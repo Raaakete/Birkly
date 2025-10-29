@@ -36,18 +36,34 @@ class HaruVersion {
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 10,
-                    'user_agent' => 'HaruCMS/' . $currentVersion
+                    'user_agent' => 'HaruCMS/' . $currentVersion,
+                    'ignore_errors' => true
                 ]
             ]);
             
-            $response = file_get_contents(self::$updateCheckUrl, false, $context);
-            if (!$response) {
-                return ['error' => 'Unable to check for updates'];
+            $response = @file_get_contents(self::$updateCheckUrl, false, $context);
+            
+            // Check for HTTP errors
+            if ($response === false) {
+                $error = error_get_last();
+                if (isset($error['message']) && strpos($error['message'], '404') !== false) {
+                    return ['error' => 'No releases found. Please create a GitHub Release for version ' . $currentVersion . ' or later.'];
+                }
+                return ['error' => 'Unable to check for updates. Repository may be private or unreachable.'];
             }
             
             $release = json_decode($response, true);
+            
+            // Check if GitHub returned an error message
+            if (isset($release['message']) && isset($release['documentation_url'])) {
+                if ($release['status'] == 404) {
+                    return ['error' => 'No releases found. Please create a GitHub Release at https://github.com/Raaakete/haru/releases'];
+                }
+                return ['error' => 'GitHub API error: ' . ($release['message'] ?? 'Unknown error')];
+            }
+            
             if (!$release || !isset($release['tag_name'])) {
-                return ['error' => 'Invalid release data'];
+                return ['error' => 'Invalid release data from GitHub'];
             }
             
             $latestVersion = ltrim($release['tag_name'], 'v');
