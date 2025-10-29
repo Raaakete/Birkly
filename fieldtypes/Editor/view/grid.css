@@ -1,0 +1,17 @@
+.ed-grid { display:flex; gap:12px; position:relative; }
+.ed-grid[data-cols="2"]{}
+.ed-grid[data-cols="3"]{}
+.ed-grid[data-cols="4"]{}
+
+.ed-col { position:relative; flex: 0 0 var(--basis, 100%); min-width:80px; border:1px dashed var(--border-light); padding:6px; }
+.ed-col[contenteditable="true"]:focus{ outline:2px solid rgba(0,0,0,0.06); }
+
+/* Internal resizer at the right edge of each column (except last) */
+.ed-col-resizer { position:absolute; top:0; right:-3px; width:6px; height:100%; cursor:col-resize; user-select:none; z-index:5; }
+.ed-col-resizer::before{ content:''; position:absolute; top:0; left:50%; transform:translateX(-1px); width:2px; height:100%; background:transparent; }
+.ed-col-resizer:hover::before{ background:#2da3ff; }
+
+/* Reorder handle */
+.ed-col-drag { position:absolute; top:-8px; left:50%; transform:translateX(-50%); width:14px; height:14px; background:#fff; border:1px solid var(--border-light); border-radius:50%; cursor:grab; z-index:6; user-select:none; }
+.ed-col-drag:active { cursor:grabbing; }
+

@@ -1,0 +1,878 @@
+<div class="media-library">
+  <!-- Header -->
+  <div class="media-header">
+    <div class="header-content">
+      <h1>Media Library</h1>
+      <div id="media-breadcrumb" class="breadcrumb">
+        <span onclick="navigateToFolder('')" class="breadcrumb-item">Media</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="createFolder()">New Folder</button>
+      <button class="btn btn-primary" onclick="uploadMedia()">Upload Media</button>
+    </div>
+  </div>
+
+  <div class="media-layout">
+    <!-- Sidebar -->
+    <aside class="media-sidebar">
+      <div class="sidebar-header">
+        <h3>Folders</h3>
+        <button class="btn-icon" onclick="refreshFolders()" title="Refresh">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.48L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="sidebar-content" id="folder-tree">
+        <div class="folder-item all" onclick="navigateToFolder('all')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2-2z"></path>
+            <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
+          </svg>
+          <span>All Media</span>
+        </div>
+        <div class="folder-item root" onclick="navigateToFolder('')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+          </svg>
+          <span>Root Folder</span>
+        </div>
+        <div id="folder-list-container"></div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="media-main">
+      <!-- Toolbar -->
+      <div class="media-toolbar">
+        <div class="toolbar-search">
+          <input type="text" id="media-search" placeholder="Search media..." class="search-input">
+        </div>
+        <div class="toolbar-filters">
+          <select id="type-filter" class="filter-select">
+            <option value="">All Types</option>
+            <option value="image">Images</option>
+            <option value="video">Videos</option>
+            <option value="audio">Audio</option>
+            <option value="document">Documents</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Media Grid -->
+      <div class="media-content" id="media-content">
+        <div class="media-grid" id="media-grid">
+          <div class="media-loading">Loading media...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Upload Modal -->
+  <div id="upload-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Upload Media</h3>
+        <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="upload-form" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="file-input">Select File</label>
+            <input type="file" id="file-input" name="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" required>
+          </div>
+          <div class="form-group">
+            <label for="upload-title">Title (optional)</label>
+            <input type="text" id="upload-title" name="title" placeholder="Enter a title for this media">
+          </div>
+          <div class="form-group">
+            <label for="upload-folder">Current Folder: <span id="current-upload-folder">Root</span></label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="handleUpload()">Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Media Details Modal -->
+  <div id="media-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="media-modal-title">Media Details</h3>
+        <button class="modal-close" onclick="closeMediaModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="media-modal-body">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="openMoveModal()">Move to Folder</button>
+        <button class="btn btn-danger" onclick="deleteCurrentMedia()">Delete</button>
+        <button class="btn btn-secondary" onclick="closeMediaModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move Media Modal -->
+  <div id="move-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Move Media to Folder</h3>
+        <button class="modal-close" onclick="closeMoveModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="folder-tree-move" id="folder-tree-move">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeMoveModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmMove()">Move</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Media Library JavaScript
+let currentMedia = [];
+let currentMediaItem = null;
+let currentMoveItem = null;
+let currentFolder = '';
+let folderData = [];
+let selectedMoveFolder = '';
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  loadFolders();
+  loadMedia();
+  
+  document.getElementById('media-search').addEventListener('input', filterMedia);
+  document.getElementById('type-filter').addEventListener('change', filterMedia);
+});
+
+// Navigate to folder
+function navigateToFolder(folder) {
+  console.log('navigateToFolder called with:', folder);
+  currentFolder = folder;
+  console.log('currentFolder set to:', currentFolder);
+  loadMedia();
+  updateBreadcrumb();
+  highlightCurrentFolder();
+}
+
+// Update breadcrumb
+function updateBreadcrumb() {
+  const breadcrumb = document.getElementById('media-breadcrumb');
+  
+  if (currentFolder === 'all') {
+    breadcrumb.innerHTML = '<span class="breadcrumb-item">All Media</span>';
+    return;
+  }
+  
+  breadcrumb.innerHTML = '<span onclick="navigateToFolder(\'\')" class="breadcrumb-item">Root</span>';
+  
+  if (currentFolder) {
+    const parts = currentFolder.split('/');
+    let path = '';
+    parts.forEach((part, index) => {
+      path += (path ? '/' : '') + part;
+      const separator = document.createElement('span');
+      separator.className = 'breadcrumb-separator';
+      separator.textContent = ' / ';
+      breadcrumb.appendChild(separator);
+      
+      const item = document.createElement('span');
+      item.className = 'breadcrumb-item';
+      item.textContent = part;
+      item.onclick = () => navigateToFolder(path);
+      breadcrumb.appendChild(item);
+    });
+  }
+}
+
+// Load folders
+async function loadFolders() {
+  try {
+    const response = await fetch('/api/admin_media.php?action=folders');
+    const result = await response.json();
+    
+    if (result.status === 'ok') {
+      folderData = result.data;
+      renderFolderTree();
+      renderMoveFolderTree();
+    }
+  } catch (error) {
+    console.error('Error loading folders:', error);
+  }
+}
+
+function refreshFolders() {
+  loadFolders();
+  loadMedia();
+}
+
+// Render folder tree in sidebar
+function renderFolderTree() {
+  const container = document.getElementById('folder-list-container');
+  container.innerHTML = '';
+  
+  // Group folders by level for proper indentation
+  const foldersByLevel = {};
+  folderData.forEach(folder => {
+    const level = folder.level || 0;
+    if (!foldersByLevel[level]) {
+      foldersByLevel[level] = [];
+    }
+    foldersByLevel[level].push(folder);
+  });
+  
+  // Render folders with proper nesting
+  Object.keys(foldersByLevel).sort((a, b) => parseInt(a) - parseInt(b)).forEach(level => {
+    foldersByLevel[level].forEach(folder => {
+      const folderItem = document.createElement('div');
+      folderItem.className = 'folder-item';
+      folderItem.style.paddingLeft = `${(folder.level || 0) * 20 + 8}px`;
+      folderItem.onclick = () => navigateToFolder(folder.path);
+      folderItem.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>${folder.name}</span>
+        <span class="folder-count">(${folder.count})</span>
+        <div class="folder-actions">
+          <button class="btn-icon" onclick="event.stopPropagation(); createSubfolder('${folder.path}')" title="Create Subfolder">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </button>
+          <button class="btn-icon" onclick="event.stopPropagation(); renameFolder('${folder.path}')" title="Rename Folder">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+          <button class="btn-icon" onclick="event.stopPropagation(); deleteFolderWithOptions('${folder.path}')" title="Delete Folder">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+      container.appendChild(folderItem);
+    });
+  });
+  
+  highlightCurrentFolder();
+}
+
+function highlightCurrentFolder() {
+  document.querySelectorAll('.folder-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  if (currentFolder === 'all') {
+    document.querySelector('.folder-item.all').classList.add('active');
+  } else if (!currentFolder) {
+    document.querySelector('.folder-item.root').classList.add('active');
+  } else {
+    const parts = currentFolder.split('/');
+    document.querySelectorAll('.folder-item').forEach(item => {
+      const span = item.querySelector('span');
+      if (span && span.textContent.trim() === parts[parts.length - 1]) {
+        item.classList.add('active');
+      }
+    });
+  }
+}
+
+// Render folder tree for move modal
+function renderMoveFolderTree() {
+  const container = document.getElementById('folder-tree-move');
+  container.innerHTML = '';
+  
+  // Create root folder item
+  const rootItem = document.createElement('div');
+  rootItem.className = 'folder-item-move';
+  rootItem.onclick = () => selectMoveFolder('');
+  rootItem.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+    </svg>
+    <span>Root Folder</span>
+  `;
+  container.appendChild(rootItem);
+  
+  // Build folder tree structure
+  const folderTree = buildFolderTree(folderData);
+  renderFolderTreeRecursive(container, folderTree, 0);
+}
+
+function buildFolderTree(folders) {
+  const tree = {};
+  
+  // Group folders by their parent path
+  folders.forEach(folder => {
+    const pathParts = folder.path.split('/');
+    const parentPath = pathParts.slice(0, -1).join('/');
+    const folderName = pathParts[pathParts.length - 1];
+    
+    if (!tree[parentPath]) {
+      tree[parentPath] = [];
+    }
+    tree[parentPath].push({
+      ...folder,
+      name: folderName
+    });
+  });
+  
+  return tree;
+}
+
+function renderFolderTreeRecursive(container, tree, level) {
+  // Sort folders by level first, then by name
+  const sortedFolders = Object.keys(tree).sort((a, b) => {
+    const aLevel = a ? a.split('/').length : 0;
+    const bLevel = b ? b.split('/').length : 0;
+    return aLevel - bLevel;
+  });
+  
+  sortedFolders.forEach(parentPath => {
+    const folders = tree[parentPath];
+    folders.forEach(folder => {
+      const folderItem = document.createElement('div');
+      folderItem.className = 'folder-item-move';
+      folderItem.onclick = () => selectMoveFolder(folder.path);
+      folderItem.style.paddingLeft = `${level * 20 + 8}px`;
+      folderItem.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>${folder.name}</span>
+      `;
+      container.appendChild(folderItem);
+      
+      // Recursively render subfolders
+      const subfolders = tree[folder.path];
+      if (subfolders) {
+        renderFolderTreeRecursive(container, { [folder.path]: subfolders }, level + 1);
+      }
+    });
+  });
+}
+
+function selectMoveFolder(folder) {
+  selectedMoveFolder = folder;
+  document.querySelectorAll('.folder-item-move').forEach(item => {
+    item.classList.remove('selected');
+  });
+  
+  document.querySelectorAll('.folder-item-move').forEach(item => {
+    const span = item.querySelector('span');
+    if (span) {
+      const folderName = span.textContent.trim();
+      const folderPath = folder || '';
+      
+      // For root folder
+      if (folderPath === '' && folderName === 'Root Folder') {
+        item.classList.add('selected');
+      }
+      // For nested folders, compare the folder name with the last part of the path
+      else if (folderPath !== '' && folderName === folderPath.split('/').pop()) {
+        item.classList.add('selected');
+      }
+    }
+  });
+}
+
+// Load media
+async function loadMedia() {
+  const url = `/api/admin_media.php?action=list&folder=${encodeURIComponent(currentFolder)}`;
+  console.log('loadMedia called with currentFolder:', currentFolder);
+  console.log('API URL:', url);
+  
+  try {
+    const response = await fetch(url);
+    const result = await response.json();
+    
+    console.log('API response:', result);
+    
+    if (result.status === 'ok') {
+      currentMedia = result.data;
+      console.log('Loaded media count:', currentMedia.length);
+      renderMediaGrid();
+    } else {
+      showError('Failed to load media: ' + result.message);
+    }
+  } catch (error) {
+    showError('Error loading media: ' + error.message);
+  }
+}
+
+// Render media grid
+function renderMediaGrid() {
+  const grid = document.getElementById('media-grid');
+  
+  if (currentMedia.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><h3>No Media Found</h3><p>Upload some files or navigate to a different folder.</p></div>';
+    return;
+  }
+  
+  grid.innerHTML = '';
+  
+  currentMedia.forEach(item => {
+    const mediaCard = document.createElement('div');
+    mediaCard.className = 'media-card';
+    mediaCard.innerHTML = `
+      <div class="thumb" onclick="viewMedia('${item.id}')">
+        ${getMediaThumbnail(item)}
+      </div>
+      <div class="meta">
+        <div class="name" title="${item.name}" onclick="viewMedia('${item.id}')">${item.name}</div>
+        <div class="info">${item.category} • ${item.size_formatted}</div>
+      </div>
+    `;
+    
+    grid.appendChild(mediaCard);
+  });
+}
+
+// Get media thumbnail
+function getMediaThumbnail(item) {
+  if (item.category === 'image') {
+    return `<img src="${item.url}" alt="${item.name}">`;
+  } else if (item.category === 'video') {
+    return `<div class="video-thumb">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="5,3 19,12 5,21"></polygon>
+      </svg>
+    </div>`;
+  } else if (item.category === 'audio') {
+    return `<div class="audio-thumb">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </svg>
+    </div>`;
+  } else {
+    return `<div class="file-thumb">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14,2 14,8 20,8"></polyline>
+      </svg>
+    </div>`;
+  }
+}
+
+// Filter media
+function filterMedia() {
+  const search = document.getElementById('media-search').value.toLowerCase();
+  const type = document.getElementById('type-filter').value;
+  
+  const filtered = currentMedia.filter(item => {
+    const matchesSearch = !search || item.name.toLowerCase().includes(search);
+    const matchesType = !type || item.category === type;
+    return matchesSearch && matchesType;
+  });
+  
+  const grid = document.getElementById('media-grid');
+  grid.innerHTML = '';
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><p>No media matches your filter.</p></div>';
+    return;
+  }
+  
+  filtered.forEach(item => {
+    const mediaCard = document.createElement('div');
+    mediaCard.className = 'media-card';
+    mediaCard.innerHTML = `
+      <div class="thumb" onclick="viewMedia('${item.id}')">
+        ${getMediaThumbnail(item)}
+      </div>
+      <div class="meta">
+        <div class="name" title="${item.name}" onclick="viewMedia('${item.id}')">${item.name}</div>
+        <div class="info">${item.category} • ${item.size_formatted}</div>
+      </div>
+    `;
+    grid.appendChild(mediaCard);
+  });
+}
+
+// Upload media
+function uploadMedia() {
+  const folderDisplay = currentFolder === 'all' ? 'Root' : (currentFolder || 'Root');
+  document.getElementById('current-upload-folder').textContent = folderDisplay;
+  document.getElementById('upload-modal').style.display = 'flex';
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-modal').style.display = 'none';
+  document.getElementById('upload-form').reset();
+}
+
+async function handleUpload() {
+  const form = document.getElementById('upload-form');
+  const formData = new FormData(form);
+  const uploadFolder = currentFolder === 'all' ? '' : currentFolder;
+  formData.append('folder', uploadFolder);
+  
+  try {
+    const response = await fetch('/api/admin_media.php?action=upload', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'ok') {
+      showSuccess('Media uploaded successfully!');
+      closeUploadModal();
+      loadMedia();
+      loadFolders();
+    } else {
+      showError('Upload failed: ' + result.message);
+    }
+  } catch (error) {
+    showError('Upload error: ' + error.message);
+  }
+}
+
+// Create folder
+async function createFolder() {
+  const name = prompt('Enter folder name:');
+  if (!name) return;
+  
+  try {
+    const formData = new FormData();
+    formData.append('name', name);
+    
+    const response = await fetch('/api/admin_media.php?action=create_folder', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'ok') {
+      showSuccess('Folder created successfully!');
+      loadFolders();
+    } else {
+      showError('Failed to create folder: ' + result.message);
+    }
+  } catch (error) {
+    showError('Error creating folder: ' + error.message);
+  }
+}
+
+// Rename folder
+async function renameFolder(folderPath) {
+  const currentName = folderPath.split('/').pop();
+  const newName = prompt(`Enter new name for folder "${currentName}":`, currentName);
+  
+  if (!newName || newName === currentName) return;
+  
+  // Build new path
+  const pathParts = folderPath.split('/');
+  pathParts[pathParts.length - 1] = newName;
+  const newPath = pathParts.join('/');
+  
+  try {
+    const formData = new FormData();
+    formData.append('old_name', folderPath);
+    formData.append('new_name', newPath);
+    
+    const response = await fetch('/api/admin_media.php?action=rename_folder', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'ok') {
+      showSuccess('Folder renamed successfully!');
+      loadFolders();
+      loadMedia();
+    } else {
+      showError('Failed to rename folder: ' + result.message);
+    }
+  } catch (error) {
+    showError('Error renaming folder: ' + error.message);
+  }
+}
+
+// Delete folder with options
+async function deleteFolderWithOptions(folderPath) {
+  const folderName = folderPath.split('/').pop();
+  
+  // Check if folder has files
+  const folder = folderData.find(f => f.path === folderPath);
+  const hasFiles = folder && folder.count > 0;
+  
+  let handleFiles = 'move'; // default
+  
+  if (hasFiles) {
+    const choice = confirm(`Folder "${folderName}" contains ${folder.count} files.\n\nClick OK to move files to root folder, or Cancel to delete files with folder.`);
+    handleFiles = choice ? 'move' : 'delete';
+  }
+  
+  const confirmMessage = hasFiles ? 
+    `Are you sure you want to delete folder "${folderName}" and ${handleFiles === 'delete' ? 'delete all files' : 'move files to root'}?` :
+    `Are you sure you want to delete folder "${folderName}"?`;
+    
+  if (!confirm(confirmMessage)) return;
+  
+  try {
+    const formData = new FormData();
+    formData.append('name', folderPath);
+    formData.append('handle_files', handleFiles);
+    
+    const response = await fetch('/api/admin_media.php?action=delete_folder', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'ok') {
+      showSuccess(result.message);
+      loadFolders();
+      loadMedia();
+    } else {
+      showError('Failed to delete folder: ' + result.message);
+    }
+  } catch (error) {
+    showError('Error deleting folder: ' + error.message);
+  }
+}
+
+// View media details
+function viewMedia(id) {
+  console.log('viewMedia called with id:', id);
+  console.log('currentMedia:', currentMedia);
+  
+  const item = currentMedia.find(m => m.id === id);
+  if (!item) {
+    console.error('Media item not found for id:', id);
+    return;
+  }
+  
+  console.log('Found media item:', item);
+  currentMediaItem = item;
+  
+  const modal = document.getElementById('media-modal');
+  const title = document.getElementById('media-modal-title');
+  const body = document.getElementById('media-modal-body');
+  
+  title.textContent = item.name;
+  
+  body.innerHTML = `
+    <div class="media-preview">
+      ${getMediaPreview(item)}
+    </div>
+    <div class="media-details">
+      <h4>Details</h4>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Name:</label>
+          <span>${item.name}</span>
+        </div>
+        <div class="detail-item">
+          <label>Type:</label>
+          <span>${item.type}</span>
+        </div>
+        <div class="detail-item">
+          <label>Size:</label>
+          <span>${item.size_formatted}</span>
+        </div>
+        <div class="detail-item">
+          <label>Uploaded:</label>
+          <span>${new Date(item.uploaded_at).toLocaleDateString()}</span>
+        </div>
+        <div class="detail-item">
+          <label>Folder:</label>
+          <span>${item.folder || 'Root'}</span>
+        </div>
+        <div class="detail-item">
+          <label>ID:</label>
+          <span style="font-family: monospace; font-size: 0.875rem;">${item.id}</span>
+        </div>
+        ${item.dimensions ? `
+        <div class="detail-item">
+          <label>Dimensions:</label>
+          <span>${item.dimensions.width} × ${item.dimensions.height}</span>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  
+  modal.style.display = 'flex';
+}
+
+function getMediaPreview(item) {
+  if (item.category === 'image') {
+    return `<img src="${item.url}" alt="${item.name}" style="max-width: 100%; max-height: 300px;">`;
+  } else if (item.category === 'video') {
+    return `<video controls style="max-width: 100%; max-height: 300px;">
+      <source src="${item.url}" type="${item.type}">
+      Your browser does not support the video tag.
+    </video>`;
+  } else if (item.category === 'audio') {
+    return `<audio controls style="width: 100%;">
+      <source src="${item.url}" type="${item.type}">
+      Your browser does not support the audio tag.
+    </audio>`;
+  } else {
+    return `<div class="file-preview">
+      <p>Preview not available for ${item.category} files.</p>
+      <a href="${item.url}" target="_blank" class="btn btn-primary">Download File</a>
+    </div>`;
+  }
+}
+
+function closeMediaModal() {
+  document.getElementById('media-modal').style.display = 'none';
+  // Don't clear currentMediaItem here - it might be needed for move operations
+}
+
+function closeMediaModalCompletely() {
+  document.getElementById('media-modal').style.display = 'none';
+  currentMediaItem = null;
+}
+
+// Open move modal
+function openMoveModal() {
+  console.log('openMoveModal called, currentMediaItem:', currentMediaItem);
+  
+  if (!currentMediaItem) {
+    console.error('No currentMediaItem in openMoveModal');
+    showError('No media item selected');
+    return;
+  }
+  
+  selectedMoveFolder = currentMediaItem.folder || '';
+  console.log('Selected move folder:', selectedMoveFolder);
+  
+  renderMoveFolderTree();
+  
+  document.querySelectorAll('.folder-item-move').forEach(item => {
+    item.classList.remove('selected');
+    const span = item.querySelector('span');
+    if (span && span.textContent.trim() === (selectedMoveFolder || 'Root Folder')) {
+      item.classList.add('selected');
+    }
+  });
+  
+  document.getElementById('move-modal').style.display = 'flex';
+}
+
+function closeMoveModal() {
+  document.getElementById('move-modal').style.display = 'none';
+  selectedMoveFolder = '';
+}
+
+async function confirmMove() {
+  if (!currentMediaItem) {
+    console.error('No currentMediaItem set');
+    showError('No media item selected');
+    return;
+  }
+  
+  console.log('Moving media:', currentMediaItem.id, 'to folder:', selectedMoveFolder);
+  
+  try {
+    const formData = new FormData();
+    formData.append('id', currentMediaItem.id);
+    formData.append('folder', selectedMoveFolder);
+    
+    const response = await fetch('/api/admin_media.php?action=move_to_folder', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    console.log('Move result:', result);
+    
+    if (result.status === 'ok') {
+      showSuccess('Media moved successfully!');
+      closeMoveModal();
+      closeMediaModalCompletely();
+      loadMedia();
+      loadFolders();
+    } else {
+      showError('Failed to move media: ' + result.message);
+    }
+  } catch (error) {
+    console.error('Move error:', error);
+    showError('Error moving media: ' + error.message);
+  }
+}
+
+// Delete media
+async function deleteMedia(id) {
+  if (!confirm('Are you sure you want to delete this media file?')) return;
+  
+  try {
+    const formData = new FormData();
+    formData.append('id', id);
+    
+    const response = await fetch('/api/admin_media.php?action=delete', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'ok') {
+      showSuccess('Media deleted successfully!');
+      loadMedia();
+      loadFolders();
+    } else {
+      showError('Failed to delete media: ' + result.message);
+    }
+  } catch (error) {
+    showError('Error deleting media: ' + error.message);
+  }
+}
+
+function deleteCurrentMedia() {
+  if (currentMediaItem) {
+    deleteMedia(currentMediaItem.id);
+    closeMediaModalCompletely();
+  }
+}
+
+// Utility functions
+function showSuccess(message) {
+  const notification = document.createElement('div');
+  notification.className = 'notification success';
+  notification.textContent = message;
+  notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 4px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 3000);
+}
+
+function showError(message) {
+  const notification = document.createElement('div');
+  notification.className = 'notification error';
+  notification.textContent = message;
+  notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 20px; border-radius: 4px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 5000);
+}
+</script>

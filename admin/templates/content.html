@@ -1,0 +1,45 @@
+<div class="content-page">
+    <div class="page-header">
+        <h1>Content Management</h1>
+        <div class="breadcrumbs"><span class="current">Content</span></div>
+    </div>
+    
+    <div class="main-actions-bar">
+        <a class="btn btn-primary" href="/admin/index.php?page=collection-editor">New Collection</a>
+    </div>
+    
+    <div class="grid">
+        <?php if (!empty($collections)): ?>
+            <?php foreach ($collections as $collection): ?>
+                <a class="card" href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug']) ?>">
+                    <div class="collection-header">
+                        <h3 class="title">
+                            <img src="/admin/assets/DotsSixVertical.svg" alt="DragandDrop">
+                            <?= htmlspecialchars($collection['name']) ?>
+                        </h3>
+                        <div class="collection-description">
+                            <p><?= htmlspecialchars($collection['description']) ?></p>
+                        </div>
+                    </div>
+                    <div class="collection-footer">
+                        <div class="entry-count">
+                            <b><?= htmlspecialchars($collection['entries_count']) ?></b> entries
+                        </div>
+                        <div class="collection-actions">
+                            <a class="btn" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug']) ?>">
+                                <img src="/admin/assets/PencilSimple.svg" alt="Edit">
+                            </a>
+                            <button class="btn" disabled>
+                                <img src="/admin/assets/Trash.svg" alt="Delete">
+                            </button>
+                        </div>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="empty-state">
+                <p>No collections found. <a href="/admin/index.php?page=collection-editor">Create your first collection</a>.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>

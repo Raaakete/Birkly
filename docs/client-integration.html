@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaruCMS Client Integration Guide</title>
+    <style>
+        body { font-family: system-ui, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; }
+        code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 3px; font-family: monospace; }
+        pre { background: #f1f5f9; padding: 1rem; border-radius: 5px; overflow-x: auto; }
+        .example { background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 5px; padding: 1rem; margin: 1rem 0; }
+        .warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 5px; padding: 1rem; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <h1>HaruCMS Client Integration Guide</h1>
+    
+    <p>This guide shows how to integrate HaruCMS with your external website to display dynamic content.</p>
+
+    <h2>1. Basic Setup</h2>
+    
+    <p>Include the HaruCMS script in your website:</p>
+    
+    <pre><code>&lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;</code></pre>
+
+    <h2>2. Static Content (Legacy Mode)</h2>
+    
+    <p>Use HaruCMS templating syntax directly in your HTML:</p>
+    
+    <div class="example">
+        <h3>Example: Blog List</h3>
+        <pre><code>&lt;div class="blog-posts"&gt;
+  {for each entry in 'blog' sort="date:desc" limit=5}
+    &lt;article class="post"&gt;
+      &lt;h2&gt;{title}&lt;/h2&gt;
+      &lt;time&gt;{date|date:YYYY-MM-DD}&lt;/time&gt;
+      &lt;p&gt;{content|escape}&lt;/p&gt;
+    &lt;/article&gt;
+  {/for}
+&lt;/div&gt;</code></pre>
+    </div>
+
+    <h2>3. Dynamic Routing (SPA Mode)</h2>
+    
+    <p>Enable dynamic routing for clean URLs by adding <code>?routing=true</code> to your URL:</p>
+    
+    <div class="example">
+        <h3>Example: Single Page Application</h3>
+        <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;My Website&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;nav&gt;
+        &lt;a href="/"&gt;Home&lt;/a&gt;
+        &lt;a href="/blog"&gt;Blog&lt;/a&gt;
+        &lt;a href="/about"&gt;About&lt;/a&gt;
+    &lt;/nav&gt;
+    
+    &lt;main id="content"&gt;
+        &lt;!-- Content will be dynamically loaded here --&gt;
+    &lt;/main&gt;
+    
+    &lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;
+    &lt;script&gt;
+        // Enable routing mode
+        window.location.hash = '#routing';
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <h2>4. Available Routes</h2>
+    
+    <ul>
+        <li><code>/</code> - Home page with latest blog posts</li>
+        <li><code>/blog</code> - Blog listing page</li>
+        <li><code>/blog/:slug</code> - Individual blog post (e.g., <code>/blog/my-awesome-post</code>)</li>
+        <li><code>/page/:slug</code> - Static pages (e.g., <code>/page/about</code>)</li>
+    </ul>
+
+    <h2>5. Templating Syntax</h2>
+    
+    <h3>Loops</h3>
+    <pre><code>{for each entry in 'collection' sort="field:desc" filter="field=value" limit=10}
+  &lt;div&gt;{title}&lt;/div&gt;
+{/for}</code></pre>
+
+    <h3>Conditionals</h3>
+    <pre><code>{if featured}
+  &lt;span&gt;★ Featured&lt;/span&gt;
+{else}
+  &lt;span&gt;Regular Post&lt;/span&gt;
+{/if}</code></pre>
+
+    <h3>Filters</h3>
+    <pre><code>{title|escape|default:Untitled}
+{date|date:YYYY-MM-DD}
+{content|escape}</code></pre>
+
+    <h3>Single Data Fetch</h3>
+    <pre><code>{from 'blog' get 'entry-id, title'}</code></pre>
+
+    <h2>6. JavaScript API</h2>
+    
+    <p>Access HaruCMS functions programmatically:</p>
+    
+    <pre><code>// Navigate to a page
+window.HaruCMS.navigate('/blog/my-post');
+
+// Get a specific entry
+const entry = await window.HaruCMS.getEntryBySlug('blog', 'my-post-slug');
+
+// Make API calls directly
+const data = await window.HaruCMS.fetchAPI({
+  action: 'list_entries',
+  collection: 'blog'
+});</code></pre>
+
+    <h2>7. Configuration</h2>
+    
+    <p>You can customize the API base URL by modifying the script or setting a global variable:</p>
+    
+    <pre><code>&lt;script&gt;
+window.HARUCMS_API_BASE = 'https://your-harucms-domain.com/api/public.php';
+&lt;/script&gt;
+&lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;</code></pre>
+
+    <h2>8. Example Integration</h2>
+    
+    <div class="example">
+        <h3>Complete Example Website</h3>
+        <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;My Website&lt;/title&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        nav { background: #333; padding: 1rem; }
+        nav a { color: white; text-decoration: none; margin-right: 1rem; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .post { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;nav&gt;
+        &lt;a href="/"&gt;Home&lt;/a&gt;
+        &lt;a href="/blog"&gt;Blog&lt;/a&gt;
+        &lt;a href="/page/about"&gt;About&lt;/a&gt;
+    &lt;/nav&gt;
+    
+    &lt;div class="container"&gt;
+        &lt;!-- Static content example --&gt;
+        &lt;h1&gt;Latest Posts&lt;/h1&gt;
+        {for each entry in 'blog' sort="date:desc" limit=3}
+            &lt;div class="post"&gt;
+                &lt;h2&gt;&lt;a href="/blog/{slug}"&gt;{title}&lt;/a&gt;&lt;/h2&gt;
+                &lt;time&gt;{date|date:YYYY-MM-DD}&lt;/time&gt;
+                &lt;p&gt;{content|escape}&lt;/p&gt;
+            &lt;/div&gt;
+        {/for}
+    &lt;/div&gt;
+    
+    &lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;
+    &lt;script&gt;
+        // Enable routing for dynamic navigation
+        window.location.hash = '#routing';
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <div class="warning">
+        <h3>⚠️ Important Notes</h3>
+        <ul>
+            <li>Your HaruCMS server must be accessible from your website's domain</li>
+            <li>CORS must be properly configured on your HaruCMS server</li>
+            <li>The <code>api/public.php</code> endpoint must be publicly accessible</li>
+            <li>For production, consider using HTTPS for both your website and HaruCMS</li>
+        </ul>
+    </div>
+
+    <h2>9. Testing</h2>
+    
+    <p>Use the test website at <code>testwebsite/index.html</code> to see examples in action.</p>
+    
+    <p>To test locally:</p>
+    <pre><code># Start HaruCMS server
+php -S localhost:8001
+
+# Access test website
+http://localhost:8001/testwebsite/</code></pre>
+</body>
+</html> 

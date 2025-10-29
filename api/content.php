@@ -1,0 +1,770 @@
+<?php
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
+session_start();
+header('Content-Type: application/json');
+
+require_once 'storage.php';
+require_once 'auth.php';
+require_once '../core/plugins.php';
+require_once 'validate.php';
+require_once '../core/csrf.php';
+require_once 'log.php';
+
+// Basic auth check
+if (!isset($_SESSION['user']) && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+    exit;
+}
+
+$storage = new Storage('../content');
+$input = json_decode(file_get_contents('php://input'), true);
+$action = $input['action'] ?? $_GET['action'] ?? '';
+
+// Handle collections
+if ($action === 'list_collections') {
+    // Allow public access for read-only operations
+    // requireAuth('manage_content');
+    global $haru_collections;
+    // Populate $haru_collections with core collections
+    $collections = $storage->list('collections');
+    foreach ($collections as $dir) {
+        $meta = $storage->read("collections/$dir/collection.json");
+        if (!$meta) {
+            $meta = [
+                'id' => 'col-' . strtolower(preg_replace('/[^A-Za-z0-9]+/', '-', $dir)),
+                'title' => $dir,
+                'slug' => strtolower(preg_replace('/[^A-Za-z0-9]+/', '-', $dir)),
+            ];
+            $storage->write("collections/$dir/collection.json", $meta);
+        }
+        $haru_collections[$meta['slug']] = [
+            'path' => realpath("../content/collections/$dir"),
+            'options' => []
+        ];
+    }
+    // Now build result from all registered collections (core + plugins)
+    $result = [];
+    foreach ($haru_collections as $slug => $info) {
+        if (!empty($info['options']['hidden'])) continue; // skip hidden collections
+        $path = $info['path'];
+        $metaFile = rtrim($path, '/').'/collection.json';
+        if (file_exists($metaFile)) {
+            $meta = json_decode(file_get_contents($metaFile), true);
+            if ($meta) {
+                // Add entries_count
+                $entriesDir = rtrim($path, '/') . '/entries';
+                $entriesCount = 0;
+                if (file_exists($entriesDir) && is_dir($entriesDir)) {
+                    $entriesCount = count(array_filter(scandir($entriesDir), function($f) use ($entriesDir) {
+                        return $f !== '.' && $f !== '..' && is_file($entriesDir . '/' . $f) && pathinfo($f, PATHINFO_EXTENSION) === 'json';
+                    }));
+                }
+                $meta['entries_count'] = $entriesCount;
+                $result[] = $meta;
+            }
+        }
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'collections' => $result
+        ]
+    ]);
+    exit;
+}
+
+if ($action === 'create_collection') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'create_collection', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $title = trim($input['title'] ?? '');
+    if (empty($title)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection title required']);
+        exit;
+    }
+    // Generate slug
+    function slugify($str) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $str)));
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+        return $slug;
+    }
+    $slug = slugify($title);
+    // Ensure slug and title uniqueness
+    $collections = $storage->list('collections');
+    $existingTitles = [];
+    $existingSlugs = [];
+    foreach ($collections as $dir) {
+        $meta = $storage->read("collections/$dir/collection.json");
+        if ($meta) {
+            $existingTitles[] = strtolower($meta['title']);
+            $existingSlugs[] = $meta['slug'];
+        } else {
+            $existingTitles[] = strtolower($dir);
+            $existingSlugs[] = slugify($dir);
+        }
+    }
+    $baseSlug = $slug;
+    $i = 2;
+    while (in_array($slug, $existingSlugs)) {
+        $slug = $baseSlug . '-' . $i;
+        $i++;
+    }
+    if (in_array(strtolower($title), $existingTitles)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection title must be unique']);
+        exit;
+    }
+    $id = 'col-' . uniqid();
+    $dir = $slug;
+    // Create collection directory
+    if (!file_exists("../content/collections/$dir")) {
+        mkdir("../content/collections/$dir/entries", 0755, true);
+    }
+    $meta = [ 'id' => $id, 'title' => $title, 'slug' => $slug ];
+    $storage->write("collections/$dir/collection.json", $meta);
+    $schema = $input['schema'] ?? [];
+    $storage->write("collections/$dir/schema.json", $schema);
+    log_security_event('create_collection', ['id' => $id, 'title' => $title, 'slug' => $slug]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Collection created',
+        'data' => $meta
+    ]);
+    exit;
+}
+
+if ($action === 'update_collection') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'update_collection', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $id = $input['id'] ?? '';
+    $title = trim($input['title'] ?? '');
+    $slug = trim($input['slug'] ?? '');
+    $schema = $input['schema'] ?? [];
+    if (empty($id) || empty($title) || empty($slug) || empty($schema)) {
+        echo json_encode(['status' => 'error', 'message' => 'ID, title, slug, and schema required']);
+        exit;
+    }
+    // Find collection dir by id
+    $collections = $storage->list('collections');
+    $dir = null;
+    foreach ($collections as $d) {
+        $meta = $storage->read("collections/$d/collection.json");
+        if ($meta && $meta['id'] === $id) {
+            $dir = $d;
+            break;
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    // Ensure title and slug uniqueness (ignore current collection)
+    $existingTitles = [];
+    $existingSlugs = [];
+    foreach ($collections as $d) {
+        if ($d === $dir) continue;
+        $meta = $storage->read("collections/$d/collection.json");
+        if ($meta) {
+            $existingTitles[] = strtolower($meta['title']);
+            $existingSlugs[] = $meta['slug'];
+        }
+    }
+    if (in_array(strtolower($title), $existingTitles)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection title must be unique']);
+        exit;
+    }
+    if (in_array($slug, $existingSlugs)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection slug must be unique']);
+        exit;
+    }
+    // Update metadata and schema
+    $meta = [ 'id' => $id, 'title' => $title, 'slug' => $slug ];
+    $storage->write("collections/$dir/collection.json", $meta);
+    $storage->write("collections/$dir/schema.json", $schema);
+    log_security_event('update_collection', ['id' => $id, 'title' => $title, 'slug' => $slug]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Collection updated',
+        'data' => $meta
+    ]);
+    exit;
+}
+
+if ($action === 'delete_collection') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'delete_collection', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $id = $input['id'] ?? '';
+    if (empty($id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection id required']);
+        exit;
+    }
+    // Find collection dir by id
+    $collections = $storage->list('collections');
+    $dir = null;
+    foreach ($collections as $d) {
+        $meta = $storage->read("collections/$d/collection.json");
+        if ($meta && $meta['id'] === $id) {
+            $dir = $d;
+            break;
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    // Delete all entries and schema/meta
+    $entries = $storage->list("collections/$dir/entries");
+    foreach ($entries as $entry) {
+        $storage->delete("collections/$dir/entries/$entry");
+    }
+    $storage->delete("collections/$dir/schema.json");
+    $storage->delete("collections/$dir/collection.json");
+    // Remove the collection directory if empty
+    @rmdir("../content/collections/$dir/entries");
+    @rmdir("../content/collections/$dir");
+    log_security_event('delete_collection', ['id' => $id]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Collection deleted'
+    ]);
+    exit;
+}
+
+// Handle entries
+if ($action === 'list_entries') {
+    // Allow public access for read-only operations
+    // requireAuth('manage_content');
+    $collection = $input['collection'] ?? $_GET['collection'] ?? '';
+    $id = $input['id'] ?? $_GET['id'] ?? '';
+    $dir = '';
+    $collections = $storage->list('collections');
+    $debug_ids = [];
+    // Always log the input and found IDs for debugging
+    file_put_contents(__DIR__ . '/../logs/list_entries_debug.log', date('c') . " | input: " . json_encode($input) . " | found ids: " . json_encode(array_map(function($d) use ($storage) { $m = $storage->read("collections/$d/collection.json"); return $m['id'] ?? null; }, $collections)) . "\n", FILE_APPEND);
+    if ($id) {
+        foreach ($collections as $d) {
+            $m = $storage->read("collections/$d/collection.json");
+            if ($m && isset($m['id'])) $debug_ids[] = $m['id'];
+            if ($m && $m['id'] === $id) {
+                $dir = $d;
+                break;
+            }
+        }
+        // Log what IDs were found and what was searched for
+        file_put_contents(__DIR__ . '/../logs/list_entries_debug.log', date('c') . " | requested id: $id | found ids: " . json_encode($debug_ids) . "\n", FILE_APPEND);
+    } elseif ($collection) {
+        foreach ($collections as $d) {
+            $m = $storage->read("collections/$d/collection.json");
+            if ($m && $m['slug'] === $collection) {
+                $dir = $d;
+                break;
+            }
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    $entries = $storage->list("collections/$dir/entries");
+    $entryData = [];
+    foreach ($entries as $entry) {
+        $data = $storage->read("collections/$dir/entries/$entry");
+        if ($data) {
+            $entryData[] = $data;
+        }
+    }
+    // Apply order if order.json exists
+    $orderFile = "collections/$dir/order.json";
+    if (file_exists("../content/$orderFile")) {
+        $order = json_decode(file_get_contents("../content/$orderFile"), true);
+        if (is_array($order)) {
+            $entryDataById = [];
+            foreach ($entryData as $e) {
+                if (isset($e['id'])) $entryDataById[$e['id']] = $e;
+            }
+            $ordered = [];
+            foreach ($order as $id) {
+                if (isset($entryDataById[$id])) {
+                    $ordered[] = $entryDataById[$id];
+                    unset($entryDataById[$id]);
+                }
+            }
+            // Append any new entries not in order.json
+            foreach ($entryDataById as $e) {
+                $ordered[] = $e;
+            }
+            $entryData = $ordered;
+        }
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [ 'entries' => $entryData ]
+    ]);
+    exit;
+}
+
+if ($action === 'create_entry') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'create_entry', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $collection = $input['collection'] ?? '';
+    $data = $input['data'] ?? [];
+    $dir = '';
+    $collections = $storage->list('collections');
+    foreach ($collections as $d) {
+        $m = $storage->read("collections/$d/collection.json");
+        if ($m && $m['id'] === $collection) {
+            $dir = $d;
+            break;
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    if (empty($dir) || empty($data)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection and data required']);
+        exit;
+    }
+    // Require title
+    $title = trim($data['title'] ?? '');
+    if ($title === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Title is required']);
+        exit;
+    }
+    // Generate slug
+    function slugify($str) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $str)));
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+        return $slug;
+    }
+    $slug = slugify($title);
+    // Ensure slug uniqueness within collection
+    $entries = $storage->list("collections/$dir/entries");
+    $existingSlugs = [];
+    foreach ($entries as $entryFile) {
+        $entryData = $storage->read("collections/$dir/entries/$entryFile");
+        if ($entryData && isset($entryData['slug'])) {
+            $existingSlugs[] = $entryData['slug'];
+        }
+    }
+    $baseSlug = $slug;
+    $i = 2;
+    while (in_array($slug, $existingSlugs)) {
+        $slug = $baseSlug . '-' . $i;
+        $i++;
+    }
+    $id = uniqid();
+    // --- WYSIWYG HTML fix: build $cleanData ---
+    $schema = $storage->read("collections/$dir/schema.json");
+    $cleanData = [];
+    foreach (
+        $schema['fields'] as $field
+    ) {
+        $name = $field['name'];
+        if ($field['type'] === 'wysiwyg' || $field['type'] === 'media') {
+            $cleanData[$name] = $data[$name] ?? '';
+        } else if ($field['type'] === 'dynamicitems') {
+            $cleanData[$name] = $data[$name] ?? [];
+        } else {
+            $cleanData[$name] = sanitize_string($data[$name] ?? '');
+        }
+    }
+    // Add system fields
+    $cleanData['id'] = $id;
+    $cleanData['slug'] = $slug;
+    $cleanData['created_at'] = date('c');
+    $cleanData['updated_at'] = date('c');
+    $cleanData['title'] = $title;
+    
+    // Add status and metadata
+    if (isset($data['status'])) {
+        $cleanData['status'] = $data['status'];
+    } else {
+        $cleanData['status'] = 'unpublished'; // Default status for new entries
+    }
+    if (isset($data['published_at'])) {
+        $cleanData['published_at'] = $data['published_at'];
+    }
+    if (isset($data['expires_at'])) {
+        $cleanData['expires_at'] = $data['expires_at'];
+    }
+    if (isset($data['meta'])) {
+        $cleanData['meta'] = $data['meta'];
+    }
+    $result = $storage->write("collections/$dir/entries/$id.json", $cleanData);
+    if ($result) do_action('after_content_save', $dir, $cleanData);
+    log_security_event('create_entry', ['collection' => $dir, 'id' => $id]);
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Entry created' : 'Failed to create entry',
+        'data' => ['id' => $id, 'slug' => $slug, 'title' => $title]
+    ]);
+    exit;
+}
+
+if ($action === 'update_entry') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'update_entry', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $collection = $input['collection'] ?? '';
+    $id = $input['id'] ?? '';
+    $data = $input['data'] ?? [];
+    $dir = '';
+    $collections = $storage->list('collections');
+    foreach ($collections as $d) {
+        $m = $storage->read("collections/$d/collection.json");
+        if ($m && $m['id'] === $collection) {
+            $dir = $d;
+            break;
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    if (empty($dir) || empty($id) || empty($data)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection, ID and data required']);
+        exit;
+    }
+    $existing = $storage->read("collections/$dir/entries/$id.json");
+    if (!$existing) {
+        echo json_encode(['status' => 'error', 'message' => 'Entry not found']);
+        exit;
+    }
+    // Require title
+    $title = trim($data['title'] ?? '');
+    if ($title === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Title is required']);
+        exit;
+    }
+    // Generate slug
+    function slugify($str) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $str)));
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+        return $slug;
+    }
+    $slug = slugify($title);
+    // Ensure slug uniqueness within collection (ignore current entry)
+    $entries = $storage->list("collections/$dir/entries");
+    $existingSlugs = [];
+    foreach ($entries as $entryFile) {
+        if ($entryFile === "$id.json") continue;
+        $entryData = $storage->read("collections/$dir/entries/$entryFile");
+        if ($entryData && isset($entryData['slug'])) {
+            $existingSlugs[] = $entryData['slug'];
+        }
+    }
+    $baseSlug = $slug;
+    $i = 2;
+    while (in_array($slug, $existingSlugs)) {
+        $slug = $baseSlug . '-' . $i;
+        $i++;
+    }
+    // --- WYSIWYG HTML fix: build $cleanData ---
+    $schema = $storage->read("collections/$dir/schema.json");
+    $cleanData = [];
+    foreach (
+        $schema['fields'] as $field
+    ) {
+        $name = $field['name'];
+        if ($field['type'] === 'wysiwyg' || $field['type'] === 'media') {
+            $cleanData[$name] = $data[$name] ?? '';
+        } else if ($field['type'] === 'dynamicitems') {
+            $cleanData[$name] = $data[$name] ?? [];
+        } else {
+            $cleanData[$name] = sanitize_string($data[$name] ?? '');
+        }
+    }
+    // Add system fields
+    $cleanData['id'] = $id;
+    $cleanData['slug'] = $slug;
+    $cleanData['created_at'] = $existing['created_at'];
+    $cleanData['updated_at'] = date('c');
+    $cleanData['title'] = $title;
+    
+    // Add status and metadata
+    if (isset($data['status'])) {
+        $cleanData['status'] = $data['status'];
+    }
+    if (isset($data['published_at'])) {
+        $cleanData['published_at'] = $data['published_at'];
+    }
+    if (isset($data['expires_at'])) {
+        $cleanData['expires_at'] = $data['expires_at'];
+    }
+    if (isset($data['meta'])) {
+        $cleanData['meta'] = $data['meta'];
+    }
+    $result = $storage->write("collections/$dir/entries/$id.json", $cleanData);
+    if ($result) do_action('after_content_save', $dir, $cleanData);
+    log_security_event('update_entry', ['collection' => $dir, 'id' => $id]);
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Entry updated' : 'Failed to update entry',
+        'data' => ['id' => $id, 'slug' => $slug, 'title' => $title]
+    ]);
+    exit;
+}
+
+if ($action === 'delete_entry') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'delete_entry', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $collection = $input['collection'] ?? '';
+    $id = $input['id'] ?? '';
+    $dir = '';
+    $collections = $storage->list('collections');
+    foreach ($collections as $d) {
+        $m = $storage->read("collections/$d/collection.json");
+        if ($m && $m['id'] === $collection) {
+            $dir = $d;
+            break;
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    if (empty($dir) || empty($id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection and ID required']);
+        exit;
+    }
+    $result = $storage->delete("collections/$dir/entries/$id.json");
+    log_security_event('delete_entry', ['collection' => $dir, 'id' => $id]);
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Entry deleted' : 'Failed to delete entry'
+    ]);
+    exit;
+}
+
+if ($action === 'set_entry_order') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'set_entry_order', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $collection = $input['collection'] ?? '';
+    $order = $input['order'] ?? [];
+    $dir = '';
+    $collections = $storage->list('collections');
+    foreach ($collections as $d) {
+        $m = $storage->read("collections/$d/collection.json");
+        if ($m && ($m['id'] === $collection || $m['slug'] === $collection)) {
+            $dir = $d;
+            break;
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    if (!is_array($order)) {
+        echo json_encode(['status' => 'error', 'message' => 'Order must be an array']);
+        exit;
+    }
+    $result = $storage->write("collections/$dir/order.json", $order);
+    log_security_event('set_entry_order', ['collection' => $dir, 'order_count' => count($order)]);
+    echo json_encode(['status' => $result ? 'ok' : 'error']);
+    exit;
+}
+
+if ($action === 'get_schema') {
+    $collection = $input['collection'] ?? '';
+    $id = $input['id'] ?? '';
+    $dir = '';
+    $meta = null;
+    $collections = $storage->list('collections');
+    if ($id) {
+        foreach ($collections as $d) {
+            $m = $storage->read("collections/$d/collection.json");
+            if ($m && $m['id'] === $id) {
+                $dir = $d;
+                $meta = $m;
+                break;
+            }
+        }
+    } elseif ($collection) {
+        foreach ($collections as $d) {
+            $m = $storage->read("collections/$d/collection.json");
+            if ($m && $m['slug'] === $collection) {
+                $dir = $d;
+                $meta = $m;
+                break;
+            }
+        }
+    }
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    $schema = $storage->read("collections/$dir/schema.json") ?? [];
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [ 'schema' => $schema, 'collection' => $meta ]
+    ]);
+    exit;
+}
+
+if ($action === 'get_entry') {
+    // Allow public access for read-only operations
+    // requireAuth('manage_content');
+    $collection = $input['collection'] ?? $_GET['collection'] ?? '';
+    $entryId = $input['id'] ?? $_GET['id'] ?? '';
+    $slug = $input['slug'] ?? $_GET['slug'] ?? '';
+    $dir = '';
+    $collections = $storage->list('collections');
+    
+    // Find collection by ID
+    if ($collection) {
+        foreach ($collections as $d) {
+            $m = $storage->read("collections/$d/collection.json");
+            if ($m && $m['id'] === $collection) {
+                $dir = $d;
+                break;
+            }
+        }
+    }
+    
+    if (!$dir) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    
+    // Find entry by slug or ID
+    $entry = null;
+    if ($slug) {
+        // Search by slug
+        $entries = $storage->list("collections/$dir/entries");
+        foreach ($entries as $entryFile) {
+            $entryData = $storage->read("collections/$dir/entries/$entryFile");
+            if ($entryData && isset($entryData['slug']) && $entryData['slug'] === $slug) {
+                $entry = $entryData;
+                break;
+            }
+        }
+    } elseif ($entryId) {
+        // Search by entry ID
+        $entry = $storage->read("collections/$dir/entries/$entryId.json");
+    }
+    
+    if (!$entry) {
+        echo json_encode(['status' => 'error', 'message' => 'Entry not found']);
+        exit;
+    }
+    
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [ 'entry' => $entry ]
+    ]);
+    exit;
+}
+
+if ($action === 'get_entry_titles') {
+    $ids = $input['ids'] ?? $_GET['ids'] ?? [];
+    if (is_string($ids)) {
+        // Handle JSON string from GET parameter
+        $decoded = json_decode($ids, true);
+        $ids = is_array($decoded) ? $decoded : [$ids];
+    }
+    if (!is_array($ids)) $ids = [$ids];
+    $result = [];
+    $collections = $storage->list('collections');
+    foreach ($ids as $id) {
+        foreach ($collections as $d) {
+            $entry = $storage->read("collections/$d/entries/$id.json");
+            if ($entry) {
+                $result[] = [ 'id' => $id, 'title' => $entry['title'] ?? $id ];
+                break;
+            }
+        }
+    }
+    echo json_encode(['status' => 'ok', 'data' => [ 'entries' => $result ]]);
+    exit;
+}
+
+if ($action === 'count') {
+    $collections = $storage->list('collections');
+    $collectionCount = count($collections);
+    $totalEntries = 0;
+    foreach ($collections as $collection) {
+        $entries = $storage->list("collections/$collection/entries");
+        $totalEntries += count($entries);
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'collections' => $collectionCount,
+            'entries' => $totalEntries,
+            'total' => $collectionCount + $totalEntries
+        ]
+    ]);
+    exit;
+}
+
+if ($action === 'save_groups') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'save_groups', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $groups = $input['groups'] ?? [];
+    $result = file_put_contents(__DIR__ . '/../content/collections/groups.json', json_encode($groups, JSON_PRETTY_PRINT));
+    echo json_encode([
+        'status' => $result !== false ? 'ok' : 'error',
+        'message' => $result !== false ? 'Groups saved' : 'Failed to save groups'
+    ]);
+    exit;
+}
+
+// Default response
+$collections = $storage->list('collections');
+$totalEntries = 0;
+foreach ($collections as $collection) {
+    $entries = $storage->list("collections/$collection/entries");
+    $totalEntries += count($entries);
+}
+echo json_encode([
+    'status' => 'ok',
+    'message' => 'Content API is working',
+    'data' => [
+        'count' => $totalEntries
+    ]
+]); 

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>API - HaruCMS Docs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="docs-app">
+    <nav class="sidebar">
+      <div class="sidebar-header">HaruCMS Docs</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="content.html">Content</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="users.html">Users</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="forms.html">Forms</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="extensibility.html">Extensibility</a></li>
+        <li><a href="api.html" class="active">API</a></li>
+        <li><a href="deployment.html">Deployment</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <h1>API</h1>
+      <h2>Available Endpoints</h2>
+      <ul>
+        <li><code>/api/content.php</code>: Content management (list, get, create, update, delete entries/collections)</li>
+        <li><code>/api/media.php</code>: Media upload, list, delete</li>
+        <li><code>/api/users.php</code>: User management, login, logout</li>
+        <li><code>/api/public_submit.php</code>: Public form submissions</li>
+      </ul>
+      <h2>Authentication</h2>
+      <ul>
+        <li>Admin API endpoints require session authentication and CSRF token</li>
+        <li>Public endpoints (content fetch, public_submit) do not require auth</li>
+      </ul>
+      <h2>Request & Response Format</h2>
+      <ul>
+        <li>All requests use JSON or <code>multipart/form-data</code> (for uploads)</li>
+        <li>Responses are JSON objects with <code>status</code>, <code>message</code>, and <code>data</code></li>
+      </ul>
+      <h2>Example Requests</h2>
+      <pre><code>// List entries in a collection
+POST /api/content.php
+{
+  "action": "list_entries",
+  "collection": "blog"
+}
+
+// Public form submission
+POST /api/public_submit.php
+{
+  "collection": "contact_form",
+  "fields": { "name": "Alice", "email": "alice@example.com" }
+}
+</code></pre>
+      <h2>Best Practices</h2>
+      <ul>
+        <li>Always validate and sanitize input</li>
+        <li>Use CSRF tokens for admin actions</li>
+        <li>Check API responses for errors</li>
+      </ul>
+    </main>
+  </div>
+</body>
+</html> 

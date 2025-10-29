@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Templates - HaruCMS Docs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="docs-app">
+    <nav class="sidebar">
+      <div class="sidebar-header">HaruCMS Docs</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="content.html">Content</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="users.html">Users</a></li>
+        <li><a href="templates.html" class="active">Templates</a></li>
+        <li><a href="forms.html">Forms</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="extensibility.html">Extensibility</a></li>
+        <li><a href="api.html">API</a></li>
+        <li><a href="deployment.html">Deployment</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <h1>Templates</h1>
+      <h2>Output Templating</h2>
+      <ul>
+        <li>Loops: <code>{% for entry in entries %}...{% endfor %}</code></li>
+        <li>Conditionals: <code>{% if field %}...{% endif %}</code></li>
+        <li>Variables: <code>{{ field }}</code></li>
+        <li>Filters: <code>{{ field | date:YYYY-MM-DD }}</code></li>
+      </ul>
+      <pre><code>&lt;ul&gt;
+{% for entry in entries %}
+  &lt;li&gt;{{ entry.title }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+</code></pre>
+      <h2>Modular Form Input Blocks</h2>
+      <ul>
+        <li>Use <code>{add entry to 'collection'}</code>...<code>{/add}</code> for public submissions.</li>
+        <li>Inside, use fieldtype helpers: <code>{input name="title"}</code>, <code>{textarea name="message"}</code>, etc.</li>
+        <li>Value binding: <code>{{ field }}</code> for pre-filled values.</li>
+      </ul>
+      <pre><code>{add entry to 'contact_form'}
+  {input name="title"}
+  {textarea name="message"}
+  &lt;button type="submit"&gt;Send&lt;/button&gt;
+{/add}
+</code></pre>
+      <h2>Best Practices</h2>
+      <ul>
+        <li>Keep templates simple and readable.</li>
+        <li>Use fieldtype helpers for consistency and validation.</li>
+        <li>Escape output where needed for security.</li>
+      </ul>
+    </main>
+  </div>
+</body>
+</html> 

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Test - HaruCMS</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .test-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+        .test-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .test-content {
+            padding: 20px;
+        }
+        .editor-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 400px;
+        }
+        .test-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .test-controls button {
+            margin-right: 10px;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #f0f0f0;
+        }
+        .test-controls button.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .output-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .output-section h3 {
+            margin-top: 0;
+        }
+        .output-content {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Editor Test Page</h1>
+            <p>Testing HaruCMS Block Editor functionality</p>
+        </div>
+        
+        <div class="test-content">
+            <div class="test-controls">
+                <h3>Test Controls</h3>
+                <button onclick="testBasicTyping()">Test Basic Typing</button>
+                <button onclick="testListCreation()">Test List Creation</button>
+                <button onclick="testEnterInList()">Test Enter in List</button>
+                <button onclick="testBlockConversion()">Test Block Conversion</button>
+                <button onclick="testAllFeatures()">Test All Features</button>
+                <button onclick="clearOutput()">Clear Output</button>
+            </div>
+            
+            <div class="editor-container" id="editor-surface">
+                <!-- Editor will be loaded here -->
+            </div>
+            
+            <div class="output-section">
+                <h3>Test Output</h3>
+                <div id="test-output" class="output-content">Ready to test...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the editor -->
+    <script src="/fieldtypes/Editor/editor-loader.js"></script>
+    <script src="/fieldtypes/Editor/modes/block.js"></script>
+    <script src="/fieldtypes/Editor/fieldtype.js"></script>
+    <script>
+        let editor = null;
+        let testOutput = document.getElementById('test-output');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            testOutput.textContent += `[${timestamp}] ${message}\n`;
+            testOutput.scrollTop = testOutput.scrollHeight;
+        }
+        
+        function clearOutput() {
+            testOutput.textContent = 'Output cleared...\n';
+        }
+        
+        // Initialize editor when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            log('Page loaded, initializing editor...');
+            
+            // Create a wrapper structure for the editor
+            const surface = document.getElementById('editor-surface');
+            surface.className = 'ed-block-surface';
+            
+            // Create a wrapper div that the editor expects
+            const wrapper = document.createElement('div');
+            wrapper.className = 'editor-field';
+            wrapper.setAttribute('data-name', 'test-editor');
+            
+            // Move the surface into the wrapper
+            surface.parentNode.insertBefore(wrapper, surface);
+            wrapper.appendChild(surface);
+            
+            // Initialize the editor
+            if (window.EditorModes && window.EditorModes.block) {
+                editor = window.EditorModes.block;
+                editor.init(wrapper);
+                log('✅ Editor initialized successfully');
+                
+                // Add some initial content for testing
+                setTimeout(() => {
+                    testBasicTyping();
+                }, 500);
+            } else {
+                log('❌ Editor not available');
+            }
+        });
+        
+        function testBasicTyping() {
+            log('🧪 Testing basic typing...');
+            const surface = document.getElementById('editor-surface');
+            
+            if (surface.__blocks && surface.__blocks.length > 0) {
+                const firstBlock = surface.__blocks[0];
+                log(`First block type: ${firstBlock.type}, content: "${firstBlock.html}"`);
+                
+                // Focus the first block
+                const firstBlockEl = surface.children[0];
+                if (firstBlockEl) {
+                    firstBlockEl.focus();
+                    log('✅ Focused first block');
+                } else {
+                    log('❌ Could not find first block element');
+                }
+            } else {
+                log('❌ No blocks found in surface');
+            }
+        }
+        
+        function testListCreation() {
+            log('🧪 Testing list creation...');
+            const surface = document.getElementById('editor-surface');
+            
+            if (editor && surface.__blocks && surface.__blocks.length > 0) {
+                // Get the first block
+                const firstBlock = surface.__blocks[0];
+                const firstBlockEl = surface.children[0];
+                
+                if (firstBlockEl) {
+                    // Convert to list
+                    firstBlock.type = 'ul';
+                    firstBlock.html = 'First list item\nSecond list item\nThird list item';
+                    
+                    // Re-render
+                    editor.render(surface, 0, true);
+                    log('✅ Created list with 3 items');
+                    
+                    // Show the result
+                    setTimeout(() => {
+                        const renderedBlock = surface.children[0];
+                        if (renderedBlock) {
+                            log(`Rendered block HTML: ${renderedBlock.outerHTML.substring(0, 200)}...`);
+                        }
+                    }, 100);
+                }
+            } else {
+                log('❌ Editor or surface not available');
+            }
+        }
+        
+        function testEnterInList() {
+            log('🧪 Testing Enter key in list...');
+            const surface = document.getElementById('editor-surface');
+            
+            if (surface.__blocks && surface.__blocks.length > 0) {
+                const firstBlock = surface.__blocks[0];
+                
+                if (firstBlock.type === 'ul' || firstBlock.type === 'ol') {
+                    log('✅ Found list block, testing Enter functionality...');
+                    
+                    // Focus the list
+                    const listEl = surface.children[0];
+                    if (listEl) {
+                        listEl.focus();
+                        
+                        // Simulate pressing Enter
+                        const enterEvent = new KeyboardEvent('keydown', {
+                            key: 'Enter',
+                            code: 'Enter',
+                            keyCode: 13,
+                            which: 13,
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        
+                        listEl.dispatchEvent(enterEvent);
+                        log('✅ Dispatched Enter key event');
+                        
+                        // Check if new list item was created
+                        setTimeout(() => {
+                            const listItems = listEl.querySelectorAll('li');
+                            log(`List now has ${listItems.length} items`);
+                            
+                            if (listItems.length > 3) {
+                                log('✅ New list item was created!');
+                            } else {
+                                log('❌ No new list item was created');
+                            }
+                        }, 100);
+                    }
+                } else {
+                    log('❌ First block is not a list, run "Test List Creation" first');
+                }
+            }
+        }
+        
+        function testBlockConversion() {
+            log('🧪 Testing block conversion...');
+            const surface = document.getElementById('editor-surface');
+            
+            if (surface.__blocks && surface.__blocks.length > 0) {
+                const firstBlock = surface.__blocks[0];
+                log(`Converting block from ${firstBlock.type} to paragraph...`);
+                
+                // Convert to paragraph
+                firstBlock.type = 'p';
+                editor.render(surface, 0, true);
+                
+                log('✅ Block converted to paragraph');
+                
+                // Show the result
+                setTimeout(() => {
+                    const renderedBlock = surface.children[0];
+                    if (renderedBlock) {
+                        log(`Converted block HTML: ${renderedBlock.outerHTML.substring(0, 200)}...`);
+                    }
+                }, 100);
+            }
+        }
+        
+        function testAllFeatures() {
+            log('🧪 Running comprehensive test...');
+            
+            // Test sequence
+            setTimeout(() => testBasicTyping(), 100);
+            setTimeout(() => testListCreation(), 300);
+            setTimeout(() => testEnterInList(), 600);
+            setTimeout(() => testBlockConversion(), 900);
+            
+            log('✅ All tests scheduled to run');
+        }
+    </script>
+</body>
+</html>
