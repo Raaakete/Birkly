@@ -5,7 +5,13 @@ class HaruVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
     private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/haru/releases/latest';
-    private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/Raaakete/haru@';
+    
+    /**
+     * Get download URL for a specific version
+     */
+    private static function getDownloadUrl(string $version): string {
+        return "https://github.com/Raaakete/haru/archive/refs/tags/v{$version}.zip";
+    }
     
     /**
      * Get current CMS version
@@ -66,7 +72,7 @@ class HaruVersion {
      * Download and verify update package
      */
     public static function downloadUpdate(string $version): array {
-        $downloadUrl = self::$downloadBaseUrl . $version . '/harucms.zip';
+        $downloadUrl = self::getDownloadUrl($version);
         $tempFile = sys_get_temp_dir() . '/harucms-update-' . $version . '.zip';
         
         try {
@@ -171,6 +177,21 @@ class HaruVersion {
             }
             $zip->close();
             
+            // GitHub zipball extracts to a subdirectory (haru-VERSION/)
+            // Find the actual CMS root inside the extracted directory
+            $extractedContents = scandir($tempExtractDir);
+            $actualCmsRoot = null;
+            foreach ($extractedContents as $item) {
+                if ($item !== '.' && $item !== '..' && is_dir($tempExtractDir . '/' . $item)) {
+                    $actualCmsRoot = $tempExtractDir . '/' . $item;
+                    break;
+                }
+            }
+            
+            if (!$actualCmsRoot || !file_exists($actualCmsRoot . '/index.php')) {
+                return ['error' => 'CMS files not found in update package'];
+            }
+            
             // Move files to CMS root (excluding sensitive files)
             $excludeFiles = [
                 'users/',
@@ -183,7 +204,7 @@ class HaruVersion {
                 'config.php'
             ];
             
-            if (!self::moveUpdateFiles($tempExtractDir, $cmsRoot, $excludeFiles)) {
+            if (!self::moveUpdateFiles($actualCmsRoot, $cmsRoot, $excludeFiles)) {
                 // Restore backup on failure
                 self::restoreBackup($backupDir, $cmsRoot);
                 return ['error' => 'Failed to install update files'];
