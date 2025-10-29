@@ -86,7 +86,7 @@ function fetch_admin_page_data(string $page, array $query = []): array {
             if ($page === 'dashboard' || $page === 'media') {
                 $data = fetch_admin_page_data($page);
                 echo render_template_file($templatePath, $data);
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'entries' || $page === 'entry-editor' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins') {
+            } elseif ($page === 'content' || $page === 'settings' || $page === 'updates' || $page === 'entries' || $page === 'entry-editor' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins') {
                 // Content, Settings, Entries, Entry Editor, Collection Editor, Users, Roles, and Plugins pages use direct PHP instead of template parser
                 $data = fetch_admin_page_data($page, $_GET);
                 extract($data);
