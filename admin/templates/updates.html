@@ -280,6 +280,11 @@ async function checkForUpdates() {
                 </div>
             `;
             showMessage('Error: ' + result.message, 'error');
+            // Ensure the retry button is visible even on error
+            updateDetails.style.display = 'block';
+            updateActions.style.display = 'block';
+            document.getElementById('download-update-btn').style.display = 'none';
+            document.getElementById('check-updates-btn').textContent = 'Try Again';
         }
     } catch (error) {
         statusIndicator.innerHTML = `
@@ -293,6 +298,11 @@ async function checkForUpdates() {
             </div>
         `;
         showMessage('Error checking updates: ' + error.message, 'error');
+        // Ensure the retry button is visible even on exception
+        updateDetails.style.display = 'block';
+        updateActions.style.display = 'block';
+        document.getElementById('download-update-btn').style.display = 'none';
+        document.getElementById('check-updates-btn').textContent = 'Try Again';
     }
 }
 
