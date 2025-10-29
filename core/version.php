@@ -4,8 +4,8 @@
 class HaruVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
-    private static $updateCheckUrl = 'https://api.github.com/repos/yourusername/harucms/releases/latest';
-    private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/yourusername/harucms@';
+    private static $updateCheckUrl = 'https://api.github.com/repos/kevenbayrak/harucms/releases/latest';
+    private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/kevenbayrak/harucms@';
     
     /**
      * Get current CMS version

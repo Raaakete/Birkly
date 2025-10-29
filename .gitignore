@@ -1,4 +1,4 @@
-# HaruCMS .gitignore
+# HaruCMS Production .gitignore
 
 # User data directories (should not be committed)
 users/
@@ -30,25 +30,14 @@ config.php
 ehthumbs.db
 Thumbs.db
 
-# PHP
+# PHP dependencies
 vendor/
 composer.lock
-
-# Node.js (if any)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Temporary files
 *.tmp
 *.temp
 *.log
-
-# Test files
-test_*.php
-test_*.html
-debug-*.html
 
 # Backup files
 *.bak
@@ -62,7 +51,14 @@ cache/
 # Upload directories (user content)
 uploads/
 
-# Development files
+# Development and test files
 *.dev.php
 *.test.php
 debug.php
+test_*.php
+test_*.html
+debug-*.html
+demo-*.html
+
+# Session files
+sess_*
