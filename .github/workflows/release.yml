@@ -1,0 +1,170 @@
+name: Release HaruCMS
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        
+    - name: Get version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Update VERSION file
+      run: |
+        echo "${{ steps.version.outputs.version }}" > VERSION
+        
+    - name: Create release package
+      run: |
+        # Create a clean release package
+        mkdir -p release/harucms
+        
+        # Copy core files (exclude development files)
+        cp -r admin release/harucms/
+        cp -r api release/harucms/
+        cp -r core release/harucms/
+        cp -r fieldtypes release/harucms/
+        cp -r plugins release/harucms/
+        cp -r templates release/harucms/
+        cp -r src release/harucms/
+        
+        # Copy root files
+        cp index.php release/harucms/
+        cp render_page.php release/harucms/
+        cp invite.php release/harucms/
+        cp VERSION release/harucms/
+        cp composer.json release/harucms/
+        cp README.md release/harucms/
+        
+        # Create directories for user data
+        mkdir -p release/harucms/{users,content,media,logs,settings,backups}
+        
+        # Create .gitignore for user data
+        cat > release/harucms/.gitignore << EOF
+        users/
+        content/
+        media/
+        logs/
+        settings/
+        backups/
+        .env
+        config.php
+        temp/
+        EOF
+        
+        # Create installation instructions
+        cat > release/harucms/INSTALL.md << EOF
+        # HaruCMS Installation
+        
+        ## Quick Start
+        
+        1. Upload all files to your web server
+        2. Ensure PHP 8.1+ is installed
+        3. Set proper permissions (755 for directories, 644 for files)
+        4. Create a database (optional - HaruCMS works with file storage)
+        5. Visit your site and follow the setup wizard
+        
+        ## Requirements
+        
+        - PHP 8.1 or higher
+        - Web server (Apache, Nginx, etc.)
+        - Write permissions for users/, content/, media/, logs/, settings/, backups/ directories
+        
+        ## Configuration
+        
+        - Edit settings/ files for basic configuration
+        - Upload media files to media/ directory
+        - User accounts are stored in users/ directory
+        
+        ## Support
+        
+        Visit https://github.com/yourusername/harucms for documentation and support.
+        EOF
+        
+        # Create zip package
+        cd release
+        zip -r harucms-${{ steps.version.outputs.version }}.zip harucms/
+        
+    - name: Generate checksums
+      run: |
+        cd release
+        sha256sum harucms-${{ steps.version.outputs.version }}.zip > harucms-${{ steps.version.outputs.version }}.zip.sha256
+        
+    - name: Upload to GitHub Releases
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./release/harucms-${{ steps.version.outputs.version }}.zip
+        asset_name: harucms-${{ steps.version.outputs.version }}.zip
+        asset_content_type: application/zip
+        
+    - name: Upload checksum
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./release/harucms-${{ steps.version.outputs.version }}.zip.sha256
+        asset_name: harucms-${{ steps.version.outputs.version }}.zip.sha256
+        asset_content_type: text/plain
+        
+    - name: Create Release
+      if: github.event_name == 'workflow_dispatch'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        release_name: HaruCMS ${{ steps.version.outputs.version }}
+        body: |
+          ## HaruCMS ${{ steps.version.outputs.version }}
+          
+          ### Installation
+          
+          1. Download the `harucms-${{ steps.version.outputs.version }}.zip` file
+          2. Extract to your web server
+          3. Set proper permissions
+          4. Visit your site to complete setup
+          
+          ### Checksum Verification
+          
+          ```bash
+          sha256sum -c harucms-${{ steps.version.outputs.version }}.zip.sha256
+          ```
+          
+          ### What's New
+          
+          - See commit history for detailed changes
+          - Check INSTALL.md for installation instructions
+          
+          ### Support
+          
+          - Documentation: https://github.com/yourusername/harucms
+          - Issues: https://github.com/yourusername/harucms/issues
+        draft: false
+        prerelease: false

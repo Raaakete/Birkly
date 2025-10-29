@@ -1,0 +1,639 @@
+<div class="roles-page">
+    <div class="page-header">
+        <h1>Role Management</h1>
+        <div class="breadcrumbs">
+            <a href="/admin/index.php?page=settings">Settings</a>
+            <span class="separator">›</span>
+            <span class="current">Roles</span>
+        </div>
+    </div>
+    
+    <div class="main-actions-bar">
+        <button class="btn btn-primary" onclick="openAddRoleModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Role
+        </button>
+    </div>
+    
+    <div class="roles-container">
+        <div class="roles-grid" id="roles-grid">
+            <?php if (empty($roles)): ?>
+                <div class="empty-state">
+                    <p>No custom roles found.</p>
+                    <button class="btn btn-primary" onclick="openAddRoleModal()">Add First Role</button>
+                </div>
+            <?php else: ?>
+                <?php foreach ($roles as $role): ?>
+                    <div class="role-card">
+                        <div class="role-header">
+                            <h3><?= htmlspecialchars($role['name']) ?></h3>
+                            <div class="role-actions">
+                                <button class="btn-icon" onclick="editRole('<?= $role['id'] ?>')" title="Edit Role">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
+                                <button class="btn-icon danger" onclick="confirmDeleteRole('<?= $role['id'] ?>', '<?= htmlspecialchars($role['name']) ?>')" title="Delete Role">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3,6 5,6 21,6"></polyline>
+                                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="role-description">
+                            <?= htmlspecialchars($role['description'] ?? 'No description') ?>
+                        </div>
+                        <div class="role-permissions">
+                            <h4>Permissions:</h4>
+                            <div class="permissions-list">
+                                <?php if (isset($role['permissions']) && is_array($role['permissions'])): ?>
+                                    <?php foreach ($role['permissions'] as $permission): ?>
+                                        <span class="permission-badge"><?= htmlspecialchars($permission) ?></span>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <span class="no-permissions">No permissions assigned</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="role-users">
+                            <h4>Users with this role:</h4>
+                            <div class="users-list">
+                                <?php 
+                                $roleUsers = array_filter($users, function($user) use ($role) {
+                                    return $user['role'] === $role['name'];
+                                });
+                                ?>
+                                <?php if (!empty($roleUsers)): ?>
+                                    <?php foreach ($roleUsers as $user): ?>
+                                        <span class="user-badge"><?= htmlspecialchars($user['email']) ?></span>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <span class="no-users">No users assigned</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- Add Role Modal -->
+<div id="add-role-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Role</h2>
+            <button class="modal-close-btn" onclick="closeAddRoleModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="add-role-form">
+                <div class="form-group">
+                    <label for="role-name">Role Name</label>
+                    <input type="text" id="role-name" name="name" required class="input" placeholder="e.g., Content Manager">
+                </div>
+                <div class="form-group">
+                    <label for="role-description">Description</label>
+                    <textarea id="role-description" name="description" class="input" rows="3" placeholder="Describe what this role can do"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="permissions-grid" id="add-permissions-grid">
+                        <!-- Permissions will be populated by JavaScript -->
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeAddRoleModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="createRole()">Create Role</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div id="edit-role-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Role</h2>
+            <button class="modal-close-btn" onclick="closeEditRoleModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="edit-role-form">
+                <input type="hidden" id="edit-role-id" name="id">
+                <div class="form-group">
+                    <label for="edit-role-name">Role Name</label>
+                    <input type="text" id="edit-role-name" name="name" required class="input">
+                </div>
+                <div class="form-group">
+                    <label for="edit-role-description">Description</label>
+                    <textarea id="edit-role-description" name="description" class="input" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="permissions-grid" id="edit-permissions-grid">
+                        <!-- Permissions will be populated by JavaScript -->
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeEditRoleModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="updateRole()">Update Role</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDeleteRole()">Delete Role</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.roles-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.role-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s;
+}
+
+.role-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.role-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.role-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.role-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.btn-icon.danger:hover {
+    background: var(--error-100);
+    color: var(--error-700);
+}
+
+.role-description {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.role-permissions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.permission-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+}
+
+.resource {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.actions {
+    color: var(--text-secondary);
+}
+
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.permission-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.permission-section h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.permission-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+}
+
+.empty-state p {
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .roles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .permissions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .role-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+</style>
+
+<script>
+let roles = [];
+let availableResources = ['collections', 'media', 'users', 'settings'];
+let availableActions = ['view', 'edit', 'create', 'delete'];
+
+// Get CSRF token
+function getCsrfToken() {
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    return metaToken ? metaToken.getAttribute('content') : '';
+}
+
+// Load roles
+async function loadRoles() {
+    try {
+        const response = await fetch('/api/roles.php?action=list_roles');
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            roles = result.roles || [];
+            renderRoles();
+        } else {
+            showMessage('Error loading roles: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error loading roles:', error);
+        showMessage('Error loading roles: ' + error.message, 'error');
+    }
+}
+
+// Render roles grid
+function renderRoles() {
+    const grid = document.getElementById('roles-grid');
+    
+    if (roles.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <p>No roles found.</p>
+                <button class="btn btn-primary" onclick="openAddRoleModal()">Add First Role</button>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = roles.map(role => `
+        <div class="role-card">
+            <div class="role-header">
+                <h3>${escapeHtml(role.name)}</h3>
+                <div class="role-actions">
+                    <button class="btn-icon" onclick="editRole('${role.id}')" title="Edit Role">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon danger" onclick="confirmDeleteRole('${role.id}', '${escapeHtml(role.name)}')" title="Delete Role">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <p class="role-description">${escapeHtml(role.description)}</p>
+            <div class="role-permissions">
+                ${renderRolePermissions(role.permissions)}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Render role permissions
+function renderRolePermissions(permissions) {
+    if (!permissions) return '<p class="text-muted">No permissions defined</p>';
+    
+    const items = [];
+    for (const [resource, actions] of Object.entries(permissions)) {
+        if (Array.isArray(actions)) {
+            items.push(`
+                <div class="permission-item">
+                    <span class="resource">${resource === '*' ? 'All Resources' : resource}</span>
+                    <span class="actions">${actions.join(', ')}</span>
+                </div>
+            `);
+        }
+    }
+    
+    return items.length > 0 ? items.join('') : '<p class="text-muted">No permissions defined</p>';
+}
+
+// Create permissions grid
+function createPermissionsGrid(containerId, permissions = {}) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    availableResources.forEach(resource => {
+        const section = document.createElement('div');
+        section.className = 'permission-section';
+        
+        section.innerHTML = `
+            <h4>${resource}</h4>
+            <div class="permission-checkboxes">
+                ${availableActions.map(action => `
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="permissions[${resource}][]" value="${action}" 
+                               ${hasPermission(permissions, resource, action) ? 'checked' : ''}>
+                        <span>${action}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+        
+        container.appendChild(section);
+    });
+}
+
+// Check if role has specific permission
+function hasPermission(permissions, resource, action) {
+    if (!permissions) return false;
+    
+    // Check wildcard permissions
+    if (permissions['*'] && permissions['*'].includes(action)) {
+        return true;
+    }
+    
+    // Check specific resource permissions
+    if (permissions[resource] && permissions[resource].includes(action)) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Collect permissions from form
+function collectPermissions(form) {
+    const permissions = {};
+    
+    availableResources.forEach(resource => {
+        const checkboxes = form.querySelectorAll(`input[name="permissions[${resource}][]"]:checked`);
+        if (checkboxes.length > 0) {
+            permissions[resource] = Array.from(checkboxes).map(cb => cb.value);
+        }
+    });
+    
+    return permissions;
+}
+
+// Utility functions
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function(tag) {
+        const chars = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'};
+        return chars[tag] || tag;
+    });
+}
+
+function showMessage(message, type) {
+    let messageDiv = document.getElementById('role-message');
+    if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        messageDiv.id = 'role-message';
+        messageDiv.className = 'message ' + type;
+        document.querySelector('.roles-page').insertBefore(messageDiv, document.querySelector('.main-actions-bar'));
+    }
+    
+    messageDiv.textContent = message;
+    messageDiv.className = 'message ' + type;
+    messageDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Modal functions
+function openAddRoleModal() {
+    document.getElementById('add-role-modal').classList.add('active');
+    document.getElementById('add-role-form').reset();
+    createPermissionsGrid('add-permissions-grid');
+}
+
+function closeAddRoleModal() {
+    document.getElementById('add-role-modal').classList.remove('active');
+}
+
+function openEditRoleModal() {
+    document.getElementById('edit-role-modal').classList.add('active');
+}
+
+function closeEditRoleModal() {
+    document.getElementById('edit-role-modal').classList.remove('active');
+}
+
+// Role management functions
+async function createRole() {
+    const form = document.getElementById('add-role-form');
+    const formData = new FormData(form);
+    
+    const roleData = {
+        action: 'create_role',
+        role: {
+            id: formData.get('name').toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            name: formData.get('name'),
+            description: formData.get('description'),
+            permissions: collectPermissions(form)
+        },
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/roles.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(roleData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Role created successfully!', 'success');
+            closeAddRoleModal();
+            loadRoles();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error creating role: ' + error.message, 'error');
+    }
+}
+
+function editRole(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    document.getElementById('edit-role-id').value = role.id;
+    document.getElementById('edit-role-name').value = role.name;
+    document.getElementById('edit-role-description').value = role.description || '';
+    
+    createPermissionsGrid('edit-permissions-grid', role.permissions);
+    openEditRoleModal();
+}
+
+async function updateRole() {
+    const form = document.getElementById('edit-role-form');
+    const formData = new FormData(form);
+    
+    const roleData = {
+        action: 'update_role',
+        role: {
+            id: formData.get('id'),
+            name: formData.get('name'),
+            description: formData.get('description'),
+            permissions: collectPermissions(form)
+        },
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/roles.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(roleData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Role updated successfully!', 'success');
+            closeEditRoleModal();
+            loadRoles();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error updating role: ' + error.message, 'error');
+    }
+}
+
+function confirmDeleteRole(roleId, roleName) {
+    if (confirm(`Are you sure you want to delete role "${roleName}"? This action cannot be undone.`)) {
+        deleteRole(roleId);
+    }
+}
+
+async function deleteRole(roleId) {
+    const roleData = {
+        action: 'delete_role',
+        id: roleId,
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/roles.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(roleData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Role deleted successfully!', 'success');
+            closeEditRoleModal();
+            loadRoles();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error deleting role: ' + error.message, 'error');
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadRoles();
+});
+</script>

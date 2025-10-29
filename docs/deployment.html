@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deployment - HaruCMS Docs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="docs-app">
+    <nav class="sidebar">
+      <div class="sidebar-header">HaruCMS Docs</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="content.html">Content</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="users.html">Users</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="forms.html">Forms</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="extensibility.html">Extensibility</a></li>
+        <li><a href="api.html">API</a></li>
+        <li><a href="deployment.html" class="active">Deployment</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <h1>Deployment</h1>
+      <h2>Production Setup</h2>
+      <ul>
+        <li>Use Apache, Nginx, or PHP built-in server for production</li>
+        <li>Set correct permissions for <code>/content</code>, <code>/media</code>, <code>/users</code></li>
+        <li>Disable directory listing and PHP execution in <code>/media</code></li>
+      </ul>
+      <h2>Server Configuration</h2>
+      <ul>
+        <li>See <code>nginx.conf.example</code> and <code>nginx.conf.sample</code> for Nginx</li>
+        <li>Use <code>.htaccess</code> for Apache (sample provided)</li>
+      </ul>
+      <h2>Backups</h2>
+      <ul>
+        <li>Use the admin UI or <code>/api/backup.php</code> to create/restore backups</li>
+        <li>Store backups offsite for safety</li>
+      </ul>
+      <h2>Environment Variables</h2>
+      <ul>
+        <li>Configure via <code>config.php</code> or environment variables as needed</li>
+      </ul>
+      <h2>Troubleshooting</h2>
+      <ul>
+        <li>Check <code>/logs/</code> for errors</li>
+        <li>Review permissions and server config</li>
+        <li>Consult the <a href="faq.html">FAQ</a> for common issues</li>
+      </ul>
+      <h2>Best Practices</h2>
+      <ul>
+        <li>Keep regular backups</li>
+        <li>Test restores before production changes</li>
+        <li>Monitor logs and server health</li>
+      </ul>
+    </main>
+  </div>
+</body>
+</html> 

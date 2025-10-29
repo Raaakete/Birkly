@@ -1,0 +1,67 @@
+window.HaruFieldtypes = window.HaruFieldtypes || {};
+window.HaruFieldtypes['select'] = {
+  label: 'Select',
+  category: 'input',
+  dynamicItemsEligible: false,
+  render: function(fieldConfig, value) {
+    let options = `<option value="">Select ${fieldConfig.label || fieldConfig.name}</option>`;
+    (fieldConfig.options || []).forEach(opt => {
+      options += `<option value="${opt.value}"${value == opt.value ? ' selected' : ''}>${opt.label}</option>`;
+    });
+    return `<select class="input" name="${fieldConfig.name}" id="field_${fieldConfig.name}" ${fieldConfig.required ? 'required' : ''}>${options}</select>`;
+  },
+  getValue: function(fieldName) {
+    var input = document.getElementById('field_' + fieldName);
+    return input ? input.value : '';
+  },
+  setValue: function(fieldName, value) {
+    var input = document.getElementById('field_' + fieldName);
+    if (input) input.value = value || '';
+  },
+  renderConfig: function(config, onChange) {
+    // config: {options: [{label, value}, ...]}
+    let container = document.createElement('div');
+    container.className = 'select-options-editor mt-1';
+    container.innerHTML = `
+      <label class="mb-1" style="font-size:0.95em;">Options:</label>
+      <div class="options-list mb-1"></div>
+      <button type="button" class="btn btn-secondary btn-sm">Add Option</button>
+    `;
+    const optionsList = container.querySelector('.options-list');
+    function renderOptions() {
+      optionsList.innerHTML = '';
+      (config.options || []).forEach((opt, j) => {
+        const row = document.createElement('div');
+        row.className = 'flex gap-1 mb-1 align-center';
+        row.innerHTML = `
+          <input type="text" class="input" placeholder="Label" value="${opt.label||''}" style="max-width:100px;">
+          <input type="text" class="input" placeholder="Value" value="${opt.value||''}" style="max-width:100px;">
+          <button type="button" class="btn btn-danger btn-sm">&times;</button>
+        `;
+        const [labelInput, valueInput, removeBtn] = row.children;
+        labelInput.addEventListener('input', e => {
+          config.options[j].label = e.target.value;
+          onChange && onChange(config);
+        });
+        valueInput.addEventListener('input', e => {
+          config.options[j].value = e.target.value;
+          onChange && onChange(config);
+        });
+        removeBtn.addEventListener('click', () => {
+          config.options.splice(j, 1);
+          renderOptions();
+          onChange && onChange(config);
+        });
+        optionsList.appendChild(row);
+      });
+    }
+    renderOptions();
+    container.querySelector('button.btn-secondary').addEventListener('click', () => {
+      config.options = config.options || [];
+      config.options.push({label:'',value:''});
+      renderOptions();
+      onChange && onChange(config);
+    });
+    return container;
+  }
+}; 

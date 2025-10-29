@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Website - HaruCMS</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f8fafc; color: #222; margin: 0; }
+    header { background: #2563eb; color: #fff; padding: 1rem 2rem; }
+    .container { max-width: 700px; margin: 2rem auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 2rem; }
+    .entry { margin-bottom: 2rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem; }
+    .entry:last-child { border-bottom: none; }
+    .entry-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 0.2rem; }
+    .entry-date { color: #888; font-size: 0.95em; margin-bottom: 0.5rem; }
+    .text-muted { color: #888; }
+    .demo-section { margin-bottom: 3rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 4px; }
+    .demo-section h3 { margin-top: 0; color: #2563eb; }
+    .btn { display: inline-block; padding: 0.5rem 1rem; background: #2563eb; color: white; text-decoration: none; border-radius: 4px; margin: 0.5rem; }
+    .btn:hover { background: #1d4ed8; }
+    .btn-secondary { background: #6b7280; }
+    .btn-secondary:hover { background: #4b5563; }
+    .routing-demo { background: #f0f9ff; border-color: #0ea5e9; }
+    .legacy-demo { background: #fef3c7; border-color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Test Website <span style="font-size:0.7em;font-weight:400;">(HaruCMS)</span></h1>
+    <nav>
+      <a href="./" class="btn">Home</a>
+      <a href="./blog" class="btn">Blog</a>
+      <a href="./?routing=true" class="btn btn-secondary">Enable Routing</a>
+      <a href="./" class="btn btn-secondary">Disable Routing</a>
+      <a href="./#routing" class="btn btn-secondary">Enable Routing (Hash)</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- Dynamic Routing Demo -->
+    <div class="demo-section routing-demo">
+      <h3>🚀 Dynamic Routing Demo</h3>
+      <p>Click the buttons above to test clean URLs:</p>
+      <ul>
+        <li><strong>Home:</strong> <code>/</code> - Shows latest blog posts</li>
+        <li><strong>Blog List:</strong> <code>/blog</code> - Shows all blog posts</li>
+        <li><strong>Single Post:</strong> <code>/blog/my-post-slug</code> - Shows individual blog post</li>
+        <li><strong>Pages:</strong> <code>/page/about</code> - Shows static pages</li>
+      </ul>
+      <p><em>Note: Enable routing mode first by clicking "Enable Routing"</em></p>
+    </div>
+
+    <!-- Legacy Templating Demo -->
+    <div class="demo-section legacy-demo">
+      <h3>📝 Legacy Templating Demo (Static Content)</h3>
+      <p>This section shows the existing templating system working without routing:</p>
+      
+      <!-- 1. Basic Loop, Advanced Sorting, Index, Date Formatting, Featured First -->
+      <h4>Featured First, Newest First (with Index, Date, Filters)</h4>
+      {for each entry in 'blog' sort="first:featured:1, date:desc" limit=5}
+        <div class="entry">
+          <div class="entry-title">{index}. {title|escape|default:Untitled}</div>
+          <div class="entry-date">{date|date:YYYY-MM-DD}</div>
+          <div class="entry-content">{content|escape}</div>
+          {if featured}<span class="text-muted">★ Featured</span>{/if}
+          <div class="text-muted">Author: {author}</div>
+        </div>
+      {/for}
+
+      <!-- 2. Filtering: Only Featured Posts -->
+      <h4>Only Featured Posts</h4>
+      {for each entry in 'blog' filter="featured=1" sort="date:desc"}
+        <div class="entry">
+          <div class="entry-title">{title}</div>
+          <div class="entry-date">{date|date:YYYY-MM-DD}</div>
+          <div class="entry-content">{content}</div>
+        </div>
+      {/for}
+
+      <!-- 3. Conditionals: Show if Not Featured -->
+      <h4>Non-Featured Posts (with If/Else)</h4>
+      {for each entry in 'blog' filter="featured=0" sort="date:desc" limit=3}
+        <div class="entry">
+          <div class="entry-title">{title}</div>
+          {if featured}<span>★</span>{else}<span class="text-muted">Not Featured</span>{/if}
+          <div class="entry-date">{date|date:YYYY-MM-DD}</div>
+        </div>
+      {/for}
+
+      <!-- 4. Single Data Fetch -->
+      <h4>Single Data Fetch Example</h4>
+      <div>
+        First Author Name: {from 'blog' get '{first, author}'}
+      </div>
+    </div>
+
+    <!-- Community User Registration Test -->
+    <div class="demo-section">
+      <h3>👥 Test Community User Registration</h3>
+      <form id="testRegisterForm" style="max-width:400px;margin-bottom:1rem;">
+        <div class="form-group">
+          <label for="testUsername">Username</label>
+          <input type="text" id="testUsername" name="username" class="input" required>
+        </div>
+        <div class="form-group">
+          <label for="testEmail">Email</label>
+          <input type="email" id="testEmail" name="email" class="input" required>
+        </div>
+        <div class="form-group">
+          <label for="testPassword">Password</label>
+          <input type="password" id="testPassword" name="password" class="input" required>
+        </div>
+        <button type="submit" class="btn">Register</button>
+      </form>
+      <div id="testRegisterResult"></div>
+    </div>
+  </div>
+
+  <script src="/cms-template.v2.js"></script>
+</body>
+</html> 

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Security - HaruCMS Docs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="docs-app">
+    <nav class="sidebar">
+      <div class="sidebar-header">HaruCMS Docs</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="content.html">Content</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="users.html">Users</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="forms.html">Forms</a></li>
+        <li><a href="security.html" class="active">Security</a></li>
+        <li><a href="extensibility.html">Extensibility</a></li>
+        <li><a href="api.html">API</a></li>
+        <li><a href="deployment.html">Deployment</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <h1>Security</h1>
+      <h2>Security Architecture</h2>
+      <ul>
+        <li>Strict input validation and output escaping</li>
+        <li>CSRF protection for all state-changing actions</li>
+        <li>XSS protection (backend and frontend)</li>
+        <li>File upload security (type, size, content, storage)</li>
+        <li>Session security (Secure, HttpOnly, SameSite cookies, timeout, auto-logout)</li>
+        <li>Role-based access control</li>
+        <li>Rate limiting on sensitive/public endpoints</li>
+        <li>Security logging for critical actions</li>
+        <li>Anti-spam: honeypot, CAPTCHA, Akismet</li>
+      </ul>
+      <h2>Security Review Checklist</h2>
+      <ul>
+        <li>CSRF Protection</li>
+        <li>XSS Protection</li>
+        <li>File Upload Security</li>
+        <li>Rate Limiting</li>
+        <li>Session Security</li>
+        <li>Access Control</li>
+        <li>Security Logging</li>
+        <li>General Input Validation</li>
+      </ul>
+      <h2>Best Practices</h2>
+      <ul>
+        <li>Keep HaruCMS and all dependencies up to date</li>
+        <li>Use strong, unique passwords for all users</li>
+        <li>Review logs and permissions regularly</li>
+        <li>Enable all available security features</li>
+        <li>Limit public form submissions and use anti-spam</li>
+      </ul>
+      <h2>Actionable Recommendations</h2>
+      <ul>
+        <li>Enable rate limiting and security logging on all endpoints</li>
+        <li>Configure allowed file types and size limits</li>
+        <li>Set up email notifications for critical actions</li>
+        <li>Regularly back up your data and test restores</li>
+      </ul>
+    </main>
+  </div>
+</body>
+</html> 

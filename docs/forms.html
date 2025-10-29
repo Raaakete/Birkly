@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forms - HaruCMS Docs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="docs-app">
+    <nav class="sidebar">
+      <div class="sidebar-header">HaruCMS Docs</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="content.html">Content</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="users.html">Users</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="forms.html" class="active">Forms</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="extensibility.html">Extensibility</a></li>
+        <li><a href="api.html">API</a></li>
+        <li><a href="deployment.html">Deployment</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <h1>Forms</h1>
+      <h2>Modular Form Input Blocks</h2>
+      <ul>
+        <li>Use <code>{add entry to 'collection'}</code>...<code>{/add}</code> to define custom forms.</li>
+        <li>Fieldtype helpers: <code>{input name="field"}</code>, <code>{select name="field"}</code>, etc.</li>
+        <li>Value binding: <code>{{ field }}</code> for pre-filled values.</li>
+      </ul>
+      <pre><code>{add entry to 'feedback'}
+  {input name="name"}
+  {textarea name="message"}
+  {input name="email"}
+  &lt;button type="submit"&gt;Send Feedback&lt;/button&gt;
+{/add}
+</code></pre>
+      <h2>HaruForm JS Helper</h2>
+      <ul>
+        <li>Attach to any form for AJAX submission, CSRF, and error handling.</li>
+        <li>Hooks: <code>onSuccess</code>, <code>onError</code>.</li>
+      </ul>
+      <pre><code>&lt;script&gt;
+new HaruForm('myFormId', {
+  onSuccess: data =&gt; { /* show success */ },
+  onError: err =&gt; { /* show error */ }
+});
+&lt;/script&gt;
+</code></pre>
+      <h2>Anti-Spam & Security</h2>
+      <ul>
+        <li>Honeypot field (hidden input)</li>
+        <li>Simple math CAPTCHA (if enabled)</li>
+        <li>Akismet integration (if configured)</li>
+        <li>Rate limiting and CSRF protection are enforced automatically</li>
+      </ul>
+      <h2>File Uploads</h2>
+      <ul>
+        <li>Use <code>{media name="attachment"}</code> or <code>&lt;input type="file" ...&gt;</code> for file fields.</li>
+        <li>Files are validated and stored securely.</li>
+      </ul>
+      <h2>Email Notifications</h2>
+      <ul>
+        <li>Set <code>notify_email</code> in collection config to receive emails on new submissions.</li>
+      </ul>
+      <h2>Best Practices</h2>
+      <ul>
+        <li>Keep forms simple and user-friendly.</li>
+        <li>Use anti-spam features for public forms.</li>
+        <li>Validate and sanitize all input.</li>
+      </ul>
+    </main>
+  </div>
+</body>
+</html> 

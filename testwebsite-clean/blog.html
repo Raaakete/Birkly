@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog - HaruCMS Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    
+    /* Header */
+    header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem 0; }
+    .header-content { max-width: 1200px; margin: 0 auto; padding: 0 2rem; text-align: center; }
+    .header-content h1 { font-size: 3rem; margin-bottom: 1rem; }
+    
+    /* Navigation */
+    nav { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 1rem 0; }
+    .nav-content { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .nav-logo { font-size: 1.5rem; font-weight: bold; color: #667eea; }
+    .nav-links a { color: #333; text-decoration: none; margin-left: 2rem; transition: color 0.3s; }
+    .nav-links a:hover { color: #667eea; }
+    
+    /* Main Content */
+    .main-content { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; }
+    
+    /* Page Title */
+    .page-title { text-align: center; margin-bottom: 3rem; }
+    .page-title h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+    .page-title p { color: #666; font-size: 1.1rem; }
+    
+    /* Blog Grid */
+    .blog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; }
+    .blog-item { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s, box-shadow 0.3s; }
+    .blog-item:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
+    .blog-item img { width: 100%; height: 200px; object-fit: cover; }
+    .blog-item-content { padding: 2rem; }
+    .blog-item h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .blog-item h3 a { color: #333; text-decoration: none; transition: color 0.3s; }
+    .blog-item h3 a:hover { color: #667eea; }
+    .blog-item .meta { display: flex; gap: 1rem; margin-bottom: 1rem; color: #999; font-size: 0.9rem; }
+    .blog-item .excerpt { color: #666; margin-bottom: 1.5rem; line-height: 1.6; }
+    .blog-item .read-more { color: #667eea; text-decoration: none; font-weight: 500; transition: color 0.3s; }
+    .blog-item .read-more:hover { color: #5a6fd8; }
+    .blog-item .featured { display: inline-block; background: #ff6b6b; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; margin-left: 1rem; }
+    
+    /* Footer */
+    footer { background: #333; color: white; text-align: center; padding: 2rem; margin-top: 4rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>Blog</h1>
+    </div>
+  </header>
+  
+  <nav>
+    <div class="nav-content">
+      <div class="nav-logo">Portfolio</div>
+      <div class="nav-links">
+        <a href="./">Home</a>
+        <a href="./portfolio.html">Portfolio</a>
+        <a href="./blog.html">Blog</a>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="main-content">
+    <div class="page-title">
+      <h2>Latest Articles</h2>
+      <p>Thoughts, insights, and creative inspiration</p>
+    </div>
+    
+    <div class="blog-grid">
+      {for each entry in 'blog' sort="date:desc"}
+        <div class="blog-item">
+          {if image}<img src="{image}" alt="{title}">{/if}
+          <div class="blog-item-content">
+            <h3>
+              <a href="./blogpost-simple.html?slug={slug}">{title}</a>
+              {if featured}<span class="featured">Featured</span>{/if}
+            </h3>
+            <div class="meta">
+              <span>{date|date:MMMM DD, YYYY}</span>
+              <span>by {author}</span>
+            </div>
+            <div class="excerpt">{content|escape}</div>
+            <a href="./blogpost-simple.html?slug={slug}" class="read-more">Read Full Article →</a>
+          </div>
+        </div>
+      {/for}
+    </div>
+  </div>
+  
+  <footer>
+    <p>&copy; 2024 Creative Portfolio. Powered by HaruCMS.</p>
+  </footer>
+  
+  <script src="../cms-template.v2.js"></script>
+</body>
+</html> 

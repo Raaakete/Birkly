@@ -1,0 +1,87 @@
+<div class="entries-page">
+    <div class="page-header">
+        <h1><?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'Unknown Collection') ?></h1>
+        <div class="breadcrumbs">
+            <a href="/admin/index.php?page=content">Content</a>
+            <span class="separator">›</span>
+            <span class="current"><?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'Unknown Collection') ?></span>
+        </div>
+    </div>
+    
+    <div class="main-actions-bar">
+        <a class="btn btn-primary" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>">New Entry</a>
+        <a class="btn btn-secondary" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>">Edit Collection</a>
+    </div>
+    
+    <?php if (!empty($entries)): ?>
+        <div class="entries-smart-table">
+            <div class="table-viewport">
+                <div class="table-head">
+                    <div class="head-row">
+                        <div class="head-cell head-drag"></div>
+                        <div class="head-cell head-title">Title</div>
+                        <div class="head-cell head-status">Status</div>
+                        <div class="fields-head-region">
+                            <?php foreach ($fields as $field): ?>
+                                <div class="head-cell head-field" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>">
+                                    <?= htmlspecialchars($field['name']) ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="head-cell head-actions">Actions</div>
+                    </div>
+                </div>
+                
+                <div class="table-body">
+                    <?php foreach ($entries as $entry): ?>
+                        <div class="table-row">
+                            <div class="cell cell-drag">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="9" cy="12" r="1"></circle>
+                                    <circle cx="9" cy="5" r="1"></circle>
+                                    <circle cx="9" cy="19" r="1"></circle>
+                                    <circle cx="20" cy="12" r="1"></circle>
+                                    <circle cx="20" cy="5" r="1"></circle>
+                                    <circle cx="20" cy="19" r="1"></circle>
+                                </svg>
+                            </div>
+                            <div class="cell cell-title">
+                                <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" class="title-text">
+                                    <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? 'Untitled') ?>
+                                </a>
+                            </div>
+                            <div class="cell cell-status">
+                                <span class="status-badge <?= htmlspecialchars($entry['__cells']['__status'] ?? $entry['status'] ?? 'draft') ?>">
+                                    <?= htmlspecialchars(ucfirst($entry['__cells']['__status'] ?? $entry['status'] ?? 'draft')) ?>
+                                </span>
+                            </div>
+                            <div class="fields-region">
+                                <?php foreach ($fields as $field): ?>
+                                    <div class="cell cell-field" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>">
+                                        <?php
+                                        $fieldName = $field['name'];
+                                        $fieldValue = $entry['__cells'][$fieldName . '_html'] ?? $entry['__cells'][$fieldName] ?? '';
+                                        echo $fieldValue ?: '<span class="ft-list-empty">–</span>';
+                                        ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="cell cell-actions">
+                                <a class="btn btn-sm" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>">
+                                    Edit
+                                </a>
+                                <button class="btn btn-sm btn-danger" disabled>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="empty-state">
+            <p>No entries found in this collection. <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>">Create your first entry</a>.</p>
+        </div>
+    <?php endif; ?>
+</div>

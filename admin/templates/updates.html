@@ -1,0 +1,871 @@
+<div class="updates-page">
+  <div class="page-header">
+    <h1>System Updates</h1>
+    <div class="breadcrumbs">
+      <span class="current">Updates</span>
+    </div>
+  </div>
+
+  <div class="updates-content">
+    <!-- Current Version Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Current Version</h2>
+        <div class="version-badge current">
+          <span id="current-version">Loading...</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p>Your HaruCMS installation is running version <strong id="current-version-text">Loading...</strong></p>
+        <div class="version-info">
+          <div class="info-item">
+            <span class="label">Installation Date:</span>
+            <span class="value" id="install-date">Unknown</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Last Update:</span>
+            <span class="value" id="last-update">Never</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Status Card -->
+    <div class="card" id="update-status-card">
+      <div class="card-header">
+        <h2>Update Status</h2>
+        <div class="update-status" id="update-status">
+          <div class="status-indicator loading">
+            <div class="spinner"></div>
+            <span>Checking for updates...</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body" id="update-details" style="display: none;">
+        <div id="update-info"></div>
+        <div class="update-actions" id="update-actions" style="display: none;">
+          <button class="btn btn-primary" id="download-update-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Update
+          </button>
+          <button class="btn btn-secondary" id="check-updates-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"></path>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Check Again
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Progress Card -->
+    <div class="card" id="update-progress-card" style="display: none;">
+      <div class="card-header">
+        <h2>Update Progress</h2>
+      </div>
+      <div class="card-body">
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-text" id="progress-text">Preparing update...</div>
+        </div>
+        <div class="progress-details" id="progress-details">
+          <div class="detail-item">
+            <span class="label">Status:</span>
+            <span class="value" id="progress-status">Initializing</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Version:</span>
+            <span class="value" id="progress-version">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update History Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Update History</h2>
+      </div>
+      <div class="card-body">
+        <div class="update-history" id="update-history">
+          <div class="history-item">
+            <div class="history-date">Loading...</div>
+            <div class="history-version">Loading...</div>
+            <div class="history-status">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Update Settings</h2>
+      </div>
+      <div class="card-body">
+        <div class="settings-form">
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="auto-check-updates" checked>
+              <span>Automatically check for updates</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="notify-updates">
+              <span>Show notifications for available updates</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="auto-backup">
+              <span>Create automatic backup before updates</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="check-frequency">Check Frequency</label>
+            <select id="check-frequency" class="input">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="manual">Manual Only</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Confirmation Modal -->
+  <div id="update-confirmation-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Confirm Update</h2>
+        <button class="modal-close-btn" onclick="closeUpdateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="update-warning">
+          <div class="warning-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div class="warning-content">
+            <h3>Update to Version <span id="confirm-version">-</span></h3>
+            <p>This will update your HaruCMS installation. A backup will be created automatically.</p>
+            <div class="update-details">
+              <div class="detail-item">
+                <span class="label">Current Version:</span>
+                <span class="value" id="confirm-current">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">New Version:</span>
+                <span class="value" id="confirm-new">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Update Size:</span>
+                <span class="value" id="confirm-size">-</span>
+              </div>
+            </div>
+            <div class="release-notes" id="confirm-notes"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirm-update-btn">Install Update</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="updates-message" class="updates-message" style="display: none;"></div>
+</div>
+
+<script>
+let updateData = null;
+let updateProgress = null;
+
+// Initialize updates page
+document.addEventListener('DOMContentLoaded', function() {
+    loadCurrentVersion();
+    checkForUpdates();
+    loadUpdateHistory();
+    loadUpdateSettings();
+    
+    // Set up event listeners
+    document.getElementById('check-updates-btn').addEventListener('click', checkForUpdates);
+    document.getElementById('download-update-btn').addEventListener('click', downloadUpdate);
+    document.getElementById('confirm-update-btn').addEventListener('click', installUpdate);
+    document.getElementById('save-settings-btn').addEventListener('click', saveUpdateSettings);
+});
+
+// Get CSRF token
+function getCsrfToken() {
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    return metaToken ? metaToken.getAttribute('content') : '';
+}
+
+function showMessage(message, type) {
+    const messageDiv = document.getElementById('updates-message');
+    messageDiv.textContent = message;
+    messageDiv.className = 'updates-message ' + type;
+    messageDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 5000);
+}
+
+function loadCurrentVersion() {
+    // This would typically come from the server
+    document.getElementById('current-version').textContent = '1.0.0';
+    document.getElementById('current-version-text').textContent = '1.0.0';
+    document.getElementById('install-date').textContent = 'Unknown';
+    document.getElementById('last-update').textContent = 'Never';
+}
+
+async function checkForUpdates() {
+    const statusIndicator = document.getElementById('update-status');
+    const updateDetails = document.getElementById('update-details');
+    const updateActions = document.getElementById('update-actions');
+    
+    // Show loading state
+    statusIndicator.innerHTML = `
+        <div class="status-indicator loading">
+            <div class="spinner"></div>
+            <span>Checking for updates...</span>
+        </div>
+    `;
+    updateDetails.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/updates.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'check_updates',
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            updateData = result.data;
+            displayUpdateStatus(result.data);
+        } else {
+            statusIndicator.innerHTML = `
+                <div class="status-indicator error">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    <span>Error checking updates</span>
+                </div>
+            `;
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        statusIndicator.innerHTML = `
+            <div class="status-indicator error">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span>Failed to check updates</span>
+            </div>
+        `;
+        showMessage('Error checking updates: ' + error.message, 'error');
+    }
+}
+
+function displayUpdateStatus(data) {
+    const statusIndicator = document.getElementById('update-status');
+    const updateDetails = document.getElementById('update-details');
+    const updateActions = document.getElementById('update-actions');
+    const updateInfo = document.getElementById('update-info');
+    
+    if (data.update_available) {
+        statusIndicator.innerHTML = `
+            <div class="status-indicator available">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+                <span>Update Available</span>
+            </div>
+        `;
+        
+        updateInfo.innerHTML = `
+            <div class="update-available">
+                <h3>Version ${data.latest_version} is available</h3>
+                <p>You are currently running version ${data.current_version}. A new version is available for download.</p>
+                <div class="version-comparison">
+                    <div class="version-item current">
+                        <span class="label">Current:</span>
+                        <span class="version">${data.current_version}</span>
+                    </div>
+                    <div class="version-item latest">
+                        <span class="label">Latest:</span>
+                        <span class="version">${data.latest_version}</span>
+                    </div>
+                </div>
+                ${data.release_notes ? `
+                    <div class="release-notes">
+                        <h4>Release Notes:</h4>
+                        <div class="notes-content">${data.release_notes}</div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        updateActions.style.display = 'block';
+        updateDetails.style.display = 'block';
+    } else {
+        statusIndicator.innerHTML = `
+            <div class="status-indicator up-to-date">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+                <span>Up to Date</span>
+            </div>
+        `;
+        
+        updateInfo.innerHTML = `
+            <div class="update-current">
+                <h3>You're up to date!</h3>
+                <p>You are running the latest version (${data.current_version}).</p>
+            </div>
+        `;
+        
+        updateActions.style.display = 'block';
+        updateDetails.style.display = 'block';
+    }
+}
+
+async function downloadUpdate() {
+    if (!updateData || !updateData.update_available) {
+        return;
+    }
+    
+    showUpdateProgress('Downloading update...', 0);
+    
+    try {
+        const response = await fetch('/api/updates.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'download_update',
+                version: updateData.latest_version,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            updateProgress = result.data;
+            showUpdateProgress('Update downloaded successfully', 100);
+            showUpdateConfirmation();
+        } else {
+            hideUpdateProgress();
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        hideUpdateProgress();
+        showMessage('Error downloading update: ' + error.message, 'error');
+    }
+}
+
+function showUpdateConfirmation() {
+    if (!updateData || !updateProgress) {
+        return;
+    }
+    
+    document.getElementById('confirm-version').textContent = updateData.latest_version;
+    document.getElementById('confirm-current').textContent = updateData.current_version;
+    document.getElementById('confirm-new').textContent = updateData.latest_version;
+    document.getElementById('confirm-size').textContent = formatFileSize(updateProgress.size);
+    
+    if (updateData.release_notes) {
+        document.getElementById('confirm-notes').innerHTML = `
+            <h4>Release Notes:</h4>
+            <div class="notes-content">${updateData.release_notes}</div>
+        `;
+    }
+    
+    document.getElementById('update-confirmation-modal').classList.add('active');
+}
+
+function closeUpdateModal() {
+    document.getElementById('update-confirmation-modal').classList.remove('active');
+}
+
+async function installUpdate() {
+    if (!updateData || !updateProgress) {
+        return;
+    }
+    
+    closeUpdateModal();
+    showUpdateProgress('Installing update...', 0);
+    
+    try {
+        const response = await fetch('/api/updates.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'install_update',
+                version: updateData.latest_version,
+                temp_file: updateProgress.temp_file,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showUpdateProgress('Update installed successfully!', 100);
+            showMessage('Update installed successfully! The page will reload in 5 seconds.', 'success');
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000);
+        } else {
+            hideUpdateProgress();
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        hideUpdateProgress();
+        showMessage('Error installing update: ' + error.message, 'error');
+    }
+}
+
+function showUpdateProgress(message, percent) {
+    const progressCard = document.getElementById('update-progress-card');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const progressStatus = document.getElementById('progress-status');
+    const progressVersion = document.getElementById('progress-version');
+    
+    progressCard.style.display = 'block';
+    progressFill.style.width = percent + '%';
+    progressText.textContent = message;
+    progressStatus.textContent = message;
+    
+    if (updateData) {
+        progressVersion.textContent = updateData.latest_version;
+    }
+}
+
+function hideUpdateProgress() {
+    document.getElementById('update-progress-card').style.display = 'none';
+}
+
+function loadUpdateHistory() {
+    // This would typically load from server
+    const history = document.getElementById('update-history');
+    history.innerHTML = `
+        <div class="history-item">
+            <div class="history-date">No updates yet</div>
+            <div class="history-version">-</div>
+            <div class="history-status">-</div>
+        </div>
+    `;
+}
+
+function loadUpdateSettings() {
+    // Load settings from localStorage or server
+    document.getElementById('auto-check-updates').checked = true;
+    document.getElementById('notify-updates').checked = false;
+    document.getElementById('auto-backup').checked = true;
+    document.getElementById('check-frequency').value = 'weekly';
+}
+
+function saveUpdateSettings() {
+    const settings = {
+        autoCheck: document.getElementById('auto-check-updates').checked,
+        notifyUpdates: document.getElementById('notify-updates').checked,
+        autoBackup: document.getElementById('auto-backup').checked,
+        checkFrequency: document.getElementById('check-frequency').value
+    };
+    
+    // Save to localStorage for now
+    localStorage.setItem('harucms_update_settings', JSON.stringify(settings));
+    showMessage('Settings saved successfully!', 'success');
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+</script>
+
+<style>
+.updates-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.breadcrumbs {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.updates-content {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.card-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.version-badge {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.version-badge.current {
+  background: var(--primary-100);
+  color: var(--primary-700);
+}
+
+.version-info {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-item .label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.info-item .value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.status-indicator.loading {
+  background: var(--blue-100);
+  color: var(--blue-700);
+}
+
+.status-indicator.available {
+  background: var(--green-100);
+  color: var(--green-700);
+}
+
+.status-indicator.up-to-date {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.status-indicator.error {
+  background: var(--red-100);
+  color: var(--red-700);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.update-available h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.version-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.version-item {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.version-item .label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.version-item .version {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.release-notes {
+  margin-top: 1rem;
+}
+
+.release-notes h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.notes-content {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.update-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.progress-container {
+  margin-bottom: 1rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-500);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.progress-details {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.update-history {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.history-date {
+  color: var(--text-secondary);
+}
+
+.history-version {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.history-status {
+  color: var(--text-secondary);
+}
+
+.settings-form {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin: 0;
+}
+
+.input {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.update-warning {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.warning-icon {
+  color: var(--yellow-500);
+  flex-shrink: 0;
+}
+
+.warning-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.update-details {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.updates-message {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  z-index: 1000;
+  max-width: 400px;
+}
+
+.updates-message.success {
+  background: var(--green-100);
+  color: var(--green-700);
+  border: 1px solid var(--green-200);
+}
+
+.updates-message.error {
+  background: var(--red-100);
+  color: var(--red-700);
+  border: 1px solid var(--red-200);
+}
+
+.updates-message.info {
+  background: var(--blue-100);
+  color: var(--blue-700);
+  border: 1px solid var(--blue-200);
+}
+</style>
