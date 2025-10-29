@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Project - HaruCMS Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    
+    /* Header */
+    header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem 0; }
+    .header-content { max-width: 1200px; margin: 0 auto; padding: 0 2rem; text-align: center; }
+    .header-content h1 { font-size: 3rem; margin-bottom: 1rem; }
+    
+    /* Navigation */
+    nav { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 1rem 0; }
+    .nav-content { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .nav-logo { font-size: 1.5rem; font-weight: bold; color: #667eea; }
+    .nav-links a { color: #333; text-decoration: none; margin-left: 2rem; transition: color 0.3s; }
+    .nav-links a:hover { color: #667eea; }
+    
+    /* Main Content */
+    .main-content { max-width: 1000px; margin: 0 auto; padding: 4rem 2rem; }
+    
+    /* Project */
+    .project { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .project-header { padding: 3rem 2rem 2rem; }
+    .project-title { font-size: 2.5rem; margin-bottom: 1rem; line-height: 1.2; }
+    .project-meta { display: flex; gap: 1rem; margin-bottom: 2rem; color: #999; font-size: 0.9rem; }
+    .project-category { display: inline-block; background: #667eea; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; margin-left: 1rem; }
+    .project-image { width: 100%; height: 500px; object-fit: cover; }
+    .project-content { padding: 2rem; line-height: 1.8; }
+    .project-content p { margin-bottom: 1.5rem; }
+    .project-content h2, .project-content h3 { margin: 2rem 0 1rem; }
+    
+    /* Back Button */
+    .back-button { display: inline-block; color: #667eea; text-decoration: none; margin-bottom: 2rem; transition: color 0.3s; }
+    .back-button:hover { color: #5a6fd8; }
+    
+    /* Footer */
+    footer { background: #333; color: white; text-align: center; padding: 2rem; margin-top: 4rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>Portfolio Project</h1>
+    </div>
+  </header>
+  
+  <nav>
+    <div class="nav-content">
+      <div class="nav-logo">Portfolio</div>
+      <div class="nav-links">
+        <a href="./">Home</a>
+        <a href="./portfolio.html">Portfolio</a>
+        <a href="./blog.html">Blog</a>
+        <a href="./users.html">Users</a>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="main-content">
+    <a href="./portfolio.html" class="back-button">← Back to Portfolio</a>
+    
+    <!-- Simple dynamic template - works without server configuration -->
+    {get entry from 'portfolio' where 'slug' = '$slug$'}
+      <div class="project">
+        <div class="project-header">
+          <h1 class="project-title">{title}</h1>
+          <div class="project-meta">
+            {if category}<span class="project-category">{category}</span>{/if}
+            {if date}<span>Completed {date|date:MMMM YYYY}</span>{/if}
+          </div>
+        </div>
+        {if image}<img src="{image}" alt="{title}" class="project-image">{/if}
+        <div class="project-content">
+          {if description}{description}{/if}
+          {if content}{content}{/if}
+        </div>
+      </div>
+    {/get}
+  </div>
+  
+  <footer>
+    <p>&copy; 2024 Creative Portfolio. Powered by HaruCMS.</p>
+  </footer>
+  
+  <script src="../cms-template.v2.js"></script>
+</body>
+</html> 

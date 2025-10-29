@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Getting Started - HaruCMS Docs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="docs-app">
+    <nav class="sidebar">
+      <div class="sidebar-header">HaruCMS Docs</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="getting-started.html" class="active">Getting Started</a></li>
+        <li><a href="content.html">Content</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="users.html">Users</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="forms.html">Forms</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="extensibility.html">Extensibility</a></li>
+        <li><a href="api.html">API</a></li>
+        <li><a href="deployment.html">Deployment</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <h1>Getting Started</h1>
+      <h2>Requirements</h2>
+      <ul>
+        <li>PHP 8.1+ (recommended: 8.2+)</li>
+        <li>100MB disk space (recommended: 1GB+)</li>
+        <li>256MB RAM (recommended: 1GB+)</li>
+        <li>Modern web server (PHP built-in, Apache, Nginx, Valet, Herd, Docker, etc.)</li>
+      </ul>
+      <h2>Installation</h2>
+      <ol>
+        <li>Clone or download the HaruCMS repository.</li>
+        <li>Open a terminal in the project root.</li>
+        <li>Start the PHP server:<br>
+          <pre><code>./start-server.sh</code></pre>
+          or manually:<br>
+          <pre><code>php -S localhost:8080 router.php</code></pre>
+        </li>
+        <li>Visit <a href="http://localhost:8080/admin/">http://localhost:8080/admin/</a> in your browser.</li>
+      </ol>
+      <h2>Project Structure</h2>
+      <pre><code>/admin      # Admin UI (HTML, JS, CSS)
+/api        # API endpoints (PHP)
+/content    # Collections, entries, schemas
+/fieldtypes # Field type modules
+/media      # Uploaded files
+/plugins    # Plugins
+/templates  # Template files
+/users      # User data
+</code></pre>
+      <h2>First Login</h2>
+      <ul>
+        <li>Default admin user is created on first run or see <code>/users/</code> for user files.</li>
+        <li>Login at <a href="/admin/login.html">/admin/login.html</a> with your credentials.</li>
+      </ul>
+      <h2>Next Steps</h2>
+      <ul>
+        <li>Read the <a href="content.html">Content</a> section to create collections and entries.</li>
+        <li>Explore <a href="templates.html">Templates</a> and <a href="forms.html">Forms</a> for frontend integration.</li>
+      </ul>
+    </main>
+  </div>
+</body>
+</html> 

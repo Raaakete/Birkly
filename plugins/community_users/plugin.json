@@ -1,0 +1,47 @@
+{
+  "name": "Community Users",
+  "version": "1.0.0",
+  "description": "Community user management system with registration and authentication",
+  "author": "HaruCMS",
+  "requires": "1.0.0",
+  "hooks": ["after_content_save", "admin_navigation", "dashboard_stats"],
+  "permissions": ["manage_users", "view_users"],
+  "navigation": {
+    "name": "Community Users",
+    "page": "community_users",
+    "icon": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>"
+  },
+  "settings_schema": {
+    "enable_registration": {
+      "type": "boolean",
+      "default": true,
+      "label": "Enable User Registration",
+      "description": "Allow new users to register accounts"
+    },
+    "require_email_verification": {
+      "type": "boolean",
+      "default": false,
+      "label": "Require Email Verification",
+      "description": "Require users to verify their email before activation"
+    },
+    "auto_approve_users": {
+      "type": "boolean",
+      "default": true,
+      "label": "Auto-approve Users",
+      "description": "Automatically approve new user registrations"
+    },
+    "default_user_role": {
+      "type": "string",
+      "default": "user",
+      "label": "Default User Role",
+      "description": "Default role assigned to new users",
+      "options": ["user", "editor", "admin"]
+    },
+    "max_users": {
+      "type": "integer",
+      "default": 1000,
+      "label": "Maximum Users",
+      "description": "Maximum number of users allowed (0 for unlimited)"
+    }
+  }
+} 

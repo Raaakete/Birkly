@@ -1,0 +1,68 @@
+# HaruCMS .gitignore
+
+# User data directories (should not be committed)
+users/
+content/
+media/
+logs/
+settings/
+backups/
+temp/
+
+# Environment and configuration files
+.env
+config.php
+*.local.php
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# PHP
+vendor/
+composer.lock
+
+# Node.js (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Test files
+test_*.php
+test_*.html
+debug-*.html
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Cache files
+cache/
+*.cache
+
+# Upload directories (user content)
+uploads/
+
+# Development files
+*.dev.php
+*.test.php
+debug.php

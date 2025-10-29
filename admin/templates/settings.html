@@ -1,0 +1,863 @@
+<div class="settings-page">
+  <div class="page-header">
+    <h1>Settings</h1>
+    <div class="breadcrumbs"><span class="current">Settings</span></div>
+  </div>
+
+  <div class="settings-tabs">
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="general">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+        </svg>
+        General
+      </button>
+      <button class="tab-btn" data-tab="users">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Users
+      </button>
+      <button class="tab-btn" data-tab="roles">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="8.5" cy="7" r="4"></circle>
+          <path d="M20 8v6"></path>
+          <path d="M23 11h-6"></path>
+        </svg>
+        Roles
+      </button>
+      <button class="tab-btn" data-tab="plugins">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+        </svg>
+        Plugins
+      </button>
+      <button class="tab-btn" data-tab="security">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <circle cx="12" cy="16" r="1"></circle>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Security
+      </button>
+      <button class="tab-btn" data-tab="api">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        API
+      </button>
+    </div>
+
+    <div class="tab-content">
+      <!-- General Tab -->
+      <div class="tab-pane active" id="general">
+        <form id="general-form" class="settings-form">
+          <div class="settings-section">
+            <h2>Site Information</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="site-name">Site Name</label>
+                <input type="text" id="site-name" name="siteName" value="<?= htmlspecialchars($settings['site']['name'] ?? '') ?>" required>
+              </div>
+              <div class="form-group">
+                <label for="site-url">Site URL</label>
+                <input type="url" id="site-url" name="siteUrl" value="<?= htmlspecialchars($settings['site']['url'] ?? '') ?>">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="site-description">Description</label>
+              <textarea id="site-description" name="siteDescription" rows="3"><?= htmlspecialchars($settings['site']['description'] ?? '') ?></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="site-timezone">Timezone</label>
+                <select id="site-timezone" name="siteTimezone">
+                  <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
+                  <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>Eastern Time</option>
+                  <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>>Central Time</option>
+                  <option value="America/Denver" <?= ($settings['site']['timezone'] ?? '') === 'America/Denver' ? 'selected' : '' ?>>Mountain Time</option>
+                  <option value="America/Los_Angeles" <?= ($settings['site']['timezone'] ?? '') === 'America/Los_Angeles' ? 'selected' : '' ?>>Pacific Time</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="site-language">Language</label>
+                <select id="site-language" name="siteLanguage">
+                  <option value="en" <?= ($settings['site']['language'] ?? '') === 'en' ? 'selected' : '' ?>>English</option>
+                  <option value="de" <?= ($settings['site']['language'] ?? '') === 'de' ? 'selected' : '' ?>>Deutsch</option>
+                  <option value="fr" <?= ($settings['site']['language'] ?? '') === 'fr' ? 'selected' : '' ?>>Français</option>
+                  <option value="es" <?= ($settings['site']['language'] ?? '') === 'es' ? 'selected' : '' ?>>Español</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h2>Media Settings</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="media-max-upload-size">Max Upload Size (MB)</label>
+                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" value="<?= htmlspecialchars($settings['media']['maxUploadSize'] ?? '') ?>" min="1" max="100">
+              </div>
+              <div class="form-group">
+                <label for="media-image-quality">Image Quality (%)</label>
+                <input type="number" id="media-image-quality" name="mediaImageQuality" value="<?= htmlspecialchars($settings['media']['imageQuality'] ?? '') ?>" min="10" max="100">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="media-thumbnail-width">Thumbnail Width (px)</label>
+                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" value="<?= htmlspecialchars($settings['media']['thumbnailWidth'] ?? '') ?>" min="50" max="1000">
+              </div>
+              <div class="form-group">
+                <label for="media-thumbnail-height">Thumbnail Height (px)</label>
+                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" value="<?= htmlspecialchars($settings['media']['thumbnailHeight'] ?? '') ?>" min="50" max="1000">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= ($settings['media']['createThumbnails'] ?? '') === 'on' ? 'checked' : '' ?>>
+                <span>Create Thumbnails Automatically</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h2>Branding</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="branding-primary-color">Primary Color</label>
+                <input type="color" id="branding-primary-color" name="brandingPrimaryColor" value="<?= htmlspecialchars($settings['branding']['primaryColor'] ?? '#3b82f6') ?>">
+              </div>
+              <div class="form-group">
+                <label for="branding-secondary-color">Secondary Color</label>
+                <input type="color" id="branding-secondary-color" name="brandingSecondaryColor" value="<?= htmlspecialchars($settings['branding']['secondaryColor'] ?? '#64748b') ?>">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="branding-logo-url">Logo URL</label>
+              <input type="url" id="branding-logo-url" name="brandingLogoUrl" value="<?= htmlspecialchars($settings['branding']['logoUrl'] ?? '') ?>">
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <button type="submit" class="btn btn-primary">Save General Settings</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Users Tab -->
+      <div class="tab-pane" id="users">
+        <div class="settings-section">
+          <div class="section-header">
+            <h2>User Management</h2>
+            <div class="user-actions">
+              <button class="btn btn-secondary" onclick="openInviteUserModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                Invite User
+              </button>
+              <button class="btn btn-primary" onclick="openAddUserModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add User
+              </button>
+            </div>
+          </div>
+          <div class="users-grid">
+            <?php if (empty($users)): ?>
+              <div class="empty-state">
+                <p>No users found.</p>
+                <button class="btn btn-primary" onclick="openAddUserModal()">Add First User</button>
+              </div>
+            <?php else: ?>
+              <?php foreach ($users as $user): ?>
+                <div class="user-card">
+                  <div class="user-header">
+                    <div class="user-avatar">
+                      <?= strtoupper(substr($user['email'], 0, 1)) ?>
+                    </div>
+                    <div class="user-info">
+                      <h4><?= htmlspecialchars($user['email']) ?></h4>
+                      <span class="role-badge <?= $user['role'] ?>"><?= $user['role'] ?></span>
+                    </div>
+                    <div class="user-actions">
+                      <button class="btn-icon" onclick="editUser('<?= $user['id'] ?>')" title="Edit User">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
+                      <button class="btn-icon danger" onclick="confirmDeleteUser('<?= $user['id'] ?>', '<?= htmlspecialchars($user['email']) ?>')" title="Delete User">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3,6 5,6 21,6"></polyline>
+                          <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="user-details">
+                    <p><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
+                    <p><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
+
+      <!-- Roles Tab -->
+      <div class="tab-pane" id="roles">
+        <div class="settings-section">
+          <div class="section-header">
+            <h2>User Management</h2>
+            <button class="btn btn-primary" onclick="openAddUserModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add User
+            </button>
+          </div>
+          <div class="users-grid">
+            <?php if (empty($users)): ?>
+              <div class="empty-state">
+                <p>No users found.</p>
+                <button class="btn btn-primary" onclick="openAddUserModal()">Add First User</button>
+              </div>
+            <?php else: ?>
+              <?php foreach ($users as $user): ?>
+                <div class="user-card">
+                  <div class="user-header">
+                    <div class="user-avatar">
+                      <?= strtoupper(substr($user['email'], 0, 1)) ?>
+                    </div>
+                    <div class="user-info">
+                      <h4><?= htmlspecialchars($user['email']) ?></h4>
+                      <span class="role-badge <?= $user['role'] ?>"><?= $user['role'] ?></span>
+                    </div>
+                    <div class="user-actions">
+                      <button class="btn-icon" onclick="editUser('<?= $user['id'] ?>')" title="Edit User">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
+                      <button class="btn-icon danger" onclick="confirmDeleteUser('<?= $user['id'] ?>', '<?= htmlspecialchars($user['email']) ?>')" title="Delete User">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3,6 5,6 21,6"></polyline>
+                          <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="user-details">
+                    <p><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
+                    <p><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="section-header">
+            <h2>Role Management</h2>
+            <button class="btn btn-primary" onclick="openAddRoleModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add Role
+            </button>
+          </div>
+          <div class="roles-grid">
+            <?php foreach ($settings['roles'] ?? [] as $role): ?>
+            <div class="role-card">
+              <div class="role-header">
+                <h3><?= htmlspecialchars($role['name']) ?></h3>
+                <div class="role-actions">
+                  <button class="btn-icon" onclick="editRole('<?= htmlspecialchars($role['id']) ?>')" title="Edit Role">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button class="btn-icon" onclick="deleteRole('<?= htmlspecialchars($role['id']) ?>')" title="Delete Role">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3,6 5,6 21,6"></polyline>
+                      <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <p class="role-description"><?= htmlspecialchars($role['description']) ?></p>
+              <div class="role-permissions">
+                <?php foreach ($role['permissions'] ?? [] as $resource => $actions): ?>
+                <div class="permission-item">
+                  <span class="resource"><?= htmlspecialchars($resource) ?></span>
+                  <span class="actions"><?= implode(', ', $actions) ?></span>
+                </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plugins Tab -->
+      <div class="tab-pane" id="plugins">
+        <div class="settings-section">
+          <h2>Installed Plugins</h2>
+          <div class="plugins-grid">
+            <?php foreach ($settings['plugins'] ?? [] as $pluginId => $plugin): ?>
+            <div class="plugin-card">
+              <div class="plugin-header">
+                <h3><?= htmlspecialchars($pluginId) ?></h3>
+                <div class="plugin-status">
+                  <span class="status-badge <?= $plugin['active'] ? 'active' : 'inactive' ?>">
+                    <?= $plugin['active'] ? 'Active' : 'Inactive' ?>
+                  </span>
+                </div>
+              </div>
+              <div class="plugin-actions">
+                <button class="btn btn-sm <?= $plugin['active'] ? 'btn-secondary' : 'btn-primary' ?>" 
+                        onclick="togglePlugin('<?= htmlspecialchars($pluginId) ?>', <?= $plugin['active'] ? 'false' : 'true' ?>)">
+                  <?= $plugin['active'] ? 'Deactivate' : 'Activate' ?>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deletePlugin('<?= htmlspecialchars($pluginId) ?>')">
+                  Delete
+                </button>
+              </div>
+              <?php if (!empty($plugin['settings'])): ?>
+              <div class="plugin-settings">
+                <h4>Settings</h4>
+                <?php foreach ($plugin['settings'] as $key => $value): ?>
+                <div class="setting-item">
+                  <span class="setting-key"><?= htmlspecialchars($key) ?>:</span>
+                  <span class="setting-value"><?= htmlspecialchars(is_bool($value) ? ($value ? 'true' : 'false') : $value) ?></span>
+                </div>
+                <?php endforeach; ?>
+              </div>
+              <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Tab -->
+      <div class="tab-pane" id="security">
+        <form id="security-form" class="settings-form">
+          <div class="settings-section">
+            <h2>Session Security</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="security-session-timeout">Session Timeout (minutes)</label>
+                <input type="number" id="security-session-timeout" name="securitySessionTimeout" value="<?= htmlspecialchars($settings['security']['sessionTimeout'] ?? '') ?>" min="5" max="1440">
+              </div>
+              <div class="form-group">
+                <label for="security-max-login-attempts">Max Login Attempts</label>
+                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" value="<?= htmlspecialchars($settings['security']['maxLoginAttempts'] ?? '') ?>" min="3" max="20">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="security-password-min-length">Password Min Length</label>
+                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" value="<?= htmlspecialchars($settings['security']['passwordMinLength'] ?? '') ?>" min="6" max="50">
+              </div>
+              <div class="form-group">
+                <label for="security-lockout-time">Lockout Time (minutes)</label>
+                <input type="number" id="security-lockout-time" name="securityLockoutTime" value="<?= htmlspecialchars($settings['security']['lockoutTime'] ?? '') ?>" min="5" max="1440">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['requireStrongPassword'] ?? '') === 'on' ? 'checked' : '' ?>>
+                <span>Require Strong Password</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h2>CSRF Protection</h2>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="security-enable-csrf" name="securityEnableCsrf" <?= ($settings['security']['enable_csrf'] ?? true) ? 'checked' : '' ?>>
+                <span>Enable CSRF Protection</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <button type="submit" class="btn btn-primary">Save Security Settings</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- API Tab -->
+      <div class="tab-pane" id="api">
+        <div class="settings-section">
+          <h2>API Configuration</h2>
+          <div class="api-info">
+            <div class="info-card">
+              <h3>API Endpoint</h3>
+              <p>The API is available at: <code>/api/</code></p>
+            </div>
+            <div class="info-card">
+              <h3>Authentication</h3>
+              <p>API requests require proper authentication headers.</p>
+            </div>
+            <div class="info-card">
+              <h3>Rate Limiting</h3>
+              <p>API requests are rate-limited to prevent abuse.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h2>API Keys</h2>
+          <div class="api-keys">
+            <div class="empty-state">
+              <p>No API keys configured yet.</p>
+              <button class="btn btn-primary">Generate API Key</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Management Modals -->
+  <!-- Invite User Modal -->
+  <div id="invite-user-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Invite New User</h2>
+        <button class="modal-close-btn" onclick="closeInviteUserModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="invite-user-form">
+          <div class="form-group">
+            <label for="invite-email">Email Address</label>
+            <input type="email" id="invite-email" name="email" required class="input" placeholder="user@example.com">
+          </div>
+          <div class="form-group">
+            <label for="invite-role">Role</label>
+            <select id="invite-role" name="role" class="input">
+              <option value="viewer">Viewer</option>
+              <option value="editor">Editor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="invite-expires">Invitation Expires In</label>
+            <select id="invite-expires" name="expires_days" class="input">
+              <option value="1">1 Day</option>
+              <option value="7" selected>7 Days</option>
+              <option value="30">30 Days</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeInviteUserModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="sendInvitation()">Send Invitation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div id="add-user-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New User</h2>
+        <button class="modal-close-btn" onclick="closeAddUserModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="add-user-form">
+          <div class="form-group">
+            <label for="user-email">Email Address</label>
+            <input type="email" id="user-email" name="email" required class="input">
+          </div>
+          <div class="form-group">
+            <label for="user-password">Password</label>
+            <input type="password" id="user-password" name="password" required class="input" minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="user-role">Role</label>
+            <select id="user-role" name="role" class="input">
+              <option value="viewer">Viewer</option>
+              <option value="editor">Editor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="edit-user-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit User</h2>
+        <button class="modal-close-btn" onclick="closeEditUserModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-user-form">
+          <input type="hidden" id="edit-user-id" name="id">
+          <div class="form-group">
+            <label for="edit-user-email">Email Address</label>
+            <input type="email" id="edit-user-email" name="email" required class="input">
+          </div>
+          <div class="form-group">
+            <label for="edit-user-password">New Password (leave blank to keep current)</label>
+            <input type="password" id="edit-user-password" name="password" class="input" minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="edit-user-role">Role</label>
+            <select id="edit-user-role" name="role" class="input">
+              <option value="viewer">Viewer</option>
+              <option value="editor">Editor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="updateUser()">Update User</button>
+        <button type="button" class="btn btn-danger" onclick="deleteUserFromModal()">Delete User</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings-message" class="settings-message" style="display: none;"></div>
+</div>
+
+<script>
+// Tab functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remove active class from all buttons and panes
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Add active class to clicked button and corresponding pane
+            this.classList.add('active');
+            const targetPane = document.getElementById(targetTab);
+            if (targetPane) {
+                targetPane.classList.add('active');
+            }
+        });
+    });
+
+    // Form submissions
+    const generalForm = document.getElementById('general-form');
+    const securityForm = document.getElementById('security-form');
+
+    if (generalForm) {
+        generalForm.addEventListener('submit', handleFormSubmit);
+    }
+    if (securityForm) {
+        securityForm.addEventListener('submit', handleFormSubmit);
+    }
+});
+
+// Get CSRF token from meta tag or generate one
+function getCsrfToken() {
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.getAttribute('content');
+    }
+    // Fallback: try to get from a global variable or generate a placeholder
+    return window.csrfToken || 'placeholder-token';
+}
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const settings = {};
+    
+    // Convert form data to settings object
+    for (let [key, value] of formData.entries()) {
+        settings[key] = value;
+    }
+    
+    try {
+        const response = await fetch('/api/settings.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'save_all',
+                settings: settings,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Settings saved successfully!', 'success');
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error saving settings: ' + error.message, 'error');
+    }
+}
+
+function showMessage(message, type) {
+    const messageDiv = document.getElementById('settings-message');
+    messageDiv.textContent = message;
+    messageDiv.className = 'settings-message ' + type;
+    messageDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Invitation functions
+function openInviteUserModal() {
+    document.getElementById('invite-user-modal').classList.add('active');
+    document.getElementById('invite-user-form').reset();
+}
+
+function closeInviteUserModal() {
+    document.getElementById('invite-user-modal').classList.remove('active');
+}
+
+async function sendInvitation() {
+    const form = document.getElementById('invite-user-form');
+    const formData = new FormData(form);
+    
+    const invitationData = {
+        action: 'create_invitation',
+        email: formData.get('email'),
+        role: formData.get('role'),
+        expires_days: parseInt(formData.get('expires_days')),
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/invitations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin', // Include cookies/session
+            body: JSON.stringify(invitationData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            let message = 'Invitation sent successfully!';
+            if (result.data && result.data.localhost_note) {
+                message = result.message + '\n\n' + result.data.localhost_note;
+            }
+            showMessage(message, 'success');
+            closeInviteUserModal();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error sending invitation: ' + error.message, 'error');
+    }
+}
+
+// User management functions
+function openAddUserModal() {
+    document.getElementById('add-user-modal').classList.add('active');
+    document.getElementById('add-user-form').reset();
+}
+
+function closeAddUserModal() {
+    document.getElementById('add-user-modal').classList.remove('active');
+}
+
+function openEditUserModal() {
+    document.getElementById('edit-user-modal').classList.add('active');
+}
+
+function closeEditUserModal() {
+    document.getElementById('edit-user-modal').classList.remove('active');
+}
+
+function editUser(userId) {
+    // Find user data
+    const users = <?= json_encode($users ?? []) ?>;
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    
+    // Populate edit form
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-email').value = user.email;
+    document.getElementById('edit-user-password').value = '';
+    document.getElementById('edit-user-role').value = user.role;
+    
+    openEditUserModal();
+}
+
+async function createUser() {
+    const form = document.getElementById('add-user-form');
+    const formData = new FormData(form);
+    
+    const userData = {
+        action: 'create_user',
+        email: formData.get('email'),
+        password: formData.get('password'),
+        role: formData.get('role'),
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('User created successfully!', 'success');
+            closeAddUserModal();
+            // Reload the page to show the new user
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error creating user: ' + error.message, 'error');
+    }
+}
+
+async function updateUser() {
+    const form = document.getElementById('edit-user-form');
+    const formData = new FormData(form);
+    
+    const updates = {
+        email: formData.get('email'),
+        role: formData.get('role')
+    };
+    
+    if (formData.get('password')) {
+        updates.password = formData.get('password');
+    }
+    
+    const userData = {
+        action: 'update_user',
+        id: formData.get('id'),
+        updates: updates,
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('User updated successfully!', 'success');
+            closeEditUserModal();
+            // Reload the page to show the updated user
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error updating user: ' + error.message, 'error');
+    }
+}
+
+function confirmDeleteUser(userId, email) {
+    if (confirm(`Are you sure you want to delete user "${email}"? This action cannot be undone.`)) {
+        deleteUser(userId);
+    }
+}
+
+async function deleteUser(userId) {
+    const userData = {
+        action: 'delete_user',
+        id: userId,
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('User deleted successfully!', 'success');
+            // Reload the page to show the updated user list
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error deleting user: ' + error.message, 'error');
+    }
+}
+
+function deleteUserFromModal() {
+    const userId = document.getElementById('edit-user-id').value;
+    const email = document.getElementById('edit-user-email').value;
+    closeEditUserModal();
+    confirmDeleteUser(userId, email);
+}
+
+// Plugin management functions
+function togglePlugin(pluginId, activate) {
+    const action = activate ? 'activate' : 'deactivate';
+    showMessage(`${action} plugin functionality not implemented yet`, 'warning');
+}
+
+function deletePlugin(pluginId) {
+    if (confirm('Are you sure you want to delete this plugin?')) {
+        showMessage('Delete plugin functionality not implemented yet', 'warning');
+    }
+}
+</script>
+

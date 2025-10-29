@@ -1,0 +1,154 @@
+<div class="entry-editor-page">
+    <?php if (!empty($fieldtype_assets['css'])): ?>
+        <style><?= $fieldtype_assets['css'] ?></style>
+    <?php endif; ?>
+    
+    <div class="page-header">
+        <h1><?= htmlspecialchars($entry ? 'Edit Entry' : 'New Entry') ?></h1>
+        <div class="breadcrumbs">
+            <a href="/admin/index.php?page=content">Content</a>
+            <span class="separator">›</span>
+            <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'Collection') ?></a>
+            <span class="separator">›</span>
+            <span class="current"><?= htmlspecialchars($entry ? 'Edit Entry' : 'New Entry') ?></span>
+        </div>
+    </div>
+    
+    <form id="entry-form" class="entry-form" method="POST" action="/api/admin_entries.php">
+        <input type="hidden" name="action" value="<?= $entry ? 'update' : 'create' ?>">
+        <input type="hidden" name="collection" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
+        <?php if ($entry): ?>
+            <input type="hidden" name="entry_id" value="<?= htmlspecialchars($entry['id'] ?? '') ?>">
+        <?php endif; ?>
+        <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
+        
+        <div class="editor-layout">
+            <div class="editor-main">
+                <div class="editor-content">
+                    <?php foreach ($fields as $field): ?>
+                        <div class="field-block">
+                            <div class="field-header">
+                                <div class="field-title"><?= htmlspecialchars($field['label']) ?></div>
+                                <?php if (!empty($field['required'])): ?>
+                                    <div class="field-subtitle">Required</div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="field-control">
+                                <?= $field['html'] ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <div class="editor-sidebar">
+                <div class="card">
+                    <h3>Publish</h3>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select name="status" id="status" class="input">
+                            <option value="draft" <?= ($entry['status'] ?? 'draft') === 'draft' ? 'selected' : '' ?>>Draft</option>
+                            <option value="published" <?= ($entry['status'] ?? 'draft') === 'published' ? 'selected' : '' ?>>Published</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="slug">Slug</label>
+                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="auto-generated">
+                    </div>
+                    
+                    <?php if ($entry): ?>
+                        <div class="form-group">
+                            <label>Created</label>
+                            <div class="form-text"><?= htmlspecialchars($entry['created_at'] ?? '') ?></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Updated</label>
+                            <div class="form-text"><?= htmlspecialchars($entry['updated_at'] ?? '') ?></div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <?= $entry ? 'Update Entry' : 'Create Entry' ?>
+                        </button>
+                        <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>SEO</h3>
+                    <div class="form-group">
+                        <label for="meta_title">Meta Title</label>
+                        <input type="text" name="meta_title" id="meta_title" class="input" value="<?= htmlspecialchars($entry['meta_title'] ?? '') ?>" placeholder="SEO title">
+                    </div>
+                    <div class="form-group">
+                        <label for="meta_description">Meta Description</label>
+                        <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="SEO description"><?= htmlspecialchars($entry['meta_description'] ?? '') ?></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-generate slug from title
+document.addEventListener('DOMContentLoaded', function() {
+    const titleField = document.getElementById('field_title');
+    const slugField = document.getElementById('slug');
+    
+    if (titleField && slugField) {
+        titleField.addEventListener('input', function() {
+            if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
+                const slug = titleField.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim('-');
+                slugField.value = slug;
+                slugField.dataset.autoGenerated = 'true';
+            }
+        });
+        
+        slugField.addEventListener('input', function() {
+            slugField.dataset.autoGenerated = 'false';
+        });
+    }
+    
+    // Form submission
+    const form = document.getElementById('entry-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch('/api/admin_entries.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    // Redirect to entries list
+                    window.location.href = '/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>';
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving entry: ' + error.message);
+            });
+        });
+    }
+});
+</script>
+
+<?php if (!empty($fieldtype_assets['js'])): ?>
+    <script><?= $fieldtype_assets['js'] ?></script>
+<?php endif; ?>

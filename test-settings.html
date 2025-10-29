@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Test</title>
+    <link rel="stylesheet" href="/admin/css/style.css">
+</head>
+<body>
+    <div class="settings-page">
+        <div class="page-header">
+            <h1>Settings Test</h1>
+            <p>Testing the settings functionality</p>
+        </div>
+        
+        <div class="settings-tabs">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="general">
+                    <i class="icon-settings"></i>
+                    General
+                </button>
+                <button class="tab-btn" data-tab="admin">
+                    <i class="icon-dashboard"></i>
+                    Admin
+                </button>
+            </div>
+            
+            <div class="tab-content">
+                <div class="tab-pane active" id="general">
+                    <div class="settings-section">
+                        <h2>Site Settings</h2>
+                        
+                        <div class="form-group">
+                            <label for="site-name">Site Name</label>
+                            <input type="text" id="site-name" name="site_name" value="">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="site-url">Site URL</label>
+                            <input type="url" id="site-url" name="site_url" value="">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane" id="admin">
+                    <div class="settings-section">
+                        <h2>Admin Settings</h2>
+                        
+                        <div class="form-group">
+                            <label for="items-per-page">Items per Page</label>
+                            <input type="number" id="items-per-page" name="admin_itemsPerPage" value="" min="5" max="100">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin-theme">Admin Theme</label>
+                            <select id="admin-theme" name="admin_theme">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto (System)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-actions">
+            <button class="btn-secondary" onclick="resetSettings()">Reset to Defaults</button>
+            <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        // Simple test implementation
+        const HaruCMS = {
+            PageHandlers: {
+                initSettingsTabs() {
+                    console.log('Initializing settings tabs...');
+                    const tabButtons = document.querySelectorAll('.tab-btn');
+                    const tabPanes = document.querySelectorAll('.tab-pane');
+                    
+                    console.log('Found tab buttons:', tabButtons.length);
+                    console.log('Found tab panes:', tabPanes.length);
+                    
+                    tabButtons.forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const targetTab = button.getAttribute('data-tab');
+                            console.log('Switching to tab:', targetTab);
+                            
+                            // Update active tab button
+                            tabButtons.forEach(btn => btn.classList.remove('active'));
+                            button.classList.add('active');
+                            
+                            // Update active tab pane
+                            tabPanes.forEach(pane => pane.classList.remove('active'));
+                            const targetPane = document.getElementById(targetTab);
+                            if (targetPane) {
+                                targetPane.classList.add('active');
+                                console.log('Activated tab pane:', targetTab);
+                            } else {
+                                console.error('Target tab pane not found:', targetTab);
+                            }
+                        });
+                    });
+                },
+                
+                loadDefaultSettings() {
+                    console.log('Loading default settings...');
+                    const defaultSettings = {
+                        site: {
+                            name: 'HaruCMS',
+                            url: 'https://harucms.com'
+                        },
+                        admin: {
+                            itemsPerPage: '20',
+                            theme: 'light'
+                        }
+                    };
+                    
+                    this.populateSettingsForm(defaultSettings);
+                },
+                
+                populateSettingsForm(settings) {
+                    console.log('Populating settings form with:', settings);
+                    
+                    Object.keys(settings).forEach(category => {
+                        Object.keys(settings[category]).forEach(key => {
+                            const fieldName = `${category}_${key}`;
+                            const field = document.querySelector(`[name="${fieldName}"]`);
+                            
+                            console.log(`Looking for field: ${fieldName}`, field ? 'found' : 'not found');
+                            
+                            if (field) {
+                                field.value = settings[category][key];
+                                console.log(`Set field ${fieldName} to:`, settings[category][key]);
+                            }
+                        });
+                    });
+                    
+                    console.log('Settings form populated');
+                },
+                
+                saveSettings() {
+                    console.log('Saving settings...');
+                    alert('Settings saved! (Test implementation)');
+                },
+                
+                resetSettings() {
+                    console.log('Resetting settings...');
+                    this.loadDefaultSettings();
+                    alert('Settings reset to defaults!');
+                }
+            }
+        };
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing settings...');
+            HaruCMS.PageHandlers.initSettingsTabs();
+            HaruCMS.PageHandlers.loadDefaultSettings();
+        });
+        
+        // Global functions
+        window.saveSettings = () => HaruCMS.PageHandlers.saveSettings();
+        window.resetSettings = () => HaruCMS.PageHandlers.resetSettings();
+    </script>
+</body>
+</html> 

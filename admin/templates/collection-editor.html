@@ -1,0 +1,295 @@
+<div class="collection-editor-page">
+    <div class="page-header">
+        <h1><?= htmlspecialchars($collection['title'] ? 'Edit Collection' : 'New Collection') ?></h1>
+        <div class="breadcrumbs">
+            <a href="/admin/index.php?page=content">Content</a>
+            <span class="separator">›</span>
+            <span class="current"><?= htmlspecialchars($collection['title'] ? 'Edit Collection' : 'New Collection') ?></span>
+        </div>
+    </div>
+    
+    <form id="collection-form" class="collection-form" method="POST" action="/api/admin_collections.php">
+        <input type="hidden" name="action" value="<?= $collection['title'] ? 'update' : 'create' ?>">
+        <?php if ($collection['title']): ?>
+            <input type="hidden" name="collection_slug" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
+        <?php endif; ?>
+        <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
+        
+        <div class="editor-layout">
+            <div class="editor-main">
+                <div class="editor-content">
+                    <div class="field-block">
+                        <div class="field-header">
+                            <div class="field-title">Collection Name</div>
+                            <div class="field-subtitle">Required</div>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
+                        </div>
+                    </div>
+                    
+                    <div class="field-block">
+                        <div class="field-header">
+                            <div class="field-title">Slug</div>
+                            <div class="field-subtitle">URL-friendly identifier</div>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated">
+                        </div>
+                    </div>
+                    
+                    <div class="field-block">
+                        <div class="field-header">
+                            <div class="field-title">Description</div>
+                            <div class="field-subtitle">Optional</div>
+                        </div>
+                        <div class="field-control">
+                            <textarea name="description" id="description" class="input" rows="3" placeholder="Describe what this collection is for"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="field-block">
+                        <div class="field-header">
+                            <div class="field-title">Default Sort Order</div>
+                            <div class="field-subtitle">How entries are ordered by default</div>
+                        </div>
+                        <div class="field-control">
+                            <select name="sort" id="sort" class="input">
+                                <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
+                                <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
+                                <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>>Title A-Z</option>
+                                <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>>Title Z-A</option>
+                                <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="editor-sidebar">
+                <div class="card">
+                    <h3>Collection Fields</h3>
+                    <p>Define the fields that entries in this collection will have.</p>
+                    
+                    <div id="fields-container">
+                        <?php if (!empty($fields)): ?>
+                            <?php foreach ($fields as $index => $field): ?>
+                                <div class="field-definition" data-index="<?= $index ?>">
+                                    <div class="field-definition-header">
+                                        <input type="text" name="fields[<?= $index ?>][name]" value="<?= htmlspecialchars($field['name'] ?? '') ?>" placeholder="Field name" class="field-name-input">
+                                        <select name="fields[<?= $index ?>][type]" class="field-type-select">
+                                            <?php foreach ($fieldtypes as $fieldtype): ?>
+                                                <option value="<?= htmlspecialchars($fieldtype['name']) ?>" <?= ($field['type'] ?? '') === $fieldtype['name'] ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($fieldtype['label']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <button type="button" class="btn-icon remove-field-btn" title="Remove field">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="3,6 5,6 21,6"></polyline>
+                                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="field-definition-body">
+                                        <input type="text" name="fields[<?= $index ?>][label]" value="<?= htmlspecialchars($field['label'] ?? '') ?>" placeholder="Field label" class="field-label-input">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
+                                            <span>Required</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <button type="button" id="add-field-btn" class="btn btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Field
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <h3>Actions</h3>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <?= $collection['title'] ? 'Update Collection' : 'Create Collection' ?>
+                        </button>
+                        <a href="/admin/index.php?page=content" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.field-definition {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.field-definition-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.field-name-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.field-type-select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    min-width: 120px;
+}
+
+.field-definition-body {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.field-label-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.remove-field-btn {
+    background: var(--error-100);
+    color: var(--error-700);
+    border: 1px solid var(--error-200);
+}
+
+.remove-field-btn:hover {
+    background: var(--error-200);
+    color: var(--error-800);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate slug from name
+    const nameField = document.getElementById('name');
+    const slugField = document.getElementById('slug');
+    
+    if (nameField && slugField) {
+        nameField.addEventListener('input', function() {
+            if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
+                const slug = nameField.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim('-');
+                slugField.value = slug;
+                slugField.dataset.autoGenerated = 'true';
+            }
+        });
+        
+        slugField.addEventListener('input', function() {
+            slugField.dataset.autoGenerated = 'false';
+        });
+    }
+    
+    // Add field functionality
+    const addFieldBtn = document.getElementById('add-field-btn');
+    const fieldsContainer = document.getElementById('fields-container');
+    let fieldIndex = fieldsContainer.children.length;
+    
+    addFieldBtn.addEventListener('click', function() {
+        const fieldDefinition = document.createElement('div');
+        fieldDefinition.className = 'field-definition';
+        fieldDefinition.setAttribute('data-index', fieldIndex);
+        
+        fieldDefinition.innerHTML = `
+            <div class="field-definition-header">
+                <input type="text" name="fields[${fieldIndex}][name]" placeholder="Field name" class="field-name-input">
+                <select name="fields[${fieldIndex}][type]" class="field-type-select">
+                    <?php foreach ($fieldtypes as $fieldtype): ?>
+                        <option value="<?= htmlspecialchars($fieldtype['name']) ?>"><?= htmlspecialchars($fieldtype['label']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" class="btn-icon remove-field-btn" title="Remove field">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"></polyline>
+                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="field-definition-body">
+                <input type="text" name="fields[${fieldIndex}][label]" placeholder="Field label" class="field-label-input">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="fields[${fieldIndex}][required]" value="1">
+                    <span>Required</span>
+                </label>
+            </div>
+        `;
+        
+        fieldsContainer.appendChild(fieldDefinition);
+        fieldIndex++;
+    });
+    
+    // Remove field functionality
+    fieldsContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-field-btn')) {
+            e.target.closest('.field-definition').remove();
+        }
+    });
+    
+    // Form submission
+    const form = document.getElementById('collection-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch('/api/admin_collections.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    // Redirect to content page
+                    window.location.href = '/admin/index.php?page=content';
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving collection: ' + error.message);
+            });
+        });
+    }
+});
+</script>
