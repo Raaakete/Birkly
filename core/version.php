@@ -12,6 +12,35 @@ class HaruVersion {
     private static function getDownloadUrl(string $version): string {
         return "https://github.com/Raaakete/haru/archive/refs/tags/v{$version}.zip";
     }
+
+    /**
+     * Build common HTTP headers for GitHub requests. Supports private repos via token.
+     * Token sources (first found wins):
+     *  - env HARU_GITHUB_TOKEN
+     *  - settings/security.json key "github_token"
+     */
+    private static function getGithubHeaders(string $userAgent): array {
+        $headers = [
+            'User-Agent: ' . $userAgent,
+            'Accept: application/vnd.github+json'
+        ];
+
+        $token = getenv('HARU_GITHUB_TOKEN');
+        if (!$token) {
+            $securityFile = __DIR__ . '/../settings/security.json';
+            if (file_exists($securityFile)) {
+                $sec = json_decode(@file_get_contents($securityFile), true) ?: [];
+                if (!empty($sec['github_token']) && is_string($sec['github_token'])) {
+                    $token = $sec['github_token'];
+                }
+            }
+        }
+
+        if ($token) {
+            $headers[] = 'Authorization: Bearer ' . $token;
+        }
+        return $headers;
+    }
     
     /**
      * Get current CMS version
@@ -33,11 +62,12 @@ class HaruVersion {
         $currentVersion = self::getCurrentVersion();
         
         try {
+            $headers = self::getGithubHeaders('HaruCMS/' . $currentVersion);
             $context = stream_context_create([
                 'http' => [
-                    'timeout' => 10,
-                    'user_agent' => 'HaruCMS/' . $currentVersion,
-                    'ignore_errors' => true
+                    'timeout' => 15,
+                    'ignore_errors' => true,
+                    'header' => implode("\r\n", $headers)
                 ]
             ]);
             
@@ -56,8 +86,11 @@ class HaruVersion {
             
             // Check if GitHub returned an error message
             if (isset($release['message']) && isset($release['documentation_url'])) {
-                if ($release['status'] == 404) {
-                    return ['error' => 'No releases found. Please create a GitHub Release at https://github.com/Raaakete/haru/releases'];
+                if (($release['status'] ?? null) == 404) {
+                    return ['error' => 'No releases found. Publish a GitHub Release (not only a tag).'];
+                }
+                if (($release['status'] ?? null) == 401 || ($release['status'] ?? null) == 403) {
+                    return ['error' => 'GitHub private repo detected. Add a token in settings/security.json as {"github_token":"..."} or set env HARU_GITHUB_TOKEN.'];
                 }
                 return ['error' => 'GitHub API error: ' . ($release['message'] ?? 'Unknown error')];
             }
@@ -93,16 +126,18 @@ class HaruVersion {
         
         try {
             // Download the update
+            $headers = self::getGithubHeaders('HaruCMS/' . self::getCurrentVersion());
             $context = stream_context_create([
                 'http' => [
-                    'timeout' => 300, // 5 minutes for large downloads
-                    'user_agent' => 'HaruCMS/' . self::getCurrentVersion()
+                    'timeout' => 300,
+                    'ignore_errors' => true,
+                    'header' => implode("\r\n", $headers)
                 ]
             ]);
             
-            $zipContent = file_get_contents($downloadUrl, false, $context);
+            $zipContent = @file_get_contents($downloadUrl, false, $context);
             if (!$zipContent) {
-                return ['error' => 'Failed to download update'];
+                return ['error' => 'Failed to download update (private repo? add HARU_GITHUB_TOKEN)'];
             }
             
             // Save to temporary file
