@@ -322,20 +322,92 @@ function getEntryEditorData($includeFieldHtml = false) {
         'fields' => $fields,
         'fieldtypes' => $fieldtypes
     ];
+    
+    // Always add mandatory title field at the top (not from schema)
+    // This ensures every entry has a title, regardless of collection schema
+    $titleField = [
+        'name' => 'title',
+        'label' => 'Title',
+        'type' => 'text',
+        'required' => true,
+        'id' => 'field-title'
+    ];
+    
+    // Add title field HTML if including field HTML
+    if ($includeFieldHtml) {
+        require_once __DIR__ . '/../fieldtypes/BaseField.php';
+        require_once __DIR__ . '/../fieldtypes/Text/Text.php';
+        
+        $titleValue = $payload['entry']['title'] ?? '';
+        $titleFieldtype = new \HaruCMS\FieldTypes\Text\Text([
+            'name' => 'title',
+            'label' => 'Title',
+            'value' => $titleValue,
+            'required' => true,
+            'help' => '',
+            'group' => '',
+            'options' => []
+        ]);
+        
+        $titleField['html'] = $titleFieldtype->render();
+    }
+    
+    // Prepend title field to fields array
+    $payload['fields'] = array_merge([$titleField], $payload['fields']);
 
     // Optionally embed rendered field HTML for template-driven editor
     if ($includeFieldHtml && !empty($fields)) {
+        require_once __DIR__ . '/../fieldtypes/BaseField.php';
+        // Include fieldtypes API in internal mode to avoid emitting output
+        $____prevInternal = $GLOBALS['__HARU_INTERNAL_CALL'] ?? null;
+        $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+        require_once __DIR__ . '/admin_fieldtypes.php'; // Use the fieldtype loading functions
+        if ($____prevInternal === null) {
+            unset($GLOBALS['__HARU_INTERNAL_CALL']);
+        } else {
+            $GLOBALS['__HARU_INTERNAL_CALL'] = $____prevInternal;
+        }
+        
         $__fieldtypeCss = [];
         $__fieldtypeJs = [];
         foreach ($payload['fields'] as $idx => $f) {
             $type = $f['type'] ?? '';
             $name = $f['name'] ?? '';
             if (!$type || !$name) continue;
-            $value = ($payload['entry'][$name] ?? null);
-            $class = 'HaruCMS\\FieldTypes\\' . ucfirst(strtolower($type)) . '\\' . ucfirst(strtolower($type));
-            if (class_exists($class)) {
+            
+            $rawValue = ($payload['entry'][$name] ?? null);
+            
+            // Use the proper fieldtype loader from admin_fieldtypes.php
+            $className = getFieldtypeClass($type);
+            if ($className && class_exists($className)) {
                 try {
-                    $ft = new $class([
+                    // Process the value through processLoadedValue if method exists
+                    $value = $rawValue;
+                    if ($rawValue !== null) {
+                        // Create a temporary instance to process the value
+                        $tempFt = new $className([
+                            'name' => $name,
+                            'label' => $f['label'] ?? $name,
+                            'value' => null,
+                            'required' => false
+                        ]);
+                        if (method_exists($tempFt, 'processLoadedValue')) {
+                            $value = $tempFt->processLoadedValue($rawValue);
+                        }
+                    } else {
+                        // Use default value if no value exists
+                        $tempFt = new $className([
+                            'name' => $name,
+                            'label' => $f['label'] ?? $name,
+                            'value' => null,
+                            'required' => false
+                        ]);
+                        if (method_exists($tempFt, 'getDefaultValue')) {
+                            $value = $tempFt->getDefaultValue();
+                        }
+                    }
+                    
+                    $ft = new $className([
                         'name' => $name,
                         'label' => $f['label'] ?? $name,
                         'value' => $value,
@@ -344,21 +416,79 @@ function getEntryEditorData($includeFieldHtml = false) {
                         'group' => $f['group'] ?? 'Content',
                         'options' => $f['options'] ?? []
                     ]);
+                    
                     if (method_exists($ft, 'render')) {
                         // For editor form, use full field render
-                        $payload['fields'][$idx]['html'] = $ft->render();
-                        if (method_exists($ft, 'getCSS')) { $css = (string)$ft->getCSS(); if ($css !== '' && !in_array($css, $__fieldtypeCss, true)) { $__fieldtypeCss[] = $css; } }
-                        if (method_exists($ft, 'getJavaScript')) { $js = (string)$ft->getJavaScript(); if ($js !== '' && !in_array($js, $__fieldtypeJs, true)) { $__fieldtypeJs[] = $js; } }
+                        $renderedHtml = $ft->render();
+                        
+                        // Add data-fieldtype attribute to help with JS initialization
+                        // Wrap the HTML or add attribute to the first input/textarea/select
+                        $renderedHtml = preg_replace_callback(
+                            '/<(input|textarea|select|div|span)([^>]*)>/i',
+                            function($matches) use ($type) {
+                                $tag = $matches[1];
+                                $attrs = $matches[2];
+                                // Only add if not already present
+                                if (strpos($attrs, 'data-fieldtype') === false) {
+                                    $attrs .= ' data-fieldtype="' . htmlspecialchars($type) . '"';
+                                }
+                                return "<{$tag}{$attrs}>";
+                            },
+                            $renderedHtml,
+                            1 // Only replace first match
+                        );
+                        
+                        $payload['fields'][$idx]['html'] = $renderedHtml;
+                        
+                        // Collect CSS
+                        if (method_exists($ft, 'getCSS')) {
+                            $css = (string)$ft->getCSS();
+                            if ($css !== '' && !in_array($css, $__fieldtypeCss, true)) {
+                                $__fieldtypeCss[] = $css;
+                            }
+                        }
+                        
+                        // Collect JavaScript
+                        if (method_exists($ft, 'getJavaScript')) {
+                            $js = (string)$ft->getJavaScript();
+                            if ($js !== '' && !in_array($js, $__fieldtypeJs, true)) {
+                                $__fieldtypeJs[] = $js;
+                            }
+                        }
+                    } else {
+                        $payload['fields'][$idx]['html'] = '<div class="field-error">Fieldtype "' . htmlspecialchars($type) . '" missing render() method</div>';
                     }
                 } catch (\Throwable $e) {
-                    $payload['fields'][$idx]['html'] = '<div class="field-error">Fieldtype failed to render</div>';
+                    error_log("Fieldtype rendering error for {$type}: " . $e->getMessage());
+                    $payload['fields'][$idx]['html'] = '<div class="field-error">Fieldtype "' . htmlspecialchars($type) . '" failed: ' . htmlspecialchars($e->getMessage()) . '</div>';
                 }
+            } else {
+                $payload['fields'][$idx]['html'] = '<div class="field-error">Fieldtype "' . htmlspecialchars($type) . '" not found</div>';
             }
         }
+        
         if (!empty($__fieldtypeCss) || !empty($__fieldtypeJs)) {
+            // Write assets to temp files to avoid inline </script> parsing issues
+            $tempDir = __DIR__ . '/../temp';
+            if (!is_dir($tempDir)) { @mkdir($tempDir, 0755, true); }
+            $hashBase = implode('\n', $__fieldtypeCss) . '\n' . implode('\n', $__fieldtypeJs);
+            $hash = substr(sha1($hashBase), 0, 12);
+            $cssPath = $tempDir . "/fieldtypes-{$hash}.css";
+            if (!empty($__fieldtypeCss)) { @file_put_contents($cssPath, implode("\n\n", $__fieldtypeCss)); }
+
+            // Write each JS chunk as a separate file to isolate failures
+            $jsFiles = [];
+            if (!empty($__fieldtypeJs)) {
+                foreach ($__fieldtypeJs as $i => $chunk) {
+                    $file = $tempDir . "/fieldtypes-{$hash}-{$i}.js";
+                    $wrapped = ";(function(){\n" . $chunk . "\n})();";
+                    @file_put_contents($file, "/* HaruCMS fieldtype chunk {$i} */\n'use strict';\n" . $wrapped . "\n");
+                    $jsFiles[] = "/temp/fieldtypes-{$hash}-{$i}.js";
+                }
+            }
             $payload['fieldtype_assets'] = [
-                'css' => implode("\n\n", $__fieldtypeCss),
-                'js' => implode("\n\n", $__fieldtypeJs)
+                'css' => !empty($__fieldtypeCss) ? "/temp/fieldtypes-{$hash}.css" : '',
+                'js_files'  => $jsFiles
             ];
         }
     }

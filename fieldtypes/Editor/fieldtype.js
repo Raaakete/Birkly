@@ -58,6 +58,42 @@
     const blockSurface = wrapper.querySelector('.ed-block-surface');
     const hidden = document.getElementById('field_'+name+'_value');
 
+    // Ensure Advanced surface is focusable and interactive
+    try {
+      if (advanced) {
+        if (!advanced.getAttribute('contenteditable')) advanced.setAttribute('contenteditable', 'true');
+        if (!advanced.hasAttribute('tabindex')) advanced.setAttribute('tabindex', '0');
+        advanced.style.pointerEvents = 'auto';
+        advanced.style.minHeight = advanced.style.minHeight || '180px';
+        advanced.addEventListener('mousedown', function(){ advanced.focus({ preventScroll: true }); });
+        // Change detection for saving
+        const advObserver = new MutationObserver(function(){ syncHidden(); });
+        advObserver.observe(advanced, { childList: true, subtree: true, characterData: true });
+        ['input','keyup'].forEach(function(ev){ advanced.addEventListener(ev, syncHidden); });
+        advanced.addEventListener('paste', function(){ setTimeout(syncHidden, 0); });
+        // Advanced toolbar wiring (fallback)
+        const advToolbar = wrapper.querySelector('.advanced-toolbar');
+        if (advToolbar) {
+          advToolbar.addEventListener('click', function(e){
+            const btn = e.target.closest('[data-command]');
+            if (!btn) return;
+            e.preventDefault();
+            const cmd = btn.getAttribute('data-command');
+            const val = btn.getAttribute('data-value') || null;
+            try {
+              advanced.focus({ preventScroll: true });
+              document.execCommand(cmd, false, val);
+              syncHidden();
+            } catch(_e) {}
+          });
+        }
+      }
+      const tabsElTmp = wrapper.querySelector('.ed-toolbar');
+      const toolsElTmp = wrapper.querySelector('.ed-toolsbar');
+      if (tabsElTmp) tabsElTmp.style.pointerEvents = 'auto';
+      if (toolsElTmp) toolsElTmp.style.pointerEvents = 'auto';
+    } catch(_e) {}
+
     function setMode(mode){
       if (advanced) advanced.style.display = mode==='advanced' ? 'block' : 'none';
       if (w) w.style.display = mode==='wysiwyg' ? 'block' : 'none';
@@ -130,9 +166,26 @@
         }}catch(_e){}
       });
     }
-    // Initial toolbar render based on active tab
+  // Initial toolbar render based on active tab and populate surface from hidden value
     const activeTab = (tabsEl.querySelector('.ed-mode.active') || {}).textContent || 'Advanced';
     const initialMode = activeTab.toLowerCase().includes('advanced') ? 'advanced' : activeTab.toLowerCase().includes('block') ? 'block' : activeTab.toLowerCase().includes('markdown') ? 'markdown' : 'wysiwyg';
+    // Do NOT re-initialize or switch modes here; only populate if Advanced is already active and empty
+    function decodeHtml(s){ try { var ta = document.createElement('textarea'); ta.innerHTML = s||''; return ta.value; } catch(_e){ return s; } }
+    function restoreIfNeeded(){
+      try {
+        if (initialMode === 'advanced') {
+          const surfaceEmpty = advanced && (!advanced.innerHTML || !advanced.innerHTML.trim());
+          if (surfaceEmpty && hidden) {
+            const val = decodeHtml(hidden.value || '');
+            if (window.EditorModes?.advanced?.setValue) window.EditorModes.advanced.setValue(val);
+            else if (advanced) advanced.innerHTML = val;
+          }
+        }
+      } catch(_e){}
+    }
+    restoreIfNeeded();
+    try { requestAnimationFrame(restoreIfNeeded); } catch(_e) {}
+
     renderToolbarFor(initialMode);
     // Handle mode switching on tabs row
     tabsEl.addEventListener('click', (e)=>{
@@ -144,13 +197,13 @@
         btn.classList.add('active');
         if (mode==='advanced') {
           if (window.EditorModes?.advanced?.setValue) {
-            window.EditorModes.advanced.setValue(hidden.value);
+            window.EditorModes.advanced.setValue(hidden.value || '');
           } else {
-            advanced.innerHTML = hidden.value;
+            advanced.innerHTML = decodeHtml(hidden.value || '');
           }
-        } else if (mode==='markdown') md.value = htmlToMd(hidden.value);
-        else if (mode==='wysiwyg') w.innerHTML = hidden.value;
-        else if (mode==='html') ht.value = hidden.value;
+        } else if (mode==='markdown') md.value = htmlToMd(hidden.value || '');
+        else if (mode==='wysiwyg') w.innerHTML = decodeHtml(hidden.value || '');
+        else if (mode==='html') ht.value = decodeHtml(hidden.value || '');
         setMode(mode);
         renderToolbarFor(mode);
         // After switching modes, keep hidden in sync
@@ -215,6 +268,16 @@
     // Initialize Advanced Editor if it's the active mode
     if (currentMode() === 'advanced' && window.EditorModes?.advanced) {
       window.EditorModes.advanced.init(wrapper);
+      // Populate Advanced surface from hidden value after init (init may clear surface)
+      try {
+        var raw = hidden ? hidden.value : '';
+        var ta = document.createElement('textarea'); ta.innerHTML = raw; var decoded = ta.value;
+        if (typeof window.EditorModes.advanced.setValue === 'function') {
+          window.EditorModes.advanced.setValue(decoded || '');
+        } else if (advanced) {
+          advanced.innerHTML = decoded || '';
+        }
+      } catch(_e) {}
     }
     
     wrapper.dataset.initialized = 'true';
@@ -240,19 +303,12 @@
       } else if (mode.toLowerCase().includes('wysiwyg')) {
         document.execCommand('insertHTML', false, sanitized);
       } else if (mode.toLowerCase().includes('markdown')) {
-        const block = `\n\n\`\`\`html\n${sanitized}\n\`\`\`\n\n`;
+        const block = `\n\n\`\`\`html\n${sanitized}\n\`\`\``;
         md.value += block; md.dispatchEvent(new Event('input'));
       } else if (mode.toLowerCase().includes('block')) {
-        // Insert a dedicated HTML block as-is
-        const surface = wrapper.querySelector('.ed-block') || wrapper.querySelector('.ed-surface');
-        const blockDiv = document.createElement('div');
-        blockDiv.className = 'ed-pane ed-block-html';
-        blockDiv.setAttribute('data-block-type','html');
-        blockDiv.innerHTML = sanitized;
-        surface.appendChild(blockDiv);
+        // No-op fallback for block mode
       } else if (mode.toLowerCase().includes('html')) {
-        const ht = wrapper.querySelector('.ed-html');
-        ht.value += `\n${sanitized}`; ht.dispatchEvent(new Event('input'));
+        if (ht) { ht.value += `\n${sanitized}`; ht.dispatchEvent(new Event('input')); }
       }
     }
   }
@@ -261,5 +317,3 @@
   document.addEventListener('haru:pageRendered', initAll);
   setTimeout(initAll, 0);
 })();
-
-

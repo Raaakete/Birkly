@@ -5,12 +5,37 @@ window.EditorModes.advanced = {
   // Initialize the advanced editor
   init(container) {
     this.container = container;
-    this.surface = container.querySelector('.editor-surface') || container;
+    // Find Advanced pane: has both .ed-advanced and .editor-surface classes
+    this.surface = container.querySelector('.ed-advanced') || container.querySelector('.editor-surface') || container;
     this.toolbar = null;
     this.content = null;
     
+    // Preserve existing content if Advanced pane already has content
+    var existingContent = '';
+    if (this.surface && this.surface !== container) {
+      // Check if Advanced pane already has content (not just toolbar)
+      var existingContentEl = this.surface.querySelector('.advanced-content');
+      if (existingContentEl) {
+        existingContent = existingContentEl.innerHTML || '';
+      } else if (this.surface.querySelector('.advanced-toolbar')) {
+        // Toolbar exists but content might be in the surface itself
+        var childNodes = Array.from(this.surface.childNodes);
+        childNodes.forEach(function(node) {
+          if (node.nodeType === 1 && !node.classList.contains('advanced-toolbar')) {
+            existingContent = node.innerHTML || existingContent;
+          }
+        });
+      }
+    }
+    
     this.render();
     this.attachEvents();
+    
+    // Restore existing content if we had it
+    if (existingContent && this.content) {
+      this.content.innerHTML = existingContent;
+      this.container.dataset.value = existingContent;
+    }
     
     return this;
   },
@@ -3738,14 +3763,61 @@ window.EditorModes.advanced = {
   
   // Get current content
   getValue() {
-    return this.content ? this.content.innerHTML : '';
+    // First try to read from this.content (the Advanced mode's managed content div)
+    if (this.content && this.content.parentNode) {
+      return this.content.innerHTML || '';
+    }
+    // Fallback: try to find Advanced content in the DOM directly
+    if (this.surface) {
+      var contentEl = this.surface.querySelector('.advanced-content');
+      if (contentEl) return contentEl.innerHTML || '';
+      // If no .advanced-content found, try reading from surface itself (if it's contenteditable)
+      if (this.surface.classList.contains('ed-advanced') && this.surface.contentEditable === 'true') {
+        return this.surface.innerHTML || '';
+      }
+    }
+    // Last resort: check container
+    if (this.container) {
+      var advPane = this.container.querySelector('.ed-advanced');
+      if (advPane) {
+        var contentEl = advPane.querySelector('.advanced-content');
+        if (contentEl) return contentEl.innerHTML || '';
+        if (advPane.contentEditable === 'true') return advPane.innerHTML || '';
+      }
+    }
+    return '';
   },
   
   // Set content
   setValue(html) {
+    var val = html || '';
+    // Set in managed content element
     if (this.content) {
-      this.content.innerHTML = html || '';
-      this.container.dataset.value = html || '';
+      this.content.innerHTML = val;
+      this.container.dataset.value = val;
+    } else {
+      // Fallback: find Advanced content in DOM and set it
+      if (this.surface) {
+        var contentEl = this.surface.querySelector('.advanced-content');
+        if (contentEl) {
+          contentEl.innerHTML = val;
+        } else if (this.surface.classList.contains('ed-advanced') && this.surface.contentEditable === 'true') {
+          this.surface.innerHTML = val;
+        }
+      }
+      // Also try to find it via container
+      if (this.container) {
+        var advPane = this.container.querySelector('.ed-advanced');
+        if (advPane) {
+          var contentEl = advPane.querySelector('.advanced-content');
+          if (contentEl) {
+            contentEl.innerHTML = val;
+          } else if (advPane.contentEditable === 'true') {
+            advPane.innerHTML = val;
+          }
+        }
+      }
+      if (this.container) this.container.dataset.value = val;
     }
   },
   
