@@ -34,13 +34,59 @@ spl_autoload_register(function ($class) {
 });
 
 function getFieldtypeClass($fieldtypeName) {
-    $fieldtypeName = ucfirst(strtolower($fieldtypeName));
-    $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+    // Handle special cases with proper casing
+    $fieldtypeMap = [
+        'dynamicitems' => 'DynamicItems',
+        'dynamic-items' => 'DynamicItems',
+        'wysiwyg' => 'Wysiwyg',
+        'editor' => 'Editor',
+        'checkbox' => 'Checkbox',
+        'datetime' => 'DateTime',
+        'date' => 'Date',
+        'textarea' => 'Textarea',
+        'number' => 'Number',
+        'text' => 'Text',
+        'select' => 'Select',
+        'media' => 'Media',
+        'tags' => 'Tags',
+        'tag' => 'Tags', // Tag fieldtype uses Tags class
+        'relation' => 'Relation'
+    ];
+    
+    // Normalize fieldtype name
+    $normalized = strtolower($fieldtypeName);
+    
+    // Get proper class name from map
+    if (isset($fieldtypeMap[$normalized])) {
+        $properName = $fieldtypeMap[$normalized];
+    } else {
+        // Default: capitalize first letter
+        $properName = ucfirst($normalized);
+    }
+    
+    $className = "HaruCMS\\FieldTypes\\{$properName}\\{$properName}";
+    
+    // Try loading the file directly if class doesn't exist
+    if (!class_exists($className)) {
+        $fieldtypeDir = __DIR__ . "/../fieldtypes/{$properName}";
+        $fieldtypeFile = "{$fieldtypeDir}/{$properName}.php";
+        
+        if (file_exists($fieldtypeFile)) {
+            require_once $fieldtypeFile;
+        }
+    }
     
     if (class_exists($className)) {
         return $className;
     }
     
+    // Last resort: try alternative naming
+    $altClassName = "HaruCMS\\FieldTypes\\{$properName}\\{$properName}";
+    if (class_exists($altClassName)) {
+        return $altClassName;
+    }
+    
+    error_log("Fieldtype class not found: {$fieldtypeName} (tried {$className})");
     return null;
 }
 

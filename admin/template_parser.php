@@ -26,6 +26,24 @@ class TemplateParser {
     
     private function parseNaturalSyntax($template) {
         $parsed = $template;
+
+        // Support {{ variable }} with dot-notation and optional | raw filter
+        // Example: {{ entry.title }} or {{ field.html | raw }}
+        $parsed = preg_replace_callback(
+            '/\{\{\s*([a-zA-Z0-9_\.]+)\s*(\|\s*raw)?\s*\}\}/',
+            function($matches) {
+                $path = $matches[1];
+                $isRaw = isset($matches[2]) && trim($matches[2]) !== '';
+                $parts = explode('.', $path);
+                $php = '$' . array_shift($parts);
+                foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+                if ($isRaw) {
+                    return '<?= ' . $php . ' ?? "" ?>';
+                }
+                return '<?= htmlspecialchars(' . $php . ' ?? "", ENT_QUOTES, "UTF-8") ?>';
+            },
+            $parsed
+        );
         
         // Handle {from object get property} syntax
         $parsed = preg_replace_callback(
@@ -38,12 +56,23 @@ class TemplateParser {
             $parsed
         );
         
-        // Handle {if condition} ... {endif} syntax
+        // Handle {if condition exist} ... {endif} syntax
+        // Support dot-notation: {if fieldtype_assets.js_files exist}
         $parsed = preg_replace_callback(
             '/\{if\s+([^}]+)\s+exist\}/',
             function($matches) {
-                $condition = $matches[1];
-                return '<?php if (!empty($' . $condition . ')): ?>';
+                $path = trim($matches[1]);
+                // Build PHP variable from dot-notation: a.b.c -> $a['b']['c']
+                $parts = explode('.', $path);
+                $base = '$' . array_shift($parts);
+                $current = $base;
+                $issetChecks = ['isset(' . $base . ')'];
+                foreach ($parts as $p) {
+                    $current .= "['" . $p . "']";
+                    $issetChecks[] = 'isset(' . $current . ')';
+                }
+                $issetExpr = implode(' && ', $issetChecks);
+                return '<?php if (' . $issetExpr . ' && !empty(' . $current . ')): ?>';
             },
             $parsed
         );
@@ -95,12 +124,19 @@ class TemplateParser {
         $parsed = str_replace('{/if}', '<?php endif; ?>', $parsed);
         
         // Handle {for item in array} ... {endfor} syntax
+        // Support dot-notation: {for src in fieldtype_assets.js_files}
         $parsed = preg_replace_callback(
             '/\{for\s+([^\s]+)\s+in\s+([^}]+)\}/',
             function($matches) {
                 $item = $matches[1];
-                $array = $matches[2];
-                return '<?php foreach ($' . $array . ' as $' . $item . '): ?>';
+                $arrayPath = trim($matches[2]);
+                // Convert dot-notation to array access: a.b.c -> $a['b']['c']
+                $parts = explode('.', $arrayPath);
+                $phpArray = '$' . array_shift($parts);
+                foreach ($parts as $p) {
+                    $phpArray .= "['" . $p . "']";
+                }
+                return '<?php foreach (' . $phpArray . ' ?? [] as $' . $item . '): ?>';
             },
             $parsed
         );

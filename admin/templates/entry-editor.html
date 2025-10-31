@@ -1,43 +1,47 @@
 <div class="entry-editor-page">
-    <?php if (!empty($fieldtype_assets['css'])): ?>
-        <style><?= $fieldtype_assets['css'] ?></style>
-    <?php endif; ?>
+{if fieldtype_assets.css exist}
+  <link rel="stylesheet" href="{{ fieldtype_assets.css }}">
+{endif}
     
     <div class="page-header">
-        <h1><?= htmlspecialchars($entry ? 'Edit Entry' : 'New Entry') ?></h1>
+        <h1>{if entry exist}Edit Entry{else}New Entry{endif}</h1>
         <div class="breadcrumbs">
             <a href="/admin/index.php?page=content">Content</a>
             <span class="separator">›</span>
-            <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'Collection') ?></a>
+            <a href="/admin/index.php?page=entries&collection={{ collection.slug }}">{{ collection.title }}</a>
             <span class="separator">›</span>
-            <span class="current"><?= htmlspecialchars($entry ? 'Edit Entry' : 'New Entry') ?></span>
+            <span class="current">{if entry exist}Edit Entry{else}New Entry{endif}</span>
         </div>
     </div>
     
     <form id="entry-form" class="entry-form" method="POST" action="/api/admin_entries.php">
-        <input type="hidden" name="action" value="<?= $entry ? 'update' : 'create' ?>">
-        <input type="hidden" name="collection" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
-        <?php if ($entry): ?>
-            <input type="hidden" name="entry_id" value="<?= htmlspecialchars($entry['id'] ?? '') ?>">
-        <?php endif; ?>
-        <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
+        <input type="hidden" name="action" value="{if entry exist}update{else}create{endif}">
+        <input type="hidden" name="collection" value="{{ collection.slug }}">
+        {if entry.id exist}
+          <input type="hidden" name="entry_id" value="{{ entry.id }}">
+        {endif}
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
         
         <div class="editor-layout">
             <div class="editor-main">
                 <div class="editor-content">
-                    <?php foreach ($fields as $field): ?>
+                    {for field in fields}
                         <div class="field-block">
                             <div class="field-header">
-                                <div class="field-title"><?= htmlspecialchars($field['label']) ?></div>
-                                <?php if (!empty($field['required'])): ?>
-                                    <div class="field-subtitle">Required</div>
-                                <?php endif; ?>
+                                <div class="field-title">{{ field.label }}</div>
+                                {if field.required exist}
+                                  <div class="field-subtitle">Required</div>
+                                {endif}
                             </div>
                             <div class="field-control">
-                                <?= $field['html'] ?>
+                                {if field.html exist}
+                                    {{ field.html | raw }}
+                                {else}
+                                    <input type="text" name="{{ field.name }}" id="field_{{ field.name }}" value="{{ entry[field.name] }}" class="input" {if field.required exist}required{endif}>
+                                {endif}
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    {endfor}
                 </div>
             </div>
             
@@ -47,32 +51,32 @@
                     <div class="form-group">
                         <label for="status">Status</label>
                         <select name="status" id="status" class="input">
-                            <option value="draft" <?= ($entry['status'] ?? 'draft') === 'draft' ? 'selected' : '' ?>>Draft</option>
-                            <option value="published" <?= ($entry['status'] ?? 'draft') === 'published' ? 'selected' : '' ?>>Published</option>
+                            <option value="draft" {if entry.status == 'draft'}selected{endif}>Draft</option>
+                            <option value="published" {if entry.status == 'published'}selected{endif}>Published</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="slug">Slug</label>
-                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="auto-generated">
+                        <input type="text" name="slug" id="slug" class="input" value="{{ entry.slug }}" placeholder="auto-generated">
                     </div>
                     
-                    <?php if ($entry): ?>
+                    {if entry exist}
                         <div class="form-group">
                             <label>Created</label>
-                            <div class="form-text"><?= htmlspecialchars($entry['created_at'] ?? '') ?></div>
+                            <div class="form-text">{{ entry.created_at }}</div>
                         </div>
                         <div class="form-group">
                             <label>Updated</label>
-                            <div class="form-text"><?= htmlspecialchars($entry['updated_at'] ?? '') ?></div>
+                            <div class="form-text">{{ entry.updated_at }}</div>
                         </div>
-                    <?php endif; ?>
+                    {endif}
                     
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">
-                            <?= $entry ? 'Update Entry' : 'Create Entry' ?>
+                            {if entry exist}Update Entry{else}Create Entry{endif}
                         </button>
-                        <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" class="btn btn-secondary">
+                        <a href="/admin/index.php?page=entries&collection={{ collection.slug }}" class="btn btn-secondary">
                             Cancel
                         </a>
                     </div>
@@ -82,11 +86,11 @@
                     <h3>SEO</h3>
                     <div class="form-group">
                         <label for="meta_title">Meta Title</label>
-                        <input type="text" name="meta_title" id="meta_title" class="input" value="<?= htmlspecialchars($entry['meta_title'] ?? '') ?>" placeholder="SEO title">
+                        <input type="text" name="meta_title" id="meta_title" class="input" value="{{ entry.meta_title }}" placeholder="SEO title">
                     </div>
                     <div class="form-group">
                         <label for="meta_description">Meta Description</label>
-                        <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="SEO description"><?= htmlspecialchars($entry['meta_description'] ?? '') ?></textarea>
+                        <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="SEO description">{{ entry.meta_description }}</textarea>
                     </div>
                 </div>
             </div>
@@ -94,61 +98,29 @@
     </form>
 </div>
 
-<script>
-// Auto-generate slug from title
-document.addEventListener('DOMContentLoaded', function() {
-    const titleField = document.getElementById('field_title');
-    const slugField = document.getElementById('slug');
-    
-    if (titleField && slugField) {
-        titleField.addEventListener('input', function() {
-            if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
-                const slug = titleField.value
-                    .toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim('-');
-                slugField.value = slug;
-                slugField.dataset.autoGenerated = 'true';
-            }
-        });
-        
-        slugField.addEventListener('input', function() {
-            slugField.dataset.autoGenerated = 'false';
-        });
-    }
-    
-    // Form submission
-    const form = document.getElementById('entry-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(form);
-            
-            fetch('/api/admin_entries.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    // Redirect to entries list
-                    window.location.href = '/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>';
-                } else {
-                    alert('Error: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error saving entry: ' + error.message);
-            });
-        });
-    }
-});
-</script>
+<!-- Entry Editor JavaScript -->
+<div id="entry-editor-config" data-collection-slug="{{ collection.slug }}"></div>
+<script src="/admin/js/entry-editor.js"></script>
 
-<?php if (!empty($fieldtype_assets['js'])): ?>
-    <script><?= $fieldtype_assets['js'] ?></script>
-<?php endif; ?>
+{if fieldtype_assets.js_files exist}
+  {for src in fieldtype_assets.js_files}
+    <script src="{{ src }}" defer></script>
+  {endfor}
+{endif}
+
+<!-- Direct Editor assets (robust, isolated) -->
+<script src="/fieldtypes/Editor/core/commands.js" defer></script>
+<script src="/fieldtypes/Editor/core/bus.js" defer></script>
+<script src="/fieldtypes/Editor/core/model.js" defer></script>
+<script src="/fieldtypes/Editor/core/ops.js" defer></script>
+<script src="/fieldtypes/Editor/core/selection.js" defer></script>
+<script src="/fieldtypes/Editor/view/grid.js" defer></script>
+<script src="/fieldtypes/Editor/modes/advanced.js" defer></script>
+<script src="/fieldtypes/Editor/modes/wysiwyg.js" defer></script>
+<script src="/fieldtypes/Editor/modes/markdown.js" defer></script>
+<script src="/fieldtypes/Editor/modes/html.js" defer></script>
+<script src="/fieldtypes/Editor/modes/block.js" defer></script>
+<script src="/fieldtypes/Editor/ui/wysiwygToolbar.js" defer></script>
+<script src="/fieldtypes/Editor/ui/markdownToolbar.js" defer></script>
+<script src="/fieldtypes/Editor/ui/blockToolbar.js" defer></script>
+<script src="/fieldtypes/Editor/fieldtype.js" defer></script>
