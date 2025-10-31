@@ -72,8 +72,10 @@ class Editor extends BaseField {
             .'</div>'
         .'</div>';
 
+        // Provide initial value for robust client-side restore
+        $dataInitial = htmlspecialchars($value, ENT_QUOTES | ENT_HTML5);
         return <<<HTML
-        <div class="editor-field" id="{$id}_wrapper" data-name="{$this->name}">
+        <div class="editor-field" id="{$id}_wrapper" data-name="{$this->name}" data-initial-value="{$dataInitial}">
             {$toolbar}
             <div class="ed-surface">
                 <div id="{$id}_advanced" class="ed-pane ed-advanced editor-surface" style="display:block;" {$required}></div>
@@ -101,6 +103,7 @@ class Editor extends BaseField {
     public function getJavaScript(): string {
         // Load split modules (modes) first, then the entry script
         $parts = [];
+        // Load full Advanced stack (self-contained within fieldtype)
         $paths = [
             __DIR__ . '/core/commands.js',
             __DIR__ . '/core/bus.js',

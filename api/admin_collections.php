@@ -130,19 +130,73 @@ try {
                 'id' => $fieldId
             ];
             
-            // Add field-specific settings
-            if ($fieldData['type'] === 'select' && isset($fieldData['options'])) {
+            // Add field-specific settings based on fieldtype
+            if ($fieldData['type'] === 'select') {
                 $options = [];
-                foreach ($fieldData['options'] as $optionData) {
-                    if (!empty($optionData['label']) && !empty($optionData['value'])) {
-                        $options[] = [
-                            'label' => $optionData['label'],
-                            'value' => $optionData['value']
-                        ];
+                
+                // Handle options_text format (label|value per line)
+                if (!empty($fieldData['options_text'])) {
+                    $lines = explode("\n", $fieldData['options_text']);
+                    foreach ($lines as $line) {
+                        $line = trim($line);
+                        if (empty($line)) continue;
+                        
+                        // Parse label|value format
+                        if (strpos($line, '|') !== false) {
+                            list($label, $value) = explode('|', $line, 2);
+                            $options[] = [
+                                'label' => trim($label),
+                                'value' => trim($value)
+                            ];
+                        } else {
+                            // If no pipe, use line as both label and value
+                            $options[] = [
+                                'label' => $line,
+                                'value' => strtolower(preg_replace('/[^a-z0-9]+/', '-', $line))
+                            ];
+                        }
                     }
                 }
+                
+                // Also handle array format from existing data
+                if (isset($fieldData['options']) && is_array($fieldData['options'])) {
+                    foreach ($fieldData['options'] as $optionData) {
+                        if (is_array($optionData) && !empty($optionData['label']) && !empty($optionData['value'])) {
+                            $options[] = [
+                                'label' => $optionData['label'],
+                                'value' => $optionData['value']
+                            ];
+                        }
+                    }
+                }
+                
                 if (!empty($options)) {
                     $field['options'] = $options;
+                }
+            }
+            
+            // Add other fieldtype-specific settings
+            if ($fieldData['type'] === 'number') {
+                if (isset($fieldData['min'])) {
+                    $field['min'] = $fieldData['min'];
+                }
+                if (isset($fieldData['max'])) {
+                    $field['max'] = $fieldData['max'];
+                }
+                if (isset($fieldData['step'])) {
+                    $field['step'] = $fieldData['step'];
+                }
+            }
+            
+            if ($fieldData['type'] === 'text' || $fieldData['type'] === 'textarea') {
+                if (isset($fieldData['placeholder'])) {
+                    $field['placeholder'] = $fieldData['placeholder'];
+                }
+                if (isset($fieldData['minLength'])) {
+                    $field['minLength'] = (int)$fieldData['minLength'];
+                }
+                if (isset($fieldData['maxLength'])) {
+                    $field['maxLength'] = (int)$fieldData['maxLength'];
                 }
             }
             

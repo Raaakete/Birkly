@@ -97,6 +97,20 @@
                                             <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
                                             <span>Required</span>
                                         </label>
+                                        <div class="fieldtype-config" data-field-index="<?= $index ?>" style="<?= ($field['type'] ?? '') === 'select' && !empty($field['options']) ? '' : 'display: none;' ?>">
+                                            <?php if (($field['type'] ?? '') === 'select' && !empty($field['options'])): ?>
+                                                <div class="field-config-section">
+                                                    <label>Options (one per line, format: label|value)</label>
+                                                    <textarea name="fields[<?= $index ?>][options_text]" class="input" rows="4"><?php
+                                                        if (!empty($field['options']) && is_array($field['options'])) {
+                                                            foreach ($field['options'] as $opt) {
+                                                                echo htmlspecialchars(($opt['label'] ?? '') . '|' . ($opt['value'] ?? '')) . "\n";
+                                                            }
+                                                        }
+                                                    ?></textarea>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -192,6 +206,51 @@
     background: var(--error-200);
     color: var(--error-800);
 }
+
+.field-definition-body {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+}
+
+.field-definition-body > .field-label-input,
+.field-definition-body > .checkbox-label {
+    margin: 0;
+}
+
+.fieldtype-config {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.field-config-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field-config-section label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.field-config-section textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-family: monospace;
+    resize: vertical;
+}
+
+.field-config-section small {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
 </style>
 
 <script>
@@ -222,20 +281,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add field functionality
     const addFieldBtn = document.getElementById('add-field-btn');
     const fieldsContainer = document.getElementById('fields-container');
-    let fieldIndex = fieldsContainer.children.length;
+    
+    function getNextFieldIndex() {
+        const existingFields = fieldsContainer.querySelectorAll('.field-definition');
+        let maxIndex = -1;
+        existingFields.forEach(function(field) {
+            const indexAttr = field.getAttribute('data-index');
+            if (indexAttr !== null) {
+                const idx = parseInt(indexAttr, 10);
+                if (!isNaN(idx) && idx > maxIndex) {
+                    maxIndex = idx;
+                }
+            }
+        });
+        return maxIndex + 1;
+    }
     
     addFieldBtn.addEventListener('click', function() {
+        const fieldIndex = getNextFieldIndex();
         const fieldDefinition = document.createElement('div');
         fieldDefinition.className = 'field-definition';
         fieldDefinition.setAttribute('data-index', fieldIndex);
         
+        // Get available fieldtypes from PHP
+        const availableFieldtypes = <?= json_encode($fieldtypes ?? []) ?>;
+        
+        let fieldtypeOptions = '';
+        availableFieldtypes.forEach(function(ft) {
+            fieldtypeOptions += `<option value="${ft.name}">${ft.label}</option>`;
+        });
+        
         fieldDefinition.innerHTML = `
             <div class="field-definition-header">
-                <input type="text" name="fields[${fieldIndex}][name]" placeholder="Field name" class="field-name-input">
-                <select name="fields[${fieldIndex}][type]" class="field-type-select">
-                    <?php foreach ($fieldtypes as $fieldtype): ?>
-                        <option value="<?= htmlspecialchars($fieldtype['name']) ?>"><?= htmlspecialchars($fieldtype['label']) ?></option>
-                    <?php endforeach; ?>
+                <input type="text" name="fields[${fieldIndex}][name]" placeholder="Field name" class="field-name-input" required>
+                <select name="fields[${fieldIndex}][type]" class="field-type-select" required>
+                    <option value="">Select type...</option>
+                    ${fieldtypeOptions}
                 </select>
                 <button type="button" class="btn-icon remove-field-btn" title="Remove field">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -250,11 +331,58 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="checkbox" name="fields[${fieldIndex}][required]" value="1">
                     <span>Required</span>
                 </label>
+                <div class="fieldtype-config" data-field-index="${fieldIndex}" style="display: none;">
+                    <!-- Fieldtype-specific configuration will be loaded here -->
+                </div>
             </div>
         `;
         
         fieldsContainer.appendChild(fieldDefinition);
-        fieldIndex++;
+        
+        // Add listener for fieldtype change to load configuration UI
+        const typeSelect = fieldDefinition.querySelector('.field-type-select');
+        typeSelect.addEventListener('change', function() {
+            loadFieldtypeConfig(fieldIndex, this.value);
+        });
+    });
+    
+    // Load fieldtype-specific configuration UI
+    function loadFieldtypeConfig(fieldIndex, fieldtype) {
+        const configContainer = document.querySelector(`[data-field-index="${fieldIndex}"]`);
+        if (!configContainer || !fieldtype) {
+            return;
+        }
+        
+        // For now, show/hide based on fieldtype
+        // In the future, this can load specific config UI via AJAX
+        if (fieldtype === 'select') {
+            configContainer.style.display = 'block';
+            configContainer.innerHTML = `
+                <div class="field-config-section">
+                    <label>Options (one per line, format: label|value)</label>
+                    <textarea name="fields[${fieldIndex}][options_text]" class="input" rows="4" placeholder="Option 1|value1&#10;Option 2|value2"></textarea>
+                    <small>Or leave empty to configure later</small>
+                </div>
+            `;
+        } else {
+            configContainer.style.display = 'none';
+            configContainer.innerHTML = '';
+        }
+    }
+    
+    // Attach fieldtype change listeners to existing fields
+    document.querySelectorAll('.field-type-select').forEach(function(select) {
+        const fieldDefinition = select.closest('.field-definition');
+        if (fieldDefinition) {
+            const fieldIndex = fieldDefinition.getAttribute('data-index');
+            select.addEventListener('change', function() {
+                loadFieldtypeConfig(fieldIndex, this.value);
+            });
+            // Load config if fieldtype is already selected
+            if (select.value) {
+                loadFieldtypeConfig(fieldIndex, select.value);
+            }
+        }
     });
     
     // Remove field functionality

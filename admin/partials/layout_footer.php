@@ -3,6 +3,7 @@
 
     <script src="/admin/js/utils.js"></script>
     <script src="/admin/js/theme.js"></script>
+    <script src="/admin/js/fieldtypes-shim.js"></script>
     <script src="/admin/js/media-modal.js?v=20250804-15"></script>
     
     <!-- Logout functionality -->
