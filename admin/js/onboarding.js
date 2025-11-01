@@ -4,8 +4,9 @@
  */
 
 const onboarding = {
-    currentStep: 1,
+    currentStep: 0,
     maxSteps: 5,
+    needsFirstUser: false,
     selectedDemoContent: null,
     selectedDemoTemplate: null,
     siteInfo: {},
@@ -16,14 +17,45 @@ const onboarding = {
             return;
         }
         
-        // Initialize first step
-        this.showStep(1);
+        // Check if we need to create first user
+        this.checkFirstUser();
         
         // Setup form handlers
         this.setupForms();
     },
     
+    async checkFirstUser() {
+        try {
+            const response = await fetch('/api/onboarding.php?action=status');
+            const data = await response.json();
+            
+            if (data.status === 'ok' && data.data.needs_first_user) {
+                this.needsFirstUser = true;
+                this.maxSteps = 6; // Add one step for first user
+                this.currentStep = 0;
+                this.showStep(0); // Show first user step
+            } else {
+                this.currentStep = 1;
+                this.showStep(1); // Show welcome step
+            }
+        } catch (error) {
+            console.error('Error checking first user:', error);
+            // Default to step 1 if check fails
+            this.currentStep = 1;
+            this.showStep(1);
+        }
+    },
+    
     setupForms() {
+        // First user form
+        const firstUserForm = document.getElementById('first-user-form');
+        if (firstUserForm) {
+            firstUserForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.createFirstUser();
+            });
+        }
+        
         // Site info form
         const siteInfoForm = document.getElementById('site-info-form');
         if (siteInfoForm) {
@@ -31,6 +63,69 @@ const onboarding = {
                 e.preventDefault();
                 this.saveSiteInfo();
             });
+        }
+    },
+    
+    async createFirstUser() {
+        const form = document.getElementById('first-user-form');
+        const errorDiv = document.getElementById('first-user-error');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        const email = document.getElementById('first-user-email').value.trim();
+        const password = document.getElementById('first-user-password').value;
+        const passwordConfirm = document.getElementById('first-user-password-confirm').value;
+        
+        // Clear previous errors
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+        
+        // Validate passwords match
+        if (password !== passwordConfirm) {
+            errorDiv.textContent = 'Passwords do not match';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        // Validate password length
+        if (password.length < 8) {
+            errorDiv.textContent = 'Password must be at least 8 characters';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Account...';
+        
+        try {
+            const response = await fetch('/api/onboarding.php?action=create_first_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'ok') {
+                // User created and logged in - reload to continue onboarding
+                window.location.reload();
+            } else {
+                errorDiv.textContent = data.message || 'Failed to create account';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Admin Account';
+            }
+        } catch (error) {
+            console.error('Error creating first user:', error);
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Admin Account';
         }
     },
     
@@ -63,6 +158,7 @@ const onboarding = {
     
     getStepName(step) {
         const steps = {
+            0: 'first-user',
             1: 'welcome',
             2: 'site-info',
             3: 'demo-content',
