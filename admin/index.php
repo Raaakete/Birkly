@@ -2,6 +2,9 @@
 // Simple query-based admin router (MPA)
 // Usage: /admin/index.php?page=dashboard
 
+// Set Content-Type header FIRST to ensure HTML is rendered correctly
+header('Content-Type: text/html; charset=utf-8');
+
 // Include authentication middleware FIRST
 require_once __DIR__ . '/auth_middleware.php';
 
