@@ -110,15 +110,18 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     
     header('Content-Type: application/json');
     
-    // Check authentication
-    if (!isset($_SESSION['user'])) {
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    
+    // Allow 'status' and 'create_first_user' actions without authentication
+    $allowedWithoutAuth = ['status', 'create_first_user'];
+    
+    // Check authentication (unless action is allowed without auth)
+    if (!in_array($action, $allowedWithoutAuth) && !isset($_SESSION['user'])) {
         http_response_code(401);
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
         exit;
     }
-    
-    $action = $_GET['action'] ?? $_POST['action'] ?? '';
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
     switch ($action) {
     case 'status':
