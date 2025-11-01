@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaruCMS - Getting Started</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .intro {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 4px;
+        }
+
+        .intro h2 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .path-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .path-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .path-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .path-card h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .path-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .instructions {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .instructions.active {
+            display: block;
+        }
+
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .step {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .step h4 {
+            display: inline-block;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .step pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .step code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9rem;
+            color: #d63384;
+        }
+
+        .step p {
+            margin-top: 0.5rem;
+            color: #666;
+        }
+
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .note strong {
+            color: #856404;
+        }
+
+        .success-box {
+            background: #d1e7dd;
+            border: 1px solid #badbcc;
+            border-left: 4px solid #198754;
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .success-box h3 {
+            color: #198754;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .credentials {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-family: monospace;
+        }
+
+        .credentials strong {
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .path-selector {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Welcome to HaruCMS</h1>
+            <p>Your flat-file, zero-dependency CMS is ready to go!</p>
+        </div>
+
+        <div class="content">
+            <div class="intro">
+                <h2>👋 First Steps</h2>
+                <p>HaruCMS is a flat-file CMS that works without a database. Choose your setup path below to get started. Once your server is running, you'll be guided through the onboarding process to set up your site.</p>
+            </div>
+
+            <div class="path-selector">
+                <div class="path-card" onclick="showInstructions('local')">
+                    <h3>💻 Local Development</h3>
+                    <p>Perfect for testing, development, or running on your own computer.</p>
+                </div>
+                <div class="path-card" onclick="showInstructions('server')">
+                    <h3>🌐 Web Server</h3>
+                    <p>Deploy to a live web server (Apache, Nginx, or shared hosting).</p>
+                </div>
+            </div>
+
+            <!-- Local Development Instructions -->
+            <div id="local-instructions" class="instructions">
+                <h3>📋 Local Development Setup</h3>
+
+                <div class="step">
+                    <h4><span class="step-number">1</span>Check Requirements</h4>
+                    <p>Make sure you have <strong>PHP 7.4 or higher</strong> installed. Check by running:</p>
+                    <pre>php -v</pre>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-number">2</span>Start the Server</h4>
+                    <p>Open a terminal/command prompt in this directory and run one of these options:</p>
+                    <p><strong>Option A - Using the provided script (recommended):</strong></p>
+                    <pre>chmod +x ./start-server.sh
+./start-server.sh</pre>
+                    <p><strong>Option B - Using PHP built-in server:</strong></p>
+                    <pre>php -S localhost:8001</pre>
+                    <p>The server will start on <code>http://localhost:8001</code> (or the port you specified).</p>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-number">3</span>Access the Admin Panel</h4>
+                    <p>Open your browser and navigate to:</p>
+                    <pre><a href="http://localhost:8001/admin" target="_blank">http://localhost:8001/admin</a></pre>
+                </div>
+
+                <div class="note">
+                    <strong>💡 Tip:</strong> If port 8001 is already in use, you can specify a different port:
+                    <pre>./start-server.sh -p 8080</pre>
+                    or
+                    <pre>php -S localhost:8080</pre>
+                </div>
+
+                <div class="success-box">
+                    <h3>✅ Server Running?</h3>
+                    <p>Once you see the admin login page, you're ready to continue!</p>
+                    <a href="/admin" class="btn" onclick="window.open('/admin', '_blank'); return false;">Go to Admin Panel →</a>
+                </div>
+            </div>
+
+            <!-- Web Server Instructions -->
+            <div id="server-instructions" class="instructions">
+                <h3>📋 Web Server Deployment</h3>
+
+                <div class="step">
+                    <h4><span class="step-number">1</span>Upload Files</h4>
+                    <p>Upload all HaruCMS files to your web server using FTP, SFTP, or your hosting provider's file manager.</p>
+                    <p><strong>Important:</strong> Upload all files and folders, including the <code>admin/</code>, <code>api/</code>, <code>core/</code>, and all other directories.</p>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-number">2</span>Configure Your Server</h4>
+                    <p><strong>For Apache:</strong></p>
+                    <p>The included <code>.htaccess</code> file should work automatically. Make sure mod_rewrite is enabled.</p>
+                    
+                    <p><strong>For Nginx:</strong></p>
+                    <p>Use the provided <code>nginx.conf.example</code> as a reference. Key points:</p>
+                    <pre>server {
+    listen 80;
+    server_name yourdomain.com;
+    root /path/to/harucms;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}</pre>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-number">3</span>Set Permissions</h4>
+                    <p>Make sure these directories are writable by the web server:</p>
+                    <pre>chmod -R 755 content/ media/ users/ settings/ logs/</pre>
+                    <p>On some shared hosting, you may need to set permissions via your hosting control panel.</p>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-number">4</span>Access the Admin Panel</h4>
+                    <p>Open your browser and navigate to:</p>
+                    <pre>https://yourdomain.com/admin</pre>
+                    <p>Replace <code>yourdomain.com</code> with your actual domain name.</p>
+                </div>
+
+                <div class="note">
+                    <strong>💡 Tip:</strong> For shared hosting, most providers support PHP out of the box. Just upload the files and visit your domain's <code>/admin</code> path.
+                </div>
+
+                <div class="success-box">
+                    <h3>✅ Server Configured?</h3>
+                    <p>Once you can access the admin login page, you're ready to continue!</p>
+                    <a href="/admin" class="btn" onclick="window.open('/admin', '_blank'); return false;">Go to Admin Panel →</a>
+                </div>
+            </div>
+
+            <!-- Default Credentials -->
+            <div class="note" style="margin-top: 2rem;">
+                <strong>🔐 Default Admin Credentials:</strong>
+                <div class="credentials">
+                    <strong>Email:</strong> admin@localhost<br>
+                    <strong>Password:</strong> admin
+                </div>
+                <p style="margin-top: 0.5rem;"><strong>Important:</strong> Change the password immediately after your first login for security!</p>
+            </div>
+
+            <!-- Next Steps -->
+            <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e0e0e0;">
+                <h3 style="color: #667eea; margin-bottom: 1rem;">🎯 What's Next?</h3>
+                <p>Once you've accessed the admin panel:</p>
+                <ol style="margin-left: 1.5rem; margin-top: 0.5rem; color: #666;">
+                    <li>Log in with the default credentials above</li>
+                    <li>You'll be guided through the <strong>onboarding wizard</strong> to set up your site</li>
+                    <li>Choose demo content and templates (optional)</li>
+                    <li>Start creating your first collection and entries</li>
+                </ol>
+            </div>
+
+            <!-- Support -->
+            <div style="margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 6px; text-align: center;">
+                <h4 style="color: #667eea; margin-bottom: 0.5rem;">Need Help?</h4>
+                <p style="color: #666;">Check the <code>README.md</code> file or visit the project documentation on GitHub.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showInstructions(path) {
+            // Hide all instructions
+            document.querySelectorAll('.instructions').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show selected instructions
+            const instructions = document.getElementById(path + '-instructions');
+            if (instructions) {
+                instructions.classList.add('active');
+                
+                // Update card selection
+                document.querySelectorAll('.path-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                event.currentTarget.classList.add('selected');
+
+                // Scroll to instructions
+                instructions.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Auto-detect if running locally and show local instructions
+        window.addEventListener('load', () => {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                showInstructions('local');
+            }
+        });
+    </script>
+</body>
+</html>
+
