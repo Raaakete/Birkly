@@ -281,12 +281,10 @@
                     <p><strong>Option A - Using the provided script (recommended):</strong></p>
                     <pre>chmod +x ./start-server.sh
 ./start-server.sh</pre>
-                    <p><strong>Option B - Using PHP built-in server:</strong></p>
-                    <pre>php -S localhost:8080</pre>
+                    <p><strong>Option B - Using PHP built-in server directly (not recommended):</strong></p>
+                    <pre>php -S localhost:8080 -t . server-router.php</pre>
+                    <p><strong>Important:</strong> Always use <code>server-router.php</code> when running PHP server directly, or use the <code>start-server.sh</code> script (recommended) which handles this automatically.</p>
                     <p>The server will start on <code>http://localhost:8080</code> (or the port you specified).</p>
-                    <p><strong>Important:</strong> Use the <code>start-server.sh</code> script instead to ensure PHP files execute correctly:</p>
-                    <pre>chmod +x ./start-server.sh
-./start-server.sh</pre>
                 </div>
 
                 <div class="step">
