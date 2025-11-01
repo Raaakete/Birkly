@@ -3,7 +3,10 @@
 // Usage: /admin/index.php?page=dashboard
 
 // Set Content-Type header FIRST to ensure HTML is rendered correctly
-header('Content-Type: text/html; charset=utf-8');
+// Must be before any output, including whitespace
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=utf-8');
+}
 
 // Include authentication middleware FIRST
 require_once __DIR__ . '/auth_middleware.php';
