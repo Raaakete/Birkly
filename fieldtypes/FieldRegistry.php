@@ -45,6 +45,9 @@ class FieldRegistry {
         self::register('checkbox', '\HaruCMS\FieldTypes\Checkbox\Checkbox');
         self::register('select', '\HaruCMS\FieldTypes\Select\Select');
         self::register('media', '\HaruCMS\FieldTypes\Media\Media');
+        self::register('file', '\HaruCMS\FieldTypes\File\File');
+        self::register('gallery', '\HaruCMS\FieldTypes\Gallery\Gallery');
+        self::register('map', '\HaruCMS\FieldTypes\Map\Map');
         self::register('wysiwyg', '\HaruCMS\FieldTypes\Wysiwyg\Wysiwyg');
         self::register('dynamicitems', '\HaruCMS\FieldTypes\DynamicItems\DynamicItems');
         self::register('tags', '\HaruCMS\FieldTypes\Tags\Tags');

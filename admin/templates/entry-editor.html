@@ -14,8 +14,8 @@
         </div>
     </div>
     
-    <form id="entry-form" class="entry-form" method="POST" action="/api/admin_entries.php">
-        <input type="hidden" name="action" value="{if entry exist}update{else}create{endif}">
+    <form id="entry-form" class="entry-form" method="POST" action="/api/admin_entries.php?action=save" aria-label="{if entry exist}Edit entry form{else}Create new entry form{endif}">
+        <!-- Action is passed via URL query string, not form field -->
         <input type="hidden" name="collection" value="{{ collection.slug }}">
         {if entry.id exist}
           <input type="hidden" name="entry_id" value="{{ entry.id }}">
@@ -53,7 +53,74 @@
                         <select name="status" id="status" class="input">
                             <option value="draft" {if entry.status == 'draft'}selected{endif}>Draft</option>
                             <option value="published" {if entry.status == 'published'}selected{endif}>Published</option>
+                            <option value="scheduled" {if entry.status == 'scheduled'}selected{endif}>Scheduled</option>
+                            <option value="pending_review" {if entry.status == 'pending_review'}selected{endif}>Pending Review</option>
+                            <option value="approved" {if entry.status == 'approved'}selected{endif}>Approved</option>
+                            <option value="rejected" {if entry.status == 'rejected'}selected{endif}>Rejected</option>
                         </select>
+                    </div>
+                    
+                    <div class="form-group" id="reviewer-group" style="display: none;">
+                        <label for="reviewer">Assign Reviewer</label>
+                        <select name="reviewer" id="reviewer" class="input">
+                            <option value="">No reviewer assigned</option>
+                            <!-- Reviewers will be populated via JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="review-notes-group" style="display: none;">
+                        <label for="review_notes">Review Notes</label>
+                        <textarea name="review_notes" id="review_notes" class="input" rows="3" placeholder="Add review notes...">{{ entry.review_notes }}</textarea>
+                    </div>
+                    
+                    {if entry.status == 'pending_review' || entry.status == 'approved' || entry.status == 'rejected'}
+                    <div class="form-group review-actions" id="review-actions">
+                        <label>Review Actions</label>
+                        <div class="action-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;" role="group" aria-label="Review actions">
+                            <button type="button" class="btn btn-success btn-sm" id="approve-entry" aria-label="Approve this entry">
+                                Approve
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" id="reject-entry" aria-label="Reject this entry">
+                                Reject
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="request-changes" aria-label="Request changes to this entry">
+                                Request Changes
+                            </button>
+                        </div>
+                    </div>
+                    {endif}
+                    
+                    {if entry.reviewer exist}
+                    <div class="form-group">
+                        <label>Assigned Reviewer</label>
+                        <div class="form-text">{{ entry.reviewer }}</div>
+                    </div>
+                    {endif}
+                    
+                    {if entry.reviewed_at exist}
+                    <div class="form-group">
+                        <label>Reviewed</label>
+                        <div class="form-text">{{ entry.reviewed_at }}</div>
+                    </div>
+                    {endif}
+                    
+                    {if entry.reviewed_by exist}
+                    <div class="form-group">
+                        <label>Reviewed By</label>
+                        <div class="form-text">{{ entry.reviewed_by }}</div>
+                    </div>
+                    {endif}
+                    
+                    <div class="form-group" id="publish-schedule-group" style="display: none;">
+                        <label for="published_at">Schedule Publish Date</label>
+                        <input type="datetime-local" name="published_at" id="published_at" class="input" value="" aria-describedby="published_at_help" {if entry.published_at exist}data-value="{{ entry.published_at }}" {endif}>
+                        <small class="form-text" id="published_at_help">Leave empty to publish immediately</small>
+                    </div>
+                    
+                    <div class="form-group" id="expire-schedule-group">
+                        <label for="expires_at">Schedule Unpublish Date</label>
+                        <input type="datetime-local" name="expires_at" id="expires_at" class="input" value="" aria-describedby="expires_at_help" {if entry.expires_at exist}data-value="{{ entry.expires_at }}" {endif}>
+                        <small class="form-text" id="expires_at_help">Optional: automatically unpublish on this date</small>
                     </div>
                     
                     <div class="form-group">
@@ -69,6 +136,13 @@
                         <div class="form-group">
                             <label>Updated</label>
                             <div class="form-text">{{ entry.updated_at }}</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Version</label>
+                            <div class="form-text">
+                                v{{ entry.version || 1 }}
+                                <a href="#" id="view-versions" class="link" style="margin-left: 8px;" aria-label="View version history for this entry">View History</a>
+                            </div>
                         </div>
                     {endif}
                     

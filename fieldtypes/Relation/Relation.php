@@ -6,11 +6,13 @@ use HaruCMS\FieldTypes\BaseField;
 class Relation extends BaseField {
     protected $collection;
     protected $multiple;
+    protected $options;
     
     public function __construct(array $config) {
         parent::__construct($config);
         $this->collection = $config['collection'] ?? '';
         $this->multiple = $config['multiple'] ?? false;
+        $this->options = $config['options'] ?? [];
     }
     
     public function getType(): string { return 'relation'; }
@@ -36,8 +38,18 @@ class Relation extends BaseField {
         $isMultiple = $this->multiple;
         $selectText = $isMultiple ? 'Add Relations' : 'Select Entry';
         
+        // Get filter and display options
+        $filterOptions = json_encode($this->options['filters'] ?? []);
+        $displayOptions = json_encode($this->options['display'] ?? ['mode' => 'list']);
+        $sortOptions = json_encode($this->options['sort'] ?? []);
+        $limit = $this->options['limit'] ?? 0;
+        
         return <<<HTML
-        <div class="relation-field" id="relation_field_{$this->name}">
+        <div class="relation-field" id="relation_field_{$this->name}" 
+             data-filters='{$filterOptions}' 
+             data-display='{$displayOptions}' 
+             data-sort='{$sortOptions}' 
+             data-limit="{$limit}">
             <div class="relation-list" id="relation_list_{$this->name}">
                 <div class="text-muted">No relations selected</div>
             </div>
@@ -420,6 +432,34 @@ class Relation extends BaseField {
             'multiple' => [
                 'label' => 'Allow Multiple',
                 'type' => 'checkbox',
+                'required' => false
+            ],
+            'filters' => [
+                'label' => 'Filter Options',
+                'type' => 'json',
+                'description' => 'JSON object with filter options (e.g., {"status": "published", "date_from": "2024-01-01"})',
+                'required' => false
+            ],
+            'display' => [
+                'label' => 'Display Mode',
+                'type' => 'select',
+                'options' => [
+                    'list' => 'List',
+                    'grid' => 'Grid',
+                    'compact' => 'Compact'
+                ],
+                'required' => false
+            ],
+            'sort' => [
+                'label' => 'Sort Options',
+                'type' => 'json',
+                'description' => 'JSON object with sort options (e.g., {"field": "created_at", "direction": "desc"})',
+                'required' => false
+            ],
+            'limit' => [
+                'label' => 'Limit Results',
+                'type' => 'number',
+                'description' => 'Maximum number of entries to show (0 = unlimited)',
                 'required' => false
             ]
         ];

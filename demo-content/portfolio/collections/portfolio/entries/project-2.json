@@ -1,0 +1,13 @@
+{
+  "id": "demo-project-2",
+  "title": "Mobile Banking App",
+  "slug": "mobile-banking-app",
+  "description": "A secure mobile banking application with biometric authentication, transaction history, and budget tracking features.",
+  "client": "Finance Solutions",
+  "project_url": "https://example.com",
+  "tags": ["mobile", "ios", "android", "fintech"],
+  "status": "published",
+  "created_at": "2025-01-02T10:00:00+00:00",
+  "updated_at": "2025-01-02T10:00:00+00:00"
+}
+

@@ -45,6 +45,330 @@
     }
 
     /**
+     * Initialize scheduled publishing UI
+     */
+    function initScheduledPublishing() {
+        const statusSelect = document.getElementById('status');
+        const publishScheduleGroup = document.getElementById('publish-schedule-group');
+        const publishAtInput = document.getElementById('published_at');
+        const expiresAtInput = document.getElementById('expires_at');
+        
+        if (!statusSelect || !publishScheduleGroup) return;
+        
+        function toggleScheduleFields() {
+            const status = statusSelect.value;
+            if (status === 'scheduled') {
+                publishScheduleGroup.style.display = 'block';
+            } else {
+                publishScheduleGroup.style.display = 'none';
+            }
+        }
+        
+        // Initial state
+        toggleScheduleFields();
+        
+        // Update on status change
+        statusSelect.addEventListener('change', toggleScheduleFields);
+        
+        // Format datetime-local value from ISO string if needed
+        function formatDateTimeForInput(isoString) {
+            if (!isoString) return '';
+            try {
+                const dt = new Date(isoString);
+                if (isNaN(dt.getTime())) return '';
+                const year = dt.getFullYear();
+                const month = String(dt.getMonth() + 1).padStart(2, '0');
+                const day = String(dt.getDate()).padStart(2, '0');
+                const hours = String(dt.getHours()).padStart(2, '0');
+                const minutes = String(dt.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            } catch (e) {
+                return '';
+            }
+        }
+        
+        // Try to get values from entry data (set via data attributes)
+        const entryIdInput = document.querySelector('input[name="entry_id"]');
+        if (entryIdInput && publishAtInput) {
+            // Entry exists - get value from data attribute
+            const publishedAtValue = publishAtInput.getAttribute('data-value') || '';
+            if (publishedAtValue) {
+                publishAtInput.value = formatDateTimeForInput(publishedAtValue);
+            }
+        }
+        
+        if (expiresAtInput) {
+            const expiresAtValue = expiresAtInput.getAttribute('data-value') || '';
+            if (expiresAtValue) {
+                expiresAtInput.value = formatDateTimeForInput(expiresAtValue);
+            }
+        }
+        
+        // Convert datetime-local to ISO format before submission
+        const form = document.getElementById('entry-form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (publishAtInput && publishAtInput.value) {
+                    // Convert datetime-local to ISO format
+                    const dt = new Date(publishAtInput.value);
+                    publishAtInput.value = dt.toISOString();
+                }
+                if (expiresAtInput && expiresAtInput.value) {
+                    const dt = new Date(expiresAtInput.value);
+                    expiresAtInput.value = dt.toISOString();
+                }
+            });
+        }
+    }
+
+    /**
+     * Initialize content approval workflow
+     */
+    function initApprovalWorkflow() {
+        const statusSelect = document.getElementById('status');
+        const reviewerGroup = document.getElementById('reviewer-group');
+        const reviewNotesGroup = document.getElementById('review-notes-group');
+        const approveBtn = document.getElementById('approve-entry');
+        const rejectBtn = document.getElementById('reject-entry');
+        const requestChangesBtn = document.getElementById('request-changes');
+        
+        if (!statusSelect) return;
+        
+        function toggleReviewFields() {
+            const status = statusSelect.value;
+            const isReviewStatus = ['pending_review', 'approved', 'rejected'].includes(status);
+            
+            if (reviewerGroup) {
+                reviewerGroup.style.display = isReviewStatus ? 'block' : 'none';
+            }
+            if (reviewNotesGroup) {
+                reviewNotesGroup.style.display = isReviewStatus ? 'block' : 'none';
+            }
+        }
+        
+        // Initial state
+        toggleReviewFields();
+        
+        // Update on status change
+        statusSelect.addEventListener('change', toggleReviewFields);
+        
+        // Load reviewers
+        loadReviewers();
+        
+        // Setup review action buttons
+        if (approveBtn) {
+            approveBtn.addEventListener('click', function() {
+                submitReviewAction('approved');
+            });
+        }
+        
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', function() {
+                const notes = prompt('Enter rejection reason:');
+                if (notes !== null) {
+                    submitReviewAction('rejected', notes);
+                }
+            });
+        }
+        
+        if (requestChangesBtn) {
+            requestChangesBtn.addEventListener('click', function() {
+                const notes = prompt('Enter change request details:');
+                if (notes !== null) {
+                    submitReviewAction('draft', notes);
+                }
+            });
+        }
+    }
+    
+    function loadReviewers() {
+        const reviewerSelect = document.getElementById('reviewer');
+        if (!reviewerSelect) return;
+        
+        // Fetch users with admin or editor role
+        fetch('/api/users.php?action=list_users')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.data && data.data.users) {
+                    reviewerSelect.innerHTML = '<option value="">No reviewer assigned</option>';
+                    data.data.users.forEach(user => {
+                        if (user.role === 'admin' || user.role === 'editor') {
+                            const option = document.createElement('option');
+                            option.value = user.email || user.id;
+                            option.textContent = user.email || user.name || 'User';
+                            reviewerSelect.appendChild(option);
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading reviewers:', error);
+            });
+    }
+    
+    function submitReviewAction(action, notes = '') {
+        const form = document.getElementById('entry-form');
+        if (!form) return;
+        
+        const entryId = document.querySelector('input[name="entry_id"]')?.value;
+        const collectionSlug = form.querySelector('input[name="collection"]')?.value;
+        const reviewer = document.getElementById('reviewer')?.value || '';
+        
+        if (!entryId || !collectionSlug) {
+            alert('Cannot submit review: missing entry or collection information');
+            return;
+        }
+        
+        const reviewData = {
+            collection: collectionSlug,
+            entry_id: entryId,
+            action: action,
+            reviewer: reviewer,
+            notes: notes
+        };
+        
+        fetch('/api/admin_entries.php?action=review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reviewData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                alert('Review action submitted successfully. Reloading page...');
+                window.location.reload();
+            } else {
+                alert('Error submitting review: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Review error:', error);
+            alert('Error submitting review: ' + error.message);
+        });
+    }
+
+    /**
+     * Initialize version history viewer
+     */
+    function initVersionHistory() {
+        const viewVersionsLink = document.getElementById('view-versions');
+        if (!viewVersionsLink) return;
+        
+        viewVersionsLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showVersionHistory();
+        });
+    }
+    
+    function showVersionHistory() {
+        const form = document.getElementById('entry-form');
+        if (!form) return;
+        
+        const entryId = document.querySelector('input[name="entry_id"]')?.value;
+        const collectionSlug = form.querySelector('input[name="collection"]')?.value;
+        
+        if (!entryId || !collectionSlug) {
+            alert('Cannot view history: missing entry or collection information');
+            return;
+        }
+        
+        // Fetch version history
+        fetch(`/api/admin_entries.php?action=versions&collection=${encodeURIComponent(collectionSlug)}&entry_id=${encodeURIComponent(entryId)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.versions) {
+                    renderVersionModal(data.versions, collectionSlug, entryId);
+                } else {
+                    alert('Error loading version history: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Version history error:', error);
+                alert('Error loading version history: ' + error.message);
+            });
+    }
+    
+    function renderVersionModal(versions, collectionSlug, entryId) {
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+        modalContent.style.maxWidth = '800px';
+        
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <h2>Version History</h2>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="versions-list">
+                    ${versions.map((version, index) => `
+                        <div class="version-item" style="padding: 12px; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <strong>Version ${version.version || (versions.length - index)}</strong>
+                                    <div style="font-size: 0.875em; color: #666; margin-top: 4px;">
+                                        ${new Date(version.created_at).toLocaleString()}
+                                        ${version.author ? ` by ${version.author}` : ''}
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm" onclick="window.restoreVersion('${collectionSlug}', '${entryId}', '${version.version}')">
+                                        Restore
+                                    </button>
+                                    ${index === 0 ? '<span style="margin-left: 8px; color: #0a0;">Current</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        // Close on backdrop click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+    
+    window.restoreVersion = function(collectionSlug, entryId, version) {
+        if (!confirm('Are you sure you want to restore this version? Current version will be saved as a new version.')) {
+            return;
+        }
+        
+        fetch('/api/admin_entries.php?action=restore_version', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                collection: collectionSlug,
+                entry_id: entryId,
+                version: version
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                alert('Version restored successfully. Reloading page...');
+                window.location.reload();
+            } else {
+                alert('Error restoring version: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Restore error:', error);
+            alert('Error restoring version: ' + error.message);
+        });
+    }
+
+    /**
      * Sync editor content to hidden input before form submission
      */
     function syncEditorContent(editorWrapper) {
@@ -168,6 +492,10 @@
             }
 
             const formData = new FormData(form);
+            
+            // Remove any 'action' field from FormData - we use URL query parameter instead
+            // This prevents conflicts between POST body and GET parameter
+            formData.delete('action');
             
             // Call the API explicitly with action=save to avoid server-side routing ambiguity
             fetch('/api/admin_entries.php?action=save', {
@@ -470,6 +798,9 @@
         initFormSubmission();
         initTagsEnterKeyPrevention();
         initFieldtypes();
+        initScheduledPublishing();
+        initVersionHistory();
+        initApprovalWorkflow();
     }
 
     // Initialize when DOM is ready

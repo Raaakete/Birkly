@@ -36,6 +36,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $loginResult = attemptLogin($email, $password);
         
         if ($loginResult['success']) {
+            // Check if 2FA is enabled for this user
+            require_once __DIR__ . '/../api/2fa.php';
+            $usersDir = __DIR__ . '/../data/users';
+            $userFile = $usersDir . '/' . sanitizeFilename($email) . '.json';
+            
+            if (file_exists($userFile)) {
+                $userData = json_decode(file_get_contents($userFile), true);
+                if (isset($userData['2fa']['enabled']) && $userData['2fa']['enabled']) {
+                    // Store email in session for 2FA verification
+                    $_SESSION['2fa_pending'] = $email;
+                    // Don't set user session yet - require 2FA verification first
+                    unset($_SESSION['user']);
+                    header('Location: verify-2fa.php');
+                    exit;
+                }
+            }
+            
+            // No 2FA - proceed with normal login
             // Redirect to dashboard or original page
             $redirect = $_GET['redirect'] ?? 'index.php?page=dashboard';
             header('Location: ' . $redirect);
@@ -71,6 +89,11 @@ function attemptLogin($email, $password) {
     $_SESSION['last_activity'] = time();
     
     return ['success' => true, 'message' => 'Login successful.'];
+}
+
+// Helper function to sanitize filename (duplicate from 2fa.php - should be in common file)
+function sanitizeFilename($filename) {
+    return preg_replace('/[^a-z0-9._-]/i', '_', $filename);
 }
 ?>
 <!DOCTYPE html>

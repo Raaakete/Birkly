@@ -452,6 +452,27 @@ window.HaruFieldtypes['relation'] = {
     const grid = document.getElementById('relationPickerGrid');
     grid.innerHTML = '<div class="text-muted">Loading entries...</div>';
     
+    // Get filter options from field config
+    const fieldElement = document.querySelector(`[data-field="${relationPickerField}"]`);
+    let filters = {};
+    let sortOptions = {};
+    let limit = 0;
+    
+    if (fieldElement && fieldElement.closest('.relation-field')) {
+      const fieldContainer = fieldElement.closest('.relation-field');
+      try {
+        const filtersAttr = fieldContainer.getAttribute('data-filters');
+        const sortAttr = fieldContainer.getAttribute('data-sort');
+        const limitAttr = fieldContainer.getAttribute('data-limit');
+        
+        if (filtersAttr) filters = JSON.parse(filtersAttr);
+        if (sortAttr) sortOptions = JSON.parse(sortAttr);
+        if (limitAttr) limit = parseInt(limitAttr) || 0;
+      } catch (e) {
+        console.warn('[Relation Picker] Failed to parse field options:', e);
+      }
+    }
+    
     try {
       const fetchFunction = window.haruFetch || fetch;
       // Build query parameters for GET request
@@ -461,6 +482,31 @@ window.HaruFieldtypes['relation'] = {
       });
       if (search) {
         params.append('search', search);
+      }
+      
+      // Add filter parameters
+      if (filters.status) {
+        params.append('filter_status', filters.status);
+      }
+      if (filters.date_from) {
+        params.append('filter_date_from', filters.date_from);
+      }
+      if (filters.date_to) {
+        params.append('filter_date_to', filters.date_to);
+      }
+      if (filters.field && filters.field_value) {
+        params.append(`filter_${filters.field}`, filters.field_value);
+      }
+      
+      // Add sort parameters
+      if (sortOptions.field) {
+        params.append('sort', sortOptions.field);
+        params.append('sort_direction', sortOptions.direction || 'asc');
+      }
+      
+      // Add limit
+      if (limit > 0) {
+        params.append('limit', limit);
       }
       
       const res = await fetchFunction(`/api/content.php?${params.toString()}`, {
@@ -481,12 +527,50 @@ window.HaruFieldtypes['relation'] = {
         const collection = relationPickerCollections.find(c => c.id === collectionId);
         const collectionName = collection ? collection.title : 'Unknown';
         
-        grid.innerHTML = relationPickerItems.map(e => `
-          <div class="relation-picker-item" data-id="${e.id}" tabindex="0" style="cursor:pointer;padding:0.5rem 1rem;border-radius:4px;margin-bottom:0.5rem;border:1px solid #ddd;transition:all 0.2s;">
-            <div class="relation-title" style="font-weight:500;">${e.title || e.id}</div>
-            <div class="relation-meta" style="font-size:12px;color:#666;">from ${collectionName}</div>
-          </div>
-        `).join('');
+        // Get display mode from field config
+        let displayMode = 'list';
+        if (fieldElement && fieldElement.closest('.relation-field')) {
+          const fieldContainer = fieldElement.closest('.relation-field');
+          try {
+            const displayAttr = fieldContainer.getAttribute('data-display');
+            if (displayAttr) {
+              const displayConfig = JSON.parse(displayAttr);
+              displayMode = displayConfig.mode || 'list';
+            }
+          } catch (e) {
+            // Use default
+          }
+        }
+        
+        // Render based on display mode
+        if (displayMode === 'grid') {
+          grid.style.display = 'grid';
+          grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
+          grid.style.gap = '12px';
+          grid.innerHTML = relationPickerItems.map(e => `
+            <div class="relation-picker-item" data-id="${e.id}" tabindex="0" style="cursor:pointer;padding:0.75rem;border-radius:8px;border:1px solid #ddd;transition:all 0.2s;background:#fff;">
+              <div class="relation-title" style="font-weight:500;margin-bottom:4px;">${(e.title || e.id).substring(0, 30)}${(e.title || e.id).length > 30 ? '...' : ''}</div>
+              <div class="relation-meta" style="font-size:11px;color:#666;">${collectionName}</div>
+            </div>
+          `).join('');
+        } else if (displayMode === 'compact') {
+          grid.style.display = 'block';
+          grid.innerHTML = relationPickerItems.map(e => `
+            <div class="relation-picker-item" data-id="${e.id}" tabindex="0" style="cursor:pointer;padding:0.5rem;border-radius:4px;margin-bottom:0.25rem;border:1px solid #ddd;transition:all 0.2s;background:#fff;font-size:13px;">
+              <span style="font-weight:500;">${e.title || e.id}</span>
+              <span style="color:#666;margin-left:8px;">(${collectionName})</span>
+            </div>
+          `).join('');
+        } else {
+          // Default list mode
+          grid.style.display = 'block';
+          grid.innerHTML = relationPickerItems.map(e => `
+            <div class="relation-picker-item" data-id="${e.id}" tabindex="0" style="cursor:pointer;padding:0.5rem 1rem;border-radius:4px;margin-bottom:0.5rem;border:1px solid #ddd;transition:all 0.2s;background:#fff;">
+              <div class="relation-title" style="font-weight:500;">${e.title || e.id}</div>
+              <div class="relation-meta" style="font-size:12px;color:#666;">from ${collectionName}</div>
+            </div>
+          `).join('');
+        }
         
         grid.querySelectorAll('.relation-picker-item').forEach(itemDiv => {
           itemDiv.addEventListener('click', () => {

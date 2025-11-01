@@ -5,6 +5,7 @@
     <script src="/admin/js/theme.js"></script>
     <script src="/admin/js/fieldtypes-shim.js"></script>
     <script src="/admin/js/media-modal.js?v=20250804-15"></script>
+    <script src="/admin/js/accessibility.js"></script>
     
     <!-- Logout functionality -->
     <script>
