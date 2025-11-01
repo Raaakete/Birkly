@@ -11,6 +11,17 @@ haru_secure_session_start();
 function requireAdminAuth() {
     // Check if user is logged in
     if (!isset($_SESSION['user'])) {
+        // Check if we're on onboarding page and no users exist - allow access
+        $page = $_GET['page'] ?? '';
+        if ($page === 'onboarding') {
+            $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+            require_once __DIR__ . '/../api/onboarding.php';
+            if (!hasUsers()) {
+                // No users exist and we're on onboarding - allow access for first user creation
+                return true;
+            }
+        }
+        
         // Redirect to login page
         $loginUrl = '/admin/login.php';
         if (isset($_GET['page'])) {

@@ -40,6 +40,21 @@ if (isset($_SESSION['user'])) {
 $error = '';
 $success = '';
 
+// Check if no users exist - redirect to onboarding for first user creation
+$GLOBALS['__HARU_INTERNAL_CALL'] = true;
+require_once __DIR__ . '/../api/onboarding.php';
+if (!hasUsers()) {
+    // No users exist - redirect to onboarding to create first user
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    if (!headers_sent()) {
+        http_response_code(302);
+        header('Location: /admin/index.php?page=onboarding');
+    }
+    exit;
+}
+
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
