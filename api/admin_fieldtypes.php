@@ -160,12 +160,9 @@ function getAvailableFieldtypes() {
 function parseConfigFromPost() {
     $config = [];
     
-    error_log("parseConfigFromPost - Raw POST data: " . json_encode($_POST));
-    
     // Check if config is already an array (from JSON)
     if (isset($_POST['config']) && is_array($_POST['config'])) {
         $config = $_POST['config'];
-        error_log("parseConfigFromPost - Using config array directly: " . json_encode($config));
         return $config;
     }
     
@@ -174,19 +171,15 @@ function parseConfigFromPost() {
         $decoded = json_decode($_POST['config'], true);
         if ($decoded !== null) {
             $config = $decoded;
-            error_log("parseConfigFromPost - Using decoded JSON config: " . json_encode($config));
             return $config;
         }
     }
     
     // Parse individual config[...] parameters
     foreach ($_POST as $key => $value) {
-        error_log("parseConfigFromPost - Processing key: '$key' = '$value'");
-        
         if (strpos($key, 'config[') === 0) {
             // Extract the config key from config[key] format
             $configKey = substr($key, 7, -1); // Remove 'config[' and ']'
-            error_log("parseConfigFromPost - Extracted configKey: '$configKey'");
             
             if (strpos($configKey, '[') !== false) {
                 // Handle nested arrays like config[options][0][label]
@@ -199,7 +192,6 @@ function parseConfigFromPost() {
                 foreach ($parts as $i => $part) {
                     if ($i === count($parts) - 1) {
                         $current[$part] = $value;
-                        error_log("parseConfigFromPost - Set nested config[$part] = '$value'");
                     } else {
                         if (!isset($current[$part])) {
                             $current[$part] = [];
@@ -209,25 +201,25 @@ function parseConfigFromPost() {
                 }
             } else {
                 $config[$configKey] = $value;
-                error_log("parseConfigFromPost - Set config[$configKey] = '$value'");
             }
         }
     }
-    
-    // Debug logging
-    error_log("parseConfigFromPost - Final config: " . json_encode($config));
     
     return $config;
 }
 
 // Handle requests
-$action = $_GET['action'] ?? '';
+// CRITICAL: Only execute switch if NOT being included by another file
+if (isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__HARU_INTERNAL_CALL'] === true) {
+    // Being included - don't execute switch statement, just provide functions
+    // Do nothing and let execution continue
+} else {
+    // File is being called directly (not included) - handle API requests
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-// Only execute the switch statement if this file is being called directly (not included)
-if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    // Execute the switch statement for direct calls
     switch ($action) {
         case 'render':
-            error_log("=== ADMIN_FIELDTYPES API CALL ===");
             $fieldtypeName = $_POST['fieldtype'] ?? '';
             $config = parseConfigFromPost();
             
@@ -254,8 +246,9 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         default:
             if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
                 http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             }
-            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             break;
     }
+    exit; // Exit after handling direct API call
 } 

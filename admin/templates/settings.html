@@ -399,6 +399,15 @@
             </div>
           </div>
 
+          <div class="settings-section">
+            <h2>Two-Factor Authentication (2FA)</h2>
+            <div id="2fa-status">
+              <div class="text-center">
+                <div class="spinner">Loading 2FA status...</div>
+              </div>
+            </div>
+          </div>
+
           <div class="settings-actions">
             <button type="submit" class="btn btn-primary">Save Security Settings</button>
           </div>
@@ -434,6 +443,95 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Webhooks Tab -->
+      <div class="tab-pane" id="webhooks">
+        <div class="settings-section">
+          <div class="section-header">
+            <h2>Webhooks</h2>
+            <button class="btn btn-primary" onclick="window.location.href='/admin/index.php?page=webhooks'">
+              Manage Webhooks
+            </button>
+          </div>
+          <div class="webhooks-info">
+            <p>Webhooks allow you to receive real-time notifications when content changes occur.</p>
+            <p><a href="/admin/index.php?page=webhooks" class="btn btn-secondary">Go to Webhooks Management</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2FA Modals -->
+  <!-- Setup 2FA Modal -->
+  <div id="2fa-setup-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Setup Two-Factor Authentication</h2>
+        <button class="modal-close-btn" onclick="close2FASetupModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="2fa-setup-content">
+          <div class="text-center">
+            <div class="spinner">Initializing 2FA setup...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disable 2FA Modal -->
+  <div id="2fa-disable-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Disable Two-Factor Authentication</h2>
+        <button class="modal-close-btn" onclick="close2FADisableModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>To disable 2FA, please enter your password and a verification code from your authenticator app.</p>
+        <form id="2fa-disable-form">
+          <div class="form-group">
+            <label for="disable-password">Password</label>
+            <input type="password" id="disable-password" name="password" class="input" required>
+          </div>
+          <div class="form-group">
+            <label for="disable-code">Verification Code (optional)</label>
+            <input type="text" id="disable-code" name="code" class="input" placeholder="000000" maxlength="6">
+            <small class="form-text">Enter a code from your authenticator app or leave blank</small>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="close2FADisableModal()">Cancel</button>
+            <button type="submit" class="btn btn-danger">Disable 2FA</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Regenerate Backup Codes Modal -->
+  <div id="2fa-regenerate-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Regenerate Backup Codes</h2>
+        <button class="modal-close-btn" onclick="close2FARegenerateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Warning: Regenerating backup codes will invalidate all existing backup codes.</p>
+        <form id="2fa-regenerate-form">
+          <div class="form-group">
+            <label for="regenerate-password">Password</label>
+            <input type="password" id="regenerate-password" name="password" class="input" required>
+          </div>
+          <div class="form-group">
+            <label for="regenerate-code">Verification Code (optional)</label>
+            <input type="text" id="regenerate-code" name="code" class="input" placeholder="000000" maxlength="6">
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="close2FARegenerateModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Regenerate Codes</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -859,5 +957,297 @@ function deletePlugin(pluginId) {
         showMessage('Delete plugin functionality not implemented yet', 'warning');
     }
 }
+
+// 2FA Management Functions
+(function() {
+    'use strict';
+    
+    let setupSecret = null;
+    let setupBackupCodes = null;
+    
+    // Load 2FA status on page load
+    if (document.getElementById('2fa-status')) {
+        load2FAStatus();
+    }
+    
+    async function load2FAStatus() {
+        try {
+            const response = await fetch('/api/2fa.php?action=status');
+            const data = await response.json();
+            
+            if (data.status === 'ok') {
+                render2FAStatus(data.enabled, data.enabled_at, data.backup_codes_count);
+            } else {
+                document.getElementById('2fa-status').innerHTML = '<p class="text-muted">Error loading 2FA status</p>';
+            }
+        } catch (error) {
+            console.error('Error loading 2FA status:', error);
+            document.getElementById('2fa-status').innerHTML = '<p class="text-muted">Error loading 2FA status</p>';
+        }
+    }
+    
+    function render2FAStatus(enabled, enabledAt, backupCodesCount) {
+        const container = document.getElementById('2fa-status');
+        
+        if (enabled) {
+            container.innerHTML = `
+                <div class="2fa-status-enabled">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <span class="badge badge-success">Enabled</span>
+                        <span class="text-muted">${enabledAt ? 'Enabled on ' + new Date(enabledAt).toLocaleDateString() : ''}</span>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <p class="text-muted">You have ${backupCodesCount || 0} backup codes remaining.</p>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="regenerate2FABackupCodes()">Regenerate Backup Codes</button>
+                        <button class="btn btn-danger btn-sm" onclick="open2FADisableModal()">Disable 2FA</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="2fa-status-disabled">
+                    <p class="text-muted" style="margin-bottom: 16px;">Two-factor authentication is not enabled for your account.</p>
+                    <button class="btn btn-primary" onclick="open2FASetupModal()">Enable 2FA</button>
+                </div>
+            `;
+        }
+    }
+    
+    async function open2FASetupModal() {
+        const modal = document.getElementById('2fa-setup-modal');
+        const content = document.getElementById('2fa-setup-content');
+        
+        modal.style.display = 'flex';
+        content.innerHTML = '<div class="text-center"><div class="spinner">Setting up 2FA...</div></div>';
+        
+        try {
+            const response = await fetch('/api/2fa.php?action=setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+            const data = await response.json();
+            
+            if (data.status === 'ok') {
+                setupSecret = data.data.secret;
+                setupBackupCodes = data.data.backup_codes;
+                
+                // Generate QR code URL
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.data.qr_url)}`;
+                
+                content.innerHTML = `
+                    <div class="2fa-setup-step1">
+                        <h3 style="margin-top: 0;">Step 1: Scan QR Code</h3>
+                        <p class="text-muted">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+                        <div style="text-align: center; margin: 24px 0;">
+                            <img src="${qrUrl}" alt="2FA QR Code" style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; background: white;">
+                        </div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 16px 0;">
+                            <p style="margin: 0; font-size: 0.875em; color: #666;"><strong>Manual Entry:</strong> If you can't scan the QR code, enter this key manually:</p>
+                            <code style="display: block; margin-top: 8px; font-size: 0.875em; word-break: break-all;">${data.data.manual_entry_key}</code>
+                        </div>
+                        <button class="btn btn-primary" onclick="verify2FASetup()">I've scanned the code</button>
+                        <button class="btn btn-secondary" onclick="close2FASetupModal()" style="margin-left: 8px;">Cancel</button>
+                    </div>
+                    <div class="2fa-setup-step2" style="display: none;">
+                        <h3 style="margin-top: 0;">Step 2: Verify Code</h3>
+                        <p class="text-muted">Enter the 6-digit code from your authenticator app to verify setup:</p>
+                        <div class="form-group">
+                            <label for="setup-verify-code">Verification Code</label>
+                            <input type="text" id="setup-verify-code" class="input" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.5rem;">
+                        </div>
+                        <button class="btn btn-primary" onclick="enable2FA()">Enable 2FA</button>
+                        <button class="btn btn-secondary" onclick="close2FASetupModal()" style="margin-left: 8px;">Cancel</button>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `<p class="text-danger">Error: ${data.message}</p><button class="btn btn-secondary" onclick="close2FASetupModal()">Close</button>`;
+            }
+        } catch (error) {
+            console.error('Error setting up 2FA:', error);
+            content.innerHTML = `<p class="text-danger">Error setting up 2FA: ${error.message}</p><button class="btn btn-secondary" onclick="close2FASetupModal()">Close</button>`;
+        }
+    }
+    
+    async function verify2FASetup() {
+        document.querySelector('.2fa-setup-step1').style.display = 'none';
+        document.querySelector('.2fa-setup-step2').style.display = 'block';
+        document.getElementById('setup-verify-code').focus();
+    }
+    
+    async function enable2FA() {
+        const code = document.getElementById('setup-verify-code').value.trim();
+        
+        if (!code || code.length !== 6) {
+            alert('Please enter a valid 6-digit code');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/2fa.php?action=enable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'ok') {
+                // Show backup codes
+                showBackupCodes(data.data.backup_codes);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error enabling 2FA:', error);
+            alert('Error enabling 2FA: ' + error.message);
+        }
+    }
+    
+    function showBackupCodes(codes) {
+        const content = document.getElementById('2fa-setup-content');
+        content.innerHTML = `
+            <div class="2fa-setup-step3">
+                <h3 style="margin-top: 0;">Step 3: Save Backup Codes</h3>
+                <p class="text-warning"><strong>Important:</strong> Save these backup codes in a safe place. You can use them to access your account if you lose your authenticator device.</p>
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                    <code style="display: block; font-family: monospace; line-height: 2; font-size: 0.875em;">
+                        ${codes.map(code => code).join('<br>')}
+                    </code>
+                </div>
+                <p class="text-muted">Each backup code can only be used once.</p>
+                <button class="btn btn-primary" onclick="close2FASetupModal(); load2FAStatus();">Done</button>
+            </div>
+        `;
+    }
+    
+    function close2FASetupModal() {
+        document.getElementById('2fa-setup-modal').style.display = 'none';
+        setupSecret = null;
+        setupBackupCodes = null;
+    }
+    
+    function open2FADisableModal() {
+        document.getElementById('2fa-disable-modal').style.display = 'flex';
+    }
+    
+    function close2FADisableModal() {
+        document.getElementById('2fa-disable-modal').style.display = 'none';
+        document.getElementById('2fa-disable-form').reset();
+    }
+    
+    async function disable2FA() {
+        const form = document.getElementById('2fa-disable-form');
+        const formData = new FormData(form);
+        
+        const code = formData.get('code') || '';
+        const password = formData.get('password') || '';
+        
+        if (!password) {
+            alert('Password is required');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/2fa.php?action=disable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, password })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'ok') {
+                alert('2FA disabled successfully');
+                close2FADisableModal();
+                load2FAStatus();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error disabling 2FA:', error);
+            alert('Error disabling 2FA: ' + error.message);
+        }
+    }
+    
+    function open2FARegenerateModal() {
+        document.getElementById('2fa-regenerate-modal').style.display = 'flex';
+    }
+    
+    function close2FARegenerateModal() {
+        document.getElementById('2fa-regenerate-modal').style.display = 'none';
+        document.getElementById('2fa-regenerate-form').reset();
+    }
+    
+    async function regenerate2FABackupCodes() {
+        open2FARegenerateModal();
+    }
+    
+    async function regenerateBackupCodes() {
+        const form = document.getElementById('2fa-regenerate-form');
+        const formData = new FormData(form);
+        
+        const code = formData.get('code') || '';
+        const password = formData.get('password') || '';
+        
+        if (!password) {
+            alert('Password is required');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/2fa.php?action=regenerate_backup_codes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, password })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'ok') {
+                showBackupCodes(data.data.backup_codes);
+                close2FARegenerateModal();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error regenerating backup codes:', error);
+            alert('Error regenerating backup codes: ' + error.message);
+        }
+    }
+    
+    // Expose functions globally
+    window.open2FASetupModal = open2FASetupModal;
+    window.close2FASetupModal = close2FASetupModal;
+    window.verify2FASetup = verify2FASetup;
+    window.enable2FA = enable2FA;
+    window.open2FADisableModal = open2FADisableModal;
+    window.close2FADisableModal = close2FADisableModal;
+    window.open2FARegenerateModal = open2FARegenerateModal;
+    window.close2FARegenerateModal = close2FARegenerateModal;
+    window.regenerate2FABackupCodes = regenerate2FABackupCodes;
+    
+    // Handle form submissions
+    document.getElementById('2fa-disable-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        disable2FA();
+    });
+    
+    document.getElementById('2fa-regenerate-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        regenerateBackupCodes();
+    });
+    
+    // Format code inputs
+    document.getElementById('setup-verify-code')?.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
+    });
+    
+    document.getElementById('disable-code')?.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
+    });
+    
+    document.getElementById('regenerate-code')?.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
+    });
+})();
 </script>
 

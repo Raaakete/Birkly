@@ -98,12 +98,25 @@ function getPageData($page) {
             return getUsersData();
         case 'roles':
             return getRolesData();
+        case 'onboarding':
+            return getOnboardingData();
         default:
             return ['error' => 'Page not found'];
     }
 }
 
 function getDashboardData() {
+    // Include onboarding to get user status
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once __DIR__ . '/onboarding.php';
+    
+    // Get current user
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+    $onboardingStatus = getOnboardingStatus($userId);
+    
     // Get collections
     $collectionsPath = __DIR__ . '/../content/collections';
     $collections = [];
@@ -144,6 +157,53 @@ function getDashboardData() {
     // Get recent collections (last 5)
     $recentCollections = array_slice($collections, 0, 5);
     
+    // Build onboarding checklist
+    $checklist = [
+        [
+            'id' => 'setup_complete',
+            'label' => 'Complete site setup',
+            'completed' => $onboardingStatus['setup_wizard_completed'] ?? false,
+            'link' => '/admin/index.php?page=onboarding'
+        ],
+        [
+            'id' => 'first_collection',
+            'label' => 'Create your first collection',
+            'completed' => count($collections) > 0,
+            'link' => '/admin/index.php?page=content'
+        ],
+        [
+            'id' => 'first_entry',
+            'label' => 'Add your first entry',
+            'completed' => $totalEntries > 0,
+            'link' => count($collections) > 0 ? '/admin/index.php?page=entry-editor&collection=' . $collections[0]['slug'] : '/admin/index.php?page=content'
+        ],
+        [
+            'id' => 'upload_media',
+            'label' => 'Upload media files',
+            'completed' => false, // Could check media directory
+            'link' => '/admin/index.php?page=media'
+        ],
+        [
+            'id' => 'configure_settings',
+            'label' => 'Configure site settings',
+            'completed' => false, // Could check if settings were customized
+            'link' => '/admin/index.php?page=settings'
+        ],
+        [
+            'id' => 'create_template',
+            'label' => 'Set up your first template (optional)',
+            'completed' => false,
+            'link' => '/admin/index.php?page=templates'
+        ]
+    ];
+    
+    $checklistCompleted = 0;
+    foreach ($checklist as $item) {
+        if ($item['completed']) {
+            $checklistCompleted++;
+        }
+    }
+    
     return [
         'stats' => [
             'collections' => count($collections),
@@ -152,7 +212,16 @@ function getDashboardData() {
             'drafts' => $drafts
         ],
         'recent_activity' => $recentActivity,
-        'recent_collections' => $recentCollections
+        'recent_collections' => $recentCollections,
+        'onboarding' => [
+            'completed' => $onboardingStatus['completed'] ?? false,
+            'is_first_time' => $onboardingStatus['is_first_time'] ?? false,
+            'checklist' => $checklist,
+            'checklist_progress' => [
+                'completed' => $checklistCompleted,
+                'total' => count($checklist)
+            ]
+        ]
     ];
 }
 
@@ -1208,6 +1277,77 @@ function getRolesData() {
     return [
         'roles' => $roles,
         'users' => $users
+    ];
+}
+
+function getOnboardingData() {
+    // Get current user
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+    
+    // Include onboarding functions
+    require_once __DIR__ . '/onboarding.php';
+    
+    // Get onboarding status
+    $status = getOnboardingStatus($userId);
+    
+    // Get available demo content packs
+    $demoPacks = [];
+    $demoContentPath = __DIR__ . '/../demo-content';
+    if (is_dir($demoContentPath)) {
+        $dirs = glob($demoContentPath . '/*', GLOB_ONLYDIR);
+        foreach ($dirs as $dir) {
+            $packName = basename($dir);
+            $manifestFile = $dir . '/manifest.json';
+            if (file_exists($manifestFile)) {
+                $manifest = json_decode(file_get_contents($manifestFile), true);
+                if ($manifest) {
+                    $demoPacks[] = [
+                        'id' => $packName,
+                        'name' => $manifest['name'] ?? $packName,
+                        'description' => $manifest['description'] ?? '',
+                        'preview_image' => $manifest['preview_image'] ?? null,
+                        'collections_count' => $manifest['collections_count'] ?? 0,
+                        'entries_count' => $manifest['entries_count'] ?? 0
+                    ];
+                }
+            }
+        }
+    }
+    
+    // Get available demo templates
+    $demoTemplates = [];
+    $demoTemplatesPath = __DIR__ . '/../demo-templates';
+    if (is_dir($demoTemplatesPath)) {
+        $dirs = glob($demoTemplatesPath . '/*', GLOB_ONLYDIR);
+        foreach ($dirs as $dir) {
+            $templateName = basename($dir);
+            $manifestFile = $dir . '/manifest.json';
+            if (file_exists($manifestFile)) {
+                $manifest = json_decode(file_get_contents($manifestFile), true);
+                if ($manifest) {
+                    $demoTemplates[] = [
+                        'id' => $templateName,
+                        'name' => $manifest['name'] ?? $templateName,
+                        'description' => $manifest['description'] ?? '',
+                        'preview_image' => $manifest['preview_image'] ?? null,
+                        'style' => $manifest['style'] ?? 'minimal'
+                    ];
+                }
+            }
+        }
+    }
+    
+    return [
+        'status' => $status,
+        'demo_packs' => $demoPacks,
+        'demo_templates' => $demoTemplates,
+        'user' => [
+            'name' => $_SESSION['user']['name'] ?? $_SESSION['user']['email'] ?? 'User',
+            'email' => $_SESSION['user']['email'] ?? ''
+        ]
     ];
 }
 ?> 

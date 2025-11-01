@@ -4555,3 +4555,174 @@ a.card:hover {
     justify-content: center;
   }
 }
+/* Welcome Dashboard Styles */
+.welcome-dashboard {
+  margin-bottom: var(--space-8);
+}
+
+.welcome-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+}
+
+.welcome-header {
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+
+.welcome-header h2 {
+  margin: 0 0 var(--space-2) 0;
+  font-size: 1.75rem;
+  color: var(--text-primary);
+}
+
+.welcome-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.checklist-progress {
+  margin-bottom: var(--space-6);
+}
+
+.progress-bar-container {
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s;
+}
+
+.checklist-item:hover {
+  background: var(--bg-secondary);
+}
+
+.checklist-item.completed {
+  opacity: 0.7;
+}
+
+.checklist-checkbox {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checklist-item.completed .checklist-checkbox {
+  color: var(--success-500);
+}
+
+.checklist-label {
+  flex: 1;
+}
+
+.checklist-label a {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.checklist-label a:hover {
+  color: var(--primary-600);
+}
+
+.quick-actions {
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--border-light);
+}
+
+.quick-actions h3 {
+  margin: 0 0 var(--space-4) 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.action-buttons .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.action-buttons .btn-primary {
+  background: var(--primary-600);
+  color: #fff;
+}
+
+.action-buttons .btn-primary:hover {
+  background: var(--primary-700);
+}
+
+.action-buttons .btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+}
+
+.action-buttons .btn-secondary:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-strong);
+}
+
+@media (max-width: 768px) {
+  .welcome-card {
+    padding: var(--space-6);
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .action-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

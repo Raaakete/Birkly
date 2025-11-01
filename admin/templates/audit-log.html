@@ -1,0 +1,209 @@
+<div class="audit-log-page">
+    <div class="page-header">
+        <h1>Audit Log</h1>
+        <div class="breadcrumbs">
+            <a href="/admin/index.php?page=dashboard">Dashboard</a>
+            <span class="separator">›</span>
+            <span class="current">Audit Log</span>
+        </div>
+    </div>
+    
+    <div class="main-actions-bar">
+        <div class="filters">
+            <select id="event-filter" class="input">
+                <option value="">All Events</option>
+            </select>
+            <input type="date" id="date-filter" class="input" placeholder="Filter by date">
+            <button class="btn btn-secondary" id="refresh-logs">Refresh</button>
+        </div>
+    </div>
+    
+    <div class="table-container">
+        <table class="table" id="audit-log-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Event</th>
+                    <th>IP Address</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="log-entries">
+                <tr>
+                    <td colspan="5" class="text-center">
+                        <div class="spinner">Loading...</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination">
+        <button class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    let currentPage = 0;
+    const pageSize = 50;
+    let allLogs = [];
+    let filteredLogs = [];
+    const eventTypes = new Set();
+    
+    function init() {
+        loadLogs();
+        setupFilters();
+        
+        document.getElementById('refresh-logs')?.addEventListener('click', function() {
+            currentPage = 0;
+            loadLogs(true);
+        });
+        
+        document.getElementById('load-more')?.addEventListener('click', function() {
+            currentPage++;
+            renderLogs();
+        });
+    }
+    
+    function setupFilters() {
+        const eventFilter = document.getElementById('event-filter');
+        const dateFilter = document.getElementById('date-filter');
+        
+        eventFilter?.addEventListener('change', function() {
+            filterLogs();
+        });
+        
+        dateFilter?.addEventListener('change', function() {
+            filterLogs();
+        });
+    }
+    
+    function filterLogs() {
+        const eventFilter = document.getElementById('event-filter')?.value || '';
+        const dateFilter = document.getElementById('date-filter')?.value || '';
+        
+        filteredLogs = allLogs.filter(log => {
+            if (eventFilter && log.event !== eventFilter) {
+                return false;
+            }
+            
+            if (dateFilter) {
+                const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                if (logDate !== dateFilter) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        currentPage = 0;
+        renderLogs();
+    }
+    
+    function loadLogs(refresh = false) {
+        const tbody = document.getElementById('log-entries');
+        if (!tbody) return;
+        
+        if (refresh) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner">Loading...</div></td></tr>';
+        }
+        
+        fetch('/api/log.php?action=list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.logs) {
+                    allLogs = data.logs;
+                    
+                    // Collect event types
+                    allLogs.forEach(log => {
+                        if (log.event) {
+                            eventTypes.add(log.event);
+                        }
+                    });
+                    
+                    // Populate event filter
+                    const eventFilter = document.getElementById('event-filter');
+                    if (eventFilter) {
+                        eventFilter.innerHTML = '<option value="">All Events</option>';
+                        Array.from(eventTypes).sort().forEach(event => {
+                            const option = document.createElement('option');
+                            option.value = event;
+                            option.textContent = event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            eventFilter.appendChild(option);
+                        });
+                    }
+                    
+                    filteredLogs = allLogs;
+                    currentPage = 0;
+                    renderLogs();
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading logs</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading logs:', error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading logs: ' + error.message + '</td></tr>';
+            });
+    }
+    
+    function renderLogs() {
+        const tbody = document.getElementById('log-entries');
+        if (!tbody) return;
+        
+        const startIndex = currentPage * pageSize;
+        const endIndex = startIndex + pageSize;
+        const logsToShow = filteredLogs.slice(0, endIndex);
+        
+        if (logsToShow.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No log entries found</td></tr>';
+            document.getElementById('load-more').style.display = 'none';
+            return;
+        }
+        
+        let html = '';
+        logsToShow.forEach(log => {
+            const timestamp = new Date(log.timestamp).toLocaleString();
+            const details = log.details ? JSON.stringify(log.details, null, 2) : '';
+            
+            html += `
+                <tr>
+                    <td>${timestamp}</td>
+                    <td>${escapeHtml(log.user || 'Unknown')}</td>
+                    <td><span class="badge badge-info">${escapeHtml(log.event || 'Unknown')}</span></td>
+                    <td>${escapeHtml(log.ip || 'Unknown')}</td>
+                    <td>
+                        ${details ? `<details><summary>View Details</summary><pre style="max-width: 400px; overflow: auto;">${escapeHtml(details)}</pre></details>` : '-'}
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        
+        // Show/hide load more button
+        const loadMoreBtn = document.getElementById('load-more');
+        if (loadMoreBtn) {
+            loadMoreBtn.style.display = (endIndex < filteredLogs.length) ? 'block' : 'none';
+        }
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+
