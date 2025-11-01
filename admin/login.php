@@ -132,9 +132,12 @@ function attemptLogin($email, $password) {
     return ['success' => true, 'message' => 'Login successful.'];
 }
 
-// Helper function to sanitize filename (duplicate from 2fa.php - should be in common file)
-function sanitizeFilename($filename) {
-    return preg_replace('/[^a-z0-9._-]/i', '_', $filename);
+// Helper function to sanitize filename
+// Note: This function is also in api/2fa.php, so we check if it exists first
+if (!function_exists('sanitizeFilename')) {
+    function sanitizeFilename($filename) {
+        return preg_replace('/[^a-z0-9._-]/i', '_', $filename);
+    }
 }
 ?>
 <!DOCTYPE html>
