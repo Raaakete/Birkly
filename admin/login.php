@@ -1,19 +1,24 @@
 <?php
 // admin/login.php - Admin login page for HaruCMS
 
-// CRITICAL: Start output buffering FIRST to ensure headers can be sent
+// CRITICAL: Set Content-Type header FIRST before anything else
+// This ensures it's sent even if session_start() or includes output something
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=utf-8');
+}
+
+// CRITICAL: Start output buffering AFTER setting Content-Type
 // This prevents any accidental output from interfering with headers
 ob_start();
 
-// Now include dependencies (before setting Content-Type to catch any output)
+// Now include dependencies (output buffering will catch any output)
 require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
 
-// CRITICAL: Set Content-Type header AFTER includes (in case they output)
-// But before any HTML output
+// Ensure Content-Type is still set (in case something cleared it)
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
 }
