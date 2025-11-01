@@ -187,5 +187,5 @@ print_status "Press Ctrl+C to stop the server"
 print_status "Admin panel: http://localhost:$PORT/admin/"
 print_status "Logs will be written to logs/ directory"
 
-# Start PHP server with error logging
-php -S localhost:$PORT -t . 2>&1 | tee logs/server.log 
+# Start PHP server with router script and error logging
+php -S localhost:$PORT -t . router.php 2>&1 | tee logs/server.log 
