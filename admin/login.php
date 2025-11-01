@@ -340,3 +340,7 @@ function sanitizeFilename($filename) {
     </script>
 </body>
 </html>
+<?php
+// End output buffering and send all output
+ob_end_flush();
+?>
