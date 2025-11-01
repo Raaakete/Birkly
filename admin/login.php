@@ -1,6 +1,11 @@
 <?php
 // admin/login.php - Admin login page for HaruCMS
 
+// CRITICAL: Set Content-Type header FIRST to ensure HTML is rendered correctly
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=utf-8');
+}
+
 require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
