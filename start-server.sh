@@ -11,7 +11,7 @@
 set -e  # Exit on any error
 
 # Configuration
-DEFAULT_PORT=8001
+DEFAULT_PORT=8080
 ROOT_DIR=$(dirname "$0")
 SCRIPT_NAME=$(basename "$0")
 
