@@ -21,7 +21,14 @@ if (!headers_sent()) {
 // If user is already logged in, redirect to dashboard
 // Use absolute path to ensure correct routing
 if (isset($_SESSION['user'])) {
-    header('Location: /admin/index.php?page=dashboard');
+    // Clear output buffer if exists
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    if (!headers_sent()) {
+        http_response_code(302);
+        header('Location: /admin/index.php?page=dashboard');
+    }
     exit;
 }
 
@@ -61,8 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Don't set user session yet - require 2FA verification first
                     unset($_SESSION['user']);
                     // CRITICAL: Clear output buffer before redirect
-                    ob_clean();
+                    if (ob_get_level() > 0) {
+                        ob_clean();
+                    }
                     if (!headers_sent()) {
+                        http_response_code(302);
                         header('Location: /admin/verify-2fa.php');
                     }
                     exit;
