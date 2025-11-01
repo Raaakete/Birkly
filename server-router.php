@@ -2,34 +2,23 @@
 /**
  * Router script for PHP built-in server
  * 
- * IMPORTANT: In PHP's built-in server, if a router script returns false,
- * PHP will handle the request normally (execute PHP files, serve static files).
+ * CRITICAL: In PHP's built-in server, a router script MUST return false
+ * to let PHP execute files. Any other behavior causes files to be served as plain text.
  * 
- * If we don't return false (or output something), PHP serves files as plain text.
+ * DO NOT output anything, DO NOT echo, DO NOT call readfile().
+ * Just return false for files that should be executed/served normally.
  */
 
-// Parse the URI to get the path (ignore query string for file checking)
+// Get the URI path (ignore query string)
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-// Get the actual file path
 $file = __DIR__ . $uri;
 
-// Check if the requested file exists
+// For ALL existing files (PHP or static), return false to let PHP handle them
 if (file_exists($file) && is_file($file)) {
-    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    
-    // For PHP files, return false to let PHP execute them
-    if ($ext === 'php') {
-        // Return false = tell PHP to execute this file normally
-        return false;
-    }
-    
-    // For static files (CSS, JS, images), also return false
-    // This lets PHP's built-in server serve them normally
+    // Return false = tell PHP built-in server to handle this file normally
+    // PHP will execute .php files and serve other files as static content
     return false;
 }
 
-// For non-existent files, return false to let PHP return 404
-// CRITICAL: We must return false, not true or anything else
+// For non-existent files, also return false to let PHP return 404
 return false;
-
