@@ -2,6 +2,10 @@
 // Simple query-based admin router (MPA)
 // Usage: /admin/index.php?page=dashboard
 
+// CRITICAL: Start output buffering to catch any accidental output
+// This ensures headers can be set even if included files output something
+ob_start();
+
 // Set Content-Type header FIRST to ensure HTML is rendered correctly
 // Must be before any output, including whitespace
 if (!headers_sent()) {
@@ -110,8 +114,8 @@ function fetch_admin_page_data(string $page, array $query = []): array {
     }
     return [];
 }
-
-include __DIR__ . '/partials/layout_head.php';
+?>
+<?php include __DIR__ . '/partials/layout_head.php'; ?>
         <?php include __DIR__ . '/partials/sidebar.php'; ?>
 
         <!-- Main Content -->
