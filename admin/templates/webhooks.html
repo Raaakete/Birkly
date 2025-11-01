@@ -1,0 +1,415 @@
+<div class="webhooks-page">
+    <div class="page-header">
+        <h1>Webhooks</h1>
+        <div class="breadcrumbs">
+            <a href="/admin/index.php?page=settings">Settings</a>
+            <span class="separator">›</span>
+            <span class="current">Webhooks</span>
+        </div>
+    </div>
+    
+    <div class="main-actions-bar">
+        <button class="btn btn-primary" id="create-webhook">Create Webhook</button>
+    </div>
+    
+    <div class="table-container">
+        <table class="table" id="webhooks-table">
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Events</th>
+                    <th>Collections</th>
+                    <th>Status</th>
+                    <th>Last Triggered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="webhooks-list">
+                <tr>
+                    <td colspan="6" class="text-center">
+                        <div class="spinner">Loading...</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Webhook Modal -->
+<div id="webhook-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 id="modal-title">Create Webhook</h2>
+            <button class="modal-close" onclick="closeWebhookModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="webhook-form">
+                <input type="hidden" id="webhook-id" name="id" value="">
+                
+                <div class="form-group">
+                    <label for="webhook-url">Webhook URL *</label>
+                    <input type="url" id="webhook-url" name="url" class="input" required placeholder="https://example.com/webhook">
+                    <small class="form-text">The URL to send webhook requests to</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Events *</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="events[]" value="entry.created"> Entry Created</label>
+                        <label><input type="checkbox" name="events[]" value="entry.updated"> Entry Updated</label>
+                        <label><input type="checkbox" name="events[]" value="entry.deleted"> Entry Deleted</label>
+                        <label><input type="checkbox" name="events[]" value="entry.published"> Entry Published</label>
+                        <label><input type="checkbox" name="events[]" value="collection.created"> Collection Created</label>
+                        <label><input type="checkbox" name="events[]" value="*"> All Events</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="webhook-collections">Collections</label>
+                    <select id="webhook-collections" name="collections[]" class="input" multiple style="min-height: 100px;">
+                        <option value="*">All Collections</option>
+                        <!-- Collections will be loaded via JavaScript -->
+                    </select>
+                    <small class="form-text">Select specific collections or leave empty for all collections</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="webhook-secret">Secret Key</label>
+                    <input type="text" id="webhook-secret" name="secret" class="input" placeholder="Auto-generated if empty">
+                    <small class="form-text">Used to verify webhook authenticity (leave empty to auto-generate)</small>
+                    <button type="button" class="btn btn-sm btn-secondary" id="generate-secret">Generate Secret</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="webhook-active" name="active" checked> Active
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeWebhookModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" id="save-webhook">Save Webhook</button>
+            <button type="button" class="btn btn-info" id="test-webhook" style="display: none;">Test Webhook</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    let collections = [];
+    
+    function init() {
+        loadWebhooks();
+        loadCollections();
+        setupEventListeners();
+    }
+    
+    function setupEventListeners() {
+        document.getElementById('create-webhook')?.addEventListener('click', function() {
+            openWebhookModal();
+        });
+        
+        document.getElementById('save-webhook')?.addEventListener('click', function() {
+            saveWebhook();
+        });
+        
+        document.getElementById('test-webhook')?.addEventListener('click', function() {
+            testWebhook();
+        });
+        
+        document.getElementById('generate-secret')?.addEventListener('click', function() {
+            const secret = generateSecret();
+            document.getElementById('webhook-secret').value = secret;
+        });
+    }
+    
+    function loadCollections() {
+        fetch('/api/content.php?action=list_collections')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.data && data.data.collections) {
+                    collections = data.data.collections;
+                    updateCollectionsSelect();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading collections:', error);
+            });
+    }
+    
+    function updateCollectionsSelect() {
+        const select = document.getElementById('webhook-collections');
+        if (!select) return;
+        
+        // Keep existing selected values
+        const selected = Array.from(select.selectedOptions).map(opt => opt.value);
+        select.innerHTML = '<option value="*">All Collections</option>';
+        
+        collections.forEach(collection => {
+            const option = document.createElement('option');
+            option.value = collection.slug || collection.id;
+            option.textContent = collection.title || collection.name || collection.slug;
+            if (selected.includes(option.value)) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    }
+    
+    function loadWebhooks() {
+        const tbody = document.getElementById('webhooks-list');
+        if (!tbody) return;
+        
+        fetch('/api/webhooks.php?action=list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.webhooks) {
+                    renderWebhooks(data.webhooks);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading webhooks</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading webhooks:', error);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading webhooks: ' + error.message + '</td></tr>';
+            });
+    }
+    
+    function renderWebhooks(webhooks) {
+        const tbody = document.getElementById('webhooks-list');
+        if (!tbody) return;
+        
+        if (webhooks.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No webhooks configured. <a href="#" id="create-webhook-link">Create your first webhook</a></td></tr>';
+            document.getElementById('create-webhook-link')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                openWebhookModal();
+            });
+            return;
+        }
+        
+        let html = '';
+        webhooks.forEach(webhook => {
+            const events = Array.isArray(webhook.events) ? webhook.events.join(', ') : 'All';
+            const collections = Array.isArray(webhook.collections) ? webhook.collections.join(', ') : 'All';
+            const status = webhook.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-secondary">Inactive</span>';
+            
+            html += `
+                <tr>
+                    <td>${escapeHtml(webhook.url)}</td>
+                    <td>${escapeHtml(events)}</td>
+                    <td>${escapeHtml(collections)}</td>
+                    <td>${status}</td>
+                    <td>${webhook.last_triggered ? new Date(webhook.last_triggered).toLocaleString() : 'Never'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editWebhook('${webhook.id}')">Edit</button>
+                        <button class="btn btn-sm btn-info" onclick="testWebhookById('${webhook.id}')">Test</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteWebhook('${webhook.id}')">Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+    
+    function openWebhookModal(webhookId = null) {
+        const modal = document.getElementById('webhook-modal');
+        const form = document.getElementById('webhook-form');
+        const modalTitle = document.getElementById('modal-title');
+        const testBtn = document.getElementById('test-webhook');
+        
+        if (!modal || !form) return;
+        
+        if (webhookId) {
+            modalTitle.textContent = 'Edit Webhook';
+            testBtn.style.display = 'inline-block';
+            loadWebhook(webhookId);
+        } else {
+            modalTitle.textContent = 'Create Webhook';
+            testBtn.style.display = 'none';
+            form.reset();
+            document.getElementById('webhook-id').value = '';
+            document.getElementById('webhook-active').checked = true;
+        }
+        
+        modal.style.display = 'flex';
+    }
+    
+    function closeWebhookModal() {
+        const modal = document.getElementById('webhook-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    function loadWebhook(webhookId) {
+        fetch(`/api/webhooks.php?action=get&id=${encodeURIComponent(webhookId)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.webhook) {
+                    const webhook = data.webhook;
+                    document.getElementById('webhook-id').value = webhook.id;
+                    document.getElementById('webhook-url').value = webhook.url || '';
+                    document.getElementById('webhook-active').checked = webhook.active !== false;
+                    
+                    // Set events
+                    const eventCheckboxes = document.querySelectorAll('input[name="events[]"]');
+                    eventCheckboxes.forEach(checkbox => {
+                        checkbox.checked = webhook.events && (
+                            webhook.events.includes(checkbox.value) || 
+                            webhook.events.includes('*')
+                        );
+                    });
+                    
+                    // Set collections
+                    setTimeout(() => {
+                        updateCollectionsSelect();
+                        if (webhook.collections) {
+                            const select = document.getElementById('webhook-collections');
+                            Array.from(select.options).forEach(option => {
+                                option.selected = webhook.collections.includes(option.value) || webhook.collections.includes('*');
+                            });
+                        }
+                    }, 100);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading webhook:', error);
+                alert('Error loading webhook: ' + error.message);
+            });
+    }
+    
+    function saveWebhook() {
+        const form = document.getElementById('webhook-form');
+        if (!form || !form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        const formData = new FormData(form);
+        const events = Array.from(formData.getAll('events[]'));
+        const collections = Array.from(formData.getAll('collections[]'));
+        
+        const webhookData = {
+            id: formData.get('id') || '',
+            url: formData.get('url'),
+            events: events.length > 0 ? events : ['*'],
+            collections: collections.length > 0 ? collections : ['*'],
+            secret: formData.get('secret') || '',
+            active: formData.get('active') === 'on'
+        };
+        
+        const action = webhookData.id ? 'update' : 'create';
+        
+        fetch(`/api/webhooks.php?action=${action}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                alert('Webhook saved successfully');
+                closeWebhookModal();
+                loadWebhooks();
+            } else {
+                alert('Error saving webhook: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving webhook:', error);
+            alert('Error saving webhook: ' + error.message);
+        });
+    }
+    
+    function testWebhookById(webhookId) {
+        if (!confirm('Send a test webhook to this URL?')) {
+            return;
+        }
+        
+        fetch('/api/webhooks.php?action=test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: webhookId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                if (data.success) {
+                    alert('Test webhook sent successfully! HTTP ' + data.http_code);
+                } else {
+                    alert('Test webhook failed: HTTP ' + data.http_code + (data.error ? '\n' + data.error : ''));
+                }
+            } else {
+                alert('Error testing webhook: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error testing webhook:', error);
+            alert('Error testing webhook: ' + error.message);
+        });
+    }
+    
+    function deleteWebhook(webhookId) {
+        if (!confirm('Are you sure you want to delete this webhook?')) {
+            return;
+        }
+        
+        fetch('/api/webhooks.php?action=delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: webhookId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                alert('Webhook deleted successfully');
+                loadWebhooks();
+            } else {
+                alert('Error deleting webhook: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting webhook:', error);
+            alert('Error deleting webhook: ' + error.message);
+        });
+    }
+    
+    function generateSecret() {
+        return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Expose functions globally for onclick handlers
+    window.editWebhook = openWebhookModal;
+    window.testWebhookById = testWebhookById;
+    window.deleteWebhook = deleteWebhook;
+    window.closeWebhookModal = closeWebhookModal;
+    
+    // Close modal on backdrop click
+    document.getElementById('webhook-modal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeWebhookModal();
+        }
+    });
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+

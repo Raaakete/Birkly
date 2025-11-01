@@ -1,0 +1,638 @@
+<div class="onboarding-page">
+    <div class="onboarding-container">
+        <!-- Step 1: Welcome -->
+        <div class="onboarding-step" id="step-welcome" data-step="1">
+            <div class="onboarding-content">
+                <div class="welcome-header">
+                    <h1>Welcome to HaruCMS!</h1>
+                    <p class="welcome-subtitle">Let's get you set up in just a few steps.</p>
+                </div>
+                
+                <div class="welcome-features">
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>Content Management</h3>
+                        <p>Create and manage your content with ease</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3>Flexible Fieldtypes</h3>
+                        <p>Choose from a variety of content field types</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <h3>Fast & Simple</h3>
+                        <p>No database, no complex setup needed</p>
+                    </div>
+                </div>
+                
+                <div class="onboarding-actions">
+                    <button class="btn btn-primary btn-large" onclick="onboarding.nextStep()">
+                        Get Started
+                    </button>
+                    <button class="btn btn-secondary btn-large" onclick="onboarding.skip()">
+                        Skip Setup
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Site Information -->
+        <div class="onboarding-step" id="step-site-info" data-step="2" style="display: none;">
+            <div class="onboarding-content">
+                <div class="step-header">
+                    <div class="step-indicator">
+                        <span class="step-number">2</span>
+                        <span class="step-label">Site Information</span>
+                    </div>
+                </div>
+                
+                <form id="site-info-form" class="onboarding-form">
+                    <div class="form-group">
+                        <label for="site-title">Site Title</label>
+                        <input type="text" id="site-title" name="site_title" placeholder="My Awesome Site" required>
+                        <small>This will be displayed as your site's main title</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="site-description">Site Description</label>
+                        <textarea id="site-description" name="site_description" rows="3" placeholder="A brief description of your site"></textarea>
+                        <small>A short description of your site (used for SEO)</small>
+                    </div>
+                    
+                    <div class="onboarding-actions">
+                        <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
+                            Back
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Step 3: Demo Content -->
+        <div class="onboarding-step" id="step-demo-content" data-step="3" style="display: none;">
+            <div class="onboarding-content">
+                <div class="step-header">
+                    <div class="step-indicator">
+                        <span class="step-number">3</span>
+                        <span class="step-label">Demo Content</span>
+                    </div>
+                    <p class="step-description">Would you like to start with sample content? This helps you learn how HaruCMS works.</p>
+                </div>
+                
+                <div class="demo-options">
+                    {if onboarding_data.demo_packs exist}
+                        {foreach onboarding_data.demo_packs as pack}
+                            <div class="demo-card" onclick="onboarding.selectDemoContent('{pack.id}')">
+                                <div class="demo-card-header">
+                                    <h3>{pack.name}</h3>
+                                </div>
+                                <div class="demo-card-body">
+                                    <p>{pack.description}</p>
+                                    <div class="demo-stats">
+                                        <span>{pack.collections_count} Collections</span>
+                                        <span>{pack.entries_count} Entries</span>
+                                    </div>
+                                </div>
+                                <div class="demo-card-footer">
+                                    <button class="btn btn-primary btn-small">Install</button>
+                                </div>
+                            </div>
+                        {endforeach}
+                    {else}
+                        <div class="no-demo-content">
+                            <p>No demo content packs available. You can create your own content after setup.</p>
+                        </div>
+                    {endif}
+                    
+                    <div class="demo-card skip-card" onclick="onboarding.selectDemoContent(null)">
+                        <div class="demo-card-header">
+                            <h3>Start Fresh</h3>
+                        </div>
+                        <div class="demo-card-body">
+                            <p>I want to create my own content from scratch</p>
+                        </div>
+                        <div class="demo-card-footer">
+                            <button class="btn btn-secondary btn-small">Skip</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="onboarding-actions" id="demo-content-actions" style="display: none;">
+                    <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
+                        Back
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="onboarding.nextStep()" id="continue-from-demo">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 4: Demo Template -->
+        <div class="onboarding-step" id="step-demo-template" data-step="4" style="display: none;">
+            <div class="onboarding-content">
+                <div class="step-header">
+                    <div class="step-indicator">
+                        <span class="step-number">4</span>
+                        <span class="step-label">Frontend Template</span>
+                    </div>
+                    <p class="step-description">Choose a frontend template to display your content. You can always change this later.</p>
+                </div>
+                
+                <div class="demo-options">
+                    {if onboarding_data.demo_templates exist}
+                        {foreach onboarding_data.demo_templates as template}
+                            <div class="demo-card template-card" onclick="onboarding.selectDemoTemplate('{template.id}')">
+                                <div class="demo-card-header">
+                                    <h3>{template.name}</h3>
+                                    <span class="template-style">{template.style}</span>
+                                </div>
+                                <div class="demo-card-body">
+                                    <p>{template.description}</p>
+                                </div>
+                                <div class="demo-card-footer">
+                                    <button class="btn btn-primary btn-small">Install</button>
+                                </div>
+                            </div>
+                        {endforeach}
+                    {else}
+                        <div class="no-demo-content">
+                            <p>No demo templates available. You can create your own templates after setup.</p>
+                        </div>
+                    {endif}
+                    
+                    <div class="demo-card skip-card" onclick="onboarding.selectDemoTemplate(null)">
+                        <div class="demo-card-header">
+                            <h3>Skip for Now</h3>
+                        </div>
+                        <div class="demo-card-body">
+                            <p>I'll create my own templates later</p>
+                        </div>
+                        <div class="demo-card-footer">
+                            <button class="btn btn-secondary btn-small">Skip</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="onboarding-actions">
+                    <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
+                        Back
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="onboarding.nextStep()">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 5: Completion -->
+        <div class="onboarding-step" id="step-complete" data-step="5" style="display: none;">
+            <div class="onboarding-content">
+                <div class="completion-animation">
+                    <div class="checkmark">✓</div>
+                </div>
+                
+                <div class="completion-content">
+                    <h1>You're All Set! 🎉</h1>
+                    <p class="completion-message">Your HaruCMS is ready to use. Here's what you can do next:</p>
+                    
+                    <div class="next-steps">
+                        <div class="next-step-card">
+                            <div class="step-icon">📝</div>
+                            <h3>Create Your First Entry</h3>
+                            <p>Start adding content to your collections</p>
+                            <a href="/admin/index.php?page=content" class="btn btn-primary btn-small">Go to Content</a>
+                        </div>
+                        
+                        <div class="next-step-card">
+                            <div class="step-icon">🎨</div>
+                            <h3>Customize Your Site</h3>
+                            <p>Configure settings and customize your site</p>
+                            <a href="/admin/index.php?page=settings" class="btn btn-primary btn-small">Go to Settings</a>
+                        </div>
+                        
+                        <div class="next-step-card">
+                            <div class="step-icon">📚</div>
+                            <h3>Read the Documentation</h3>
+                            <p>Learn more about HaruCMS features</p>
+                            <a href="/docs" class="btn btn-secondary btn-small">View Docs</a>
+                        </div>
+                    </div>
+                    
+                    <div class="onboarding-actions">
+                        <button type="button" class="btn btn-primary btn-large" onclick="onboarding.complete()">
+                            Go to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Indicator -->
+        <div class="onboarding-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-steps">
+                <span class="progress-step active" data-step="1">Welcome</span>
+                <span class="progress-step" data-step="2">Site Info</span>
+                <span class="progress-step" data-step="3">Content</span>
+                <span class="progress-step" data-step="4">Template</span>
+                <span class="progress-step" data-step="5">Complete</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.onboarding-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+}
+
+.onboarding-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.onboarding-step {
+    padding: 3rem;
+    min-height: 500px;
+}
+
+.onboarding-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.welcome-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.welcome-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.welcome-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.welcome-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin: 3rem 0;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.feature-card:hover {
+    border-color: #667eea;
+    transform: translateY(-4px);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    margin: 0.5rem 0;
+    color: #333;
+}
+
+.feature-card p {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.step-header {
+    margin-bottom: 2rem;
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+}
+
+.step-label {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.step-description {
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.onboarding-form {
+    margin-top: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.5rem;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.demo-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.demo-card {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.demo-card:hover {
+    border-color: #667eea;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.demo-card.selected {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.demo-card-header {
+    margin-bottom: 1rem;
+}
+
+.demo-card-header h3 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.template-style {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #e9ecef;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.demo-card-body p {
+    color: #666;
+    margin: 0 0 1rem 0;
+}
+
+.demo-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #999;
+}
+
+.demo-card-footer {
+    margin-top: 1rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5568d3;
+}
+
+.btn-secondary {
+    background: #e9ecef;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #dee2e6;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.onboarding-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.completion-animation {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.checkmark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-size: 3rem;
+    animation: checkmark-pop 0.5s ease-out;
+}
+
+@keyframes checkmark-pop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.completion-content {
+    text-align: center;
+}
+
+.completion-content h1 {
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.completion-message {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.next-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.next-step-card {
+    padding: 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.step-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.next-step-card h3 {
+    margin: 0.5rem 0;
+    color: #333;
+}
+
+.next-step-card p {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.onboarding-progress {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.progress-bar {
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #667eea;
+    transition: width 0.3s ease;
+    width: 20%;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+}
+
+.progress-step {
+    color: #999;
+    transition: color 0.3s;
+}
+
+.progress-step.active {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.no-demo-content {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .onboarding-step {
+        padding: 2rem 1rem;
+    }
+    
+    .welcome-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .demo-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .next-steps {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script src="/admin/js/onboarding.js"></script>
+

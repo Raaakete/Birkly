@@ -1,0 +1,305 @@
+/**
+ * Onboarding JavaScript
+ * Handles the onboarding wizard flow
+ */
+
+const onboarding = {
+    currentStep: 1,
+    maxSteps: 5,
+    selectedDemoContent: null,
+    selectedDemoTemplate: null,
+    siteInfo: {},
+    
+    init() {
+        // Check if we're on the onboarding page
+        if (!document.querySelector('.onboarding-page')) {
+            return;
+        }
+        
+        // Initialize first step
+        this.showStep(1);
+        
+        // Setup form handlers
+        this.setupForms();
+    },
+    
+    setupForms() {
+        // Site info form
+        const siteInfoForm = document.getElementById('site-info-form');
+        if (siteInfoForm) {
+            siteInfoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveSiteInfo();
+            });
+        }
+    },
+    
+    showStep(step) {
+        this.currentStep = step;
+        
+        // Hide all steps
+        document.querySelectorAll('.onboarding-step').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Show current step
+        const currentStepEl = document.getElementById(`step-${this.getStepName(step)}`);
+        if (currentStepEl) {
+            currentStepEl.style.display = 'block';
+        }
+        
+        // Update progress
+        this.updateProgress();
+        
+        // Update progress steps
+        document.querySelectorAll('.progress-step').forEach((el, index) => {
+            if (index + 1 <= step) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+    },
+    
+    getStepName(step) {
+        const steps = {
+            1: 'welcome',
+            2: 'site-info',
+            3: 'demo-content',
+            4: 'demo-template',
+            5: 'complete'
+        };
+        return steps[step] || 'welcome';
+    },
+    
+    updateProgress() {
+        const progress = (this.currentStep / this.maxSteps) * 100;
+        const progressFill = document.getElementById('progress-fill');
+        if (progressFill) {
+            progressFill.style.width = `${progress}%`;
+        }
+    },
+    
+    nextStep() {
+        if (this.currentStep < this.maxSteps) {
+            // Special handling for demo content step
+            if (this.currentStep === 3) {
+                if (this.selectedDemoContent === null && document.getElementById('demo-content-actions')) {
+                    document.getElementById('demo-content-actions').style.display = 'flex';
+                    return;
+                }
+                if (this.selectedDemoContent !== null) {
+                    this.installDemoContent(this.selectedDemoContent);
+                }
+            }
+            
+            // Special handling for demo template step
+            if (this.currentStep === 4) {
+                if (this.selectedDemoTemplate !== null) {
+                    this.installDemoTemplate(this.selectedDemoTemplate);
+                }
+            }
+            
+            this.showStep(this.currentStep + 1);
+            this.updateProgressAPI();
+        }
+    },
+    
+    previousStep() {
+        if (this.currentStep > 1) {
+            this.showStep(this.currentStep - 1);
+            this.updateProgressAPI();
+        }
+    },
+    
+    saveSiteInfo() {
+        const form = document.getElementById('site-info-form');
+        if (!form) return;
+        
+        const formData = new FormData(form);
+        this.siteInfo = {
+            site_title: formData.get('site_title'),
+            site_description: formData.get('site_description')
+        };
+        
+        // Save site info via API
+        fetch('/api/settings.php?action=update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                site_title: this.siteInfo.site_title,
+                site_description: this.siteInfo.site_description
+            })
+        }).then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                this.nextStep();
+            } else {
+                alert('Failed to save site information: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error saving site info:', error);
+            // Continue anyway
+            this.nextStep();
+        });
+    },
+    
+    selectDemoContent(packId) {
+        // Remove selected class from all cards
+        document.querySelectorAll('.demo-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked card
+        event.target.closest('.demo-card').classList.add('selected');
+        
+        this.selectedDemoContent = packId;
+        
+        // Show continue button
+        const actions = document.getElementById('demo-content-actions');
+        if (actions) {
+            actions.style.display = 'flex';
+        }
+    },
+    
+    selectDemoTemplate(templateId) {
+        // Remove selected class from all cards
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked card (if not skip card)
+        if (templateId !== null) {
+            event.target.closest('.demo-card').classList.add('selected');
+        }
+        
+        this.selectedDemoTemplate = templateId;
+    },
+    
+    async installDemoContent(packId) {
+        if (!packId) return;
+        
+        try {
+            const response = await fetch('/api/demo.php?action=install_content', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    pack_id: packId
+                })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Update progress
+                this.updateProgressAPI('demo_content_installed', true);
+            } else {
+                console.error('Failed to install demo content:', data.message);
+            }
+        } catch (error) {
+            console.error('Error installing demo content:', error);
+        }
+    },
+    
+    async installDemoTemplate(templateId) {
+        if (!templateId) return;
+        
+        try {
+            const response = await fetch('/api/demo.php?action=install_template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    template_id: templateId
+                })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Update progress
+                this.updateProgressAPI('demo_template_installed', true);
+            } else {
+                console.error('Failed to install demo template:', data.message);
+            }
+        } catch (error) {
+            console.error('Error installing demo template:', error);
+        }
+    },
+    
+    async updateProgressAPI(key, value) {
+        try {
+            const update = {};
+            if (key && value !== undefined) {
+                update[key] = value;
+            }
+            update.step = this.currentStep;
+            
+            await fetch('/api/onboarding.php?action=update_progress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(update)
+            });
+        } catch (error) {
+            console.error('Error updating progress:', error);
+        }
+    },
+    
+    async complete() {
+        try {
+            const response = await fetch('/api/onboarding.php?action=complete', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Redirect to dashboard
+                window.location.href = '/admin/index.php?page=dashboard';
+            } else {
+                alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error completing onboarding:', error);
+            // Redirect anyway
+            window.location.href = '/admin/index.php?page=dashboard';
+        }
+    },
+    
+    async skip() {
+        if (!confirm('Are you sure you want to skip the setup? You can always complete it later from settings.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/onboarding.php?action=skip', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Redirect to dashboard
+                window.location.href = '/admin/index.php?page=dashboard';
+            } else {
+                alert('Failed to skip onboarding: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error skipping onboarding:', error);
+            // Redirect anyway
+            window.location.href = '/admin/index.php?page=dashboard';
+        }
+    }
+};
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => onboarding.init());
+} else {
+    onboarding.init();
+}
+

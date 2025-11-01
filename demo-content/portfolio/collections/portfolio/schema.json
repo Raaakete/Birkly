@@ -1,0 +1,57 @@
+{
+  "fields": [
+    {
+      "name": "title",
+      "type": "text",
+      "label": "Project Title",
+      "required": true
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "label": "Slug",
+      "required": true
+    },
+    {
+      "name": "description",
+      "type": "textarea",
+      "label": "Description",
+      "required": true
+    },
+    {
+      "name": "image",
+      "type": "media",
+      "label": "Project Image",
+      "required": false
+    },
+    {
+      "name": "client",
+      "type": "text",
+      "label": "Client",
+      "required": false
+    },
+    {
+      "name": "project_url",
+      "type": "text",
+      "label": "Project URL",
+      "required": false
+    },
+    {
+      "name": "tags",
+      "type": "tags",
+      "label": "Tags",
+      "required": false
+    },
+    {
+      "name": "status",
+      "type": "select",
+      "label": "Status",
+      "options": [
+        "draft",
+        "published"
+      ],
+      "default": "published"
+    }
+  ]
+}
+

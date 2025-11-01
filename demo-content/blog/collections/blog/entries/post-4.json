@@ -1,0 +1,15 @@
+{
+  "id": "demo-post-4",
+  "title": "Customizing Your Site",
+  "slug": "customizing-your-site",
+  "excerpt": "Learn how to customize your site's appearance and behavior using templates and settings.",
+  "content": "<p>Customization is key to making your site unique. HaruCMS provides several ways to customize your site:</p><ul><li>Edit templates to change the appearance</li><li>Configure site settings</li><li>Add custom CSS and JavaScript</li><li>Install plugins for additional functionality</li></ul><p>With these tools, you have full control over your site's look and feel.</p>",
+  "category": "Customization",
+  "tags": ["customization", "templates", "design"],
+  "author": "Admin",
+  "status": "published",
+  "created_at": "2025-01-04T10:00:00+00:00",
+  "updated_at": "2025-01-04T10:00:00+00:00",
+  "published_at": "2025-01-04T10:00:00+00:00"
+}
+

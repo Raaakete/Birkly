@@ -44,4 +44,29 @@ if (isset($_GET['action']) && $_GET['action'] === 'recent') {
         'data' => [ 'logs' => $entries ]
     ]);
     exit;
+}
+
+// API: Get all log entries (for audit log viewer)
+if (isset($_GET['action']) && $_GET['action'] === 'list') {
+    header('Content-Type: application/json');
+    require_once 'auth.php';
+    requireAuth(['admin']);
+    
+    $logFile = dirname(__DIR__) . '/logs/security.log';
+    $entries = [];
+    if (file_exists($logFile)) {
+        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = array_reverse($lines); // Newest first
+        foreach ($lines as $line) {
+            $entry = json_decode($line, true);
+            if ($entry) {
+                $entries[] = $entry;
+            }
+        }
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'logs' => $entries
+    ]);
+    exit;
 } 
