@@ -45,7 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     unset($_SESSION['2fa_pending']);
                     
                     // Redirect to dashboard
-                    $redirect = $_GET['redirect'] ?? 'index.php?page=dashboard';
+                    // Use absolute path to ensure correct routing
+                    $redirect = $_GET['redirect'] ?? '/admin/index.php?page=dashboard';
+                    // If redirect is relative, make it absolute
+                    if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
+                        $redirect = '/admin/' . $redirect;
+                    }
                     header('Location: ' . $redirect);
                     exit;
                 }

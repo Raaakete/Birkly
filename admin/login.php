@@ -8,8 +8,9 @@ haru_secure_session_start();
 require_once __DIR__ . '/../core/csrf.php';
 
 // If user is already logged in, redirect to dashboard
+// Use absolute path to ensure correct routing
 if (isset($_SESSION['user'])) {
-    header('Location: index.php?page=dashboard');
+    header('Location: /admin/index.php?page=dashboard');
     exit;
 }
 
