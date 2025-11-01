@@ -54,20 +54,21 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             exit;
     }
-} else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    switch ($action) {
-        case 'status':
-            $result = get2FAStatus();
-            echo json_encode($result);
-            exit;
-        case 'qr_code':
-            $result = generateQRCode();
-            echo json_encode($result);
-            exit;
-        default:
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-            exit;
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        switch ($action) {
+            case 'status':
+                $result = get2FAStatus();
+                echo json_encode($result);
+                exit;
+            case 'qr_code':
+                $result = generateQRCode();
+                echo json_encode($result);
+                exit;
+            default:
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+                exit;
+        }
     }
 }
 
