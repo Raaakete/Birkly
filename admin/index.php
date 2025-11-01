@@ -19,7 +19,32 @@ header('Referrer-Policy: no-referrer');
 // Include template parser
 require_once __DIR__ . '/template_parser.php';
 
+// Check onboarding status - show welcome screen if needed
+// Note: auth_middleware.php already starts the session, but we need onboarding functions
+$GLOBALS['__HARU_INTERNAL_CALL'] = true;
+require_once __DIR__ . '/../api/onboarding.php';
+
+// Ensure session is started
+if (session_status() === PHP_SESSION_NONE) {
+    require_once __DIR__ . '/../api/session.php';
+    haru_secure_session_start();
+}
+
+// Get onboarding status (only if user is logged in)
+$onboardingStatus = [
+    'is_first_time' => false,
+    'completed' => false
+];
+if (isset($_SESSION['user'])) {
+    $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+    $onboardingStatus = getOnboardingStatus($userId);
+}
+
+// If first-time setup and onboarding not completed, redirect to welcome
 $page = isset($_GET['page']) && $_GET['page'] !== '' ? $_GET['page'] : 'dashboard';
+if ($page !== 'onboarding' && $onboardingStatus['is_first_time'] && !$onboardingStatus['completed']) {
+    $page = 'onboarding';
+}
 
         // Whitelist of allowed pages → template file map
         $allowedPages = [
@@ -33,6 +58,10 @@ $page = isset($_GET['page']) && $_GET['page'] !== '' ? $_GET['page'] : 'dashboar
             'collection-editor' => 'collection-editor.html',
             'roles' => 'roles.html',
             'plugins' => 'plugins.html',
+            'audit-log' => 'audit-log.html',
+            'activity' => 'activity.html',
+            'webhooks' => 'webhooks.html',
+            'onboarding' => 'onboarding.html',
             'community_users' => null, // Plugin page - handled dynamically
             'sample_plugin' => null // Plugin page - handled dynamically
         ];
@@ -83,12 +112,69 @@ function fetch_admin_page_data(string $page, array $query = []): array {
         <main class="main-content">
             <?php
             // Render the page using template system
-            if ($page === 'dashboard' || $page === 'media' || $page === 'entry-editor') {
+            if ($page === 'onboarding') {
+                // Onboarding page - load onboarding data and render template
+                $onboardingData = fetch_admin_page_data('onboarding', $_GET);
+                try {
+                    $output = render_template_file($templatePath, array_merge($data ?? [], [
+                        'onboarding' => $onboardingStatus,
+                        'onboarding_data' => $onboardingData
+                    ]));
+                    echo $output ?: '<div class="error">Failed to render onboarding page</div>';
+                } catch (Exception $e) {
+                    echo '<div class="error">Error rendering onboarding: ' . htmlspecialchars($e->getMessage()) . '</div>';
+                }
+            } elseif ($page === 'dashboard' || $page === 'media' || $page === 'entry-editor') {
                 // Pass query params so entry-editor receives collection/entry ids
                 $data = fetch_admin_page_data($page, $_GET);
-                echo render_template_file($templatePath, $data);
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'updates' || $page === 'entries' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins') {
-                // Content, Settings, Entries, Entry Editor, Collection Editor, Users, Roles, and Plugins pages use direct PHP instead of template parser
+                
+                // For dashboard, ensure onboarding data is included
+                if ($page === 'dashboard') {
+                    $data['onboarding'] = $onboardingStatus;
+                }
+                
+                // Check if there's an error in the data
+                if (isset($data['error'])) {
+                    echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                    echo '<h2>Error Loading Page</h2>';
+                    echo '<p>' . htmlspecialchars($data['error']) . '</p>';
+                    echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                    echo '</div>';
+                } else {
+                    try {
+                        $output = render_template_file($templatePath, $data);
+                        if (empty($output)) {
+                            echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                            echo '<h2>Error Rendering Template</h2>';
+                            echo '<p>The template rendered empty output. This might be a template parsing error.</p>';
+                            echo '<p><strong>Debug Info:</strong></p>';
+                            echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">';
+                            echo 'Page: ' . htmlspecialchars($page) . "\n";
+                            echo 'Template: ' . htmlspecialchars($templatePath) . "\n";
+                            echo 'Data keys: ' . implode(', ', array_keys($data)) . "\n";
+                            if (isset($data['collection'])) {
+                                echo 'Collection: ' . htmlspecialchars($data['collection']['slug'] ?? 'N/A') . "\n";
+                            }
+                            if (isset($data['entry'])) {
+                                echo 'Entry ID: ' . htmlspecialchars($data['entry']['id'] ?? 'N/A') . "\n";
+                            }
+                            echo '</pre>';
+                            echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                            echo '</div>';
+                        } else {
+                            echo $output;
+                        }
+                    } catch (Exception $e) {
+                        echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                        echo '<h2>Template Rendering Error</h2>';
+                        echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
+                        echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                        echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                        echo '</div>';
+                    }
+                }
+            } elseif ($page === 'content' || $page === 'settings' || $page === 'updates' || $page === 'entries' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'audit-log' || $page === 'activity' || $page === 'webhooks') {
+                // Content, Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages use direct PHP instead of template parser
                 $data = fetch_admin_page_data($page, $_GET);
                 extract($data);
                 include $templatePath;
