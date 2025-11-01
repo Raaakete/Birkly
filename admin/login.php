@@ -77,12 +77,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
                 $redirect = '/admin/' . $redirect;
             }
-            // CRITICAL: Clear output buffer and ensure headers can be sent
-            ob_clean();
+            // CRITICAL: End and discard all output before redirect
+            // Use ob_end_clean() to completely clear buffer, not just ob_clean()
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            // Now set redirect header - no output buffer should exist
             if (!headers_sent()) {
+                http_response_code(302); // Explicitly set redirect status FIRST
                 header('Location: ' . $redirect);
-                header('Content-Type: text/html; charset=utf-8'); // Some browsers need this
-                http_response_code(302); // Explicitly set redirect status
             }
             exit;
         } else {
