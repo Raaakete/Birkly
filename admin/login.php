@@ -49,14 +49,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['2fa_pending'] = $email;
                     // Don't set user session yet - require 2FA verification first
                     unset($_SESSION['user']);
-                    header('Location: verify-2fa.php');
+                    header('Location: /admin/verify-2fa.php');
                     exit;
                 }
             }
             
             // No 2FA - proceed with normal login
             // Redirect to dashboard or original page
-            $redirect = $_GET['redirect'] ?? 'index.php?page=dashboard';
+            // Use absolute path to ensure correct routing
+            $redirect = $_GET['redirect'] ?? '/admin/index.php?page=dashboard';
+            // If redirect is relative, make it absolute
+            if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
+                $redirect = '/admin/' . $redirect;
+            }
             header('Location: ' . $redirect);
             exit;
         } else {
