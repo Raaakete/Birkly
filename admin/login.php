@@ -56,6 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($loginResult['success']) {
             // Check if 2FA is enabled for this user
+            // Set flag to prevent API from executing switch statement
+            $GLOBALS['__HARU_INTERNAL_CALL'] = true;
             require_once __DIR__ . '/../api/2fa.php';
             $usersDir = __DIR__ . '/../data/users';
             $userFile = $usersDir . '/' . sanitizeFilename($email) . '.json';
