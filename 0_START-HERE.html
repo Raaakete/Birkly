@@ -276,7 +276,19 @@
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">2</span>Start the Server</h4>
+                    <h4><span class="step-number">2</span>Create Default Admin User (First Time Only)</h4>
+                    <p>If this is a fresh installation, you need to create the default admin user:</p>
+                    <pre>php scripts/create-default-user.php</pre>
+                    <p>This creates a default admin account with:</p>
+                    <ul>
+                        <li><strong>Email:</strong> admin@localhost</li>
+                        <li><strong>Password:</strong> password</li>
+                    </ul>
+                    <p><strong>Note:</strong> You can skip this step if you already have user accounts.</p>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-number">3</span>Start the Server</h4>
                     <p>Open a terminal/command prompt in this directory and run one of these options:</p>
                     <p><strong>Option A - Using the provided script (recommended):</strong></p>
                     <pre>chmod +x ./start-server.sh
