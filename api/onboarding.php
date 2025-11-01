@@ -9,8 +9,25 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
 
 // Helper functions - always available (even when included)
+// Helper to check if there are any users
+function hasUsers() {
+    $usersDir = __DIR__ . '/../users';
+    if (!is_dir($usersDir)) {
+        return false;
+    }
+    $files = array_filter(scandir($usersDir), function($f) {
+        return $f !== '.' && $f !== '..' && pathinfo($f, PATHINFO_EXTENSION) === 'json';
+    });
+    return count($files) > 0;
+}
+
 // Helper to check if this is a first-time setup
 function isFirstTimeSetup() {
+    // First check if there are any users - if not, it's definitely first-time
+    if (!hasUsers()) {
+        return true;
+    }
+    
     $storage = new Storage('../content');
     $collections = $storage->list('collections');
     
@@ -33,9 +50,21 @@ function isFirstTimeSetup() {
 }
 
 // Helper to get onboarding status
-function getOnboardingStatus($userId) {
+function getOnboardingStatus($userId = null) {
     $settingsStorage = new Storage('../settings');
     $onboardingData = $settingsStorage->read('onboarding.json') ?? [];
+    
+    $needsFirstUser = !hasUsers();
+    $isFirstTime = isFirstTimeSetup();
+    
+    // If no userId provided (not logged in yet), return basic status
+    if ($userId === null) {
+        return [
+            'needs_first_user' => $needsFirstUser,
+            'is_first_time' => $isFirstTime,
+            'completed' => false
+        ];
+    }
     
     // Check user-specific onboarding
     $userStorage = new Storage('../users');
@@ -43,7 +72,8 @@ function getOnboardingStatus($userId) {
     $userOnboarding = $userStorage->read($userOnboardingFile) ?? [];
     
     return [
-        'is_first_time' => isFirstTimeSetup(),
+        'needs_first_user' => $needsFirstUser,
+        'is_first_time' => $isFirstTime,
         'completed' => $userOnboarding['completed'] ?? false,
         'setup_wizard_completed' => $userOnboarding['setup_wizard_completed'] ?? false,
         'demo_content_installed' => $userOnboarding['demo_content_installed'] ?? false,
@@ -92,13 +122,97 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
     switch ($action) {
     case 'status':
-        // Get onboarding status
-        $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+        // Get onboarding status - can work without authentication for first user check
+        $userId = isset($_SESSION['user']) ? ($_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown') : null;
         $status = getOnboardingStatus($userId);
         
         echo json_encode([
             'status' => 'ok',
             'data' => $status
+        ]);
+        exit;
+        
+    case 'create_first_user':
+        // Create first admin user - no authentication required (this is how we get the first user)
+        $email = trim($input['email'] ?? '');
+        $password = $input['password'] ?? '';
+        
+        if (empty($email) || empty($password)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Email and password required']);
+            exit;
+        }
+        
+        // Check if users already exist
+        if (hasUsers()) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Users already exist. Cannot create first user.']);
+            exit;
+        }
+        
+        // Validate email format
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid email format']);
+            exit;
+        }
+        
+        // Validate password strength (minimum 8 characters)
+        if (strlen($password) < 8) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Password must be at least 8 characters']);
+            exit;
+        }
+        
+        // Create users directory if it doesn't exist
+        $usersDir = __DIR__ . '/../users';
+        if (!is_dir($usersDir)) {
+            mkdir($usersDir, 0755, true);
+        }
+        
+        // Create first admin user
+        require_once __DIR__ . '/storage.php';
+        require_once __DIR__ . '/users.php'; // For hashPassword function
+        
+        $userId = md5(strtolower(trim($email)));
+        $userFile = $userId . '.json';
+        
+        if (file_exists($usersDir . '/' . $userFile)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'User already exists']);
+            exit;
+        }
+        
+        $user = [
+            'id' => $userId,
+            'email' => strtolower(trim($email)),
+            'password' => hashPassword($password),
+            'role' => 'admin',
+            'created_at' => date('c'),
+            'is_first_user' => true
+        ];
+        
+        $result = file_put_contents($usersDir . '/' . $userFile, json_encode($user, JSON_PRETTY_PRINT));
+        
+        if ($result === false) {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to create user']);
+            exit;
+        }
+        
+        // Auto-login the user
+        unset($user['password']);
+        haru_secure_session_start();
+        $_SESSION['user'] = $user;
+        $_SESSION['last_activity'] = time();
+        
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'First admin user created and logged in',
+            'data' => [
+                'user' => $user,
+                'onboarding' => getOnboardingStatus($userId)
+            ]
         ]);
         exit;
         
