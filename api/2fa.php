@@ -11,18 +11,20 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/log.php';
 
-header('Content-Type: application/json');
+// Only execute API logic if not included internally
+if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    header('Content-Type: application/json');
 
-// Check authentication
-if (!isset($_SESSION['user'])) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Authentication required']);
-    exit;
-}
+    // Check authentication
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Authentication required']);
+        exit;
+    }
 
-$action = $_GET['action'] ?? '';
+    $action = $_GET['action'] ?? '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawInput = file_get_contents('php://input');
     $input = json_decode($rawInput, true);
     
