@@ -2,6 +2,10 @@
 
 A flat-file, modular, zero-dependency CMS designed for simplicity, security, and extensibility. Just upload and use—no npm, no database, no server setup required.
 
+## 🚀 Quick Start
+
+**New to HaruCMS?** Open `0_START-HERE.html` in your browser for a complete setup guide with step-by-step instructions for local development or web server deployment.
+
 ## Project Structure
 
 - `/admin/` — Admin UI (HTML/CSS/JS)
