@@ -60,7 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['2fa_pending'] = $email;
                     // Don't set user session yet - require 2FA verification first
                     unset($_SESSION['user']);
-                    header('Location: /admin/verify-2fa.php');
+                    // CRITICAL: Clear output buffer before redirect
+                    ob_clean();
+                    if (!headers_sent()) {
+                        header('Location: /admin/verify-2fa.php');
+                    }
                     exit;
                 }
             }
@@ -73,10 +77,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
                 $redirect = '/admin/' . $redirect;
             }
-            // CRITICAL: Clear output buffer before redirect
+            // CRITICAL: Clear output buffer and ensure headers can be sent
             ob_clean();
-            // Set redirect header
-            header('Location: ' . $redirect);
+            if (!headers_sent()) {
+                header('Location: ' . $redirect);
+                header('Content-Type: text/html; charset=utf-8'); // Some browsers need this
+                http_response_code(302); // Explicitly set redirect status
+            }
             exit;
         } else {
             $error = $loginResult['message'];
