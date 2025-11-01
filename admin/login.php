@@ -73,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
                 $redirect = '/admin/' . $redirect;
             }
+            // CRITICAL: Clear output buffer before redirect
+            ob_clean();
+            // Set redirect header
             header('Location: ' . $redirect);
             exit;
         } else {
