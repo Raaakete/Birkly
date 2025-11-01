@@ -110,8 +110,8 @@ function fetch_admin_page_data(string $page, array $query = []): array {
     }
     return [];
 }
-?>
-<?php include __DIR__ . '/partials/layout_head.php'; ?>
+
+include __DIR__ . '/partials/layout_head.php';
         <?php include __DIR__ . '/partials/sidebar.php'; ?>
 
         <!-- Main Content -->
