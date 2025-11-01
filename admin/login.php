@@ -1,6 +1,10 @@
 <?php
 // admin/login.php - Admin login page for HaruCMS
 
+// CRITICAL: Start output buffering FIRST to ensure headers can be sent
+// This prevents any accidental output from interfering with headers
+ob_start();
+
 // CRITICAL: Set Content-Type header FIRST before any includes or output
 // This MUST be done before any includes that might output anything
 if (!headers_sent()) {
