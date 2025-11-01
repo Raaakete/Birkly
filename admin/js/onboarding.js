@@ -112,7 +112,20 @@ const onboarding = {
         }
     },
     
-    saveSiteInfo() {
+    async getCSRFToken() {
+        try {
+            const response = await fetch('/api/csrf.php');
+            const data = await response.json();
+            if (data.status === 'ok' && data.data && data.data.csrf_token) {
+                return data.data.csrf_token;
+            }
+        } catch (error) {
+            console.error('Error fetching CSRF token:', error);
+        }
+        return null;
+    },
+    
+    async saveSiteInfo() {
         const form = document.getElementById('site-info-form');
         if (!form) return;
         
@@ -122,6 +135,13 @@ const onboarding = {
             site_description: formData.get('site_description')
         };
         
+        // Get CSRF token
+        const csrfToken = await this.getCSRFToken();
+        if (!csrfToken) {
+            alert('Failed to get security token. Please refresh the page and try again.');
+            return;
+        }
+        
         // Save site info via API
         fetch('/api/settings.php?action=update', {
             method: 'POST',
@@ -129,8 +149,13 @@ const onboarding = {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                site_title: this.siteInfo.site_title,
-                site_description: this.siteInfo.site_description
+                action: 'update',
+                category: 'site',
+                settings: {
+                    name: this.siteInfo.site_title,
+                    description: this.siteInfo.site_description
+                },
+                _csrf: csrfToken
             })
         }).then(response => response.json())
         .then(data => {
@@ -142,8 +167,7 @@ const onboarding = {
         })
         .catch(error => {
             console.error('Error saving site info:', error);
-            // Continue anyway
-            this.nextStep();
+            alert('Failed to save site information. Please try again.');
         });
     },
     

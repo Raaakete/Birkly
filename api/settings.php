@@ -135,6 +135,13 @@ if ($action === 'save_all') {
 
 // Update settings
 if ($action === 'update') {
+    // Check authentication first
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
         log_security_event('permission_denied', ['action' => 'settings_update', 'reason' => 'invalid CSRF']);
