@@ -49,8 +49,10 @@ A flat-file, modular, zero-dependency CMS designed for simplicity, security, and
 
 ## Default Admin Login
 
-- Username/Email: `admin@localhost`
-- Password: `admin`
+After running `php scripts/create-default-user.php` to create the default admin user:
+
+- Email: `admin@localhost`
+- Password: `password`
 
 **Important:** Change the password after your first login for security.
 
