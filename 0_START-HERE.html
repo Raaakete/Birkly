@@ -282,14 +282,17 @@
                     <pre>chmod +x ./start-server.sh
 ./start-server.sh</pre>
                     <p><strong>Option B - Using PHP built-in server:</strong></p>
-                    <pre>php -S localhost:8001</pre>
-                    <p>The server will start on <code>http://localhost:8001</code> (or the port you specified).</p>
+                    <pre>php -S localhost:8080</pre>
+                    <p>The server will start on <code>http://localhost:8080</code> (or the port you specified).</p>
+                    <p><strong>Important:</strong> Use the <code>start-server.sh</code> script instead to ensure PHP files execute correctly:</p>
+                    <pre>chmod +x ./start-server.sh
+./start-server.sh</pre>
                 </div>
 
                 <div class="step">
                     <h4><span class="step-number">3</span>Access the Admin Panel</h4>
                     <p>Open your browser and navigate to:</p>
-                    <pre><a href="http://localhost:8001/admin" target="_blank">http://localhost:8001/admin</a></pre>
+                    <pre><a href="http://localhost:8080/admin" target="_blank">http://localhost:8080/admin</a></pre>
                 </div>
 
                 <div class="note">

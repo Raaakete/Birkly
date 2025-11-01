@@ -25,9 +25,14 @@ A flat-file, modular, zero-dependency CMS designed for simplicity, security, and
 1. Download and extract HaruCMS.
 2. Open a terminal in the extracted folder and run:
    ```
-   php -S localhost:8000
+   chmod +x ./start-server.sh
+   ./start-server.sh
    ```
-3. Visit [http://localhost:8000/admin](http://localhost:8000/admin) in your browser.
+   Or directly with PHP (requires the router script):
+   ```
+   php -S localhost:8080 -t . server-router.php
+   ```
+3. Visit [http://localhost:8080/admin](http://localhost:8080/admin) in your browser.
 
 - No configuration is needed for most local environments (XAMPP, MAMP, Laragon, Herd, Valet, etc.).
 - All static files and API endpoints work out of the box.
