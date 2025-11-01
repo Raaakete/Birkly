@@ -58,6 +58,8 @@ class TemplateParser {
         
         // Handle {if condition exist} ... {endif} syntax
         // Support dot-notation: {if fieldtype_assets.js_files exist}
+        // Note: "exist" checks should be separate from comparison operators
+        // Use nested if statements: {if var exist} {if var.property == value} ... {endif} {endif}
         $parsed = preg_replace_callback(
             '/\{if\s+([^}]+)\s+exist\}/',
             function($matches) {
@@ -65,6 +67,15 @@ class TemplateParser {
                 // Build PHP variable from dot-notation: a.b.c -> $a['b']['c']
                 $parts = explode('.', $path);
                 $base = '$' . array_shift($parts);
+                
+                // If no dot notation, just check the base variable
+                if (empty($parts)) {
+                    // For simple variables like "entry", check if it exists and is not null/empty
+                    // For arrays, consider them "existing" if they're set (even if empty, as they might have default values)
+                    return '<?php if (isset(' . $base . ') && (' . $base . ' !== null)): ?>';
+                }
+                
+                // For dot notation, build nested checks
                 $current = $base;
                 $issetChecks = ['isset(' . $base . ')'];
                 foreach ($parts as $p) {
@@ -98,18 +109,124 @@ class TemplateParser {
         );
         
         // Handle {if object.property == 'value'} syntax
+        // Also handle multiple conditions with || (OR) and && (AND)
+        // Only match if the pattern contains == or != (comparison operators)
+        // This must come after "exist" checks to avoid conflicts
         $parsed = preg_replace_callback(
-            '/\{if\s+([^}]+)\s*==\s*[\'"]([^\'"]+)[\'"]\}/',
+            '/\{if\s+([^}]+)\}/',
             function($matches) {
-                $condition = $matches[1];
-                $value = $matches[2];
-                // Convert dot notation to array access properly
-                $parts = explode('.', $condition);
-                $condition = '$' . $parts[0];
-                for ($i = 1; $i < count($parts); $i++) {
-                    $condition .= '[\'' . $parts[$i] . '\']';
+                $fullCondition = trim($matches[1]);
+                
+                // Skip if this is an "exist" check (should already be handled)
+                if (preg_match('/\s+exist\s*$/', $fullCondition) || preg_match('/\s+has\s+/', $fullCondition)) {
+                    return '{if ' . $fullCondition . '}';
                 }
-                return '<?php if ((' . $condition . ' ?? \'\') === \'' . $value . '\'): ?>';
+                
+                // Check if this contains == or != comparisons
+                if (strpos($fullCondition, '==') === false && strpos($fullCondition, '!=') === false) {
+                    // Not a comparison condition - handle as boolean check
+                    // Simple variable check: {if item.completed} means check if truthy
+                    $parts = explode('.', $fullCondition);
+                    $phpVar = '$' . array_shift($parts);
+                    foreach ($parts as $p) {
+                        $phpVar .= "['" . $p . "']";
+                    }
+                    return '<?php if (' . $phpVar . ' ?? false): ?>';
+                }
+                
+                // Split by || and && to handle multiple conditions
+                // Use a regex that captures the operators as separate elements
+                $matches = preg_split('/(\s*\|\|\s*|\s*&&\s*)/', $fullCondition, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+                $operators = [];
+                $parts = [];
+                
+                // Extract operators and conditions
+                foreach ($matches as $item) {
+                    $trimmed = trim($item);
+                    if ($trimmed === '||' || $trimmed === '&&') {
+                        $operators[] = $trimmed;
+                    } else if (!empty($trimmed)) {
+                        $parts[] = trim($item);
+                    }
+                }
+                
+                // Convert each part to PHP code
+                $phpConditions = [];
+                foreach ($parts as $part) {
+                    $part = trim($part);
+                    
+                    // Handle boolean comparisons: == true or == false
+                    if (preg_match('/^(.+?)\s*==\s*(true|false)$/i', $part, $subMatches)) {
+                        $condition = trim($subMatches[1]);
+                        $boolValue = strtolower(trim($subMatches[2])) === 'true';
+                        
+                        // Convert dot notation to array access
+                        $conditionParts = explode('.', $condition);
+                        $phpVar = '$' . $conditionParts[0];
+                        for ($i = 1; $i < count($conditionParts); $i++) {
+                            $phpVar .= '[\'' . $conditionParts[$i] . '\']';
+                        }
+                        
+                        $phpConditions[] = '(' . $phpVar . ' ?? false) === ' . ($boolValue ? 'true' : 'false');
+                    }
+                    // Handle != with boolean values
+                    else if (preg_match('/^(.+?)\s*!=\s*(true|false)$/i', $part, $subMatches)) {
+                        $condition = trim($subMatches[1]);
+                        $boolValue = strtolower(trim($subMatches[2])) === 'true';
+                        
+                        // Convert dot notation to array access
+                        $conditionParts = explode('.', $condition);
+                        $phpVar = '$' . $conditionParts[0];
+                        for ($i = 1; $i < count($conditionParts); $i++) {
+                            $phpVar .= '[\'' . $conditionParts[$i] . '\']';
+                        }
+                        
+                        $phpConditions[] = '(' . $phpVar . ' ?? false) !== ' . ($boolValue ? 'true' : 'false');
+                    }
+                    // Parse string comparisons: entry.status == 'value'
+                    else if (preg_match('/^(.+?)\s*==\s*[\'"]([^\'"]+)[\'"]$/', $part, $subMatches)) {
+                        $condition = trim($subMatches[1]);
+                        $value = $subMatches[2];
+                        
+                        // Convert dot notation to array access
+                        $conditionParts = explode('.', $condition);
+                        $phpVar = '$' . $conditionParts[0];
+                        for ($i = 1; $i < count($conditionParts); $i++) {
+                            $phpVar .= '[\'' . $conditionParts[$i] . '\']';
+                        }
+                        
+                        // Escape the value for PHP
+                        $valueEscaped = addslashes($value);
+                        $phpConditions[] = '(' . $phpVar . ' ?? \'\') === \'' . $valueEscaped . '\'';
+                    }
+                    // Handle != with string values
+                    else if (preg_match('/^(.+?)\s*!=\s*[\'"]([^\'"]+)[\'"]$/', $part, $subMatches)) {
+                        $condition = trim($subMatches[1]);
+                        $value = $subMatches[2];
+                        
+                        // Convert dot notation to array access
+                        $conditionParts = explode('.', $condition);
+                        $phpVar = '$' . $conditionParts[0];
+                        for ($i = 1; $i < count($conditionParts); $i++) {
+                            $phpVar .= '[\'' . $conditionParts[$i] . '\']';
+                        }
+                        
+                        // Escape the value for PHP
+                        $valueEscaped = addslashes($value);
+                        $phpConditions[] = '(' . $phpVar . ' ?? \'\') !== \'' . $valueEscaped . '\'';
+                    } else {
+                        // Fallback: treat as raw condition (might be handled by other patterns)
+                        $phpConditions[] = $part;
+                    }
+                }
+                
+                // Reconstruct with operators
+                $result = $phpConditions[0];
+                for ($i = 0; $i < count($operators) && isset($phpConditions[$i + 1]); $i++) {
+                    $result .= ' ' . $operators[$i] . ' ' . $phpConditions[$i + 1];
+                }
+                
+                return '<?php if (' . $result . '): ?>';
             },
             $parsed
         );
@@ -163,11 +280,32 @@ class TemplateParser {
         // Start output buffering
         ob_start();
         
-        // Evaluate the parsed template
-        eval('?>' . $parsed . '<?php');
+        // Enable error reporting temporarily
+        $oldErrorReporting = error_reporting(E_ALL);
+        $oldDisplayErrors = ini_get('display_errors');
+        ini_set('display_errors', '0');
+        
+        try {
+            // Evaluate the parsed template
+            eval('?>' . $parsed . '<?php');
+        } catch (Throwable $e) {
+            ob_end_clean();
+            error_reporting($oldErrorReporting);
+            ini_set('display_errors', $oldDisplayErrors);
+            throw new Exception('Template rendering error: ' . $e->getMessage() . ' at line ' . $e->getLine(), 0, $e);
+        }
+        
+        // Restore error reporting
+        error_reporting($oldErrorReporting);
+        ini_set('display_errors', $oldDisplayErrors);
         
         // Get the output
         $output = ob_get_clean();
+        
+        // Check for eval errors
+        if ($output === false) {
+            throw new Exception('Template rendering failed: Output buffering error');
+        }
         
         return $output;
     }

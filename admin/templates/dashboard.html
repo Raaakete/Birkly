@@ -1,8 +1,87 @@
 <div class="dashboard-page">
     <div class="page-header">
         <h1>Dashboard</h1>
-        <p>Welcome to HaruCMS Admin</p>
+        {if onboarding exist}
+            {if onboarding.completed == false && onboarding.is_first_time == true}
+                <p>Welcome to HaruCMS! Let's get you started.</p>
+            {else}
+                <p>Welcome to HaruCMS Admin</p>
+            {endif}
+        {else}
+            <p>Welcome to HaruCMS Admin</p>
+        {endif}
     </div>
+    
+    {if onboarding exist}
+        {if onboarding.completed == false && onboarding.is_first_time == true}
+            <!-- Welcome Dashboard for New Users -->
+            <div class="welcome-dashboard">
+                <div class="welcome-card">
+                    <div class="welcome-header">
+                        <h2>Welcome to HaruCMS! 🎉</h2>
+                        <p>Complete these steps to get your site up and running:</p>
+                    </div>
+                    
+                    <div class="checklist-progress">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: {{ (onboarding.checklist_progress.completed / onboarding.checklist_progress.total) * 100 }}%"></div>
+                        </div>
+                        <div class="progress-text">
+                            {{ onboarding.checklist_progress.completed }} of {{ onboarding.checklist_progress.total }} completed
+                        </div>
+                    </div>
+                    
+                    <div class="checklist">
+                        {foreach onboarding.checklist as item}
+                            <div class="checklist-item {if item.completed}completed{endif}">
+                                <div class="checklist-checkbox">
+                                    {if item.completed}
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                        </svg>
+                                    {else}
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="10" cy="10" r="9"/>
+                                        </svg>
+                                    {endif}
+                                </div>
+                                <div class="checklist-label">
+                                    <a href="{{ item.link }}">{{ item.label }}</a>
+                                </div>
+                            </div>
+                        {endforeach}
+                    </div>
+                    
+                    <div class="quick-actions">
+                        <h3>Quick Actions</h3>
+                        <div class="action-buttons">
+                            <a href="/admin/index.php?page=content" class="btn btn-primary">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 4H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2m-4-2v4m0-4h4m0 0V2"/>
+                                </svg>
+                                Create Collection
+                            </a>
+                            <a href="/admin/index.php?page=media" class="btn btn-secondary">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="14" height="14" rx="2"/>
+                                    <circle cx="7" cy="7" r="1.5"/>
+                                    <path d="M3 12l4-4 4 4 6-6"/>
+                                </svg>
+                                Upload Media
+                            </a>
+                            <a href="/admin/index.php?page=settings" class="btn btn-secondary">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="10" cy="10" r="3"/>
+                                    <path d="M10 1v2m0 14v2m9-9h-2M3 10H1m15.364-6.364l-1.414 1.414M4.05 15.95l-1.414 1.414m12.728 0l-1.414-1.414M4.05 4.05L2.636 2.636"/>
+                                </svg>
+                                Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {endif}
+    {endif}
     
     <div class="stats-grid">
         <div class="stat-card">
@@ -46,45 +125,49 @@
         </div>
     </div>
     
-    <div class="dashboard-content">
-        <div class="recent-activity">
-            <h2>Recent Activity</h2>
-            <div class="activity-list">
-                {if recent_activity exist}
-                    {for activity in recent_activity}
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>
-                            </div>
-                            <div class="activity-content">
-                                <p>{from activity get message}</p>
-                                <span class="activity-time">{from activity get created_at}</span>
-                            </div>
-                        </div>
-                    {endfor}
-                {else}
-                    <p>No recent activity</p>
-                {endif}
+    {if onboarding exist}
+        {if onboarding.completed == true || onboarding.is_first_time == false}
+            <div class="dashboard-content">
+                <div class="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div class="activity-list">
+                        {if recent_activity exist}
+                            {for activity in recent_activity}
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p>{from activity get message}</p>
+                                        <span class="activity-time">{from activity get created_at}</span>
+                                    </div>
+                                </div>
+                            {endfor}
+                        {else}
+                            <p>No recent activity</p>
+                        {endif}
+                    </div>
+                </div>
+                
+                <div class="recent-collections">
+                    <h2>Recent Collections</h2>
+                    <div class="collections-list">
+                        {if recent_collections exist}
+                            {for collection in recent_collections}
+                                <div class="collection-item">
+                                    <div class="collection-info">
+                                        <h4>{from collection get title}</h4>
+                                        <p>{from collection get entries_count} entries</p>
+                                    </div>
+                                    <a class="btn-small" href="/admin/index.php?page=entries&collection={from collection get slug}">View</a>
+                                </div>
+                            {endfor}
+                        {else}
+                            <p>No collections found</p>
+                        {endif}
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div class="recent-collections">
-            <h2>Recent Collections</h2>
-            <div class="collections-list">
-                {if recent_collections exist}
-                    {for collection in recent_collections}
-                        <div class="collection-item">
-                            <div class="collection-info">
-                                <h4>{from collection get title}</h4>
-                                <p>{from collection get entries_count} entries</p>
-                            </div>
-                            <a class="btn-small" href="/admin/index.php?page=entries&collection={from collection get slug}">View</a>
-                        </div>
-                    {endfor}
-                {else}
-                    <p>No collections found</p>
-                {endif}
-            </div>
-        </div>
-    </div>
+        {endif}
+    {endif}
 </div>
