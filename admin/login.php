@@ -5,18 +5,18 @@
 // This prevents any accidental output from interfering with headers
 ob_start();
 
-// CRITICAL: Set Content-Type header FIRST before any includes or output
-// This MUST be done before any includes that might output anything
-if (!headers_sent()) {
-    header('Content-Type: text/html; charset=utf-8');
-}
-
-// Now include dependencies
+// Now include dependencies (before setting Content-Type to catch any output)
 require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
+
+// CRITICAL: Set Content-Type header AFTER includes (in case they output)
+// But before any HTML output
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=utf-8');
+}
 
 // If user is already logged in, redirect to dashboard
 // Use absolute path to ensure correct routing
