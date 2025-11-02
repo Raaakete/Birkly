@@ -329,7 +329,8 @@
                 let itemOutput = loopContent;
                 
                 // Replace {{ item.property }} with actual values
-                itemOutput = itemOutput.replace(/\{\{\s*([^\s}]+)\.([^\s}]+)(?:\s*\|\s*([^\s}]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (varMatch, itemName, prop, filter, filterValue) => {
+                // Fixed regex: variable and property names should not include pipe character
+                itemOutput = itemOutput.replace(/\{\{\s*([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?:\s*"([^"]+)")?)?\s*\}\}/g, (varMatch, itemName, prop, filter, filterValue) => {
                     if (itemName !== itemVar) return varMatch;
                     
                     let value = item[prop] || '';
