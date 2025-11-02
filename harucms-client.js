@@ -741,34 +741,40 @@
     
     /**
      * Detect collection name from template or URL
+     * IMPORTANT: Ignore /demo-blog/ path - that's just the website folder, not a collection
      */
     function detectCollectionFromTemplate() {
         // Try to extract from template
         const bodyText = document.body.innerHTML;
         const match = bodyText.match(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/);
-        if (match) {
+        if (match && match[1] !== 'demo-blog') {
             return match[1];
         }
         
-        // Try to extract from URL path
+        // Try to extract from URL path (but ignore demo-blog prefix)
         const path = window.location.pathname;
-        const pathMatch = path.match(/\/([^\/]+)\/(?:post|entry|article)/i);
-        if (pathMatch) {
+        let cleanPath = path.replace(/^\/demo-blog/, '');
+        
+        const pathMatch = cleanPath.match(/\/([^\/]+)\/(?:post|entry|article)/i);
+        if (pathMatch && pathMatch[1] !== 'demo-blog') {
             return pathMatch[1];
         }
         
         // Check if we're on a post/entry/article page
-        const filename = path.split('/').pop() || '';
+        const filename = cleanPath.split('/').pop() || '';
         if (filename.includes('post') || filename.includes('entry') || filename.includes('article')) {
-            // Default to 'blog' for post pages, or check if there's a collection hint in the URL
-            if (path.includes('/blog')) return 'blog';
-            // Common default for post pages
+            // Default to 'blog' for post pages
             return 'blog';
         }
         
-        // Common defaults based on path
-        if (path.includes('/blog') || path.includes('blog')) return 'blog';
-        if (path.includes('/post')) return 'blog';
+        // Common defaults based on path (but exclude demo-blog)
+        if (cleanPath.includes('/blog') || cleanPath.includes('blog')) return 'blog';
+        if (cleanPath.includes('/post')) return 'blog';
+        
+        // If we're on a demo-blog page, default to 'blog' collection
+        if (path.includes('/demo-blog/')) {
+            return 'blog';
+        }
         
         // Last resort: if we're on a page with slug parameter, default to 'blog'
         if (urlParams && urlParams.get('slug')) {
