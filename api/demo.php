@@ -18,19 +18,35 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-requireAuth('manage_content');
+// Parse action from various sources
+$action = '';
+if (isset($_GET['action'])) {
+    $action = trim($_GET['action']);
+} elseif (isset($_POST['action'])) {
+    $action = trim($_POST['action']);
+} else {
+    // Try to parse from REQUEST_URI
+    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_QUERY);
+    if ($uri) {
+        parse_str($uri, $queryParams);
+        $action = trim($queryParams['action'] ?? '');
+    }
+}
 
-$action = trim($_GET['action'] ?? $_POST['action'] ?? '');
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
 // Debug logging
-error_log("Demo API - Action: [" . $action . "], GET: " . json_encode($_GET) . ", POST action: " . ($_POST['action'] ?? 'none'));
+error_log("Demo API - Action: [" . $action . "], GET: " . json_encode($_GET) . ", POST action: " . ($_POST['action'] ?? 'none') . ", REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'none'));
+
 if (empty($action)) {
-    error_log("Demo API called without action. GET: " . json_encode($_GET) . ", POST: " . json_encode($_POST));
+    error_log("Demo API called without action. GET: " . json_encode($_GET) . ", POST: " . json_encode($_POST) . ", REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'none'));
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'No action specified']);
     exit;
 }
+
+// Check authentication AFTER parsing action (so we can log what action was requested)
+requireAuth('manage_content');
 
 // Helper to delete demo content
 function deleteDemoContent() {
