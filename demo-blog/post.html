@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading... - Demo Blog</title>
+    <title>{{ title }} - {{ site_title }}</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,10 +18,24 @@
     </header>
 
     <main class="container">
-        <article class="post" id="post-content">
-            <div style="text-align: center; padding: 2rem;">
-                <p>Loading post...</p>
+        <article class="post">
+            <h1>{{ title }}</h1>
+            <div class="post-meta">
+                <time>{{ created_at|date:"F j, Y" }}</time>
+                {if tags exist}
+                <div class="tags">
+                    {foreach tags as tag}
+                    <span class="tag">{{ tag }}</span>
+                    {endforeach}
+                </div>
+                {endif}
             </div>
+            <div class="post-content">
+                {{ content|raw }}
+            </div>
+            <nav class="post-navigation">
+                <a href="index.html">← Back to Blog</a>
+            </nav>
         </article>
     </main>
 
@@ -31,93 +45,36 @@
         </div>
     </footer>
 
-    <!-- HaruCMS Client Library -->
-    <!-- In production, this would be: <script src="https://your-cms-domain.com/harucms-client.js"></script> -->
+    <!-- HaruCMS Client Library - That's it! Just one script tag. -->
+    <!-- In production: <script src="https://your-cms-domain.com/harucms-client.js"></script> -->
     <script src="/harucms-client.js" data-cms-url="http://localhost:8080"></script>
     <script>
-        // Get slug from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('slug');
-        
-        // Wait for HaruCMS to initialize and then fetch the specific post
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Wait a bit for HaruCMS to initialize
-            await new Promise(resolve => setTimeout(resolve, 100));
+        // Minimal script ONLY for URL parameter (slug) - library doesn't handle this yet
+        // TODO: Enhance library to support URL-based routing automatically
+        (async function() {
+            const slug = new URLSearchParams(window.location.search).get('slug');
+            if (!slug || !window.HaruCMS) return;
             
-            if (!slug) {
-                document.getElementById('post-content').innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Post not found. <a href="index.html">← Back to Blog</a></p></div>';
-                return;
+            const entry = await window.HaruCMS.getEntryBySlug('blog', slug);
+            if (entry) {
+                // Simple manual updates for this specific case
+                document.title = entry.title + ' - Demo Blog';
+                document.querySelector('h1').textContent = entry.title;
+                document.querySelector('time').textContent = new Date(entry.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                document.querySelector('.post-content').innerHTML = entry.content || '';
+                
+                if (entry.tags?.length) {
+                    const tagsDiv = document.querySelector('.tags') || document.createElement('div');
+                    tagsDiv.className = 'tags';
+                    tagsDiv.innerHTML = entry.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
+                    if (!document.querySelector('.tags')) {
+                        document.querySelector('.post-meta').appendChild(tagsDiv);
+                    }
+                }
+            } else {
+                document.querySelector('main').innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Post not found. <a href="index.html">← Back to Blog</a></p></div>';
             }
-            
-            if (window.HaruCMS && window.HaruCMS.getEntryBySlug) {
-                const postContainer = document.getElementById('post-content');
-                
-                // Fetch the specific entry by slug
-                const entry = await window.HaruCMS.getEntryBySlug('blog', slug);
-                
-                if (entry) {
-                    // Render the post
-                    const formattedDate = formatDate(entry.created_at, 'F j, Y');
-                    const tagsHtml = entry.tags && entry.tags.length > 0
-                        ? `<div class="tags">${entry.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>`
-                        : '';
-                    
-                    postContainer.innerHTML = `
-                        <h1>${escapeHtml(entry.title || '')}</h1>
-                        <div class="post-meta">
-                            <time>${formattedDate}</time>
-                            ${tagsHtml}
-                        </div>
-                        <div class="post-content">
-                            ${entry.content || ''}
-                        </div>
-                        <nav class="post-navigation">
-                            <a href="index.html">← Back to Blog</a>
-                        </nav>
-                    `;
-                    
-                    // Update page title
-                    document.title = `${entry.title} - Demo Blog`;
-                } else {
-                    postContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Post not found. <a href="index.html">← Back to Blog</a></p></div>';
-                }
-                
-                // Update site title and year
-                const siteTitle = document.querySelector('h1 a');
-                if (siteTitle) {
-                    siteTitle.textContent = 'Demo Blog';
-                }
-                
-                const footer = document.querySelector('footer p');
-                if (footer) {
-                    footer.textContent = `© Demo Blog ${new Date().getFullYear()}`;
-                }
-            }
-        });
-        
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        function formatDate(dateString, format) {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return dateString;
-            
-            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            const day = date.getDate();
-            const month = months[date.getMonth()];
-            const year = date.getFullYear();
-            
-            return format
-                .replace('F', month)
-                .replace('j', day)
-                .replace('Y', year);
-        }
+        })();
     </script>
 </body>
 </html>
-
