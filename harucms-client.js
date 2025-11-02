@@ -529,6 +529,11 @@
         }
         
         // Normal template processing for lists/loops
+        // Find ALL elements with template syntax (including in attributes)
+        // We need to check both text nodes AND attribute values
+        const templates = [];
+        
+        // Method 1: Check text nodes (for content)
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -536,12 +541,10 @@
             false
         );
         
-        const templates = [];
         let node;
-        
         while (node = walker.nextNode()) {
             if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
-                // Found template syntax
+                // Found template syntax in text
                 const parent = node.parentElement;
                 if (!parent || parent.dataset.cmsProcessed) continue;
                 
@@ -551,6 +554,32 @@
                     originalHtml: parent.innerHTML,
                     template: parent.innerHTML
                 });
+            }
+        }
+        
+        // Method 2: Check attributes (for href, src, etc.)
+        // Find all elements that might have template syntax in attributes
+        const allElements = document.body.querySelectorAll('*');
+        for (let el of allElements) {
+            if (el.dataset.cmsProcessed) continue;
+            
+            // Check all attributes for template syntax
+            for (let attr of el.attributes) {
+                if (/\{\{|\{for|\{if/.test(attr.value)) {
+                    // Found template syntax in attribute
+                    // Add parent element to templates list
+                    let parent = el.parentElement;
+                    if (!parent) parent = el;
+                    if (!parent.dataset.cmsProcessed) {
+                        parent.dataset.cmsProcessed = 'true';
+                        templates.push({
+                            element: parent,
+                            originalHtml: parent.innerHTML,
+                            template: parent.innerHTML
+                        });
+                    }
+                    break; // Found template syntax, no need to check other attributes
+                }
             }
         }
         
@@ -684,16 +713,13 @@
         
         HaruCMS.initialized = true;
         
-        // Detect API endpoint
+        // Detect API endpoint first
         await detectApiEndpoint();
         
-        // Process templates when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', processTemplates);
-        } else {
-            processTemplates();
-        }
+        // Process templates immediately (don't wait for DOMContentLoaded)
+        await processTemplates();
     }
+    
     
     /**
      * Public API
@@ -746,6 +772,13 @@
         })
     };
     
-    // Auto-initialize
-    init();
+    // Auto-initialize - start immediately (don't wait for DOMContentLoaded for inline scripts)
+    // But check if DOM is ready first
+    if (document.readyState === 'loading') {
+        // Wait for DOM to be ready before processing templates
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        // DOM already ready, initialize immediately
+        init();
+    }
 })();
