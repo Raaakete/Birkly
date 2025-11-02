@@ -6,12 +6,11 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    require_once 'domain_auth.php';
+    setDynamicCORS();
     http_response_code(200);
     exit;
 }
@@ -22,8 +21,8 @@ require_once 'validate.php';
 require_once 'rate_limit.php';
 require_once 'log.php';
 
-// Require domain authentication for all form submissions
-requireDomainAuth();
+// Require domain authentication with write permission for form submissions
+requireDomainAuth('write');
 
 $input = sanitize_input(json_decode(file_get_contents('php://input'), true));
 $action = $input['action'] ?? '';
