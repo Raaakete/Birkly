@@ -18,6 +18,9 @@ require_once 'log.php';
 // Apply domain authentication with read permission
 requireDomainAuth('read');
 
+// Apply rate limiting based on domain's read limits
+applyDomainRateLimit('read');
+
 $storage = new Storage('../content');
 $input = array_merge($_GET, $_POST);
 $action = $input['action'] ?? '';
@@ -26,16 +29,6 @@ function respond($data, $code = 200) {
     http_response_code($code);
     echo json_encode($data);
     exit;
-}
-
-// Rate limiting per domain
-$license = $GLOBALS['current_license'] ?? [];
-$domain = $license['domain'] ?? 'unknown';
-$rateLimiter = new RateLimiter('secure_api_' . $domain, 100, 60); // 100 requests per minute per domain
-if (!$rateLimiter->check()) {
-    log_security_event('rate_limited', ['action' => 'secure_api', 'domain' => $domain]);
-    $retryAfter = $rateLimiter->getRetryAfter();
-    respond(['status' => 'error', 'message' => 'Rate limit exceeded', 'retry_after' => $retryAfter], 429);
 }
 
 if ($action === 'list_collections') {

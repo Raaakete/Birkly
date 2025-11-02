@@ -451,6 +451,8 @@ function requireDomainAuth($operation = 'read', $collection = null) {
     
     // Add license info to request context
     $GLOBALS['current_license'] = $validation['license'];
+    $GLOBALS['current_domain'] = $domain;
+    $GLOBALS['current_operation'] = $operation;
     
     log_security_event('domain_auth_success', [
         'domain' => $domain,
@@ -458,6 +460,59 @@ function requireDomainAuth($operation = 'read', $collection = null) {
         'license_type' => $validation['license']['type'] ?? 'licensed',
         'operation' => $operation
     ]);
+}
+
+/**
+ * Apply rate limiting based on domain and operation type
+ */
+function applyDomainRateLimit($operation = 'read') {
+    $license = $GLOBALS['current_license'] ?? [];
+    $domain = $GLOBALS['current_domain'] ?? 'unknown';
+    
+    // Localhost has higher limits for development
+    if (($license['type'] ?? '') === 'local_dev') {
+        $readLimit = 1000;   // 1000 reads/minute for localhost
+        $writeLimit = 100;   // 100 writes/hour for localhost
+    } else {
+        // Get rate limits from license permissions
+        $permissions = $license['permissions'] ?? [];
+        $rateLimits = $permissions['rate_limits'] ?? [];
+        
+        $readLimit = $rateLimits['read']['limit'] ?? 100;   // Default: 100 reads/minute
+        $writeLimit = $rateLimits['write']['limit'] ?? 10;  // Default: 10 writes/hour
+    }
+    
+    // Create rate limiter based on operation
+    require_once __DIR__ . '/rate_limit.php';
+    
+    if ($operation === 'read') {
+        $rateLimiter = new RateLimiter("api_read_$domain", $readLimit, 60); // per minute
+    } else {
+        $rateLimiter = new RateLimiter("api_write_$domain", $writeLimit, 3600); // per hour
+    }
+    
+    if (!$rateLimiter->check()) {
+        require_once __DIR__ . '/log.php';
+        log_security_event('rate_limited', [
+            'domain' => $domain,
+            'operation' => $operation,
+            'limit' => $operation === 'read' ? $readLimit : $writeLimit,
+            'window' => $operation === 'read' ? 60 : 3600,
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+        ]);
+        
+        $retryAfter = $rateLimiter->getRetryAfter();
+        http_response_code(429);
+        echo json_encode([
+            'status' => 'error',
+            'message' => "Rate limit exceeded. Please try again later.",
+            'code' => 'RATE_LIMIT_EXCEEDED',
+            'retry_after' => $retryAfter,
+            'limit' => $operation === 'read' ? $readLimit : $writeLimit,
+            'window' => $operation === 'read' ? 60 : 3600
+        ]);
+        exit;
+    }
 }
 
 // Alternative: API key authentication
