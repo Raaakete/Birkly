@@ -498,32 +498,119 @@
                     
                     return; // Done processing single entry
                 } else {
-                    // Entry not found - show error message
+                    // Entry not found - show error message and process any remaining templates
                     const main = document.querySelector('main');
                     if (main) {
                         main.innerHTML = `
                             <div style="text-align: center; padding: 3rem;">
                                 <h1 style="font-size: 2rem; margin-bottom: 1rem;">Post Not Found</h1>
                                 <p style="color: #6b7280; margin-bottom: 2rem;">The post you're looking for doesn't exist.</p>
-                                <a href="index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Blog</a>
+                                <a href="/demo-blog/index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Blog</a>
                             </div>
                         `;
                     }
+                    
+                    // Process remaining templates (header, footer) with default data
+                    const defaultData = {
+                        site_title: 'HaruCMS',
+                        current_year: new Date().getFullYear()
+                    };
+                    
+                    // Process header and footer templates
+                    const walker = document.createTreeWalker(
+                        document.body,
+                        NodeFilter.SHOW_TEXT,
+                        null,
+                        false
+                    );
+                    
+                    const templates = [];
+                    let node;
+                    
+                    while (node = walker.nextNode()) {
+                        if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
+                            const parent = node.parentElement;
+                            if (!parent || parent.dataset.cmsProcessed) continue;
+                            
+                            parent.dataset.cmsProcessed = 'true';
+                            templates.push({
+                                element: parent,
+                                template: parent.innerHTML
+                            });
+                        }
+                    }
+                    
+                    // Render templates with default data
+                    for (let template of templates) {
+                        try {
+                            const rendered = renderTemplate(template.template, defaultData);
+                            template.element.innerHTML = rendered;
+                        } catch (error) {
+                            console.error('HaruCMS: Error processing template:', error);
+                        }
+                    }
+                    
                     return;
                 }
             } catch (error) {
-                console.warn('HaruCMS: Could not fetch entry by slug:', error);
-                // Show error message
+                console.error('HaruCMS: Could not fetch entry by slug:', error);
+                console.error('HaruCMS: Error details:', {
+                    slug: slug,
+                    collection: collection,
+                    error: error.message || error
+                });
+                
+                // Show error message and process remaining templates
                 const main = document.querySelector('main');
                 if (main) {
                     main.innerHTML = `
                         <div style="text-align: center; padding: 3rem;">
                             <h1 style="font-size: 2rem; margin-bottom: 1rem;">Error Loading Post</h1>
                             <p style="color: #6b7280; margin-bottom: 2rem;">Could not load the post. Please try again later.</p>
-                            <a href="index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Blog</a>
+                            <a href="/demo-blog/index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Blog</a>
                         </div>
                     `;
                 }
+                
+                // Process remaining templates (header, footer) with default data
+                const defaultData = {
+                    site_title: 'HaruCMS',
+                    current_year: new Date().getFullYear()
+                };
+                
+                const walker = document.createTreeWalker(
+                    document.body,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                const templates = [];
+                let node;
+                
+                while (node = walker.nextNode()) {
+                    if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
+                        const parent = node.parentElement;
+                        if (!parent || parent.dataset.cmsProcessed) continue;
+                        
+                        parent.dataset.cmsProcessed = 'true';
+                        templates.push({
+                            element: parent,
+                            template: parent.innerHTML
+                        });
+                    }
+                }
+                
+                // Render templates with default data
+                for (let template of templates) {
+                    try {
+                        const rendered = renderTemplate(template.template, defaultData);
+                        template.element.innerHTML = rendered;
+                    } catch (error) {
+                        console.error('HaruCMS: Error processing template:', error);
+                    }
+                }
+                
                 return;
             }
         }
@@ -678,29 +765,55 @@
      */
     async function getEntryBySlug(collection, slug) {
         try {
+            console.log('HaruCMS: Fetching entry by slug', { collection, slug });
             const data = await fetchContent('list_entries', { collection: collection });
-            if (data && data.status === 'ok' && data.data.entries) {
-                // Normalize slug for comparison (handle both formats)
-                const normalizedSlug = slug.toLowerCase().trim();
-                const entry = data.data.entries.find(entry => {
-                    const entrySlug = (entry.slug || '').toLowerCase().trim();
-                    return entrySlug === normalizedSlug;
-                });
-                
-                if (entry) {
-                    return entry;
-                }
-                
-                // If not found, log for debugging
-                console.warn('HaruCMS: Entry not found', {
-                    collection: collection,
-                    slug: slug,
-                    availableSlugs: data.data.entries.map(e => e.slug).filter(Boolean),
-                    entriesCount: data.data.entries.length
-                });
+            
+            if (!data) {
+                console.warn('HaruCMS: No data returned from API');
+                return null;
             }
+            
+            if (data.status !== 'ok') {
+                console.warn('HaruCMS: API returned error:', data.message || data.status);
+                return null;
+            }
+            
+            if (!data.data || !data.data.entries) {
+                console.warn('HaruCMS: No entries in API response');
+                return null;
+            }
+            
+            // Normalize slug for comparison (handle both formats)
+            const normalizedSlug = slug.toLowerCase().trim();
+            
+            console.log('HaruCMS: Searching for slug', normalizedSlug, 'in', data.data.entries.length, 'entries');
+            console.log('HaruCMS: Available slugs:', data.data.entries.map(e => e.slug).filter(Boolean));
+            
+            const entry = data.data.entries.find(entry => {
+                const entrySlug = (entry.slug || '').toLowerCase().trim();
+                const match = entrySlug === normalizedSlug;
+                if (match) {
+                    console.log('HaruCMS: Found entry:', entry.title || entry.id);
+                }
+                return match;
+            });
+            
+            if (entry) {
+                return entry;
+            }
+            
+            // If not found, log for debugging
+            console.warn('HaruCMS: Entry not found', {
+                collection: collection,
+                slug: slug,
+                normalizedSlug: normalizedSlug,
+                availableSlugs: data.data.entries.map(e => e.slug).filter(Boolean),
+                entriesCount: data.data.entries.length,
+                allEntries: data.data.entries.map(e => ({ id: e.id, title: e.title, slug: e.slug, status: e.status }))
+            });
         } catch (error) {
             console.error('HaruCMS: Error fetching entry by slug:', error);
+            console.error('HaruCMS: Error stack:', error.stack);
         }
         return null;
     }
