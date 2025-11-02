@@ -43,7 +43,16 @@ if ($action === 'list_licenses') {
             'has_api_key' => !empty($license['api_key']),
             'features' => $license['features'] ?? [],
             'allowed_domains' => $license['allowed_domains'] ?? [$domain],
-            'domain_count' => count($license['allowed_domains'] ?? [$domain])
+            'domain_count' => count($license['allowed_domains'] ?? [$domain]),
+            'permissions' => $license['permissions'] ?? [
+                'permission_level' => $license['permission_level'] ?? 'read_write',
+                'read_collections' => $license['read_collections'] ?? [],
+                'write_collections' => $license['write_collections'] ?? [],
+                'rate_limits' => $license['rate_limits'] ?? [
+                    'read' => ['limit' => 100, 'window' => 60],
+                    'write' => ['limit' => 10, 'window' => 3600]
+                ]
+            ]
         ];
     }
     
@@ -75,6 +84,9 @@ if ($action === 'register_domain') {
     $plan = $input['plan'] ?? 'basic';
     $expiresAt = $input['expires_at'] ?? null;
     $additionalDomains = $input['additional_domains'] ?? [];
+    $permissionLevel = $input['permission_level'] ?? 'read_write';
+    $readLimit = intval($input['read_limit'] ?? $input['rate_limits']['read']['limit'] ?? 100);
+    $writeLimit = intval($input['write_limit'] ?? $input['rate_limits']['write']['limit'] ?? 10);
     
     if (empty($domain) || empty($customerEmail)) {
         echo json_encode(['status' => 'error', 'message' => 'Domain and customer email are required']);
@@ -114,7 +126,12 @@ if ($action === 'register_domain') {
         'expires_at' => $expiresAt,
         'features' => getPlanFeatures($plan),
         'created_by' => $_SESSION['user']['email'] ?? 'admin',
-        'allowed_domains' => array_merge([$domain], $additionalDomains)
+        'allowed_domains' => array_merge([$domain], $additionalDomains),
+        'permission_level' => $permissionLevel,
+        'rate_limits' => [
+            'read' => ['limit' => $readLimit, 'window' => 60],
+            'write' => ['limit' => $writeLimit, 'window' => 3600]
+        ]
     ];
     
     $result = $domainAuth->registerDomain($domain, $licenseData);
@@ -295,20 +312,30 @@ if ($action === 'update_license') {
     $status = $input['status'] ?? '';
     $expiresAt = $input['expires_at'] ?? null;
     $plan = $input['plan'] ?? '';
+    $permissions = $input['permissions'] ?? [];
     
     if (empty($domain)) {
         echo json_encode(['status' => 'error', 'message' => 'Domain is required']);
         exit;
     }
     
-    $result = $domainAuth->updateLicense($domain, [
+    $updates = [
         'status' => $status,
         'expires_at' => $expiresAt,
         'plan' => $plan,
         'features' => getPlanFeatures($plan),
         'updated_at' => date('c'),
         'updated_by' => $_SESSION['user']['email'] ?? 'admin'
-    ]);
+    ];
+    
+    // Merge permissions if provided
+    if (!empty($permissions)) {
+        $currentLicense = $domainAuth->getAllLicenses()[$domain] ?? [];
+        $currentPermissions = $currentLicense['permissions'] ?? [];
+        $updates['permissions'] = array_merge($currentPermissions, $permissions);
+    }
+    
+    $result = $domainAuth->updateLicense($domain, $updates);
     
     if ($result) {
         log_security_event('license_updated', [
@@ -327,7 +354,7 @@ if ($action === 'update_license') {
     exit;
 }
 
-if ($action === 'revoke_license') {
+if ($action === 'delete_license' || $action === 'revoke_license') {
     // Check admin authentication
     if (!isset($_SESSION['user']) || !checkPermission($_SESSION['user'], 'manage_content')) {
         http_response_code(401);
@@ -347,24 +374,27 @@ if ($action === 'revoke_license') {
         exit;
     }
     
-    $result = $domainAuth->updateLicense($domain, [
-        'status' => 'revoked',
-        'revoked_at' => date('c'),
-        'revoked_by' => $_SESSION['user']['email'] ?? 'admin'
-    ]);
-    
-    if ($result) {
-        log_security_event('license_revoked', [
-            'domain' => $domain,
-            'admin' => $_SESSION['user']['email'] ?? 'admin'
-        ]);
+    $licenses = $domainAuth->getAllLicenses();
+    if (isset($licenses[$domain])) {
+        unset($licenses[$domain]);
+        $storage = new Storage('../settings');
+        $result = $storage->write('licenses.json', $licenses);
         
-        echo json_encode([
-            'status' => 'ok',
-            'message' => 'License revoked successfully'
-        ]);
+        if ($result) {
+            log_security_event('license_deleted', [
+                'domain' => $domain,
+                'admin' => $_SESSION['user']['email'] ?? 'admin'
+            ]);
+            
+            echo json_encode([
+                'status' => 'ok',
+                'message' => 'Domain deleted successfully'
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete domain']);
+        }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Failed to revoke license']);
+        echo json_encode(['status' => 'error', 'message' => 'Domain not found']);
     }
     exit;
 }
