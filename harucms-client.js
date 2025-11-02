@@ -578,6 +578,9 @@
         }
     }
     
+    // Store urlParams for use in detectCollectionFromTemplate
+    let urlParams = null;
+    
     /**
      * Detect collection name from template or URL
      */
@@ -616,9 +619,6 @@
         
         return null;
     }
-    
-    // Store urlParams for use in detectCollectionFromTemplate
-    let urlParams = null;
     
     /**
      * Get entry by slug (helper function)
