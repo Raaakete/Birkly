@@ -179,10 +179,14 @@ const onboarding = {
             // Special handling for demo website step
             const demoStepNumber = this.needsFirstUser ? 3 : 3; // Step 3 (after welcome and site-info)
             if (this.currentStep === demoStepNumber) {
-                if (this.selectedDemoWebsite === null && document.getElementById('demo-website-actions')) {
-                    document.getElementById('demo-website-actions').style.display = 'flex';
+                // If nothing selected, allow skipping
+                if (this.selectedDemoWebsite === null) {
+                    // Skip is allowed - continue to next step
+                    this.showStep(this.currentStep + 1);
+                    this.updateProgressAPI();
                     return;
                 }
+                // If website selected, install it
                 if (this.selectedDemoWebsite !== null) {
                     this.installDemoWebsite(this.selectedDemoWebsite);
                     // Wait for installation before proceeding
