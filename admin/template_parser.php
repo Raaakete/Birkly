@@ -240,18 +240,27 @@ class TemplateParser {
         // Handle {/if} syntax (alternative closing)
         $parsed = str_replace('{/if}', '<?php endif; ?>', $parsed);
         
-        // Handle {for item in array} ... {endfor} syntax
+        // Handle {for item in array} or {for each item in array} ... {endfor} syntax
         // Support dot-notation: {for src in fieldtype_assets.js_files}
+        // Also support: {for each entry in 'blog'} with quoted collection names
         $parsed = preg_replace_callback(
-            '/\{for\s+([^\s]+)\s+in\s+([^}]+)\}/',
+            '/\{for\s+(?:each\s+)?([^\s]+)\s+in\s+([^}]+)\}/',
             function($matches) {
-                $item = $matches[1];
-                $arrayPath = trim($matches[2]);
-                // Convert dot-notation to array access: a.b.c -> $a['b']['c']
-                $parts = explode('.', $arrayPath);
-                $phpArray = '$' . array_shift($parts);
-                foreach ($parts as $p) {
-                    $phpArray .= "['" . $p . "']";
+                $item = trim($matches[1]); // e.g., "entry"
+                $arrayPath = trim($matches[2]); // e.g., "'blog'" or "blog" or "fieldtype_assets.js_files"
+                
+                // Check if it's a quoted string (collection name like 'blog' or "blog")
+                if (preg_match("/^['\"]([^'\"]+)['\"]/", $arrayPath, $quoteMatches)) {
+                    $collectionName = $quoteMatches[1];
+                    // Use the collection name directly as a variable (e.g., $blog)
+                    $phpArray = '$' . $collectionName;
+                } else {
+                    // Convert dot-notation to array access: a.b.c -> $a['b']['c']
+                    $parts = explode('.', $arrayPath);
+                    $phpArray = '$' . array_shift($parts);
+                    foreach ($parts as $p) {
+                        $phpArray .= "['" . $p . "']";
+                    }
                 }
                 return '<?php foreach (' . $phpArray . ' ?? [] as $' . $item . '): ?>';
             },
