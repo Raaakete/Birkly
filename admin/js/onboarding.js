@@ -257,54 +257,21 @@ const onboarding = {
         // Add selected class to keep card
         event.target.closest('.demo-card').classList.add('selected');
         
-        // Show loading state
-        const keepBtn = event.target.closest('.keep-card')?.querySelector('button');
-        if (keepBtn) {
-            keepBtn.disabled = true;
-            keepBtn.textContent = 'Keeping...';
+        // Keeping demo content requires no API call - just update progress and continue
+        // Update progress (no API call needed for "keep")
+        await this.updateProgressAPI('demo_content_kept', true);
+        
+        // Show continue button and proceed
+        const actions = document.getElementById('demo-content-actions');
+        if (actions) {
+            actions.style.display = 'flex';
         }
         
-        try {
-            const response = await fetch('/api/demo.php?action=keep', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({})
-            });
-            
-            const data = await response.json();
-            if (data.status === 'ok') {
-                // Update progress
-                await this.updateProgressAPI('demo_content_kept', true);
-                
-                // Show continue button and proceed
-                const actions = document.getElementById('demo-content-actions');
-                if (actions) {
-                    actions.style.display = 'flex';
-                }
-                
-                // Auto-continue after a moment
-                setTimeout(() => {
-                    this.nextStep();
-                    this.updateProgressAPI();
-                }, 500);
-            } else {
-                console.error('Failed to keep demo content:', data.message);
-                alert('Failed to save preference: ' + (data.message || 'Unknown error'));
-                if (keepBtn) {
-                    keepBtn.disabled = false;
-                    keepBtn.textContent = 'Keep';
-                }
-            }
-        } catch (error) {
-            console.error('Error keeping demo content:', error);
-            alert('Error saving preference. Please try again.');
-            if (keepBtn) {
-                keepBtn.disabled = false;
-                keepBtn.textContent = 'Keep';
-            }
-        }
+        // Auto-continue after a moment
+        setTimeout(() => {
+            this.nextStep();
+            this.updateProgressAPI();
+        }, 300);
     },
     
     async deleteDemoContent() {
