@@ -7,7 +7,7 @@ const onboarding = {
     currentStep: 0,
     maxSteps: 4,
     needsFirstUser: false,
-    selectedDemoWebsite: null,
+    demoContentChoice: null, // 'keep' or 'delete'
     siteInfo: {},
     
     init() {
