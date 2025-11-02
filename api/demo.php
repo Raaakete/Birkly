@@ -20,8 +20,13 @@ if (!isset($_SESSION['user'])) {
 
 requireAuth('manage_content');
 
-$action = $_GET['action'] ?? $_POST['action'] ?? '';
+$action = trim($_GET['action'] ?? $_POST['action'] ?? '');
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+// Debug logging (can be removed later)
+if (empty($action)) {
+    error_log("Demo API called without action. GET: " . json_encode($_GET) . ", POST: " . json_encode($_POST));
+}
 
 // Helper to list available demo websites
 function listDemoWebsites() {
