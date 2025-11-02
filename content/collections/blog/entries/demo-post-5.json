@@ -1,0 +1,15 @@
+{
+  "id": "demo-post-5",
+  "title": "Customizing Your Site",
+  "slug": "customizing-your-site",
+  "excerpt": "Discover how to customize HaruCMS to match your needs. From templates to styling, make HaruCMS work exactly the way you want.",
+  "content": "<p>HaruCMS is designed to be flexible and customizable. There are many ways to tailor it to your specific needs.</p><h2>Template System</h2><p>The template system uses a simple, natural syntax that's easy to learn. Create beautiful layouts with loops, conditionals, and filters.</p><h2>Styling</h2><p>Customize the look and feel of your admin interface and frontend. The admin panel uses CSS variables for easy theming.</p><h2>Extensibility</h2><p>With the plugin system and custom fieldtypes, you can extend HaruCMS functionality to suit your specific requirements.</p>",
+  "category": "Customization",
+  "tags": ["customization", "templates", "styling"],
+  "author": "Admin",
+  "status": "published",
+  "created_at": "2025-01-05T16:45:00+00:00",
+  "updated_at": "2025-01-05T16:45:00+00:00",
+  "published_at": "2025-01-05T16:45:00+00:00"
+}
+
