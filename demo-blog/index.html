@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Blog - HaruCMS</title>
+    <title>{{ site_title }} - Blog</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,32 +18,26 @@
     </header>
 
     <main class="container">
-        <div class="blog-posts" id="blog-posts">
-            <!-- Content will be loaded by HaruCMS client library -->
-            <div style="text-align: center; padding: 2rem;">
-                <p>Loading blog posts...</p>
-            </div>
-            
-            <!-- Template for each blog post (hidden, used by client library) -->
-            <template id="post-template">
-                <article class="post-card">
-                    <h2><a href="post.html?slug={{ entry.slug }}">{{ entry.title }}</a></h2>
-                    <div class="post-meta">
-                        <time>{{ entry.created_at|date:"F j, Y" }}</time>
-                        {if entry.tags exist}
-                        <div class="tags">
-                            {foreach entry.tags as tag}
-                            <span class="tag">{{ tag }}</span>
-                            {endforeach}
-                        </div>
-                        {endif}
+        <div class="blog-posts">
+            {for each entry in 'blog'}
+            <article class="post-card">
+                <h2><a href="post.html?slug={{ entry.slug }}">{{ entry.title }}</a></h2>
+                <div class="post-meta">
+                    <time>{{ entry.created_at|date:"F j, Y" }}</time>
+                    {if entry.tags exist}
+                    <div class="tags">
+                        {foreach entry.tags as tag}
+                        <span class="tag">{{ tag }}</span>
+                        {endforeach}
                     </div>
-                    {if entry.excerpt exist}
-                    <p class="excerpt">{{ entry.excerpt }}</p>
                     {endif}
-                    <a href="post.html?slug={{ entry.slug }}" class="read-more">Read More →</a>
-                </article>
-            </template>
+                </div>
+                {if entry.excerpt exist}
+                <p class="excerpt">{{ entry.excerpt }}</p>
+                {endif}
+                <a href="post.html?slug={{ entry.slug }}" class="read-more">Read More →</a>
+            </article>
+            {endfor}
         </div>
     </main>
 
@@ -53,112 +47,8 @@
         </div>
     </footer>
 
-    <!-- HaruCMS Client Library -->
-    <!-- In production, this would be: <script src="https://your-cms-domain.com/harucms-client.js"></script> -->
+    <!-- HaruCMS Client Library - That's it! Just one script tag. -->
+    <!-- In production: <script src="https://your-cms-domain.com/harucms-client.js"></script> -->
     <script src="/harucms-client.js" data-cms-url="http://localhost:8080"></script>
-    <script>
-        // Wait for HaruCMS to initialize and then manually fetch and render blog posts
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Wait a bit for HaruCMS to initialize
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            if (window.HaruCMS && window.HaruCMS.fetch) {
-                const postsContainer = document.getElementById('blog-posts');
-                const template = document.getElementById('post-template');
-                
-                // Fetch blog entries
-                const response = await window.HaruCMS.fetch('list_entries', { collection: 'blog' });
-                
-                if (response && response.status === 'ok' && response.data.entries) {
-                    const entries = response.data.entries;
-                    
-                    // Clear loading message
-                    postsContainer.innerHTML = '';
-                    
-                    // Render each entry
-                    entries.forEach(entry => {
-                        // Clone template
-                        const postElement = template.content.cloneNode(true);
-                        
-                        // Replace variables
-                        const html = postElement.innerHTML;
-                        const rendered = html
-                            .replace(/\{\{ entry\.slug \}\}/g, escapeHtml(entry.slug || ''))
-                            .replace(/\{\{ entry\.title \}\}/g, escapeHtml(entry.title || ''))
-                            .replace(/\{\{ entry\.created_at\|date:"F j, Y" \}\}/g, formatDate(entry.created_at, 'F j, Y'))
-                            .replace(/\{\{ entry\.excerpt \}\}/g, escapeHtml(entry.excerpt || ''));
-                        
-                        postElement.innerHTML = rendered;
-                        
-                        // Handle tags if they exist
-                        if (entry.tags && entry.tags.length > 0) {
-                            const tagsHtml = entry.tags.map(tag => 
-                                `<span class="tag">${escapeHtml(tag)}</span>`
-                            ).join('');
-                            postElement.innerHTML = postElement.innerHTML.replace(
-                                /\{foreach entry\.tags as tag\}[\s\S]*?\{endforeach\}/,
-                                tagsHtml
-                            );
-                        } else {
-                            postElement.innerHTML = postElement.innerHTML.replace(
-                                /\{if entry\.tags exist\}[\s\S]*?\{endif\}/,
-                                ''
-                            );
-                        }
-                        
-                        // Remove excerpt condition if it doesn't exist
-                        if (!entry.excerpt) {
-                            postElement.innerHTML = postElement.innerHTML.replace(
-                                /\{if entry\.excerpt exist\}[\s\S]*?\{endif\}/,
-                                ''
-                            );
-                        }
-                        
-                        // Remove template syntax that wasn't replaced
-                        postElement.innerHTML = postElement.innerHTML.replace(/\{[^}]+\}/g, '');
-                        
-                        postsContainer.appendChild(postElement);
-                    });
-                    
-                    // Update site title and year
-                    const siteTitle = document.querySelector('h1');
-                    if (siteTitle) {
-                        siteTitle.textContent = 'Demo Blog';
-                    }
-                    
-                    const footer = document.querySelector('footer p');
-                    if (footer) {
-                        footer.textContent = `© Demo Blog ${new Date().getFullYear()}`;
-                    }
-                } else {
-                    postsContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><p>No blog posts found.</p></div>';
-                }
-            }
-        });
-        
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        function formatDate(dateString, format) {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return dateString;
-            
-            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            const day = date.getDate();
-            const month = months[date.getMonth()];
-            const year = date.getFullYear();
-            
-            return format
-                .replace('F', month)
-                .replace('j', day)
-                .replace('Y', year);
-        }
-    </script>
 </body>
 </html>
-
