@@ -18,38 +18,30 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-// Parse action from various sources
-$action = '';
-if (isset($_GET['action'])) {
-    $action = trim($_GET['action']);
-} elseif (isset($_POST['action'])) {
-    $action = trim($_POST['action']);
-} else {
-    // Try to parse from REQUEST_URI query string
-    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_QUERY);
-    if ($uri) {
-        parse_str($uri, $queryParams);
-        $action = trim($queryParams['action'] ?? '');
-    }
-}
-
-// Normalize action: lowercase and remove any whitespace
+// Parse action - prioritize $_GET since it's in the query string
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
 $action = strtolower(trim($action));
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-// Debug logging
-error_log("Demo API - Action: [" . $action . "], GET: " . json_encode($_GET) . ", POST action: " . ($_POST['action'] ?? 'none') . ", REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'none'));
+// Check authentication FIRST (before switch, but after parsing action)
+requireAuth('manage_content');
 
+// If action is still empty after normalization, return error
 if (empty($action)) {
     error_log("Demo API called without action. GET: " . json_encode($_GET) . ", POST: " . json_encode($_POST) . ", REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'none'));
     http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'No action specified']);
+    echo json_encode([
+        'status' => 'error', 
+        'message' => 'No action specified',
+        'debug' => [
+            'get' => $_GET,
+            'post' => $_POST,
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? null
+        ]
+    ]);
     exit;
 }
-
-// Check authentication AFTER parsing action (so we can log what action was requested)
-requireAuth('manage_content');
 
 // Helper to delete demo content
 function deleteDemoContent() {
@@ -168,8 +160,8 @@ function listDemoContent() {
     ];
 }
 
-// Debug: Log normalized action
-error_log("Demo API - Normalized action: [" . $action . "]");
+// Debug: Log before switch
+error_log("Demo API - About to switch on action: [" . $action . "], type: " . gettype($action) . ", length: " . strlen($action));
 
 switch ($action) {
     case 'list':
@@ -250,17 +242,26 @@ switch ($action) {
         error_log("Demo API - Default case hit! Action was: [" . $action . "], type: " . gettype($action) . ", length: " . strlen($action));
         error_log("Demo API - Action hex: " . bin2hex($action));
         error_log("Demo API - Available cases: list, delete, keep");
+        error_log("Demo API - GET: " . json_encode($_GET) . ", POST: " . json_encode($_POST));
+        error_log("Demo API - REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'none'));
+        error_log("Demo API - Comparing 'keep': " . ($action === 'keep' ? 'MATCH' : 'NO MATCH (' . var_export($action, true) . ')'));
+        error_log("Demo API - Comparing 'delete': " . ($action === 'delete' ? 'MATCH' : 'NO MATCH'));
         http_response_code(400);
         echo json_encode([
             'status' => 'error', 
-            'message' => 'Invalid action: ' . $action,
+            'message' => 'Invalid action: ' . var_export($action, true),
             'debug' => [
                 'action' => $action,
                 'action_type' => gettype($action),
                 'action_length' => strlen($action),
                 'action_hex' => bin2hex($action),
+                'action_equals_keep' => ($action === 'keep'),
+                'action_equals_delete' => ($action === 'delete'),
                 'get_action' => $_GET['action'] ?? null,
-                'post_action' => $_POST['action'] ?? null
+                'post_action' => $_POST['action'] ?? null,
+                'request_uri' => $_SERVER['REQUEST_URI'] ?? null,
+                'get_raw' => $_GET,
+                'post_raw' => $_POST
             ]
         ]);
         exit;
