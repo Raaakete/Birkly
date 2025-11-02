@@ -46,35 +46,8 @@
     </footer>
 
     <!-- HaruCMS Client Library - That's it! Just one script tag. -->
+    <!-- The library automatically detects ?slug= parameter and fetches the entry! -->
     <!-- In production: <script src="https://your-cms-domain.com/harucms-client.js"></script> -->
     <script src="/harucms-client.js" data-cms-url="http://localhost:8080"></script>
-    <script>
-        // Minimal script ONLY for URL parameter (slug) - library doesn't handle this yet
-        // TODO: Enhance library to support URL-based routing automatically
-        (async function() {
-            const slug = new URLSearchParams(window.location.search).get('slug');
-            if (!slug || !window.HaruCMS) return;
-            
-            const entry = await window.HaruCMS.getEntryBySlug('blog', slug);
-            if (entry) {
-                // Simple manual updates for this specific case
-                document.title = entry.title + ' - Demo Blog';
-                document.querySelector('h1').textContent = entry.title;
-                document.querySelector('time').textContent = new Date(entry.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                document.querySelector('.post-content').innerHTML = entry.content || '';
-                
-                if (entry.tags?.length) {
-                    const tagsDiv = document.querySelector('.tags') || document.createElement('div');
-                    tagsDiv.className = 'tags';
-                    tagsDiv.innerHTML = entry.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-                    if (!document.querySelector('.tags')) {
-                        document.querySelector('.post-meta').appendChild(tagsDiv);
-                    }
-                }
-            } else {
-                document.querySelector('main').innerHTML = '<div style="text-align: center; padding: 2rem;"><p>Post not found. <a href="index.html">← Back to Blog</a></p></div>';
-            }
-        })();
-    </script>
 </body>
 </html>
