@@ -22,6 +22,9 @@ if (empty($path) || $path === '/') {
     $path = 'index.html';
 }
 
+// Debug: Log the request (uncomment if needed)
+// error_log("Demo website router: URI=$uri, Path=$path");
+
 // Check if the demo website directory exists
 $websiteDir = __DIR__ . '/demo-blog';
 if (!is_dir($websiteDir)) {
