@@ -348,7 +348,7 @@
                 });
                 
                 // Replace {{ variable }} (non-item variables)
-                itemOutput = itemOutput.replace(/\{\{\s*([^.\s}]+)(?:\s*\|\s*([^\s}]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (varMatch, varName, filter, filterValue) => {
+                itemOutput = itemOutput.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (varMatch, varName, filter, filterValue) => {
                     // Skip if it contains a dot (it's an item property)
                     if (varMatch.includes('.')) return varMatch;
                     
@@ -373,7 +373,7 @@
         });
         
         // Replace {{ variable }} outside loops
-        output = output.replace(/\{\{\s*([^.\s}]+)(?:\s*\|\s*([^\s}]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (match, varName, filter, filterValue) => {
+        output = output.replace(/\{\{\s*([a-zA-Z0-9_\.]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (match, varName, filter, filterValue) => {
             let value = getNestedValue(data, varName) || '';
             
             if (filter === 'date' && filterValue) {
