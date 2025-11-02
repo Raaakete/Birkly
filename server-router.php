@@ -21,6 +21,13 @@ if ($uri === false || $uri === null) {
     return false;
 }
 
+// Check if this is a demo website request - handle it with demo-website-router.php
+if (preg_match('#^/demo-website-[^/]+#', $uri)) {
+    require_once __DIR__ . '/demo-website-router.php';
+    // demo-website-router.php will exit() if it handles the request
+    // If it returns false, fall through to normal handling
+}
+
 // Get the actual file path
 $file = __DIR__ . $uri;
 
