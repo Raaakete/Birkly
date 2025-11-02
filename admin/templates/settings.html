@@ -50,6 +50,14 @@
         </svg>
         API
       </button>
+      <button class="tab-btn" data-tab="domains">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        Domains
+      </button>
     </div>
 
     <div class="tab-content">
@@ -445,6 +453,30 @@
         </div>
       </div>
 
+      <!-- Domains Tab -->
+      <div class="tab-pane" id="domains">
+        <div class="settings-section">
+          <div class="section-header">
+            <h2>Domain Management</h2>
+            <p class="section-description">Register domains to allow them to access your CMS content via the API. Only registered domains can read/write content.</p>
+            <button class="btn btn-primary" onclick="openAddDomainModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Register Domain
+            </button>
+          </div>
+          
+          <div id="domains-list" class="domains-grid">
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>Loading domains...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Webhooks Tab -->
       <div class="tab-pane" id="webhooks">
         <div class="settings-section">
@@ -459,6 +491,112 @@
             <p><a href="/admin/index.php?page=webhooks" class="btn btn-secondary">Go to Webhooks Management</a></p>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Domain Management Modals -->
+  <!-- Add Domain Modal -->
+  <div id="add-domain-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>Register Domain</h2>
+        <button class="modal-close-btn" onclick="closeAddDomainModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="add-domain-form">
+          <div class="form-group">
+            <label for="domain-name">Domain Name *</label>
+            <input type="text" id="domain-name" name="domain" required class="input" placeholder="example.com">
+            <small class="text-muted">Enter the domain name without http:// or https://</small>
+          </div>
+          <div class="form-group">
+            <label for="domain-email">Customer Email *</label>
+            <input type="email" id="domain-email" name="customer_email" required class="input" placeholder="customer@example.com">
+          </div>
+          <div class="form-group">
+            <label for="domain-permission-level">Permission Level</label>
+            <select id="domain-permission-level" name="permission_level" class="input">
+              <option value="read_only">Read Only</option>
+              <option value="read_write" selected>Read & Write</option>
+            </select>
+            <small class="text-muted">Read Only: Can fetch content. Read & Write: Can fetch and submit content.</small>
+          </div>
+          <div class="form-group">
+            <label for="domain-plan">License Plan</label>
+            <select id="domain-plan" name="plan" class="input">
+              <option value="basic">Basic</option>
+              <option value="pro">Pro</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="domain-expires">Expires At (Optional)</label>
+            <input type="datetime-local" id="domain-expires" name="expires_at" class="input">
+            <small class="text-muted">Leave empty for no expiration</small>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label>Read Rate Limit (per minute)</label>
+              <input type="number" id="domain-read-limit" name="read_limit" value="100" min="1" class="input">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>Write Rate Limit (per hour)</label>
+              <input type="number" id="domain-write-limit" name="write_limit" value="10" min="1" class="input">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddDomainModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="registerDomain()">Register Domain</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Domain Modal -->
+  <div id="edit-domain-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>Edit Domain</h2>
+        <button class="modal-close-btn" onclick="closeEditDomainModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-domain-form">
+          <input type="hidden" id="edit-domain-original" name="original_domain">
+          <div class="form-group">
+            <label for="edit-domain-permission-level">Permission Level</label>
+            <select id="edit-domain-permission-level" name="permission_level" class="input">
+              <option value="read_only">Read Only</option>
+              <option value="read_write">Read & Write</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-domain-status">Status</label>
+            <select id="edit-domain-status" name="status" class="input">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-domain-expires">Expires At</label>
+            <input type="datetime-local" id="edit-domain-expires" name="expires_at" class="input">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label>Read Rate Limit (per minute)</label>
+              <input type="number" id="edit-domain-read-limit" name="read_limit" min="1" class="input">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>Write Rate Limit (per hour)</label>
+              <input type="number" id="edit-domain-write-limit" name="write_limit" min="1" class="input">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditDomainModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="updateDomain()">Update Domain</button>
       </div>
     </div>
   </div>
@@ -1249,5 +1387,358 @@ function deletePlugin(pluginId) {
         this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
     });
 })();
+
+// Domain Management Functions
+(function() {
+    'use strict';
+    
+    // Load domains when tab is clicked
+    document.querySelector('[data-tab="domains"]')?.addEventListener('click', function() {
+        if (document.getElementById('domains-list')) {
+            loadDomains();
+        }
+    });
+    
+    // Load domains on initial page load if domains tab is active
+    if (document.querySelector('[data-tab="domains"]')?.classList.contains('active')) {
+        loadDomains();
+    }
+    
+    async function loadDomains() {
+        const listContainer = document.getElementById('domains-list');
+        if (!listContainer) return;
+        
+        listContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading domains...</p></div>';
+        
+        try {
+            const response = await fetch('/api/license_management.php?action=list_licenses');
+            const data = await response.json();
+            
+            if (data.status === 'ok' && data.data.licenses) {
+                renderDomains(data.data.licenses);
+            } else {
+                listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet.</p></div>';
+            }
+        } catch (error) {
+            console.error('Error loading domains:', error);
+            listContainer.innerHTML = '<div class="error-state"><p>Error loading domains. Please try again.</p></div>';
+        }
+    }
+    
+    function renderDomains(domains) {
+        const listContainer = document.getElementById('domains-list');
+        if (!listContainer) return;
+        
+        if (domains.length === 0) {
+            listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet. Click "Register Domain" to add one.</p></div>';
+            return;
+        }
+        
+        listContainer.innerHTML = domains.map(domain => {
+            const permissions = domain.permissions || {};
+            const permissionLevel = permissions.permission_level || 'read_write';
+            const readCollections = permissions.read_collections || [];
+            const writeCollections = permissions.write_collections || [];
+            const rateLimits = permissions.rate_limits || {};
+            
+            return `
+                <div class="domain-card">
+                    <div class="domain-header">
+                        <div class="domain-info">
+                            <h3>${escapeHtml(domain.domain)}</h3>
+                            <div class="domain-badges">
+                                <span class="badge badge-${domain.status === 'active' ? 'success' : 'secondary'}">${domain.status || 'active'}</span>
+                                <span class="badge badge-${permissionLevel === 'read_write' ? 'primary' : 'info'}">${permissionLevel === 'read_write' ? 'Read & Write' : 'Read Only'}</span>
+                            </div>
+                        </div>
+                        <div class="domain-actions">
+                            <button class="btn btn-small btn-secondary" onclick="editDomain('${escapeHtml(domain.domain)}')">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteDomain('${escapeHtml(domain.domain)}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="domain-details">
+                        <div class="detail-row">
+                            <strong>Email:</strong> <span>${escapeHtml(domain.customer_email || 'N/A')}</span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Plan:</strong> <span>${escapeHtml(domain.plan || 'basic')}</span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Registered:</strong> <span>${domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                        ${domain.expires_at ? `<div class="detail-row"><strong>Expires:</strong> <span>${new Date(domain.expires_at).toLocaleDateString()}</span></div>` : ''}
+                        <div class="detail-row">
+                            <strong>Rate Limits:</strong> 
+                            <span>Read: ${rateLimits.read?.limit || 100}/min, Write: ${rateLimits.write?.limit || 10}/hour</span>
+                        </div>
+                        ${readCollections.length > 0 ? `<div class="detail-row"><strong>Read Collections:</strong> <span>${readCollections.join(', ')}</span></div>` : ''}
+                        ${writeCollections.length > 0 ? `<div class="detail-row"><strong>Write Collections:</strong> <span>${writeCollections.join(', ')}</span></div>` : ''}
+                        ${domain.allowed_domains && domain.allowed_domains.length > 1 ? `<div class="detail-row"><strong>Additional Domains:</strong> <span>${domain.allowed_domains.slice(1).join(', ')}</span></div>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Expose functions globally
+    window.loadDomains = loadDomains;
+})();
+
+async function openAddDomainModal() {
+    document.getElementById('add-domain-modal').style.display = 'flex';
+    document.getElementById('add-domain-form').reset();
+}
+
+function closeAddDomainModal() {
+    document.getElementById('add-domain-modal').style.display = 'none';
+}
+
+async function registerDomain() {
+    const form = document.getElementById('add-domain-form');
+    const formData = new FormData(form);
+    
+    const domainData = {
+        action: 'register_domain',
+        domain: formData.get('domain').trim(),
+        customer_email: formData.get('customer_email').trim(),
+        permission_level: formData.get('permission_level'),
+        plan: formData.get('plan'),
+        expires_at: formData.get('expires_at') || null,
+        read_limit: parseInt(formData.get('read_limit')) || 100,
+        write_limit: parseInt(formData.get('write_limit')) || 10,
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/license_management.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(domainData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Domain registered successfully!', 'success');
+            closeAddDomainModal();
+            loadDomains();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error registering domain: ' + error.message, 'error');
+    }
+}
+
+async function editDomain(domainName) {
+    try {
+        const response = await fetch('/api/license_management.php?action=list_licenses');
+        const data = await response.json();
+        
+        if (data.status === 'ok' && data.data.licenses) {
+            const domain = data.data.licenses.find(d => d.domain === domainName);
+            if (domain) {
+                const permissions = domain.permissions || {};
+                const rateLimits = permissions.rate_limits || {};
+                
+                document.getElementById('edit-domain-original').value = domainName;
+                document.getElementById('edit-domain-permission-level').value = permissions.permission_level || 'read_write';
+                document.getElementById('edit-domain-status').value = domain.status || 'active';
+                document.getElementById('edit-domain-expires').value = domain.expires_at ? new Date(domain.expires_at).toISOString().slice(0, 16) : '';
+                document.getElementById('edit-domain-read-limit').value = rateLimits.read?.limit || 100;
+                document.getElementById('edit-domain-write-limit').value = rateLimits.write?.limit || 10;
+                
+                document.getElementById('edit-domain-modal').style.display = 'flex';
+            }
+        }
+    } catch (error) {
+        showMessage('Error loading domain details: ' + error.message, 'error');
+    }
+}
+
+function closeEditDomainModal() {
+    document.getElementById('edit-domain-modal').style.display = 'none';
+}
+
+async function updateDomain() {
+    const form = document.getElementById('edit-domain-form');
+    const formData = new FormData(form);
+    const originalDomain = formData.get('original_domain');
+    
+    const updateData = {
+        action: 'update_license',
+        domain: originalDomain,
+        permissions: {
+            permission_level: formData.get('permission_level'),
+            rate_limits: {
+                read: {
+                    limit: parseInt(formData.get('read_limit')) || 100,
+                    window: 60
+                },
+                write: {
+                    limit: parseInt(formData.get('write_limit')) || 10,
+                    window: 3600
+                }
+            }
+        },
+        status: formData.get('status'),
+        expires_at: formData.get('expires_at') || null,
+        _csrf: getCsrfToken()
+    };
+    
+    try {
+        const response = await fetch('/api/license_management.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Domain updated successfully!', 'success');
+            closeEditDomainModal();
+            loadDomains();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error updating domain: ' + error.message, 'error');
+    }
+}
+
+async function deleteDomain(domainName) {
+    if (!confirm(`Are you sure you want to delete domain "${domainName}"? This will revoke all access.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/license_management.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'delete_license',
+                domain: domainName,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Domain deleted successfully!', 'success');
+            loadDomains();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error deleting domain: ' + error.message, 'error');
+    }
+}
 </script>
+
+<style>
+/* Domain Management Styles */
+.domains-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.domain-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 20px;
+    transition: box-shadow 0.2s;
+}
+
+.domain-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.domain-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.domain-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+    color: var(--text-primary, #333);
+}
+
+.domain-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.domain-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.domain-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-row {
+    display: flex;
+    gap: 8px;
+    font-size: 0.9em;
+    color: var(--text-secondary, #666);
+}
+
+.detail-row strong {
+    min-width: 120px;
+    color: var(--text-primary, #333);
+}
+
+.loading-state, .empty-state, .error-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary, #666);
+}
+
+.spinner {
+    border: 3px solid var(--border-color, #e0e0e0);
+    border-top: 3px solid var(--primary-color, #007bff);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.875em;
+}
+
+.section-description {
+    color: var(--text-secondary, #666);
+    margin-bottom: 16px;
+    font-size: 0.9em;
+}
+</style>
 

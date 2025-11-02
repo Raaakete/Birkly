@@ -1,13 +1,22 @@
 <?php
 // api/secure_public.php - Secure public read-only API for HaruCMS with domain authentication
 header('Content-Type: application/json');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    require_once 'domain_auth.php';
+    setDynamicCORS();
+    http_response_code(200);
+    exit;
+}
+
 require_once 'storage.php';
 require_once 'domain_auth.php';
 require_once 'rate_limit.php';
 require_once 'log.php';
 
-// Apply domain authentication
-requireDomainAuth();
+// Apply domain authentication with read permission
+requireDomainAuth('read');
 
 $storage = new Storage('../content');
 $input = array_merge($_GET, $_POST);

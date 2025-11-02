@@ -134,14 +134,105 @@ class DomainAuth {
         $licenses = $this->getLicenses();
         $domain = strtolower(trim($domain));
         
+        // Set default permissions if not provided
+        $defaultPermissions = [
+            'permission_level' => $licenseData['permission_level'] ?? 'read_write', // read_only or read_write
+            'read_collections' => $licenseData['read_collections'] ?? [], // empty = all, or specific collection slugs
+            'write_collections' => $licenseData['write_collections'] ?? [], // empty = all, or specific collection slugs
+            'rate_limits' => [
+                'read' => ['limit' => $licenseData['rate_limits']['read']['limit'] ?? 100, 'window' => $licenseData['rate_limits']['read']['window'] ?? 60],
+                'write' => ['limit' => $licenseData['rate_limits']['write']['limit'] ?? 10, 'window' => $licenseData['rate_limits']['write']['window'] ?? 3600]
+            ]
+        ];
+        
         $licenses[$domain] = array_merge($licenseData, [
             'domain' => $domain,
             'registered_at' => date('c'),
             'status' => 'active',
-            'allowed_domains' => [$domain] // Initialize with primary domain
+            'allowed_domains' => [$domain], // Initialize with primary domain
+            'permissions' => $defaultPermissions
         ]);
         
         return $this->storage->write('licenses.json', $licenses);
+    }
+    
+    // Check if domain has permission for an operation
+    public function hasPermission($domain, $operation, $collection = null) {
+        $validation = $this->validateDomain($domain);
+        if (!$validation['valid']) {
+            return ['allowed' => false, 'reason' => 'Domain not licensed'];
+        }
+        
+        $license = $validation['license'];
+        
+        // Localhost always has full permissions for development
+        if (($license['type'] ?? '') === 'local_dev') {
+            return ['allowed' => true, 'reason' => 'local_dev'];
+        }
+        
+        $permissions = $license['permissions'] ?? [];
+        $permissionLevel = $permissions['permission_level'] ?? 'read_write';
+        
+        // Check read permissions
+        if ($operation === 'read') {
+            // If permission level is read_only or read_write, allow reads
+            if ($permissionLevel === 'read_only' || $permissionLevel === 'read_write') {
+                // If specific collections are set, check them
+                $readCollections = $permissions['read_collections'] ?? [];
+                if (!empty($readCollections) && $collection) {
+                    if (in_array($collection, $readCollections)) {
+                        return ['allowed' => true, 'reason' => 'collection_allowed'];
+                    } else {
+                        return ['allowed' => false, 'reason' => 'collection_not_allowed'];
+                    }
+                }
+                return ['allowed' => true, 'reason' => 'read_permission'];
+            }
+            return ['allowed' => false, 'reason' => 'no_read_permission'];
+        }
+        
+        // Check write permissions
+        if ($operation === 'write') {
+            // Only read_write allows writes
+            if ($permissionLevel === 'read_write') {
+                // If specific collections are set, check them
+                $writeCollections = $permissions['write_collections'] ?? [];
+                if (!empty($writeCollections) && $collection) {
+                    if (in_array($collection, $writeCollections)) {
+                        return ['allowed' => true, 'reason' => 'collection_allowed'];
+                    } else {
+                        return ['allowed' => false, 'reason' => 'collection_not_allowed'];
+                    }
+                }
+                return ['allowed' => true, 'reason' => 'write_permission'];
+            }
+            return ['allowed' => false, 'reason' => 'no_write_permission'];
+        }
+        
+        return ['allowed' => false, 'reason' => 'unknown_operation'];
+    }
+    
+    // Get all registered domains for CORS
+    public function getAllowedOrigins() {
+        $licenses = $this->getLicenses();
+        $origins = ['http://localhost', 'http://127.0.0.1'];
+        
+        foreach ($licenses as $domain => $license) {
+            if (($license['status'] ?? '') === 'active' && $this->isLicenseValid($license)) {
+                $origins[] = 'https://' . $domain;
+                $origins[] = 'http://' . $domain;
+                
+                // Add allowed domains
+                if (isset($license['allowed_domains'])) {
+                    foreach ($license['allowed_domains'] as $allowedDomain) {
+                        $origins[] = 'https://' . $allowedDomain;
+                        $origins[] = 'http://' . $allowedDomain;
+                    }
+                }
+            }
+        }
+        
+        return array_unique($origins);
     }
     
     public function addAllowedDomain($licenseId, $newDomain) {
@@ -254,9 +345,54 @@ class DomainAuth {
     }
 }
 
-// Middleware function for API endpoints
-function requireDomainAuth() {
+// Set dynamic CORS headers based on registered domains
+function setDynamicCORS() {
     $domainAuth = new DomainAuth();
+    
+    // Get requesting origin
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (!$origin) {
+        // No origin header, skip CORS (same-origin request)
+        return;
+    }
+    
+    $allowedOrigins = $domainAuth->getAllowedOrigins();
+    $parsedOrigin = parse_url($origin);
+    $originHost = ($parsedOrigin['scheme'] ?? 'http') . '://' . ($parsedOrigin['host'] ?? '');
+    
+    // Check if origin matches any allowed origin
+    $isAllowed = false;
+    foreach ($allowedOrigins as $allowed) {
+        // Match exact origin or allow localhost with any port
+        if ($originHost === $allowed || 
+            (strpos($allowed, 'localhost') !== false && strpos($origin, 'localhost') !== false)) {
+            $isAllowed = true;
+            break;
+        }
+    }
+    
+    if ($isAllowed) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+    } else {
+        // For localhost dev, allow it anyway
+        if (strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+            header('Access-Control-Allow-Credentials: true');
+        }
+    }
+    
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token');
+    header('Access-Control-Max-Age: 86400');
+}
+
+// Middleware function for API endpoints
+function requireDomainAuth($operation = 'read', $collection = null) {
+    $domainAuth = new DomainAuth();
+    
+    // Set dynamic CORS first
+    setDynamicCORS();
     
     // Get domain from Referer header or Origin header
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
@@ -280,14 +416,35 @@ function requireDomainAuth() {
         log_security_event('domain_auth_failed', [
             'domain' => $domain,
             'reason' => $validation['reason'],
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+            'operation' => $operation
+        ]);
+        
+        http_response_code(403);
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Domain not authorized. Please register your domain in the admin panel.',
+            'code' => 'DOMAIN_NOT_LICENSED'
+        ]);
+        exit;
+    }
+    
+    // Check permissions for the operation
+    $permissionCheck = $domainAuth->hasPermission($domain, $operation, $collection);
+    if (!$permissionCheck['allowed']) {
+        log_security_event('domain_permission_denied', [
+            'domain' => $domain,
+            'reason' => $permissionCheck['reason'],
+            'operation' => $operation,
+            'collection' => $collection,
             'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
         ]);
         
         http_response_code(403);
         echo json_encode([
             'status' => 'error', 
-            'message' => 'Domain not authorized. Please contact support to register your domain.',
-            'code' => 'DOMAIN_NOT_LICENSED'
+            'message' => 'Permission denied: ' . $permissionCheck['reason'],
+            'code' => 'PERMISSION_DENIED'
         ]);
         exit;
     }
@@ -298,7 +455,8 @@ function requireDomainAuth() {
     log_security_event('domain_auth_success', [
         'domain' => $domain,
         'license_id' => $validation['license']['id'] ?? 'local_dev',
-        'license_type' => $validation['license']['type'] ?? 'licensed'
+        'license_type' => $validation['license']['type'] ?? 'licensed',
+        'operation' => $operation
     ]);
 }
 
