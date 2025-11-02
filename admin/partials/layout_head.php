@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
     <title>HaruCMS Admin</title>
     <link rel="stylesheet" href="/admin/css/style.css">
+    <?php if (isset($page) && $page === 'help'): ?>
+    <link rel="stylesheet" href="/admin/css/help.css">
+    <?php endif; ?>
     <link rel="shortcut icon" href="assets/haru_favicon.svg">
     
     <!-- Page uses no per-page JS here; global JS loaded in footer -->

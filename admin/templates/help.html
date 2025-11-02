@@ -1,0 +1,45 @@
+<?php
+// Get the documentation section from URL parameter
+$section = $_GET['section'] ?? 'getting-started';
+$sections = [
+    'getting-started' => 'Getting Started',
+    'what-is-cms' => 'What is a CMS?',
+    'concepts' => 'Key Concepts',
+    'collections' => 'Collections',
+    'entries' => 'Entries',
+    'media' => 'Media',
+    'fieldtypes' => 'Field Types',
+    'templating' => 'Templating Language',
+    'website-integration' => 'Website Integration',
+    'client-library' => 'Client Library'
+];
+$currentSectionTitle = $sections[$section] ?? 'Getting Started';
+?>
+<div class="help-page">
+    <div class="help-header">
+        <h1>Documentation</h1>
+        <p class="help-subtitle">Everything you need to know about HaruCMS</p>
+    </div>
+    
+    <div class="help-layout">
+        <div class="help-content">
+            <?php include __DIR__ . '/../docs/' . $section . '.php'; ?>
+        </div>
+        
+        <aside class="help-sidebar">
+            <nav class="help-nav">
+                <ul class="help-nav-list">
+                    <?php foreach ($sections as $key => $title): ?>
+                        <li class="help-nav-item">
+                            <a href="/admin/index.php?page=help&section=<?= htmlspecialchars($key) ?>" 
+                               class="help-nav-link <?= $section === $key ? 'active' : '' ?>">
+                                <?= htmlspecialchars($title) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </nav>
+        </aside>
+    </div>
+</div>
+
