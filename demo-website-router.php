@@ -7,15 +7,14 @@
 // Get the request URI and determine which demo website to render
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-// Check if this is a demo website request (e.g., /demo-website-blog/index.html)
-// Must match /demo-website-{id} or /demo-website-{id}/...
-if (!preg_match('#^/demo-website-([^/]+)(/.*)?$#', $uri, $matches)) {
+// Check if this is a demo website request (e.g., /demo-blog/index.html)
+// Match /demo-blog or /demo-blog/...
+if (!preg_match('#^/demo-blog(/.*)?$#', $uri, $matches)) {
     // Not a demo website request, return false to let server handle it
     return false;
 }
 
-$websiteId = $matches[1];
-$path = $matches[2] ?? '/index.html';
+$path = $matches[1] ?? '/index.html';
 $path = ltrim($path, '/'); // Remove leading slash
 
 // If path is empty or just '/', default to index.html
@@ -24,10 +23,10 @@ if (empty($path) || $path === '/') {
 }
 
 // Check if the demo website directory exists
-$websiteDir = __DIR__ . "/demo-website-$websiteId";
+$websiteDir = __DIR__ . '/demo-blog';
 if (!is_dir($websiteDir)) {
     http_response_code(404);
-    echo "Demo website not found: $websiteId";
+    echo "Demo website not found";
     exit;
 }
 

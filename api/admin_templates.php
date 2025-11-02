@@ -1293,35 +1293,44 @@ function getOnboardingData() {
     // Get onboarding status
     $status = getOnboardingStatus($userId);
     
-    // Get available demo websites (content + frontend together)
-    $demoWebsites = [];
-    $demoWebsitesPath = __DIR__ . '/../demo-websites';
-    if (is_dir($demoWebsitesPath)) {
-        $dirs = glob($demoWebsitesPath . '/*', GLOB_ONLYDIR);
-        foreach ($dirs as $dir) {
-            $websiteName = basename($dir);
-            $manifestFile = $dir . '/manifest.json';
-            if (file_exists($manifestFile)) {
-                $manifest = json_decode(file_get_contents($manifestFile), true);
-                if ($manifest) {
-                    $demoWebsites[] = [
-                        'id' => $websiteName,
-                        'name' => $manifest['name'] ?? $websiteName,
-                        'description' => $manifest['description'] ?? '',
-                        'preview_image' => $manifest['preview_image'] ?? null,
-                        'collections_count' => $manifest['collections_count'] ?? 0,
-                        'entries_count' => $manifest['entries_count'] ?? 0,
-                        'has_frontend' => $manifest['has_frontend'] ?? false
-                    ];
+    // Check if demo content exists (it ships with the CMS by default)
+    $demoContentInfo = [
+        'has_demo_content' => false,
+        'collections' => [],
+        'has_demo_website' => false
+    ];
+    
+    // Check for demo blog collection
+    $blogCollectionPath = __DIR__ . '/../content/collections/blog';
+    if (is_dir($blogCollectionPath)) {
+        $collectionFile = "$blogCollectionPath/collection.json";
+        if (file_exists($collectionFile)) {
+            $collectionData = json_decode(file_get_contents($collectionFile), true);
+            if ($collectionData) {
+                $entriesPath = "$blogCollectionPath/entries";
+                $entryCount = 0;
+                if (is_dir($entriesPath)) {
+                    $entryFiles = glob("$entriesPath/*.json");
+                    $entryCount = count($entryFiles);
                 }
+                
+                $demoContentInfo['has_demo_content'] = true;
+                $demoContentInfo['collections'][] = [
+                    'slug' => 'blog',
+                    'name' => $collectionData['title'] ?? 'Blog',
+                    'entries_count' => $entryCount
+                ];
             }
         }
     }
     
+    // Check for demo website
+    $demoBlogPath = __DIR__ . '/../demo-blog';
+    $demoContentInfo['has_demo_website'] = is_dir($demoBlogPath);
+    
     return [
         'status' => $status,
-        'demo_websites' => $demoWebsites,
-        'demo_packs' => $demoWebsites, // Legacy compatibility
+        'demo_content' => $demoContentInfo,
         'user' => [
             'name' => $_SESSION['user']['name'] ?? $_SESSION['user']['email'] ?? 'User',
             'email' => $_SESSION['user']['email'] ?? ''
