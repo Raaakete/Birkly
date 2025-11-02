@@ -430,9 +430,14 @@
      */
     async function processTemplates() {
         // Check for URL parameters that might indicate we need a specific entry
-        const urlParams = new URLSearchParams(window.location.search);
+        urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
-        const collection = urlParams.get('collection') || detectCollectionFromTemplate();
+        let collection = urlParams.get('collection') || detectCollectionFromTemplate();
+        
+        // If no collection detected but we have a slug, default to 'blog'
+        if (slug && !collection) {
+            collection = 'blog';
+        }
         
         // If we have a slug parameter, fetch that specific entry first
         if (slug && collection) {
@@ -591,12 +596,29 @@
             return pathMatch[1];
         }
         
-        // Common defaults
+        // Check if we're on a post/entry/article page
+        const filename = path.split('/').pop() || '';
+        if (filename.includes('post') || filename.includes('entry') || filename.includes('article')) {
+            // Default to 'blog' for post pages, or check if there's a collection hint in the URL
+            if (path.includes('/blog')) return 'blog';
+            // Common default for post pages
+            return 'blog';
+        }
+        
+        // Common defaults based on path
         if (path.includes('/blog') || path.includes('blog')) return 'blog';
         if (path.includes('/post')) return 'blog';
         
+        // Last resort: if we're on a page with slug parameter, default to 'blog'
+        if (urlParams && urlParams.get('slug')) {
+            return 'blog';
+        }
+        
         return null;
     }
+    
+    // Store urlParams for use in detectCollectionFromTemplate
+    let urlParams = null;
     
     /**
      * Get entry by slug (helper function)
