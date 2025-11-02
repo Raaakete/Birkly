@@ -1,0 +1,15 @@
+{
+  "id": "demo-post-3",
+  "title": "Understanding Fieldtypes",
+  "slug": "understanding-fieldtypes",
+  "excerpt": "Explore the various fieldtypes available in HaruCMS and how to use them effectively. From text fields to rich content editors, learn what each type offers.",
+  "content": "<p>HaruCMS offers a variety of fieldtypes to suit your content needs. Each fieldtype provides different capabilities for managing your data.</p><h2>Common Fieldtypes</h2><ul><li><strong>Text:</strong> Simple single-line text input</li><li><strong>Textarea:</strong> Multi-line text input</li><li><strong>Rich Text:</strong> Full-featured WYSIWYG editor</li><li><strong>Media:</strong> File and image uploads</li><li><strong>Tags:</strong> Tag management</li><li><strong>Relation:</strong> Link entries together</li></ul><p>Choose the right fieldtype for each piece of content to create a structured, manageable content model.</p>",
+  "category": "Features",
+  "tags": ["fieldtypes", "features", "content"],
+  "author": "Admin",
+  "status": "published",
+  "created_at": "2025-01-03T09:15:00+00:00",
+  "updated_at": "2025-01-03T09:15:00+00:00",
+  "published_at": "2025-01-03T09:15:00+00:00"
+}
+

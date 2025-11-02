@@ -1,0 +1,15 @@
+{
+  "id": "demo-post-2",
+  "title": "Creating Your First Content Entry",
+  "slug": "creating-your-first-content-entry",
+  "excerpt": "Learn how to create and manage content in HaruCMS with our step-by-step guide. We'll walk you through creating your first entry and understanding the editor.",
+  "content": "<p>Creating content in HaruCMS is simple and intuitive. Let's walk through the process of creating your first entry.</p><h2>Getting Started</h2><p>To create a new entry, navigate to the Collections section and select your collection. Click the \"New Entry\" button to open the editor.</p><h2>The Editor</h2><p>The editor provides a clean interface for managing your content fields. Each field type has its own controls and validation.</p><p>Fill in your content, set the status to \"published\" when ready, and click save. That's it!</p>",
+  "category": "Tutorial",
+  "tags": ["tutorial", "content", "editor"],
+  "author": "Admin",
+  "status": "published",
+  "created_at": "2025-01-02T14:30:00+00:00",
+  "updated_at": "2025-01-02T14:30:00+00:00",
+  "published_at": "2025-01-02T14:30:00+00:00"
+}
+
