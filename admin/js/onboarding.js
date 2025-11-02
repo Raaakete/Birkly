@@ -5,10 +5,9 @@
 
 const onboarding = {
     currentStep: 0,
-    maxSteps: 5,
+    maxSteps: 4,
     needsFirstUser: false,
-    selectedDemoContent: null,
-    selectedDemoTemplate: null,
+    selectedDemoWebsite: null,
     siteInfo: {},
     
     init() {
