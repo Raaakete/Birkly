@@ -24,6 +24,9 @@ require_once 'log.php';
 // Require domain authentication with write permission for form submissions
 requireDomainAuth('write');
 
+// Apply rate limiting based on domain's write limits
+applyDomainRateLimit('write');
+
 $input = sanitize_input(json_decode(file_get_contents('php://input'), true));
 $action = $input['action'] ?? '';
 
@@ -66,13 +69,10 @@ if ($action === 'submit_form') {
         exit;
     }
     
-    // Apply rate limiting per domain
-    $domain = getCurrentDomain();
-    $rateLimitKey = "form_submit:$domain:$collection";
-    if (!checkRateLimit($rateLimitKey, 10, 3600)) { // 10 submissions per hour per domain per collection
-        echo json_encode(['status' => 'error', 'message' => 'Rate limit exceeded. Please try again later.']);
-        exit;
-    }
+    // Rate limiting is already applied via applyDomainRateLimit('write') above
+    
+    // Get domain for logging
+    $domain = $GLOBALS['current_domain'] ?? 'unknown';
     
     // Create entry
     $entryId = uniqid();
@@ -247,19 +247,6 @@ function validateFieldValue($value, $type, $schema) {
     }
     
     return ['valid' => true];
-}
-
-function getCurrentDomain() {
-    $referer = $_SERVER['HTTP_REFERER'] ?? '';
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    
-    if ($origin) {
-        return parse_url($origin, PHP_URL_HOST);
-    } elseif ($referer) {
-        return parse_url($referer, PHP_URL_HOST);
-    }
-    
-    return 'unknown';
 }
 
 function sendFormNotification($collection, $entryData, $collectionConfig) {
