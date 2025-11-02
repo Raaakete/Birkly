@@ -497,10 +497,34 @@
                     }
                     
                     return; // Done processing single entry
+                } else {
+                    // Entry not found - show error message
+                    const main = document.querySelector('main');
+                    if (main) {
+                        main.innerHTML = `
+                            <div style="text-align: center; padding: 3rem;">
+                                <h1 style="font-size: 2rem; margin-bottom: 1rem;">Post Not Found</h1>
+                                <p style="color: #6b7280; margin-bottom: 2rem;">The post you're looking for doesn't exist.</p>
+                                <a href="index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Blog</a>
+                            </div>
+                        `;
+                    }
+                    return;
                 }
             } catch (error) {
                 console.warn('HaruCMS: Could not fetch entry by slug:', error);
-                // Fall through to normal template processing
+                // Show error message
+                const main = document.querySelector('main');
+                if (main) {
+                    main.innerHTML = `
+                        <div style="text-align: center; padding: 3rem;">
+                            <h1 style="font-size: 2rem; margin-bottom: 1rem;">Error Loading Post</h1>
+                            <p style="color: #6b7280; margin-bottom: 2rem;">Could not load the post. Please try again later.</p>
+                            <a href="index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Blog</a>
+                        </div>
+                    `;
+                }
+                return;
             }
         }
         
