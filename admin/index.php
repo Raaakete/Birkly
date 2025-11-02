@@ -72,6 +72,7 @@ if ($page !== 'onboarding' && $onboardingStatus['is_first_time'] && !$onboarding
             'activity' => 'activity.html',
             'webhooks' => 'webhooks.html',
             'onboarding' => 'onboarding.html',
+            'help' => 'help.html',
             'community_users' => null, // Plugin page - handled dynamically
             'sample_plugin' => null // Plugin page - handled dynamically
         ];
@@ -207,7 +208,7 @@ $isOnboarding = ($page === 'onboarding');
                         echo '</div>';
                     }
                 }
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'updates' || $page === 'entries' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'audit-log' || $page === 'activity' || $page === 'webhooks') {
+            } elseif ($page === 'content' || $page === 'settings' || $page === 'updates' || $page === 'entries' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'audit-log' || $page === 'activity' || $page === 'webhooks' || $page === 'help') {
                 // Content, Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages use direct PHP instead of template parser
                 $data = fetch_admin_page_data($page, $_GET);
                 extract($data);
