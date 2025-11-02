@@ -65,7 +65,17 @@ if (in_array($extension, ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico'
     }
 }
 
-// For HTML files, render with template engine
+// For HTML files, serve them as static files so client library can handle rendering
+// This allows the client library (harucms-client.js) to process templates
+if ($extension === 'html' && file_exists($requestedFile)) {
+    // Serve HTML files as static content (client library will handle rendering)
+    header('Content-Type: text/html; charset=utf-8');
+    readfile($requestedFile);
+    exit;
+}
+
+// OLD SERVER-SIDE RENDERING (DISABLED - Client library handles it now)
+/*
 if ($extension === 'html' && file_exists($requestedFile)) {
     // Include the template parser (don't include api/public.php - it outputs JSON!)
     require_once __DIR__ . '/admin/template_parser.php';
