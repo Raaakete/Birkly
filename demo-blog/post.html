@@ -18,6 +18,8 @@
     </header>
 
     <main class="container">
+        <!-- Template directive: This page fetches a single entry from the 'blog' collection -->
+        <!-- {get entry from 'blog' where slug='{{ slug }}'} -->
         <article class="post">
             <h1>{{ title }}</h1>
             <div class="post-meta">
@@ -46,8 +48,9 @@
     </footer>
 
     <!-- HaruCMS Client Library - That's it! Just one script tag. -->
-    <!-- The library automatically detects ?slug= parameter and fetches the entry! -->
+    <!-- The template explicitly specifies the 'blog' collection to fetch from -->
+    <!-- {get entry from 'blog' where slug='{{ slug }}'} -->
     <!-- In production: <script src="https://your-cms-domain.com/harucms-client.js"></script> -->
-    <script src="/harucms-client.js" data-cms-url="http://localhost:8080"></script>
+    <script src="/harucms-client.js" data-cms-url="http://localhost:8080" data-collection="blog"></script>
 </body>
 </html>
