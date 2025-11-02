@@ -139,62 +139,67 @@
             </div>
         </div>
         
-        <!-- Step 3: Demo Website (Content + Frontend) -->
-        <div class="onboarding-step" id="step-demo-website" data-step="3" style="display: none;">
+        <!-- Step 3: Demo Content -->
+        <div class="onboarding-step" id="step-demo-content" data-step="3" style="display: none;">
             <div class="onboarding-content">
                 <div class="step-header">
                     <div class="step-indicator">
                         <span class="step-number">3</span>
-                        <span class="step-label">Demo Website</span>
+                        <span class="step-label">Demo Content</span>
                     </div>
-                    <p class="step-description">Would you like to start with a demo website? This includes sample content and a simple frontend to help you learn how HaruCMS works.</p>
+                    <p class="step-description">HaruCMS ships with demo content by default to help you learn the system. Would you like to keep it or start fresh?</p>
                 </div>
                 
-                <div class="demo-options">
-                    {if onboarding_data.demo_websites exist}
-                        {for website in onboarding_data.demo_websites}
-                            <div class="demo-card" onclick="onboarding.selectDemoWebsite('{{ website.id }}')">
-                                <div class="demo-card-header">
-                                    <h3>{{ website.name }}</h3>
-                                    {if website.has_frontend}
-                                    <span class="badge">With Frontend</span>
-                                    {endif}
-                                </div>
-                                <div class="demo-card-body">
-                                    <p>{{ website.description }}</p>
-                                    <div class="demo-stats">
-                                        <span>{{ website.collections_count }} Collections</span>
-                                        <span>{{ website.entries_count }} Entries</span>
-                                        {if website.has_frontend}
-                                        <span>Frontend Included</span>
-                                        {endif}
-                                    </div>
-                                </div>
-                                <div class="demo-card-footer">
-                                    <button class="btn btn-primary btn-small">Install</button>
-                                </div>
+                {if onboarding_data.demo_content exist}
+                    {if onboarding_data.demo_content.has_demo_content == true}
+                        <div class="demo-info">
+                            <h3>Demo Content Available</h3>
+                            <p>The following demo content is included:</p>
+                            <ul class="demo-list">
+                                {for collection in onboarding_data.demo_content.collections}
+                                <li>
+                                    <strong>{{ collection.name }}</strong>
+                                    <span class="demo-count">{{ collection.entries_count }} entries</span>
+                                </li>
+                                {endfor}
+                            </ul>
+                            
+                            {if onboarding_data.demo_content.has_demo_website == true}
+                            <div class="demo-website-info">
+                                <p><strong>Demo Website:</strong> A simple blog website is available at <code>/demo-blog</code></p>
                             </div>
-                        {endfor}
-                    {else}
-                        <div class="no-demo-content">
-                            <p>No demo websites available. You can create your own content and templates after setup.</p>
+                            {endif}
                         </div>
                     {endif}
+                {endif}
+                
+                <div class="demo-options">
+                    <div class="demo-card keep-card" onclick="onboarding.keepDemoContent()">
+                        <div class="demo-card-header">
+                            <h3>Keep Demo Content</h3>
+                        </div>
+                        <div class="demo-card-body">
+                            <p>Keep the demo content and website to explore and learn from. You can modify or delete it later.</p>
+                        </div>
+                        <div class="demo-card-footer">
+                            <button class="btn btn-primary btn-small">Keep</button>
+                        </div>
+                    </div>
                     
-                    <div class="demo-card skip-card" onclick="onboarding.selectDemoWebsite(null)">
+                    <div class="demo-card delete-card" onclick="onboarding.deleteDemoContent()">
                         <div class="demo-card-header">
                             <h3>Start Fresh</h3>
                         </div>
                         <div class="demo-card-body">
-                            <p>I want to create my own content and website from scratch</p>
+                            <p>Remove all demo content and start with a clean slate. You'll create your own content from scratch.</p>
                         </div>
                         <div class="demo-card-footer">
-                            <button class="btn btn-secondary btn-small">Skip</button>
+                            <button class="btn btn-secondary btn-small">Delete</button>
                         </div>
                     </div>
                 </div>
                 
-                <div class="onboarding-actions" >
+                <div class="onboarding-actions" style="display: none;" id="demo-content-actions">
                     <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
                         Back
                     </button>

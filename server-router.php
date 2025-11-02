@@ -22,7 +22,7 @@ if ($uri === false || $uri === null) {
 }
 
 // Check if this is a demo website request - handle it with demo-website-router.php
-if (preg_match('#^/demo-website-[^/]+#', $uri)) {
+if (preg_match('#^/demo-blog#', $uri)) {
     require_once __DIR__ . '/demo-website-router.php';
     // demo-website-router.php will exit() if it handles the request
     // If it returns false, fall through to normal handling
