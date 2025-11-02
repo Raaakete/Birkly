@@ -648,9 +648,30 @@
      * Get entry by slug (helper function)
      */
     async function getEntryBySlug(collection, slug) {
-        const data = await fetchContent('list_entries', { collection: collection });
-        if (data && data.status === 'ok' && data.data.entries) {
-            return data.data.entries.find(entry => entry.slug === slug);
+        try {
+            const data = await fetchContent('list_entries', { collection: collection });
+            if (data && data.status === 'ok' && data.data.entries) {
+                // Normalize slug for comparison (handle both formats)
+                const normalizedSlug = slug.toLowerCase().trim();
+                const entry = data.data.entries.find(entry => {
+                    const entrySlug = (entry.slug || '').toLowerCase().trim();
+                    return entrySlug === normalizedSlug;
+                });
+                
+                if (entry) {
+                    return entry;
+                }
+                
+                // If not found, log for debugging
+                console.warn('HaruCMS: Entry not found', {
+                    collection: collection,
+                    slug: slug,
+                    availableSlugs: data.data.entries.map(e => e.slug).filter(Boolean),
+                    entriesCount: data.data.entries.length
+                });
+            }
+        } catch (error) {
+            console.error('HaruCMS: Error fetching entry by slug:', error);
         }
         return null;
     }
