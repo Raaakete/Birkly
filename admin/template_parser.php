@@ -258,7 +258,25 @@ class TemplateParser {
             $parsed
         );
         
+        // Handle {foreach array as item} ... {endforeach} syntax (alternative)
+        $parsed = preg_replace_callback(
+            '/\{foreach\s+([^\s]+)\s+as\s+([^\s}]+)\}/',
+            function($matches) {
+                $arrayPath = trim($matches[1]);
+                $item = trim($matches[2]);
+                // Convert dot-notation to array access: a.b.c -> $a['b']['c']
+                $parts = explode('.', $arrayPath);
+                $phpArray = '$' . array_shift($parts);
+                foreach ($parts as $p) {
+                    $phpArray .= "['" . $p . "']";
+                }
+                return '<?php foreach (' . $phpArray . ' ?? [] as $' . $item . '): ?>';
+            },
+            $parsed
+        );
+        
         $parsed = str_replace('{endfor}', '<?php endforeach; ?>', $parsed);
+        $parsed = str_replace('{endforeach}', '<?php endforeach; ?>', $parsed);
         
         // Handle {render fieldtype "name"} syntax
         $parsed = preg_replace_callback(

@@ -152,19 +152,19 @@
                 
                 <div class="demo-options">
                     {if onboarding_data.demo_websites exist}
-                        {foreach onboarding_data.demo_websites as website}
-                            <div class="demo-card" onclick="onboarding.selectDemoWebsite('{website.id}')">
+                        {for website in onboarding_data.demo_websites}
+                            <div class="demo-card" onclick="onboarding.selectDemoWebsite('{{ website.id }}')">
                                 <div class="demo-card-header">
-                                    <h3>{website.name}</h3>
+                                    <h3>{{ website.name }}</h3>
                                     {if website.has_frontend}
                                     <span class="badge">With Frontend</span>
                                     {endif}
                                 </div>
                                 <div class="demo-card-body">
-                                    <p>{website.description}</p>
+                                    <p>{{ website.description }}</p>
                                     <div class="demo-stats">
-                                        <span>{website.collections_count} Collections</span>
-                                        <span>{website.entries_count} Entries</span>
+                                        <span>{{ website.collections_count }} Collections</span>
+                                        <span>{{ website.entries_count }} Entries</span>
                                         {if website.has_frontend}
                                         <span>Frontend Included</span>
                                         {endif}
@@ -174,7 +174,7 @@
                                     <button class="btn btn-primary btn-small">Install</button>
                                 </div>
                             </div>
-                        {endforeach}
+                        {endfor}
                     {else}
                         <div class="no-demo-content">
                             <p>No demo websites available. You can create your own content and templates after setup.</p>
