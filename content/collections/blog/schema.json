@@ -20,7 +20,7 @@
     },
     {
       "name": "content",
-      "type": "rich_text",
+      "type": "editor",
       "label": "Content",
       "required": true
     },
