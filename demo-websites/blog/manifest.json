@@ -1,0 +1,11 @@
+{
+  "name": "Blog Demo Website",
+  "description": "A complete blog demo with content and a simple frontend website",
+  "version": "1.0.0",
+  "type": "website",
+  "collections_count": 1,
+  "entries_count": 5,
+  "has_frontend": true,
+  "author": "HaruCMS"
+}
+
