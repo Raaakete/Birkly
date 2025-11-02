@@ -81,7 +81,35 @@ if ($extension === 'html' && file_exists($requestedFile)) {
         $entryFiles = glob($blogCollectionPath . '/*.json');
         foreach ($entryFiles as $entryFile) {
             $entryData = json_decode(file_get_contents($entryFile), true);
-            if ($entryData && ($entryData['status'] ?? 'published') === 'published') {
+            if (!$entryData) continue;
+            
+            // Normalize entry data for template
+            // Set status to 'published' if not set (for demo entries)
+            if (!isset($entryData['status'])) {
+                $entryData['status'] = 'published';
+            }
+            
+            // Only include published entries
+            if ($entryData['status'] === 'published') {
+                // Ensure required fields for template
+                if (!isset($entryData['slug']) && isset($entryData['title'])) {
+                    // Generate slug from title if missing
+                    $entryData['slug'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $entryData['title'])));
+                }
+                
+                // Ensure excerpt exists (use first 150 chars of content if missing)
+                if (!isset($entryData['excerpt']) && isset($entryData['content'])) {
+                    $content = strip_tags($entryData['content']);
+                    $entryData['excerpt'] = mb_substr($content, 0, 150) . (mb_strlen($content) > 150 ? '...' : '');
+                }
+                
+                // Ensure created_at exists (use date field or current time)
+                if (!isset($entryData['created_at']) && isset($entryData['date'])) {
+                    $entryData['created_at'] = $entryData['date'] . 'T00:00:00+00:00';
+                } elseif (!isset($entryData['created_at'])) {
+                    $entryData['created_at'] = date('c');
+                }
+                
                 $blogEntries[] = $entryData;
             }
         }
