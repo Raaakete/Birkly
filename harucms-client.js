@@ -374,7 +374,7 @@
         
         // Replace {{ variable }} outside loops
         output = output.replace(/\{\{\s*([^.\s}]+)(?:\s*\|\s*([^\s}]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (match, varName, filter, filterValue) => {
-            let value = data[varName] || '';
+            let value = getNestedValue(data, varName) || '';
             
             if (filter === 'date' && filterValue) {
                 value = formatDate(value, filterValue);
