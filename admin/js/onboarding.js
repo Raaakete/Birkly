@@ -31,7 +31,7 @@ const onboarding = {
             
             if (data.status === 'ok' && data.data.needs_first_user) {
                 this.needsFirstUser = true;
-                this.maxSteps = 6; // Add one step for first user
+                this.maxSteps = 5; // Add one step for first user (0 + 4 normal steps)
                 this.currentStep = 0;
                 this.showStep(0); // Show first user step
             } else {
@@ -161,9 +161,8 @@ const onboarding = {
             0: 'first-user',
             1: 'welcome',
             2: 'site-info',
-            3: 'demo-content',
-            4: 'demo-template',
-            5: 'complete'
+            3: 'demo-website',
+            4: 'complete'
         };
         return steps[step] || 'welcome';
     },
@@ -178,21 +177,17 @@ const onboarding = {
     
     nextStep() {
         if (this.currentStep < this.maxSteps) {
-            // Special handling for demo content step
-            if (this.currentStep === 3) {
-                if (this.selectedDemoContent === null && document.getElementById('demo-content-actions')) {
-                    document.getElementById('demo-content-actions').style.display = 'flex';
+            // Special handling for demo website step
+            const demoStepNumber = this.needsFirstUser ? 3 : 3; // Step 3 (after welcome and site-info)
+            if (this.currentStep === demoStepNumber) {
+                if (this.selectedDemoWebsite === null && document.getElementById('demo-website-actions')) {
+                    document.getElementById('demo-website-actions').style.display = 'flex';
                     return;
                 }
-                if (this.selectedDemoContent !== null) {
-                    this.installDemoContent(this.selectedDemoContent);
-                }
-            }
-            
-            // Special handling for demo template step
-            if (this.currentStep === 4) {
-                if (this.selectedDemoTemplate !== null) {
-                    this.installDemoTemplate(this.selectedDemoTemplate);
+                if (this.selectedDemoWebsite !== null) {
+                    this.installDemoWebsite(this.selectedDemoWebsite);
+                    // Wait for installation before proceeding
+                    return;
                 }
             }
             
@@ -267,87 +262,74 @@ const onboarding = {
         });
     },
     
-    selectDemoContent(packId) {
+    selectDemoWebsite(websiteId) {
         // Remove selected class from all cards
         document.querySelectorAll('.demo-card').forEach(card => {
             card.classList.remove('selected');
         });
         
-        // Add selected class to clicked card
-        event.target.closest('.demo-card').classList.add('selected');
+        // Add selected class to clicked card (if not skip card)
+        if (websiteId !== null) {
+            event.target.closest('.demo-card').classList.add('selected');
+        }
         
-        this.selectedDemoContent = packId;
+        this.selectedDemoWebsite = websiteId;
         
         // Show continue button
-        const actions = document.getElementById('demo-content-actions');
+        const actions = document.getElementById('demo-website-actions');
         if (actions) {
             actions.style.display = 'flex';
         }
     },
     
-    selectDemoTemplate(templateId) {
-        // Remove selected class from all cards
-        document.querySelectorAll('.template-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-        
-        // Add selected class to clicked card (if not skip card)
-        if (templateId !== null) {
-            event.target.closest('.demo-card').classList.add('selected');
+    async installDemoWebsite(websiteId) {
+        if (!websiteId) {
+            // Skip selected, just continue
+            this.showStep(this.currentStep + 1);
+            this.updateProgressAPI();
+            return;
         }
         
-        this.selectedDemoTemplate = templateId;
-    },
-    
-    async installDemoContent(packId) {
-        if (!packId) return;
+        // Show loading state
+        const submitBtn = document.querySelector('#demo-website-actions .btn-primary');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Installing...';
+        }
         
         try {
-            const response = await fetch('/api/demo.php?action=install_content', {
+            const response = await fetch('/api/demo.php?action=install_website', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    pack_id: packId
+                    website_id: websiteId
                 })
             });
             
             const data = await response.json();
             if (data.status === 'ok') {
                 // Update progress
-                this.updateProgressAPI('demo_content_installed', true);
+                await this.updateProgressAPI('demo_website_installed', true);
+                // Continue to next step
+                this.showStep(this.currentStep + 1);
+                this.updateProgressAPI();
             } else {
-                console.error('Failed to install demo content:', data.message);
+                console.error('Failed to install demo website:', data.message);
+                alert('Failed to install demo website: ' + (data.message || 'Unknown error'));
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Continue';
+                }
             }
         } catch (error) {
-            console.error('Error installing demo content:', error);
-        }
-    },
-    
-    async installDemoTemplate(templateId) {
-        if (!templateId) return;
-        
-        try {
-            const response = await fetch('/api/demo.php?action=install_template', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    template_id: templateId
-                })
-            });
-            
-            const data = await response.json();
-            if (data.status === 'ok') {
-                // Update progress
-                this.updateProgressAPI('demo_template_installed', true);
-            } else {
-                console.error('Failed to install demo template:', data.message);
+            console.error('Error installing demo website:', error);
+            alert('Error installing demo website. Please try again.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Continue';
             }
-        } catch (error) {
-            console.error('Error installing demo template:', error);
         }
     },
     

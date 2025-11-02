@@ -1,0 +1,13 @@
+{
+  "id": "demo-project-3",
+  "title": "Corporate Website Redesign",
+  "slug": "corporate-website-redesign",
+  "description": "Complete redesign of a corporate website with modern UI/UX, improved performance, and enhanced accessibility features.",
+  "client": "Global Industries",
+  "project_url": "https://example.com",
+  "tags": ["web", "design", "corporate"],
+  "status": "published",
+  "created_at": "2025-01-03T10:00:00+00:00",
+  "updated_at": "2025-01-03T10:00:00+00:00"
+}
+

@@ -1,0 +1,11 @@
+{
+  "name": "Portfolio Demo Website",
+  "description": "A portfolio showcase demo with content and a simple frontend website",
+  "version": "1.0.0",
+  "type": "website",
+  "collections_count": 1,
+  "entries_count": 4,
+  "has_frontend": true,
+  "author": "HaruCMS"
+}
+
