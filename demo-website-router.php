@@ -60,9 +60,8 @@ if (in_array($extension, ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico'
 
 // For HTML files, render with template engine
 if ($extension === 'html' && file_exists($requestedFile)) {
-    // Include the template parser
+    // Include the template parser (don't include api/public.php - it outputs JSON!)
     require_once __DIR__ . '/admin/template_parser.php';
-    require_once __DIR__ . '/api/public.php';
     
     // Get settings for site title
     $settingsPath = __DIR__ . '/settings/site.json';
