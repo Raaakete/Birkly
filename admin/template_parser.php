@@ -43,19 +43,29 @@ class TemplateParser {
             $parsed
         );
 
-        // Support {{ variable }} with dot-notation and optional | raw filter
-        // Example: {{ entry.title }} or {{ field.html | raw }}
+        // Support {{ variable }} with dot-notation and optional filters (| raw, | date:"format")
+        // Example: {{ entry.title }} or {{ field.html | raw }} or {{ entry.created_at|date:"F j, Y" }}
         $parsed = preg_replace_callback(
-            '/\{\{\s*([a-zA-Z0-9_\.]+)\s*(\|\s*raw)?\s*\}\}/',
+            '/\{\{\s*([a-zA-Z0-9_\.]+)\s*(\|\s*([a-z]+)(?::\s*"([^"]+)")?)?\s*\}\}/',
             function($matches) {
                 $path = $matches[1];
-                $isRaw = isset($matches[2]) && trim($matches[2]) !== '';
+                $filterType = isset($matches[3]) ? trim($matches[3]) : '';
+                $filterValue = isset($matches[4]) ? $matches[4] : '';
+                
                 $parts = explode('.', $path);
                 $php = '$' . array_shift($parts);
                 foreach ($parts as $p) { $php .= "['" . $p . "']"; }
-                if ($isRaw) {
+                
+                // Apply filters
+                if ($filterType === 'raw') {
                     return '<?= ' . $php . ' ?? "" ?>';
+                } elseif ($filterType === 'date' && !empty($filterValue)) {
+                    // Date filter: {{ entry.created_at|date:"F j, Y" }}
+                    $format = addslashes($filterValue);
+                    return '<?= date("' . $format . '", strtotime(' . $php . ' ?? "")) ?>';
                 }
+                
+                // Default: escape for HTML
                 return '<?= htmlspecialchars(' . $php . ' ?? "", ENT_QUOTES, "UTF-8") ?>';
             },
             $parsed
