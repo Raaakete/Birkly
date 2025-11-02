@@ -115,6 +115,42 @@ function fetch_admin_page_data(string $page, array $query = []): array {
     return [];
 }
 ?>
+<?php 
+// Check if we're on onboarding page - if so, use full-page layout without sidebar
+$isOnboarding = ($page === 'onboarding');
+?>
+<?php if ($isOnboarding): ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - HaruCMS</title>
+    <link rel="stylesheet" href="/admin/css/style.css">
+    <link rel="stylesheet" href="/admin/css/onboarding.css">
+    <link rel="shortcut icon" href="/admin/assets/haru_favicon.svg">
+</head>
+<body class="onboarding-body">
+    <div class="onboarding-wrapper">
+        <?php
+        // Render onboarding page without sidebar
+        $onboardingData = fetch_admin_page_data('onboarding', $_GET);
+        try {
+            $output = render_template_file($templatePath, array_merge($data ?? [], [
+                'onboarding' => $onboardingStatus,
+                'onboarding_data' => $onboardingData
+            ]));
+            echo $output ?: '<div class="error">Failed to render onboarding page</div>';
+        } catch (Exception $e) {
+            echo '<div class="error">Error rendering onboarding: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        }
+        ?>
+    </div>
+    <script src="/admin/js/utils.js"></script>
+    <script src="/admin/js/onboarding.js"></script>
+</body>
+</html>
+<?php else: ?>
 <?php include __DIR__ . '/partials/layout_head.php'; ?>
         <?php include __DIR__ . '/partials/sidebar.php'; ?>
 
@@ -122,19 +158,7 @@ function fetch_admin_page_data(string $page, array $query = []): array {
         <main class="main-content">
             <?php
             // Render the page using template system
-            if ($page === 'onboarding') {
-                // Onboarding page - load onboarding data and render template
-                $onboardingData = fetch_admin_page_data('onboarding', $_GET);
-                try {
-                    $output = render_template_file($templatePath, array_merge($data ?? [], [
-                        'onboarding' => $onboardingStatus,
-                        'onboarding_data' => $onboardingData
-                    ]));
-                    echo $output ?: '<div class="error">Failed to render onboarding page</div>';
-                } catch (Exception $e) {
-                    echo '<div class="error">Error rendering onboarding: ' . htmlspecialchars($e->getMessage()) . '</div>';
-                }
-            } elseif ($page === 'dashboard' || $page === 'media' || $page === 'entry-editor') {
+            if ($page === 'dashboard' || $page === 'media' || $page === 'entry-editor') {
                 // Pass query params so entry-editor receives collection/entry ids
                 $data = fetch_admin_page_data($page, $_GET);
                 
@@ -224,3 +248,4 @@ function fetch_admin_page_data(string $page, array $query = []): array {
         </main>
 
         <?php include __DIR__ . '/partials/layout_footer.php'; ?>
+<?php endif; ?>
