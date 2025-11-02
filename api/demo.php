@@ -208,11 +208,20 @@ function installDemoContentPack($packId) {
 
 // Install demo website (content + frontend together)
 function installDemoWebsite($websiteId) {
+    // Normalize website ID (remove any quotes or whitespace)
+    $websiteId = trim($websiteId, " \t\n\r\0\x0B\"'");
     $demoWebsitePath = __DIR__ . "/../demo-websites/$websiteId";
     
-    if (!is_dir($demoWebsitePath)) {
-        return ['success' => false, 'message' => 'Demo website not found'];
+    // Use realpath to resolve any path issues
+    $resolvedPath = realpath($demoWebsitePath);
+    
+    if (!$resolvedPath || !is_dir($resolvedPath)) {
+        error_log("Demo website not found - ID: '$websiteId', Path: '$demoWebsitePath', Resolved: " . ($resolvedPath ?: 'NOT FOUND'));
+        return ['success' => false, 'message' => 'Demo website not found: ' . $websiteId];
     }
+    
+    // Use resolved path for all operations
+    $demoWebsitePath = $resolvedPath;
     
     $manifestFile = $demoWebsitePath . '/manifest.json';
     if (!file_exists($manifestFile)) {
