@@ -34,12 +34,14 @@ if (!is_dir($websiteDir)) {
 $requestedFile = "$websiteDir/$path";
 
 // If it's a static file (CSS, JS, images), serve it directly
-$extension = pathinfo($requestedFile, PATHINFO_EXTENSION);
+// IMPORTANT: Check file extension BEFORE checking if file exists
+$extension = pathinfo($path, PATHINFO_EXTENSION);
+
 if (in_array($extension, ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'eot'])) {
     if (file_exists($requestedFile)) {
         $mimeTypes = [
-            'css' => 'text/css',
-            'js' => 'application/javascript',
+            'css' => 'text/css; charset=utf-8',
+            'js' => 'application/javascript; charset=utf-8',
             'png' => 'image/png',
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
@@ -54,6 +56,11 @@ if (in_array($extension, ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico'
         $mime = $mimeTypes[$extension] ?? mime_content_type($requestedFile);
         header("Content-Type: $mime");
         readfile($requestedFile);
+        exit;
+    } else {
+        // File doesn't exist, return 404
+        http_response_code(404);
+        echo "File not found: $path";
         exit;
     }
 }
@@ -215,6 +222,7 @@ if ($extension === 'html' && file_exists($requestedFile)) {
         exit;
     }
 }
+*/
 
 // File not found
 http_response_code(404);
