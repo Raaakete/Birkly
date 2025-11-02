@@ -26,6 +26,22 @@ class TemplateParser {
     
     private function parseNaturalSyntax($template) {
         $parsed = $template;
+        
+        // FIRST: Convert single-brace variables {variable} to double-brace {{ variable }}
+        // But skip if it's part of a control structure (if, for, foreach, endif, endfor, etc.)
+        $parsed = preg_replace_callback(
+            '/\{([a-z0-9_\.]+)\}/',
+            function($matches) {
+                $var = $matches[1];
+                // Skip if it's a control keyword
+                if (in_array($var, ['if', 'else', 'endif', 'for', 'foreach', 'endfor', 'endforeach', 'from', 'get', 'has', 'exist', 'render', 'fieldtype'])) {
+                    return '{' . $var . '}';
+                }
+                // Convert to double braces
+                return '{{ ' . $var . ' }}';
+            },
+            $parsed
+        );
 
         // Support {{ variable }} with dot-notation and optional | raw filter
         // Example: {{ entry.title }} or {{ field.html | raw }}
