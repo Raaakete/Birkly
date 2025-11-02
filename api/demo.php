@@ -25,13 +25,16 @@ if (isset($_GET['action'])) {
 } elseif (isset($_POST['action'])) {
     $action = trim($_POST['action']);
 } else {
-    // Try to parse from REQUEST_URI
+    // Try to parse from REQUEST_URI query string
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_QUERY);
     if ($uri) {
         parse_str($uri, $queryParams);
         $action = trim($queryParams['action'] ?? '');
     }
 }
+
+// Normalize action: lowercase and remove any whitespace
+$action = strtolower(trim($action));
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
@@ -164,6 +167,9 @@ function listDemoContent() {
         'demo_website_path' => $hasDemoWebsite ? 'demo-blog' : null
     ];
 }
+
+// Debug: Log normalized action
+error_log("Demo API - Normalized action: [" . $action . "]");
 
 switch ($action) {
     case 'list':
