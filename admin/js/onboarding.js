@@ -266,23 +266,25 @@ const onboarding = {
     },
     
     selectDemoWebsite(websiteId) {
+        // Normalize website ID - remove quotes if present
+        if (websiteId) {
+            websiteId = String(websiteId).trim().replace(/^["']|["']$/g, '');
+        }
+        
         // Remove selected class from all cards
         document.querySelectorAll('.demo-card').forEach(card => {
             card.classList.remove('selected');
         });
         
         // Add selected class to clicked card (if not skip card)
-        if (websiteId !== null) {
-            event.target.closest('.demo-card').classList.add('selected');
+        if (websiteId !== null && websiteId !== '') {
+            const card = event.target.closest('.demo-card');
+            if (card) {
+                card.classList.add('selected');
+            }
         }
         
         this.selectedDemoWebsite = websiteId;
-        
-        // Show continue button
-        const actions = document.getElementById('demo-website-actions');
-        if (actions) {
-            actions.style.display = 'flex';
-        }
     },
     
     async installDemoWebsite(websiteId) {
