@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - {{ site_title }}</title>
+    <link rel="stylesheet" href="/demo-blog/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/demo-blog/index.html">{{ site_title }}</a></h1>
+            <nav>
+                <a href="/demo-blog/index.html">Home</a>
+                <a href="/demo-blog/about.html">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <article class="post">
+            <h1>About</h1>
+            <div class="post-content">
+                <p>This is a demo website built with HaruCMS, a modern flat-file content management system.</p>
+                
+                <h2>About HaruCMS</h2>
+                <p>HaruCMS is designed for simplicity and flexibility. Unlike traditional database-driven CMS platforms, HaruCMS uses simple JSON files to store your content, making it:</p>
+                <ul>
+                    <li><strong>Fast:</strong> No database queries, just file reads</li>
+                    <li><strong>Portable:</strong> Move your entire site by copying a folder</li>
+                    <li><strong>Version-controlled:</strong> Every change is tracked in your version control system</li>
+                    <li><strong>Secure:</strong> No SQL injection vulnerabilities</li>
+                    <li><strong>Flexible:</strong> Edit content directly in your code editor if needed</li>
+                </ul>
+                
+                <h2>This Demo Website</h2>
+                <p>This demo blog showcases how easy it is to create a website with HaruCMS. The entire website uses minimal JavaScript—just one script tag to connect to the CMS. All content is fetched dynamically from the CMS and rendered using HaruCMS's simple templating language.</p>
+                
+                <h2>Get Started</h2>
+                <p>Ready to build your own website with HaruCMS? Visit the <a href="/demo-blog/index.html">home page</a> to see more examples, or explore the HaruCMS documentation to learn more.</p>
+            </div>
+        </article>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; {{ site_title }} {{ current_year }}</p>
+        </div>
+    </footer>
+
+    <!-- HaruCMS Client Library - That's it! Just one script tag. -->
+    <!-- In production: <script src="https://your-cms-domain.com/harucms-client.js"></script> -->
+    <script src="/harucms-client.js" data-cms-url="http://localhost:8080" data-collection="blog"></script>
+</body>
+</html>
+
