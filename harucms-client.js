@@ -429,7 +429,77 @@
      * Process all templates in the page
      */
     async function processTemplates() {
-        // Find all elements with template syntax
+        // Check for URL parameters that might indicate we need a specific entry
+        const urlParams = new URLSearchParams(window.location.search);
+        const slug = urlParams.get('slug');
+        const collection = urlParams.get('collection') || detectCollectionFromTemplate();
+        
+        // If we have a slug parameter, fetch that specific entry first
+        if (slug && collection) {
+            try {
+                const entry = await getEntryBySlug(collection, slug);
+                if (entry) {
+                    // Prepare data with the specific entry
+                    const data = {
+                        site_title: document.title || 'My Website',
+                        current_year: new Date().getFullYear(),
+                        title: entry.title || '',
+                        content: entry.content || '',
+                        slug: entry.slug || slug,
+                        created_at: entry.created_at || '',
+                        excerpt: entry.excerpt || '',
+                        tags: entry.tags || [],
+                        ...entry // Spread all entry properties for direct access
+                    };
+                    
+                    // Find and process templates
+                    const walker = document.createTreeWalker(
+                        document.body,
+                        NodeFilter.SHOW_TEXT,
+                        null,
+                        false
+                    );
+                    
+                    const templates = [];
+                    let node;
+                    
+                    while (node = walker.nextNode()) {
+                        if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
+                            const parent = node.parentElement;
+                            if (!parent || parent.dataset.cmsProcessed) continue;
+                            
+                            parent.dataset.cmsProcessed = 'true';
+                            templates.push({
+                                element: parent,
+                                originalHtml: parent.innerHTML,
+                                template: parent.innerHTML
+                            });
+                        }
+                    }
+                    
+                    // Render each template with the entry data
+                    for (let template of templates) {
+                        try {
+                            const rendered = renderTemplate(template.template, data);
+                            template.element.innerHTML = rendered;
+                            // Update page title if title variable exists
+                            if (entry.title && template.template.includes('{{ title }}')) {
+                                document.title = entry.title + (document.title.includes(' - ') ? document.title.substring(document.title.indexOf(' - ')) : '');
+                            }
+                        } catch (error) {
+                            console.error('HaruCMS: Error processing template:', error);
+                        }
+                    }
+                    
+                    return; // Done processing single entry
+                }
+            } catch (error) {
+                console.warn('HaruCMS: Could not fetch entry by slug:', error);
+                // Fall through to normal template processing
+            }
+        }
+        
+        // Normal template processing for lists/loops
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -501,6 +571,42 @@
                 console.error('HaruCMS: Error processing template:', error);
             }
         }
+    }
+    
+    /**
+     * Detect collection name from template or URL
+     */
+    function detectCollectionFromTemplate() {
+        // Try to extract from template
+        const bodyText = document.body.innerHTML;
+        const match = bodyText.match(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/);
+        if (match) {
+            return match[1];
+        }
+        
+        // Try to extract from URL path
+        const path = window.location.pathname;
+        const pathMatch = path.match(/\/([^\/]+)\/(?:post|entry|article)/i);
+        if (pathMatch) {
+            return pathMatch[1];
+        }
+        
+        // Common defaults
+        if (path.includes('/blog') || path.includes('blog')) return 'blog';
+        if (path.includes('/post')) return 'blog';
+        
+        return null;
+    }
+    
+    /**
+     * Get entry by slug (helper function)
+     */
+    async function getEntryBySlug(collection, slug) {
+        const data = await fetchContent('list_entries', { collection: collection });
+        if (data && data.status === 'ok' && data.data.entries) {
+            return data.data.entries.find(entry => entry.slug === slug);
+        }
+        return null;
     }
     
     /**
