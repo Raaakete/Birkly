@@ -432,7 +432,25 @@
         // Check for URL parameters that might indicate we need a specific entry
         urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
-        let collection = urlParams.get('collection') || detectCollectionFromTemplate();
+        let collection = urlParams.get('collection');
+        
+        // If no collection specified, detect from template or URL
+        if (!collection) {
+            collection = detectCollectionFromTemplate();
+        }
+        
+        // IMPORTANT: For demo-blog website, the collection is always 'blog', not 'demo-blog'
+        // The '/demo-blog/' path is just the website folder, not the collection name
+        if (window.location.pathname.includes('/demo-blog/')) {
+            // If collection was detected as 'demo-blog', change it to 'blog'
+            if (collection === 'demo-blog') {
+                collection = 'blog';
+            }
+            // If no collection detected, default to 'blog' for demo blog
+            if (!collection) {
+                collection = 'blog';
+            }
+        }
         
         // If no collection detected but we have a slug, default to 'blog'
         if (slug && !collection) {
