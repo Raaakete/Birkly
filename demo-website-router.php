@@ -74,6 +74,71 @@ if ($extension === 'html' && file_exists($requestedFile)) {
     // Load the template
     $template = file_get_contents($requestedFile);
     
+    // Check if this is post.html and needs a specific entry by slug
+    $isPostPage = (basename($requestedFile) === 'post.html');
+    $requestedSlug = $_GET['slug'] ?? null;
+    
+    if ($isPostPage && $requestedSlug) {
+        // Load specific entry by slug
+        $blogCollectionPath = __DIR__ . '/content/collections/blog/entries';
+        $entryData = null;
+        
+        if (is_dir($blogCollectionPath)) {
+            $entryFiles = glob($blogCollectionPath . '/*.json');
+            foreach ($entryFiles as $entryFile) {
+                $entry = json_decode(file_get_contents($entryFile), true);
+                if (!$entry) continue;
+                
+                // Normalize slug
+                if (!isset($entry['slug']) && isset($entry['title'])) {
+                    $entry['slug'] = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $entry['title'])));
+                }
+                
+                if (($entry['slug'] ?? '') === $requestedSlug && ($entry['status'] ?? 'published') === 'published') {
+                    $entryData = $entry;
+                    break;
+                }
+            }
+        }
+        
+        if (!$entryData) {
+            http_response_code(404);
+            echo "Post not found: " . htmlspecialchars($requestedSlug);
+            exit;
+        }
+        
+        // Normalize entry data
+        if (!isset($entryData['created_at'])) {
+            $entryData['created_at'] = $entryData['date'] . 'T00:00:00+00:00' ?? date('c');
+        }
+        
+        // Prepare template data for single post
+        $data = [
+            'site_title' => $siteTitle,
+            'current_year' => date('Y'),
+            'title' => $entryData['title'] ?? '',
+            'content' => $entryData['content'] ?? '',
+            'slug' => $entryData['slug'] ?? '',
+            'created_at' => $entryData['created_at'] ?? '',
+            'excerpt' => $entryData['excerpt'] ?? '',
+            'tags' => $entryData['tags'] ?? [],
+            'entry' => $entryData, // Full entry object
+        ];
+        
+        $parser = new TemplateParser($data);
+        try {
+            $output = $parser->render($template);
+            header('Content-Type: text/html; charset=utf-8');
+            echo $output;
+            exit;
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo "Error rendering template: " . htmlspecialchars($e->getMessage());
+            exit;
+        }
+    }
+    
+    // Otherwise, handle as list page (index.html or other)
     // Get blog entries if needed (for blog demo)
     $blogEntries = [];
     $blogCollectionPath = __DIR__ . '/content/collections/blog/entries';
