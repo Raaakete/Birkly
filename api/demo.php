@@ -23,37 +23,43 @@ requireAuth('manage_content');
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-// Helper to list available demo content packs
-function listDemoContentPacks() {
-    $demoContentPath = __DIR__ . '/../demo-content';
-    $packs = [];
+// Helper to list available demo websites
+function listDemoWebsites() {
+    $demoWebsitesPath = __DIR__ . '/../demo-websites';
+    $websites = [];
     
-    if (!is_dir($demoContentPath)) {
-        return $packs;
+    if (!is_dir($demoWebsitesPath)) {
+        return $websites;
     }
     
-    $dirs = glob($demoContentPath . '/*', GLOB_ONLYDIR);
+    $dirs = glob($demoWebsitesPath . '/*', GLOB_ONLYDIR);
     foreach ($dirs as $dir) {
-        $packName = basename($dir);
+        $websiteName = basename($dir);
         $manifestFile = $dir . '/manifest.json';
         
         if (file_exists($manifestFile)) {
             $manifest = json_decode(file_get_contents($manifestFile), true);
             if ($manifest) {
-                $packs[] = [
-                    'id' => $packName,
-                    'name' => $manifest['name'] ?? $packName,
+                $websites[] = [
+                    'id' => $websiteName,
+                    'name' => $manifest['name'] ?? $websiteName,
                     'description' => $manifest['description'] ?? '',
                     'preview_image' => $manifest['preview_image'] ?? null,
                     'collections_count' => $manifest['collections_count'] ?? 0,
                     'entries_count' => $manifest['entries_count'] ?? 0,
+                    'has_frontend' => $manifest['has_frontend'] ?? false,
                     'version' => $manifest['version'] ?? '1.0.0'
                 ];
             }
         }
     }
     
-    return $packs;
+    return $websites;
+}
+
+// Legacy function for backward compatibility
+function listDemoContentPacks() {
+    return listDemoWebsites();
 }
 
 // Helper to list available demo templates
@@ -200,8 +206,152 @@ function installDemoContentPack($packId) {
     ];
 }
 
-// Install demo template
+// Install demo website (content + frontend together)
+function installDemoWebsite($websiteId) {
+    $demoWebsitePath = __DIR__ . "/../demo-websites/$websiteId";
+    
+    if (!is_dir($demoWebsitePath)) {
+        return ['success' => false, 'message' => 'Demo website not found'];
+    }
+    
+    $manifestFile = $demoWebsitePath . '/manifest.json';
+    if (!file_exists($manifestFile)) {
+        return ['success' => false, 'message' => 'Manifest file not found'];
+    }
+    
+    $manifest = json_decode(file_get_contents($manifestFile), true);
+    if (!$manifest) {
+        return ['success' => false, 'message' => 'Invalid manifest file'];
+    }
+    
+    // Install content (collections)
+    $collectionsPath = __DIR__ . '/../content/collections';
+    if (!is_dir($collectionsPath)) {
+        mkdir($collectionsPath, 0755, true);
+    }
+    
+    $collectionsInstalled = 0;
+    $entriesInstalled = 0;
+    
+    // Process collections from demo website
+    $collectionsDir = $demoWebsitePath . '/collections';
+    if (is_dir($collectionsDir)) {
+        $collectionDirs = glob($collectionsDir . '/*', GLOB_ONLYDIR);
+        
+        foreach ($collectionDirs as $collectionDir) {
+            $collectionSlug = basename($collectionDir);
+            
+            $collectionFile = $collectionDir . '/collection.json';
+            $schemaFile = $collectionDir . '/schema.json';
+            
+            if (!file_exists($collectionFile)) {
+                continue;
+            }
+            
+            $collectionData = json_decode(file_get_contents($collectionFile), true);
+            if (!$collectionData) {
+                continue;
+            }
+            
+            $targetCollectionPath = "$collectionsPath/$collectionSlug";
+            if (!is_dir($targetCollectionPath)) {
+                mkdir($targetCollectionPath, 0755, true);
+                mkdir("$targetCollectionPath/entries", 0755, true);
+            }
+            
+            file_put_contents("$targetCollectionPath/collection.json", json_encode($collectionData, JSON_PRETTY_PRINT));
+            
+            if (file_exists($schemaFile)) {
+                $schemaData = json_decode(file_get_contents($schemaFile), true);
+                if ($schemaData) {
+                    file_put_contents("$targetCollectionPath/schema.json", json_encode($schemaData, JSON_PRETTY_PRINT));
+                }
+            }
+            
+            $collectionsInstalled++;
+            
+            // Process entries
+            $entriesDir = $collectionDir . '/entries';
+            if (is_dir($entriesDir)) {
+                $entryFiles = glob($entriesDir . '/*.json');
+                
+                foreach ($entryFiles as $entryFile) {
+                    $entryData = json_decode(file_get_contents($entryFile), true);
+                    if ($entryData) {
+                        $entryId = uniqid();
+                        $entryData['id'] = $entryId;
+                        if (!isset($entryData['created_at'])) {
+                            $entryData['created_at'] = date('c');
+                        }
+                        if (!isset($entryData['updated_at'])) {
+                            $entryData['updated_at'] = date('c');
+                        }
+                        
+                        $targetEntryFile = "$targetCollectionPath/entries/$entryId.json";
+                        file_put_contents($targetEntryFile, json_encode($entryData, JSON_PRETTY_PRINT));
+                        $entriesInstalled++;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Install frontend website if it exists
+    $websiteDir = $demoWebsitePath . '/website';
+    $frontendInstalled = false;
+    $websitePath = __DIR__ . '/../demo-website-' . $websiteId;
+    
+    if (is_dir($websiteDir)) {
+        if (!is_dir($websitePath)) {
+            mkdir($websitePath, 0755, true);
+        }
+        
+        // Copy all website files
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($websiteDir),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        
+        foreach ($files as $file) {
+            if ($file->isFile()) {
+                $relativePath = str_replace($websiteDir . DIRECTORY_SEPARATOR, '', $file->getPathname());
+                $targetPath = $websitePath . DIRECTORY_SEPARATOR . $relativePath;
+                $targetDir = dirname($targetPath);
+                
+                if (!is_dir($targetDir)) {
+                    mkdir($targetDir, 0755, true);
+                }
+                
+                copy($file->getPathname(), $targetPath);
+            }
+        }
+        
+        $frontendInstalled = true;
+    }
+    
+    return [
+        'success' => true,
+        'message' => 'Demo website installed successfully',
+        'collections_installed' => $collectionsInstalled,
+        'entries_installed' => $entriesInstalled,
+        'frontend_installed' => $frontendInstalled,
+        'website_path' => $frontendInstalled ? 'demo-website-' . $websiteId : null
+    ];
+}
+
+// Legacy function for backward compatibility
 function installDemoTemplate($templateId) {
+    // Try to install as demo website first
+    $result = installDemoWebsite($templateId);
+    if ($result['success']) {
+        return [
+            'success' => true,
+            'message' => $result['message'],
+            'templates_installed' => $result['frontend_installed'] ? 1 : 0
+        ];
+    }
+    
+    // Fallback to old template system
     $demoTemplatesPath = __DIR__ . "/../demo-templates/$templateId";
     
     if (!is_dir($demoTemplatesPath)) {
@@ -220,14 +370,12 @@ function installDemoTemplate($templateId) {
     
     $templatesPath = __DIR__ . '/../templates';
     
-    // Ensure templates directory exists
     if (!is_dir($templatesPath)) {
         mkdir($templatesPath, 0755, true);
     }
     
     $templatesInstalled = 0;
     
-    // Copy all template files
     $templateFiles = glob($demoTemplatesPath . '/*.html');
     $cssFiles = glob($demoTemplatesPath . '/*.css');
     $jsFiles = glob($demoTemplatesPath . '/*.js');
@@ -235,7 +383,6 @@ function installDemoTemplate($templateId) {
     
     foreach ($allFiles as $sourceFile) {
         $filename = basename($sourceFile);
-        // Skip manifest
         if ($filename === 'manifest.json') {
             continue;
         }
@@ -246,7 +393,6 @@ function installDemoTemplate($templateId) {
         }
     }
     
-    // Copy subdirectories if they exist
     $subdirs = ['css', 'js', 'assets'];
     foreach ($subdirs as $subdir) {
         $sourceSubdir = "$demoTemplatesPath/$subdir";
@@ -275,21 +421,63 @@ function installDemoTemplate($templateId) {
 
 switch ($action) {
     case 'list_content':
-        // List available demo content packs
-        $packs = listDemoContentPacks();
+    case 'list_websites':
+        // List available demo websites
+        $websites = listDemoWebsites();
         echo json_encode([
             'status' => 'ok',
-            'data' => ['packs' => $packs]
+            'data' => ['websites' => $websites, 'packs' => $websites] // Legacy compatibility
         ]);
         exit;
         
     case 'list_templates':
-        // List available demo templates
+        // List available demo templates (legacy)
         $templates = listDemoTemplates();
         echo json_encode([
             'status' => 'ok',
             'data' => ['templates' => $templates]
         ]);
+        exit;
+        
+    case 'install_website':
+        // Install demo website (content + frontend together)
+        $websiteId = $input['website_id'] ?? '';
+        if (empty($websiteId)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Website ID required']);
+            exit;
+        }
+        
+        $result = installDemoWebsite($websiteId);
+        
+        if ($result['success']) {
+            // Update onboarding progress
+            require_once __DIR__ . '/onboarding.php';
+            $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+            saveOnboardingProgress($userId, [
+                'demo_content_installed' => true,
+                'demo_template_installed' => true,
+                'demo_website_installed' => true,
+                'demo_website_id' => $websiteId
+            ]);
+            
+            echo json_encode([
+                'status' => 'ok',
+                'message' => $result['message'],
+                'data' => [
+                    'collections_installed' => $result['collections_installed'],
+                    'entries_installed' => $result['entries_installed'],
+                    'frontend_installed' => $result['frontend_installed'],
+                    'website_path' => $result['website_path']
+                ]
+            ]);
+        } else {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $result['message']
+            ]);
+        }
         exit;
         
     case 'install_content':

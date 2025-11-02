@@ -1293,47 +1293,25 @@ function getOnboardingData() {
     // Get onboarding status
     $status = getOnboardingStatus($userId);
     
-    // Get available demo content packs
-    $demoPacks = [];
-    $demoContentPath = __DIR__ . '/../demo-content';
-    if (is_dir($demoContentPath)) {
-        $dirs = glob($demoContentPath . '/*', GLOB_ONLYDIR);
+    // Get available demo websites (content + frontend together)
+    $demoWebsites = [];
+    $demoWebsitesPath = __DIR__ . '/../demo-websites';
+    if (is_dir($demoWebsitesPath)) {
+        $dirs = glob($demoWebsitesPath . '/*', GLOB_ONLYDIR);
         foreach ($dirs as $dir) {
-            $packName = basename($dir);
+            $websiteName = basename($dir);
             $manifestFile = $dir . '/manifest.json';
             if (file_exists($manifestFile)) {
                 $manifest = json_decode(file_get_contents($manifestFile), true);
                 if ($manifest) {
-                    $demoPacks[] = [
-                        'id' => $packName,
-                        'name' => $manifest['name'] ?? $packName,
+                    $demoWebsites[] = [
+                        'id' => $websiteName,
+                        'name' => $manifest['name'] ?? $websiteName,
                         'description' => $manifest['description'] ?? '',
                         'preview_image' => $manifest['preview_image'] ?? null,
                         'collections_count' => $manifest['collections_count'] ?? 0,
-                        'entries_count' => $manifest['entries_count'] ?? 0
-                    ];
-                }
-            }
-        }
-    }
-    
-    // Get available demo templates
-    $demoTemplates = [];
-    $demoTemplatesPath = __DIR__ . '/../demo-templates';
-    if (is_dir($demoTemplatesPath)) {
-        $dirs = glob($demoTemplatesPath . '/*', GLOB_ONLYDIR);
-        foreach ($dirs as $dir) {
-            $templateName = basename($dir);
-            $manifestFile = $dir . '/manifest.json';
-            if (file_exists($manifestFile)) {
-                $manifest = json_decode(file_get_contents($manifestFile), true);
-                if ($manifest) {
-                    $demoTemplates[] = [
-                        'id' => $templateName,
-                        'name' => $manifest['name'] ?? $templateName,
-                        'description' => $manifest['description'] ?? '',
-                        'preview_image' => $manifest['preview_image'] ?? null,
-                        'style' => $manifest['style'] ?? 'minimal'
+                        'entries_count' => $manifest['entries_count'] ?? 0,
+                        'has_frontend' => $manifest['has_frontend'] ?? false
                     ];
                 }
             }
@@ -1342,8 +1320,8 @@ function getOnboardingData() {
     
     return [
         'status' => $status,
-        'demo_packs' => $demoPacks,
-        'demo_templates' => $demoTemplates,
+        'demo_websites' => $demoWebsites,
+        'demo_packs' => $demoWebsites, // Legacy compatibility
         'user' => [
             'name' => $_SESSION['user']['name'] ?? $_SESSION['user']['email'] ?? 'User',
             'email' => $_SESSION['user']['email'] ?? ''
