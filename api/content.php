@@ -385,7 +385,7 @@ if ($action === 'create_entry') {
         $schema['fields'] as $field
     ) {
         $name = $field['name'];
-        if ($field['type'] === 'wysiwyg' || $field['type'] === 'media') {
+        if ($field['type'] === 'wysiwyg' || $field['type'] === 'editor' || $field['type'] === 'media') {
             $cleanData[$name] = $data[$name] ?? '';
         } else if ($field['type'] === 'dynamicitems') {
             $cleanData[$name] = $data[$name] ?? [];
@@ -496,7 +496,7 @@ if ($action === 'update_entry') {
         $schema['fields'] as $field
     ) {
         $name = $field['name'];
-        if ($field['type'] === 'wysiwyg' || $field['type'] === 'media') {
+        if ($field['type'] === 'wysiwyg' || $field['type'] === 'editor' || $field['type'] === 'media') {
             $cleanData[$name] = $data[$name] ?? '';
         } else if ($field['type'] === 'dynamicitems') {
             $cleanData[$name] = $data[$name] ?? [];
