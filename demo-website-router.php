@@ -8,6 +8,7 @@
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Check if this is a demo website request (e.g., /demo-website-blog/index.html)
+// Must match /demo-website-{id} or /demo-website-{id}/...
 if (!preg_match('#^/demo-website-([^/]+)(/.*)?$#', $uri, $matches)) {
     // Not a demo website request, return false to let server handle it
     return false;
