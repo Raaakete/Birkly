@@ -328,6 +328,85 @@
             return items.map(item => {
                 let itemOutput = loopContent;
                 
+                // First, handle nested foreach loops (like {foreach entry.tags as tag})
+                let foreachProcessed = true;
+                while (foreachProcessed) {
+                    foreachProcessed = false;
+                    const foreachRegex = /\{foreach\s+([a-zA-Z0-9_\.]+)\s+as\s+([a-zA-Z0-9_]+)\}/;
+                    const match = itemOutput.match(foreachRegex);
+                    if (match) {
+                        foreachProcessed = true;
+                        const fullMatch = match[0];
+                        const arrayPath = match[1];
+                        const tagVar = match[2];
+                        
+                        // Check if it's a property of the current item (e.g., entry.tags)
+                        if (arrayPath.startsWith(itemVar + '.')) {
+                            const propName = arrayPath.substring(itemVar.length + 1);
+                            const array = item[propName] || [];
+                            if (!Array.isArray(array)) {
+                                // Remove the entire loop
+                                const startPos = itemOutput.indexOf(fullMatch);
+                                const endPos = itemOutput.indexOf('{endforeach', startPos);
+                                if (endPos !== -1) {
+                                    itemOutput = itemOutput.substring(0, startPos) + itemOutput.substring(endPos + 11);
+                                } else {
+                                    itemOutput = itemOutput.replace(fullMatch, '');
+                                }
+                                continue;
+                            }
+                            
+                            // Find the matching {endforeach}
+                            const startPos = itemOutput.indexOf(fullMatch);
+                            let pos = startPos + fullMatch.length;
+                            let depth = 1;
+                            let endPos = -1;
+                            
+                            while (pos < itemOutput.length && depth > 0) {
+                                const nextForeach = itemOutput.indexOf('{foreach', pos);
+                                const nextEndForeach = itemOutput.indexOf('{endforeach', pos);
+                                
+                                if (nextForeach !== -1 && nextForeach < nextEndForeach) {
+                                    depth++;
+                                    pos = nextForeach + 8;
+                                } else if (nextEndForeach !== -1) {
+                                    depth--;
+                                    if (depth === 0) {
+                                        endPos = nextEndForeach;
+                                        break;
+                                    }
+                                    pos = nextEndForeach + 11;
+                                } else {
+                                    break;
+                                }
+                            }
+                            
+                            if (endPos === -1) {
+                                itemOutput = itemOutput.replace(fullMatch, '');
+                                continue;
+                            }
+                            
+                            const foreachContent = itemOutput.substring(startPos + fullMatch.length, endPos);
+                            
+                            // Render each tag/item
+                            const rendered = array.map(tagItem => {
+                                let tagOutput = foreachContent;
+                                // Replace {{ tagVar }} with actual tag value
+                                tagOutput = tagOutput.replace(new RegExp(`\\{\\{\\s*${tagVar}\\s*\\}\\}`, 'g'), () => {
+                                    return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                                });
+                                return tagOutput;
+                            }).join('');
+                            
+                            // Replace the foreach loop with rendered content
+                            itemOutput = itemOutput.substring(0, startPos) + rendered + itemOutput.substring(endPos + 11);
+                        } else {
+                            // Not for this item, skip it
+                            break;
+                        }
+                    }
+                }
+                
                 // Replace {{ item.property }} with actual values
                 // Fixed regex: variable and property names should not include pipe character
                 itemOutput = itemOutput.replace(/\{\{\s*([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?:\s*"([^"]+)")?)?\s*\}\}/g, (varMatch, itemName, prop, filter, filterValue) => {
