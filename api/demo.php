@@ -572,8 +572,23 @@ switch ($action) {
         exit;
         
     default:
+        // Debug: Log what action we got that didn't match
+        error_log("Demo API - Default case hit! Action was: [" . $action . "], type: " . gettype($action) . ", length: " . strlen($action));
+        error_log("Demo API - Action hex: " . bin2hex($action));
+        error_log("Demo API - Available cases: list_content, list_websites, list_templates, install_website, install_content, install_template");
         http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+        echo json_encode([
+            'status' => 'error', 
+            'message' => 'Invalid action: ' . $action,
+            'debug' => [
+                'action' => $action,
+                'action_type' => gettype($action),
+                'action_length' => strlen($action),
+                'action_hex' => bin2hex($action),
+                'get_action' => $_GET['action'] ?? null,
+                'post_action' => $_POST['action'] ?? null
+            ]
+        ]);
         exit;
 }
 
