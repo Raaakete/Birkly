@@ -23,9 +23,13 @@ requireAuth('manage_content');
 $action = trim($_GET['action'] ?? $_POST['action'] ?? '');
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
-// Debug logging (can be removed later)
+// Debug logging
+error_log("Demo API - Action: [" . $action . "], GET: " . json_encode($_GET) . ", POST action: " . ($_POST['action'] ?? 'none'));
 if (empty($action)) {
     error_log("Demo API called without action. GET: " . json_encode($_GET) . ", POST: " . json_encode($_POST));
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'No action specified']);
+    exit;
 }
 
 // Helper to list available demo websites
