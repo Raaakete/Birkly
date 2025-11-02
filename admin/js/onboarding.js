@@ -160,7 +160,7 @@ const onboarding = {
             0: 'first-user',
             1: 'welcome',
             2: 'site-info',
-            3: 'demo-website',
+            3: 'demo-content', // Keep or delete demo content
             4: 'complete'
         };
         return steps[step] || 'welcome';
@@ -176,24 +176,7 @@ const onboarding = {
     
     nextStep() {
         if (this.currentStep < this.maxSteps) {
-            // Special handling for demo website step
-            const demoStepNumber = this.needsFirstUser ? 3 : 3; // Step 3 (after welcome and site-info)
-            if (this.currentStep === demoStepNumber) {
-                // If nothing selected, allow skipping
-                if (this.selectedDemoWebsite === null) {
-                    // Skip is allowed - continue to next step
-                    this.showStep(this.currentStep + 1);
-                    this.updateProgressAPI();
-                    return;
-                }
-                // If website selected, install it
-                if (this.selectedDemoWebsite !== null) {
-                    this.installDemoWebsite(this.selectedDemoWebsite);
-                    // Wait for installation before proceeding
-                    return;
-                }
-            }
-            
+            // No special handling needed - demo content step handles its own logic
             this.showStep(this.currentStep + 1);
             this.updateProgressAPI();
         }
@@ -265,75 +248,128 @@ const onboarding = {
         });
     },
     
-    selectDemoWebsite(websiteId) {
-        // Normalize website ID - remove quotes if present
-        if (websiteId) {
-            websiteId = String(websiteId).trim().replace(/^["']|["']$/g, '');
-        }
-        
+    async keepDemoContent() {
         // Remove selected class from all cards
         document.querySelectorAll('.demo-card').forEach(card => {
             card.classList.remove('selected');
         });
         
-        // Add selected class to clicked card (if not skip card)
-        if (websiteId !== null && websiteId !== '') {
-            const card = event.target.closest('.demo-card');
-            if (card) {
-                card.classList.add('selected');
-            }
+        // Add selected class to keep card
+        event.target.closest('.demo-card').classList.add('selected');
+        
+        // Show loading state
+        const keepBtn = event.target.closest('.keep-card')?.querySelector('button');
+        if (keepBtn) {
+            keepBtn.disabled = true;
+            keepBtn.textContent = 'Keeping...';
         }
         
-        this.selectedDemoWebsite = websiteId;
+        try {
+            const response = await fetch('/api/demo.php?action=keep', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+            
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Update progress
+                await this.updateProgressAPI('demo_content_kept', true);
+                
+                // Show continue button and proceed
+                const actions = document.getElementById('demo-content-actions');
+                if (actions) {
+                    actions.style.display = 'flex';
+                }
+                
+                // Auto-continue after a moment
+                setTimeout(() => {
+                    this.nextStep();
+                    this.updateProgressAPI();
+                }, 500);
+            } else {
+                console.error('Failed to keep demo content:', data.message);
+                alert('Failed to save preference: ' + (data.message || 'Unknown error'));
+                if (keepBtn) {
+                    keepBtn.disabled = false;
+                    keepBtn.textContent = 'Keep';
+                }
+            }
+        } catch (error) {
+            console.error('Error keeping demo content:', error);
+            alert('Error saving preference. Please try again.');
+            if (keepBtn) {
+                keepBtn.disabled = false;
+                keepBtn.textContent = 'Keep';
+            }
+        }
     },
     
-    async installDemoWebsite(websiteId) {
-        if (!websiteId) {
-            // Skip selected, just continue
-            this.showStep(this.currentStep + 1);
-            this.updateProgressAPI();
+    async deleteDemoContent() {
+        // Remove selected class from all cards
+        document.querySelectorAll('.demo-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to delete card
+        event.target.closest('.demo-card').classList.add('selected');
+        
+        // Confirm deletion
+        if (!confirm('Are you sure you want to delete all demo content? This cannot be undone.')) {
             return;
         }
         
         // Show loading state
-        const submitBtn = document.querySelector('#demo-website-actions .btn-primary');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Installing...';
+        const deleteBtn = event.target.closest('.delete-card')?.querySelector('button');
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
         }
         
         try {
-            const response = await fetch('/api/demo.php?action=install_website', {
+            const response = await fetch('/api/demo.php?action=delete', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    website_id: websiteId
+                    delete_content: true,
+                    delete_website: true
                 })
             });
             
             const data = await response.json();
             if (data.status === 'ok') {
                 // Update progress
-                await this.updateProgressAPI('demo_website_installed', true);
-                // Continue to next step
-                this.showStep(this.currentStep + 1);
-                this.updateProgressAPI();
+                await this.updateProgressAPI('demo_content_deleted', true);
+                
+                // Show continue button and proceed
+                const actions = document.getElementById('demo-content-actions');
+                if (actions) {
+                    actions.style.display = 'flex';
+                }
+                
+                // Auto-continue after a moment
+                setTimeout(() => {
+                    this.nextStep();
+                    this.updateProgressAPI();
+                }, 500);
             } else {
-                console.error('Failed to install demo website:', data.message);
-                alert('Failed to install demo website: ' + (data.message || 'Unknown error'));
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Continue';
+                console.error('Failed to delete demo content:', data.message);
+                alert('Failed to delete demo content: ' + (data.message || 'Unknown error'));
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = 'Delete';
                 }
             }
         } catch (error) {
-            console.error('Error installing demo website:', error);
-            alert('Error installing demo website. Please try again.');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Continue';
+            console.error('Error deleting demo content:', error);
+            alert('Error deleting demo content. Please try again.');
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete';
             }
         }
     },
