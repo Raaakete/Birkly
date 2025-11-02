@@ -234,6 +234,57 @@
     function renderTemplate(template, data) {
         let output = template;
         
+        // Handle {foreach array as item} loops (for arrays like tags)
+        const foreachRegex = /\{foreach\s+([^\s]+)\s+as\s+([^\s]+)\}/g;
+        output = output.replace(foreachRegex, (match, arrayName, itemVar) => {
+            const array = getNestedValue(data, arrayName) || [];
+            if (!Array.isArray(array)) return '';
+            
+            // Find the matching {endforeach}
+            const startPos = output.indexOf(match);
+            let pos = startPos + match.length;
+            let depth = 1;
+            let endPos = -1;
+            
+            while (pos < output.length && depth > 0) {
+                const nextForeach = output.indexOf('{foreach', pos);
+                const nextEndForeach = output.indexOf('{endforeach', pos);
+                
+                if (nextForeach !== -1 && nextForeach < nextEndForeach) {
+                    depth++;
+                    pos = nextForeach + 8;
+                } else if (nextEndForeach !== -1) {
+                    depth--;
+                    if (depth === 0) {
+                        endPos = nextEndForeach;
+                        break;
+                    }
+                    pos = nextEndForeach + 11;
+                } else {
+                    break; // No matching endforeach
+                }
+            }
+            
+            if (endPos === -1) return ''; // No matching endforeach
+            
+            const loopContent = output.substring(startPos + match.length, endPos);
+            
+            // Render each item
+            return array.map(item => {
+                let itemOutput = loopContent;
+                
+                // Replace {{ itemVar }} with actual item value
+                itemOutput = itemOutput.replace(new RegExp(`\\{\\{\\s*${itemVar}\\s*\\}\\}`, 'g'), () => {
+                    return typeof item === 'string' ? escapeHtml(item) : item;
+                });
+                
+                // Handle conditionals inside loop
+                itemOutput = renderConditionals(itemOutput, { [itemVar]: item }, itemVar);
+                
+                return itemOutput;
+            }).join('');
+        });
+        
         // Handle {for each item in 'collection'} loops
         const loopRegex = /\{for\s+(?:each\s+)?([^\s]+)\s+in\s+['"]([^'"]+)['"]\}/g;
         output = output.replace(loopRegex, (match, itemVar, collectionName) => {
