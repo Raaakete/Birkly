@@ -437,6 +437,10 @@ function installDemoTemplate($templateId) {
     ];
 }
 
+// Debug: Log action before switch
+error_log("Demo API - Before switch, action: [" . $action . "], type: " . gettype($action) . ", length: " . strlen($action));
+error_log("Demo API - Action matches 'install_website': " . ($action === 'install_website' ? 'YES' : 'NO'));
+
 switch ($action) {
     case 'list_content':
     case 'list_websites':
