@@ -235,55 +235,84 @@
         let output = template;
         
         // Handle {foreach array as item} loops (for arrays like tags)
-        const foreachRegex = /\{foreach\s+([^\s]+)\s+as\s+([^\s]+)\}/g;
-        output = output.replace(foreachRegex, (match, arrayName, itemVar) => {
-            const array = getNestedValue(data, arrayName) || [];
-            if (!Array.isArray(array)) return '';
-            
-            // Find the matching {endforeach}
-            const startPos = output.indexOf(match);
-            let pos = startPos + match.length;
-            let depth = 1;
-            let endPos = -1;
-            
-            while (pos < output.length && depth > 0) {
-                const nextForeach = output.indexOf('{foreach', pos);
-                const nextEndForeach = output.indexOf('{endforeach', pos);
+        // We need to process these BEFORE the collection loops to avoid conflicts
+        // Use a while loop to process all foreach loops
+        let foreachProcessed = true;
+        while (foreachProcessed) {
+            foreachProcessed = false;
+            const foreachRegex = /\{foreach\s+([^\s]+)\s+as\s+([^\s]+)\}/;
+            const match = output.match(foreachRegex);
+            if (match) {
+                foreachProcessed = true;
+                const fullMatch = match[0];
+                const arrayName = match[1];
+                const itemVar = match[2];
+                const array = getNestedValue(data, arrayName) || [];
                 
-                if (nextForeach !== -1 && nextForeach < nextEndForeach) {
-                    depth++;
-                    pos = nextForeach + 8;
-                } else if (nextEndForeach !== -1) {
-                    depth--;
-                    if (depth === 0) {
-                        endPos = nextEndForeach;
-                        break;
+                if (!Array.isArray(array)) {
+                    // Remove the entire loop (including endforeach)
+                    const startPos = output.indexOf(fullMatch);
+                    const endPos = output.indexOf('{endforeach', startPos);
+                    if (endPos !== -1) {
+                        output = output.substring(0, startPos) + output.substring(endPos + 11);
+                    } else {
+                        output = output.replace(fullMatch, '');
                     }
-                    pos = nextEndForeach + 11;
-                } else {
-                    break; // No matching endforeach
+                    continue;
                 }
+                
+                // Find the matching {endforeach}
+                const startPos = output.indexOf(fullMatch);
+                let pos = startPos + fullMatch.length;
+                let depth = 1;
+                let endPos = -1;
+                
+                while (pos < output.length && depth > 0) {
+                    const nextForeach = output.indexOf('{foreach', pos);
+                    const nextEndForeach = output.indexOf('{endforeach', pos);
+                    
+                    if (nextForeach !== -1 && nextForeach < nextEndForeach) {
+                        depth++;
+                        pos = nextForeach + 8;
+                    } else if (nextEndForeach !== -1) {
+                        depth--;
+                        if (depth === 0) {
+                            endPos = nextEndForeach;
+                            break;
+                        }
+                        pos = nextEndForeach + 11;
+                    } else {
+                        break; // No matching endforeach
+                    }
+                }
+                
+                if (endPos === -1) {
+                    // No matching endforeach, remove the loop start
+                    output = output.replace(fullMatch, '');
+                    continue;
+                }
+                
+                const loopContent = output.substring(startPos + fullMatch.length, endPos);
+                
+                // Render each item
+                const rendered = array.map(item => {
+                    let itemOutput = loopContent;
+                    
+                    // Replace {{ itemVar }} with actual item value
+                    itemOutput = itemOutput.replace(new RegExp(`\\{\\{\\s*${itemVar}\\s*\\}\\}`, 'g'), () => {
+                        return typeof item === 'string' ? escapeHtml(item) : item;
+                    });
+                    
+                    // Handle conditionals inside loop
+                    itemOutput = renderConditionals(itemOutput, { [itemVar]: item }, itemVar);
+                    
+                    return itemOutput;
+                }).join('');
+                
+                // Replace the entire loop (including endforeach) with rendered content
+                output = output.substring(0, startPos) + rendered + output.substring(endPos + 11);
             }
-            
-            if (endPos === -1) return ''; // No matching endforeach
-            
-            const loopContent = output.substring(startPos + match.length, endPos);
-            
-            // Render each item
-            return array.map(item => {
-                let itemOutput = loopContent;
-                
-                // Replace {{ itemVar }} with actual item value
-                itemOutput = itemOutput.replace(new RegExp(`\\{\\{\\s*${itemVar}\\s*\\}\\}`, 'g'), () => {
-                    return typeof item === 'string' ? escapeHtml(item) : item;
-                });
-                
-                // Handle conditionals inside loop
-                itemOutput = renderConditionals(itemOutput, { [itemVar]: item }, itemVar);
-                
-                return itemOutput;
-            }).join('');
-        });
+        }
         
         // Handle {for each item in 'collection'} loops
         const loopRegex = /\{for\s+(?:each\s+)?([^\s]+)\s+in\s+['"]([^'"]+)['"]\}/g;
