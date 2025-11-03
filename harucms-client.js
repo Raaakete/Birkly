@@ -565,10 +565,18 @@
             return value;
         });
         
+        // Handle {public_form 'collection'} directive - replace with placeholder
+        // We'll process these after template rendering is complete
+        output = output.replace(/\{public_form\s+['"]([^'"]+)['"]\}/g, (match, collectionSlug) => {
+            const placeholderId = 'haru-form-placeholder-' + Math.random().toString(36).substr(2, 9);
+            // Store form info in data attribute for later processing
+            return '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" class="haru-form-placeholder">Loading form...</div>';
+        });
+        
         // Support single-brace variables outside loops: { content }, { site_title }, etc.
         output = output.replace(/\{\s*([a-zA-Z0-9_\.]+)(?:\s*"([^"]+)")?\s*\}/g, (m, varName, arg) => {
             const lowers = varName.toLowerCase();
-            if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+            if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form'].includes(lowers)) return m;
             let value = getNestedValue(data, varName) || '';
             if (varName === 'content' || /\.content$/.test(varName)) return value; // auto-raw
             if (varName === 'date' && arg) return formatDate(value, arg);
@@ -1150,6 +1158,160 @@
     }
     
     /**
+     * Fetch collection schema and API key
+     */
+    async function fetchCollectionInfo(collectionSlug) {
+        try {
+            // Try to get collection info from a new API endpoint
+            const response = await fetch(HaruCMS.cmsUrl + '/api/public.php?action=get_collection_info&collection=' + encodeURIComponent(collectionSlug));
+            const data = await response.json();
+            if (data && data.status === 'ok' && data.data) {
+                return data.data;
+            }
+        } catch (error) {
+            console.warn('HaruCMS: Could not fetch collection info:', error);
+        }
+        return null;
+    }
+    
+    /**
+     * Render public form based on collection
+     */
+    async function renderPublicForm(collectionSlug) {
+        const collectionInfo = await fetchCollectionInfo(collectionSlug);
+        if (!collectionInfo || !collectionInfo.schema || !collectionInfo.api_key) {
+            return '<p style="color: red;">Error: Collection not found or Public API not enabled.</p>';
+        }
+        
+        let formHtml = '<form class="haru-form" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-api-key="' + escapeHtml(collectionInfo.api_key) + '">\n';
+        
+        const fields = collectionInfo.schema.fields || [];
+        for (const field of fields) {
+            const fieldName = field.name || '';
+            const fieldLabel = field.label || fieldName;
+            const fieldType = field.type || 'text';
+            const required = field.required || false;
+            
+            // Skip status field (handled automatically)
+            if (fieldName === 'status') continue;
+            
+            formHtml += '  <div class="form-group">\n';
+            formHtml += '    <label for="' + escapeHtml(fieldName) + '">' + escapeHtml(fieldLabel);
+            if (required) {
+                formHtml += ' <span class="required">*</span>';
+            }
+            formHtml += '</label>\n';
+            
+            if (fieldType === 'textarea' || fieldType === 'editor') {
+                formHtml += '    <textarea name="' + escapeHtml(fieldName) + '" id="' + escapeHtml(fieldName) + '" class="form-control"';
+                if (required) formHtml += ' required';
+                formHtml += ' rows="5"></textarea>\n';
+            } else if (fieldType === 'select') {
+                formHtml += '    <select name="' + escapeHtml(fieldName) + '" id="' + escapeHtml(fieldName) + '" class="form-control"';
+                if (required) formHtml += ' required';
+                formHtml += '>\n';
+                formHtml += '      <option value="">Select...</option>\n';
+                const options = field.options || [];
+                for (const option of options) {
+                    const optLabel = option.label || option.value || '';
+                    const optValue = option.value || optLabel;
+                    formHtml += '      <option value="' + escapeHtml(optValue) + '">' + escapeHtml(optLabel) + '</option>\n';
+                }
+                formHtml += '    </select>\n';
+            } elseif (fieldType === 'boolean') {
+                formHtml += '    <label class="checkbox-label">\n';
+                formHtml += '      <input type="checkbox" name="' + escapeHtml(fieldName) + '" id="' + escapeHtml(fieldName) + '" value="1">\n';
+                formHtml += '      <span>' + escapeHtml(fieldLabel) + '</span>\n';
+                formHtml += '    </label>\n';
+            } else {
+                const inputType = (fieldType === 'email') ? 'email' : (fieldType === 'number') ? 'number' : 'text';
+                formHtml += '    <input type="' + inputType + '" name="' + escapeHtml(fieldName) + '" id="' + escapeHtml(fieldName) + '" class="form-control"';
+                if (required) formHtml += ' required';
+                formHtml += '>\n';
+            }
+            formHtml += '  </div>\n';
+        }
+        
+        // Add honeypot field
+        formHtml += '  <div style="display: none;">\n';
+        formHtml += '    <input type="text" name="_honeypot" tabindex="-1" autocomplete="off">\n';
+        formHtml += '  </div>\n';
+        
+        // Add submit button
+        formHtml += '  <button type="submit" class="btn btn-primary">Submit</button>\n';
+        formHtml += '</form>\n';
+        
+        return formHtml;
+    }
+    
+    /**
+     * Setup auto-form submission for HaruCMS forms
+     */
+    function setupFormSubmission() {
+        const forms = document.querySelectorAll('form[data-haru-collection]');
+        for (const form of forms) {
+            if (form.dataset.haruFormInitialized) continue;
+            form.dataset.haruFormInitialized = 'true';
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = this;
+                const collectionSlug = form.dataset.haruCollection;
+                const apiKey = form.dataset.haruApiKey;
+                
+                if (!collectionSlug || !apiKey) {
+                    alert('Error: Form configuration missing. Please check the form setup.');
+                    return;
+                }
+                
+                const submitBtn = form.querySelector('button[type=submit]');
+                const originalText = submitBtn ? submitBtn.textContent : 'Submit';
+                
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Sending...';
+                }
+                
+                const formData = new FormData(form);
+                const data = {};
+                for (const [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                
+                try {
+                    const apiUrl = HaruCMS.cmsUrl + '/api/public/collections.php?collection=' + encodeURIComponent(collectionSlug);
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-Key': apiKey
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'ok') {
+                        form.reset();
+                        alert('Thank you! Your message has been received. We\'ll get back to you soon.');
+                    } else {
+                        alert('Error: ' + (result.message || 'Something went wrong'));
+                    }
+                } catch (error) {
+                    console.error('HaruCMS: Form submission error:', error);
+                    alert('Error submitting form. Please try again.');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+                    }
+                }
+            });
+        }
+    }
+    
+    /**
      * Initialize HaruCMS
      */
     async function init() {
@@ -1162,6 +1324,24 @@
         
         // Process templates immediately (don't wait for DOMContentLoaded)
         await processTemplates();
+        
+        // Process {public_form} placeholders after templates are rendered
+        const formPlaceholders = document.querySelectorAll('.haru-form-placeholder');
+        for (const placeholder of formPlaceholders) {
+            const collectionSlug = placeholder.dataset.haruCollection;
+            if (collectionSlug) {
+                renderPublicForm(collectionSlug).then(formHtml => {
+                    placeholder.outerHTML = formHtml;
+                    setupFormSubmission();
+                }).catch(error => {
+                    console.error('HaruCMS: Error rendering form:', error);
+                    placeholder.innerHTML = '<p style="color: red;">Error loading form. Please try again later.</p>';
+                });
+            }
+        }
+        
+        // Setup form auto-submission after templates are processed
+        setupFormSubmission();
     }
     
     
