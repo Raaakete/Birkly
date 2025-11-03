@@ -27,18 +27,30 @@ class TemplateParser {
     private function parseNaturalSyntax($template) {
         $parsed = $template;
         
-        // FIRST: Convert single-brace variables {variable} to double-brace {{ variable }}
-        // But skip if it's part of a control structure (if, for, foreach, endif, endfor, etc.)
+        // FIRST: Support single-brace variables {variable} directly (new syntax)
+        // Skip control keywords, and render variables with safe defaults.
+        // Rule: editor fields like "content" are raw; everything else escaped.
         $parsed = preg_replace_callback(
-            '/\{([a-z0-9_\.]+)\}/',
+            '/\{\s*([a-zA-Z0-9_\.]+)\s*\}/',
             function($matches) {
-                $var = $matches[1];
-                // Skip if it's a control keyword
-                if (in_array($var, ['if', 'else', 'endif', 'for', 'foreach', 'endfor', 'endforeach', 'from', 'get', 'has', 'exist', 'render', 'fieldtype'])) {
-                    return '{' . $var . '}';
+                $var = trim($matches[1]);
+                // Skip if it's a control keyword token (beginning of a block)
+                $controlStarts = ['if', 'else', 'endif', 'for', 'foreach', 'endfor', 'endforeach', 'from', 'get', 'has', 'exist', 'render', 'fieldtype', 'include', 'media', 'url', 'count'];
+                foreach ($controlStarts as $kw) {
+                    if (strpos($var, $kw) === 0) {
+                        return '{' . $var . '}';
+                    }
                 }
-                // Convert to double braces
-                return '{{ ' . $var . ' }}';
+                // Build PHP variable from dot notation: a.b.c -> $a['b']['c']
+                $parts = explode('.', $var);
+                $php = '$' . array_shift($parts);
+                foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+                // Auto-raw for editor content fields named exactly 'content' or ending with '.content'
+                $isContent = ($var === 'content' || preg_match('/\.content$/', $var));
+                if ($isContent) {
+                    return '<?= ' . $php . ' ?? "" ?>';
+                }
+                return '<?= htmlspecialchars(' . $php . ' ?? "", ENT_QUOTES, "UTF-8") ?>';
             },
             $parsed
         );
