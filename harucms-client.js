@@ -626,10 +626,10 @@
                 // If it's part of a directive, keep it as-is
                 if (after.match(/^\s+(for|each|in|has|exist|==|!=|<=|>=|>|<)/) || 
                     before.match(/(entry|for|if)\s+$/)) {
-                    result += match[0]; // Keep directive as-is
+                    result += varMatch[0]; // Keep directive as-is
                 } else {
                     // It's a standalone directive keyword, keep it
-                    result += match[0];
+                    result += varMatch[0];
                 }
             } else {
                 // It's a regular variable - replace it
