@@ -23,7 +23,7 @@
 <p>Loop through entries of a collection:</p>
 <pre><code>{for each entry in 'blog'}
   <article>
-    <h2><a href="/demo-blog/post.html?slug={ slug }">{ title }</a></h2>
+    <h2><a href="/demo-website/post.html?slug={ slug }">{ title }</a></h2>
     <time>{ date "F j, Y" }</time>
 
     {if entry has tags}
@@ -85,7 +85,7 @@
 
 <h3>Links and URLs</h3>
 <p>Build an internal link with parameters:</p>
-<pre><code><a href="{ url '/demo-blog/post.html' slug=slug }">Read more</a></code></pre>
+<pre><code><a href="{ url '/demo-website/post.html' slug=slug }">Read more</a></code></pre>
 
 <h3>Counts</h3>
 <pre><code>Total blog posts: { count of 'blog' }</code></pre>

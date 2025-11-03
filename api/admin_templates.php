@@ -353,6 +353,10 @@ function getEntryEditorData($includeFieldHtml = false) {
     
     $collectionData = json_decode(file_get_contents($collectionFile), true);
     $collectionData['slug'] = $collectionSlug;
+    // Ensure 'name' field exists for consistency
+    if (!isset($collectionData['name']) && isset($collectionData['title'])) {
+        $collectionData['name'] = $collectionData['title'];
+    }
     
     // Get fields from schema.json
     $fields = [];
@@ -1337,7 +1341,7 @@ function getOnboardingData() {
     }
     
     // Check for demo website
-    $demoBlogPath = __DIR__ . '/../demo-blog';
+    $demoBlogPath = __DIR__ . '/../demo-website';
     $demoContentInfo['has_demo_website'] = is_dir($demoBlogPath);
     
     return [

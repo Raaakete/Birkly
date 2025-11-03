@@ -159,7 +159,7 @@ $isOnboarding = ($page === 'onboarding');
         <main class="main-content">
             <?php
             // Render the page using template system
-            if ($page === 'dashboard' || $page === 'media' || $page === 'entry-editor') {
+            if ($page === 'dashboard' || $page === 'media') {
                 // Pass query params so entry-editor receives collection/entry ids
                 $data = fetch_admin_page_data($page, $_GET);
                 
@@ -208,7 +208,7 @@ $isOnboarding = ($page === 'onboarding');
                         echo '</div>';
                     }
                 }
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'entries' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'help') {
+            } elseif ($page === 'content' || $page === 'settings' || $page === 'entries' || $page === 'entry-editor' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'help') {
                 // Content, Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages use direct PHP instead of template parser
                 $data = fetch_admin_page_data($page, $_GET);
                 extract($data);

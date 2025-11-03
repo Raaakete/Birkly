@@ -161,6 +161,94 @@
                                     </select>
                                 </div>
                                 
+                                <div class="info-item">
+                                    <label>Entry Method</label>
+                                    <select name="entry_method" id="entry_method" class="input">
+                                        <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
+                                        <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                    </select>
+                                    <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        Choose how entries can be created for this collection
+                                    </small>
+                                </div>
+                                
+                                <!-- Public API Settings (shown when Public API is selected) -->
+                                <div id="public-api-settings" style="display: <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'block' : 'none' ?>; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                    <h4 style="font-size: 0.875rem; font-weight: 600; margin: 0 0 var(--space-3) 0; color: var(--text-primary);">Public API Settings</h4>
+                                    
+                                    <div class="info-item">
+                                        <label>API Key</label>
+                                        <div class="info-value" style="display: flex; align-items: center; gap: var(--space-2);">
+                                            <code id="api-key-display" style="font-size: 0.75rem; background: var(--bg-secondary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); flex: 1; word-break: break-all;">
+                                                <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : 'Not generated yet' ?>
+                                            </code>
+                                            <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="23,4 23,10 17,10"></polyline>
+                                                    <polyline points="1,20 1,14 7,14"></polyline>
+                                                    <path d="M3.51,9a9,9 0 0,1 14.85-3.36L23,10M1,14l4.64,4.36A9,9 0 0,0 20.49,15"></path>
+                                                </svg>
+                                            </button>
+                                            <button type="button" id="copy-api-key-btn" class="btn btn-sm btn-secondary" title="Copy API key" <?= empty($collection['api_key']) ? 'disabled' : '' ?>>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="api_key" id="api_key" value="<?= htmlspecialchars($collection['api_key'] ?? '') ?>">
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="api_settings[auto_publish]" value="1" <?= !empty($collection['api_settings']['auto_publish']) ? 'checked' : '' ?>>
+                                            <span>Auto-publish submissions</span>
+                                        </label>
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            If enabled, entries will be published automatically. Otherwise, they'll be saved as drafts for review.
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Rate Limit (per hour)</label>
+                                        <input type="number" name="api_settings[rate_limit]" id="rate_limit" class="input" value="<?= htmlspecialchars($collection['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Maximum number of submissions allowed per hour per API key
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Notification Email</label>
+                                        <input type="email" name="api_settings[notification_email]" id="notification_email" class="input" value="<?= htmlspecialchars($collection['api_settings']['notification_email'] ?? '') ?>" placeholder="email@example.com">
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Optional: Receive email notifications when new entries are submitted
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>CAPTCHA Provider</label>
+                                        <select name="api_settings[captcha_provider]" id="captcha_provider" class="input">
+                                            <option value="">None (use honeypot only)</option>
+                                            <option value="recaptcha_v3" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
+                                            <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
+                                        </select>
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Optional: Add CAPTCHA protection (requires configuration)
+                                        </small>
+                                    </div>
+                                    
+                                    <div id="captcha-settings" style="display: <?= !empty($collection['api_settings']['captcha_provider']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                        <div class="info-item">
+                                            <label>CAPTCHA Site Key</label>
+                                            <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                        </div>
+                                        <div class="info-item">
+                                            <label>CAPTCHA Secret Key</label>
+                                            <input type="text" name="api_settings[captcha_secret_key]" id="captcha_secret_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <?php if ($collection['title']): ?>
                                     <?php
                                     $collectionFile = __DIR__ . "/../content/collections/" . ($collection['slug'] ?? '') . "/collection.json";
@@ -310,6 +398,169 @@ $collectionExample .= "{endfor}";
 echo htmlspecialchars($collectionExample);
 ?></code></pre>
                                 </div>
+                                
+                                <!-- Public API Form Code (only shown when Public API is enabled) -->
+                                <?php if (($collection['entry_method'] ?? 'admin_only') === 'public_api' && !empty($collection['api_key'])): ?>
+                                <div class="templating-section">
+                                    <div class="section-header">
+                                        <h4>Embeddable Form Code</h4>
+                                        <button type="button" class="copy-btn" id="copy-form-code" title="Copy to clipboard">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <p class="text-muted" style="font-size: 0.75rem; margin-bottom: var(--space-3);">
+                                        Copy and paste this code into your website to create a form that submits to this collection.
+                                    </p>
+                                    <pre class="code-example" id="form-code"><code><?php
+$collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
+$apiKey = htmlspecialchars($collection['api_key'] ?? '');
+$apiUrl = htmlspecialchars('http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/api/public/collections.php?collection=' . $collectionSlug);
+$captchaProvider = $collection['api_settings']['captcha_provider'] ?? '';
+$captchaSiteKey = $collection['api_settings']['captcha_site_key'] ?? '';
+
+$formCode = '<form id="haru-form-' . $collectionSlug . '" class="haru-form">';
+$formCode .= "\n";
+if (!empty($fields)) {
+    foreach ($fields as $field) {
+        $fieldName = $field['name'] ?? '';
+        $fieldLabel = $field['label'] ?? $fieldName;
+        $fieldType = $field['type'] ?? 'text';
+        $required = !empty($field['required']);
+        
+        $formCode .= '  <div class="form-group">' . "\n";
+        $formCode .= '    <label for="' . htmlspecialchars($fieldName) . '">' . htmlspecialchars($fieldLabel);
+        if ($required) {
+            $formCode .= ' <span class="required">*</span>';
+        }
+        $formCode .= '</label>' . "\n";
+        
+        if ($fieldType === 'textarea' || $fieldType === 'editor') {
+            $formCode .= '    <textarea name="' . htmlspecialchars($fieldName) . '" id="' . htmlspecialchars($fieldName) . '" class="form-control"';
+            if ($required) {
+                $formCode .= ' required';
+            }
+            $formCode .= ' rows="4"></textarea>' . "\n";
+        } elseif ($fieldType === 'select') {
+            $formCode .= '    <select name="' . htmlspecialchars($fieldName) . '" id="' . htmlspecialchars($fieldName) . '" class="form-control"';
+            if ($required) {
+                $formCode .= ' required';
+            }
+            $formCode .= '>' . "\n";
+            $formCode .= '      <option value="">Select...</option>' . "\n";
+            if (!empty($field['options']) && is_array($field['options'])) {
+                foreach ($field['options'] as $option) {
+                    $optLabel = $option['label'] ?? $option['value'] ?? '';
+                    $optValue = $option['value'] ?? $optLabel;
+                    $formCode .= '      <option value="' . htmlspecialchars($optValue) . '">' . htmlspecialchars($optLabel) . '</option>' . "\n";
+                }
+            }
+            $formCode .= '    </select>' . "\n";
+        } elseif ($fieldType === 'boolean') {
+            $formCode .= '    <label class="checkbox-label">' . "\n";
+            $formCode .= '      <input type="checkbox" name="' . htmlspecialchars($fieldName) . '" id="' . htmlspecialchars($fieldName) . '" value="1">' . "\n";
+            $formCode .= '      <span>' . htmlspecialchars($fieldLabel) . '</span>' . "\n";
+            $formCode .= '    </label>' . "\n";
+        } else {
+            $inputType = ($fieldType === 'email') ? 'email' : (($fieldType === 'number') ? 'number' : 'text');
+            $formCode .= '    <input type="' . $inputType . '" name="' . htmlspecialchars($fieldName) . '" id="' . htmlspecialchars($fieldName) . '" class="form-control"';
+            if ($required) {
+                $formCode .= ' required';
+            }
+            $formCode .= '>' . "\n";
+        }
+        $formCode .= '  </div>' . "\n";
+    }
+}
+
+// Add honeypot field (always hidden)
+$formCode .= '  <div style="display: none;">' . "\n";
+$formCode .= '    <input type="text" name="_honeypot" tabindex="-1" autocomplete="off">' . "\n";
+$formCode .= '  </div>' . "\n";
+
+// Add CAPTCHA if configured
+if (!empty($captchaProvider) && !empty($captchaSiteKey)) {
+    if ($captchaProvider === 'recaptcha_v3') {
+        $formCode .= '  <input type="hidden" name="captcha_token" id="captcha-token">' . "\n";
+        $formCode .= '  <script src="https://www.google.com/recaptcha/api.js?render=' . htmlspecialchars($captchaSiteKey) . '"></script>' . "\n";
+    } elseif ($captchaProvider === 'hcaptcha') {
+        $formCode .= '  <div class="h-captcha" data-sitekey="' . htmlspecialchars($captchaSiteKey) . '"></div>' . "\n";
+        $formCode .= '  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>' . "\n";
+    }
+}
+
+$formCode .= '  <button type="submit" class="btn btn-primary">Submit</button>' . "\n";
+$formCode .= '</form>' . "\n";
+$formCode .= "\n";
+$formCode .= '<script>' . "\n";
+$formCode .= 'document.getElementById("haru-form-' . $collectionSlug . '").addEventListener("submit", async function(e) {' . "\n";
+$formCode .= '  e.preventDefault();' . "\n";
+$formCode .= '  const form = this;' . "\n";
+$formCode .= '  const submitBtn = form.querySelector("button[type=submit]");' . "\n";
+$formCode .= '  const originalText = submitBtn.textContent;' . "\n";
+$formCode .= '  submitBtn.disabled = true;' . "\n";
+$formCode .= '  submitBtn.textContent = "Submitting...";' . "\n";
+$formCode .= "\n";
+$formCode .= '  const formData = new FormData(form);' . "\n";
+$formCode .= '  const data = {};' . "\n";
+$formCode .= '  for (const [key, value] of formData.entries()) {' . "\n";
+$formCode .= '    data[key] = value;' . "\n";
+$formCode .= '  }' . "\n";
+$formCode .= "\n";
+
+if ($captchaProvider === 'recaptcha_v3' && !empty($captchaSiteKey)) {
+    $formCode .= '  // Get reCAPTCHA token' . "\n";
+    $formCode .= '  grecaptcha.ready(function() {' . "\n";
+    $formCode .= '    grecaptcha.execute("' . htmlspecialchars($captchaSiteKey) . '", {action: "submit"}).then(function(token) {' . "\n";
+    $formCode .= '      data.captcha_token = token;' . "\n";
+    $formCode .= '      submitForm(data);' . "\n";
+    $formCode .= '    });' . "\n";
+    $formCode .= '  });' . "\n";
+    $formCode .= "\n";
+    $formCode .= '  function submitForm(data) {' . "\n";
+} else {
+    $formCode .= '  // Submit form' . "\n";
+}
+
+$formCode .= '    fetch("' . $apiUrl . '", {' . "\n";
+$formCode .= '      method: "POST",' . "\n";
+$formCode .= '      headers: {' . "\n";
+$formCode .= '        "Content-Type": "application/json",' . "\n";
+$formCode .= '        "X-API-Key": "' . $apiKey . '"' . "\n";
+$formCode .= '      },' . "\n";
+$formCode .= '      body: JSON.stringify(data)' . "\n";
+$formCode .= '    })' . "\n";
+$formCode .= '    .then(response => response.json())' . "\n";
+$formCode .= '    .then(result => {' . "\n";
+$formCode .= '      if (result.status === "ok") {' . "\n";
+$formCode .= '        form.reset();' . "\n";
+$formCode .= '        alert("Thank you! Your submission has been received.");' . "\n";
+$formCode .= '      } else {' . "\n";
+$formCode .= '        alert("Error: " + (result.message || "Something went wrong"));' . "\n";
+$formCode .= '      }' . "\n";
+$formCode .= '    })' . "\n";
+$formCode .= '    .catch(error => {' . "\n";
+$formCode .= '      console.error("Error:", error);' . "\n";
+$formCode .= '      alert("Error submitting form. Please try again.");' . "\n";
+$formCode .= '    })' . "\n";
+$formCode .= '    .finally(() => {' . "\n";
+$formCode .= '      submitBtn.disabled = false;' . "\n";
+$formCode .= '      submitBtn.textContent = originalText;' . "\n";
+$formCode .= '    });' . "\n";
+
+if ($captchaProvider === 'recaptcha_v3' && !empty($captchaSiteKey)) {
+    $formCode .= '  }' . "\n";
+}
+
+$formCode .= '});' . "\n";
+$formCode .= '</script>';
+
+echo htmlspecialchars($formCode);
+?></code></pre>
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -986,6 +1237,92 @@ document.addEventListener('DOMContentLoaded', function() {
             const codeElement = document.getElementById('collection-example-code');
             const text = codeElement.textContent || codeElement.innerText;
             copyToClipboard(text, this);
+        });
+    }
+    
+    // Copy form code
+    const copyFormCodeBtn = document.getElementById('copy-form-code');
+    if (copyFormCodeBtn) {
+        copyFormCodeBtn.addEventListener('click', function() {
+            const codeElement = document.getElementById('form-code');
+            const text = codeElement.textContent || codeElement.innerText;
+            copyToClipboard(text, this);
+        });
+    }
+    
+    // Entry Method functionality
+    const entryMethodSelect = document.getElementById('entry_method');
+    const publicApiSettings = document.getElementById('public-api-settings');
+    const captchaProviderSelect = document.getElementById('captcha_provider');
+    const captchaSettings = document.getElementById('captcha-settings');
+    
+    if (entryMethodSelect && publicApiSettings) {
+        entryMethodSelect.addEventListener('change', function() {
+            if (this.value === 'public_api') {
+                publicApiSettings.style.display = 'block';
+            } else {
+                publicApiSettings.style.display = 'none';
+            }
+        });
+    }
+    
+    // CAPTCHA provider toggle
+    if (captchaProviderSelect && captchaSettings) {
+        captchaProviderSelect.addEventListener('change', function() {
+            if (this.value) {
+                captchaSettings.style.display = 'block';
+            } else {
+                captchaSettings.style.display = 'none';
+            }
+        });
+    }
+    
+    // Generate API key
+    const generateApiKeyBtn = document.getElementById('generate-api-key-btn');
+    const apiKeyDisplay = document.getElementById('api-key-display');
+    const apiKeyInput = document.getElementById('api_key');
+    const copyApiKeyBtn = document.getElementById('copy-api-key-btn');
+    
+    function generateApiKey() {
+        // Generate a secure random API key
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let key = 'haru_';
+        for (let i = 0; i < 32; i++) {
+            key += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return key;
+    }
+    
+    if (generateApiKeyBtn && apiKeyDisplay && apiKeyInput) {
+        generateApiKeyBtn.addEventListener('click', function() {
+            const newKey = generateApiKey();
+            apiKeyDisplay.textContent = newKey;
+            apiKeyInput.value = newKey;
+            if (copyApiKeyBtn) {
+                copyApiKeyBtn.disabled = false;
+            }
+        });
+    }
+    
+    // Copy API key
+    if (copyApiKeyBtn && apiKeyInput) {
+        copyApiKeyBtn.addEventListener('click', function() {
+            const apiKey = apiKeyInput.value;
+            if (apiKey) {
+                navigator.clipboard.writeText(apiKey).then(function() {
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>';
+                    this.style.color = 'var(--success-600)';
+                    const btn = this;
+                    setTimeout(function() {
+                        btn.innerHTML = originalHTML;
+                        btn.style.color = '';
+                    }, 2000);
+                }.bind(this)).catch(function(err) {
+                    console.error('Failed to copy:', err);
+                    alert('Failed to copy API key');
+                });
+            }
         });
     }
 });
