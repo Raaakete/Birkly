@@ -426,6 +426,24 @@
                     return value;
                 });
                 
+                // Support single-brace variables for current item: { title }, { slug }, etc.
+                // Skip control structures like {if, {for, {endfor}
+                itemOutput = itemOutput.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, (m, name) => {
+                    const lowers = name.toLowerCase();
+                    if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+                    // Prefer current item property
+                    if (item && Object.prototype.hasOwnProperty.call(item, name)) {
+                        if (name === 'content') return (item[name] || ''); // auto-raw for editor content
+                        return escapeHtml(item[name] || '');
+                    }
+                    // Fallback to outer data
+                    if (data && Object.prototype.hasOwnProperty.call(data, name)) {
+                        if (name === 'content') return (data[name] || '');
+                        return escapeHtml(data[name] || '');
+                    }
+                    return '';
+                });
+                
                 // Replace {{ variable }} (non-item variables)
                 itemOutput = itemOutput.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (varMatch, varName, filter, filterValue) => {
                     // Skip if it contains a dot (it's an item property)
@@ -464,6 +482,16 @@
             }
             
             return value;
+        });
+        
+        // Support single-brace variables outside loops: { content }, { site_title }, etc.
+        output = output.replace(/\{\s*([a-zA-Z0-9_\.]+)(?:\s*"([^"]+)")?\s*\}/g, (m, varName, arg) => {
+            const lowers = varName.toLowerCase();
+            if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+            let value = getNestedValue(data, varName) || '';
+            if (varName === 'content' || /\.content$/.test(varName)) return value; // auto-raw
+            if (varName === 'date' && arg) return formatDate(value, arg);
+            return escapeHtml(value);
         });
         
         // Handle conditionals
