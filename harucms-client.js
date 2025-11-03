@@ -1058,6 +1058,12 @@
                 // Found template syntax in text (single or double braces)
                 if (!parent || parent.dataset.cmsProcessed) continue;
                 
+                // Skip if parent contains an entry block (it will be processed separately)
+                if (parent.querySelector('.haru-entry-block')) {
+                    console.log('HaruCMS: Skipping template with entry block:', parent.tagName, parent.className);
+                    continue;
+                }
+                
                 parent.dataset.cmsProcessed = 'true';
                 templates.push({
                     element: parent,
@@ -1076,6 +1082,13 @@
             const allElementsAlt = document.body.querySelectorAll('*');
             for (const el of allElementsAlt) {
                 if (el.dataset.cmsProcessed || el.classList.contains('haru-entry-block')) continue;
+                
+                // Skip if this element contains an entry block (it will be processed separately)
+                if (el.querySelector('.haru-entry-block')) {
+                    console.log('HaruCMS: Skipping element with entry block:', el.tagName, el.className);
+                    continue;
+                }
+                
                 const innerHTML = el.innerHTML || '';
                 if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
                     el.dataset.cmsProcessed = 'true';
@@ -1455,42 +1468,62 @@
         await processTemplates();
         console.log('HaruCMS: Templates processed');
         
-        // Process {entry for 'collection'} blocks
-        const entryBlocks = document.querySelectorAll('.haru-entry-block');
-        for (const block of entryBlocks) {
-            const collectionSlug = block.dataset.haruCollection;
-            const formContent = block.dataset.haruContent;
-            if (collectionSlug && formContent) {
-                fetchCollectionInfo(collectionSlug).then(collectionInfo => {
-                    if (!collectionInfo || !collectionInfo.schema || !collectionInfo.api_key) {
-                        block.innerHTML = '<p style="color: red;">Error: Collection not found or Public API not enabled.</p>';
-                        return;
-                    }
-                    
-                    // Create a data object with field names as variables
-                    const fieldData = {};
-                    const fields = collectionInfo.schema.fields || [];
-                    for (const field of fields) {
-                        // Make field names available as template variables
-                        fieldData[field.name] = field.name; // Use field name as both key and initial value
-                    }
-                    
-                    // Render the form content with field data
-                    const renderedContent = renderTemplate(formContent, fieldData);
-                    
-                    // Wrap in form with auto-submission attributes
-                    const formHtml = '<form class="haru-form" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-api-key="' + escapeHtml(collectionInfo.api_key) + '">\n' +
-                        renderedContent + '\n' +
-                        '</form>';
-                    
-                    block.outerHTML = formHtml;
-                    setupFormSubmission();
-                }).catch(error => {
-                    console.error('HaruCMS: Error rendering entry form:', error);
-                    block.innerHTML = '<p style="color: red;">Error loading form. Please try again later.</p>';
-                });
+        // Process {entry for 'collection'} blocks (wait a bit for DOM to update)
+        // Use setTimeout to ensure DOM is fully updated after template processing
+        setTimeout(() => {
+            const entryBlocks = document.querySelectorAll('.haru-entry-block');
+            console.log('HaruCMS: Found', entryBlocks.length, 'entry blocks to process');
+            
+            if (entryBlocks.length === 0) {
+                console.warn('HaruCMS: No entry blocks found. They may have been removed during template processing.');
+                return;
             }
-        }
+            
+            for (const block of entryBlocks) {
+                const collectionSlug = block.dataset.haruCollection;
+                const formContent = block.dataset.haruContent;
+                console.log('HaruCMS: Processing entry block for collection:', collectionSlug, 'Content length:', formContent ? formContent.length : 0);
+                
+                if (collectionSlug && formContent) {
+                    fetchCollectionInfo(collectionSlug).then(collectionInfo => {
+                        console.log('HaruCMS: Fetched collection info for:', collectionSlug, collectionInfo ? 'OK' : 'FAILED');
+                        if (!collectionInfo || !collectionInfo.schema || !collectionInfo.api_key) {
+                            block.innerHTML = '<p style="color: red;">Error: Collection not found or Public API not enabled.</p>';
+                            return;
+                        }
+                        
+                        // Create a data object with field names as variables
+                        const fieldData = {};
+                        const fields = collectionInfo.schema.fields || [];
+                        for (const field of fields) {
+                            // Make field names available as template variables
+                            fieldData[field.name] = field.name; // Use field name as both key and initial value
+                        }
+                        
+                        console.log('HaruCMS: Rendering form content with', fields.length, 'fields');
+                        
+                        // Render the form content with field data
+                        const renderedContent = renderTemplate(formContent, fieldData);
+                        
+                        console.log('HaruCMS: Form content rendered, length:', renderedContent.length);
+                        
+                        // Wrap in form with auto-submission attributes
+                        const formHtml = '<form class="haru-form" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-api-key="' + escapeHtml(collectionInfo.api_key) + '">\n' +
+                            renderedContent + '\n' +
+                            '</form>';
+                        
+                        block.outerHTML = formHtml;
+                        console.log('HaruCMS: Form HTML inserted, setting up submission');
+                        setupFormSubmission();
+                    }).catch(error => {
+                        console.error('HaruCMS: Error rendering entry form:', error);
+                        block.innerHTML = '<p style="color: red;">Error loading form. Please try again later.</p>';
+                    });
+                } else {
+                    console.warn('HaruCMS: Entry block missing collection slug or form content:', { collectionSlug, hasContent: !!formContent });
+                }
+            }
+        }, 100);
         
         // Process {public_form} placeholders after templates are rendered
         const formPlaceholders = document.querySelectorAll('.haru-form-placeholder');
