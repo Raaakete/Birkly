@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{ title } - { site_title }</title>
+    <link rel="stylesheet" href="/demo-website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/demo-website/index.html">{ site_title }</a></h1>
+            <nav>
+                <a href="/demo-website/index.html">Home</a>
+                <a href="/demo-website/services.html">Services</a>
+                <a href="/demo-website/about.html">About</a>
+                <a href="/demo-website/contact.html">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="post-detail">
+            <div class="container">
+                {from 'blog' get entry '{ slug }'}
+                <article class="post">
+                    <h1>{ title }</h1>
+                    <div class="post-meta">
+                        {if entry has date}
+                        <time>{ date "F j, Y" }</time>
+                        {endif}
+                        {if entry has tags}
+                        <div class="tags">
+                            {for each tag}
+                            <span class="tag">{ tag }</span>
+                            {endfor}
+                        </div>
+                        {endif}
+                    </div>
+                    <div class="post-content">
+                        { content }
+                    </div>
+                    <nav class="post-navigation">
+                        <a href="/demo-website/index.html">← Back to Home</a>
+                    </nav>
+                </article>
+                {endget}
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; { site_title } { current_year }</p>
+        </div>
+    </footer>
+
+    <script src="/harucms-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

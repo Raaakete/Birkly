@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - { site_title }</title>
+    <link rel="stylesheet" href="/demo-website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/demo-website/index.html">{ site_title }</a></h1>
+            <nav>
+                <a href="/demo-website/index.html">Home</a>
+                <a href="/demo-website/services.html">Services</a>
+                <a href="/demo-website/about.html">About</a>
+                <a href="/demo-website/contact.html" class="active">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>Get in Touch</h1>
+                <p class="page-subtitle">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+            </div>
+        </section>
+
+        <section class="contact-section">
+            <div class="container">
+                <div class="contact-grid">
+                    <div class="contact-info">
+                        <h2>Contact Information</h2>
+                        <p>Feel free to reach out to us through the contact form or using the information below.</p>
+                        <div class="contact-details">
+                            <div class="contact-item">
+                                <strong>Email:</strong> hello@example.com
+                            </div>
+                            <div class="contact-item">
+                                <strong>Phone:</strong> +1 (555) 123-4567
+                            </div>
+                            <div class="contact-item">
+                                <strong>Address:</strong> 123 Demo Street, City, State 12345
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-form-wrapper">
+                        <form id="haru-form-contact" class="haru-form contact-form">
+                            <div class="form-group">
+                                <label for="title">Name <span class="required">*</span></label>
+                                <input type="text" name="title" id="title" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email">Email <span class="required">*</span></label>
+                                <input type="email" name="email" id="email" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="subject">Subject</label>
+                                <input type="text" name="subject" id="subject" class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="message">Message <span class="required">*</span></label>
+                                <textarea name="message" id="message" class="form-control" rows="5" required></textarea>
+                            </div>
+                            
+                            <div style="display: none;">
+                                <input type="text" name="_honeypot" tabindex="-1" autocomplete="off">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; { site_title } { current_year }</p>
+        </div>
+    </footer>
+
+    <script>
+    document.getElementById("haru-form-contact").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const form = this;
+        const submitBtn = form.querySelector("button[type=submit]");
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending...";
+
+        const formData = new FormData(form);
+        const data = {};
+        for (const [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+
+        const apiUrl = window.location.origin + "/api/public/collections.php?collection=contact";
+        fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": "haru_contact_1234567890abcdef1234567890abcdef"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === "ok") {
+                form.reset();
+                alert("Thank you! Your message has been received. We'll get back to you soon.");
+            } else {
+                alert("Error: " + (result.message || "Something went wrong"));
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Error submitting form. Please try again.");
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    });
+    </script>
+    <script src="/harucms-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>
+
