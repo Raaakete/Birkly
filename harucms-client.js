@@ -653,6 +653,11 @@
         // Handle conditionals
         output = renderConditionals(output, data);
         
+        // Restore entry block placeholders
+        entryBlockPlaceholders.forEach((block) => {
+            output = output.replace(block.uniqueId, block.placeholder);
+        });
+        
         return output;
     }
     
