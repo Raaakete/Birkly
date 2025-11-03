@@ -1033,7 +1033,40 @@
             }
         }
         
-        // Normal template processing for lists/loops
+        // STEP 1: Process {entry for 'collection'} blocks FIRST before template detection
+        // This prevents the form HTML inside from being detected as separate templates
+        const entryBlocks = document.querySelectorAll('*');
+        for (const el of entryBlocks) {
+            const innerHTML = el.innerHTML || '';
+            // Check if this element contains {entry for} directive
+            if (innerHTML.includes('{entry for') && innerHTML.includes('{endentry}')) {
+                const entryForRegex = /\{entry\s+for\s+['"]([^'"]+)['"]\}/;
+                const entryForMatch = innerHTML.match(entryForRegex);
+                if (entryForMatch) {
+                    const collectionSlug = entryForMatch[1];
+                    const startPos = innerHTML.indexOf(entryForMatch[0]);
+                    const afterStart = innerHTML.substring(startPos + entryForMatch[0].length);
+                    const endPos = afterStart.indexOf('{endentry}');
+                    
+                    if (endPos !== -1) {
+                        const formContent = afterStart.substring(0, endPos);
+                        const placeholderId = 'haru-entry-block-' + Math.random().toString(36).substr(2, 9);
+                        const placeholder = '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-content="' + escapeHtml(formContent) + '" class="haru-entry-block">Loading form...</div>';
+                        
+                        // Replace the entire {entry for}...{endentry} block with placeholder
+                        const beforeBlock = innerHTML.substring(0, startPos);
+                        const afterBlock = innerHTML.substring(startPos + entryForMatch[0].length + endPos + 9);
+                        el.innerHTML = beforeBlock + placeholder + afterBlock;
+                        
+                        // Mark this element as processed to avoid detecting it again
+                        el.dataset.cmsProcessed = 'true';
+                        console.log('HaruCMS: Processed {entry for} block for collection:', collectionSlug);
+                    }
+                }
+            }
+        }
+        
+        // STEP 2: Normal template processing for lists/loops
         // Find ALL elements with template syntax (including in attributes)
         // We need to check both text nodes AND attribute values
         const templates = [];
@@ -1050,9 +1083,14 @@
         while (node = walker.nextNode()) {
             const nodeValue = node.nodeValue || '';
             // Check for template syntax - look for { or {{ followed by alphanumeric
+            // Skip if inside .haru-entry-block (already processed)
+            const parent = node.parentElement;
+            if (parent && parent.classList && parent.classList.contains('haru-entry-block')) {
+                continue; // Skip - already processed as entry block
+            }
+            
             if (nodeValue && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(nodeValue)) {
                 // Found template syntax in text (single or double braces)
-                const parent = node.parentElement;
                 if (!parent || parent.dataset.cmsProcessed) continue;
                 
                 parent.dataset.cmsProcessed = 'true';
@@ -1072,7 +1110,7 @@
             console.warn('HaruCMS: No templates found via text nodes, trying alternative detection...');
             const allElementsAlt = document.body.querySelectorAll('*');
             for (const el of allElementsAlt) {
-                if (el.dataset.cmsProcessed) continue;
+                if (el.dataset.cmsProcessed || el.classList.contains('haru-entry-block')) continue;
                 const innerHTML = el.innerHTML || '';
                 if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
                     el.dataset.cmsProcessed = 'true';
