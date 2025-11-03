@@ -10,30 +10,32 @@
     <div class="grid">
         <?php if (!empty($collections)): ?>
             <?php foreach ($collections as $collection): ?>
-                <a class="card" href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug']) ?>">
-                    <div class="collection-header">
-                        <h3 class="title">
-                            <img src="/admin/assets/DotsSixVertical.svg" alt="DragandDrop">
-                            <?= htmlspecialchars($collection['name']) ?>
-                        </h3>
-                        <div class="collection-description">
-                            <p><?= htmlspecialchars($collection['description']) ?></p>
+                <div class="card">
+                    <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug']) ?>" aria-label="Open collection <?= htmlspecialchars($collection['name']) ?>">
+                        <div class="collection-header">
+                            <h3 class="title">
+                                <img src="/admin/assets/DotsSixVertical.svg" alt="DragandDrop">
+                                <?= htmlspecialchars($collection['name']) ?>
+                            </h3>
+                            <div class="collection-description">
+                                <p><?= htmlspecialchars($collection['description']) ?></p>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                     <div class="collection-footer">
                         <div class="entry-count">
                             <b><?= htmlspecialchars($collection['entries_count']) ?></b> entries
                         </div>
                         <div class="collection-actions">
-                            <a class="btn" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug']) ?>">
+                            <a class="btn" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug']) ?>" aria-label="Edit collection <?= htmlspecialchars($collection['name']) ?>">
                                 <img src="/admin/assets/PencilSimple.svg" alt="Edit">
                             </a>
-                            <button class="btn" disabled>
+                            <button class="btn" disabled aria-label="Delete collection <?= htmlspecialchars($collection['name']) ?>">
                                 <img src="/admin/assets/Trash.svg" alt="Delete">
                             </button>
                         </div>
                     </div>
-                </a>
+                </div>
             <?php endforeach; ?>
         <?php else: ?>
             <div class="empty-state">

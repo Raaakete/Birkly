@@ -1,15 +1,18 @@
-<div class="dashboard-page">
-    <div class="page-header">
-        <h1>Dashboard</h1>
+
+    <div class="page-header pt-m pb-m">
+        <div class="breadcrumbs"><span class="current">Dashboard</span></div>
+    </div>
+
+    <div>
         {if onboarding exist}
-            {if onboarding.completed == false && onboarding.is_first_time == true}
-                <p>Welcome to HaruCMS! Let's get you started.</p>
-            {else}
-                <p>Welcome to HaruCMS Admin</p>
-            {endif}
+        {if onboarding.completed == false && onboarding.is_first_time == true}
+            <p>Welcome to HaruCMS! Let's get you started.</p>
         {else}
             <p>Welcome to HaruCMS Admin</p>
         {endif}
+    {else}
+        <p>Welcome to HaruCMS Admin</p>
+    {endif}
     </div>
     
     {if onboarding exist}
@@ -170,4 +173,4 @@
             </div>
         {endif}
     {endif}
-</div>
+
