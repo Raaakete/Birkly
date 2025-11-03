@@ -1032,7 +1032,9 @@
         
         let node;
         while (node = walker.nextNode()) {
-            if (node.nodeValue && /\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue)) {
+            const nodeValue = node.nodeValue || '';
+            // Check for template syntax - look for { or {{ followed by alphanumeric
+            if (nodeValue && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(nodeValue)) {
                 // Found template syntax in text (single or double braces)
                 const parent = node.parentElement;
                 if (!parent || parent.dataset.cmsProcessed) continue;
@@ -1043,11 +1045,31 @@
                     originalHtml: parent.innerHTML,
                     template: parent.innerHTML
                 });
-                console.log('HaruCMS: Found template in element:', parent.tagName, parent.className);
+                console.log('HaruCMS: Found template in element:', parent.tagName, parent.className, 'Content:', nodeValue.substring(0, 50));
             }
         }
         
         console.log('HaruCMS: Found', templates.length, 'templates to process');
+        
+        // If no templates found, try a different approach - check all elements
+        if (templates.length === 0) {
+            console.warn('HaruCMS: No templates found via text nodes, trying alternative detection...');
+            const allElements = document.body.querySelectorAll('*');
+            for (const el of allElements) {
+                if (el.dataset.cmsProcessed) continue;
+                const innerHTML = el.innerHTML || '';
+                if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
+                    el.dataset.cmsProcessed = 'true';
+                    templates.push({
+                        element: el,
+                        originalHtml: innerHTML,
+                        template: innerHTML
+                    });
+                    console.log('HaruCMS: Found template via alternative detection:', el.tagName, el.className);
+                }
+            }
+            console.log('HaruCMS: Found', templates.length, 'templates via alternative detection');
+        }
         
         // Method 2: Check attributes (for href, src, etc.)
         // Find all elements that might have template syntax in attributes
