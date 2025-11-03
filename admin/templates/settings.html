@@ -523,6 +523,161 @@
           </div>
         </div>
       </div>
+
+      <!-- Audit Log Tab -->
+      <div class="tab-pane" id="audit-log">
+        <div class="audit-log-page">
+          <div class="main-actions-bar">
+            <div class="filters">
+              <select id="event-filter" class="input">
+                <option value="">All Events</option>
+              </select>
+              <input type="date" id="date-filter" class="input" placeholder="Filter by date">
+              <button class="btn btn-secondary" id="refresh-logs">Refresh</button>
+            </div>
+          </div>
+          
+          <div class="table-container">
+            <table class="table" id="audit-log-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Event</th>
+                  <th>IP Address</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="log-entries">
+                <tr>
+                  <td colspan="5" class="text-center">
+                    <div class="spinner">Loading...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="pagination">
+            <button class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Feed Tab -->
+      <div class="tab-pane" id="activity">
+        <div class="activity-page">
+          <div class="main-actions-bar">
+            <div class="filters">
+              <select id="category-filter" class="input">
+                <option value="all">All Activity</option>
+                <option value="content">Content</option>
+                <option value="users">Users</option>
+                <option value="system">System</option>
+              </select>
+              <button class="btn btn-secondary" id="refresh-activity">Refresh</button>
+            </div>
+          </div>
+          
+          <div class="activity-feed" id="activity-feed">
+            <div class="text-center">
+              <div class="spinner">Loading activity...</div>
+            </div>
+          </div>
+          
+          <div class="pagination">
+            <button class="btn btn-secondary" id="load-more-activity" style="display: none;">Load More</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Updates Tab -->
+      <div class="tab-pane" id="updates">
+        <div class="updates-page">
+          <div class="updates-content">
+            <!-- Current Version Card -->
+            <div class="card">
+              <div class="card-header">
+                <h2>Current Version</h2>
+                <div class="version-badge current">
+                  <span id="current-version">Loading...</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <p>Your HaruCMS installation is running version <strong id="current-version-text">Loading...</strong></p>
+                <div class="version-info">
+                  <div class="info-item">
+                    <span class="label">Installation Date:</span>
+                    <span class="value" id="install-date">Unknown</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Last Update:</span>
+                    <span class="value" id="last-update">Never</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Update Status Card -->
+            <div class="card" id="update-status-card">
+              <div class="card-header">
+                <h2>Update Status</h2>
+                <div class="update-status" id="update-status">
+                  <div class="status-indicator loading">
+                    <div class="spinner"></div>
+                    <span>Checking for updates...</span>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body" id="update-details" style="display: none;">
+                <div id="update-info"></div>
+                <div class="update-actions" id="update-actions" style="display: none;">
+                  <button class="btn btn-primary" id="download-update-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7,10 12,15 17,10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download Update
+                  </button>
+                  <button class="btn btn-secondary" id="check-updates-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M23 4v6h-6"></path>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    Check Again
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password Tab -->
+      <div class="tab-pane" id="password">
+        <div class="settings-section">
+          <h2>Change Password</h2>
+          <form id="password-form" class="settings-form">
+            <div class="form-group">
+              <label for="current-password">Current Password *</label>
+              <input type="password" id="current-password" name="current_password" required class="input" autocomplete="current-password">
+            </div>
+            <div class="form-group">
+              <label for="new-password">New Password *</label>
+              <input type="password" id="new-password" name="new_password" required class="input" autocomplete="new-password" minlength="8">
+              <small class="text-muted">Password must be at least 8 characters long</small>
+            </div>
+            <div class="form-group">
+              <label for="confirm-password">Confirm New Password *</label>
+              <input type="password" id="confirm-password" name="confirm_password" required class="input" autocomplete="new-password" minlength="8">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Change Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -857,6 +1012,31 @@ document.addEventListener('DOMContentLoaded', function() {
             tabButton.classList.add('active');
             tabPane.classList.add('active');
         }
+    }
+
+    // Initialize tabs when clicked
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Initialize specific tab functionality
+            if (targetTab === 'audit-log' && typeof window.initAuditLog === 'function') {
+                setTimeout(() => window.initAuditLog(), 100);
+            } else if (targetTab === 'activity' && typeof window.initActivity === 'function') {
+                setTimeout(() => window.initActivity(), 100);
+            } else if (targetTab === 'updates' && typeof window.initUpdates === 'function') {
+                setTimeout(() => window.initUpdates(), 100);
+            }
+        });
+    });
+    
+    // Initialize if hash is set on load
+    if (hash === 'audit-log' && typeof window.initAuditLog === 'function') {
+        setTimeout(() => window.initAuditLog(), 200);
+    } else if (hash === 'activity' && typeof window.initActivity === 'function') {
+        setTimeout(() => window.initActivity(), 200);
+    } else if (hash === 'updates' && typeof window.initUpdates === 'function') {
+        setTimeout(() => window.initUpdates(), 200);
     }
 
     // Form submissions
