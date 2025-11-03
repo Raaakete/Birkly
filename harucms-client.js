@@ -603,13 +603,13 @@
         let lastIndex = 0;
         let result = '';
         const varRegex = /\{\s*([a-zA-Z0-9_]+)\s*(?:"([^"]+)")?\s*\}/g;
-        let match;
+        let varMatch;
         
-        while ((match = varRegex.exec(output)) !== null) {
-            const matchStart = match.index;
-            const matchEnd = match.index + match[0].length;
-            const varName = match[1].trim();
-            const arg = match[2];
+        while ((varMatch = varRegex.exec(output)) !== null) {
+            const matchStart = varMatch.index;
+            const matchEnd = varMatch.index + varMatch[0].length;
+            const varName = varMatch[1].trim();
+            const arg = varMatch[2];
             
             // Add everything before this match
             result += output.substring(lastIndex, matchStart);
