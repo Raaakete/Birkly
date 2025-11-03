@@ -1,29 +1,33 @@
-<div class="media-library">
+<div class="page-header pt-m pb-m">
+  <div class="breadcrumbs"><span class="current">Media</span></div>
+</div>
+
+
   <!-- Header -->
   <div class="media-header">
-    <div class="header-content">
-      <h1>Media Library</h1>
-      <div id="media-breadcrumb" class="breadcrumb">
-        <span onclick="navigateToFolder('')" class="breadcrumb-item">Media</span>
-      </div>
-    </div>
     <div class="header-actions">
       <button class="btn btn-secondary" onclick="createFolder()">New Folder</button>
       <button class="btn btn-primary" onclick="uploadMedia()">Upload Media</button>
+    </div>
+    <div class="media-toolbar">
+      <div class="toolbar-search">
+        <input type="text" id="media-search" placeholder="Search media..." class="search-input">
+      </div>
+      <div class="toolbar-filters">
+        <select id="type-filter" class="filter-select">
+          <option value="">All Types</option>
+          <option value="image">Images</option>
+          <option value="video">Videos</option>
+          <option value="audio">Audio</option>
+          <option value="document">Documents</option>
+        </select>
+      </div>
     </div>
   </div>
 
   <div class="media-layout">
     <!-- Sidebar -->
     <aside class="media-sidebar">
-      <div class="sidebar-header">
-        <h3>Folders</h3>
-        <button class="btn-icon" onclick="refreshFolders()" title="Refresh">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.48L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-          </svg>
-        </button>
-      </div>
       <div class="sidebar-content" id="folder-tree">
         <div class="folder-item all" onclick="navigateToFolder('all')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -43,23 +47,6 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="media-main">
-      <!-- Toolbar -->
-      <div class="media-toolbar">
-        <div class="toolbar-search">
-          <input type="text" id="media-search" placeholder="Search media..." class="search-input">
-        </div>
-        <div class="toolbar-filters">
-          <select id="type-filter" class="filter-select">
-            <option value="">All Types</option>
-            <option value="image">Images</option>
-            <option value="video">Videos</option>
-            <option value="audio">Audio</option>
-            <option value="document">Documents</option>
-          </select>
-        </div>
-      </div>
-
       <!-- Media Grid -->
       <div class="media-content" id="media-content">
         <div class="media-grid" id="media-grid">
@@ -134,7 +121,7 @@
       </div>
     </div>
   </div>
-</div>
+
 
 <script>
 // Media Library JavaScript
