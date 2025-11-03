@@ -612,7 +612,10 @@
         });
         
         // Support single-brace variables outside loops: { content }, { site_title }, etc.
-        output = output.replace(/\{\s*([a-zA-Z0-9_\.]+)(?:\s*"([^"]+)")?\s*\}/g, (m, varName, arg) => {
+        // Handle variables with spaces: { site_title } -> site_title
+        output = output.replace(/\{\s*([a-zA-Z0-9_\.]+)\s*(?:"([^"]+)")?\s*\}/g, (m, varName, arg) => {
+            // Trim whitespace from variable name
+            varName = varName.trim();
             const lowers = varName.toLowerCase();
             if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'].includes(lowers)) return m;
             let value = getNestedValue(data, varName) || '';
@@ -1050,7 +1053,8 @@
                 console.log('HaruCMS: Processing template:', template.template.substring(0, 100));
                 
                 // Extract collection names from template
-                const collectionMatches = template.template.match(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/g);
+                // Match: {for each entry in 'services'} or {for entry in 'services'}
+                const collectionMatches = template.template.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"]([^'"]+)['"]\}/g);
                 
                 if (collectionMatches) {
                     const collections = [];
