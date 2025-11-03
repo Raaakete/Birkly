@@ -242,7 +242,8 @@ function getContentData() {
                 $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json')) : 0;
                 
                 $collections[] = [
-                    'name' => $collectionData['name'] ?? $collectionName,
+                    'id' => $collectionData['id'] ?? $collectionData['title'] ?? null,
+                    'name' => $collectionData['name'] ?? $collectionData['title'] ?? $collectionName,
                     'slug' => $collectionName,
                     'description' => $collectionData['description'] ?? '',
                     'entries_count' => $entriesCount
@@ -251,8 +252,19 @@ function getContentData() {
         }
     }
     
+    // Load groups from groups.json
+    $groups = [];
+    $groupsFile = $collectionsPath . '/groups.json';
+    if (file_exists($groupsFile)) {
+        $groupsData = json_decode(file_get_contents($groupsFile), true);
+        if (is_array($groupsData)) {
+            $groups = $groupsData;
+        }
+    }
+    
     return [
-        'collections' => $collections
+        'collections' => $collections,
+        'groups' => $groups
     ];
 }
 

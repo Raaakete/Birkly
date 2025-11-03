@@ -5,42 +5,55 @@
     
     <div class="main-actions-bar">
         <a class="btn btn-primary" href="/admin/index.php?page=collection-editor">New Collection</a>
+        <button class="btn btn-secondary" id="new-group-btn">New Group</button>
     </div>
     
-    <div class="grid">
-        <?php if (!empty($collections)): ?>
-            <?php foreach ($collections as $collection): ?>
-                <div class="card">
-                    <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug']) ?>" aria-label="Open collection <?= htmlspecialchars($collection['name']) ?>">
-                        <div class="collection-header">
-                            <h3 class="title">
-                                <img src="/admin/assets/DotsSixVertical.svg" alt="DragandDrop">
-                                <?= htmlspecialchars($collection['name']) ?>
-                            </h3>
-                            <div class="collection-description">
-                                <p><?= htmlspecialchars($collection['description']) ?></p>
-                            </div>
-                        </div>
-                    </a>
-                    <div class="collection-footer">
-                        <div class="entry-count">
-                            <b><?= htmlspecialchars($collection['entries_count']) ?></b> entries
-                        </div>
-                        <div class="collection-actions">
-                            <a class="btn" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug']) ?>" aria-label="Edit collection <?= htmlspecialchars($collection['name']) ?>">
-                                <img src="/admin/assets/PencilSimple.svg" alt="Edit">
-                            </a>
-                            <button class="btn" disabled aria-label="Delete collection <?= htmlspecialchars($collection['name']) ?>">
-                                <img src="/admin/assets/Trash.svg" alt="Delete">
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <div class="empty-state">
-                <p>No collections found. <a href="/admin/index.php?page=collection-editor">Create your first collection</a>.</p>
-            </div>
-        <?php endif; ?>
+    <!-- Data for JavaScript -->
+    <script type="application/json" id="content-data"><?= json_encode([
+        'collections' => $collections ?? [],
+        'groups' => $groups ?? []
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+    
+    <div id="collections-container" class="collections-container">
+        <!-- Groups and collections will be rendered here by JavaScript -->
     </div>
 </div>
+
+<!-- Group Management Modal -->
+<div id="group-modal" class="modal" style="display: none;">
+    <div class="modal-backdrop" onclick="this.closest('.modal').style.display='none'"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="group-modal-title">New Group</h3>
+            <button class="modal-close" type="button">&times;</button>
+        </div>
+        <form id="group-form">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="group-name">Group Name</label>
+                    <input type="text" id="group-name" name="name" required class="input" placeholder="Enter group name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('group-modal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="group-submit">Create Group</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/admin/js/content-groups.js"></script>
+<script>
+// Initialize after DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.setupContentGroups) {
+            window.setupContentGroups();
+        }
+    });
+} else {
+    if (window.setupContentGroups) {
+        window.setupContentGroups();
+    }
+}
+</script>
