@@ -403,7 +403,12 @@ async function loadMedia() {
 function renderMediaGrid() {
   const grid = document.getElementById('media-grid');
   
-  if (currentMedia.length === 0) {
+  if (!grid) {
+    console.error('Media grid element not found');
+    return;
+  }
+  
+  if (!currentMedia || currentMedia.length === 0) {
     grid.innerHTML = '<div class="empty-state"><h3>No Media Found</h3><p>Upload some files or navigate to a different folder.</p></div>';
     return;
   }
@@ -411,47 +416,91 @@ function renderMediaGrid() {
   grid.innerHTML = '';
   
   currentMedia.forEach(item => {
+    if (!item || !item.id) {
+      console.warn('Invalid media item:', item);
+      return;
+    }
+
     const mediaCard = document.createElement('div');
     mediaCard.className = 'media-card';
-    mediaCard.innerHTML = `
-      <div class="thumb" onclick="viewMedia('${item.id}')">
-        ${getMediaThumbnail(item)}
-      </div>
-      <div class="meta">
-        <div class="name" title="${item.name}" onclick="viewMedia('${item.id}')">${item.name}</div>
-        <div class="info">${item.category} • ${item.size_formatted}</div>
-      </div>
-    `;
-    
+
+    const itemId = String(item.id || '');
+    const itemName = String(item.name || 'Untitled');
+    const itemCategory = String(item.category || 'file');
+    const itemSize = String(item.size_formatted || '0 B');
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    thumb.addEventListener('click', () => viewMedia(itemId));
+    thumb.innerHTML = getMediaThumbnailHTML(item);
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'name';
+    nameEl.title = itemName;
+    nameEl.textContent = itemName;
+    nameEl.addEventListener('click', () => viewMedia(itemId));
+
+    const infoEl = document.createElement('div');
+    infoEl.className = 'info';
+    infoEl.textContent = itemCategory + ' • ' + itemSize;
+
+    meta.appendChild(nameEl);
+    meta.appendChild(infoEl);
+
+    mediaCard.appendChild(thumb);
+    mediaCard.appendChild(meta);
     grid.appendChild(mediaCard);
   });
 }
 
 // Get media thumbnail
-function getMediaThumbnail(item) {
-  if (item.category === 'image') {
-    return `<img src="${item.url}" alt="${item.name}">`;
-  } else if (item.category === 'video') {
-    return `<div class="video-thumb">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polygon points="5,3 19,12 5,21"></polygon>
-      </svg>
-    </div>`;
-  } else if (item.category === 'audio') {
-    return `<div class="audio-thumb">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 18V5l12-2v13"></path>
-        <circle cx="6" cy="18" r="3"></circle>
-        <circle cx="18" cy="16" r="3"></circle>
-      </svg>
-    </div>`;
+function getMediaThumbnailHTML(item) {
+  if (!item) {
+    return '<div class="file-thumb">\
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>\
+        <polyline points="14,2 14,8 20,8"></polyline>\
+      </svg>\
+    </div>';
+  }
+
+  var category = String(item.category || 'file');
+  var url = String(item.url || '');
+  var name = String(item.name || 'Untitled');
+
+  if (category === 'image' && url) {
+    return '<img src="' + url + '" alt="' + name.replace(/"/g, '&quot;') + '" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\';">' +
+      '<div class="image-error" style="display:none;">\
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>\
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>\
+        <polyline points="21,15 16,10 5,21"></polyline>\
+      </svg>\
+    </div>';
+  } else if (category === 'video') {
+    return '<div class="video-thumb">\
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
+        <polygon points="5,3 19,12 5,21"></polygon>\
+      </svg>\
+    </div>';
+  } else if (category === 'audio') {
+    return '<div class="audio-thumb">\
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
+        <path d="M9 18V5l12-2v13"></path>\
+        <circle cx="6" cy="18" r="3"></circle>\
+        <circle cx="18" cy="16" r="3"></circle>\
+      </svg>\
+    </div>';
   } else {
-    return `<div class="file-thumb">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14,2 14,8 20,8"></polyline>
-      </svg>
-    </div>`;
+    return '<div class="file-thumb">\
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>\
+        <polyline points="14,2 14,8 20,8"></polyline>\
+      </svg>\
+    </div>';
   }
 }
 
@@ -475,17 +524,41 @@ function filterMedia() {
   }
   
   filtered.forEach(item => {
+    if (!item || !item.id) {
+      console.warn('Invalid media item in filter:', item);
+      return;
+    }
+
     const mediaCard = document.createElement('div');
     mediaCard.className = 'media-card';
-    mediaCard.innerHTML = `
-      <div class="thumb" onclick="viewMedia('${item.id}')">
-        ${getMediaThumbnail(item)}
-      </div>
-      <div class="meta">
-        <div class="name" title="${item.name}" onclick="viewMedia('${item.id}')">${item.name}</div>
-        <div class="info">${item.category} • ${item.size_formatted}</div>
-      </div>
-    `;
+
+    const itemId = String(item.id || '');
+    const itemName = String(item.name || 'Untitled');
+    const itemCategory = String(item.category || 'file');
+    const itemSize = String(item.size_formatted || '0 B');
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    thumb.addEventListener('click', () => viewMedia(itemId));
+    thumb.innerHTML = getMediaThumbnailHTML(item);
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'name';
+    nameEl.title = itemName;
+    nameEl.textContent = itemName;
+    nameEl.addEventListener('click', () => viewMedia(itemId));
+
+    const infoEl = document.createElement('div');
+    infoEl.className = 'info';
+    infoEl.textContent = itemCategory + ' • ' + itemSize;
+
+    meta.appendChild(nameEl);
+    meta.appendChild(infoEl);
+    mediaCard.appendChild(thumb);
+    mediaCard.appendChild(meta);
     grid.appendChild(mediaCard);
   });
 }
@@ -657,68 +730,49 @@ function viewMedia(id) {
   
   title.textContent = item.name;
   
-  body.innerHTML = `
-    <div class="media-preview">
-      ${getMediaPreview(item)}
-    </div>
-    <div class="media-details">
-      <h4>Details</h4>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <label>Name:</label>
-          <span>${item.name}</span>
-        </div>
-        <div class="detail-item">
-          <label>Type:</label>
-          <span>${item.type}</span>
-        </div>
-        <div class="detail-item">
-          <label>Size:</label>
-          <span>${item.size_formatted}</span>
-        </div>
-        <div class="detail-item">
-          <label>Uploaded:</label>
-          <span>${new Date(item.uploaded_at).toLocaleDateString()}</span>
-        </div>
-        <div class="detail-item">
-          <label>Folder:</label>
-          <span>${item.folder || 'Root'}</span>
-        </div>
-        <div class="detail-item">
-          <label>ID:</label>
-          <span style="font-family: monospace; font-size: 0.875rem;">${item.id}</span>
-        </div>
-        ${item.dimensions ? `
-        <div class="detail-item">
-          <label>Dimensions:</label>
-          <span>${item.dimensions.width} × ${item.dimensions.height}</span>
-        </div>
-        ` : ''}
-      </div>
-    </div>
-  `;
+  var detailsHtml = '';
+  detailsHtml += '<div class="media-preview">' + getMediaPreviewHTML(item) + '</div>';
+  detailsHtml += '<div class="media-details">';
+  detailsHtml += '<h4>Details</h4>';
+  detailsHtml += '<div class="detail-grid">';
+  detailsHtml += '<div class="detail-item"><label>Name:</label><span>' + (item.name || '') + '</span></div>';
+  detailsHtml += '<div class="detail-item"><label>Type:</label><span>' + (item.type || '') + '</span></div>';
+  detailsHtml += '<div class="detail-item"><label>Size:</label><span>' + (item.size_formatted || '') + '</span></div>';
+  var uploadedStr = '';
+  try { uploadedStr = new Date(item.uploaded_at).toLocaleDateString(); } catch(e) { uploadedStr = ''; }
+  detailsHtml += '<div class="detail-item"><label>Uploaded:</label><span>' + uploadedStr + '</span></div>';
+  detailsHtml += '<div class="detail-item"><label>Folder:</label><span>' + (item.folder || 'Root') + '</span></div>';
+  detailsHtml += '<div class="detail-item"><label>ID:</label><span style="font-family: monospace; font-size: 0.875rem;">' + (item.id || '') + '</span></div>';
+  if (item.dimensions && item.dimensions.width && item.dimensions.height) {
+    detailsHtml += '<div class="detail-item"><label>Dimensions:</label><span>' + item.dimensions.width + ' × ' + item.dimensions.height + '</span></div>';
+  }
+  detailsHtml += '</div></div>';
+  body.innerHTML = detailsHtml;
   
   modal.style.display = 'flex';
 }
 
-function getMediaPreview(item) {
-  if (item.category === 'image') {
-    return `<img src="${item.url}" alt="${item.name}" style="max-width: 100%; max-height: 300px;">`;
-  } else if (item.category === 'video') {
-    return `<video controls style="max-width: 100%; max-height: 300px;">
-      <source src="${item.url}" type="${item.type}">
-      Your browser does not support the video tag.
-    </video>`;
-  } else if (item.category === 'audio') {
-    return `<audio controls style="width: 100%;">
-      <source src="${item.url}" type="${item.type}">
-      Your browser does not support the audio tag.
-    </audio>`;
+function getMediaPreviewHTML(item) {
+  var url = item.url || '';
+  var type = item.type || '';
+  var category = item.category || '';
+  if (category === 'image') {
+    return '<img src="' + url + '" alt="" style="max-width: 100%; max-height: 300px;">';
+  } else if (category === 'video') {
+    return '<video controls style="max-width: 100%; max-height: 300px;">' +
+      '<source src="' + url + '" type="' + type + '">' +
+      'Your browser does not support the video tag.' +
+    '</video>';
+  } else if (category === 'audio') {
+    return '<audio controls style="width: 100%;">' +
+      '<source src="' + url + '" type="' + type + '">' +
+      'Your browser does not support the audio tag.' +
+    '</audio>';
   } else {
-    return `<div class="file-preview">
-      <p>Preview not available for ${item.category} files.</p>
-      <a href="${item.url}" target="_blank" class="btn btn-primary">Download File</a>
-    </div>`;
+    return '<div class="file-preview">' +
+      '<p>Preview not available for ' + category + ' files.</p>' +
+      '<a href="' + url + '" target="_blank" class="btn btn-primary">Download File</a>' +
+    '</div>';
   }
 }
 
