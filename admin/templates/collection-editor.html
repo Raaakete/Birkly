@@ -1,10 +1,19 @@
 <div class="collection-editor-page">
-    <div class="page-header">
-        <div class="breadcrumbs pt-m pb-m">
+    <div class="page-header pt-m pb-m">
+        <div class="breadcrumbs">
             <a href="/admin/index.php?page=content">Content</a>
             <span class="separator">›</span>
             <span class="current"><?= htmlspecialchars($collection['title'] ? 'Edit Collection' : 'New Collection') ?></span>
         </div>
+    </div>
+    
+    <div class="main-actions-bar">
+        <button type="submit" form="collection-form" class="btn btn-primary">
+            <?= $collection['title'] ? 'Save Collection' : 'Create Collection' ?>
+        </button>
+        <a href="/admin/index.php?page=content" class="btn btn-secondary">
+            Cancel
+        </a>
     </div>
     
     <form id="collection-form" class="collection-form" method="POST" action="/api/admin_collections.php">
@@ -17,123 +26,292 @@
         <div class="editor-layout">
             <div class="editor-main">
                 <div class="editor-content">
+                    <!-- Collection Title (Required, First Field) -->
                     <div class="field-block">
                         <div class="field-header">
-                            <div class="field-title">Collection Name</div>
-                            <div class="field-subtitle">Required</div>
+                            <div class="field-title">Collection Title <span class="required">*</span></div>
                         </div>
                         <div class="field-control">
                             <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
                         </div>
                     </div>
                     
-                    <div class="field-block">
-                        <div class="field-header">
-                            <div class="field-title">Slug</div>
-                            <div class="field-subtitle">URL-friendly identifier</div>
+                    <!-- Custom Fieldtypes -->
+                    <div class="fields-section">
+                        <h2 class="section-title">Collection Fields</h2>
+                        <p class="section-description">Define the fields that entries in this collection will have.</p>
+                        
+                        <div id="fields-container">
+                            <?php if (!empty($fields)): ?>
+                                <?php foreach ($fields as $index => $field): ?>
+                                    <div class="fieldtype-section" data-index="<?= $index ?>">
+                                        <div class="fieldtype-header">
+                                            <div class="fieldtype-title">
+                                                <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($field['type'] ?? 'Select Type')) ?></span>
+                                                <span class="fieldtype-name"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?></span>
+                                            </div>
+                                            <button type="button" class="btn-icon remove-field-btn" title="Remove field">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="3,6 5,6 21,6"></polyline>
+                                                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="fieldtype-body">
+                                            <div class="fieldtype-row">
+                                                <div class="fieldtype-field">
+                                                    <label>Display Name <span class="required">*</span></label>
+                                                    <input type="text" name="fields[<?= $index ?>][label]" value="<?= htmlspecialchars($field['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                </div>
+                                                <div class="fieldtype-field">
+                                                    <label>API Name</label>
+                                                    <input type="text" name="fields[<?= $index ?>][name]" value="<?= htmlspecialchars($field['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                </div>
+                                            </div>
+                                            <div class="fieldtype-row">
+                                                <div class="fieldtype-field">
+                                                    <label>Field Type</label>
+                                                    <select name="fields[<?= $index ?>][type]" class="input field-type-select" required>
+                                                        <option value="">Select type...</option>
+                                                        <?php foreach ($fieldtypes as $fieldtype): ?>
+                                                            <option value="<?= htmlspecialchars($fieldtype['name']) ?>" <?= ($field['type'] ?? '') === $fieldtype['name'] ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($fieldtype['label']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="fieldtype-field">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
+                                                        <span>Mandatory Field</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="fieldtype-config" data-field-index="<?= $index ?>"<?php if (($field['type'] ?? '') !== 'select' || empty($field['options'])): ?> style="display: none;"<?php endif; ?>>
+                                                <?php if (($field['type'] ?? '') === 'select' && !empty($field['options'])): ?>
+                                                    <div class="field-config-section">
+                                                        <label>Options (one per line, format: label|value)</label>
+                                                        <textarea name="fields[<?= $index ?>][options_text]" class="input" rows="4"><?php
+                                                            if (!empty($field['options']) && is_array($field['options'])) {
+                                                                foreach ($field['options'] as $opt) {
+                                                                    echo htmlspecialchars(($opt['label'] ?? '') . '|' . ($opt['value'] ?? '')) . "\n";
+                                                                }
+                                                            }
+                                                        ?></textarea>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
-                        <div class="field-control">
-                            <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated">
-                        </div>
-                    </div>
-                    
-                    <div class="field-block">
-                        <div class="field-header">
-                            <div class="field-title">Description</div>
-                            <div class="field-subtitle">Optional</div>
-                        </div>
-                        <div class="field-control">
-                            <textarea name="description" id="description" class="input" rows="3" placeholder="Describe what this collection is for"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
-                        </div>
-                    </div>
-                    
-                    <div class="field-block">
-                        <div class="field-header">
-                            <div class="field-title">Default Sort Order</div>
-                            <div class="field-subtitle">How entries are ordered by default</div>
-                        </div>
-                        <div class="field-control">
-                            <select name="sort" id="sort" class="input">
-                                <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
-                                <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
-                                <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>>Title A-Z</option>
-                                <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>>Title Z-A</option>
-                                <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
-                            </select>
-                        </div>
+                        
+                        <button type="button" id="add-field-btn" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Field
+                        </button>
                     </div>
                 </div>
             </div>
             
+            <!-- Right Sidebar -->
             <div class="editor-sidebar">
-                <div class="card">
-                    <h3>Collection Fields</h3>
-                    <p>Define the fields that entries in this collection will have.</p>
+                <div class="sidebar-tabs">
+                    <div class="tab-nav">
+                        <button type="button" class="tab-btn active" data-tab="settings">Settings</button>
+                        <button type="button" class="tab-btn" data-tab="automation">Automation</button>
+                        <button type="button" class="tab-btn" data-tab="templating">Templating</button>
+                    </div>
                     
-                    <div id="fields-container">
-                        <?php if (!empty($fields)): ?>
-                            <?php foreach ($fields as $index => $field): ?>
-                                <div class="field-definition" data-index="<?= $index ?>">
-                                    <div class="field-definition-header">
-                                        <input type="text" name="fields[<?= $index ?>][name]" value="<?= htmlspecialchars($field['name'] ?? '') ?>" placeholder="Field name" class="field-name-input">
-                                        <select name="fields[<?= $index ?>][type]" class="field-type-select">
-                                            <?php foreach ($fieldtypes as $fieldtype): ?>
-                                                <option value="<?= htmlspecialchars($fieldtype['name']) ?>" <?= ($field['type'] ?? '') === $fieldtype['name'] ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($fieldtype['label']) ?>
-                                                </option>
+                    <div class="tab-content">
+                        <!-- Settings Tab -->
+                        <div class="tab-pane active" id="settings-tab">
+                            <div class="card">
+                                <div class="info-item">
+                                    <label>ID</label>
+                                    <div class="info-value"><?= htmlspecialchars($collection['id'] ?? '—') ?></div>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <label>Slug</label>
+                                    <div class="info-value">
+                                        <span id="slug-display"><?= htmlspecialchars($collection['slug'] ?? 'auto-generated') ?></span>
+                                        <a href="#" id="change-slug-link" class="link">Change Slug</a>
+                                    </div>
+                                    <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated" style="display: none; margin-top: 0.5rem;">
+                                </div>
+                                
+                                <div class="info-item">
+                                    <label>Description</label>
+                                    <textarea name="description" id="description" class="input" rows="3" placeholder="Describe what this collection is for"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
+                                </div>
+                                
+                                <div class="info-item">
+                                    <label>Default Sort Order</label>
+                                    <select name="sort" id="sort" class="input">
+                                        <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
+                                        <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
+                                        <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>>Title A-Z</option>
+                                        <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>>Title Z-A</option>
+                                        <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
+                                    </select>
+                                </div>
+                                
+                                <?php if ($collection['title']): ?>
+                                    <?php
+                                    $collectionFile = __DIR__ . "/../content/collections/" . ($collection['slug'] ?? '') . "/collection.json";
+                                    $createdAt = null;
+                                    $updatedAt = null;
+                                    if (file_exists($collectionFile)) {
+                                        $collectionData = json_decode(file_get_contents($collectionFile), true);
+                                        $createdAt = $collectionData['created_at'] ?? null;
+                                        $updatedAt = $collectionData['updated_at'] ?? null;
+                                    }
+                                    ?>
+                                    <div class="info-item">
+                                        <label>Created</label>
+                                        <div class="info-value"><?= $createdAt ? date('m.d.Y, g:i A', strtotime($createdAt)) : '—' ?></div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Last Update</label>
+                                        <div class="info-value"><?= $updatedAt ? date('m.d.Y, g:i A', strtotime($updatedAt)) : '—' ?></div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Automation Tab -->
+                        <div class="tab-pane" id="automation-tab">
+                            <div class="card">
+                                <p class="text-muted">Automation settings coming soon.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Templating Tab -->
+                        <div class="tab-pane" id="templating-tab">
+                            <div class="templating-content">
+                                <p class="templating-intro">
+                                    For a detailed overview about templating, please visit 
+                                    <a href="/admin/index.php?page=help#templating" target="_blank">the documentation site</a>.
+                                </p>
+                                
+                                <!-- Field Slugs Section -->
+                                <div class="templating-section">
+                                    <div class="section-header">
+                                        <h4>Field slugs</h4>
+                                    </div>
+                                    <div class="field-slugs-list">
+                                        <?php if (!empty($fields)): ?>
+                                            <?php foreach ($fields as $field): ?>
+                                                <?php
+                                                $fieldName = $field['name'] ?? '';
+                                                $fieldLabel = $field['label'] ?? $fieldName;
+                                                $slug = '{' . htmlspecialchars($fieldName) . '}';
+                                                ?>
+                                                <div class="field-slug-item">
+                                                    <div class="field-slug-label"><?= htmlspecialchars($fieldLabel) ?>:</div>
+                                                    <div class="field-slug-value">
+                                                        <code><?= htmlspecialchars($slug) ?></code>
+                                                        <button type="button" class="copy-btn" data-copy="<?= htmlspecialchars($slug) ?>" title="Copy to clipboard">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             <?php endforeach; ?>
-                                        </select>
-                                        <button type="button" class="btn-icon remove-field-btn" title="Remove field">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="3,6 5,6 21,6"></polyline>
-                                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                        <?php else: ?>
+                                            <p class="text-muted">No fields defined yet. Add fields to see their slugs.</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
+                                <!-- Entry Level Example -->
+                                <div class="templating-section">
+                                    <div class="section-header">
+                                        <h4>Entry Level Example</h4>
+                                        <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                             </svg>
                                         </button>
                                     </div>
-                                    <div class="field-definition-body">
-                                        <input type="text" name="fields[<?= $index ?>][label]" value="<?= htmlspecialchars($field['label'] ?? '') ?>" placeholder="Field label" class="field-label-input">
-                                        <label class="checkbox-label">
-                                            <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
-                                            <span>Required</span>
-                                        </label>
-                                        <div class="fieldtype-config" data-field-index="<?= $index ?>" style="<?= ($field['type'] ?? '') === 'select' && !empty($field['options']) ? '' : 'display: none;' ?>">
-                                            <?php if (($field['type'] ?? '') === 'select' && !empty($field['options'])): ?>
-                                                <div class="field-config-section">
-                                                    <label>Options (one per line, format: label|value)</label>
-                                                    <textarea name="fields[<?= $index ?>][options_text]" class="input" rows="4"><?php
-                                                        if (!empty($field['options']) && is_array($field['options'])) {
-                                                            foreach ($field['options'] as $opt) {
-                                                                echo htmlspecialchars(($opt['label'] ?? '') . '|' . ($opt['value'] ?? '')) . "\n";
-                                                            }
-                                                        }
-                                                    ?></textarea>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
+                                    <pre class="code-example" id="entry-example-code"><code><?php
+$collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
+$exampleSlug = 'example-entry-slug';
+$entryExample = "{from '" . $collectionSlug . "' get entry '" . $exampleSlug . "'}\n";
+$entryExample .= "  <h1>{ title }</h1>\n";
+if (!empty($fields)) {
+    foreach ($fields as $field) {
+        $fieldName = $field['name'] ?? '';
+        $fieldLabel = $field['label'] ?? $fieldName;
+        if ($field['type'] === 'media') {
+            $entryExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+        } elseif ($field['type'] === 'boolean') {
+            $entryExample .= "  {if " . $fieldName . " is on}\n";
+            $entryExample .= "    <span>It is featured</span>\n";
+            $entryExample .= "  {endif}\n";
+        } elseif ($field['type'] === 'editor') {
+            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } elseif ($field['type'] === 'select') {
+            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } else {
+            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        }
+    }
+}
+$entryExample .= "{endget}";
+echo htmlspecialchars($entryExample);
+?></code></pre>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <button type="button" id="add-field-btn" class="btn btn-secondary">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Add Field
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <h3>Actions</h3>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <?= $collection['title'] ? 'Update Collection' : 'Create Collection' ?>
-                        </button>
-                        <a href="/admin/index.php?page=content" class="btn btn-secondary">
-                            Cancel
-                        </a>
+                                
+                                <!-- Collection Level Example -->
+                                <div class="templating-section">
+                                    <div class="section-header">
+                                        <h4>Collection Level Example</h4>
+                                        <button type="button" class="copy-btn" id="copy-collection-example" title="Copy to clipboard">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <pre class="code-example" id="collection-example-code"><code><?php
+$collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
+$collectionExample = "{for each entry in '" . $collectionSlug . "'}\n";
+$collectionExample .= "  <h1>{ title }</h1>\n";
+if (!empty($fields)) {
+    foreach ($fields as $field) {
+        $fieldName = $field['name'] ?? '';
+        $fieldLabel = $field['label'] ?? $fieldName;
+        if ($field['type'] === 'media') {
+            $collectionExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+        } elseif ($field['type'] === 'boolean') {
+            $collectionExample .= "  {if " . $fieldName . " is on}\n";
+            $collectionExample .= "    <span>It is featured</span>\n";
+            $collectionExample .= "  {endif}\n";
+        } elseif ($field['type'] === 'editor') {
+            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } elseif ($field['type'] === 'select') {
+            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } else {
+            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        }
+    }
+}
+$collectionExample .= "{endfor}";
+echo htmlspecialchars($collectionExample);
+?></code></pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -141,114 +319,420 @@
     </form>
 </div>
 
+<!-- Fieldtype Editor Partial Template (inline for now) -->
+<script type="text/template" id="fieldtype-template">
+    <div class="fieldtype-section" data-index="__INDEX__">
+        <div class="fieldtype-header">
+            <div class="fieldtype-title">
+                <span class="fieldtype-type">__TYPE__</span>
+                <span class="fieldtype-name">__NAME__</span>
+            </div>
+            <button type="button" class="btn-icon remove-field-btn" title="Remove field">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3,6 5,6 21,6"></polyline>
+                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="fieldtype-body">
+            <div class="fieldtype-row">
+                <div class="fieldtype-field">
+                    <label>Display Name <span class="required">*</span></label>
+                    <input type="text" name="fields[__INDEX__][label]" value="__LABEL__" placeholder="Field label" class="input" required>
+                </div>
+                <div class="fieldtype-field">
+                    <label>API Name</label>
+                    <input type="text" name="fields[__INDEX__][name]" value="__NAME__" placeholder="Field name" class="input">
+                </div>
+            </div>
+            <div class="fieldtype-row">
+                <div class="fieldtype-field">
+                    <label>Field Type</label>
+                    <select name="fields[__INDEX__][type]" class="input field-type-select" required>
+                        <option value="">Select type...</option>
+                        __FIELDTYPE_OPTIONS__
+                    </select>
+                </div>
+                <div class="fieldtype-field">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="fields[__INDEX__][required]" value="1" __REQUIRED_CHECKED__>
+                        <span>Mandatory Field</span>
+                    </label>
+                </div>
+            </div>
+            <div class="fieldtype-config" data-field-index="__INDEX__" style="display: none;">
+                <!-- Fieldtype-specific configuration will be loaded here -->
+            </div>
+        </div>
+    </div>
+</script>
+
 <style>
-.field-definition {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    margin-bottom: 1rem;
+.collection-editor-page {
+    padding: var(--space-6);
 }
 
-.field-definition-header {
+.editor-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+}
+
+.editor-main {
+    min-width: 0;
+}
+
+.editor-content {
     display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    margin-bottom: 0.5rem;
+    flex-direction: column;
+    gap: var(--space-6);
 }
 
-.field-name-input {
-    flex: 1;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
+.fields-section {
+    margin-top: var(--space-4);
 }
 
-.field-type-select {
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-    min-width: 120px;
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 var(--space-2) 0;
+    color: var(--text-primary);
 }
 
-.field-definition-body {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.field-label-input {
-    flex: 1;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
+.section-description {
     color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0 0 var(--space-4) 0;
 }
 
-.remove-field-btn {
-    background: var(--error-100);
-    color: var(--error-700);
-    border: 1px solid var(--error-200);
+/* Fieldtype Section */
+.fieldtype-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    overflow: hidden;
 }
 
-.remove-field-btn:hover {
-    background: var(--error-200);
-    color: var(--error-800);
+.fieldtype-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
 }
 
-.field-definition-body {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
+.fieldtype-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
 }
 
-.field-definition-body > .field-label-input,
-.field-definition-body > .checkbox-label {
-    margin: 0;
+.fieldtype-type {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
 }
 
-.fieldtype-config {
-    margin-top: 0.5rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border-color);
+.fieldtype-name {
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
-.field-config-section {
+.fieldtype-body {
+    padding: var(--space-4);
+}
+
+.fieldtype-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.fieldtype-row:last-child {
+    margin-bottom: 0;
+}
+
+.fieldtype-field {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
-.field-config-section label {
+.fieldtype-field label {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-primary);
 }
 
-.field-config-section textarea {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-    font-family: monospace;
-    resize: vertical;
+.fieldtype-field .required {
+    color: var(--error-500);
 }
 
-.field-config-section small {
-    font-size: 0.75rem;
+.fieldtype-config {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-light);
+}
+
+/* Sidebar */
+.editor-sidebar {
+    position: sticky;
+    top: var(--space-6);
+    height: fit-content;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+.sidebar-tabs {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
     color: var(--text-secondary);
-    font-style: italic;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tab-btn.active {
+    color: var(--primary-600);
+    border-bottom-color: var(--primary-600);
+    background: var(--bg-primary);
+}
+
+.tab-content {
+    padding: var(--space-4);
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.info-item {
+    margin-bottom: var(--space-4);
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+}
+
+.info-item label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2);
+}
+
+.info-value {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.info-value .link {
+    color: var(--primary-600);
+    text-decoration: none;
+    font-size: 0.75rem;
+}
+
+.info-value .link:hover {
+    text-decoration: underline;
+}
+
+.remove-field-btn {
+    background: transparent;
+    border: 1px solid var(--error-200);
+    color: var(--error-600);
+}
+
+.remove-field-btn:hover {
+    background: var(--error-50);
+    border-color: var(--error-300);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+/* Templating Tab Styles */
+.templating-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.templating-intro {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-4) 0;
+}
+
+.templating-intro a {
+    color: var(--primary-600);
+    text-decoration: underline;
+}
+
+.templating-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.section-header h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.field-slugs-list {
+    padding: var(--space-3) var(--space-4);
+}
+
+.field-slug-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.field-slug-item:last-child {
+    border-bottom: none;
+}
+
+.field-slug-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.field-slug-value {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.field-slug-value code {
+    background: var(--bg-primary);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.813rem;
+    color: var(--primary-700);
+    border: 1px solid var(--border-light);
+}
+
+.copy-btn {
+    background: transparent;
+    border: none;
+    padding: var(--space-1);
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.code-example {
+    margin: 0;
+    padding: var(--space-4);
+    background: var(--bg-primary);
+    border: none;
+    border-radius: 0;
+    overflow-x: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.813rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.code-example code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    white-space: pre;
+}
+
+@media (max-width: 1024px) {
+    .editor-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .editor-sidebar {
+        position: static;
+        max-height: none;
+    }
 }
 </style>
 
@@ -257,6 +741,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-generate slug from name
     const nameField = document.getElementById('name');
     const slugField = document.getElementById('slug');
+    const slugDisplay = document.getElementById('slug-display');
+    const changeSlugLink = document.getElementById('change-slug-link');
     
     if (nameField && slugField) {
         nameField.addEventListener('input', function() {
@@ -268,21 +754,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     .replace(/-+/g, '-')
                     .trim('-');
                 slugField.value = slug;
+                if (slugDisplay) slugDisplay.textContent = slug || 'auto-generated';
                 slugField.dataset.autoGenerated = 'true';
             }
         });
         
         slugField.addEventListener('input', function() {
             slugField.dataset.autoGenerated = 'false';
+            if (slugDisplay) slugDisplay.textContent = this.value || 'auto-generated';
         });
     }
+    
+    // Change slug link
+    if (changeSlugLink && slugField) {
+        changeSlugLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (slugField.style.display === 'none') {
+                slugField.style.display = 'block';
+                slugDisplay.style.display = 'none';
+                changeSlugLink.textContent = 'Cancel';
+                slugField.focus();
+            } else {
+                slugField.style.display = 'none';
+                slugDisplay.style.display = 'inline';
+                changeSlugLink.textContent = 'Change Slug';
+            }
+        });
+    }
+    
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update panes
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            const targetPane = document.getElementById(tabName + '-tab');
+            if (targetPane) targetPane.classList.add('active');
+        });
+    });
     
     // Add field functionality
     const addFieldBtn = document.getElementById('add-field-btn');
     const fieldsContainer = document.getElementById('fields-container');
     
     function getNextFieldIndex() {
-        const existingFields = fieldsContainer.querySelectorAll('.field-definition');
+        const existingFields = fieldsContainer.querySelectorAll('.fieldtype-section');
         let maxIndex = -1;
         existingFields.forEach(function(field) {
             const indexAttr = field.getAttribute('data-index');
@@ -296,58 +817,57 @@ document.addEventListener('DOMContentLoaded', function() {
         return maxIndex + 1;
     }
     
-    addFieldBtn.addEventListener('click', function() {
-        const fieldIndex = getNextFieldIndex();
-        const fieldDefinition = document.createElement('div');
-        fieldDefinition.className = 'field-definition';
-        fieldDefinition.setAttribute('data-index', fieldIndex);
-        
-        // Get available fieldtypes from PHP
-        const availableFieldtypes = <?= json_encode($fieldtypes ?? []) ?>;
+    const availableFieldtypes = <?php echo json_encode($fieldtypes ?? []); ?>;
+    
+    function renderFieldtype(fieldIndex, fieldData = {}) {
+        const template = document.getElementById('fieldtype-template').textContent;
         
         let fieldtypeOptions = '';
         availableFieldtypes.forEach(function(ft) {
-            fieldtypeOptions += `<option value="${ft.name}">${ft.label}</option>`;
+            const selected = fieldData.type === ft.name ? 'selected' : '';
+            fieldtypeOptions += `<option value="${ft.name}" ${selected}>${ft.label}</option>`;
         });
         
-        fieldDefinition.innerHTML = `
-            <div class="field-definition-header">
-                <input type="text" name="fields[${fieldIndex}][name]" placeholder="Field name" class="field-name-input" required>
-                <select name="fields[${fieldIndex}][type]" class="field-type-select" required>
-                    <option value="">Select type...</option>
-                    ${fieldtypeOptions}
-                </select>
-                <button type="button" class="btn-icon remove-field-btn" title="Remove field">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3,6 5,6 21,6"></polyline>
-                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="field-definition-body">
-                <input type="text" name="fields[${fieldIndex}][label]" placeholder="Field label" class="field-label-input">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="fields[${fieldIndex}][required]" value="1">
-                    <span>Required</span>
-                </label>
-                <div class="fieldtype-config" data-field-index="${fieldIndex}" style="display: none;">
-                    <!-- Fieldtype-specific configuration will be loaded here -->
-                </div>
-            </div>
-        `;
+        const html = template
+            .replace(/__INDEX__/g, fieldIndex)
+            .replace(/__NAME__/g, fieldData.name || '')
+            .replace(/__LABEL__/g, fieldData.label || '')
+            .replace(/__TYPE__/g, fieldData.type ? availableFieldtypes.find(ft => ft.name === fieldData.type)?.label || fieldData.type : 'Select Type')
+            .replace(/__REQUIRED_CHECKED__/g, fieldData.required ? 'checked' : '')
+            .replace(/__FIELDTYPE_OPTIONS__/g, fieldtypeOptions);
         
-        fieldsContainer.appendChild(fieldDefinition);
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const fieldElement = div.firstElementChild;
         
-        // Add listener for fieldtype change to load configuration UI
-        const typeSelect = fieldDefinition.querySelector('.field-type-select');
+        // Set up fieldtype change handler
+        const typeSelect = fieldElement.querySelector('.field-type-select');
         typeSelect.addEventListener('change', function() {
-            loadFieldtypeConfig(fieldIndex, this.value);
+            const selectedType = availableFieldtypes.find(ft => ft.name === this.value);
+            if (selectedType) {
+                fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+            }
+            loadFieldtypeConfig(fieldIndex, this.value, fieldElement);
         });
-    });
+        
+        return fieldElement;
+    }
+    
+    if (addFieldBtn && fieldsContainer) {
+        addFieldBtn.addEventListener('click', function() {
+            const fieldIndex = getNextFieldIndex();
+            const fieldElement = renderFieldtype(fieldIndex);
+            fieldsContainer.appendChild(fieldElement);
+            
+            // Focus on display name input
+            const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
+            if (displayNameInput) displayNameInput.focus();
+        });
+    }
     
     // Load fieldtype-specific configuration UI
-    function loadFieldtypeConfig(fieldIndex, fieldtype) {
-        const configContainer = document.querySelector(`[data-field-index="${fieldIndex}"]`);
+    function loadFieldtypeConfig(fieldIndex, fieldtype, fieldElement) {
+        const configContainer = fieldElement.querySelector('.fieldtype-config');
         if (!configContainer || !fieldtype) {
             return;
         }
@@ -360,7 +880,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="field-config-section">
                     <label>Options (one per line, format: label|value)</label>
                     <textarea name="fields[${fieldIndex}][options_text]" class="input" rows="4" placeholder="Option 1|value1&#10;Option 2|value2"></textarea>
-                    <small>Or leave empty to configure later</small>
+                    <small class="form-text">Or leave empty to configure later</small>
                 </div>
             `;
         } else {
@@ -371,25 +891,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Attach fieldtype change listeners to existing fields
     document.querySelectorAll('.field-type-select').forEach(function(select) {
-        const fieldDefinition = select.closest('.field-definition');
-        if (fieldDefinition) {
-            const fieldIndex = fieldDefinition.getAttribute('data-index');
+        const fieldElement = select.closest('.fieldtype-section');
+        if (fieldElement) {
+            const fieldIndex = fieldElement.getAttribute('data-index');
             select.addEventListener('change', function() {
-                loadFieldtypeConfig(fieldIndex, this.value);
+                const selectedType = availableFieldtypes.find(ft => ft.name === this.value);
+                if (selectedType) {
+                    fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+                }
+                loadFieldtypeConfig(fieldIndex, this.value, fieldElement);
             });
             // Load config if fieldtype is already selected
             if (select.value) {
-                loadFieldtypeConfig(fieldIndex, select.value);
+                loadFieldtypeConfig(fieldIndex, select.value, fieldElement);
             }
         }
     });
     
     // Remove field functionality
-    fieldsContainer.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-field-btn')) {
-            e.target.closest('.field-definition').remove();
-        }
-    });
+    if (fieldsContainer) {
+        fieldsContainer.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-field-btn')) {
+                e.target.closest('.fieldtype-section').remove();
+            }
+        });
+    }
     
     // Form submission
     const form = document.getElementById('collection-form');
@@ -416,6 +942,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 alert('Error saving collection: ' + error.message);
             });
+        });
+    }
+    
+    // Copy to clipboard functionality
+    function copyToClipboard(text, button) {
+        navigator.clipboard.writeText(text).then(function() {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>';
+            button.style.color = 'var(--success-600)';
+            setTimeout(function() {
+                button.innerHTML = originalHTML;
+                button.style.color = '';
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy to clipboard');
+        });
+    }
+    
+    // Copy field slugs
+    document.querySelectorAll('.field-slug-item .copy-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const text = this.getAttribute('data-copy');
+            copyToClipboard(text, this);
+        });
+    });
+    
+    // Copy entry example
+    const copyEntryBtn = document.getElementById('copy-entry-example');
+    if (copyEntryBtn) {
+        copyEntryBtn.addEventListener('click', function() {
+            const codeElement = document.getElementById('entry-example-code');
+            const text = codeElement.textContent || codeElement.innerText;
+            copyToClipboard(text, this);
+        });
+    }
+    
+    // Copy collection example
+    const copyCollectionBtn = document.getElementById('copy-collection-example');
+    if (copyCollectionBtn) {
+        copyCollectionBtn.addEventListener('click', function() {
+            const codeElement = document.getElementById('collection-example-code');
+            const text = codeElement.textContent || codeElement.innerText;
+            copyToClipboard(text, this);
         });
     }
 });

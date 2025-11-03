@@ -629,7 +629,21 @@ body {
 
 
 /* Buttons */
-.btn {
+/* Reset button defaults to match anchor tags */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+button.btn, a.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -641,37 +655,41 @@ body {
   color: var(--text-primary);
   text-decoration: none;
   font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-family: inherit;
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
-  font-size: 1rem;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
-.btn:hover {
+button.btn:hover, a.btn:hover {
   scale: 1.02;
   background: var(--color-neutral-200);
 }
 
-.btn:active {
+button.btn:active, a.btn:active {
   transform: translateY(1px);
 }
 
 /* Use branding colors for key UI elements */
-.btn-primary {
+button.btn-primary, a.btn-primary {
   background: var(--color-primary);
   color: var(--color-neutral-900);
   border-color: var(--color-primary);
 }
-.btn-primary:hover {
+button.btn-primary:hover, a.btn-primary:hover {
   background: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
 }
-.btn-secondary {
+button.btn-secondary, a.btn-secondary {
   background: var(--color-neutral-300);
   color: var(--color-neutral-900);
   border-color: var(--color-neutral-300);
 }
-.btn-secondary:hover {
+button.btn-secondary:hover, a.btn-secondary:hover {
   background: var(--color-neutral-400);
   border-color: var(--color-neutral-400);
 }
@@ -1108,8 +1126,19 @@ textarea {
   padding: var(--space-4);
 }
 
-.modal.show {
+.modal.show,
+.modal[style*="display: flex"] {
   display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 1001;
 }
 
 .modal-content {
@@ -3214,6 +3243,141 @@ a.card {
 /* Content Page Styles */
 /* Padding handled by main-content */
 /* Duplicate .page-header, .breadcrumbs, .main-actions-bar removed - use definitions above */
+
+/* Collection Groups */
+.collections-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.collection-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.collection-group.ungrouped {
+  margin-top: var(--space-4);
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.group-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.group-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.group-actions .btn-icon {
+  padding: var(--space-2);
+  color: var(--text-secondary);
+}
+
+.group-actions .btn-icon:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.group-collections,
+.ungrouped-collections {
+  min-height: 100px;
+  padding: var(--space-4) 0;
+  transition: background-color 0.2s;
+}
+
+/* Drag and Drop Styles */
+.draggable {
+  cursor: move;
+  transition: transform 0.2s, box-shadow 0.2s;
+  user-select: none;
+  position: relative;
+}
+
+.draggable.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.draggable > a {
+  pointer-events: auto;
+}
+
+.draggable.dragging > a {
+  pointer-events: none;
+}
+
+.draggable > a:hover {
+  text-decoration: none;
+}
+
+.drag-handle {
+  cursor: grab;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  pointer-events: auto;
+}
+
+.draggable:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.draggable .collection-actions {
+  pointer-events: auto;
+}
+
+/* Drop Zones */
+.drop-zone {
+  border-radius: var(--border-radius-s);
+  transition: all 0.2s;
+  position: relative;
+}
+
+.drop-zone.empty-drop-zone {
+  border: 2px dashed var(--border-medium);
+  background: var(--bg-secondary);
+}
+
+.drop-zone.drag-over {
+  background: var(--primary-50);
+  border: 2px dashed var(--primary-500);
+  box-shadow: inset 0 0 0 3px var(--primary-100);
+}
+
+.drop-zone.drag-over .empty-drop-message {
+  display: block;
+}
+
+.empty-drop-message {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  pointer-events: none;
+  z-index: 1;
+}
 
 .collection-header {
   margin-bottom: var(--space-4);
