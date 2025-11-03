@@ -553,43 +553,8 @@
             }).join('');
         });
         
-        // Handle {entry for 'collection'} ... {endentry} directive FIRST
-        // This must be processed BEFORE variable replacement to avoid interference
-        const entryForRegex = /\{entry\s+for\s+['"]([^'"]+)['"]\}/g;
-        let entryForMatch;
-        const entryForBlocks = [];
-        
-        // Reset regex lastIndex
-        entryForRegex.lastIndex = 0;
-        
-        while ((entryForMatch = entryForRegex.exec(output)) !== null) {
-            const startPos = entryForMatch.index;
-            const collectionSlug = entryForMatch[1];
-            const afterStart = output.substring(startPos + entryForMatch[0].length);
-            
-            // Find matching {endentry}
-            const endPos = afterStart.indexOf('{endentry}');
-            if (endPos === -1) continue;
-            
-            const formContent = afterStart.substring(0, endPos);
-            const fullBlock = entryForMatch[0] + formContent + '{endentry}';
-            
-            entryForBlocks.push({
-                fullBlock: fullBlock,
-                collection: collectionSlug,
-                content: formContent,
-                startPos: startPos,
-                endPos: startPos + entryForMatch[0].length + endPos + 9
-            });
-        }
-        
-        // Process entry blocks in reverse order (to maintain positions)
-        for (let i = entryForBlocks.length - 1; i >= 0; i--) {
-            const block = entryForBlocks[i];
-            const placeholderId = 'haru-entry-block-' + Math.random().toString(36).substr(2, 9);
-            const placeholder = '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(block.collection) + '" data-haru-content="' + escapeHtml(block.content) + '" class="haru-entry-block">Loading form...</div>';
-            output = output.substring(0, block.startPos) + placeholder + output.substring(block.endPos);
-        }
+        // NOTE: {entry for} blocks are already processed in processTemplates() BEFORE renderTemplate is called
+        // They are replaced with placeholders in the DOM, so we don't need to process them here
         
         // Handle {public_form 'collection'} directive - replace with placeholder
         // We'll process these after template rendering is complete
