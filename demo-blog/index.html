@@ -9,7 +9,7 @@
 <body>
     <header>
         <div class="container">
-            <h1>{{ site_title }}</h1>
+            <h1>{ site_title }</h1>
             <nav>
                 <a href="/demo-blog/index.html">Home</a>
                 <a href="/demo-blog/about.html">About</a>
@@ -21,21 +21,21 @@
         <div class="blog-posts">
             {for each entry in 'blog'}
             <article class="post-card">
-                <h2><a href="/demo-blog/post.html?slug={{ entry.slug }}">{{ entry.title }}</a></h2>
+                <h2><a href="/demo-blog/post.html?slug={ slug }">{ title }</a></h2>
                 <div class="post-meta">
-                    <time>{{ entry.created_at|date:"F j, Y" }}</time>
-                    {if entry.tags exist}
+                    <time>{ date "F j, Y" }</time>
+                    {if entry has tags}
                     <div class="tags">
-                        {foreach entry.tags as tag}
-                        <span class="tag">{{ tag }}</span>
-                        {endforeach}
+                        {for each tag}
+                        <span class="tag">{ tag }</span>
+                        {endfor}
                     </div>
                     {endif}
                 </div>
-                {if entry.excerpt exist}
-                <p class="excerpt">{{ entry.excerpt }}</p>
+                {if entry has excerpt}
+                <p class="excerpt">{ excerpt }</p>
                 {endif}
-                <a href="/demo-blog/post.html?slug={{ entry.slug }}" class="read-more">Read More →</a>
+                <a href="/demo-blog/post.html?slug={ slug }" class="read-more">Read More →</a>
             </article>
             {endfor}
         </div>
@@ -43,7 +43,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; {{ site_title }} {{ current_year }}</p>
+            <p>&copy; { site_title } { current_year }</p>
         </div>
     </footer>
 
