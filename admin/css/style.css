@@ -139,6 +139,9 @@
   border: 1px solid var(--border-light);
   border-radius: var(--border-radius-s);
   padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
 }
 
 .card h3 { 
@@ -513,18 +516,6 @@ body {
   color: var(--primary-700);
   font-weight: 500;
   border-left: 3px solid var(--primary-500);
-}
-
-.nav-links li.active a::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  background: var(--primary-500);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 /* Main Content */

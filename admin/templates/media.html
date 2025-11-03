@@ -1,13 +1,13 @@
 <div class="page-header pt-m pb-m">
-  <div class="breadcrumbs"><span class="current">Media</span></div>
+    <div class="breadcrumbs"><span class="current">Media</span></div>
 </div>
 
 
   <!-- Header -->
   <div class="media-header">
     <div class="header-actions">
-      <button class="btn btn-secondary" onclick="createFolder()">New Folder</button>
       <button class="btn btn-primary" onclick="uploadMedia()">Upload Media</button>
+      <button class="btn btn-secondary" onclick="createFolder()">New Folder</button>
     </div>
     <div class="media-toolbar">
       <div class="toolbar-search">
@@ -155,12 +155,17 @@ function navigateToFolder(folder) {
 function updateBreadcrumb() {
   const breadcrumb = document.getElementById('media-breadcrumb');
   
+  if (!breadcrumb) {
+    console.warn('Breadcrumb element not found');
+    return;
+  }
+  
   if (currentFolder === 'all') {
     breadcrumb.innerHTML = '<span class="breadcrumb-item">All Media</span>';
     return;
   }
   
-  breadcrumb.innerHTML = '<span onclick="navigateToFolder(\'\')" class="breadcrumb-item">Root</span>';
+  breadcrumb.innerHTML = '<span onclick="navigateToFolder(\'\')" class="breadcrumb-item">Media</span>';
   
   if (currentFolder) {
     const parts = currentFolder.split('/');
