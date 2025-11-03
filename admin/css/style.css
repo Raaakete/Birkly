@@ -133,13 +133,27 @@
 .editor-main { min-width: 0; }
 .editor-sidebar { min-width: 0; }
 
+/* Card - base definition */
 .card {
   background: var(--bg-elevated);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
+  border-radius: var(--border-radius-s);
   padding: var(--space-6);
 }
-.card h3 { margin: 0 0 var(--space-4); font-size: 1rem; }
+
+.card h3 { 
+  margin: 0 0 var(--space-4); 
+  font-size: 1rem; 
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Make links inside cards behave like block and inherit color */
+.card > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
 
 /* Field block (label appears within wrapper) */
 .field-block {
@@ -384,7 +398,7 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   margin: 0;
-  padding: var(--space-10);
+  padding: 0;
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
@@ -399,7 +413,7 @@ body {
   flex-direction: column;
   width: 280px;
   transition: transform var(--transition-normal);
-  margin-right: var(--space-10);
+  padding: var(--space-10);
 }
 
 .sidebar-header {
@@ -408,7 +422,8 @@ body {
   align-items: center;
   border-bottom: 1px solid var(--border-light);
   border-radius: var(--border-radius-s);
-  background: var(--color-neutral-600);
+  background: var(--bg-elevated);
+  padding: var(--space-3) var(--space-4);
 }
 
 .sidebar-header .logo {
@@ -433,6 +448,7 @@ body {
   background: var(--bg-elevated);
   border-radius: var(--border-radius-s);
   padding: var(--space-3) 0;
+  background: var(--color-base-white);
 }
 
 .nav-links li {
@@ -488,14 +504,15 @@ body {
 }
 
 .nav-links a:hover .nav-icon {
-  fill: red;
+  color: var(--text-primary);
 }
 
-.nav-links li.active a {
+.nav-links li.active a,
+.nav-links a.active {
   background: var(--primary-50);
   color: var(--primary-700);
   font-weight: 500;
-  border-left: 3px solid var(--color-neutral-900);
+  border-left: 3px solid var(--primary-500);
 }
 
 .nav-links li.active a::before {
@@ -513,8 +530,9 @@ body {
 /* Main Content */
 .main-content {
   flex: 1;
-  min-height: 100vh;
+  min-height: calc(100vh - var(--space-10) * 2);
   overflow-x: hidden;
+  padding: var(--space-10);
 }
 
 /* Breadcrumbs */
@@ -524,6 +542,7 @@ body {
   gap: var(--space-2);
   color: var(--text-secondary);
   font-weight: 400;
+  font-size: 1.5rem;
 }
 
 .breadcrumbs a {
@@ -992,9 +1011,6 @@ textarea {
 
 .tab-content {
   display: none;
-  padding: var(--space-6);
-  background: var(--bg-primary);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .tab-content.active {
@@ -1230,10 +1246,6 @@ textarea {
 .media-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-light);
 }
 
 .media-header h1 {
@@ -1255,10 +1267,6 @@ textarea {
 .media-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-light);
 }
 
 .search-box input {
@@ -1599,31 +1607,49 @@ textarea {
   color: #ccc;
 }
 
+/* Empty State - consolidated */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  color: var(--text-secondary);
+  min-height: 200px;
+  padding: var(--space-8);
   text-align: center;
-  padding: 40px;
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--border-radius-s);
 }
 
 .empty-icon {
-  margin-bottom: 20px;
-  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+  color: var(--text-tertiary);
+  font-size: 3rem;
 }
 
 .empty-state h3 {
-  margin: 0 0 10px 0;
-  font-size: 18px;
+  margin: 0 0 var(--space-2) 0;
+  font-size: 1.125rem;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .empty-state p {
-  margin: 0 0 20px 0;
+  margin: 0;
+  font-size: 0.875rem;
   color: var(--text-secondary);
+  max-width: 400px;
+}
+
+.empty-state a {
+  margin-top: var(--space-4);
+  color: var(--primary-600);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.empty-state a:hover {
+  text-decoration: underline;
 }
 
 /* Media Modal */
@@ -2358,16 +2384,8 @@ tr.drag-over {
 
 
 /* Settings Page Styles */
-.settings-page {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
 
 .settings-tabs {
-  background: var(--bg-primary);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
   min-height: 500px;
 }
@@ -2419,7 +2437,6 @@ tr.drag-over {
 
 .tab-pane {
   display: none;
-  padding: 30px;
   width: 100%;
   min-height: 300px;
 }
@@ -2873,35 +2890,28 @@ tr.drag-over {
 .icon-refresh::before { content: "🔄"; } 
 
 
-/* --- Content Page --- */
+/* Main Actions Bar - consolidated */
 .main-actions-bar {
   display: flex;
   gap: var(--space-3);
-  margin: var(--space-10) 0;
+  margin-bottom: var(--space-6);
+  align-items: center;
 }
 
-.main-actions-bar * {
-  display: inline-block;
-}
-
-.card {
-  background: var(--bg-elevated);
-  border-radius: var(--border-radius-s);
-  padding: var(--space-6);
+/* Card variants for collection cards */
+a.card {
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
   min-height: 250px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-a.card {
-  text-decoration: none;
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-}
-
-a.card:hover {
-  scale: 1.02;
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .card .collection-header .title {
@@ -3211,34 +3221,8 @@ a.card:hover {
 }
 
 /* Content Page Styles */
-.content-page {
-  padding: 0 var(--space-6);
-}
-
-.page-header {
-  margin-bottom: var(--space-6);
-}
-
-.breadcrumbs {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-}
-
-.breadcrumbs .current {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.main-actions-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-6);
-  padding: var(--space-4) 0;
-}
+/* Padding handled by main-content */
+/* Duplicate .page-header, .breadcrumbs, .main-actions-bar removed - use definitions above */
 
 .collection-header {
   margin-bottom: var(--space-4);
@@ -3396,6 +3380,7 @@ a.card:hover {
   align-items: center;
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
+  background: #8F9382;
 }
 
 .sidebar-header h3 {
@@ -3641,6 +3626,7 @@ a.card:hover {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
@@ -3786,21 +3772,7 @@ a.card:hover {
   color: var(--text-primary);
 }
 
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-secondary);
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem 0;
-  color: var(--text-primary);
-}
-
-.empty-state p {
-  margin: 0;
-}
+/* Empty State - removed duplicate, use consolidated definition above */
 
 /* Loading State */
 .media-loading {
@@ -3845,9 +3817,6 @@ a.card:hover {
 }
 
 /* Settings Page */
-.settings-page {
-  padding: 1rem;
-}
 
 .settings-sections {
   margin-top: 1rem;
@@ -3894,9 +3863,6 @@ a.card:hover {
 
 /* Enhanced Settings Form Styles */
 .settings-form {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
@@ -4021,9 +3987,6 @@ a.card:hover {
 
 /* Tabbed Settings Interface */
 .settings-tabs {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
   min-height: 500px;
 }
@@ -4067,11 +4030,11 @@ a.card:hover {
   position: relative;
   display: block;
   width: 100%;
+  margin-top: var(--space-6);
 }
 
 .tab-pane {
   display: none;
-  padding: 30px;
   width: 100%;
   min-height: 300px;
 }
@@ -4304,16 +4267,7 @@ a.card:hover {
   font-size: 0.85rem;
 }
 
-/* Empty States */
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--text-secondary);
-}
-
-.empty-state p {
-  margin-bottom: 1rem;
-}
+/* Empty State - removed duplicate, use consolidated definition above */
 
 /* Users Grid */
 .users-grid {
