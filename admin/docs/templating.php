@@ -1,162 +1,125 @@
 <h2>Templating Language</h2>
-<p>HaruCMS uses a simple templating language to display your content on your website. This guide will teach you everything you need to know.</p>
+<p>This guide explains the HaruCMS template language in a simple, human-readable way. You can copy the examples as-is. No programming knowledge required.</p>
 
-<h3>What is Templating?</h3>
-<p>A <strong>template</strong> is an HTML file with special placeholders that get filled in with your actual content. Instead of hardcoding content, you write templates that automatically pull content from your CMS.</p>
-
-<div class="example-box">
-    <h4>Simple Example:</h4>
-    <p>Instead of writing:</p>
-    <pre><code>&lt;h1&gt;My Blog Post Title&lt;/h1&gt;
-&lt;p&gt;My blog post content...&lt;/p&gt;</code></pre>
-    
-    <p>You write:</p>
-    <pre><code>&lt;h1&gt;{{ title }}&lt;/h1&gt;
-&lt;p&gt;{{ content|raw }}&lt;/p&gt;</code></pre>
-    
-    <p>And HaruCMS automatically fills in the actual title and content!</p>
-</div>
-
-<h3>Displaying Variables</h3>
-<p>The most basic template syntax is displaying a variable:</p>
-
-<pre><code>{{ variable_name }}</code></pre>
-
-<p>This displays the value of a variable. For example:</p>
+<h3>Key ideas</h3>
 <ul>
-    <li><code>{{ title }}</code> → Displays the title</li>
-    <li><code>{{ content }}</code> → Displays the content</li>
-    <li><code>{{ site_title }}</code> → Displays your site's title</li>
+  <li><strong>Single braces</strong>: Use <code>{ like this }</code> (never double braces).</li>
+  <li><strong>Plain English</strong>: Templates read like sentences.</li>
+  <li><strong>Safety</strong>: Text is safely displayed by default. Rich editor content shows with formatting automatically.</li>
 </ul>
 
-<h3>Accessing Entry Properties</h3>
-<p>When working with entries, use dot notation to access properties:</p>
-
-<pre><code>{{ entry.title }}
-{{ entry.content }}
-{{ entry.author }}
-{{ entry.created_at }}</code></pre>
-
-<h3>Filters</h3>
-<p>Filters modify how values are displayed. Use the pipe character (<code>|</code>) to apply filters:</p>
-
-<h4>Raw Filter</h4>
-<p>Use the <strong>raw</strong> filter to display HTML without escaping:</p>
-
-<pre><code>{{ content|raw }}</code></pre>
-
-<p><strong>Important:</strong> Always use <code>|raw</code> for Editor field content so formatting (bold, lists, etc.) displays correctly!</p>
-
-<h4>Date Filter</h4>
-<p>Format dates using the date filter:</p>
-
-<pre><code>{{ created_at|date:"F j, Y" }}</code></pre>
-
-<p>This displays dates in a readable format. Example:</p>
+<h3>Basic variables</h3>
+<p>Variables show values. Inside a blog post, for example:</p>
+<pre><code><h1>{ title }</h1>
+<p>By { author }</p>
+<time>{ date "F j, Y" }</time></code></pre>
 <ul>
-    <li><code>{{ created_at|date:"F j, Y" }}</code> → "January 15, 2025"</li>
-    <li><code>{{ created_at|date:"m/d/Y" }}</code> → "01/15/2025"</li>
+  <li><code>{ title }</code> — The current entry's title</li>
+  <li><code>{ date "F j, Y" }</code> — Show a date with a readable format (e.g., January 5, 2025)</li>
+  <li><code>{ content }</code> — Rich content (from the editor) shown with formatting</li>
 </ul>
 
-<h3>Conditionals</h3>
-<p>Show or hide content based on conditions:</p>
-
-<h4>If Something Exists</h4>
-<pre><code>{if tags exist}
-    &lt;div class="tags"&gt;Tags available!&lt;/div&gt;
-{endif}</code></pre>
-
-<p>Only shows the content if the "tags" field has a value.</p>
-
-<h4>If Entry Property Exists</h4>
-<pre><code>{if entry.excerpt exist}
-    &lt;p&gt;{{ entry.excerpt }}&lt;/p&gt;
-{endif}</code></pre>
-
-<h3>Loops - Displaying Lists</h3>
-<p>Loops let you display multiple entries or items.</p>
-
-<h4>Displaying Entries from a Collection</h4>
-<p>To show all entries from a collection (like all blog posts):</p>
-
+<h3>Showing a list of entries</h3>
+<p>Loop through entries of a collection:</p>
 <pre><code>{for each entry in 'blog'}
-    &lt;article&gt;
-        &lt;h2&gt;{{ entry.title }}&lt;/h2&gt;
-        &lt;p&gt;{{ entry.excerpt }}&lt;/p&gt;
-        &lt;a href="/post.html?slug={{ entry.slug }}"&gt;Read More&lt;/a&gt;
-    &lt;/article&gt;
+  <article>
+    <h2><a href="/demo-blog/post.html?slug={ slug }">{ title }</a></h2>
+    <time>{ date "F j, Y" }</time>
+
+    {if entry has tags}
+      <div class="tags">
+        {for each tag}
+          <span class="tag">{ tag }</span>
+        {endfor}
+      </div>
+    {endif}
+
+    {if entry has excerpt}
+      <p>{ excerpt }</p>
+    {endif}
+  </article>
+{endfor}</code></pre>
+<p>Notes:</p>
+<ul>
+  <li>Inside the loop, <code>{ title }</code> means the current entry's title.</li>
+  <li><code>{for each tag}</code> automatically loops over the current entry’s tags.</li>
+</ul>
+
+<h3>Showing a single entry</h3>
+<p>Load a specific entry (by slug) and then display it:</p>
+<pre><code>{from 'blog' get entry 'how-to-use-harucms'}
+<h1>{ title }</h1>
+<time>{ date "F j, Y" }</time>
+{ content }</code></pre>
+
+<h3>Checking if something exists</h3>
+<p>Use “has” with clear subjects:</p>
+<pre><code>{if 'blog' has entries}
+  <p>We have blog posts!</p>
+{endif}
+
+{if entry has tags}
+  <p>This post has tags.</p>
+{endif}
+
+{if not entry has excerpt}
+  <p>No excerpt yet.</p>
+{endif}</code></pre>
+
+<h3>Getting entries with options</h3>
+<p>Fetch lists with simple options:</p>
+<pre><code>{from 'blog' get entries limit=6 sort="date:desc"}
+{for each entry in entries}
+  <h2><a href="/demo-blog/post.html?slug={ slug }">{ title }</a></h2>
 {endfor}</code></pre>
 
-<p>This loops through all entries in the "blog" collection and displays each one.</p>
+<h3>Media (images/files)</h3>
+<p>Get a media file URL, optionally with basic sizing:</p>
+<pre><code><img src="{ media 'haru-logo.svg' }" alt="HaruCMS">
+<img src="{ media 'hero.jpg' width=1200 height=600 crop="center" }" alt="Hero"></code></pre>
 
-<h4>Displaying Tags</h4>
-<p>To display a list of tags:</p>
+<h3>Includes (re-use partial templates)</h3>
+<p>Include other small template files:</p>
+<pre><code>{include 'header'}
+{include 'post-card' with entry}</code></pre>
 
-<pre><code>{foreach entry.tags as tag}
-    &lt;span class="tag"&gt;{{ tag }}&lt;/span&gt;
-{endforeach}</code></pre>
+<h3>Links and URLs</h3>
+<p>Build an internal link with parameters:</p>
+<pre><code><a href="{ url '/demo-blog/post.html' slug=slug }">Read more</a></code></pre>
 
-<p>This loops through the tags array and displays each tag.</p>
+<h3>Counts</h3>
+<pre><code>Total blog posts: { count of 'blog' }</code></pre>
 
-<h3>Complete Example</h3>
-<p>Here's a complete blog post template:</p>
-
-<pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;{{ title }} - {{ site_title }}&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;article&gt;
-        &lt;h1&gt;{{ title }}&lt;/h1&gt;
-        
-        &lt;div class="meta"&gt;
-            &lt;time&gt;{{ created_at|date:"F j, Y" }}&lt;/time&gt;
-            
-            {if tags exist}
-            &lt;div class="tags"&gt;
-                {foreach tags as tag}
-                &lt;span&gt;{{ tag }}&lt;/span&gt;
-                {endforeach}
-            &lt;/div&gt;
-            {endif}
-        &lt;/div&gt;
-        
-        &lt;div class="content"&gt;
-            {{ content|raw }}
-        &lt;/div&gt;
-    &lt;/article&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
-
-<h3>Common Patterns</h3>
-
-<h4>Display Entry List</h4>
-<pre><code>{for each entry in 'blog'}
-    &lt;article&gt;
-        &lt;h2&gt;&lt;a href="/post.html?slug={{ entry.slug }}"&gt;{{ entry.title }}&lt;/a&gt;&lt;/h2&gt;
-        &lt;time&gt;{{ entry.created_at|date:"F j, Y" }}&lt;/time&gt;
-        
-        {if entry.excerpt exist}
-        &lt;p&gt;{{ entry.excerpt }}&lt;/p&gt;
-        {endif}
-        
-        &lt;a href="/post.html?slug={{ entry.slug }}"&gt;Read More →&lt;/a&gt;
-    &lt;/article&gt;
-{endfor}</code></pre>
-
-<h4>Conditional Content</h4>
-<pre><code>{if entry.featured_image exist}
-    &lt;img src="{{ entry.featured_image }}" alt="{{ entry.title }}"&gt;
-{endif}</code></pre>
-
-<h3>Tips and Best Practices</h3>
+<h3>Rules you don’t have to remember</h3>
 <ul>
-    <li><strong>Always use <code>|raw</code> for Editor fields:</strong> This ensures formatting displays correctly</li>
-    <li><strong>Use conditionals:</strong> Check if fields exist before displaying them</li>
-    <li><strong>Organize your templates:</strong> Keep templates simple and readable</li>
-    <li><strong>Test thoroughly:</strong> Check your templates with different content</li>
+  <li><strong>Editor content is automatic</strong>: <code>{ content }</code> always shows with formatting.</li>
+  <li><strong>Everything else is safe</strong>: Titles, excerpts, etc. are safely displayed.</li>
+  <li><strong>Missing values</strong> simply show as empty (no errors).</li>
 </ul>
 
-<p>Now you're ready to create your website templates! Continue to the <strong>Website Integration</strong> section to learn how to connect your templates to HaruCMS.</p>
+<h3>Cheatsheet</h3>
+<table>
+  <tr><th>Do this</th><th>Explanation</th></tr>
+  <tr><td><code>{ title }</code></td><td>Current entry’s title</td></tr>
+  <tr><td><code>{ date "F j, Y" }</code></td><td>Format a date</td></tr>
+  <tr><td><code>{ content }</code></td><td>Rich content (editor), formatting included</td></tr>
+  <tr><td><code>{for each entry in 'blog'} … {endfor}</code></td><td>Loop entries of a collection</td></tr>
+  <tr><td><code>{for each tag} … {endfor}</code></td><td>Loop tags of current entry</td></tr>
+  <tr><td><code>{if entry has tags} … {endif}</code></td><td>Show if the current entry has tags</td></tr>
+  <tr><td><code>{if 'blog' has entries} … {endif}</code></td><td>Show if a collection has entries</td></tr>
+  <tr><td><code>{from 'blog' get entries}</code></td><td>Fetch entries into <code>entries</code></td></tr>
+  <tr><td><code>{from 'blog' get entry 'slug'}</code></td><td>Fetch a single entry</td></tr>
+  <tr><td><code>{ media 'file.jpg' }</code></td><td>Get a media URL</td></tr>
+  <tr><td><code>{ url '/path' key=value }</code></td><td>Build a URL with parameters</td></tr>
+</table>
+
+<h3>Compatibility</h3>
+<p>The old forms will keep working for a transition period, but we recommend using the new style above:</p>
+<ul>
+  <li><code>{{ title }}</code> → <code>{ title }</code></li>
+  <li><code>{{ content|raw }}</code> → <code>{ content }</code></li>
+  <li><code>{foreach tags as tag}</code> → <code>{for each tag}</code></li>
+</ul>
+
+<p>That’s it—you can now write templates that read like plain English, while staying safe and powerful.</p>
 
