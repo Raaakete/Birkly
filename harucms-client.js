@@ -616,41 +616,57 @@
         
         // Support single-brace variables outside loops: { content }, { site_title }, etc.
         // Handle variables with spaces: { site_title } -> site_title
-        // IMPORTANT: Must skip directives - check for multi-word directives first
-        // Skip {entry for}, {for each}, {if entry}, etc. - these are directives, not variables
-        output = output.replace(/\{\s*([a-zA-Z0-9_\.]+)\s*(?:"([^"]+)")?\s*\}/g, (m, varName, arg) => {
-            // Get the full match context to check if it's a directive
-            const fullMatch = m;
-            const lowers = varName.toLowerCase().trim();
+        // IMPORTANT: Process this LAST, after all directives are processed
+        // Use a while loop to track positions correctly
+        let lastIndex = 0;
+        let result = '';
+        const varRegex = /\{\s*([a-zA-Z0-9_]+)\s*(?:"([^"]+)")?\s*\}/g;
+        let match;
+        
+        while ((match = varRegex.exec(output)) !== null) {
+            const matchStart = match.index;
+            const matchEnd = match.index + match[0].length;
+            const varName = match[1].trim();
+            const arg = match[2];
             
-            // Skip if it's a known directive keyword
+            // Add everything before this match
+            result += output.substring(lastIndex, matchStart);
+            
+            const lowers = varName.toLowerCase();
+            
+            // Skip if it's a directive keyword (these should already be processed)
             const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
             if (directiveKeywords.includes(lowers)) {
-                // Check if this is part of a multi-word directive by looking at what follows
-                const matchIndex = output.indexOf(m);
-                if (matchIndex !== -1) {
-                    const afterMatch = output.substring(matchIndex + m.length);
-                    // If followed by 'for', 'each', 'in', 'has', '==', etc., it's a directive
-                    if (afterMatch.match(/^\s+(for|each|in|has|exist|==|!=|<=|>=|>|<)/)) {
-                        return m; // Don't replace - it's a directive
-                    }
+                // Check context around match to see if it's part of a directive
+                const before = output.substring(Math.max(0, matchStart - 20), matchStart);
+                const after = output.substring(matchEnd, Math.min(output.length, matchEnd + 20));
+                
+                // If it's part of a directive, keep it as-is
+                if (after.match(/^\s+(for|each|in|has|exist|==|!=|<=|>=|>|<)/) || 
+                    before.match(/(entry|for|if)\s+$/)) {
+                    result += match[0]; // Keep directive as-is
+                } else {
+                    // It's a standalone directive keyword, keep it
+                    result += match[0];
                 }
-                // Also check if it's preceded by something that makes it a directive
-                if (matchIndex > 0) {
-                    const beforeMatch = output.substring(Math.max(0, matchIndex - 20), matchIndex);
-                    if (beforeMatch.match(/(entry|for|if)\s+$/)) {
-                        return m; // Don't replace - it's part of a directive
-                    }
+            } else {
+                // It's a regular variable - replace it
+                let value = getNestedValue(data, varName) || '';
+                if (varName === 'content' || /\.content$/.test(varName)) {
+                    result += value; // auto-raw
+                } else if (varName === 'date' && arg) {
+                    result += formatDate(value, arg);
+                } else {
+                    result += escapeHtml(value);
                 }
             }
             
-            // Trim whitespace from variable name
-            varName = varName.trim();
-            let value = getNestedValue(data, varName) || '';
-            if (varName === 'content' || /\.content$/.test(varName)) return value; // auto-raw
-            if (varName === 'date' && arg) return formatDate(value, arg);
-            return escapeHtml(value);
-        });
+            lastIndex = matchEnd;
+        }
+        
+        // Add remaining content
+        result += output.substring(lastIndex);
+        output = result;
         
         // Handle conditionals
         output = renderConditionals(output, data);
