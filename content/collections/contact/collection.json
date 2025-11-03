@@ -1,0 +1,19 @@
+{
+  "id": "col-contact",
+  "name": "Contact",
+  "slug": "contact",
+  "description": "Contact form submissions",
+  "entry_method": "public_api",
+  "api_key": "haru_contact_1234567890abcdef1234567890abcdef",
+  "api_settings": {
+    "auto_publish": false,
+    "rate_limit": 10,
+    "notification_email": "",
+    "captcha_provider": "",
+    "captcha_site_key": "",
+    "captcha_secret_key": ""
+  },
+  "created_at": "2025-01-15T10:00:00+00:00",
+  "updated_at": "2025-01-15T10:00:00+00:00"
+}
+

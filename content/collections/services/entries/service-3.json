@@ -1,0 +1,14 @@
+{
+  "id": "service-3",
+  "title": "E-Commerce Solutions",
+  "slug": "e-commerce-solutions",
+  "description": "Complete online store setup and management",
+  "content": "<p>Launch your online store with our comprehensive e-commerce solutions. We handle everything from setup to payment integration.</p><p>Accept payments, manage inventory, and track orders all in one place.</p>",
+  "icon": "🛒",
+  "price": "Starting at $3,500",
+  "featured": false,
+  "status": "published",
+  "created_at": "2025-01-15T10:00:00+00:00",
+  "updated_at": "2025-01-15T10:00:00+00:00"
+}
+

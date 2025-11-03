@@ -1,0 +1,45 @@
+{
+  "fields": [
+    {
+      "name": "title",
+      "type": "text",
+      "label": "Name",
+      "required": true
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "label": "Email",
+      "required": true
+    },
+    {
+      "name": "subject",
+      "type": "text",
+      "label": "Subject",
+      "required": false
+    },
+    {
+      "name": "message",
+      "type": "textarea",
+      "label": "Message",
+      "required": true
+    },
+    {
+      "name": "status",
+      "type": "select",
+      "label": "Status",
+      "options": [
+        {
+          "label": "Draft",
+          "value": "draft"
+        },
+        {
+          "label": "Published",
+          "value": "published"
+        }
+      ],
+      "default": "draft"
+    }
+  ]
+}
+
