@@ -553,26 +553,14 @@
             }).join('');
         });
         
-        // Replace {{ variable }} outside loops
-        output = output.replace(/\{\{\s*([a-zA-Z0-9_\.]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (match, varName, filter, filterValue) => {
-            let value = getNestedValue(data, varName) || '';
-            
-            if (filter === 'date' && filterValue) {
-                value = formatDate(value, filterValue);
-            } else if (filter === 'raw') {
-                return value;
-            } else if (filter === 'escape' || !filter) {
-                value = escapeHtml(value);
-            }
-            
-            return value;
-        });
-        
-        // Handle {entry for 'collection'} ... {endentry} directive
-        // This allows users to write custom form HTML with field name variables
+        // Handle {entry for 'collection'} ... {endentry} directive FIRST
+        // This must be processed BEFORE variable replacement to avoid interference
         const entryForRegex = /\{entry\s+for\s+['"]([^'"]+)['"]\}/g;
         let entryForMatch;
         const entryForBlocks = [];
+        
+        // Reset regex lastIndex
+        entryForRegex.lastIndex = 0;
         
         while ((entryForMatch = entryForRegex.exec(output)) !== null) {
             const startPos = entryForMatch.index;
@@ -611,13 +599,53 @@
             return '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" class="haru-form-placeholder">Loading form...</div>';
         });
         
+        // Replace {{ variable }} outside loops
+        output = output.replace(/\{\{\s*([a-zA-Z0-9_\.]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (match, varName, filter, filterValue) => {
+            let value = getNestedValue(data, varName) || '';
+            
+            if (filter === 'date' && filterValue) {
+                value = formatDate(value, filterValue);
+            } else if (filter === 'raw') {
+                return value;
+            } else if (filter === 'escape' || !filter) {
+                value = escapeHtml(value);
+            }
+            
+            return value;
+        });
+        
         // Support single-brace variables outside loops: { content }, { site_title }, etc.
         // Handle variables with spaces: { site_title } -> site_title
+        // IMPORTANT: Must skip directives - check for multi-word directives first
+        // Skip {entry for}, {for each}, {if entry}, etc. - these are directives, not variables
         output = output.replace(/\{\s*([a-zA-Z0-9_\.]+)\s*(?:"([^"]+)")?\s*\}/g, (m, varName, arg) => {
+            // Get the full match context to check if it's a directive
+            const fullMatch = m;
+            const lowers = varName.toLowerCase().trim();
+            
+            // Skip if it's a known directive keyword
+            const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
+            if (directiveKeywords.includes(lowers)) {
+                // Check if this is part of a multi-word directive by looking at what follows
+                const matchIndex = output.indexOf(m);
+                if (matchIndex !== -1) {
+                    const afterMatch = output.substring(matchIndex + m.length);
+                    // If followed by 'for', 'each', 'in', 'has', '==', etc., it's a directive
+                    if (afterMatch.match(/^\s+(for|each|in|has|exist|==|!=|<=|>=|>|<)/)) {
+                        return m; // Don't replace - it's a directive
+                    }
+                }
+                // Also check if it's preceded by something that makes it a directive
+                if (matchIndex > 0) {
+                    const beforeMatch = output.substring(Math.max(0, matchIndex - 20), matchIndex);
+                    if (beforeMatch.match(/(entry|for|if)\s+$/)) {
+                        return m; // Don't replace - it's part of a directive
+                    }
+                }
+            }
+            
             // Trim whitespace from variable name
             varName = varName.trim();
-            const lowers = varName.toLowerCase();
-            if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'].includes(lowers)) return m;
             let value = getNestedValue(data, varName) || '';
             if (varName === 'content' || /\.content$/.test(varName)) return value; // auto-raw
             if (varName === 'date' && arg) return formatDate(value, arg);
