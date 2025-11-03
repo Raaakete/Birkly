@@ -3,14 +3,13 @@
   <link rel="stylesheet" href="{{ fieldtype_assets.css }}">
 {endif}
     
-    <div class="page-header">
-        <h1>{if entry exist}Edit Entry{else}New Entry{endif}</h1>
+    <div class="page-header pt-m pb-m">
         <div class="breadcrumbs">
             <a href="/admin/index.php?page=content">Content</a>
             <span class="separator">›</span>
             <a href="/admin/index.php?page=entries&collection={{ collection.slug }}">{{ collection.title }}</a>
             <span class="separator">›</span>
-            <span class="current">{if entry exist}Edit Entry{else}New Entry{endif}</span>
+            <span class="current">{if entry exist}{{ entry.title }}{else}New Entry{endif}</span>
         </div>
     </div>
     
