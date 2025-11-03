@@ -58,6 +58,37 @@
         </svg>
         Domains
       </button>
+      <button class="tab-btn" data-tab="audit-log">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14,2 14,8 20,8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10,9 9,9 8,9"></polyline>
+        </svg>
+        Audit Log
+      </button>
+      <button class="tab-btn" data-tab="activity">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+        </svg>
+        Activity Feed
+      </button>
+      <button class="tab-btn" data-tab="updates">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6"></path>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        Updates
+      </button>
+      <button class="tab-btn" data-tab="password">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <circle cx="12" cy="16" r="1"></circle>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Password
+      </button>
     </div>
 
     <div class="tab-content">
@@ -807,12 +838,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetPane) {
                 targetPane.classList.add('active');
             }
+            
+            // Handle URL hash for deep linking
+            if (targetTab) {
+                window.history.replaceState(null, '', '?page=settings#' + targetTab);
+            }
         });
     });
+
+    // Check URL hash on load to set active tab
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+        const tabButton = document.querySelector(`[data-tab="${hash}"]`);
+        const tabPane = document.getElementById(hash);
+        if (tabButton && tabPane) {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            tabButton.classList.add('active');
+            tabPane.classList.add('active');
+        }
+    }
 
     // Form submissions
     const generalForm = document.getElementById('general-form');
     const securityForm = document.getElementById('security-form');
+    const passwordForm = document.getElementById('password-form');
 
     if (generalForm) {
         generalForm.addEventListener('submit', handleFormSubmit);
@@ -820,7 +870,58 @@ document.addEventListener('DOMContentLoaded', function() {
     if (securityForm) {
         securityForm.addEventListener('submit', handleFormSubmit);
     }
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', handlePasswordChange);
+    }
 });
+
+// Handle password change
+async function handlePasswordChange(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    const currentPassword = formData.get('current_password');
+    const newPassword = formData.get('new_password');
+    const confirmPassword = formData.get('confirm_password');
+    
+    if (newPassword !== confirmPassword) {
+        showMessage('New password and confirmation do not match', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 8) {
+        showMessage('Password must be at least 8 characters long', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'change_password',
+                current_password: currentPassword,
+                new_password: newPassword,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Password changed successfully!', 'success');
+            form.reset();
+        } else {
+            showMessage('Error: ' + (result.message || 'Failed to change password'), 'error');
+        }
+    } catch (error) {
+        showMessage('Error changing password: ' + error.message, 'error');
+    }
+}
 
 // Get CSRF token from meta tag or generate one
 function getCsrfToken() {
