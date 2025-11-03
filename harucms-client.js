@@ -1340,7 +1340,7 @@
                     formHtml += '      <option value="' + escapeHtml(optValue) + '">' + escapeHtml(optLabel) + '</option>\n';
                 }
                 formHtml += '    </select>\n';
-            } elseif (fieldType === 'boolean') {
+            } else if (fieldType === 'boolean') {
                 formHtml += '    <label class="checkbox-label">\n';
                 formHtml += '      <input type="checkbox" name="' + escapeHtml(fieldName) + '" id="' + escapeHtml(fieldName) + '" value="1">\n';
                 formHtml += '      <span>' + escapeHtml(fieldLabel) + '</span>\n';
