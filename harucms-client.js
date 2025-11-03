@@ -565,6 +565,41 @@
             return value;
         });
         
+        // Handle {entry for 'collection'} ... {endentry} directive
+        // This allows users to write custom form HTML with field name variables
+        const entryForRegex = /\{entry\s+for\s+['"]([^'"]+)['"]\}/g;
+        let entryForMatch;
+        const entryForBlocks = [];
+        
+        while ((entryForMatch = entryForRegex.exec(output)) !== null) {
+            const startPos = entryForMatch.index;
+            const collectionSlug = entryForMatch[1];
+            const afterStart = output.substring(startPos + entryForMatch[0].length);
+            
+            // Find matching {endentry}
+            const endPos = afterStart.indexOf('{endentry}');
+            if (endPos === -1) continue;
+            
+            const formContent = afterStart.substring(0, endPos);
+            const fullBlock = entryForMatch[0] + formContent + '{endentry}';
+            
+            entryForBlocks.push({
+                fullBlock: fullBlock,
+                collection: collectionSlug,
+                content: formContent,
+                startPos: startPos,
+                endPos: startPos + entryForMatch[0].length + endPos + 9
+            });
+        }
+        
+        // Process entry blocks in reverse order (to maintain positions)
+        for (let i = entryForBlocks.length - 1; i >= 0; i--) {
+            const block = entryForBlocks[i];
+            const placeholderId = 'haru-entry-block-' + Math.random().toString(36).substr(2, 9);
+            const placeholder = '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(block.collection) + '" data-haru-content="' + escapeHtml(block.content) + '" class="haru-entry-block">Loading form...</div>';
+            output = output.substring(0, block.startPos) + placeholder + output.substring(block.endPos);
+        }
+        
         // Handle {public_form 'collection'} directive - replace with placeholder
         // We'll process these after template rendering is complete
         output = output.replace(/\{public_form\s+['"]([^'"]+)['"]\}/g, (match, collectionSlug) => {
@@ -576,7 +611,7 @@
         // Support single-brace variables outside loops: { content }, { site_title }, etc.
         output = output.replace(/\{\s*([a-zA-Z0-9_\.]+)(?:\s*"([^"]+)")?\s*\}/g, (m, varName, arg) => {
             const lowers = varName.toLowerCase();
-            if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form'].includes(lowers)) return m;
+            if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'].includes(lowers)) return m;
             let value = getNestedValue(data, varName) || '';
             if (varName === 'content' || /\.content$/.test(varName)) return value; // auto-raw
             if (varName === 'date' && arg) return formatDate(value, arg);
@@ -861,7 +896,7 @@
                     let node;
                     
                     while (node = walker.nextNode()) {
-                        if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
+                        if (node.nodeValue && /\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue)) {
                             const parent = node.parentElement;
                             if (!parent || parent.dataset.cmsProcessed) continue;
                             
@@ -922,7 +957,7 @@
                 let node;
                 
                 while (node = walker.nextNode()) {
-                    if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
+                    if (node.nodeValue && /\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue)) {
                         const parent = node.parentElement;
                         if (!parent || parent.dataset.cmsProcessed) continue;
                         
@@ -963,8 +998,8 @@
         
         let node;
         while (node = walker.nextNode()) {
-            if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
-                // Found template syntax in text
+            if (node.nodeValue && /\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue)) {
+                // Found template syntax in text (single or double braces)
                 const parent = node.parentElement;
                 if (!parent || parent.dataset.cmsProcessed) continue;
                 
@@ -985,7 +1020,7 @@
             
             // Check all attributes for template syntax
             for (let attr of el.attributes) {
-                if (/\{\{|\{for|\{if/.test(attr.value)) {
+                if (/\{[a-zA-Z0-9_\.\s'"]+\}/.test(attr.value)) {
                     // Found template syntax in attribute
                     // Add parent element to templates list
                     let parent = el.parentElement;
@@ -1324,6 +1359,43 @@
         
         // Process templates immediately (don't wait for DOMContentLoaded)
         await processTemplates();
+        
+        // Process {entry for 'collection'} blocks
+        const entryBlocks = document.querySelectorAll('.haru-entry-block');
+        for (const block of entryBlocks) {
+            const collectionSlug = block.dataset.haruCollection;
+            const formContent = block.dataset.haruContent;
+            if (collectionSlug && formContent) {
+                fetchCollectionInfo(collectionSlug).then(collectionInfo => {
+                    if (!collectionInfo || !collectionInfo.schema || !collectionInfo.api_key) {
+                        block.innerHTML = '<p style="color: red;">Error: Collection not found or Public API not enabled.</p>';
+                        return;
+                    }
+                    
+                    // Create a data object with field names as variables
+                    const fieldData = {};
+                    const fields = collectionInfo.schema.fields || [];
+                    for (const field of fields) {
+                        // Make field names available as template variables
+                        fieldData[field.name] = field.name; // Use field name as both key and initial value
+                    }
+                    
+                    // Render the form content with field data
+                    const renderedContent = renderTemplate(formContent, fieldData);
+                    
+                    // Wrap in form with auto-submission attributes
+                    const formHtml = '<form class="haru-form" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-api-key="' + escapeHtml(collectionInfo.api_key) + '">\n' +
+                        renderedContent + '\n' +
+                        '</form>';
+                    
+                    block.outerHTML = formHtml;
+                    setupFormSubmission();
+                }).catch(error => {
+                    console.error('HaruCMS: Error rendering entry form:', error);
+                    block.innerHTML = '<p style="color: red;">Error loading form. Please try again later.</p>';
+                });
+            }
+        }
         
         // Process {public_form} placeholders after templates are rendered
         const formPlaceholders = document.querySelectorAll('.haru-form-placeholder');
