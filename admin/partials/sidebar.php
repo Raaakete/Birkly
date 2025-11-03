@@ -46,6 +46,7 @@ $activePluginNavigation = get_active_plugin_navigation();
                 </div>
             </div>
             <nav class="sidebar-nav">
+                <!-- First Section: Main Navigation -->
                 <ul class="nav-links" id="links-main">
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>">
@@ -76,7 +77,7 @@ $activePluginNavigation = get_active_plugin_navigation();
                     </li>
                 </ul>
 
-                <!-- Plugin Navigation Section -->
+                <!-- Second Section: Plugins (only show if plugins exist) -->
                 <?php if (!empty($activePluginNavigation)): ?>
                 <div class="nav-section" id="nav-plugins-section">
                     <div class="nav-section-header">
@@ -95,9 +96,10 @@ $activePluginNavigation = get_active_plugin_navigation();
                 </div>
                 <?php endif; ?>
 
+                <!-- Third Section: Settings, Help, Logout -->
                 <ul class="nav-links" id="links-settings">
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('users') || is_nav_active('roles') || is_nav_active('plugins') || is_nav_active('templates') ?>">
+                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('users') || is_nav_active('roles') || is_nav_active('plugins') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -106,40 +108,15 @@ $activePluginNavigation = get_active_plugin_navigation();
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('audit-log')) ?>" class="nav-link <?= is_nav_active('audit-log') ?>">
+                        <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14,2 14,8 20,8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10,9 9,9 8,9"></polyline>
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
                             </svg>
-                            Audit Log
+                            Help
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('activity')) ?>" class="nav-link <?= is_nav_active('activity') ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
-                            </svg>
-                            Activity Feed
-                        </a>
-                    </li>
-                </ul>
-
-                <ul class="nav-links" id="links-updates">
-                    <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('updates')) ?>" class="nav-link <?= is_nav_active('updates') ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 4v6h-6"></path>
-                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                            </svg>
-                            Updates
-                        </a>
-                    </li>
-                </ul>
-
-                <ul class="nav-links" id="links-profile">
                     <li class="nav-item">
                         <div class="user-info">
                             <div class="user-avatar">
@@ -152,16 +129,6 @@ $activePluginNavigation = get_active_plugin_navigation();
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a href="/admin/reset-password.php" class="nav-link">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <circle cx="12" cy="16" r="1"></circle>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            Change Password
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <button class="nav-link logout-btn" id="logout-btn">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -171,17 +138,6 @@ $activePluginNavigation = get_active_plugin_navigation();
                             Logout
                         </button>
                     </li>
-                    <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
-                            Help
-                        </a>
-                    </li>
                 </ul>
             </nav>
         </aside>
-
