@@ -33,6 +33,9 @@ try {
     $template = $_POST['template'] ?? '';
     $sort = $_POST['sort'] ?? 'created_desc';
     $fields = $_POST['fields'] ?? [];
+    $entryMethod = $_POST['entry_method'] ?? 'admin_only';
+    $apiKey = $_POST['api_key'] ?? '';
+    $apiSettings = $_POST['api_settings'] ?? [];
     
     error_log("Processing form data:");
     error_log("name: " . $name);
@@ -97,6 +100,16 @@ try {
         error_log("mkdir result: " . ($result ? 'success' : 'failed'));
     }
     
+    // Generate API key if Public API is selected and no key exists
+    if ($entryMethod === 'public_api' && empty($apiKey)) {
+        // Generate a secure random API key
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        $apiKey = 'haru_';
+        for ($i = 0; $i < 32; $i++) {
+            $apiKey .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+    }
+    
     // Prepare collection data
     $collectionData = [
         'name' => $name,
@@ -104,9 +117,48 @@ try {
         'description' => $description,
         'template' => $template,
         'sort' => $sort,
+        'entry_method' => $entryMethod,
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ];
+    
+    // Add API key and settings if Public API is enabled
+    if ($entryMethod === 'public_api') {
+        $collectionData['api_key'] = $apiKey;
+        $collectionData['api_settings'] = [
+            'auto_publish' => !empty($apiSettings['auto_publish']),
+            'rate_limit' => isset($apiSettings['rate_limit']) ? (int)$apiSettings['rate_limit'] : 10,
+            'notification_email' => $apiSettings['notification_email'] ?? '',
+            'captcha_provider' => $apiSettings['captcha_provider'] ?? '',
+            'captcha_site_key' => $apiSettings['captcha_site_key'] ?? '',
+            'captcha_secret_key' => $apiSettings['captcha_secret_key'] ?? ''
+        ];
+    } else {
+        // Remove API settings if switching back to Admin Only
+        unset($collectionData['api_key']);
+        unset($collectionData['api_settings']);
+    }
+    
+    // Preserve existing created_at if updating
+    if ($existingCollection && isset($existingCollection['created_at'])) {
+        $collectionData['created_at'] = $existingCollection['created_at'];
+    }
+    
+    // Preserve existing API key if updating and not changing entry method
+    if ($existingCollection && isset($existingCollection['entry_method']) && 
+        $existingCollection['entry_method'] === 'public_api' && 
+        $entryMethod === 'public_api' && 
+        empty($apiKey) && 
+        isset($existingCollection['api_key'])) {
+        $collectionData['api_key'] = $existingCollection['api_key'];
+        // Merge existing API settings with new ones
+        if (isset($existingCollection['api_settings'])) {
+            $collectionData['api_settings'] = array_merge(
+                $existingCollection['api_settings'],
+                $collectionData['api_settings']
+            );
+        }
+    }
     
     // Save collection.json
     $collectionFile = $collectionDir . '/collection.json';

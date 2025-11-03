@@ -76,7 +76,7 @@ function deleteDemoContent() {
 
 // Helper to delete demo website folder
 function deleteDemoWebsite() {
-    $demoBlogPath = __DIR__ . '/../demo-blog';
+    $demoBlogPath = __DIR__ . '/../demo-website';
     
     if (is_dir($demoBlogPath)) {
         $result = deleteDirectory($demoBlogPath);
@@ -150,13 +150,13 @@ function listDemoContent() {
     }
     
     // Check if demo website exists
-    $demoBlogPath = __DIR__ . '/../demo-blog';
+    $demoBlogPath = __DIR__ . '/../demo-website';
     $hasDemoWebsite = is_dir($demoBlogPath);
     
     return [
         'collections' => $exists,
         'has_demo_website' => $hasDemoWebsite,
-        'demo_website_path' => $hasDemoWebsite ? 'demo-blog' : null
+        'demo_website_path' => $hasDemoWebsite ? 'demo-website' : null
     ];
 }
 

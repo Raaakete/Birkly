@@ -1,169 +1,321 @@
+<?php
+// Load fieldtype assets if needed
+$fieldtypeAssets = [];
+if (isset($fieldtype_assets)) {
+    $fieldtypeAssets = $fieldtype_assets;
+}
+?>
 <div class="entry-editor-page">
-{if fieldtype_assets.css exist}
-  <link rel="stylesheet" href="{{ fieldtype_assets.css }}">
-{endif}
+<?php if (!empty($fieldtypeAssets['css'])): ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars($fieldtypeAssets['css']) ?>">
+<?php endif; ?>
     
     <div class="page-header pt-m pb-m">
         <div class="breadcrumbs">
             <a href="/admin/index.php?page=content">Content</a>
             <span class="separator">›</span>
-            <a href="/admin/index.php?page=entries&collection={{ collection.slug }}">{{ collection.title }}</a>
+            <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
             <span class="separator">›</span>
-            <span class="current">{if entry exist}{{ entry.title }}{else}New Entry{endif}</span>
+            <span class="current"><?= !empty($entry['title']) ? htmlspecialchars($entry['title']) : 'New Entry' ?></span>
         </div>
     </div>
     
-    <form id="entry-form" class="entry-form" method="POST" action="/api/admin_entries.php?action=save" aria-label="{if entry exist}Edit entry form{else}Create new entry form{endif}">
-        <!-- Action is passed via URL query string, not form field -->
-        <input type="hidden" name="collection" value="{{ collection.slug }}">
-        {if entry.id exist}
-          <input type="hidden" name="entry_id" value="{{ entry.id }}">
-        {endif}
-        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <div class="main-actions-bar">
+        <button type="submit" form="entry-form" class="btn btn-primary">
+            <?= !empty($entry['id']) ? 'Update Entry' : 'Create Entry' ?>
+        </button>
+        <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" class="btn btn-secondary">
+            Cancel
+        </a>
+    </div>
+    
+    <form id="entry-form" class="entry-form" method="POST" action="/api/admin_entries.php?action=save" aria-label="<?= !empty($entry['id']) ? 'Edit entry form' : 'Create new entry form' ?>">
+        <input type="hidden" name="collection" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
+        <?php if (!empty($entry['id'])): ?>
+            <input type="hidden" name="entry_id" value="<?= htmlspecialchars($entry['id']) ?>">
+        <?php endif; ?>
+        <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
         
         <div class="editor-layout">
             <div class="editor-main">
                 <div class="editor-content">
-                    {for field in fields}
-                        <div class="field-block">
-                            <div class="field-header">
-                                <div class="field-title">{{ field.label }}</div>
-                                {if field.required exist}
-                                  <div class="field-subtitle">Required</div>
-                                {endif}
+                    <?php if (!empty($fields)): ?>
+                        <?php foreach ($fields as $field): ?>
+                            <div class="field-block">
+                                <div class="field-header">
+                                    <div class="field-title"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?><?= !empty($field['required']) ? ' <span class="required">*</span>' : '' ?></div>
+                                    <?php if (!empty($field['required'])): ?>
+                                        <div class="field-subtitle">Required</div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="field-control">
+                                    <?php if (!empty($field['html'])): ?>
+                                        <?= $field['html'] ?>
+                                    <?php else: ?>
+                                        <?php
+                                        $fieldName = $field['name'] ?? '';
+                                        $fieldValue = $entry[$fieldName] ?? '';
+                                        ?>
+                                        <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($fieldValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                            <div class="field-control">
-                                {if field.html exist}
-                                    {{ field.html | raw }}
-                                {else}
-                                    <input type="text" name="{{ field.name }}" id="field_{{ field.name }}" value="{{ entry[field.name] }}" class="input" {if field.required exist}required{endif}>
-                                {endif}
-                            </div>
-                        </div>
-                    {endfor}
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
             
+            <!-- Right Sidebar -->
             <div class="editor-sidebar">
-                <div class="card">
-                    <h3>Publish</h3>
-                    <div class="form-group">
-                        <label for="status">Status</label>
-                        <select name="status" id="status" class="input">
-                            <option value="draft" {if entry.status == 'draft'}selected{endif}>Draft</option>
-                            <option value="published" {if entry.status == 'published'}selected{endif}>Published</option>
-                            <option value="scheduled" {if entry.status == 'scheduled'}selected{endif}>Scheduled</option>
-                            <option value="pending_review" {if entry.status == 'pending_review'}selected{endif}>Pending Review</option>
-                            <option value="approved" {if entry.status == 'approved'}selected{endif}>Approved</option>
-                            <option value="rejected" {if entry.status == 'rejected'}selected{endif}>Rejected</option>
-                        </select>
+                <div class="sidebar-tabs">
+                    <div class="tab-nav">
+                        <button type="button" class="tab-btn active" data-tab="publish">Publish</button>
+                        <button type="button" class="tab-btn" data-tab="seo">SEO</button>
+                        <button type="button" class="tab-btn" data-tab="templating">Templating</button>
                     </div>
                     
-                    <div class="form-group" id="reviewer-group" style="display: none;">
-                        <label for="reviewer">Assign Reviewer</label>
-                        <select name="reviewer" id="reviewer" class="input">
-                            <option value="">No reviewer assigned</option>
-                            <!-- Reviewers will be populated via JavaScript -->
-                        </select>
-                    </div>
-                    
-                    <div class="form-group" id="review-notes-group" style="display: none;">
-                        <label for="review_notes">Review Notes</label>
-                        <textarea name="review_notes" id="review_notes" class="input" rows="3" placeholder="Add review notes...">{{ entry.review_notes }}</textarea>
-                    </div>
-                    
-                    {if entry.status == 'pending_review' || entry.status == 'approved' || entry.status == 'rejected'}
-                    <div class="form-group review-actions" id="review-actions">
-                        <label>Review Actions</label>
-                        <div class="action-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;" role="group" aria-label="Review actions">
-                            <button type="button" class="btn btn-success btn-sm" id="approve-entry" aria-label="Approve this entry">
-                                Approve
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" id="reject-entry" aria-label="Reject this entry">
-                                Reject
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm" id="request-changes" aria-label="Request changes to this entry">
-                                Request Changes
-                            </button>
-                        </div>
-                    </div>
-                    {endif}
-                    
-                    {if entry.reviewer exist}
-                    <div class="form-group">
-                        <label>Assigned Reviewer</label>
-                        <div class="form-text">{{ entry.reviewer }}</div>
-                    </div>
-                    {endif}
-                    
-                    {if entry.reviewed_at exist}
-                    <div class="form-group">
-                        <label>Reviewed</label>
-                        <div class="form-text">{{ entry.reviewed_at }}</div>
-                    </div>
-                    {endif}
-                    
-                    {if entry.reviewed_by exist}
-                    <div class="form-group">
-                        <label>Reviewed By</label>
-                        <div class="form-text">{{ entry.reviewed_by }}</div>
-                    </div>
-                    {endif}
-                    
-                    <div class="form-group" id="publish-schedule-group" style="display: none;">
-                        <label for="published_at">Schedule Publish Date</label>
-                        <input type="datetime-local" name="published_at" id="published_at" class="input" value="" aria-describedby="published_at_help" {if entry.published_at exist}data-value="{{ entry.published_at }}" {endif}>
-                        <small class="form-text" id="published_at_help">Leave empty to publish immediately</small>
-                    </div>
-                    
-                    <div class="form-group" id="expire-schedule-group">
-                        <label for="expires_at">Schedule Unpublish Date</label>
-                        <input type="datetime-local" name="expires_at" id="expires_at" class="input" value="" aria-describedby="expires_at_help" {if entry.expires_at exist}data-value="{{ entry.expires_at }}" {endif}>
-                        <small class="form-text" id="expires_at_help">Optional: automatically unpublish on this date</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="slug">Slug</label>
-                        <input type="text" name="slug" id="slug" class="input" value="{{ entry.slug }}" placeholder="auto-generated">
-                    </div>
-                    
-                    {if entry exist}
-                        <div class="form-group">
-                            <label>Created</label>
-                            <div class="form-text">{{ entry.created_at }}</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Updated</label>
-                            <div class="form-text">{{ entry.updated_at }}</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Version</label>
-                            <div class="form-text">
-                                v{{ entry.version || 1 }}
-                                <a href="#" id="view-versions" class="link" style="margin-left: 8px;" aria-label="View version history for this entry">View History</a>
+                    <div class="tab-content">
+                        <!-- Publish Tab -->
+                        <div class="tab-pane active" id="publish-tab">
+                            <div class="card">
+                                <div class="form-group">
+                                    <label for="status">Status</label>
+                                    <select name="status" id="status" class="input">
+                                        <option value="draft" <?= ($entry['status'] ?? 'draft') === 'draft' ? 'selected' : '' ?>>Draft</option>
+                                        <option value="published" <?= ($entry['status'] ?? 'draft') === 'published' ? 'selected' : '' ?>>Published</option>
+                                        <option value="scheduled" <?= ($entry['status'] ?? 'draft') === 'scheduled' ? 'selected' : '' ?>>Scheduled</option>
+                                        <option value="pending_review" <?= ($entry['status'] ?? 'draft') === 'pending_review' ? 'selected' : '' ?>>Pending Review</option>
+                                        <option value="approved" <?= ($entry['status'] ?? 'draft') === 'approved' ? 'selected' : '' ?>>Approved</option>
+                                        <option value="rejected" <?= ($entry['status'] ?? 'draft') === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group" id="reviewer-group" style="display: none;">
+                                    <label for="reviewer">Assign Reviewer</label>
+                                    <select name="reviewer" id="reviewer" class="input">
+                                        <option value="">No reviewer assigned</option>
+                                        <!-- Reviewers will be populated via JavaScript -->
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group" id="review-notes-group" style="display: none;">
+                                    <label for="review_notes">Review Notes</label>
+                                    <textarea name="review_notes" id="review_notes" class="input" rows="3" placeholder="Add review notes..."><?= htmlspecialchars($entry['review_notes'] ?? '') ?></textarea>
+                                </div>
+                                
+                                <?php if (in_array($entry['status'] ?? 'draft', ['pending_review', 'approved', 'rejected'])): ?>
+                                <div class="form-group review-actions" id="review-actions">
+                                    <label>Review Actions</label>
+                                    <div class="action-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;" role="group" aria-label="Review actions">
+                                        <button type="button" class="btn btn-success btn-sm" id="approve-entry" aria-label="Approve this entry">
+                                            Approve
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="reject-entry" aria-label="Reject this entry">
+                                            Reject
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="request-changes" aria-label="Request changes to this entry">
+                                            Request Changes
+                                        </button>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($entry['reviewer'])): ?>
+                                <div class="form-group">
+                                    <label>Assigned Reviewer</label>
+                                    <div class="form-text"><?= htmlspecialchars($entry['reviewer']) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($entry['reviewed_at'])): ?>
+                                <div class="form-group">
+                                    <label>Reviewed</label>
+                                    <div class="form-text"><?= htmlspecialchars($entry['reviewed_at']) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($entry['reviewed_by'])): ?>
+                                <div class="form-group">
+                                    <label>Reviewed By</label>
+                                    <div class="form-text"><?= htmlspecialchars($entry['reviewed_by']) ?></div>
+                                </div>
+                                <?php endif; ?>
+                                
+                                <div class="form-group" id="publish-schedule-group" style="display: none;">
+                                    <label for="published_at">Schedule Publish Date</label>
+                                    <input type="datetime-local" name="published_at" id="published_at" class="input" value="" aria-describedby="published_at_help" <?= !empty($entry['published_at']) ? 'data-value="' . htmlspecialchars($entry['published_at']) . '"' : '' ?>>
+                                    <small class="form-text" id="published_at_help">Leave empty to publish immediately</small>
+                                </div>
+                                
+                                <div class="form-group" id="expire-schedule-group">
+                                    <label for="expires_at">Schedule Unpublish Date</label>
+                                    <input type="datetime-local" name="expires_at" id="expires_at" class="input" value="" aria-describedby="expires_at_help" <?= !empty($entry['expires_at']) ? 'data-value="' . htmlspecialchars($entry['expires_at']) . '"' : '' ?>>
+                                    <small class="form-text" id="expires_at_help">Optional: automatically unpublish on this date</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="slug">Slug</label>
+                                    <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="auto-generated">
+                                </div>
+                                
+                                <?php if (!empty($entry['id'])): ?>
+                                    <div class="info-item">
+                                        <label>Created</label>
+                                        <div class="info-value"><?= !empty($entry['created_at']) ? date('m.d.Y, g:i A', strtotime($entry['created_at'])) : '—' ?></div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Updated</label>
+                                        <div class="info-value"><?= !empty($entry['updated_at']) ? date('m.d.Y, g:i A', strtotime($entry['updated_at'])) : '—' ?></div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Version</label>
+                                        <div class="info-value">
+                                            v<?= htmlspecialchars($entry['version'] ?? 1) ?>
+                                            <a href="#" id="view-versions" class="link" style="margin-left: 8px;" aria-label="View version history for this entry">View History</a>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
-                    {endif}
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            {if entry exist}Update Entry{else}Create Entry{endif}
-                        </button>
-                        <a href="/admin/index.php?page=entries&collection={{ collection.slug }}" class="btn btn-secondary">
-                            Cancel
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <h3>SEO</h3>
-                    <div class="form-group">
-                        <label for="meta_title">Meta Title</label>
-                        <input type="text" name="meta_title" id="meta_title" class="input" value="{{ entry.meta_title }}" placeholder="SEO title">
-                    </div>
-                    <div class="form-group">
-                        <label for="meta_description">Meta Description</label>
-                        <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="SEO description">{{ entry.meta_description }}</textarea>
+                        
+                        <!-- SEO Tab -->
+                        <div class="tab-pane" id="seo-tab">
+                            <div class="card">
+                                <div class="form-group">
+                                    <label for="meta_title">Meta Title</label>
+                                    <input type="text" name="meta_title" id="meta_title" class="input" value="<?= htmlspecialchars($entry['meta_title'] ?? '') ?>" placeholder="SEO title">
+                                </div>
+                                <div class="form-group">
+                                    <label for="meta_description">Meta Description</label>
+                                    <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="SEO description"><?= htmlspecialchars($entry['meta_description'] ?? '') ?></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Templating Tab -->
+                        <div class="tab-pane" id="templating-tab">
+                            <div class="templating-content">
+                                <p class="templating-intro">
+                                    For a detailed overview about templating, please visit 
+                                    <a href="/admin/index.php?page=help#templating" target="_blank">the documentation site</a>.
+                                </p>
+                                
+                                <!-- Field Slugs Section -->
+                                <div class="templating-section">
+                                    <div class="section-header">
+                                        <h4>Field slugs</h4>
+                                    </div>
+                                    <div class="field-slugs-list">
+                                        <?php if (!empty($fields)): ?>
+                                            <?php foreach ($fields as $field): ?>
+                                                <?php
+                                                $fieldName = $field['name'] ?? '';
+                                                $fieldLabel = $field['label'] ?? $fieldName;
+                                                $slug = '{' . htmlspecialchars($fieldName) . '}';
+                                                ?>
+                                                <div class="field-slug-item">
+                                                    <div class="field-slug-label"><?= htmlspecialchars($fieldLabel) ?>:</div>
+                                                    <div class="field-slug-value">
+                                                        <code><?= htmlspecialchars($slug) ?></code>
+                                                        <button type="button" class="copy-btn" data-copy="<?= htmlspecialchars($slug) ?>" title="Copy to clipboard">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <p class="text-muted">No fields defined yet.</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
+                                <!-- Entry Level Example -->
+                                <div class="templating-section">
+                                    <div class="section-header">
+                                        <h4>Entry Level Example</h4>
+                                        <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <pre class="code-example" id="entry-example-code"><code><?php
+$collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
+$entrySlug = !empty($entry['slug']) ? htmlspecialchars($entry['slug']) : 'example-entry-slug';
+$entryExample = "{from '" . $collectionSlug . "' get entry '" . $entrySlug . "'}\n";
+$entryExample .= "  <h1>{ title }</h1>\n";
+if (!empty($fields)) {
+    foreach ($fields as $field) {
+        $fieldName = $field['name'] ?? '';
+        $fieldLabel = $field['label'] ?? $fieldName;
+        $fieldType = $field['type'] ?? '';
+        if ($fieldType === 'media') {
+            $entryExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+        } elseif ($fieldType === 'boolean') {
+            $entryExample .= "  {if " . $fieldName . " is on}\n";
+            $entryExample .= "    <span>It is featured</span>\n";
+            $entryExample .= "  {endif}\n";
+        } elseif ($fieldType === 'editor') {
+            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } elseif ($fieldType === 'select') {
+            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } else {
+            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        }
+    }
+}
+$entryExample .= "{endget}";
+echo htmlspecialchars($entryExample);
+?></code></pre>
+                                </div>
+                                
+                                <!-- Collection Level Example -->
+                                <div class="templating-section">
+                                    <div class="section-header">
+                                        <h4>Collection Level Example</h4>
+                                        <button type="button" class="copy-btn" id="copy-collection-example" title="Copy to clipboard">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <pre class="code-example" id="collection-example-code"><code><?php
+$collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
+$collectionExample = "{for each entry in '" . $collectionSlug . "'}\n";
+$collectionExample .= "  <h1>{ title }</h1>\n";
+if (!empty($fields)) {
+    foreach ($fields as $field) {
+        $fieldName = $field['name'] ?? '';
+        $fieldLabel = $field['label'] ?? $fieldName;
+        $fieldType = $field['type'] ?? '';
+        if ($fieldType === 'media') {
+            $collectionExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+        } elseif ($fieldType === 'boolean') {
+            $collectionExample .= "  {if " . $fieldName . " is on}\n";
+            $collectionExample .= "    <span>It is featured</span>\n";
+            $collectionExample .= "  {endif}\n";
+        } elseif ($fieldType === 'editor') {
+            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } elseif ($fieldType === 'select') {
+            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        } else {
+            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
+        }
+    }
+}
+$collectionExample .= "{endfor}";
+echo htmlspecialchars($collectionExample);
+?></code></pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -172,14 +324,14 @@
 </div>
 
 <!-- Entry Editor JavaScript -->
-<div id="entry-editor-config" data-collection-slug="{{ collection.slug }}"></div>
+<div id="entry-editor-config" data-collection-slug="<?= htmlspecialchars($collection['slug'] ?? '') ?>"></div>
 <script src="/admin/js/entry-editor.js"></script>
 
-{if fieldtype_assets.js_files exist}
-  {for src in fieldtype_assets.js_files}
-    <script src="{{ src }}" defer></script>
-  {endfor}
-{endif}
+<?php if (!empty($fieldtypeAssets['js_files'])): ?>
+    <?php foreach ($fieldtypeAssets['js_files'] as $src): ?>
+        <script src="<?= htmlspecialchars($src) ?>" defer></script>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <!-- Direct Editor assets (robust, isolated) -->
 <script src="/fieldtypes/Editor/core/commands.js" defer></script>
@@ -197,3 +349,67 @@
 <script src="/fieldtypes/Editor/ui/markdownToolbar.js" defer></script>
 <script src="/fieldtypes/Editor/ui/blockToolbar.js" defer></script>
 <script src="/fieldtypes/Editor/fieldtype.js" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.dataset.tab;
+            
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update panes
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            const targetPane = document.getElementById(tabName + '-tab');
+            if (targetPane) targetPane.classList.add('active');
+        });
+    });
+    
+    // Copy to clipboard functionality
+    function copyToClipboard(text, button) {
+        navigator.clipboard.writeText(text).then(function() {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>';
+            button.style.color = 'var(--success-600)';
+            setTimeout(function() {
+                button.innerHTML = originalHTML;
+                button.style.color = '';
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy to clipboard');
+        });
+    }
+    
+    // Copy field slugs
+    document.querySelectorAll('.field-slug-item .copy-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const text = this.getAttribute('data-copy');
+            copyToClipboard(text, this);
+        });
+    });
+    
+    // Copy entry example
+    const copyEntryBtn = document.getElementById('copy-entry-example');
+    if (copyEntryBtn) {
+        copyEntryBtn.addEventListener('click', function() {
+            const codeElement = document.getElementById('entry-example-code');
+            const text = codeElement.textContent || codeElement.innerText;
+            copyToClipboard(text, this);
+        });
+    }
+    
+    // Copy collection example
+    const copyCollectionBtn = document.getElementById('copy-collection-example');
+    if (copyCollectionBtn) {
+        copyCollectionBtn.addEventListener('click', function() {
+            const codeElement = document.getElementById('collection-example-code');
+            const text = codeElement.textContent || codeElement.innerText;
+            copyToClipboard(text, this);
+        });
+    }
+});
+</script>
