@@ -9,6 +9,14 @@ settings/
 backups/
 temp/
 
+# Exception: Demo content collections (shipped with CMS)
+!content/collections/blog/
+!content/collections/services/
+!content/collections/contact/
+!content/collections/blog/**
+!content/collections/services/**
+!content/collections/contact/**
+
 # Environment and configuration files
 .env
 config.php

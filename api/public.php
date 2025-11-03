@@ -100,4 +100,42 @@ if ($action === 'get_site_settings') {
     respond(['status'=>'ok','data'=>['settings'=>$siteSettings]]);
 }
 
+if ($action === 'get_collection_info') {
+    $collection = $input['collection'] ?? '';
+    if (empty($collection)) {
+        respond(['status'=>'error','message'=>'Collection parameter required']);
+    }
+    
+    $dir = '';
+    $collections = $storage->list('collections');
+    foreach ($collections as $d) {
+        $m = $storage->read("collections/$d/collection.json");
+        if ($m && ($m['slug'] === $collection || $m['id'] === $collection)) {
+            $dir = $d;
+            break;
+        }
+    }
+    
+    if (!$dir) {
+        respond(['status'=>'error','message'=>'Collection not found']);
+    }
+    
+    $collectionData = $storage->read("collections/$dir/collection.json");
+    $schema = $storage->read("collections/$dir/schema.json");
+    
+    // Only return if Public API is enabled
+    if (($collectionData['entry_method'] ?? 'admin_only') !== 'public_api') {
+        respond(['status'=>'error','message'=>'Public API not enabled for this collection']);
+    }
+    
+    respond([
+        'status'=>'ok',
+        'data'=>[
+            'schema' => $schema,
+            'api_key' => $collectionData['api_key'] ?? '',
+            'collection' => $collectionData
+        ]
+    ]);
+}
+
 respond(['status'=>'error','message'=>'Invalid action']); 
