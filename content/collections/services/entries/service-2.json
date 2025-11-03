@@ -1,0 +1,14 @@
+{
+  "id": "service-2",
+  "title": "Content Management",
+  "slug": "content-management",
+  "description": "Easy-to-use CMS solutions for managing your content",
+  "content": "<p>Take control of your content with our intuitive content management systems. Update your website anytime, anywhere without technical knowledge.</p><p>Perfect for blogs, portfolios, and business websites.</p>",
+  "icon": "📝",
+  "price": "Starting at $1,500",
+  "featured": true,
+  "status": "published",
+  "created_at": "2025-01-15T10:00:00+00:00",
+  "updated_at": "2025-01-15T10:00:00+00:00"
+}
+
