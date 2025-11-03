@@ -1841,5 +1841,517 @@ async function deleteDomain(domainName) {
     margin-bottom: 16px;
     font-size: 0.9em;
 }
+
+/* Audit Log, Activity, Updates styles when in tabs */
+#audit-log .audit-log-page,
+#activity .activity-page,
+#updates .updates-page {
+    padding: 0;
+}
+
+#audit-log .page-header,
+#activity .page-header,
+#updates .page-header {
+    display: none;
+}
+
+#audit-log .main-actions-bar,
+#activity .main-actions-bar {
+    margin-bottom: 1.5rem;
+}
+
+#updates .updates-content {
+    display: grid;
+    gap: 1.5rem;
+}
+</style>
+
+<!-- Audit Log Script -->
+<script>
+(function() {
+    'use strict';
+    
+    let currentPage = 0;
+    const pageSize = 50;
+    let allLogs = [];
+    let filteredLogs = [];
+    const eventTypes = new Set();
+    
+    window.initAuditLog = function() {
+        loadLogs();
+        setupFilters();
+        
+        const refreshBtn = document.getElementById('refresh-logs');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                currentPage = 0;
+                loadLogs(true);
+            });
+        }
+        
+        const loadMoreBtn = document.getElementById('load-more');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function() {
+                currentPage++;
+                renderLogs();
+            });
+        }
+    };
+    
+    function setupFilters() {
+        const eventFilter = document.getElementById('event-filter');
+        const dateFilter = document.getElementById('date-filter');
+        
+        if (eventFilter) {
+            eventFilter.addEventListener('change', function() {
+                filterLogs();
+            });
+        }
+        
+        if (dateFilter) {
+            dateFilter.addEventListener('change', function() {
+                filterLogs();
+            });
+        }
+    }
+    
+    function filterLogs() {
+        const eventFilter = document.getElementById('event-filter')?.value || '';
+        const dateFilter = document.getElementById('date-filter')?.value || '';
+        
+        filteredLogs = allLogs.filter(log => {
+            if (eventFilter && log.event !== eventFilter) {
+                return false;
+            }
+            
+            if (dateFilter) {
+                const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                if (logDate !== dateFilter) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        currentPage = 0;
+        renderLogs();
+    }
+    
+    function loadLogs(refresh = false) {
+        const tbody = document.getElementById('log-entries');
+        if (!tbody) return;
+        
+        if (refresh) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner">Loading...</div></td></tr>';
+        }
+        
+        fetch('/api/log.php?action=list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.logs) {
+                    allLogs = data.logs;
+                    
+                    allLogs.forEach(log => {
+                        if (log.event) {
+                            eventTypes.add(log.event);
+                        }
+                    });
+                    
+                    const eventFilter = document.getElementById('event-filter');
+                    if (eventFilter) {
+                        eventFilter.innerHTML = '<option value="">All Events</option>';
+                        Array.from(eventTypes).sort().forEach(event => {
+                            const option = document.createElement('option');
+                            option.value = event;
+                            option.textContent = event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            eventFilter.appendChild(option);
+                        });
+                    }
+                    
+                    filteredLogs = allLogs;
+                    currentPage = 0;
+                    renderLogs();
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading logs</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading logs:', error);
+                const tbody = document.getElementById('log-entries');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading logs: ' + error.message + '</td></tr>';
+                }
+            });
+    }
+    
+    function renderLogs() {
+        const tbody = document.getElementById('log-entries');
+        if (!tbody) return;
+        
+        const startIndex = currentPage * pageSize;
+        const endIndex = startIndex + pageSize;
+        const logsToShow = filteredLogs.slice(0, endIndex);
+        
+        if (logsToShow.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No log entries found</td></tr>';
+            const loadMoreBtn = document.getElementById('load-more');
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = 'none';
+            }
+            return;
+        }
+        
+        let html = '';
+        logsToShow.forEach(log => {
+            const timestamp = new Date(log.timestamp).toLocaleString();
+            const details = log.details ? JSON.stringify(log.details, null, 2) : '';
+            
+            html += `
+                <tr>
+                    <td>${timestamp}</td>
+                    <td>${escapeHtml(log.user || 'Unknown')}</td>
+                    <td><span class="badge badge-info">${escapeHtml(log.event || 'Unknown')}</span></td>
+                    <td>${escapeHtml(log.ip || 'Unknown')}</td>
+                    <td>
+                        ${details ? `<details><summary>View Details</summary><pre style="max-width: 400px; overflow: auto;">${escapeHtml(details)}</pre></details>` : '-'}
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        
+        const loadMoreBtn = document.getElementById('load-more');
+        if (loadMoreBtn) {
+            loadMoreBtn.style.display = (endIndex < filteredLogs.length) ? 'block' : 'none';
+        }
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+})();
+</script>
+
+<!-- Activity Feed Script -->
+<script>
+(function() {
+    'use strict';
+    
+    let currentPage = 0;
+    const pageSize = 20;
+    let allActivity = [];
+    let filteredActivity = [];
+    let currentFilter = 'all';
+    
+    window.initActivity = function() {
+        loadActivity();
+        setupFilters();
+        
+        const refreshBtn = document.getElementById('refresh-activity');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                currentPage = 0;
+                loadActivity(true);
+            });
+        }
+        
+        const loadMoreBtn = document.getElementById('load-more-activity');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', function() {
+                currentPage++;
+                renderActivity();
+            });
+        }
+    };
+    
+    function setupFilters() {
+        const categoryFilter = document.getElementById('category-filter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function() {
+                currentFilter = this.value;
+                filterActivity();
+            });
+        }
+    }
+    
+    function filterActivity() {
+        if (currentFilter === 'all') {
+            filteredActivity = allActivity;
+        } else {
+            filteredActivity = allActivity.filter(item => item.category === currentFilter);
+        }
+        
+        currentPage = 0;
+        renderActivity();
+    }
+    
+    function loadActivity(refresh = false) {
+        const feed = document.getElementById('activity-feed');
+        if (!feed) return;
+        
+        if (refresh) {
+            feed.innerHTML = '<div class="text-center"><div class="spinner">Loading activity...</div></div>';
+        }
+        
+        fetch('/api/activity.php?action=list&limit=' + (pageSize * 2))
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.activity) {
+                    allActivity = data.activity;
+                    filteredActivity = allActivity;
+                    currentPage = 0;
+                    renderActivity();
+                } else {
+                    feed.innerHTML = '<div class="text-center">Error loading activity</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading activity:', error);
+                feed.innerHTML = '<div class="text-center">Error loading activity: ' + error.message + '</div>';
+            });
+    }
+    
+    function renderActivity() {
+        const feed = document.getElementById('activity-feed');
+        if (!feed) return;
+        
+        const startIndex = currentPage * pageSize;
+        const endIndex = startIndex + pageSize;
+        const itemsToShow = filteredActivity.slice(0, endIndex);
+        
+        if (itemsToShow.length === 0) {
+            feed.innerHTML = '<div class="text-center">No activity found</div>';
+            const loadMoreBtn = document.getElementById('load-more-activity');
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = 'none';
+            }
+            return;
+        }
+        
+        let html = '<div class="activity-timeline">';
+        itemsToShow.forEach((item, index) => {
+            const timestamp = new Date(item.timestamp).toLocaleString();
+            const isRecent = index < 5;
+            
+            html += `
+                <div class="activity-item ${isRecent ? 'recent' : ''}" style="border-left: 3px solid ${item.color || '#6c757d'};">
+                    <div class="activity-icon" style="background: ${item.color || '#6c757d'}20;">
+                        ${item.icon || '📌'}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-message">${escapeHtml(item.message)}</div>
+                        <div class="activity-meta">
+                            <span class="activity-user">${escapeHtml(item.user)}</span>
+                            <span class="activity-time">${timestamp}</span>
+                        </div>
+                        ${item.details && Object.keys(item.details).length > 0 ? `
+                            <details class="activity-details">
+                                <summary>Details</summary>
+                                <pre style="max-width: 600px; overflow: auto; font-size: 0.875em; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-top: 8px;">${escapeHtml(JSON.stringify(item.details, null, 2))}</pre>
+                            </details>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        feed.innerHTML = html;
+        
+        const loadMoreBtn = document.getElementById('load-more-activity');
+        if (loadMoreBtn) {
+            loadMoreBtn.style.display = (endIndex < filteredActivity.length) ? 'block' : 'none';
+        }
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+})();
+</script>
+
+<!-- Updates Script -->
+<script>
+let updateData = null;
+let updateProgress = null;
+
+window.initUpdates = function() {
+    loadCurrentVersion();
+    checkForUpdates();
+    
+    const checkBtn = document.getElementById('check-updates-btn');
+    if (checkBtn) {
+        checkBtn.addEventListener('click', checkForUpdates);
+    }
+    
+    const downloadBtn = document.getElementById('download-update-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadUpdate);
+    }
+};
+
+function loadCurrentVersion() {
+    document.getElementById('current-version').textContent = '1.0.0';
+    document.getElementById('current-version-text').textContent = '1.0.0';
+    document.getElementById('install-date').textContent = 'Unknown';
+    document.getElementById('last-update').textContent = 'Never';
+}
+
+async function checkForUpdates() {
+    const statusIndicator = document.getElementById('update-status');
+    const updateDetails = document.getElementById('update-details');
+    const updateActions = document.getElementById('update-actions');
+    
+    if (!statusIndicator) return;
+    
+    statusIndicator.innerHTML = `
+        <div class="status-indicator loading">
+            <div class="spinner"></div>
+            <span>Checking for updates...</span>
+        </div>
+    `;
+    if (updateDetails) updateDetails.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/updates.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'check_updates',
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            updateData = result.data;
+            displayUpdateStatus(result.data);
+        } else {
+            if (statusIndicator) {
+                statusIndicator.innerHTML = `
+                    <div class="status-indicator error">
+                        <span>Error checking updates</span>
+                    </div>
+                `;
+            }
+            if (updateDetails) updateDetails.style.display = 'block';
+            if (updateActions) updateActions.style.display = 'block';
+        }
+    } catch (error) {
+        if (statusIndicator) {
+            statusIndicator.innerHTML = `
+                <div class="status-indicator error">
+                    <span>Failed to check updates</span>
+                </div>
+            `;
+        }
+        if (updateDetails) updateDetails.style.display = 'block';
+        if (updateActions) updateActions.style.display = 'block';
+    }
+}
+
+function displayUpdateStatus(data) {
+    const statusIndicator = document.getElementById('update-status');
+    const updateDetails = document.getElementById('update-details');
+    const updateActions = document.getElementById('update-actions');
+    const updateInfo = document.getElementById('update-info');
+    
+    if (!statusIndicator || !updateInfo) return;
+    
+    if (data.update_available) {
+        statusIndicator.innerHTML = `
+            <div class="status-indicator available">
+                <span>Update Available</span>
+            </div>
+        `;
+        
+        updateInfo.innerHTML = `
+            <div class="update-available">
+                <h3>Version ${data.latest_version} is available</h3>
+                <p>You are currently running version ${data.current_version}.</p>
+            </div>
+        `;
+        
+        if (updateActions) updateActions.style.display = 'block';
+        if (updateDetails) updateDetails.style.display = 'block';
+    } else {
+        statusIndicator.innerHTML = `
+            <div class="status-indicator up-to-date">
+                <span>Up to Date</span>
+            </div>
+        `;
+        
+        updateInfo.innerHTML = `
+            <div class="update-current">
+                <h3>You're up to date!</h3>
+                <p>You are running the latest version (${data.current_version}).</p>
+            </div>
+        `;
+        
+        if (updateActions) updateActions.style.display = 'block';
+        if (updateDetails) updateDetails.style.display = 'block';
+    }
+}
+
+async function downloadUpdate() {
+    // Placeholder for download functionality
+    alert('Download functionality will be implemented in the future.');
+}
+</script>
+
+<!-- Activity Feed Styles -->
+<style>
+.activity-timeline {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.activity-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-message {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.activity-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.875em;
+    color: #666;
+}
 </style>
 
