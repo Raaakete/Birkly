@@ -47,7 +47,29 @@
                     </div>
                     
                     <div class="contact-form-wrapper">
-                        {public_form 'contact'}
+                        {entry for 'contact'}
+                        <div class="form-group">
+                            <label for="title">Name <span class="required">*</span></label>
+                            <input type="text" name="{title}" id="title" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email <span class="required">*</span></label>
+                            <input type="email" name="{email}" id="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <input type="text" name="{subject}" id="subject">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Message <span class="required">*</span></label>
+                            <textarea name="{message}" id="message" rows="5" required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                        {endentry}
                     </div>
                 </div>
             </div>
