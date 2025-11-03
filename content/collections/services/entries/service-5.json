@@ -1,0 +1,14 @@
+{
+  "id": "service-5",
+  "title": "Mobile App Development",
+  "slug": "mobile-app-development",
+  "description": "Native and cross-platform mobile applications",
+  "content": "<p>Reach your audience on the go with our mobile app development services. We create apps for iOS and Android using modern frameworks.</p><p>From concept to launch, we guide you through the entire process.</p>",
+  "icon": "📱",
+  "price": "Starting at $4,000",
+  "featured": true,
+  "status": "published",
+  "created_at": "2025-01-15T10:00:00+00:00",
+  "updated_at": "2025-01-15T10:00:00+00:00"
+}
+
