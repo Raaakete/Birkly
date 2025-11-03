@@ -37,6 +37,21 @@ A flat-file, modular, zero-dependency CMS designed for simplicity, security, and
 - No configuration is needed for most local environments (XAMPP, MAMP, Laragon, Herd, Valet, etc.).
 - All static files and API endpoints work out of the box.
 
+### Demo Content
+
+To set up demo content (blog posts, services, contact form) for testing:
+
+```bash
+php scripts/create-demo-content.php
+```
+
+This creates:
+- **Blog** collection with 5 sample posts
+- **Services** collection with 5 sample services
+- **Contact** collection with Public API enabled for form submissions
+
+After running the script, visit [http://localhost:8080/demo-website/](http://localhost:8080/demo-website/) to see the demo website in action.
+
 ### Production/Deployment
 
 1. Upload all files to your web server (Apache, Nginx, etc.).
