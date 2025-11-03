@@ -1054,8 +1054,8 @@
         // If no templates found, try a different approach - check all elements
         if (templates.length === 0) {
             console.warn('HaruCMS: No templates found via text nodes, trying alternative detection...');
-            const allElements = document.body.querySelectorAll('*');
-            for (const el of allElements) {
+            const allElementsAlt = document.body.querySelectorAll('*');
+            for (const el of allElementsAlt) {
                 if (el.dataset.cmsProcessed) continue;
                 const innerHTML = el.innerHTML || '';
                 if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
