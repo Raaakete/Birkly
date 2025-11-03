@@ -80,9 +80,6 @@ $activePluginNavigation = get_active_plugin_navigation();
                 <!-- Second Section: Plugins (only show if plugins exist) -->
                 <?php if (!empty($activePluginNavigation)): ?>
                 <div class="nav-section" id="nav-plugins-section">
-                    <div class="nav-section-header">
-                        <span class="nav-section-title">Plugins</span>
-                    </div>
                     <ul class="nav-links" id="links-plugins">
                         <?php foreach ($activePluginNavigation as $plugin): ?>
                         <li class="nav-item">
@@ -117,11 +114,11 @@ $activePluginNavigation = get_active_plugin_navigation();
                             Help
                         </a>
                     </li>
+                </ul>
+
+                <ul class="nav-links" id="links-account">
                     <li class="nav-item">
                         <div class="user-info">
-                            <div class="user-avatar">
-                                <?= strtoupper(substr(getCurrentUser()['email'] ?? 'U', 0, 1)) ?>
-                            </div>
                             <div class="user-details">
                                 <div class="user-name"><?= htmlspecialchars(getCurrentUser()['email'] ?? 'User') ?></div>
                                 <div class="user-role"><?= htmlspecialchars(ucfirst(getCurrentUser()['role'] ?? 'viewer')) ?></div>
