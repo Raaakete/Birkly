@@ -315,7 +315,8 @@
         }
         
         // Handle {for each item in 'collection'} loops
-        const loopRegex = /\{for\s+(?:each\s+)?([^\s]+)\s+in\s+['"]([^'"]+)['"]\}/g;
+        // Match: {for each entry in 'services'} or {for entry in 'services'}
+        const loopRegex = /\{for\s+(?:each\s+)?([a-zA-Z0-9_]+)\s+in\s+['"]([^'"]+)['"]\}/g;
         output = output.replace(loopRegex, (match, itemVar, collectionName) => {
             const items = data[collectionName] || [];
             if (!Array.isArray(items)) return '';
@@ -503,7 +504,9 @@
                 
                 // Support single-brace variables for current item: { title }, { slug }, etc.
                 // Skip control structures like {if, {for, {endfor}
+                // Handle variables with spaces: { title } -> title
                 itemOutput = itemOutput.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, (m, name) => {
+                    name = name.trim(); // Trim whitespace
                     const lowers = name.toLowerCase();
                     if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
                     // Prefer current item property
@@ -1009,8 +1012,11 @@
                     originalHtml: parent.innerHTML,
                     template: parent.innerHTML
                 });
+                console.log('HaruCMS: Found template in element:', parent.tagName, parent.className);
             }
         }
+        
+        console.log('HaruCMS: Found', templates.length, 'templates to process');
         
         // Method 2: Check attributes (for href, src, etc.)
         // Find all elements that might have template syntax in attributes
@@ -1041,6 +1047,8 @@
         // Process each template
         for (let template of templates) {
             try {
+                console.log('HaruCMS: Processing template:', template.template.substring(0, 100));
+                
                 // Extract collection names from template
                 const collectionMatches = template.template.match(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/g);
                 
@@ -1053,6 +1061,8 @@
                         }
                     });
                     
+                    console.log('HaruCMS: Found collections:', collections);
+                    
                     // Fetch data for all collections
                     const data = {
                         site_title: siteTitle,
@@ -1060,10 +1070,13 @@
                     };
                     
                     for (let collectionName of collections) {
+                        console.log('HaruCMS: Fetching entries for collection:', collectionName);
                         const apiData = await fetchContent('list_entries', { collection: collectionName });
                         if (apiData && apiData.status === 'ok' && apiData.data.entries) {
                             data[collectionName] = apiData.data.entries;
+                            console.log('HaruCMS: Fetched', apiData.data.entries.length, 'entries for', collectionName);
                         } else {
+                            console.warn('HaruCMS: Failed to fetch entries for', collectionName, apiData);
                             data[collectionName] = [];
                         }
                     }
@@ -1071,17 +1084,21 @@
                     // Render template
                     const rendered = renderTemplate(template.template, data);
                     template.element.innerHTML = rendered;
+                    console.log('HaruCMS: Template rendered successfully');
                 } else {
                     // No collections, just render variables
                     const data = {
                         site_title: siteTitle,
                         current_year: new Date().getFullYear()
                     };
+                    console.log('HaruCMS: Rendering template without collections');
                     const rendered = renderTemplate(template.template, data);
                     template.element.innerHTML = rendered;
+                    console.log('HaruCMS: Template rendered successfully');
                 }
             } catch (error) {
                 console.error('HaruCMS: Error processing template:', error);
+                console.error('HaruCMS: Error stack:', error.stack);
             }
         }
     }
@@ -1354,11 +1371,16 @@
         
         HaruCMS.initialized = true;
         
+        console.log('HaruCMS: Initializing...');
+        
         // Detect API endpoint first
         await detectApiEndpoint();
+        console.log('HaruCMS: API endpoint detected:', HaruCMS.apiEndpoint);
         
         // Process templates immediately (don't wait for DOMContentLoaded)
+        console.log('HaruCMS: Processing templates...');
         await processTemplates();
+        console.log('HaruCMS: Templates processed');
         
         // Process {entry for 'collection'} blocks
         const entryBlocks = document.querySelectorAll('.haru-entry-block');
