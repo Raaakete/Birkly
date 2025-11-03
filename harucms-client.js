@@ -328,6 +328,81 @@
             return items.map(item => {
                 let itemOutput = loopContent;
                 
+                // Handle nested {for each tag} loops (without 'in' clause) - refers to item's property
+                let nestedLoopProcessed = true;
+                while (nestedLoopProcessed) {
+                    nestedLoopProcessed = false;
+                    const nestedLoopRegex = /\{for\s+each\s+([^\s}]+)\}/g;
+                    const nestedMatch = nestedLoopRegex.exec(itemOutput);
+                    if (nestedMatch) {
+                        nestedLoopProcessed = true;
+                        const fullMatch = nestedMatch[0];
+                        const propName = nestedMatch[1];
+                        
+                        // Check if it's a property of the current item (e.g., tags)
+                        const array = item[propName] || [];
+                        if (!Array.isArray(array)) {
+                            // Remove the entire loop
+                            const startPos = itemOutput.indexOf(fullMatch);
+                            const endPos = itemOutput.indexOf('{endfor', startPos);
+                            if (endPos !== -1) {
+                                itemOutput = itemOutput.substring(0, startPos) + itemOutput.substring(endPos + 7);
+                            } else {
+                                itemOutput = itemOutput.replace(fullMatch, '');
+                            }
+                            nestedLoopRegex.lastIndex = 0; // Reset regex
+                            continue;
+                        }
+                        
+                        // Find the matching {endfor}
+                        const startPos = itemOutput.indexOf(fullMatch);
+                        let pos = startPos + fullMatch.length;
+                        let depth = 1;
+                        let endPos = -1;
+                        
+                        while (pos < itemOutput.length && depth > 0) {
+                            const nextFor = itemOutput.indexOf('{for', pos);
+                            const nextEndFor = itemOutput.indexOf('{endfor', pos);
+                            
+                            if (nextFor !== -1 && nextFor < nextEndFor) {
+                                depth++;
+                                pos = nextFor + 4;
+                            } else if (nextEndFor !== -1) {
+                                depth--;
+                                if (depth === 0) {
+                                    endPos = nextEndFor;
+                                    break;
+                                }
+                                pos = nextEndFor + 7;
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                        if (endPos === -1) {
+                            itemOutput = itemOutput.replace(fullMatch, '');
+                            nestedLoopRegex.lastIndex = 0;
+                            continue;
+                        }
+                        
+                        const nestedLoopContent = itemOutput.substring(startPos + fullMatch.length, endPos);
+                        
+                        // Render each array item
+                        const rendered = array.map(tagItem => {
+                            let tagOutput = nestedLoopContent;
+                            // Replace { tag } with actual tag value
+                            tagOutput = tagOutput.replace(new RegExp(`\\{\\s*${propName}\\s*\\}`, 'g'), () => {
+                                return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                            });
+                            return tagOutput;
+                        }).join('');
+                        
+                        // Replace the nested loop with rendered content
+                        itemOutput = itemOutput.substring(0, startPos) + rendered + itemOutput.substring(endPos + 7);
+                        nestedLoopRegex.lastIndex = 0; // Reset regex
+                    }
+                }
+                
                 // First, handle nested foreach loops (like {foreach entry.tags as tag})
                 let foreachProcessed = true;
                 while (foreachProcessed) {
@@ -463,7 +538,13 @@
                 });
                 
                 // Handle conditionals inside loop
-                itemOutput = renderConditionals(itemOutput, item, itemVar);
+                // Create a combined data object that includes the item with both its variable name and as 'entry'
+                const loopData = {
+                    ...data,
+                    [itemVar]: item,
+                    entry: item // Also available as 'entry' for conditionals like {if entry.status == 'published'}
+                };
+                itemOutput = renderConditionals(itemOutput, loopData, itemVar);
                 
                 return itemOutput;
             }).join('');
@@ -549,6 +630,20 @@
     function renderConditionals(template, data, itemPrefix = '') {
         let output = template;
         
+        // Handle {if variable == 'value'} comparisons
+        output = output.replace(/\{if\s+([^}]+)\s+==\s+['"]([^'"]+)['"]\}/g, (match, varPath, expectedValue) => {
+            const value = getNestedValue(data, varPath);
+            const stringValue = String(value || '');
+            return stringValue === expectedValue ? '' : '<!--SKIP-->';
+        });
+        
+        // Handle {if variable has property} (e.g., {if entry has tags})
+        output = output.replace(/\{if\s+([^\s]+)\s+has\s+([^\s}]+)\}/g, (match, objPath, propName) => {
+            const obj = getNestedValue(data, objPath);
+            const hasProp = obj && typeof obj === 'object' && (obj[propName] !== undefined && obj[propName] !== null && obj[propName] !== '');
+            return hasProp ? '' : '<!--SKIP-->';
+        });
+        
         // Handle {if variable exist}
         output = output.replace(/\{if\s+([^}]+)\s+exist\}/g, (match, varPath) => {
             const value = getNestedValue(data, varPath);
@@ -614,9 +709,32 @@
     }
     
     /**
+     * Fetch site settings from API
+     */
+    async function fetchSiteSettings() {
+        try {
+            const apiData = await fetchContent('get_site_settings', {});
+            if (apiData && apiData.status === 'ok' && apiData.data.settings) {
+                return apiData.data.settings;
+            }
+        } catch (error) {
+            console.warn('HaruCMS: Could not fetch site settings:', error);
+        }
+        return {
+            title: 'HaruCMS',
+            name: 'HaruCMS',
+            description: ''
+        };
+    }
+    
+    /**
      * Process all templates in the page
      */
     async function processTemplates() {
+        // Fetch site settings first
+        const siteSettings = await fetchSiteSettings();
+        const siteTitle = siteSettings.name || siteSettings.title || 'HaruCMS';
+        
         // Check for URL parameters that might indicate we need a specific entry
         urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
@@ -652,7 +770,7 @@
                 if (entry) {
                     // Prepare data with the specific entry
                     const data = {
-                        site_title: document.title || 'My Website',
+                        site_title: siteTitle,
                         current_year: new Date().getFullYear(),
                         title: entry.title || '',
                         content: entry.content || '',
@@ -660,6 +778,7 @@
                         created_at: entry.created_at || '',
                         excerpt: entry.excerpt || '',
                         tags: entry.tags || [],
+                        entry: entry, // Add entry object for conditionals
                         ...entry // Spread all entry properties for direct access
                     };
                     
@@ -718,7 +837,7 @@
                     
                     // Process remaining templates (header, footer) with default data
                     const defaultData = {
-                        site_title: 'HaruCMS',
+                        site_title: siteTitle,
                         current_year: new Date().getFullYear()
                     };
                     
@@ -780,7 +899,7 @@
                 
                 // Process remaining templates (header, footer) with default data
                 const defaultData = {
-                    site_title: 'HaruCMS',
+                    site_title: siteTitle,
                     current_year: new Date().getFullYear()
                 };
                 
@@ -893,7 +1012,7 @@
                     
                     // Fetch data for all collections
                     const data = {
-                        site_title: document.title || 'My Website',
+                        site_title: siteTitle,
                         current_year: new Date().getFullYear()
                     };
                     
@@ -912,7 +1031,7 @@
                 } else {
                     // No collections, just render variables
                     const data = {
-                        site_title: document.title || 'My Website',
+                        site_title: siteTitle,
                         current_year: new Date().getFullYear()
                     };
                     const rendered = renderTemplate(template.template, data);

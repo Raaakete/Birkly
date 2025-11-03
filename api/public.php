@@ -81,4 +81,23 @@ if ($action === 'get_entry') {
     respond(['status'=>'ok','data'=>['entry'=>$data]]);
 }
 
+if ($action === 'get_site_settings') {
+    $settingsPath = __DIR__ . '/../settings/site.json';
+    $siteSettings = [
+        'title' => 'HaruCMS',
+        'name' => 'HaruCMS',
+        'description' => '',
+        'url' => ''
+    ];
+    
+    if (file_exists($settingsPath)) {
+        $fileData = json_decode(file_get_contents($settingsPath), true);
+        if ($fileData) {
+            $siteSettings = array_merge($siteSettings, $fileData);
+        }
+    }
+    
+    respond(['status'=>'ok','data'=>['settings'=>$siteSettings]]);
+}
+
 respond(['status'=>'error','message'=>'Invalid action']); 
