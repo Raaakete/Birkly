@@ -1134,6 +1134,20 @@
             try {
                 console.log('HaruCMS: Processing template:', template.template.substring(0, 100));
                 
+                // Check if this template contains entry blocks - if so, preserve them
+                const entryBlocksInTemplate = template.element.querySelectorAll('.haru-entry-block');
+                const preservedBlocks = [];
+                if (entryBlocksInTemplate.length > 0) {
+                    console.log('HaruCMS: Found', entryBlocksInTemplate.length, 'entry blocks in template, preserving them');
+                    // Store the entry blocks before rendering
+                    entryBlocksInTemplate.forEach((block, index) => {
+                        preservedBlocks.push({
+                            html: block.outerHTML,
+                            index: index
+                        });
+                    });
+                }
+                
                 // Extract collection names from template
                 // Match: {for each entry in 'services'} or {for entry in 'services'}
                 const collectionMatches = template.template.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"]([^'"]+)['"]\}/g);
@@ -1168,7 +1182,24 @@
                     }
                     
                     // Render template
-                    const rendered = renderTemplate(template.template, data);
+                    let rendered = renderTemplate(template.template, data);
+                    
+                    // Restore preserved entry blocks if any were removed
+                    if (preservedBlocks.length > 0) {
+                        preservedBlocks.forEach(block => {
+                            // Check if the rendered HTML still contains this block
+                            if (!rendered.includes(block.html.substring(0, 50))) {
+                                // Block was removed, restore it
+                                // Find the placeholder position in the original template
+                                const placeholderRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/g;
+                                if (placeholderRegex.test(template.template)) {
+                                    // Replace placeholder in rendered with preserved block
+                                    rendered = rendered.replace(placeholderRegex, block.html);
+                                }
+                            }
+                        });
+                    }
+                    
                     template.element.innerHTML = rendered;
                     console.log('HaruCMS: Template rendered successfully');
                 } else {
@@ -1178,7 +1209,22 @@
                         current_year: new Date().getFullYear()
                     };
                     console.log('HaruCMS: Rendering template without collections');
-                    const rendered = renderTemplate(template.template, data);
+                    let rendered = renderTemplate(template.template, data);
+                    
+                    // Restore preserved entry blocks if any were removed
+                    if (preservedBlocks.length > 0) {
+                        preservedBlocks.forEach(block => {
+                            // Check if the rendered HTML still contains this block
+                            if (!rendered.includes(block.html.substring(0, 50))) {
+                                // Block was removed, restore it
+                                const placeholderRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/g;
+                                if (placeholderRegex.test(template.template)) {
+                                    rendered = rendered.replace(placeholderRegex, block.html);
+                                }
+                            }
+                        });
+                    }
+                    
                     template.element.innerHTML = rendered;
                     console.log('HaruCMS: Template rendered successfully');
                 }
