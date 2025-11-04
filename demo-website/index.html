@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{ site_title } - Demo Website</title>
+    <title>HaruCMS - Demo Website</title>
     <link rel="stylesheet" href="/demo-website/styles.css">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1><a href="/demo-website/index.html">{ site_title }</a></h1>
+            <h1><a href="/demo-website/index.html">HaruCMS</a></h1>
             <nav>
                 <a href="/demo-website/index.html">Home</a>
                 <a href="/demo-website/services.html">Services</a>
+                <a href="/demo-website/blog.html">Blog</a>
                 <a href="/demo-website/about.html">About</a>
                 <a href="/demo-website/contact.html">Contact</a>
             </nav>
@@ -47,7 +48,6 @@
                         {if entry has price}
                         <p class="service-price">{ price }</p>
                         {endif}
-                        <a href="/demo-website/service.html?slug={ slug }" class="service-link">Learn More →</a>
                     </div>
                     {endif}
                     {endfor}
@@ -91,7 +91,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; { site_title } { current_year }</p>
+            <p>&copy; HaruCMS { current_year }</p>
         </div>
     </footer>
 
