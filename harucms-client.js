@@ -359,13 +359,17 @@
                         
                         // Check if it's a property of the current item (e.g., tags)
                         // Try singular form first, then plural form (e.g., 'tag' -> 'tags')
-                        let array = item[propName] || [];
-                        if (!Array.isArray(array)) {
-                            // Try plural form if singular doesn't exist
+                        let array = item[propName];
+                        // If property doesn't exist or is not an array, try plural form
+                        if (!array || !Array.isArray(array)) {
                             const pluralForm = propName + 's';
-                            array = item[pluralForm] || [];
+                            array = item[pluralForm];
                         }
-                        if (!Array.isArray(array)) {
+                        // If still not an array, default to empty array
+                        if (!array || !Array.isArray(array)) {
+                            array = [];
+                        }
+                        if (!Array.isArray(array) || array.length === 0) {
                             // Remove the entire loop
                             const startPos = itemOutput.indexOf(fullMatch);
                             const endPos = itemOutput.indexOf('{endfor', startPos);
