@@ -356,18 +356,24 @@
                         nestedLoopProcessed = true;
                         const fullMatch = nestedMatch[0];
                         const propName = nestedMatch[1];
+                        console.log('HaruCMS: Processing nested loop for property:', propName, 'in item:', item.title || item.id);
                         
                         // Check if it's a property of the current item (e.g., tags)
                         // Try singular form first, then plural form (e.g., 'tag' -> 'tags')
                         let array = item[propName];
+                        console.log('HaruCMS: Checking property:', propName, 'value:', array, 'type:', typeof array, 'isArray:', Array.isArray(array));
                         // If property doesn't exist or is not an array, try plural form
                         if (!array || !Array.isArray(array)) {
                             const pluralForm = propName + 's';
                             array = item[pluralForm];
+                            console.log('HaruCMS: Trying plural form:', pluralForm, 'value:', array, 'isArray:', Array.isArray(array));
                         }
                         // If still not an array, default to empty array
                         if (!array || !Array.isArray(array)) {
                             array = [];
+                            console.log('HaruCMS: Property not found or not an array, defaulting to empty array');
+                        } else {
+                            console.log('HaruCMS: Found array with', array.length, 'items:', array);
                         }
                         
                         // Only remove the loop if it's not an array (empty arrays should still process)
@@ -416,9 +422,11 @@
                         }
                         
                         const nestedLoopContent = itemOutput.substring(startPos + fullMatch.length, endPos);
+                        console.log('HaruCMS: Nested loop content:', nestedLoopContent.substring(0, 100));
                         
                         // Render each array item
                         const rendered = array.map(tagItem => {
+                            console.log('HaruCMS: Processing tag item:', tagItem);
                             let tagOutput = nestedLoopContent;
                             
                             // First, replace all variables that refer to the outer loop item (e.g., { title }, { slug })
