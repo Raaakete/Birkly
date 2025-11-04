@@ -1236,24 +1236,23 @@
                                 extractedBlock.id = entryBlockHTML.match(/id\s*=\s*["']([^"']+)["']/)?.[1] || 'haru-entry-block-' + Math.random().toString(36).substr(2, 9);
                                 extractedBlock.dataset.haruCollection = collectionSlug;
                                 
-                                // Extract data-haru-content
+                                // Extract data-haru-content - keep it as encoded HTML string
+                                // The content is HTML-encoded in the attribute, we need to preserve it
                                 const contentMatch = entryBlockHTML.match(/data-haru-content\s*=\s*["']([^"']+)["']/);
                                 if (contentMatch) {
-                                    // Decode HTML entities in content
-                                    const tempContentDiv = document.createElement('div');
-                                    tempContentDiv.innerHTML = contentMatch[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-                                    extractedBlock.dataset.haruContent = tempContentDiv.textContent || contentMatch[1];
+                                    // Store the encoded content as-is (it will be decoded when used)
+                                    extractedBlock.dataset.haruContent = contentMatch[1];
+                                    console.log('HaruCMS: Extracted content from attribute, length:', contentMatch[1].length);
                                 } else {
-                                    // Try to get content from the full HTML
+                                    // Try to get content from the full HTML by finding the attribute value
                                     const contentStart = entryBlockHTML.indexOf('data-haru-content="');
                                     if (contentStart !== -1) {
                                         const contentEnd = entryBlockHTML.indexOf('"', contentStart + 19);
                                         if (contentEnd !== -1) {
                                             const encodedContent = entryBlockHTML.substring(contentStart + 19, contentEnd);
-                                            // Decode and extract
-                                            const tempContentDiv = document.createElement('div');
-                                            tempContentDiv.innerHTML = encodedContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-                                            extractedBlock.dataset.haruContent = tempContentDiv.textContent || encodedContent;
+                                            // Store the encoded content as-is
+                                            extractedBlock.dataset.haruContent = encodedContent;
+                                            console.log('HaruCMS: Extracted content from HTML string, length:', encodedContent.length);
                                         }
                                     }
                                 }
@@ -1786,10 +1785,17 @@
             
             for (const block of entryBlocks) {
                 const collectionSlug = block.dataset.haruCollection;
-                const formContent = block.dataset.haruContent;
+                let formContent = block.dataset.haruContent;
                 console.log('HaruCMS: Processing entry block for collection:', collectionSlug, 'Content length:', formContent ? formContent.length : 0);
                 
                 if (collectionSlug && formContent) {
+                    // Decode HTML-encoded content
+                    // The content is stored as HTML-encoded (e.g., &lt;div&gt; becomes <div>)
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = formContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                    formContent = tempDiv.textContent || formContent;
+                    console.log('HaruCMS: Decoded form content, length:', formContent.length, 'First 100 chars:', formContent.substring(0, 100));
+                    
                     fetchCollectionInfo(collectionSlug).then(collectionInfo => {
                         console.log('HaruCMS: Fetched collection info for:', collectionSlug, collectionInfo ? 'OK' : 'FAILED');
                         if (!collectionInfo || !collectionInfo.schema || !collectionInfo.api_key) {
