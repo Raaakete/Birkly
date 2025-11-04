@@ -1284,6 +1284,7 @@
                                         }
                                     } else {
                                         // Search backwards from maxPos to find the closing quote
+                                        // We need to find the quote that's immediately followed by whitespace and then 'class='
                                         let searchEnd = maxPos - 1;
                                         while (searchEnd > contentStart) {
                                             if (entryBlockHTML[searchEnd] === '"') {
@@ -1298,9 +1299,19 @@
                                                     searchEnd--;
                                                     continue;
                                                 }
-                                                // This should be the closing quote
-                                                extractedContent = entryBlockHTML.substring(contentStart, searchEnd);
-                                                break;
+                                                // Verify this is the closing quote by checking what comes after it
+                                                let afterQuote = searchEnd + 1;
+                                                // Skip whitespace after the quote
+                                                while (afterQuote < entryBlockHTML.length && /\s/.test(entryBlockHTML[afterQuote])) {
+                                                    afterQuote++;
+                                                }
+                                                // Check if after whitespace we have 'class=' or '>'
+                                                if (entryBlockHTML.substring(afterQuote, afterQuote + 6) === 'class=' || 
+                                                    entryBlockHTML[afterQuote] === '>') {
+                                                    // This is the closing quote!
+                                                    extractedContent = entryBlockHTML.substring(contentStart, searchEnd);
+                                                    break;
+                                                }
                                             }
                                             searchEnd--;
                                         }
@@ -1859,15 +1870,19 @@
                 if (collectionSlug && formContent) {
                     // Decode HTML-encoded content
                     // The content is stored as HTML-encoded (e.g., &lt;div&gt; becomes <div>)
-                    // We need to decode HTML entities but preserve the HTML structure
-                    // Use a temporary element to decode, but get the innerHTML to preserve tags
+                    // We need to decode HTML entities properly
+                    // Use a temporary element to decode HTML entities
                     const tempDiv = document.createElement('div');
-                    // Decode HTML entities
-                    formContent = formContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'");
-                    // Set the decoded HTML
+                    // Decode HTML entities - this handles all HTML entities including numeric ones
                     tempDiv.innerHTML = formContent;
-                    // Get the innerHTML to preserve HTML structure (not textContent which strips tags)
-                    formContent = tempDiv.innerHTML;
+                    // Get the text content (which will have HTML entities decoded)
+                    // But we need the actual HTML, so we need to decode entities manually
+                    // Actually, if we set innerHTML and then get innerHTML, it should decode entities
+                    // But we need to be careful - let's use a different approach
+                    // Create a textarea to decode HTML entities properly
+                    const textarea = document.createElement('textarea');
+                    textarea.innerHTML = formContent;
+                    formContent = textarea.value;
                     console.log('HaruCMS: Decoded form content, length:', formContent.length, 'First 100 chars:', formContent.substring(0, 100));
                     
                     fetchCollectionInfo(collectionSlug).then(collectionInfo => {
