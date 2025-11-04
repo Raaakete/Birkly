@@ -1163,9 +1163,12 @@
                 if (entryBlocksInDOM.length > 0) {
                     console.log('HaruCMS: Found', entryBlocksInDOM.length, 'entry blocks in DOM, preserving them');
                     entryBlocksInDOM.forEach((block, index) => {
-                        // Store the actual element and its HTML
+                        // Clone the element so we can restore it after innerHTML replacement
+                        const clonedElement = block.cloneNode(true);
+                        // Store the actual element reference and its position
                         preservedBlocks.push({
-                            element: block,
+                            originalElement: block,
+                            clonedElement: clonedElement,
                             html: block.outerHTML,
                             parent: block.parentElement,
                             nextSibling: block.nextSibling
@@ -1218,18 +1221,20 @@
                         // Check if entry blocks still exist, if not restore them
                         preservedBlocks.forEach((block, index) => {
                             // Check if the block still exists in the DOM
-                            const existingBlock = template.element.querySelector('.haru-entry-block[data-haru-collection="' + block.element.dataset.haruCollection + '"]');
+                            const collectionSlug = block.originalElement.dataset.haruCollection;
+                            const existingBlock = template.element.querySelector('.haru-entry-block[data-haru-collection="' + collectionSlug + '"]');
                             if (!existingBlock) {
                                 console.log('HaruCMS: Entry block', index, 'was removed, restoring it');
-                                // Find where to insert it - look for a marker or insert at the end
-                                // Try to find the original position or insert at the end of the element
+                                // Clone the element again (since innerHTML replacement removed the original)
+                                const restoredElement = block.clonedElement.cloneNode(true);
+                                // Find where to insert it - try to maintain original position
                                 const container = template.element;
                                 if (block.nextSibling && block.nextSibling.parentElement === container) {
                                     // Insert before the next sibling
-                                    container.insertBefore(block.element, block.nextSibling);
+                                    container.insertBefore(restoredElement, block.nextSibling);
                                 } else {
                                     // Append to the end
-                                    container.appendChild(block.element);
+                                    container.appendChild(restoredElement);
                                 }
                             } else {
                                 console.log('HaruCMS: Entry block', index, 'still exists in DOM');
