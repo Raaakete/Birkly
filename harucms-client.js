@@ -1238,23 +1238,59 @@
                                 
                                 // Extract data-haru-content - keep it as encoded HTML string
                                 // The content is HTML-encoded in the attribute, we need to preserve it
-                                const contentMatch = entryBlockHTML.match(/data-haru-content\s*=\s*["']([^"']+)["']/);
-                                if (contentMatch) {
-                                    // Store the encoded content as-is (it will be decoded when used)
-                                    extractedBlock.dataset.haruContent = contentMatch[1];
-                                    console.log('HaruCMS: Extracted content from attribute, length:', contentMatch[1].length);
+                                // Parse the HTML properly to extract the attribute value, which may contain encoded quotes
+                                let extractedContent = null;
+                                
+                                // Try to parse the element properly
+                                const tempParseDiv = document.createElement('div');
+                                tempParseDiv.innerHTML = entryBlockHTML;
+                                const parsedElement = tempParseDiv.firstElementChild;
+                                
+                                if (parsedElement && parsedElement.hasAttribute('data-haru-content')) {
+                                    // Get the attribute value directly from the parsed element
+                                    extractedContent = parsedElement.getAttribute('data-haru-content');
+                                    console.log('HaruCMS: Extracted content from parsed element, length:', extractedContent ? extractedContent.length : 0);
                                 } else {
-                                    // Try to get content from the full HTML by finding the attribute value
-                                    const contentStart = entryBlockHTML.indexOf('data-haru-content="');
-                                    if (contentStart !== -1) {
-                                        const contentEnd = entryBlockHTML.indexOf('"', contentStart + 19);
-                                        if (contentEnd !== -1) {
-                                            const encodedContent = entryBlockHTML.substring(contentStart + 19, contentEnd);
-                                            // Store the encoded content as-is
-                                            extractedBlock.dataset.haruContent = encodedContent;
-                                            console.log('HaruCMS: Extracted content from HTML string, length:', encodedContent.length);
+                                    // Fallback: Try regex matching, but handle encoded quotes
+                                    // Match: data-haru-content="..." where ... may contain &quot; or other encoded entities
+                                    const contentMatch = entryBlockHTML.match(/data-haru-content\s*=\s*"([^"]*(?:&quot;|&amp;|&lt;|&gt;|&#39;|&#x27;|[^"])*)"|data-haru-content\s*=\s*'([^']*(?:&#39;|&#x27;|&amp;|&lt;|&gt;|&quot;|[^'])*)'/);
+                                    if (contentMatch) {
+                                        extractedContent = contentMatch[1] || contentMatch[2];
+                                        console.log('HaruCMS: Extracted content via regex, length:', extractedContent ? extractedContent.length : 0);
+                                    } else {
+                                        // Last resort: Find the attribute value manually
+                                        const attrStart = entryBlockHTML.indexOf('data-haru-content="');
+                                        if (attrStart !== -1) {
+                                            let contentStart = attrStart + 19;
+                                            let contentEnd = contentStart;
+                                            let inQuotes = false;
+                                            let i = contentStart;
+                                            
+                                            // Find the closing quote, but skip encoded quotes
+                                            while (i < entryBlockHTML.length) {
+                                                if (entryBlockHTML.substring(i, i + 6) === '&quot;') {
+                                                    i += 6; // Skip encoded quote
+                                                } else if (entryBlockHTML[i] === '"' && entryBlockHTML[i - 1] !== '\\') {
+                                                    contentEnd = i;
+                                                    break;
+                                                } else {
+                                                    i++;
+                                                }
+                                            }
+                                            
+                                            if (contentEnd > contentStart) {
+                                                extractedContent = entryBlockHTML.substring(contentStart, contentEnd);
+                                                console.log('HaruCMS: Extracted content manually, length:', extractedContent.length);
+                                            }
                                         }
                                     }
+                                }
+                                
+                                if (extractedContent) {
+                                    extractedBlock.dataset.haruContent = extractedContent;
+                                    console.log('HaruCMS: Final extracted content length:', extractedContent.length, 'First 100 chars:', extractedContent.substring(0, 100));
+                                } else {
+                                    console.warn('HaruCMS: Could not extract data-haru-content from entry block HTML');
                                 }
                                 
                                 extractedBlock.textContent = 'Loading form...';
