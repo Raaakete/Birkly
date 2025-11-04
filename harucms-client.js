@@ -369,7 +369,9 @@
                         if (!array || !Array.isArray(array)) {
                             array = [];
                         }
-                        if (!Array.isArray(array) || array.length === 0) {
+                        
+                        // Only remove the loop if it's not an array (empty arrays should still process)
+                        if (!Array.isArray(array)) {
                             // Remove the entire loop
                             const startPos = itemOutput.indexOf(fullMatch);
                             const endPos = itemOutput.indexOf('{endfor', startPos);
