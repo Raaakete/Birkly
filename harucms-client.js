@@ -1306,19 +1306,21 @@
                                                     afterQuote++;
                                                 }
                                                 // Check if after whitespace we have 'class=' or '>'
-                                                // Also check if we have 'data-haru-preserved=' (which shouldn't be in content)
+                                                // The closing quote should be followed by whitespace and then 'class="haru-entry-block"'
+                                                const afterWhitespace = entryBlockHTML.substring(afterQuote, afterQuote + 25);
                                                 if (entryBlockHTML.substring(afterQuote, afterQuote + 6) === 'class=' || 
-                                                    entryBlockHTML[afterQuote] === '>' ||
-                                                    entryBlockHTML.substring(afterQuote, afterQuote + 20) === 'data-haru-preserved=') {
-                                                    // This is the closing quote!
-                                                    // Make sure we're not including the quote itself or any trailing content
-                                                    extractedContent = entryBlockHTML.substring(contentStart, searchEnd);
-                                                    // Verify the content doesn't end with malformed patterns
-                                                    if (extractedContent.endsWith('=""') || extractedContent.endsWith('="')) {
-                                                        // Trim malformed endings
-                                                        extractedContent = extractedContent.replace(/=""?\s*$/, '');
+                                                    entryBlockHTML[afterQuote] === '>') {
+                                                    // Verify this is really the closing quote by checking if we're near the class attribute
+                                                    // The closing quote should be very close to 'class="haru-entry-block"'
+                                                    const distanceToClass = classAttrPos - searchEnd;
+                                                    if (distanceToClass > 0 && distanceToClass < 50) {
+                                                        // This is the closing quote!
+                                                        extractedContent = entryBlockHTML.substring(contentStart, searchEnd);
+                                                        // Remove any trailing malformed patterns that might have been included
+                                                        extractedContent = extractedContent.replace(/\s*=""?\s*$/, '');
+                                                        extractedContent = extractedContent.replace(/\s*"\s*data-haru-preserved.*$/, '');
+                                                        break;
                                                     }
-                                                    break;
                                                 }
                                             }
                                             searchEnd--;
@@ -1909,7 +1911,13 @@
                     formContent = formContent.replace(/\s*=""\s*$/gm, '');
                     
                     // Remove any trailing content that looks like attributes (data-haru-preserved, etc.)
+                    // This should have been removed during extraction, but clean it up here too
                     formContent = formContent.replace(/\s*"\s*data-haru-preserved.*$/s, '');
+                    formContent = formContent.replace(/\s*data-haru-preserved.*$/s, '');
+                    
+                    // Also remove any remaining malformed quote patterns at the very end
+                    formContent = formContent.replace(/\s*"\s*=\s*"\s*$/s, '');
+                    formContent = formContent.replace(/\s*=\s*"\s*$/s, '');
                     
                     console.log('HaruCMS: Decoded form content, length:', formContent.length);
                     console.log('HaruCMS: First 200 chars:', formContent.substring(0, 200));
