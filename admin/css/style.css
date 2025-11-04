@@ -80,11 +80,11 @@
   --color-white:                  #fff;
   --color-primary:                #FFFB00;
   --color-secondary:              #A1B0A1;
-  --color-darkest:                #494949;
-  --color-dark:                   #939393;
+  --color-darkest:                #4a4d47;
+  --color-dark:                   #8e928b;
   --color-mid:                    #000;
-  --color-light:                  #d4d7de;
-  --color-lightest:               #e1e4eb;
+  --color-light:                  #dce2d7;
+  --color-lightest:               #f4f6f1;
   --color-positiv:                #e4f1ec;
   --color-negativ:                #f3eced;
 
@@ -414,7 +414,7 @@ body {
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 280px;
+  width: 320px;
   transition: transform var(--transition-normal);
   padding: var(--space-10);
 }
@@ -432,8 +432,9 @@ body {
 .sidebar-header .logo {
   display: flex;
   height: 44px;
-  padding: var(--space-3) var(--space-6);
-  object-fit: contain;
+  padding: var(--space-2) var(--space-4);
+  justify-content: center;
+  width: 100%;
 }
 
 .sidebar-header .h1 {
@@ -512,10 +513,10 @@ body {
 
 .nav-links li.active a,
 .nav-links a.active {
-  background: var(--primary-50);
-  color: var(--primary-700);
-  font-weight: 500;
-  border-left: 3px solid var(--primary-500);
+  background: var(--color-lightest);
+  color: var(--color-black);
+  font-weight: 600;
+  border-left: 3px solid var(--color-dark);
 }
 
 /* Main Content */
@@ -835,7 +836,7 @@ textarea {
 .entries-smart-table .head-status,
 .entries-smart-table .cell-status { width: 120px; }
 .entries-smart-table .head-actions,
-.entries-smart-table .cell-actions { width: 130px; justify-content: flex-end; position: sticky; right: 0; border-left: 1px solid var(--border-light); z-index: 1; }
+.entries-smart-table .cell-actions { width: 188px; justify-content: flex-end; position: sticky; right: 0; border-left: 1px solid var(--border-light); z-index: 1; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.1); }
 
 .entries-smart-table .cell-drag,
 .entries-smart-table .cell-title,
