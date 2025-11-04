@@ -1245,13 +1245,12 @@
                                 const attrStart = entryBlockHTML.indexOf('data-haru-content="');
                                 if (attrStart !== -1) {
                                     let contentStart = attrStart + 19; // Length of 'data-haru-content="'
-                                    let contentEnd = contentStart;
                                     let i = contentStart;
-                                    let depth = 0; // Track quote depth for nested quotes
                                     
-                                    // Find the closing quote, but handle encoded quotes (&quot;) and nested quotes
+                                    // Find the closing quote by character-by-character parsing
+                                    // We need to skip over encoded quotes (&quot;) and other HTML entities
                                     while (i < entryBlockHTML.length) {
-                                        // Check for encoded quote
+                                        // Check for encoded quote - this is part of the content, not the closing quote
                                         if (entryBlockHTML.substring(i, i + 6) === '&quot;') {
                                             i += 6; // Skip encoded quote
                                             continue;
@@ -1265,21 +1264,35 @@
                                             i += 6;
                                             continue;
                                         }
-                                        // Check for unescaped quote (end of attribute)
-                                        if (entryBlockHTML[i] === '"' && (i === contentStart || entryBlockHTML[i - 1] !== '\\')) {
-                                            contentEnd = i;
-                                            break;
+                                        // Check for other HTML entities (they might contain quotes)
+                                        if (entryBlockHTML[i] === '&') {
+                                            // Skip HTML entities like &amp;, &lt;, &gt;
+                                            let entityEnd = entryBlockHTML.indexOf(';', i);
+                                            if (entityEnd !== -1) {
+                                                i = entityEnd + 1;
+                                                continue;
+                                            }
+                                        }
+                                        // Check for unescaped quote that ends the attribute
+                                        // This must be a real quote (") not part of an entity
+                                        if (entryBlockHTML[i] === '"') {
+                                            // Make sure it's not escaped
+                                            if (i === contentStart || entryBlockHTML[i - 1] !== '\\') {
+                                                // This is the closing quote
+                                                break;
+                                            }
                                         }
                                         i++;
                                     }
                                     
-                                    if (contentEnd > contentStart) {
-                                        extractedContent = entryBlockHTML.substring(contentStart, contentEnd);
+                                    if (i > contentStart && i < entryBlockHTML.length) {
+                                        extractedContent = entryBlockHTML.substring(contentStart, i);
                                         console.log('HaruCMS: Extracted content from raw HTML string, length:', extractedContent.length);
                                         console.log('HaruCMS: First 200 chars:', extractedContent.substring(0, 200));
                                         console.log('HaruCMS: Last 100 chars:', extractedContent.substring(Math.max(0, extractedContent.length - 100)));
                                     } else {
-                                        console.warn('HaruCMS: Could not find closing quote for data-haru-content attribute');
+                                        console.warn('HaruCMS: Could not find closing quote for data-haru-content attribute. i:', i, 'contentStart:', contentStart, 'HTML length:', entryBlockHTML.length);
+                                        console.warn('HaruCMS: HTML around attribute:', entryBlockHTML.substring(Math.max(0, attrStart - 50), Math.min(entryBlockHTML.length, attrStart + 100)));
                                     }
                                 } else {
                                     console.warn('HaruCMS: Could not find data-haru-content attribute in HTML string');
