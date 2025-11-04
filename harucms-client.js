@@ -1156,11 +1156,14 @@
                 console.log('HaruCMS: Processing template:', template.template.substring(0, 100));
                 
                 // Check if this template contains entry blocks - if so, preserve them in DOM
-                // Store references to the actual DOM elements before processing
-                // NOTE: We need to check the CURRENT DOM, not the stored template HTML,
-                // because entry blocks were added to the DOM in step 1
+                // IMPORTANT: We need to check the CURRENT DOM state, not just the stored HTML
+                // Entry blocks were added to DOM in step 1, so they should exist in the DOM now
                 const entryBlocksInDOM = template.element.querySelectorAll('.haru-entry-block');
                 const preservedBlocks = [];
+                
+                // Also check if the template HTML string contains entry block placeholders
+                const hasEntryBlockInHTML = template.template.includes('haru-entry-block');
+                
                 if (entryBlocksInDOM.length > 0) {
                     console.log('HaruCMS: Found', entryBlocksInDOM.length, 'entry blocks in DOM, preserving them');
                     entryBlocksInDOM.forEach((block, index) => {
@@ -1177,11 +1180,31 @@
                         });
                         console.log('HaruCMS: Preserved entry block', index, 'for collection:', block.dataset.haruCollection);
                     });
-                } else {
-                    // Check if the template HTML contains entry block placeholders
-                    // (they might have been added to innerHTML but not yet in DOM as separate elements)
-                    if (template.template.includes('haru-entry-block')) {
-                        console.log('HaruCMS: Template HTML contains entry block placeholder, but not found in DOM');
+                } else if (hasEntryBlockInHTML) {
+                    // Entry block is in the HTML string but not in DOM - this shouldn't happen
+                    // but if it does, we need to extract it from the HTML and create a DOM element
+                    console.warn('HaruCMS: Template HTML contains entry block placeholder, but not found in DOM');
+                    console.warn('HaruCMS: Attempting to extract entry block from HTML string');
+                    
+                    // Try to extract the entry block HTML from template.template
+                    const entryBlockMatch = template.template.match(/<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/s);
+                    if (entryBlockMatch) {
+                        const entryBlockHTML = entryBlockMatch[0];
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = entryBlockHTML;
+                        const extractedBlock = tempDiv.firstElementChild;
+                        if (extractedBlock && extractedBlock.classList.contains('haru-entry-block')) {
+                            // Store the extracted block
+                            preservedBlocks.push({
+                                originalElement: null, // No original element in DOM
+                                clonedElement: extractedBlock.cloneNode(true),
+                                html: entryBlockHTML,
+                                parent: null,
+                                nextSibling: null,
+                                collectionSlug: extractedBlock.dataset.haruCollection
+                            });
+                            console.log('HaruCMS: Extracted entry block from HTML for collection:', extractedBlock.dataset.haruCollection);
+                        }
                     }
                 }
                 
