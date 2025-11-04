@@ -719,16 +719,30 @@
                     const nextFor = output.indexOf('{for', pos);
                     const nextEndFor = output.indexOf('{endfor', pos);
                     
-                    if (nextFor !== -1 && nextFor < nextEndFor) {
+                    if (nextFor !== -1 && nextEndFor !== -1 && nextFor < nextEndFor) {
                         depth++;
                         pos = nextFor + 4;
                     } else if (nextEndFor !== -1) {
-                        depth--;
-                        if (depth === 0) {
-                            endPos = nextEndFor;
-                            break;
+                        // Find the closing brace of {endfor}
+                        const closingBracePos = output.indexOf('}', nextEndFor + 7);
+                        if (closingBracePos !== -1) {
+                            depth--;
+                            if (depth === 0) {
+                                endPos = nextEndFor; // Position of {endfor (before the closing brace)
+                                endPosClosingBrace = closingBracePos; // Position of the closing brace
+                                break;
+                            }
+                            pos = closingBracePos + 1;
+                        } else {
+                            // No closing brace found, treat {endfor as the end
+                            depth--;
+                            if (depth === 0) {
+                                endPos = nextEndFor;
+                                endPosClosingBrace = nextEndFor + 7; // Assume {endfor is 7 chars
+                                break;
+                            }
+                            pos = nextEndFor + 7;
                         }
-                        pos = nextEndFor + 7;
                     } else {
                         break;
                     }
