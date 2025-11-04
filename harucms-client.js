@@ -924,20 +924,45 @@
             }
             
             if (nextEnd !== -1 && (nextFor === -1 || nextEnd < nextFor)) {
-                // Found an {endfor} - add content up to it
-                content += afterStart.substring(pos, nextEnd);
-                depth--;
-                if (depth === 0) {
-                    console.log('HaruCMS: extractLoopContent - extracted content length:', content.length, 'contains {for each tag:', content.includes('{for each tag'));
-                    console.log('HaruCMS: extractLoopContent - extracted content sample:', content.substring(0, 300));
-                    return content;
+                // Found an {endfor} - add content up to it (including the {endfor} text)
+                // But we need to find the closing brace to include the full {endfor}
+                const closingBracePos = afterStart.indexOf('}', nextEnd + 7);
+                if (closingBracePos !== -1) {
+                    // Include the full {endfor} in content before checking depth
+                    content += afterStart.substring(pos, closingBracePos + 1);
+                    depth--;
+                    if (depth === 0) {
+                        console.log('HaruCMS: extractLoopContent - extracted content length:', content.length, 'contains {for each tag:', content.includes('{for each tag'));
+                        console.log('HaruCMS: extractLoopContent - extracted content sample:', content.substring(0, 300));
+                        return content;
+                    }
+                    pos = closingBracePos + 1;
+                } else {
+                    // No closing brace found, just use {endfor
+                    content += afterStart.substring(pos, nextEnd);
+                    depth--;
+                    if (depth === 0) {
+                        console.log('HaruCMS: extractLoopContent - extracted content length:', content.length, 'contains {for each tag:', content.includes('{for each tag'));
+                        console.log('HaruCMS: extractLoopContent - extracted content sample:', content.substring(0, 300));
+                        return content;
+                    }
+                    pos = nextEnd + (afterStart.indexOf('{endfor', pos) !== -1 ? 7 : 11);
                 }
-                pos = nextEnd + (afterStart.indexOf('{endfor', pos) !== -1 ? 7 : 11);
             } else if (nextFor !== -1) {
-                // Found a nested {for} - add content up to it, then increase depth
-                content += afterStart.substring(pos, nextFor);
-                depth++;
-                pos = nextFor + 4;
+                // Found a nested {for} - add content up to it (but we need to find where the {for} directive ends)
+                // Find the closing brace of the {for} directive (e.g., {for each tag})
+                const closingBracePos = afterStart.indexOf('}', nextFor + 4);
+                if (closingBracePos !== -1) {
+                    // Include the full {for...} directive in content
+                    content += afterStart.substring(pos, closingBracePos + 1);
+                    depth++;
+                    pos = closingBracePos + 1;
+                } else {
+                    // No closing brace found, just include up to {for
+                    content += afterStart.substring(pos, nextFor);
+                    depth++;
+                    pos = nextFor + 4;
+                }
             } else {
                 break;
             }
