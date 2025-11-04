@@ -874,7 +874,7 @@
                     let node;
                     
                     while (node = walker.nextNode()) {
-                        if (node.nodeValue && /\{\{|\{for|\{if/.test(node.nodeValue)) {
+                        if (node.nodeValue && (/\{\{|\{for|\{if|\{[a-zA-Z0-9_\.\s]+\}/.test(node.nodeValue))) {
                             const parent = node.parentElement;
                             if (!parent || parent.dataset.cmsProcessed) continue;
                             
@@ -994,7 +994,7 @@
                 let node;
                 
                 while (node = walker.nextNode()) {
-                    if (node.nodeValue && /\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue)) {
+                    if (node.nodeValue && (/\{\{|\{for|\{if|\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue))) {
                         const parent = node.parentElement;
                         if (!parent || parent.dataset.cmsProcessed) continue;
                         
