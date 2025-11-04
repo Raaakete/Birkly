@@ -1253,30 +1253,52 @@
                         // Check if entry blocks still exist, if not restore them
                         preservedBlocks.forEach((block, index) => {
                             // Check if the block still exists in the DOM
-                            const collectionSlug = block.collectionSlug || block.originalElement.dataset.haruCollection;
+                            const collectionSlug = block.collectionSlug || (block.originalElement ? block.originalElement.dataset.haruCollection : null);
+                            if (!collectionSlug) {
+                                console.warn('HaruCMS: Entry block', index, 'has no collection slug');
+                                return;
+                            }
+                            
                             const existingBlock = template.element.querySelector('.haru-entry-block[data-haru-collection="' + collectionSlug + '"]');
                             if (!existingBlock) {
                                 console.log('HaruCMS: Entry block', index, 'was removed, restoring it for collection:', collectionSlug);
                                 // Clone the element again (since innerHTML replacement removed the original)
                                 const restoredElement = block.clonedElement.cloneNode(true);
-                                // Find where to insert it - try to maintain original position
-                                const container = template.element;
-                                // Try to find a good insertion point - look for the placeholder in rendered HTML
-                                const placeholderPattern = new RegExp('<div[^>]*id="[^"]*haru-entry-block[^"]*"[^>]*>', 'i');
-                                const placeholderMatch = rendered.match(placeholderPattern);
-                                if (placeholderMatch) {
-                                    // If placeholder exists in rendered HTML, replace it with actual block
-                                    const placeholderFullRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/s;
+                                
+                                // Try to find the placeholder in the rendered HTML and replace it
+                                const placeholderIdMatch = block.html.match(/id="([^"]*haru-entry-block[^"]*)"/);
+                                if (placeholderIdMatch) {
+                                    const placeholderId = placeholderIdMatch[1];
+                                    // Try to find placeholder by ID in rendered HTML
+                                    const placeholderRegex = new RegExp('<div[^>]*id="' + placeholderId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"[^>]*>.*?<\/div>', 's');
+                                    if (rendered.match(placeholderRegex)) {
+                                        // Replace placeholder with actual block
+                                        rendered = rendered.replace(placeholderRegex, restoredElement.outerHTML);
+                                        template.element.innerHTML = rendered;
+                                        console.log('HaruCMS: Entry block', index, 'restored by replacing placeholder in HTML');
+                                        return;
+                                    }
+                                }
+                                
+                                // Fallback: Try to find any placeholder and replace it
+                                const placeholderFullRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/s;
+                                if (rendered.match(placeholderFullRegex)) {
                                     rendered = rendered.replace(placeholderFullRegex, restoredElement.outerHTML);
                                     template.element.innerHTML = rendered;
-                                } else if (block.nextSibling && block.nextSibling.parentElement === container) {
+                                    console.log('HaruCMS: Entry block', index, 'restored by replacing placeholder in HTML (fallback)');
+                                    return;
+                                }
+                                
+                                // Last resort: Insert into DOM
+                                const container = template.element;
+                                if (block.nextSibling && block.nextSibling.parentElement === container) {
                                     // Insert before the next sibling
                                     container.insertBefore(restoredElement, block.nextSibling);
                                 } else {
                                     // Append to the end
                                     container.appendChild(restoredElement);
                                 }
-                                console.log('HaruCMS: Entry block', index, 'restored successfully');
+                                console.log('HaruCMS: Entry block', index, 'restored by inserting into DOM');
                             } else {
                                 console.log('HaruCMS: Entry block', index, 'still exists in DOM');
                             }
@@ -1303,30 +1325,52 @@
                         // Check if entry blocks still exist, if not restore them
                         preservedBlocks.forEach((block, index) => {
                             // Check if the block still exists in the DOM
-                            const collectionSlug = block.collectionSlug || block.originalElement.dataset.haruCollection;
+                            const collectionSlug = block.collectionSlug || (block.originalElement ? block.originalElement.dataset.haruCollection : null);
+                            if (!collectionSlug) {
+                                console.warn('HaruCMS: Entry block', index, 'has no collection slug');
+                                return;
+                            }
+                            
                             const existingBlock = template.element.querySelector('.haru-entry-block[data-haru-collection="' + collectionSlug + '"]');
                             if (!existingBlock) {
                                 console.log('HaruCMS: Entry block', index, 'was removed, restoring it for collection:', collectionSlug);
                                 // Clone the element again (since innerHTML replacement removed the original)
                                 const restoredElement = block.clonedElement.cloneNode(true);
-                                // Find where to insert it - try to maintain original position
-                                const container = template.element;
-                                // Try to find a good insertion point - look for the placeholder in rendered HTML
-                                const placeholderPattern = new RegExp('<div[^>]*id="[^"]*haru-entry-block[^"]*"[^>]*>', 'i');
-                                const placeholderMatch = rendered.match(placeholderPattern);
-                                if (placeholderMatch) {
-                                    // If placeholder exists in rendered HTML, replace it with actual block
-                                    const placeholderFullRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/s;
+                                
+                                // Try to find the placeholder in the rendered HTML and replace it
+                                const placeholderIdMatch = block.html.match(/id="([^"]*haru-entry-block[^"]*)"/);
+                                if (placeholderIdMatch) {
+                                    const placeholderId = placeholderIdMatch[1];
+                                    // Try to find placeholder by ID in rendered HTML
+                                    const placeholderRegex = new RegExp('<div[^>]*id="' + placeholderId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"[^>]*>.*?<\/div>', 's');
+                                    if (rendered.match(placeholderRegex)) {
+                                        // Replace placeholder with actual block
+                                        rendered = rendered.replace(placeholderRegex, restoredElement.outerHTML);
+                                        template.element.innerHTML = rendered;
+                                        console.log('HaruCMS: Entry block', index, 'restored by replacing placeholder in HTML');
+                                        return;
+                                    }
+                                }
+                                
+                                // Fallback: Try to find any placeholder and replace it
+                                const placeholderFullRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/s;
+                                if (rendered.match(placeholderFullRegex)) {
                                     rendered = rendered.replace(placeholderFullRegex, restoredElement.outerHTML);
                                     template.element.innerHTML = rendered;
-                                } else if (block.nextSibling && block.nextSibling.parentElement === container) {
+                                    console.log('HaruCMS: Entry block', index, 'restored by replacing placeholder in HTML (fallback)');
+                                    return;
+                                }
+                                
+                                // Last resort: Insert into DOM
+                                const container = template.element;
+                                if (block.nextSibling && block.nextSibling.parentElement === container) {
                                     // Insert before the next sibling
                                     container.insertBefore(restoredElement, block.nextSibling);
                                 } else {
                                     // Append to the end
                                     container.appendChild(restoredElement);
                                 }
-                                console.log('HaruCMS: Entry block', index, 'restored successfully');
+                                console.log('HaruCMS: Entry block', index, 'restored by inserting into DOM');
                             } else {
                                 console.log('HaruCMS: Entry block', index, 'still exists in DOM');
                             }
