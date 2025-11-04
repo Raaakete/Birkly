@@ -350,7 +350,10 @@
                 let nestedLoopProcessed = true;
                 while (nestedLoopProcessed) {
                     nestedLoopProcessed = false;
-                    const nestedLoopRegex = /\{for\s+each\s+([^\s}]+)\}/g;
+                    // Match {for each tag} or {for each tags} - handle optional spaces
+                    const nestedLoopRegex = /\{for\s+each\s+([a-zA-Z0-9_]+)\s*\}/g;
+                    // Reset regex lastIndex to start from beginning
+                    nestedLoopRegex.lastIndex = 0;
                     const nestedMatch = nestedLoopRegex.exec(itemOutput);
                     if (nestedMatch) {
                         nestedLoopProcessed = true;
@@ -457,8 +460,11 @@
                                 return '';
                             });
                             
+                            console.log('HaruCMS: Final tag output:', tagOutput);
                             return tagOutput;
                         }).join('');
+                        
+                        console.log('HaruCMS: Rendered nested loop content, length:', rendered.length, 'first 100 chars:', rendered.substring(0, 100));
                         
                         // Replace the nested loop with rendered content
                         itemOutput = itemOutput.substring(0, startPos) + rendered + itemOutput.substring(endPos + 7);
