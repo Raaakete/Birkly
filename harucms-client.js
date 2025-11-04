@@ -1158,13 +1158,14 @@
                 
                 // Check if this template contains entry blocks - if so, preserve them
                 // Check the original template HTML, not the current DOM (which might have been modified)
-                const entryBlockRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/g;
+                const entryBlockRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/gs;
                 const preservedBlocks = [];
-                let match;
-                while ((match = entryBlockRegex.exec(template.template)) !== null) {
+                let blockMatch;
+                while ((blockMatch = entryBlockRegex.exec(template.template)) !== null) {
                     preservedBlocks.push({
-                        html: match[0],
-                        fullMatch: match[0]
+                        html: blockMatch[0],
+                        fullMatch: blockMatch[0],
+                        uniqueId: 'ENTRY_BLOCK_PLACEHOLDER_' + preservedBlocks.length
                     });
                 }
                 if (preservedBlocks.length > 0) {
@@ -1207,34 +1208,17 @@
                     // Render template
                     let rendered = renderTemplate(template.template, data);
                     
-                    // Restore preserved entry blocks if any were removed
+                    // Check if entry blocks were preserved by renderTemplate
                     if (preservedBlocks.length > 0) {
-                        // Check if rendered HTML still contains the entry blocks
-                        preservedBlocks.forEach(block => {
+                        console.log('HaruCMS: Checking if', preservedBlocks.length, 'entry blocks were preserved in rendered output');
+                        preservedBlocks.forEach((block, index) => {
+                            // Check if the rendered output contains the entry block (renderTemplate should have restored it)
                             if (!rendered.includes('haru-entry-block')) {
-                                // Entry block was removed, restore it
-                                // Find where it should be in the rendered output
-                                // The placeholder should be somewhere in the rendered HTML
-                                // If not found, we need to insert it back
-                                console.log('HaruCMS: Entry block was removed during rendering, restoring it');
-                                const placeholderMatch = block.html.match(/<div[^>]*class="haru-entry-block"[^>]*>/);
-                                if (placeholderMatch) {
-                                    // Try to find a similar position in rendered HTML
-                                    // For now, just append it (this is a fallback)
-                                    // But first, let's check if renderTemplate actually preserved it
-                                    // If not, we need to find where it was in the original template
-                                }
-                            }
-                        });
-                        // If entry blocks were in the original template, ensure they're in the rendered output
-                        // Replace any partial matches with the full block
-                        preservedBlocks.forEach(block => {
-                            const partialMatch = block.html.substring(0, 50);
-                            if (!rendered.includes(partialMatch)) {
-                                // Block was completely removed, need to find where to insert it
-                                // For simplicity, if the template contains the placeholder, 
-                                // renderTemplate should preserve it, but if it doesn't, we restore it
-                                console.warn('HaruCMS: Entry block not found in rendered output, may need manual restoration');
+                                console.warn('HaruCMS: Entry block', index, 'not found in rendered output');
+                                // Entry block was removed, restore it from the original block HTML
+                                rendered = rendered.replace(block.uniqueId || 'ENTRY_BLOCK_PLACEHOLDER_' + index, block.html);
+                            } else {
+                                console.log('HaruCMS: Entry block', index, 'preserved in rendered output');
                             }
                         });
                     }
