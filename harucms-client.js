@@ -1306,10 +1306,18 @@
                                                     afterQuote++;
                                                 }
                                                 // Check if after whitespace we have 'class=' or '>'
+                                                // Also check if we have 'data-haru-preserved=' (which shouldn't be in content)
                                                 if (entryBlockHTML.substring(afterQuote, afterQuote + 6) === 'class=' || 
-                                                    entryBlockHTML[afterQuote] === '>') {
+                                                    entryBlockHTML[afterQuote] === '>' ||
+                                                    entryBlockHTML.substring(afterQuote, afterQuote + 20) === 'data-haru-preserved=') {
                                                     // This is the closing quote!
+                                                    // Make sure we're not including the quote itself or any trailing content
                                                     extractedContent = entryBlockHTML.substring(contentStart, searchEnd);
+                                                    // Verify the content doesn't end with malformed patterns
+                                                    if (extractedContent.endsWith('=""') || extractedContent.endsWith('="')) {
+                                                        // Trim malformed endings
+                                                        extractedContent = extractedContent.replace(/=""?\s*$/, '');
+                                                    }
                                                     break;
                                                 }
                                             }
