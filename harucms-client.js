@@ -1318,9 +1318,16 @@
                                     }
                                     
                                     if (extractedContent) {
+                                        // Check if the extracted content includes extra characters at the end
+                                        // The last chars show: button&gt;="" "="" data-haru-preserved="false
+                                        // This means we're including part of the next attribute
+                                        // We need to trim it properly
+                                        // The content should end before the closing quote, not include it
+                                        // But we already extracted it correctly, so the issue must be elsewhere
                                         console.log('HaruCMS: Extracted content from raw HTML string, length:', extractedContent.length);
                                         console.log('HaruCMS: First 200 chars:', extractedContent.substring(0, 200));
                                         console.log('HaruCMS: Last 100 chars:', extractedContent.substring(Math.max(0, extractedContent.length - 100)));
+                                        console.log('HaruCMS: Content ends with:', extractedContent.substring(Math.max(0, extractedContent.length - 20)));
                                     } else {
                                         console.warn('HaruCMS: Could not find closing quote for data-haru-content attribute. contentStart:', contentStart, 'HTML length:', entryBlockHTML.length);
                                         console.warn('HaruCMS: HTML around attribute:', entryBlockHTML.substring(Math.max(0, attrStart - 50), Math.min(entryBlockHTML.length, attrStart + 200)));
