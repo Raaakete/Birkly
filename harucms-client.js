@@ -342,6 +342,9 @@
             const loopContent = extractLoopContent(output, match);
             if (!loopContent) return '';
             
+            console.log('HaruCMS: Extracted loop content, length:', loopContent.length, 'contains {for each:', loopContent.includes('{for each'), 'contains {for each tag:', loopContent.includes('{for each tag'));
+            console.log('HaruCMS: Loop content sample:', loopContent.substring(0, 200));
+            
             // Render each item
             return items.map(item => {
                 let itemOutput = loopContent;
