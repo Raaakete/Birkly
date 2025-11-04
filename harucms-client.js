@@ -398,6 +398,7 @@
                         let pos = startPos + fullMatch.length;
                         let depth = 1;
                         let endPos = -1;
+                        let endPosClosingBrace = -1;
                         
                         while (pos < itemOutput.length && depth > 0) {
                             const nextFor = itemOutput.indexOf('{for', pos);
@@ -412,7 +413,8 @@
                                 if (closingBracePos !== -1) {
                                     depth--;
                                     if (depth === 0) {
-                                        endPos = closingBracePos; // Position of the closing brace
+                                        endPos = nextEndFor; // Position of {endfor (before the closing brace)
+                                        endPosClosingBrace = closingBracePos; // Position of the closing brace
                                         break;
                                     }
                                     pos = closingBracePos + 1;
@@ -421,6 +423,7 @@
                                     depth--;
                                     if (depth === 0) {
                                         endPos = nextEndFor;
+                                        endPosClosingBrace = nextEndFor + 7; // Assume {endfor is 7 chars
                                         break;
                                     }
                                     pos = nextEndFor + 7;
@@ -436,6 +439,7 @@
                             continue;
                         }
                         
+                        // Extract content between {for each tag} and {endfor} (not including {endfor})
                         const nestedLoopContent = itemOutput.substring(startPos + fullMatch.length, endPos);
                         console.log('HaruCMS: Nested loop content:', nestedLoopContent.substring(0, 100));
                         
@@ -491,8 +495,9 @@
                         console.log('HaruCMS: Rendered nested loop content, length:', rendered.length, 'first 100 chars:', rendered.substring(0, 100));
                         
                         // Replace the nested loop with rendered content
-                        // endPos is now the position of the closing brace '}' of {endfor}
-                        itemOutput = itemOutput.substring(0, startPos) + rendered + itemOutput.substring(endPos + 1);
+                        // endPos is the position of {endfor, endPosClosingBrace is the position of the closing brace
+                        const replaceEndPos = endPosClosingBrace !== -1 ? endPosClosingBrace + 1 : endPos + 8;
+                        itemOutput = itemOutput.substring(0, startPos) + rendered + itemOutput.substring(replaceEndPos);
                         nestedLoopRegex.lastIndex = 0; // Reset regex
                     }
                 }
@@ -782,8 +787,9 @@
                 console.log('HaruCMS: Rendered nested loop content, length:', rendered.length, 'first 100 chars:', rendered.substring(0, 100));
                 
                 // Replace the nested loop with rendered content
-                // endPos is now the position of the closing brace '}' of {endfor}
-                output = output.substring(0, startPos) + rendered + output.substring(endPos + 1);
+                // endPos is the position of {endfor, endPosClosingBrace is the position of the closing brace
+                const replaceEndPos = endPosClosingBrace !== -1 ? endPosClosingBrace + 1 : endPos + 8;
+                output = output.substring(0, startPos) + rendered + output.substring(replaceEndPos);
             }
         }
         
