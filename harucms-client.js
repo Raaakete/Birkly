@@ -1326,20 +1326,27 @@
                 
                 // Check if this element is inside a collection loop (e.g., {for each entry in 'blog'})
                 // If so, skip it - it will be processed as part of the collection loop
-                let ancestor = parent.parentElement;
-                let isInsideCollectionLoop = false;
-                while (ancestor) {
-                    const ancestorText = ancestor.textContent || '';
-                    if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
-                        isInsideCollectionLoop = true;
-                        console.log('HaruCMS: Skipping nested template inside collection loop:', parent.tagName, parent.className);
-                        break;
-                    }
-                    ancestor = ancestor.parentElement;
-                }
+                // BUT: Don't skip if this element itself contains a collection loop (it's the parent template)
+                const parentText = parent.textContent || parent.innerHTML || '';
+                const parentHasCollectionLoop = parentText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/);
                 
-                if (isInsideCollectionLoop) {
-                    continue; // Skip - will be processed as part of collection loop
+                if (!parentHasCollectionLoop) {
+                    // Only check ancestors if this element doesn't contain a collection loop itself
+                    let ancestor = parent.parentElement;
+                    let isInsideCollectionLoop = false;
+                    while (ancestor) {
+                        const ancestorText = ancestor.textContent || ancestor.innerHTML || '';
+                        if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
+                            isInsideCollectionLoop = true;
+                            console.log('HaruCMS: Skipping nested template inside collection loop:', parent.tagName, parent.className);
+                            break;
+                        }
+                        ancestor = ancestor.parentElement;
+                    }
+                    
+                    if (isInsideCollectionLoop) {
+                        continue; // Skip - will be processed as part of collection loop
+                    }
                 }
                 
                 parent.dataset.cmsProcessed = 'true';
@@ -1365,20 +1372,27 @@
                 if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
                     // Check if this element is inside a collection loop
                     // If so, skip it - it will be processed as part of the collection loop
-                    let ancestor = el.parentElement;
-                    let isInsideCollectionLoop = false;
-                    while (ancestor) {
-                        const ancestorText = ancestor.textContent || ancestor.innerHTML || '';
-                        if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
-                            isInsideCollectionLoop = true;
-                            console.log('HaruCMS: Skipping nested template inside collection loop (alt detection):', el.tagName, el.className);
-                            break;
-                        }
-                        ancestor = ancestor.parentElement;
-                    }
+                    // BUT: Don't skip if this element itself contains a collection loop (it's the parent template)
+                    const elText = el.textContent || el.innerHTML || '';
+                    const elHasCollectionLoop = elText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/);
                     
-                    if (isInsideCollectionLoop) {
-                        continue; // Skip - will be processed as part of collection loop
+                    if (!elHasCollectionLoop) {
+                        // Only check ancestors if this element doesn't contain a collection loop itself
+                        let ancestor = el.parentElement;
+                        let isInsideCollectionLoop = false;
+                        while (ancestor) {
+                            const ancestorText = ancestor.textContent || ancestor.innerHTML || '';
+                            if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
+                                isInsideCollectionLoop = true;
+                                console.log('HaruCMS: Skipping nested template inside collection loop (alt detection):', el.tagName, el.className);
+                                break;
+                            }
+                            ancestor = ancestor.parentElement;
+                        }
+                        
+                        if (isInsideCollectionLoop) {
+                            continue; // Skip - will be processed as part of collection loop
+                        }
                     }
                     
                     el.dataset.cmsProcessed = 'true';
