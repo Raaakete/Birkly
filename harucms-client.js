@@ -644,76 +644,8 @@
             return '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" class="haru-form-placeholder">Loading form...</div>';
         });
         
-        // Replace {{ variable }} outside loops
-        output = output.replace(/\{\{\s*([a-zA-Z0-9_\.]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (match, varName, filter, filterValue) => {
-            let value = getNestedValue(data, varName) || '';
-            
-            if (filter === 'date' && filterValue) {
-                value = formatDate(value, filterValue);
-            } else if (filter === 'raw') {
-                return value;
-            } else if (filter === 'escape' || !filter) {
-                value = escapeHtml(value);
-            }
-            
-            return value;
-        });
-        
-        // Support single-brace variables outside loops: { content }, { site_title }, etc.
-        // Handle variables with spaces: { site_title } -> site_title
-        // IMPORTANT: Process this LAST, after all directives are processed
-        // Use a while loop to track positions correctly
-        let lastIndex = 0;
-        let result = '';
-        const varRegex = /\{\s*([a-zA-Z0-9_]+)\s*(?:"([^"]+)")?\s*\}/g;
-        let varMatch;
-        
-        while ((varMatch = varRegex.exec(output)) !== null) {
-            const matchStart = varMatch.index;
-            const matchEnd = varMatch.index + varMatch[0].length;
-            const varName = varMatch[1].trim();
-            const arg = varMatch[2];
-            
-            // Add everything before this match
-            result += output.substring(lastIndex, matchStart);
-            
-            const lowers = varName.toLowerCase();
-            
-            // Skip if it's a directive keyword (these should already be processed)
-            const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
-            if (directiveKeywords.includes(lowers)) {
-                // Check context around match to see if it's part of a directive
-                const before = output.substring(Math.max(0, matchStart - 20), matchStart);
-                const after = output.substring(matchEnd, Math.min(output.length, matchEnd + 20));
-                
-                // If it's part of a directive, keep it as-is
-                if (after.match(/^\s+(for|each|in|has|exist|==|!=|<=|>=|>|<)/) || 
-                    before.match(/(entry|for|if)\s+$/)) {
-                    result += varMatch[0]; // Keep directive as-is
-                } else {
-                    // It's a standalone directive keyword, keep it
-                    result += varMatch[0];
-                }
-            } else {
-                // It's a regular variable - replace it
-                let value = getNestedValue(data, varName) || '';
-                if (varName === 'content' || /\.content$/.test(varName)) {
-                    result += value; // auto-raw
-                } else if (varName === 'date' && arg) {
-                    result += formatDate(value, arg);
-                } else {
-                    result += escapeHtml(value);
-                }
-            }
-            
-            lastIndex = matchEnd;
-        }
-        
-        // Add remaining content
-        result += output.substring(lastIndex);
-        output = result;
-        
         // Handle nested loops for single entry pages (e.g., {for each tag} when rendering a single entry)
+        // IMPORTANT: Process this BEFORE single-brace variable replacement to prevent { tag } from being replaced prematurely
         // This processes nested loops that reference properties of the current entry (like tags)
         let nestedLoopProcessed = true;
         while (nestedLoopProcessed) {
@@ -840,6 +772,75 @@
                 output = output.substring(0, startPos) + rendered + output.substring(endPos + 7);
             }
         }
+        
+        // Replace {{ variable }} outside loops
+        output = output.replace(/\{\{\s*([a-zA-Z0-9_\.]+)(?:\s*\|\s*([a-zA-Z0-9_]+)(?::\s*"([^"]+)")?)?\s*\}\}/g, (match, varName, filter, filterValue) => {
+            let value = getNestedValue(data, varName) || '';
+            
+            if (filter === 'date' && filterValue) {
+                value = formatDate(value, filterValue);
+            } else if (filter === 'raw') {
+                return value;
+            } else if (filter === 'escape' || !filter) {
+                value = escapeHtml(value);
+            }
+            
+            return value;
+        });
+        
+        // Support single-brace variables outside loops: { content }, { site_title }, etc.
+        // Handle variables with spaces: { site_title } -> site_title
+        // IMPORTANT: Process this AFTER nested loops to prevent { tag } from being replaced prematurely
+        // Use a while loop to track positions correctly
+        let lastIndex = 0;
+        let result = '';
+        const varRegex = /\{\s*([a-zA-Z0-9_]+)\s*(?:"([^"]+)")?\s*\}/g;
+        let varMatch;
+        
+        while ((varMatch = varRegex.exec(output)) !== null) {
+            const matchStart = varMatch.index;
+            const matchEnd = varMatch.index + varMatch[0].length;
+            const varName = varMatch[1].trim();
+            const arg = varMatch[2];
+            
+            // Add everything before this match
+            result += output.substring(lastIndex, matchStart);
+            
+            const lowers = varName.toLowerCase();
+            
+            // Skip if it's a directive keyword (these should already be processed)
+            const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
+            if (directiveKeywords.includes(lowers)) {
+                // Check context around match to see if it's part of a directive
+                const before = output.substring(Math.max(0, matchStart - 20), matchStart);
+                const after = output.substring(matchEnd, Math.min(output.length, matchEnd + 20));
+                
+                // If it's part of a directive, keep it as-is
+                if (after.match(/^\s+(for|each|in|has|exist|==|!=|<=|>=|>|<)/) || 
+                    before.match(/(entry|for|if)\s+$/)) {
+                    result += varMatch[0]; // Keep directive as-is
+                } else {
+                    // It's a standalone directive keyword, keep it
+                    result += varMatch[0];
+                }
+            } else {
+                // It's a regular variable - replace it
+                let value = getNestedValue(data, varName) || '';
+                if (varName === 'content' || /\.content$/.test(varName)) {
+                    result += value; // auto-raw
+                } else if (varName === 'date' && arg) {
+                    result += formatDate(value, arg);
+                } else {
+                    result += escapeHtml(value);
+                }
+            }
+            
+            lastIndex = matchEnd;
+        }
+        
+        // Add remaining content
+        result += output.substring(lastIndex);
+        output = result;
         
         // Handle conditionals
         output = renderConditionals(output, data);
