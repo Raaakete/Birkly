@@ -1791,9 +1791,15 @@
                 if (collectionSlug && formContent) {
                     // Decode HTML-encoded content
                     // The content is stored as HTML-encoded (e.g., &lt;div&gt; becomes <div>)
+                    // We need to decode HTML entities but preserve the HTML structure
+                    // Use a temporary element to decode, but get the innerHTML to preserve tags
                     const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = formContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-                    formContent = tempDiv.textContent || formContent;
+                    // Decode HTML entities
+                    formContent = formContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'");
+                    // Set the decoded HTML
+                    tempDiv.innerHTML = formContent;
+                    // Get the innerHTML to preserve HTML structure (not textContent which strips tags)
+                    formContent = tempDiv.innerHTML;
                     console.log('HaruCMS: Decoded form content, length:', formContent.length, 'First 100 chars:', formContent.substring(0, 100));
                     
                     fetchCollectionInfo(collectionSlug).then(collectionInfo => {
