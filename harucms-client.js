@@ -1038,7 +1038,15 @@
                     if (endPos !== -1) {
                         const formContent = afterStart.substring(0, endPos);
                         const placeholderId = 'haru-entry-block-' + Math.random().toString(36).substr(2, 9);
-                        const placeholder = '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-content="' + escapeHtml(formContent) + '" class="haru-entry-block" data-haru-preserved="false">Loading form...</div>';
+                        // Escape the form content for use in HTML attribute
+                        // We need to encode quotes, <, >, &, and newlines properly
+                        let escapedContent = escapeHtml(formContent);
+                        // Also encode quotes and apostrophes for use in attribute
+                        escapedContent = escapedContent.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                        // Encode newlines as spaces to keep it on one line
+                        escapedContent = escapedContent.replace(/\n/g, ' ').replace(/\r/g, '');
+                        
+                        const placeholder = '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-content="' + escapedContent + '" class="haru-entry-block" data-haru-preserved="false">Loading form...</div>';
                         
                         // Replace the entire {entry for}...{endentry} block with placeholder
                         const beforeBlock = innerHTML.substring(0, startPos);
