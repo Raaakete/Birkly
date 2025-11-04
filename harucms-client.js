@@ -1156,20 +1156,21 @@
             try {
                 console.log('HaruCMS: Processing template:', template.template.substring(0, 100));
                 
-                // Check if this template contains entry blocks - if so, preserve them
-                // Check the original template HTML, not the current DOM (which might have been modified)
-                const entryBlockRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/gs;
+                // Check if this template contains entry blocks - if so, preserve them in DOM
+                // Store references to the actual DOM elements before processing
+                const entryBlocksInDOM = template.element.querySelectorAll('.haru-entry-block');
                 const preservedBlocks = [];
-                let blockMatch;
-                while ((blockMatch = entryBlockRegex.exec(template.template)) !== null) {
-                    preservedBlocks.push({
-                        html: blockMatch[0],
-                        fullMatch: blockMatch[0],
-                        uniqueId: 'ENTRY_BLOCK_PLACEHOLDER_' + preservedBlocks.length
+                if (entryBlocksInDOM.length > 0) {
+                    console.log('HaruCMS: Found', entryBlocksInDOM.length, 'entry blocks in DOM, preserving them');
+                    entryBlocksInDOM.forEach((block, index) => {
+                        // Store the actual element and its HTML
+                        preservedBlocks.push({
+                            element: block,
+                            html: block.outerHTML,
+                            parent: block.parentElement,
+                            nextSibling: block.nextSibling
+                        });
                     });
-                }
-                if (preservedBlocks.length > 0) {
-                    console.log('HaruCMS: Found', preservedBlocks.length, 'entry blocks in template HTML, preserving them');
                 }
                 
                 // Extract collection names from template
@@ -1208,22 +1209,35 @@
                     // Render template
                     let rendered = renderTemplate(template.template, data);
                     
-                    // Check if entry blocks were preserved by renderTemplate
+                    // Restore entry blocks in DOM if they were removed
                     if (preservedBlocks.length > 0) {
-                        console.log('HaruCMS: Checking if', preservedBlocks.length, 'entry blocks were preserved in rendered output');
+                        console.log('HaruCMS: Restoring', preservedBlocks.length, 'entry blocks in DOM after rendering');
+                        // Set the rendered HTML first
+                        template.element.innerHTML = rendered;
+                        
+                        // Check if entry blocks still exist, if not restore them
                         preservedBlocks.forEach((block, index) => {
-                            // Check if the rendered output contains the entry block (renderTemplate should have restored it)
-                            if (!rendered.includes('haru-entry-block')) {
-                                console.warn('HaruCMS: Entry block', index, 'not found in rendered output');
-                                // Entry block was removed, restore it from the original block HTML
-                                rendered = rendered.replace(block.uniqueId || 'ENTRY_BLOCK_PLACEHOLDER_' + index, block.html);
+                            // Check if the block still exists in the DOM
+                            const existingBlock = template.element.querySelector('.haru-entry-block[data-haru-collection="' + block.element.dataset.haruCollection + '"]');
+                            if (!existingBlock) {
+                                console.log('HaruCMS: Entry block', index, 'was removed, restoring it');
+                                // Find where to insert it - look for a marker or insert at the end
+                                // Try to find the original position or insert at the end of the element
+                                const container = template.element;
+                                if (block.nextSibling && block.nextSibling.parentElement === container) {
+                                    // Insert before the next sibling
+                                    container.insertBefore(block.element, block.nextSibling);
+                                } else {
+                                    // Append to the end
+                                    container.appendChild(block.element);
+                                }
                             } else {
-                                console.log('HaruCMS: Entry block', index, 'preserved in rendered output');
+                                console.log('HaruCMS: Entry block', index, 'still exists in DOM');
                             }
                         });
+                    } else {
+                        template.element.innerHTML = rendered;
                     }
-                    
-                    template.element.innerHTML = rendered;
                     console.log('HaruCMS: Template rendered successfully');
                 } else {
                     // No collections, just render variables
