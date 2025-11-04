@@ -1105,12 +1105,6 @@
             for (const el of allElementsAlt) {
                 if (el.dataset.cmsProcessed || el.classList.contains('haru-entry-block')) continue;
                 
-                // Skip if this element contains an entry block (it will be processed separately)
-                if (el.querySelector('.haru-entry-block')) {
-                    console.log('HaruCMS: Skipping element with entry block:', el.tagName, el.className);
-                    continue;
-                }
-                
                 const innerHTML = el.innerHTML || '';
                 if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
                     el.dataset.cmsProcessed = 'true';
@@ -1119,7 +1113,12 @@
                         originalHtml: innerHTML,
                         template: innerHTML
                     });
-                    console.log('HaruCMS: Found template via alternative detection:', el.tagName, el.className);
+                    // Check if this element contains entry blocks for logging
+                    if (el.querySelector('.haru-entry-block')) {
+                        console.log('HaruCMS: Found template via alternative detection:', el.tagName, el.className, '(contains entry block)');
+                    } else {
+                        console.log('HaruCMS: Found template via alternative detection:', el.tagName, el.className);
+                    }
                 }
             }
             console.log('HaruCMS: Found', templates.length, 'templates via alternative detection');
