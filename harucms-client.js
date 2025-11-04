@@ -420,16 +420,35 @@
                         // Render each array item
                         const rendered = array.map(tagItem => {
                             let tagOutput = nestedLoopContent;
-                            // Replace { tag } or { propName } with actual tag value
-                            // Match both singular and plural forms (e.g., { tag } and { tags })
-                            const singularMatch = new RegExp(`\\{\\s*${propName}\\s*\\}`, 'g');
-                            const pluralMatch = new RegExp(`\\{\\s*${propName}s\\s*\\}`, 'g');
-                            tagOutput = tagOutput.replace(singularMatch, () => {
-                                return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                            
+                            // First, replace all variables that refer to the outer loop item (e.g., { title }, { slug })
+                            // This allows variables like { title } to work inside nested loops
+                            tagOutput = tagOutput.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, (m, name) => {
+                                name = name.trim();
+                                const lowers = name.toLowerCase();
+                                // Skip directive keywords
+                                if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+                                
+                                // If this is the loop variable (tag), replace with tag value
+                                if (name === propName || name === propName + 's') {
+                                    return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                                }
+                                
+                                // Otherwise, try to get from the outer loop item
+                                if (item && Object.prototype.hasOwnProperty.call(item, name)) {
+                                    if (name === 'content') return (item[name] || '');
+                                    return escapeHtml(item[name] || '');
+                                }
+                                
+                                // Fallback to outer data
+                                if (data && Object.prototype.hasOwnProperty.call(data, name)) {
+                                    if (name === 'content') return (data[name] || '');
+                                    return escapeHtml(data[name] || '');
+                                }
+                                
+                                return '';
                             });
-                            tagOutput = tagOutput.replace(pluralMatch, () => {
-                                return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
-                            });
+                            
                             return tagOutput;
                         }).join('');
                         
