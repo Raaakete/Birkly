@@ -39,10 +39,6 @@
                 {for each entry in 'about'}
                 {if entry.status == 'published'}
                 <article class="post">
-                    <h1>{ title }</h1>
-                    {if entry has subtitle}
-                    <p class="page-subtitle">{ subtitle }</p>
-                    {endif}
                     <div class="post-content">
                         { content }
                     </div>
