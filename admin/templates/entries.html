@@ -66,7 +66,7 @@
                                 <?php endforeach; ?>
                             </div>
                             <div class="cell cell-actions" role="cell">
-                                <a class="btn btn-sm" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" aria-label="Edit entry <?= htmlspecialchars($entry['title'] ?? '') ?>">
+                                <a class="btn btn-sm mr-s" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" aria-label="Edit entry <?= htmlspecialchars($entry['title'] ?? '') ?>">
                                     Edit
                                 </a>
                                 <button class="btn btn-sm btn-danger" disabled aria-label="Delete entry <?= htmlspecialchars($entry['title'] ?? '') ?>">
