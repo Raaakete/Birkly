@@ -1363,6 +1363,24 @@
                 
                 const innerHTML = el.innerHTML || '';
                 if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
+                    // Check if this element is inside a collection loop
+                    // If so, skip it - it will be processed as part of the collection loop
+                    let ancestor = el.parentElement;
+                    let isInsideCollectionLoop = false;
+                    while (ancestor) {
+                        const ancestorText = ancestor.textContent || ancestor.innerHTML || '';
+                        if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
+                            isInsideCollectionLoop = true;
+                            console.log('HaruCMS: Skipping nested template inside collection loop (alt detection):', el.tagName, el.className);
+                            break;
+                        }
+                        ancestor = ancestor.parentElement;
+                    }
+                    
+                    if (isInsideCollectionLoop) {
+                        continue; // Skip - will be processed as part of collection loop
+                    }
+                    
                     el.dataset.cmsProcessed = 'true';
                     templates.push({
                         element: el,
