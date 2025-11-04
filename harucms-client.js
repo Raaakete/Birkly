@@ -420,8 +420,14 @@
                         // Render each array item
                         const rendered = array.map(tagItem => {
                             let tagOutput = nestedLoopContent;
-                            // Replace { tag } with actual tag value
-                            tagOutput = tagOutput.replace(new RegExp(`\\{\\s*${propName}\\s*\\}`, 'g'), () => {
+                            // Replace { tag } or { propName } with actual tag value
+                            // Match both singular and plural forms (e.g., { tag } and { tags })
+                            const singularMatch = new RegExp(`\\{\\s*${propName}\\s*\\}`, 'g');
+                            const pluralMatch = new RegExp(`\\{\\s*${propName}s\\s*\\}`, 'g');
+                            tagOutput = tagOutput.replace(singularMatch, () => {
+                                return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                            });
+                            tagOutput = tagOutput.replace(pluralMatch, () => {
                                 return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
                             });
                             return tagOutput;
