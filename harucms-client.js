@@ -713,6 +713,134 @@
         result += output.substring(lastIndex);
         output = result;
         
+        // Handle nested loops for single entry pages (e.g., {for each tag} when rendering a single entry)
+        // This processes nested loops that reference properties of the current entry (like tags)
+        let nestedLoopProcessed = true;
+        while (nestedLoopProcessed) {
+            nestedLoopProcessed = false;
+            // Match {for each tag} or {for each tags} - handle optional spaces
+            const nestedLoopRegex = /\{for\s+each\s+([a-zA-Z0-9_]+)\s*\}/;
+            const nestedMatch = nestedLoopRegex.exec(output);
+            if (nestedMatch) {
+                nestedLoopProcessed = true;
+                const fullMatch = nestedMatch[0];
+                const propName = nestedMatch[1];
+                console.log('HaruCMS: Processing nested loop for property:', propName, 'in single entry context');
+                
+                // Check if it's a property in the data object (e.g., tags)
+                // Try singular form first, then plural form (e.g., 'tag' -> 'tags')
+                let array = data[propName];
+                console.log('HaruCMS: Checking property:', propName, 'value:', array, 'type:', typeof array, 'isArray:', Array.isArray(array));
+                // If property doesn't exist or is not an array, try plural form
+                if (!array || !Array.isArray(array)) {
+                    const pluralForm = propName + 's';
+                    array = data[pluralForm];
+                    console.log('HaruCMS: Trying plural form:', pluralForm, 'value:', array, 'isArray:', Array.isArray(array));
+                }
+                // If still not an array, default to empty array
+                if (!array || !Array.isArray(array)) {
+                    array = [];
+                    console.log('HaruCMS: Property not found or not an array, defaulting to empty array');
+                } else {
+                    console.log('HaruCMS: Found array with', array.length, 'items:', array);
+                }
+                
+                // Only remove the loop if it's not an array (empty arrays should still process)
+                if (!Array.isArray(array)) {
+                    // Remove the entire loop
+                    const startPos = output.indexOf(fullMatch);
+                    const endPos = output.indexOf('{endfor', startPos);
+                    if (endPos !== -1) {
+                        output = output.substring(0, startPos) + output.substring(endPos + 7);
+                    } else {
+                        output = output.replace(fullMatch, '');
+                    }
+                    continue;
+                }
+                
+                // Find the matching {endfor}
+                const startPos = output.indexOf(fullMatch);
+                let pos = startPos + fullMatch.length;
+                let depth = 1;
+                let endPos = -1;
+                
+                while (pos < output.length && depth > 0) {
+                    const nextFor = output.indexOf('{for', pos);
+                    const nextEndFor = output.indexOf('{endfor', pos);
+                    
+                    if (nextFor !== -1 && nextFor < nextEndFor) {
+                        depth++;
+                        pos = nextFor + 4;
+                    } else if (nextEndFor !== -1) {
+                        depth--;
+                        if (depth === 0) {
+                            endPos = nextEndFor;
+                            break;
+                        }
+                        pos = nextEndFor + 7;
+                    } else {
+                        break;
+                    }
+                }
+                
+                if (endPos === -1) {
+                    output = output.replace(fullMatch, '');
+                    continue;
+                }
+                
+                const nestedLoopContent = output.substring(startPos + fullMatch.length, endPos);
+                console.log('HaruCMS: Nested loop content:', nestedLoopContent.substring(0, 100));
+                
+                // Render each array item
+                const rendered = array.map(tagItem => {
+                    console.log('HaruCMS: Processing tag item:', tagItem);
+                    let tagOutput = nestedLoopContent;
+                    
+                    // Replace the loop variable first ({ tag } or { tags })
+                    // Match both singular and plural forms
+                    const tagVarRegex = new RegExp(`\\{\\s*${propName}\\s*\\}`, 'g');
+                    const tagVarPluralRegex = new RegExp(`\\{\\s*${propName}s\\s*\\}`, 'g');
+                    
+                    tagOutput = tagOutput.replace(tagVarRegex, () => {
+                        const replaced = typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                        console.log('HaruCMS: Replaced {', propName, '} with:', replaced);
+                        return replaced;
+                    });
+                    tagOutput = tagOutput.replace(tagVarPluralRegex, () => {
+                        const replaced = typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                        console.log('HaruCMS: Replaced {', propName, 's} with:', replaced);
+                        return replaced;
+                    });
+                    
+                    // Then replace all other variables that refer to the entry data (e.g., { title }, { slug })
+                    // This allows variables like { title } to work inside nested loops
+                    tagOutput = tagOutput.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, (m, name) => {
+                        name = name.trim();
+                        const lowers = name.toLowerCase();
+                        // Skip directive keywords and the loop variable (already replaced)
+                        if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+                        if (name === propName || name === propName + 's') return m; // Already replaced above
+                        
+                        // Otherwise, try to get from the data object
+                        if (data && Object.prototype.hasOwnProperty.call(data, name)) {
+                            if (name === 'content') return (data[name] || '');
+                            return escapeHtml(data[name] || '');
+                        }
+                        
+                        return '';
+                    });
+                    
+                    console.log('HaruCMS: Final tag output:', tagOutput);
+                    return tagOutput;
+                }).join('');
+                
+                console.log('HaruCMS: Rendered nested loop content, length:', rendered.length, 'first 100 chars:', rendered.substring(0, 100));
+                
+                // Replace the nested loop with rendered content
+                output = output.substring(0, startPos) + rendered + output.substring(endPos + 7);
+            }
+        }
+        
         // Handle conditionals
         output = renderConditionals(output, data);
         
