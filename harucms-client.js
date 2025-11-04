@@ -1214,43 +1214,72 @@
                     
                     if (entryBlockMatch) {
                         const entryBlockHTML = entryBlockMatch[0];
-                        console.log('HaruCMS: Found entry block HTML, length:', entryBlockHTML.length, 'First 200 chars:', entryBlockHTML.substring(0, 200));
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = entryBlockHTML;
-                        const extractedBlock = tempDiv.firstElementChild;
-                        if (extractedBlock) {
-                            console.log('HaruCMS: Extracted element, tag:', extractedBlock.tagName, 'classList:', Array.from(extractedBlock.classList));
-                            console.log('HaruCMS: Extracted element attributes:', Array.from(extractedBlock.attributes).map(a => a.name + '=' + a.value).join(', '));
+                        console.log('HaruCMS: Found entry block HTML, length:', entryBlockHTML.length);
+                        
+                        // Extract collection slug directly from HTML string to avoid parsing issues
+                        const collectionSlugMatch = entryBlockHTML.match(/data-haru-collection\s*=\s*["']([^"']+)["']/);
+                        const collectionSlug = collectionSlugMatch ? collectionSlugMatch[1] : null;
+                        
+                        if (collectionSlug) {
+                            console.log('HaruCMS: Extracted collection slug from HTML:', collectionSlug);
+                            // Create a proper entry block element from the HTML
+                            const tempDiv = document.createElement('div');
+                            // Use the exact HTML we found, but ensure it's properly formatted
+                            tempDiv.innerHTML = entryBlockHTML;
+                            let extractedBlock = tempDiv.firstElementChild;
                             
-                            // Check if it has the class OR check by data attribute
-                            if (extractedBlock.classList.contains('haru-entry-block') || extractedBlock.dataset.haruCollection) {
-                                const collectionSlug = extractedBlock.dataset.haruCollection;
-                                console.log('HaruCMS: Entry block has collection slug:', collectionSlug);
-                                if (collectionSlug) {
-                                    // Store the extracted block
-                                    preservedBlocks.push({
-                                        originalElement: null, // No original element in DOM
-                                        clonedElement: extractedBlock.cloneNode(true),
-                                        html: entryBlockHTML,
-                                        parent: null,
-                                        nextSibling: null,
-                                        collectionSlug: collectionSlug
-                                    });
-                                    console.log('HaruCMS: Extracted entry block from HTML for collection:', collectionSlug);
+                            // If parsing failed, create a new element with the correct attributes
+                            if (!extractedBlock || !extractedBlock.classList || !extractedBlock.classList.contains('haru-entry-block')) {
+                                console.log('HaruCMS: HTML parsing failed, creating element manually');
+                                extractedBlock = document.createElement('div');
+                                extractedBlock.className = 'haru-entry-block';
+                                extractedBlock.id = entryBlockHTML.match(/id\s*=\s*["']([^"']+)["']/)?.[1] || 'haru-entry-block-' + Math.random().toString(36).substr(2, 9);
+                                extractedBlock.dataset.haruCollection = collectionSlug;
+                                
+                                // Extract data-haru-content
+                                const contentMatch = entryBlockHTML.match(/data-haru-content\s*=\s*["']([^"']+)["']/);
+                                if (contentMatch) {
+                                    // Decode HTML entities in content
+                                    const tempContentDiv = document.createElement('div');
+                                    tempContentDiv.innerHTML = contentMatch[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                                    extractedBlock.dataset.haruContent = tempContentDiv.textContent || contentMatch[1];
                                 } else {
-                                    console.warn('HaruCMS: Entry block has no collection slug');
+                                    // Try to get content from the full HTML
+                                    const contentStart = entryBlockHTML.indexOf('data-haru-content="');
+                                    if (contentStart !== -1) {
+                                        const contentEnd = entryBlockHTML.indexOf('"', contentStart + 19);
+                                        if (contentEnd !== -1) {
+                                            const encodedContent = entryBlockHTML.substring(contentStart + 19, contentEnd);
+                                            // Decode and extract
+                                            const tempContentDiv = document.createElement('div');
+                                            tempContentDiv.innerHTML = encodedContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+                                            extractedBlock.dataset.haruContent = tempContentDiv.textContent || encodedContent;
+                                        }
+                                    }
                                 }
+                                
+                                extractedBlock.textContent = 'Loading form...';
+                            }
+                            
+                            if (extractedBlock && extractedBlock.dataset && extractedBlock.dataset.haruCollection) {
+                                // Store the extracted block
+                                preservedBlocks.push({
+                                    originalElement: null, // No original element in DOM
+                                    clonedElement: extractedBlock.cloneNode(true),
+                                    html: entryBlockHTML,
+                                    parent: null,
+                                    nextSibling: null,
+                                    collectionSlug: extractedBlock.dataset.haruCollection
+                                });
+                                console.log('HaruCMS: Extracted entry block from HTML for collection:', extractedBlock.dataset.haruCollection);
                             } else {
-                                console.warn('HaruCMS: Extracted element does not have haru-entry-block class or data-haru-collection');
+                                console.warn('HaruCMS: Could not create valid entry block element');
                             }
                         } else {
-                            console.warn('HaruCMS: Could not extract element from HTML, tempDiv children:', tempDiv.children.length);
+                            console.warn('HaruCMS: Could not extract collection slug from entry block HTML');
                         }
                     } else {
                         console.warn('HaruCMS: Could not match entry block in template HTML');
-                        // Debug: show a sample of the template HTML
-                        const sample = template.template.substring(0, 500);
-                        console.warn('HaruCMS: Template HTML sample:', sample);
                     }
                 }
                 
