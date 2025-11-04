@@ -1038,7 +1038,7 @@
                     if (endPos !== -1) {
                         const formContent = afterStart.substring(0, endPos);
                         const placeholderId = 'haru-entry-block-' + Math.random().toString(36).substr(2, 9);
-                        const placeholder = '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-content="' + escapeHtml(formContent) + '" class="haru-entry-block">Loading form...</div>';
+                        const placeholder = '<div id="' + placeholderId + '" data-haru-collection="' + escapeHtml(collectionSlug) + '" data-haru-content="' + escapeHtml(formContent) + '" class="haru-entry-block" data-haru-preserved="false">Loading form...</div>';
                         
                         // Replace the entire {entry for}...{endentry} block with placeholder
                         const beforeBlock = innerHTML.substring(0, startPos);
