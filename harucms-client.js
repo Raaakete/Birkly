@@ -904,6 +904,9 @@
         if (startPos === -1) return null;
         
         const afterStart = template.substring(startPos + startMatch.length);
+        console.log('HaruCMS: extractLoopContent - afterStart length:', afterStart.length, 'contains {for each tag:', afterStart.includes('{for each tag'));
+        console.log('HaruCMS: extractLoopContent - afterStart sample:', afterStart.substring(0, 300));
+        
         let depth = 1;
         let pos = 0;
         let content = '';
@@ -921,13 +924,17 @@
             }
             
             if (nextEnd !== -1 && (nextFor === -1 || nextEnd < nextFor)) {
+                // Found an {endfor} - add content up to it
                 content += afterStart.substring(pos, nextEnd);
                 depth--;
                 if (depth === 0) {
+                    console.log('HaruCMS: extractLoopContent - extracted content length:', content.length, 'contains {for each tag:', content.includes('{for each tag'));
+                    console.log('HaruCMS: extractLoopContent - extracted content sample:', content.substring(0, 300));
                     return content;
                 }
                 pos = nextEnd + (afterStart.indexOf('{endfor', pos) !== -1 ? 7 : 11);
             } else if (nextFor !== -1) {
+                // Found a nested {for} - add content up to it, then increase depth
                 content += afterStart.substring(pos, nextFor);
                 depth++;
                 pos = nextFor + 4;
@@ -936,6 +943,7 @@
             }
         }
         
+        console.log('HaruCMS: extractLoopContent - failed to extract content, depth:', depth);
         return null;
     }
     
