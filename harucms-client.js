@@ -1215,6 +1215,7 @@
                     if (entryBlockMatch) {
                         const entryBlockHTML = entryBlockMatch[0];
                         console.log('HaruCMS: Found entry block HTML, length:', entryBlockHTML.length);
+                        console.log('HaruCMS: Entry block HTML (first 500 chars):', entryBlockHTML.substring(0, 500));
                         
                         // Extract collection slug directly from HTML string to avoid parsing issues
                         const collectionSlugMatch = entryBlockHTML.match(/data-haru-collection\s*=\s*["']([^"']+)["']/);
