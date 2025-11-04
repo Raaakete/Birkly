@@ -351,10 +351,10 @@
                 while (nestedLoopProcessed) {
                     nestedLoopProcessed = false;
                     // Match {for each tag} or {for each tags} - handle optional spaces
-                    const nestedLoopRegex = /\{for\s+each\s+([a-zA-Z0-9_]+)\s*\}/g;
-                    // Reset regex lastIndex to start from beginning
-                    nestedLoopRegex.lastIndex = 0;
+                    // Must match: {for each tag} or {for each tags} (with optional spaces)
+                    const nestedLoopRegex = /\{for\s+each\s+([a-zA-Z0-9_]+)\s*\}/;
                     const nestedMatch = nestedLoopRegex.exec(itemOutput);
+                    console.log('HaruCMS: Checking for nested loops in itemOutput, length:', itemOutput.length, 'match:', nestedMatch ? 'found' : 'not found');
                     if (nestedMatch) {
                         nestedLoopProcessed = true;
                         const fullMatch = nestedMatch[0];
