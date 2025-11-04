@@ -713,6 +713,7 @@
                 let pos = startPos + fullMatch.length;
                 let depth = 1;
                 let endPos = -1;
+                let endPosClosingBrace = -1;
                 
                 while (pos < output.length && depth > 0) {
                     const nextFor = output.indexOf('{for', pos);
@@ -738,6 +739,7 @@
                     continue;
                 }
                 
+                // Extract content between {for each tag} and {endfor} (not including {endfor})
                 const nestedLoopContent = output.substring(startPos + fullMatch.length, endPos);
                 console.log('HaruCMS: Nested loop content:', nestedLoopContent.substring(0, 100));
                 
