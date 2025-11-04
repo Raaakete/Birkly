@@ -863,29 +863,24 @@
                     };
                     
                     // Find and process templates
-                    const walker = document.createTreeWalker(
-                        document.body,
-                        NodeFilter.SHOW_TEXT,
-                        null,
-                        false
-                    );
-                    
+                    // Use alternative detection method for single entry pages too
                     const templates = [];
-                    let node;
-                    
-                    while (node = walker.nextNode()) {
-                        if (node.nodeValue && (/\{\{|\{for|\{if|\{[a-zA-Z0-9_\.\s]+\}/.test(node.nodeValue))) {
-                            const parent = node.parentElement;
-                            if (!parent || parent.dataset.cmsProcessed) continue;
-                            
-                            parent.dataset.cmsProcessed = 'true';
+                    const allElements = document.body.querySelectorAll('*');
+                    for (const el of allElements) {
+                        if (el.dataset.cmsProcessed || el.classList.contains('haru-entry-block')) continue;
+                        
+                        const innerHTML = el.innerHTML || '';
+                        if (innerHTML && (/\{[a-zA-Z0-9_]/ || /\{\{/).test(innerHTML)) {
+                            el.dataset.cmsProcessed = 'true';
                             templates.push({
-                                element: parent,
-                                originalHtml: parent.innerHTML,
-                                template: parent.innerHTML
+                                element: el,
+                                originalHtml: innerHTML,
+                                template: innerHTML
                             });
                         }
                     }
+                    
+                    console.log('HaruCMS: Found', templates.length, 'templates for single entry page');
                     
                     // Render each template with the entry data
                     for (let template of templates) {
@@ -893,7 +888,7 @@
                             const rendered = renderTemplate(template.template, data);
                             template.element.innerHTML = rendered;
                             // Update page title if title variable exists
-                            if (entry.title && template.template.includes('{{ title }}')) {
+                            if (entry.title && (template.template.includes('{ title }') || template.template.includes('{{ title }}'))) {
                                 document.title = entry.title + (document.title.includes(' - ') ? document.title.substring(document.title.indexOf(' - ')) : '');
                             }
                         } catch (error) {
