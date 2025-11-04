@@ -358,7 +358,13 @@
                         const propName = nestedMatch[1];
                         
                         // Check if it's a property of the current item (e.g., tags)
-                        const array = item[propName] || [];
+                        // Try singular form first, then plural form (e.g., 'tag' -> 'tags')
+                        let array = item[propName] || [];
+                        if (!Array.isArray(array)) {
+                            // Try plural form if singular doesn't exist
+                            const pluralForm = propName + 's';
+                            array = item[pluralForm] || [];
+                        }
                         if (!Array.isArray(array)) {
                             // Remove the entire loop
                             const startPos = itemOutput.indexOf(fullMatch);
