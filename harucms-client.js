@@ -1316,9 +1316,18 @@
                                                     if (distanceToClass > 0 && distanceToClass < 50) {
                                                         // This is the closing quote!
                                                         extractedContent = entryBlockHTML.substring(contentStart, searchEnd);
-                                                        // Remove any trailing malformed patterns that might have been included
+                                                        
+                                                        // Aggressively remove any trailing malformed patterns
+                                                        // Remove patterns like ="" or =" at the end
                                                         extractedContent = extractedContent.replace(/\s*=""?\s*$/, '');
+                                                        // Remove any trailing quote and attribute patterns
                                                         extractedContent = extractedContent.replace(/\s*"\s*data-haru-preserved.*$/, '');
+                                                        extractedContent = extractedContent.replace(/\s*data-haru-preserved.*$/, '');
+                                                        // Remove any trailing ="" or =" patterns
+                                                        extractedContent = extractedContent.replace(/\s*=\s*""?\s*$/, '');
+                                                        // Remove trailing quotes that might be part of malformed HTML
+                                                        extractedContent = extractedContent.replace(/\s*"\s*$/, '');
+                                                        
                                                         break;
                                                     }
                                                 }
