@@ -1864,9 +1864,30 @@
                             renderedContent + '\n' +
                             '</form>';
                         
-                        block.outerHTML = formHtml;
-                        console.log('HaruCMS: Form HTML inserted, setting up submission');
-                        setupFormSubmission();
+                        // Replace the block with the form
+                        const parent = block.parentElement;
+                        if (parent) {
+                            // Create a temporary container to parse the form HTML
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = formHtml;
+                            const formElement = tempDiv.firstElementChild;
+                            
+                            // Replace the block with the form element
+                            parent.replaceChild(formElement, block);
+                            console.log('HaruCMS: Form HTML inserted via replaceChild, setting up submission');
+                            
+                            // Setup form submission after a brief delay to ensure DOM is updated
+                            setTimeout(() => {
+                                setupFormSubmission();
+                            }, 50);
+                        } else {
+                            // Fallback to outerHTML if no parent
+                            block.outerHTML = formHtml;
+                            console.log('HaruCMS: Form HTML inserted via outerHTML, setting up submission');
+                            setTimeout(() => {
+                                setupFormSubmission();
+                            }, 50);
+                        }
                     }).catch(error => {
                         console.error('HaruCMS: Error rendering entry form:', error);
                         block.innerHTML = '<p style="color: red;">Error loading form. Please try again later.</p>';
