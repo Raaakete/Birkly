@@ -1272,21 +1272,46 @@
                     console.log('HaruCMS: Rendering template without collections');
                     let rendered = renderTemplate(template.template, data);
                     
-                    // Restore preserved entry blocks if any were removed
+                    // Restore entry blocks in DOM if they were removed
                     if (preservedBlocks.length > 0) {
-                        preservedBlocks.forEach(block => {
-                            // Check if the rendered HTML still contains this block
-                            if (!rendered.includes(block.html.substring(0, 50))) {
-                                // Block was removed, restore it
-                                const placeholderRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/g;
-                                if (placeholderRegex.test(template.template)) {
-                                    rendered = rendered.replace(placeholderRegex, block.html);
+                        console.log('HaruCMS: Restoring', preservedBlocks.length, 'entry blocks in DOM after rendering');
+                        // Set the rendered HTML first
+                        template.element.innerHTML = rendered;
+                        
+                        // Check if entry blocks still exist, if not restore them
+                        preservedBlocks.forEach((block, index) => {
+                            // Check if the block still exists in the DOM
+                            const collectionSlug = block.collectionSlug || block.originalElement.dataset.haruCollection;
+                            const existingBlock = template.element.querySelector('.haru-entry-block[data-haru-collection="' + collectionSlug + '"]');
+                            if (!existingBlock) {
+                                console.log('HaruCMS: Entry block', index, 'was removed, restoring it for collection:', collectionSlug);
+                                // Clone the element again (since innerHTML replacement removed the original)
+                                const restoredElement = block.clonedElement.cloneNode(true);
+                                // Find where to insert it - try to maintain original position
+                                const container = template.element;
+                                // Try to find a good insertion point - look for the placeholder in rendered HTML
+                                const placeholderPattern = new RegExp('<div[^>]*id="[^"]*haru-entry-block[^"]*"[^>]*>', 'i');
+                                const placeholderMatch = rendered.match(placeholderPattern);
+                                if (placeholderMatch) {
+                                    // If placeholder exists in rendered HTML, replace it with actual block
+                                    const placeholderFullRegex = /<div[^>]*class="haru-entry-block"[^>]*>.*?<\/div>/s;
+                                    rendered = rendered.replace(placeholderFullRegex, restoredElement.outerHTML);
+                                    template.element.innerHTML = rendered;
+                                } else if (block.nextSibling && block.nextSibling.parentElement === container) {
+                                    // Insert before the next sibling
+                                    container.insertBefore(restoredElement, block.nextSibling);
+                                } else {
+                                    // Append to the end
+                                    container.appendChild(restoredElement);
                                 }
+                                console.log('HaruCMS: Entry block', index, 'restored successfully');
+                            } else {
+                                console.log('HaruCMS: Entry block', index, 'still exists in DOM');
                             }
                         });
+                    } else {
+                        template.element.innerHTML = rendered;
                     }
-                    
-                    template.element.innerHTML = rendered;
                     console.log('HaruCMS: Template rendered successfully');
                 }
             } catch (error) {
