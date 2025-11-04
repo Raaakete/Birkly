@@ -1898,7 +1898,22 @@
                     const textarea = document.createElement('textarea');
                     textarea.innerHTML = formContent;
                     formContent = textarea.value;
-                    console.log('HaruCMS: Decoded form content, length:', formContent.length, 'First 100 chars:', formContent.substring(0, 100));
+                    
+                    // Clean up any malformed HTML patterns that might have been included
+                    // The extraction might include extra characters like =" or ="" or the next attribute
+                    // Remove patterns like ="" or =" that appear in decoded content
+                    formContent = formContent.replace(/\s*="">""\s*/g, '">');
+                    formContent = formContent.replace(/\s*="">"\s*/g, '">');
+                    formContent = formContent.replace(/\s*="">\s*/g, '">');
+                    formContent = formContent.replace(/\s*="\s*$/gm, '');
+                    formContent = formContent.replace(/\s*=""\s*$/gm, '');
+                    
+                    // Remove any trailing content that looks like attributes (data-haru-preserved, etc.)
+                    formContent = formContent.replace(/\s*"\s*data-haru-preserved.*$/s, '');
+                    
+                    console.log('HaruCMS: Decoded form content, length:', formContent.length);
+                    console.log('HaruCMS: First 200 chars:', formContent.substring(0, 200));
+                    console.log('HaruCMS: Last 100 chars:', formContent.substring(Math.max(0, formContent.length - 100)));
                     
                     fetchCollectionInfo(collectionSlug).then(collectionInfo => {
                         console.log('HaruCMS: Fetched collection info for:', collectionSlug, collectionInfo ? 'OK' : 'FAILED');
