@@ -1934,18 +1934,35 @@
                     formContent = textarea.value;
                     
                     // Clean up any malformed HTML patterns that might have been included
-                    // The extraction might include extra characters like =" or ="" or the next attribute
-                    // Remove patterns like ="" or =" that appear in decoded content
-                    formContent = formContent.replace(/\s*="">""\s*/g, '">');
-                    formContent = formContent.replace(/\s*="">"\s*/g, '">');
-                    formContent = formContent.replace(/\s*="">\s*/g, '">');
-                    formContent = formContent.replace(/\s*="\s*$/gm, '');
-                    formContent = formContent.replace(/\s*=""\s*$/gm, '');
+                    // The decoded content shows patterns like: class=" form-group">="" and <label=""
+                    // These need to be fixed to proper HTML
                     
                     // Remove any trailing content that looks like attributes (data-haru-preserved, etc.)
                     // This should have been removed during extraction, but clean it up here too
                     formContent = formContent.replace(/\s*"\s*data-haru-preserved.*$/s, '');
                     formContent = formContent.replace(/\s*data-haru-preserved.*$/s, '');
+                    
+                    // Fix malformed attribute patterns: class=" form-group">="" -> class="form-group">
+                    formContent = formContent.replace(/(\w+)="\s+([^"]+)"\s*>\s*=""/g, '$1="$2">');
+                    formContent = formContent.replace(/(\w+)="\s+([^"]+)"\s*>\s*="/g, '$1="$2">');
+                    
+                    // Fix malformed patterns like: >name="" -> >name
+                    formContent = formContent.replace(/>([^<]+)=""/g, '>$1');
+                    formContent = formContent.replace(/>([^<]+)="/g, '>$1');
+                    
+                    // Fix patterns like: <label="" for="title" -> <label for="title"
+                    formContent = formContent.replace(/(<\w+)=""/g, '$1');
+                    
+                    // Fix patterns like: <span="" class=" -> <span class="
+                    formContent = formContent.replace(/(<\w+)=""\s+(\w+)=""/g, '$1 $2=""');
+                    formContent = formContent.replace(/(<\w+)=""\s+(\w+)=/g, '$1 $2=');
+                    
+                    // Remove any remaining malformed patterns
+                    formContent = formContent.replace(/\s*="">""\s*/g, '">');
+                    formContent = formContent.replace(/\s*="">"\s*/g, '">');
+                    formContent = formContent.replace(/\s*="">\s*/g, '">');
+                    formContent = formContent.replace(/\s*="\s*$/gm, '');
+                    formContent = formContent.replace(/\s*=""\s*$/gm, '');
                     
                     // Also remove any remaining malformed quote patterns at the very end
                     formContent = formContent.replace(/\s*"\s*=\s*"\s*$/s, '');
