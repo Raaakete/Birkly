@@ -1318,14 +1318,37 @@
                                                         extractedContent = entryBlockHTML.substring(contentStart, searchEnd);
                                                         
                                                         // Aggressively remove any trailing malformed patterns
-                                                        // Remove patterns like ="" or =" at the end
+                                                        // The content might end with: button&gt;="" "="" data-haru-preserved="false
+                                                        // We need to remove everything from the first quote that's followed by = or data-haru
+                                                        
+                                                        // First, check if content ends with data-haru-preserved and remove it
+                                                        const dataHaruIndex = extractedContent.indexOf('data-haru-preserved');
+                                                        if (dataHaruIndex !== -1) {
+                                                            // Find the quote before data-haru-preserved
+                                                            let quoteBeforeDataHaru = dataHaruIndex - 1;
+                                                            while (quoteBeforeDataHaru > 0 && extractedContent[quoteBeforeDataHaru] !== '"') {
+                                                                quoteBeforeDataHaru--;
+                                                            }
+                                                            if (quoteBeforeDataHaru > 0 && extractedContent[quoteBeforeDataHaru] === '"') {
+                                                                // Check what's before this quote - if it's = or whitespace, trim from there
+                                                                if (quoteBeforeDataHaru > 0 && (extractedContent[quoteBeforeDataHaru - 1] === '=' || /\s/.test(extractedContent[quoteBeforeDataHaru - 1]))) {
+                                                                    // Trim from the quote before data-haru
+                                                                    extractedContent = extractedContent.substring(0, quoteBeforeDataHaru);
+                                                                    // Also trim any trailing = or whitespace
+                                                                    extractedContent = extractedContent.replace(/\s*=\s*$/, '');
+                                                                } else {
+                                                                    // Just trim from data-haru-preserved
+                                                                    extractedContent = extractedContent.substring(0, dataHaruIndex);
+                                                                }
+                                                            } else {
+                                                                // Just trim from data-haru-preserved
+                                                                extractedContent = extractedContent.substring(0, dataHaruIndex);
+                                                            }
+                                                        }
+                                                        
+                                                        // Remove any trailing malformed patterns
                                                         extractedContent = extractedContent.replace(/\s*=""?\s*$/, '');
-                                                        // Remove any trailing quote and attribute patterns
-                                                        extractedContent = extractedContent.replace(/\s*"\s*data-haru-preserved.*$/, '');
-                                                        extractedContent = extractedContent.replace(/\s*data-haru-preserved.*$/, '');
-                                                        // Remove any trailing ="" or =" patterns
                                                         extractedContent = extractedContent.replace(/\s*=\s*""?\s*$/, '');
-                                                        // Remove trailing quotes that might be part of malformed HTML
                                                         extractedContent = extractedContent.replace(/\s*"\s*$/, '');
                                                         
                                                         break;
