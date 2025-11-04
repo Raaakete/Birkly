@@ -1321,35 +1321,48 @@
                                                         // The content might end with: button&gt;="" "="" data-haru-preserved="false
                                                         // We need to remove everything from the first quote that's followed by = or data-haru
                                                         
-                                                        // First, check if content ends with data-haru-preserved and remove it
-                                                        const dataHaruIndex = extractedContent.indexOf('data-haru-preserved');
+                                                        // Remove any trailing malformed patterns BEFORE checking for data-haru-preserved
+                                                        // This helps us find the actual end of the content
+                                                        let cleanedContent = extractedContent.replace(/\s*=""?\s*$/, '');
+                                                        cleanedContent = cleanedContent.replace(/\s*=\s*""?\s*$/, '');
+                                                        cleanedContent = cleanedContent.replace(/\s*"\s*$/, '');
+                                                        
+                                                        // Check if cleaned content still ends with data-haru-preserved
+                                                        const dataHaruIndex = cleanedContent.indexOf('data-haru-preserved');
                                                         if (dataHaruIndex !== -1) {
                                                             // Find the quote before data-haru-preserved
                                                             let quoteBeforeDataHaru = dataHaruIndex - 1;
-                                                            while (quoteBeforeDataHaru > 0 && extractedContent[quoteBeforeDataHaru] !== '"') {
+                                                            while (quoteBeforeDataHaru > 0 && cleanedContent[quoteBeforeDataHaru] !== '"' && cleanedContent[quoteBeforeDataHaru] !== '&') {
                                                                 quoteBeforeDataHaru--;
                                                             }
-                                                            if (quoteBeforeDataHaru > 0 && extractedContent[quoteBeforeDataHaru] === '"') {
+                                                            // If we found a quote, check if it's part of &quot; or a real quote
+                                                            if (quoteBeforeDataHaru >= 5 && cleanedContent.substring(quoteBeforeDataHaru - 5, quoteBeforeDataHaru + 1) === '&quot;') {
+                                                                // It's part of &quot;, skip it
+                                                                quoteBeforeDataHaru = quoteBeforeDataHaru - 5;
+                                                            }
+                                                            if (quoteBeforeDataHaru > 0 && cleanedContent[quoteBeforeDataHaru] === '"') {
                                                                 // Check what's before this quote - if it's = or whitespace, trim from there
-                                                                if (quoteBeforeDataHaru > 0 && (extractedContent[quoteBeforeDataHaru - 1] === '=' || /\s/.test(extractedContent[quoteBeforeDataHaru - 1]))) {
+                                                                if (quoteBeforeDataHaru > 0 && (cleanedContent[quoteBeforeDataHaru - 1] === '=' || /\s/.test(cleanedContent[quoteBeforeDataHaru - 1]))) {
                                                                     // Trim from the quote before data-haru
-                                                                    extractedContent = extractedContent.substring(0, quoteBeforeDataHaru);
+                                                                    cleanedContent = cleanedContent.substring(0, quoteBeforeDataHaru);
                                                                     // Also trim any trailing = or whitespace
-                                                                    extractedContent = extractedContent.replace(/\s*=\s*$/, '');
+                                                                    cleanedContent = cleanedContent.replace(/\s*=\s*$/, '');
                                                                 } else {
                                                                     // Just trim from data-haru-preserved
-                                                                    extractedContent = extractedContent.substring(0, dataHaruIndex);
+                                                                    cleanedContent = cleanedContent.substring(0, dataHaruIndex);
                                                                 }
                                                             } else {
                                                                 // Just trim from data-haru-preserved
-                                                                extractedContent = extractedContent.substring(0, dataHaruIndex);
+                                                                cleanedContent = cleanedContent.substring(0, dataHaruIndex);
                                                             }
                                                         }
                                                         
-                                                        // Remove any trailing malformed patterns
-                                                        extractedContent = extractedContent.replace(/\s*=""?\s*$/, '');
-                                                        extractedContent = extractedContent.replace(/\s*=\s*""?\s*$/, '');
-                                                        extractedContent = extractedContent.replace(/\s*"\s*$/, '');
+                                                        // Final cleanup
+                                                        cleanedContent = cleanedContent.replace(/\s*=""?\s*$/, '');
+                                                        cleanedContent = cleanedContent.replace(/\s*=\s*""?\s*$/, '');
+                                                        cleanedContent = cleanedContent.replace(/\s*"\s*$/, '');
+                                                        
+                                                        extractedContent = cleanedContent;
                                                         
                                                         break;
                                                     }
