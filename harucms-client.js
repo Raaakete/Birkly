@@ -432,18 +432,30 @@
                             console.log('HaruCMS: Processing tag item:', tagItem);
                             let tagOutput = nestedLoopContent;
                             
-                            // First, replace all variables that refer to the outer loop item (e.g., { title }, { slug })
+                            // Replace the loop variable first ({ tag } or { tags })
+                            // Match both singular and plural forms
+                            const tagVarRegex = new RegExp(`\\{\\s*${propName}\\s*\\}`, 'g');
+                            const tagVarPluralRegex = new RegExp(`\\{\\s*${propName}s\\s*\\}`, 'g');
+                            
+                            tagOutput = tagOutput.replace(tagVarRegex, () => {
+                                const replaced = typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                                console.log('HaruCMS: Replaced {', propName, '} with:', replaced);
+                                return replaced;
+                            });
+                            tagOutput = tagOutput.replace(tagVarPluralRegex, () => {
+                                const replaced = typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
+                                console.log('HaruCMS: Replaced {', propName, 's} with:', replaced);
+                                return replaced;
+                            });
+                            
+                            // Then replace all other variables that refer to the outer loop item (e.g., { title }, { slug })
                             // This allows variables like { title } to work inside nested loops
                             tagOutput = tagOutput.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, (m, name) => {
                                 name = name.trim();
                                 const lowers = name.toLowerCase();
-                                // Skip directive keywords
+                                // Skip directive keywords and the loop variable (already replaced)
                                 if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
-                                
-                                // If this is the loop variable (tag), replace with tag value
-                                if (name === propName || name === propName + 's') {
-                                    return typeof tagItem === 'string' ? escapeHtml(tagItem) : tagItem;
-                                }
+                                if (name === propName || name === propName + 's') return m; // Already replaced above
                                 
                                 // Otherwise, try to get from the outer loop item
                                 if (item && Object.prototype.hasOwnProperty.call(item, name)) {
