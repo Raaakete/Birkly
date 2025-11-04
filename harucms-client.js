@@ -1744,12 +1744,28 @@
         // Process {entry for 'collection'} blocks (wait a bit for DOM to update)
         // Use setTimeout to ensure DOM is fully updated after template processing
         setTimeout(() => {
-            const entryBlocks = document.querySelectorAll('.haru-entry-block');
+            let entryBlocks = document.querySelectorAll('.haru-entry-block');
             console.log('HaruCMS: Found', entryBlocks.length, 'entry blocks to process');
             
             if (entryBlocks.length === 0) {
                 console.warn('HaruCMS: No entry blocks found. They may have been removed during template processing.');
-                return;
+                // Try to find them by data attribute instead
+                const byDataAttr = document.querySelectorAll('[data-haru-collection]');
+                console.log('HaruCMS: Found', byDataAttr.length, 'elements with data-haru-collection attribute');
+                for (const el of byDataAttr) {
+                    if (el.dataset.haruCollection && !el.classList.contains('haru-entry-block')) {
+                        console.log('HaruCMS: Found element with collection but missing class:', el.id, el.dataset.haruCollection);
+                        // Add the class and process it
+                        el.classList.add('haru-entry-block');
+                    }
+                }
+                // Re-query after adding classes
+                entryBlocks = document.querySelectorAll('.haru-entry-block');
+                console.log('HaruCMS: Now found', entryBlocks.length, 'entry blocks after adding classes');
+                
+                if (entryBlocks.length === 0) {
+                    return;
+                }
             }
             
             for (const block of entryBlocks) {
