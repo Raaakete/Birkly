@@ -345,6 +345,8 @@
             // Render each item
             return items.map(item => {
                 let itemOutput = loopContent;
+                console.log('HaruCMS: Processing item in collection loop:', item.title || item.id, 'itemOutput length:', itemOutput.length);
+                console.log('HaruCMS: itemOutput contains {for each:', itemOutput.includes('{for each'), 'contains {for each tag:', itemOutput.includes('{for each tag'));
                 
                 // Handle nested {for each tag} loops (without 'in' clause) - refers to item's property
                 let nestedLoopProcessed = true;
@@ -353,8 +355,10 @@
                     // Match {for each tag} or {for each tags} - handle optional spaces
                     // Must match: {for each tag} or {for each tags} (with optional spaces)
                     const nestedLoopRegex = /\{for\s+each\s+([a-zA-Z0-9_]+)\s*\}/;
+                    // Reset regex lastIndex to ensure fresh search
+                    nestedLoopRegex.lastIndex = 0;
                     const nestedMatch = nestedLoopRegex.exec(itemOutput);
-                    console.log('HaruCMS: Checking for nested loops in itemOutput, length:', itemOutput.length, 'match:', nestedMatch ? 'found' : 'not found');
+                    console.log('HaruCMS: Checking for nested loops in itemOutput, length:', itemOutput.length, 'match:', nestedMatch ? 'found' : 'not found', nestedMatch ? 'matched:' + nestedMatch[0] : '');
                     if (nestedMatch) {
                         nestedLoopProcessed = true;
                         const fullMatch = nestedMatch[0];
