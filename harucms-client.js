@@ -1324,6 +1324,24 @@
                     continue;
                 }
                 
+                // Check if this element is inside a collection loop (e.g., {for each entry in 'blog'})
+                // If so, skip it - it will be processed as part of the collection loop
+                let ancestor = parent.parentElement;
+                let isInsideCollectionLoop = false;
+                while (ancestor) {
+                    const ancestorText = ancestor.textContent || '';
+                    if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
+                        isInsideCollectionLoop = true;
+                        console.log('HaruCMS: Skipping nested template inside collection loop:', parent.tagName, parent.className);
+                        break;
+                    }
+                    ancestor = ancestor.parentElement;
+                }
+                
+                if (isInsideCollectionLoop) {
+                    continue; // Skip - will be processed as part of collection loop
+                }
+                
                 parent.dataset.cmsProcessed = 'true';
                 templates.push({
                     element: parent,
