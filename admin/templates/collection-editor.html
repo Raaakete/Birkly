@@ -1,18 +1,18 @@
 <div class="collection-editor-page">
     <div class="page-header pt-m pb-m">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=content">Content</a>
+            <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
-            <span class="current"><?= htmlspecialchars($collection['title'] ? 'Edit Collection' : 'New Collection') ?></span>
+            <span class="current"><?= htmlspecialchars($collection['title'] ? __('admin.edit_collection') : __('admin.new_collection')) ?></span>
         </div>
     </div>
     
     <div class="main-actions-bar">
         <button type="submit" form="collection-form" class="btn btn-primary">
-            <?= $collection['title'] ? 'Save Collection' : 'Create Collection' ?>
+            <?= $collection['title'] ? __('admin.save_collection') : __('admin.create_collection') ?>
         </button>
         <a href="/admin/index.php?page=content" class="btn btn-secondary">
-            Cancel
+            <?= __('admin.cancel') ?>
         </a>
     </div>
     
@@ -29,7 +29,7 @@
                     <!-- Collection Title (Required, First Field) -->
                     <div class="field-block">
                         <div class="field-header">
-                            <div class="field-title">Collection Title <span class="required">*</span></div>
+                            <div class="field-title"><?= __('admin.collection_title') ?> <span class="required">*</span></div>
                         </div>
                         <div class="field-control">
                             <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
@@ -122,9 +122,9 @@
             <div class="editor-sidebar">
                 <div class="sidebar-tabs">
                     <div class="tab-nav">
-                        <button type="button" class="tab-btn active" data-tab="settings">Settings</button>
-                        <button type="button" class="tab-btn" data-tab="automation">Automation</button>
-                        <button type="button" class="tab-btn" data-tab="templating">Templating</button>
+                        <button type="button" class="tab-btn active" data-tab="settings"><?= __('admin.settings') ?></button>
+                        <button type="button" class="tab-btn" data-tab="automation"><?= __('admin.automation') ?></button>
+                        <button type="button" class="tab-btn" data-tab="templating"><?= __('admin.templating') ?></button>
                     </div>
                     
                     <div class="tab-content">
@@ -155,8 +155,8 @@
                                     <select name="sort" id="sort" class="input">
                                         <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
                                         <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
-                                        <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>>Title A-Z</option>
-                                        <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>>Title Z-A</option>
+                                        <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>><?= __('admin.title_az') ?></option>
+                                        <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>><?= __('admin.title_za') ?></option>
                                         <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
                                     </select>
                                 </div>
@@ -174,7 +174,7 @@
                                 
                                 <!-- Multi-Language Configuration -->
                                 <div class="info-item" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
-                                    <label>Multi-Language Support</label>
+                                    <label><?= __('admin.multi_language_support') ?></label>
                                     <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
                                         <label class="toggle-switch">
                                             <input type="checkbox" name="multilanguage_enabled" id="multilanguage_enabled" value="1" <?= !empty($collection['multilanguage']['enabled']) ? 'checked' : '' ?>>
@@ -187,7 +187,7 @@
                                     </small>
                                     
                                     <div id="multilanguage-settings" style="display: <?= !empty($collection['multilanguage']['enabled']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
-                                        <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;">Languages</label>
+                                        <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;"><?= __('admin.languages') ?></label>
                                         <div id="language-tags-container" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 40px; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-s); background: var(--bg-primary);">
                                             <?php
                                             $selectedLangs = $collection['multilanguage']['languages'] ?? [];

@@ -1,7 +1,7 @@
 <div class="entries-page">
     <div class="page-header pt-m pb-m">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=content">Content</a>
+            <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
             <span class="current"><?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'Unknown Collection') ?></span>
         </div>
@@ -9,19 +9,19 @@
     
     <div class="main-actions-bar">
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <a class="btn btn-primary" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Create new entry in <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>">New Entry</a>
-            <a class="btn btn-secondary" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Edit collection settings for <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>">Edit Collection</a>
+            <a class="btn btn-primary" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Create new entry in <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>"><?= __('admin.new_entry') ?></a>
+            <a class="btn btn-secondary" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Edit collection settings for <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>"><?= __('admin.edit_collection') ?></a>
             
             <!-- Review Status Filter -->
             <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-                <label for="status-filter" style="font-size: 14px; color: var(--text-secondary);">Filter:</label>
+                <label for="status-filter" style="font-size: 14px; color: var(--text-secondary);"><?= __('admin.filter') ?>:</label>
                 <select id="status-filter" class="form-control" style="min-width: 150px;">
-                    <option value="">All Statuses</option>
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
-                    <option value="pending_review">Pending Review</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
+                    <option value=""><?= __('admin.all_statuses') ?></option>
+                    <option value="published"><?= __('admin.published') ?></option>
+                    <option value="draft"><?= __('admin.draft') ?></option>
+                    <option value="pending_review"><?= __('admin.pending_review') ?></option>
+                    <option value="approved"><?= __('admin.approved') ?></option>
+                    <option value="rejected"><?= __('admin.rejected') ?></option>
                 </select>
             </div>
         </div>
@@ -31,13 +31,13 @@
     <div id="bulk-actions-toolbar" class="bulk-actions-toolbar" style="display: none;">
         <div class="bulk-actions-content">
             <span class="bulk-actions-count">
-                <span id="bulk-selected-count">0</span> selected
+                <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
             </span>
             <div class="bulk-actions-buttons">
-                <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries">Publish</button>
-                <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries">Unpublish</button>
-                <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Delete selected entries">Delete</button>
-                <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection">Cancel</button>
+                <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
+                <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
+                <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Delete selected entries"><?= __('admin.delete') ?></button>
+                <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
             </div>
         </div>
     </div>
@@ -47,12 +47,12 @@
             <div class="table-viewport">
                 <div class="table-head">
                     <div class="head-row" role="row">
-                        <div class="head-cell head-checkbox" role="columnheader" aria-label="Select all">
-                            <input type="checkbox" id="select-all-entries" aria-label="Select all entries">
+                        <div class="head-cell head-checkbox" role="columnheader" aria-label="<?= __('admin.select_all') ?>">
+                            <input type="checkbox" id="select-all-entries" aria-label="<?= __('admin.select_all_entries') ?>">
                         </div>
-                        <div class="head-cell head-drag" role="columnheader" aria-label="Drag handle"></div>
-                        <div class="head-cell head-title" role="columnheader">Title</div>
-                        <div class="head-cell head-status" role="columnheader">Status</div>
+                        <div class="head-cell head-drag" role="columnheader" aria-label="<?= __('admin.drag_to_reorder') ?>"></div>
+                        <div class="head-cell head-title" role="columnheader"><?= __('admin.title') ?></div>
+                        <div class="head-cell head-status" role="columnheader"><?= __('admin.status') ?></div>
                         <div class="fields-head-region">
                             <?php foreach ($fields as $field): ?>
                                 <div class="head-cell head-field" role="columnheader" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>">
@@ -60,17 +60,17 @@
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <div class="head-cell head-actions" role="columnheader">Actions</div>
+                        <div class="head-cell head-actions" role="columnheader"><?= __('admin.actions') ?></div>
                     </div>
                 </div>
                 
                 <div class="table-body">
                     <?php foreach ($entries as $entry): ?>
                         <div class="table-row" role="row" data-entry-id="<?= htmlspecialchars($entry['id'] ?? '') ?>">
-                            <div class="cell cell-checkbox" role="cell" aria-label="Select entry">
-                                <input type="checkbox" class="entry-checkbox" value="<?= htmlspecialchars($entry['id'] ?? '') ?>" aria-label="Select entry <?= htmlspecialchars($entry['title'] ?? '') ?>">
+                            <div class="cell cell-checkbox" role="cell" aria-label="<?= __('admin.select_entry') ?>">
+                                <input type="checkbox" class="entry-checkbox" value="<?= htmlspecialchars($entry['id'] ?? '') ?>" aria-label="<?= __('admin.select_entry') ?> <?= htmlspecialchars($entry['title'] ?? '') ?>">
                             </div>
-                            <div class="cell cell-drag" role="cell" aria-label="Drag to reorder">
+                            <div class="cell cell-drag" role="cell" aria-label="<?= __('admin.drag_to_reorder') ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <circle cx="9" cy="12" r="1"></circle>
                                     <circle cx="9" cy="5" r="1"></circle>
@@ -82,14 +82,21 @@
                             </div>
                             <div class="cell cell-title" role="cell">
                                 <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" class="title-text">
-                                    <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? 'Untitled') ?>
+                                    <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?>
                                 </a>
                             </div>
                             <div class="cell cell-status" role="cell">
                                 <?php
                                 $status = $entry['__cells']['__status'] ?? $entry['status'] ?? 'draft';
                                 $statusClass = $status;
-                                $statusLabel = ucfirst(str_replace('_', ' ', $status));
+                                
+                                // Translate status label
+                                $statusKey = $status;
+                                if (in_array($status, ['pending_review', 'approved', 'rejected', 'published', 'draft'])) {
+                                    $statusLabel = __('admin.' . $statusKey);
+                                } else {
+                                    $statusLabel = ucfirst(str_replace('_', ' ', $status));
+                                }
                                 
                                 // Add review status indicator if applicable
                                 if (in_array($status, ['pending_review', 'approved', 'rejected'])) {
@@ -113,7 +120,7 @@
                                     $reviewInfo = ' title="Reviewed by: ' . htmlspecialchars($reviewedBy) . '"';
                                 }
                                 ?>
-                                <span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="Status: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
+                                <span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
                                     <?= htmlspecialchars($statusLabel) ?>
                                 </span>
                                 <?php if ($status === 'pending_review' && $reviewer): ?>
@@ -137,11 +144,11 @@
                                 <?php endforeach; ?>
                             </div>
                             <div class="cell cell-actions" role="cell">
-                                <a class="btn btn-sm mr-s" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" aria-label="Edit entry <?= htmlspecialchars($entry['title'] ?? '') ?>">
-                                    Edit
+                                <a class="btn btn-sm mr-s" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($entry['title'] ?? '') ?>">
+                                    <?= __('admin.edit_entry') ?>
                                 </a>
-                                <button class="btn btn-sm btn-danger" disabled aria-label="Delete entry <?= htmlspecialchars($entry['title'] ?? '') ?>">
-                                    Delete
+                                <button class="btn btn-sm btn-danger" disabled aria-label="<?= __('admin.delete') ?> <?= htmlspecialchars($entry['title'] ?? '') ?>">
+                                    <?= __('admin.delete') ?>
                                 </button>
                             </div>
                         </div>
@@ -151,7 +158,7 @@
         </div>
     <?php else: ?>
         <div class="empty-state">
-            <p>No entries found in this collection. <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>">Create your first entry</a>.</p>
+            <p><?= __('admin.no_entries_found_in_collection') ?> <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= __('admin.create_first_entry') ?></a>.</p>
         </div>
     <?php endif; ?>
 </div>

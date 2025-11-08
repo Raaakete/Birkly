@@ -98,31 +98,31 @@
                 <h2 class="section-title">Latest Blog Posts</h2>
                 <p class="section-subtitle">Stay updated with our latest news and insights</p>
                 {endif}
-                <div class="blog-posts">
-                    {for each entry in 'blog'}
+        <div class="blog-posts">
+            {for each entry in 'blog'}
                     {if entry.status == 'published'}
-                    <article class="post-card">
+            <article class="post-card">
                         <h3><a href="/demo-website/post.html?slug={ slug }">{ title }</a></h3>
-                        <div class="post-meta">
+                <div class="post-meta">
                             {if entry has date}
-                            <time>{ date "F j, Y" }</time>
+                    <time>{ date "F j, Y" }</time>
                             {endif}
-                            {if entry has tags}
-                            <div class="tags">
-                                {for each tag}
-                                <span class="tag">{ tag }</span>
-                                {endfor}
-                            </div>
-                            {endif}
-                        </div>
-                        {if entry has excerpt}
-                        <p class="excerpt">{ excerpt }</p>
-                        {endif}
-                        <a href="/demo-website/post.html?slug={ slug }" class="read-more">Read More →</a>
-                    </article>
+                    {if entry has tags}
+                    <div class="tags">
+                        {for each tag}
+                        <span class="tag">{ tag }</span>
+                        {endfor}
+                    </div>
                     {endif}
-                    {endfor}
                 </div>
+                {if entry has excerpt}
+                <p class="excerpt">{ excerpt }</p>
+                {endif}
+                        <a href="/demo-website/post.html?slug={ slug }" class="read-more">Read More →</a>
+            </article>
+                    {endif}
+            {endfor}
+        </div>
             </div>
         </section>
     </main>
