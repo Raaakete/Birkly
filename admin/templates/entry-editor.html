@@ -103,20 +103,33 @@ if (isset($fieldtype_assets)) {
                                     <textarea name="review_notes" id="review_notes" class="input" rows="3" placeholder="Add review notes..."><?= htmlspecialchars($entry['review_notes'] ?? '') ?></textarea>
                                 </div>
                                 
-                                <?php if (in_array($entry['status'] ?? 'draft', ['pending_review', 'approved', 'rejected'])): ?>
-                                <div class="form-group review-actions" id="review-actions">
-                                    <label>Review Actions</label>
+                                <?php 
+                                $currentStatus = $entry['status'] ?? 'draft';
+                                $isReviewStatus = in_array($currentStatus, ['pending_review', 'approved', 'rejected']);
+                                $canReview = isset($_SESSION['user']['role']) && in_array($_SESSION['user']['role'], ['admin', 'editor']);
+                                ?>
+                                <?php if ($isReviewStatus && $canReview): ?>
+                                <div class="form-group review-actions" id="review-actions" style="background: var(--bg-elevated); padding: var(--space-4); border-radius: var(--border-radius-s); border: 1px solid var(--border-light); margin-top: var(--space-4);">
+                                    <label style="font-weight: 600; margin-bottom: var(--space-2); display: block;">Review Actions</label>
                                     <div class="action-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;" role="group" aria-label="Review actions">
                                         <button type="button" class="btn btn-success btn-sm" id="approve-entry" aria-label="Approve this entry">
-                                            Approve
+                                            ✓ Approve
                                         </button>
                                         <button type="button" class="btn btn-danger btn-sm" id="reject-entry" aria-label="Reject this entry">
-                                            Reject
+                                            ✗ Reject
                                         </button>
                                         <button type="button" class="btn btn-secondary btn-sm" id="request-changes" aria-label="Request changes to this entry">
-                                            Request Changes
+                                            ↻ Request Changes
                                         </button>
                                     </div>
+                                    <?php if (!empty($entry['review_notes'])): ?>
+                                        <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border-light);">
+                                            <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Review Notes:</label>
+                                            <div style="margin-top: var(--space-1); padding: var(--space-2); background: var(--bg-secondary); border-radius: var(--border-radius-s); font-size: 13px; color: var(--text-primary);">
+                                                <?= nl2br(htmlspecialchars($entry['review_notes'])) ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                                 <?php endif; ?>
                                 

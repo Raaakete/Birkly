@@ -11,6 +11,7 @@ define('ADMIN_ENTRIES_PHP_EXECUTED', true);
 
 // CRITICAL: Check authentication FIRST before any other logic
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../core/cache.php';
 haru_secure_session_start();
 if (!isset($_SESSION['user'])) {
     while (ob_get_level() > 0) { ob_end_clean(); }
@@ -98,11 +99,8 @@ if ($action === 'create' || $action === 'update' || $action === '') {
     $action = 'save';
 }
 
-// FORCE to 'save' to bypass any parsing issues temporarily
-$action = 'save';
-
 // Validate action is in allowed list (should always pass since we normalized to 'save')
-$validActions = ['save', 'delete', 'list', 'versions', 'restore_version', 'review'];
+$validActions = ['save', 'delete', 'list', 'versions', 'restore_version', 'review', 'bulk', 'diff'];
 if (!in_array($action, $validActions, true)) {
     // This should never happen, but just in case...
     while (ob_get_level() > 0) {
@@ -121,31 +119,6 @@ if (!in_array($action, $validActions, true)) {
             'action' => $action,
             'action_type' => gettype($action),
             'valid_actions' => $validActions
-        ]
-    ]);
-    exit;
-}
-
-// DEBUG: Output action value right before switch
-// This will show us if switch is reached and what action value is
-if ($action !== 'save' && strlen($action) !== 4) {
-    while (ob_get_level() > 0) { ob_end_clean(); }
-    error_reporting($oldErrorReporting);
-    ini_set('display_errors', $oldDisplayErrors);
-    http_response_code(400);
-    if (!headers_sent()) {
-        header('Content-Type: application/json');
-    }
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Action check before switch failed',
-        'debug' => [
-            'action' => $action,
-            'action_type' => gettype($action),
-            'action_length' => strlen($action),
-            'action_hex' => bin2hex($action),
-            'action_equals_save' => ($action === 'save'),
-            'action_length_check' => (strlen($action) === 4)
         ]
     ]);
     exit;
@@ -249,6 +222,28 @@ switch ($action) {
         break;
     case 'review':
         $result = processReviewAction();
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        ob_start();
+        error_reporting($oldErrorReporting);
+        ini_set('display_errors', $oldDisplayErrors);
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        ob_end_flush();
+        exit;
+        break;
+    case 'bulk':
+        $result = performBulkOperation();
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        ob_start();
+        error_reporting($oldErrorReporting);
+        ini_set('display_errors', $oldDisplayErrors);
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        ob_end_flush();
+        exit;
+        break;
+    case 'diff':
+        $result = getVersionDiff();
         while (ob_get_level() > 0) { ob_end_clean(); }
         ob_start();
         error_reporting($oldErrorReporting);
@@ -473,6 +468,10 @@ function saveEntry() {
         return ['status' => 'error', 'message' => 'Failed to encode entry data: ' . json_last_error_msg()];
     }
     if (file_put_contents($entryFile, $jsonOutput)) {
+        // Invalidate cache for this collection
+        $cache = new Cache();
+        $cache->invalidateCollection($collectionSlug);
+        
         // Trigger webhooks
         if (file_exists(__DIR__ . '/webhooks.php')) {
             // Set flag to prevent webhooks.php from executing its switch statement
@@ -539,6 +538,10 @@ function deleteEntry() {
     }
     
     if (file_exists($entryFile) && unlink($entryFile)) {
+        // Invalidate cache for this collection
+        $cache = new Cache();
+        $cache->invalidateCollection($collectionSlug);
+        
         // Trigger webhook
         if (file_exists(__DIR__ . '/webhooks.php')) {
             require_once __DIR__ . '/webhooks.php';
@@ -581,59 +584,261 @@ function listEntries() {
     $collectionSlug = $_GET['collection'] ?? '';
     $search = $_GET['search'] ?? '';
     
-    error_log("=== LIST ENTRIES DEBUG ===");
-    error_log("Collection slug: " . $collectionSlug);
-    error_log("Search term: " . $search);
-    
     if (empty($collectionSlug)) {
         return ['error' => 'Collection slug is required'];
     }
     
-    // Find collection directory by slug
-    $collectionsDir = __DIR__ . '/../content/collections';
-    if (!is_dir($collectionsDir)) {
-        return ['error' => 'Collections directory not found'];
-    }
+    // Initialize cache
+    $cache = new Cache();
     
-    $collectionDir = $collectionsDir . '/' . $collectionSlug;
+    // Try to get cached entries
+    $cachedEntries = $cache->getEntries($collectionSlug);
     
-    if (!is_dir($collectionDir)) {
-        return ['error' => 'Collection not found'];
-    }
-    
-    $entriesDir = $collectionDir . '/entries';
-    if (!is_dir($entriesDir)) {
-        return ['entries' => []];
-    }
-    
-    $entries = [];
-    $entryFiles = scandir($entriesDir);
-    
-    foreach ($entryFiles as $file) {
-        if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
-            $entryPath = $entriesDir . '/' . $file;
-            $entryData = json_decode(file_get_contents($entryPath), true);
-            
-            if ($entryData) {
-                $entryId = pathinfo($file, PATHINFO_FILENAME);
-                $title = $entryData['title'] ?? $entryId;
+    if ($cachedEntries === null) {
+        // Cache miss - load entries from files
+        $collectionsDir = __DIR__ . '/../content/collections';
+        if (!is_dir($collectionsDir)) {
+            return ['error' => 'Collections directory not found'];
+        }
+        
+        $collectionDir = $collectionsDir . '/' . $collectionSlug;
+        
+        if (!is_dir($collectionDir)) {
+            return ['error' => 'Collection not found'];
+        }
+        
+        $entriesDir = $collectionDir . '/entries';
+        if (!is_dir($entriesDir)) {
+            $cache->setEntries($collectionSlug, []);
+            return ['entries' => []];
+        }
+        
+        $entries = [];
+        $entryFiles = scandir($entriesDir);
+        
+        foreach ($entryFiles as $file) {
+            if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
+                $entryPath = $entriesDir . '/' . $file;
+                $entryData = json_decode(file_get_contents($entryPath), true);
                 
-                // Apply search filter if provided
-                if (!empty($search) && stripos($title, $search) === false) {
+                if ($entryData) {
+                    $entryId = pathinfo($file, PATHINFO_FILENAME);
+                    $title = $entryData['title'] ?? $entryId;
+                    
+                    $entries[] = [
+                        'id' => $entryId,
+                        'title' => $title,
+                        'status' => $entryData['status'] ?? 'draft',
+                        'updated_at' => $entryData['updated_at'] ?? null,
+                        'created_at' => $entryData['created_at'] ?? null
+                    ];
+                }
+            }
+        }
+        
+        // Cache the entries
+        $cache->setEntries($collectionSlug, $entries);
+        $cachedEntries = $entries;
+    }
+    
+    // Apply search filter if provided
+    if (!empty($search)) {
+        // Use search index for better performance
+        $searchIndex = $cache->getSearchIndex($collectionSlug);
+        
+        if ($searchIndex === null) {
+            // Build search index - need to get collectionDir
+            $collectionsDir = __DIR__ . '/../content/collections';
+            $collectionDir = $collectionsDir . '/' . $collectionSlug;
+            
+            $schemaPath = $collectionDir . '/schema.json';
+            $schema = null;
+            if (file_exists($schemaPath)) {
+                $schema = json_decode(file_get_contents($schemaPath), true);
+            }
+            
+            $searchIndex = $cache->buildSearchIndex($collectionSlug, $cachedEntries, $schema);
+            $cache->setSearchIndex($collectionSlug, $searchIndex);
+        }
+        
+        // Search in index
+        $matchingIds = $cache->searchInIndex($searchIndex, $search);
+        
+        // Filter entries by matching IDs
+        $cachedEntries = array_filter($cachedEntries, function($entry) use ($matchingIds) {
+            return in_array($entry['id'], $matchingIds);
+        });
+        
+        // Re-index array
+        $cachedEntries = array_values($cachedEntries);
+    }
+    
+    // Return simplified format for admin UI
+    $result = [];
+    foreach ($cachedEntries as $entry) {
+        $result[] = [
+            'id' => $entry['id'],
+            'title' => $entry['title']
+        ];
+    }
+    
+    return ['entries' => $result];
+}
+
+/**
+ * Perform bulk operation on entries
+ */
+function performBulkOperation() {
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    if (!$input) {
+        return ['status' => 'error', 'message' => 'Invalid request data'];
+    }
+    
+    $collectionSlug = $input['collection'] ?? '';
+    $action = $input['action'] ?? '';
+    $entryIds = $input['entry_ids'] ?? [];
+    
+    if (empty($collectionSlug)) {
+        return ['status' => 'error', 'message' => 'Collection slug is required'];
+    }
+    
+    if (empty($action)) {
+        return ['status' => 'error', 'message' => 'Action is required'];
+    }
+    
+    if (empty($entryIds) || !is_array($entryIds)) {
+        return ['status' => 'error', 'message' => 'Entry IDs are required'];
+    }
+    
+    // Validate CSRF token
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'bulk_operation', 'reason' => 'invalid CSRF']);
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
+    
+    // Validate collection exists
+    $collectionDir = __DIR__ . "/../content/collections/$collectionSlug";
+    if (!is_dir($collectionDir)) {
+        return ['status' => 'error', 'message' => 'Collection not found'];
+    }
+    
+    $entriesDir = "$collectionDir/entries";
+    if (!is_dir($entriesDir)) {
+        return ['status' => 'error', 'message' => 'Entries directory not found'];
+    }
+    
+    // Initialize cache for invalidation
+    $cache = new Cache();
+    
+    $successCount = 0;
+    $errorCount = 0;
+    $errors = [];
+    
+    foreach ($entryIds as $entryId) {
+        $entryFile = "$entriesDir/$entryId.json";
+        
+        if (!file_exists($entryFile)) {
+            $errorCount++;
+            $errors[] = "Entry $entryId not found";
+            continue;
+        }
+        
+        $entryData = json_decode(file_get_contents($entryFile), true);
+        if (!$entryData) {
+            $errorCount++;
+            $errors[] = "Entry $entryId is invalid";
+            continue;
+        }
+        
+        try {
+            switch ($action) {
+                case 'publish':
+                    $entryData['status'] = 'published';
+                    $entryData['updated_at'] = date('c');
+                    break;
+                    
+                case 'unpublish':
+                    $entryData['status'] = 'draft';
+                    $entryData['updated_at'] = date('c');
+                    break;
+                    
+                case 'delete':
+                    if (unlink($entryFile)) {
+                        // Trigger webhook
+                        if (file_exists(__DIR__ . '/webhooks.php')) {
+                            require_once __DIR__ . '/webhooks.php';
+                            triggerWebhook('entry.deleted', [
+                                'collection' => $collectionSlug,
+                                'entry_id' => $entryId,
+                                'entry' => $entryData
+                            ]);
+                        }
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                        $errors[] = "Failed to delete entry $entryId";
+                    }
+                    continue 2; // Skip to next entry
+                    
+                default:
+                    $errorCount++;
+                    $errors[] = "Unknown action: $action";
+                    continue 2;
+            }
+            
+            // Save entry (for publish/unpublish)
+            if ($action !== 'delete') {
+                $jsonOutput = json_encode($entryData, JSON_PRETTY_PRINT);
+                if ($jsonOutput === false) {
+                    $errorCount++;
+                    $errors[] = "Failed to encode entry $entryId: " . json_last_error_msg();
                     continue;
                 }
                 
-                $entries[] = [
-                    'id' => $entryId,
-                    'title' => $title
-                ];
+                if (file_put_contents($entryFile, $jsonOutput)) {
+                    // Trigger webhook
+                    if (file_exists(__DIR__ . '/webhooks.php')) {
+                        require_once __DIR__ . '/webhooks.php';
+                        $webhookEvent = $action === 'publish' ? 'entry.published' : 'entry.updated';
+                        triggerWebhook($webhookEvent, [
+                            'collection' => $collectionSlug,
+                            'entry_id' => $entryId,
+                            'entry' => $entryData
+                        ]);
+                    }
+                    $successCount++;
+                } else {
+                    $errorCount++;
+                    $errors[] = "Failed to save entry $entryId";
+                }
             }
+        } catch (Exception $e) {
+            $errorCount++;
+            $errors[] = "Error processing entry $entryId: " . $e->getMessage();
         }
     }
     
-    error_log("Found " . count($entries) . " entries");
+    // Invalidate cache after bulk operation
+    $cache->invalidateCollection($collectionSlug);
     
-    return ['entries' => $entries];
+    if ($errorCount > 0 && $successCount === 0) {
+        return [
+            'status' => 'error',
+            'message' => 'All operations failed',
+            'errors' => $errors,
+            'count' => 0
+        ];
+    }
+    
+    return [
+        'status' => 'ok',
+        'message' => "Successfully processed $successCount entr" . ($successCount === 1 ? 'y' : 'ies'),
+        'count' => $successCount,
+        'errors' => $errors,
+        'error_count' => $errorCount
+    ];
 }
 
 /**
@@ -713,6 +918,140 @@ function getVersionHistory() {
     });
     
     return ['status' => 'ok', 'versions' => $versions];
+}
+
+/**
+ * Get diff between two versions
+ */
+function getVersionDiff() {
+    $collectionSlug = $_GET['collection'] ?? '';
+    $entryId = $_GET['entry_id'] ?? '';
+    $version1 = $_GET['version1'] ?? '';
+    $version2 = $_GET['version2'] ?? '';
+    
+    if (empty($collectionSlug) || empty($entryId)) {
+        return ['status' => 'error', 'message' => 'Collection slug and entry ID are required'];
+    }
+    
+    if (empty($version1) || empty($version2)) {
+        return ['status' => 'error', 'message' => 'Both versions are required'];
+    }
+    
+    $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
+    $versionsDir = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId/versions";
+    
+    // Load version 1
+    $version1Data = null;
+    if ($version1 === 'current') {
+        if (file_exists($entryFile)) {
+            $version1Data = json_decode(file_get_contents($entryFile), true);
+        }
+    } else {
+        $version1File = "$versionsDir/v{$version1}.json";
+        if (file_exists($version1File)) {
+            $version1Data = json_decode(file_get_contents($version1File), true);
+        }
+    }
+    
+    // Load version 2
+    $version2Data = null;
+    if ($version2 === 'current') {
+        if (file_exists($entryFile)) {
+            $version2Data = json_decode(file_get_contents($entryFile), true);
+        }
+    } else {
+        $version2File = "$versionsDir/v{$version2}.json";
+        if (file_exists($version2File)) {
+            $version2Data = json_decode(file_get_contents($version2File), true);
+        }
+    }
+    
+    if (!$version1Data || !$version2Data) {
+        return ['status' => 'error', 'message' => 'One or both versions not found'];
+    }
+    
+    // Calculate diff
+    $diff = calculateDiff($version1Data, $version2Data);
+    
+    return [
+        'status' => 'ok',
+        'version1' => $version1Data,
+        'version2' => $version2Data,
+        'diff' => $diff
+    ];
+}
+
+/**
+ * Calculate diff between two data structures
+ */
+function calculateDiff($old, $new, $path = '') {
+    $diff = [];
+    
+    // Get all keys from both versions
+    $allKeys = array_unique(array_merge(array_keys($old), array_keys($new)));
+    
+    // Skip internal fields
+    $skipFields = ['author', 'created_at', 'updated_at', 'version'];
+    
+    foreach ($allKeys as $key) {
+        if (in_array($key, $skipFields)) {
+            continue;
+        }
+        
+        $currentPath = $path ? "$path.$key" : $key;
+        $oldValue = $old[$key] ?? null;
+        $newValue = $new[$key] ?? null;
+        
+        // Check if values are different
+        if ($oldValue !== $newValue) {
+            if (!isset($old[$key])) {
+                // Added
+                $diff[] = [
+                    'path' => $currentPath,
+                    'type' => 'added',
+                    'old' => null,
+                    'new' => formatValue($newValue)
+                ];
+            } elseif (!isset($new[$key])) {
+                // Removed
+                $diff[] = [
+                    'path' => $currentPath,
+                    'type' => 'removed',
+                    'old' => formatValue($oldValue),
+                    'new' => null
+                ];
+            } elseif (is_array($oldValue) && is_array($newValue)) {
+                // Recursively diff arrays
+                $nestedDiff = calculateDiff($oldValue, $newValue, $currentPath);
+                $diff = array_merge($diff, $nestedDiff);
+            } else {
+                // Modified
+                $diff[] = [
+                    'path' => $currentPath,
+                    'type' => 'modified',
+                    'old' => formatValue($oldValue),
+                    'new' => formatValue($newValue)
+                ];
+            }
+        }
+    }
+    
+    return $diff;
+}
+
+/**
+ * Format value for display
+ */
+function formatValue($value) {
+    if (is_array($value)) {
+        return json_encode($value, JSON_PRETTY_PRINT);
+    } elseif (is_bool($value)) {
+        return $value ? 'true' : 'false';
+    } elseif (is_null($value)) {
+        return 'null';
+    } else {
+        return (string)$value;
+    }
 }
 
 /**
