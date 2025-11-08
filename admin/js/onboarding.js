@@ -63,6 +63,26 @@ const onboarding = {
                 this.saveSiteInfo();
             });
         }
+        
+        // Logo preview
+        const logoInput = document.getElementById('project-logo');
+        if (logoInput) {
+            logoInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const preview = document.getElementById('logo-preview');
+                        const previewImg = document.getElementById('logo-preview-img');
+                        if (preview && previewImg) {
+                            previewImg.src = event.target.result;
+                            preview.style.display = 'block';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
     },
     
     async createFirstUser() {
@@ -219,21 +239,78 @@ const onboarding = {
             return;
         }
         
+        // Handle logo upload if provided
+        const logoFile = formData.get('project_logo');
+        let logoPath = '';
+        
+        if (logoFile && logoFile.size > 0) {
+            // Upload logo first
+            const logoFormData = new FormData();
+            logoFormData.append('file', logoFile);
+            logoFormData.append('_csrf', csrfToken);
+            
+            try {
+                const uploadResponse = await fetch('/api/settings.php?action=upload_logo', {
+                    method: 'POST',
+                    body: logoFormData
+                });
+                
+                const uploadResult = await uploadResponse.json();
+                if (uploadResult.status === 'ok') {
+                    logoPath = uploadResult.data.logoPath;
+                } else {
+                    alert('Failed to upload logo: ' + (uploadResult.message || 'Unknown error'));
+                    return;
+                }
+            } catch (error) {
+                console.error('Error uploading logo:', error);
+                alert('Failed to upload logo. Please try again.');
+                return;
+            }
+        }
+        
         // Save project info via API
+        const settingsData = {
+            action: 'update',
+            category: 'admin',
+            settings: {
+                project_name: this.siteInfo.project_name,
+                project_description: this.siteInfo.project_description || ''
+            },
+            _csrf: csrfToken
+        };
+        
+        // If logo was uploaded, save it to branding settings
+        if (logoPath) {
+            const brandingFormData = new FormData();
+            brandingFormData.append('action', 'update');
+            brandingFormData.append('category', 'branding');
+            brandingFormData.append('logoPath', logoPath);
+            brandingFormData.append('_csrf', csrfToken);
+            
+            // Save branding settings
+            await fetch('/api/settings.php?action=update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'update',
+                    category: 'branding',
+                    settings: {
+                        logoPath: logoPath
+                    },
+                    _csrf: csrfToken
+                })
+            });
+        }
+        
         fetch('/api/settings.php?action=update', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                action: 'update',
-                category: 'admin',
-                settings: {
-                    project_name: this.siteInfo.project_name,
-                    project_description: this.siteInfo.project_description || ''
-                },
-                _csrf: csrfToken
-            })
+            body: JSON.stringify(settingsData)
         }).then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
