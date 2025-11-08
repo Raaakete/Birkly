@@ -1,0 +1,14 @@
+{
+  "title": "About Me",
+  "slug": "about",
+  "content": "<p>Hi, I'm a passionate developer and writer. I love creating simple, elegant solutions to complex problems.</p><p>This blog is my space to share insights, tutorials, and thoughts about the ever-evolving world of technology.</p>",
+  "template": "default",
+  "status": "published",
+  "meta_description": "Learn more about me and my journey in technology and development",
+  "featured_image": "",
+  "show_in_menu": true,
+  "menu_order": 2,
+  "id": "about",
+  "created_at": "2025-01-15T10:00:00+00:00",
+  "updated_at": "2025-01-15T10:00:00+00:00"
+} 
