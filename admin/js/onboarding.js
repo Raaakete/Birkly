@@ -208,8 +208,8 @@ const onboarding = {
         
         const formData = new FormData(form);
         this.siteInfo = {
-            site_title: formData.get('site_title'),
-            site_description: formData.get('site_description')
+            project_name: formData.get('project_name'),
+            project_description: formData.get('project_description')
         };
         
         // Get CSRF token
@@ -219,7 +219,7 @@ const onboarding = {
             return;
         }
         
-        // Save site info via API
+        // Save project info via API
         fetch('/api/settings.php?action=update', {
             method: 'POST',
             headers: {
@@ -227,10 +227,10 @@ const onboarding = {
             },
             body: JSON.stringify({
                 action: 'update',
-                category: 'site',
+                category: 'admin',
                 settings: {
-                    name: this.siteInfo.site_title,
-                    description: this.siteInfo.site_description
+                    project_name: this.siteInfo.project_name,
+                    project_description: this.siteInfo.project_description || ''
                 },
                 _csrf: csrfToken
             })
@@ -239,12 +239,12 @@ const onboarding = {
             if (data.status === 'ok') {
                 this.nextStep();
             } else {
-                alert('Failed to save site information: ' + (data.message || 'Unknown error'));
+                alert('Failed to save project information: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
-            console.error('Error saving site info:', error);
-            alert('Failed to save site information. Please try again.');
+            console.error('Error saving project info:', error);
+            alert('Failed to save project information. Please try again.');
         });
     },
     

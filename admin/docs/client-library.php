@@ -83,9 +83,9 @@
 
 <h4>Global Variables</h4>
 <ul>
-    <li><code>{{ site_title }}</code> - Your website's title</li>
     <li><code>{{ current_year }}</code> - Current year (for copyright notices)</li>
 </ul>
+<p><strong>Note:</strong> The CMS no longer provides <code>site_title</code>. Each website should define its own title in templates or use static text. The CMS provides content, not site-specific settings.</p>
 
 <h4>Entry Variables (when viewing a single entry)</h4>
 <ul>

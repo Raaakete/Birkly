@@ -1058,6 +1058,9 @@
     
     /**
      * Fetch site settings from API
+     * Note: This is for backward compatibility only.
+     * Websites should define their own site_title in their templates.
+     * The CMS doesn't manage site titles - it just provides content.
      */
     async function fetchSiteSettings() {
         try {
@@ -1068,9 +1071,10 @@
         } catch (error) {
             console.warn('HaruCMS: Could not fetch site settings:', error);
         }
+        // Return empty settings - websites should define their own site_title
         return {
-            title: 'HaruCMS',
-            name: 'HaruCMS',
+            title: '',
+            name: '',
             description: ''
         };
     }
@@ -1079,9 +1083,9 @@
      * Process all templates in the page
      */
     async function processTemplates() {
-        // Fetch site settings first
-        const siteSettings = await fetchSiteSettings();
-        const siteTitle = siteSettings.name || siteSettings.title || 'HaruCMS';
+        // Note: We no longer fetch site_title from CMS settings.
+        // Websites should define their own site_title in their templates.
+        // The CMS doesn't manage site titles - it just provides content.
         
         // Check for URL parameters that might indicate we need a specific entry
         urlParams = new URLSearchParams(window.location.search);
@@ -1117,8 +1121,8 @@
                 const entry = await getEntryBySlug(collection, slug);
                 if (entry) {
                     // Prepare data with the specific entry
+                    // Note: site_title is not provided by CMS - websites should define their own
                     const data = {
-                        site_title: siteTitle,
                         current_year: new Date().getFullYear(),
                         title: entry.title || '',
                         content: entry.content || '',
@@ -1179,8 +1183,8 @@
                     }
                     
                     // Process remaining templates (header, footer) with default data
+                    // Note: site_title is not provided by CMS - websites should define their own
                     const defaultData = {
-                        site_title: siteTitle,
                         current_year: new Date().getFullYear()
                     };
                     
@@ -1241,8 +1245,8 @@
                 }
                 
                 // Process remaining templates (header, footer) with default data
+                // Note: site_title is not provided by CMS - websites should define their own
                 const defaultData = {
-                    site_title: siteTitle,
                     current_year: new Date().getFullYear()
                 };
                 
@@ -1760,8 +1764,8 @@
                     console.log('HaruCMS: Found collections:', collections);
                     
                     // Fetch data for all collections
+                    // Note: site_title is not provided by CMS - websites should define their own
                     const data = {
-                        site_title: siteTitle,
                         current_year: new Date().getFullYear()
                     };
                     
@@ -1853,8 +1857,8 @@
                     console.log('HaruCMS: Template rendered successfully');
                 } else {
                     // No collections, just render variables
+                    // Note: site_title is not provided by CMS - websites should define their own
                     const data = {
-                        site_title: siteTitle,
                         current_year: new Date().getFullYear()
                     };
                     console.log('HaruCMS: Rendering template without collections');

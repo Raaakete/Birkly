@@ -33,6 +33,9 @@ $defaultSettings = [
         'time_format' => 'H:i:s'
     ],
     'admin' => [
+        'project_name' => 'HaruCMS',
+        'project_description' => '',
+        'cms_url' => '',
         'items_per_page' => 20,
         'default_collection' => '',
         'show_welcome' => true,

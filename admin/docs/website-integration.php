@@ -67,12 +67,12 @@
 &lt;html lang="en"&gt;
 &lt;head&gt;
     &lt;meta charset="UTF-8"&gt;
-    &lt;title&gt;{{ site_title }} - Blog&lt;/title&gt;
+    &lt;title&gt;My Blog&lt;/title&gt;
     &lt;link rel="stylesheet" href="styles.css"&gt;
 &lt;/head&gt;
 &lt;body&gt;
     &lt;header&gt;
-        &lt;h1&gt;{{ site_title }}&lt;/h1&gt;
+        &lt;h1&gt;My Website&lt;/h1&gt;
         &lt;nav&gt;
             &lt;a href="/"&gt;Home&lt;/a&gt;
             &lt;a href="/about.html"&gt;About&lt;/a&gt;
@@ -112,7 +112,7 @@
     &lt;/main&gt;
     
     &lt;footer&gt;
-        &lt;p&gt;&copy; {{ site_title }} {{ current_year }}&lt;/p&gt;
+        &lt;p&gt;&copy; My Website {{ current_year }}&lt;/p&gt;
     &lt;/footer&gt;
     
     &lt;!-- HaruCMS Client Library --&gt;
