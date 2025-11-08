@@ -21,6 +21,10 @@ requireAdminAuth();
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
 
+// Initialize i18n system
+require_once __DIR__ . '/../core/i18n.php';
+I18n::init();
+
 // Security headers (basic)
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');

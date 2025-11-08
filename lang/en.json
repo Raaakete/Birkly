@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "name": "English",
+    "native_name": "English",
+    "flag": "🇺🇸"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "content": "Content",
+    "media": "Media",
+    "settings": "Settings",
+    "help": "Help",
+    "logout": "Logout",
+    "new_collection": "New Collection",
+    "new_entry": "New Entry",
+    "edit_collection": "Edit Collection",
+    "edit_entry": "Edit Entry",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "draft": "Draft",
+    "published": "Published",
+    "pending_review": "Pending Review",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "title": "Title",
+    "status": "Status",
+    "actions": "Actions",
+    "filter": "Filter",
+    "all_statuses": "All Statuses",
+    "select_all": "Select All",
+    "bulk_actions": "Bulk Actions",
+    "selected": "selected",
+    "approve": "Approve",
+    "reject": "Reject",
+    "request_changes": "Request Changes",
+    "version_history": "Version History",
+    "compare_versions": "Compare Versions",
+    "restore_version": "Restore",
+    "current": "Current",
+    "no_entries": "No entries found",
+    "create_first_entry": "Create your first entry"
+  }
+}
+

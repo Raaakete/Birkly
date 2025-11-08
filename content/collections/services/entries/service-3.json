@@ -1,14 +1,23 @@
 {
   "id": "service-3",
-  "title": "E-Commerce Solutions",
   "slug": "e-commerce-solutions",
-  "description": "Complete online store setup and management",
-  "content": "<p>Launch your online store with our comprehensive e-commerce solutions. We handle everything from setup to payment integration.</p><p>Accept payments, manage inventory, and track orders all in one place.</p>",
-  "icon": "🛒",
-  "price": "Starting at $3,500",
-  "featured": false,
   "status": "published",
   "created_at": "2025-01-15T10:00:00+00:00",
-  "updated_at": "2025-01-15T10:00:00+00:00"
+  "updated_at": "2025-01-15T10:00:00+00:00",
+  "en": {
+    "title": "E-Commerce Solutions",
+    "description": "Complete online store setup and management",
+    "content": "<p>Launch your online store with our comprehensive e-commerce solutions. We handle everything from setup to payment integration.</p><p>Accept payments, manage inventory, and track orders all in one place.</p>",
+    "icon": "🛒",
+    "price": "Starting at $3,500",
+    "featured": false
+  },
+  "de": {
+    "title": "E-Commerce-Lösungen",
+    "description": "Komplette Einrichtung und Verwaltung von Online-Shops",
+    "content": "<p>Starten Sie Ihren Online-Shop mit unseren umfassenden E-Commerce-Lösungen. Wir kümmern uns um alles von der Einrichtung bis zur Zahlungsintegration.</p><p>Zahlungen akzeptieren, Inventar verwalten und Bestellungen an einem Ort verfolgen.</p>",
+    "icon": "🛒",
+    "price": "Ab 3.500 €",
+    "featured": false
+  }
 }
-

@@ -359,6 +359,37 @@ function saveEntry() {
         'updated_at' => date('Y-m-d H:i:s')
     ];
     
+    // Handle language and translations
+    if (isset($entryData['language']) && !empty($entryData['language'])) {
+        $entryOutput['language'] = $entryData['language'];
+    } elseif (isset($entry['language'])) {
+        $entryOutput['language'] = $entry['language'];
+    }
+    
+    // Handle translations (links to other language versions)
+    if (isset($entryData['translations'])) {
+        if (is_string($entryData['translations'])) {
+            // Try to decode JSON string
+            $decoded = json_decode($entryData['translations'], true);
+            if (is_array($decoded)) {
+                $entryOutput['translations'] = $decoded;
+            } elseif (is_array($entryData['translations'])) {
+                $entryOutput['translations'] = $entryData['translations'];
+            }
+        } elseif (is_array($entryData['translations'])) {
+            $entryOutput['translations'] = $entryData['translations'];
+        }
+    } elseif (isset($entry['translations']) && is_array($entry['translations'])) {
+        $entryOutput['translations'] = $entry['translations'];
+    }
+    
+    // Handle translation_parent (if this is a translation of another entry)
+    if (isset($entryData['translation_parent']) && !empty($entryData['translation_parent'])) {
+        $entryOutput['translation_parent'] = $entryData['translation_parent'];
+    } elseif (isset($entry['translation_parent'])) {
+        $entryOutput['translation_parent'] = $entry['translation_parent'];
+    }
+    
     // Handle reviewer assignment if provided
     if (isset($entryData['reviewer']) && !empty($entryData['reviewer'])) {
         $entryOutput['reviewer'] = $entryData['reviewer'];
@@ -385,19 +416,76 @@ function saveEntry() {
         $entryOutput['expires_at'] = $entryData['expires_at'];
     }
     
+    // Check if collection has multi-language enabled
+    $collectionFile = "$collectionDir/collection.json";
+    $collectionData = [];
+    if (file_exists($collectionFile)) {
+        $collectionData = json_decode(file_get_contents($collectionFile), true);
+    }
+    $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
+    $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
+    
     // Process fieldtypes to save values properly
     // Set flag to prevent admin_fieldtypes.php from executing its switch statement
     $GLOBALS['__HARU_INTERNAL_CALL'] = true;
     require_once __DIR__ . '/admin_fieldtypes.php';
     $fields = $schema['fields'] ?? [];
     
-    foreach ($fields as $field) {
-        $fieldName = $field['name'] ?? '';
-        $fieldType = $field['type'] ?? '';
-        if (empty($fieldName)) continue;
-        
-        $rawValue = $entryData[$fieldName] ?? null;
-        $value = $rawValue;
+    // Handle multi-language content structure
+    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
+        // Organize language-specific fields
+        foreach ($multilanguageLanguages as $langCode) {
+            $entryOutput[$langCode] = [];
+            
+            foreach ($fields as $field) {
+                $fieldName = $field['name'] ?? '';
+                if (empty($fieldName)) continue;
+                
+                // Check for language-specific field (e.g., "en[title]")
+                $langFieldKey = $langCode . '[' . $fieldName . ']';
+                $rawValue = $entryData[$langFieldKey] ?? null;
+                
+                if ($rawValue !== null) {
+                    $fieldType = $field['type'] ?? '';
+                    $value = $rawValue;
+                    
+                    // Process value through fieldtype if it exists
+                    if (!empty($fieldType)) {
+                        $className = getFieldtypeClass($fieldType);
+                        if ($className && class_exists($className)) {
+                            try {
+                                $tempErrorReporting = error_reporting(E_ALL & ~E_DEPRECATED & ~E_WARNING);
+                                $ft = new $className([
+                                    'name' => $fieldName,
+                                    'label' => $field['label'] ?? $fieldName,
+                                    'value' => $rawValue,
+                                    'required' => $field['required'] ?? false,
+                                    'options' => $field['options'] ?? []
+                                ]);
+                                error_reporting($tempErrorReporting);
+                                
+                                if (method_exists($ft, 'processValue')) {
+                                    $value = $ft->processValue($rawValue);
+                                }
+                            } catch (Exception $e) {
+                                error_log("Error processing fieldtype {$fieldType} for field {$fieldName}: " . $e->getMessage());
+                            }
+                        }
+                    }
+                    
+                    $entryOutput[$langCode][$fieldName] = $value;
+                }
+            }
+        }
+    } else {
+        // Single language - process fields normally
+        foreach ($fields as $field) {
+            $fieldName = $field['name'] ?? '';
+            $fieldType = $field['type'] ?? '';
+            if (empty($fieldName)) continue;
+            
+            $rawValue = $entryData[$fieldName] ?? null;
+            $value = $rawValue;
         
         // Process value through fieldtype if it exists
         if ($rawValue !== null && !empty($fieldType)) {
@@ -428,6 +516,7 @@ function saveEntry() {
         
         $entryOutput[$fieldName] = $value;
     }
+}
     
     // Also add any other fields that might have been submitted but aren't in schema
     foreach ($entryData as $key => $value) {

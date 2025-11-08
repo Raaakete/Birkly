@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "name": "German",
+    "native_name": "Deutsch",
+    "flag": "🇩🇪"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "content": "Inhalt",
+    "media": "Medien",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "logout": "Abmelden",
+    "new_collection": "Neue Sammlung",
+    "new_entry": "Neuer Eintrag",
+    "edit_collection": "Sammlung bearbeiten",
+    "edit_entry": "Eintrag bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "publish": "Veröffentlichen",
+    "unpublish": "Veröffentlichung zurückziehen",
+    "draft": "Entwurf",
+    "published": "Veröffentlicht",
+    "pending_review": "Zur Überprüfung",
+    "approved": "Genehmigt",
+    "rejected": "Abgelehnt",
+    "title": "Titel",
+    "status": "Status",
+    "actions": "Aktionen",
+    "filter": "Filter",
+    "all_statuses": "Alle Status",
+    "select_all": "Alle auswählen",
+    "bulk_actions": "Massenaktionen",
+    "selected": "ausgewählt",
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "request_changes": "Änderungen anfordern",
+    "version_history": "Versionsverlauf",
+    "compare_versions": "Versionen vergleichen",
+    "restore_version": "Wiederherstellen",
+    "current": "Aktuell",
+    "no_entries": "Keine Einträge gefunden",
+    "create_first_entry": "Erstellen Sie Ihren ersten Eintrag"
+  }
+}
+
