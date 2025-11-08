@@ -39,28 +39,112 @@ if (isset($fieldtype_assets)) {
         <div class="editor-layout">
             <div class="editor-main">
                 <div class="editor-content">
-                    <?php if (!empty($fields)): ?>
-                        <?php foreach ($fields as $field): ?>
-                            <div class="field-block">
-                                <div class="field-header">
-                                    <div class="field-title"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?><?= !empty($field['required']) ? ' <span class="required">*</span>' : '' ?></div>
-                                    <?php if (!empty($field['required'])): ?>
-                                        <div class="field-subtitle">Required</div>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="field-control">
-                                    <?php if (!empty($field['html'])): ?>
-                                        <?= $field['html'] ?>
-                                    <?php else: ?>
-                                        <?php
-                                        $fieldName = $field['name'] ?? '';
-                                        $fieldValue = $entry[$fieldName] ?? '';
-                                        ?>
-                                        <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($fieldValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
-                                    <?php endif; ?>
-                                </div>
+                    <?php
+                    // Check if collection has multi-language enabled
+                    $multilanguageEnabled = !empty($collection['multilanguage']['enabled']);
+                    $multilanguageLanguages = $collection['multilanguage']['languages'] ?? [];
+                    $defaultLang = !empty($multilanguageLanguages) ? $multilanguageLanguages[0] : 'en';
+                    ?>
+                    
+                    <?php if ($multilanguageEnabled && !empty($multilanguageLanguages)): ?>
+                        <!-- Language Tabs -->
+                        <div class="language-tabs-container" style="margin-bottom: var(--space-6);">
+                            <div class="language-tabs-nav" style="display: flex; gap: var(--space-2); border-bottom: 2px solid var(--border-color);">
+                                <?php foreach ($multilanguageLanguages as $langCode): ?>
+                                    <button type="button" class="language-tab-btn <?= $langCode === $defaultLang ? 'active' : '' ?>" data-lang="<?= htmlspecialchars($langCode) ?>">
+                                        <?= htmlspecialchars(strtoupper($langCode)) ?>
+                                    </button>
+                                <?php endforeach; ?>
                             </div>
-                        <?php endforeach; ?>
+                            
+                            <!-- Language Tab Content -->
+                            <?php foreach ($multilanguageLanguages as $langCode): ?>
+                                <div class="language-tab-content" data-lang="<?= htmlspecialchars($langCode) ?>" style="display: <?= $langCode === $defaultLang ? 'block' : 'none' ?>; margin-top: var(--space-4);">
+                                    <?php if (!empty($fields)): ?>
+                                        <?php foreach ($fields as $field): ?>
+                                            <div class="field-block">
+                                                <div class="field-header">
+                                                    <div class="field-title"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?><?= !empty($field['required']) ? ' <span class="required">*</span>' : '' ?></div>
+                                                    <?php if (!empty($field['required'])): ?>
+                                                        <div class="field-subtitle">Required</div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="field-control">
+                                                    <?php if (!empty($field['html'])): ?>
+                                                        <?php
+                                                        // Replace field names with language-specific names
+                                                        $fieldName = $field['name'] ?? '';
+                                                        $langFieldName = $langCode . '[' . $fieldName . ']';
+                                                        $langHtml = str_replace('name="' . $fieldName . '"', 'name="' . $langFieldName . '"', $field['html']);
+                                                        $langHtml = str_replace('id="field_' . $fieldName . '"', 'id="field_' . $langCode . '_' . $fieldName . '"', $langHtml);
+                                                        // Get value from language-specific data
+                                                        $langValue = $entry[$langCode][$fieldName] ?? '';
+                                                        
+                                                        // For complex fieldtypes (like dynamicitems), the value might be an array
+                                                        // We need to JSON encode it and update the hidden input
+                                                        if (is_array($langValue)) {
+                                                            $langValueJson = htmlspecialchars(json_encode($langValue), ENT_QUOTES, 'UTF-8');
+                                                            // Update hidden input value for dynamicitems (pattern: id="field_{name}_value")
+                                                            $hiddenInputPattern = '/id="field_' . preg_quote($langCode . '_' . $fieldName, '/') . '_value"[^>]*value="[^"]*"/';
+                                                            if (preg_match($hiddenInputPattern, $langHtml)) {
+                                                                $langHtml = preg_replace($hiddenInputPattern, 'id="field_' . htmlspecialchars($langCode . '_' . $fieldName) . '_value" value="' . $langValueJson . '"', $langHtml);
+                                                            } else {
+                                                                // Try to find the hidden input by name pattern
+                                                                $namePattern = '/name="' . preg_quote($langFieldName, '/') . '"[^>]*value="[^"]*"/';
+                                                                if (preg_match($namePattern, $langHtml)) {
+                                                                    $langHtml = preg_replace($namePattern, 'name="' . htmlspecialchars($langFieldName) . '" value="' . $langValueJson . '"', $langHtml);
+                                                                }
+                                                            }
+                                                        } else {
+                                                            // Simple string value
+                                                            if (preg_match('/value="[^"]*"/', $langHtml)) {
+                                                                $langHtml = preg_replace('/value="[^"]*"/', 'value="' . htmlspecialchars($langValue) . '"', $langHtml);
+                                                            } else {
+                                                                $langHtml = str_replace('>', ' value="' . htmlspecialchars($langValue) . '">', $langHtml);
+                                                            }
+                                                        }
+                                                        echo $langHtml;
+                                                        ?>
+                                                    <?php else: ?>
+                                                        <?php
+                                                        $fieldName = $field['name'] ?? '';
+                                                        $langFieldName = $langCode . '[' . $fieldName . ']';
+                                                        $langValue = $entry[$langCode][$fieldName] ?? '';
+                                                        ?>
+                                                        <input type="text" name="<?= htmlspecialchars($langFieldName) ?>" id="field_<?= htmlspecialchars($langCode) ?>_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($langValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <!-- Single Language (No Tabs) -->
+                        <?php if (!empty($fields)): ?>
+                            <?php foreach ($fields as $field): ?>
+                                <div class="field-block">
+                                    <div class="field-header">
+                                        <div class="field-title"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?><?= !empty($field['required']) ? ' <span class="required">*</span>' : '' ?></div>
+                                        <?php if (!empty($field['required'])): ?>
+                                            <div class="field-subtitle">Required</div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="field-control">
+                                        <?php if (!empty($field['html'])): ?>
+                                            <?= $field['html'] ?>
+                                        <?php else: ?>
+                                            <?php
+                                            $fieldName = $field['name'] ?? '';
+                                            $fieldValue = $entry[$fieldName] ?? '';
+                                            ?>
+                                            <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($fieldValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -70,6 +154,7 @@ if (isset($fieldtype_assets)) {
                 <div class="sidebar-tabs">
                     <div class="tab-nav">
                         <button type="button" class="tab-btn active" data-tab="publish">Publish</button>
+                        <button type="button" class="tab-btn" data-tab="translations">Translations</button>
                         <button type="button" class="tab-btn" data-tab="seo">SEO</button>
                         <button type="button" class="tab-btn" data-tab="templating">Templating</button>
                     </div>
@@ -190,6 +275,84 @@ if (isset($fieldtype_assets)) {
                                         </div>
                                     </div>
                                 <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Translations Tab -->
+                        <div class="tab-pane" id="translations-tab">
+                            <div class="card">
+                                <?php
+                                require_once __DIR__ . '/../../core/i18n.php';
+                                $availableLangs = I18n::getAvailableLanguages();
+                                $currentLang = $entry['language'] ?? getCurrentLanguage();
+                                $translations = $entry['translations'] ?? [];
+                                $translationParent = $entry['translation_parent'] ?? '';
+                                ?>
+                                
+                                <div class="form-group">
+                                    <label for="entry_language">Content Language</label>
+                                    <select name="language" id="entry_language" class="input">
+                                        <?php foreach ($availableLangs as $langCode => $langInfo): ?>
+                                            <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentLang ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($langInfo['native_name']) ?> <?= htmlspecialchars($langInfo['flag']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="form-text">The language of this entry's content</small>
+                                </div>
+                                
+                                <?php if (!empty($translationParent)): ?>
+                                    <div class="form-group">
+                                        <label>Translation Of</label>
+                                        <div class="form-text">
+                                            <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($translationParent) ?>" class="btn btn-sm">
+                                                View Original Entry
+                                            </a>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="form-group">
+                                    <label>Available Translations</label>
+                                    <div id="translations-list" class="translations-list">
+                                        <?php if (!empty($translations)): ?>
+                                            <?php foreach ($translations as $langCode => $entryId): ?>
+                                                <?php if (isset($availableLangs[$langCode])): ?>
+                                                    <div class="translation-item">
+                                                        <span class="translation-lang"><?= htmlspecialchars($availableLangs[$langCode]['native_name']) ?> <?= htmlspecialchars($availableLangs[$langCode]['flag']) ?></span>
+                                                        <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entryId) ?>" class="btn btn-sm">
+                                                            Edit
+                                                        </a>
+                                                    </div>
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <p class="form-text" style="color: var(--text-secondary);">No translations available</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
+                                <?php if (!empty($entry['id'])): ?>
+                                    <div class="form-group">
+                                        <label>Create Translation</label>
+                                        <select id="create-translation-lang" class="input" style="margin-bottom: var(--space-2);">
+                                            <option value="">Select language...</option>
+                                            <?php foreach ($availableLangs as $langCode => $langInfo): ?>
+                                                <?php if ($langCode !== $currentLang && !isset($translations[$langCode])): ?>
+                                                    <option value="<?= htmlspecialchars($langCode) ?>">
+                                                        <?= htmlspecialchars($langInfo['native_name']) ?> <?= htmlspecialchars($langInfo['flag']) ?>
+                                                    </option>
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <button type="button" id="create-translation-btn" class="btn btn-primary btn-sm" disabled>
+                                            Create Translation
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <input type="hidden" name="translation_parent" id="translation_parent" value="<?= htmlspecialchars($translationParent) ?>">
+                                <input type="hidden" name="translations" id="translations" value="<?= htmlspecialchars(json_encode($translations)) ?>">
                             </div>
                         </div>
                         

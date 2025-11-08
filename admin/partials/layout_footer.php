@@ -44,6 +44,35 @@
             });
         }
     });
+    
+    // Language switcher
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect) {
+        languageSelect.addEventListener('change', function() {
+            const language = this.value;
+            
+            fetch('/api/settings.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=set_language&language=' + encodeURIComponent(language) + '&_csrf=' + encodeURIComponent(document.querySelector('meta[name="csrf-token"]').getAttribute('content'))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    // Reload page to apply new language
+                    window.location.reload();
+                } else {
+                    alert('Error changing language: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Language change error:', error);
+                alert('Error changing language. Please try again.');
+            });
+        });
+    }
     </script>
     
     <!-- No SPA router/scripts in MPA mode -->

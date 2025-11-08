@@ -342,10 +342,63 @@ if ($action === 'list_entries') {
         }
     }
     
-    echo json_encode([
-        'status' => 'ok',
-        'data' => [ 'entries' => $cachedEntries ]
-    ]);
+    // Get language parameter
+    $language = $input['language'] ?? $_GET['language'] ?? 'en';
+    
+    // Get collection metadata
+    $collectionMeta = $storage->read("collections/$dir/collection.json");
+    $multilanguageEnabled = !empty($collectionMeta['multilanguage']['enabled']);
+    $multilanguageLanguages = $collectionMeta['multilanguage']['languages'] ?? [];
+    
+    // Validate language
+    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
+        if (!in_array($language, $multilanguageLanguages)) {
+            $language = $multilanguageLanguages[0] ?? 'en'; // Fallback to first available language
+        }
+    } else {
+        $language = null; // No multi-language, use original structure
+    }
+    
+    // Transform entries for language-specific content
+    if ($language && $multilanguageEnabled) {
+        $transformedEntries = array_map(function($entry) use ($language, $multilanguageLanguages) {
+            // Check if entry has multi-language structure
+            $hasMultilang = false;
+            foreach ($multilanguageLanguages as $lang) {
+                if (isset($entry[$lang]) && is_array($entry[$lang])) {
+                    $hasMultilang = true;
+                    break;
+                }
+            }
+            
+            if ($hasMultilang && isset($entry[$language])) {
+                // Merge language-specific content with entry metadata
+                $transformed = array_merge($entry, $entry[$language]);
+                // Keep metadata fields
+                $transformed['id'] = $entry['id'] ?? '';
+                $transformed['slug'] = $entry['slug'] ?? '';
+                $transformed['status'] = $entry['status'] ?? 'draft';
+                $transformed['created_at'] = $entry['created_at'] ?? '';
+                $transformed['updated_at'] = $entry['updated_at'] ?? '';
+                $transformed['published_at'] = $entry['published_at'] ?? '';
+                return $transformed;
+            }
+            
+            // No multi-language structure, return as-is
+            return $entry;
+        }, $cachedEntries);
+        
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [ 'entries' => $transformedEntries ]
+        ]);
+    } else {
+        // No multi-language, return entries as-is
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [ 'entries' => $cachedEntries ]
+        ]);
+    }
     exit;
 }
 
@@ -675,6 +728,7 @@ if ($action === 'get_entry') {
     $collection = $input['collection'] ?? $_GET['collection'] ?? '';
     $entryId = $input['id'] ?? $_GET['id'] ?? '';
     $slug = $input['slug'] ?? $_GET['slug'] ?? '';
+    $language = $input['language'] ?? $_GET['language'] ?? 'en'; // Default to 'en'
     $dir = '';
     $collections = $storage->list('collections');
     
@@ -692,6 +746,20 @@ if ($action === 'get_entry') {
     if (!$dir) {
         echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
         exit;
+    }
+    
+    // Get collection metadata
+    $collectionMeta = $storage->read("collections/$dir/collection.json");
+    $multilanguageEnabled = !empty($collectionMeta['multilanguage']['enabled']);
+    $multilanguageLanguages = $collectionMeta['multilanguage']['languages'] ?? [];
+    
+    // Validate language
+    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
+        if (!in_array($language, $multilanguageLanguages)) {
+            $language = $multilanguageLanguages[0] ?? 'en'; // Fallback to first available language
+        }
+    } else {
+        $language = null; // No multi-language, use original structure
     }
     
     // Find entry by slug or ID
@@ -714,6 +782,31 @@ if ($action === 'get_entry') {
     if (!$entry) {
         echo json_encode(['status' => 'error', 'message' => 'Entry not found']);
         exit;
+    }
+    
+    // Transform entry for language-specific content
+    if ($language && $multilanguageEnabled) {
+        // Check if entry has multi-language structure
+        $hasMultilang = false;
+        foreach ($multilanguageLanguages as $lang) {
+            if (isset($entry[$lang]) && is_array($entry[$lang])) {
+                $hasMultilang = true;
+                break;
+            }
+        }
+        
+        if ($hasMultilang && isset($entry[$language])) {
+            // Merge language-specific content with entry metadata
+            $transformed = array_merge($entry, $entry[$language]);
+            // Keep metadata fields
+            $transformed['id'] = $entry['id'] ?? '';
+            $transformed['slug'] = $entry['slug'] ?? '';
+            $transformed['status'] = $entry['status'] ?? 'draft';
+            $transformed['created_at'] = $entry['created_at'] ?? '';
+            $transformed['updated_at'] = $entry['updated_at'] ?? '';
+            $transformed['published_at'] = $entry['published_at'] ?? '';
+            $entry = $transformed;
+        }
     }
     
     echo json_encode([

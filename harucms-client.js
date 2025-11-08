@@ -56,6 +56,24 @@
         // CSRF token cache
         csrfToken: null,
         
+        // Current language
+        currentLanguage: (function() {
+            // Get from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const langFromUrl = urlParams.get('lang');
+            if (langFromUrl) {
+                localStorage.setItem('harucms_language', langFromUrl);
+                return langFromUrl;
+            }
+            // Get from localStorage
+            const langFromStorage = localStorage.getItem('harucms_language');
+            if (langFromStorage) {
+                return langFromStorage;
+            }
+            // Default to 'en'
+            return 'en';
+        })(),
+        
         // Initialization flag
         initialized: false
     };
@@ -105,6 +123,11 @@
     async function fetchContent(action, params = {}) {
         if (!HaruCMS.apiEndpoint) {
             await detectApiEndpoint();
+        }
+        
+        // Add language parameter for list_entries and get_entry actions
+        if ((action === 'list_entries' || action === 'get_entry') && HaruCMS.currentLanguage) {
+            params.language = HaruCMS.currentLanguage;
         }
         
         const queryParams = new URLSearchParams({
@@ -837,7 +860,8 @@
         // Use a while loop to track positions correctly
         let lastIndex = 0;
         let result = '';
-        const varRegex = /\{\s*([a-zA-Z0-9_]+)\s*(?:"([^"]+)")?\s*\}/g;
+        // Updated regex to handle dot notation and array indices (e.g., site_elements.hero.content.0.value)
+        const varRegex = /\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*(?:\.[0-9]+(?:\.[a-zA-Z0-9_]+)*)?)\s*(?:"([^"]+)")?\s*\}/g;
         let varMatch;
         
         while ((varMatch = varRegex.exec(output)) !== null) {
@@ -852,7 +876,7 @@
             const lowers = varName.toLowerCase();
             
             // Skip if it's a directive keyword (these should already be processed)
-            const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
+            const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry','else'];
             if (directiveKeywords.includes(lowers)) {
                 // Check context around match to see if it's part of a directive
                 const before = output.substring(Math.max(0, matchStart - 20), matchStart);
@@ -869,6 +893,10 @@
             } else {
                 // It's a regular variable - replace it
                 let value = getNestedValue(data, varName) || '';
+                if (varName.startsWith('site_elements.')) {
+                    // Log site element access for debugging
+                    console.log('HaruCMS: Accessing site element:', varName, 'value:', value, 'type:', typeof value);
+                }
                 if (varName === 'content' || /\.content$/.test(varName)) {
                     result += value; // auto-raw
                 } else if (varName === 'date' && arg) {
@@ -992,32 +1020,65 @@
             return hasProp ? '' : '<!--SKIP-->';
         });
         
+        // Handle {else} FIRST - mark it for conditional removal
+        // We need to handle else blocks by replacing them with markers
+        // First, replace {else} with a marker that we can use to split content
+        output = output.replace(/\{else\}/g, '<!--ELSE-->');
+        
+        // Handle {endif} - mark it for conditional removal
+        output = output.replace(/\{endif\}/g, '<!--ENDIF-->');
+        output = output.replace(/\{endfor\}/g, '');
+        output = output.replace(/\{endforeach\}/g, '');
+        
         // Handle {if variable exist}
         output = output.replace(/\{if\s+([^}]+)\s+exist\}/g, (match, varPath) => {
             const value = getNestedValue(data, varPath);
             return value !== null && value !== undefined && value !== '' ? '' : '<!--SKIP-->';
         });
         
-        // Handle {endif}
-        output = output.replace(/\{endif\}/g, '<!--ENDIF-->');
-        output = output.replace(/\{endfor\}/g, '');
-        output = output.replace(/\{endforeach\}/g, '');
+        // Handle conditional blocks with else
+        // Pattern: <!--SKIP-->...<!--ELSE-->...<!--ENDIF-->
+        // If condition is false, keep content between <!--ELSE--> and <!--ENDIF-->, remove rest
+        // If condition is true, keep content before <!--ELSE-->, remove <!--ELSE-->...<!--ENDIF-->
         
-        // Remove content between <!--SKIP--> and <!--ENDIF-->
+        // First, handle false conditions (with <!--SKIP-->)
+        // Pattern: <!--SKIP-->...<!--ELSE-->...<!--ENDIF-->
+        // Keep only the else block content
+        output = output.replace(/<!--SKIP-->[\s\S]*?<!--ELSE-->([\s\S]*?)<!--ENDIF-->/g, '$1');
+        
+        // Then, handle true conditions (without <!--SKIP-->)
+        // Pattern: ...<!--ELSE-->...<!--ENDIF-->
+        // Keep everything before <!--ELSE-->, remove <!--ELSE--> through <!--ENDIF-->
+        // Use regex to remove all else blocks at once (non-greedy, across newlines)
+        output = output.replace(/<!--ELSE-->[\s\S]*?<!--ENDIF-->/g, '');
+        
+        // Remove content between <!--SKIP--> and <!--ENDIF--> (for conditions without else)
         output = output.replace(/<!--SKIP-->[\s\S]*?<!--ENDIF-->/g, '');
+        
+        // Remove any remaining <!--ENDIF--> markers (for standalone {endif} without {else})
+        output = output.replace(/<!--ENDIF-->/g, '');
+        
+        // Final cleanup: remove any remaining <!--ELSE--> markers (shouldn't happen, but just in case)
+        output = output.replace(/<!--ELSE-->/g, '');
         
         return output;
     }
     
     /**
-     * Get nested value from object (e.g., "entry.title")
+     * Get nested value from object (e.g., "entry.title" or "content.0.value")
      */
     function getNestedValue(obj, path) {
         const parts = path.split('.');
         let value = obj;
         for (let part of parts) {
             if (value && typeof value === 'object') {
-                value = value[part];
+                // Handle array indices (e.g., "0", "1")
+                const numIndex = parseInt(part, 10);
+                if (!isNaN(numIndex) && Array.isArray(value)) {
+                    value = value[numIndex];
+                } else {
+                    value = value[part];
+                }
             } else {
                 return null;
             }
@@ -1080,12 +1141,68 @@
     }
     
     /**
+     * Get site element by key
+     */
+    async function getSiteElement(key) {
+        try {
+            const data = await fetchContent('list_entries', { collection: 'site_elements' });
+            if (data && data.status === 'ok' && data.data.entries) {
+                const element = data.data.entries.find(entry => entry.key === key);
+                return element || null;
+            }
+        } catch (error) {
+            console.warn('HaruCMS: Error fetching site element:', error);
+        }
+        return null;
+    }
+    
+    /**
+     * Get all site elements
+     */
+    async function getAllSiteElements() {
+        try {
+            console.log('HaruCMS: Fetching site elements with language:', HaruCMS.currentLanguage);
+            const data = await fetchContent('list_entries', { 
+                collection: 'site_elements',
+                language: HaruCMS.currentLanguage 
+            });
+            if (data && data.status === 'ok' && data.data.entries) {
+                console.log('HaruCMS: Fetched', data.data.entries.length, 'site elements');
+                const elements = {};
+                data.data.entries.forEach(entry => {
+                    // After API transformation, key should be at top level
+                    const key = entry.key;
+                    if (key) {
+                        elements[key] = entry;
+                        console.log('HaruCMS: Added site element:', key, 'with content:', entry.content ? 'yes' : 'no', 'content type:', typeof entry.content, 'is array:', Array.isArray(entry.content));
+                        if (entry.content && Array.isArray(entry.content) && entry.content.length > 0) {
+                            console.log('HaruCMS: First content item:', entry.content[0]);
+                        }
+                    } else {
+                        console.warn('HaruCMS: Site element missing key:', entry);
+                    }
+                });
+                console.log('HaruCMS: Site elements object:', Object.keys(elements));
+                return elements;
+            } else {
+                console.warn('HaruCMS: Failed to fetch site elements:', data);
+            }
+        } catch (error) {
+            console.warn('HaruCMS: Error fetching site elements:', error);
+        }
+        return {};
+    }
+    
+    /**
      * Process all templates in the page
      */
     async function processTemplates() {
         // Note: We no longer fetch site_title from CMS settings.
         // Websites should define their own site_title in their templates.
         // The CMS doesn't manage site titles - it just provides content.
+        
+        // Fetch site elements for use in templates
+        const siteElements = await getAllSiteElements();
         
         // Check for URL parameters that might indicate we need a specific entry
         urlParams = new URLSearchParams(window.location.search);
@@ -1131,6 +1248,7 @@
                         excerpt: entry.excerpt || '',
                         tags: entry.tags || [],
                         entry: entry, // Add entry object for conditionals
+                        site_elements: siteElements, // Add site elements for use in templates
                         ...entry // Spread all entry properties for direct access
                     };
                     
@@ -1185,7 +1303,8 @@
                     // Process remaining templates (header, footer) with default data
                     // Note: site_title is not provided by CMS - websites should define their own
                     const defaultData = {
-                        current_year: new Date().getFullYear()
+                        current_year: new Date().getFullYear(),
+                        site_elements: siteElements // Add site elements for use in templates
                     };
                     
                     // Process header and footer templates
@@ -1247,7 +1366,8 @@
                 // Process remaining templates (header, footer) with default data
                 // Note: site_title is not provided by CMS - websites should define their own
                 const defaultData = {
-                    current_year: new Date().getFullYear()
+                    current_year: new Date().getFullYear(),
+                    site_elements: siteElements // Add site elements for use in templates
                 };
                 
                 const walker = document.createTreeWalker(
@@ -1369,14 +1489,30 @@
                 
                 if (!parentHasCollectionLoop) {
                     // Only check ancestors if this element doesn't contain a collection loop itself
+                    // We need to check if this element is actually INSIDE a collection loop's content
+                    // (i.e., between {for each entry in 'collection'} and {endfor})
+                    // Not just if there's a collection loop somewhere in an ancestor
                     let ancestor = parent.parentElement;
                     let isInsideCollectionLoop = false;
-                    while (ancestor) {
+                    while (ancestor && ancestor !== document.body) {
                         const ancestorText = ancestor.textContent || ancestor.innerHTML || '';
-                        if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
-                            isInsideCollectionLoop = true;
-                            console.log('HaruCMS: Skipping nested template inside collection loop:', parent.tagName, parent.className);
-                            break;
+                        // Check if this ancestor contains a collection loop AND this element is inside its content
+                        const collectionLoopMatch = ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"]([^'"]+)['"]\}/);
+                        if (collectionLoopMatch) {
+                            // Found a collection loop in ancestor - check if this element is inside its loop content
+                            // The loop content is between the {for} tag and {endfor}
+                            const loopStartIndex = ancestorText.indexOf(collectionLoopMatch[0]);
+                            const loopEndIndex = ancestorText.indexOf('{endfor}', loopStartIndex);
+                            if (loopEndIndex !== -1) {
+                                // Get the position of this element's content in the ancestor's text
+                                const elementIndex = ancestorText.indexOf(parent.innerHTML);
+                                if (elementIndex !== -1 && elementIndex > loopStartIndex && elementIndex < loopEndIndex) {
+                                    // This element is inside the collection loop's content
+                                    isInsideCollectionLoop = true;
+                                    console.log('HaruCMS: Skipping nested template inside collection loop:', parent.tagName, parent.className);
+                                    break;
+                                }
+                            }
                         }
                         ancestor = ancestor.parentElement;
                     }
@@ -1384,6 +1520,23 @@
                     if (isInsideCollectionLoop) {
                         continue; // Skip - will be processed as part of collection loop
                     }
+                }
+                
+                // Check if this element is a child of an already-detected template
+                // If so, skip it - it will be processed as part of the parent template
+                let ancestor = parent.parentElement;
+                let isChildOfTemplate = false;
+                while (ancestor && ancestor !== document.body) {
+                    // Check if this ancestor is already in the templates array
+                    if (templates.some(t => t.element === ancestor)) {
+                        isChildOfTemplate = true;
+                        break;
+                    }
+                    ancestor = ancestor.parentElement;
+                }
+                
+                if (isChildOfTemplate) {
+                    continue; // Skip - will be processed as part of parent template
                 }
                 
                 parent.dataset.cmsProcessed = 'true';
@@ -1415,14 +1568,30 @@
                     
                     if (!elHasCollectionLoop) {
                         // Only check ancestors if this element doesn't contain a collection loop itself
+                        // We need to check if this element is actually INSIDE a collection loop's content
+                        // (i.e., between {for each entry in 'collection'} and {endfor})
+                        // Not just if there's a collection loop somewhere in an ancestor
                         let ancestor = el.parentElement;
                         let isInsideCollectionLoop = false;
-                        while (ancestor) {
+                        while (ancestor && ancestor !== document.body) {
                             const ancestorText = ancestor.textContent || ancestor.innerHTML || '';
-                            if (ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]\}/)) {
-                                isInsideCollectionLoop = true;
-                                console.log('HaruCMS: Skipping nested template inside collection loop (alt detection):', el.tagName, el.className);
-                                break;
+                            // Check if this ancestor contains a collection loop AND this element is inside its content
+                            const collectionLoopMatch = ancestorText.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"]([^'"]+)['"]\}/);
+                            if (collectionLoopMatch) {
+                                // Found a collection loop in ancestor - check if this element is inside its loop content
+                                // The loop content is between the {for} tag and {endfor}
+                                const loopStartIndex = ancestorText.indexOf(collectionLoopMatch[0]);
+                                const loopEndIndex = ancestorText.indexOf('{endfor}', loopStartIndex);
+                                if (loopEndIndex !== -1) {
+                                    // Get the position of this element's content in the ancestor's text
+                                    const elementIndex = ancestorText.indexOf(el.innerHTML);
+                                    if (elementIndex !== -1 && elementIndex > loopStartIndex && elementIndex < loopEndIndex) {
+                                        // This element is inside the collection loop's content
+                                        isInsideCollectionLoop = true;
+                                        console.log('HaruCMS: Skipping nested template inside collection loop (alt detection):', el.tagName, el.className);
+                                        break;
+                                    }
+                                }
                             }
                             ancestor = ancestor.parentElement;
                         }
@@ -1430,6 +1599,23 @@
                         if (isInsideCollectionLoop) {
                             continue; // Skip - will be processed as part of collection loop
                         }
+                    }
+                    
+                    // Check if this element is a child of an already-detected template
+                    // If so, skip it - it will be processed as part of the parent template
+                    let ancestor = el.parentElement;
+                    let isChildOfTemplate = false;
+                    while (ancestor && ancestor !== document.body) {
+                        // Check if this ancestor is already in the templates array
+                        if (templates.some(t => t.element === ancestor)) {
+                            isChildOfTemplate = true;
+                            break;
+                        }
+                        ancestor = ancestor.parentElement;
+                    }
+                    
+                    if (isChildOfTemplate) {
+                        continue; // Skip - will be processed as part of parent template
                     }
                     
                     el.dataset.cmsProcessed = 'true';
@@ -1766,8 +1952,10 @@
                     // Fetch data for all collections
                     // Note: site_title is not provided by CMS - websites should define their own
                     const data = {
-                        current_year: new Date().getFullYear()
+                        current_year: new Date().getFullYear(),
+                        site_elements: siteElements // Add site elements for use in templates
                     };
+                    console.log('HaruCMS: Data object created with site_elements:', Object.keys(data.site_elements || {}));
                     
                     for (let collectionName of collections) {
                         console.log('HaruCMS: Fetching entries for collection:', collectionName);
@@ -1826,6 +2014,17 @@
                         });
                     }
                     
+                    // Debug: log rendered output to check for else blocks
+                    if (rendered.includes('<!--ELSE-->') || rendered.includes('<!--ENDIF-->')) {
+                        console.warn('HaruCMS: Warning - rendered output still contains else/endif markers:', rendered.substring(0, 300));
+                    }
+                    
+                    // Debug: check if content is duplicated (check for duplicate h2 tags or similar)
+                    const h2Count = (rendered.match(/<h2[^>]*>/g) || []).length;
+                    if (h2Count > 1 && template.template.includes('{if') && template.template.includes('{else}')) {
+                        console.warn('HaruCMS: Warning - multiple h2 tags found in rendered output, possible duplication:', h2Count, 'Sample:', rendered.substring(0, 500));
+                    }
+                    
                     // Set innerHTML only once after all placeholders are replaced
                     template.element.innerHTML = rendered;
                     
@@ -1859,8 +2058,10 @@
                     // No collections, just render variables
                     // Note: site_title is not provided by CMS - websites should define their own
                     const data = {
-                        current_year: new Date().getFullYear()
+                        current_year: new Date().getFullYear(),
+                        site_elements: siteElements // Add site elements for use in templates
                     };
+                    console.log('HaruCMS: Data object (no collections) with site_elements:', Object.keys(data.site_elements || {}));
                     console.log('HaruCMS: Rendering template without collections');
                     let rendered = renderTemplate(template.template, data);
                     
@@ -1904,6 +2105,17 @@
                             
                             console.warn('HaruCMS: Entry block', index, 'placeholder not found in rendered HTML for collection:', collectionSlug);
                         });
+                    }
+                    
+                    // Debug: log rendered output to check for else blocks
+                    if (rendered.includes('<!--ELSE-->') || rendered.includes('<!--ENDIF-->')) {
+                        console.warn('HaruCMS: Warning - rendered output still contains else/endif markers:', rendered.substring(0, 300));
+                    }
+                    
+                    // Debug: check if content is duplicated (check for duplicate h2 tags or similar)
+                    const h2Count = (rendered.match(/<h2[^>]*>/g) || []).length;
+                    if (h2Count > 1 && template.template.includes('{if') && template.template.includes('{else}')) {
+                        console.warn('HaruCMS: Warning - multiple h2 tags found in rendered output, possible duplication:', h2Count, 'Sample:', rendered.substring(0, 500));
                     }
                     
                     // Set innerHTML only once after all placeholders are replaced
@@ -2206,12 +2418,51 @@
     /**
      * Initialize HaruCMS
      */
+    /**
+     * Create language selector UI
+     */
+    function createLanguageSelector() {
+        // Check if language selector already exists
+        if (document.getElementById('harucms-language-selector')) {
+            return;
+        }
+        
+        // Create language selector
+        const selector = document.createElement('div');
+        selector.id = 'harucms-language-selector';
+        selector.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+        
+        const select = document.createElement('select');
+        select.style.cssText = 'border: none; outline: none; font-size: 14px; padding: 4px 8px; cursor: pointer;';
+        select.innerHTML = `
+            <option value="en" ${HaruCMS.currentLanguage === 'en' ? 'selected' : ''}>English</option>
+            <option value="de" ${HaruCMS.currentLanguage === 'de' ? 'selected' : ''}>Deutsch</option>
+        `;
+        
+        select.addEventListener('change', function() {
+            const newLang = this.value;
+            HaruCMS.currentLanguage = newLang;
+            localStorage.setItem('harucms_language', newLang);
+            
+            // Update URL with language parameter
+            const url = new URL(window.location);
+            url.searchParams.set('lang', newLang);
+            window.location.href = url.toString();
+        });
+        
+        selector.appendChild(select);
+        document.body.appendChild(selector);
+    }
+    
     async function init() {
         if (HaruCMS.initialized) return;
         
         HaruCMS.initialized = true;
         
         console.log('HaruCMS: Initializing...');
+        
+        // Create language selector
+        createLanguageSelector();
         
         // Detect API endpoint first
         await detectApiEndpoint();

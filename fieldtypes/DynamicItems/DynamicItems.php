@@ -249,4 +249,47 @@ class DynamicItems extends BaseField {
     public function processLoadedValue($value) {
         return $value;
     }
+    
+    /**
+     * Render list cell for entries table
+     */
+    public function renderListCell($value, array $context = []): string {
+        // Handle JSON string
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $value = $decoded;
+            } else {
+                $value = [];
+            }
+        }
+        
+        // Ensure value is an array
+        if (!is_array($value)) {
+            $value = [];
+        }
+        
+        $count = count($value);
+        if ($count === 0) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Show count and preview of first few items
+        $preview = [];
+        foreach (array_slice($value, 0, 3) as $item) {
+            if (isset($item['value'])) {
+                $itemValue = is_array($item['value']) ? json_encode($item['value']) : (string)$item['value'];
+                $itemValue = mb_substr($itemValue, 0, 30);
+                $preview[] = htmlspecialchars($itemValue, ENT_QUOTES, 'UTF-8');
+            }
+        }
+        
+        $previewText = implode(', ', $preview);
+        if ($count > 3) {
+            $previewText .= '...';
+        }
+        
+        return '<span class="ft-list-badge">' . $count . ' item' . ($count === 1 ? '' : 's') . '</span>' .
+               ($previewText ? ' <span class="ft-list-text">(' . $previewText . ')</span>' : '');
+    }
 } 

@@ -460,7 +460,17 @@ function getEntryEditorData($includeFieldHtml = false) {
             $name = $f['name'] ?? '';
             if (!$type || !$name) continue;
             
+            // For multi-language entries, we need to get the value from the default language
+            // The entry editor template will handle language-specific values
+            $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
+            $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
+            $defaultLang = !empty($multilanguageLanguages) ? $multilanguageLanguages[0] : 'en';
+            
             $rawValue = ($payload['entry'][$name] ?? null);
+            // If multi-language is enabled and value is not at top level, try default language
+            if ($rawValue === null && $multilanguageEnabled && !empty($multilanguageLanguages) && isset($payload['entry'][$defaultLang][$name])) {
+                $rawValue = $payload['entry'][$defaultLang][$name];
+            }
             
             // Use the proper fieldtype loader from admin_fieldtypes.php
             $className = getFieldtypeClass($type);
@@ -658,10 +668,35 @@ function getEntriesData() {
     $preferredWidth = '240px';
     if (!empty($fields)) { $preferredWidth = $fields[0]['width'] ?? '240px'; }
 
+    // Check if collection has multi-language enabled
+    $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
+    $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
+    $defaultLanguage = !empty($multilanguageLanguages) ? $multilanguageLanguages[0] : 'en';
+    
     foreach ($entries as $entry) {
         $cells = [];
         // Title and status are mandatory in UI; ensure presence
-        $cells['__title'] = $entry['title'] ?? '';
+        // For multi-language entries, extract title from language section
+        $title = $entry['title'] ?? '';
+        if (empty($title) && $multilanguageEnabled && !empty($multilanguageLanguages)) {
+            // Try to get title from default language
+            if (isset($entry[$defaultLanguage]['title'])) {
+                $title = $entry[$defaultLanguage]['title'];
+            } else {
+                // Try any available language
+                foreach ($multilanguageLanguages as $lang) {
+                    if (isset($entry[$lang]['title']) && !empty($entry[$lang]['title'])) {
+                        $title = $entry[$lang]['title'];
+                        break;
+                    }
+                }
+            }
+        }
+        // Fallback to key or slug if no title found
+        if (empty($title)) {
+            $title = $entry['key'] ?? $entry['slug'] ?? 'Untitled';
+        }
+        $cells['__title'] = $title;
         $cells['__status'] = $entry['status'] ?? 'draft';
 
         $entryFieldPairs = [];
@@ -670,7 +705,22 @@ function getEntriesData() {
             $type = $field['type'] ?? null;
             if (!$name || !$type) continue;
 
+            // For multi-language entries, extract value from language section
             $value = $entry[$name] ?? ($field['default'] ?? null);
+            if ($value === null && $multilanguageEnabled && !empty($multilanguageLanguages)) {
+                // Try to get value from default language
+                if (isset($entry[$defaultLanguage][$name])) {
+                    $value = $entry[$defaultLanguage][$name];
+                } else {
+                    // Try any available language
+                    foreach ($multilanguageLanguages as $lang) {
+                        if (isset($entry[$lang][$name])) {
+                            $value = $entry[$lang][$name];
+                            break;
+                        }
+                    }
+                }
+            }
 
             // Try to render via fieldtype class if present
             $rendered = null;

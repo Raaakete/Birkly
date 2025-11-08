@@ -97,6 +97,27 @@ nav a {
     position: relative;
 }
 
+.language-selector {
+    margin-left: var(--spacing-md);
+}
+
+.language-selector select {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--color-text-light);
+    background: var(--color-bg);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.language-selector select:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
 nav a::after {
     content: '';
     position: absolute;

@@ -172,6 +172,41 @@
                                     </small>
                                 </div>
                                 
+                                <!-- Multi-Language Configuration -->
+                                <div class="info-item" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                    <label>Multi-Language Support</label>
+                                    <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="multilanguage_enabled" id="multilanguage_enabled" value="1" <?= !empty($collection['multilanguage']['enabled']) ? 'checked' : '' ?>>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                        <span style="font-weight: 500;">Enable multi-language support for this collection</span>
+                                    </div>
+                                    <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        When enabled, entries can have content in multiple languages
+                                    </small>
+                                    
+                                    <div id="multilanguage-settings" style="display: <?= !empty($collection['multilanguage']['enabled']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                        <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;">Languages</label>
+                                        <div id="language-tags-container" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 40px; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-s); background: var(--bg-primary);">
+                                            <?php
+                                            $selectedLangs = $collection['multilanguage']['languages'] ?? [];
+                                            foreach ($selectedLangs as $langCode):
+                                            ?>
+                                                <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
+                                                    <?= htmlspecialchars(strtoupper($langCode)) ?>
+                                                    <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
+                                                    <input type="hidden" name="multilanguage_languages[]" value="<?= htmlspecialchars($langCode) ?>">
+                                                </span>
+                                            <?php endforeach; ?>
+                                            <input type="text" id="language-input" placeholder="Type language code or name..." style="border: none; outline: none; flex: 1; min-width: 200px; font-size: 0.875rem;" autocomplete="off">
+                                        </div>
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
+                                        </small>
+                                    </div>
+                                </div>
+                                
                                 <!-- Public API Settings (shown when Public API is selected) -->
                                 <div id="public-api-settings" style="display: <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'block' : 'none' ?>; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
                                     <h4 style="font-size: 0.875rem; font-weight: 600; margin: 0 0 var(--space-3) 0; color: var(--text-primary);">Public API Settings</h4>
@@ -1171,7 +1206,84 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission
     const form = document.getElementById('collection-form');
     if (form) {
+        // Prevent form submission when Enter is pressed in language input - use capture phase
+        form.addEventListener('keydown', function(e) {
+            if ((e.key === 'Enter' || e.keyCode === 13) && e.target && e.target.id === 'language-input') {
+                console.log('[Form] Enter key in language input - handling it here');
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Handle language addition here since we're in capture phase
+                const input = e.target;
+                const inputValue = input.value.trim().toLowerCase();
+                console.log('[Form] Input value:', inputValue, 'length:', inputValue.length);
+                
+                // Get autocomplete list
+                const autocompleteList = document.getElementById('language-autocomplete');
+                const selectedIndex = window.__languageSelectedIndex || -1;
+                
+                let langCodeToAdd = null;
+                
+                // First check if autocomplete has a selection
+                if (autocompleteList && autocompleteList.style.display === 'block' && selectedIndex >= 0 && autocompleteList.children[selectedIndex]) {
+                    const selected = autocompleteList.children[selectedIndex];
+                    langCodeToAdd = selected.dataset.code;
+                    console.log('[Form] Adding from autocomplete:', langCodeToAdd);
+                } else if (inputValue && inputValue.length >= 2 && inputValue.length <= 5) {
+                    // Check if it's a valid language code (2-5 chars)
+                    langCodeToAdd = inputValue;
+                    console.log('[Form] Using as language code:', langCodeToAdd);
+                } else if (inputValue) {
+                    // Try to find matching language by name (English or native)
+                    const langList = window.__languageList || [];
+                    const matchingLang = langList.find(lang => {
+                        const nameLower = (lang.name || '').toLowerCase();
+                        const nativeLower = (lang.native || '').toLowerCase();
+                        return nameLower === inputValue || 
+                               nativeLower === inputValue ||
+                               nameLower.startsWith(inputValue) ||
+                               nativeLower.startsWith(inputValue) ||
+                               inputValue.includes(nameLower) ||
+                               inputValue.includes(nativeLower);
+                    });
+                    
+                    if (matchingLang) {
+                        langCodeToAdd = matchingLang.code;
+                        console.log('[Form] Found matching language:', matchingLang.name, '/', matchingLang.native, '->', langCodeToAdd);
+                    } else {
+                        console.log('[Form] No matching language found for:', inputValue);
+                    }
+                }
+                
+                // Add the language if we found a valid code
+                if (langCodeToAdd) {
+                    if (window.addLanguageTag) {
+                        window.addLanguageTag(langCodeToAdd);
+                    }
+                    input.value = '';
+                    if (window.hideAutocomplete) {
+                        window.hideAutocomplete();
+                    }
+                } else {
+                    console.log('[Form] Could not determine language code from:', inputValue);
+                }
+                
+                return false;
+            }
+        }, true); // Capture phase - catch it before it bubbles
+        
         form.addEventListener('submit', function(e) {
+            // Check if submit was triggered from language input
+            const activeElement = document.activeElement;
+            console.log('[Form] Submit event - active element:', activeElement ? activeElement.id : 'none');
+            if (activeElement && activeElement.id === 'language-input') {
+                console.log('[Form] Preventing form submit - language input is active');
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
             e.preventDefault();
             
             const formData = new FormData(form);
@@ -1253,6 +1365,360 @@ document.addEventListener('DOMContentLoaded', function() {
     // Entry Method functionality
     const entryMethodSelect = document.getElementById('entry_method');
     const publicApiSettings = document.getElementById('public-api-settings');
+    
+    // Multi-language toggle
+    const multilanguageEnabled = document.getElementById('multilanguage_enabled');
+    const multilanguageSettings = document.getElementById('multilanguage-settings');
+    
+    if (multilanguageEnabled && multilanguageSettings) {
+        multilanguageEnabled.addEventListener('change', function() {
+            multilanguageSettings.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    // Language tags functionality with autocomplete
+    // Common language codes with names - make it globally accessible
+    // Includes both English and native names for better matching
+    const languageList = [
+        { code: 'en', name: 'English', native: 'English' },
+        { code: 'de', name: 'German', native: 'Deutsch' },
+        { code: 'fr', name: 'French', native: 'Français' },
+        { code: 'es', name: 'Spanish', native: 'Español' },
+        { code: 'it', name: 'Italian', native: 'Italiano' },
+        { code: 'pt', name: 'Portuguese', native: 'Português' },
+        { code: 'nl', name: 'Dutch', native: 'Nederlands' },
+        { code: 'ru', name: 'Russian', native: 'Русский' },
+        { code: 'ja', name: 'Japanese', native: '日本語' },
+        { code: 'ko', name: 'Korean', native: '한국어' },
+        { code: 'zh', name: 'Chinese', native: '中文' },
+        { code: 'ar', name: 'Arabic', native: 'العربية' },
+        { code: 'hi', name: 'Hindi', native: 'हिन्दी' },
+        { code: 'pl', name: 'Polish', native: 'Polski' },
+        { code: 'tr', name: 'Turkish', native: 'Türkçe' },
+        { code: 'sv', name: 'Swedish', native: 'Svenska' },
+        { code: 'da', name: 'Danish', native: 'Dansk' },
+        { code: 'no', name: 'Norwegian', native: 'Norsk' },
+        { code: 'fi', name: 'Finnish', native: 'Suomi' },
+        { code: 'cs', name: 'Czech', native: 'Čeština' },
+        { code: 'hu', name: 'Hungarian', native: 'Magyar' },
+        { code: 'ro', name: 'Romanian', native: 'Română' },
+        { code: 'el', name: 'Greek', native: 'Ελληνικά' },
+        { code: 'he', name: 'Hebrew', native: 'עברית' },
+        { code: 'th', name: 'Thai', native: 'ไทย' },
+        { code: 'vi', name: 'Vietnamese', native: 'Tiếng Việt' },
+        { code: 'id', name: 'Indonesian', native: 'Bahasa Indonesia' },
+        { code: 'ms', name: 'Malay', native: 'Bahasa Melayu' },
+        { code: 'uk', name: 'Ukrainian', native: 'Українська' },
+        { code: 'bg', name: 'Bulgarian', native: 'Български' },
+        { code: 'hr', name: 'Croatian', native: 'Hrvatski' },
+        { code: 'sk', name: 'Slovak', native: 'Slovenčina' },
+        { code: 'sl', name: 'Slovenian', native: 'Slovenščina' },
+        { code: 'et', name: 'Estonian', native: 'Eesti' },
+        { code: 'lv', name: 'Latvian', native: 'Latviešu' },
+        { code: 'lt', name: 'Lithuanian', native: 'Lietuvių' }
+    ];
+    window.__languageList = languageList; // Make it globally accessible
+    
+    let autocompleteList = null;
+    let selectedIndex = -1;
+    window.__languageSelectedIndex = -1; // Make it accessible globally
+    
+    // Initialize language input when multi-language is enabled
+    function initLanguageInput() {
+        const languageInput = document.getElementById('language-input');
+        const languageTagsContainer = document.getElementById('language-tags-container');
+        
+        if (!languageInput || !languageTagsContainer) {
+            return;
+        }
+        
+        // Remove existing autocomplete if any
+        const existingAutocomplete = document.getElementById('language-autocomplete');
+        if (existingAutocomplete) {
+            existingAutocomplete.remove();
+        }
+        
+        // Create autocomplete dropdown
+        autocompleteList = document.createElement('div');
+        autocompleteList.id = 'language-autocomplete';
+        autocompleteList.className = 'language-autocomplete';
+        languageTagsContainer.parentNode.insertBefore(autocompleteList, languageTagsContainer.nextSibling);
+        
+        // Add language on Enter or comma - use capture phase to catch it early
+        languageInput.addEventListener('keydown', function(e) {
+            // Only handle if this is the language input
+            if (e.target.id !== 'language-input') {
+                return;
+            }
+            
+            console.log('[Language Input] Keydown:', e.key, 'keyCode:', e.keyCode, 'target:', e.target.id);
+            
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                console.log('[Language Input] Enter key detected!');
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                const input = e.target;
+                const langCode = input.value.trim().toLowerCase();
+                console.log('[Language Input] Language code:', langCode, 'length:', langCode.length);
+                
+                if (autocompleteList && autocompleteList.style.display === 'block' && selectedIndex >= 0 && autocompleteList.children[selectedIndex]) {
+                    const selected = autocompleteList.children[selectedIndex];
+                    const selectedLangCode = selected.dataset.code;
+                    console.log('[Language Input] Adding from autocomplete:', selectedLangCode);
+                    addLanguageTag(selectedLangCode);
+                    input.value = '';
+                    hideAutocomplete();
+                } else if (langCode && langCode.length >= 2 && langCode.length <= 5) {
+                    console.log('[Language Input] Adding from input value:', langCode);
+                    addLanguageTag(langCode);
+                    input.value = '';
+                    hideAutocomplete();
+                } else {
+                    console.log('[Language Input] Invalid language code:', langCode, 'length:', langCode.length);
+                }
+                return false;
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (autocompleteList && autocompleteList.style.display === 'block') {
+                    selectedIndex = Math.min(selectedIndex + 1, autocompleteList.children.length - 1);
+                    updateAutocompleteSelection();
+                }
+                return false;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (autocompleteList && autocompleteList.style.display === 'block') {
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateAutocompleteSelection();
+                }
+                return false;
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                hideAutocomplete();
+                return false;
+            } else if (e.key === ',') {
+                e.preventDefault();
+                e.stopPropagation();
+                const langCode = this.value.trim().toLowerCase();
+                if (langCode && langCode.length >= 2 && langCode.length <= 5) {
+                    addLanguageTag(langCode);
+                    this.value = '';
+                    hideAutocomplete();
+                }
+                return false;
+            }
+        });
+        
+        // Show autocomplete on input
+        languageInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            if (query.length >= 1) {
+                showAutocomplete(query);
+            } else {
+                hideAutocomplete();
+            }
+        });
+        
+        // Add language on blur if value exists (with delay to allow click on autocomplete)
+        languageInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                const langCode = this.value.trim().toLowerCase();
+                if (langCode && langCode.length >= 2 && langCode.length <= 5) {
+                    addLanguageTag(langCode);
+                    this.value = '';
+                }
+                hideAutocomplete();
+            }, 200);
+        });
+        
+        // Remove language tag (only add once)
+        if (!languageTagsContainer.dataset.listenerAdded) {
+            languageTagsContainer.dataset.listenerAdded = 'true';
+            languageTagsContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('language-tag-remove')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const langCode = e.target.dataset.lang;
+                    removeLanguageTag(langCode);
+                }
+            });
+        }
+        
+        // Handle autocomplete clicks
+        autocompleteList.addEventListener('mousedown', function(e) {
+            e.preventDefault(); // Prevent input blur
+        });
+        
+        autocompleteList.addEventListener('click', function(e) {
+            const item = e.target.closest('.autocomplete-item');
+            if (item) {
+                e.preventDefault();
+                e.stopPropagation();
+                const langCode = item.dataset.code;
+                addLanguageTag(langCode);
+                languageInput.value = '';
+                hideAutocomplete();
+                languageInput.focus();
+            }
+        });
+    }
+    
+    // Initialize language input on page load
+    initLanguageInput();
+    
+    // Re-initialize when multi-language toggle is changed
+    if (multilanguageEnabled && multilanguageSettings) {
+        multilanguageEnabled.addEventListener('change', function() {
+            multilanguageSettings.style.display = this.checked ? 'block' : 'none';
+            if (this.checked) {
+                setTimeout(initLanguageInput, 100); // Small delay to ensure DOM is updated
+            }
+        });
+    }
+    
+    function showAutocomplete(query) {
+        if (!autocompleteList) {
+            return;
+        }
+        
+        const filtered = languageList.filter(lang => {
+            const codeLower = lang.code.toLowerCase();
+            const nameLower = (lang.name || '').toLowerCase();
+            const nativeLower = (lang.native || '').toLowerCase();
+            return codeLower.includes(query) || 
+                   nameLower.includes(query) ||
+                   nativeLower.includes(query);
+        }).slice(0, 8); // Limit to 8 results
+        
+        if (filtered.length === 0) {
+            hideAutocomplete();
+            return;
+        }
+        
+        autocompleteList.innerHTML = '';
+        selectedIndex = -1;
+        window.__languageSelectedIndex = -1;
+        
+        filtered.forEach((lang, index) => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.dataset.code = lang.code;
+            const displayName = lang.native && lang.native !== lang.name ? `${lang.name} / ${lang.native}` : lang.name;
+            item.innerHTML = `
+                <strong>${lang.code.toUpperCase()}</strong>
+                <span>${displayName}</span>
+            `;
+            autocompleteList.appendChild(item);
+        });
+        
+        autocompleteList.style.display = 'block';
+        updateAutocompletePosition();
+    }
+    
+    function hideAutocomplete() {
+        const autocompleteList = document.getElementById('language-autocomplete');
+        if (autocompleteList) {
+            autocompleteList.style.display = 'none';
+            selectedIndex = -1;
+            window.__languageSelectedIndex = -1;
+        }
+    }
+    
+    // Make hideAutocomplete accessible globally
+    window.hideAutocomplete = hideAutocomplete;
+    
+    function updateAutocompleteSelection() {
+        if (!autocompleteList) {
+            return;
+        }
+        
+        const items = autocompleteList.querySelectorAll('.autocomplete-item');
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+        window.__languageSelectedIndex = selectedIndex; // Update global
+    }
+    
+    function updateAutocompletePosition() {
+        const languageInput = document.getElementById('language-input');
+        const languageTagsContainer = document.getElementById('language-tags-container');
+        
+        if (!languageInput || !autocompleteList || !languageTagsContainer) {
+            return;
+        }
+        
+        const containerRect = languageTagsContainer.getBoundingClientRect();
+        autocompleteList.style.top = (containerRect.bottom + window.scrollY) + 'px';
+        autocompleteList.style.left = containerRect.left + 'px';
+        autocompleteList.style.width = containerRect.width + 'px';
+    }
+    
+    // Define addLanguageTag function early so it's accessible
+    function addLanguageTag(langCode) {
+        const languageTagsContainer = document.getElementById('language-tags-container');
+        const languageInput = document.getElementById('language-input');
+        
+        if (!languageTagsContainer || !languageInput) {
+            console.log('[addLanguageTag] Missing elements');
+            return;
+        }
+        
+        // Check if already exists
+        const existing = languageTagsContainer.querySelector(`[data-lang="${langCode}"]`);
+        if (existing) {
+            console.log('[addLanguageTag] Language already added:', langCode);
+            return;
+        }
+        
+        // Find language name
+        const lang = languageList.find(l => l.code === langCode);
+        const langName = lang ? lang.name : langCode.toUpperCase();
+        
+        // Create tag
+        const tag = document.createElement('span');
+        tag.className = 'language-tag';
+        tag.dataset.lang = langCode;
+        tag.innerHTML = `
+            ${langCode.toUpperCase()}
+            <button type="button" class="language-tag-remove" data-lang="${langCode}" aria-label="Remove language">×</button>
+            <input type="hidden" name="multilanguage_languages[]" value="${langCode}">
+        `;
+        
+        // Insert before input
+        languageTagsContainer.insertBefore(tag, languageInput);
+        
+        console.log('[addLanguageTag] Language added:', langCode);
+    }
+    
+    // Make it globally accessible immediately
+    window.addLanguageTag = addLanguageTag;
+    
+    function removeLanguageTag(langCode) {
+        const languageTagsContainer = document.getElementById('language-tags-container');
+        if (!languageTagsContainer) {
+            return;
+        }
+        
+        const tag = languageTagsContainer.querySelector(`[data-lang="${langCode}"]`);
+        if (tag) {
+            tag.remove();
+            console.log('Language removed:', langCode);
+        }
+    }
+    
+    // Update autocomplete position on scroll/resize
+    window.addEventListener('scroll', updateAutocompletePosition, true);
+    window.addEventListener('resize', updateAutocompletePosition);
+    
     const captchaProviderSelect = document.getElementById('captcha_provider');
     const captchaSettings = document.getElementById('captcha-settings');
     
@@ -1326,4 +1792,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+</script>
 </script>
