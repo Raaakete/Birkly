@@ -16,14 +16,12 @@ temp/
 !content/collections/blog/
 !content/collections/services/
 !content/collections/contact/
-!content/collections/portfolio/
-!content/collections/pages/
+!content/collections/about/
 !content/collections/site_elements/
 !content/collections/blog/**
 !content/collections/services/**
 !content/collections/contact/**
-!content/collections/portfolio/**
-!content/collections/pages/**
+!content/collections/about/**
 !content/collections/site_elements/**
 
 # Environment and configuration files
