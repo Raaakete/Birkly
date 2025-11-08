@@ -104,27 +104,27 @@
             </div>
         </div>
         
-        <!-- Step 2: Site Information -->
+        <!-- Step 2: Project Information -->
         <div class="onboarding-step" id="step-site-info" data-step="2" style="display: none;">
             <div class="onboarding-content">
                 <div class="step-header">
                     <div class="step-indicator">
                         <span class="step-number">2</span>
-                        <span class="step-label">Site Information</span>
+                        <span class="step-label">Project Information</span>
                     </div>
                 </div>
                 
                 <form id="site-info-form" class="onboarding-form">
                     <div class="form-group">
-                        <label for="site-title">Site Title</label>
-                        <input type="text" id="site-title" name="site_title" placeholder="My Awesome Site" required>
-                        <small>This will be displayed as your site's main title</small>
+                        <label for="project-name">Project Name</label>
+                        <input type="text" id="project-name" name="project_name" placeholder="My Project" required>
+                        <small>This name will be displayed in the admin panel (e.g., "Acme Corp CMS", "My Project")</small>
                     </div>
                     
                     <div class="form-group">
-                        <label for="site-description">Site Description</label>
-                        <textarea id="site-description" name="site_description" rows="3" placeholder="A brief description of your site"></textarea>
-                        <small>A short description of your site (used for SEO)</small>
+                        <label for="project-description">Project Description (Optional)</label>
+                        <textarea id="project-description" name="project_description" rows="3" placeholder="A brief description of this project"></textarea>
+                        <small>Optional description for your reference in the admin panel</small>
                     </div>
                     
                     <div class="onboarding-actions">
@@ -166,7 +166,7 @@
                             
                             {if onboarding_data.demo_content.has_demo_website == true}
                             <div class="demo-website-info">
-                                <p><strong>Demo Website:</strong> A simple blog website is available at <code>/demo-blog</code></p>
+                                <p><strong>Demo Website:</strong> A simple blog website is available at <code>/demo-website</code></p>
                             </div>
                             {endif}
                         </div>
@@ -260,7 +260,7 @@
             </div>
             <div class="progress-steps">
                 <span class="progress-step active" data-step="1">Welcome</span>
-                <span class="progress-step" data-step="2">Site Info</span>
+                <span class="progress-step" data-step="2">Project Info</span>
                 <span class="progress-step" data-step="3">Demo Website</span>
                 <span class="progress-step" data-step="4">Complete</span>
             </div>

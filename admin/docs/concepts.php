@@ -11,8 +11,15 @@
         <li><strong>Products:</strong> All your product listings</li>
         <li><strong>Team Members:</strong> Information about your staff</li>
         <li><strong>Testimonials:</strong> Customer reviews</li>
+        <li><strong>Contact Submissions:</strong> Form submissions from your website</li>
     </ul>
 </div>
+
+<p>Each collection has an <strong>Entry Method</strong> that determines how entries can be created:</p>
+<ul>
+    <li><strong>Admin Only</strong> (default) - Only entries created through the admin panel are allowed</li>
+    <li><strong>Public API</strong> - Allows entries to be submitted via external websites using an API key (perfect for contact forms, newsletter signups, etc.)</li>
+</ul>
 
 <p>Each collection has a <strong>schema</strong> that defines what fields (information) each entry in that collection will have. For example, a Blog Post collection might have fields like:</p>
 <ul>
