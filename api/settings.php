@@ -95,6 +95,74 @@ if ($action === 'get') {
 // All other actions require authentication and manage_settings permission
 requireAuth('manage_settings');
 
+// Handle logo upload
+if ($action === 'upload_logo') {
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'upload_logo', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(['status' => 'error', 'message' => 'No file uploaded or upload error']);
+        exit;
+    }
+    
+    $file = $_FILES['file'];
+    
+    // Validate file type
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    if (!in_array($mimeType, $allowedTypes)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid file type. Only images are allowed.']);
+        exit;
+    }
+    
+    // Validate file size (max 2MB for logo)
+    if ($file['size'] > 2 * 1024 * 1024) {
+        echo json_encode(['status' => 'error', 'message' => 'File too large. Maximum size is 2MB.']);
+        exit;
+    }
+    
+    // Create admin/assets directory if it doesn't exist
+    $assetsDir = __DIR__ . '/../admin/assets';
+    if (!is_dir($assetsDir)) {
+        mkdir($assetsDir, 0755, true);
+    }
+    
+    // Generate unique filename
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $filename = 'project-logo-' . uniqid() . '.' . $extension;
+    $filepath = $assetsDir . '/' . $filename;
+    
+    // Move uploaded file
+    if (move_uploaded_file($file['tmp_name'], $filepath)) {
+        $logoPath = '/admin/assets/' . $filename;
+        
+        // Save to branding settings
+        $branding = $storage->read('branding.json') ?? [];
+        $branding['logoPath'] = $logoPath;
+        $branding['_updated_at'] = date('c');
+        $branding['_updated_by'] = $_SESSION['user']['id'] ?? 'unknown';
+        $storage->write('branding.json', $branding);
+        
+        log_security_event('logo_uploaded', ['user' => $_SESSION['user']['email'] ?? 'unknown', 'file' => $filename]);
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Logo uploaded successfully',
+            'data' => ['logoPath' => $logoPath]
+        ]);
+        exit;
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to save file']);
+        exit;
+    }
+}
+
 // Add support for saving all settings at once, including branding
 if ($action === 'save_all') {
     $csrf = $input['_csrf'] ?? '';
@@ -108,31 +176,118 @@ if ($action === 'save_all') {
         echo json_encode(['status' => 'error', 'message' => 'Settings required']);
         exit;
     }
-    // Save core categories
-    foreach (['site', 'admin', 'media', 'security'] as $cat) {
-        $catSettings = [];
-        foreach ($settings as $k => $v) {
-            if (strpos($k, $cat) === 0) {
-                $key = lcfirst(substr($k, strlen($cat)));
-                $catSettings[$key] = $v;
-            }
-        }
-        if (!empty($catSettings)) {
-            $existing = $storage->read("$cat.json") ?? [];
-            $updated = array_merge($existing, $catSettings);
-            $updated['_updated_at'] = date('c');
-            $updated['_updated_by'] = $_SESSION['user']['id'];
-            $storage->write("$cat.json", $updated);
-        }
+    
+    // Map form field names to settings structure
+    // Admin settings
+    $adminSettings = [];
+    if (isset($settings['projectName'])) {
+        $adminSettings['project_name'] = $settings['projectName'];
     }
-    // Save branding settings
+    if (isset($settings['cmsUrl'])) {
+        $adminSettings['cms_url'] = $settings['cmsUrl'];
+    }
+    if (isset($settings['projectDescription'])) {
+        $adminSettings['project_description'] = $settings['projectDescription'];
+    }
+    
+    // Site settings
+    $siteSettings = [];
+    if (isset($settings['siteTimezone'])) {
+        $siteSettings['timezone'] = $settings['siteTimezone'];
+    }
+    if (isset($settings['siteLanguage'])) {
+        $siteSettings['language'] = $settings['siteLanguage'];
+    }
+    
+    // Media settings
+    $mediaSettings = [];
+    if (isset($settings['mediaMaxUploadSize'])) {
+        $mediaSettings['max_upload_size'] = intval($settings['mediaMaxUploadSize']) * 1024 * 1024; // Convert MB to bytes
+    }
+    if (isset($settings['mediaImageQuality'])) {
+        $mediaSettings['image_quality'] = intval($settings['mediaImageQuality']);
+    }
+    if (isset($settings['mediaThumbnailWidth'])) {
+        $mediaSettings['thumbnail_size'][0] = intval($settings['mediaThumbnailWidth']);
+    }
+    if (isset($settings['mediaThumbnailHeight'])) {
+        $mediaSettings['thumbnail_size'][1] = intval($settings['mediaThumbnailHeight']);
+    }
+    if (isset($settings['mediaCreateThumbnails'])) {
+        $mediaSettings['create_thumbnails'] = ($settings['mediaCreateThumbnails'] === 'on' || $settings['mediaCreateThumbnails'] === true);
+    }
+    
+    // Security settings
+    $securitySettings = [];
+    if (isset($settings['securitySessionTimeout'])) {
+        $securitySettings['session_timeout'] = intval($settings['securitySessionTimeout']) * 60; // Convert minutes to seconds
+    }
+    if (isset($settings['securityMaxLoginAttempts'])) {
+        $securitySettings['max_login_attempts'] = intval($settings['securityMaxLoginAttempts']);
+    }
+    if (isset($settings['securityPasswordMinLength'])) {
+        $securitySettings['password_min_length'] = intval($settings['securityPasswordMinLength']);
+    }
+    if (isset($settings['securityLockoutTime'])) {
+        $securitySettings['lockout_time'] = intval($settings['securityLockoutTime']) * 60; // Convert minutes to seconds
+    }
+    if (isset($settings['securityRequireStrongPassword'])) {
+        $securitySettings['require_strong_password'] = ($settings['securityRequireStrongPassword'] === 'on' || $settings['securityRequireStrongPassword'] === true);
+    }
+    if (isset($settings['securityEnableCsrf'])) {
+        $securitySettings['enable_csrf'] = ($settings['securityEnableCsrf'] === 'on' || $settings['securityEnableCsrf'] === true);
+    }
+    
+    // Branding settings
     $branding = [];
-    foreach ($settings as $k => $v) {
-        if (strpos($k, 'branding') === 0) {
-            $key = lcfirst(substr($k, strlen('branding')));
-            $branding[$key] = $v;
-        }
+    if (isset($settings['brandingPrimaryColor'])) {
+        $branding['primaryColor'] = $settings['brandingPrimaryColor'];
     }
+    if (isset($settings['brandingSecondaryColor'])) {
+        $branding['secondaryColor'] = $settings['brandingSecondaryColor'];
+    }
+    // Handle logoPath if provided directly
+    if (isset($settings['brandingLogoPath']) && !empty($settings['brandingLogoPath'])) {
+        $branding['logoPath'] = $settings['brandingLogoPath'];
+    }
+    
+    // Save each category
+    if (!empty($adminSettings)) {
+        $existing = $storage->read('admin.json') ?? [];
+        $updated = array_merge($existing, $adminSettings);
+        $updated['_updated_at'] = date('c');
+        $updated['_updated_by'] = $_SESSION['user']['id'];
+        $storage->write('admin.json', $updated);
+    }
+    
+    if (!empty($siteSettings)) {
+        $existing = $storage->read('site.json') ?? [];
+        $updated = array_merge($existing, $siteSettings);
+        $updated['_updated_at'] = date('c');
+        $updated['_updated_by'] = $_SESSION['user']['id'];
+        $storage->write('site.json', $updated);
+    }
+    
+    if (!empty($mediaSettings)) {
+        $existing = $storage->read('media.json') ?? [];
+        // Handle thumbnail_size array merge
+        if (isset($mediaSettings['thumbnail_size']) && isset($existing['thumbnail_size'])) {
+            $mediaSettings['thumbnail_size'] = array_merge($existing['thumbnail_size'], $mediaSettings['thumbnail_size']);
+        }
+        $updated = array_merge($existing, $mediaSettings);
+        $updated['_updated_at'] = date('c');
+        $updated['_updated_by'] = $_SESSION['user']['id'];
+        $storage->write('media.json', $updated);
+    }
+    
+    if (!empty($securitySettings)) {
+        $existing = $storage->read('security.json') ?? [];
+        $updated = array_merge($existing, $securitySettings);
+        $updated['_updated_at'] = date('c');
+        $updated['_updated_by'] = $_SESSION['user']['id'];
+        $storage->write('security.json', $updated);
+    }
+    
     if (!empty($branding)) {
         $existing = $storage->read('branding.json') ?? [];
         $updated = array_merge($existing, $branding);
@@ -140,6 +295,7 @@ if ($action === 'save_all') {
         $updated['_updated_by'] = $_SESSION['user']['id'];
         $storage->write('branding.json', $updated);
     }
+    
     log_security_event('settings_save_all', ['user' => $_SESSION['user']['email'] ?? 'unknown']);
     echo json_encode(['status' => 'ok', 'message' => 'Settings saved']);
     exit;

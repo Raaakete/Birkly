@@ -387,6 +387,7 @@
 .admin-layout {
   display: flex;
   flex-direction: row;
+  min-height: 100vh;
 }
 
 
@@ -403,6 +404,7 @@ body {
   margin: 0;
   padding: 0;
   transition: background-color var(--transition-normal), color var(--transition-normal);
+  min-height: 100vh;
 }
 
 /* Layout */
@@ -417,6 +419,7 @@ body {
   width: 320px;
   transition: transform var(--transition-normal);
   padding: var(--space-10);
+  justify-content: space-between;
 }
 
 .sidebar-header {
@@ -426,14 +429,12 @@ body {
   border-bottom: 1px solid var(--border-light);
   border-radius: var(--border-radius-s);
   background: var(--bg-elevated);
-  padding: var(--space-3) var(--space-4);
 }
 
 .sidebar-header .logo {
   display: flex;
   height: 44px;
-  padding: var(--space-2) var(--space-4);
-  justify-content: center;
+  padding: var(--space-3) var(--space-3);
   width: 100%;
 }
 

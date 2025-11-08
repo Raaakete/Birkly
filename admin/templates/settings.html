@@ -93,7 +93,7 @@
     <div class="tab-content">
       <!-- General Tab -->
       <div class="tab-pane active" id="general">
-        <form id="general-form" class="settings-form">
+        <form id="general-form" class="settings-form" enctype="multipart/form-data">
           <div class="settings-section">
             <h2>Project Information</h2>
             <p class="settings-help">These settings are for the admin panel only. They don't affect the websites you're building with HaruCMS.</p>
@@ -180,8 +180,20 @@
               </div>
             </div>
             <div class="form-group">
-              <label for="branding-logo-url">Logo URL</label>
-              <input type="url" id="branding-logo-url" name="brandingLogoUrl" value="<?= htmlspecialchars($settings['branding']['logoUrl'] ?? '') ?>">
+              <label for="project-logo">Project Logo/Icon</label>
+              <input type="file" id="project-logo" name="project_logo" accept="image/*">
+              <small>Upload a logo or icon for your project. This will be displayed in the sidebar and used as the favicon. If not provided, the default HaruCMS icon will be used.</small>
+              <?php if (!empty($settings['branding']['logoPath'])): ?>
+                <div style="margin-top: 0.5rem;">
+                  <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Current logo:</p>
+                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="Current logo" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                  <button type="button" id="remove-logo-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Remove Logo</button>
+                </div>
+              <?php endif; ?>
+              <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
+                <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Preview:</p>
+                <img id="logo-preview-img" src="" alt="Logo preview" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+              </div>
             </div>
           </div>
 
@@ -1049,6 +1061,61 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (generalForm) {
         generalForm.addEventListener('submit', handleFormSubmit);
+        
+        // Logo preview
+        const logoInput = document.getElementById('project-logo');
+        if (logoInput) {
+            logoInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const preview = document.getElementById('logo-preview');
+                        const previewImg = document.getElementById('logo-preview-img');
+                        if (preview && previewImg) {
+                            previewImg.src = event.target.result;
+                            preview.style.display = 'block';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        // Remove logo button
+        const removeLogoBtn = document.getElementById('remove-logo-btn');
+        if (removeLogoBtn) {
+            removeLogoBtn.addEventListener('click', async () => {
+                if (confirm('Are you sure you want to remove the logo? The default HaruCMS icon will be used.')) {
+                    try {
+                        const response = await fetch('/api/settings.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                action: 'update',
+                                category: 'branding',
+                                settings: {
+                                    logoPath: ''
+                                },
+                                _csrf: getCsrfToken()
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.status === 'ok') {
+                            showMessage('Logo removed successfully!', 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showMessage('Error: ' + result.message, 'error');
+                        }
+                    } catch (error) {
+                        showMessage('Error removing logo: ' + error.message, 'error');
+                    }
+                }
+            });
+        }
     }
     if (securityForm) {
         securityForm.addEventListener('submit', handleFormSubmit);
@@ -1121,10 +1188,44 @@ async function handleFormSubmit(e) {
     
     const formData = new FormData(e.target);
     const settings = {};
+    const logoFile = formData.get('project_logo');
     
-    // Convert form data to settings object
+    // Handle logo upload if provided
+    let logoPath = '';
+    if (logoFile && logoFile.size > 0) {
+        try {
+            const logoFormData = new FormData();
+            logoFormData.append('file', logoFile);
+            logoFormData.append('_csrf', getCsrfToken());
+            
+            const uploadResponse = await fetch('/api/settings.php?action=upload_logo', {
+                method: 'POST',
+                body: logoFormData
+            });
+            
+            const uploadResult = await uploadResponse.json();
+            if (uploadResult.status === 'ok') {
+                logoPath = uploadResult.data.logoPath;
+            } else {
+                showMessage('Error uploading logo: ' + (uploadResult.message || 'Unknown error'), 'error');
+                return;
+            }
+        } catch (error) {
+            showMessage('Error uploading logo: ' + error.message, 'error');
+            return;
+        }
+    }
+    
+    // Convert form data to settings object (skip logo file)
     for (let [key, value] of formData.entries()) {
-        settings[key] = value;
+        if (key !== 'project_logo') {
+            settings[key] = value;
+        }
+    }
+    
+    // If logo was uploaded, add it to branding settings
+    if (logoPath) {
+        settings.brandingLogoPath = logoPath;
     }
     
     try {
@@ -1144,6 +1245,8 @@ async function handleFormSubmit(e) {
         
         if (result.status === 'ok') {
             showMessage('Settings saved successfully!', 'success');
+            // Reload page after a short delay to apply all changes (sidebar, favicon, etc.)
+            setTimeout(() => location.reload(), 1000);
         } else {
             showMessage('Error: ' + result.message, 'error');
         }
