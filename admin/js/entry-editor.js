@@ -164,19 +164,13 @@
         
         if (rejectBtn) {
             rejectBtn.addEventListener('click', function() {
-                const notes = prompt('Enter rejection reason:');
-                if (notes !== null) {
-                    submitReviewAction('rejected', notes);
-                }
+                showReviewModal('rejected', 'Reject Entry', 'Enter rejection reason:');
             });
         }
         
         if (requestChangesBtn) {
             requestChangesBtn.addEventListener('click', function() {
-                const notes = prompt('Enter change request details:');
-                if (notes !== null) {
-                    submitReviewAction('draft', notes);
-                }
+                showReviewModal('draft', 'Request Changes', 'Enter change request details:');
             });
         }
     }
@@ -204,6 +198,55 @@
             .catch(error => {
                 console.error('Error loading reviewers:', error);
             });
+    }
+    
+    function showReviewModal(action, title, label) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+        modalContent.style.maxWidth = '500px';
+        
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <h2>${title}</h2>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="review-notes-input">${label}</label>
+                    <textarea id="review-notes-input" class="input" rows="4" placeholder="Enter notes..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button class="btn btn-primary" id="submit-review-btn">Submit</button>
+                </div>
+            </div>
+        `;
+        
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        const submitBtn = modalContent.querySelector('#submit-review-btn');
+        const notesInput = modalContent.querySelector('#review-notes-input');
+        
+        submitBtn.addEventListener('click', function() {
+            const notes = notesInput.value.trim();
+            modal.remove();
+            submitReviewAction(action, notes);
+        });
+        
+        // Close on backdrop click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Focus textarea
+        notesInput.focus();
     }
     
     function submitReviewAction(action, notes = '') {
@@ -296,7 +339,7 @@
         
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
-        modalContent.style.maxWidth = '800px';
+        modalContent.style.maxWidth = '1200px';
         
         modalContent.innerHTML = `
             <div class="modal-header">
@@ -304,7 +347,36 @@
                 <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="versions-list">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Compare Version 1:</label>
+                        <select id="version1-select" class="form-control" style="width: 100%;">
+                            <option value="">Select version...</option>
+                            ${versions.map((version, index) => `
+                                <option value="${version.version || 'current'}" ${index === 0 ? 'selected' : ''}>
+                                    Version ${version.version || (versions.length - index)} ${index === 0 ? '(Current)' : ''}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Compare Version 2:</label>
+                        <select id="version2-select" class="form-control" style="width: 100%;">
+                            <option value="">Select version...</option>
+                            ${versions.map((version, index) => `
+                                <option value="${version.version || 'current'}" ${index === 1 ? 'selected' : ''}>
+                                    Version ${version.version || (versions.length - index)} ${index === 0 ? '(Current)' : ''}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <button id="compare-versions-btn" class="btn btn-primary">Compare Versions</button>
+                </div>
+                <div id="diff-view" style="display: none;"></div>
+                <div class="versions-list" id="versions-list">
+                    <h3 style="margin-bottom: 12px;">All Versions</h3>
                     ${versions.map((version, index) => `
                         <div class="version-item" style="padding: 12px; border-bottom: 1px solid #eee;">
                             <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -331,12 +403,113 @@
         modal.appendChild(modalContent);
         document.body.appendChild(modal);
         
+        // Compare versions handler
+        const compareBtn = modalContent.querySelector('#compare-versions-btn');
+        const version1Select = modalContent.querySelector('#version1-select');
+        const version2Select = modalContent.querySelector('#version2-select');
+        const diffView = modalContent.querySelector('#diff-view');
+        
+        compareBtn.addEventListener('click', function() {
+            const v1 = version1Select.value;
+            const v2 = version2Select.value;
+            
+            if (!v1 || !v2) {
+                alert('Please select both versions to compare');
+                return;
+            }
+            
+            if (v1 === v2) {
+                alert('Please select two different versions');
+                return;
+            }
+            
+            // Fetch diff
+            fetch(`/api/admin_entries.php?action=diff&collection=${encodeURIComponent(collectionSlug)}&entry_id=${encodeURIComponent(entryId)}&version1=${encodeURIComponent(v1)}&version2=${encodeURIComponent(v2)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        renderDiffView(diffView, data.diff, data.version1, data.version2, v1, v2);
+                        diffView.style.display = 'block';
+                        document.getElementById('versions-list').style.display = 'none';
+                    } else {
+                        alert('Error loading diff: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Diff error:', error);
+                    alert('Error loading diff: ' + error.message);
+                });
+        });
+        
         // Close on backdrop click
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
                 modal.remove();
             }
         });
+    }
+    
+    function renderDiffView(container, diff, version1, version2, v1Label, v2Label) {
+        if (diff.length === 0) {
+            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">No differences found between these versions.</p>';
+            return;
+        }
+        
+        container.innerHTML = `
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('diff-view').style.display='none'; document.getElementById('versions-list').style.display='block';">Back to Versions</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 20px;">
+                <div style="background: #f5f5f5; padding: 12px; border-right: 1px solid #ddd;">
+                    <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Version ${v1Label}</h3>
+                </div>
+                <div style="background: #f5f5f5; padding: 12px;">
+                    <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Version ${v2Label}</h3>
+                </div>
+            </div>
+            <div style="max-height: 600px; overflow-y: auto;">
+                ${diff.map(change => {
+                    const oldValue = change.old || '<em style="color: #999;">(empty)</em>';
+                    const newValue = change.new || '<em style="color: #999;">(empty)</em>';
+                    let bgColor1 = '#fff';
+                    let bgColor2 = '#fff';
+                    let borderColor1 = '#ddd';
+                    let borderColor2 = '#ddd';
+                    
+                    if (change.type === 'added') {
+                        bgColor2 = '#e8f5e9';
+                        borderColor2 = '#4caf50';
+                    } else if (change.type === 'removed') {
+                        bgColor1 = '#ffebee';
+                        borderColor1 = '#f44336';
+                    } else if (change.type === 'modified') {
+                        bgColor1 = '#fff3e0';
+                        bgColor2 = '#e3f2fd';
+                        borderColor1 = '#ff9800';
+                        borderColor2 = '#2196f3';
+                    }
+                    
+                    return `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid #ddd;">
+                            <div style="padding: 12px; background: ${bgColor1}; border-right: 1px solid ${borderColor1};">
+                                <div style="font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 600;">${change.path}</div>
+                                <div style="white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 12px;">${escapeHtml(oldValue)}</div>
+                            </div>
+                            <div style="padding: 12px; background: ${bgColor2}; border-left: 2px solid ${borderColor2};">
+                                <div style="font-size: 11px; color: #666; margin-bottom: 4px; font-weight: 600;">${change.path}</div>
+                                <div style="white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 12px;">${escapeHtml(newValue)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
     
     window.restoreVersion = function(collectionSlug, entryId, version) {

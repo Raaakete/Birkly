@@ -9,6 +9,7 @@ header('Content-Type: application/json');
 require_once 'storage.php';
 require_once 'auth.php';
 require_once '../core/plugins.php';
+require_once '../core/cache.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once 'log.php';
@@ -283,21 +284,47 @@ if ($action === 'list_entries') {
         echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
         exit;
     }
-    $entries = $storage->list("collections/$dir/entries");
-    $entryData = [];
-    foreach ($entries as $entry) {
-        $data = $storage->read("collections/$dir/entries/$entry");
-        if ($data) {
-            $entryData[] = $data;
-        }
+    
+    // Get collection slug for caching
+    $collectionSlug = '';
+    $collectionMeta = $storage->read("collections/$dir/collection.json");
+    if ($collectionMeta && isset($collectionMeta['slug'])) {
+        $collectionSlug = $collectionMeta['slug'];
     }
+    
+    // Try to get cached entries
+    $cache = new Cache();
+    $cachedEntries = null;
+    if ($collectionSlug) {
+        $cachedEntries = $cache->getEntries($collectionSlug);
+    }
+    
+    if ($cachedEntries === null) {
+        // Cache miss - load entries from files
+        $entries = $storage->list("collections/$dir/entries");
+        $entryData = [];
+        foreach ($entries as $entry) {
+            $data = $storage->read("collections/$dir/entries/$entry");
+            if ($data) {
+                $entryData[] = $data;
+            }
+        }
+        
+        // Cache entries if we have a slug
+        if ($collectionSlug) {
+            $cache->setEntries($collectionSlug, $entryData);
+        }
+        
+        $cachedEntries = $entryData;
+    }
+    
     // Apply order if order.json exists
     $orderFile = "collections/$dir/order.json";
     if (file_exists("../content/$orderFile")) {
         $order = json_decode(file_get_contents("../content/$orderFile"), true);
         if (is_array($order)) {
             $entryDataById = [];
-            foreach ($entryData as $e) {
+            foreach ($cachedEntries as $e) {
                 if (isset($e['id'])) $entryDataById[$e['id']] = $e;
             }
             $ordered = [];
@@ -311,12 +338,13 @@ if ($action === 'list_entries') {
             foreach ($entryDataById as $e) {
                 $ordered[] = $e;
             }
-            $entryData = $ordered;
+            $cachedEntries = $ordered;
         }
     }
+    
     echo json_encode([
         'status' => 'ok',
-        'data' => [ 'entries' => $entryData ]
+        'data' => [ 'entries' => $cachedEntries ]
     ]);
     exit;
 }

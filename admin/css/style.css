@@ -797,7 +797,7 @@ textarea {
 .entries-smart-table .head-row,
 .entries-smart-table .table-row {
   display: grid;
-  grid-template-columns: 40px auto 120px max-content 130px;
+  grid-template-columns: 40px 40px auto 120px max-content 130px;
   align-items: center;
   width: 100%;
   transition: all var(--transition-normal); 
@@ -829,6 +829,8 @@ textarea {
 .entries-smart-table .cell { background: var(--bg-elevated); }
 
 
+.entries-smart-table .head-checkbox,
+.entries-smart-table .cell-checkbox { width: 40px; justify-content: center; }
 .entries-smart-table .head-drag,
 .entries-smart-table .cell-drag { width: 40px; justify-content: center; cursor: grab !important; }
 .entries-smart-table .head-title,
@@ -846,6 +848,39 @@ textarea {
 .entries-smart-table .head-field,
 .entries-smart-table .cell-field { width: var(--col-field, 240px); }
 
+/* Bulk Actions Toolbar */
+.bulk-actions-toolbar {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-s);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bulk-actions-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.bulk-actions-count {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bulk-actions-buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.entries-smart-table .table-row[data-entry-selected="true"] .cell {
+  background: var(--color-primary-light);
+}
 
 /* Header fields grid mirrors body fields grid */
 .entries-smart-table .fields-head-region {
@@ -878,6 +913,37 @@ textarea {
 }
 .entries-smart-table .cell-status .status-badge.published { background: var(--success-50); color: var(--success-600); }
 .entries-smart-table .cell-status .status-badge.draft { background: var(--warning-50); color: var(--warning-600); }
+.entries-smart-table .cell-status .status-badge.pending_review,
+.entries-smart-table .cell-status .status-badge.review-status.pending { 
+  background: #fff3cd; 
+  color: #856404; 
+  border: 1px solid #ffc107;
+}
+.entries-smart-table .cell-status .status-badge.approved,
+.entries-smart-table .cell-status .status-badge.review-status.approved { 
+  background: #d4edda; 
+  color: #155724; 
+  border: 1px solid #28a745;
+}
+.entries-smart-table .cell-status .status-badge.rejected,
+.entries-smart-table .cell-status .status-badge.review-status.rejected { 
+  background: #f8d7da; 
+  color: #721c24; 
+  border: 1px solid #dc3545;
+}
+
+.entries-smart-table .cell-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reviewer-indicator {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-secondary);
+  cursor: help;
+}
 
 .entries-smart-table .fields-region {
   display: grid;

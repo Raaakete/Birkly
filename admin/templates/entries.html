@@ -8,8 +8,38 @@
     </div>
     
     <div class="main-actions-bar">
-        <a class="btn btn-primary" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Create new entry in <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>">New Entry</a>
-        <a class="btn btn-secondary" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Edit collection settings for <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>">Edit Collection</a>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <a class="btn btn-primary" href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Create new entry in <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>">New Entry</a>
+            <a class="btn btn-secondary" href="/admin/index.php?page=collection-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" aria-label="Edit collection settings for <?= htmlspecialchars($collection['title'] ?? $collection['name'] ?? 'this collection') ?>">Edit Collection</a>
+            
+            <!-- Review Status Filter -->
+            <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+                <label for="status-filter" style="font-size: 14px; color: var(--text-secondary);">Filter:</label>
+                <select id="status-filter" class="form-control" style="min-width: 150px;">
+                    <option value="">All Statuses</option>
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                    <option value="pending_review">Pending Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Actions Toolbar (hidden by default) -->
+    <div id="bulk-actions-toolbar" class="bulk-actions-toolbar" style="display: none;">
+        <div class="bulk-actions-content">
+            <span class="bulk-actions-count">
+                <span id="bulk-selected-count">0</span> selected
+            </span>
+            <div class="bulk-actions-buttons">
+                <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries">Publish</button>
+                <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries">Unpublish</button>
+                <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Delete selected entries">Delete</button>
+                <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection">Cancel</button>
+            </div>
+        </div>
     </div>
     
     <?php if (!empty($entries)): ?>
@@ -17,6 +47,9 @@
             <div class="table-viewport">
                 <div class="table-head">
                     <div class="head-row" role="row">
+                        <div class="head-cell head-checkbox" role="columnheader" aria-label="Select all">
+                            <input type="checkbox" id="select-all-entries" aria-label="Select all entries">
+                        </div>
                         <div class="head-cell head-drag" role="columnheader" aria-label="Drag handle"></div>
                         <div class="head-cell head-title" role="columnheader">Title</div>
                         <div class="head-cell head-status" role="columnheader">Status</div>
@@ -33,7 +66,10 @@
                 
                 <div class="table-body">
                     <?php foreach ($entries as $entry): ?>
-                        <div class="table-row" role="row">
+                        <div class="table-row" role="row" data-entry-id="<?= htmlspecialchars($entry['id'] ?? '') ?>">
+                            <div class="cell cell-checkbox" role="cell" aria-label="Select entry">
+                                <input type="checkbox" class="entry-checkbox" value="<?= htmlspecialchars($entry['id'] ?? '') ?>" aria-label="Select entry <?= htmlspecialchars($entry['title'] ?? '') ?>">
+                            </div>
                             <div class="cell cell-drag" role="cell" aria-label="Drag to reorder">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <circle cx="9" cy="12" r="1"></circle>
@@ -50,9 +86,44 @@
                                 </a>
                             </div>
                             <div class="cell cell-status" role="cell">
-                                <span class="status-badge <?= htmlspecialchars($entry['__cells']['__status'] ?? $entry['status'] ?? 'draft') ?>" aria-label="Status: <?= htmlspecialchars(ucfirst($entry['__cells']['__status'] ?? $entry['status'] ?? 'draft')) ?>">
-                                    <?= htmlspecialchars(ucfirst($entry['__cells']['__status'] ?? $entry['status'] ?? 'draft')) ?>
+                                <?php
+                                $status = $entry['__cells']['__status'] ?? $entry['status'] ?? 'draft';
+                                $statusClass = $status;
+                                $statusLabel = ucfirst(str_replace('_', ' ', $status));
+                                
+                                // Add review status indicator if applicable
+                                if (in_array($status, ['pending_review', 'approved', 'rejected'])) {
+                                    $statusClass .= ' review-status';
+                                    if ($status === 'pending_review') {
+                                        $statusClass .= ' pending';
+                                    } elseif ($status === 'approved') {
+                                        $statusClass .= ' approved';
+                                    } elseif ($status === 'rejected') {
+                                        $statusClass .= ' rejected';
+                                    }
+                                }
+                                
+                                // Add reviewer info if available
+                                $reviewer = $entry['reviewer'] ?? '';
+                                $reviewedBy = $entry['reviewed_by'] ?? '';
+                                $reviewInfo = '';
+                                if ($reviewer) {
+                                    $reviewInfo = ' title="Assigned to: ' . htmlspecialchars($reviewer) . '"';
+                                } elseif ($reviewedBy) {
+                                    $reviewInfo = ' title="Reviewed by: ' . htmlspecialchars($reviewedBy) . '"';
+                                }
+                                ?>
+                                <span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="Status: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
+                                    <?= htmlspecialchars($statusLabel) ?>
                                 </span>
+                                <?php if ($status === 'pending_review' && $reviewer): ?>
+                                    <div class="reviewer-indicator" title="Assigned to: <?= htmlspecialchars($reviewer) ?>">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             <div class="fields-region">
                                 <?php foreach ($fields as $field): ?>
@@ -84,3 +155,5 @@
         </div>
     <?php endif; ?>
 </div>
+
+<script src="/admin/js/entries.js"></script>
