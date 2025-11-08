@@ -964,6 +964,133 @@
     }
 
     /**
+     * Initialize translation creation
+     */
+    function initTranslationCreation() {
+        const createTranslationLang = document.getElementById('create-translation-lang');
+        const createTranslationBtn = document.getElementById('create-translation-btn');
+        
+        if (createTranslationLang && createTranslationBtn) {
+            createTranslationLang.addEventListener('change', function() {
+                createTranslationBtn.disabled = !this.value;
+            });
+            
+            createTranslationBtn.addEventListener('click', function() {
+                const language = createTranslationLang.value;
+                if (!language) return;
+                
+                const collectionSlug = config.collectionSlug || document.querySelector('input[name="collection"]')?.value;
+                const entryId = document.querySelector('input[name="entry_id"]')?.value;
+                
+                if (!collectionSlug || !entryId) {
+                    alert('Cannot create translation: missing collection or entry ID');
+                    return;
+                }
+                
+                // Create new entry as translation
+                const form = document.getElementById('entry-form');
+                const formData = new FormData(form);
+                const entryData = {};
+                
+                // Copy all form fields
+                for (const [key, value] of formData.entries()) {
+                    if (key !== 'entry_id' && key !== 'collection' && key !== '_csrf' && key !== 'language' && key !== 'translation_parent') {
+                        entryData[key] = value;
+                    }
+                }
+                
+                // Set translation-specific fields
+                entryData.language = language;
+                entryData.translation_parent = entryId;
+                entryData.status = 'draft'; // Start as draft
+                
+                // Create new entry via API
+                fetch('/api/admin_entries.php?action=save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        collection: collectionSlug,
+                        action: 'create',
+                        language: language,
+                        translation_parent: entryId,
+                        ...entryData,
+                        _csrf: formData.get('_csrf')
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok' && data.data && data.data.id) {
+                        // Update translations list in parent entry
+                        const translations = JSON.parse(document.querySelector('input[name="translations"]')?.value || '{}');
+                        translations[language] = data.data.id;
+                        
+                        // Update parent entry's translations
+                        fetch('/api/admin_entries.php?action=save', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({
+                                collection: collectionSlug,
+                                entry_id: entryId,
+                                action: 'update',
+                                translations: JSON.stringify(translations),
+                                _csrf: formData.get('_csrf')
+                            })
+                        })
+                        .then(() => {
+                            // Redirect to new translation
+                            window.location.href = `/admin/index.php?page=entry-editor&collection=${collectionSlug}&entry=${data.data.id}`;
+                        })
+                        .catch(error => {
+                            console.error('Error updating parent translations:', error);
+                            alert('Translation created, but failed to link to parent entry');
+                            window.location.reload();
+                        });
+                    } else {
+                        alert('Error creating translation: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error creating translation:', error);
+                    alert('Error creating translation. Please try again.');
+                });
+            });
+        }
+    }
+
+    /**
+     * Initialize language tabs
+     */
+    function initLanguageTabs() {
+        const languageTabBtns = document.querySelectorAll('.language-tab-btn');
+        const languageTabContents = document.querySelectorAll('.language-tab-content');
+        
+        languageTabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const langCode = this.dataset.lang;
+                
+                // Update buttons
+                languageTabBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update content
+                languageTabContents.forEach(content => {
+                    if (content.dataset.lang === langCode) {
+                        content.style.display = 'block';
+                        content.classList.add('active');
+                    } else {
+                        content.style.display = 'none';
+                        content.classList.remove('active');
+                    }
+                });
+            });
+        });
+    }
+
+    /**
      * Main initialization
      */
     function init() {
@@ -974,6 +1101,8 @@
         initScheduledPublishing();
         initVersionHistory();
         initApprovalWorkflow();
+        initTranslationCreation();
+        initLanguageTabs();
     }
 
     // Initialize when DOM is ready

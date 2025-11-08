@@ -16,28 +16,61 @@
                 <a href="/demo-website/blog.html">Blog</a>
                 <a href="/demo-website/about.html">About</a>
                 <a href="/demo-website/contact.html">Contact</a>
+                <div class="language-selector">
+                    <select id="language-select" onchange="changeLanguage(this.value)">
+                        <option value="en">English</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
             </nav>
         </div>
     </header>
+    <script>
+        // Set current language in selector
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentLang = urlParams.get('lang') || localStorage.getItem('harucms_language') || 'en';
+        document.getElementById('language-select').value = currentLang;
+        
+        function changeLanguage(lang) {
+            localStorage.setItem('harucms_language', lang);
+            const url = new URL(window.location);
+            url.searchParams.set('lang', lang);
+            window.location.href = url.toString();
+        }
+    </script>
 
     <main>
         <!-- Hero Section -->
         <section class="hero">
             <div class="container">
+                {if site_elements.hero exist}
+                <h2>{site_elements.hero.content.0.value}</h2>
+                <p class="hero-subtitle">{site_elements.hero.content.1.value}</p>
+                <div class="hero-actions">
+                    <a href="/demo-website/services.html" class="btn btn-primary">{site_elements.hero.content.2.value}</a>
+                    <a href="/demo-website/contact.html" class="btn btn-secondary">{site_elements.hero.content.3.value}</a>
+                </div>
+                {else}
                 <h2>Welcome to Our Demo Website</h2>
                 <p class="hero-subtitle">Built with HaruCMS - A modern, flexible content management system</p>
                 <div class="hero-actions">
                     <a href="/demo-website/services.html" class="btn btn-primary">Our Services</a>
                     <a href="/demo-website/contact.html" class="btn btn-secondary">Get in Touch</a>
                 </div>
+                {endif}
             </div>
         </section>
 
         <!-- Services Section -->
         <section class="services-section">
             <div class="container">
+                {if site_elements.homepage_services exist}
+                <h2 class="section-title">{site_elements.homepage_services.content.0.value}</h2>
+                <p class="section-subtitle">{site_elements.homepage_services.content.1.value}</p>
+                {else}
                 <h2 class="section-title">Our Services</h2>
                 <p class="section-subtitle">We offer a range of professional services to help your business grow</p>
+                {endif}
                 <div class="services-grid">
                     {for each entry in 'services'}
                     {if entry.status == 'published'}
@@ -58,8 +91,13 @@
         <!-- Blog Section -->
         <section class="blog-section">
             <div class="container">
+                {if site_elements.homepage_blog exist}
+                <h2 class="section-title">{site_elements.homepage_blog.content.0.value}</h2>
+                <p class="section-subtitle">{site_elements.homepage_blog.content.1.value}</p>
+                {else}
                 <h2 class="section-title">Latest Blog Posts</h2>
                 <p class="section-subtitle">Stay updated with our latest news and insights</p>
+                {endif}
                 <div class="blog-posts">
                     {for each entry in 'blog'}
                     {if entry.status == 'published'}

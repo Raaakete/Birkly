@@ -36,6 +36,8 @@ try {
     $entryMethod = $_POST['entry_method'] ?? 'admin_only';
     $apiKey = $_POST['api_key'] ?? '';
     $apiSettings = $_POST['api_settings'] ?? [];
+    $multilanguageEnabled = !empty($_POST['multilanguage_enabled']);
+    $multilanguageLanguages = $_POST['multilanguage_languages'] ?? [];
     
     error_log("Processing form data:");
     error_log("name: " . $name);
@@ -118,6 +120,10 @@ try {
         'template' => $template,
         'sort' => $sort,
         'entry_method' => $entryMethod,
+        'multilanguage' => [
+            'enabled' => $multilanguageEnabled,
+            'languages' => $multilanguageLanguages
+        ],
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ];

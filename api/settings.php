@@ -182,6 +182,47 @@ if ($action === 'update') {
 }
 
 // Reset settings to defaults
+if ($action === 'set_language') {
+    $csrf = $_POST['_csrf'] ?? $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'set_language', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    $language = $_POST['language'] ?? $input['language'] ?? '';
+    if (empty($language)) {
+        echo json_encode(['status' => 'error', 'message' => 'Language required']);
+        exit;
+    }
+    
+    // Validate language exists
+    require_once __DIR__ . '/../core/i18n.php';
+    $availableLangs = I18n::getAvailableLanguages();
+    if (!isset($availableLangs[$language])) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid language']);
+        exit;
+    }
+    
+    // Set language in session
+    if (session_status() === PHP_SESSION_NONE) {
+        require_once __DIR__ . '/session.php';
+        haru_secure_session_start();
+    }
+    $_SESSION['admin_language'] = $language;
+    
+    // Save to admin settings
+    $adminSettings = $storage->read('admin.json') ?? $defaultSettings['admin'];
+    $adminSettings['language'] = $language;
+    $storage->write('admin.json', $adminSettings);
+    
+    // Set language in i18n system
+    I18n::setLanguage($language);
+    
+    echo json_encode(['status' => 'ok', 'message' => 'Language changed successfully']);
+    exit;
+}
+
 if ($action === 'reset') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
