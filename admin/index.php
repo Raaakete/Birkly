@@ -133,7 +133,15 @@ $isOnboarding = ($page === 'onboarding');
     <title>Setup - HaruCMS</title>
     <link rel="stylesheet" href="/admin/css/style.css">
     <link rel="stylesheet" href="/admin/css/onboarding.css">
-    <link rel="shortcut icon" href="/admin/assets/haru_favicon.svg">
+    <?php
+    // Load settings to get logo for favicon
+    require_once __DIR__ . '/../api/storage.php';
+    $storage = new Storage(__DIR__ . '/../settings');
+    $brandingSettings = $storage->read('branding.json') ?? [];
+    $logoPath = $brandingSettings['logoPath'] ?? '';
+    $faviconUrl = !empty($logoPath) ? $logoPath : '/admin/assets/haru-icon.svg';
+    ?>
+    <link rel="shortcut icon" href="<?= htmlspecialchars($faviconUrl) ?>">
 </head>
 <body class="onboarding-body">
     <div class="onboarding-wrapper">

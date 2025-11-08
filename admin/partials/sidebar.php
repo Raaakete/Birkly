@@ -37,12 +37,25 @@ function get_active_plugin_navigation(): array {
 }
 
 $activePluginNavigation = get_active_plugin_navigation();
+
+// Load settings to get project name and logo
+require_once __DIR__ . '/../../api/storage.php';
+$storage = new Storage(__DIR__ . '/../../settings');
+$adminSettings = $storage->read('admin.json') ?? [];
+$brandingSettings = $storage->read('branding.json') ?? [];
+
+$projectName = $adminSettings['project_name'] ?? 'HaruCMS';
+$logoPath = $brandingSettings['logoPath'] ?? '';
+$defaultLogo = '/admin/assets/haru-icon.svg';
+$logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 ?>
         <!-- Sidebar -->
         <aside class="sidebar">
+        <div>
             <div class="sidebar-header">
-                <div id="brandingLogoSidebar" class="logo">
-                    <img src="/admin/assets/haru-logo-shadow.svg" alt="Logo">
+                <div id="brandingLogoSidebar" class="logo" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" style="width: 32px; height: 32px; flex-shrink: 0;">
+                    <span style="color: white; font-weight: 600; font-size: 1rem;"><?= htmlspecialchars($projectName) ?></span>
                 </div>
             </div>
             <nav class="sidebar-nav">
@@ -114,6 +127,20 @@ $activePluginNavigation = get_active_plugin_navigation();
                             <?= __('admin.help') ?>
                         </a>
                     </li>
+                </ul>
+                </nav>
+                </div>
+                <div>
+                <nav class="sidebar-nav">
+                <ul class="nav-links" id="links-account">
+                    <li class="nav-item">
+                        <div class="user-info">
+                            <div class="user-details">
+                                <div class="user-name"><?= htmlspecialchars(getCurrentUser()['email'] ?? 'User') ?></div>
+                                <div class="user-role"><?= htmlspecialchars(ucfirst(getCurrentUser()['role'] ?? 'viewer')) ?></div>
+                            </div>
+                        </div>
+                    </li>
                     <li class="nav-item">
                         <div class="language-switcher">
                             <?php
@@ -129,17 +156,6 @@ $activePluginNavigation = get_active_plugin_navigation();
                             </select>
                         </div>
                     </li>
-                </ul>
-
-                <ul class="nav-links" id="links-account">
-                    <li class="nav-item">
-                        <div class="user-info">
-                            <div class="user-details">
-                                <div class="user-name"><?= htmlspecialchars(getCurrentUser()['email'] ?? 'User') ?></div>
-                                <div class="user-role"><?= htmlspecialchars(ucfirst(getCurrentUser()['role'] ?? 'viewer')) ?></div>
-                            </div>
-                        </div>
-                    </li>
                     <li class="nav-item">
                         <button class="nav-link logout-btn" id="logout-btn">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
@@ -152,4 +168,5 @@ $activePluginNavigation = get_active_plugin_navigation();
                     </li>
                 </ul>
             </nav>
+            </div>
         </aside>
