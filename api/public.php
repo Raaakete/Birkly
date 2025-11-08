@@ -2,6 +2,7 @@
 // api/public.php - Public read-only API for HaruCMS
 header('Content-Type: application/json');
 require_once 'storage.php';
+require_once '../core/cache.php';
 $storage = new Storage('../content');
 $input = array_merge($_GET, $_POST);
 $action = $input['action'] ?? '';
@@ -44,15 +45,45 @@ if ($action === 'list_entries') {
         }
     }
     if (!$dir) respond(['status'=>'error','message'=>'Collection not found']);
-    $entries = $storage->list("collections/$dir/entries");
-    $entryData = [];
-    foreach ($entries as $entry) {
-        $data = $storage->read("collections/$dir/entries/$entry");
-        if ($data && $data['status'] === 'published') {
-            $entryData[] = $data;
-        }
+    
+    // Get collection slug for caching
+    $collectionSlug = '';
+    $collectionMeta = $storage->read("collections/$dir/collection.json");
+    if ($collectionMeta && isset($collectionMeta['slug'])) {
+        $collectionSlug = $collectionMeta['slug'];
     }
-    respond(['status'=>'ok','data'=>['entries'=>$entryData]]);
+    
+    // Try to get cached entries
+    $cache = new Cache();
+    $cachedEntries = null;
+    if ($collectionSlug) {
+        $cachedEntries = $cache->getEntries($collectionSlug);
+    }
+    
+    if ($cachedEntries === null) {
+        // Cache miss - load entries from files
+        $entries = $storage->list("collections/$dir/entries");
+        $entryData = [];
+        foreach ($entries as $entry) {
+            $data = $storage->read("collections/$dir/entries/$entry");
+            if ($data) {
+                $entryData[] = $data;
+            }
+        }
+        
+        // Cache all entries (we'll filter published below)
+        if ($collectionSlug) {
+            $cache->setEntries($collectionSlug, $entryData);
+        }
+        $cachedEntries = $entryData;
+    }
+    
+    // Filter only published entries for public API
+    $publishedEntries = array_filter($cachedEntries, function($entry) {
+        return ($entry['status'] ?? 'draft') === 'published';
+    });
+    
+    respond(['status'=>'ok','data'=>['entries'=>array_values($publishedEntries)]]);
 }
 
 if ($action === 'get_entry') {
