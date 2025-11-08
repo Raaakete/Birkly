@@ -10,12 +10,21 @@ backups/
 temp/
 
 # Exception: Demo content collections (shipped with CMS)
+# First un-ignore the collections directory
+!content/collections/
+# Then un-ignore specific demo collections
 !content/collections/blog/
 !content/collections/services/
 !content/collections/contact/
+!content/collections/portfolio/
+!content/collections/pages/
+!content/collections/site_elements/
 !content/collections/blog/**
 !content/collections/services/**
 !content/collections/contact/**
+!content/collections/portfolio/**
+!content/collections/pages/**
+!content/collections/site_elements/**
 
 # Environment and configuration files
 .env
