@@ -12,20 +12,20 @@ if (isset($fieldtype_assets)) {
     
     <div class="page-header pt-m pb-m">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=content">Content</a>
+            <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
             <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
             <span class="separator">›</span>
-            <span class="current"><?= !empty($entry['title']) ? htmlspecialchars($entry['title']) : 'New Entry' ?></span>
+            <span class="current"><?= !empty($entry['title']) ? htmlspecialchars($entry['title']) : __('admin.new_entry') ?></span>
         </div>
     </div>
     
     <div class="main-actions-bar">
         <button type="submit" form="entry-form" class="btn btn-primary">
-            <?= !empty($entry['id']) ? 'Update Entry' : 'Create Entry' ?>
+            <?= !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry') ?>
         </button>
         <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" class="btn btn-secondary">
-            Cancel
+            <?= __('admin.cancel') ?>
         </a>
     </div>
     
@@ -290,7 +290,7 @@ if (isset($fieldtype_assets)) {
                                 ?>
                                 
                                 <div class="form-group">
-                                    <label for="entry_language">Content Language</label>
+                                    <label for="entry_language"><?= __('admin.content_language') ?></label>
                                     <select name="language" id="entry_language" class="input">
                                         <?php foreach ($availableLangs as $langCode => $langInfo): ?>
                                             <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentLang ? 'selected' : '' ?>>

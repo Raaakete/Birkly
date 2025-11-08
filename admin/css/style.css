@@ -838,7 +838,7 @@ textarea {
 .entries-smart-table .head-status,
 .entries-smart-table .cell-status { width: 120px; }
 .entries-smart-table .head-actions,
-.entries-smart-table .cell-actions { width: 188px; justify-content: flex-end; position: sticky; right: 0; border-left: 1px solid var(--border-light); z-index: 1; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.1); }
+.entries-smart-table .cell-actions { width: 234px; justify-content: flex-end; position: sticky; right: 0; border-left: 1px solid var(--border-light); z-index: 1; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.1); }
 
 .entries-smart-table .cell-drag,
 .entries-smart-table .cell-title,

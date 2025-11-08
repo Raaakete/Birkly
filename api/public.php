@@ -71,14 +71,14 @@ if ($action === 'list_entries') {
     
     if ($cachedEntries === null) {
         // Cache miss - load entries from files
-        $entries = $storage->list("collections/$dir/entries");
-        $entryData = [];
-        foreach ($entries as $entry) {
-            $data = $storage->read("collections/$dir/entries/$entry");
+    $entries = $storage->list("collections/$dir/entries");
+    $entryData = [];
+    foreach ($entries as $entry) {
+        $data = $storage->read("collections/$dir/entries/$entry");
             if ($data) {
-                $entryData[] = $data;
-            }
+            $entryData[] = $data;
         }
+    }
         
         // Cache all entries (we'll filter published below)
         if ($collectionSlug) {
@@ -175,7 +175,7 @@ if ($action === 'get_entry') {
             }
         }
     } elseif ($entryId) {
-        $data = $storage->read("collections/$dir/entries/$entryId.json");
+    $data = $storage->read("collections/$dir/entries/$entryId.json");
     }
     
     if (!$data || ($data['status'] ?? 'draft') !== 'published') {

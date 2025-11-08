@@ -1,17 +1,17 @@
 
     <div class="page-header pt-m pb-m">
-        <div class="breadcrumbs"><span class="current">Dashboard</span></div>
+        <div class="breadcrumbs"><span class="current"><?= __('admin.dashboard') ?></span></div>
     </div>
 
     <div>
         {if onboarding exist}
         {if onboarding.completed == false && onboarding.is_first_time == true}
-            <p>Welcome to HaruCMS! Let's get you started.</p>
+            <p><?= __('admin.welcome_to_harucms_exclamation') ?> <?= __('admin.complete_steps') ?></p>
         {else}
-            <p>Welcome to HaruCMS Admin</p>
+            <p><?= __('admin.welcome_to_harucms') ?></p>
         {endif}
     {else}
-        <p>Welcome to HaruCMS Admin</p>
+        <p><?= __('admin.welcome_to_harucms') ?></p>
     {endif}
     </div>
     
@@ -21,8 +21,8 @@
             <div class="welcome-dashboard">
                 <div class="welcome-card">
                     <div class="welcome-header">
-                        <h2>Welcome to HaruCMS! 🎉</h2>
-                        <p>Complete these steps to get your site up and running:</p>
+                        <h2><?= __('admin.welcome_to_harucms_exclamation') ?></h2>
+                        <p><?= __('admin.complete_steps') ?></p>
                     </div>
                     
                     <div class="checklist-progress">
@@ -56,13 +56,13 @@
                     </div>
                     
                     <div class="quick-actions">
-                        <h3>Quick Actions</h3>
+                        <h3><?= __('admin.quick_actions') ?></h3>
                         <div class="action-buttons">
                             <a href="/admin/index.php?page=content" class="btn btn-primary">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M12 4H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2m-4-2v4m0-4h4m0 0V2"/>
                                 </svg>
-                                Create Collection
+                                <?= __('admin.create_collection') ?>
                             </a>
                             <a href="/admin/index.php?page=media" class="btn btn-secondary">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
@@ -70,14 +70,14 @@
                                     <circle cx="7" cy="7" r="1.5"/>
                                     <path d="M3 12l4-4 4 4 6-6"/>
                                 </svg>
-                                Upload Media
+                                <?= __('admin.upload_media') ?>
                             </a>
                             <a href="/admin/index.php?page=settings" class="btn btn-secondary">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="10" cy="10" r="3"/>
                                     <path d="M10 1v2m0 14v2m9-9h-2M3 10H1m15.364-6.364l-1.414 1.414M4.05 15.95l-1.414 1.414m12.728 0l-1.414-1.414M4.05 4.05L2.636 2.636"/>
                                 </svg>
-                                Settings
+                                <?= __('admin.settings') ?>
                             </a>
                         </div>
                     </div>
@@ -93,7 +93,7 @@
             </div>
             <div class="stat-content">
                 <h3>{from stats get collections}</h3>
-                <p>Collections</p>
+                <p><?= __('admin.collections') ?></p>
             </div>
         </div>
         
@@ -103,7 +103,7 @@
             </div>
             <div class="stat-content">
                 <h3>{from stats get total_entries}</h3>
-                <p>Total Entries</p>
+                <p><?= __('admin.total_entries') ?></p>
             </div>
         </div>
         
@@ -113,7 +113,7 @@
             </div>
             <div class="stat-content">
                 <h3>{from stats get published}</h3>
-                <p>Published</p>
+                <p><?= __('admin.published') ?></p>
             </div>
         </div>
         
@@ -123,7 +123,7 @@
             </div>
             <div class="stat-content">
                 <h3>{from stats get drafts}</h3>
-                <p>Drafts</p>
+                <p><?= __('admin.drafts') ?></p>
             </div>
         </div>
     </div>
@@ -132,7 +132,7 @@
         {if onboarding.completed == true || onboarding.is_first_time == false}
             <div class="dashboard-content">
                 <div class="recent-activity">
-                    <h2>Recent Activity</h2>
+                    <h2><?= __('admin.recent_activity') ?></h2>
                     <div class="activity-list">
                         {if recent_activity exist}
                             {for activity in recent_activity}
@@ -147,26 +147,26 @@
                                 </div>
                             {endfor}
                         {else}
-                            <p>No recent activity</p>
+                            <p><?= __('admin.no_recent_activity') ?></p>
                         {endif}
                     </div>
                 </div>
                 
                 <div class="recent-collections">
-                    <h2>Recent Collections</h2>
+                    <h2><?= __('admin.recent_collections') ?></h2>
                     <div class="collections-list">
                         {if recent_collections exist}
                             {for collection in recent_collections}
                                 <div class="collection-item">
                                     <div class="collection-info">
                                         <h4>{from collection get title}</h4>
-                                        <p>{from collection get entries_count} entries</p>
+                                        <p>{from collection get entries_count} <?= __('admin.entries') ?></p>
                                     </div>
-                                    <a class="btn-small" href="/admin/index.php?page=entries&collection={from collection get slug}">View</a>
+                                    <a class="btn-small" href="/admin/index.php?page=entries&collection={from collection get slug}"><?= __('admin.view') ?></a>
                                 </div>
                             {endfor}
                         {else}
-                            <p>No collections found</p>
+                            <p><?= __('admin.no_collections_found') ?></p>
                         {endif}
                     </div>
                 </div>
