@@ -1,0 +1,14 @@
+{
+  "title": "Welcome to My Blog",
+  "slug": "home",
+  "content": "<p>Welcome to my personal blog! Here you'll find my thoughts on technology, design, and life.</p>",
+  "template": "home",
+  "status": "published",
+  "meta_description": "Personal blog about technology, design, and life",
+  "featured_image": "",
+  "show_in_menu": true,
+  "menu_order": 1,
+  "id": "home",
+  "created_at": "2025-01-15T10:00:00+00:00",
+  "updated_at": "2025-01-15T10:00:00+00:00"
+} 

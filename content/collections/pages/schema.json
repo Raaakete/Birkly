@@ -1,0 +1,95 @@
+{
+  "fields": [
+    {
+      "name": "title",
+      "label": "Page Title",
+      "type": "text",
+      "required": true,
+      "help": "The title of the page (used in browser tab and SEO)"
+    },
+    {
+      "name": "slug",
+      "label": "URL Slug",
+      "type": "text",
+      "required": true,
+      "help": "The URL path for this page (e.g., 'about' for /about)"
+    },
+    {
+      "name": "content",
+      "label": "Page Content",
+      "type": "wysiwyg",
+      "required": false,
+      "help": "The main content of the page"
+    },
+    {
+      "name": "template",
+      "label": "Template",
+      "type": "select",
+      "required": false,
+      "options": [
+        {
+          "label": "Default Page",
+          "value": "default"
+        },
+        {
+          "label": "Homepage",
+          "value": "home"
+        },
+        {
+          "label": "Blog Listing",
+          "value": "blog-list"
+        },
+        {
+          "label": "Contact Page",
+          "value": "contact"
+        }
+      ],
+      "help": "Choose how this page should be displayed"
+    },
+    {
+      "name": "status",
+      "label": "Status",
+      "type": "select",
+      "required": true,
+      "options": [
+        {
+          "label": "Published",
+          "value": "published"
+        },
+        {
+          "label": "Draft",
+          "value": "draft"
+        }
+      ],
+      "help": "Published pages are visible to visitors"
+    },
+    {
+      "name": "meta_description",
+      "label": "Meta Description",
+      "type": "textarea",
+      "required": false,
+      "help": "SEO description (appears in search results)"
+    },
+    {
+      "name": "featured_image",
+      "label": "Featured Image",
+      "type": "media",
+      "required": false,
+      "help": "Main image for the page"
+    },
+    {
+      "name": "show_in_menu",
+      "label": "Show in Navigation",
+      "type": "checkbox",
+      "required": false,
+      "help": "Include this page in the main navigation menu"
+    },
+    {
+      "name": "menu_order",
+      "label": "Menu Order",
+      "type": "number",
+      "required": false,
+      "help": "Order in navigation menu (lower numbers appear first)"
+    }
+  ]
+} 
