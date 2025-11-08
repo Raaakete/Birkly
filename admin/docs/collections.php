@@ -51,8 +51,31 @@
             <li>Whether it's required</li>
         </ul>
     </li>
+    <li>Go to the <strong>Settings</strong> tab to configure:
+        <ul>
+            <li><strong>Entry Method:</strong> Choose "Admin Only" (default) or "Public API" (for forms)</li>
+            <li>If "Public API" is selected, configure security settings (rate limit, auto-publish, CAPTCHA, etc.)</li>
+        </ul>
+    </li>
     <li>Click <strong>"Save Collection"</strong></li>
 </ol>
+
+<h3>Entry Method</h3>
+<p>Each collection has an <strong>Entry Method</strong> that determines how entries can be created:</p>
+<ul>
+    <li><strong>Admin Only</strong> (default) - Only entries created through the admin panel are allowed. This is the standard method for most content.</li>
+    <li><strong>Public API</strong> - Allows entries to be submitted via external websites using an API key. Perfect for contact forms, newsletter signups, feedback forms, and other user-submitted content.</li>
+</ul>
+
+<p>When you select "Public API":</p>
+<ul>
+    <li>An API key is automatically generated</li>
+    <li>You can configure security settings (rate limit, auto-publish, CAPTCHA, etc.)</li>
+    <li>You can use the <code>{entry for}</code> directive in your website templates to create forms</li>
+    <li>All submissions are saved as entries in your collection</li>
+</ul>
+
+<p>For more information on using Public API forms, see the <strong>Public API Forms</strong> documentation.</p>
 
 <h3>Field Types Explained</h3>
 <p>Each field type serves a specific purpose:</p>

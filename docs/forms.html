@@ -26,12 +26,78 @@
     </nav>
     <main class="main-content">
       <h1>Forms</h1>
-      <h2>Modular Form Input Blocks</h2>
+      <p>HaruCMS allows you to create forms that submit directly to your collections. This is perfect for contact forms, newsletter signups, feedback forms, and more.</p>
+      
+      <h2>Entry Method</h2>
+      <p>Each collection has an <strong>Entry Method</strong> that determines how entries can be created:</p>
       <ul>
-        <li>Use <code>{add entry to 'collection'}</code>...<code>{/add}</code> to define custom forms.</li>
-        <li>Fieldtype helpers: <code>{input name="field"}</code>, <code>{select name="field"}</code>, etc.</li>
-        <li>Value binding: <code>{{ field }}</code> for pre-filled values.</li>
+        <li><strong>Admin Only</strong> (default) - Only entries created through the admin panel</li>
+        <li><strong>Public API</strong> - Allows entries to be submitted via external websites using an API key</li>
       </ul>
+      
+      <h2>Setting Up a Public API Collection</h2>
+      <ol>
+        <li>Go to <strong>Content → Collections</strong> in the admin panel</li>
+        <li>Click on the collection you want to make public (or create a new one)</li>
+        <li>Go to the <strong>Settings</strong> tab</li>
+        <li>Change <strong>Entry Method</strong> from "Admin Only" to "Public API"</li>
+        <li>An API key will be automatically generated</li>
+        <li>Configure security settings (rate limit, auto-publish, CAPTCHA, etc.)</li>
+        <li>Click <strong>Save Collection</strong></li>
+      </ol>
+      
+      <h2>Template-First Forms (Recommended)</h2>
+      <p>Define your form HTML directly in your template using the <code>{entry for}</code> directive:</p>
+      <pre><code>&lt;div class="contact-form-wrapper"&gt;
+{entry for 'contact'}
+    &lt;div class="form-group"&gt;
+        &lt;label for="name"&gt;Name &lt;span class="required"&gt;*&lt;/span&gt;&lt;/label&gt;
+        &lt;input type="text" name="{name}" id="name" required /&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="form-group"&gt;
+        &lt;label for="email"&gt;Email &lt;span class="required"&gt;*&lt;/span&gt;&lt;/label&gt;
+        &lt;input type="email" name="{email}" id="email" required /&gt;
+    &lt;/div&gt;
+    
+    &lt;div class="form-group"&gt;
+        &lt;label for="message"&gt;Message &lt;span class="required"&gt;*&lt;/span&gt;&lt;/label&gt;
+        &lt;textarea name="{message}" id="message" rows="5" required&gt;&lt;/textarea&gt;
+    &lt;/div&gt;
+    
+    &lt;button type="submit"&gt;Send Message&lt;/button&gt;
+{endentry}
+&lt;/div&gt;
+
+&lt;script src="/harucms-client.js" 
+        data-cms-url="https://your-cms-domain.com"&gt;&lt;/script&gt;</code></pre>
+      
+      <p><strong>How it works:</strong></p>
+      <ul>
+        <li>The <code>{entry for 'contact'}</code> directive wraps your form HTML</li>
+        <li>Field names use template variables like <code>{name}</code>, <code>{email}</code>, <code>{message}</code></li>
+        <li>The client library automatically handles form submission, validation, and success/error messages</li>
+      </ul>
+      
+      <h2>Auto-Generated Forms</h2>
+      <p>Use the <code>{public_form}</code> directive to automatically generate a form based on your collection schema:</p>
+      <pre><code>&lt;div class="contact-form-wrapper"&gt;
+    {public_form 'contact'}
+&lt;/div&gt;
+
+&lt;script src="/harucms-client.js" 
+        data-cms-url="https://your-cms-domain.com"&gt;&lt;/script&gt;</code></pre>
+      
+      <h2>Field Name Mapping</h2>
+      <p>When using <code>{entry for}</code>, field names in your HTML must match your collection's field slugs:</p>
+      <ul>
+        <li>If your collection has a field with slug <code>email</code>, use <code>name="{email}"</code></li>
+        <li>If your collection has a field with slug <code>full_name</code>, use <code>name="{full_name}"</code></li>
+        <li>Field slugs are shown in the <strong>Templating</strong> tab of the collection editor</li>
+      </ul>
+      
+      <h2>Legacy Form Syntax (Deprecated)</h2>
+      <p>The old form syntax is still supported but not recommended:</p>
       <pre><code>{add entry to 'feedback'}
   {input name="name"}
   {textarea name="message"}

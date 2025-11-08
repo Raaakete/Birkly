@@ -23,10 +23,13 @@
 <h3>First Steps</h3>
 <ol>
     <li><strong>Log In:</strong> Use the admin panel at <code>/admin</code> to access your CMS</li>
+    <li><strong>Set Up Project:</strong> During onboarding, you'll be asked for a Project Name (this is for admin panel branding only, not for your website)</li>
     <li><strong>Create Content:</strong> Start by creating a collection (like "Blog Posts" or "Pages")</li>
     <li><strong>Add Entries:</strong> Fill your collection with actual content entries</li>
     <li><strong>Connect Your Website:</strong> Use the client library to display your content on your website</li>
 </ol>
+
+<p><strong>Note:</strong> HaruCMS doesn't manage a specific website - it just provides content. Each website using the CMS should define its own title and settings. The Project Name you set during onboarding is only for the admin panel branding.</p>
 
 <p>Ready to dive deeper? Continue reading the sections below to learn about each feature in detail!</p>
 
