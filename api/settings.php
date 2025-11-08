@@ -18,8 +18,17 @@ require_once '../core/csrf.php';
 require_once 'log.php';
 
 $storage = new Storage('../settings');
-$input = sanitize_input(json_decode(file_get_contents('php://input'), true));
-$action = $input['action'] ?? $_GET['action'] ?? '';
+// Handle both JSON and form-encoded data
+$rawInput = file_get_contents('php://input');
+$input = [];
+if (!empty($rawInput)) {
+    $decoded = json_decode($rawInput, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        $input = sanitize_input($decoded);
+    }
+}
+// Get action from POST, input, or GET (in that order)
+$action = $_POST['action'] ?? $input['action'] ?? $_GET['action'] ?? '';
 
 // Default settings structure
 $defaultSettings = [
@@ -181,8 +190,20 @@ if ($action === 'update') {
     exit;
 }
 
-// Reset settings to defaults
+// Set language
 if ($action === 'set_language') {
+    // Start session first
+    require_once __DIR__ . '/session.php';
+    haru_secure_session_start();
+    
+    // Check authentication
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    
+    // Handle both form-encoded and JSON data
     $csrf = $_POST['_csrf'] ?? $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
         log_security_event('permission_denied', ['action' => 'set_language', 'reason' => 'invalid CSRF']);
@@ -205,10 +226,6 @@ if ($action === 'set_language') {
     }
     
     // Set language in session
-    if (session_status() === PHP_SESSION_NONE) {
-        require_once __DIR__ . '/session.php';
-        haru_secure_session_start();
-    }
     $_SESSION['admin_language'] = $language;
     
     // Save to admin settings

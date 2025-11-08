@@ -29,27 +29,27 @@
     <main>
         <section class="post-detail">
             <div class="container">
-                <article class="post">
+        <article class="post">
                     <h1>{ title }</h1>
-                    <div class="post-meta">
+            <div class="post-meta">
                         {if entry has date}
                         <time>{ date "F j, Y" }</time>
                         {endif}
                         {if entry has tags}
-                        <div class="tags">
+                <div class="tags">
                             {for each tag}
                             <span class="tag">{ tag }</span>
                             {endfor}
-                        </div>
-                        {endif}
-                    </div>
-                    <div class="post-content">
-                        { content }
-                    </div>
-                    <nav class="post-navigation">
+                </div>
+                {endif}
+            </div>
+            <div class="post-content">
+                { content }
+            </div>
+            <nav class="post-navigation">
                         <a href="/demo-website/index.html">← Back to Home</a>
-                    </nav>
-                </article>
+            </nav>
+        </article>
             </div>
         </section>
     </main>
