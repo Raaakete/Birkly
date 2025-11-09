@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HaruCMS - Getting Started</title>
     <style>
+        /* Use CSS Variables from Admin System */
+        :root {
+            --background-global: #f8f9f7;
+            --bg-elevated: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --text-primary: #1a202c;
+            --text-secondary: #64748b;
+            --text-tertiary: #9ca3af;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --success-700: #15803d;
+            --error-700: #b91c1c;
+            --border-light: #e2e8f0;
+            --border-radius-s: 4px;
+            --border-radius-m: 8px;
+            --border-radius-l: 20px;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,98 +37,135 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text-primary);
+            background: var(--background-global);
             min-height: 100vh;
-            padding: 2rem;
+            padding: var(--space-8);
         }
 
         .container {
             max-width: 900px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: var(--bg-elevated);
+            border-radius: var(--border-radius-m);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 3rem 2rem;
+            background: var(--bg-elevated);
+            padding: var(--space-8);
             text-align: center;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+
+        .header-logo img {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            margin-bottom: var(--space-2);
             font-weight: 700;
+            color: var(--text-primary);
         }
 
         .header p {
-            font-size: 1.2rem;
-            opacity: 0.95;
+            font-size: 1.125rem;
+            color: var(--text-secondary);
         }
 
         .content {
-            padding: 2rem;
+            padding: var(--space-8);
         }
 
         .intro {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border-radius: 4px;
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--primary-500);
+            padding: var(--space-6);
+            margin-bottom: var(--space-8);
+            border-radius: var(--border-radius-s);
         }
 
         .intro h2 {
-            color: #667eea;
-            margin-bottom: 0.5rem;
-            font-size: 1.3rem;
+            color: var(--primary-600);
+            margin-bottom: var(--space-2);
+            font-size: 1.25rem;
+            font-weight: 600;
         }
 
         .path-selector {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin: 2rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-6);
+            margin: var(--space-8) 0;
         }
 
         .path-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius-m);
+            padding: var(--space-6);
+            transition: all 0.2s ease;
             cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .path-card:hover {
-            border-color: #667eea;
+            border-color: var(--primary-500);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-        }
-
-        .path-card h3 {
-            color: #667eea;
-            margin-bottom: 0.5rem;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
         .path-card.selected {
-            border-color: #667eea;
-            background: #f0f4ff;
+            border-color: var(--primary-500);
+            background: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1);
+        }
+
+        .path-card h3 {
+            color: var(--primary-600);
+            margin-bottom: var(--space-2);
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .path-card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
         }
 
         .instructions {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: #f8f9fa;
-            border-radius: 8px;
+            margin-top: var(--space-8);
+            padding: var(--space-6);
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-m);
             display: none;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .instructions.active {
@@ -113,117 +173,232 @@
         }
 
         .instructions h3 {
-            color: #333;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: var(--space-4);
+            font-size: 1.25rem;
+            font-weight: 600;
         }
 
         .step {
-            margin: 1.5rem 0;
-            padding: 1rem;
-            background: white;
-            border-radius: 6px;
-            border-left: 3px solid #667eea;
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            background: var(--bg-elevated);
+            border-radius: var(--border-radius-s);
+            border-left: 3px solid var(--primary-500);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .step-number {
-            display: inline-block;
-            background: #667eea;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-500);
             color: white;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            text-align: center;
-            line-height: 28px;
-            font-weight: bold;
-            margin-right: 0.5rem;
+            font-weight: 600;
+            margin-right: var(--space-2);
+            font-size: 0.875rem;
         }
 
         .step h4 {
-            display: inline-block;
-            color: #333;
-            margin-bottom: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+            font-size: 1.125rem;
+            font-weight: 600;
         }
 
         .step pre {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 1rem;
-            border-radius: 4px;
+            background: #1a202c;
+            color: #f7fafc;
+            padding: var(--space-4);
+            border-radius: var(--border-radius-s);
             overflow-x: auto;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
+            margin-top: var(--space-3);
+            font-size: 0.875rem;
+            line-height: 1.5;
         }
 
         .step code {
-            background: #f4f4f4;
-            padding: 0.2rem 0.4rem;
-            border-radius: 3px;
-            font-size: 0.9rem;
-            color: #d63384;
+            background: var(--bg-secondary);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--border-radius-s);
+            font-size: 0.875rem;
+            color: var(--primary-600);
+            font-weight: 500;
         }
 
         .step p {
-            margin-top: 0.5rem;
-            color: #666;
+            margin-top: var(--space-3);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .step ul {
+            margin-left: var(--space-6);
+            margin-top: var(--space-3);
+            color: var(--text-secondary);
+        }
+
+        .step li {
+            margin-bottom: var(--space-2);
         }
 
         .note {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-left: 4px solid #ffc107;
-            padding: 1rem;
-            border-radius: 4px;
-            margin: 1rem 0;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            border-left: 4px solid #f59e0b;
+            padding: var(--space-4);
+            border-radius: var(--border-radius-s);
+            margin: var(--space-6) 0;
         }
 
         .note strong {
-            color: #856404;
+            color: #92400e;
         }
 
         .success-box {
-            background: #d1e7dd;
-            border: 1px solid #badbcc;
-            border-left: 4px solid #198754;
-            padding: 1.5rem;
-            border-radius: 4px;
-            margin: 2rem 0;
+            background: #dcfce7;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid var(--success-700);
+            padding: var(--space-6);
+            border-radius: var(--border-radius-s);
+            margin: var(--space-8) 0;
             text-align: center;
         }
 
         .success-box h3 {
-            color: #198754;
-            margin-bottom: 1rem;
+            color: var(--success-700);
+            margin-bottom: var(--space-4);
+            font-size: 1.125rem;
+            font-weight: 600;
         }
 
         .btn {
-            display: inline-block;
-            background: #667eea;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            background: var(--primary-500);
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--border-radius-s);
             text-decoration: none;
             font-weight: 600;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
+            transition: all 0.2s ease;
+            margin-top: var(--space-4);
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
         }
 
         .btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            background: var(--primary-600);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--primary-500);
         }
 
         .credentials {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 6px;
-            margin: 1rem 0;
-            font-family: monospace;
+            background: var(--bg-secondary);
+            padding: var(--space-4);
+            border-radius: var(--border-radius-s);
+            margin: var(--space-4) 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
         }
 
         .credentials strong {
-            color: #667eea;
+            color: var(--primary-600);
+        }
+
+        .server-check {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius-m);
+            padding: var(--space-6);
+            margin: var(--space-6) 0;
+        }
+
+        .server-check h4 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-4);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .check-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            border-radius: var(--border-radius-s);
+            margin: var(--space-2) 0;
+        }
+
+        .check-status.checking {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .check-status.success {
+            background: #dcfce7;
+            color: var(--success-700);
+        }
+
+        .check-status.error {
+            background: #fee2e2;
+            color: var(--error-700);
+        }
+
+        .check-status-icon {
+            font-size: 1.25rem;
+        }
+
+        .onboarding-link {
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+            color: white;
+            padding: var(--space-6);
+            border-radius: var(--border-radius-m);
+            text-align: center;
+            margin: var(--space-8) 0;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2);
+        }
+
+        .onboarding-link h3 {
+            color: white;
+            margin-bottom: var(--space-2);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .onboarding-link p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: var(--space-4);
+        }
+
+        .onboarding-link .btn {
+            background: white;
+            color: var(--primary-600);
+            margin-top: 0;
+        }
+
+        .onboarding-link .btn:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         @media (max-width: 768px) {
@@ -232,11 +407,11 @@
             }
 
             .header h1 {
-                font-size: 2rem;
+                font-size: 1.75rem;
             }
 
             body {
-                padding: 1rem;
+                padding: var(--space-4);
             }
         }
     </style>
@@ -244,14 +419,38 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Welcome to HaruCMS</h1>
-            <p>Your flat-file, zero-dependency CMS is ready to go!</p>
+            <div class="header-logo">
+                <img src="/admin/assets/haru-icon.svg" alt="HaruCMS Logo">
+                <h1>Welcome to HaruCMS</h1>
+            </div>
+            <p>Your flat-file, headless CMS is ready to go!</p>
         </div>
 
         <div class="content">
             <div class="intro">
                 <h2>👋 First Steps</h2>
-                <p>HaruCMS is a flat-file CMS that works without a database. Choose your setup path below to get started. Once your server is running, you'll be guided through the onboarding process to set up your site.</p>
+                <p>HaruCMS is a flat-file, headless CMS that works without a database. Choose your setup path below to get started. Once your server is running, you'll be guided through the onboarding process to set up your CMS.</p>
+            </div>
+
+            <!-- Server Status Check -->
+            <div class="server-check">
+                <h4>🔍 Check Server Status</h4>
+                <div id="server-status-check">
+                    <div class="check-status checking">
+                        <span class="check-status-icon">⏳</span>
+                        <span>Checking server status...</span>
+                    </div>
+                </div>
+                <div id="server-status-details" style="display: none; margin-top: var(--space-4);">
+                    <div id="api-check" class="check-status checking">
+                        <span class="check-status-icon">⏳</span>
+                        <span>Checking API...</span>
+                    </div>
+                    <div id="admin-check" class="check-status checking">
+                        <span class="check-status-icon">⏳</span>
+                        <span>Checking Admin Panel...</span>
+                    </div>
+                </div>
             </div>
 
             <div class="path-selector">
@@ -273,49 +472,41 @@
                     <h4><span class="step-number">1</span>Check Requirements</h4>
                     <p>Make sure you have <strong>PHP 7.4 or higher</strong> installed. Check by running:</p>
                     <pre>php -v</pre>
+                    <p>The server script will automatically check this for you.</p>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">2</span>Create Default Admin User (First Time Only)</h4>
-                    <p>If this is a fresh installation, you need to create the default admin user:</p>
-                    <pre>php scripts/create-default-user.php</pre>
-                    <p>This creates a default admin account with:</p>
-                    <ul>
-                        <li><strong>Email:</strong> admin@localhost</li>
-                        <li><strong>Password:</strong> password</li>
-                    </ul>
-                    <p><strong>Note:</strong> You can skip this step if you already have user accounts.</p>
-                </div>
-
-                <div class="step">
-                    <h4><span class="step-number">3</span>Start the Server</h4>
-                    <p>Open a terminal/command prompt in this directory and run one of these options:</p>
+                    <h4><span class="step-number">2</span>Start the Server</h4>
+                    <p>Open a terminal/command prompt in this directory and run:</p>
                     <p><strong>Option A - Using the provided script (recommended):</strong></p>
                     <pre>chmod +x ./start-server.sh
-./start-server.sh</pre>
-                    <p><strong>Option B - Using PHP built-in server directly (not recommended):</strong></p>
+./start-server.sh -k</pre>
+                    <p>The <code>-k</code> flag will automatically kill any existing server on the port.</p>
+                    <p><strong>Option B - Using a specific port:</strong></p>
+                    <pre>./start-server.sh -k -p 8001</pre>
+                    <p><strong>Option C - Using PHP built-in server directly:</strong></p>
                     <pre>php -S localhost:8080 -t . server-router.php</pre>
                     <p><strong>Important:</strong> Always use <code>server-router.php</code> when running PHP server directly, or use the <code>start-server.sh</code> script (recommended) which handles this automatically.</p>
                     <p>The server will start on <code>http://localhost:8080</code> (or the port you specified).</p>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">3</span>Access the Admin Panel</h4>
-                    <p>Open your browser and navigate to:</p>
-                    <pre><a href="http://localhost:8080/admin" target="_blank">http://localhost:8080/admin</a></pre>
+                    <h4><span class="step-number">3</span>Verify Server is Running</h4>
+                    <p>Check the server status above, or visit:</p>
+                    <pre><a href="/test-server.php" target="_blank">http://localhost:8080/test-server.php</a></pre>
+                    <p>This will verify that PHP is executing correctly and the router is working.</p>
                 </div>
 
                 <div class="note">
-                    <strong>💡 Tip:</strong> If port 8001 is already in use, you can specify a different port:
-                    <pre>./start-server.sh -p 8080</pre>
-                    or
-                    <pre>php -S localhost:8080</pre>
+                    <strong>💡 Tip:</strong> If port 8080 is already in use, you can specify a different port:
+                    <pre>./start-server.sh -k -p 8001</pre>
+                    Then update the URLs accordingly (e.g., <code>http://localhost:8001/admin</code>).
                 </div>
 
                 <div class="success-box">
                     <h3>✅ Server Running?</h3>
-                    <p>Once you see the admin login page, you're ready to continue!</p>
-                    <a href="/admin" class="btn" onclick="window.open('/admin', '_blank'); return false;">Go to Admin Panel →</a>
+                    <p>Once the server status check shows green, you're ready to continue!</p>
+                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-local">Start Onboarding →</a>
                 </div>
             </div>
 
@@ -327,6 +518,7 @@
                     <h4><span class="step-number">1</span>Upload Files</h4>
                     <p>Upload all HaruCMS files to your web server using FTP, SFTP, or your hosting provider's file manager.</p>
                     <p><strong>Important:</strong> Upload all files and folders, including the <code>admin/</code>, <code>api/</code>, <code>core/</code>, and all other directories.</p>
+                    <p>Make sure to preserve the directory structure.</p>
                 </div>
 
                 <div class="step">
@@ -362,10 +554,10 @@
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">4</span>Access the Admin Panel</h4>
+                    <h4><span class="step-number">4</span>Verify Installation</h4>
                     <p>Open your browser and navigate to:</p>
-                    <pre>https://yourdomain.com/admin</pre>
-                    <p>Replace <code>yourdomain.com</code> with your actual domain name.</p>
+                    <pre>https://yourdomain.com/test-server.php</pre>
+                    <p>Replace <code>yourdomain.com</code> with your actual domain name. This will verify that PHP is executing correctly.</p>
                 </div>
 
                 <div class="note">
@@ -374,42 +566,106 @@
 
                 <div class="success-box">
                     <h3>✅ Server Configured?</h3>
-                    <p>Once you can access the admin login page, you're ready to continue!</p>
-                    <a href="/admin" class="btn" onclick="window.open('/admin', '_blank'); return false;">Go to Admin Panel →</a>
+                    <p>Once you can access the test page, you're ready to continue!</p>
+                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-server">Start Onboarding →</a>
                 </div>
             </div>
 
-            <!-- Default Credentials -->
-            <div class="note" style="margin-top: 2rem;">
-                <strong>🔐 Default Admin Credentials:</strong>
-                <div class="credentials">
-                    <strong>Email:</strong> admin@localhost<br>
-                    <strong>Password:</strong> password
-                </div>
-                <p style="margin-top: 0.5rem;"><strong>Important:</strong> After creating the default user with <code>php scripts/create-default-user.php</code>, you can log in with these credentials. Change the password immediately after your first login for security!</p>
+            <!-- Onboarding Link -->
+            <div class="onboarding-link">
+                <h3>🎯 Ready to Get Started?</h3>
+                <p>Once your server is running, click below to start the onboarding process. You'll be guided through setting up your admin account, project information, and demo content.</p>
+                <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-main">Start Onboarding →</a>
             </div>
 
             <!-- Next Steps -->
-            <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e0e0e0;">
-                <h3 style="color: #667eea; margin-bottom: 1rem;">🎯 What's Next?</h3>
-                <p>Once you've accessed the admin panel:</p>
-                <ol style="margin-left: 1.5rem; margin-top: 0.5rem; color: #666;">
-                    <li>Log in with the default credentials above</li>
-                    <li>You'll be guided through the <strong>onboarding wizard</strong> to set up your site</li>
-                    <li>Choose demo content and templates (optional)</li>
+            <div style="margin-top: var(--space-8); padding-top: var(--space-8); border-top: 1px solid var(--border-light);">
+                <h3 style="color: var(--primary-600); margin-bottom: var(--space-4); font-size: 1.25rem; font-weight: 600;">📚 What's Next?</h3>
+                <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">After completing the onboarding:</p>
+                <ol style="margin-left: var(--space-6); margin-top: var(--space-2); color: var(--text-secondary); line-height: 1.8;">
+                    <li>You'll have your admin account set up</li>
+                    <li>Your project will be configured with a name and logo</li>
+                    <li>You can choose to keep or remove demo content</li>
                     <li>Start creating your first collection and entries</li>
+                    <li>Integrate your website with the CMS using the client library</li>
                 </ol>
             </div>
 
             <!-- Support -->
-            <div style="margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 6px; text-align: center;">
-                <h4 style="color: #667eea; margin-bottom: 0.5rem;">Need Help?</h4>
-                <p style="color: #666;">Check the <code>README.md</code> file or visit the project documentation on GitHub.</p>
+            <div style="margin-top: var(--space-8); padding: var(--space-6); background: var(--bg-secondary); border-radius: var(--border-radius-m); text-align: center;">
+                <h4 style="color: var(--primary-600); margin-bottom: var(--space-2); font-weight: 600;">Need Help?</h4>
+                <p style="color: var(--text-secondary);">Check the <code>README.md</code> file or visit the project documentation on GitHub.</p>
             </div>
         </div>
     </div>
 
     <script>
+        // Server status check
+        async function checkServerStatus() {
+            const statusDiv = document.getElementById('server-status-check');
+            const detailsDiv = document.getElementById('server-status-details');
+            const apiCheck = document.getElementById('api-check');
+            const adminCheck = document.getElementById('admin-check');
+            
+            // Check if we can reach the current domain
+            const baseUrl = window.location.origin;
+            
+            try {
+                // Check if API is accessible
+                try {
+                    const apiResponse = await fetch(baseUrl + '/api/public.php?action=status', {
+                        method: 'GET',
+                        cache: 'no-cache'
+                    });
+                    
+                    if (apiResponse.ok) {
+                        apiCheck.className = 'check-status success';
+                        apiCheck.innerHTML = '<span class="check-status-icon">✓</span><span>API is accessible</span>';
+                    } else {
+                        apiCheck.className = 'check-status error';
+                        apiCheck.innerHTML = '<span class="check-status-icon">✗</span><span>API returned error: ' + apiResponse.status + '</span>';
+                    }
+                } catch (error) {
+                    apiCheck.className = 'check-status error';
+                    apiCheck.innerHTML = '<span class="check-status-icon">✗</span><span>Cannot reach API: ' + error.message + '</span>';
+                }
+                
+                // Check if admin panel is accessible
+                try {
+                    const adminResponse = await fetch(baseUrl + '/admin/index.php', {
+                        method: 'HEAD',
+                        cache: 'no-cache'
+                    });
+                    
+                    if (adminResponse.ok) {
+                        adminCheck.className = 'check-status success';
+                        adminCheck.innerHTML = '<span class="check-status-icon">✓</span><span>Admin panel is accessible</span>';
+                    } else {
+                        adminCheck.className = 'check-status error';
+                        adminCheck.innerHTML = '<span class="check-status-icon">✗</span><span>Admin panel returned error: ' + adminResponse.status + '</span>';
+                    }
+                } catch (error) {
+                    adminCheck.className = 'check-status error';
+                    adminCheck.innerHTML = '<span class="check-status-icon">✗</span><span>Cannot reach admin panel: ' + error.message + '</span>';
+                }
+                
+                // Overall status
+                const allChecksPassed = apiCheck.classList.contains('success') && adminCheck.classList.contains('success');
+                
+                if (allChecksPassed) {
+                    statusDiv.innerHTML = '<div class="check-status success"><span class="check-status-icon">✓</span><span>Server is running correctly!</span></div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="check-status error"><span class="check-status-icon">✗</span><span>Some checks failed. See details below.</span></div>';
+                }
+                
+                detailsDiv.style.display = 'block';
+                
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="check-status error"><span class="check-status-icon">✗</span><span>Cannot check server status: ' + error.message + '</span></div>';
+                detailsDiv.style.display = 'block';
+            }
+        }
+
         function showInstructions(path) {
             // Hide all instructions
             document.querySelectorAll('.instructions').forEach(el => {
@@ -434,11 +690,26 @@
 
         // Auto-detect if running locally and show local instructions
         window.addEventListener('load', () => {
+            // Check server status
+            checkServerStatus();
+            
+            // Auto-select local instructions if on localhost
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                showInstructions('local');
+                const localCard = document.querySelector('.path-card');
+                if (localCard) {
+                    showInstructions('local');
+                }
             }
+        });
+
+        // Update onboarding links to use current origin
+        document.addEventListener('DOMContentLoaded', () => {
+            const baseUrl = window.location.origin;
+            const onboardingLinks = document.querySelectorAll('[id^="onboarding-link"]');
+            onboardingLinks.forEach(link => {
+                link.href = baseUrl + '/admin/index.php?page=onboarding';
+            });
         });
     </script>
 </body>
 </html>
-
