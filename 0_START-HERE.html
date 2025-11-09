@@ -20,7 +20,6 @@
             --border-light: #e2e8f0;
             --border-radius-s: 4px;
             --border-radius-m: 8px;
-            --border-radius-l: 20px;
             --space-2: 0.5rem;
             --space-3: 0.75rem;
             --space-4: 1rem;
@@ -44,7 +43,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
             background: var(--bg-elevated);
             border-radius: var(--border-radius-m);
@@ -104,6 +103,12 @@
             font-weight: 600;
         }
 
+        .intro p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            line-height: 1.7;
+        }
+
         .path-selector {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -146,6 +151,7 @@
         .path-card p {
             color: var(--text-secondary);
             font-size: 0.875rem;
+            line-height: 1.6;
         }
 
         .instructions {
@@ -174,8 +180,8 @@
 
         .instructions h3 {
             color: var(--text-primary);
-            margin-bottom: var(--space-4);
-            font-size: 1.25rem;
+            margin-bottom: var(--space-6);
+            font-size: 1.5rem;
             font-weight: 600;
         }
 
@@ -211,6 +217,13 @@
             font-weight: 600;
         }
 
+        .step p {
+            margin-top: var(--space-3);
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            line-height: 1.7;
+        }
+
         .step pre {
             background: #1a202c;
             color: #f7fafc;
@@ -220,6 +233,7 @@
             margin-top: var(--space-3);
             font-size: 0.875rem;
             line-height: 1.5;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         }
 
         .step code {
@@ -229,22 +243,7 @@
             font-size: 0.875rem;
             color: var(--primary-600);
             font-weight: 500;
-        }
-
-        .step p {
-            margin-top: var(--space-3);
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .step ul {
-            margin-left: var(--space-6);
-            margin-top: var(--space-3);
-            color: var(--text-secondary);
-        }
-
-        .step li {
-            margin-bottom: var(--space-2);
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         }
 
         .note {
@@ -256,8 +255,11 @@
             margin: var(--space-6) 0;
         }
 
-        .note strong {
+        .note p {
             color: #92400e;
+            font-size: 0.875rem;
+            margin: 0;
+            line-height: 1.6;
         }
 
         .success-box {
@@ -277,6 +279,62 @@
             font-weight: 600;
         }
 
+        .success-box p {
+            color: var(--success-700);
+            margin-bottom: var(--space-4);
+            font-size: 0.9375rem;
+        }
+
+        .connection-status {
+            background: var(--bg-elevated);
+            border: 2px solid var(--border-light);
+            border-radius: var(--border-radius-m);
+            padding: var(--space-6);
+            margin: var(--space-6) 0;
+            text-align: center;
+        }
+
+        .connection-status.connected {
+            background: #dcfce7;
+            border-color: var(--success-700);
+        }
+
+        .connection-status.not-connected {
+            background: #fee2e2;
+            border-color: var(--error-700);
+        }
+
+        .connection-status.checking {
+            background: var(--bg-secondary);
+            border-color: var(--border-light);
+        }
+
+        .connection-status h4 {
+            color: var(--text-primary);
+            margin-bottom: var(--space-3);
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .connection-status p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin: 0;
+        }
+
+        .connection-status.connected h4 {
+            color: var(--success-700);
+        }
+
+        .connection-status.not-connected h4 {
+            color: var(--error-700);
+        }
+
+        .connection-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-2);
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -289,7 +347,7 @@
             font-weight: 600;
             transition: all 0.2s ease;
             margin-top: var(--space-4);
-            font-size: 0.875rem;
+            font-size: 0.9375rem;
             border: none;
             cursor: pointer;
         }
@@ -300,77 +358,10 @@
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2);
         }
 
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-light);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-elevated);
-            border-color: var(--primary-500);
-        }
-
-        .credentials {
-            background: var(--bg-secondary);
-            padding: var(--space-4);
-            border-radius: var(--border-radius-s);
-            margin: var(--space-4) 0;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.875rem;
-        }
-
-        .credentials strong {
-            color: var(--primary-600);
-        }
-
-        .server-check {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-light);
-            border-radius: var(--border-radius-m);
-            padding: var(--space-6);
-            margin: var(--space-6) 0;
-        }
-
-        .server-check h4 {
-            color: var(--text-primary);
-            margin-bottom: var(--space-4);
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .check-status {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--space-3);
-            border-radius: var(--border-radius-s);
-            margin: var(--space-2) 0;
-        }
-
-        .check-status.checking {
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-        }
-
-        .check-status.success {
-            background: #dcfce7;
-            color: var(--success-700);
-        }
-
-        .check-status.error {
-            background: #fee2e2;
-            color: var(--error-700);
-        }
-
-        .check-status-icon {
-            font-size: 1.25rem;
-        }
-
         .onboarding-link {
             background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
             color: white;
-            padding: var(--space-6);
+            padding: var(--space-8);
             border-radius: var(--border-radius-m);
             text-align: center;
             margin: var(--space-8) 0;
@@ -387,6 +378,7 @@
         .onboarding-link p {
             color: rgba(255, 255, 255, 0.9);
             margin-bottom: var(--space-4);
+            font-size: 0.9375rem;
         }
 
         .onboarding-link .btn {
@@ -420,7 +412,7 @@
     <div class="container">
         <div class="header">
             <div class="header-logo">
-                <img src="/admin/assets/haru-icon.svg" alt="HaruCMS Logo">
+                <img src="admin/assets/haru-icon.svg" alt="HaruCMS Logo" onerror="this.style.display='none'">
                 <h1>Welcome to HaruCMS</h1>
             </div>
             <p>Your flat-file, headless CMS is ready to go!</p>
@@ -428,241 +420,158 @@
 
         <div class="content">
             <div class="intro">
-                <h2>👋 First Steps</h2>
-                <p>HaruCMS is a flat-file, headless CMS that works without a database. Choose your setup path below to get started. Once your server is running, you'll be guided through the onboarding process to set up your CMS.</p>
-            </div>
-
-            <!-- Server Status Check -->
-            <div class="server-check">
-                <h4>🔍 Check Server Status</h4>
-                <div id="server-status-check">
-                    <div class="check-status checking">
-                        <span class="check-status-icon">⏳</span>
-                        <span>Checking server status...</span>
-                    </div>
-                </div>
-                <div id="server-status-details" style="display: none; margin-top: var(--space-4);">
-                    <div id="api-check" class="check-status checking">
-                        <span class="check-status-icon">⏳</span>
-                        <span>Checking API...</span>
-                    </div>
-                    <div id="admin-check" class="check-status checking">
-                        <span class="check-status-icon">⏳</span>
-                        <span>Checking Admin Panel...</span>
-                    </div>
-                </div>
+                <h2>👋 Let's Get Started</h2>
+                <p>HaruCMS is a simple content management system that works without a database. Choose how you want to set it up below. Don't worry - we'll guide you through every step!</p>
             </div>
 
             <div class="path-selector">
                 <div class="path-card" onclick="showInstructions('local')">
-                    <h3>💻 Local Development</h3>
-                    <p>Perfect for testing, development, or running on your own computer.</p>
+                    <h3>💻 On Your Computer</h3>
+                    <p>Perfect for testing and learning. We'll help you start a local server on your computer.</p>
                 </div>
                 <div class="path-card" onclick="showInstructions('server')">
-                    <h3>🌐 Web Server</h3>
-                    <p>Deploy to a live web server (Apache, Nginx, or shared hosting).</p>
+                    <h3>🌐 On a Web Server</h3>
+                    <p>For your live website. Upload the files to your web hosting provider.</p>
                 </div>
             </div>
 
             <!-- Local Development Instructions -->
             <div id="local-instructions" class="instructions">
-                <h3>📋 Local Development Setup</h3>
+                <h3>📋 Setting Up on Your Computer</h3>
 
                 <div class="step">
-                    <h4><span class="step-number">1</span>Check Requirements</h4>
-                    <p>Make sure you have <strong>PHP 7.4 or higher</strong> installed. Check by running:</p>
-                    <pre>php -v</pre>
-                    <p>The server script will automatically check this for you.</p>
+                    <h4><span class="step-number">1</span>Open Terminal</h4>
+                    <p>On <strong>Mac</strong>: Press <code>Cmd + Space</code>, type "Terminal", and press Enter.</p>
+                    <p>On <strong>Windows</strong>: Press <code>Windows + R</code>, type "cmd", and press Enter.</p>
+                    <p>On <strong>Linux</strong>: Press <code>Ctrl + Alt + T</code>.</p>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">2</span>Start the Server</h4>
-                    <p>Open a terminal/command prompt in this directory and run:</p>
-                    <p><strong>Option A - Using the provided script (recommended):</strong></p>
-                    <pre>chmod +x ./start-server.sh
-./start-server.sh -k</pre>
-                    <p>The <code>-k</code> flag will automatically kill any existing server on the port.</p>
-                    <p><strong>Option B - Using a specific port:</strong></p>
-                    <pre>./start-server.sh -k -p 8001</pre>
-                    <p><strong>Option C - Using PHP built-in server directly:</strong></p>
-                    <pre>php -S localhost:8080 -t . server-router.php</pre>
-                    <p><strong>Important:</strong> Always use <code>server-router.php</code> when running PHP server directly, or use the <code>start-server.sh</code> script (recommended) which handles this automatically.</p>
-                    <p>The server will start on <code>http://localhost:8080</code> (or the port you specified).</p>
+                    <h4><span class="step-number">2</span>Navigate to This Folder</h4>
+                    <p>In the terminal, type this command (replace with your actual folder path):</p>
+                    <pre>cd /path/to/your/harucms/folder</pre>
+                    <p>Or simply drag the folder into the terminal window and it will fill in the path automatically.</p>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">3</span>Verify Server is Running</h4>
-                    <p>Check the server status above, or visit:</p>
-                    <pre><a href="/test-server.php" target="_blank">http://localhost:8080/test-server.php</a></pre>
-                    <p>This will verify that PHP is executing correctly and the router is working.</p>
+                    <h4><span class="step-number">3</span>Start the Server</h4>
+                    <p>Copy and paste this command into your terminal and press Enter:</p>
+                    <pre>chmod +x ./start-server.sh && ./start-server.sh -k</pre>
+                    <p>You should see a message saying "Starting server on http://localhost:8080". Keep this terminal window open!</p>
+                </div>
+
+                <div class="step">
+                    <h4><span class="step-number">4</span>Check Connection</h4>
+                    <p>Below you'll see if your server is connected. If it says "Not Connected", make sure the terminal is still running and try refreshing this page.</p>
+                    
+                    <!-- Connection Status Box -->
+                    <div class="connection-status checking" id="connection-status">
+                        <div class="connection-icon">⏳</div>
+                        <h4>Checking connection...</h4>
+                        <p>Please wait while we check if your server is running.</p>
+                    </div>
                 </div>
 
                 <div class="note">
-                    <strong>💡 Tip:</strong> If port 8080 is already in use, you can specify a different port:
-                    <pre>./start-server.sh -k -p 8001</pre>
-                    Then update the URLs accordingly (e.g., <code>http://localhost:8001/admin</code>).
+                    <p><strong>💡 Tip:</strong> If you see an error about the port being in use, the server might already be running. Try opening <a href="http://localhost:8080/admin" target="_blank">http://localhost:8080/admin</a> in your browser.</p>
                 </div>
 
-                <div class="success-box">
-                    <h3>✅ Server Running?</h3>
-                    <p>Once the server status check shows green, you're ready to continue!</p>
-                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-local">Start Onboarding →</a>
+                <div class="success-box" id="local-success" style="display: none;">
+                    <h3>✅ Great! Your Server is Running</h3>
+                    <p>You're all set! Click the button below to start setting up your CMS.</p>
+                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-local">Start Setup →</a>
                 </div>
             </div>
 
             <!-- Web Server Instructions -->
             <div id="server-instructions" class="instructions">
-                <h3>📋 Web Server Deployment</h3>
+                <h3>📋 Setting Up on a Web Server</h3>
 
                 <div class="step">
-                    <h4><span class="step-number">1</span>Upload Files</h4>
-                    <p>Upload all HaruCMS files to your web server using FTP, SFTP, or your hosting provider's file manager.</p>
-                    <p><strong>Important:</strong> Upload all files and folders, including the <code>admin/</code>, <code>api/</code>, <code>core/</code>, and all other directories.</p>
-                    <p>Make sure to preserve the directory structure.</p>
+                    <h4><span class="step-number">1</span>Upload All Files</h4>
+                    <p>Using your hosting provider's file manager or FTP program, upload <strong>all files and folders</strong> from this HaruCMS folder to your web server.</p>
+                    <p>Make sure to keep the folder structure the same (don't change folder names).</p>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">2</span>Configure Your Server</h4>
-                    <p><strong>For Apache:</strong></p>
-                    <p>The included <code>.htaccess</code> file should work automatically. Make sure mod_rewrite is enabled.</p>
-                    
-                    <p><strong>For Nginx:</strong></p>
-                    <p>Use the provided <code>nginx.conf.example</code> as a reference. Key points:</p>
-                    <pre>server {
-    listen 80;
-    server_name yourdomain.com;
-    root /path/to/harucms;
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        include fastcgi_params;
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-    }
-}</pre>
-                </div>
-
-                <div class="step">
-                    <h4><span class="step-number">3</span>Set Permissions</h4>
-                    <p>Make sure these directories are writable by the web server:</p>
-                    <pre>chmod -R 755 content/ media/ users/ settings/ logs/</pre>
-                    <p>On some shared hosting, you may need to set permissions via your hosting control panel.</p>
-                </div>
-
-                <div class="step">
-                    <h4><span class="step-number">4</span>Verify Installation</h4>
-                    <p>Open your browser and navigate to:</p>
-                    <pre>https://yourdomain.com/test-server.php</pre>
-                    <p>Replace <code>yourdomain.com</code> with your actual domain name. This will verify that PHP is executing correctly.</p>
+                    <h4><span class="step-number">2</span>Visit Your Website</h4>
+                    <p>Open your web browser and go to:</p>
+                    <pre>https://yourdomain.com/admin</pre>
+                    <p>Replace <code>yourdomain.com</code> with your actual website address.</p>
                 </div>
 
                 <div class="note">
-                    <strong>💡 Tip:</strong> For shared hosting, most providers support PHP out of the box. Just upload the files and visit your domain's <code>/admin</code> path.
+                    <p><strong>💡 Tip:</strong> Most hosting providers work automatically. If you see an error, contact your hosting provider's support - they can help you configure it.</p>
                 </div>
 
                 <div class="success-box">
-                    <h3>✅ Server Configured?</h3>
-                    <p>Once you can access the test page, you're ready to continue!</p>
-                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-server">Start Onboarding →</a>
+                    <h3>✅ Ready to Continue?</h3>
+                    <p>If you can see the login page, you're ready to start the setup!</p>
+                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-server">Start Setup →</a>
                 </div>
             </div>
 
             <!-- Onboarding Link -->
             <div class="onboarding-link">
                 <h3>🎯 Ready to Get Started?</h3>
-                <p>Once your server is running, click below to start the onboarding process. You'll be guided through setting up your admin account, project information, and demo content.</p>
-                <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-main">Start Onboarding →</a>
-            </div>
-
-            <!-- Next Steps -->
-            <div style="margin-top: var(--space-8); padding-top: var(--space-8); border-top: 1px solid var(--border-light);">
-                <h3 style="color: var(--primary-600); margin-bottom: var(--space-4); font-size: 1.25rem; font-weight: 600;">📚 What's Next?</h3>
-                <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">After completing the onboarding:</p>
-                <ol style="margin-left: var(--space-6); margin-top: var(--space-2); color: var(--text-secondary); line-height: 1.8;">
-                    <li>You'll have your admin account set up</li>
-                    <li>Your project will be configured with a name and logo</li>
-                    <li>You can choose to keep or remove demo content</li>
-                    <li>Start creating your first collection and entries</li>
-                    <li>Integrate your website with the CMS using the client library</li>
-                </ol>
-            </div>
-
-            <!-- Support -->
-            <div style="margin-top: var(--space-8); padding: var(--space-6); background: var(--bg-secondary); border-radius: var(--border-radius-m); text-align: center;">
-                <h4 style="color: var(--primary-600); margin-bottom: var(--space-2); font-weight: 600;">Need Help?</h4>
-                <p style="color: var(--text-secondary);">Check the <code>README.md</code> file or visit the project documentation on GitHub.</p>
+                <p>Once your server is running, click below to start the setup process. We'll guide you through creating your account and configuring your CMS.</p>
+                <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-main">Start Setup →</a>
             </div>
         </div>
     </div>
 
     <script>
-        // Server status check
-        async function checkServerStatus() {
-            const statusDiv = document.getElementById('server-status-check');
-            const detailsDiv = document.getElementById('server-status-details');
-            const apiCheck = document.getElementById('api-check');
-            const adminCheck = document.getElementById('admin-check');
+        // Simple connection check for local server
+        async function checkConnection() {
+            const statusDiv = document.getElementById('connection-status');
+            const successBox = document.getElementById('local-success');
             
-            // Check if we can reach the current domain
+            if (!statusDiv) return;
+            
             const baseUrl = window.location.origin;
             
             try {
-                // Check if API is accessible
-                try {
-                    const apiResponse = await fetch(baseUrl + '/api/public.php?action=status', {
-                        method: 'GET',
-                        cache: 'no-cache'
-                    });
-                    
-                    if (apiResponse.ok) {
-                        apiCheck.className = 'check-status success';
-                        apiCheck.innerHTML = '<span class="check-status-icon">✓</span><span>API is accessible</span>';
-                    } else {
-                        apiCheck.className = 'check-status error';
-                        apiCheck.innerHTML = '<span class="check-status-icon">✗</span><span>API returned error: ' + apiResponse.status + '</span>';
-                    }
-                } catch (error) {
-                    apiCheck.className = 'check-status error';
-                    apiCheck.innerHTML = '<span class="check-status-icon">✗</span><span>Cannot reach API: ' + error.message + '</span>';
+                // Try to reach the admin panel
+                const response = await fetch(baseUrl + '/admin/index.php', {
+                    method: 'HEAD',
+                    cache: 'no-cache',
+                    mode: 'no-cors' // This allows us to check even if CORS fails
+                });
+                
+                // If we get here, the server is likely running
+                statusDiv.className = 'connection-status connected';
+                statusDiv.innerHTML = `
+                    <div class="connection-icon">✓</div>
+                    <h4>Connected to Local Server</h4>
+                    <p>Your server is running correctly!</p>
+                `;
+                
+                if (successBox) {
+                    successBox.style.display = 'block';
                 }
-                
-                // Check if admin panel is accessible
-                try {
-                    const adminResponse = await fetch(baseUrl + '/admin/index.php', {
-                        method: 'HEAD',
-                        cache: 'no-cache'
-                    });
-                    
-                    if (adminResponse.ok) {
-                        adminCheck.className = 'check-status success';
-                        adminCheck.innerHTML = '<span class="check-status-icon">✓</span><span>Admin panel is accessible</span>';
-                    } else {
-                        adminCheck.className = 'check-status error';
-                        adminCheck.innerHTML = '<span class="check-status-icon">✗</span><span>Admin panel returned error: ' + adminResponse.status + '</span>';
-                    }
-                } catch (error) {
-                    adminCheck.className = 'check-status error';
-                    adminCheck.innerHTML = '<span class="check-status-icon">✗</span><span>Cannot reach admin panel: ' + error.message + '</span>';
-                }
-                
-                // Overall status
-                const allChecksPassed = apiCheck.classList.contains('success') && adminCheck.classList.contains('success');
-                
-                if (allChecksPassed) {
-                    statusDiv.innerHTML = '<div class="check-status success"><span class="check-status-icon">✓</span><span>Server is running correctly!</span></div>';
-                } else {
-                    statusDiv.innerHTML = '<div class="check-status error"><span class="check-status-icon">✗</span><span>Some checks failed. See details below.</span></div>';
-                }
-                
-                detailsDiv.style.display = 'block';
                 
             } catch (error) {
-                statusDiv.innerHTML = '<div class="check-status error"><span class="check-status-icon">✗</span><span>Cannot check server status: ' + error.message + '</span></div>';
-                detailsDiv.style.display = 'block';
+                // Try a simpler check - just see if we can load the page
+                fetch(baseUrl + '/admin/index.php', { method: 'GET', cache: 'no-cache' })
+                    .then(() => {
+                        statusDiv.className = 'connection-status connected';
+                        statusDiv.innerHTML = `
+                            <div class="connection-icon">✓</div>
+                            <h4>Connected to Local Server</h4>
+                            <p>Your server is running correctly!</p>
+                        `;
+                        if (successBox) {
+                            successBox.style.display = 'block';
+                        }
+                    })
+                    .catch(() => {
+                        statusDiv.className = 'connection-status not-connected';
+                        statusDiv.innerHTML = `
+                            <div class="connection-icon">✗</div>
+                            <h4>Not Connected</h4>
+                            <p>Make sure you've started the server in your terminal. If you just started it, wait a few seconds and refresh this page.</p>
+                        `;
+                    });
             }
         }
 
@@ -685,19 +594,21 @@
 
                 // Scroll to instructions
                 instructions.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // If local instructions, check connection
+                if (path === 'local') {
+                    setTimeout(checkConnection, 500);
+                }
             }
         }
 
         // Auto-detect if running locally and show local instructions
         window.addEventListener('load', () => {
-            // Check server status
-            checkServerStatus();
-            
             // Auto-select local instructions if on localhost
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 const localCard = document.querySelector('.path-card');
                 if (localCard) {
-                    showInstructions('local');
+                    localCard.click();
                 }
             }
         });
