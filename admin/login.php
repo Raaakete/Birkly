@@ -161,6 +161,17 @@ if (!function_exists('sanitizeFilename')) {
         return preg_replace('/[^a-z0-9._-]/i', '_', $filename);
     }
 }
+
+// Load branding settings for logo
+require_once __DIR__ . '/../api/storage.php';
+$storage = new Storage(__DIR__ . '/../settings');
+$adminSettings = $storage->read('admin.json') ?? [];
+$brandingSettings = $storage->read('branding.json') ?? [];
+
+$projectName = $adminSettings['project_name'] ?? 'HaruCMS';
+$logoPath = $brandingSettings['logoPath'] ?? '';
+$defaultLogo = '/admin/assets/haru-icon.svg';
+$logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -168,44 +179,154 @@ if (!function_exists('sanitizeFilename')) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
-    <title>Login - HaruCMS Admin</title>
+    <title>Login - <?= htmlspecialchars($projectName) ?> Admin</title>
     <link rel="stylesheet" href="/admin/css/style.css">
-    <link rel="shortcut icon" href="assets/haru_favicon.svg">
+    <link rel="shortcut icon" href="<?= htmlspecialchars($logoUrl) ?>">
     <style>
+        :root {
+            --color-primary: #FFFB00;
+            --color-secondary: #A1B0A1;
+            --color-darkest: #4a4d47;
+            --color-dark: #8e928b;
+            --color-mid: #000;
+            --color-light: #dce2d7;
+            --color-lightest: #f4f6f1;
+            --color-positiv: #e4f1ec;
+            --color-negativ: #f3eced;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            position: relative;
+            overflow: hidden;
+            background: var(--color-lightest);
         }
-        
+
+        /* Animated Background */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                var(--color-primary) 0%,
+                var(--color-positiv) 25%,
+                var(--color-secondary) 50%,
+                var(--color-light) 75%,
+                var(--color-primary) 100%
+            );
+            background-size: 400% 400%;
+            animation: waveAnimation 15s ease infinite;
+            opacity: 0.6;
+        }
+
+        .wave:nth-child(2) {
+            animation-delay: -5s;
+            opacity: 0.4;
+            background: linear-gradient(
+                135deg,
+                var(--color-secondary) 0%,
+                var(--color-light) 25%,
+                var(--color-positiv) 50%,
+                var(--color-primary) 75%,
+                var(--color-secondary) 100%
+            );
+            background-size: 400% 400%;
+        }
+
+        .wave:nth-child(3) {
+            animation-delay: -10s;
+            opacity: 0.3;
+            background: linear-gradient(
+                225deg,
+                var(--color-positiv) 0%,
+                var(--color-primary) 25%,
+                var(--color-light) 50%,
+                var(--color-secondary) 75%,
+                var(--color-positiv) 100%
+            );
+            background-size: 400% 400%;
+        }
+
+        @keyframes waveAnimation {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+                background-position: 0% 50%;
+            }
+            50% {
+                transform: translate(-50%, -50%) rotate(180deg);
+                background-position: 100% 50%;
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+                background-position: 0% 50%;
+            }
+        }
+
         .login-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             padding: 3rem;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             margin: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .login-header {
             text-align: center;
             margin-bottom: 2rem;
         }
+
+        .login-logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
         
         .login-header h1 {
-            color: #2d3748;
+            color: var(--color-darkest);
             margin: 0 0 0.5rem 0;
             font-size: 1.875rem;
             font-weight: 700;
         }
         
         .login-header p {
-            color: #718096;
+            color: var(--color-dark);
             margin: 0;
             font-size: 0.875rem;
         }
@@ -224,46 +345,51 @@ if (!function_exists('sanitizeFilename')) {
         
         .form-group label {
             font-weight: 600;
-            color: #2d3748;
+            color: var(--color-darkest);
             font-size: 0.875rem;
         }
         
         .form-group input {
             padding: 0.75rem 1rem;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--color-light);
             border-radius: 8px;
             font-size: 1rem;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
+            background: white;
+            color: var(--color-darkest);
         }
         
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(255, 251, 0, 0.1);
         }
         
         .login-button {
-            background: #667eea;
-            color: white;
+            background: var(--color-primary);
+            color: var(--color-darkest);
             border: none;
             padding: 0.875rem 1.5rem;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            margin-top: 0.5rem;
         }
         
         .login-button:hover {
-            background: #5a67d8;
+            background: #fff700;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 251, 0, 0.3);
         }
         
         .login-button:active {
-            background: #4c51bf;
+            transform: translateY(0);
         }
         
         .error-message {
-            background: #fed7d7;
+            background: var(--color-negativ);
             color: #c53030;
             padding: 0.75rem 1rem;
             border-radius: 8px;
@@ -272,7 +398,7 @@ if (!function_exists('sanitizeFilename')) {
         }
         
         .success-message {
-            background: #c6f6d5;
+            background: var(--color-positiv);
             color: #2f855a;
             padding: 0.75rem 1rem;
             border-radius: 8px;
@@ -284,17 +410,17 @@ if (!function_exists('sanitizeFilename')) {
             text-align: center;
             margin-top: 2rem;
             padding-top: 2rem;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--color-light);
         }
         
         .login-footer p {
-            color: #718096;
+            color: var(--color-dark);
             font-size: 0.875rem;
             margin: 0;
         }
         
         .login-footer a {
-            color: #667eea;
+            color: var(--color-primary);
             text-decoration: none;
             font-weight: 600;
         }
@@ -302,28 +428,29 @@ if (!function_exists('sanitizeFilename')) {
         .login-footer a:hover {
             text-decoration: underline;
         }
-        
-        .logo {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 1rem;
-            background: #667eea;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="background">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+
     <div class="login-container">
         <div class="login-header">
-            <div class="logo">H</div>
+            <div class="login-logo">
+                <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?> Logo">
+            </div>
             <h1>Welcome Back</h1>
-            <p>Sign in to your HaruCMS admin account</p>
+            <p>Sign in to your <?= htmlspecialchars($projectName) ?> admin account</p>
         </div>
         
         <?php if ($error): ?>
