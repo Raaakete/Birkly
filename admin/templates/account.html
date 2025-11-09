@@ -1,0 +1,324 @@
+<div class="page-header pt-m pb-m">
+  <div class="breadcrumbs"><span class="current">Account Settings</span></div>
+</div>
+<div class="account-settings-page">
+  <div class="settings-section">
+    <h2>Profile Information</h2>
+    <form id="account-profile-form" class="settings-form" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="account-name">Name</label>
+        <input type="text" id="account-name" name="name" value="<?= htmlspecialchars($user['name'] ?? $user['email'] ?? '') ?>" required>
+        <small>Your display name in the admin panel</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="account-email">Email</label>
+        <input type="email" id="account-email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" disabled>
+        <small>Email cannot be changed</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="account-avatar">Avatar</label>
+        <input type="file" id="account-avatar" name="avatar" accept="image/*">
+        <small>Upload a profile picture. Recommended size: 200x200px. If not provided, initials will be used.</small>
+        <?php if (!empty($user['avatar'])): ?>
+          <div style="margin-top: 0.5rem;">
+            <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Current avatar:</p>
+            <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Current avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;">
+            <button type="button" id="remove-avatar-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Remove Avatar</button>
+          </div>
+        <?php endif; ?>
+        <div id="avatar-preview" style="margin-top: 0.5rem; display: none;">
+          <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Preview:</p>
+          <img id="avatar-preview-img" src="" alt="Avatar preview" style="width: 80px; height: 80px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;">
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+      </div>
+      
+      <div id="account-message" class="settings-message" style="display: none;"></div>
+    </form>
+  </div>
+
+  <div class="settings-section">
+    <h2>Change Password</h2>
+    <form id="account-password-form" class="settings-form">
+      <div class="form-group">
+        <label for="current-password">Current Password *</label>
+        <input type="password" id="current-password" name="current_password" required class="input" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label for="new-password">New Password *</label>
+        <input type="password" id="new-password" name="new_password" required class="input" autocomplete="new-password" minlength="8">
+        <small class="text-muted">Password must be at least 8 characters long</small>
+      </div>
+      <div class="form-group">
+        <label for="confirm-password">Confirm New Password *</label>
+        <input type="password" id="confirm-password" name="confirm_password" required class="input" autocomplete="new-password" minlength="8">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Change Password</button>
+      </div>
+      
+      <div id="password-message" class="settings-message" style="display: none;"></div>
+    </form>
+  </div>
+
+  <div class="settings-section">
+    <h2>Language Preferences</h2>
+    <form id="account-language-form" class="settings-form">
+      <div class="form-group">
+        <label for="account-language">Admin Panel Language</label>
+        <select id="account-language" name="language" class="input">
+          <?php
+          $currentLang = getCurrentLanguage();
+          $availableLangs = I18n::getAvailableLanguages();
+          foreach ($availableLangs as $langCode => $langInfo):
+          ?>
+            <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentLang ? 'selected' : '' ?>>
+              <?= htmlspecialchars($langInfo['native_name']) ?> <?= htmlspecialchars($langInfo['flag']) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+        <small>This setting only affects your admin panel language, not the system default.</small>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Language</button>
+      </div>
+      
+      <div id="language-message" class="settings-message" style="display: none;"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Avatar preview
+    const avatarInput = document.getElementById('account-avatar');
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('avatar-preview');
+                    const previewImg = document.getElementById('avatar-preview-img');
+                    if (preview && previewImg) {
+                        previewImg.src = event.target.result;
+                        preview.style.display = 'block';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Remove avatar
+    const removeAvatarBtn = document.getElementById('remove-avatar-btn');
+    if (removeAvatarBtn) {
+        removeAvatarBtn.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to remove your avatar?')) {
+                try {
+                    const response = await fetch('/api/users.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'update_profile',
+                            avatar: '',
+                            _csrf: getCsrfToken()
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.status === 'ok') {
+                        showMessage('account-message', 'Avatar removed successfully!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showMessage('account-message', 'Error: ' + result.message, 'error');
+                    }
+                } catch (error) {
+                    showMessage('account-message', 'Error removing avatar: ' + error.message, 'error');
+                }
+            }
+        });
+    }
+    
+    // Profile form
+    const profileForm = document.getElementById('account-profile-form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(profileForm);
+            const avatarFile = formData.get('avatar');
+            
+            // Handle avatar upload if provided
+            let avatarPath = '';
+            if (avatarFile && avatarFile.size > 0) {
+                try {
+                    const avatarFormData = new FormData();
+                    avatarFormData.append('file', avatarFile);
+                    avatarFormData.append('_csrf', getCsrfToken());
+                    
+                    const uploadResponse = await fetch('/api/users.php?action=upload_avatar', {
+                        method: 'POST',
+                        body: avatarFormData
+                    });
+                    
+                    const uploadResult = await uploadResponse.json();
+                    if (uploadResult.status === 'ok') {
+                        avatarPath = uploadResult.data.avatarPath;
+                    } else {
+                        showMessage('account-message', 'Error uploading avatar: ' + (uploadResult.message || 'Unknown error'), 'error');
+                        return;
+                    }
+                } catch (error) {
+                    showMessage('account-message', 'Error uploading avatar: ' + error.message, 'error');
+                    return;
+                }
+            }
+            
+            // Update profile
+            try {
+                const updateData = {
+                    action: 'update_profile',
+                    name: formData.get('name'),
+                    _csrf: getCsrfToken()
+                };
+                
+                if (avatarPath) {
+                    updateData.avatar = avatarPath;
+                }
+                
+                const response = await fetch('/api/users.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const result = await response.json();
+                if (result.status === 'ok') {
+                    showMessage('account-message', 'Profile updated successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showMessage('account-message', 'Error: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('account-message', 'Error updating profile: ' + error.message, 'error');
+            }
+        });
+    }
+    
+    // Password form
+    const passwordForm = document.getElementById('account-password-form');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(passwordForm);
+            
+            const currentPassword = formData.get('current_password');
+            const newPassword = formData.get('new_password');
+            const confirmPassword = formData.get('confirm_password');
+            
+            if (newPassword !== confirmPassword) {
+                showMessage('password-message', 'New password and confirmation do not match', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                showMessage('password-message', 'Password must be at least 8 characters long', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/users.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        action: 'change_password',
+                        current_password: currentPassword,
+                        new_password: newPassword,
+                        _csrf: getCsrfToken()
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'ok') {
+                    showMessage('password-message', 'Password changed successfully!', 'success');
+                    passwordForm.reset();
+                } else {
+                    showMessage('password-message', 'Error: ' + (result.message || 'Failed to change password'), 'error');
+                }
+            } catch (error) {
+                showMessage('password-message', 'Error changing password: ' + error.message, 'error');
+            }
+        });
+    }
+    
+    // Language form
+    const languageForm = document.getElementById('account-language-form');
+    if (languageForm) {
+        languageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(languageForm);
+            const language = formData.get('language');
+            
+            try {
+                const response = await fetch('/api/users.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'set_language',
+                        language: language,
+                        _csrf: getCsrfToken()
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'ok') {
+                    showMessage('language-message', 'Language preference saved!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showMessage('language-message', 'Error: ' + (result.message || 'Failed to save language'), 'error');
+                }
+            } catch (error) {
+                showMessage('language-message', 'Error saving language: ' + error.message, 'error');
+            }
+        });
+    }
+    
+    function getCsrfToken() {
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        return window.csrfToken || 'placeholder-token';
+    }
+    
+    function showMessage(elementId, message, type) {
+        const messageDiv = document.getElementById(elementId);
+        if (messageDiv) {
+            messageDiv.textContent = message;
+            messageDiv.className = 'settings-message ' + type;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    }
+});
+</script>
+

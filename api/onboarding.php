@@ -137,12 +137,20 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         
     case 'create_first_user':
         // Create first admin user - no authentication required (this is how we get the first user)
+        $name = trim($input['name'] ?? '');
         $email = trim($input['email'] ?? '');
         $password = $input['password'] ?? '';
         
-        if (empty($email) || empty($password)) {
+        if (empty($name) || empty($email) || empty($password)) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Email and password required']);
+            echo json_encode(['status' => 'error', 'message' => 'Name, email and password required']);
+            exit;
+        }
+        
+        // Validate name
+        if (strlen($name) < 2) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Name must be at least 2 characters']);
             exit;
         }
         
@@ -188,6 +196,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         
         $user = [
             'id' => $userId,
+            'name' => $name,
             'email' => strtolower(trim($email)),
             'password' => hashPassword($password),
             'role' => 'admin',
@@ -271,10 +280,32 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         // Mark onboarding as complete
         $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
         
-        saveOnboardingProgress($userId, [
+        // Get demo website URL and choice from request
+        $demoWebsiteUrl = $input['demo_website_url'] ?? null;
+        $demoContentChoice = $input['demo_content_choice'] ?? null;
+        
+        $progressData = [
             'completed' => true,
             'completed_at' => date('c')
-        ]);
+        ];
+        
+        // Store demo website URL if provided
+        if ($demoWebsiteUrl) {
+            $progressData['demo_website_url'] = $demoWebsiteUrl;
+        }
+        if ($demoContentChoice) {
+            $progressData['demo_content_choice'] = $demoContentChoice;
+        }
+        
+        saveOnboardingProgress($userId, $progressData);
+        
+        // Store in session for modal display
+        if ($demoWebsiteUrl) {
+            $_SESSION['onboarding_demo_website_url'] = $demoWebsiteUrl;
+        }
+        if ($demoContentChoice) {
+            $_SESSION['onboarding_demo_choice'] = $demoContentChoice;
+        }
         
         echo json_encode([
             'status' => 'ok',

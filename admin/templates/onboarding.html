@@ -1,5 +1,23 @@
 <div class="onboarding-page">
     <div class="onboarding-container">
+        <!-- Onboarding Header with Logo -->
+        <div class="onboarding-header">
+            <?php
+            // Load settings to get logo
+            require_once __DIR__ . '/../../api/storage.php';
+            $storage = new Storage(__DIR__ . '/../../settings');
+            $adminSettings = $storage->read('admin.json') ?? [];
+            $brandingSettings = $storage->read('branding.json') ?? [];
+            
+            $projectName = $adminSettings['project_name'] ?? 'HaruCMS';
+            $logoPath = $brandingSettings['logoPath'] ?? '';
+            $defaultLogo = '/admin/assets/haru-icon.svg';
+            $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
+            ?>
+            <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="onboarding-logo">
+            <h1 class="onboarding-header-title"><?= htmlspecialchars($projectName) ?></h1>
+        </div>
+        
         <!-- Step 0: Create First User (if no users exist) -->
         <div class="onboarding-step" id="step-first-user" data-step="0" style="display: none;">
             <div class="onboarding-content">
@@ -16,7 +34,25 @@
                 </div>
                 
                 <form id="first-user-form" class="onboarding-form">
-                    <div class="form-group">
+                    <div class="form-group" id="form-group-name">
+                        <label for="first-user-name">Name</label>
+                        <input 
+                            type="text" 
+                            id="first-user-name" 
+                            name="name" 
+                            required 
+                            autocomplete="name"
+                            placeholder="John Doe"
+                            minlength="2"
+                        >
+                        <small class="form-help">Your display name in the admin panel</small>
+                        <div class="form-feedback error">Name must be at least 2 characters</div>
+                        <div class="form-feedback success">✓ Name looks good</div>
+                        <div class="form-icon error">⚠</div>
+                        <div class="form-icon success">✓</div>
+                    </div>
+                    
+                    <div class="form-group" id="form-group-email">
                         <label for="first-user-email">Email Address</label>
                         <input 
                             type="email" 
@@ -27,9 +63,13 @@
                             placeholder="admin@example.com"
                         >
                         <small class="form-help">This will be your admin login email</small>
+                        <div class="form-feedback error">Please enter a valid email address</div>
+                        <div class="form-feedback success">✓ Email looks good</div>
+                        <div class="form-icon error">⚠</div>
+                        <div class="form-icon success">✓</div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="form-group-password">
                         <label for="first-user-password">Password</label>
                         <input 
                             type="password" 
@@ -41,9 +81,13 @@
                             minlength="8"
                         >
                         <small class="form-help">Minimum 8 characters</small>
+                        <div class="form-feedback error">Password must be at least 8 characters</div>
+                        <div class="form-feedback success">✓ Password looks good</div>
+                        <div class="form-icon error">⚠</div>
+                        <div class="form-icon success">✓</div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="form-group-password-confirm">
                         <label for="first-user-password-confirm">Confirm Password</label>
                         <input 
                             type="password" 
@@ -54,6 +98,10 @@
                             placeholder="Confirm your password"
                             minlength="8"
                         >
+                        <div class="form-feedback error">Passwords do not match</div>
+                        <div class="form-feedback success">✓ Passwords match</div>
+                        <div class="form-icon error">⚠</div>
+                        <div class="form-icon success">✓</div>
                     </div>
                     
                     <div class="form-actions">
@@ -115,10 +163,14 @@
                 </div>
                 
                 <form id="site-info-form" class="onboarding-form" enctype="multipart/form-data">
-                    <div class="form-group">
+                    <div class="form-group" id="form-group-project-name">
                         <label for="project-name">Project Name</label>
-                        <input type="text" id="project-name" name="project_name" placeholder="My Project" required>
-                        <small>This name will be displayed in the admin panel (e.g., "Acme Corp CMS", "My Project")</small>
+                        <input type="text" id="project-name" name="project_name" placeholder="My Project" required minlength="2">
+                        <small class="form-help">This name will be displayed in the admin panel (e.g., "Acme Corp CMS", "My Project")</small>
+                        <div class="form-feedback error">Project name must be at least 2 characters</div>
+                        <div class="form-feedback success">✓ Project name looks good</div>
+                        <div class="form-icon error">⚠</div>
+                        <div class="form-icon success">✓</div>
                     </div>
                     
                     <div class="form-group">
@@ -159,29 +211,6 @@
                     <p class="step-description">HaruCMS ships with demo content by default to help you learn the system. Would you like to keep it or start fresh?</p>
                 </div>
                 
-                {if onboarding_data.demo_content exist}
-                    {if onboarding_data.demo_content.has_demo_content == true}
-                        <div class="demo-info">
-                            <h3>Demo Content Available</h3>
-                            <p>The following demo content is included:</p>
-                            <ul class="demo-list">
-                                {for collection in onboarding_data.demo_content.collections}
-                                <li>
-                                    <strong>{{ collection.name }}</strong>
-                                    <span class="demo-count">{{ collection.entries_count }} entries</span>
-                                </li>
-                                {endfor}
-                            </ul>
-                            
-                            {if onboarding_data.demo_content.has_demo_website == true}
-                            <div class="demo-website-info">
-                                <p><strong>Demo Website:</strong> A simple blog website is available at <code>/demo-website</code></p>
-                            </div>
-                            {endif}
-                        </div>
-                    {endif}
-                {endif}
-                
                 <div class="demo-options">
                     <div class="demo-card keep-card" onclick="onboarding.keepDemoContent()">
                         <div class="demo-card-header">
@@ -190,6 +219,11 @@
                         <div class="demo-card-body">
                             <p>Keep the demo content and website to explore and learn from. You can modify or delete it later.</p>
                         </div>
+                        {if onboarding_data.demo_content.has_demo_website == true}
+                            <div class="demo-website-info">
+                                <p><strong>Demo Website:</strong> A simple website is available at <code>/demo-website</code></p>
+                            </div>
+                            {endif}
                         <div class="demo-card-footer">
                             <button class="btn btn-primary btn-small">Keep</button>
                         </div>
@@ -219,59 +253,15 @@
             </div>
         </div>
         
-        <!-- Step 4: Completion -->
-        <div class="onboarding-step" id="step-complete" data-step="4" style="display: none;">
-            <div class="onboarding-content">
-                <div class="completion-animation">
-                    <div class="checkmark">✓</div>
-                </div>
-                
-                <div class="completion-content">
-                    <h1>You're All Set! 🎉</h1>
-                    <p class="completion-message">Your HaruCMS is ready to use. Here's what you can do next:</p>
-                    
-                    <div class="next-steps">
-                        <div class="next-step-card">
-                            <div class="step-icon">📝</div>
-                            <h3>Create Your First Entry</h3>
-                            <p>Start adding content to your collections</p>
-                            <a href="/admin/index.php?page=content" class="btn btn-primary btn-small">Go to Content</a>
-                        </div>
-                        
-                        <div class="next-step-card">
-                            <div class="step-icon">🎨</div>
-                            <h3>Customize Your Site</h3>
-                            <p>Configure settings and customize your site</p>
-                            <a href="/admin/index.php?page=settings" class="btn btn-primary btn-small">Go to Settings</a>
-                        </div>
-                        
-                        <div class="next-step-card">
-                            <div class="step-icon">📚</div>
-                            <h3>Read the Documentation</h3>
-                            <p>Learn more about HaruCMS features</p>
-                            <a href="/docs" class="btn btn-secondary btn-small">View Docs</a>
-                        </div>
-                    </div>
-                    
-                    <div class="onboarding-actions">
-                        <button type="button" class="btn btn-primary btn-large" onclick="onboarding.complete()">
-                            Go to Dashboard
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Progress Indicator -->
         <div class="onboarding-progress">
             <div class="progress-bar">
                 <div class="progress-fill" id="progress-fill"></div>
             </div>
-            <div class="progress-steps">
+                <div class="progress-steps">
                 <span class="progress-step active" data-step="1">Welcome</span>
                 <span class="progress-step" data-step="2">Project Info</span>
                 <span class="progress-step" data-step="3">Demo Website</span>
-                <span class="progress-step" data-step="4">Complete</span>
             </div>
         </div>
     </div>

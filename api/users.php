@@ -67,7 +67,21 @@ if ($action === 'login') {
     
     // Don't send password hash to client
     unset($user['password']);
+    
+    // Ensure name and avatar are in session
+    $user['name'] = $user['name'] ?? $user['email'];
+    $user['avatar'] = $user['avatar'] ?? '';
+    $user['language'] = $user['language'] ?? null;
+    
     $_SESSION['user'] = $user;
+    
+    // Set language from user profile if available
+    if (!empty($user['language'])) {
+        require_once __DIR__ . '/../core/i18n.php';
+        I18n::setLanguage($user['language']);
+        $_SESSION['admin_language'] = $user['language'];
+    }
+    
     log_security_event('login_success', ['email' => $email]);
     echo json_encode([
         'status' => 'ok',
@@ -289,6 +303,221 @@ if ($action === 'count') {
         'data' => [
             'count' => $count
         ]
+    ]);
+    exit;
+}
+
+// Update profile (current user only)
+if ($action === 'update_profile') {
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    $userId = $_SESSION['user']['id'];
+    $user = $storage->read($userId . '.json');
+    if (!$user) {
+        echo json_encode(['status' => 'error', 'message' => 'User not found']);
+        exit;
+    }
+    
+    // Update allowed fields
+    if (isset($input['name'])) {
+        $user['name'] = $input['name'];
+    }
+    if (isset($input['avatar'])) {
+        $user['avatar'] = $input['avatar'];
+    }
+    
+    $user['updated_at'] = date('c');
+    $result = $storage->write($userId . '.json', $user);
+    
+    // Update session
+    $_SESSION['user'] = array_merge($_SESSION['user'], [
+        'name' => $user['name'] ?? $_SESSION['user']['email'],
+        'avatar' => $user['avatar'] ?? ''
+    ]);
+    
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Profile updated' : 'Failed to update profile'
+    ]);
+    exit;
+}
+
+// Upload avatar
+if ($action === 'upload_avatar') {
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(['status' => 'error', 'message' => 'No file uploaded or upload error']);
+        exit;
+    }
+    
+    $file = $_FILES['file'];
+    
+    // Validate file type
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    if (!in_array($mimeType, $allowedTypes)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid file type. Only images are allowed.']);
+        exit;
+    }
+    
+    // Validate file size (max 2MB for avatar)
+    if ($file['size'] > 2 * 1024 * 1024) {
+        echo json_encode(['status' => 'error', 'message' => 'File too large. Maximum size is 2MB.']);
+        exit;
+    }
+    
+    // Create admin/assets/avatars directory if it doesn't exist
+    $avatarsDir = __DIR__ . '/../admin/assets/avatars';
+    if (!is_dir($avatarsDir)) {
+        mkdir($avatarsDir, 0755, true);
+    }
+    
+    // Generate unique filename
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $filename = 'avatar-' . $_SESSION['user']['id'] . '-' . uniqid() . '.' . $extension;
+    $filepath = $avatarsDir . '/' . $filename;
+    
+    // Move uploaded file
+    if (move_uploaded_file($file['tmp_name'], $filepath)) {
+        $avatarPath = '/admin/assets/avatars/' . $filename;
+        
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Avatar uploaded successfully',
+            'data' => ['avatarPath' => $avatarPath]
+        ]);
+        exit;
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to save file']);
+        exit;
+    }
+}
+
+// Set language (user-level)
+if ($action === 'set_language') {
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'set_language', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    $language = $input['language'] ?? '';
+    if (empty($language)) {
+        echo json_encode(['status' => 'error', 'message' => 'Language required']);
+        exit;
+    }
+    
+    // Validate language exists
+    require_once __DIR__ . '/../core/i18n.php';
+    $availableLangs = I18n::getAvailableLanguages();
+    if (!isset($availableLangs[$language])) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid language']);
+        exit;
+    }
+    
+    // Set language in session
+    $_SESSION['admin_language'] = $language;
+    
+    // Save to user profile
+    $userId = $_SESSION['user']['id'];
+    $user = $storage->read($userId . '.json');
+    if ($user) {
+        $user['language'] = $language;
+        $user['updated_at'] = date('c');
+        $storage->write($userId . '.json', $user);
+        
+        // Update session
+        $_SESSION['user']['language'] = $language;
+    }
+    
+    // Set language in i18n system
+    I18n::setLanguage($language);
+    
+    echo json_encode(['status' => 'ok', 'message' => 'Language changed successfully']);
+    exit;
+}
+
+// Change password (current user only)
+if ($action === 'change_password') {
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    $currentPassword = $input['current_password'] ?? '';
+    $newPassword = $input['new_password'] ?? '';
+    
+    if (empty($currentPassword) || empty($newPassword)) {
+        echo json_encode(['status' => 'error', 'message' => 'Current password and new password required']);
+        exit;
+    }
+    
+    if (strlen($newPassword) < 8) {
+        echo json_encode(['status' => 'error', 'message' => 'New password must be at least 8 characters long']);
+        exit;
+    }
+    
+    $userId = $_SESSION['user']['id'];
+    $user = $storage->read($userId . '.json');
+    if (!$user) {
+        echo json_encode(['status' => 'error', 'message' => 'User not found']);
+        exit;
+    }
+    
+    // Verify current password
+    if (!verifyPassword($currentPassword, $user['password'])) {
+        echo json_encode(['status' => 'error', 'message' => 'Current password is incorrect']);
+        exit;
+    }
+    
+    // Update password
+    $user['password'] = hashPassword($newPassword);
+    $user['updated_at'] = date('c');
+    $result = $storage->write($userId . '.json', $user);
+    
+    log_security_event('password_changed', ['user' => $_SESSION['user']['email'] ?? 'unknown']);
+    
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Password changed successfully' : 'Failed to change password'
     ]);
     exit;
 }
