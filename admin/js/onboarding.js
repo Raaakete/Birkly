@@ -235,21 +235,34 @@ const onboarding = {
     showStep(step) {
         this.currentStep = step;
         
-        // Hide all steps with animation
+        // Get the step name for the current step
+        const stepName = this.getStepName(step);
+        const currentStepId = `step-${stepName}`;
+        
+        // First, immediately hide all steps that are not the current one
+        // This prevents any race conditions with animations
         document.querySelectorAll('.onboarding-step').forEach(el => {
-            if (el.style.display !== 'none') {
-                el.style.animation = 'fadeOut 0.2s ease-out';
-                setTimeout(() => {
-                    el.style.display = 'none';
-                }, 200);
+            const stepId = el.id;
+            if (stepId !== currentStepId) {
+                // Immediately hide (no animation delay)
+                el.style.display = 'none';
+                el.style.animation = '';
             }
         });
         
         // Show current step with animation
-        const currentStepEl = document.getElementById(`step-${this.getStepName(step)}`);
+        const currentStepEl = document.getElementById(currentStepId);
         if (currentStepEl) {
+            // Always show the step, even if it was already visible
             currentStepEl.style.display = 'block';
-            currentStepEl.style.animation = 'fadeInUp 0.4s ease-out';
+            // Force reflow to ensure animation works
+            currentStepEl.offsetHeight;
+            // Reset animation and apply fadeIn
+            currentStepEl.style.animation = '';
+            // Use requestAnimationFrame to ensure the display change is applied before animation
+            requestAnimationFrame(() => {
+                currentStepEl.style.animation = 'fadeInUp 0.4s ease-out';
+            });
         }
         
         // Update progress
