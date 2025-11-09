@@ -149,10 +149,31 @@ $isOnboarding = ($page === 'onboarding');
         <?php
         // Render onboarding page without sidebar
         $onboardingData = fetch_admin_page_data('onboarding', $_GET);
+        // Calculate project root path (admin/ is one level down from project root)
+        // __DIR__ in admin/index.php is /path/to/project/admin, so dirname(__DIR__) is project root
+        $projectRoot = dirname(__DIR__);
+        // Verify the path is correct
+        if (!file_exists($projectRoot . '/api/storage.php')) {
+            // Fallback: try to find the project root by looking for api/storage.php
+            $currentDir = __DIR__;
+            $projectRoot = null;
+            for ($i = 0; $i < 3; $i++) {
+                $testPath = $currentDir . str_repeat('/..', $i);
+                $realPath = realpath($testPath);
+                if ($realPath && file_exists($realPath . '/api/storage.php')) {
+                    $projectRoot = $realPath;
+                    break;
+                }
+            }
+            if (!$projectRoot) {
+                $projectRoot = dirname(__DIR__); // Fallback to default
+            }
+        }
         try {
             $output = render_template_file($templatePath, array_merge($data ?? [], [
                 'onboarding' => $onboardingStatus,
-                'onboarding_data' => $onboardingData
+                'onboarding_data' => $onboardingData,
+                'project_root' => $projectRoot // Pass project root path to template
             ]));
             echo $output ?: '<div class="error">Failed to render onboarding page</div>';
         } catch (Exception $e) {
