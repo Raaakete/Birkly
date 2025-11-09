@@ -213,7 +213,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             background: var(--color-lightest);
         }
 
-        /* Animated Background */
+        /* Animated Background Canvas */
         .background {
             position: fixed;
             top: 0;
@@ -221,67 +221,12 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             width: 100%;
             height: 100%;
             z-index: 0;
-            overflow: hidden;
         }
 
-        .wave {
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                45deg,
-                var(--color-primary) 0%,
-                var(--color-positiv) 25%,
-                var(--color-secondary) 50%,
-                var(--color-light) 75%,
-                var(--color-primary) 100%
-            );
-            background-size: 400% 400%;
-            animation: waveAnimation 15s ease infinite;
-            opacity: 0.6;
-        }
-
-        .wave:nth-child(2) {
-            animation-delay: -5s;
-            opacity: 0.4;
-            background: linear-gradient(
-                135deg,
-                var(--color-secondary) 0%,
-                var(--color-light) 25%,
-                var(--color-positiv) 50%,
-                var(--color-primary) 75%,
-                var(--color-secondary) 100%
-            );
-            background-size: 400% 400%;
-        }
-
-        .wave:nth-child(3) {
-            animation-delay: -10s;
-            opacity: 0.3;
-            background: linear-gradient(
-                225deg,
-                var(--color-positiv) 0%,
-                var(--color-primary) 25%,
-                var(--color-light) 50%,
-                var(--color-secondary) 75%,
-                var(--color-positiv) 100%
-            );
-            background-size: 400% 400%;
-        }
-
-        @keyframes waveAnimation {
-            0% {
-                transform: translate(-50%, -50%) rotate(0deg);
-                background-position: 0% 50%;
-            }
-            50% {
-                transform: translate(-50%, -50%) rotate(180deg);
-                background-position: 100% 50%;
-            }
-            100% {
-                transform: translate(-50%, -50%) rotate(360deg);
-                background-position: 0% 50%;
-            }
+        .background canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
 
         .login-container {
@@ -439,9 +384,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 </head>
 <body>
     <div class="background">
-        <div class="wave"></div>
-        <div class="wave"></div>
-        <div class="wave"></div>
+        <canvas id="background-canvas"></canvas>
     </div>
 
     <div class="login-container">
@@ -504,6 +447,64 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     </div>
     
     <script>
+        // Animated Background Canvas
+        (function() {
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Admin panel colors
+            const colors = {
+                primary: '#FFFB00',
+                secondary: '#A1B0A1',
+                positiv: '#e4f1ec',
+                light: '#dce2d7',
+                lightest: '#f4f6f1'
+            };
+            
+            let time = 0;
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
+            function drawWave(amplitude, frequency, speed, color, offset) {
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                
+                for (let x = 0; x < canvas.width; x++) {
+                    const y = canvas.height / 2 + 
+                        amplitude * Math.sin((x * frequency + time * speed + offset) * 0.01);
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.lineTo(0, canvas.height);
+                ctx.closePath();
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw multiple waves with different properties
+                drawWave(80, 0.5, 0.5, colors.positiv, 0);
+                drawWave(60, 0.7, 0.7, colors.secondary, 50);
+                drawWave(100, 0.4, 0.4, colors.primary, 100);
+                drawWave(70, 0.6, 0.6, colors.light, 150);
+                
+                time += 0.5;
+                
+                requestAnimationFrame(animate);
+            }
+            
+            resizeCanvas();
+            animate();
+            
+            window.addEventListener('resize', resizeCanvas);
+        })();
+        
         // Auto-focus email field
         document.getElementById('email').focus();
         
