@@ -14,12 +14,34 @@ class I18n {
      * Initialize i18n system
      */
     public static function init($language = null) {
-        // Get language from session or settings
+        // Get language from user profile, session, or settings
         if ($language === null) {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
-            $language = $_SESSION['admin_language'] ?? self::getDefaultLanguage();
+            
+            // First check user profile (user-level language)
+            if (isset($_SESSION['user'])) {
+                require_once __DIR__ . '/../api/storage.php';
+                $userStorage = new Storage(__DIR__ . '/../users');
+                $userId = $_SESSION['user']['id'] ?? '';
+                if ($userId) {
+                    $user = $userStorage->read($userId . '.json');
+                    if ($user && isset($user['language'])) {
+                        $language = $user['language'];
+                        self::setLanguage($language);
+                        return;
+                    }
+                }
+            }
+            
+            // Then check session
+            if (isset($_SESSION['admin_language'])) {
+                $language = $_SESSION['admin_language'];
+            } else {
+                // Finally fall back to default
+                $language = self::getDefaultLanguage();
+            }
         }
         
         self::setLanguage($language);

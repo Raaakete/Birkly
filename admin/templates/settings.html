@@ -80,14 +80,6 @@
         </svg>
         Updates
       </button>
-      <button class="tab-btn" data-tab="password">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <circle cx="12" cy="16" r="1"></circle>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        Password
-      </button>
     </div>
 
     <div class="tab-content">
@@ -669,30 +661,6 @@
         </div>
       </div>
 
-      <!-- Password Tab -->
-      <div class="tab-pane" id="password">
-        <div class="settings-section">
-          <h2>Change Password</h2>
-          <form id="password-form" class="settings-form">
-            <div class="form-group">
-              <label for="current-password">Current Password *</label>
-              <input type="password" id="current-password" name="current_password" required class="input" autocomplete="current-password">
-            </div>
-            <div class="form-group">
-              <label for="new-password">New Password *</label>
-              <input type="password" id="new-password" name="new_password" required class="input" autocomplete="new-password" minlength="8">
-              <small class="text-muted">Password must be at least 8 characters long</small>
-            </div>
-            <div class="form-group">
-              <label for="confirm-password">Confirm New Password *</label>
-              <input type="password" id="confirm-password" name="confirm_password" required class="input" autocomplete="new-password" minlength="8">
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary">Change Password</button>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -1057,7 +1025,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submissions
     const generalForm = document.getElementById('general-form');
     const securityForm = document.getElementById('security-form');
-    const passwordForm = document.getElementById('password-form');
 
     if (generalForm) {
         generalForm.addEventListener('submit', handleFormSubmit);
@@ -1120,58 +1087,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (securityForm) {
         securityForm.addEventListener('submit', handleFormSubmit);
     }
-    if (passwordForm) {
-        passwordForm.addEventListener('submit', handlePasswordChange);
-    }
 });
-
-// Handle password change
-async function handlePasswordChange(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    
-    const currentPassword = formData.get('current_password');
-    const newPassword = formData.get('new_password');
-    const confirmPassword = formData.get('confirm_password');
-    
-    if (newPassword !== confirmPassword) {
-        showMessage('New password and confirmation do not match', 'error');
-        return;
-    }
-    
-    if (newPassword.length < 8) {
-        showMessage('Password must be at least 8 characters long', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/users.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                action: 'change_password',
-                current_password: currentPassword,
-                new_password: newPassword,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('Password changed successfully!', 'success');
-            form.reset();
-        } else {
-            showMessage('Error: ' + (result.message || 'Failed to change password'), 'error');
-        }
-    } catch (error) {
-        showMessage('Error changing password: ' + error.message, 'error');
-    }
-}
 
 // Get CSRF token from meta tag or generate one
 function getCsrfToken() {

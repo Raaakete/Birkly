@@ -66,6 +66,7 @@ if ($page !== 'onboarding' && $onboardingStatus['is_first_time'] && !$onboarding
             'content' => 'content.html',
             'media' => 'media.html',
             'settings' => 'settings.html',
+            'account' => 'account.html',
             'updates' => 'updates.html',
             'entries' => 'entries.html',
             'entry-editor' => 'entry-editor.html',
@@ -171,7 +172,7 @@ $isOnboarding = ($page === 'onboarding');
         <main class="main-content">
             <?php
             // Render the page using template system
-            if ($page === 'dashboard' || $page === 'media') {
+            if ($page === 'dashboard' || $page === 'media' || $page === 'account') {
                 // Pass query params so entry-editor receives collection/entry ids
                 $data = fetch_admin_page_data($page, $_GET);
                 
@@ -220,8 +221,8 @@ $isOnboarding = ($page === 'onboarding');
                         echo '</div>';
                     }
                 }
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'entries' || $page === 'entry-editor' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'help') {
-                // Content, Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages use direct PHP instead of template parser
+            } elseif ($page === 'content' || $page === 'settings' || $page === 'account' || $page === 'entries' || $page === 'entry-editor' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'help') {
+                // Content, Settings, Account, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages use direct PHP instead of template parser
                 $data = fetch_admin_page_data($page, $_GET);
                 extract($data);
                 include $templatePath;
