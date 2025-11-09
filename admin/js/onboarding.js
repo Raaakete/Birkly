@@ -5,10 +5,11 @@
 
 const onboarding = {
     currentStep: 0,
-    maxSteps: 4,
+    maxSteps: 3, // Reduced from 4 since completion is now a modal
     needsFirstUser: false,
     demoContentChoice: null, // 'keep' or 'delete'
     siteInfo: {},
+    demoWebsiteUrl: null, // Will be set when demo content is kept
     
     init() {
         // Check if we're on the onboarding page
@@ -30,7 +31,7 @@ const onboarding = {
             
             if (data.status === 'ok' && data.data.needs_first_user) {
                 this.needsFirstUser = true;
-                this.maxSteps = 5; // Add one step for first user (0 + 4 normal steps)
+                this.maxSteps = 4; // Add one step for first user (0 + 3 normal steps)
                 this.currentStep = 0;
                 this.showStep(0); // Show first user step
             } else {
@@ -53,6 +54,36 @@ const onboarding = {
                 e.preventDefault();
                 this.createFirstUser();
             });
+            
+            // Real-time validation for first user form
+            this.setupValidation('first-user-name', 'form-group-name', (value) => value.length >= 2);
+            this.setupValidation('first-user-email', 'form-group-email', (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+            this.setupValidation('first-user-password', 'form-group-password', (value) => value.length >= 8);
+            
+            // Password confirmation validation
+            const passwordInput = document.getElementById('first-user-password');
+            const passwordConfirmInput = document.getElementById('first-user-password-confirm');
+            if (passwordInput && passwordConfirmInput) {
+                const validatePasswordMatch = () => {
+                    const password = passwordInput.value;
+                    const passwordConfirm = passwordConfirmInput.value;
+                    const formGroup = document.getElementById('form-group-password-confirm');
+                    if (passwordConfirm.length > 0) {
+                        if (password === passwordConfirm && password.length >= 8) {
+                            formGroup.classList.remove('error');
+                            formGroup.classList.add('success');
+                        } else {
+                            formGroup.classList.remove('success');
+                            formGroup.classList.add('error');
+                        }
+                    } else {
+                        formGroup.classList.remove('error', 'success');
+                    }
+                };
+                
+                passwordInput.addEventListener('input', validatePasswordMatch);
+                passwordConfirmInput.addEventListener('input', validatePasswordMatch);
+            }
         }
         
         // Site info form
@@ -62,6 +93,9 @@ const onboarding = {
                 e.preventDefault();
                 this.saveSiteInfo();
             });
+            
+            // Real-time validation for site info form
+            this.setupValidation('project-name', 'form-group-project-name', (value) => value.length >= 2);
         }
         
         // Logo preview
@@ -77,6 +111,7 @@ const onboarding = {
                         if (preview && previewImg) {
                             previewImg.src = event.target.result;
                             preview.style.display = 'block';
+                            preview.style.animation = 'fadeIn 0.3s ease-out';
                         }
                     };
                     reader.readAsDataURL(file);
@@ -85,11 +120,49 @@ const onboarding = {
         }
     },
     
+    setupValidation(inputId, formGroupId, validator) {
+        const input = document.getElementById(inputId);
+        const formGroup = document.getElementById(formGroupId);
+        
+        if (!input || !formGroup) return;
+        
+        input.addEventListener('blur', () => {
+            const value = input.value.trim();
+            if (value.length > 0) {
+                if (validator(value)) {
+                    formGroup.classList.remove('error');
+                    formGroup.classList.add('success');
+                } else {
+                    formGroup.classList.remove('success');
+                    formGroup.classList.add('error');
+                }
+            } else {
+                formGroup.classList.remove('error', 'success');
+            }
+        });
+        
+        input.addEventListener('input', () => {
+            const value = input.value.trim();
+            if (value.length > 0) {
+                if (validator(value)) {
+                    formGroup.classList.remove('error');
+                    formGroup.classList.add('success');
+                } else {
+                    formGroup.classList.remove('success');
+                    formGroup.classList.add('error');
+                }
+            } else {
+                formGroup.classList.remove('error', 'success');
+            }
+        });
+    },
+    
     async createFirstUser() {
         const form = document.getElementById('first-user-form');
         const errorDiv = document.getElementById('first-user-error');
         const submitBtn = form.querySelector('button[type="submit"]');
         
+        const name = document.getElementById('first-user-name').value.trim();
         const email = document.getElementById('first-user-email').value.trim();
         const password = document.getElementById('first-user-password').value;
         const passwordConfirm = document.getElementById('first-user-password-confirm').value;
@@ -97,6 +170,13 @@ const onboarding = {
         // Clear previous errors
         errorDiv.style.display = 'none';
         errorDiv.textContent = '';
+        
+        // Validate name
+        if (!name || name.length < 2) {
+            errorDiv.textContent = 'Name must be at least 2 characters';
+            errorDiv.style.display = 'block';
+            return;
+        }
         
         // Validate passwords match
         if (password !== passwordConfirm) {
@@ -112,8 +192,9 @@ const onboarding = {
             return;
         }
         
-        // Disable submit button
+        // Disable submit button and show loading state
         submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
         submitBtn.textContent = 'Creating Account...';
         
         try {
@@ -123,6 +204,7 @@ const onboarding = {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    name: name,
                     email: email,
                     password: password
                 })
@@ -137,6 +219,7 @@ const onboarding = {
                 errorDiv.textContent = data.message || 'Failed to create account';
                 errorDiv.style.display = 'block';
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
                 submitBtn.textContent = 'Create Admin Account';
             }
         } catch (error) {
@@ -144,6 +227,7 @@ const onboarding = {
             errorDiv.textContent = 'An error occurred. Please try again.';
             errorDiv.style.display = 'block';
             submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
             submitBtn.textContent = 'Create Admin Account';
         }
     },
@@ -151,15 +235,21 @@ const onboarding = {
     showStep(step) {
         this.currentStep = step;
         
-        // Hide all steps
+        // Hide all steps with animation
         document.querySelectorAll('.onboarding-step').forEach(el => {
-            el.style.display = 'none';
+            if (el.style.display !== 'none') {
+                el.style.animation = 'fadeOut 0.2s ease-out';
+                setTimeout(() => {
+                    el.style.display = 'none';
+                }, 200);
+            }
         });
         
-        // Show current step
+        // Show current step with animation
         const currentStepEl = document.getElementById(`step-${this.getStepName(step)}`);
         if (currentStepEl) {
             currentStepEl.style.display = 'block';
+            currentStepEl.style.animation = 'fadeInUp 0.4s ease-out';
         }
         
         // Update progress
@@ -167,10 +257,15 @@ const onboarding = {
         
         // Update progress steps
         document.querySelectorAll('.progress-step').forEach((el, index) => {
-            if (index + 1 <= step) {
-                el.classList.add('active');
-            } else {
+            const stepNumber = this.needsFirstUser ? index : index + 1;
+            if (stepNumber < step) {
+                el.classList.add('completed');
                 el.classList.remove('active');
+            } else if (stepNumber === step) {
+                el.classList.add('active');
+                el.classList.remove('completed');
+            } else {
+                el.classList.remove('active', 'completed');
             }
         });
     },
@@ -226,16 +321,41 @@ const onboarding = {
         const form = document.getElementById('site-info-form');
         if (!form) return;
         
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const projectName = document.getElementById('project-name').value.trim();
+        
+        // Validate project name
+        if (!projectName || projectName.length < 2) {
+            const formGroup = document.getElementById('form-group-project-name');
+            if (formGroup) {
+                formGroup.classList.add('error');
+                formGroup.classList.remove('success');
+            }
+            return;
+        }
+        
         const formData = new FormData(form);
         this.siteInfo = {
             project_name: formData.get('project_name'),
             project_description: formData.get('project_description')
         };
         
+        // Show loading state
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = 'Saving...';
+        }
+        
         // Get CSRF token
         const csrfToken = await this.getCSRFToken();
         if (!csrfToken) {
             alert('Failed to get security token. Please refresh the page and try again.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+                submitBtn.textContent = 'Continue';
+            }
             return;
         }
         
@@ -334,6 +454,9 @@ const onboarding = {
         // Add selected class to keep card
         event.target.closest('.demo-card').classList.add('selected');
         
+        // Store choice
+        this.demoContentChoice = 'keep';
+        
         // Keeping demo content requires no API call - just update progress and continue
         // Update progress (no API call needed for "keep")
         await this.updateProgressAPI('demo_content_kept', true);
@@ -344,10 +467,12 @@ const onboarding = {
             actions.style.display = 'flex';
         }
         
+        // Store demo website URL for later use
+        this.demoWebsiteUrl = this.getDemoWebsiteUrl();
+        
         // Auto-continue after a moment
         setTimeout(() => {
-            this.nextStep();
-            this.updateProgressAPI();
+            this.complete(); // Complete onboarding instead of nextStep
         }, 300);
     },
     
@@ -386,6 +511,9 @@ const onboarding = {
             
             const data = await response.json();
             if (data.status === 'ok') {
+                // Store choice
+                this.demoContentChoice = 'delete';
+                
                 // Update progress
                 await this.updateProgressAPI('demo_content_deleted', true);
                 
@@ -397,8 +525,7 @@ const onboarding = {
                 
                 // Auto-continue after a moment
                 setTimeout(() => {
-                    this.nextStep();
-                    this.updateProgressAPI();
+                    this.complete(); // Complete onboarding instead of nextStep
                 }, 500);
             } else {
                 console.error('Failed to delete demo content:', data.message);
@@ -440,14 +567,32 @@ const onboarding = {
     
     async complete() {
         try {
+            // Store demo website URL if demo content was kept
+            const demoWebsiteUrl = this.demoContentChoice === 'keep' ? this.getDemoWebsiteUrl() : null;
+            
             const response = await fetch('/api/onboarding.php?action=complete', {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    demo_website_url: demoWebsiteUrl,
+                    demo_content_choice: this.demoContentChoice
+                })
             });
             
             const data = await response.json();
             if (data.status === 'ok') {
-                // Redirect to dashboard
-                window.location.href = '/admin/index.php?page=dashboard';
+                // Redirect to dashboard - the modal will be shown there
+                const params = new URLSearchParams();
+                if (demoWebsiteUrl) {
+                    params.set('demo_website_url', demoWebsiteUrl);
+                }
+                if (this.demoContentChoice) {
+                    params.set('demo_choice', this.demoContentChoice);
+                }
+                const queryString = params.toString();
+                window.location.href = '/admin/index.php?page=dashboard' + (queryString ? '&' + queryString : '');
             } else {
                 alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
             }
@@ -456,6 +601,16 @@ const onboarding = {
             // Redirect anyway
             window.location.href = '/admin/index.php?page=dashboard';
         }
+    },
+    
+    /**
+     * Generate demo website URL based on current location
+     */
+    getDemoWebsiteUrl() {
+        const currentUrl = window.location.origin + window.location.pathname;
+        // Remove /admin/index.php or /admin/ from the path
+        const baseUrl = currentUrl.replace(/\/admin\/.*$/, '');
+        return baseUrl + '/demo-website/';
     },
     
     async skip() {

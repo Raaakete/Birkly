@@ -86,6 +86,8 @@ function getPageData($page) {
             return getMediaData();
         case 'settings':
             return getSettingsData();
+        case 'account':
+            return getAccountData();
         case 'collection-editor':
             return getCollectionEditorData();
         case 'entry-editor':
@@ -879,6 +881,34 @@ function getSettingsData() {
         'settings' => $settings,
         'users' => getUsersData()['users'],
         'roles' => getRolesData()['roles']
+    ];
+}
+
+function getAccountData() {
+    // Get current user data from session
+    if (!isset($_SESSION['user'])) {
+        return ['error' => 'User not found'];
+    }
+    
+    $currentUser = $_SESSION['user'];
+    
+    // Load full user data from storage to get name and avatar
+    require_once __DIR__ . '/storage.php';
+    $userStorage = new Storage(__DIR__ . '/../users');
+    $userId = $currentUser['id'] ?? '';
+    if ($userId) {
+        $userData = $userStorage->read($userId . '.json');
+        if ($userData) {
+            // Merge session data with stored data
+            $currentUser = array_merge($currentUser, $userData);
+        }
+    }
+    
+    // Don't send password hash
+    unset($currentUser['password']);
+    
+    return [
+        'user' => $currentUser
     ];
 }
 

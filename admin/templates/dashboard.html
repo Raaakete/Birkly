@@ -1,4 +1,77 @@
 
+    <!-- Onboarding Completion Modal -->
+    <div class="modal" id="onboarding-complete-modal" style="display: none;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>🎉 You're All Set!</h2>
+                <button class="modal-close" id="onboarding-complete-close" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: var(--space-6, 1.5rem); color: var(--text-secondary, #64748b);">
+                    Your HaruCMS is ready to use. Here's what you can do next:
+                </p>
+                
+                <div style="display: grid; gap: var(--space-4, 1rem); margin-bottom: var(--space-6, 1.5rem);">
+                    <div class="card" style="padding: var(--space-4, 1rem);">
+                        <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
+                            <div style="font-size: 2rem; flex-shrink: 0;">📝</div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;">Create Your First Entry</h3>
+                                <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
+                                    Start adding content to your collections
+                                </p>
+                                <a href="/admin/index.php?page=content" class="btn btn-primary btn-small">Go to Content</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="padding: var(--space-4, 1rem);">
+                        <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
+                            <div style="font-size: 2rem; flex-shrink: 0;">🎨</div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;">Customize Your Site</h3>
+                                <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
+                                    Configure settings and customize your site
+                                </p>
+                                <a href="/admin/index.php?page=settings" class="btn btn-primary btn-small">Go to Settings</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" id="demo-website-card" style="padding: var(--space-4, 1rem); display: none;">
+                        <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
+                            <div style="font-size: 2rem; flex-shrink: 0;">🌐</div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;">View Demo Website</h3>
+                                <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
+                                    Explore the demo website with sample content
+                                </p>
+                                <a href="#" id="demo-website-link" target="_blank" class="btn btn-primary btn-small" style="display: none;">Open Demo Website</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="padding: var(--space-4, 1rem);">
+                        <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
+                            <div style="font-size: 2rem; flex-shrink: 0;">📚</div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;">Read the Documentation</h3>
+                                <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
+                                    Learn more about HaruCMS features
+                                </p>
+                                <a href="/docs" target="_blank" class="btn btn-secondary btn-small">View Docs</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: var(--space-4, 1rem) var(--space-6, 1.5rem); border-top: 1px solid var(--border-light, #e2e8f0); display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" id="onboarding-complete-close-btn">Get Started</button>
+            </div>
+        </div>
+    </div>
+
     <div class="page-header pt-m pb-m">
         <div class="breadcrumbs"><span class="current"><?= __('admin.dashboard') ?></span></div>
     </div>
