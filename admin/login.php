@@ -183,16 +183,26 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     <link rel="stylesheet" href="/admin/css/style.css">
     <link rel="shortcut icon" href="<?= htmlspecialchars($logoUrl) ?>">
     <style>
+        /* Use admin panel CSS variables */
         :root {
             --color-primary: #FFFB00;
+            --color-primary-hover: #f2e966;
             --color-secondary: #A1B0A1;
             --color-darkest: #4a4d47;
             --color-dark: #8e928b;
-            --color-mid: #000;
             --color-light: #dce2d7;
             --color-lightest: #f4f6f1;
             --color-positiv: #e4f1ec;
             --color-negativ: #f3eced;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-elevated: #ffffff;
+            --border-color: #e5e7eb;
+            --border-light: #f3f4f6;
+            --background-global: #f8f9f7;
         }
 
         * {
@@ -208,39 +218,17 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             justify-content: center;
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            position: relative;
-            overflow: hidden;
-            background: var(--color-lightest);
-        }
-
-        /* Animated Background Canvas */
-        .background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-
-        .background canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
+            background: var(--background-global);
         }
 
         .login-container {
-            position: relative;
-            z-index: 1;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: var(--bg-elevated);
+            border-radius: var(--border-radius-m, 8px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
             padding: 3rem;
             width: 100%;
             max-width: 420px;
             margin: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .login-header {
@@ -264,14 +252,14 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         }
         
         .login-header h1 {
-            color: var(--color-darkest);
+            color: var(--text-primary);
             margin: 0 0 0.5rem 0;
             font-size: 1.875rem;
             font-weight: 700;
         }
         
         .login-header p {
-            color: var(--color-dark);
+            color: var(--text-secondary);
             margin: 0;
             font-size: 0.875rem;
         }
@@ -282,41 +270,44 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             gap: 1.5rem;
         }
         
+        /* Match admin panel form styling exactly */
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+            margin-bottom: 20px;
         }
         
         .form-group label {
-            font-weight: 600;
-            color: var(--color-darkest);
-            font-size: 0.875rem;
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 14px;
         }
         
-        .form-group input {
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--color-light);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            background: white;
-            color: var(--color-darkest);
+        .form-group input[type="email"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.3s ease;
         }
         
         .form-group input:focus {
             outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(255, 251, 0, 0.1);
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .login-button {
             background: var(--color-primary);
             color: var(--color-darkest);
             border: none;
-            padding: 0.875rem 1.5rem;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -324,53 +315,54 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         }
         
         .login-button:hover {
-            background: #fff700;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 251, 0, 0.3);
+            background: var(--color-primary-hover);
         }
         
         .login-button:active {
-            transform: translateY(0);
+            transform: translateY(1px);
         }
         
         .error-message {
             background: var(--color-negativ);
             color: #c53030;
             padding: 0.75rem 1rem;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 0.875rem;
             border: 1px solid #feb2b2;
+            margin-bottom: 1.5rem;
         }
         
         .success-message {
             background: var(--color-positiv);
             color: #2f855a;
             padding: 0.75rem 1rem;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 0.875rem;
             border: 1px solid #9ae6b4;
+            margin-bottom: 1.5rem;
         }
         
         .login-footer {
             text-align: center;
             margin-top: 2rem;
             padding-top: 2rem;
-            border-top: 1px solid var(--color-light);
+            border-top: 1px solid var(--border-light);
         }
         
         .login-footer p {
-            color: var(--color-dark);
+            color: var(--text-secondary);
             font-size: 0.875rem;
             margin: 0;
         }
         
         .login-footer a {
-            color: var(--color-primary);
+            color: var(--primary-500);
             text-decoration: none;
             font-weight: 600;
         }
         
         .login-footer a:hover {
+            color: var(--primary-600);
             text-decoration: underline;
         }
 
@@ -383,10 +375,6 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     </style>
 </head>
 <body>
-    <div class="background">
-        <canvas id="background-canvas"></canvas>
-    </div>
-
     <div class="login-container">
         <div class="login-header">
             <div class="login-logo">
@@ -447,132 +435,6 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     </div>
     
     <script>
-        // Custom Sun Beams Effect - Wavy yellow rays from center
-        document.addEventListener('DOMContentLoaded', function() {
-            const canvas = document.getElementById('background-canvas');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Admin panel colors
-            const bgColor = '#f4f6f1'; // lightest - background
-            const beamColor = '#FFFB00'; // primary - yellow
-            
-            let time = 0;
-            const numBeams = 12; // Number of sun beam rays
-            const beams = [];
-            
-            function resizeCanvas() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                
-                // Update max length for all beams
-                const maxLength = Math.max(canvas.width, canvas.height) * 1.5;
-                beams.forEach(beam => {
-                    beam.maxLength = maxLength;
-                });
-            }
-            
-            function initBeams() {
-                beams.length = 0; // Clear existing beams
-                
-                // Initialize beams
-                for (let i = 0; i < numBeams; i++) {
-                    const angle = (Math.PI * 2 / numBeams) * i;
-                    beams.push({
-                        angle: angle,
-                        baseAngle: angle,
-                        length: 0,
-                        maxLength: Math.max(window.innerWidth, window.innerHeight) * 1.5,
-                        waveAmplitude: 20 + Math.random() * 30,
-                        waveFrequency: 0.02 + Math.random() * 0.03,
-                        waveSpeed: 0.5 + Math.random() * 0.5,
-                        rotationSpeed: 0.001 + Math.random() * 0.002,
-                        opacity: 0.4 + Math.random() * 0.3
-                    });
-                }
-            }
-            
-            function drawBeam(beam) {
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                
-                // Rotate the beam angle
-                beam.angle = beam.baseAngle + time * beam.rotationSpeed;
-                
-                // Gradually grow the beam length
-                beam.length = Math.min(beam.length + 3, beam.maxLength);
-                
-                ctx.beginPath();
-                
-                // Draw wavy beam path
-                const segments = 150;
-                for (let i = 0; i <= segments; i++) {
-                    const progress = i / segments;
-                    const distance = beam.length * progress;
-                    
-                    // Calculate wave offset perpendicular to beam direction
-                    const waveOffset = Math.sin(distance * beam.waveFrequency + time * beam.waveSpeed) * beam.waveAmplitude;
-                    
-                    // Calculate position along beam direction
-                    const x = centerX + Math.cos(beam.angle) * distance + Math.sin(beam.angle) * waveOffset;
-                    const y = centerY + Math.sin(beam.angle) * distance - Math.cos(beam.angle) * waveOffset;
-                    
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                
-                // Create gradient from center to end
-                const endX = centerX + Math.cos(beam.angle) * beam.length;
-                const endY = centerY + Math.sin(beam.angle) * beam.length;
-                const gradient = ctx.createLinearGradient(centerX, centerY, endX, endY);
-                
-                // Convert opacity to hex
-                const opacityHex = Math.floor(beam.opacity * 255).toString(16).padStart(2, '0');
-                
-                gradient.addColorStop(0, beamColor + '00'); // Transparent at center
-                gradient.addColorStop(0.2, beamColor + opacityHex);
-                gradient.addColorStop(0.5, beamColor + opacityHex);
-                gradient.addColorStop(1, beamColor + '00'); // Fade to transparent at end
-                
-                ctx.strokeStyle = gradient;
-                ctx.lineWidth = 4;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.globalAlpha = 1.0;
-                ctx.stroke();
-            }
-            
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw background
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw all beams
-                beams.forEach(beam => {
-                    drawBeam(beam);
-                });
-                
-                time += 0.5;
-                
-                requestAnimationFrame(animate);
-            }
-            
-            // Initialize
-            resizeCanvas();
-            initBeams();
-            animate();
-            
-            window.addEventListener('resize', function() {
-                resizeCanvas();
-            });
-        });
-        
         // Auto-focus email field
         document.getElementById('email').focus();
         
