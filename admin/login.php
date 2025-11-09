@@ -447,32 +447,34 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     </div>
     
     <script>
-        // Animated Background Canvas - CodePen style wave animation
+        // Custom Sun Beams Effect - Wavy yellow rays from center
         (function() {
             const canvas = document.getElementById('background-canvas');
             const ctx = canvas.getContext('2d');
             
             // Admin panel colors
-            const colors = [
-                '#FFFB00',  // primary - yellow
-                '#A1B0A1',  // secondary - green-gray
-                '#e4f1ec', // positiv - light green
-                '#dce2d7', // light - light gray-green
-                '#f4f6f1'  // lightest - very light green
-            ];
+            const bgColor = '#f4f6f1'; // lightest - background
+            const beamColor = '#FFFB00'; // primary - yellow
             
             let time = 0;
-            const waves = [];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const numBeams = 12; // Number of sun beam rays
+            const beams = [];
             
-            // Create multiple wave objects
-            for (let i = 0; i < 4; i++) {
-                waves.push({
-                    amplitude: 50 + Math.random() * 50,
-                    frequency: 0.01 + Math.random() * 0.02,
-                    speed: 0.5 + Math.random() * 0.5,
-                    color: colors[i % colors.length],
-                    offset: Math.random() * Math.PI * 2,
-                    y: (canvas.height / 5) * (i + 1)
+            // Initialize beams
+            for (let i = 0; i < numBeams; i++) {
+                const angle = (Math.PI * 2 / numBeams) * i;
+                beams.push({
+                    angle: angle,
+                    baseAngle: angle,
+                    length: 0,
+                    maxLength: Math.max(canvas.width, canvas.height) * 1.5,
+                    waveAmplitude: 20 + Math.random() * 30,
+                    waveFrequency: 0.02 + Math.random() * 0.03,
+                    waveSpeed: 0.5 + Math.random() * 0.5,
+                    rotationSpeed: 0.001 + Math.random() * 0.002,
+                    opacity: 0.3 + Math.random() * 0.2
                 });
             }
             
@@ -480,35 +482,61 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
                 
-                // Update wave positions
-                waves.forEach((wave, i) => {
-                    wave.y = (canvas.height / 5) * (i + 1);
+                // Update center and max length
+                const newCenterX = canvas.width / 2;
+                const newCenterY = canvas.height / 2;
+                
+                beams.forEach(beam => {
+                    beam.maxLength = Math.max(canvas.width, canvas.height) * 1.5;
                 });
             }
             
-            function drawWave(wave) {
-                ctx.beginPath();
-                ctx.moveTo(0, wave.y);
+            function drawBeam(beam) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
                 
-                for (let x = 0; x < canvas.width; x++) {
-                    const y = wave.y + 
-                        wave.amplitude * Math.sin(x * wave.frequency + time * wave.speed + wave.offset);
-                    ctx.lineTo(x, y);
+                // Rotate the beam angle
+                beam.angle = beam.baseAngle + time * beam.rotationSpeed;
+                
+                // Gradually grow the beam length
+                beam.length = Math.min(beam.length + 2, beam.maxLength);
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                
+                // Draw wavy beam path
+                const segments = 100;
+                for (let i = 0; i <= segments; i++) {
+                    const progress = i / segments;
+                    const distance = beam.length * progress;
+                    
+                    // Calculate wave offset perpendicular to beam direction
+                    const waveOffset = Math.sin(distance * beam.waveFrequency + time * beam.waveSpeed) * beam.waveAmplitude;
+                    
+                    // Calculate position along beam direction
+                    const x = centerX + Math.cos(beam.angle) * distance + Math.sin(beam.angle) * waveOffset;
+                    const y = centerY + Math.sin(beam.angle) * distance - Math.cos(beam.angle) * waveOffset;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
                 }
                 
-                // Fill to bottom
-                ctx.lineTo(canvas.width, canvas.height);
-                ctx.lineTo(0, canvas.height);
-                ctx.closePath();
+                // Create gradient from center to end
+                const endX = centerX + Math.cos(beam.angle) * beam.length;
+                const endY = centerY + Math.sin(beam.angle) * beam.length;
+                const gradient = ctx.createLinearGradient(centerX, centerY, endX, endY);
+                gradient.addColorStop(0, beamColor + '00'); // Transparent at center
+                gradient.addColorStop(0.3, beamColor + Math.floor(beam.opacity * 255).toString(16).padStart(2, '0'));
+                gradient.addColorStop(1, beamColor + '00'); // Fade to transparent at end
                 
-                // Create gradient
-                const gradient = ctx.createLinearGradient(0, wave.y, 0, canvas.height);
-                gradient.addColorStop(0, wave.color);
-                gradient.addColorStop(1, wave.color + '00'); // Fade to transparent
-                
-                ctx.fillStyle = wave.color;
-                ctx.globalAlpha = 0.6;
-                ctx.fill();
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.globalAlpha = beam.opacity;
+                ctx.stroke();
                 ctx.globalAlpha = 1.0;
             }
             
@@ -516,15 +544,15 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
                 // Draw background
-                ctx.fillStyle = '#f4f6f1';
+                ctx.fillStyle = bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // Draw all waves
-                waves.forEach(wave => {
-                    drawWave(wave);
+                // Draw all beams
+                beams.forEach(beam => {
+                    drawBeam(beam);
                 });
                 
-                time += 0.02;
+                time += 0.5;
                 
                 requestAnimationFrame(animate);
             }
