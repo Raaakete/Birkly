@@ -4,8 +4,11 @@
         <div class="onboarding-header">
             <?php
             // Load settings to get logo
-            require_once __DIR__ . '/../../api/storage.php';
-            $storage = new Storage(__DIR__ . '/../../settings');
+            // Use path relative to admin directory (template is in admin/templates/)
+            $basePath = dirname(__DIR__); // Gets admin/ directory
+            $projectRoot = dirname($basePath); // Gets project root
+            require_once $projectRoot . '/api/storage.php';
+            $storage = new Storage($projectRoot . '/settings');
             $adminSettings = $storage->read('admin.json') ?? [];
             $brandingSettings = $storage->read('branding.json') ?? [];
             
