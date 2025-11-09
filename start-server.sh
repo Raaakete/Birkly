@@ -173,7 +173,8 @@ if [ ! -x "$0" ]; then
     chmod +x "$0"
 fi
 
-# Check prerequisites
+# Check prerequisites FIRST - PHP is required before anything else
+print_status "Checking prerequisites..."
 check_php
 check_project
 

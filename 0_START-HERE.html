@@ -109,89 +109,24 @@
             line-height: 1.7;
         }
 
-        .path-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--space-6);
+        .steps-container {
             margin: var(--space-8) 0;
-        }
-
-        .path-card {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-light);
-            border-radius: var(--border-radius-m);
-            padding: var(--space-6);
-            transition: all 0.2s ease;
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        .path-card:hover {
-            border-color: var(--primary-500);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transform: translateY(-2px);
-        }
-
-        .path-card.selected {
-            border-color: var(--primary-500);
-            background: rgba(59, 130, 246, 0.05);
-            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1);
-        }
-
-        .path-card h3 {
-            color: var(--primary-600);
-            margin-bottom: var(--space-2);
-            font-size: 1.25rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-        }
-
-        .path-card p {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            line-height: 1.6;
-        }
-
-        .instructions {
-            margin-top: var(--space-8);
-            padding: var(--space-6);
-            background: var(--bg-secondary);
-            border-radius: var(--border-radius-m);
-            display: none;
-            animation: fadeInUp 0.4s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .instructions.active {
-            display: block;
-        }
-
-        .instructions h3 {
-            color: var(--text-primary);
-            margin-bottom: var(--space-6);
-            font-size: 1.5rem;
-            font-weight: 600;
         }
 
         .step {
             margin: var(--space-6) 0;
             padding: var(--space-6);
             background: var(--bg-elevated);
-            border-radius: var(--border-radius-s);
-            border-left: 3px solid var(--primary-500);
+            border-radius: var(--border-radius-m);
+            border-left: 4px solid var(--primary-500);
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
         }
 
         .step-number {
@@ -200,43 +135,41 @@
             justify-content: center;
             background: var(--primary-500);
             color: white;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             font-weight: 600;
-            margin-right: var(--space-2);
-            font-size: 0.875rem;
-        }
-
-        .step h4 {
-            display: inline-flex;
-            align-items: center;
-            color: var(--text-primary);
-            margin-bottom: var(--space-3);
             font-size: 1.125rem;
-            font-weight: 600;
+            flex-shrink: 0;
         }
 
-        .step p {
-            margin-top: var(--space-3);
+        .step-title {
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .step-content {
             color: var(--text-secondary);
             font-size: 0.9375rem;
             line-height: 1.7;
+            margin-bottom: var(--space-4);
         }
 
-        .step pre {
+        .step-content pre {
             background: #1a202c;
             color: #f7fafc;
             padding: var(--space-4);
             border-radius: var(--border-radius-s);
             overflow-x: auto;
-            margin-top: var(--space-3);
+            margin: var(--space-3) 0;
             font-size: 0.875rem;
             line-height: 1.5;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         }
 
-        .step code {
+        .step-content code {
             background: var(--bg-secondary);
             padding: 0.125rem 0.375rem;
             border-radius: var(--border-radius-s);
@@ -246,91 +179,117 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         }
 
-        .note {
-            background: #fef3c7;
-            border: 1px solid #fde68a;
-            border-left: 4px solid #f59e0b;
-            padding: var(--space-4);
+        .accordion {
+            margin-top: var(--space-4);
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-secondary);
             border-radius: var(--border-radius-s);
-            margin: var(--space-6) 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
         }
 
-        .note p {
-            color: #92400e;
-            font-size: 0.875rem;
-            margin: 0;
-            line-height: 1.6;
+        .accordion-header:hover {
+            background: var(--border-light);
         }
 
-        .success-box {
-            background: #dcfce7;
-            border: 1px solid #bbf7d0;
-            border-left: 4px solid var(--success-700);
-            padding: var(--space-6);
-            border-radius: var(--border-radius-s);
-            margin: var(--space-8) 0;
-            text-align: center;
+        .accordion-header.active {
+            background: var(--primary-500);
+            color: white;
         }
 
-        .success-box h3 {
-            color: var(--success-700);
-            margin-bottom: var(--space-4);
-            font-size: 1.125rem;
+        .accordion-title {
             font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-primary);
         }
 
-        .success-box p {
-            color: var(--success-700);
-            margin-bottom: var(--space-4);
-            font-size: 0.9375rem;
+        .accordion-header.active .accordion-title {
+            color: white;
         }
 
-        .connection-status {
-            background: var(--bg-elevated);
+        .accordion-icon {
+            transition: transform 0.2s ease;
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+        }
+
+        .accordion-header.active .accordion-icon {
+            color: white;
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 var(--space-4);
+        }
+
+        .accordion-content.active {
+            max-height: 1000px;
+            padding: var(--space-4);
+        }
+
+        .accordion-content p {
+            margin: var(--space-2) 0;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.7;
+        }
+
+        .accordion-content ul {
+            margin-left: var(--space-6);
+            margin-top: var(--space-2);
+        }
+
+        .accordion-content li {
+            margin-bottom: var(--space-2);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .status-box {
+            background: var(--bg-secondary);
             border: 2px solid var(--border-light);
             border-radius: var(--border-radius-m);
             padding: var(--space-6);
-            margin: var(--space-6) 0;
+            margin: var(--space-4) 0;
             text-align: center;
         }
 
-        .connection-status.connected {
+        .status-box.success {
             background: #dcfce7;
             border-color: var(--success-700);
         }
 
-        .connection-status.not-connected {
+        .status-box.error {
             background: #fee2e2;
             border-color: var(--error-700);
         }
 
-        .connection-status.checking {
-            background: var(--bg-secondary);
-            border-color: var(--border-light);
-        }
-
-        .connection-status h4 {
+        .status-box h4 {
             color: var(--text-primary);
-            margin-bottom: var(--space-3);
-            font-size: 1.125rem;
+            margin-bottom: var(--space-2);
+            font-size: 1rem;
             font-weight: 600;
         }
 
-        .connection-status p {
-            color: var(--text-secondary);
-            font-size: 0.9375rem;
-            margin: 0;
-        }
-
-        .connection-status.connected h4 {
+        .status-box.success h4 {
             color: var(--success-700);
         }
 
-        .connection-status.not-connected h4 {
+        .status-box.error h4 {
             color: var(--error-700);
         }
 
-        .connection-icon {
+        .status-icon {
             font-size: 2rem;
             margin-bottom: var(--space-2);
         }
@@ -358,46 +317,12 @@
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2);
         }
 
-        .onboarding-link {
-            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-            color: white;
-            padding: var(--space-8);
-            border-radius: var(--border-radius-m);
-            text-align: center;
-            margin: var(--space-8) 0;
-            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -1px rgba(59, 130, 246, 0.2);
-        }
-
-        .onboarding-link h3 {
-            color: white;
-            margin-bottom: var(--space-2);
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .onboarding-link p {
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: var(--space-4);
-            font-size: 0.9375rem;
-        }
-
-        .onboarding-link .btn {
-            background: white;
-            color: var(--primary-600);
-            margin-top: 0;
-        }
-
-        .onboarding-link .btn:hover {
-            background: #f3f4f6;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        .btn-large {
+            padding: var(--space-4) var(--space-8);
+            font-size: 1rem;
         }
 
         @media (max-width: 768px) {
-            .path-selector {
-                grid-template-columns: 1fr;
-            }
-
             .header h1 {
                 font-size: 1.75rem;
             }
@@ -421,155 +346,217 @@
         <div class="content">
             <div class="intro">
                 <h2>👋 Let's Get Started</h2>
-                <p>HaruCMS is a simple content management system that works without a database. Choose how you want to set it up below. Don't worry - we'll guide you through every step!</p>
+                <p>HaruCMS is a simple content management system that works without a database. Follow these 4 simple steps to get started on your computer.</p>
             </div>
 
-            <div class="path-selector">
-                <div class="path-card" onclick="showInstructions('local')">
-                    <h3>💻 On Your Computer</h3>
-                    <p>Perfect for testing and learning. We'll help you start a local server on your computer.</p>
-                </div>
-                <div class="path-card" onclick="showInstructions('server')">
-                    <h3>🌐 On a Web Server</h3>
-                    <p>For your live website. Upload the files to your web hosting provider.</p>
-                </div>
-            </div>
-
-            <!-- Local Development Instructions -->
-            <div id="local-instructions" class="instructions">
-                <h3>📋 Setting Up on Your Computer</h3>
-
+            <div class="steps-container">
+                <!-- Step 1: Check PHP -->
                 <div class="step">
-                    <h4><span class="step-number">1</span>Open Terminal</h4>
-                    <p>On <strong>Mac</strong>: Press <code>Cmd + Space</code>, type "Terminal", and press Enter.</p>
-                    <p>On <strong>Windows</strong>: Press <code>Windows + R</code>, type "cmd", and press Enter.</p>
-                    <p>On <strong>Linux</strong>: Press <code>Ctrl + Alt + T</code>.</p>
-                </div>
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <h3 class="step-title">Check if PHP is Installed</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>First, we need to check if PHP is installed on your computer. PHP is required for HaruCMS to run.</p>
+                        <p>Open a terminal and run this command:</p>
+                        <pre>php -v</pre>
+                        <p>If you see version information (like "PHP 8.1.0"), PHP is installed! ✅</p>
+                        <p>If you see an error (like "command not found"), PHP is not installed. ❌</p>
+                    </div>
 
-                <div class="step">
-                    <h4><span class="step-number">2</span>Navigate to This Folder</h4>
-                    <p>In the terminal, type this command (replace with your actual folder path):</p>
-                    <pre>cd /path/to/your/harucms/folder</pre>
-                    <p>Or simply drag the folder into the terminal window and it will fill in the path automatically.</p>
-                </div>
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">PHP is not installed - How to install it</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>On Mac:</strong></p>
+                            <p>Option 1: Using Homebrew (recommended)</p>
+                            <pre>brew install php</pre>
+                            <p>Option 2: Download from <a href="https://www.php.net/downloads.php" target="_blank">php.net</a></p>
+                            
+                            <p><strong>On Windows:</strong></p>
+                            <p>Option 1: Download from <a href="https://www.php.net/downloads.php" target="_blank">php.net</a></p>
+                            <p>Option 2: Use XAMPP or WAMP (includes PHP)</p>
+                            
+                            <p><strong>On Linux:</strong></p>
+                            <pre>sudo apt install php</pre>
+                            <p>Or for other distributions:</p>
+                            <pre>sudo yum install php</pre>
+                        </div>
+                    </div>
 
-                <div class="step">
-                    <h4><span class="step-number">3</span>Start the Server</h4>
-                    <p>Copy and paste this command into your terminal and press Enter:</p>
-                    <pre>./start-server.sh</pre>
-                    <p>The script will check if PHP is installed and start the server automatically.</p>
-                    <p>You should see a message saying "Starting server on http://localhost:8080". <strong>Keep this terminal window open!</strong></p>
-                </div>
-
-                <div class="step">
-                    <h4><span class="step-number">4</span>Check if Server is Running</h4>
-                    <p>Look at your terminal window. If you see "Starting server on http://localhost:8080", your server is running!</p>
-                    <p>If you see an error message, the script will tell you what's wrong (like PHP not being installed).</p>
-                    
-                    <!-- Connection Status Box -->
-                    <div class="connection-status" id="connection-status">
-                        <div class="connection-icon">ℹ️</div>
-                        <h4>Check Your Terminal</h4>
-                        <p>Look at the terminal window where you ran the command. If it says "Starting server on http://localhost:8080", your server is running!</p>
-                        <p style="margin-top: var(--space-3);"><strong>If the server is running, click the button below to continue.</strong></p>
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">How to open a terminal</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>On Mac:</strong></p>
+                            <ul>
+                                <li>Press <code>Cmd + Space</code></li>
+                                <li>Type "Terminal"</li>
+                                <li>Press Enter</li>
+                            </ul>
+                            
+                            <p><strong>On Windows:</strong></p>
+                            <ul>
+                                <li>Press <code>Windows + R</code></li>
+                                <li>Type "cmd"</li>
+                                <li>Press Enter</li>
+                            </ul>
+                            
+                            <p><strong>On Linux:</strong></p>
+                            <ul>
+                                <li>Press <code>Ctrl + Alt + T</code></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
-                <div class="note">
-                    <p><strong>💡 Tip:</strong> If you see an error about the port being in use, the server might already be running. Try clicking the "Start Setup" button below.</p>
-                </div>
-
-                <div class="success-box" id="local-success">
-                    <h3>✅ Ready to Continue?</h3>
-                    <p>If your terminal shows the server is running, click the button below to start setting up your CMS.</p>
-                    <a href="http://localhost:8080/admin/index.php?page=onboarding" class="btn" id="onboarding-link-local" target="_blank">Start Setup →</a>
-                </div>
-            </div>
-
-            <!-- Web Server Instructions -->
-            <div id="server-instructions" class="instructions">
-                <h3>📋 Setting Up on a Web Server</h3>
-
+                <!-- Step 2: Start Server -->
                 <div class="step">
-                    <h4><span class="step-number">1</span>Upload All Files</h4>
-                    <p>Using your hosting provider's file manager or FTP program, upload <strong>all files and folders</strong> from this HaruCMS folder to your web server.</p>
-                    <p>Make sure to keep the folder structure the same (don't change folder names).</p>
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <h3 class="step-title">Start the Server</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Now that PHP is installed, let's start the server. Open a terminal in the HaruCMS folder and run:</p>
+                        <pre>./start-server.sh</pre>
+                        <p>You should see a message saying "Starting server on http://localhost:8080". <strong>Keep this terminal window open!</strong></p>
+                    </div>
+
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">How to open terminal in the project folder</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>Method 1: Drag and Drop (Easiest)</strong></p>
+                            <ul>
+                                <li>Open Terminal</li>
+                                <li>Type <code>cd </code> (with a space after "cd")</li>
+                                <li>Drag the HaruCMS folder into the terminal window</li>
+                                <li>Press Enter</li>
+                            </ul>
+                            
+                            <p><strong>Method 2: Navigate Manually</strong></p>
+                            <ul>
+                                <li>Open Terminal</li>
+                                <li>Type <code>cd </code> followed by the path to your HaruCMS folder</li>
+                                <li>For example: <code>cd /Users/yourname/Documents/HaruCMS</code></li>
+                                <li>Press Enter</li>
+                            </ul>
+                            
+                            <p><strong>Method 3: Right-click in Folder (Mac/Linux)</strong></p>
+                            <ul>
+                                <li>Right-click on the HaruCMS folder</li>
+                                <li>Select "Open Terminal Here" or "Open in Terminal"</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">Port is already in use - What to do</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p>If you see an error about the port being in use, it means the server might already be running.</p>
+                            <p><strong>Solution 1:</strong> Check if the server is already running by opening <a href="http://localhost:8080/admin" target="_blank">http://localhost:8080/admin</a> in your browser.</p>
+                            <p><strong>Solution 2:</strong> Kill the existing server and start a new one:</p>
+                            <pre>./start-server.sh -k</pre>
+                            <p><strong>Solution 3:</strong> Use a different port:</p>
+                            <pre>./start-server.sh -p 8001</pre>
+                            <p>Then use <code>http://localhost:8001</code> instead of <code>http://localhost:8080</code></p>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Step 3: Check Server -->
                 <div class="step">
-                    <h4><span class="step-number">2</span>Visit Your Website</h4>
-                    <p>Open your web browser and go to:</p>
-                    <pre>https://yourdomain.com/admin</pre>
-                    <p>Replace <code>yourdomain.com</code> with your actual website address.</p>
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <h3 class="step-title">Check if Server is Running</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Look at your terminal window. If you see "Starting server on http://localhost:8080", your server is running! ✅</p>
+                        <p>If you see an error message, check the troubleshooting section below.</p>
+                        
+                        <div class="status-box" id="server-status">
+                            <div class="status-icon">ℹ️</div>
+                            <h4>Check Your Terminal</h4>
+                            <p>Look at the terminal window where you ran the command. If it says "Starting server on http://localhost:8080", your server is running!</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">Troubleshooting - Server not starting</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>Problem: "PHP is not installed"</strong></p>
+                            <p>Go back to Step 1 and install PHP first.</p>
+                            
+                            <p><strong>Problem: "Permission denied"</strong></p>
+                            <p>Make the script executable:</p>
+                            <pre>chmod +x ./start-server.sh</pre>
+                            <p>Then try again:</p>
+                            <pre>./start-server.sh</pre>
+                            
+                            <p><strong>Problem: "Port already in use"</strong></p>
+                            <p>See the troubleshooting section in Step 2.</p>
+                            
+                            <p><strong>Problem: "Command not found" or script doesn't run</strong></p>
+                            <p>Make sure you're in the HaruCMS folder. Check with:</p>
+                            <pre>pwd</pre>
+                            <p>You should see the path to your HaruCMS folder.</p>
+                            
+                            <p><strong>Still having issues?</strong></p>
+                            <p>Make sure you're using the latest version of HaruCMS from GitHub. If problems persist, check the README.md file for more help.</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="note">
-                    <p><strong>💡 Tip:</strong> Most hosting providers work automatically. If you see an error, contact your hosting provider's support - they can help you configure it.</p>
+                <!-- Step 4: Continue to Onboarding -->
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">4</span>
+                        <h3 class="step-title">Continue to Setup</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Great! Your server is running. Now let's set up your CMS. Click the button below to start the setup process.</p>
+                        <p>We'll guide you through creating your admin account and configuring your CMS.</p>
+                        
+                        <div style="text-align: center; margin-top: var(--space-6);">
+                            <a href="http://localhost:8080/admin/index.php?page=onboarding" class="btn btn-large" target="_blank">Start Setup →</a>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="success-box">
-                    <h3>✅ Ready to Continue?</h3>
-                    <p>If you can see the login page, you're ready to start the setup!</p>
-                    <p style="margin-top: var(--space-2); font-size: 0.875rem; color: var(--text-secondary);">Replace "yourdomain.com" with your actual website address in the link below:</p>
-                    <a href="#" class="btn" id="onboarding-link-server" onclick="return false;">Start Setup →</a>
-                    <p style="margin-top: var(--space-2); font-size: 0.875rem; color: var(--text-secondary);">Or visit: <code id="server-onboarding-url">https://yourdomain.com/admin/index.php?page=onboarding</code></p>
-                </div>
-            </div>
-
-            <!-- Onboarding Link -->
-            <div class="onboarding-link">
-                <h3>🎯 Ready to Get Started?</h3>
-                <p>Once your server is running, click below to start the setup process. We'll guide you through creating your account and configuring your CMS.</p>
-                <a href="http://localhost:8080/admin/index.php?page=onboarding" class="btn" id="onboarding-link-main" target="_blank">Start Setup →</a>
             </div>
         </div>
     </div>
 
     <script>
-        function showInstructions(path) {
-            // Hide all instructions
-            document.querySelectorAll('.instructions').forEach(el => {
-                el.classList.remove('active');
-            });
-
-            // Show selected instructions
-            const instructions = document.getElementById(path + '-instructions');
-            if (instructions) {
-                instructions.classList.add('active');
-                
-                // Update card selection
-                document.querySelectorAll('.path-card').forEach(card => {
-                    card.classList.remove('selected');
-                });
-                event.currentTarget.classList.add('selected');
-
-                // Scroll to instructions
-                instructions.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const isActive = header.classList.contains('active');
+            
+            // Close all accordions in the same step
+            const step = header.closest('.step');
+            const allHeaders = step.querySelectorAll('.accordion-header');
+            const allContents = step.querySelectorAll('.accordion-content');
+            
+            allHeaders.forEach(h => h.classList.remove('active'));
+            allContents.forEach(c => c.classList.remove('active'));
+            
+            // Toggle the clicked one
+            if (!isActive) {
+                header.classList.add('active');
+                content.classList.add('active');
             }
         }
-
-        // Auto-detect if running locally and show local instructions
-        window.addEventListener('load', () => {
-            // Auto-select local instructions if on localhost
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                const localCard = document.querySelector('.path-card');
-                if (localCard) {
-                    localCard.click();
-                }
-            } else {
-                // For web server setup, update the onboarding URL
-                const serverUrl = document.getElementById('server-onboarding-url');
-                const serverLink = document.getElementById('onboarding-link-server');
-                if (serverUrl && serverLink) {
-                    const currentHost = window.location.hostname;
-                    const currentProtocol = window.location.protocol;
-                    const onboardingUrl = currentProtocol + '//' + currentHost + '/admin/index.php?page=onboarding';
-                    serverUrl.textContent = onboardingUrl;
-                    serverLink.href = onboardingUrl;
-                    serverLink.onclick = null;
-                }
-            }
-        });
     </script>
 </body>
 </html>
