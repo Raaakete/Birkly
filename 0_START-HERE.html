@@ -109,8 +109,58 @@
             line-height: 1.7;
         }
 
+        .path-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-6);
+            margin: var(--space-8) 0;
+        }
+
+        .path-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius-m);
+            padding: var(--space-6);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .path-card:hover {
+            border-color: var(--primary-500);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .path-card.selected {
+            border-color: var(--primary-500);
+            background: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1);
+        }
+
+        .path-card h3 {
+            color: var(--primary-600);
+            margin-bottom: var(--space-2);
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .path-card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
         .steps-container {
             margin: var(--space-8) 0;
+            display: none;
+        }
+
+        .steps-container.active {
+            display: block;
         }
 
         .step {
@@ -346,10 +396,22 @@
         <div class="content">
             <div class="intro">
                 <h2>👋 Let's Get Started</h2>
-                <p>HaruCMS is a simple content management system that works without a database. Follow these 4 simple steps to get started on your computer.</p>
+                <p>HaruCMS is a simple content management system that works without a database. Choose how you want to set it up below.</p>
             </div>
 
-            <div class="steps-container">
+            <div class="path-selector">
+                <div class="path-card" onclick="showSteps('local')">
+                    <h3>💻 On Your Computer</h3>
+                    <p>Perfect for testing and learning. We'll help you start a local server on your computer.</p>
+                </div>
+                <div class="path-card" onclick="showSteps('server')">
+                    <h3>🌐 On a Web Server</h3>
+                    <p>For your live website. Upload the files to your web hosting provider.</p>
+                </div>
+            </div>
+
+            <!-- Local Development Steps -->
+            <div class="steps-container" id="local-steps">
                 <!-- Step 1: Check PHP -->
                 <div class="step">
                     <div class="step-header">
@@ -535,6 +597,134 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Web Server Steps -->
+            <div class="steps-container" id="server-steps">
+                <!-- Step 1: Upload Files -->
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <h3 class="step-title">Upload All Files</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Using your hosting provider's file manager or FTP program, upload <strong>all files and folders</strong> from this HaruCMS folder to your web server.</p>
+                        <p>Make sure to keep the folder structure the same (don't change folder names).</p>
+                    </div>
+
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">How to upload files using FTP</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>Using an FTP Client (FileZilla, Cyberduck, etc.):</strong></p>
+                            <ul>
+                                <li>Download and install an FTP client</li>
+                                <li>Connect to your web server using your hosting credentials</li>
+                                <li>Upload all files and folders from the HaruCMS folder</li>
+                                <li>Make sure to preserve the folder structure</li>
+                            </ul>
+                            
+                            <p><strong>Using Your Hosting Provider's File Manager:</strong></p>
+                            <ul>
+                                <li>Log into your hosting control panel (cPanel, Plesk, etc.)</li>
+                                <li>Open the File Manager</li>
+                                <li>Upload all files and folders from the HaruCMS folder</li>
+                                <li>Extract any ZIP files if needed</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Set Permissions -->
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <h3 class="step-title">Set File Permissions</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Some folders need to be writable by the web server. Set permissions for these folders:</p>
+                        <pre>chmod -R 755 content/ media/ users/ settings/ logs/</pre>
+                        <p>On most shared hosting providers, this is done automatically. If you see permission errors, contact your hosting provider's support.</p>
+                    </div>
+
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">How to set permissions via hosting control panel</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>Using cPanel File Manager:</strong></p>
+                            <ul>
+                                <li>Right-click on each folder (content, media, users, settings, logs)</li>
+                                <li>Select "Change Permissions"</li>
+                                <li>Set to 755 (or 777 if 755 doesn't work)</li>
+                                <li>Check "Recurse into subdirectories"</li>
+                            </ul>
+                            
+                            <p><strong>Using SSH/Terminal:</strong></p>
+                            <pre>chmod -R 755 content/ media/ users/ settings/ logs/</pre>
+                            
+                            <p><strong>Note:</strong> If you're not sure how to do this, contact your hosting provider's support. They can help you set the correct permissions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Visit Your Website -->
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <h3 class="step-title">Visit Your Website</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Open your web browser and go to:</p>
+                        <pre>https://yourdomain.com/admin</pre>
+                        <p>Replace <code>yourdomain.com</code> with your actual website address.</p>
+                        <p>If you see the login page, everything is working! ✅</p>
+                    </div>
+
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">Troubleshooting - Can't access admin panel</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>Problem: "404 Not Found" or "Page not found"</strong></p>
+                            <p>Make sure all files were uploaded correctly. Check that the <code>admin/</code> folder exists on your server.</p>
+                            
+                            <p><strong>Problem: "500 Internal Server Error"</strong></p>
+                            <p>This usually means PHP isn't working or there's a permission issue. Contact your hosting provider's support.</p>
+                            
+                            <p><strong>Problem: "Permission denied"</strong></p>
+                            <p>Go back to Step 2 and set the correct permissions for the folders.</p>
+                            
+                            <p><strong>Problem: Blank page or PHP errors</strong></p>
+                            <p>Make sure your hosting provider supports PHP 7.4 or higher. Contact support if you're not sure.</p>
+                            
+                            <p><strong>Still having issues?</strong></p>
+                            <p>Contact your hosting provider's support. They can help you configure the server correctly.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Continue to Onboarding -->
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">4</span>
+                        <h3 class="step-title">Continue to Setup</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Great! Your website is accessible. Now let's set up your CMS. Visit your admin panel and you'll be guided through the setup process.</p>
+                        <p>We'll help you create your admin account and configure your CMS.</p>
+                        
+                        <div style="text-align: center; margin-top: var(--space-6);">
+                            <p style="margin-bottom: var(--space-3); color: var(--text-secondary); font-size: 0.875rem;">Replace "yourdomain.com" with your actual website address:</p>
+                            <p style="margin-bottom: var(--space-4);"><code id="server-onboarding-url" style="font-size: 0.875rem;">https://yourdomain.com/admin/index.php?page=onboarding</code></p>
+                            <a href="#" class="btn btn-large" id="server-onboarding-link" onclick="return false;">Start Setup →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -557,6 +747,59 @@
                 content.classList.add('active');
             }
         }
+
+        function showSteps(path) {
+            // Hide all step containers
+            document.querySelectorAll('.steps-container').forEach(container => {
+                container.classList.remove('active');
+            });
+
+            // Show selected steps
+            const steps = document.getElementById(path + '-steps');
+            if (steps) {
+                steps.classList.add('active');
+            }
+
+            // Update card selection
+            document.querySelectorAll('.path-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+
+            // Scroll to steps
+            if (steps) {
+                steps.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // For web server, update onboarding link
+            if (path === 'server') {
+                const currentHost = window.location.hostname;
+                const currentProtocol = window.location.protocol;
+                if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+                    const onboardingUrl = currentProtocol + '//' + currentHost + '/admin/index.php?page=onboarding';
+                    const urlElement = document.getElementById('server-onboarding-url');
+                    const linkElement = document.getElementById('server-onboarding-link');
+                    if (urlElement) {
+                        urlElement.textContent = onboardingUrl;
+                    }
+                    if (linkElement) {
+                        linkElement.href = onboardingUrl;
+                        linkElement.onclick = null;
+                    }
+                }
+            }
+        }
+
+        // Auto-detect if running locally and show local steps
+        window.addEventListener('load', () => {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                const localCard = document.querySelector('.path-card');
+                if (localCard) {
+                    localCard.click();
+                }
+            }
+        });
     </script>
 </body>
 </html>
+
