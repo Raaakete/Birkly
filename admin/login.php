@@ -447,54 +447,84 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     </div>
     
     <script>
-        // Animated Background Canvas
+        // Animated Background Canvas - CodePen style wave animation
         (function() {
             const canvas = document.getElementById('background-canvas');
             const ctx = canvas.getContext('2d');
             
             // Admin panel colors
-            const colors = {
-                primary: '#FFFB00',
-                secondary: '#A1B0A1',
-                positiv: '#e4f1ec',
-                light: '#dce2d7',
-                lightest: '#f4f6f1'
-            };
+            const colors = [
+                '#FFFB00',  // primary - yellow
+                '#A1B0A1',  // secondary - green-gray
+                '#e4f1ec', // positiv - light green
+                '#dce2d7', // light - light gray-green
+                '#f4f6f1'  // lightest - very light green
+            ];
             
             let time = 0;
+            const waves = [];
+            
+            // Create multiple wave objects
+            for (let i = 0; i < 4; i++) {
+                waves.push({
+                    amplitude: 50 + Math.random() * 50,
+                    frequency: 0.01 + Math.random() * 0.02,
+                    speed: 0.5 + Math.random() * 0.5,
+                    color: colors[i % colors.length],
+                    offset: Math.random() * Math.PI * 2,
+                    y: (canvas.height / 5) * (i + 1)
+                });
+            }
             
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
+                
+                // Update wave positions
+                waves.forEach((wave, i) => {
+                    wave.y = (canvas.height / 5) * (i + 1);
+                });
             }
             
-            function drawWave(amplitude, frequency, speed, color, offset) {
+            function drawWave(wave) {
                 ctx.beginPath();
-                ctx.moveTo(0, canvas.height / 2);
+                ctx.moveTo(0, wave.y);
                 
                 for (let x = 0; x < canvas.width; x++) {
-                    const y = canvas.height / 2 + 
-                        amplitude * Math.sin((x * frequency + time * speed + offset) * 0.01);
+                    const y = wave.y + 
+                        wave.amplitude * Math.sin(x * wave.frequency + time * wave.speed + wave.offset);
                     ctx.lineTo(x, y);
                 }
                 
+                // Fill to bottom
                 ctx.lineTo(canvas.width, canvas.height);
                 ctx.lineTo(0, canvas.height);
                 ctx.closePath();
-                ctx.fillStyle = color;
+                
+                // Create gradient
+                const gradient = ctx.createLinearGradient(0, wave.y, 0, canvas.height);
+                gradient.addColorStop(0, wave.color);
+                gradient.addColorStop(1, wave.color + '00'); // Fade to transparent
+                
+                ctx.fillStyle = wave.color;
+                ctx.globalAlpha = 0.6;
                 ctx.fill();
+                ctx.globalAlpha = 1.0;
             }
             
             function animate() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Draw multiple waves with different properties
-                drawWave(80, 0.5, 0.5, colors.positiv, 0);
-                drawWave(60, 0.7, 0.7, colors.secondary, 50);
-                drawWave(100, 0.4, 0.4, colors.primary, 100);
-                drawWave(70, 0.6, 0.6, colors.light, 150);
+                // Draw background
+                ctx.fillStyle = '#f4f6f1';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                time += 0.5;
+                // Draw all waves
+                waves.forEach(wave => {
+                    drawWave(wave);
+                });
+                
+                time += 0.02;
                 
                 requestAnimationFrame(animate);
             }
