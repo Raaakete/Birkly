@@ -83,17 +83,25 @@ kill_port() {
 # Function to check PHP version
 check_php() {
     if ! command -v php &> /dev/null; then
-        print_error "PHP is not installed or not in PATH"
+        print_error "PHP is not installed!"
+        echo ""
+        echo "HaruCMS requires PHP to run. Please install PHP first:"
+        echo "  - Mac: Install via Homebrew (brew install php) or download from php.net"
+        echo "  - Windows: Download from php.net or use XAMPP/WAMP"
+        echo "  - Linux: Install via your package manager (apt install php, yum install php, etc.)"
+        echo ""
+        echo "After installing PHP, try running this script again."
         exit 1
     fi
     
     local php_version=$(php -r "echo PHP_VERSION;" 2>/dev/null)
     if [ -z "$php_version" ]; then
         print_error "Could not determine PHP version"
+        echo "Please make sure PHP is installed correctly."
         exit 1
     fi
     
-    print_status "PHP version: $php_version"
+    print_success "PHP is installed (version: $php_version)"
     
     # Check if version is >= 7.4 (recommended minimum)
     local major=$(echo $php_version | cut -d. -f1)
@@ -159,6 +167,11 @@ fi
 
 # Main execution
 print_status "Starting HaruCMS Development Server..."
+
+# Make script executable if it isn't already
+if [ ! -x "$0" ]; then
+    chmod +x "$0"
+fi
 
 # Check prerequisites
 check_php

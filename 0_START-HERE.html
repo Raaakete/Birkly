@@ -456,30 +456,33 @@
                 <div class="step">
                     <h4><span class="step-number">3</span>Start the Server</h4>
                     <p>Copy and paste this command into your terminal and press Enter:</p>
-                    <pre>chmod +x ./start-server.sh && ./start-server.sh -k</pre>
-                    <p>You should see a message saying "Starting server on http://localhost:8080". Keep this terminal window open!</p>
+                    <pre>./start-server.sh</pre>
+                    <p>The script will check if PHP is installed and start the server automatically.</p>
+                    <p>You should see a message saying "Starting server on http://localhost:8080". <strong>Keep this terminal window open!</strong></p>
                 </div>
 
                 <div class="step">
-                    <h4><span class="step-number">4</span>Check Connection</h4>
-                    <p>Below you'll see if your server is connected. If it says "Not Connected", make sure the terminal is still running and try refreshing this page.</p>
+                    <h4><span class="step-number">4</span>Check if Server is Running</h4>
+                    <p>Look at your terminal window. If you see "Starting server on http://localhost:8080", your server is running!</p>
+                    <p>If you see an error message, the script will tell you what's wrong (like PHP not being installed).</p>
                     
                     <!-- Connection Status Box -->
-                    <div class="connection-status checking" id="connection-status">
-                        <div class="connection-icon">⏳</div>
-                        <h4>Checking connection...</h4>
-                        <p>Please wait while we check if your server is running.</p>
+                    <div class="connection-status" id="connection-status">
+                        <div class="connection-icon">ℹ️</div>
+                        <h4>Check Your Terminal</h4>
+                        <p>Look at the terminal window where you ran the command. If it says "Starting server on http://localhost:8080", your server is running!</p>
+                        <p style="margin-top: var(--space-3);"><strong>If the server is running, click the button below to continue.</strong></p>
                     </div>
                 </div>
 
                 <div class="note">
-                    <p><strong>💡 Tip:</strong> If you see an error about the port being in use, the server might already be running. Try opening <a href="http://localhost:8080/admin" target="_blank">http://localhost:8080/admin</a> in your browser.</p>
+                    <p><strong>💡 Tip:</strong> If you see an error about the port being in use, the server might already be running. Try clicking the "Start Setup" button below.</p>
                 </div>
 
-                <div class="success-box" id="local-success" style="display: none;">
-                    <h3>✅ Great! Your Server is Running</h3>
-                    <p>You're all set! Click the button below to start setting up your CMS.</p>
-                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-local">Start Setup →</a>
+                <div class="success-box" id="local-success">
+                    <h3>✅ Ready to Continue?</h3>
+                    <p>If your terminal shows the server is running, click the button below to start setting up your CMS.</p>
+                    <a href="http://localhost:8080/admin/index.php?page=onboarding" class="btn" id="onboarding-link-local" target="_blank">Start Setup →</a>
                 </div>
             </div>
 
@@ -507,7 +510,9 @@
                 <div class="success-box">
                     <h3>✅ Ready to Continue?</h3>
                     <p>If you can see the login page, you're ready to start the setup!</p>
-                    <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-server">Start Setup →</a>
+                    <p style="margin-top: var(--space-2); font-size: 0.875rem; color: var(--text-secondary);">Replace "yourdomain.com" with your actual website address in the link below:</p>
+                    <a href="#" class="btn" id="onboarding-link-server" onclick="return false;">Start Setup →</a>
+                    <p style="margin-top: var(--space-2); font-size: 0.875rem; color: var(--text-secondary);">Or visit: <code id="server-onboarding-url">https://yourdomain.com/admin/index.php?page=onboarding</code></p>
                 </div>
             </div>
 
@@ -515,66 +520,12 @@
             <div class="onboarding-link">
                 <h3>🎯 Ready to Get Started?</h3>
                 <p>Once your server is running, click below to start the setup process. We'll guide you through creating your account and configuring your CMS.</p>
-                <a href="/admin/index.php?page=onboarding" class="btn" id="onboarding-link-main">Start Setup →</a>
+                <a href="http://localhost:8080/admin/index.php?page=onboarding" class="btn" id="onboarding-link-main" target="_blank">Start Setup →</a>
             </div>
         </div>
     </div>
 
     <script>
-        // Simple connection check for local server
-        async function checkConnection() {
-            const statusDiv = document.getElementById('connection-status');
-            const successBox = document.getElementById('local-success');
-            
-            if (!statusDiv) return;
-            
-            const baseUrl = window.location.origin;
-            
-            try {
-                // Try to reach the admin panel
-                const response = await fetch(baseUrl + '/admin/index.php', {
-                    method: 'HEAD',
-                    cache: 'no-cache',
-                    mode: 'no-cors' // This allows us to check even if CORS fails
-                });
-                
-                // If we get here, the server is likely running
-                statusDiv.className = 'connection-status connected';
-                statusDiv.innerHTML = `
-                    <div class="connection-icon">✓</div>
-                    <h4>Connected to Local Server</h4>
-                    <p>Your server is running correctly!</p>
-                `;
-                
-                if (successBox) {
-                    successBox.style.display = 'block';
-                }
-                
-            } catch (error) {
-                // Try a simpler check - just see if we can load the page
-                fetch(baseUrl + '/admin/index.php', { method: 'GET', cache: 'no-cache' })
-                    .then(() => {
-                        statusDiv.className = 'connection-status connected';
-                        statusDiv.innerHTML = `
-                            <div class="connection-icon">✓</div>
-                            <h4>Connected to Local Server</h4>
-                            <p>Your server is running correctly!</p>
-                        `;
-                        if (successBox) {
-                            successBox.style.display = 'block';
-                        }
-                    })
-                    .catch(() => {
-                        statusDiv.className = 'connection-status not-connected';
-                        statusDiv.innerHTML = `
-                            <div class="connection-icon">✗</div>
-                            <h4>Not Connected</h4>
-                            <p>Make sure you've started the server in your terminal. If you just started it, wait a few seconds and refresh this page.</p>
-                        `;
-                    });
-            }
-        }
-
         function showInstructions(path) {
             // Hide all instructions
             document.querySelectorAll('.instructions').forEach(el => {
@@ -594,11 +545,6 @@
 
                 // Scroll to instructions
                 instructions.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                
-                // If local instructions, check connection
-                if (path === 'local') {
-                    setTimeout(checkConnection, 500);
-                }
             }
         }
 
@@ -610,16 +556,19 @@
                 if (localCard) {
                     localCard.click();
                 }
+            } else {
+                // For web server setup, update the onboarding URL
+                const serverUrl = document.getElementById('server-onboarding-url');
+                const serverLink = document.getElementById('onboarding-link-server');
+                if (serverUrl && serverLink) {
+                    const currentHost = window.location.hostname;
+                    const currentProtocol = window.location.protocol;
+                    const onboardingUrl = currentProtocol + '//' + currentHost + '/admin/index.php?page=onboarding';
+                    serverUrl.textContent = onboardingUrl;
+                    serverLink.href = onboardingUrl;
+                    serverLink.onclick = null;
+                }
             }
-        });
-
-        // Update onboarding links to use current origin
-        document.addEventListener('DOMContentLoaded', () => {
-            const baseUrl = window.location.origin;
-            const onboardingLinks = document.querySelectorAll('[id^="onboarding-link"]');
-            onboardingLinks.forEach(link => {
-                link.href = baseUrl + '/admin/index.php?page=onboarding';
-            });
         });
     </script>
 </body>
