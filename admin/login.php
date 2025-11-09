@@ -448,8 +448,10 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     
     <script>
         // Custom Sun Beams Effect - Wavy yellow rays from center
-        (function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('background-canvas');
+            if (!canvas) return;
+            
             const ctx = canvas.getContext('2d');
             
             // Admin panel colors
@@ -457,38 +459,38 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             const beamColor = '#FFFB00'; // primary - yellow
             
             let time = 0;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
             const numBeams = 12; // Number of sun beam rays
             const beams = [];
-            
-            // Initialize beams
-            for (let i = 0; i < numBeams; i++) {
-                const angle = (Math.PI * 2 / numBeams) * i;
-                beams.push({
-                    angle: angle,
-                    baseAngle: angle,
-                    length: 0,
-                    maxLength: Math.max(canvas.width, canvas.height) * 1.5,
-                    waveAmplitude: 20 + Math.random() * 30,
-                    waveFrequency: 0.02 + Math.random() * 0.03,
-                    waveSpeed: 0.5 + Math.random() * 0.5,
-                    rotationSpeed: 0.001 + Math.random() * 0.002,
-                    opacity: 0.3 + Math.random() * 0.2
-                });
-            }
             
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
                 
-                // Update center and max length
-                const newCenterX = canvas.width / 2;
-                const newCenterY = canvas.height / 2;
-                
+                // Update max length for all beams
+                const maxLength = Math.max(canvas.width, canvas.height) * 1.5;
                 beams.forEach(beam => {
-                    beam.maxLength = Math.max(canvas.width, canvas.height) * 1.5;
+                    beam.maxLength = maxLength;
                 });
+            }
+            
+            function initBeams() {
+                beams.length = 0; // Clear existing beams
+                
+                // Initialize beams
+                for (let i = 0; i < numBeams; i++) {
+                    const angle = (Math.PI * 2 / numBeams) * i;
+                    beams.push({
+                        angle: angle,
+                        baseAngle: angle,
+                        length: 0,
+                        maxLength: Math.max(window.innerWidth, window.innerHeight) * 1.5,
+                        waveAmplitude: 20 + Math.random() * 30,
+                        waveFrequency: 0.02 + Math.random() * 0.03,
+                        waveSpeed: 0.5 + Math.random() * 0.5,
+                        rotationSpeed: 0.001 + Math.random() * 0.002,
+                        opacity: 0.4 + Math.random() * 0.3
+                    });
+                }
             }
             
             function drawBeam(beam) {
@@ -499,13 +501,12 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                 beam.angle = beam.baseAngle + time * beam.rotationSpeed;
                 
                 // Gradually grow the beam length
-                beam.length = Math.min(beam.length + 2, beam.maxLength);
+                beam.length = Math.min(beam.length + 3, beam.maxLength);
                 
                 ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
                 
                 // Draw wavy beam path
-                const segments = 100;
+                const segments = 150;
                 for (let i = 0; i <= segments; i++) {
                     const progress = i / segments;
                     const distance = beam.length * progress;
@@ -528,16 +529,21 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                 const endX = centerX + Math.cos(beam.angle) * beam.length;
                 const endY = centerY + Math.sin(beam.angle) * beam.length;
                 const gradient = ctx.createLinearGradient(centerX, centerY, endX, endY);
+                
+                // Convert opacity to hex
+                const opacityHex = Math.floor(beam.opacity * 255).toString(16).padStart(2, '0');
+                
                 gradient.addColorStop(0, beamColor + '00'); // Transparent at center
-                gradient.addColorStop(0.3, beamColor + Math.floor(beam.opacity * 255).toString(16).padStart(2, '0'));
+                gradient.addColorStop(0.2, beamColor + opacityHex);
+                gradient.addColorStop(0.5, beamColor + opacityHex);
                 gradient.addColorStop(1, beamColor + '00'); // Fade to transparent at end
                 
                 ctx.strokeStyle = gradient;
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 ctx.lineCap = 'round';
-                ctx.globalAlpha = beam.opacity;
-                ctx.stroke();
+                ctx.lineJoin = 'round';
                 ctx.globalAlpha = 1.0;
+                ctx.stroke();
             }
             
             function animate() {
@@ -557,11 +563,15 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                 requestAnimationFrame(animate);
             }
             
+            // Initialize
             resizeCanvas();
+            initBeams();
             animate();
             
-            window.addEventListener('resize', resizeCanvas);
-        })();
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+            });
+        });
         
         // Auto-focus email field
         document.getElementById('email').focus();
