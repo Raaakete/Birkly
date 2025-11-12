@@ -424,6 +424,7 @@
             document.querySelectorAll('.drop-zone').forEach(zone => {
                 zone.classList.remove('drag-over');
             });
+            removeDropIndicator();
             console.log('Drag ended');
             draggedElement = null;
             draggedCollection = null;
@@ -457,21 +458,42 @@
         // Use event delegation on the container to handle all drop zones
         container.addEventListener('dragover', function(e) {
             const dropZone = e.target.closest('.drop-zone');
-            if (!dropZone) return;
+            if (!dropZone) {
+                removeDropIndicator();
+                return;
+            }
             
             e.preventDefault();
             e.stopPropagation();
             e.dataTransfer.dropEffect = 'move';
             dropZone.classList.add('drag-over');
+            
+            // Show drop indicator
+            if (draggedElement && draggedCollection) {
+                const targetGroupId = dropZone.dataset.groupId || null;
+                const targetGroupIdNormalized = targetGroupId === '' || targetGroupId === undefined ? null : targetGroupId;
+                const draggedGroupIdNormalized = draggedGroupId === '' || draggedGroupId === undefined ? null : draggedGroupId;
+                
+                // Only show indicator if dropping in same group
+                if (targetGroupIdNormalized === draggedGroupIdNormalized) {
+                    showDropIndicator(e, dropZone);
+                } else {
+                    removeDropIndicator();
+                }
+            }
         }, false);
         
         container.addEventListener('dragleave', function(e) {
             const dropZone = e.target.closest('.drop-zone');
-            if (!dropZone) return;
+            if (!dropZone) {
+                removeDropIndicator();
+                return;
+            }
             
             // Only remove if we're actually leaving the zone
             if (!dropZone.contains(e.relatedTarget)) {
                 dropZone.classList.remove('drag-over');
+                removeDropIndicator();
             }
         }, false);
         
@@ -479,12 +501,14 @@
             const dropZone = e.target.closest('.drop-zone');
             if (!dropZone) {
                 console.log('Drop: No drop zone found');
+                removeDropIndicator();
                 return;
             }
             
             e.preventDefault();
             e.stopPropagation();
             dropZone.classList.remove('drag-over');
+            removeDropIndicator();
             
             if (!draggedElement || !draggedCollection) {
                 console.log('Drop: No dragged element or collection');
@@ -501,36 +525,52 @@
             // Check if we're reordering within the same group (both null for ungrouped, or same string for grouped)
             if (targetGroupIdNormalized === draggedGroupIdNormalized) {
                 console.log('Drop: Reordering within same group');
-                // Find the target card - check if we're dropping on a card or between cards
-                let targetCard = e.target.closest('.collection-card');
                 
-                // If we didn't find a card, try to find the nearest card in the drop zone
-                if (!targetCard) {
-                    const cards = Array.from(dropZone.querySelectorAll('.collection-card'));
-                    console.log('Drop: Found', cards.length, 'cards in drop zone');
-                    // Find the card that's closest to the drop point
-                    const dropY = e.clientY;
-                    let closestCard = null;
-                    let closestDistance = Infinity;
+                // Get the drop indicator to find insertion point
+                const dropIndicator = document.querySelector('.drop-indicator');
+                let targetSlug = null;
+                
+                if (dropIndicator && dropIndicator.dataset.targetSlug) {
+                    // Use the drop indicator's target
+                    targetSlug = dropIndicator.dataset.targetSlug;
+                    const insertBefore = dropIndicator.dataset.insertBefore === 'true';
+                    console.log('Drop: Using indicator target', targetSlug, 'insertBefore:', insertBefore);
+                } else {
+                    // Fallback: find the target card
+                    let targetCard = e.target.closest('.collection-card');
                     
-                    cards.forEach(card => {
-                        if (card === draggedElement) return;
-                        const rect = card.getBoundingClientRect();
-                        const cardCenterY = rect.top + rect.height / 2;
-                        const distance = Math.abs(dropY - cardCenterY);
-                        if (distance < closestDistance) {
-                            closestDistance = distance;
-                            closestCard = card;
-                        }
-                    });
+                    // If we didn't find a card, try to find the nearest card in the drop zone
+                    if (!targetCard) {
+                        const cards = Array.from(dropZone.querySelectorAll('.collection-card'));
+                        console.log('Drop: Found', cards.length, 'cards in drop zone');
+                        // Find the card that's closest to the drop point
+                        const dropY = e.clientY;
+                        let closestCard = null;
+                        let closestDistance = Infinity;
+                        
+                        cards.forEach(card => {
+                            if (card === draggedElement) return;
+                            const rect = card.getBoundingClientRect();
+                            const cardCenterY = rect.top + rect.height / 2;
+                            const distance = Math.abs(dropY - cardCenterY);
+                            if (distance < closestDistance) {
+                                closestDistance = distance;
+                                closestCard = card;
+                            }
+                        });
+                        
+                        targetCard = closestCard;
+                    }
                     
-                    targetCard = closestCard;
+                    if (targetCard && targetCard !== draggedElement) {
+                        targetSlug = targetCard.dataset.collectionSlug;
+                    }
                 }
                 
-                if (targetCard && targetCard !== draggedElement) {
-                    console.log('Drop: Reordering', draggedCollection.slug, 'to position of', targetCard.dataset.collectionSlug);
+                if (targetSlug) {
+                    console.log('Drop: Reordering', draggedCollection.slug, 'to position of', targetSlug);
                     // Reorder within same group
-                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupIdNormalized, targetCard.dataset.collectionSlug);
+                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupIdNormalized, targetSlug);
                 } else {
                     console.log('Drop: No target card found, just refreshing');
                     // Dropped in empty space, just refresh
@@ -574,7 +614,11 @@
     function reorderCollectionInGroup(collectionSlug, groupId, targetSlug) {
         console.log('ReorderCollectionInGroup:', collectionSlug, 'groupId:', groupId, 'targetSlug:', targetSlug);
         
-        if (!groupId) {
+        // Get the drop indicator to check if we should insert before or after
+        const dropIndicator = document.querySelector('.drop-indicator');
+        const insertBefore = dropIndicator && dropIndicator.dataset.insertBefore === 'true';
+        
+        if (!groupId || groupId === 'ungrouped') {
             // Reordering in ungrouped - we need to track order in groups.json
             // Create or update an "ungrouped" entry in groups to track order
             let ungroupedGroup = groups.find(g => g.id === 'ungrouped');
@@ -604,7 +648,9 @@
             // Find target position and insert
             const targetIndex = ungroupedGroup.collections.indexOf(targetSlug);
             if (targetIndex !== -1) {
-                ungroupedGroup.collections.splice(targetIndex, 0, collectionSlug);
+                // Insert before or after based on drop indicator
+                const insertIndex = insertBefore ? targetIndex : targetIndex + 1;
+                ungroupedGroup.collections.splice(insertIndex, 0, collectionSlug);
             } else {
                 // Target not found, just append
                 ungroupedGroup.collections.push(collectionSlug);
@@ -624,7 +670,9 @@
             // Find target position and insert
             const targetIndex = group.collections.indexOf(targetSlug);
             if (targetIndex !== -1) {
-                group.collections.splice(targetIndex, 0, collectionSlug);
+                // Insert before or after based on drop indicator
+                const insertIndex = insertBefore ? targetIndex : targetIndex + 1;
+                group.collections.splice(insertIndex, 0, collectionSlug);
             } else {
                 // Target not found, just append
                 group.collections.push(collectionSlug);
@@ -843,6 +891,77 @@
             console.error('Error saving groups:', error);
             alert('Error saving groups. Please try again.');
         });
+    }
+    
+    // Drop indicator functions
+    function showDropIndicator(e, dropZone) {
+        const cards = Array.from(dropZone.querySelectorAll('.collection-card')).filter(card => card !== draggedElement);
+        if (cards.length === 0) {
+            removeDropIndicator();
+            return;
+        }
+        
+        const dropY = e.clientY;
+        let insertBefore = false;
+        let targetCard = null;
+        let minDistance = Infinity;
+        
+        // Find the card we're closest to
+        cards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const cardTop = rect.top;
+            const cardBottom = rect.bottom;
+            const cardCenterY = rect.top + rect.height / 2;
+            
+            // Check if we're above or below the card
+            const distanceToTop = Math.abs(dropY - cardTop);
+            const distanceToBottom = Math.abs(dropY - cardBottom);
+            const distanceToCenter = Math.abs(dropY - cardCenterY);
+            
+            const minDist = Math.min(distanceToTop, distanceToBottom, distanceToCenter);
+            
+            if (minDist < minDistance) {
+                minDistance = minDist;
+                targetCard = card;
+                // If closer to top, insert before; if closer to bottom, insert after
+                insertBefore = distanceToTop < distanceToBottom;
+            }
+        });
+        
+        if (!targetCard) {
+            removeDropIndicator();
+            return;
+        }
+        
+        // Remove existing indicator
+        removeDropIndicator();
+        
+        // Create indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator';
+        indicator.dataset.targetSlug = targetCard.dataset.collectionSlug;
+        indicator.dataset.insertBefore = insertBefore;
+        
+        const rect = targetCard.getBoundingClientRect();
+        const dropZoneRect = dropZone.getBoundingClientRect();
+        
+        if (insertBefore) {
+            indicator.style.top = (rect.top - dropZoneRect.top - 2) + 'px';
+        } else {
+            indicator.style.top = (rect.bottom - dropZoneRect.top + 2) + 'px';
+        }
+        indicator.style.left = '0';
+        indicator.style.width = '100%';
+        
+        dropZone.style.position = 'relative';
+        dropZone.appendChild(indicator);
+    }
+    
+    function removeDropIndicator() {
+        const indicator = document.querySelector('.drop-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
     }
     
     // Expose setupDropZones to be called after render
