@@ -2557,12 +2557,44 @@ textarea:focus {
   opacity: 0.6;
   transition: opacity 0.15s;
 }
-tr.dragging {
+
+.table-row.dragging {
   opacity: 0.5;
 }
-tr.drag-over {
+
+.table-row.drag-over {
   outline: 2px dashed var(--primary-400);
   background: var(--primary-50);
+}
+
+.cell-drag {
+  cursor: grab;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.table-row:hover .cell-drag {
+  opacity: 1;
+}
+
+.cell-drag:active {
+  cursor: grabbing;
+}
+
+/* Entry drop indicator */
+.entry-drop-indicator {
+  position: absolute;
+  height: 3px;
+  background: var(--primary-500);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  animation: dropIndicatorPulse 1s ease-in-out infinite;
+}
+
+.table-body {
+  position: relative;
 } 
 
 /* --- Tags Fieldtype --- */
