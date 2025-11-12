@@ -305,43 +305,7 @@
     
     const tableBody = document.querySelector('.table-body');
     if (tableBody) {
-        // Make rows draggable
-        const rows = document.querySelectorAll('.table-row');
-        rows.forEach(row => {
-            const dragCell = row.querySelector('.cell-drag');
-            if (dragCell) {
-                row.draggable = true;
-                dragCell.style.cursor = 'grab';
-                
-                // Add drag event listeners
-                row.addEventListener('dragstart', function(e) {
-                    // Only start drag from drag handle
-                    if (!e.target.closest('.cell-drag') && e.target !== dragCell) {
-                        e.preventDefault();
-                        return false;
-                    }
-                    
-                    draggedRow = this;
-                    draggedEntryId = this.dataset.entryId;
-                    this.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', draggedEntryId);
-                    
-                    // Hide the row being dragged (but keep space)
-                    this.style.opacity = '0.5';
-                });
-                
-                row.addEventListener('dragend', function(e) {
-                    this.classList.remove('dragging');
-                    this.style.opacity = '';
-                    removeEntryDropIndicator();
-                    draggedRow = null;
-                    draggedEntryId = null;
-                });
-            }
-        });
-        
-        // Set up drop zone
+        // Set up drop zone handlers first
         tableBody.addEventListener('dragover', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -515,6 +479,8 @@
      */
     function initializeEntryDragHandlers() {
         const rows = document.querySelectorAll('.table-row');
+        console.log('Initializing drag handlers for', rows.length, 'rows');
+        
         rows.forEach(row => {
             const dragCell = row.querySelector('.cell-drag');
             if (dragCell && !row.hasAttribute('data-drag-initialized')) {
@@ -522,14 +488,26 @@
                 dragCell.style.cursor = 'grab';
                 row.setAttribute('data-drag-initialized', 'true');
                 
+                // Make the drag cell itself draggable too
+                dragCell.draggable = false; // Prevent double dragging
+                
                 row.addEventListener('dragstart', function(e) {
-                    if (!e.target.closest('.cell-drag') && e.target !== dragCell) {
+                    console.log('Drag start triggered', e.target);
+                    
+                    // Only allow drag from the drag handle area
+                    const clickedElement = e.target;
+                    const isInDragCell = clickedElement.closest('.cell-drag') !== null;
+                    
+                    if (!isInDragCell) {
+                        console.log('Drag prevented - not from drag handle');
                         e.preventDefault();
                         return false;
                     }
                     
                     draggedRow = this;
                     draggedEntryId = this.dataset.entryId;
+                    console.log('Dragging entry:', draggedEntryId);
+                    
                     this.classList.add('dragging');
                     e.dataTransfer.effectAllowed = 'move';
                     e.dataTransfer.setData('text/plain', draggedEntryId);
@@ -537,17 +515,28 @@
                 });
                 
                 row.addEventListener('dragend', function(e) {
+                    console.log('Drag end');
                     this.classList.remove('dragging');
                     this.style.opacity = '';
                     removeEntryDropIndicator();
                     draggedRow = null;
                     draggedEntryId = null;
                 });
+                
+                // Also add mousedown to the drag cell for better UX
+                dragCell.addEventListener('mousedown', function(e) {
+                    console.log('Mouse down on drag handle');
+                    // This helps ensure the drag starts from the handle
+                });
             }
         });
     }
     
     // Initialize drag handlers on page load
-    initializeEntryDragHandlers();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeEntryDragHandlers);
+    } else {
+        initializeEntryDragHandlers();
+    }
 })();
 
