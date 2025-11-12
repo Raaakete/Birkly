@@ -541,12 +541,14 @@
                 // Get the drop indicator to find insertion point
                 const dropIndicator = document.querySelector('.drop-indicator');
                 let targetSlug = null;
+                let insertBefore = false;
                 
                 if (dropIndicator && dropIndicator.dataset.targetSlug) {
                     // Use the drop indicator's target
                     targetSlug = dropIndicator.dataset.targetSlug;
-                    const insertBefore = dropIndicator.dataset.insertBefore === 'true';
-                    console.log('Drop: Using indicator target', targetSlug, 'insertBefore:', insertBefore);
+                    insertBefore = dropIndicator.dataset.insertBefore === 'true';
+                    const isVertical = dropIndicator.dataset.isVertical === 'true';
+                    console.log('Drop: Using indicator target', targetSlug, 'insertBefore:', insertBefore, 'isVertical:', isVertical);
                 } else {
                     // Fallback: find the target card
                     let targetCard = e.target.closest('.collection-card');
@@ -580,9 +582,9 @@
                 }
                 
                 if (targetSlug) {
-                    console.log('Drop: Reordering', draggedCollection.slug, 'to position of', targetSlug);
+                    console.log('Drop: Reordering', draggedCollection.slug, 'to position of', targetSlug, 'insertBefore:', insertBefore);
                     // Reorder within same group
-                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupIdNormalized, targetSlug);
+                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupIdNormalized, targetSlug, insertBefore);
                 } else {
                     console.log('Drop: No target card found, just refreshing');
                     // Dropped in empty space, just refresh
@@ -623,12 +625,8 @@
         saveGroups();
     }
     
-    function reorderCollectionInGroup(collectionSlug, groupId, targetSlug) {
-        console.log('ReorderCollectionInGroup:', collectionSlug, 'groupId:', groupId, 'targetSlug:', targetSlug);
-        
-        // Get the drop indicator to check if we should insert before or after
-        const dropIndicator = document.querySelector('.drop-indicator');
-        const insertBefore = dropIndicator && dropIndicator.dataset.insertBefore === 'true';
+    function reorderCollectionInGroup(collectionSlug, groupId, targetSlug, insertBefore = false) {
+        console.log('ReorderCollectionInGroup:', collectionSlug, 'groupId:', groupId, 'targetSlug:', targetSlug, 'insertBefore:', insertBefore);
         
         if (!groupId || groupId === 'ungrouped') {
             // Reordering in ungrouped - we need to track order in groups.json
@@ -654,19 +652,30 @@
                 ungroupedGroup.collections = ungroupedCollections.map(col => col.slug);
             }
             
-            // Remove from current position
-            ungroupedGroup.collections = ungroupedGroup.collections.filter(slug => slug !== collectionSlug);
-            
-            // Find target position and insert
+            // Find current and target positions BEFORE removing
+            const currentIndex = ungroupedGroup.collections.indexOf(collectionSlug);
             const targetIndex = ungroupedGroup.collections.indexOf(targetSlug);
-            if (targetIndex !== -1) {
-                // Insert before or after based on drop indicator
-                const insertIndex = insertBefore ? targetIndex : targetIndex + 1;
+            
+            if (targetIndex !== -1 && currentIndex !== targetIndex) {
+                // Remove from current position first
+                ungroupedGroup.collections = ungroupedGroup.collections.filter(slug => slug !== collectionSlug);
+                
+                // Calculate new target index after removal
+                let newTargetIndex = targetIndex;
+                if (currentIndex < targetIndex) {
+                    // We removed an item before the target, so target index shifts down
+                    newTargetIndex = targetIndex - 1;
+                }
+                
+                // Insert at the correct position
+                const insertIndex = insertBefore ? newTargetIndex : newTargetIndex + 1;
                 ungroupedGroup.collections.splice(insertIndex, 0, collectionSlug);
-            } else {
-                // Target not found, just append
+            } else if (targetIndex === -1) {
+                // Target not found, just remove and re-append
+                ungroupedGroup.collections = ungroupedGroup.collections.filter(slug => slug !== collectionSlug);
                 ungroupedGroup.collections.push(collectionSlug);
             }
+            // If currentIndex === targetIndex, do nothing (dropped on itself)
             
             console.log('Ungrouped order after reorder:', ungroupedGroup.collections);
         } else {
@@ -676,19 +685,30 @@
                 return;
             }
             
-            // Remove from current position
-            group.collections = group.collections.filter(slug => slug !== collectionSlug);
-            
-            // Find target position and insert
+            // Find current and target positions BEFORE removing
+            const currentIndex = group.collections.indexOf(collectionSlug);
             const targetIndex = group.collections.indexOf(targetSlug);
-            if (targetIndex !== -1) {
-                // Insert before or after based on drop indicator
-                const insertIndex = insertBefore ? targetIndex : targetIndex + 1;
+            
+            if (targetIndex !== -1 && currentIndex !== targetIndex) {
+                // Remove from current position first
+                group.collections = group.collections.filter(slug => slug !== collectionSlug);
+                
+                // Calculate new target index after removal
+                let newTargetIndex = targetIndex;
+                if (currentIndex < targetIndex) {
+                    // We removed an item before the target, so target index shifts down
+                    newTargetIndex = targetIndex - 1;
+                }
+                
+                // Insert at the correct position
+                const insertIndex = insertBefore ? newTargetIndex : newTargetIndex + 1;
                 group.collections.splice(insertIndex, 0, collectionSlug);
-            } else {
-                // Target not found, just append
+            } else if (targetIndex === -1) {
+                // Target not found, just remove and re-append
+                group.collections = group.collections.filter(slug => slug !== collectionSlug);
                 group.collections.push(collectionSlug);
             }
+            // If currentIndex === targetIndex, do nothing (dropped on itself)
             
             console.log('Group order after reorder:', group.collections);
         }
@@ -913,29 +933,50 @@
             return;
         }
         
+        const dropX = e.clientX;
         const dropY = e.clientY;
         let insertBefore = false;
         let targetCard = null;
         let minDistance = Infinity;
+        let isVertical = false; // Whether to show vertical or horizontal indicator
         
-        // Find the card we're closest to (by Y position for grid layout)
+        // Find the card we're closest to
         cards.forEach(card => {
             const rect = card.getBoundingClientRect();
             const cardTop = rect.top;
             const cardBottom = rect.bottom;
+            const cardLeft = rect.left;
+            const cardRight = rect.right;
+            const cardCenterX = rect.left + rect.width / 2;
             const cardCenterY = rect.top + rect.height / 2;
             
-            // Check if we're above or below the card
+            // Calculate distances
             const distanceToTop = Math.abs(dropY - cardTop);
             const distanceToBottom = Math.abs(dropY - cardBottom);
+            const distanceToLeft = Math.abs(dropX - cardLeft);
+            const distanceToRight = Math.abs(dropX - cardRight);
             
-            const minDist = Math.min(distanceToTop, distanceToBottom);
+            // Determine if we're closer horizontally or vertically
+            const horizontalDist = Math.min(distanceToLeft, distanceToRight);
+            const verticalDist = Math.min(distanceToTop, distanceToBottom);
+            
+            // Use the minimum distance
+            const minDist = Math.min(horizontalDist, verticalDist);
             
             if (minDist < minDistance) {
                 minDistance = minDist;
                 targetCard = card;
-                // If closer to top, insert before; if closer to bottom, insert after
-                insertBefore = distanceToTop < distanceToBottom;
+                
+                // Determine insertion direction
+                if (verticalDist < horizontalDist) {
+                    // Closer to top/bottom - insert before/after vertically
+                    isVertical = false; // Horizontal line between rows
+                    insertBefore = distanceToTop < distanceToBottom;
+                } else {
+                    // Closer to left/right - insert before/after horizontally
+                    isVertical = true; // Vertical line between columns
+                    insertBefore = distanceToLeft < distanceToRight;
+                }
             }
         });
         
@@ -952,21 +993,34 @@
         indicator.className = 'drop-indicator';
         indicator.dataset.targetSlug = targetCard.dataset.collectionSlug;
         indicator.dataset.insertBefore = insertBefore;
+        indicator.dataset.isVertical = isVertical;
         
         const rect = targetCard.getBoundingClientRect();
         const dropZoneRect = dropZone.getBoundingClientRect();
         
-        // Position indicator between cards (full width for grid layout)
-        if (insertBefore) {
-            indicator.style.top = (rect.top - dropZoneRect.top - 1) + 'px';
+        if (isVertical) {
+            // Vertical indicator between columns
+            if (insertBefore) {
+                indicator.style.left = (rect.left - dropZoneRect.left - 1) + 'px';
+            } else {
+                indicator.style.left = (rect.right - dropZoneRect.left + 1) + 'px';
+            }
+            indicator.style.top = (rect.top - dropZoneRect.top) + 'px';
+            indicator.style.width = '3px';
+            indicator.style.height = rect.height + 'px';
         } else {
-            indicator.style.top = (rect.bottom - dropZoneRect.top + 1) + 'px';
+            // Horizontal indicator between rows
+            if (insertBefore) {
+                indicator.style.top = (rect.top - dropZoneRect.top - 1) + 'px';
+            } else {
+                indicator.style.top = (rect.bottom - dropZoneRect.top + 1) + 'px';
+            }
+            indicator.style.left = (rect.left - dropZoneRect.left) + 'px';
+            indicator.style.width = rect.width + 'px';
+            indicator.style.height = '3px';
         }
-        indicator.style.left = '0';
-        indicator.style.width = '100%';
-        indicator.style.height = '3px';
-        indicator.style.position = 'absolute';
         
+        indicator.style.position = 'absolute';
         dropZone.style.position = 'relative';
         dropZone.appendChild(indicator);
     }
