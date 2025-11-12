@@ -475,11 +475,37 @@
             
             // Check if we're reordering within the same group
             if (targetGroupIdStr === draggedGroupIdStr) {
-                // Find the target position (card we're dropping on or after)
-                const targetCard = e.target.closest('.collection-card');
+                // Find the target card - check if we're dropping on a card or between cards
+                let targetCard = e.target.closest('.collection-card');
+                
+                // If we didn't find a card, try to find the nearest card in the drop zone
+                if (!targetCard) {
+                    const cards = Array.from(dropZone.querySelectorAll('.collection-card'));
+                    // Find the card that's closest to the drop point
+                    const dropY = e.clientY;
+                    let closestCard = null;
+                    let closestDistance = Infinity;
+                    
+                    cards.forEach(card => {
+                        if (card === draggedElement) return;
+                        const rect = card.getBoundingClientRect();
+                        const cardCenterY = rect.top + rect.height / 2;
+                        const distance = Math.abs(dropY - cardCenterY);
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestCard = card;
+                        }
+                    });
+                    
+                    targetCard = closestCard;
+                }
+                
                 if (targetCard && targetCard !== draggedElement) {
                     // Reorder within same group
                     reorderCollectionInGroup(draggedCollection.slug, draggedGroupId, targetCard.dataset.collectionSlug);
+                } else {
+                    // Dropped in empty space, just refresh
+                    saveGroups();
                 }
                 return;
             }
@@ -543,9 +569,11 @@
     }
     
     function duplicateCollection(collection) {
-        if (!collection.id) {
-            alert('Error: Collection ID not found. Cannot duplicate collection.');
+        // Use id if available, otherwise try to find collection by slug
+        const collectionId = collection.id;
+        if (!collectionId) {
             console.error('Collection data:', collection);
+            alert('Error: Collection ID not found. Cannot duplicate collection.');
             return;
         }
         
@@ -558,7 +586,7 @@
             },
             body: JSON.stringify({
                 action: 'duplicate_collection',
-                id: collection.id,
+                id: collectionId,
                 _csrf: csrfToken
             })
         })
@@ -661,13 +689,15 @@
     }
     
     function deleteCollection(collection) {
-        if (!collection.id) {
-            alert('Error: Collection ID not found. Cannot delete collection.');
+        // Use id if available
+        const collectionId = collection.id;
+        if (!collectionId) {
             console.error('Collection data:', collection);
+            alert('Error: Collection ID not found. Cannot delete collection.');
             return;
         }
         
-        const confirmMessage = `Are you sure you want to delete "${collection.name}"? This will also delete all ${collection.entries_count || 0} entries in this collection. This action cannot be undone.`;
+        const confirmMessage = `Are you sure you want to delete "${collection.name || collection.title || 'this collection'}"? This will also delete all ${collection.entries_count || 0} entries in this collection. This action cannot be undone.`;
         
         if (!confirm(confirmMessage)) {
             return;
@@ -682,7 +712,7 @@
             },
             body: JSON.stringify({
                 action: 'delete_collection',
-                id: collection.id,
+                id: collectionId,
                 _csrf: csrfToken
             })
         })
