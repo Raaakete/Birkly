@@ -222,9 +222,13 @@ if ($action === 'delete_collection') {
     $dir = null;
     foreach ($collections as $d) {
         $meta = $storage->read("collections/$d/collection.json");
-        if ($meta && $meta['id'] === $id) {
-            $dir = $d;
-            break;
+        if ($meta) {
+            // Check both id field and generated id from slug
+            $metaId = $meta['id'] ?? 'col-' . $d;
+            if ($metaId === $id || $d === $id || (strpos($id, 'col-') === 0 && $d === substr($id, 4))) {
+                $dir = $d;
+                break;
+            }
         }
     }
     if (!$dir) {
@@ -269,10 +273,14 @@ if ($action === 'duplicate_collection') {
     $sourceMeta = null;
     foreach ($collections as $d) {
         $meta = $storage->read("collections/$d/collection.json");
-        if ($meta && $meta['id'] === $id) {
-            $sourceDir = $d;
-            $sourceMeta = $meta;
-            break;
+        if ($meta) {
+            // Check both id field and generated id from slug
+            $metaId = $meta['id'] ?? 'col-' . $d;
+            if ($metaId === $id || $d === $id || (strpos($id, 'col-') === 0 && $d === substr($id, 4))) {
+                $sourceDir = $d;
+                $sourceMeta = $meta;
+                break;
+            }
         }
     }
     if (!$sourceDir || !$sourceMeta) {
