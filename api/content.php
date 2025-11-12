@@ -249,6 +249,91 @@ if ($action === 'delete_collection') {
     exit;
 }
 
+if ($action === 'duplicate_collection') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'duplicate_collection', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    requireAuth('manage_content');
+    $id = $input['id'] ?? '';
+    if (empty($id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection id required']);
+        exit;
+    }
+    
+    // Find source collection dir by id
+    $collections = $storage->list('collections');
+    $sourceDir = null;
+    $sourceMeta = null;
+    foreach ($collections as $d) {
+        $meta = $storage->read("collections/$d/collection.json");
+        if ($meta && $meta['id'] === $id) {
+            $sourceDir = $d;
+            $sourceMeta = $meta;
+            break;
+        }
+    }
+    if (!$sourceDir || !$sourceMeta) {
+        echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
+        exit;
+    }
+    
+    // Generate slug for duplicate
+    function slugify($str) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $str)));
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+        return $slug;
+    }
+    
+    $baseSlug = slugify($sourceMeta['title'] ?? $sourceMeta['name'] ?? 'collection') . '-copy';
+    $newSlug = $baseSlug;
+    $i = 2;
+    while (in_array($newSlug, array_map(function($d) use ($storage) {
+        $m = $storage->read("collections/$d/collection.json");
+        return $m['slug'] ?? $d;
+    }, $collections))) {
+        $newSlug = $baseSlug . '-' . $i;
+        $i++;
+    }
+    
+    // Create new collection directory
+    $newDir = $newSlug;
+    $newDirPath = "../content/collections/$newDir";
+    if (!file_exists($newDirPath)) {
+        mkdir($newDirPath . '/entries', 0755, true);
+    }
+    
+    // Copy collection metadata
+    $newMeta = $sourceMeta;
+    $newMeta['id'] = 'col-' . uniqid();
+    $newMeta['slug'] = $newSlug;
+    $newMeta['title'] = ($sourceMeta['title'] ?? $sourceMeta['name'] ?? 'Collection') . ' (Copy)';
+    if (isset($newMeta['name'])) {
+        $newMeta['name'] = $newMeta['title'];
+    }
+    $newMeta['created_at'] = date('Y-m-d H:i:s');
+    $newMeta['updated_at'] = date('Y-m-d H:i:s');
+    $storage->write("collections/$newDir/collection.json", $newMeta);
+    
+    // Copy schema
+    $sourceSchema = $storage->read("collections/$sourceDir/schema.json");
+    if ($sourceSchema) {
+        $storage->write("collections/$newDir/schema.json", $sourceSchema);
+    }
+    
+    // Note: We don't copy entries, just the collection structure
+    log_security_event('duplicate_collection', ['id' => $id, 'new_id' => $newMeta['id']]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Collection duplicated',
+        'data' => $newMeta
+    ]);
+    exit;
+}
+
 // Handle entries
 if ($action === 'list_entries') {
     // Allow public access for read-only operations
