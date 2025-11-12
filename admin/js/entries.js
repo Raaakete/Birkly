@@ -295,5 +295,259 @@
             });
         });
     }
+    
+    // ============================================
+    // Drag and Drop Reordering for Entries
+    // ============================================
+    
+    let draggedRow = null;
+    let draggedEntryId = null;
+    
+    const tableBody = document.querySelector('.table-body');
+    if (tableBody) {
+        // Make rows draggable
+        const rows = document.querySelectorAll('.table-row');
+        rows.forEach(row => {
+            const dragCell = row.querySelector('.cell-drag');
+            if (dragCell) {
+                row.draggable = true;
+                dragCell.style.cursor = 'grab';
+                
+                // Add drag event listeners
+                row.addEventListener('dragstart', function(e) {
+                    // Only start drag from drag handle
+                    if (!e.target.closest('.cell-drag') && e.target !== dragCell) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    draggedRow = this;
+                    draggedEntryId = this.dataset.entryId;
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggedEntryId);
+                    
+                    // Hide the row being dragged (but keep space)
+                    this.style.opacity = '0.5';
+                });
+                
+                row.addEventListener('dragend', function(e) {
+                    this.classList.remove('dragging');
+                    this.style.opacity = '';
+                    removeEntryDropIndicator();
+                    draggedRow = null;
+                    draggedEntryId = null;
+                });
+            }
+        });
+        
+        // Set up drop zone
+        tableBody.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (!draggedRow || !draggedEntryId) return;
+            
+            // Find the row we're hovering over
+            const targetRow = e.target.closest('.table-row');
+            if (targetRow && targetRow !== draggedRow) {
+                showEntryDropIndicator(e, targetRow);
+            } else {
+                removeEntryDropIndicator();
+            }
+        });
+        
+        tableBody.addEventListener('dragleave', function(e) {
+            // Only remove indicator if we're actually leaving the table body
+            if (!tableBody.contains(e.relatedTarget)) {
+                removeEntryDropIndicator();
+            }
+        });
+        
+        tableBody.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            removeEntryDropIndicator();
+            
+            if (!draggedRow || !draggedEntryId) return;
+            
+            const dropIndicator = document.querySelector('.entry-drop-indicator');
+            let targetEntryId = null;
+            let insertBefore = false;
+            
+            if (dropIndicator && dropIndicator.dataset.targetEntryId) {
+                targetEntryId = dropIndicator.dataset.targetEntryId;
+                insertBefore = dropIndicator.dataset.insertBefore === 'true';
+            } else {
+                // Fallback: find target row
+                const targetRow = e.target.closest('.table-row');
+                if (targetRow && targetRow !== draggedRow) {
+                    targetEntryId = targetRow.dataset.entryId;
+                    // Determine if we should insert before or after
+                    const dropY = e.clientY;
+                    const rect = targetRow.getBoundingClientRect();
+                    insertBefore = dropY < rect.top + rect.height / 2;
+                }
+            }
+            
+            if (targetEntryId && targetEntryId !== draggedEntryId) {
+                reorderEntries(draggedEntryId, targetEntryId, insertBefore);
+            }
+        });
+    }
+    
+    /**
+     * Show drop indicator for entry reordering
+     */
+    function showEntryDropIndicator(e, targetRow) {
+        removeEntryDropIndicator();
+        
+        const dropY = e.clientY;
+        const rect = targetRow.getBoundingClientRect();
+        const insertBefore = dropY < rect.top + rect.height / 2;
+        
+        const indicator = document.createElement('div');
+        indicator.className = 'entry-drop-indicator';
+        indicator.dataset.targetEntryId = targetRow.dataset.entryId;
+        indicator.dataset.insertBefore = insertBefore;
+        
+        const tableBody = document.querySelector('.table-body');
+        const tableBodyRect = tableBody.getBoundingClientRect();
+        
+        if (insertBefore) {
+            indicator.style.top = (rect.top - tableBodyRect.top - 1) + 'px';
+        } else {
+            indicator.style.top = (rect.bottom - tableBodyRect.top + 1) + 'px';
+        }
+        
+        indicator.style.left = '0';
+        indicator.style.width = '100%';
+        indicator.style.height = '3px';
+        indicator.style.position = 'absolute';
+        
+        tableBody.style.position = 'relative';
+        tableBody.appendChild(indicator);
+    }
+    
+    /**
+     * Remove drop indicator
+     */
+    function removeEntryDropIndicator() {
+        const indicator = document.querySelector('.entry-drop-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+    
+    /**
+     * Reorder entries
+     */
+    async function reorderEntries(entryId, targetEntryId, insertBefore) {
+        const rows = Array.from(document.querySelectorAll('.table-row'));
+        const currentOrder = rows.map(row => row.dataset.entryId).filter(id => id);
+        
+        // Find current and target positions
+        const currentIndex = currentOrder.indexOf(entryId);
+        const targetIndex = currentOrder.indexOf(targetEntryId);
+        
+        if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) {
+            return;
+        }
+        
+        // Remove from current position
+        currentOrder.splice(currentIndex, 1);
+        
+        // Calculate new target index after removal
+        let newTargetIndex = targetIndex;
+        if (currentIndex < targetIndex) {
+            newTargetIndex = targetIndex - 1;
+        }
+        
+        // Insert at correct position
+        const insertIndex = insertBefore ? newTargetIndex : newTargetIndex + 1;
+        currentOrder.splice(insertIndex, 0, entryId);
+        
+        // Save new order
+        try {
+            const response = await fetch('/api/content.php?action=set_entry_order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    collection: collectionSlug,
+                    order: currentOrder,
+                    _csrf: getCSRFToken()
+                })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'ok') {
+                // Reorder DOM elements to match new order
+                const tableBody = document.querySelector('.table-body');
+                const entryMap = {};
+                rows.forEach(row => {
+                    entryMap[row.dataset.entryId] = row;
+                });
+                
+                // Clear and re-append in new order
+                tableBody.innerHTML = '';
+                currentOrder.forEach(id => {
+                    if (entryMap[id]) {
+                        tableBody.appendChild(entryMap[id]);
+                    }
+                });
+                
+                // Re-initialize drag handlers for reordered rows
+                initializeEntryDragHandlers();
+            } else {
+                alert('Failed to save entry order: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error reordering entries:', error);
+            alert('Error saving entry order. Please try again.');
+        }
+    }
+    
+    /**
+     * Initialize drag handlers for entry rows
+     */
+    function initializeEntryDragHandlers() {
+        const rows = document.querySelectorAll('.table-row');
+        rows.forEach(row => {
+            const dragCell = row.querySelector('.cell-drag');
+            if (dragCell && !row.hasAttribute('data-drag-initialized')) {
+                row.draggable = true;
+                dragCell.style.cursor = 'grab';
+                row.setAttribute('data-drag-initialized', 'true');
+                
+                row.addEventListener('dragstart', function(e) {
+                    if (!e.target.closest('.cell-drag') && e.target !== dragCell) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    draggedRow = this;
+                    draggedEntryId = this.dataset.entryId;
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggedEntryId);
+                    this.style.opacity = '0.5';
+                });
+                
+                row.addEventListener('dragend', function(e) {
+                    this.classList.remove('dragging');
+                    this.style.opacity = '';
+                    removeEntryDropIndicator();
+                    draggedRow = null;
+                    draggedEntryId = null;
+                });
+            }
+        });
+    }
+    
+    // Initialize drag handlers on page load
+    initializeEntryDragHandlers();
 })();
 
