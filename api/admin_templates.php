@@ -243,8 +243,15 @@ function getContentData() {
                 $entriesDir = $dir . '/entries';
                 $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json')) : 0;
                 
+                // Ensure we always have an ID - use id from collection.json, or generate one from slug
+                $collectionId = $collectionData['id'] ?? null;
+                if (!$collectionId) {
+                    // Try to generate a consistent ID from slug or use slug itself
+                    $collectionId = 'col-' . $collectionName;
+                }
+                
                 $collections[] = [
-                    'id' => $collectionData['id'] ?? $collectionData['title'] ?? null,
+                    'id' => $collectionId,
                     'name' => $collectionData['name'] ?? $collectionData['title'] ?? $collectionName,
                     'slug' => $collectionName,
                     'description' => $collectionData['description'] ?? '',
