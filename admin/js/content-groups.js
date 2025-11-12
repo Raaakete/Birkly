@@ -178,10 +178,22 @@
         // Add drop zone class
         grid.classList.add('drop-zone');
         
-        // Render collections in this group
-        const groupCollections = collections.filter(col => 
+        // Render collections in this group - respect order from group.collections
+        let groupCollections = collections.filter(col => 
             group.collections && group.collections.includes(col.slug)
         );
+        
+        // Sort by the order in group.collections
+        if (group.collections && group.collections.length > 0) {
+            groupCollections.sort((a, b) => {
+                const indexA = group.collections.indexOf(a.slug);
+                const indexB = group.collections.indexOf(b.slug);
+                if (indexA === -1 && indexB === -1) return 0;
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            });
+        }
         
         if (groupCollections.length === 0) {
             grid.classList.add('empty-drop-zone');
@@ -906,7 +918,7 @@
         let targetCard = null;
         let minDistance = Infinity;
         
-        // Find the card we're closest to
+        // Find the card we're closest to (by Y position for grid layout)
         cards.forEach(card => {
             const rect = card.getBoundingClientRect();
             const cardTop = rect.top;
@@ -916,9 +928,8 @@
             // Check if we're above or below the card
             const distanceToTop = Math.abs(dropY - cardTop);
             const distanceToBottom = Math.abs(dropY - cardBottom);
-            const distanceToCenter = Math.abs(dropY - cardCenterY);
             
-            const minDist = Math.min(distanceToTop, distanceToBottom, distanceToCenter);
+            const minDist = Math.min(distanceToTop, distanceToBottom);
             
             if (minDist < minDistance) {
                 minDistance = minDist;
@@ -945,13 +956,16 @@
         const rect = targetCard.getBoundingClientRect();
         const dropZoneRect = dropZone.getBoundingClientRect();
         
+        // Position indicator between cards (full width for grid layout)
         if (insertBefore) {
-            indicator.style.top = (rect.top - dropZoneRect.top - 2) + 'px';
+            indicator.style.top = (rect.top - dropZoneRect.top - 1) + 'px';
         } else {
-            indicator.style.top = (rect.bottom - dropZoneRect.top + 2) + 'px';
+            indicator.style.top = (rect.bottom - dropZoneRect.top + 1) + 'px';
         }
         indicator.style.left = '0';
         indicator.style.width = '100%';
+        indicator.style.height = '3px';
+        indicator.style.position = 'absolute';
         
         dropZone.style.position = 'relative';
         dropZone.appendChild(indicator);
