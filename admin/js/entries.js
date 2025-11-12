@@ -481,62 +481,99 @@
         const rows = document.querySelectorAll('.table-row');
         console.log('Initializing drag handlers for', rows.length, 'rows');
         
-        rows.forEach(row => {
+        if (rows.length === 0) {
+            console.warn('No table rows found!');
+            return;
+        }
+        
+        rows.forEach((row, index) => {
             const dragCell = row.querySelector('.cell-drag');
-            if (dragCell && !row.hasAttribute('data-drag-initialized')) {
-                row.draggable = true;
-                dragCell.style.cursor = 'grab';
-                row.setAttribute('data-drag-initialized', 'true');
-                
-                // Make the drag cell itself draggable too
-                dragCell.draggable = false; // Prevent double dragging
-                
-                row.addEventListener('dragstart', function(e) {
-                    console.log('Drag start triggered', e.target);
-                    
-                    // Only allow drag from the drag handle area
-                    const clickedElement = e.target;
-                    const isInDragCell = clickedElement.closest('.cell-drag') !== null;
-                    
-                    if (!isInDragCell) {
-                        console.log('Drag prevented - not from drag handle');
-                        e.preventDefault();
-                        return false;
-                    }
-                    
-                    draggedRow = this;
-                    draggedEntryId = this.dataset.entryId;
-                    console.log('Dragging entry:', draggedEntryId);
-                    
-                    this.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', draggedEntryId);
-                    this.style.opacity = '0.5';
-                });
-                
-                row.addEventListener('dragend', function(e) {
-                    console.log('Drag end');
-                    this.classList.remove('dragging');
-                    this.style.opacity = '';
-                    removeEntryDropIndicator();
-                    draggedRow = null;
-                    draggedEntryId = null;
-                });
-                
-                // Also add mousedown to the drag cell for better UX
-                dragCell.addEventListener('mousedown', function(e) {
-                    console.log('Mouse down on drag handle');
-                    // This helps ensure the drag starts from the handle
-                });
+            const entryId = row.dataset.entryId;
+            
+            console.log(`Row ${index}: entryId=${entryId}, dragCell=`, dragCell);
+            
+            if (!dragCell) {
+                console.warn(`Row ${index} has no drag cell!`);
+                return;
             }
+            
+            if (row.hasAttribute('data-drag-initialized')) {
+                console.log(`Row ${index} already initialized`);
+                return;
+            }
+            
+            // Make row draggable
+            row.draggable = true;
+            dragCell.style.cursor = 'grab';
+            row.setAttribute('data-drag-initialized', 'true');
+            
+            // Prevent default drag behavior on the SVG inside
+            const svg = dragCell.querySelector('svg');
+            if (svg) {
+                svg.draggable = false;
+            }
+            
+            // Track if drag started from handle
+            let dragStartedFromHandle = false;
+            
+            // Mouse down on drag handle
+            dragCell.addEventListener('mousedown', function(e) {
+                console.log('Mouse down on drag handle for entry:', entryId);
+                dragStartedFromHandle = true;
+                e.stopPropagation();
+            });
+            
+            // Mouse down anywhere else on row - reset flag
+            row.addEventListener('mousedown', function(e) {
+                if (!e.target.closest('.cell-drag')) {
+                    dragStartedFromHandle = false;
+                }
+            });
+            
+            // Drag start
+            row.addEventListener('dragstart', function(e) {
+                console.log('Drag start event fired', {
+                    target: e.target,
+                    entryId: entryId,
+                    startedFromHandle: dragStartedFromHandle
+                });
+                
+                // Only allow drag if started from handle
+                if (!dragStartedFromHandle) {
+                    console.log('Drag prevented - not started from handle');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                draggedRow = this;
+                draggedEntryId = entryId;
+                console.log('Starting drag for entry:', draggedEntryId);
+                
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedEntryId);
+                this.style.opacity = '0.5';
+            });
+            
+            // Drag end
+            row.addEventListener('dragend', function(e) {
+                console.log('Drag end');
+                this.classList.remove('dragging');
+                this.style.opacity = '';
+                removeEntryDropIndicator();
+                draggedRow = null;
+                draggedEntryId = null;
+                dragStartedFromHandle = false;
+            });
         });
+        
+        console.log('Drag handlers initialized for', rows.length, 'rows');
     }
     
     // Initialize drag handlers on page load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeEntryDragHandlers);
-    } else {
+    // Use setTimeout to ensure DOM is fully ready
+    setTimeout(function() {
         initializeEntryDragHandlers();
-    }
+    }, 100);
 })();
 
