@@ -217,15 +217,13 @@
     
     function createCollectionCard(collection, groupId) {
         const card = document.createElement('div');
-        card.className = 'card draggable';
+        card.className = 'card draggable collection-card';
         card.dataset.collectionSlug = collection.slug;
         card.draggable = true;
         card.dataset.groupId = groupId || '';
         
-        const link = document.createElement('a');
-        link.href = '/admin/index.php?page=entries&collection=' + encodeURIComponent(collection.slug);
-        link.setAttribute('aria-label', 'Open collection ' + collection.name);
-        link.draggable = false; // Prevent link from being draggable
+        // Make entire card clickable (will be handled by click event)
+        card.style.cursor = 'pointer';
         
         const header = document.createElement('div');
         header.className = 'collection-header';
@@ -253,7 +251,6 @@
         
         header.appendChild(title);
         header.appendChild(description);
-        link.appendChild(header);
         
         const footer = document.createElement('div');
         footer.className = 'collection-footer';
@@ -265,33 +262,79 @@
         entryCount.appendChild(countBold);
         entryCount.appendChild(document.createTextNode(' entries'));
         
-        const actions = document.createElement('div');
-        actions.className = 'collection-actions';
+        // 3-dot menu instead of separate edit/delete buttons
+        const menuWrapper = document.createElement('div');
+        menuWrapper.className = 'collection-menu-wrapper';
         
-        const editLink = document.createElement('a');
-        editLink.className = 'btn';
-        editLink.href = '/admin/index.php?page=collection-editor&collection=' + encodeURIComponent(collection.slug);
-        editLink.setAttribute('aria-label', 'Edit collection ' + collection.name);
-        editLink.innerHTML = '<img src="/admin/assets/PencilSimple.svg" alt="Edit">';
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn';
-        deleteBtn.setAttribute('aria-label', 'Delete collection ' + collection.name);
-        deleteBtn.innerHTML = '<img src="/admin/assets/Trash.svg" alt="Delete">';
-        deleteBtn.onclick = (e) => {
+        const menuButton = document.createElement('button');
+        menuButton.className = 'collection-menu-btn';
+        menuButton.setAttribute('aria-label', 'Collection options');
+        menuButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>';
+        menuButton.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
+            toggleCollectionMenu(menuButton, collection);
+        };
+        
+        const menuDropdown = document.createElement('div');
+        menuDropdown.className = 'collection-menu-dropdown';
+        menuDropdown.style.display = 'none';
+        
+        const editItem = document.createElement('a');
+        editItem.className = 'collection-menu-item';
+        editItem.href = '/admin/index.php?page=collection-editor&collection=' + encodeURIComponent(collection.slug);
+        editItem.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg><span>Edit Collection</span>';
+        editItem.onclick = (e) => {
+            e.stopPropagation();
+            // Let the link navigate normally
+        };
+        
+        const duplicateItem = document.createElement('button');
+        duplicateItem.className = 'collection-menu-item';
+        duplicateItem.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Duplicate Collection</span>';
+        duplicateItem.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAllMenus();
+            duplicateCollection(collection);
+        };
+        
+        const deleteItem = document.createElement('button');
+        deleteItem.className = 'collection-menu-item collection-menu-item-danger';
+        deleteItem.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg><span>Delete Collection</span>';
+        deleteItem.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAllMenus();
             deleteCollection(collection);
         };
         
-        actions.appendChild(editLink);
-        actions.appendChild(deleteBtn);
+        menuDropdown.appendChild(editItem);
+        menuDropdown.appendChild(duplicateItem);
+        menuDropdown.appendChild(deleteItem);
+        
+        menuWrapper.appendChild(menuButton);
+        menuWrapper.appendChild(menuDropdown);
         
         footer.appendChild(entryCount);
-        footer.appendChild(actions);
+        footer.appendChild(menuWrapper);
         
-        card.appendChild(link);
+        card.appendChild(header);
         card.appendChild(footer);
+        
+        // Make card clickable to navigate to entries
+        card.addEventListener('click', function(e) {
+            // Don't navigate if clicking on menu or drag handle
+            if (e.target.closest('.collection-menu-wrapper') || e.target.closest('.drag-handle')) {
+                return;
+            }
+            // Don't navigate if we just dragged
+            if (card.classList.contains('just-dragged')) {
+                card.classList.remove('just-dragged');
+                return;
+            }
+            window.location.href = '/admin/index.php?page=entries&collection=' + encodeURIComponent(collection.slug);
+        });
         
         // Drag event listeners
         setupDragEvents(card, collection, groupId);
@@ -299,14 +342,40 @@
         return card;
     }
     
+    function toggleCollectionMenu(button, collection) {
+        // Close all other menus first
+        closeAllMenus();
+        
+        const dropdown = button.nextElementSibling;
+        if (dropdown && dropdown.classList.contains('collection-menu-dropdown')) {
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            button.classList.toggle('active');
+        }
+    }
+    
+    function closeAllMenus() {
+        document.querySelectorAll('.collection-menu-dropdown').forEach(menu => {
+            menu.style.display = 'none';
+        });
+        document.querySelectorAll('.collection-menu-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+    }
+    
+    // Close menus when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.collection-menu-wrapper')) {
+            closeAllMenus();
+        }
+    });
+    
     function setupDragEvents(card, collection, groupId) {
         let dragStarted = false;
-        let clickBlocked = false;
         
-        // Handle dragstart
+        // Handle dragstart - only from drag handle or card itself (not menu)
         card.addEventListener('dragstart', function(e) {
-            // Don't start drag from action buttons
-            if (e.target.closest('.collection-actions')) {
+            // Don't start drag from menu
+            if (e.target.closest('.collection-menu-wrapper')) {
                 e.preventDefault();
                 return false;
             }
@@ -328,14 +397,12 @@
         // Handle dragend
         card.addEventListener('dragend', function(e) {
             this.classList.remove('dragging');
-            clickBlocked = dragStarted;
             
-            // Clear flags after a short delay to allow click handling
+            // Mark as just dragged to prevent click navigation
+            this.classList.add('just-dragged');
             setTimeout(() => {
+                this.classList.remove('just-dragged');
                 dragStarted = false;
-                if (clickBlocked) {
-                    clickBlocked = false;
-                }
             }, 100);
             
             document.querySelectorAll('.drop-zone').forEach(zone => {
@@ -347,36 +414,15 @@
             draggedGroupId = null;
         });
         
-        // Prevent link navigation if we just dragged
-        const link = card.querySelector('a');
-        if (link) {
-            link.addEventListener('click', function(e) {
-                if (clickBlocked) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    clickBlocked = false;
-                    return false;
-                }
-            }, true); // Use capture phase
-            
-            // Prevent default drag behavior on link
-            link.addEventListener('dragstart', function(e) {
-                e.stopPropagation();
-            });
-        }
-        
-        // Prevent clicks on action buttons from starting drag
-        const actionButtons = card.querySelectorAll('.collection-actions a, .collection-actions button');
-        actionButtons.forEach(btn => {
-            btn.addEventListener('mousedown', function(e) {
-                e.stopPropagation();
-            });
-            btn.addEventListener('dragstart', function(e) {
+        // Prevent drag from menu button
+        const menuButton = card.querySelector('.collection-menu-btn');
+        if (menuButton) {
+            menuButton.addEventListener('dragstart', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
                 return false;
             });
-        });
+        }
     }
     
     // Set up drop zones using event delegation
@@ -427,8 +473,14 @@
             const targetGroupIdStr = targetGroupId || '';
             const draggedGroupIdStr = draggedGroupId || '';
             
-            // If dropping in same group/zone, do nothing
+            // Check if we're reordering within the same group
             if (targetGroupIdStr === draggedGroupIdStr) {
+                // Find the target position (card we're dropping on or after)
+                const targetCard = e.target.closest('.collection-card');
+                if (targetCard && targetCard !== draggedElement) {
+                    // Reorder within same group
+                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupId, targetCard.dataset.collectionSlug);
+                }
                 return;
             }
             
@@ -461,6 +513,68 @@
         
         // Save and re-render
         saveGroups();
+    }
+    
+    function reorderCollectionInGroup(collectionSlug, groupId, targetSlug) {
+        if (!groupId) {
+            // Reordering in ungrouped - we need to track order differently
+            // For now, just save groups to trigger re-render
+            saveGroups();
+            return;
+        }
+        
+        const group = groups.find(g => g.id === groupId);
+        if (!group || !group.collections) return;
+        
+        // Remove from current position
+        group.collections = group.collections.filter(slug => slug !== collectionSlug);
+        
+        // Find target position and insert
+        const targetIndex = group.collections.indexOf(targetSlug);
+        if (targetIndex !== -1) {
+            group.collections.splice(targetIndex, 0, collectionSlug);
+        } else {
+            // Target not found, just append
+            group.collections.push(collectionSlug);
+        }
+        
+        // Save and re-render
+        saveGroups();
+    }
+    
+    function duplicateCollection(collection) {
+        if (!collection.id) {
+            alert('Error: Collection ID not found. Cannot duplicate collection.');
+            console.error('Collection data:', collection);
+            return;
+        }
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        
+        fetch('/api/content.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'duplicate_collection',
+                id: collection.id,
+                _csrf: csrfToken
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                // Reload page to show new collection
+                window.location.reload();
+            } else {
+                alert('Failed to duplicate collection: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error duplicating collection:', error);
+            alert('Error duplicating collection. Please try again.');
+        });
     }
     
     function showCreateGroupModal() {
