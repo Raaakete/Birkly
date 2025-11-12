@@ -107,11 +107,27 @@
         });
         
         // Render ungrouped collections
-        const ungroupedCollections = collections.filter(col => {
+        // Check if there's an ungrouped group with order
+        const ungroupedGroup = groups.find(g => g.id === 'ungrouped');
+        let ungroupedCollections = collections.filter(col => {
             return !groups.some(group => 
-                group.collections && group.collections.includes(col.slug)
+                group.id !== 'ungrouped' && group.collections && group.collections.includes(col.slug)
             );
         });
+        
+        // If ungrouped group exists and has order, sort by that order
+        if (ungroupedGroup && ungroupedGroup.collections && ungroupedGroup.collections.length > 0) {
+            const order = ungroupedGroup.collections;
+            ungroupedCollections.sort((a, b) => {
+                const indexA = order.indexOf(a.slug);
+                const indexB = order.indexOf(b.slug);
+                // If not in order, put at end
+                if (indexA === -1 && indexB === -1) return 0;
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            });
+        }
         
         console.log('Ungrouped collections:', ungroupedCollections.length);
         
@@ -461,26 +477,37 @@
         
         container.addEventListener('drop', function(e) {
             const dropZone = e.target.closest('.drop-zone');
-            if (!dropZone) return;
+            if (!dropZone) {
+                console.log('Drop: No drop zone found');
+                return;
+            }
             
             e.preventDefault();
             e.stopPropagation();
             dropZone.classList.remove('drag-over');
             
-            if (!draggedElement || !draggedCollection) return;
+            if (!draggedElement || !draggedCollection) {
+                console.log('Drop: No dragged element or collection');
+                return;
+            }
             
             const targetGroupId = dropZone.dataset.groupId || null;
-            const targetGroupIdStr = targetGroupId || '';
-            const draggedGroupIdStr = draggedGroupId || '';
+            // Normalize both to null or string for comparison
+            const targetGroupIdNormalized = targetGroupId === '' || targetGroupId === undefined ? null : targetGroupId;
+            const draggedGroupIdNormalized = draggedGroupId === '' || draggedGroupId === undefined ? null : draggedGroupId;
             
-            // Check if we're reordering within the same group
-            if (targetGroupIdStr === draggedGroupIdStr) {
+            console.log('Drop: targetGroupId=', targetGroupIdNormalized, 'draggedGroupId=', draggedGroupIdNormalized);
+            
+            // Check if we're reordering within the same group (both null for ungrouped, or same string for grouped)
+            if (targetGroupIdNormalized === draggedGroupIdNormalized) {
+                console.log('Drop: Reordering within same group');
                 // Find the target card - check if we're dropping on a card or between cards
                 let targetCard = e.target.closest('.collection-card');
                 
                 // If we didn't find a card, try to find the nearest card in the drop zone
                 if (!targetCard) {
                     const cards = Array.from(dropZone.querySelectorAll('.collection-card'));
+                    console.log('Drop: Found', cards.length, 'cards in drop zone');
                     // Find the card that's closest to the drop point
                     const dropY = e.clientY;
                     let closestCard = null;
@@ -501,17 +528,20 @@
                 }
                 
                 if (targetCard && targetCard !== draggedElement) {
+                    console.log('Drop: Reordering', draggedCollection.slug, 'to position of', targetCard.dataset.collectionSlug);
                     // Reorder within same group
-                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupId, targetCard.dataset.collectionSlug);
+                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupIdNormalized, targetCard.dataset.collectionSlug);
                 } else {
+                    console.log('Drop: No target card found, just refreshing');
                     // Dropped in empty space, just refresh
                     saveGroups();
                 }
                 return;
             }
             
+            console.log('Drop: Moving collection to different group');
             // Move collection to new group
-            moveCollectionToGroup(draggedCollection.slug, draggedGroupId, targetGroupId);
+            moveCollectionToGroup(draggedCollection.slug, draggedGroupIdNormalized, targetGroupIdNormalized);
         }, false);
     }
     
@@ -542,26 +572,65 @@
     }
     
     function reorderCollectionInGroup(collectionSlug, groupId, targetSlug) {
+        console.log('ReorderCollectionInGroup:', collectionSlug, 'groupId:', groupId, 'targetSlug:', targetSlug);
+        
         if (!groupId) {
-            // Reordering in ungrouped - we need to track order differently
-            // For now, just save groups to trigger re-render
-            saveGroups();
-            return;
-        }
-        
-        const group = groups.find(g => g.id === groupId);
-        if (!group || !group.collections) return;
-        
-        // Remove from current position
-        group.collections = group.collections.filter(slug => slug !== collectionSlug);
-        
-        // Find target position and insert
-        const targetIndex = group.collections.indexOf(targetSlug);
-        if (targetIndex !== -1) {
-            group.collections.splice(targetIndex, 0, collectionSlug);
+            // Reordering in ungrouped - we need to track order in groups.json
+            // Create or update an "ungrouped" entry in groups to track order
+            let ungroupedGroup = groups.find(g => g.id === 'ungrouped');
+            if (!ungroupedGroup) {
+                ungroupedGroup = {
+                    id: 'ungrouped',
+                    name: 'Ungrouped Collections',
+                    collections: []
+                };
+                groups.push(ungroupedGroup);
+            }
+            
+            // Get all ungrouped collections
+            const ungroupedCollections = collections.filter(col => {
+                return !groups.some(g => g.id !== 'ungrouped' && g.collections && g.collections.includes(col.slug));
+            });
+            
+            // Build ordered list
+            if (!ungroupedGroup.collections || ungroupedGroup.collections.length === 0) {
+                // Initialize with current order
+                ungroupedGroup.collections = ungroupedCollections.map(col => col.slug);
+            }
+            
+            // Remove from current position
+            ungroupedGroup.collections = ungroupedGroup.collections.filter(slug => slug !== collectionSlug);
+            
+            // Find target position and insert
+            const targetIndex = ungroupedGroup.collections.indexOf(targetSlug);
+            if (targetIndex !== -1) {
+                ungroupedGroup.collections.splice(targetIndex, 0, collectionSlug);
+            } else {
+                // Target not found, just append
+                ungroupedGroup.collections.push(collectionSlug);
+            }
+            
+            console.log('Ungrouped order after reorder:', ungroupedGroup.collections);
         } else {
-            // Target not found, just append
-            group.collections.push(collectionSlug);
+            const group = groups.find(g => g.id === groupId);
+            if (!group || !group.collections) {
+                console.log('Group not found or has no collections');
+                return;
+            }
+            
+            // Remove from current position
+            group.collections = group.collections.filter(slug => slug !== collectionSlug);
+            
+            // Find target position and insert
+            const targetIndex = group.collections.indexOf(targetSlug);
+            if (targetIndex !== -1) {
+                group.collections.splice(targetIndex, 0, collectionSlug);
+            } else {
+                // Target not found, just append
+                group.collections.push(collectionSlug);
+            }
+            
+            console.log('Group order after reorder:', group.collections);
         }
         
         // Save and re-render
