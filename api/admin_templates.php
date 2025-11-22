@@ -281,20 +281,83 @@ function getCollectionEditorData() {
     // Get collection data from URL parameters
     $collectionSlug = $_GET['collection'] ?? null;
     
-    // Get available fieldtypes
+    // Get available fieldtypes with categories
     $fieldtypes = [];
     $fieldtypesDir = __DIR__ . "/../fieldtypes";
-    if (is_dir($fieldtypesDir)) {
-        $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
-        foreach ($dirs as $dir) {
-            $fieldtypeName = basename($dir);
-            // Convert directory name to lowercase for consistency with fieldtype registration
-            $fieldtypeKey = strtolower($fieldtypeName);
-            $fieldtypes[] = [
-                'name' => $fieldtypeKey,
-                'label' => ucfirst($fieldtypeName)
-            ];
+    
+    try {
+        if (is_dir($fieldtypesDir)) {
+            $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
+            if ($dirs === false) {
+                error_log("Failed to glob fieldtypes directory");
+            } else {
+                foreach ($dirs as $dir) {
+                    $fieldtypeName = basename($dir);
+                    
+                    // Skip special directories
+                    if (in_array($fieldtypeName, ['.', '..', 'Tag'])) {
+                        continue;
+                    }
+                    
+                    // Check if PHP file exists
+                    $phpFile = $dir . '/' . $fieldtypeName . '.php';
+                    if (!file_exists($phpFile)) {
+                        continue;
+                    }
+                    
+                    // Try to get fieldtype class and category
+                    $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+                    
+                    // Try to load the class
+                    if (!class_exists($className)) {
+                        if (file_exists($phpFile)) {
+                            require_once $phpFile;
+                        }
+                    }
+                    
+                    // Verify class exists and extends BaseField
+                    if (class_exists($className)) {
+                        try {
+                            // Check if it extends BaseField
+                            if (!is_subclass_of($className, 'HaruCMS\\FieldTypes\\BaseField')) {
+                                continue;
+                            }
+                            
+                            // Create a temporary instance to get config and category
+                            $tempConfig = [
+                                'name' => 'temp',
+                                'label' => ucfirst($fieldtypeName),
+                                'required' => false
+                            ];
+                            $fieldtype = new $className($tempConfig);
+                            $config = $fieldtype->getAdminConfig();
+                            $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
+                            
+                            $fieldtypes[] = [
+                                'name' => strtolower($fieldtypeName),
+                                'label' => ucfirst($fieldtypeName),
+                                'type' => $config['type'] ?? strtolower($fieldtypeName),
+                                'category' => $category,
+                                'config' => $config
+                            ];
+                        } catch (\Exception $e) {
+                            // Skip fieldtypes that can't be instantiated
+                            error_log("Error loading fieldtype {$fieldtypeName}: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+                            continue;
+                        } catch (\Throwable $e) {
+                            // Skip fieldtypes that can't be instantiated (PHP 7+)
+                            error_log("Error loading fieldtype {$fieldtypeName}: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+                            continue;
+                        }
+                    }
+                }
+            }
         }
+    } catch (\Exception $e) {
+        error_log("Fatal error in getCollectionEditorData: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        // Return empty fieldtypes array on error
+        $fieldtypes = [];
     }
     
     // Debug: Log fieldtypes found
@@ -469,6 +532,8 @@ function getEntryEditorData($includeFieldHtml = false) {
             $name = $f['name'] ?? '';
             if (!$type || !$name) continue;
             
+            // Note: Keep type as-is - getFieldtypeClass handles aliases (content-editor -> contenteditor)
+            
             // For multi-language entries, we need to get the value from the default language
             // The entry editor template will handle language-specific values
             $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
@@ -511,7 +576,8 @@ function getEntryEditorData($includeFieldHtml = false) {
                         }
                     }
                     
-                    $ft = new $className([
+                    // Build config array with all field settings
+                    $fieldConfig = [
                         'name' => $name,
                         'label' => $f['label'] ?? $name,
                         'value' => $value,
@@ -519,7 +585,16 @@ function getEntryEditorData($includeFieldHtml = false) {
                         'help' => $f['help_text'] ?? '',
                         'group' => $f['group'] ?? 'Content',
                         'options' => $f['options'] ?? []
-                    ]);
+                    ];
+                    
+                    // Add all other field settings to config (format, css_url, etc.)
+                    foreach ($f as $key => $val) {
+                        if (!in_array($key, ['name', 'label', 'type', 'required', 'help_text', 'group', 'options', 'id'])) {
+                            $fieldConfig[$key] = $val;
+                        }
+                    }
+                    
+                    $ft = new $className($fieldConfig);
                     
                     if (method_exists($ft, 'render')) {
                         // For editor form, use full field render

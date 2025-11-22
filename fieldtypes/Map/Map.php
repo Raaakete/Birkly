@@ -8,6 +8,10 @@ class Map extends BaseField {
         return 'map';
     }
 
+    public function getCategory(): string {
+        return 'Location';
+    }
+
     public function render(): string {
         $value = $this->value ?? '';
         

@@ -8,6 +8,10 @@ class Tags extends BaseField {
         return 'tags';
     }
 
+    public function getCategory(): string {
+        return 'Content & Text';
+    }
+
     public function render(): string {
         $value = $this->value ?? [];
         

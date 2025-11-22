@@ -92,17 +92,54 @@
 .advanced-content h4,
 .advanced-content h5,
 .advanced-content h6 {
-  margin: 1em 0 0.5em 0;
+  margin: 0.75em 0 0.25em 0;
   font-weight: 600;
   line-height: 1.3;
+}
+
+.advanced-content h1:first-child,
+.advanced-content h2:first-child,
+.advanced-content h3:first-child,
+.advanced-content h4:first-child,
+.advanced-content h5:first-child,
+.advanced-content h6:first-child {
+  margin-top: 0;
 }
 
 .advanced-content h1 { font-size: 2em; }
 .advanced-content h2 { font-size: 1.5em; }
 .advanced-content h3 { font-size: 1.25em; }
 
+.editor-field .advanced-content p,
+.advanced-editor .advanced-content p,
+div[contenteditable="true"].advanced-content p,
 .advanced-content p {
-  margin: 0 0 1em 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 1.5em;
+  line-height: 1.6;
+}
+
+.editor-field .advanced-content p + p,
+.advanced-editor .advanced-content p + p,
+div[contenteditable="true"].advanced-content p + p,
+.advanced-content p + p {
+  margin-top: 0.25em !important;
+  margin-bottom: 0 !important;
+}
+
+.editor-field .advanced-content p:last-child,
+.advanced-editor .advanced-content p:last-child,
+div[contenteditable="true"].advanced-content p:last-child,
+.advanced-content p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.editor-field .advanced-content p:empty,
+.advanced-editor .advanced-content p:empty,
+div[contenteditable="true"].advanced-content p:empty,
+.advanced-content p:empty {
+  min-height: 1.5em;
 }
 
 .advanced-content ul,
@@ -253,6 +290,27 @@
   outline-offset: -2px;
 }
 
+/* Slash Menu (Notion-like) */
+.slash-menu {
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slash-menu-item:hover {
+  background-color: #f0f0f0;
+}
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .advanced-toolbar {
@@ -276,5 +334,4 @@
     font-size: 12px;
   }
   
-
 }

@@ -34,9 +34,10 @@
         // Add images from media library
         if (addBtn) {
             addBtn.addEventListener('click', function() {
-                // Check if media modal exists
-                if (window.MediaModal && typeof window.MediaModal.open === 'function') {
-                    window.MediaModal.open({
+                // Check if media modal exists (try both possible locations)
+                const mediaModal = window.HaruCMS?.MediaModal || window.MediaModal;
+                if (mediaModal && typeof mediaModal.open === 'function') {
+                    mediaModal.open({
                         onSelect: function(media) {
                             addImage(media);
                         },
@@ -174,12 +175,17 @@
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'ok' && data.data) {
                         return data.data;
                     }
-                    throw new Error(data.message || 'Upload failed');
+                    throw new Error(data.error || data.message || 'Upload failed');
                 });
             });
             
@@ -201,7 +207,7 @@
                     console.error('Upload error:', error);
                     uploadBtn.disabled = false;
                     uploadBtn.textContent = 'Upload Images';
-                    alert('Upload failed: ' + error.message);
+                    alert('Upload failed: ' + (error.message || 'Unknown error'));
                 });
         }
         

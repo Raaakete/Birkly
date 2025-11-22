@@ -16,6 +16,10 @@ class Relation extends BaseField {
     }
     
     public function getType(): string { return 'relation'; }
+
+    public function getCategory(): string {
+        return 'Misc';
+    }
     public function render(): string {
         $value = $this->value ?? [];
         
@@ -468,4 +472,25 @@ class Relation extends BaseField {
     public function getDefaultValue() { return null; }
     public function processValue($value) { return $value; }
     public function processLoadedValue($value) { return $value; }
+
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        $collection = htmlspecialchars($existingData['collection'] ?? '');
+        $multiple = !empty($existingData['multiple']);
+        $multipleChecked = $multiple ? 'checked' : '';
+        
+        return <<<HTML
+            <div class="field-config-section">
+                <label>Target Collection</label>
+                <input type="text" name="fields[{$fieldIndex}][collection]" class="input" value="{$collection}" placeholder="Collection slug">
+                <small class="form-text">Slug of the collection to relate to</small>
+            </div>
+            <div class="field-config-section">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="fields[{$fieldIndex}][multiple]" value="1" {$multipleChecked}>
+                    <span class="checkmark"></span>
+                    <span>Allow Multiple Relations</span>
+                </label>
+            </div>
+        HTML;
+    }
 } 

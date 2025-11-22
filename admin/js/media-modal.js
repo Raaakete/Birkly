@@ -5,8 +5,8 @@ window.HaruCMS.MediaModal = {
     currentCallback: null,
     
     // Open media modal
-    open(callback) {
-        console.log('MediaModal.open() called');
+    open(options) {
+        console.log('MediaModal.open() called', options);
         
         // Prevent opening if already open
         if (this.isOpen) {
@@ -14,7 +14,15 @@ window.HaruCMS.MediaModal = {
             this.close();
         }
         
-        this.currentCallback = callback;
+        // Handle both callback function and options object
+        if (typeof options === 'function') {
+            this.currentCallback = options;
+        } else if (options && typeof options.onSelect === 'function') {
+            this.currentCallback = options.onSelect;
+        } else {
+            this.currentCallback = null;
+        }
+        
         this.isOpen = true;
         console.log('Rendering modal...');
         this.render();
@@ -80,7 +88,7 @@ window.HaruCMS.MediaModal = {
         console.log('MediaModal.render() called');
         this.modal = document.createElement('div');
         this.modal.className = 'media-modal-overlay';
-        this.modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+        this.modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 12000;';
         this.modal.innerHTML = `
             <div class="media-modal" style="background: white; border-radius: 8px; width: 80%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column;">
                 <div class="media-modal-header" style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
@@ -261,6 +269,9 @@ window.HaruCMS.MediaModal = {
         this.close();
     }
 };
+
+// Create alias for easier access
+window.MediaModal = window.HaruCMS.MediaModal;
 
 // Add CSS for media modal
 const mediaModalCSS = `
