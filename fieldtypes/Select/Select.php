@@ -15,6 +15,10 @@ class Select extends BaseField {
         return 'select';
     }
 
+    public function getCategory(): string {
+        return 'Selection';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $optionsHtml = '<option value="">Select ' . htmlspecialchars($this->label) . '</option>';
@@ -78,5 +82,117 @@ class Select extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        $options = $existingData['options'] ?? [];
+        $optionsHtml = '';
+        
+        foreach ($options as $idx => $opt) {
+            $label = htmlspecialchars($opt['label'] ?? $opt['value'] ?? '');
+            $value = htmlspecialchars($opt['value'] ?? $opt['label'] ?? '');
+            $optionsHtml .= <<<HTML
+                <div class="option-item" data-option-index="{$idx}">
+                    <input type="text" class="input option-label" placeholder="Label" value="{$label}" data-field="{$fieldIndex}" data-option="{$idx}">
+                    <input type="text" class="input option-value" placeholder="Value" value="{$value}" data-field="{$fieldIndex}" data-option="{$idx}">
+                    <button type="button" class="btn-icon remove-option-btn" data-field="{$fieldIndex}" data-option="{$idx}" title="Remove option">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            HTML;
+        }
+        
+        return <<<HTML
+            <div class="field-config-section">
+                <label>Options</label>
+                <div class="options-list" id="options_list_{$fieldIndex}">
+                    {$optionsHtml}
+                </div>
+                <div class="add-option-controls">
+                    <input type="text" class="input new-option-label" placeholder="Option label" id="new_option_label_{$fieldIndex}">
+                    <input type="text" class="input new-option-value" placeholder="Option value (optional)" id="new_option_value_{$fieldIndex}">
+                    <button type="button" class="btn btn-secondary add-option-btn" data-field="{$fieldIndex}">Add Option</button>
+                </div>
+                <small class="form-text">Add options for this select field</small>
+            </div>
+            <script>
+            (function() {
+                const fieldIndex = '{$fieldIndex}';
+                const optionsList = document.getElementById('options_list_' + fieldIndex);
+                const addBtn = document.querySelector('.add-option-btn[data-field="' + fieldIndex + '"]');
+                const newLabelInput = document.getElementById('new_option_label_' + fieldIndex);
+                const newValueInput = document.getElementById('new_option_value_' + fieldIndex);
+                
+                if (!optionsList || !addBtn) return;
+                
+                // Remove existing listeners by cloning
+                const newAddBtn = addBtn.cloneNode(true);
+                addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+                
+                newAddBtn.addEventListener('click', function() {
+                    const label = newLabelInput.value.trim();
+                    if (!label) {
+                        alert('Please enter an option label');
+                        return;
+                    }
+                    
+                    const value = newValueInput.value.trim() || label.toLowerCase().replace(/\s+/g, '_');
+                    const optionIndex = optionsList.children.length;
+                    
+                    const optionHTML = '<div class="option-item" data-option-index="' + optionIndex + '">' +
+                        '<input type="text" class="input option-label" placeholder="Label" value="' + label.replace(/"/g, '&quot;') + '" data-field="' + fieldIndex + '" data-option="' + optionIndex + '">' +
+                        '<input type="text" class="input option-value" placeholder="Value" value="' + value.replace(/"/g, '&quot;') + '" data-field="' + fieldIndex + '" data-option="' + optionIndex + '">' +
+                        '<button type="button" class="btn-icon remove-option-btn" data-field="' + fieldIndex + '" data-option="' + optionIndex + '" title="Remove option">' +
+                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                        '<line x1="18" y1="6" x2="6" y2="18"></line>' +
+                        '<line x1="6" y1="6" x2="18" y2="18"></line>' +
+                        '</svg></button></div>';
+                    
+                    optionsList.insertAdjacentHTML('beforeend', optionHTML);
+                    newLabelInput.value = '';
+                    newValueInput.value = '';
+                    newLabelInput.focus();
+                    
+                    initRemoveButtons(fieldIndex);
+                });
+                
+                function initRemoveButtons(fieldIndex) {
+                    document.querySelectorAll('.remove-option-btn[data-field="' + fieldIndex + '"]').forEach(function(btn) {
+                        const newBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(newBtn, btn);
+                        newBtn.addEventListener('click', function() {
+                            const optionItem = this.closest('.option-item');
+                            if (optionItem) {
+                                optionItem.remove();
+                            }
+                        });
+                    });
+                }
+                
+                if (newLabelInput) {
+                    newLabelInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            newAddBtn.click();
+                        }
+                    });
+                }
+                
+                if (newValueInput) {
+                    newValueInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            newAddBtn.click();
+                        }
+                    });
+                }
+                
+                initRemoveButtons(fieldIndex);
+            })();
+            </script>
+        HTML;
     }
 } 

@@ -17,9 +17,14 @@ class Textarea extends BaseField {
         return 'textarea';
     }
 
+    public function getCategory(): string {
+        return 'Content & Text';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
-        $placeholder = $this->placeholder ? "placeholder=\"{$this->placeholder}\"" : '';
+        $placeholderText = $this->placeholder ?: 'Enter ' . strtolower($this->label ?: 'text');
+        $placeholder = "placeholder=\"" . htmlspecialchars($placeholderText) . "\"";
         $rows = (int)$this->rows;
         $value = htmlspecialchars($this->value ?? '');
         return <<<HTML
@@ -73,5 +78,21 @@ class Textarea extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        $placeholder = htmlspecialchars($existingData['placeholder'] ?? '');
+        $rows = htmlspecialchars($existingData['rows'] ?? 4);
+        
+        return <<<HTML
+            <div class="field-config-section">
+                <label>Placeholder</label>
+                <input type="text" name="fields[{$fieldIndex}][placeholder]" class="input" value="{$placeholder}" placeholder="Enter placeholder text">
+            </div>
+            <div class="field-config-section">
+                <label>Rows</label>
+                <input type="number" name="fields[{$fieldIndex}][rows]" class="input" value="{$rows}" min="1" max="20">
+            </div>
+        HTML;
     }
 } 

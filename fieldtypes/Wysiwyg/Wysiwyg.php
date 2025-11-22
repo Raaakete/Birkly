@@ -8,6 +8,10 @@ class Wysiwyg extends BaseField {
         return 'wysiwyg';
     }
 
+    public function getCategory(): string {
+        return 'Content & Text';
+    }
+
     public function render(): string {
         $value = htmlspecialchars($this->value ?? '', ENT_QUOTES | ENT_HTML5);
         $required = $this->required ? 'required' : '';

@@ -8,6 +8,10 @@ class DateTime extends BaseField {
         return 'datetime';
     }
 
+    public function getCategory(): string {
+        return 'Date & Time';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $value = htmlspecialchars($this->value ?? '');
@@ -21,7 +25,23 @@ class DateTime extends BaseField {
         if ($this->required && empty($value)) {
             $errors[] = "{$this->label} is required";
         }
-        // Optionally: validate datetime format
+        
+        if (!empty($value)) {
+            // Validate datetime-local format (YYYY-MM-DDTHH:mm)
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/', $value)) {
+                $errors[] = "{$this->label} must be a valid date and time";
+            } else {
+                // Try to parse the datetime
+                $datetime = \DateTime::createFromFormat('Y-m-d\TH:i', $value);
+                if (!$datetime) {
+                    $datetime = \DateTime::createFromFormat('Y-m-d\TH:i:s', $value);
+                }
+                if (!$datetime) {
+                    $errors[] = "{$this->label} must be a valid date and time";
+                }
+            }
+        }
+        
         return $errors;
     }
 
@@ -61,5 +81,27 @@ class DateTime extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        $format = $existingData['format'] ?? 'Y-m-d H:i';
+        $formatSelected = [
+            'Y-m-d H:i' => $format === 'Y-m-d H:i' ? 'selected' : '',
+            'd/m/Y H:i' => $format === 'd/m/Y H:i' ? 'selected' : '',
+            'm/d/Y H:i' => $format === 'm/d/Y H:i' ? 'selected' : '',
+            'Y-m-d g:i A' => $format === 'Y-m-d g:i A' ? 'selected' : '',
+        ];
+        
+        return <<<HTML
+            <div class="field-config-section">
+                <label>Date/Time Format</label>
+                <select name="fields[{$fieldIndex}][format]" class="input">
+                    <option value="Y-m-d H:i" {$formatSelected['Y-m-d H:i']}>YYYY-MM-DD HH:mm</option>
+                    <option value="d/m/Y H:i" {$formatSelected['d/m/Y H:i']}>DD/MM/YYYY HH:mm</option>
+                    <option value="m/d/Y H:i" {$formatSelected['m/d/Y H:i']}>MM/DD/YYYY HH:mm</option>
+                    <option value="Y-m-d g:i A" {$formatSelected['Y-m-d g:i A']}>YYYY-MM-DD hh:mm AM/PM</option>
+                </select>
+            </div>
+        HTML;
     }
 } 

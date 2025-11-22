@@ -180,6 +180,9 @@ try {
                 continue; // Skip invalid fields
             }
             
+            // Debug: Log field data
+            error_log("Processing field ID: $fieldId, type: " . ($fieldData['type'] ?? 'missing') . ", keys: " . implode(', ', array_keys($fieldData)));
+            
             $field = [
                 'name' => strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldData['name']))),
                 'label' => $fieldData['label'] ?? $fieldData['name'],
@@ -189,17 +192,37 @@ try {
             ];
             
             // Add field-specific settings based on fieldtype
-            if ($fieldData['type'] === 'select') {
+            // Keep fieldtype as-is (don't normalize - let getFieldtypeClass handle aliases)
+            $fieldType = $fieldData['type'];
+            
+            // Handle options for select, radio, multiselect
+            if (in_array($fieldType, ['select', 'radio', 'multiselect'])) {
                 $options = [];
                 
-                // Handle options_text format (label|value per line)
-                if (!empty($fieldData['options_text'])) {
+                // Handle new format: option-label and option-value inputs
+                if (isset($fieldData['option-label']) && isset($fieldData['option-value'])) {
+                    $labels = is_array($fieldData['option-label']) ? $fieldData['option-label'] : [$fieldData['option-label']];
+                    $values = is_array($fieldData['option-value']) ? $fieldData['option-value'] : [$fieldData['option-value']];
+                    
+                    for ($i = 0; $i < count($labels); $i++) {
+                        $label = trim($labels[$i] ?? '');
+                        $value = trim($values[$i] ?? '');
+                        if (!empty($label)) {
+                            $options[] = [
+                                'label' => $label,
+                                'value' => !empty($value) ? $value : strtolower(preg_replace('/[^a-z0-9]+/', '_', $label))
+                            ];
+                        }
+                    }
+                }
+                
+                // Fallback: Handle options_text format (label|value per line) for backward compatibility
+                if (empty($options) && !empty($fieldData['options_text'])) {
                     $lines = explode("\n", $fieldData['options_text']);
                     foreach ($lines as $line) {
                         $line = trim($line);
                         if (empty($line)) continue;
                         
-                        // Parse label|value format
                         if (strpos($line, '|') !== false) {
                             list($label, $value) = explode('|', $line, 2);
                             $options[] = [
@@ -207,7 +230,6 @@ try {
                                 'value' => trim($value)
                             ];
                         } else {
-                            // If no pipe, use line as both label and value
                             $options[] = [
                                 'label' => $line,
                                 'value' => strtolower(preg_replace('/[^a-z0-9]+/', '-', $line))
@@ -217,7 +239,7 @@ try {
                 }
                 
                 // Also handle array format from existing data
-                if (isset($fieldData['options']) && is_array($fieldData['options'])) {
+                if (empty($options) && isset($fieldData['options']) && is_array($fieldData['options'])) {
                     foreach ($fieldData['options'] as $optionData) {
                         if (is_array($optionData) && !empty($optionData['label']) && !empty($optionData['value'])) {
                             $options[] = [
@@ -231,30 +253,142 @@ try {
                 if (!empty($options)) {
                     $field['options'] = $options;
                 }
-            }
-            
-            // Add other fieldtype-specific settings
-            if ($fieldData['type'] === 'number') {
-                if (isset($fieldData['min'])) {
-                    $field['min'] = $fieldData['min'];
+                
+                // Radio-specific: layout
+                if ($fieldType === 'radio' && isset($fieldData['layout'])) {
+                    $field['layout'] = $fieldData['layout'];
                 }
-                if (isset($fieldData['max'])) {
-                    $field['max'] = $fieldData['max'];
-                }
-                if (isset($fieldData['step'])) {
-                    $field['step'] = $fieldData['step'];
+                
+                // Multiselect-specific: searchable
+                if ($fieldType === 'multiselect' && isset($fieldData['searchable'])) {
+                    $field['searchable'] = !empty($fieldData['searchable']);
                 }
             }
             
-            if ($fieldData['type'] === 'text' || $fieldData['type'] === 'textarea') {
+            // Number fieldtype
+            if ($fieldType === 'number') {
+                if (isset($fieldData['min']) && $fieldData['min'] !== '') {
+                    $field['min'] = (float)$fieldData['min'];
+                }
+                if (isset($fieldData['max']) && $fieldData['max'] !== '') {
+                    $field['max'] = (float)$fieldData['max'];
+                }
+                if (isset($fieldData['step']) && $fieldData['step'] !== '') {
+                    $field['step'] = (float)$fieldData['step'];
+                }
+                if (isset($fieldData['integer'])) {
+                    $field['integer'] = !empty($fieldData['integer']);
+                }
+            }
+            
+            // Text and Textarea
+            if (in_array($fieldType, ['text', 'textarea', 'email', 'url'])) {
                 if (isset($fieldData['placeholder'])) {
                     $field['placeholder'] = $fieldData['placeholder'];
                 }
-                if (isset($fieldData['minLength'])) {
+                if (isset($fieldData['minLength']) && $fieldData['minLength'] !== '') {
                     $field['minLength'] = (int)$fieldData['minLength'];
                 }
-                if (isset($fieldData['maxLength'])) {
+                if (isset($fieldData['maxLength']) && $fieldData['maxLength'] !== '') {
                     $field['maxLength'] = (int)$fieldData['maxLength'];
+                }
+            }
+            
+            // Textarea-specific: rows
+            if ($fieldType === 'textarea' && isset($fieldData['rows'])) {
+                $field['rows'] = (int)$fieldData['rows'];
+            }
+            
+            // Email-specific: multiple
+            if ($fieldType === 'email' && isset($fieldData['multiple'])) {
+                $field['multiple'] = !empty($fieldData['multiple']);
+            }
+            
+            // URL-specific: autoProtocol
+            if ($fieldType === 'url' && isset($fieldData['autoProtocol'])) {
+                $field['autoProtocol'] = !empty($fieldData['autoProtocol']);
+            }
+            
+            // Date fieldtype
+            if ($fieldType === 'date' && isset($fieldData['format'])) {
+                $field['format'] = $fieldData['format'];
+            }
+            
+            // Time fieldtype
+            if ($fieldType === 'time') {
+                if (isset($fieldData['format'])) {
+                    $field['format'] = $fieldData['format'];
+                }
+                if (isset($fieldData['step']) && $fieldData['step'] !== '') {
+                    $field['step'] = (int)$fieldData['step'];
+                }
+            }
+            
+            // DateTime fieldtype
+            if ($fieldType === 'datetime' && isset($fieldData['format'])) {
+                $field['format'] = $fieldData['format'];
+            }
+            
+            // ContentEditor fieldtype (check both with and without hyphen)
+            // Note: schema stores as "contenteditor", but form may send "content-editor"
+            if ($fieldType === 'content-editor' || $fieldType === 'contenteditor') {
+                if (isset($fieldData['css_url']) && !empty(trim($fieldData['css_url']))) {
+                    $field['css_url'] = trim($fieldData['css_url']);
+                    error_log("ContentEditor: Saved css_url: " . $field['css_url']);
+                } else {
+                    error_log("ContentEditor: css_url not set or empty. fieldType: " . $fieldType . ", fieldData keys: " . implode(', ', array_keys($fieldData)));
+                }
+            }
+            
+            // Range fieldtype
+            if ($fieldType === 'range') {
+                if (isset($fieldData['min']) && $fieldData['min'] !== '') {
+                    $field['min'] = (float)$fieldData['min'];
+                }
+                if (isset($fieldData['max']) && $fieldData['max'] !== '') {
+                    $field['max'] = (float)$fieldData['max'];
+                }
+                if (isset($fieldData['step']) && $fieldData['step'] !== '') {
+                    $field['step'] = (float)$fieldData['step'];
+                }
+                if (isset($fieldData['showValue'])) {
+                    $field['showValue'] = !empty($fieldData['showValue']);
+                }
+            }
+            
+            // Color fieldtype
+            if ($fieldType === 'color') {
+                if (isset($fieldData['format'])) {
+                    $field['format'] = $fieldData['format'];
+                }
+                if (isset($fieldData['alpha'])) {
+                    $field['alpha'] = !empty($fieldData['alpha']);
+                }
+            }
+            
+            // File and Media fieldtypes
+            if (in_array($fieldType, ['file', 'media'])) {
+                $field['options'] = [];
+                if (isset($fieldData['accept'])) {
+                    $field['options']['accept'] = $fieldData['accept'];
+                }
+                if (isset($fieldData['multiple'])) {
+                    $field['options']['multiple'] = !empty($fieldData['multiple']);
+                }
+            }
+            
+            // Gallery fieldtype
+            if ($fieldType === 'gallery' && isset($fieldData['maxImages']) && $fieldData['maxImages'] !== '') {
+                $field['maxImages'] = (int)$fieldData['maxImages'];
+            }
+            
+            // Relation fieldtype
+            if ($fieldType === 'relation') {
+                if (isset($fieldData['collection'])) {
+                    $field['collection'] = $fieldData['collection'];
+                }
+                if (isset($fieldData['multiple'])) {
+                    $field['multiple'] = !empty($fieldData['multiple']);
                 }
             }
             

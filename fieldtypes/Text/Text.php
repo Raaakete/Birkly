@@ -33,12 +33,17 @@ class Text extends BaseField {
         return 'text';
     }
 
+    public function getCategory(): string {
+        return 'Content & Text';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $minLength = $this->minLength ? "minlength=\"{$this->minLength}\"" : '';
         $maxLength = $this->maxLength ? "maxlength=\"{$this->maxLength}\"" : '';
         $pattern = $this->pattern ? "pattern=\"{$this->pattern}\"" : '';
-        $placeholder = $this->placeholder ? "placeholder=\"{$this->placeholder}\"" : '';
+        $placeholderText = $this->placeholder ?: 'Enter ' . strtolower($this->label ?: 'text');
+        $placeholder = "placeholder=\"" . htmlspecialchars($placeholderText) . "\"";
         $value = htmlspecialchars($this->value ?? '');
 
         return <<<HTML
@@ -168,5 +173,28 @@ class Text extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        $placeholder = htmlspecialchars($existingData['placeholder'] ?? '');
+        $minLength = htmlspecialchars($existingData['minLength'] ?? '');
+        $maxLength = htmlspecialchars($existingData['maxLength'] ?? '');
+        
+        return <<<HTML
+            <div class="field-config-section">
+                <label>Placeholder</label>
+                <input type="text" name="fields[{$fieldIndex}][placeholder]" class="input" value="{$placeholder}" placeholder="Enter placeholder text">
+            </div>
+            <div class="field-config-row">
+                <div class="field-config-field">
+                    <label>Min Length</label>
+                    <input type="number" name="fields[{$fieldIndex}][minLength]" class="input" value="{$minLength}" min="0" placeholder="No minimum">
+                </div>
+                <div class="field-config-field">
+                    <label>Max Length</label>
+                    <input type="number" name="fields[{$fieldIndex}][maxLength]" class="input" value="{$maxLength}" min="0" placeholder="No maximum">
+                </div>
+            </div>
+        HTML;
     }
 } 

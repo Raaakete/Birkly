@@ -8,6 +8,10 @@ class File extends BaseField {
         return 'file';
     }
 
+    public function getCategory(): string {
+        return 'Media';
+    }
+
     public function render(): string {
         $value = $this->value ?? '';
         $fileId = $this->extractFileId($value);
@@ -39,6 +43,7 @@ class File extends BaseField {
         
         $multi = $this->options['multiple'] ?? false;
         $accept = $this->options['accept'] ?? '*/*';
+        $multipleAttr = $multi ? 'multiple' : '';
         
         return <<<HTML
         <div class="file-field" id="field_{$this->name}">
@@ -50,7 +55,7 @@ class File extends BaseField {
                 <button type="button" class="btn btn-primary upload-file-btn" data-field="{$this->name}">Upload File</button>
                 <button type="button" class="btn btn-danger remove-file-btn" data-field="{$this->name}" style="display:none;">Remove</button>
             </div>
-            <input type="file" id="file_input_{$this->name}" accept="{$accept}" style="display:none;" {$multi ? 'multiple' : ''}>
+            <input type="file" id="file_input_{$this->name}" accept="{$accept}" style="display:none;" {$multipleAttr}>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$fileId}">
         </div>
         HTML;
@@ -278,6 +283,28 @@ class File extends BaseField {
     public function processLoadedValue($value) {
         // Return as-is when loading
         return $value;
+    }
+
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        $options = $existingData['options'] ?? [];
+        $multiple = !empty($options['multiple']);
+        $accept = htmlspecialchars($options['accept'] ?? '*/*');
+        $multipleChecked = $multiple ? 'checked' : '';
+        
+        return <<<HTML
+            <div class="field-config-section">
+                <label>Accepted File Types</label>
+                <input type="text" name="fields[{$fieldIndex}][accept]" class="input" value="{$accept}" placeholder="*/* or image/*, .pdf, etc.">
+                <small class="form-text">Comma-separated list (e.g., image/*, .pdf, .doc)</small>
+            </div>
+            <div class="field-config-section">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="fields[{$fieldIndex}][multiple]" value="1" {$multipleChecked}>
+                    <span class="checkmark"></span>
+                    <span>Allow Multiple Files</span>
+                </label>
+            </div>
+        HTML;
     }
 }
 

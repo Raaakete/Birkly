@@ -8,6 +8,10 @@ class Gallery extends BaseField {
         return 'gallery';
     }
 
+    public function getCategory(): string {
+        return 'Media';
+    }
+
     public function render(): string {
         $value = $this->value ?? [];
         
@@ -295,6 +299,18 @@ class Gallery extends BaseField {
         }
         
         return [];
+    }
+
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        $maxImages = htmlspecialchars($existingData['maxImages'] ?? '');
+        
+        return <<<HTML
+            <div class="field-config-section">
+                <label>Max Images</label>
+                <input type="number" name="fields[{$fieldIndex}][maxImages]" class="input" value="{$maxImages}" min="0" placeholder="No limit">
+                <small class="form-text">Maximum number of images (0 = unlimited)</small>
+            </div>
+        HTML;
     }
 }
 

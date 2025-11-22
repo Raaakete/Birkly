@@ -82,6 +82,22 @@ abstract class BaseField {
         return $this->group;
     }
 
+    // Get field's category for grouping in UI
+    // Fieldtypes should override this to return their category
+    public function getCategory(): string {
+        return 'Misc'; // Default category
+    }
+
+    // Get field's configuration UI HTML for the collection editor
+    // Fieldtypes should override this to provide their own configuration UI
+    // Parameters:
+    //   - $fieldIndex: The index of the field in the collection
+    //   - $existingData: Existing field configuration data (if editing)
+    // Returns: HTML string for the configuration UI
+    public function getConfigUI($fieldIndex, $existingData = []): string {
+        return ''; // Default: no configuration UI
+    }
+
     // Get field's validation rules
     public function getValidationRules(): array {
         return $this->validationRules;

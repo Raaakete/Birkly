@@ -11,6 +11,10 @@ use HaruCMS\FieldTypes\BaseField;
 class Editor extends BaseField {
     public function getType(): string { return 'editor'; }
 
+    public function getCategory(): string {
+        return 'Content & Text';
+    }
+
     public static function getConfig(): array {
         return [
             'label' => 'Editor',
