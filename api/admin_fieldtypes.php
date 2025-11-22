@@ -34,59 +34,75 @@ spl_autoload_register(function ($class) {
 });
 
 function getFieldtypeClass($fieldtypeName) {
-    // Handle special cases with proper casing
-    $fieldtypeMap = [
-        'dynamicitems' => 'DynamicItems',
-        'dynamic-items' => 'DynamicItems',
-        'wysiwyg' => 'Wysiwyg',
-        'editor' => 'Editor',
-        'checkbox' => 'Checkbox',
-        'datetime' => 'DateTime',
-        'date' => 'Date',
-        'textarea' => 'Textarea',
-        'number' => 'Number',
-        'text' => 'Text',
-        'select' => 'Select',
-        'media' => 'Media',
-        'tags' => 'Tags',
-        'tag' => 'Tags', // Tag fieldtype uses Tags class
-        'relation' => 'Relation'
+    // Normalize fieldtype name (handle various formats)
+    $normalized = strtolower(trim($fieldtypeName));
+    
+    // Handle special aliases (these are just convenience mappings, not hardcoded fieldtypes)
+    $aliases = [
+        'tag' => 'tags', // Tag fieldtype uses Tags class
+        'dynamic-items' => 'dynamicitems',
+        'content-editor' => 'contenteditor', // ContentEditor fieldtype directory name
     ];
     
-    // Normalize fieldtype name
-    $normalized = strtolower($fieldtypeName);
-    
-    // Get proper class name from map
-    if (isset($fieldtypeMap[$normalized])) {
-        $properName = $fieldtypeMap[$normalized];
-    } else {
-        // Default: capitalize first letter
-        $properName = ucfirst($normalized);
+    if (isset($aliases[$normalized])) {
+        $normalized = $aliases[$normalized];
     }
     
-    $className = "HaruCMS\\FieldTypes\\{$properName}\\{$properName}";
+    // Auto-discover fieldtype by scanning directory
+    $fieldtypesDir = __DIR__ . '/../fieldtypes';
     
-    // Try loading the file directly if class doesn't exist
-    if (!class_exists($className)) {
-        $fieldtypeDir = __DIR__ . "/../fieldtypes/{$properName}";
-        $fieldtypeFile = "{$fieldtypeDir}/{$properName}.php";
+    if (!is_dir($fieldtypesDir)) {
+        error_log("Fieldtypes directory not found: {$fieldtypesDir}");
+        return null;
+    }
+    
+    // Try to find matching directory
+    $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
+    $matchedDir = null;
+    $matchedName = null;
+    
+    foreach ($dirs as $dir) {
+        $dirName = basename($dir);
+        $dirNameLower = strtolower($dirName);
         
-        if (file_exists($fieldtypeFile)) {
-            require_once $fieldtypeFile;
+        // Exact match (case-insensitive)
+        if ($dirNameLower === $normalized) {
+            $matchedDir = $dir;
+            $matchedName = $dirName;
+            break;
+        }
+        
+        // Try camelCase variations (e.g., "multiselect" matches "MultiSelect")
+        $camelCase = ucfirst($normalized);
+        if (strtolower($dirName) === strtolower($camelCase)) {
+            $matchedDir = $dir;
+            $matchedName = $dirName;
+            break;
         }
     }
     
+    if (!$matchedDir || !$matchedName) {
+        error_log("Fieldtype directory not found for: {$fieldtypeName}");
+        return null;
+    }
+    
+    // Construct class name from directory name
+    // Directory name should match class name (e.g., "Text" directory => "Text" class)
+    $className = "HaruCMS\\FieldTypes\\{$matchedName}\\{$matchedName}";
+    
+    // Try loading the file
+    $fieldtypeFile = "{$matchedDir}/{$matchedName}.php";
+    
+    if (file_exists($fieldtypeFile)) {
+        require_once $fieldtypeFile;
+    }
+    
+    // Check if class exists
     if (class_exists($className)) {
         return $className;
     }
     
-    // Last resort: try alternative naming
-    $altClassName = "HaruCMS\\FieldTypes\\{$properName}\\{$properName}";
-    if (class_exists($altClassName)) {
-        return $altClassName;
-    }
-    
-    error_log("Fieldtype class not found: {$fieldtypeName} (tried {$className})");
+    error_log("Fieldtype class not found: {$fieldtypeName} (tried {$className} from {$matchedDir})");
     return null;
 }
 
@@ -138,11 +154,13 @@ function getAvailableFieldtypes() {
                     ];
                     $fieldtype = new $className($tempConfig);
                     $config = $fieldtype->getAdminConfig();
+                    $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
                     
                     $fieldtypes[] = [
                         'name' => strtolower($fieldtypeName),
                         'label' => ucfirst($fieldtypeName),
                         'type' => $config['type'] ?? strtolower($fieldtypeName),
+                        'category' => $category,
                         'config' => $config
                     ];
                 } catch (Exception $e) {
@@ -241,6 +259,138 @@ if (isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__HARU_INTERNAL_CALL'] 
                 'status' => 'ok',
                 'data' => $fieldtypes
             ]);
+            break;
+            
+        case 'get_config_ui':
+            $fieldtypeName = $_GET['fieldtype'] ?? $_POST['fieldtype'] ?? '';
+            $fieldIndex = $_GET['fieldIndex'] ?? $_POST['fieldIndex'] ?? '0';
+            $existingDataJson = $_GET['existingData'] ?? $_POST['existingData'] ?? '{}';
+            $existingData = json_decode($existingDataJson, true) ?? [];
+            
+            if (!$fieldtypeName) {
+                if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+                    http_response_code(400);
+                }
+                echo json_encode(['status' => 'error', 'message' => 'Fieldtype name required']);
+                exit;
+            }
+            
+            $className = getFieldtypeClass($fieldtypeName);
+            if (!$className) {
+                if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+                    http_response_code(404);
+                }
+                echo json_encode(['status' => 'error', 'message' => "Fieldtype '{$fieldtypeName}' not found"]);
+                exit;
+            }
+            
+            try {
+                // Create a temporary instance to get config UI
+                $tempConfig = [
+                    'name' => 'temp',
+                    'label' => ucfirst($fieldtypeName),
+                    'required' => false
+                ];
+                $fieldtype = new $className($tempConfig);
+                
+                // Get the configuration UI
+                $configUI = method_exists($fieldtype, 'getConfigUI') 
+                    ? $fieldtype->getConfigUI($fieldIndex, $existingData)
+                    : '';
+                
+                echo json_encode([
+                    'status' => 'ok',
+                    'html' => $configUI
+                ]);
+            } catch (Exception $e) {
+                if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+                    http_response_code(500);
+                }
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error getting config UI: ' . $e->getMessage()
+                ]);
+            }
+            break;
+            
+        case 'render_for_dynamicitems':
+            // Render a fieldtype instance for DynamicItems with full configuration
+            $fieldtypeName = $_POST['fieldtype'] ?? '';
+            $blockName = $_POST['blockName'] ?? '';
+            $blockLabel = $_POST['blockLabel'] ?? '';
+            $blockRequired = isset($_POST['blockRequired']) && $_POST['blockRequired'] === 'true';
+            $blockValue = $_POST['blockValue'] ?? null;
+            $blockSettings = isset($_POST['blockSettings']) ? json_decode($_POST['blockSettings'], true) : [];
+            
+            if (!$fieldtypeName || !$blockName) {
+                if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+                    http_response_code(400);
+                }
+                echo json_encode(['status' => 'error', 'message' => 'Fieldtype name and block name required']);
+                exit;
+            }
+            
+            $className = getFieldtypeClass($fieldtypeName);
+            if (!$className) {
+                if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+                    http_response_code(404);
+                }
+                echo json_encode(['status' => 'error', 'message' => "Fieldtype '{$fieldtypeName}' not found"]);
+                exit;
+            }
+            
+            try {
+                // Build full config for the fieldtype
+                $config = [
+                    'name' => $blockName,
+                    'label' => $blockLabel ?: ucfirst($blockName),
+                    'required' => $blockRequired,
+                    'value' => $blockValue
+                ];
+                
+                // Merge any additional settings
+                if (is_array($blockSettings)) {
+                    $config = array_merge($config, $blockSettings);
+                }
+                
+                $fieldtype = new $className($config);
+                $html = $fieldtype->render();
+                $javascript = $fieldtype->getJavaScript();
+                $css = $fieldtype->getCSS();
+                
+                // Add data attributes to help with identification
+                $html = preg_replace_callback(
+                    '/<(input|textarea|select|div|span)([^>]*)>/i',
+                    function($matches) use ($fieldtypeName, $blockName) {
+                        $tag = $matches[1];
+                        $attrs = $matches[2];
+                        if (strpos($attrs, 'data-fieldtype') === false) {
+                            $attrs .= ' data-fieldtype="' . htmlspecialchars($fieldtypeName) . '"';
+                        }
+                        if (strpos($attrs, 'data-block-name') === false) {
+                            $attrs .= ' data-block-name="' . htmlspecialchars($blockName) . '"';
+                        }
+                        return "<{$tag}{$attrs}>";
+                    },
+                    $html,
+                    1
+                );
+                
+                echo json_encode([
+                    'status' => 'ok',
+                    'html' => $html,
+                    'javascript' => $javascript,
+                    'css' => $css
+                ]);
+            } catch (Exception $e) {
+                if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+                    http_response_code(500);
+                }
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Error rendering fieldtype: ' . $e->getMessage()
+                ]);
+            }
             break;
             
         default:

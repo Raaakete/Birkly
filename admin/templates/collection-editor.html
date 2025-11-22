@@ -74,7 +74,18 @@
                                                     <select name="fields[<?= $index ?>][type]" class="input field-type-select" required>
                                                         <option value="">Select type...</option>
                                                         <?php foreach ($fieldtypes as $fieldtype): ?>
-                                                            <option value="<?= htmlspecialchars($fieldtype['name']) ?>" <?= ($field['type'] ?? '') === $fieldtype['name'] ? 'selected' : '' ?>>
+                                                            <?php
+                                                            // Normalize fieldtype names for comparison (handle content-editor vs contenteditor)
+                                                            $fieldType = $field['type'] ?? '';
+                                                            $fieldtypeName = $fieldtype['name'] ?? '';
+                                                            // Use 'type' from getAdminConfig() if available, otherwise use 'name'
+                                                            $fieldtypeType = $fieldtype['type'] ?? $fieldtypeName;
+                                                            // Check if field type matches fieldtype name or type (normalize hyphens for comparison)
+                                                            $isSelected = ($fieldType === $fieldtypeName || $fieldType === $fieldtypeType || 
+                                                                          strtolower(str_replace('-', '', $fieldType)) === strtolower(str_replace('-', '', $fieldtypeName)) ||
+                                                                          strtolower(str_replace('-', '', $fieldType)) === strtolower(str_replace('-', '', $fieldtypeType)));
+                                                            ?>
+                                                            <option value="<?= htmlspecialchars($fieldtypeType) ?>" <?= $isSelected ? 'selected' : '' ?>>
                                                                 <?= htmlspecialchars($fieldtype['label']) ?>
                                                             </option>
                                                         <?php endforeach; ?>
@@ -83,6 +94,7 @@
                                                 <div class="fieldtype-field">
                                                     <label class="checkbox-label">
                                                         <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
+                                                        <span class="checkmark"></span>
                                                         <span>Mandatory Field</span>
                                                     </label>
                                                 </div>
@@ -642,6 +654,7 @@ echo htmlspecialchars($formCode);
                 <div class="fieldtype-field">
                     <label class="checkbox-label">
                         <input type="checkbox" name="fields[__INDEX__][required]" value="1" __REQUIRED_CHECKED__>
+                        <span class="checkmark"></span>
                         <span>Mandatory Field</span>
                     </label>
                 </div>
@@ -652,6 +665,26 @@ echo htmlspecialchars($formCode);
         </div>
     </div>
 </script>
+
+<!-- Fieldtype Selection Modal -->
+<div id="fieldtype-selector-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px; width: 90%;">
+        <div class="modal-header">
+            <h2>Select Field Type</h2>
+            <button type="button" class="btn-icon modal-close" id="close-fieldtype-modal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="fieldtype-grid" class="fieldtype-grid">
+                <!-- Fieldtypes will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
 .collection-editor-page {
@@ -764,8 +797,200 @@ echo htmlspecialchars($formCode);
 
 .fieldtype-config {
     margin-top: var(--space-4);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--border-light);
+    padding: var(--space-4);
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-light);
+}
+
+.field-config-section {
+    margin-bottom: var(--space-4);
+}
+
+.field-config-section:last-child {
+    margin-bottom: 0;
+}
+
+.field-config-section label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.field-config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.field-config-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    max-height: 300px;
+    overflow-y: auto;
+    padding: var(--space-2);
+    background: var(--bg-primary);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-light);
+}
+
+.option-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: var(--space-2);
+    align-items: center;
+}
+
+.option-item .input {
+    margin: 0;
+}
+
+.add-option-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: var(--space-2);
+    align-items: end;
+}
+
+.form-text {
+    display: block;
+    margin-top: var(--space-1);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Fieldtype Selector Modal */
+#fieldtype-selector-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#fieldtype-selector-modal .modal-content {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#fieldtype-selector-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--border-light);
+}
+
+#fieldtype-selector-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#fieldtype-selector-modal .modal-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-2);
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+}
+
+#fieldtype-selector-modal .modal-close:hover {
+    color: var(--text-primary);
+}
+
+#fieldtype-selector-modal .modal-body {
+    padding: var(--space-5);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.fieldtype-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.fieldtype-category-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 2px solid var(--border-light);
+}
+
+.fieldtype-category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-2);
+}
+
+.fieldtype-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+    min-height: 140px;
+}
+
+.fieldtype-card:hover {
+    border-color: var(--primary-500);
+    background: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.fieldtype-card:active {
+    transform: translateY(0);
+}
+
+.fieldtype-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: var(--space-3);
+    color: var(--primary-500);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+}
+
+.fieldtype-card-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-align: center;
+    word-break: break-word;
 }
 
 /* Sidebar */
@@ -871,17 +1096,70 @@ echo htmlspecialchars($formCode);
     border-color: var(--error-300);
 }
 
-.checkbox-label {
+.collection-editor-page .checkbox-label {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: 8px;
     font-size: 0.875rem;
     cursor: pointer;
+    user-select: none;
+    line-height: 1.5;
+    margin: 0;
 }
 
-.checkbox-label input[type="checkbox"] {
-    width: auto;
-    margin: 0;
+.collection-editor-page .checkbox-label > span:last-child {
+    line-height: 1.5;
+    display: inline-block;
+}
+
+.collection-editor-page .checkbox-label input[type="checkbox"] {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    position: absolute !important;
+}
+
+.collection-editor-page .checkmark {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+.collection-editor-page .checkbox-label:hover .checkmark {
+    border-color: #9ca3af;
+}
+
+.collection-editor-page .checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.collection-editor-page .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 3px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    display: block;
+    box-sizing: border-box;
 }
 
 /* Templating Tab Styles */
@@ -1110,15 +1388,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let fieldtypeOptions = '';
         availableFieldtypes.forEach(function(ft) {
-            const selected = fieldData.type === ft.name ? 'selected' : '';
-            fieldtypeOptions += `<option value="${ft.name}" ${selected}>${ft.label}</option>`;
+            // Use type if available, otherwise name (matching PHP template behavior)
+            const optionValue = ft.type || ft.name;
+            // Check if fieldData.type matches either the type or name
+            const selected = (fieldData.type === ft.type || fieldData.type === ft.name) ? 'selected' : '';
+            fieldtypeOptions += `<option value="${optionValue}" ${selected}>${ft.label}</option>`;
         });
         
         const html = template
             .replace(/__INDEX__/g, fieldIndex)
             .replace(/__NAME__/g, fieldData.name || '')
             .replace(/__LABEL__/g, fieldData.label || '')
-            .replace(/__TYPE__/g, fieldData.type ? availableFieldtypes.find(ft => ft.name === fieldData.type)?.label || fieldData.type : 'Select Type')
+            .replace(/__TYPE__/g, fieldData.type ? availableFieldtypes.find(ft => ft.name === fieldData.type || ft.type === fieldData.type)?.label || fieldData.type : 'Select Type')
             .replace(/__REQUIRED_CHECKED__/g, fieldData.required ? 'checked' : '')
             .replace(/__FIELDTYPE_OPTIONS__/g, fieldtypeOptions);
         
@@ -1129,50 +1410,270 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set up fieldtype change handler
         const typeSelect = fieldElement.querySelector('.field-type-select');
         typeSelect.addEventListener('change', function() {
-            const selectedType = availableFieldtypes.find(ft => ft.name === this.value);
+            // Find by either type or name (since option value can be either)
+            const selectedType = availableFieldtypes.find(ft => (ft.type || ft.name) === this.value);
             if (selectedType) {
                 fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
             }
-            loadFieldtypeConfig(fieldIndex, this.value, fieldElement);
+            // Use the fieldtype name for loading config (consistent with existing code)
+            const fieldtypeName = selectedType ? (selectedType.name || selectedType.type) : this.value;
+            loadFieldtypeConfig(fieldIndex, fieldtypeName, fieldElement);
         });
         
         return fieldElement;
     }
     
-    if (addFieldBtn && fieldsContainer) {
+    // Fieldtype selector modal
+    const fieldtypeModal = document.getElementById('fieldtype-selector-modal');
+    const fieldtypeGrid = document.getElementById('fieldtype-grid');
+    const closeFieldtypeModal = document.getElementById('close-fieldtype-modal');
+    
+    // Open modal when clicking "Add Field"
+    if (addFieldBtn && fieldtypeModal) {
         addFieldBtn.addEventListener('click', function() {
-            const fieldIndex = getNextFieldIndex();
-            const fieldElement = renderFieldtype(fieldIndex);
-            fieldsContainer.appendChild(fieldElement);
+            // Group fieldtypes by category
+            const fieldtypesByCategory = {};
+            availableFieldtypes.forEach(function(ft) {
+                const category = ft.category || 'Misc';
+                if (!fieldtypesByCategory[category]) {
+                    fieldtypesByCategory[category] = [];
+                }
+                fieldtypesByCategory[category].push(ft);
+            });
             
-            // Focus on display name input
-            const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
-            if (displayNameInput) displayNameInput.focus();
+            // Define category order
+            const categoryOrder = [
+                'Content & Text',
+                'Numeric',
+                'Date & Time',
+                'Selection',
+                'Media',
+                'Location',
+                'Misc'
+            ];
+            
+            // Populate fieldtype grid with categories
+            fieldtypeGrid.innerHTML = '';
+            
+            // Render categories in order
+            categoryOrder.forEach(function(category) {
+                if (!fieldtypesByCategory[category] || fieldtypesByCategory[category].length === 0) {
+                    return;
+                }
+                
+                // Category header
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'fieldtype-category-header';
+                categoryHeader.textContent = category;
+                fieldtypeGrid.appendChild(categoryHeader);
+                
+                // Category grid
+                const categoryGrid = document.createElement('div');
+                categoryGrid.className = 'fieldtype-category-grid';
+                
+                fieldtypesByCategory[category].forEach(function(ft) {
+                    const fieldtypeCard = document.createElement('div');
+                    fieldtypeCard.className = 'fieldtype-card';
+                    fieldtypeCard.dataset.fieldtype = ft.name;
+                    fieldtypeCard.innerHTML = `
+                        <div class="fieldtype-card-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                            </svg>
+                        </div>
+                        <div class="fieldtype-card-name">${ft.label || ft.name}</div>
+                    `;
+                    fieldtypeCard.addEventListener('click', function() {
+                        const selectedFieldtype = this.dataset.fieldtype;
+                        closeFieldtypeModal.click();
+                        
+                        // Add field with selected fieldtype
+                        const fieldIndex = getNextFieldIndex();
+                        const fieldData = {
+                            type: selectedFieldtype,
+                            label: '',
+                            name: '',
+                            required: false
+                        };
+                        const fieldElement = renderFieldtype(fieldIndex, fieldData);
+                        fieldsContainer.appendChild(fieldElement);
+                        
+                        // Update the fieldtype type display and select
+                        const selectedType = availableFieldtypes.find(ft => ft.name === selectedFieldtype);
+                        if (selectedType) {
+                            fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+                            // Set the select value - use type if available, otherwise name (to match PHP template option values)
+                            const typeSelect = fieldElement.querySelector('.field-type-select');
+                            if (typeSelect) {
+                                typeSelect.value = selectedType.type || selectedType.name;
+                            }
+                        }
+                        
+                        // Load fieldtype config if needed
+                        loadFieldtypeConfig(fieldIndex, selectedFieldtype, fieldElement);
+                        
+                        // Focus on display name input
+                        const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
+                        if (displayNameInput) {
+                            displayNameInput.focus();
+                            // Scroll into view
+                            fieldElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    });
+                    categoryGrid.appendChild(fieldtypeCard);
+                });
+                
+                fieldtypeGrid.appendChild(categoryGrid);
+            });
+            
+            // Show any remaining categories not in the order list
+            Object.keys(fieldtypesByCategory).forEach(function(category) {
+                if (categoryOrder.indexOf(category) === -1) {
+                    const categoryHeader = document.createElement('div');
+                    categoryHeader.className = 'fieldtype-category-header';
+                    categoryHeader.textContent = category;
+                    fieldtypeGrid.appendChild(categoryHeader);
+                    
+                    const categoryGrid = document.createElement('div');
+                    categoryGrid.className = 'fieldtype-category-grid';
+                    
+                    fieldtypesByCategory[category].forEach(function(ft) {
+                        const fieldtypeCard = document.createElement('div');
+                        fieldtypeCard.className = 'fieldtype-card';
+                        fieldtypeCard.dataset.fieldtype = ft.name;
+                        fieldtypeCard.innerHTML = `
+                            <div class="fieldtype-card-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                                </svg>
+                            </div>
+                            <div class="fieldtype-card-name">${ft.label || ft.name}</div>
+                        `;
+                        fieldtypeCard.addEventListener('click', function() {
+                            const selectedFieldtype = this.dataset.fieldtype;
+                            closeFieldtypeModal.click();
+                            
+                            const fieldIndex = getNextFieldIndex();
+                            const fieldData = {
+                                type: selectedFieldtype,
+                                label: '',
+                                name: '',
+                                required: false
+                            };
+                            const fieldElement = renderFieldtype(fieldIndex, fieldData);
+                            fieldsContainer.appendChild(fieldElement);
+                            
+                            const selectedType = availableFieldtypes.find(ft => ft.name === selectedFieldtype);
+                            if (selectedType) {
+                                fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+                                const typeSelect = fieldElement.querySelector('.field-type-select');
+                                if (typeSelect) {
+                                    // Use type if available, otherwise name (to match PHP template option values)
+                                    typeSelect.value = selectedType.type || selectedType.name;
+                                }
+                            }
+                            
+                            loadFieldtypeConfig(fieldIndex, selectedFieldtype, fieldElement);
+                            
+                            const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
+                            if (displayNameInput) {
+                                displayNameInput.focus();
+                                fieldElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                        });
+                        categoryGrid.appendChild(fieldtypeCard);
+                    });
+                    
+                    fieldtypeGrid.appendChild(categoryGrid);
+                }
+            });
+            
+            // Show modal
+            fieldtypeModal.style.display = 'flex';
+        });
+    }
+    
+    // Close modal
+    if (closeFieldtypeModal && fieldtypeModal) {
+        closeFieldtypeModal.addEventListener('click', function() {
+            fieldtypeModal.style.display = 'none';
+        });
+        
+        // Close on backdrop click
+        fieldtypeModal.addEventListener('click', function(e) {
+            if (e.target === fieldtypeModal) {
+                fieldtypeModal.style.display = 'none';
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && fieldtypeModal.style.display === 'flex') {
+                fieldtypeModal.style.display = 'none';
+            }
         });
     }
     
     // Load fieldtype-specific configuration UI
-    function loadFieldtypeConfig(fieldIndex, fieldtype, fieldElement) {
+    function loadFieldtypeConfig(fieldIndex, fieldtype, fieldElement, existingData = {}) {
         const configContainer = fieldElement.querySelector('.fieldtype-config');
         if (!configContainer || !fieldtype) {
             return;
         }
         
-        // For now, show/hide based on fieldtype
-        // In the future, this can load specific config UI via AJAX
-        if (fieldtype === 'select') {
-            configContainer.style.display = 'block';
-            configContainer.innerHTML = `
-                <div class="field-config-section">
-                    <label>Options (one per line, format: label|value)</label>
-                    <textarea name="fields[${fieldIndex}][options_text]" class="input" rows="4" placeholder="Option 1|value1&#10;Option 2|value2"></textarea>
-                    <small class="form-text">Or leave empty to configure later</small>
-                </div>
-            `;
-        } else {
-            configContainer.style.display = 'none';
-            configContainer.innerHTML = '';
-        }
+        // Load configuration UI from the fieldtype itself via API
+        // Use POST instead of GET to avoid URL length limits for complex existingData
+        const formData = new FormData();
+        formData.append('action', 'get_config_ui');
+        formData.append('fieldtype', fieldtype);
+        formData.append('fieldIndex', fieldIndex);
+        formData.append('existingData', JSON.stringify(existingData));
+        
+        fetch('/api/admin_fieldtypes.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok' && data.html) {
+                    configContainer.style.display = 'block';
+                    configContainer.innerHTML = data.html;
+                    
+                    // Extract and execute any inline scripts
+                    // Scripts inserted via innerHTML don't execute automatically
+                    const scripts = configContainer.querySelectorAll('script');
+                    scripts.forEach(function(oldScript) {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr => {
+                            newScript.setAttribute(attr.name, attr.value);
+                        });
+                        newScript.textContent = oldScript.innerHTML;
+                        // Append to document head to ensure execution
+                        document.head.appendChild(newScript);
+                        // Remove the old script tag from the container
+                        oldScript.remove();
+                    });
+                    
+                    // Initialize any fieldtype-specific JavaScript after loading
+                    // This allows fieldtypes to add their own initialization code
+                    if (window.initFieldtypeConfig && typeof window.initFieldtypeConfig === 'function') {
+                        window.initFieldtypeConfig(fieldIndex, fieldtype, configContainer);
+                    }
+                } else {
+                    configContainer.style.display = 'none';
+                    configContainer.innerHTML = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading fieldtype config:', error);
+                configContainer.style.display = 'none';
+                configContainer.innerHTML = '';
+            });
+
     }
     
     // Attach fieldtype change listeners to existing fields
@@ -1181,7 +1682,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fieldElement) {
             const fieldIndex = fieldElement.getAttribute('data-index');
             select.addEventListener('change', function() {
-                const selectedType = availableFieldtypes.find(ft => ft.name === this.value);
+                // Find by type first (from getAdminConfig), then by name
+                const selectedType = availableFieldtypes.find(ft => (ft.type || ft.name) === this.value) || 
+                                     availableFieldtypes.find(ft => ft.name === this.value);
                 if (selectedType) {
                     fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
                 }
@@ -1189,7 +1692,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             // Load config if fieldtype is already selected
             if (select.value) {
-                loadFieldtypeConfig(fieldIndex, select.value, fieldElement);
+                // Get existing field data from PHP-rendered data
+                const fieldData = <?php echo json_encode($fields ?? []); ?>;
+                const fieldIndexNum = parseInt(fieldIndex);
+                // Try to find by numeric index first, then by id
+                let existingField = fieldData[fieldIndexNum];
+                if (!existingField) {
+                    existingField = fieldData.find(f => f.id === 'field-' + fieldIndex || f.id === fieldIndex);
+                }
+                // Use the entire field object as existingData to include all properties (css_url, format, etc.)
+                const existingData = existingField || {};
+                loadFieldtypeConfig(fieldIndex, select.value, fieldElement, existingData);
             }
         }
     });
@@ -1203,8 +1716,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Form submission
+    // Form submission - collect option data before submit
     const form = document.getElementById('collection-form');
+    
+    // Before form submission, collect option data from input fields
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Remove any existing hidden inputs for option data to prevent duplicates on re-submission
+            document.querySelectorAll('input[type="hidden"][name*="[option-label][]"], input[type="hidden"][name*="[option-value][]"]').forEach(function(input) {
+                input.remove();
+            });
+            
+            // Collect options for select/radio/multiselect fields
+            document.querySelectorAll('.options-list').forEach(function(optionsList) {
+                const fieldIndex = optionsList.id.replace('options_list_', '');
+                const optionItems = optionsList.querySelectorAll('.option-item');
+                
+                optionItems.forEach(function(item, idx) {
+                    const labelInput = item.querySelector('.option-label');
+                    const valueInput = item.querySelector('.option-value');
+                    
+                    if (labelInput && valueInput) {
+                        // Create hidden inputs for the option data
+                        const labelHidden = document.createElement('input');
+                        labelHidden.type = 'hidden';
+                        labelHidden.name = `fields[${fieldIndex}][option-label][]`;
+                        labelHidden.value = labelInput.value;
+                        
+                        const valueHidden = document.createElement('input');
+                        valueHidden.type = 'hidden';
+                        valueHidden.name = `fields[${fieldIndex}][option-value][]`;
+                        valueHidden.value = valueInput.value;
+                        
+                        form.appendChild(labelHidden);
+                        form.appendChild(valueHidden);
+                    }
+                });
+            });
+        });
+    }
     if (form) {
         // Prevent form submission when Enter is pressed in language input - use capture phase
         form.addEventListener('keydown', function(e) {
@@ -1287,6 +1837,14 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(form);
+            
+            // Debug: Log CSS URL values before submission
+            console.log('Form submission - checking CSS URL fields:');
+            for (let [key, value] of formData.entries()) {
+                if (key.includes('css_url')) {
+                    console.log('Found CSS URL field:', key, '=', value);
+                }
+            }
             
             fetch('/api/admin_collections.php', {
                 method: 'POST',

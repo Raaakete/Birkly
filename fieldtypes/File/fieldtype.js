@@ -21,9 +21,10 @@
         // Select file from media library
         if (selectBtn) {
             selectBtn.addEventListener('click', function() {
-                // Check if media modal exists
-                if (window.MediaModal && typeof window.MediaModal.open === 'function') {
-                    window.MediaModal.open({
+                // Check if media modal exists (try both possible locations)
+                const mediaModal = window.HaruCMS?.MediaModal || window.MediaModal;
+                if (mediaModal && typeof mediaModal.open === 'function') {
+                    mediaModal.open({
                         onSelect: function(media) {
                             setFileValue(media);
                         },
@@ -108,7 +109,12 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 uploadBtn.disabled = false;
                 uploadBtn.textContent = 'Upload File';
@@ -116,7 +122,7 @@
                 if (data.status === 'ok' && data.data) {
                     setFileValue(data.data);
                 } else {
-                    alert('Upload failed: ' + (data.message || 'Unknown error'));
+                    alert('Upload failed: ' + (data.error || data.message || 'Unknown error'));
                 }
             })
             .catch(error => {

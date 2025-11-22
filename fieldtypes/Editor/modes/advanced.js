@@ -100,11 +100,25 @@ window.EditorModes.advanced = {
   
   // Attach event listeners
   attachEvents() {
-    // Toolbar button clicks
+    // Toolbar button clicks - save selection BEFORE click to prevent loss
+    this.toolbar.addEventListener('mousedown', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        // Save selection immediately on mousedown, before focus changes
+        this.saveSelection();
+      }
+    });
+    
     this.toolbar.addEventListener('click', (e) => {
       if (e.target.tagName === 'BUTTON') {
         e.preventDefault();
-        this.executeCommand(e.target.dataset.command, e.target.dataset.value);
+        e.stopPropagation();
+        
+        // CRITICAL: Save selection right before executing
+        // Use a small delay to ensure selection is captured after any focus changes
+        setTimeout(() => {
+          this.saveSelection();
+          this.executeCommand(e.target.dataset.command, e.target.dataset.value);
+        }, 0);
       }
     });
     
@@ -112,6 +126,8 @@ window.EditorModes.advanced = {
     
     // Content area events
     this.content.addEventListener('input', () => {
+      // Fix paragraph spacing on input
+      this.fixParagraphSpacing();
       this.saveContent();
     });
     
@@ -121,6 +137,19 @@ window.EditorModes.advanced = {
     
     this.content.addEventListener('keydown', (e) => {
       this.handleKeydown(e);
+    });
+    
+    // Save selection on mouse/keyboard activity to ensure it's available for toolbar
+    this.content.addEventListener('mouseup', () => {
+      setTimeout(() => {
+        this.saveSelection();
+      }, 0);
+    });
+    
+    this.content.addEventListener('keyup', () => {
+      setTimeout(() => {
+        this.saveSelection();
+      }, 0);
     });
     
     // Handle clicks to create new paragraphs below content blocks
@@ -147,13 +176,26 @@ window.EditorModes.advanced = {
     if (this.container.dataset.value) {
       // Load existing content without modifying structure
       this.content.innerHTML = this.container.dataset.value;
-      console.log('Existing content loaded, preserving structure');
-      console.log('Content HTML after loading:', this.content.innerHTML);
+      
+      // Fix paragraph spacing in loaded content
+      this.fixParagraphSpacing();
     } else {
       // Create initial paragraph structure only for empty content
-      this.content.innerHTML = '<p><br></p>';
-      console.log('Initial paragraph structure created');
+      this.content.innerHTML = '<p style="margin:0;padding:0;"><br></p>';
     }
+  },
+  
+  // Fix paragraph spacing by adding inline styles
+  fixParagraphSpacing() {
+    const paragraphs = this.content.querySelectorAll('p');
+    paragraphs.forEach((p, index) => {
+      // Force inline styles using cssText to override any CSS
+      if (index === 0) {
+        p.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important;';
+      } else {
+        p.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
+      }
+    });
   },
 
   // Ensure content has proper paragraph structure
@@ -205,7 +247,7 @@ window.EditorModes.advanced = {
     this.content.innerHTML = '';
     newContent.forEach(element => this.content.appendChild(element));
     
-    console.log('Content restructured with proper block element handling');
+    
   },
 
   // Check if element is a block element
@@ -214,32 +256,130 @@ window.EditorModes.advanced = {
     return blockTags.includes(element.tagName);
   },
   
-  // Execute toolbar commands
-  executeCommand(command, value) {
-    // Ensure content area is focused and has selection
-    this.content.focus();
-    
-    // If no text is selected, create a text node for formatting
+  // Centralized selection management
+  saveSelection() {
     const selection = window.getSelection();
-    if (selection.rangeCount === 0 || selection.toString().length === 0) {
-      // Create a range at the end of content
+    if (selection.rangeCount > 0) {
+      try {
+        const range = selection.getRangeAt(0);
+        const ancestor = range.commonAncestorContainer;
+        
+        // More robust check - selection is within our content area
+        if (this.content && (
+          this.content.contains(ancestor) || 
+          this.content === ancestor ||
+          (ancestor.nodeType === Node.TEXT_NODE && this.content.contains(ancestor.parentNode)) ||
+          (ancestor.nodeType === Node.ELEMENT_NODE && this.content.contains(ancestor))
+        )) {
+          this.savedSelection = range.cloneRange();
+          return true;
+        }
+      } catch (e) {
+        // Selection save failed
+        this.clearSavedSelection();
+        return false;
+      }
+    }
+    // No selection - don't clear saved one, might still be valid
+    return false;
+  },
+  
+  restoreSelection() {
+    if (!this.savedSelection) {
+      // If no saved selection, create one at cursor position
+      const selection = window.getSelection();
       const range = document.createRange();
       range.selectNodeContents(this.content);
-      range.collapse(false); // Collapse to end
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return false;
+    }
+    
+    try {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(this.savedSelection);
+      this.content.focus();
+      return true;
+    } catch (e) {
+      // Selection might be invalid (e.g., DOM changed), create new one
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(this.content);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return false;
+    }
+  },
+  
+  clearSavedSelection() {
+    this.savedSelection = null;
+  },
+  
+  // Execute toolbar commands
+  executeCommand(command, value) {
+    // Ensure content area is focused
+    this.content.focus();
+    
+    // Get current selection
+    const selection = window.getSelection();
+    let range = null;
+    
+    // First, try to restore saved selection if we have one
+    if (this.savedSelection) {
+      try {
+        const savedAncestor = this.savedSelection.commonAncestorContainer;
+        // More robust check for saved selection validity
+        if (this.content.contains(savedAncestor) || 
+            this.content === savedAncestor ||
+            (savedAncestor.nodeType === Node.TEXT_NODE && this.content.contains(savedAncestor.parentNode)) ||
+            (savedAncestor.nodeType === Node.ELEMENT_NODE && this.content.contains(savedAncestor))) {
+          selection.removeAllRanges();
+          selection.addRange(this.savedSelection.cloneRange());
+          range = selection.getRangeAt(0);
+        }
+      } catch (e) {
+        // Saved selection is invalid, ignore it
+      }
+    }
+    
+    // If no valid saved selection, use current selection
+    if (!range && selection.rangeCount > 0) {
+      try {
+        range = selection.getRangeAt(0);
+        const ancestor = range.commonAncestorContainer;
+        // More robust validation
+        if (!(this.content.contains(ancestor) || 
+              this.content === ancestor ||
+              (ancestor.nodeType === Node.TEXT_NODE && this.content.contains(ancestor.parentNode)) ||
+              (ancestor.nodeType === Node.ELEMENT_NODE && this.content.contains(ancestor)))) {
+          range = null;
+        }
+      } catch (e) {
+        range = null;
+      }
+    }
+    
+    // If still no valid selection, create one at end of content
+    if (!range) {
+      range = document.createRange();
+      range.selectNodeContents(this.content);
+      range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);
     }
     
+    // Now execute the command
     switch (command) {
       case 'createLink':
         this.createLink();
         break;
       case 'foreColor':
-        console.log('🎨 ForeColor button clicked');
         this.showColorModal('foreColor');
         break;
       case 'hiliteColor':
-        console.log('🖍️ HiliteColor button clicked');
         this.showColorModal('hiliteColor');
         break;
       case 'insertTable':
@@ -255,42 +395,72 @@ window.EditorModes.advanced = {
         this.insertCode();
         break;
       case 'formatBlock':
-        // Handle formatBlock with proper block replacement
         if (value && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'].includes(value)) {
           this.applyFormatBlock(value);
         }
         break;
       case 'insertUnorderedList':
       case 'insertOrderedList':
-        // Handle list creation with proper structure
         this.createList(command === 'insertUnorderedList' ? 'ul' : 'ol');
         break;
       default:
-        // Use standard execCommand for most formatting
-        if (value) {
-          document.execCommand(command, false, value);
-        } else {
-          document.execCommand(command, false, null);
+        // For formatting commands (bold, italic, etc.), use execCommand
+        // Ensure selection is active
+        if (selection.rangeCount === 0 && range) {
+          selection.addRange(range);
+        }
+        
+        // Execute the command
+        try {
+          document.execCommand(command, false, value || null);
+        } catch (e) {
+          // Command execution failed - try once more with fresh selection
+          try {
+            if (range) {
+              selection.removeAllRanges();
+              selection.addRange(range);
+              document.execCommand(command, false, value || null);
+            }
+          } catch (e2) {
+            // Retry also failed
+          }
+        }
+        
+        // Restore selection after command if we had one saved
+        if (this.savedSelection && !this.savedSelection.collapsed) {
+          try {
+            setTimeout(() => {
+              const sel = window.getSelection();
+              if (sel.rangeCount === 0 || sel.isCollapsed) {
+                sel.removeAllRanges();
+                sel.addRange(this.savedSelection.cloneRange());
+                this.content.focus();
+              }
+            }, 0);
+          } catch (e) {
+            // Could not restore selection
+          }
         }
         break;
     }
     
+    // Clear saved selection after use
+    this.clearSavedSelection();
+    
     // Update toolbar state
-    this.updateToolbarState();
+    setTimeout(() => {
+      this.updateToolbarState();
+    }, 10);
+    
+    // Save content
+    this.saveContent();
   },
   
   // Create a link
   createLink() {
-    console.log('🔗 Creating link...');
-    
-    // Store the current selection before opening modal
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      this.savedSelection = selection.getRangeAt(0).cloneRange();
-      console.log('Link selection saved:', this.savedSelection.toString());
-    } else {
-      console.log('No selection to save for link');
-      this.savedSelection = null;
+    // Selection should already be saved by executeCommand, but ensure it's saved
+    if (!this.savedSelection) {
+      this.saveSelection();
     }
     
     // Create professional link modal
@@ -482,14 +652,11 @@ window.EditorModes.advanced = {
     const target = document.getElementById('link-target').value;
     
     if (url && url !== 'https://') {
-      console.log('🔗 Creating link for selected text');
+      
       
       // Restore the saved selection if available
       if (this.savedSelection) {
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(this.savedSelection);
-        console.log('Link selection restored:', selection.toString());
+        this.restoreSelection();
         
         // Ensure content is focused
         this.content.focus();
@@ -497,7 +664,7 @@ window.EditorModes.advanced = {
         try {
           // Use createLink command to wrap selected text
           const success = document.execCommand('createLink', false, url);
-          console.log('Link createLink success:', success);
+          
           
           if (success) {
             // Set target attribute on the newly created link
@@ -509,19 +676,19 @@ window.EditorModes.advanced = {
               linkElement.setAttribute('target', target);
             }
           } else {
-            console.log('Link createLink failed, using fallback');
+            
             this.insertLinkFallback(url, target);
           }
         } catch (e) {
-          console.log('Link createLink failed, using fallback:', e);
+          
           this.insertLinkFallback(url, target);
         }
       } else {
-        console.log('No selection to create link from');
+        
       }
       
       // Clear saved selection
-      this.savedSelection = null;
+      this.clearSavedSelection();
       
       this.closeLinkModal();
     } else {
@@ -549,7 +716,7 @@ window.EditorModes.advanced = {
   
   // Fallback link insertion method
   insertLinkFallback(url, target) {
-    console.log('🔗 Using link fallback method');
+    
     
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
@@ -570,24 +737,23 @@ window.EditorModes.advanced = {
       range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);
-      console.log('🔗 Link created via fallback');
+      
     } else {
-      console.log('🔗 No selection for link fallback');
+      
     }
   },
   
   // Show color modal
   showColorModal(colorType) {
-    console.log('🎨 Creating color modal for:', colorType);
+    
     
     // Store the current selection before opening modal
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
       this.savedSelection = selection.getRangeAt(0).cloneRange();
-      console.log('Selection saved:', this.savedSelection.toString());
     } else {
-      console.log('No selection to save');
-      this.savedSelection = null;
+      
+      this.clearSavedSelection();
     }
     
     // Remove any existing modal first
@@ -613,7 +779,7 @@ window.EditorModes.advanced = {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     `;
     
-    console.log('Modal element created with styles:', modal.style.cssText);
+    
     
     const title = colorType === 'foreColor' ? 'Text Color' : 'Background Color';
     
@@ -833,7 +999,7 @@ window.EditorModes.advanced = {
       </div>
     `;
     
-    console.log('Modal content set, length:', modal.innerHTML.length);
+    
     
     // Append modal to DOM first
     document.body.appendChild(modal);
@@ -943,12 +1109,12 @@ window.EditorModes.advanced = {
     
     if (applyBtn) {
       applyBtn.addEventListener('click', () => {
-        console.log('🎨 Apply button clicked');
+        
         const color = hexInput.value;
-        console.log('🎨 Selected color:', color);
+        
         
         if (this.isValidHex(color)) {
-          console.log('🎨 Applying hex color:', color);
+          
           this.applyColor(colorType, color);
           this.closeColorModal();
         } else {
@@ -958,7 +1124,7 @@ window.EditorModes.advanced = {
           const b = parseInt(rgbaB.value) || 0;
           const a = parseFloat(rgbaA.value) || 1;
           const rgba = `rgba(${r}, ${g}, ${b}, ${a})`;
-          console.log('🎨 Applying RGBA color:', rgba);
+          
           this.applyColor(colorType, rgba);
           this.closeColorModal();
         }
@@ -987,7 +1153,7 @@ window.EditorModes.advanced = {
       });
     });
     
-    console.log('Modal appended and event listeners added');
+    
     
     // Add CSS animation
     const style = document.createElement('style');
@@ -1003,7 +1169,7 @@ window.EditorModes.advanced = {
     `;
     document.head.appendChild(style);
     
-    console.log('Color modal setup complete');
+    
   },
   
   // Close color modal
@@ -1021,7 +1187,7 @@ window.EditorModes.advanced = {
   
   // Apply color to selection
   applyColor(colorType, color) {
-    console.log('🎨 Applying color:', colorType, color);
+    
     
     // Ensure content is focused
     this.content.focus();
@@ -1030,10 +1196,10 @@ window.EditorModes.advanced = {
       // Remove color styling
       if (colorType === 'foreColor') {
         const success = document.execCommand('removeFormat', false, null);
-        console.log('removeFormat success:', success);
+        
       } else if (colorType === 'hiliteColor') {
         const success = document.execCommand('hiliteColor', false, 'transparent');
-        console.log('removeFormat success:', success);
+        
       }
     } else {
       // Handle both hex colors and color names
@@ -1049,15 +1215,15 @@ window.EditorModes.advanced = {
         hexColor = this.getColorHex(color);
       }
       
-      console.log('Using hex color:', hexColor);
+      
       
       // Use the simple approach: just wrap selected text in a span
-      console.log('Using simple span wrapping approach');
+      
       this.applyColorSimple(colorType, hexColor);
     }
     
     // Clear saved selection
-    this.savedSelection = null;
+    this.clearSavedSelection();
   },
   
   // Get hex color value
@@ -1081,10 +1247,10 @@ window.EditorModes.advanced = {
   
   // Simple color application - just wrap selected text in a span
   applyColorSimple(colorType, hexColor) {
-    console.log('🎨 Applying color with simple span wrapping:', colorType, hexColor);
+    
     
     if (!this.savedSelection) {
-      console.log('No saved selection available');
+      
       return;
     }
     
@@ -1093,21 +1259,21 @@ window.EditorModes.advanced = {
     const selectedText = range.toString();
     
     if (!selectedText.trim()) {
-      console.log('No text selected, cannot apply color');
+      
       return;
     }
     
-    console.log('Selected text to color:', selectedText);
+    
     
     // Create a span element with the color
     const span = document.createElement('span');
     
     if (colorType === 'foreColor') {
       span.style.color = hexColor;
-      console.log('Setting text color to:', hexColor);
+      
     } else if (colorType === 'hiliteColor') {
       span.style.backgroundColor = hexColor;
-      console.log('Setting background color to:', hexColor);
+      
       
       // Ensure text is readable
       const rgb = this.hexToRgb(hexColor);
@@ -1128,13 +1294,6 @@ window.EditorModes.advanced = {
     const startOffset = range.startOffset;
     const endOffset = range.endOffset;
     
-    console.log('Range details:', {
-      startContainer: startContainer.nodeType === Node.TEXT_NODE ? startContainer.textContent : 'Element',
-      endContainer: endContainer.nodeType === Node.TEXT_NODE ? endContainer.textContent : 'Element',
-      startOffset,
-      endOffset,
-      selectedText
-    });
     
     if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
       // Same text node - split it precisely
@@ -1152,12 +1311,12 @@ window.EditorModes.advanced = {
       textNode.parentNode.insertBefore(afterNode, textNode);
       textNode.remove();
       
-      console.log('Text node split and span inserted precisely');
+      
     } else {
       // Different nodes or complex selection - use fallback method
       range.deleteContents();
       range.insertNode(span);
-      console.log('Used fallback insertion method');
+      
     }
     
     // CRITICAL: Move cursor after the span to prevent new text from being captured
@@ -1173,33 +1332,32 @@ window.EditorModes.advanced = {
     // Ensure the content area is focused
     this.content.focus();
     
-    console.log('Color applied successfully with precise span wrapping');
-    console.log('Generated HTML:', span.outerHTML);
-    console.log('Cursor positioned after span to prevent text capture');
+    
+    
+    
   },
 
   // Isolated color application method - doesn't affect global selection
   applyColorIsolated(colorType, hexColor) {
-    console.log('🎨 Applying color in isolated mode:', colorType, hexColor);
+    
     
     if (!this.savedSelection) {
-      console.log('No saved selection available');
+      
       return;
     }
     
     // Clone the saved range to avoid modifying the original
     const range = this.savedSelection.cloneRange();
-    console.log('Working with saved selection:', range.toString());
     
     // Create a span element to wrap only the selected text
     const span = document.createElement('span');
     
     if (colorType === 'foreColor') {
       span.style.color = hexColor;
-      console.log('Setting text color to:', hexColor);
+      
     } else if (colorType === 'hiliteColor') {
       span.style.backgroundColor = hexColor;
-      console.log('Setting background color to:', hexColor);
+      
       
       // Ensure text is readable by setting appropriate text color
       const rgb = this.hexToRgb(hexColor);
@@ -1213,11 +1371,11 @@ window.EditorModes.advanced = {
       // Extract the selected text content
       const selectedText = range.toString();
       if (!selectedText.trim()) {
-        console.log('No text selected, cannot apply color');
+        
         return;
       }
       
-      console.log('Applying color to text:', selectedText);
+      
       
       // Create a text node with the selected content
       const textNode = document.createTextNode(selectedText);
@@ -1227,28 +1385,28 @@ window.EditorModes.advanced = {
       range.deleteContents();
       range.insertNode(span);
       
-      console.log('Color applied successfully to selected text only');
+      
       
     } catch (e) {
-      console.log('Color application failed:', e);
+      
     }
   },
 
   // Fallback color application method (kept for compatibility)
   applyColorFallback(colorType, color, hexColor) {
-    console.log('🔄 Using color fallback for:', colorType, color);
+    
     
     // Use saved selection if available, otherwise current selection
     let range;
     if (this.savedSelection) {
       range = this.savedSelection.cloneRange();
-      console.log('Using saved selection for fallback');
+      
     } else {
       const selection = window.getSelection();
       if (selection.rangeCount > 0) {
         range = selection.getRangeAt(0);
       } else {
-        console.log('No selection available for fallback');
+        
         return;
       }
     }
@@ -1258,10 +1416,10 @@ window.EditorModes.advanced = {
     
     if (colorType === 'foreColor') {
       span.style.color = hexColor;
-      console.log('Setting text color to:', hexColor);
+      
     } else if (colorType === 'hiliteColor') {
       span.style.backgroundColor = hexColor;
-      console.log('Setting background color to:', hexColor);
+      
       
       // Ensure text is readable by setting appropriate text color
       const rgb = this.hexToRgb(hexColor);
@@ -1272,12 +1430,11 @@ window.EditorModes.advanced = {
     }
     
     try {
-      console.log('Attempting to apply color to range:', range.toString());
       
       // Extract the selected text content
       const selectedText = range.toString();
       if (!selectedText.trim()) {
-        console.log('No text selected, cannot apply color');
+        
         return;
       }
       
@@ -1293,25 +1450,18 @@ window.EditorModes.advanced = {
       const selection = window.getSelection();
       selection.removeAllRanges();
       
-      console.log('Color applied successfully to selected text only');
+      
       
     } catch (e) {
-      console.log('Color application failed:', e);
+      
     }
   },
   
   // Insert table
   insertTable() {
-    console.log('📊 Creating table...');
-    
-    // Store the current selection before opening modal
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      this.savedSelection = selection.getRangeAt(0).cloneRange();
-      console.log('Table selection saved:', this.savedSelection.toString());
-    } else {
-      console.log('No selection to save for table');
-      this.savedSelection = null;
+    // Selection should already be saved by executeCommand, but ensure it's saved
+    if (!this.savedSelection) {
+      this.saveSelection();
     }
     
     // Create professional table modal
@@ -1509,7 +1659,7 @@ window.EditorModes.advanced = {
     const rowCount = Math.min(Math.max(rows, 2), 10);
     const colCount = Math.min(Math.max(cols, 2), 10);
     
-    console.log('📊 Creating table:', rowCount, 'x', colCount, 'Header:', hasHeader);
+    
     
     const table = document.createElement('table');
     table.className = 'advanced-table';
@@ -1544,14 +1694,11 @@ window.EditorModes.advanced = {
     table.appendChild(tbody);
     
     // Insert at cursor position
-    console.log('📊 Inserting table:', table.outerHTML);
+    
     
     // Restore the saved selection if available
     if (this.savedSelection) {
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(this.savedSelection);
-      console.log('Table selection restored:', selection.toString());
+      this.restoreSelection();
     }
     
     // Ensure content is focused
@@ -1559,18 +1706,18 @@ window.EditorModes.advanced = {
     
     try {
       const success = document.execCommand('insertHTML', false, table.outerHTML);
-      console.log('Table execCommand success:', success);
+      
       if (!success) {
-        console.log('Table execCommand failed, using fallback');
+        
         this.insertTableFallback(table.outerHTML);
       }
     } catch (e) {
-      console.log('Table execCommand failed, using fallback:', e);
+      
       this.insertTableFallback(table.outerHTML);
     }
     
     // Clear saved selection
-    this.savedSelection = null;
+    this.clearSavedSelection();
     
     this.closeTableModal();
   },
@@ -1588,7 +1735,7 @@ window.EditorModes.advanced = {
   
   // Fallback table insertion method
   insertTableFallback(tableHtml) {
-    console.log('Using table fallback');
+    
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
@@ -1605,16 +1752,9 @@ window.EditorModes.advanced = {
   
     // Insert embed
   insertEmbed() {
-    console.log('📺 Creating embed...');
-    
-    // Store the current selection before opening modal
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      this.savedSelection = selection.getRangeAt(0).cloneRange();
-      console.log('Embed selection saved:', this.savedSelection.toString());
-    } else {
-      console.log('No selection to save for embed');
-      this.savedSelection = null;
+    // Selection should already be saved by executeCommand, but ensure it's saved
+    if (!this.savedSelection) {
+      this.saveSelection();
     }
     
     // Create professional embed modal with multiple sources
@@ -1911,7 +2051,7 @@ window.EditorModes.advanced = {
 
   // Handle source button clicks (Twitter, YouTube, etc.)
   handleSourceButtonClick(source, urlInput, previewDiv) {
-    console.log('🔗 Source button clicked:', source);
+    
     
     // Define example URLs and embed codes for each source
     const sourceExamples = {
@@ -1979,7 +2119,7 @@ window.EditorModes.advanced = {
         </div>
       `;
       
-      console.log('Source example loaded:', source);
+      
     }
   },
 
@@ -2087,20 +2227,19 @@ window.EditorModes.advanced = {
       return;
     }
     
-    console.log('📺 Inserting embed for URL:', url);
+    
     
     // Generate appropriate embed HTML based on URL
     let embedHtml = this.generateEmbedHtml(url);
     
     if (embedHtml) {
-      console.log('📺 Generated embed HTML:', embedHtml);
+      
       
       // Restore the saved selection if available
       if (this.savedSelection) {
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(this.savedSelection);
-        console.log('Embed selection restored:', selection.toString());
       }
       
       // Ensure content is focused
@@ -2108,23 +2247,23 @@ window.EditorModes.advanced = {
       
       try {
         const success = document.execCommand('insertHTML', false, embedHtml);
-        console.log('Embed execCommand success:', success);
+        
         if (success) {
           // execCommand succeeded, find the inserted embed and fetch metadata
           setTimeout(() => {
             this.findAndUpdateEmbedMetadata(url);
           }, 100);
         } else {
-          console.log('Embed execCommand failed, using fallback');
+          
           this.insertEmbedFallback(embedHtml);
         }
       } catch (e) {
-        console.log('Embed execCommand failed, using fallback:', e);
+        
         this.insertEmbedFallback(embedHtml);
       }
       
       // Clear saved selection
-      this.savedSelection = null;
+      this.clearSavedSelection();
       
       this.closeEmbedModal();
     } else {
@@ -2134,13 +2273,13 @@ window.EditorModes.advanced = {
 
   // Generate appropriate embed HTML based on URL
   generateEmbedHtml(url) {
-    console.log('🔗 Generating embed for URL:', url);
+    
     
     // YouTube
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       const videoId = this.extractYouTubeId(url);
       if (videoId) {
-        console.log('📺 YouTube video ID extracted:', videoId);
+        
         return `<div class="embed-container youtube-embed" style="
           position: relative; 
           padding-bottom: 56.25%; 
@@ -2173,7 +2312,7 @@ window.EditorModes.advanced = {
     if (url.includes('vimeo.com')) {
       const videoId = this.extractVimeoId(url);
       if (videoId) {
-        console.log('🎬 Vimeo video ID extracted:', videoId);
+        
         return `<div class="embed-container vimeo-embed" style="
           position: relative; 
           padding-bottom: 56.25%; 
@@ -2204,12 +2343,12 @@ window.EditorModes.advanced = {
     
     // Twitter/X
     if (url.includes('twitter.com') || url.includes('x.com')) {
-      console.log('🐦 Twitter URL detected');
+      
       
       // Extract tweet ID for better embedding
       const tweetId = this.extractTweetId(url);
       if (tweetId) {
-        console.log('🐦 Tweet ID extracted:', tweetId);
+        
         
         // Use Twitter's embed URL directly - this should work without external scripts
         const embedUrl = `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}`;
@@ -2236,7 +2375,7 @@ window.EditorModes.advanced = {
     
     // Instagram
     if (url.includes('instagram.com')) {
-      console.log('📷 Instagram URL detected');
+      
       return `<div class="embed-container instagram-embed" style="
         max-width: 550px; 
         margin: 10px auto;
@@ -2272,7 +2411,7 @@ window.EditorModes.advanced = {
     
     // Facebook
     if (url.includes('facebook.com')) {
-      console.log('📘 Facebook URL detected');
+      
       return `<div class="embed-container facebook-embed" style="max-width: 550px; margin: 10px auto;">
         <div id="fb-root"></div>
         <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v18.0"></script>
@@ -2284,7 +2423,7 @@ window.EditorModes.advanced = {
     if (url.includes('linkedin.com')) {
       const postId = this.extractLinkedInId(url);
       if (postId) {
-        console.log('💼 LinkedIn post ID extracted:', postId);
+        
         return `<div class="embed-container linkedin-embed" style="max-width: 550px; margin: 10px auto;">
           <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:activity:${postId}" 
             height="400" width="550" frameborder="0" allowfullscreen></iframe>
@@ -2296,7 +2435,7 @@ window.EditorModes.advanced = {
     if (url.includes('tiktok.com')) {
       const videoId = this.extractTikTokId(url);
       if (videoId) {
-        console.log('🎵 TikTok video ID extracted:', videoId);
+        
         return `<div class="embed-container tiktok-embed" style="max-width: 325px; margin: 10px auto;">
           <blockquote class="tiktok-embed" cite="${url}" data-video-id="${videoId}">
           </blockquote>
@@ -2307,7 +2446,7 @@ window.EditorModes.advanced = {
     
     // Spotify
     if (url.includes('spotify.com')) {
-      console.log('🎵 Spotify URL detected');
+      
       const embedUrl = this.convertSpotifyUrl(url);
       return `<div class="embed-container spotify-embed" style="max-width: 300px; margin: 10px auto;">
         <iframe style="border-radius:12px" src="${embedUrl}" 
@@ -2320,7 +2459,7 @@ window.EditorModes.advanced = {
       const user = this.extractGitHubUser(url);
       const repo = this.extractGitHubRepo(url);
       if (user && repo) {
-        console.log('💻 GitHub repository detected:', user + '/' + repo);
+        
         return `<div class="embed-container github-embed" style="text-align: center; padding: 20px; border: 1px solid #e1e5e9; border-radius: 8px; background: #f8f9fa;">
           <h3 style="margin: 0 0 10px 0; color: #333;">GitHub Repository</h3>
           <p style="margin: 0 0 15px 0; color: #666;">${user}/${repo}</p>
@@ -2342,7 +2481,7 @@ window.EditorModes.advanced = {
     }
     
     // General website embed with meta tags
-    console.log('🌐 Using general website embed');
+    
     return this.createGeneralWebsiteEmbed(url);
   },
 
@@ -2480,7 +2619,7 @@ window.EditorModes.advanced = {
 
   // Insert embed fallback method
   insertEmbedFallback(embedHtml) {
-    console.log('📺 Using embed fallback method');
+    
     
     // Create a temporary container
     const temp = document.createElement('div');
@@ -2496,11 +2635,11 @@ window.EditorModes.advanced = {
       range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);
-      console.log('📺 Embed inserted via fallback');
+      
     } else {
       // Fallback: append to content
       this.content.appendChild(embedElement);
-      console.log('📺 Embed appended to content via fallback');
+      
     }
     
     // After embed is inserted, fetch metadata if it's a website embed
@@ -2516,86 +2655,86 @@ window.EditorModes.advanced = {
     
     const embedId = embedElement.id;
     if (!embedId) {
-      console.log('🌐 No embed ID found, skipping metadata fetch');
+      
       return;
     }
     
-    console.log('🌐 Fetching metadata for embed:', embedId);
+    
     
     // Find the URL from the embed
     const urlElement = embedElement.querySelector('[style*="color: #999"]');
     if (!urlElement) {
-      console.log('🌐 No URL element found in embed');
+      
       return;
     }
     
     const url = urlElement.textContent.trim();
     if (!url) {
-      console.log('🌐 No URL found in embed');
+      
       return;
     }
     
-    console.log('🌐 Found URL in embed:', url);
+    
     
     // Fetch metadata from our PHP endpoint
               const metadataUrl = '/api/fetch-metadata.php?url=' + encodeURIComponent(url);
-    console.log('🌐 Fetching from:', metadataUrl);
+    
     
     fetch(metadataUrl)
       .then(response => {
-        console.log('🌐 Response status:', response.status);
+        
         if (!response.ok) throw new Error('HTTP ' + response.status);
         return response.json();
       })
       .then(data => {
-        console.log('🌐 Metadata received:', data);
+        
         
         if (data.success && data.data) {
           // Update title if available
           const titleElement = embedElement.querySelector('#title-' + embedId);
           if (titleElement && data.data.title) {
             titleElement.textContent = data.data.title;
-            console.log('✅ Title updated to:', data.data.title);
+            
           }
           
           // Update description if available
           const descElement = embedElement.querySelector('#desc-' + embedId);
           if (descElement && data.data.description) {
             descElement.textContent = data.data.description;
-            console.log('✅ Description updated to:', data.data.description);
+            
           }
           
           // Update image if available
           const imageElement = embedElement.querySelector('#image-' + embedId);
           if (imageElement && data.data.image) {
             imageElement.innerHTML = '<img src="' + data.data.image + '" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML=\'🔗\'">';
-            console.log('✅ Image updated to:', data.data.image);
+            
           } else if (imageElement && data.data.favicon) {
             imageElement.innerHTML = '<img src="' + data.data.favicon + '" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML=\'🔗\'">';
-            console.log('✅ Favicon updated to:', data.data.favicon);
+            
           }
           
           // Update favicon in URL section if available
           const faviconElement = embedElement.querySelector('#favicon-' + embedId);
           if (faviconElement && data.data.favicon) {
             faviconElement.innerHTML = '<img src="' + data.data.favicon + '" style="width: 100%; height: 100%; object-fit: cover; border-radius: 3px;" onerror="this.parentElement.innerHTML=\'🔗\'">';
-            console.log('✅ Favicon in URL section updated to:', data.data.favicon);
+            
           }
           
-          console.log('✅ Metadata update completed successfully');
+          
         } else {
           throw new Error(data.error || 'Unknown error');
         }
       })
       .catch(error => {
-        console.error('🌐 Metadata fetch failed:', error.message);
+        // Metadata fetch failed - continue without metadata
         
         // Simple fallback - just show favicon
         const imageElement = embedElement.querySelector('#image-' + embedId);
         if (imageElement) {
           const faviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(url) + '&sz=64';
           imageElement.innerHTML = '<img src="' + faviconUrl + '" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML=\'🔗\'">';
-          console.log('✅ Favicon fallback loaded');
+          
         }
         
         // Also update favicon in URL section
@@ -2603,31 +2742,31 @@ window.EditorModes.advanced = {
         if (faviconElement) {
           const faviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(url) + '&sz=16';
           faviconElement.innerHTML = '<img src="' + faviconUrl + '" style="width: 100%; height: 100%; object-fit: cover; border-radius: 3px;" onerror="this.parentElement.innerHTML=\'🔗\'">';
-          console.log('✅ Favicon in URL section fallback loaded');
+          
         }
         
         const descElement = embedElement.querySelector('#desc-' + embedId);
         if (descElement) {
           descElement.textContent = 'Website link';
-          console.log('✅ Description fallback updated');
+          
         }
       });
   },
   
   // Find and update metadata for embeds inserted via execCommand
   findAndUpdateEmbedMetadata(url) {
-    console.log('🔍 Looking for recently inserted embed for URL:', url);
+    
     
     // Find all website embeds in the content
     const embeds = this.content.querySelectorAll('.website-embed');
     if (embeds.length === 0) {
-      console.log('🔍 No website embeds found');
+      
       return;
     }
     
     // Get the most recently inserted embed (last one)
     const latestEmbed = embeds[embeds.length - 1];
-    console.log('🔍 Found latest embed:', latestEmbed.id);
+    
     
     // Fetch metadata for this embed
     this.fetchEmbedMetadata(latestEmbed);
@@ -2641,50 +2780,47 @@ window.EditorModes.advanced = {
       // Get plain text from clipboard
       const text = e.clipboardData.getData('text/plain');
       
-      console.log('📋 Paste event triggered with text:', text);
+      
       
       // Check if we're pasting into a code block
       const selection = window.getSelection();
-      console.log('Paste - Selection range count:', selection.rangeCount);
+      
       
       if (selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-        console.log('Paste - Range start container:', range.startContainer);
-        console.log('Paste - Range start container tag:', range.startContainer.tagName);
-        console.log('Paste - Range start container node type:', range.startContainer.nodeType);
+        
+        
+        
         
         const codeBlock = this.getCurrentCodeBlock(range.startContainer);
-        console.log('Paste - Code block found:', codeBlock);
+        
         
         if (codeBlock) {
-          console.log('💻 Pasting into code block:', text);
-          console.log('Code block HTML:', codeBlock.outerHTML);
-          console.log('Code block children:', Array.from(codeBlock.children).map(c => c.tagName).join(', '));
+          
+          
           
           // Insert text directly into code block without URL detection
           const codeElement = codeBlock.querySelector('code') || codeBlock.querySelector('code[contenteditable]');
-          console.log('Found code element:', codeElement);
-          console.log('Code element contenteditable:', codeElement ? codeElement.contentEditable : 'N/A');
-          console.log('Code element attributes:', codeElement ? Array.from(codeElement.attributes).map(a => `${a.name}="${a.value}"`).join(', ') : 'N/A');
+          
+          
           
           if (codeElement) {
             // Get current cursor position
             const selection = window.getSelection();
-            console.log('Selection range count:', selection.rangeCount);
+            
             
             if (selection.rangeCount > 0) {
               const range = selection.getRangeAt(0);
-              console.log('Current range:', range.toString());
               
               // Delete any selected content first
               range.deleteContents();
               
               // Insert the text as a text node
               const textNode = document.createTextNode(text);
-              console.log('Created text node:', textNode.textContent);
+              
               
               range.insertNode(textNode);
-              console.log('Text node inserted');
+              
               
               // Move cursor to end of inserted text
               range.setStartAfter(textNode);
@@ -2692,7 +2828,7 @@ window.EditorModes.advanced = {
               selection.removeAllRanges();
               selection.addRange(range);
               
-              console.log('Cursor positioned after text');
+              
               
               // Trigger syntax highlighting after paste with longer delay to ensure DOM update
               setTimeout(() => {
@@ -2700,36 +2836,36 @@ window.EditorModes.advanced = {
               }, 50);
               
               // Primary method succeeded, no need for fallback
-              console.log('✅ Primary text insertion successful, skipping fallback');
+              
               return;
             } else {
-              console.log('No selection range found');
+              
             }
           } else {
-            console.log('No code element found in code block');
+            
           }
           
           // Fallback: try direct text insertion (only if primary method failed)
-          console.log('🔄 Trying fallback text insertion...');
+          
           try {
             const codeElement = codeBlock.querySelector('code') || codeBlock.querySelector('code[contenteditable]');
-            console.log('Fallback - Found code element:', codeElement);
+            
             
             if (codeElement) {
               // Simple approach: append text to existing content
               const currentText = codeElement.textContent || '';
               codeElement.textContent = currentText + text;
-              console.log('Fallback text insertion successful, new content:', codeElement.textContent);
+              
               
               // Trigger syntax highlighting
               setTimeout(() => {
                 this.rehighlightCode(codeElement);
               }, 10);
             } else {
-              console.log('Fallback - No code element found');
+              
             }
           } catch (e) {
-            console.error('Fallback text insertion failed:', e);
+            // Fallback text insertion failed - allow default behavior
           }
           
           return;
@@ -2738,15 +2874,20 @@ window.EditorModes.advanced = {
       
       // Check if pasted content is a URL
       if (text && this.isValidUrl(text)) {
-        console.log('🔗 URL detected in paste:', text);
+        
         this.showPasteMenu(text, e);
       } else {
         // Regular text paste
-        console.log('📝 Regular text paste:', text);
+        
         document.execCommand('insertText', false, text);
+        
+        // Fix paragraph spacing after paste
+        setTimeout(() => {
+          this.fixParagraphSpacing();
+        }, 0);
       }
     } catch (error) {
-      console.error('❌ Paste error:', error);
+      // Paste error occurred - allow default paste behavior
       // Fallback: allow default paste behavior
       e.stopPropagation();
       return true;
@@ -3006,7 +3147,7 @@ window.EditorModes.advanced = {
 
   // Handle paste menu actions
   handlePasteMenuAction(action, url) {
-    console.log('🔗 Paste menu action:', action, 'for URL:', url);
+    
     
     switch (action) {
       case 'link':
@@ -3136,8 +3277,44 @@ window.EditorModes.advanced = {
   
   // Handle keyboard shortcuts with proper paragraph behavior
   handleKeydown(e) {
+    // Handle slash commands (/) - Notion-like
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const textBeforeCursor = this.getTextBeforeCursor(range);
+        
+        // Only show slash menu if at start of block or after space/newline
+        if (textBeforeCursor.endsWith('/') || textBeforeCursor.match(/\s\/$/)) {
+          e.preventDefault();
+          this.showSlashMenu(range);
+          return;
+        }
+      }
+    }
+    
+    // Handle Escape to close menus
+    if (e.key === 'Escape') {
+      this.hideSlashMenu();
+    }
+    
     // Handle Enter key for proper paragraph creation
     if (e.key === 'Enter') {
+      // Execute selected slash command if menu is open
+      if (this.slashMenuVisible && this.slashMenu) {
+        e.preventDefault();
+        const items = this.slashMenu.querySelectorAll('.slash-menu-item');
+        if (items.length > 0 && this.slashMenuSelectedIndex >= 0) {
+          const selectedItem = items[this.slashMenuSelectedIndex];
+          if (selectedItem) {
+            const action = selectedItem.dataset.action;
+            const range = selection.getRangeAt(0);
+            this.executeSlashCommand(action, range);
+          }
+        }
+        return;
+      }
+      
       e.preventDefault();
       
       if (e.shiftKey) {
@@ -3164,31 +3341,44 @@ window.EditorModes.advanced = {
       return;
     }
     
-    // Ctrl+B for bold
-    if (e.ctrlKey && e.key === 'b') {
+    // Ctrl+B / Cmd+B for bold
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b' && !e.shiftKey && !e.altKey) {
       e.preventDefault();
+      this.saveSelection();
       document.execCommand('bold', false, null);
       this.updateToolbarState();
+      return;
     }
     
-    // Ctrl+I for italic
-    if (e.ctrlKey && e.key === 'i') {
+    // Ctrl+I / Cmd+I for italic
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i' && !e.shiftKey && !e.altKey) {
       e.preventDefault();
+      this.saveSelection();
       document.execCommand('italic', false, null);
       this.updateToolbarState();
+      return;
     }
     
-    // Ctrl+U for underline
-    if (e.ctrlKey && e.key === 'u') {
+    // Ctrl+U / Cmd+U for underline
+    if ((e.ctrlKey || e.metaKey) && e.key === 'u' && !e.shiftKey && !e.altKey) {
       e.preventDefault();
+      this.saveSelection();
       document.execCommand('underline', false, null);
       this.updateToolbarState();
+      return;
+    }
+    
+    // Handle arrow keys in slash menu
+    if (this.slashMenuVisible && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault();
+      this.navigateSlashMenu(e.key === 'ArrowDown' ? 1 : -1);
+      return;
     }
   },
 
   // Create new paragraph (Enter key)
   createNewParagraph() {
-    console.log('📝 Creating new paragraph, list item, or quote paragraph');
+    
     
     const selection = window.getSelection();
     if (selection.rangeCount === 0) return;
@@ -3196,13 +3386,13 @@ window.EditorModes.advanced = {
     const range = selection.getRangeAt(0);
     const currentBlock = this.getCurrentBlock(range.startContainer);
     
-    console.log('Current block:', currentBlock);
-    console.log('Range start container:', range.startContainer);
+    
+    
     
     if (currentBlock) {
       // Check if we're inside a list
       const listItem = this.getCurrentListItem(range.startContainer);
-      console.log('List item found:', listItem);
+      
       
       if (listItem) {
         // We're inside a list - create new list item
@@ -3210,7 +3400,7 @@ window.EditorModes.advanced = {
       } else {
         // Check if we're inside a quote
         const quote = this.getCurrentQuote(range.startContainer);
-        console.log('Quote found:', quote);
+        
         
         if (quote) {
           // We're inside a quote - create new paragraph within quote
@@ -3218,7 +3408,7 @@ window.EditorModes.advanced = {
         } else {
           // Check if we're inside a code block
           const codeBlock = this.getCurrentCodeBlock(range.startContainer);
-          console.log('Code block found:', codeBlock);
+          
           
           if (codeBlock) {
             // We're inside a code block - create new line within code
@@ -3234,7 +3424,7 @@ window.EditorModes.advanced = {
 
   // Create new list item when Enter is pressed inside a list
   createNewListItem(currentListItem) {
-    console.log('📋 Creating new list item or exiting list');
+    
     
     // Check if current list item is empty (just <br> or empty)
     const isCurrentItemEmpty = this.isListItemEmpty(currentListItem);
@@ -3257,10 +3447,11 @@ window.EditorModes.advanced = {
 
   // Exit list and create new paragraph
   exitListAndCreateParagraph(currentListItem) {
-    console.log('🚪 Exiting list and creating new paragraph');
+    
     
     const list = currentListItem.parentNode; // UL or OL
     const newParagraph = document.createElement('p');
+    newParagraph.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
     newParagraph.innerHTML = '<br>';
     
     // Insert new paragraph after the list
@@ -3282,12 +3473,12 @@ window.EditorModes.advanced = {
     selection.removeAllRanges();
     selection.addRange(newRange);
     
-    console.log('Exited list, new paragraph created');
+    
   },
 
   // Create new list item element (when current item has content)
   createNewListItemElement(currentListItem) {
-    console.log('📋 Creating new list item element');
+    
     
     const list = currentListItem.parentNode; // UL or OL
     const newListItem = document.createElement('li');
@@ -3304,40 +3495,76 @@ window.EditorModes.advanced = {
     selection.removeAllRanges();
     selection.addRange(newRange);
     
-    console.log('New list item created');
+    
   },
 
   // Create new paragraph element (when not in a list)
   createNewParagraphElement(currentBlock, range) {
-    console.log('📝 Creating new paragraph element');
+    // Get text after cursor
+    const clonedRange = range.cloneRange();
+    clonedRange.setEndAfter(currentBlock);
+    const afterContent = clonedRange.extractContents();
     
-    // Split the current block at cursor position
-    const afterCursor = range.extractContents();
-    
-    // Create new paragraph
+    // Create new paragraph with inline styles to prevent spacing
     const newParagraph = document.createElement('p');
-    newParagraph.innerHTML = '<br>';
+    newParagraph.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
+    
+    // If there's content after cursor, move it to new paragraph
+    if (afterContent.textContent.trim()) {
+      while (afterContent.firstChild) {
+        newParagraph.appendChild(afterContent.firstChild);
+      }
+    } else {
+      newParagraph.innerHTML = '<br>';
+    }
+    
+    // Ensure current block has inline styles
+    const existingStyle = currentBlock.style.cssText || '';
+    currentBlock.style.cssText = existingStyle + 'margin: 0 !important; padding: 0 !important; margin-bottom: 0 !important;';
     
     // Insert new paragraph after current block
-    currentBlock.parentNode.insertBefore(newParagraph, currentBlock.nextSibling);
+    if (currentBlock.nextSibling) {
+      currentBlock.parentNode.insertBefore(newParagraph, currentBlock.nextSibling);
+    } else {
+      currentBlock.parentNode.appendChild(newParagraph);
+    }
     
-    // Move cursor to new paragraph
+    // Ensure current block has content (at least <br>)
+    if (!currentBlock.textContent.trim()) {
+      currentBlock.innerHTML = '<br>';
+    }
+    
+    // Move cursor to start of new paragraph
     const newRange = document.createRange();
-    newRange.setStart(newParagraph, 0);
+    const textNode = newParagraph.firstChild;
+    if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+      newRange.setStart(textNode, 0);
+    } else {
+      newRange.setStart(newParagraph, 0);
+    }
     newRange.collapse(true);
+    
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(newRange);
     
-    console.log('New paragraph created, formatting reset');
+    this.content.focus();
+    // Fix paragraph spacing after creating new paragraph
+    this.fixParagraphSpacing();
+    this.saveContent();
   },
 
   // Create a list with proper structure (no p wrapping)
   createList(listType) {
-    console.log('📋 Creating list:', listType);
-    
     const selection = window.getSelection();
-    if (selection.rangeCount === 0) return;
+    if (selection.rangeCount === 0) {
+      // Create selection at cursor if none exists
+      const range = document.createRange();
+      range.selectNodeContents(this.content);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
     
     const range = selection.getRangeAt(0);
     const currentBlock = this.getCurrentBlock(range.startContainer);
@@ -3363,7 +3590,7 @@ window.EditorModes.advanced = {
         selection.removeAllRanges();
         selection.addRange(newRange);
         
-        console.log('List created, paragraph replaced');
+        
       } else {
         // If not in a paragraph, create list at cursor position
         const list = document.createElement(listType);
@@ -3382,7 +3609,7 @@ window.EditorModes.advanced = {
         selection.removeAllRanges();
         selection.addRange(newRange);
         
-        console.log('List created at cursor position');
+        
       }
     }
   },
@@ -3411,11 +3638,11 @@ window.EditorModes.advanced = {
   
   // Create new paragraph within quote when Enter is pressed
   createNewQuoteParagraph(quote, range) {
-    console.log('💬 Creating new paragraph within quote or exiting quote');
+    
     
     // Find the current block element within the quote
     const currentBlock = this.getCurrentBlockWithinQuote(range.startContainer, quote);
-    console.log('Current block within quote:', currentBlock);
+    
     
     if (!currentBlock) {
       // No current block found, create a new paragraph
@@ -3425,7 +3652,7 @@ window.EditorModes.advanced = {
     
     // Check if current block is empty (just <br> or empty)
     const isCurrentBlockEmpty = this.isBlockEmpty(currentBlock);
-    console.log('Is current block empty:', isCurrentBlockEmpty);
+    
     
     if (isCurrentBlockEmpty) {
       // Current block is empty - exit the quote and create new paragraph
@@ -3445,10 +3672,11 @@ window.EditorModes.advanced = {
   
   // Exit quote and create new paragraph
   exitQuoteAndCreateParagraph(quote, currentParagraph) {
-    console.log('🚪 Exiting quote and creating new paragraph');
+    
     
     // Create new paragraph after the quote
     const newParagraph = document.createElement('p');
+    newParagraph.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
     newParagraph.innerHTML = '<br>';
     
     // Insert new paragraph after the quote
@@ -3470,14 +3698,15 @@ window.EditorModes.advanced = {
     selection.removeAllRanges();
     selection.addRange(newRange);
     
-    console.log('Exited quote, new paragraph created');
+    
   },
   
   // Create new paragraph within quote (when current paragraph has content)
   createNewParagraphWithinQuote(quote, currentBlock) {
-    console.log('💬 Creating new paragraph within quote');
+    
     
     const newParagraph = document.createElement('p');
+    newParagraph.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
     newParagraph.innerHTML = '<br>';
     
     if (currentBlock) {
@@ -3496,7 +3725,7 @@ window.EditorModes.advanced = {
     selection.removeAllRanges();
     selection.addRange(newRange);
     
-    console.log('New paragraph created within quote');
+    
   },
   
   // Get the current block element within a quote
@@ -3531,18 +3760,18 @@ window.EditorModes.advanced = {
   
   // Get the current code block if we're inside a code block
   getCurrentCodeBlock(node) {
-    console.log('getCurrentCodeBlock called with node:', node);
-    console.log('Node tag:', node.tagName);
-    console.log('Node class:', node.className);
+    
+    
+    
     
     let currentNode = node;
     let depth = 0;
     
     while (currentNode && currentNode !== this.content && depth < 10) {
-      console.log(`Depth ${depth}:`, currentNode.tagName, currentNode.className);
+      
       
       if (currentNode.tagName === 'PRE' && currentNode.classList.contains('advanced-code')) {
-        console.log('Found code block at depth:', depth);
+        
         return currentNode;
       }
       
@@ -3550,23 +3779,23 @@ window.EditorModes.advanced = {
       depth++;
     }
     
-    console.log('No code block found, reached depth:', depth);
+    
     return null;
   },
   
   // Create new line within code block when Enter is pressed
   createNewLineWithinCode(codeBlock, range) {
-    console.log('💻 Handling Enter in code block');
+    
     
     const codeElement = codeBlock.querySelector('code');
     if (!codeElement) {
-      console.log('No code element found in code block');
+      
       return;
     }
     
     // For code blocks, always insert line breaks on Enter
     // Only exit when the user explicitly deletes all content
-    console.log('Inserting line break in code');
+    
     document.execCommand('insertLineBreak', false, null);
   },
   
@@ -3574,10 +3803,11 @@ window.EditorModes.advanced = {
   
   // Exit code block and create new paragraph
   exitCodeBlockAndCreateParagraph(codeBlock) {
-    console.log('🚪 Exiting code block and creating new paragraph');
+    
     
     // Create new paragraph after the code block
     const newParagraph = document.createElement('p');
+    newParagraph.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
     newParagraph.innerHTML = '<br>';
     
     // Insert new paragraph after the code block
@@ -3594,12 +3824,12 @@ window.EditorModes.advanced = {
     selection.removeAllRanges();
     selection.addRange(newRange);
     
-    console.log('Exited code block, new paragraph created');
+    
   },
 
   // Indent list item (create sub-list)
   indentListItem() {
-    console.log('➡️ Indenting list item');
+    
     
     const selection = window.getSelection();
     if (selection.rangeCount === 0) return;
@@ -3608,7 +3838,7 @@ window.EditorModes.advanced = {
     const currentListItem = this.getCurrentListItem(range.startContainer);
     
     if (!currentListItem) {
-      console.log('Not in a list item, cannot indent');
+      
       return;
     }
     
@@ -3629,15 +3859,15 @@ window.EditorModes.advanced = {
       list.removeChild(currentListItem);
       subList.appendChild(currentListItem);
       
-      console.log('List item indented, sub-list created');
+      
     } else {
-      console.log('No previous list item to indent under');
+      
     }
   },
 
   // Outdent list item (move to parent list)
   outdentListItem() {
-    console.log('⬅️ Outdenting list item');
+    
     
     const selection = window.getSelection();
     if (selection.rangeCount === 0) return;
@@ -3646,7 +3876,7 @@ window.EditorModes.advanced = {
     const currentListItem = this.getCurrentListItem(range.startContainer);
     
     if (!currentListItem) {
-      console.log('Not in a list item, cannot outdent');
+      
       return;
     }
     
@@ -3665,16 +3895,28 @@ window.EditorModes.advanced = {
         parentListItem.removeChild(currentList);
       }
       
-      console.log('List item outdented to parent level');
+      
     } else {
-      console.log('Already at top level, cannot outdent');
+      
     }
   },
 
   // Insert line break within current paragraph (Shift+Enter)
   insertLineBreak() {
-    console.log('↵ Inserting line break within paragraph');
-    document.execCommand('insertLineBreak', false, null);
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const br = document.createElement('br');
+      range.deleteContents();
+      range.insertNode(br);
+      
+      // Move cursor after the break
+      range.setStartAfter(br);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    this.saveContent();
   },
 
   // Get the current block element (P, H1, H2, etc.)
@@ -3690,20 +3932,78 @@ window.EditorModes.advanced = {
 
   // Apply format block (H1-H6, P, etc.) with proper replacement
   applyFormatBlock(tagName) {
-    console.log('🏷️ Applying format block:', tagName);
-    
+    // Restore saved selection if available
     const selection = window.getSelection();
-    if (selection.rangeCount === 0) return;
+    let range = null;
     
-    const range = selection.getRangeAt(0);
+    if (this.savedSelection) {
+      try {
+        if (this.content.contains(this.savedSelection.commonAncestorContainer)) {
+          selection.removeAllRanges();
+          selection.addRange(this.savedSelection.cloneRange());
+          range = selection.getRangeAt(0);
+        }
+      } catch (e) {
+        // Saved selection invalid
+      }
+    }
+    
+    // If no valid selection, get current one
+    if (!range) {
+      if (selection.rangeCount > 0) {
+        range = selection.getRangeAt(0);
+        if (!this.content.contains(range.commonAncestorContainer)) {
+          range = null;
+        }
+      }
+    }
+    
+    // If still no selection, create one at cursor
+    if (!range) {
+      range = document.createRange();
+      const walker = document.createTreeWalker(
+        this.content,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+      
+      let lastTextNode = null;
+      let node;
+      while (node = walker.nextNode()) {
+        lastTextNode = node;
+      }
+      
+      if (lastTextNode) {
+        range.setStart(lastTextNode, lastTextNode.textContent.length);
+        range.collapse(true);
+      } else {
+        range.selectNodeContents(this.content);
+        range.collapse(false);
+      }
+      
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    
+    // Get the current block element
     const currentBlock = this.getCurrentBlock(range.startContainer);
     
-    if (currentBlock) {
+    if (currentBlock && this.isBlockElement(currentBlock)) {
       // Create new element with the desired tag
       const newElement = document.createElement(tagName);
       
       // Copy the content from current block
       newElement.innerHTML = currentBlock.innerHTML;
+      
+      // Copy any attributes that should be preserved
+      if (currentBlock.hasAttributes()) {
+        Array.from(currentBlock.attributes).forEach(attr => {
+          if (attr.name !== 'class' || !attr.value.includes('advanced-')) {
+            newElement.setAttribute(attr.name, attr.value);
+          }
+        });
+      }
       
       // Replace the current block with the new element
       currentBlock.parentNode.replaceChild(newElement, currentBlock);
@@ -3715,8 +4015,16 @@ window.EditorModes.advanced = {
       selection.removeAllRanges();
       selection.addRange(newRange);
       
-      console.log('Format block applied:', tagName);
-      console.log('Generated HTML:', newElement.outerHTML);
+      this.content.focus();
+      this.saveContent();
+    } else {
+      // No block found, try using execCommand as fallback
+      try {
+        document.execCommand('formatBlock', false, tagName);
+        this.saveContent();
+      } catch (e) {
+        // Fallback failed
+      }
     }
   },
   
@@ -3748,7 +4056,7 @@ window.EditorModes.advanced = {
   saveContent() {
     if (this.content) {
       const html = this.content.innerHTML;
-      console.log('💾 Saving content:', html);
+      
       this.container.dataset.value = html;
       
       // Trigger change event for CMS
@@ -3830,16 +4138,9 @@ window.EditorModes.advanced = {
   
   // Insert quote block
   insertQuote() {
-    console.log('💬 Creating quote...');
-    
-    // Store the current selection before inserting
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      this.savedSelection = selection.getRangeAt(0).cloneRange();
-      console.log('Quote selection saved:', this.savedSelection.toString());
-    } else {
-      console.log('No selection to save for quote');
-      this.savedSelection = null;
+    // Selection should already be saved by executeCommand, but ensure it's saved
+    if (!this.savedSelection) {
+      this.saveSelection();
     }
     
     // Create quote HTML
@@ -3854,14 +4155,11 @@ window.EditorModes.advanced = {
     `;
     
     // Insert at cursor position
-    console.log('💬 Inserting quote:', quoteHtml);
+    
     
     // Restore the saved selection if available
     if (this.savedSelection) {
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(this.savedSelection);
-      console.log('Quote selection restored:', selection.toString());
+      this.restoreSelection();
     }
     
     // Ensure content is focused
@@ -3869,23 +4167,23 @@ window.EditorModes.advanced = {
     
     try {
       const success = document.execCommand('insertHTML', false, quoteHtml);
-      console.log('Quote execCommand success:', success);
+      
       if (!success) {
-        console.log('Quote execCommand failed, using fallback');
+        
         this.insertQuoteFallback(quoteHtml);
       }
     } catch (e) {
-      console.log('Quote execCommand failed, using fallback:', e);
+      
       this.insertQuoteFallback(quoteHtml);
     }
     
     // Clear saved selection
-    this.savedSelection = null;
+    this.clearSavedSelection();
   },
   
   // Fallback quote insertion method
   insertQuoteFallback(quoteHtml) {
-    console.log('Using quote fallback');
+    
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
@@ -3902,16 +4200,9 @@ window.EditorModes.advanced = {
   
   // Insert code block
   insertCode() {
-    console.log('💻 Creating code block...');
-    
-    // Store the current selection before inserting
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      this.savedSelection = selection.getRangeAt(0).cloneRange();
-      console.log('Code selection saved:', this.savedSelection.toString());
-    } else {
-      console.log('No selection to save for code');
-      this.savedSelection = null;
+    // Selection should already be saved by executeCommand, but ensure it's saved
+    if (!this.savedSelection) {
+      this.saveSelection();
     }
     
     // Create code HTML with syntax highlighting
@@ -3939,14 +4230,11 @@ window.EditorModes.advanced = {
     `;
     
     // Insert at cursor position
-    console.log('💻 Inserting code block:', codeHtml);
+    
     
     // Restore the saved selection if available
     if (this.savedSelection) {
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(this.savedSelection);
-      console.log('Code selection restored:', selection.toString());
+      this.restoreSelection();
     }
     
     // Ensure content is focused
@@ -3954,18 +4242,18 @@ window.EditorModes.advanced = {
     
     try {
       const success = document.execCommand('insertHTML', false, codeHtml);
-      console.log('Code execCommand success:', success);
+      
       if (!success) {
-        console.log('Code execCommand failed, using fallback');
+        
         this.insertCodeFallback(codeHtml);
       }
     } catch (e) {
-      console.log('Code execCommand failed, using fallback:', e);
+      
       this.insertCodeFallback(codeHtml);
     }
     
     // Clear saved selection
-    this.savedSelection = null;
+    this.clearSavedSelection();
     
     // Apply syntax highlighting after a short delay to ensure DOM is ready
     setTimeout(() => {
@@ -3975,7 +4263,7 @@ window.EditorModes.advanced = {
   
   // Fallback code insertion method
   insertCodeFallback(codeHtml) {
-    console.log('Using code fallback');
+    
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
@@ -3997,27 +4285,28 @@ window.EditorModes.advanced = {
   
   // Handle clicks to create new paragraphs below content blocks
   handleContentClick(e) {
-    console.log('🖱️ Click detected in content area');
-    console.log('Clicked element:', e.target);
-    console.log('Clicked element tag:', e.target.tagName);
-    console.log('Clicked element classes:', e.target.className);
+    
+    
+    
+    
     
     // Check if we clicked below a content block (quote, code, table, etc.)
     const clickedElement = e.target;
     const contentBlock = this.findContentBlockAbove(clickedElement);
     
-    console.log('Content block found:', contentBlock);
+    
     
     if (contentBlock) {
-      console.log('📝 Click detected below content block:', contentBlock.tagName);
+      
       
       // Check if we need to create a new paragraph below
       const nextElement = contentBlock.nextElementSibling;
-      console.log('Next element after content block:', nextElement);
+      
       
       if (!nextElement || nextElement.tagName !== 'P') {
         // Create new paragraph below the content block
         const newParagraph = document.createElement('p');
+        newParagraph.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
         newParagraph.innerHTML = '<br>';
         newParagraph.className = 'click-created-paragraph';
         
@@ -4035,14 +4324,14 @@ window.EditorModes.advanced = {
         // Focus the new paragraph
         newParagraph.focus();
         
-        console.log('New paragraph created below content block');
+        
       } else {
-        console.log('Paragraph already exists below content block');
+        
       }
     } else {
       // If no content block found, check if we clicked at the end of content
       // This handles clicking at the very bottom of the editor
-      console.log('No content block found, checking if click is at end of content');
+      
       this.handleClickAtEndOfContent(e);
     }
   },
@@ -4054,13 +4343,14 @@ window.EditorModes.advanced = {
     const clickY = e.clientY;
     const contentBottom = rect.bottom;
     
-    console.log('Click Y:', clickY, 'Content bottom:', contentBottom);
+    
     
     // If click is below the content area, create a new paragraph at the end
     if (clickY >= contentBottom - 10) { // 10px tolerance
-      console.log('Click detected at end of content, creating new paragraph');
+      
       
       const newParagraph = document.createElement('p');
+      newParagraph.style.cssText = 'margin: 0 !important; padding: 0 !important; margin-top: 0.25em !important; margin-bottom: 0 !important;';
       newParagraph.innerHTML = '<br>';
       newParagraph.className = 'click-created-paragraph';
       
@@ -4078,7 +4368,7 @@ window.EditorModes.advanced = {
       // Focus the new paragraph
       newParagraph.focus();
       
-      console.log('New paragraph created at end of content');
+      
     }
   },
   
@@ -4143,16 +4433,13 @@ window.EditorModes.advanced = {
   
   // Re-highlight code when content changes
   rehighlightCode(codeElement) {
-    console.log('🔄 Re-highlighting code element:', codeElement);
+    
     
     // Try multiple ways to get the text content
     let text = codeElement.textContent || codeElement.innerText || '';
-    console.log('📝 Text to highlight (textContent):', codeElement.textContent);
-    console.log('📝 Text to highlight (innerText):', codeElement.innerText);
-    console.log('📝 Text to highlight (final):', text);
     
     const language = codeElement.dataset.language || 'javascript';
-    console.log('🌐 Language:', language);
+    
     
     if (language === 'javascript') {
       // Store current cursor position
@@ -4162,11 +4449,11 @@ window.EditorModes.advanced = {
         const range = selection.getRangeAt(0);
         cursorOffset = range.startOffset;
       }
-      console.log('📍 Cursor offset before highlighting:', cursorOffset);
+      
       
       // If text is empty, try to get it from the DOM structure
       if (!text.trim()) {
-        console.log('⚠️ Text is empty, checking DOM structure...');
+        
         const walker = document.createTreeWalker(
           codeElement,
           NodeFilter.SHOW_TEXT,
@@ -4180,59 +4467,59 @@ window.EditorModes.advanced = {
           allText += node.textContent;
         }
         text = allText;
-        console.log('🔍 Text from DOM walker:', text);
+        
       }
       
       const highlighted = this.highlightJavaScript(text);
-      console.log('✨ Highlighted HTML:', highlighted);
+      
       
       codeElement.innerHTML = highlighted;
-      console.log('💾 InnerHTML updated');
+      
       
       // Restore cursor position after highlighting
       this.restoreCursorPositionInCode(codeElement, cursorOffset);
-      console.log('📍 Cursor position restored');
+      
     } else {
-      console.log('⚠️ Language not supported for highlighting:', language);
+      
     }
   },
   
   // Simple JavaScript syntax highlighting
   highlightJavaScript(code) {
-    console.log('🎨 Starting JavaScript highlighting for:', code);
+    
     
     let highlighted = code
       // Keywords
       .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|default)\b/g, '<span class="js-keyword">$1</span>');
-    console.log('🔑 After keywords:', highlighted);
+    
     
     highlighted = highlighted
       // Strings
       .replace(/(["'`])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="js-string">$1$2$1</span>');
-    console.log('📝 After strings:', highlighted);
+    
     
     highlighted = highlighted
       // Numbers
       .replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="js-number">$1</span>');
-    console.log('🔢 After numbers:', highlighted);
+    
     
     highlighted = highlighted
       // Comments
       .replace(/(\/\/.*$)/gm, '<span class="js-comment">$1</span>')
       .replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="js-comment">$1</span>');
-    console.log('💭 After comments:', highlighted);
+    
     
     highlighted = highlighted
       // Function calls
       .replace(/\b(\w+)(?=\s*\()/g, '<span class="js-function">$1</span>');
-    console.log('⚡ After functions:', highlighted);
+    
     
     highlighted = highlighted
       // Line breaks
       .replace(/\n/g, '<br>');
-    console.log('↩️ After line breaks:', highlighted);
     
-    console.log('🎯 Final highlighted result:', highlighted);
+    
+    
     return highlighted;
   },
   
@@ -4287,7 +4574,7 @@ window.EditorModes.advanced = {
         this.restoreCursorPosition(codeElement);
       }
     } catch (e) {
-      console.warn('Could not restore cursor position:', e);
+      // Could not restore cursor position - fallback to end of element
       // Fallback to end of element
       this.restoreCursorPosition(codeElement);
     }
@@ -4304,5 +4591,221 @@ window.EditorModes.advanced = {
     if (this.content) {
       this.content.remove();
     }
-  }
+  },
+  
+  // Get text before cursor position
+  getTextBeforeCursor(range) {
+    const container = range.startContainer;
+    if (container.nodeType === Node.TEXT_NODE) {
+      return container.textContent.substring(0, range.startOffset);
+    }
+    return '';
+  },
+  
+  // Show slash command menu (Notion-like)
+  showSlashMenu(range) {
+    // Remove any existing slash menu
+    this.hideSlashMenu();
+    
+    // Get cursor position
+    const rect = range.getBoundingClientRect();
+    const contentRect = this.content.getBoundingClientRect();
+    
+    // Create slash menu
+    const menu = document.createElement('div');
+    menu.className = 'slash-menu';
+    menu.style.cssText = `
+      position: absolute;
+      top: ${rect.top - contentRect.top + rect.height + 4}px;
+      left: ${rect.left - contentRect.left}px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 4px;
+      z-index: 10000;
+      min-width: 240px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    
+    // Command list
+    const commands = [
+      { icon: '📝', label: 'Text', action: 'text', description: 'Plain text paragraph' },
+      { icon: '📄', label: 'Heading 1', action: 'h1', description: 'Large heading' },
+      { icon: '📄', label: 'Heading 2', action: 'h2', description: 'Medium heading' },
+      { icon: '📄', label: 'Heading 3', action: 'h3', description: 'Small heading' },
+      { icon: '•', label: 'Bullet List', action: 'ul', description: 'Unordered list' },
+      { icon: '1.', label: 'Numbered List', action: 'ol', description: 'Ordered list' },
+      { icon: '🔗', label: 'Link', action: 'link', description: 'Insert link' },
+      { icon: '📊', label: 'Table', action: 'table', description: 'Insert table' },
+      { icon: '📺', label: 'Embed', action: 'embed', description: 'Insert embed' },
+      { icon: '💬', label: 'Quote', action: 'quote', description: 'Insert quote' },
+      { icon: '💻', label: 'Code', action: 'code', description: 'Insert code block' },
+    ];
+    
+    commands.forEach((cmd, index) => {
+      const item = document.createElement('div');
+      item.className = 'slash-menu-item';
+      item.dataset.action = cmd.action;
+      item.dataset.index = index;
+      item.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: background-color 0.15s;
+      `;
+      
+      item.innerHTML = `
+        <span style="font-size: 18px; width: 24px; text-align: center;">${cmd.icon}</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 500; color: #333;">${cmd.label}</div>
+          <div style="font-size: 12px; color: #666; margin-top: 2px;">${cmd.description}</div>
+        </div>
+      `;
+      
+      item.addEventListener('mouseenter', () => {
+        item.style.backgroundColor = '#f0f0f0';
+        this.slashMenuSelectedIndex = index;
+      });
+      
+      item.addEventListener('mouseleave', () => {
+        if (this.slashMenuSelectedIndex !== index) {
+          item.style.backgroundColor = 'transparent';
+        }
+      });
+      
+      item.addEventListener('click', () => {
+        this.executeSlashCommand(cmd.action, range);
+      });
+      
+      menu.appendChild(item);
+    });
+    
+    // Append to content area (positioned relative)
+    this.content.style.position = 'relative';
+    this.content.appendChild(menu);
+    
+    this.slashMenu = menu;
+    this.slashMenuVisible = true;
+    this.slashMenuSelectedIndex = 0;
+    this.updateSlashMenuSelection();
+    
+    // Remove the "/" character
+    if (range.startContainer.nodeType === Node.TEXT_NODE) {
+      const textNode = range.startContainer;
+      const text = textNode.textContent;
+      const beforeSlash = text.substring(0, range.startOffset - 1);
+      const afterSlash = text.substring(range.startOffset);
+      textNode.textContent = beforeSlash + afterSlash;
+      range.setStart(textNode, range.startOffset - 1);
+      range.collapse(true);
+    }
+  },
+  
+  // Hide slash menu
+  hideSlashMenu() {
+    if (this.slashMenu) {
+      this.slashMenu.remove();
+      this.slashMenu = null;
+      this.slashMenuVisible = false;
+      this.slashMenuSelectedIndex = -1;
+    }
+  },
+  
+  // Navigate slash menu with arrow keys
+  navigateSlashMenu(direction) {
+    if (!this.slashMenu) return;
+    
+    const items = this.slashMenu.querySelectorAll('.slash-menu-item');
+    if (items.length === 0) return;
+    
+    this.slashMenuSelectedIndex += direction;
+    
+    if (this.slashMenuSelectedIndex < 0) {
+      this.slashMenuSelectedIndex = items.length - 1;
+    } else if (this.slashMenuSelectedIndex >= items.length) {
+      this.slashMenuSelectedIndex = 0;
+    }
+    
+    this.updateSlashMenuSelection();
+  },
+  
+  // Update slash menu selection highlight
+  updateSlashMenuSelection() {
+    if (!this.slashMenu) return;
+    
+    const items = this.slashMenu.querySelectorAll('.slash-menu-item');
+    items.forEach((item, index) => {
+      if (index === this.slashMenuSelectedIndex) {
+        item.style.backgroundColor = '#e8f0fe';
+        item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } else {
+        item.style.backgroundColor = 'transparent';
+      }
+    });
+  },
+  
+  // Execute slash command
+  executeSlashCommand(action, range) {
+    this.hideSlashMenu();
+    
+    // Restore selection if range provided
+    if (range) {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      this.content.focus();
+    } else {
+      // Get current selection if no range provided
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) {
+        const newRange = document.createRange();
+        newRange.selectNodeContents(this.content);
+        newRange.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+      this.content.focus();
+    }
+    
+    // Execute command
+    switch (action) {
+      case 'text':
+        this.executeCommand('formatBlock', 'p');
+        break;
+      case 'h1':
+      case 'h2':
+      case 'h3':
+        this.executeCommand('formatBlock', action);
+        break;
+      case 'ul':
+        this.executeCommand('insertUnorderedList');
+        break;
+      case 'ol':
+        this.executeCommand('insertOrderedList');
+        break;
+      case 'link':
+        this.createLink();
+        break;
+      case 'table':
+        this.insertTable();
+        break;
+      case 'embed':
+        this.insertEmbed();
+        break;
+      case 'quote':
+        this.insertQuote();
+        break;
+      case 'code':
+        this.insertCode();
+        break;
+    }
+  },
+  
 };

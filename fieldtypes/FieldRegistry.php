@@ -35,22 +35,56 @@ class FieldRegistry {
         return $class::getConfig();
     }
 
-    // Register built-in field types
+    /**
+     * Auto-discover and register all fieldtypes from the fieldtypes directory
+     * This method scans the directory and automatically registers all available fieldtypes
+     * No hardcoded fieldtype list needed - fully self-contained!
+     */
+    public static function autoRegisterFieldTypes(): void {
+        $fieldtypesDir = __DIR__;
+        
+        if (!is_dir($fieldtypesDir)) {
+            return;
+        }
+        
+        // Scan all subdirectories in fieldtypes folder
+        $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
+        
+        foreach ($dirs as $dir) {
+            $fieldtypeName = basename($dir);
+            
+            // Skip special directories
+            if (in_array($fieldtypeName, ['.', '..', 'BaseField.php'])) {
+                continue;
+            }
+            
+            // Check if PHP file exists (fieldtype must have {Name}/{Name}.php structure)
+            $phpFile = $dir . '/' . $fieldtypeName . '.php';
+            
+            if (!file_exists($phpFile)) {
+                continue;
+            }
+            
+            // Construct class name
+            $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+            
+            // Try to load the class
+            if (!class_exists($className)) {
+                require_once $phpFile;
+            }
+            
+            // Verify class exists and extends BaseField
+            if (class_exists($className) && is_subclass_of($className, BaseField::class)) {
+                // Register with lowercase name for consistency
+                self::register(strtolower($fieldtypeName), $className);
+            }
+        }
+    }
+    
+    /**
+     * @deprecated Use autoRegisterFieldTypes() instead. This method is kept for backward compatibility.
+     */
     public static function registerBuiltInFieldTypes(): void {
-        self::register('text', '\HaruCMS\FieldTypes\Text\Text');
-        self::register('textarea', '\HaruCMS\FieldTypes\Textarea\Textarea');
-        self::register('number', '\HaruCMS\FieldTypes\Number\Number');
-        self::register('date', '\HaruCMS\FieldTypes\Date\Date');
-        self::register('datetime', '\HaruCMS\FieldTypes\DateTime\DateTime');
-        self::register('checkbox', '\HaruCMS\FieldTypes\Checkbox\Checkbox');
-        self::register('select', '\HaruCMS\FieldTypes\Select\Select');
-        self::register('media', '\HaruCMS\FieldTypes\Media\Media');
-        self::register('file', '\HaruCMS\FieldTypes\File\File');
-        self::register('gallery', '\HaruCMS\FieldTypes\Gallery\Gallery');
-        self::register('map', '\HaruCMS\FieldTypes\Map\Map');
-        self::register('wysiwyg', '\HaruCMS\FieldTypes\Wysiwyg\Wysiwyg');
-        self::register('dynamicitems', '\HaruCMS\FieldTypes\DynamicItems\DynamicItems');
-        self::register('tags', '\HaruCMS\FieldTypes\Tags\Tags');
-        self::register('editor', '\HaruCMS\FieldTypes\Editor\Editor');
+        self::autoRegisterFieldTypes();
     }
 } 

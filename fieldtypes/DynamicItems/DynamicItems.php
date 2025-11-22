@@ -8,6 +8,10 @@ class DynamicItems extends BaseField {
         return 'dynamicitems';
     }
 
+    public function getCategory(): string {
+        return 'Misc';
+    }
+
     public function render(): string {
         $value = $this->value ?? [];
         
@@ -27,15 +31,73 @@ class DynamicItems extends BaseField {
         }
         
         $valueJson = htmlspecialchars(json_encode($value), ENT_QUOTES, 'UTF-8');
-        $allowedBlocks = $this->settings['allowedBlocks'] ?? ['text', 'textarea', 'quote', 'number', 'date', 'checkbox'];
+        
+        // Get all available fieldtypes with full metadata
+        $availableFieldtypes = [];
+        $fieldtypesDir = __DIR__ . '/..';
+        
+        if (is_dir($fieldtypesDir)) {
+            $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
+            foreach ($dirs as $dir) {
+                $fieldtypeName = basename($dir);
+                
+                // Skip DynamicItems itself and complex types
+                $excluded = ['DynamicItems', 'Gallery', 'Map', 'Relation', 'Wysiwyg', 'Editor', 'ContentEditor'];
+                if (in_array($fieldtypeName, $excluded)) {
+                    continue;
+                }
+                
+                // Check if PHP file exists
+                $phpFile = $dir . '/' . $fieldtypeName . '.php';
+                if (!file_exists($phpFile)) {
+                    continue;
+                }
+                
+                // Load the class file
+                $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+                if (!class_exists($className)) {
+                    require_once $phpFile;
+                }
+                
+                // Verify class exists and extends BaseField
+                if (class_exists($className) && is_subclass_of($className, BaseField::class)) {
+                    try {
+                        $tempConfig = [
+                            'name' => 'temp',
+                            'label' => ucfirst($fieldtypeName),
+                            'required' => false
+                        ];
+                        $fieldtype = new $className($tempConfig);
+                        $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
+                        
+                        $availableFieldtypes[] = [
+                            'name' => strtolower($fieldtypeName),
+                            'label' => ucfirst($fieldtypeName),
+                            'category' => $category
+                        ];
+                    } catch (\Exception $e) {
+                        // Skip fieldtypes that can't be instantiated
+                        error_log("DynamicItems: Failed to instantiate fieldtype {$fieldtypeName}: " . $e->getMessage());
+                        continue;
+                    }
+                }
+            }
+        }
+        
+        // Sort by category, then by label
+        usort($availableFieldtypes, function($a, $b) {
+            if ($a['category'] !== $b['category']) {
+                return strcmp($a['category'], $b['category']);
+            }
+            return strcmp($a['label'], $b['label']);
+        });
+        
+        $allowedBlocks = $this->settings['allowedBlocks'] ?? array_column($availableFieldtypes, 'name');
         $configJson = htmlspecialchars(json_encode([
             'name' => $this->name,
-            'allowedBlocks' => $allowedBlocks
+            'allowedBlocks' => $allowedBlocks,
+            'availableFieldtypes' => $availableFieldtypes
         ]), ENT_QUOTES, 'UTF-8');
-        
-        // Debug logging
-        error_log("DynamicItems render - name: " . $this->name);
-        error_log("DynamicItems render - settings: " . json_encode($this->settings ?? []));
         
         return <<<HTML
         <div class="block-field" id="field_{$this->name}" data-field-config="{$configJson}">
@@ -43,16 +105,8 @@ class DynamicItems extends BaseField {
                 <!-- Blocks will be rendered by JavaScript -->
             </div>
             <div class="block-controls">
-                <select class="input" id="add_block_type_{$this->name}">
-                    <option value="text">Text</option>
-                    <option value="textarea">Textarea</option>
-                    <option value="quote">Quote</option>
-                    <option value="number">Number</option>
-                    <option value="date">Date</option>
-                    <option value="checkbox">Checkbox</option>
-                </select>
-                <button type="button" class="btn btn-secondary" onclick="window.HaruFieldtypes['dynamicitems'].addBlock('{$this->name}')">
-                    Add Block
+                <button type="button" class="btn btn-primary" onclick="window.HaruFieldtypes['dynamicitems'].showAddBlockModal('{$this->name}')">
+                    + Add Block
                 </button>
             </div>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$valueJson}">
@@ -70,9 +124,42 @@ class DynamicItems extends BaseField {
     }
 
     public function getAdminConfig(): array {
-        // Return a sample config for the admin UI
+        // Get all available fieldtypes with full metadata (same logic as render method)
+        $availableFieldtypes = [];
+        $fieldtypesDir = __DIR__ . '/..';
+        
+        if (is_dir($fieldtypesDir)) {
+            $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
+            foreach ($dirs as $dir) {
+                $fieldtypeName = basename($dir);
+                
+                // Skip DynamicItems itself and complex types
+                $excluded = ['DynamicItems', 'Gallery', 'Map', 'Relation', 'Wysiwyg', 'Editor', 'ContentEditor'];
+                if (in_array($fieldtypeName, $excluded)) {
+                    continue;
+                }
+                
+                // Check if PHP file exists
+                $phpFile = $dir . '/' . $fieldtypeName . '.php';
+                if (!file_exists($phpFile)) {
+                    continue;
+                }
+                
+                // Load the class file
+                $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+                if (!class_exists($className)) {
+                    require_once $phpFile;
+                }
+                
+                // Verify class exists and extends BaseField
+                if (class_exists($className) && is_subclass_of($className, BaseField::class)) {
+                    $availableFieldtypes[] = strtolower($fieldtypeName);
+                }
+            }
+        }
+        
         return [
-            'allowedBlocks' => ['text', 'textarea', 'quote', 'number', 'date', 'checkbox']
+            'allowedBlocks' => $availableFieldtypes
         ];
     }
 
@@ -138,42 +225,42 @@ class DynamicItems extends BaseField {
         return <<<'CSS'
         .block-field {
             border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 16px;
+            border-radius: 8px;
+            padding: 20px;
             background: #f8f9fa;
             margin-bottom: 1rem;
         }
         
         .block-items {
-            margin-bottom: 16px;
-            min-height: 60px;
+            margin-bottom: 20px;
+            min-height: 80px;
             background: #fff;
             border: 2px dashed #dee2e6;
-            border-radius: 4px;
-            padding: 12px;
+            border-radius: 6px;
+            padding: 16px;
         }
         
         .block-items:empty::before {
-            content: "Drag blocks here or use the Add Block button below";
+            content: "No blocks yet. Click 'Add Block' to get started.";
             color: #6c757d;
             font-style: italic;
             text-align: center;
             display: block;
-            padding: 20px;
+            padding: 40px 20px;
         }
         
         .block-item {
             border: 1px solid #e9ecef;
-            border-radius: 4px;
-            padding: 12px;
-            margin-bottom: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
             background: #fff;
-            cursor: move;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             transition: all 0.2s;
+            overflow: hidden;
         }
         
         .block-item:hover {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             border-color: #007bff;
         }
         
@@ -181,9 +268,70 @@ class DynamicItems extends BaseField {
             margin-bottom: 0;
         }
         
-        .block-type-select {
-            margin-bottom: 8px;
-            width: 150px;
+        .block-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .block-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .block-item-label {
+            font-weight: 600;
+            color: #212529;
+            font-size: 14px;
+        }
+        
+        .block-item-type {
+            padding: 2px 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .block-item-name {
+            padding: 2px 8px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #6c757d;
+            font-family: monospace;
+        }
+        
+        .block-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .block-item-content {
+            padding: 16px;
+        }
+        
+        .block-loading {
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .block-error {
+            padding: 16px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            color: #721c24;
         }
         
         .block-controls {
@@ -192,11 +340,7 @@ class DynamicItems extends BaseField {
             gap: 8px;
         }
         
-        .block-controls select {
-            min-width: 150px;
-        }
-        
-        .button {
+        .btn {
             padding: 8px 16px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -204,32 +348,181 @@ class DynamicItems extends BaseField {
             cursor: pointer;
             font-size: 14px;
             transition: all 0.2s;
+            font-family: inherit;
         }
         
-        .button:hover {
+        .btn:hover {
             background: #f8f9fa;
             border-color: #007bff;
         }
         
-        .button-danger {
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            border-color: #545b62;
+        }
+        
+        .btn-danger {
             background: #dc3545;
             color: white;
             border-color: #dc3545;
         }
         
-        .button-danger:hover {
+        .btn-danger:hover {
             background: #c82333;
             border-color: #bd2130;
         }
         
-        /* Drag and drop feedback */
-        .block-item.dragging {
-            opacity: 0.5;
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
         }
         
-        .block-item.drag-over {
+        /* Modal Styles */
+        .dynamicitems-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+        
+        .dynamicitems-modal {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .dynamicitems-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .dynamicitems-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .dynamicitems-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .dynamicitems-modal-close:hover {
+            background: #f8f9fa;
+            color: #212529;
+        }
+        
+        .dynamicitems-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .dynamicitems-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+        
+        .dynamicitems-form-group {
+            margin-bottom: 20px;
+        }
+        
+        .dynamicitems-form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #212529;
+            font-size: 14px;
+        }
+        
+        .dynamicitems-form-group label .required {
+            color: #dc3545;
+        }
+        
+        .dynamicitems-form-group small {
+            display: block;
+            margin-top: 4px;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .dynamicitems-form-group .input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .dynamicitems-form-group .input:focus {
+            outline: none;
             border-color: #007bff;
-            background: #e3f2fd;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .dynamicitems-form-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        #block-settings-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        #block-settings-content {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 4px;
         }
         CSS;
     }
