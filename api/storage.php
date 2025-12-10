@@ -16,12 +16,10 @@ class Storage {
     
     public function read($path) {
         $fullPath = $this->basePath . '/' . ltrim($path, '/');
-        file_put_contents(__DIR__ . '/../logs/login_debug.log', date('c') . ' | fullPath: ' . $fullPath . "\n", FILE_APPEND);
         if (!file_exists($fullPath)) {
             return null;
         }
         $content = file_get_contents($fullPath);
-        file_put_contents(__DIR__ . '/../logs/login_debug.log', date('c') . ' | file content: ' . $content . "\n", FILE_APPEND);
         return json_decode($content, true);
     }
     

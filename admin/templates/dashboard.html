@@ -192,14 +192,20 @@
         {if onboarding.completed == true || onboarding.is_first_time == false}
             <div class="dashboard-content">
                 <div class="recent-activity">
-                    <h2><?= __('admin.recent_activity') ?></h2>
+                    <div class="activity-header">
+                        <h2><?= __('admin.recent_activity') ?></h2>
+                        <div class="activity-filters">
+                            <button class="activity-filter-btn active" data-filter="all">All</button>
+                            <button class="activity-filter-btn" data-filter="content">Content</button>
+                            <button class="activity-filter-btn" data-filter="users">Users</button>
+                            <button class="activity-filter-btn" data-filter="system">System</button>
+                        </div>
+                    </div>
                     <div class="activity-list">
                         {if recent_activity exist}
                             {for activity in recent_activity}
-                                <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>
-                                    </div>
+                                <div class="activity-item" data-category="{from activity get category}">
+                                    <div class="activity-icon">{from activity get icon}</div>
                                     <div class="activity-content">
                                         <p>{from activity get message}</p>
                                         <span class="activity-time">{from activity get created_at}</span>
@@ -207,7 +213,7 @@
                                 </div>
                             {endfor}
                         {else}
-                            <p><?= __('admin.no_recent_activity') ?></p>
+                            <p class="empty-state"><?= __('admin.no_recent_activity') ?></p>
                         {endif}
                     </div>
                 </div>

@@ -1,11 +1,15 @@
         </main>
     </div>
 
-    <script src="/admin/js/utils.js"></script>
-    <script src="/admin/js/theme.js"></script>
+<script src="/admin/js/utils.js"></script>
+<script src="/admin/js/theme.js"></script>
+<script src="/admin/js/ai-chat-button.js"></script>
     <script src="/admin/js/fieldtypes-shim.js"></script>
     <script src="/admin/js/media-modal.js?v=20250804-15"></script>
     <script src="/admin/js/accessibility.js"></script>
+    <?php if (isset($page) && $page === 'dashboard'): ?>
+    <script src="/admin/js/dashboard.js"></script>
+    <?php endif; ?>
     
     <!-- Logout functionality -->
     <script>

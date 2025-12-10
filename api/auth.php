@@ -7,6 +7,10 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 require_once 'storage.php';
 require_once 'session.php';
+// Load ai_helpers for getPermissionsForRole if available
+if (file_exists(__DIR__ . '/ai_helpers.php')) {
+    require_once __DIR__ . '/ai_helpers.php';
+}
 
 function getSessionTimeout() {
     // Load session timeout from settings, fallback to 3600s
@@ -43,16 +47,25 @@ function requireAuth($permission = null) {
 
 function checkPermission($user, $permission) {
     if (!isset($user['role'])) return false;
-    $roles = [
-        'admin' => ['*'], // Admin has all permissions
-        'editor' => [
-            'manage_content', 'manage_media', 'manage_plugins', 'read', 'write', 'delete', 'upload'
-        ],
-        'author' => [
-            'manage_content', 'manage_media', 'read', 'write', 'upload'
-        ],
-        'viewer' => ['read']
-    ];
-    $userPermissions = $roles[$user['role']] ?? [];
+    
+    // Use getPermissionsForRole from ai_helpers.php if available
+    // Otherwise fall back to legacy hardcoded roles
+    if (function_exists('getPermissionsForRole')) {
+        $userPermissions = getPermissionsForRole($user['role']);
+    } else {
+        // Fallback to legacy hardcoded roles
+        $roles = [
+            'admin' => ['*'], // Admin has all permissions
+            'editor' => [
+                'manage_content', 'manage_media', 'manage_plugins', 'read', 'write', 'delete', 'upload'
+            ],
+            'author' => [
+                'manage_content', 'manage_media', 'read', 'write', 'upload'
+            ],
+            'viewer' => ['read']
+        ];
+        $userPermissions = $roles[$user['role']] ?? [];
+    }
+    
     return in_array('*', $userPermissions) || in_array($permission, $userPermissions);
 } 

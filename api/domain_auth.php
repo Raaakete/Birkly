@@ -7,7 +7,7 @@ require_once 'log.php';
 
 class DomainAuth {
     private $storage;
-    private $licensesFile = '../settings/licenses.json';
+    private $licensesFile = '../settings/domains.json';
     
     public function __construct() {
         $this->storage = new Storage('../settings');
@@ -107,23 +107,26 @@ class DomainAuth {
                 substr($domain, -strlen($parentDomain) - 1) === '.' . $parentDomain);
     }
     
-    private function isLicenseValid($license) {
-        if (empty($license['status']) || $license['status'] !== 'active') {
+    private function isLicenseValid($domainInfo) {
+        // Simplified: just check if status is active
+        if (empty($domainInfo['status']) || $domainInfo['status'] !== 'active') {
             return false;
-        }
-        
-        if (!empty($license['expires_at'])) {
-            $expires = strtotime($license['expires_at']);
-            if ($expires && time() > $expires) {
-                return false;
-            }
         }
         
         return true;
     }
     
     private function getLicenses() {
-        return $this->storage->read('licenses.json') ?? [];
+        // Check for both domains.json (new) and licenses.json (legacy) for backward compatibility
+        $domains = $this->storage->read('domains.json') ?? [];
+        if (empty($domains)) {
+            $domains = $this->storage->read('licenses.json') ?? [];
+            // If we found legacy file, migrate it
+            if (!empty($domains)) {
+                $this->storage->write('domains.json', $domains);
+            }
+        }
+        return $domains;
     }
     
     public function getAllLicenses() {
@@ -153,7 +156,7 @@ class DomainAuth {
             'permissions' => $defaultPermissions
         ]);
         
-        return $this->storage->write('licenses.json', $licenses);
+        return $this->storage->write('domains.json', $licenses);
     }
     
     // Check if domain has permission for an operation
@@ -341,7 +344,7 @@ class DomainAuth {
         }
         
         $licenses[$domain] = array_merge($licenses[$domain], $updates);
-        return $this->storage->write('licenses.json', $licenses);
+        return $this->storage->write('domains.json', $licenses);
     }
 }
 
