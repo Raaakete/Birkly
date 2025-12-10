@@ -24,49 +24,53 @@ function log_security_event($event, $details = []) {
 }
 
 // API: Get recent log entries
-if (isset($_GET['action']) && $_GET['action'] === 'recent') {
-    requireAuth(['admin', 'manage_settings']);
-    $logFile = dirname(__DIR__) . '/logs/security.log';
-    $entries = [];
-    if (file_exists($logFile)) {
-        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $lines = array_reverse($lines);
-        foreach ($lines as $line) {
-            $entry = json_decode($line, true);
-            if ($entry) {
-                $entries[] = $entry;
+// Only execute if this file is called directly, not when included
+if (basename($_SERVER['SCRIPT_NAME']) === 'log.php') {
+    if (isset($_GET['action']) && $_GET['action'] === 'recent') {
+        requireAuth(['admin', 'manage_settings']);
+        $logFile = dirname(__DIR__) . '/logs/security.log';
+        $entries = [];
+        if (file_exists($logFile)) {
+            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $lines = array_reverse($lines);
+            foreach ($lines as $line) {
+                $entry = json_decode($line, true);
+                if ($entry) {
+                    $entries[] = $entry;
+                }
+                if (count($entries) >= 10) break;
             }
-            if (count($entries) >= 10) break;
         }
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [ 'logs' => $entries ]
+        ]);
+        exit;
     }
-    echo json_encode([
-        'status' => 'ok',
-        'data' => [ 'logs' => $entries ]
-    ]);
-    exit;
-}
 
-// API: Get all log entries (for audit log viewer)
-if (isset($_GET['action']) && $_GET['action'] === 'list') {
-    header('Content-Type: application/json');
-    require_once 'auth.php';
-    requireAuth(['admin']);
-    
-    $logFile = dirname(__DIR__) . '/logs/security.log';
-    $entries = [];
-    if (file_exists($logFile)) {
-        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $lines = array_reverse($lines); // Newest first
-        foreach ($lines as $line) {
-            $entry = json_decode($line, true);
-            if ($entry) {
-                $entries[] = $entry;
+    // API: Get all log entries (for audit log viewer)
+    if (isset($_GET['action']) && $_GET['action'] === 'list') {
+        header('Content-Type: application/json');
+        require_once 'auth.php';
+        requireAuth(['admin']);
+        
+        $logFile = dirname(__DIR__) . '/logs/security.log';
+        $entries = [];
+        if (file_exists($logFile)) {
+            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $lines = array_reverse($lines); // Newest first
+            foreach ($lines as $line) {
+                $entry = json_decode($line, true);
+                if ($entry) {
+                    $entries[] = $entry;
+                }
             }
         }
+        echo json_encode([
+            'status' => 'ok',
+            'logs' => $entries
+        ]);
+        exit;
     }
-    echo json_encode([
-        'status' => 'ok',
-        'logs' => $entries
-    ]);
-    exit;
 } 

@@ -9,6 +9,13 @@
     <?php if (isset($page) && $page === 'help'): ?>
     <link rel="stylesheet" href="/admin/css/help.css">
     <?php endif; ?>
+    <?php if (isset($page) && $page === 'settings'): ?>
+    <link rel="stylesheet" href="/admin/css/ai-connections.css">
+    <?php endif; ?>
+    <?php if (isset($page) && $page === 'dashboard'): ?>
+    <link rel="stylesheet" href="/admin/css/dashboard.css">
+    <?php endif; ?>
+    <link rel="stylesheet" href="/admin/css/ai-chat-button.css">
     <?php
     // Load settings to get logo for favicon
     require_once __DIR__ . '/../../api/storage.php';

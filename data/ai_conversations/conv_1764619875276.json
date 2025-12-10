@@ -1,0 +1,32 @@
+{
+    "id": "conv_1764619875276",
+    "ai_connection_id": "ai_99598771c041d038",
+    "user_id": "46d229b033af06a191ff2267bca9ae56",
+    "messages": [
+        {
+            "role": "user",
+            "content": "which collection has the most entries?"
+        },
+        {
+            "role": "assistant",
+            "content": ""
+        },
+        {
+            "role": "user",
+            "content": "which collection has the most entries?"
+        },
+        {
+            "role": "assistant",
+            "content": ""
+        },
+        {
+            "role": "user",
+            "content": "whcih collection hast the most entries?"
+        },
+        {
+            "role": "assistant",
+            "content": ""
+        }
+    ],
+    "updated_at": "2025-12-01T21:38:55+00:00"
+}

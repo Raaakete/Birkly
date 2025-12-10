@@ -1,0 +1,19 @@
+{
+    "id": "approval_911f6ddf792ce326",
+    "ai_user_id": "ai_99598771c041d038",
+    "action_type": "create_collection",
+    "action_data": {
+        "slug": "bling",
+        "name": "Bling"
+    },
+    "description": "Created collection 'Bling' with slug 'bling'.",
+    "status": "approved",
+    "created_at": "2025-12-01T17:52:18+00:00",
+    "conversation_id": "conv_1764611180055",
+    "reviewed_at": "2025-12-01T17:52:51+00:00",
+    "reviewed_by": "46d229b033af06a191ff2267bca9ae56",
+    "result": {
+        "collection_slug": "bling",
+        "collection_name": "Bling"
+    }
+}

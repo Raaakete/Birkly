@@ -1,0 +1,48 @@
+{
+    "id": "conv_1764611180055",
+    "ai_connection_id": "ai_99598771c041d038",
+    "user_id": "46d229b033af06a191ff2267bca9ae56",
+    "messages": [
+        {
+            "role": "user",
+            "content": "now create an entry for it"
+        },
+        {
+            "role": "assistant",
+            "content": "```json\n{\n  \"actions\": [\n    {\n      \"type\": \"create_entry\",\n      \"data\": {\n        \"collection\": \"bling\",\n        \"title\": \"Sample Bling\"\n      },\n      \"description\": \"Created a new entry in the 'bling' collection.\"\n    }\n  ]\n}\n```"
+        },
+        {
+            "role": "user",
+            "content": "another one"
+        },
+        {
+            "role": "assistant",
+            "content": "Creating another entry."
+        },
+        {
+            "role": "user",
+            "content": "two more"
+        },
+        {
+            "role": "assistant",
+            "content": "Creating another entry."
+        },
+        {
+            "role": "user",
+            "content": "i need three more"
+        },
+        {
+            "role": "assistant",
+            "content": "Creating another entry."
+        },
+        {
+            "role": "user",
+            "content": "create a new user called Toni Stark"
+        },
+        {
+            "role": "assistant",
+            "content": "```json\n{\n  \"actions\": [\n    {\n      \"type\": \"create_entry\",\n      \"data\": {\n        \"collection\": \"users\",\n        \"title\": \"Toni Stark\",\n        \"slug\": \"toni-stark\",\n        \"email\": \"\",\n        \"subject\": \"\",\n        \"message\": \"\",\n        \"status\": \"active\"\n      },\n      \"description\": \"Created a new user entry for Toni Stark.\"\n    }\n  ]\n}\n```"
+        }
+    ],
+    "updated_at": "2025-12-01T18:22:49+00:00"
+}

@@ -1,0 +1,13 @@
+{
+    "id": "approval_831d3e8730b6e92f",
+    "ai_user_id": "ai_99598771c041d038",
+    "action_type": "create_collection",
+    "action_data": {
+        "slug": "bling",
+        "title": "Bling"
+    },
+    "description": "Created collection 'Bling' with slug 'bling'.",
+    "status": "pending",
+    "created_at": "2025-12-01T17:49:29+00:00",
+    "conversation_id": "conv_1764611180055"
+}

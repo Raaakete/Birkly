@@ -1,0 +1,1186 @@
+<?php
+/**
+ * AI Approval Queue API
+ * Manages pending AI actions that require human approval
+ */
+
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
+ini_set('max_execution_time', 300);
+ini_set('memory_limit', '256M');
+
+require_once 'session.php';
+haru_secure_session_start();
+
+if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    header('Content-Type: application/json');
+}
+
+require_once 'storage.php';
+require_once 'auth.php';
+require_once 'validate.php';
+require_once '../core/csrf.php';
+require_once 'log.php';
+
+$storage = new Storage('../data/ai_approvals');
+$input = sanitize_input(json_decode(file_get_contents('php://input'), true));
+$action = $input['action'] ?? $_GET['action'] ?? '';
+
+// All actions require authentication
+requireAuth();
+
+// Create approval request (called by AI system)
+if ($action === 'create') {
+    $aiUserId = $input['ai_user_id'] ?? '';
+    $actionType = $input['action_type'] ?? '';
+    $actionData = $input['action_data'] ?? [];
+    $description = $input['description'] ?? '';
+    
+    if (empty($aiUserId) || empty($actionType) || empty($actionData)) {
+        echo json_encode(['status' => 'error', 'message' => 'Missing required fields']);
+        exit;
+    }
+    
+    $approvalId = 'approval_' . bin2hex(random_bytes(8));
+    $approval = [
+        'id' => $approvalId,
+        'ai_user_id' => $aiUserId,
+        'action_type' => $actionType, // 'create_entry', 'update_entry', 'delete_entry', etc.
+        'action_data' => $actionData,
+        'description' => $description,
+        'status' => 'pending',
+        'created_at' => date('c'),
+        'reviewed_at' => null,
+        'reviewed_by' => null
+    ];
+    
+    $result = $storage->write($approvalId . '.json', $approval);
+    
+    log_security_event('ai_approval_created', [
+        'approval_id' => $approvalId,
+        'ai_user_id' => $aiUserId,
+        'action_type' => $actionType
+    ]);
+    
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Approval request created' : 'Failed to create approval',
+        'data' => ['approval' => $approval]
+    ]);
+    exit;
+}
+
+// List approvals
+if ($action === 'list') {
+    $status = $_GET['status'] ?? 'all';
+    $approvalList = [];
+    
+    // Check if storage directory exists
+    if (is_dir($storage->basePath)) {
+        $approvals = $storage->list('');
+        
+        foreach ($approvals as $approvalFile) {
+            $approval = $storage->read($approvalFile);
+            if ($approval) {
+                if ($status === 'all' || ($approval['status'] ?? '') === $status) {
+                    $approvalList[] = $approval;
+                }
+            }
+        }
+        
+        // Sort by created_at descending
+        usort($approvalList, function($a, $b) {
+            $timeA = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
+            $timeB = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
+            return $timeB - $timeA;
+        });
+    }
+    
+    echo json_encode([
+        'status' => 'ok',
+        'data' => ['approvals' => $approvalList]
+    ]);
+    exit;
+}
+
+// Get single approval
+if ($action === 'get') {
+    $approvalId = $_GET['id'] ?? '';
+    if (empty($approvalId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Approval ID required']);
+        exit;
+    }
+    
+    $approval = $storage->read($approvalId . '.json');
+    if (!$approval) {
+        echo json_encode(['status' => 'error', 'message' => 'Approval not found']);
+        exit;
+    }
+    
+    echo json_encode([
+        'status' => 'ok',
+        'data' => ['approval' => $approval]
+    ]);
+    exit;
+}
+
+// Approve action
+if ($action === 'approve') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    $approvalId = $input['id'] ?? '';
+    if (empty($approvalId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Approval ID required']);
+        exit;
+    }
+    
+    $approval = $storage->read($approvalId . '.json');
+    if (!$approval) {
+        echo json_encode(['status' => 'error', 'message' => 'Approval not found']);
+        exit;
+    }
+    
+    if ($approval['status'] !== 'pending') {
+        echo json_encode(['status' => 'error', 'message' => 'Approval already processed']);
+        exit;
+    }
+    
+    // Execute the approved action
+    $result = executeAiAction($approval);
+    
+    if ($result['success']) {
+        $approval['status'] = 'approved';
+        $approval['reviewed_at'] = date('c');
+        $approval['reviewed_by'] = $_SESSION['user']['id'];
+        $approval['result'] = $result['data'];
+        
+        $storage->write($approvalId . '.json', $approval);
+        
+        log_security_event('ai_approval_approved', [
+            'approval_id' => $approvalId,
+            'reviewed_by' => $_SESSION['user']['id'],
+            'action_type' => $approval['action_type']
+        ]);
+        
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Action approved and executed',
+            'data' => ['approval' => $approval, 'result' => $result['data']]
+        ]);
+    } else {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Failed to execute action: ' . $result['message']
+        ]);
+    }
+    exit;
+}
+
+// Reject action
+if ($action === 'reject') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    $approvalId = $input['id'] ?? '';
+    $reason = $input['reason'] ?? 'No reason provided';
+    
+    if (empty($approvalId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Approval ID required']);
+        exit;
+    }
+    
+    $approval = $storage->read($approvalId . '.json');
+    if (!$approval) {
+        echo json_encode(['status' => 'error', 'message' => 'Approval not found']);
+        exit;
+    }
+    
+    if ($approval['status'] !== 'pending') {
+        echo json_encode(['status' => 'error', 'message' => 'Approval already processed']);
+        exit;
+    }
+    
+    $approval['status'] = 'rejected';
+    $approval['reviewed_at'] = date('c');
+    $approval['reviewed_by'] = $_SESSION['user']['id'];
+    $approval['rejection_reason'] = $reason;
+    
+    $storage->write($approvalId . '.json', $approval);
+    
+    log_security_event('ai_approval_rejected', [
+        'approval_id' => $approvalId,
+        'reviewed_by' => $_SESSION['user']['id'],
+        'reason' => $reason
+    ]);
+    
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Action rejected',
+        'data' => ['approval' => $approval]
+    ]);
+    exit;
+}
+
+// Execute AI action (internal function)
+function executeAiAction($approval) {
+    $actionType = $approval['action_type'];
+    $actionData = $approval['action_data'];
+    
+    // Get AI user but DO NOT modify session - pass it as context instead
+    $usersStorage = new Storage('../users');
+    $aiUser = $usersStorage->read($approval['ai_user_id'] . '.json');
+    if (!$aiUser) {
+        return ['success' => false, 'message' => 'AI user not found'];
+    }
+    
+    // Store original user ID for logging/attribution
+    $originalUserId = $_SESSION['user']['id'] ?? null;
+    
+    // Log what we're about to execute
+    error_log("executeAiAction: Action type: " . $actionType);
+    error_log("executeAiAction: Action data: " . json_encode($actionData));
+    
+    // Execute action with AI user context (but don't modify session)
+    switch ($actionType) {
+        case 'create_collection':
+            return executeCreateCollection($actionData, $aiUser, $originalUserId);
+            
+        case 'update_collection':
+            return executeUpdateCollection($actionData, $aiUser, $originalUserId);
+            
+        case 'delete_collection':
+            return executeDeleteCollection($actionData, $aiUser, $originalUserId);
+            
+        case 'create_entry':
+            error_log("executeAiAction: Calling executeCreateEntry with actionData: " . json_encode($actionData));
+            return executeCreateEntry($actionData, $aiUser, $originalUserId);
+            
+        case 'update_entry':
+            return executeUpdateEntry($actionData, $aiUser, $originalUserId);
+            
+        case 'delete_entry':
+            return executeDeleteEntry($actionData, $aiUser, $originalUserId);
+            
+        case 'upload_media':
+            return executeUploadMedia($actionData, $aiUser, $originalUserId);
+            
+        case 'delete_media':
+            return executeDeleteMedia($actionData, $aiUser, $originalUserId);
+            
+        case 'update_media':
+            return executeUpdateMedia($actionData, $aiUser, $originalUserId);
+            
+        case 'create_media_folder':
+            return executeCreateMediaFolder($actionData, $aiUser, $originalUserId);
+            
+        case 'delete_media_folder':
+            return executeDeleteMediaFolder($actionData, $aiUser, $originalUserId);
+            
+        case 'move_media':
+            return executeMoveMedia($actionData, $aiUser, $originalUserId);
+            
+        case 'update_settings':
+            return executeUpdateSettings($actionData, $aiUser, $originalUserId);
+            
+        case 'create_page':
+            return executeCreatePage($actionData, $aiUser, $originalUserId);
+            
+        case 'update_page':
+            return executeUpdatePage($actionData, $aiUser, $originalUserId);
+            
+        case 'delete_page':
+            return executeDeletePage($actionData, $aiUser, $originalUserId);
+            
+        case 'update_user':
+            return executeUpdateUser($actionData, $aiUser, $originalUserId);
+            
+        case 'delete_user':
+            return executeDeleteUser($actionData, $aiUser, $originalUserId);
+            
+        case 'create_role':
+            return executeCreateRole($actionData, $aiUser, $originalUserId);
+            
+        case 'update_role':
+            return executeUpdateRole($actionData, $aiUser, $originalUserId);
+            
+        case 'delete_role':
+            return executeDeleteRole($actionData, $aiUser, $originalUserId);
+            
+        case 'activate_plugin':
+            return executeActivatePlugin($actionData, $aiUser, $originalUserId);
+            
+        case 'deactivate_plugin':
+            return executeDeactivatePlugin($actionData, $aiUser, $originalUserId);
+            
+        default:
+            return ['success' => false, 'message' => 'Unknown action type: ' . $actionType];
+    }
+}
+
+// Execute create collection
+function executeCreateCollection($actionData, $aiUser = null, $originalUserId = null) {
+    $name = $actionData['name'] ?? '';
+    $slug = $actionData['slug'] ?? '';
+    $fields = $actionData['fields'] ?? [];
+    $description = $actionData['description'] ?? '';
+    
+    if (empty($name)) {
+        return ['success' => false, 'message' => 'Collection name is required'];
+    }
+    
+    // Generate slug if not provided
+    if (empty($slug)) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
+        $slug = trim($slug, '-');
+    }
+    
+    // Validate slug format
+    if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+        return ['success' => false, 'message' => 'Invalid slug format'];
+    }
+    
+    $collectionsPath = __DIR__ . '/../content/collections';
+    $collectionDir = $collectionsPath . '/' . $slug;
+    
+    // Check if collection already exists
+    if (is_dir($collectionDir)) {
+        return ['success' => false, 'message' => 'Collection already exists'];
+    }
+    
+    // Create collection directory
+    if (!is_dir($collectionsPath)) {
+        mkdir($collectionsPath, 0755, true);
+    }
+    
+    if (!mkdir($collectionDir, 0755, true)) {
+        return ['success' => false, 'message' => 'Failed to create collection directory'];
+    }
+    
+    // Create entries directory
+    $entriesDir = $collectionDir . '/entries';
+    if (!mkdir($entriesDir, 0755, true)) {
+        return ['success' => false, 'message' => 'Failed to create entries directory'];
+    }
+    
+    // Prepare collection data
+    $collectionData = [
+        'name' => $name,
+        'slug' => $slug,
+        'description' => $description,
+        'created_at' => date('Y-m-d H:i:s'),
+        'updated_at' => date('Y-m-d H:i:s'),
+        'entry_method' => 'admin_only'
+    ];
+    
+    // Save collection.json
+    $collectionFile = $collectionDir . '/collection.json';
+    if (file_put_contents($collectionFile, json_encode($collectionData, JSON_PRETTY_PRINT)) === false) {
+        return ['success' => false, 'message' => 'Failed to save collection.json'];
+    }
+    
+    // Save schema.json with fields
+    if (!empty($fields)) {
+        $schemaData = ['fields' => $fields];
+        $schemaFile = $collectionDir . '/schema.json';
+        if (file_put_contents($schemaFile, json_encode($schemaData, JSON_PRETTY_PRINT)) === false) {
+            return ['success' => false, 'message' => 'Failed to save schema.json'];
+        }
+    }
+    
+    // Use AI user ID or original user ID for logging
+    $createdBy = $aiUser['id'] ?? $originalUserId ?? 'ai';
+    
+    log_security_event('ai_collection_created', [
+        'collection_slug' => $slug,
+        'collection_name' => $name,
+        'created_by' => $createdBy,
+        'ai_user_id' => $aiUser['id'] ?? null,
+        'original_user_id' => $originalUserId
+    ]);
+    
+    return ['success' => true, 'data' => ['collection_slug' => $slug, 'collection_name' => $name]];
+}
+
+// Execute create entry
+function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null) {
+    error_log("executeCreateEntry: FUNCTION CALLED");
+    error_log("executeCreateEntry: Received action data: " . json_encode($actionData));
+    error_log("executeCreateEntry: Action data type: " . gettype($actionData));
+    error_log("executeCreateEntry: Action data keys: " . (is_array($actionData) ? implode(', ', array_keys($actionData)) : 'not an array'));
+    
+    // Extract collection BEFORE require_once in case it modifies anything
+    $collection = '';
+    $entryData = [];
+    
+    // Handle different data structures from AI
+    // Format 1: {collection: "slug", title: "...", content: "..."} - most common from AI
+    // Format 2: {collection: "slug", data: {title: "...", content: "..."}}
+    // Format 3: {data: {collection: "slug", title: "...", content: "..."}}
+    
+    // Try to get collection from various locations
+    if (isset($actionData['collection'])) {
+        error_log("executeCreateEntry: Found collection at top level: " . $actionData['collection']);
+        $collection = $actionData['collection'];
+        // Check if there's nested data
+        if (isset($actionData['data']) && is_array($actionData['data'])) {
+            error_log("executeCreateEntry: Found nested data field");
+            $entryData = $actionData['data'];
+        } else {
+            // Collection and fields are at the same level - this is the most common format
+            error_log("executeCreateEntry: Collection and fields at same level");
+            $entryData = $actionData;
+            unset($entryData['collection']);
+        }
+    } elseif (isset($actionData['data']['collection'])) {
+        error_log("executeCreateEntry: Found collection nested in data: " . $actionData['data']['collection']);
+        // Collection is nested in data
+        $collection = $actionData['data']['collection'];
+        $entryData = $actionData['data'];
+        unset($entryData['collection']);
+    } else {
+        error_log("executeCreateEntry: Collection not found in action data. Action data: " . json_encode($actionData));
+        error_log("executeCreateEntry: Available keys: " . (is_array($actionData) ? implode(', ', array_keys($actionData)) : 'not an array'));
+        return ['success' => false, 'message' => 'Collection slug is required. Action data: ' . json_encode($actionData)];
+    }
+    
+    error_log("executeCreateEntry: Extracted collection: " . $collection);
+    error_log("executeCreateEntry: Extracted entryData keys: " . implode(', ', array_keys($entryData)));
+    
+    // Normalize collection slug (handle collection name vs slug)
+    $collection = strtolower(trim($collection));
+    $collection = preg_replace('/[^a-z0-9-]+/', '-', $collection);
+    $collection = trim($collection, '-');
+    
+    if (empty($collection)) {
+        error_log("executeCreateEntry: Collection slug is empty after normalization. Original: " . ($actionData['collection'] ?? 'N/A'));
+        return ['success' => false, 'message' => 'Collection slug is required'];
+    }
+    
+    error_log("executeCreateEntry: Normalized collection slug: " . $collection);
+    
+    try {
+        // Don't require admin_entries.php - it has auth checks that will exit
+        // We'll use Storage directly instead
+        require_once __DIR__ . '/storage.php';
+        
+        // Create entry using Storage directly
+        $contentStorage = new Storage('../content');
+        $collectionDir = '../content/collections/' . $collection;
+        
+        if (!is_dir($collectionDir)) {
+            error_log("executeCreateEntry: Collection directory not found: " . $collectionDir);
+            return ['success' => false, 'message' => 'Collection not found: ' . $collection];
+        }
+        
+        // Generate entry ID
+        $entryId = bin2hex(random_bytes(8));
+        $entryFile = $collectionDir . '/entries/' . $entryId . '.json';
+        
+        // Ensure entries directory exists
+        $entriesDir = dirname($entryFile);
+        if (!is_dir($entriesDir)) {
+            if (!mkdir($entriesDir, 0755, true)) {
+                error_log("executeCreateEntry: Failed to create entries directory: " . $entriesDir);
+                return ['success' => false, 'message' => 'Failed to create entries directory'];
+            }
+        }
+        
+        // Prepare entry data - ensure we have at least a title
+        if (empty($entryData['title']) && empty($entryData['name'])) {
+            // Try to generate a title from other fields
+            $entryData['title'] = $entryData['title'] ?? $entryData['name'] ?? 'Untitled Entry';
+        }
+        
+        // Use AI user ID or original user ID for attribution
+        $createdBy = $aiUser['id'] ?? $originalUserId ?? 'ai';
+        
+        $entry = array_merge($entryData, [
+            'id' => $entryId,
+            'created_at' => date('c'),
+            'created_by' => $createdBy,
+            'status' => 'draft' // Default to draft, can be changed
+        ]);
+        
+        $writePath = 'collections/' . $collection . '/entries/' . $entryId . '.json';
+        error_log("executeCreateEntry: Attempting to write entry to: " . $writePath);
+        $result = $contentStorage->write($writePath, $entry);
+        
+        if ($result) {
+            error_log("executeCreateEntry: Successfully created entry: " . $entryId);
+            return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
+        } else {
+            error_log("executeCreateEntry: Failed to write entry file. Path: " . $writePath);
+            error_log("executeCreateEntry: Storage base path: " . $contentStorage->basePath);
+            error_log("executeCreateEntry: Full path would be: " . $contentStorage->basePath . '/' . $writePath);
+            return ['success' => false, 'message' => 'Failed to write entry file. Check server logs for details.'];
+        }
+    } catch (Exception $e) {
+        error_log("executeCreateEntry Exception: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        return ['success' => false, 'message' => 'Error creating entry: ' . $e->getMessage()];
+    } catch (Error $e) {
+        error_log("executeCreateEntry Fatal Error: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        return ['success' => false, 'message' => 'Fatal error creating entry: ' . $e->getMessage()];
+    }
+}
+
+// Execute update entry
+function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null) {
+    error_log("executeUpdateEntry: FUNCTION CALLED");
+    error_log("executeUpdateEntry: Received action data: " . json_encode($actionData));
+    
+    require_once __DIR__ . '/storage.php';
+    
+    // Handle different data structures from AI (same as create_entry)
+    // Format 1: {collection: "slug", slug: "entry-slug", text: "..."} - most common from AI
+    // Format 2: {collection: "slug", id: "entry-id", data: {text: "..."}}
+    // Format 3: {data: {collection: "slug", id: "entry-id", text: "..."}}
+    
+    $collection = '';
+    $entryId = '';
+    $entrySlug = '';
+    $updateData = [];
+    
+    // Try to get collection and entry identifier from various locations
+    if (isset($actionData['collection'])) {
+        $collection = $actionData['collection'];
+        // Check if there's nested data
+        if (isset($actionData['data']) && is_array($actionData['data'])) {
+            $updateData = $actionData['data'];
+            $entryId = $updateData['id'] ?? '';
+            $entrySlug = $updateData['slug'] ?? '';
+        } else {
+            // Collection and fields are at the same level - this is the most common format
+            $updateData = $actionData;
+            unset($updateData['collection']);
+            $entryId = $updateData['id'] ?? '';
+            $entrySlug = $updateData['slug'] ?? '';
+            // Remove id and slug from updateData as they're identifiers, not fields to update
+            unset($updateData['id'], $updateData['slug']);
+        }
+    } elseif (isset($actionData['data']['collection'])) {
+        $collection = $actionData['data']['collection'];
+        $updateData = $actionData['data'];
+        unset($updateData['collection']);
+        $entryId = $updateData['id'] ?? '';
+        $entrySlug = $updateData['slug'] ?? '';
+        unset($updateData['id'], $updateData['slug']);
+    } else {
+        error_log("executeUpdateEntry: Collection not found in action data");
+        return ['success' => false, 'message' => 'Collection is required'];
+    }
+    
+    // Normalize collection slug
+    $collection = strtolower(trim($collection));
+    $collection = preg_replace('/[^a-z0-9-]/', '', $collection);
+    
+    if (empty($collection)) {
+        return ['success' => false, 'message' => 'Collection is required'];
+    }
+    
+    if (empty($entryId) && empty($entrySlug)) {
+        return ['success' => false, 'message' => 'Entry ID or slug is required'];
+    }
+    
+    $contentStorage = new Storage('../content');
+    
+    // Find entry by ID or slug
+    $entry = null;
+    $entryFile = null;
+    
+    if (!empty($entryId)) {
+        // Try by ID first
+        $entryFile = 'collections/' . $collection . '/entries/' . $entryId . '.json';
+        $entry = $contentStorage->read($entryFile);
+    }
+    
+    if (!$entry && !empty($entrySlug)) {
+        // Try by slug
+        $entries = $contentStorage->list('collections/' . $collection . '/entries');
+        foreach ($entries as $file) {
+            $entryData = $contentStorage->read('collections/' . $collection . '/entries/' . $file);
+            if ($entryData && isset($entryData['slug']) && $entryData['slug'] === $entrySlug) {
+                $entry = $entryData;
+                $entryFile = 'collections/' . $collection . '/entries/' . $file;
+                $entryId = $entryData['id'] ?? pathinfo($file, PATHINFO_FILENAME);
+                break;
+            }
+        }
+    }
+    
+    if (!$entry) {
+        error_log("executeUpdateEntry: Entry not found. Collection: $collection, ID: $entryId, Slug: $entrySlug");
+        return ['success' => false, 'message' => 'Entry not found'];
+    }
+    
+    // Use AI user ID or original user ID for attribution
+    $updatedBy = $aiUser['id'] ?? $originalUserId ?? 'ai';
+    
+    // Merge updates (only update fields that are provided)
+    foreach ($updateData as $key => $value) {
+        $entry[$key] = $value;
+    }
+    $entry['updated_at'] = date('c');
+    $entry['updated_by'] = $updatedBy;
+    
+    // Ensure we have the correct file path
+    if (!$entryFile) {
+        $entryFile = 'collections/' . $collection . '/entries/' . $entryId . '.json';
+    }
+    
+    error_log("executeUpdateEntry: Updating entry file: " . $entryFile);
+    $result = $contentStorage->write($entryFile, $entry);
+    
+    if ($result) {
+        error_log("executeUpdateEntry: Successfully updated entry");
+        return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
+    } else {
+        error_log("executeUpdateEntry: Failed to write entry file");
+        return ['success' => false, 'message' => 'Failed to update entry'];
+    }
+}
+
+// Execute delete entry
+function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    
+    $collection = $actionData['collection'] ?? '';
+    $entryId = $actionData['id'] ?? '';
+    
+    if (empty($collection) || empty($entryId)) {
+        return ['success' => false, 'message' => 'Collection and entry ID are required'];
+    }
+    
+    $contentStorage = new Storage('../content');
+    $entryFile = 'collections/' . $collection . '/entries/' . $entryId . '.json';
+    
+    $result = $contentStorage->delete($entryFile);
+    
+    if ($result) {
+        return ['success' => true, 'data' => []];
+    } else {
+        return ['success' => false, 'message' => 'Failed to delete entry'];
+    }
+}
+
+// Execute update collection
+function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $slug = $actionData['slug'] ?? '';
+    if (empty($slug)) {
+        return ['success' => false, 'message' => 'Collection slug is required'];
+    }
+    
+    $collectionFile = '../content/collections/' . $slug . '/collection.json';
+    if (!file_exists($collectionFile)) {
+        return ['success' => false, 'message' => 'Collection not found'];
+    }
+    
+    $collection = json_decode(file_get_contents($collectionFile), true);
+    if (!$collection) {
+        return ['success' => false, 'message' => 'Failed to read collection'];
+    }
+    
+    // Update fields
+    if (isset($actionData['name'])) $collection['name'] = $actionData['name'];
+    if (isset($actionData['description'])) $collection['description'] = $actionData['description'];
+    if (isset($actionData['fields'])) $collection['fields'] = $actionData['fields'];
+    $collection['updated_at'] = date('c');
+    
+    $result = file_put_contents($collectionFile, json_encode($collection, JSON_PRETTY_PRINT));
+    return $result ? ['success' => true, 'data' => ['collection' => $collection]] : ['success' => false, 'message' => 'Failed to update collection'];
+}
+
+// Execute delete collection
+function executeDeleteCollection($actionData, $aiUser = null, $originalUserId = null) {
+    $slug = $actionData['slug'] ?? '';
+    if (empty($slug)) {
+        return ['success' => false, 'message' => 'Collection slug is required'];
+    }
+    
+    $collectionDir = '../content/collections/' . $slug;
+    if (!is_dir($collectionDir)) {
+        return ['success' => false, 'message' => 'Collection not found'];
+    }
+    
+    // Recursively delete directory
+    function deleteDirectory($dir) {
+        if (!is_dir($dir)) return false;
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            is_dir($path) ? deleteDirectory($path) : unlink($path);
+        }
+        return rmdir($dir);
+    }
+    
+    $result = deleteDirectory($collectionDir);
+    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete collection'];
+}
+
+// Execute upload media
+function executeUploadMedia($actionData, $aiUser = null, $originalUserId = null) {
+    $url = $actionData['url'] ?? '';
+    $base64 = $actionData['base64'] ?? '';
+    $name = $actionData['name'] ?? 'uploaded-file';
+    $folder = $actionData['folder'] ?? '';
+    
+    if (empty($url) && empty($base64)) {
+        return ['success' => false, 'message' => 'URL or base64 data is required'];
+    }
+    
+    $mediaDir = __DIR__ . '/../media';
+    if ($folder) {
+        $mediaDir .= '/' . $folder;
+    }
+    if (!is_dir($mediaDir)) {
+        mkdir($mediaDir, 0755, true);
+    }
+    
+    // Handle URL download
+    if ($url) {
+        $fileContent = @file_get_contents($url);
+        if ($fileContent === false) {
+            return ['success' => false, 'message' => 'Failed to download file from URL'];
+        }
+        $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+    } else {
+        // Handle base64
+        $fileContent = base64_decode($base64);
+        if ($fileContent === false) {
+            return ['success' => false, 'message' => 'Invalid base64 data'];
+        }
+        $extension = pathinfo($name, PATHINFO_EXTENSION) ?: 'jpg';
+    }
+    
+    $mediaId = uniqid();
+    $filename = $mediaId . '.' . $extension;
+    $filepath = $mediaDir . '/' . $filename;
+    
+    if (file_put_contents($filepath, $fileContent) === false) {
+        return ['success' => false, 'message' => 'Failed to save file'];
+    }
+    
+    // Update metadata
+    $metadataFile = __DIR__ . '/../media/.metadata.json';
+    $metadata = file_exists($metadataFile) ? json_decode(file_get_contents($metadataFile), true) : [];
+    $metadata[$mediaId] = [
+        'name' => $name,
+        'type' => mime_content_type($filepath),
+        'size' => filesize($filepath),
+        'ext' => $extension,
+        'folder' => $folder,
+        'created_at' => date('c')
+    ];
+    file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
+    
+    return ['success' => true, 'data' => ['media_id' => $mediaId, 'url' => '/media/' . ($folder ? $folder . '/' : '') . $filename]];
+}
+
+// Execute delete media
+function executeDeleteMedia($actionData, $aiUser = null, $originalUserId = null) {
+    $mediaId = $actionData['id'] ?? '';
+    if (empty($mediaId)) {
+        return ['success' => false, 'message' => 'Media ID is required'];
+    }
+    
+    $metadataFile = __DIR__ . '/../media/.metadata.json';
+    $metadata = file_exists($metadataFile) ? json_decode(file_get_contents($metadataFile), true) : [];
+    
+    if (!isset($metadata[$mediaId])) {
+        return ['success' => false, 'message' => 'Media not found'];
+    }
+    
+    $media = $metadata[$mediaId];
+    $folder = $media['folder'] ?? '';
+    $ext = $media['ext'] ?? '';
+    $filepath = __DIR__ . '/../media/' . ($folder ? $folder . '/' : '') . $mediaId . '.' . $ext;
+    
+    if (file_exists($filepath)) {
+        unlink($filepath);
+    }
+    
+    unset($metadata[$mediaId]);
+    file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
+    
+    return ['success' => true, 'data' => []];
+}
+
+// Execute update media
+function executeUpdateMedia($actionData, $aiUser = null, $originalUserId = null) {
+    $mediaId = $actionData['id'] ?? '';
+    if (empty($mediaId)) {
+        return ['success' => false, 'message' => 'Media ID is required'];
+    }
+    
+    $metadataFile = __DIR__ . '/../media/.metadata.json';
+    $metadata = file_exists($metadataFile) ? json_decode(file_get_contents($metadataFile), true) : [];
+    
+    if (!isset($metadata[$mediaId])) {
+        return ['success' => false, 'message' => 'Media not found'];
+    }
+    
+    if (isset($actionData['name'])) $metadata[$mediaId]['name'] = $actionData['name'];
+    if (isset($actionData['alt'])) $metadata[$mediaId]['alt'] = $actionData['alt'];
+    
+    file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
+    return ['success' => true, 'data' => ['media' => $metadata[$mediaId]]];
+}
+
+// Execute create media folder
+function executeCreateMediaFolder($actionData, $aiUser = null, $originalUserId = null) {
+    $folderName = $actionData['name'] ?? '';
+    if (empty($folderName)) {
+        return ['success' => false, 'message' => 'Folder name is required'];
+    }
+    
+    $folderPath = __DIR__ . '/../media/' . $folderName;
+    if (is_dir($folderPath)) {
+        return ['success' => false, 'message' => 'Folder already exists'];
+    }
+    
+    $result = mkdir($folderPath, 0755, true);
+    return $result ? ['success' => true, 'data' => ['folder' => $folderName]] : ['success' => false, 'message' => 'Failed to create folder'];
+}
+
+// Execute delete media folder
+function executeDeleteMediaFolder($actionData, $aiUser = null, $originalUserId = null) {
+    $folderName = $actionData['name'] ?? '';
+    if (empty($folderName)) {
+        return ['success' => false, 'message' => 'Folder name is required'];
+    }
+    
+    $folderPath = __DIR__ . '/../media/' . $folderName;
+    if (!is_dir($folderPath)) {
+        return ['success' => false, 'message' => 'Folder not found'];
+    }
+    
+    function deleteMediaFolder($dir) {
+        if (!is_dir($dir)) return false;
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            is_dir($path) ? deleteMediaFolder($path) : unlink($path);
+        }
+        return rmdir($dir);
+    }
+    
+    $result = deleteMediaFolder($folderPath);
+    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete folder'];
+}
+
+// Execute move media
+function executeMoveMedia($actionData, $aiUser = null, $originalUserId = null) {
+    $mediaId = $actionData['id'] ?? '';
+    $folder = $actionData['folder'] ?? '';
+    
+    if (empty($mediaId)) {
+        return ['success' => false, 'message' => 'Media ID is required'];
+    }
+    
+    $metadataFile = __DIR__ . '/../media/.metadata.json';
+    $metadata = file_exists($metadataFile) ? json_decode(file_get_contents($metadataFile), true) : [];
+    
+    if (!isset($metadata[$mediaId])) {
+        return ['success' => false, 'message' => 'Media not found'];
+    }
+    
+    $media = $metadata[$mediaId];
+    $oldFolder = $media['folder'] ?? '';
+    $ext = $media['ext'] ?? '';
+    
+    $oldPath = __DIR__ . '/../media/' . ($oldFolder ? $oldFolder . '/' : '') . $mediaId . '.' . $ext;
+    $newPath = __DIR__ . '/../media/' . ($folder ? $folder . '/' : '') . $mediaId . '.' . $ext;
+    
+    if ($folder && !is_dir(dirname($newPath))) {
+        mkdir(dirname($newPath), 0755, true);
+    }
+    
+    if (file_exists($oldPath)) {
+        rename($oldPath, $newPath);
+    }
+    
+    $metadata[$mediaId]['folder'] = $folder;
+    file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
+    
+    return ['success' => true, 'data' => ['media' => $metadata[$mediaId]]];
+}
+
+// Execute update settings
+function executeUpdateSettings($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $settingsStorage = new Storage('../settings');
+    $category = $actionData['category'] ?? '';
+    $settings = $actionData['settings'] ?? [];
+    
+    if (empty($category) || empty($settings)) {
+        return ['success' => false, 'message' => 'Category and settings are required'];
+    }
+    
+    $current = $settingsStorage->read("$category.json") ?: [];
+    $updated = array_merge($current, $settings);
+    
+    $result = $settingsStorage->write("$category.json", $updated);
+    return $result ? ['success' => true, 'data' => ['settings' => $updated]] : ['success' => false, 'message' => 'Failed to update settings'];
+}
+
+// Execute create page
+function executeCreatePage($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $contentStorage = new Storage('../content');
+    
+    $title = $actionData['title'] ?? '';
+    $slug = $actionData['slug'] ?? '';
+    $content = $actionData['content'] ?? '';
+    
+    if (empty($title)) {
+        return ['success' => false, 'message' => 'Page title is required'];
+    }
+    
+    if (empty($slug)) {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
+    }
+    
+    $pageId = uniqid();
+    $page = [
+        'id' => $pageId,
+        'title' => $title,
+        'slug' => $slug,
+        'content' => $content,
+        'created_at' => date('c'),
+        'updated_at' => date('c')
+    ];
+    
+    $result = $contentStorage->write("pages/$slug.json", $page);
+    return $result ? ['success' => true, 'data' => ['page' => $page]] : ['success' => false, 'message' => 'Failed to create page'];
+}
+
+// Execute update page
+function executeUpdatePage($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $contentStorage = new Storage('../content');
+    
+    $slug = $actionData['slug'] ?? $actionData['id'] ?? '';
+    if (empty($slug)) {
+        return ['success' => false, 'message' => 'Page slug or ID is required'];
+    }
+    
+    $pageFile = "pages/$slug.json";
+    $page = $contentStorage->read($pageFile);
+    if (!$page) {
+        return ['success' => false, 'message' => 'Page not found'];
+    }
+    
+    if (isset($actionData['title'])) $page['title'] = $actionData['title'];
+    if (isset($actionData['content'])) $page['content'] = $actionData['content'];
+    if (isset($actionData['slug'])) $page['slug'] = $actionData['slug'];
+    $page['updated_at'] = date('c');
+    
+    $result = $contentStorage->write($pageFile, $page);
+    return $result ? ['success' => true, 'data' => ['page' => $page]] : ['success' => false, 'message' => 'Failed to update page'];
+}
+
+// Execute delete page
+function executeDeletePage($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $contentStorage = new Storage('../content');
+    
+    $slug = $actionData['slug'] ?? $actionData['id'] ?? '';
+    if (empty($slug)) {
+        return ['success' => false, 'message' => 'Page slug or ID is required'];
+    }
+    
+    $result = $contentStorage->delete("pages/$slug.json");
+    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete page'];
+}
+
+// Execute update user
+function executeUpdateUser($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $usersStorage = new Storage('../users');
+    
+    $userId = $actionData['id'] ?? $actionData['email'] ?? '';
+    if (empty($userId)) {
+        return ['success' => false, 'message' => 'User ID or email is required'];
+    }
+    
+    $userFile = $userId . '.json';
+    $user = $usersStorage->read($userFile);
+    if (!$user) {
+        // Try to find by email
+        $userFiles = glob('../users/*.json');
+        foreach ($userFiles as $file) {
+            $userData = json_decode(file_get_contents($file), true);
+            if ($userData && $userData['email'] === $userId) {
+                $user = $userData;
+                $userFile = basename($file);
+                break;
+            }
+        }
+    }
+    
+    if (!$user) {
+        return ['success' => false, 'message' => 'User not found'];
+    }
+    
+    if (isset($actionData['email'])) $user['email'] = $actionData['email'];
+    if (isset($actionData['role'])) $user['role'] = $actionData['role'];
+    if (isset($actionData['name'])) $user['name'] = $actionData['name'];
+    // Never update password through AI
+    
+    $result = $usersStorage->write($userFile, $user);
+    return $result ? ['success' => true, 'data' => ['user' => $user]] : ['success' => false, 'message' => 'Failed to update user'];
+}
+
+// Execute delete user
+function executeDeleteUser($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $usersStorage = new Storage('../users');
+    
+    $userId = $actionData['id'] ?? $actionData['email'] ?? '';
+    if (empty($userId)) {
+        return ['success' => false, 'message' => 'User ID or email is required'];
+    }
+    
+    // Don't allow deleting yourself
+    if ($userId === ($aiUser['id'] ?? '') || $userId === ($originalUserId ?? '')) {
+        return ['success' => false, 'message' => 'Cannot delete your own user account'];
+    }
+    
+    $userFile = $userId . '.json';
+    $result = $usersStorage->delete($userFile);
+    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete user'];
+}
+
+// Execute create role
+function executeCreateRole($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $settingsStorage = new Storage('../settings');
+    
+    $name = $actionData['name'] ?? '';
+    $permissions = $actionData['permissions'] ?? [];
+    
+    if (empty($name)) {
+        return ['success' => false, 'message' => 'Role name is required'];
+    }
+    
+    $roles = $settingsStorage->read('roles.json') ?: [];
+    $roleId = strtolower(trim(preg_replace('/[^a-z0-9-]+/', '-', $name)));
+    
+    // Check if role already exists
+    foreach ($roles as $role) {
+        if (($role['id'] ?? '') === $roleId || ($role['name'] ?? '') === $name) {
+            return ['success' => false, 'message' => 'Role already exists'];
+        }
+    }
+    
+    $role = [
+        'id' => $roleId,
+        'name' => $name,
+        'description' => $actionData['description'] ?? '',
+        'permissions' => $permissions
+    ];
+    
+    $roles[] = $role;
+    $result = $settingsStorage->write('roles.json', $roles);
+    return $result ? ['success' => true, 'data' => ['role' => $role]] : ['success' => false, 'message' => 'Failed to create role'];
+}
+
+// Execute update role
+function executeUpdateRole($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $settingsStorage = new Storage('../settings');
+    
+    $roleId = $actionData['id'] ?? '';
+    if (empty($roleId)) {
+        return ['success' => false, 'message' => 'Role ID is required'];
+    }
+    
+    $roles = $settingsStorage->read('roles.json') ?: [];
+    $roleFound = false;
+    
+    foreach ($roles as &$role) {
+        if (($role['id'] ?? '') === $roleId) {
+            if (isset($actionData['name'])) $role['name'] = $actionData['name'];
+            if (isset($actionData['description'])) $role['description'] = $actionData['description'];
+            if (isset($actionData['permissions'])) $role['permissions'] = $actionData['permissions'];
+            $roleFound = true;
+            break;
+        }
+    }
+    
+    if (!$roleFound) {
+        return ['success' => false, 'message' => 'Role not found'];
+    }
+    
+    $result = $settingsStorage->write('roles.json', $roles);
+    return $result ? ['success' => true, 'data' => ['role' => $role]] : ['success' => false, 'message' => 'Failed to update role'];
+}
+
+// Execute delete role
+function executeDeleteRole($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $settingsStorage = new Storage('../settings');
+    
+    $roleId = $actionData['id'] ?? '';
+    if (empty($roleId)) {
+        return ['success' => false, 'message' => 'Role ID is required'];
+    }
+    
+    $roles = $settingsStorage->read('roles.json') ?: [];
+    $roles = array_filter($roles, function($role) use ($roleId) {
+        return ($role['id'] ?? '') !== $roleId;
+    });
+    
+    $result = $settingsStorage->write('roles.json', array_values($roles));
+    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete role'];
+}
+
+// Execute activate plugin
+function executeActivatePlugin($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $settingsStorage = new Storage('../settings');
+    
+    $pluginId = $actionData['id'] ?? '';
+    if (empty($pluginId)) {
+        return ['success' => false, 'message' => 'Plugin ID is required'];
+    }
+    
+    $plugins = $settingsStorage->read('plugins.json') ?: [];
+    $plugins[$pluginId] = ['active' => true, 'activated_at' => date('c')];
+    
+    $result = $settingsStorage->write('plugins.json', $plugins);
+    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to activate plugin'];
+}
+
+// Execute deactivate plugin
+function executeDeactivatePlugin($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/storage.php';
+    $settingsStorage = new Storage('../settings');
+    
+    $pluginId = $actionData['id'] ?? '';
+    if (empty($pluginId)) {
+        return ['success' => false, 'message' => 'Plugin ID is required'];
+    }
+    
+    $plugins = $settingsStorage->read('plugins.json') ?: [];
+    if (isset($plugins[$pluginId])) {
+        $plugins[$pluginId]['active'] = false;
+    }
+    
+    $result = $settingsStorage->write('plugins.json', $plugins);
+    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to deactivate plugin'];
+}
+
+echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
+
