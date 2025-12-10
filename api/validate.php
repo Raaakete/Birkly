@@ -35,7 +35,17 @@ function sanitize_array($arr) {
     foreach ($arr as $k => $v) {
         if (is_array($v)) {
             $out[$k] = sanitize_array($v);
+        } elseif (is_bool($v)) {
+            // Preserve boolean values
+            $out[$k] = $v;
+        } elseif (is_int($v) || is_float($v)) {
+            // Preserve numeric values
+            $out[$k] = $v;
+        } elseif (is_null($v)) {
+            // Preserve null values
+            $out[$k] = $v;
         } else {
+            // Only sanitize strings
             $out[$k] = sanitize_string($v);
         }
     }

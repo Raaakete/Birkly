@@ -1,133 +1,145 @@
 <?php
 // api/activity.php - Recent activity tracking for dashboard
 
-header('Content-Type: application/json');
-require_once 'session.php';
-haru_secure_session_start();
-
-require_once 'storage.php';
-require_once 'auth.php';
-
-// Check authentication
-requireAuth('view_dashboard');
-
-$action = $_GET['action'] ?? '';
-
-if ($action === 'recent') {
-    $limit = intval($_GET['limit'] ?? 10);
-    $offset = intval($_GET['offset'] ?? 0);
-    $filter = $_GET['filter'] ?? ''; // 'all', 'content', 'users', 'system'
+// Only execute API code if called directly, not when included
+if (basename($_SERVER['SCRIPT_NAME']) === 'activity.php') {
+    header('Content-Type: application/json');
+    require_once 'session.php';
+    haru_secure_session_start();
     
-    $activity = [];
+    require_once 'storage.php';
+    require_once 'auth.php';
     
-    // Read from security log for recent activity
-    $logFile = __DIR__ . '/../logs/security.log';
-    if (file_exists($logFile)) {
-        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $lines = array_reverse($lines); // Newest first
-        $totalLines = count($lines);
+    // Check authentication
+    requireAuth('view_dashboard');
+    
+    $action = $_GET['action'] ?? '';
+    
+    if ($action === 'recent') {
+        $limit = intval($_GET['limit'] ?? 10);
+        $offset = intval($_GET['offset'] ?? 0);
+        $filter = $_GET['filter'] ?? ''; // 'all', 'content', 'users', 'system'
         
-        $processed = 0;
-        foreach ($lines as $line) {
-            if ($processed >= ($offset + $limit)) break;
+        $activity = [];
+        $lines = [];
+        
+        // Read from security log for recent activity
+        $logFile = __DIR__ . '/../logs/security.log';
+        if (file_exists($logFile)) {
+            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $lines = array_reverse($lines); // Newest first
+            $totalLines = count($lines);
             
-            $entry = json_decode($line, true);
-            if (!$entry || !is_array($entry)) {
-                // Try old format (pipe-separated)
-                $parts = explode(' | ', $line);
-                if (count($parts) >= 3) {
-                    $entry = [
-                        'timestamp' => $parts[0] ?? '',
-                        'event' => $parts[1] ?? '',
-                        'details' => json_decode($parts[2] ?? '{}', true) ?: []
-                    ];
-                } else {
-                    continue;
+            $processed = 0;
+            foreach ($lines as $line) {
+                if ($processed >= ($offset + $limit)) break;
+                
+                $entry = json_decode($line, true);
+                if (!$entry || !is_array($entry)) {
+                    // Try old format (pipe-separated)
+                    $parts = explode(' | ', $line);
+                    if (count($parts) >= 3) {
+                        $entry = [
+                            'timestamp' => $parts[0] ?? '',
+                            'event' => $parts[1] ?? '',
+                            'details' => json_decode($parts[2] ?? '{}', true) ?: []
+                        ];
+                    } else {
+                        continue;
+                    }
+                }
+                
+                $event = $entry['event'] ?? '';
+                $timestamp = $entry['timestamp'] ?? '';
+                $user = $entry['user'] ?? 'Unknown';
+                $details = $entry['details'] ?? [];
+                
+                // Apply filter
+                if ($filter && $filter !== 'all') {
+                    $category = getEventCategory($event);
+                    if ($category !== $filter) {
+                        continue;
+                    }
+                }
+                
+                // Format activity item
+                $activityItem = formatActivityItem($event, $user, $details, $timestamp);
+                if ($activityItem) {
+                    if ($processed >= $offset) {
+                        $activity[] = $activityItem;
+                    }
+                    $processed++;
                 }
             }
+        }
+        
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'activity' => $activity,
+                'total' => count($lines),
+                'limit' => $limit,
+                'offset' => $offset
+            ]
+        ]);
+        exit;
+    }
+    
+    if ($action === 'list') {
+        $limit = intval($_GET['limit'] ?? 50);
+        $offset = intval($_GET['offset'] ?? 0);
+        $filter = $_GET['filter'] ?? '';
+        
+        $activity = [];
+        $logFile = __DIR__ . '/../logs/security.log';
+        
+        if (file_exists($logFile)) {
+            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $lines = array_reverse($lines);
             
-            $event = $entry['event'] ?? '';
-            $timestamp = $entry['timestamp'] ?? '';
-            $user = $entry['user'] ?? 'Unknown';
-            $details = $entry['details'] ?? [];
-            
-            // Apply filter
-            if ($filter && $filter !== 'all') {
-                $category = getEventCategory($event);
-                if ($category !== $filter) {
+            foreach ($lines as $line) {
+                $entry = json_decode($line, true);
+                if (!$entry || !is_array($entry)) {
                     continue;
                 }
-            }
-            
-            // Format activity item
-            $activityItem = formatActivityItem($event, $user, $details, $timestamp);
-            if ($activityItem) {
-                if ($processed >= $offset) {
+                
+                $event = $entry['event'] ?? '';
+                $timestamp = $entry['timestamp'] ?? '';
+                $user = $entry['user'] ?? 'Unknown';
+                $details = $entry['details'] ?? [];
+                
+                if ($filter && $filter !== 'all') {
+                    $category = getEventCategory($event);
+                    if ($category !== $filter) {
+                        continue;
+                    }
+                }
+                
+                $activityItem = formatActivityItem($event, $user, $details, $timestamp);
+                if ($activityItem) {
                     $activity[] = $activityItem;
+                    if (count($activity) >= $limit) break;
                 }
-                $processed++;
             }
         }
-    }
-    
-    echo json_encode([
-        'status' => 'ok',
-        'data' => [
-            'activity' => $activity,
-            'total' => count($lines),
-            'limit' => $limit,
-            'offset' => $offset
-        ]
-    ]);
-    exit;
-}
-
-if ($action === 'list') {
-    $limit = intval($_GET['limit'] ?? 50);
-    $offset = intval($_GET['offset'] ?? 0);
-    $filter = $_GET['filter'] ?? '';
-    
-    $activity = [];
-    $logFile = __DIR__ . '/../logs/security.log';
-    
-    if (file_exists($logFile)) {
-        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $lines = array_reverse($lines);
         
-        foreach ($lines as $line) {
-            $entry = json_decode($line, true);
-            if (!$entry || !is_array($entry)) {
-                continue;
-            }
-            
-            $event = $entry['event'] ?? '';
-            $timestamp = $entry['timestamp'] ?? '';
-            $user = $entry['user'] ?? 'Unknown';
-            $details = $entry['details'] ?? [];
-            
-            if ($filter && $filter !== 'all') {
-                $category = getEventCategory($event);
-                if ($category !== $filter) {
-                    continue;
-                }
-            }
-            
-            $activityItem = formatActivityItem($event, $user, $details, $timestamp);
-            if ($activityItem) {
-                $activity[] = $activityItem;
-                if (count($activity) >= $limit) break;
-            }
-        }
+        echo json_encode([
+            'status' => 'ok',
+            'activity' => $activity,
+            'total' => count($activity)
+        ]);
+        exit;
     }
     
+    // Default response
     echo json_encode([
-        'status' => 'ok',
-        'activity' => $activity,
-        'total' => count($activity)
+        'status' => 'error',
+        'message' => 'Invalid action'
     ]);
     exit;
 }
 
+// Helper functions are always available (for use when included)
 function getEventCategory($event) {
     $contentEvents = ['create_entry', 'update_entry', 'delete_entry', 'create_collection', 'update_collection', 'delete_collection', 'publish_entry', 'unpublish_entry', 'scheduled_publish', 'review_action'];
     $userEvents = ['create_user', 'update_user', 'delete_user', 'invitation_created', 'invitation_accepted'];
@@ -255,10 +267,4 @@ function getEventColor($event) {
     ];
     
     return $colors[$event] ?? '#6c757d';
-}
-
-// Default response
-echo json_encode([
-    'status' => 'error',
-    'message' => 'Invalid action'
-]); 
+} 

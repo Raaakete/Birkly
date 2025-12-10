@@ -53,6 +53,67 @@ $GLOBALS['haru_plugins']['community_users']['dashboard_stats_callback'] = functi
     ];
 };
 
+// Register dashboard widget callback
+$GLOBALS['haru_plugins']['community_users']['dashboard_widgets_callback'] = function() {
+    $community_users_path = __DIR__ . '/collections/community_users/entries/';
+    $user_count = 0;
+    $recent_users = [];
+    
+    if (is_dir($community_users_path)) {
+        $files = glob($community_users_path . '*.json');
+        $user_count = count($files);
+        
+        // Get 5 most recent users
+        $files = array_slice($files, -5);
+        foreach ($files as $file) {
+            $user_data = json_decode(file_get_contents($file), true);
+            if ($user_data) {
+                $recent_users[] = [
+                    'email' => $user_data['email'] ?? 'Unknown',
+                    'created_at' => $user_data['created_at'] ?? date('c')
+                ];
+            }
+        }
+        $recent_users = array_reverse($recent_users);
+    }
+    
+    $recentUsersHtml = '';
+    if (count($recent_users) > 0) {
+        $recentUsersHtml = '<ul style="list-style: none; padding: 0; margin: 0;">';
+        foreach ($recent_users as $user) {
+            $timeAgo = '';
+            if (isset($user['created_at'])) {
+                $created = new DateTime($user['created_at']);
+                $now = new DateTime();
+                $diff = $now->diff($created);
+                if ($diff->days > 0) {
+                    $timeAgo = $diff->days . 'd ago';
+                } elseif ($diff->h > 0) {
+                    $timeAgo = $diff->h . 'h ago';
+                } else {
+                    $timeAgo = 'Just now';
+                }
+            }
+            $recentUsersHtml .= '<li style="padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb;">';
+            $recentUsersHtml .= '<div style="font-weight: 500;">' . htmlspecialchars($user['email']) . '</div>';
+            $recentUsersHtml .= '<div style="font-size: 0.75rem; color: #6b7280;">' . $timeAgo . '</div>';
+            $recentUsersHtml .= '</li>';
+        }
+        $recentUsersHtml .= '</ul>';
+    } else {
+        $recentUsersHtml = '<p style="color: #6b7280; font-size: 0.875rem;">No recent users</p>';
+    }
+    
+    return [
+        [
+            'title' => 'Recent Community Users',
+            'html' => $recentUsersHtml,
+            'content' => "Total users: {$user_count}",
+            'javascript' => 'console.log("Community Users widget loaded");'
+        ]
+    ];
+};
+
 // Hook to handle user registration based on settings
 register_hook('before_user_create', function($user_data) {
     $enable_registration = get_plugin_setting('community_users', 'enable_registration', true);

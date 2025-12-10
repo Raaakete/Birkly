@@ -12,21 +12,12 @@
         </svg>
         General
       </button>
-      <button class="tab-btn" data-tab="users">
+      <button class="tab-btn" data-tab="users-roles">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
-        Users
-      </button>
-      <button class="tab-btn" data-tab="roles">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="8.5" cy="7" r="4"></circle>
-          <path d="M20 8v6"></path>
-          <path d="M23 11h-6"></path>
-        </svg>
-        Roles
+        Users & Roles
       </button>
       <button class="tab-btn" data-tab="plugins">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -57,34 +48,31 @@
         </svg>
         Domains
       </button>
-      <button class="tab-btn" data-tab="audit-log">
+      <button class="tab-btn" data-tab="activity-log">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14,2 14,8 20,8"></polyline>
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10,9 9,9 8,9"></polyline>
         </svg>
-        Audit Log
+        Activity & Audit Log
       </button>
-      <button class="tab-btn" data-tab="activity">
+      <button class="tab-btn" data-tab="ai-connections">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
         </svg>
-        Activity Feed
-      </button>
-      <button class="tab-btn" data-tab="updates">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 4v6h-6"></path>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-        Updates
+        AI Connections
       </button>
     </div>
 
     <div class="tab-content">
       <!-- General Tab -->
       <div class="tab-pane active" id="general">
+        <div class="main-actions-bar">
+          <button type="submit" form="general-form" class="btn btn-primary">Save Settings</button>
+        </div>
         <form id="general-form" class="settings-form" enctype="multipart/form-data">
           <div class="settings-section">
             <h2>Project Information</h2>
@@ -96,18 +84,6 @@
                 <small>This name will be displayed in the admin panel (e.g., "Acme Corp CMS", "My Project")</small>
               </div>
               <div class="form-group">
-                <label for="cms-url">CMS URL</label>
-                <input type="url" id="cms-url" name="cmsUrl" value="<?= htmlspecialchars($settings['admin']['cms_url'] ?? $settings['site']['url'] ?? '') ?>" placeholder="https://cms.example.com">
-                <small>Optional: The URL where this CMS is hosted (for API documentation)</small>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="project-description">Project Description (Optional)</label>
-              <textarea id="project-description" name="projectDescription" rows="3" placeholder="A brief description of this project"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
-              <small>Optional description for your reference in the admin panel</small>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
                 <label for="site-timezone">Timezone</label>
                 <select id="site-timezone" name="siteTimezone">
                   <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
@@ -117,14 +93,26 @@
                   <option value="America/Los_Angeles" <?= ($settings['site']['timezone'] ?? '') === 'America/Los_Angeles' ? 'selected' : '' ?>>Pacific Time</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="site-language">Language</label>
-                <select id="site-language" name="siteLanguage">
-                  <option value="en" <?= ($settings['site']['language'] ?? '') === 'en' ? 'selected' : '' ?>>English</option>
-                  <option value="de" <?= ($settings['site']['language'] ?? '') === 'de' ? 'selected' : '' ?>>Deutsch</option>
-                  <option value="fr" <?= ($settings['site']['language'] ?? '') === 'fr' ? 'selected' : '' ?>>Français</option>
-                  <option value="es" <?= ($settings['site']['language'] ?? '') === 'es' ? 'selected' : '' ?>>Español</option>
-                </select>
+            </div>
+            <div class="form-group">
+              <label for="project-description">Project Description (Optional)</label>
+              <textarea id="project-description" name="projectDescription" rows="3" placeholder="A brief description of this project"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
+              <small>Optional description for your reference in the admin panel</small>
+            </div>
+            <div class="form-group">
+              <label for="project-logo">Project Logo/Icon</label>
+              <input type="file" id="project-logo" name="project_logo" accept="image/*">
+              <small>Upload a logo or icon for your project. This will be displayed in the sidebar and used as the favicon. If not provided, the default HaruCMS icon will be used.</small>
+              <?php if (!empty($settings['branding']['logoPath'])): ?>
+                <div style="margin-top: 0.5rem;">
+                  <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Current logo:</p>
+                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="Current logo" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                  <button type="button" id="remove-logo-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Remove Logo</button>
+                </div>
+              <?php endif; ?>
+              <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
+                <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Preview:</p>
+                <img id="logo-preview-img" src="" alt="Logo preview" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
               </div>
             </div>
           </div>
@@ -160,43 +148,70 @@
           </div>
 
           <div class="settings-section">
-            <h2>Branding</h2>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="branding-primary-color">Primary Color</label>
-                <input type="color" id="branding-primary-color" name="brandingPrimaryColor" value="<?= htmlspecialchars($settings['branding']['primaryColor'] ?? '#3b82f6') ?>">
-              </div>
-              <div class="form-group">
-                <label for="branding-secondary-color">Secondary Color</label>
-                <input type="color" id="branding-secondary-color" name="brandingSecondaryColor" value="<?= htmlspecialchars($settings['branding']['secondaryColor'] ?? '#64748b') ?>">
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="project-logo">Project Logo/Icon</label>
-              <input type="file" id="project-logo" name="project_logo" accept="image/*">
-              <small>Upload a logo or icon for your project. This will be displayed in the sidebar and used as the favicon. If not provided, the default HaruCMS icon will be used.</small>
-              <?php if (!empty($settings['branding']['logoPath'])): ?>
-                <div style="margin-top: 0.5rem;">
-                  <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Current logo:</p>
-                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="Current logo" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                  <button type="button" id="remove-logo-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Remove Logo</button>
+            <h2>System Updates</h2>
+            <div class="updates-content">
+              <!-- Current Version Card -->
+              <div class="card">
+                <div class="card-header">
+                  <h3>Current Version</h3>
+                  <div class="version-badge current">
+                    <span id="current-version">Loading...</span>
+                  </div>
                 </div>
-              <?php endif; ?>
-              <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
-                <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Preview:</p>
-                <img id="logo-preview-img" src="" alt="Logo preview" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                <div class="card-body">
+                  <p>Your HaruCMS installation is running version <strong id="current-version-text">Loading...</strong></p>
+                  <div class="version-info">
+                    <div class="info-item">
+                      <span class="label">Installation Date:</span>
+                      <span class="value" id="install-date">Unknown</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Last Update:</span>
+                      <span class="value" id="last-update">Never</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Update Status Card -->
+              <div class="card" id="update-status-card">
+                <div class="card-header">
+                  <h3>Update Status</h3>
+                  <div class="update-status" id="update-status">
+                    <div class="status-indicator loading">
+                      <div class="spinner"></div>
+                      <span>Checking for updates...</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body" id="update-details" style="display: none;">
+                  <div id="update-info"></div>
+                  <div class="update-actions" id="update-actions" style="display: none;">
+                    <button type="button" class="btn btn-primary" id="download-update-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      Download Update
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="check-updates-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                      </svg>
+                      Check Again
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div class="settings-actions">
-            <button type="submit" class="btn btn-primary">Save General Settings</button>
           </div>
         </form>
       </div>
 
-      <!-- Users Tab -->
-      <div class="tab-pane" id="users">
+      <!-- Users & Roles Tab -->
+      <div class="tab-pane" id="users-roles">
         <div class="settings-section">
           <div class="section-header">
             <h2>User Management</h2>
@@ -217,7 +232,7 @@
               </button>
             </div>
           </div>
-          <div class="users-grid">
+          <div class="users-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
             <?php if (empty($users)): ?>
               <div class="empty-state">
                 <p>No users found.</p>
@@ -225,16 +240,16 @@
               </div>
             <?php else: ?>
               <?php foreach ($users as $user): ?>
-                <div class="user-card">
-                  <div class="user-header">
-                    <div class="user-avatar">
+                <div class="user-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
+                  <div class="user-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem;">
                       <?= strtoupper(substr($user['email'], 0, 1)) ?>
                     </div>
-                    <div class="user-info">
-                      <h4><?= htmlspecialchars($user['email']) ?></h4>
-                      <span class="role-badge <?= $user['role'] ?>"><?= $user['role'] ?></span>
+                    <div class="user-info" style="flex: 1; min-width: 0;">
+                      <h4 style="margin: 0 0 0.25rem 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?= htmlspecialchars($user['email']) ?></h4>
+                      <span class="role-badge <?= $user['role'] ?>" style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: var(--color-primary-light); color: var(--color-primary);"><?= $user['role'] ?></span>
                     </div>
-                    <div class="user-actions">
+                    <div class="user-actions" style="display: flex; gap: 0.5rem;">
                       <button class="btn-icon" onclick="editUser('<?= $user['id'] ?>')" title="Edit User">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -249,65 +264,9 @@
                       </button>
                     </div>
                   </div>
-                  <div class="user-details">
-                    <p><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
-                    <p><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
-                  </div>
-                </div>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        </div>
-      </div>
-
-      <!-- Roles Tab -->
-      <div class="tab-pane" id="roles">
-        <div class="settings-section">
-          <div class="section-header">
-            <h2>User Management</h2>
-            <button class="btn btn-primary" onclick="openAddUserModal()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Add User
-            </button>
-          </div>
-          <div class="users-grid">
-            <?php if (empty($users)): ?>
-              <div class="empty-state">
-                <p>No users found.</p>
-                <button class="btn btn-primary" onclick="openAddUserModal()">Add First User</button>
-              </div>
-            <?php else: ?>
-              <?php foreach ($users as $user): ?>
-                <div class="user-card">
-                  <div class="user-header">
-                    <div class="user-avatar">
-                      <?= strtoupper(substr($user['email'], 0, 1)) ?>
-                    </div>
-                    <div class="user-info">
-                      <h4><?= htmlspecialchars($user['email']) ?></h4>
-                      <span class="role-badge <?= $user['role'] ?>"><?= $user['role'] ?></span>
-                    </div>
-                    <div class="user-actions">
-                      <button class="btn-icon" onclick="editUser('<?= $user['id'] ?>')" title="Edit User">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                      </button>
-                      <button class="btn-icon danger" onclick="confirmDeleteUser('<?= $user['id'] ?>', '<?= htmlspecialchars($user['email']) ?>')" title="Delete User">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="3,6 5,6 21,6"></polyline>
-                          <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="user-details">
-                    <p><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
-                    <p><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
+                  <div class="user-details" style="font-size: 0.875rem; color: var(--text-secondary);">
+                    <p style="margin: 0.25rem 0;"><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
+                    <p style="margin: 0.25rem 0;"><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
                   </div>
                 </div>
               <?php endforeach; ?>
@@ -404,32 +363,35 @@
 
       <!-- Security Tab -->
       <div class="tab-pane" id="security">
+        <div class="main-actions-bar">
+          <button type="submit" form="security-form" class="btn btn-primary">Save Settings</button>
+        </div>
         <form id="security-form" class="settings-form">
           <div class="settings-section">
             <h2>Session Security</h2>
             <div class="form-row">
               <div class="form-group">
                 <label for="security-session-timeout">Session Timeout (minutes)</label>
-                <input type="number" id="security-session-timeout" name="securitySessionTimeout" value="<?= htmlspecialchars($settings['security']['sessionTimeout'] ?? '') ?>" min="5" max="1440">
+                <input type="number" id="security-session-timeout" name="securitySessionTimeout" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
               </div>
               <div class="form-group">
                 <label for="security-max-login-attempts">Max Login Attempts</label>
-                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" value="<?= htmlspecialchars($settings['security']['maxLoginAttempts'] ?? '') ?>" min="3" max="20">
+                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="security-password-min-length">Password Min Length</label>
-                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" value="<?= htmlspecialchars($settings['security']['passwordMinLength'] ?? '') ?>" min="6" max="50">
+                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
               </div>
               <div class="form-group">
                 <label for="security-lockout-time">Lockout Time (minutes)</label>
-                <input type="number" id="security-lockout-time" name="securityLockoutTime" value="<?= htmlspecialchars($settings['security']['lockoutTime'] ?? '') ?>" min="5" max="1440">
+                <input type="number" id="security-lockout-time" name="securityLockoutTime" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
               </div>
             </div>
             <div class="form-group">
               <label class="checkbox-label">
-                <input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['requireStrongPassword'] ?? '') === 'on' ? 'checked' : '' ?>>
+                <input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['require_strong_password'] ?? $settings['security']['requireStrongPassword'] ?? true) ? 'checked' : '' ?>>
                 <span>Require Strong Password</span>
               </label>
             </div>
@@ -453,41 +415,34 @@
               </div>
             </div>
           </div>
-
-          <div class="settings-actions">
-            <button type="submit" class="btn btn-primary">Save Security Settings</button>
-          </div>
         </form>
       </div>
 
       <!-- API Tab -->
       <div class="tab-pane" id="api">
         <div class="settings-section">
-          <h2>API Configuration</h2>
-          <div class="api-info">
-            <div class="info-card">
-              <h3>API Endpoint</h3>
-              <p>The API is available at: <code>/api/</code></p>
+          <h2>API Information</h2>
+          <p class="settings-help">The HaruCMS API allows external applications and domains to access your content programmatically. This page provides information about API endpoints and configuration.</p>
+          
+          <div class="api-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+            <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
+              <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">API Endpoint</h3>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">The API is available at: <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">/api/</code></p>
             </div>
-            <div class="info-card">
-              <h3>Authentication</h3>
-              <p>API requests require proper authentication headers.</p>
+            <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
+              <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Authentication</h3>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">API requests require proper authentication via session cookies or API keys. See the <a href="/admin/index.php?page=settings#domains" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab to register domains for API access.</p>
             </div>
-            <div class="info-card">
-              <h3>Rate Limiting</h3>
-              <p>API requests are rate-limited to prevent abuse.</p>
+            <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
+              <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Rate Limiting</h3>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">API requests are rate-limited per domain to prevent abuse. Rate limits can be configured in the <a href="/admin/index.php?page=settings#domains" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab.</p>
             </div>
           </div>
         </div>
 
         <div class="settings-section">
-          <h2>API Keys</h2>
-          <div class="api-keys">
-            <div class="empty-state">
-              <p>No API keys configured yet.</p>
-              <button class="btn btn-primary">Generate API Key</button>
-            </div>
-          </div>
+          <h2>API Documentation</h2>
+          <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the HaruCMS documentation or contact your system administrator.</p>
         </div>
       </div>
 
@@ -495,9 +450,9 @@
       <div class="tab-pane" id="domains">
         <div class="settings-section">
           <div class="section-header">
-            <h2>Domain Management</h2>
-            <p class="section-description">Register domains to allow them to access your CMS content via the API. Only registered domains can read/write content.</p>
-            <button class="btn btn-primary" onclick="openAddDomainModal()">
+            <h2>Domain Management & Analytics</h2>
+            <p class="section-description">Register domains to allow them to access your CMS content via the API. Optionally enable analytics tracking to monitor visitor statistics. Zero-dependency, self-hosted analytics with complete privacy.</p>
+            <button class="btn btn-primary" id="register-domain-btn" onclick="openAddDomainModal()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -531,33 +486,40 @@
         </div>
       </div>
 
-      <!-- Audit Log Tab -->
-      <div class="tab-pane" id="audit-log">
-        <div class="audit-log-page">
+      <!-- Activity & Audit Log Tab -->
+      <div class="tab-pane" id="activity-log">
+        <div class="activity-log-page">
           <div class="main-actions-bar">
-            <div class="filters">
-              <select id="event-filter" class="input">
+            <div class="filters" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <select id="event-filter" class="input" style="min-width: 200px;">
                 <option value="">All Events</option>
               </select>
-              <input type="date" id="date-filter" class="input" placeholder="Filter by date">
+              <select id="category-filter" class="input" style="min-width: 150px;">
+                <option value="all">All Categories</option>
+                <option value="content">Content</option>
+                <option value="users">Users</option>
+                <option value="system">System</option>
+              </select>
+              <input type="date" id="date-filter" class="input" placeholder="Filter by date" style="min-width: 150px;">
               <button class="btn btn-secondary" id="refresh-logs">Refresh</button>
             </div>
           </div>
           
-          <div class="table-container">
-            <table class="table" id="audit-log-table">
+          <div class="table-container" style="overflow-x: auto;">
+            <table class="table" id="activity-log-table" style="width: 100%; border-collapse: collapse;">
               <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>User</th>
-                  <th>Event</th>
-                  <th>IP Address</th>
-                  <th>Details</th>
+                <tr style="background: var(--bg-secondary); border-bottom: 2px solid var(--border-light);">
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Timestamp</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">User</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Event</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Category</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">IP Address</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Details</th>
                 </tr>
               </thead>
               <tbody id="log-entries">
                 <tr>
-                  <td colspan="5" class="text-center">
+                  <td colspan="6" class="text-center" style="padding: 2rem;">
                     <div class="spinner">Loading...</div>
                   </td>
                 </tr>
@@ -565,101 +527,151 @@
             </table>
           </div>
           
-          <div class="pagination">
+          <div class="pagination" style="margin-top: 1.5rem; text-align: center;">
             <button class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
           </div>
         </div>
       </div>
 
-      <!-- Activity Feed Tab -->
-      <div class="tab-pane" id="activity">
-        <div class="activity-page">
-          <div class="main-actions-bar">
-            <div class="filters">
-              <select id="category-filter" class="input">
-                <option value="all">All Activity</option>
-                <option value="content">Content</option>
-                <option value="users">Users</option>
-                <option value="system">System</option>
-              </select>
-              <button class="btn btn-secondary" id="refresh-activity">Refresh</button>
-            </div>
-          </div>
-          
-          <div class="activity-feed" id="activity-feed">
-            <div class="text-center">
-              <div class="spinner">Loading activity...</div>
-            </div>
-          </div>
-          
-          <div class="pagination">
-            <button class="btn btn-secondary" id="load-more-activity" style="display: none;">Load More</button>
-          </div>
-        </div>
-      </div>
-
       <!-- Updates Tab -->
-      <div class="tab-pane" id="updates">
-        <div class="updates-page">
-          <div class="updates-content">
-            <!-- Current Version Card -->
-            <div class="card">
-              <div class="card-header">
-                <h2>Current Version</h2>
-                <div class="version-badge current">
-                  <span id="current-version">Loading...</span>
+      <div class="tab-pane" id="ai-connections">
+        <div class="ai-connections-settings">
+          <div class="settings-section">
+            <h2>AI Connections</h2>
+            <p class="settings-help">Connect your AI accounts to get AI assistance in creating and editing content. You can configure whether AI actions require approval or execute immediately.</p>
+            
+            <div class="connections-container">
+              <div class="connections-panel">
+                <div class="panel-header">
+                  <h3>Connected AI Services</h3>
+                  <button class="btn btn-primary" id="add-connection-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Connection
+                  </button>
                 </div>
-              </div>
-              <div class="card-body">
-                <p>Your HaruCMS installation is running version <strong id="current-version-text">Loading...</strong></p>
-                <div class="version-info">
-                  <div class="info-item">
-                    <span class="label">Installation Date:</span>
-                    <span class="value" id="install-date">Unknown</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Last Update:</span>
-                    <span class="value" id="last-update">Never</span>
-                  </div>
+                
+                <div class="connections-list" id="connections-list">
+                  <div class="loading">Loading connections...</div>
                 </div>
               </div>
             </div>
 
-            <!-- Update Status Card -->
-            <div class="card" id="update-status-card">
-              <div class="card-header">
-                <h2>Update Status</h2>
-                <div class="update-status" id="update-status">
-                  <div class="status-indicator loading">
-                    <div class="spinner"></div>
-                    <span>Checking for updates...</span>
-                  </div>
-                </div>
+            <!-- Approval Queue Panel -->
+            <div class="approval-queue-panel" id="approval-queue-panel" style="margin-top: 2rem;">
+              <div class="panel-header">
+                <h3>Approval Queue</h3>
+                <button class="btn-icon" id="toggle-queue-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
               </div>
-              <div class="card-body" id="update-details" style="display: none;">
-                <div id="update-info"></div>
-                <div class="update-actions" id="update-actions" style="display: none;">
-                  <button class="btn btn-primary" id="download-update-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7,10 12,15 17,10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Download Update
-                  </button>
-                  <button class="btn btn-secondary" id="check-updates-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M23 4v6h-6"></path>
-                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                    </svg>
-                    Check Again
-                  </button>
-                </div>
+              <div class="approval-queue-content" id="approval-queue-content">
+                <div class="loading">Loading approvals...</div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Add / Edit Connection Modal -->
+        <div class="modal" id="add-connection-modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2 id="connection-modal-title">Add AI Connection</h2>
+              <button class="btn-icon modal-close" id="close-modal-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <form id="add-connection-form" class="modal-body">
+              <input type="hidden" id="connection-id" name="id">
+              <div class="form-group">
+                <label for="connection-provider">AI Provider</label>
+                <select id="connection-provider" name="provider" required>
+                  <option value="">Select a provider...</option>
+                </select>
+                <small>Choose the AI service you want to connect</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="connection-name">Connection Name</label>
+                <input type="text" id="connection-name" name="name" placeholder="My AI Assistant">
+                <small>Optional: Give this connection a friendly name</small>
+              </div>
+              
+              <div class="form-group" id="api-url-group" style="display: none;">
+                <label for="connection-api-url">API URL</label>
+                <input type="url" id="connection-api-url" name="api_url" placeholder="https://api.example.com/v1/chat/completions">
+                <small>API endpoint URL (required for custom providers, optional for others)</small>
+              </div>
+              
+              <div class="form-group" id="api-key-group">
+                <label for="connection-api-key">API Key</label>
+                <input type="password" id="connection-api-key" name="api_key">
+                <small>Your API key from the AI provider. This is stored encrypted and never shared. (Not required for MCP)</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="connection-model">Model</label>
+                <select id="connection-model" name="model">
+                  <option value="">Default</option>
+                </select>
+                <input type="text" id="connection-model-custom" name="model_custom" placeholder="Enter model name" style="display: none; margin-top: 0.5rem;">
+                <small>Select which AI model to use, or enter a custom model name</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="connection-role">Role</label>
+                <select id="connection-role" name="role" required>
+                  <option value="viewer">Viewer (Read-only)</option>
+                  <option value="author" selected>Author (Create content)</option>
+                  <option value="editor">Editor (Create & Edit)</option>
+                  <option value="admin">Admin (Full access)</option>
+                </select>
+                <small>What permissions should this AI have?</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="connection-shared-type">Who can use this connection?</label>
+                <select id="connection-shared-type" name="shared_type" required>
+                  <option value="none" selected>Only me (Private)</option>
+                  <option value="all">All users</option>
+                  <option value="specific">Specific users</option>
+                </select>
+                <small>Choose who can access and use this AI connection</small>
+              </div>
+              
+              <div class="form-group" id="allowed-users-group" style="display: none;">
+                <label for="connection-allowed-users">Select users</label>
+                <div id="allowed-users-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
+                  <div class="loading">Loading users...</div>
+                </div>
+                <small>Select which users can use this connection</small>
+              </div>
+              
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="connection-require-approval" name="require_approval" value="1" checked>
+                  Require approval for AI actions
+                </label>
+                <small>If enabled, all AI actions will require manual approval before execution. If disabled, actions execute immediately.</small>
+              </div>
+              
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="connection-submit-btn">Connect</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
+
+
 
     </div>
   </div>
@@ -691,19 +703,6 @@
             </select>
             <small class="text-muted">Read Only: Can fetch content. Read & Write: Can fetch and submit content.</small>
           </div>
-          <div class="form-group">
-            <label for="domain-plan">License Plan</label>
-            <select id="domain-plan" name="plan" class="input">
-              <option value="basic">Basic</option>
-              <option value="pro">Pro</option>
-              <option value="enterprise">Enterprise</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="domain-expires">Expires At (Optional)</label>
-            <input type="datetime-local" id="domain-expires" name="expires_at" class="input">
-            <small class="text-muted">Leave empty for no expiration</small>
-          </div>
           <div class="form-row">
             <div class="form-group" style="flex: 1;">
               <label>Read Rate Limit (per minute)</label>
@@ -713,6 +712,13 @@
               <label>Write Rate Limit (per hour)</label>
               <input type="number" id="domain-write-limit" name="write_limit" value="10" min="1" class="input">
             </div>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
+              Enable Analytics Tracking
+            </label>
+            <small class="text-muted">Track visitor statistics for this domain. Zero-dependency, self-hosted analytics with complete privacy.</small>
           </div>
         </form>
       </div>
@@ -747,10 +753,6 @@
               <option value="inactive">Inactive</option>
             </select>
           </div>
-          <div class="form-group">
-            <label for="edit-domain-expires">Expires At</label>
-            <input type="datetime-local" id="edit-domain-expires" name="expires_at" class="input">
-          </div>
           <div class="form-row">
             <div class="form-group" style="flex: 1;">
               <label>Read Rate Limit (per minute)</label>
@@ -761,11 +763,84 @@
               <input type="number" id="edit-domain-write-limit" name="write_limit" min="1" class="input">
             </div>
           </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="edit-domain-enable-analytics" name="enable_analytics" value="1">
+              Enable Analytics Tracking
+            </label>
+            <small class="text-muted">Track visitor statistics for this domain.</small>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeEditDomainModal()">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="updateDomain()">Update Domain</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Role Management Modals -->
+  <!-- Add Role Modal -->
+  <div id="add-role-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2>Add New Role</h2>
+        <button class="modal-close-btn" onclick="closeAddRoleModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="add-role-form">
+          <div class="form-group">
+            <label for="role-name">Role Name</label>
+            <input type="text" id="role-name" name="name" required class="input" placeholder="e.g., Content Manager">
+          </div>
+          <div class="form-group">
+            <label for="role-description">Description</label>
+            <textarea id="role-description" name="description" class="input" rows="3" placeholder="Describe what this role can do"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Permissions</label>
+            <div class="permissions-grid" id="add-permissions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+              <!-- Permissions will be populated by JavaScript -->
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddRoleModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="createRole()">Create Role</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Role Modal -->
+  <div id="edit-role-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2>Edit Role</h2>
+        <button class="modal-close-btn" onclick="closeEditRoleModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-role-form">
+          <input type="hidden" id="edit-role-id" name="id">
+          <div class="form-group">
+            <label for="edit-role-name">Role Name</label>
+            <input type="text" id="edit-role-name" name="name" required class="input">
+          </div>
+          <div class="form-group">
+            <label for="edit-role-description">Description</label>
+            <textarea id="edit-role-description" name="description" class="input" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Permissions</label>
+            <div class="permissions-grid" id="edit-permissions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+              <!-- Permissions will be populated by JavaScript -->
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditRoleModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="updateRole()">Update Role</button>
       </div>
     </div>
   </div>
@@ -776,7 +851,7 @@
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
         <h2>Setup Two-Factor Authentication</h2>
-        <button class="modal-close-btn" onclick="close2FASetupModal()">&times;</button>
+        <button class="modal-close-btn" onclick="if(window.close2FASetupModal) { window.close2FASetupModal(); } else { document.getElementById('2fa-setup-modal').style.display = 'none'; }">&times;</button>
       </div>
       <div class="modal-body">
         <div id="2fa-setup-content">
@@ -955,72 +1030,506 @@
   <div id="settings-message" class="settings-message" style="display: none;"></div>
 </div>
 
+<style>
+/* Simple checkbox styling for permissions */
+.permissions-grid input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+    cursor: pointer;
+    margin: 0;
+    margin-right: 8px;
+    flex-shrink: 0;
+    accent-color: #3b82f6;
+}
+
+.permissions-grid input[type="checkbox"]:checked {
+    accent-color: #3b82f6;
+}
+
+.permissions-grid .checkbox-label {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text-primary, #1e293b);
+    cursor: pointer;
+    user-select: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.permissions-grid .checkbox-label:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.permissions-grid .checkbox-label:has(input:checked) {
+    background-color: rgba(59, 130, 246, 0.1);
+    font-weight: 500;
+}
+</style>
+
 <script>
-// Tab functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabPanes = document.querySelectorAll('.tab-pane');
+// Role management functions - MUST be defined first, before any IIFE
+let availableResources = ['collections', 'media', 'users', 'settings'];
+let availableActions = ['view', 'edit', 'create', 'delete'];
 
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetTab = this.getAttribute('data-tab');
-            
-            // Remove active class from all buttons and panes
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabPanes.forEach(pane => pane.classList.remove('active'));
-            
-            // Add active class to clicked button and corresponding pane
-            this.classList.add('active');
-            const targetPane = document.getElementById(targetTab);
-            if (targetPane) {
-                targetPane.classList.add('active');
-            }
-            
-            // Handle URL hash for deep linking
-            if (targetTab) {
-                window.history.replaceState(null, '', '?page=settings#' + targetTab);
-            }
-        });
-    });
-
-    // Check URL hash on load to set active tab
-    const hash = window.location.hash.replace('#', '');
-    if (hash) {
-        const tabButton = document.querySelector(`[data-tab="${hash}"]`);
-        const tabPane = document.getElementById(hash);
-        if (tabButton && tabPane) {
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabPanes.forEach(pane => pane.classList.remove('active'));
-            tabButton.classList.add('active');
-            tabPane.classList.add('active');
-        }
+function createPermissionsGrid(containerId, permissions = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error('Container not found:', containerId);
+        return;
     }
-
-    // Initialize tabs when clicked
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            const targetTab = this.getAttribute('data-tab');
+    
+    // Verify container is inside a form
+    const form = container.closest('form');
+    if (!form) {
+        console.warn('Permissions grid container is not inside a form');
+    }
+    
+    container.innerHTML = '';
+    
+    availableResources.forEach(resource => {
+        const section = document.createElement('div');
+        section.className = 'permission-section';
+        section.style.cssText = 'background: var(--bg-secondary, #f8f9fa); border: 1px solid var(--border-color, #e2e8f0); border-radius: var(--radius-md, 8px); padding: 1rem;';
+        
+        availableActions.forEach(action => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-label';
+            label.style.cssText = 'display: flex; align-items: center; font-size: 0.875rem; color: var(--text-primary, #1e293b); cursor: pointer; user-select: none; padding: 0.5rem; border-radius: 4px; transition: background-color 0.15s ease;';
             
-            // Initialize specific tab functionality
-            if (targetTab === 'audit-log' && typeof window.initAuditLog === 'function') {
-                setTimeout(() => window.initAuditLog(), 100);
-            } else if (targetTab === 'activity' && typeof window.initActivity === 'function') {
-                setTimeout(() => window.initActivity(), 100);
-            } else if (targetTab === 'updates' && typeof window.initUpdates === 'function') {
-                setTimeout(() => window.initUpdates(), 100);
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = `permissions[${resource}][]`;
+            checkbox.value = action;
+            checkbox.setAttribute('data-resource', resource);
+            checkbox.checked = hasPermission(permissions, resource, action);
+            // Simple, clear checkbox styling
+            checkbox.style.cssText = 'width: 20px; height: 20px; min-width: 20px; min-height: 20px; cursor: pointer; margin: 0; margin-right: 8px; flex-shrink: 0;';
+            
+            checkbox.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            const span = document.createElement('span');
+            span.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+            span.style.cssText = 'cursor: pointer;';
+            
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            
+            // Simple hover effect
+            label.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+            });
+            
+            label.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+            
+            const checkboxesDiv = section.querySelector('.permission-checkboxes') || document.createElement('div');
+            if (!section.querySelector('.permission-checkboxes')) {
+                checkboxesDiv.className = 'permission-checkboxes';
+                checkboxesDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem;';
+                
+                const h4 = document.createElement('h4');
+                h4.textContent = resource;
+                h4.style.cssText = 'margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-primary, #1e293b); text-transform: capitalize; font-weight: 600;';
+                section.appendChild(h4);
+                section.appendChild(checkboxesDiv);
             }
+            
+            checkboxesDiv.appendChild(label);
         });
+        
+        container.appendChild(section);
     });
     
-    // Initialize if hash is set on load
-    if (hash === 'audit-log' && typeof window.initAuditLog === 'function') {
-        setTimeout(() => window.initAuditLog(), 200);
-    } else if (hash === 'activity' && typeof window.initActivity === 'function') {
-        setTimeout(() => window.initActivity(), 200);
-    } else if (hash === 'updates' && typeof window.initUpdates === 'function') {
-        setTimeout(() => window.initUpdates(), 200);
+    console.log('Permissions grid created in:', containerId, 'with', container.querySelectorAll('input[type="checkbox"]').length, 'checkboxes');
+}
+
+function hasPermission(permissions, resource, action) {
+    if (!permissions) return false;
+    if (permissions['*'] && permissions['*'].includes(action)) return true;
+    if (permissions[resource] && permissions[resource].includes(action)) return true;
+    return false;
+}
+
+function collectPermissions(form) {
+    const permissions = {};
+    if (!form) {
+        console.error('Form is null in collectPermissions');
+        return permissions;
     }
+    
+    availableResources.forEach(resource => {
+        // Use attribute selector with escaped brackets
+        const selector = `input[name="permissions[${resource}][]"]:checked`;
+        const checkboxes = form.querySelectorAll(selector);
+        console.log(`Found ${checkboxes.length} checked boxes for ${resource}`, checkboxes);
+        
+        if (checkboxes.length > 0) {
+            permissions[resource] = Array.from(checkboxes).map(cb => cb.value);
+        }
+    });
+    
+    console.log('Collected permissions:', permissions);
+    return permissions;
+}
+
+function openAddRoleModal() {
+    const modal = document.getElementById('add-role-modal');
+    if (!modal) {
+        console.error('Add role modal not found');
+        alert('Role modal not found. Please refresh the page.');
+        return;
+    }
+    console.log('Opening add role modal');
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    const form = document.getElementById('add-role-form');
+    if (form) form.reset();
+    createPermissionsGrid('add-permissions-grid');
+    console.log('Modal opened, permissions grid created');
+}
+
+function closeAddRoleModal() {
+    const modal = document.getElementById('add-role-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+}
+
+async function editRole(roleId) {
+    console.log('editRole called for:', roleId);
+    const modal = document.getElementById('edit-role-modal');
+    if (!modal) {
+        console.error('Edit role modal not found');
+        alert('Edit role modal not found. Please refresh the page.');
+        return;
+    }
+    
+    // Show modal
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    // Load role data
+    try {
+        const response = await fetch(`/api/roles.php?action=get_role&id=${encodeURIComponent(roleId)}`);
+        const result = await response.json();
+        
+        if (result.status === 'ok' && result.role) {
+            const role = result.role;
+            
+            // Fill form
+            document.getElementById('edit-role-id').value = role.id || roleId;
+            document.getElementById('edit-role-name').value = role.name || '';
+            document.getElementById('edit-role-description').value = role.description || '';
+            
+            // Create permissions grid with existing permissions
+            createPermissionsGrid('edit-permissions-grid', role.permissions || {});
+            
+            console.log('Role loaded:', role);
+        } else {
+            showMessage('Error loading role: ' + (result.message || 'Unknown error'), 'error');
+            closeEditRoleModal();
+        }
+    } catch (error) {
+        console.error('Error loading role:', error);
+        showMessage('Error loading role: ' + error.message, 'error');
+        closeEditRoleModal();
+    }
+}
+
+function closeEditRoleModal() {
+    const modal = document.getElementById('edit-role-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+}
+
+async function updateRole() {
+    console.log('updateRole called');
+    const form = document.getElementById('edit-role-form');
+    if (!form) {
+        console.error('Edit form not found');
+        showMessage('Error: Form not found', 'error');
+        return;
+    }
+    
+    const roleId = document.getElementById('edit-role-id').value;
+    const nameInput = form.querySelector('#edit-role-name');
+    const descriptionInput = form.querySelector('#edit-role-description');
+    
+    if (!nameInput || !nameInput.value.trim()) {
+        showMessage('Error: Role name is required', 'error');
+        nameInput?.focus();
+        return;
+    }
+    
+    const roleName = nameInput.value.trim();
+    const roleDescription = descriptionInput ? descriptionInput.value.trim() : '';
+    
+    // Collect permissions
+    const permissions = collectPermissions(form);
+    console.log('Updated role data:', { id: roleId, name: roleName, description: roleDescription, permissions });
+    
+    const roleData = {
+        role: {
+            id: roleId,
+            name: roleName,
+            description: roleDescription,
+            permissions: permissions
+        },
+        _csrf: getCsrfToken()
+    };
+    
+    console.log('Sending update role data:', roleData);
+    
+    try {
+        const response = await fetch('/api/roles.php?action=update_role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(roleData)
+        });
+        
+        console.log('Response status:', response.status);
+        const result = await response.json();
+        console.log('Response data:', result);
+        
+        if (result.status === 'ok') {
+            showMessage('Role updated successfully!', 'success');
+            closeEditRoleModal();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error updating role:', error);
+        showMessage('Error updating role: ' + error.message, 'error');
+    }
+}
+
+async function createRole() {
+    console.log('createRole called');
+    const form = document.getElementById('add-role-form');
+    if (!form) {
+        console.error('Form not found');
+        showMessage('Error: Form not found', 'error');
+        return;
+    }
+    
+    // Get form values
+    const nameInput = form.querySelector('#role-name');
+    const descriptionInput = form.querySelector('#role-description');
+    
+    if (!nameInput || !nameInput.value.trim()) {
+        showMessage('Error: Role name is required', 'error');
+        nameInput?.focus();
+        return;
+    }
+    
+    const roleName = nameInput.value.trim();
+    const roleDescription = descriptionInput ? descriptionInput.value.trim() : '';
+    
+    // Collect permissions
+    const permissions = collectPermissions(form);
+    console.log('Role data:', { name: roleName, description: roleDescription, permissions });
+    
+    const roleData = {
+        action: 'create_role',
+        role: {
+            id: roleName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            name: roleName,
+            description: roleDescription,
+            permissions: permissions
+        },
+        _csrf: getCsrfToken()
+    };
+    
+    console.log('Sending role data:', roleData);
+    
+    try {
+        // API expects action in query string, not in body
+        const response = await fetch('/api/roles.php?action=create_role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                role: roleData.role,
+                _csrf: roleData._csrf
+            })
+        });
+        
+        console.log('Response status:', response.status);
+        const result = await response.json();
+        console.log('Response data:', result);
+        
+        if (result.status === 'ok') {
+            showMessage('Role created successfully!', 'success');
+            closeAddRoleModal();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error creating role:', error);
+        showMessage('Error creating role: ' + error.message, 'error');
+    }
+}
+
+function deleteRole(roleId) {
+    if (!confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
+        return;
+    }
+    
+    // API expects action in query string, not in body
+    fetch('/api/roles.php?action=delete_role', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: roleId,
+            _csrf: getCsrfToken()
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'ok') {
+            showMessage('Role deleted successfully!', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Error deleting role: ' + error.message, 'error');
+    });
+}
+
+// Ensure functions are available on window for onclick handlers
+window.openAddRoleModal = openAddRoleModal;
+window.closeAddRoleModal = closeAddRoleModal;
+window.createRole = createRole;
+window.editRole = editRole;
+window.closeEditRoleModal = closeEditRoleModal;
+window.updateRole = updateRole;
+window.deleteRole = deleteRole;
+
+// Tab functionality - simplified and robust
+(function() {
+    function initTabs() {
+        var tabButtons = document.querySelectorAll('.tab-btn');
+        var tabPanes = document.querySelectorAll('.tab-pane');
+        
+        if (!tabButtons || tabButtons.length === 0) {
+            console.error('No tab buttons found');
+            return;
+        }
+        
+        if (!tabPanes || tabPanes.length === 0) {
+            console.error('No tab panes found');
+            return;
+        }
+        
+        // Attach click handlers
+        for (var i = 0; i < tabButtons.length; i++) {
+            tabButtons[i].addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var targetTab = this.getAttribute('data-tab');
+                if (!targetTab) return;
+                
+                // Remove active from all
+                for (var j = 0; j < tabButtons.length; j++) {
+                    tabButtons[j].classList.remove('active');
+                }
+                for (var k = 0; k < tabPanes.length; k++) {
+                    tabPanes[k].classList.remove('active');
+                }
+                
+                // Add active to clicked
+                this.classList.add('active');
+                var pane = document.getElementById(targetTab);
+                if (pane) {
+                    pane.classList.add('active');
+                }
+                
+                // Update URL
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', '?page=settings#' + targetTab);
+                }
+                
+                // Initialize tab-specific functionality
+                setTimeout(function() {
+                    if (targetTab === 'activity-log' && typeof window.initAuditLog === 'function') {
+                        window.initAuditLog();
+                    } else if (targetTab === 'general' && typeof window.initUpdates === 'function') {
+                        // Initialize updates when general tab is shown
+                        window.initUpdates();
+                    } else if (targetTab === 'domains' && typeof window.loadDomains === 'function') {
+                        window.loadDomains();
+                    }
+                }, 100);
+            });
+        }
+        
+        // Handle hash on load
+        var hash = window.location.hash.replace('#', '');
+        if (hash) {
+            var hashButton = document.querySelector('[data-tab="' + hash + '"]');
+            var hashPane = document.getElementById(hash);
+            if (hashButton && hashPane) {
+                for (var m = 0; m < tabButtons.length; m++) {
+                    tabButtons[m].classList.remove('active');
+                }
+                for (var n = 0; n < tabPanes.length; n++) {
+                    tabPanes[n].classList.remove('active');
+                }
+                hashButton.classList.add('active');
+                hashPane.classList.add('active');
+                
+                // Initialize tab-specific functionality for hash
+                if (hash === 'domains' && typeof window.loadDomains === 'function') {
+                    setTimeout(function() {
+                        window.loadDomains();
+                    }, 100);
+                }
+            }
+        } else {
+            // If no hash, check if domains tab is active by default
+            var defaultTab = document.querySelector('.tab-btn.active');
+            if (defaultTab && defaultTab.getAttribute('data-tab') === 'domains') {
+                setTimeout(function() {
+                    if (typeof window.loadDomains === 'function') {
+                        window.loadDomains();
+                    }
+                }, 100);
+            }
+        }
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTabs);
+    } else {
+        initTabs();
+    }
+    
+    // Initialize updates if general tab is active on page load
+    if (document.getElementById('general') && document.getElementById('general').classList.contains('active')) {
+        setTimeout(function() {
+            if (typeof window.initUpdates === 'function') {
+                window.initUpdates();
+            }
+        }, 200);
+    }
+})();
 
     // Form submissions
     const generalForm = document.getElementById('general-form');
@@ -1087,7 +1596,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (securityForm) {
         securityForm.addEventListener('submit', handleFormSubmit);
     }
-});
 
 // Get CSRF token from meta tag or generate one
 function getCsrfToken() {
@@ -1249,10 +1757,12 @@ function closeEditUserModal() {
     document.getElementById('edit-user-modal').classList.remove('active');
 }
 
+// Role functions are now defined at the top of the script tag
+
 function editUser(userId) {
     // Find user data
-    const users = <?= json_encode($users ?? []) ?>;
-    const user = users.find(u => u.id === userId);
+    var users = <?= json_encode($users ?? []) ?>;
+    var user = users.find(u => u.id === userId);
     if (!user) return;
     
     // Populate edit form
@@ -1345,7 +1855,7 @@ async function updateUser() {
 }
 
 function confirmDeleteUser(userId, email) {
-    if (confirm(`Are you sure you want to delete user "${email}"? This action cannot be undone.`)) {
+    if (confirm('Are you sure you want to delete user "' + email + '"? This action cannot be undone.')) {
         deleteUser(userId);
     }
 }
@@ -1388,14 +1898,63 @@ function deleteUserFromModal() {
 }
 
 // Plugin management functions
-function togglePlugin(pluginId, activate) {
-    const action = activate ? 'activate' : 'deactivate';
-    showMessage(`${action} plugin functionality not implemented yet`, 'warning');
+async function togglePlugin(pluginId, activate) {
+    var action = activate ? 'activate' : 'deactivate';
+    
+    try {
+        const response = await fetch('/api/plugins.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: action,
+                plugin_id: pluginId,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage(result.message || 'Plugin ' + action + 'd successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + (result.message || 'Failed to ' + action + ' plugin'), 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+    }
 }
 
-function deletePlugin(pluginId) {
-    if (confirm('Are you sure you want to delete this plugin?')) {
-        showMessage('Delete plugin functionality not implemented yet', 'warning');
+async function deletePlugin(pluginId) {
+    if (!confirm('Are you sure you want to delete this plugin? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/plugins.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'delete',
+                plugin_id: pluginId,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage(result.message || 'Plugin deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showMessage('Error: ' + (result.message || 'Failed to delete plugin'), 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
     }
 }
 
@@ -1406,6 +1965,97 @@ function deletePlugin(pluginId) {
     let setupSecret = null;
     let setupBackupCodes = null;
     
+    // Define the function first
+    async function open2FASetupModal() {
+        console.log('open2FASetupModal called');
+        var modal = document.getElementById('2fa-setup-modal');
+        var content = document.getElementById('2fa-setup-content');
+        
+        console.log('Modal element:', modal);
+        console.log('Content element:', content);
+        
+        if (!modal) {
+            console.error('2FA modal element not found');
+            alert('2FA modal not found. Please refresh the page.');
+            return;
+        }
+        
+        if (!content) {
+            console.error('2FA setup content element not found');
+            alert('2FA setup content not found. Please refresh the page.');
+            return;
+        }
+        
+        console.log('Showing modal');
+        // Modal uses .active class for visibility (CSS handles opacity/visibility)
+        modal.style.display = 'flex'; // Ensure it's in the DOM flow
+        modal.classList.add('active'); // This makes it visible via CSS
+        content.innerHTML = '<div class="text-center"><div class="spinner">Setting up 2FA...</div></div>';
+        
+        try {
+            console.log('Fetching 2FA setup...');
+            var response = await fetch('/api/2fa.php?action=setup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+            }
+            
+            var data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.status === 'ok') {
+                setupSecret = data.data.secret;
+                setupBackupCodes = data.data.backup_codes;
+                
+                // Generate QR code URL
+                var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(data.data.qr_url);
+                var manualEntryKey = escapeHtml(data.data.manual_entry_key || '');
+                
+                content.innerHTML = (
+                    '<div class="2fa-setup-step1">' +
+                        '<h3 style="margin-top: 0;">Step 1: Scan QR Code</h3>' +
+                        '<p class="text-muted">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>' +
+                        '<div style="text-align: center; margin: 24px 0;">' +
+                            '<img src="' + qrUrl + '" alt="2FA QR Code" style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; background: white;">' +
+                        '</div>' +
+                        '<div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 16px 0;">' +
+                            '<p style="margin: 0; font-size: 0.875em; color: #666;"><strong>Manual Entry:</strong> If you cannot scan the QR code, enter this key manually:</p>' +
+                            '<code style="display: block; margin-top: 8px; font-size: 0.875em; word-break: break-all;">' + manualEntryKey + '</code>' +
+                        '</div>' +
+                        '<button class="btn btn-primary" onclick="window.verify2FASetup()">I have scanned the code</button>' +
+                        '<button class="btn btn-secondary" onclick="window.close2FASetupModal()" style="margin-left: 8px;">Cancel</button>' +
+                    '</div>' +
+                    '<div class="2fa-setup-step2" style="display: none;">' +
+                        '<h3 style="margin-top: 0;">Step 2: Verify Code</h3>' +
+                        '<p class="text-muted">Enter the 6-digit code from your authenticator app to verify setup:</p>' +
+                        '<div class="form-group">' +
+                            '<label for="setup-verify-code">Verification Code</label>' +
+                            '<input type="text" id="setup-verify-code" class="input" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.5rem;">' +
+                        '</div>' +
+                        '<button class="btn btn-primary" onclick="window.enable2FA()">Enable 2FA</button>' +
+                        '<button class="btn btn-secondary" onclick="window.close2FASetupModal()" style="margin-left: 8px;">Cancel</button>' +
+                    '</div>'
+                );
+            } else {
+                console.error('2FA setup failed:', data);
+                var errorMsg = escapeHtml(data.message || 'Unknown error');
+                content.innerHTML = '<p class="text-danger">Error: ' + errorMsg + '</p><button class="btn btn-secondary" onclick="window.close2FASetupModal()">Close</button>';
+            }
+        } catch (error) {
+            console.error('Error setting up 2FA:', error);
+            var errorMsg = escapeHtml(error.message || 'Unknown error');
+            content.innerHTML = '<p class="text-danger">Error setting up 2FA: ' + errorMsg + '</p><p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">Check the browser console for more details.</p><button class="btn btn-secondary" onclick="window.close2FASetupModal()">Close</button>';
+        }
+    }
+    
+    // Expose function to window IMMEDIATELY after definition (synchronously)
+    window.open2FASetupModal = open2FASetupModal;
+    
     // Load 2FA status on page load
     if (document.getElementById('2fa-status')) {
         load2FAStatus();
@@ -1413,8 +2063,8 @@ function deletePlugin(pluginId) {
     
     async function load2FAStatus() {
         try {
-            const response = await fetch('/api/2fa.php?action=status');
-            const data = await response.json();
+            var response = await fetch('/api/2fa.php?action=status');
+            var data = await response.json();
             
             if (data.status === 'ok') {
                 render2FAStatus(data.enabled, data.enabled_at, data.backup_codes_count);
@@ -1427,84 +2077,62 @@ function deletePlugin(pluginId) {
         }
     }
     
-    function render2FAStatus(enabled, enabledAt, backupCodesCount) {
-        const container = document.getElementById('2fa-status');
-        
-        if (enabled) {
-            container.innerHTML = `
-                <div class="2fa-status-enabled">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                        <span class="badge badge-success">Enabled</span>
-                        <span class="text-muted">${enabledAt ? 'Enabled on ' + new Date(enabledAt).toLocaleDateString() : ''}</span>
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <p class="text-muted">You have ${backupCodesCount || 0} backup codes remaining.</p>
-                    </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-secondary btn-sm" onclick="regenerate2FABackupCodes()">Regenerate Backup Codes</button>
-                        <button class="btn btn-danger btn-sm" onclick="open2FADisableModal()">Disable 2FA</button>
-                    </div>
-                </div>
-            `;
-        } else {
-            container.innerHTML = `
-                <div class="2fa-status-disabled">
-                    <p class="text-muted" style="margin-bottom: 16px;">Two-factor authentication is not enabled for your account.</p>
-                    <button class="btn btn-primary" onclick="open2FASetupModal()">Enable 2FA</button>
-                </div>
-            `;
-        }
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
     
-    async function open2FASetupModal() {
-        const modal = document.getElementById('2fa-setup-modal');
-        const content = document.getElementById('2fa-setup-content');
+    function render2FAStatus(enabled, enabledAt, backupCodesCount) {
+        var container = document.getElementById('2fa-status');
         
-        modal.style.display = 'flex';
-        content.innerHTML = '<div class="text-center"><div class="spinner">Setting up 2FA...</div></div>';
-        
-        try {
-            const response = await fetch('/api/2fa.php?action=setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-            const data = await response.json();
-            
-            if (data.status === 'ok') {
-                setupSecret = data.data.secret;
-                setupBackupCodes = data.data.backup_codes;
-                
-                // Generate QR code URL
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.data.qr_url)}`;
-                
-                content.innerHTML = `
-                    <div class="2fa-setup-step1">
-                        <h3 style="margin-top: 0;">Step 1: Scan QR Code</h3>
-                        <p class="text-muted">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
-                        <div style="text-align: center; margin: 24px 0;">
-                            <img src="${qrUrl}" alt="2FA QR Code" style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; background: white;">
-                        </div>
-                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 16px 0;">
-                            <p style="margin: 0; font-size: 0.875em; color: #666;"><strong>Manual Entry:</strong> If you can't scan the QR code, enter this key manually:</p>
-                            <code style="display: block; margin-top: 8px; font-size: 0.875em; word-break: break-all;">${data.data.manual_entry_key}</code>
-                        </div>
-                        <button class="btn btn-primary" onclick="verify2FASetup()">I've scanned the code</button>
-                        <button class="btn btn-secondary" onclick="close2FASetupModal()" style="margin-left: 8px;">Cancel</button>
-                    </div>
-                    <div class="2fa-setup-step2" style="display: none;">
-                        <h3 style="margin-top: 0;">Step 2: Verify Code</h3>
-                        <p class="text-muted">Enter the 6-digit code from your authenticator app to verify setup:</p>
-                        <div class="form-group">
-                            <label for="setup-verify-code">Verification Code</label>
-                            <input type="text" id="setup-verify-code" class="input" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.5rem;">
-                        </div>
-                        <button class="btn btn-primary" onclick="enable2FA()">Enable 2FA</button>
-                        <button class="btn btn-secondary" onclick="close2FASetupModal()" style="margin-left: 8px;">Cancel</button>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = `<p class="text-danger">Error: ${data.message}</p><button class="btn btn-secondary" onclick="close2FASetupModal()">Close</button>`;
+        if (enabled) {
+            var enabledDate = enabledAt ? 'Enabled on ' + new Date(enabledAt).toLocaleDateString() : '';
+            var codesCount = backupCodesCount || 0;
+            container.innerHTML = 
+                '<div class="2fa-status-enabled">' +
+                    '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">' +
+                        '<span class="badge badge-success">Enabled</span>' +
+                        '<span class="text-muted">' + enabledDate + '</span>' +
+                    '</div>' +
+                    '<div style="margin-bottom: 16px;">' +
+                        '<p class="text-muted">You have ' + codesCount + ' backup codes remaining.</p>' +
+                    '</div>' +
+                    '<div style="display: flex; gap: 8px; flex-wrap: wrap;">' +
+                        '<button class="btn btn-secondary btn-sm" onclick="window.regenerate2FABackupCodes()">Regenerate Backup Codes</button>' +
+                        '<button class="btn btn-danger btn-sm" onclick="window.open2FADisableModal()">Disable 2FA</button>' +
+                    '</div>' +
+                '</div>';
+        } else {
+            container.innerHTML = 
+                '<div class="2fa-status-disabled">' +
+                    '<p class="text-muted" style="margin-bottom: 16px;">Two-factor authentication is not enabled for your account.</p>' +
+                    '<button class="btn btn-primary" id="enable-2fa-btn">Enable 2FA</button>' +
+                '</div>';
+            // Attach event listener immediately after creating button
+            var btn = document.getElementById('enable-2fa-btn');
+            if (btn) {
+                // Use both onclick and addEventListener for maximum compatibility
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('2FA button clicked');
+                    console.log('window.open2FASetupModal type:', typeof window.open2FASetupModal);
+                    if (typeof window.open2FASetupModal === 'function') {
+                        try {
+                            window.open2FASetupModal();
+                        } catch (err) {
+                            console.error('Error calling open2FASetupModal:', err);
+                            alert('Error opening 2FA setup: ' + err.message);
+                        }
+                    } else {
+                        console.error('open2FASetupModal is not a function');
+                        alert('2FA setup is not available. Please refresh the page.');
+                    }
+                    return false;
+                };
             }
-        } catch (error) {
-            console.error('Error setting up 2FA:', error);
-            content.innerHTML = `<p class="text-danger">Error setting up 2FA: ${error.message}</p><button class="btn btn-secondary" onclick="close2FASetupModal()">Close</button>`;
         }
     }
     
@@ -1515,7 +2143,7 @@ function deletePlugin(pluginId) {
     }
     
     async function enable2FA() {
-        const code = document.getElementById('setup-verify-code').value.trim();
+        var code = document.getElementById('setup-verify-code').value.trim();
         
         if (!code || code.length !== 6) {
             alert('Please enter a valid 6-digit code');
@@ -1523,13 +2151,13 @@ function deletePlugin(pluginId) {
         }
         
         try {
-            const response = await fetch('/api/2fa.php?action=enable', {
+            var response = await fetch('/api/2fa.php?action=enable', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ code: code })
             });
             
-            const data = await response.json();
+            var data = await response.json();
             
             if (data.status === 'ok') {
                 // Show backup codes
@@ -1544,27 +2172,36 @@ function deletePlugin(pluginId) {
     }
     
     function showBackupCodes(codes) {
-        const content = document.getElementById('2fa-setup-content');
-        content.innerHTML = `
-            <div class="2fa-setup-step3">
-                <h3 style="margin-top: 0;">Step 3: Save Backup Codes</h3>
-                <p class="text-warning"><strong>Important:</strong> Save these backup codes in a safe place. You can use them to access your account if you lose your authenticator device.</p>
-                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                    <code style="display: block; font-family: monospace; line-height: 2; font-size: 0.875em;">
-                        ${codes.map(code => code).join('<br>')}
-                    </code>
-                </div>
-                <p class="text-muted">Each backup code can only be used once.</p>
-                <button class="btn btn-primary" onclick="close2FASetupModal(); load2FAStatus();">Done</button>
-            </div>
-        `;
+        var content = document.getElementById('2fa-setup-content');
+        var codesHtml = codes.map(function(code) {
+            return escapeHtml(code);
+        }).join('<br>');
+        content.innerHTML = 
+            '<div class="2fa-setup-step3">' +
+                '<h3 style="margin-top: 0;">Step 3: Save Backup Codes</h3>' +
+                '<p style="color: var(--text-primary); background: var(--color-positiv, #e4f1ec); padding: 0.75rem; border-radius: 4px; border-left: 3px solid var(--color-primary);"><strong>Important:</strong> Save these backup codes in a safe place. You can use them to access your account if you lose your authenticator device.</p>' +
+                '<div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">' +
+                    '<code style="display: block; font-family: monospace; line-height: 2; font-size: 0.875em;">' +
+                        codesHtml +
+                    '</code>' +
+                '</div>' +
+                '<p class="text-muted">Each backup code can only be used once.</p>' +
+                '<button class="btn btn-primary" onclick="window.close2FASetupModal(); load2FAStatus();">Done</button>' +
+            '</div>';
     }
     
     function close2FASetupModal() {
-        document.getElementById('2fa-setup-modal').style.display = 'none';
+        var modal = document.getElementById('2fa-setup-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(function() {
+                modal.style.display = 'none';
+            }, 300);
+        }
         setupSecret = null;
         setupBackupCodes = null;
     }
+    
     
     function open2FADisableModal() {
         document.getElementById('2fa-disable-modal').style.display = 'flex';
@@ -1576,11 +2213,11 @@ function deletePlugin(pluginId) {
     }
     
     async function disable2FA() {
-        const form = document.getElementById('2fa-disable-form');
-        const formData = new FormData(form);
+        var form = document.getElementById('2fa-disable-form');
+        var formData = new FormData(form);
         
-        const code = formData.get('code') || '';
-        const password = formData.get('password') || '';
+        var code = formData.get('code') || '';
+        var password = formData.get('password') || '';
         
         if (!password) {
             alert('Password is required');
@@ -1588,13 +2225,13 @@ function deletePlugin(pluginId) {
         }
         
         try {
-            const response = await fetch('/api/2fa.php?action=disable', {
+            var response = await fetch('/api/2fa.php?action=disable', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, password })
+                body: JSON.stringify({ code: code, password: password })
             });
             
-            const data = await response.json();
+            var data = await response.json();
             
             if (data.status === 'ok') {
                 alert('2FA disabled successfully');
@@ -1623,11 +2260,11 @@ function deletePlugin(pluginId) {
     }
     
     async function regenerateBackupCodes() {
-        const form = document.getElementById('2fa-regenerate-form');
-        const formData = new FormData(form);
+        var form = document.getElementById('2fa-regenerate-form');
+        var formData = new FormData(form);
         
-        const code = formData.get('code') || '';
-        const password = formData.get('password') || '';
+        var code = formData.get('code') || '';
+        var password = formData.get('password') || '';
         
         if (!password) {
             alert('Password is required');
@@ -1635,13 +2272,13 @@ function deletePlugin(pluginId) {
         }
         
         try {
-            const response = await fetch('/api/2fa.php?action=regenerate_backup_codes', {
+            var response = await fetch('/api/2fa.php?action=regenerate_backup_codes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, password })
+                body: JSON.stringify({ code: code, password: password })
             });
             
-            const data = await response.json();
+            var data = await response.json();
             
             if (data.status === 'ok') {
                 showBackupCodes(data.data.backup_codes);
@@ -1655,8 +2292,7 @@ function deletePlugin(pluginId) {
         }
     }
     
-    // Expose functions globally
-    window.open2FASetupModal = open2FASetupModal;
+    // Expose ALL functions to window - do this immediately
     window.close2FASetupModal = close2FASetupModal;
     window.verify2FASetup = verify2FASetup;
     window.enable2FA = enable2FA;
@@ -1665,6 +2301,7 @@ function deletePlugin(pluginId) {
     window.open2FARegenerateModal = open2FARegenerateModal;
     window.close2FARegenerateModal = close2FARegenerateModal;
     window.regenerate2FABackupCodes = regenerate2FABackupCodes;
+    window.load2FAStatus = load2FAStatus;
     
     // Handle form submissions
     document.getElementById('2fa-disable-form')?.addEventListener('submit', function(e) {
@@ -1695,158 +2332,337 @@ function deletePlugin(pluginId) {
 (function() {
     'use strict';
     
-    // Load domains when tab is clicked
-    document.querySelector('[data-tab="domains"]')?.addEventListener('click', function() {
-        if (document.getElementById('domains-list')) {
-            loadDomains();
-        }
-    });
-    
-    // Load domains on initial page load if domains tab is active
-    if (document.querySelector('[data-tab="domains"]')?.classList.contains('active')) {
-        loadDomains();
-    }
+    // Domains loading is handled in the main tab click handler
     
     async function loadDomains() {
-        const listContainer = document.getElementById('domains-list');
-        if (!listContainer) return;
+        console.log('loadDomains called');
+        var listContainer = document.getElementById('domains-list');
+        if (!listContainer) {
+            console.error('domains-list container not found');
+            return;
+        }
         
         listContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading domains...</p></div>';
         
         try {
-            const response = await fetch('/api/license_management.php?action=list_licenses');
-            const data = await response.json();
+            console.log('Fetching domains from API...');
+            var response = await fetch('/api/domain_management.php?action=list_licenses', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log('Response status:', response.status);
+            var data = await response.json();
+            console.log('Response data:', data);
             
-            if (data.status === 'ok' && data.data.licenses) {
+            if (data.status === 'ok' && data.data && data.data.licenses) {
+                console.log('Rendering domains:', data.data.licenses.length);
                 renderDomains(data.data.licenses);
             } else {
+                console.log('No domains found or invalid response');
                 listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet.</p></div>';
             }
         } catch (error) {
             console.error('Error loading domains:', error);
-            listContainer.innerHTML = '<div class="error-state"><p>Error loading domains. Please try again.</p></div>';
+            listContainer.innerHTML = '<div class="error-state"><p>Error loading domains: ' + escapeHtml(error.message) + '</p></div>';
         }
     }
     
     function renderDomains(domains) {
-        const listContainer = document.getElementById('domains-list');
-        if (!listContainer) return;
-        
-        if (domains.length === 0) {
-            listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet. Click "Register Domain" to add one.</p></div>';
+        console.log('renderDomains called with', domains);
+        var listContainer = document.getElementById('domains-list');
+        if (!listContainer) {
+            console.error('domains-list container not found in renderDomains');
             return;
         }
         
-        listContainer.innerHTML = domains.map(domain => {
-            const permissions = domain.permissions || {};
-            const permissionLevel = permissions.permission_level || 'read_write';
-            const readCollections = permissions.read_collections || [];
-            const writeCollections = permissions.write_collections || [];
-            const rateLimits = permissions.rate_limits || {};
+        // Build localhost script section (always visible)
+        // Use relative path - the client library auto-detects the CMS URL from the script src
+        var localhostScript = '<scr' + 'ipt src="/harucms-client.js" data-tracking-id="localhost"></scr' + 'ipt>';
+        var localhostCodeEscaped = escapeHtml(localhostScript);
+        var localhostCodeAttr = localhostScript.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        
+        var html = '<div class="analytics-section" style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">';
+        html += '<h3 style="margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">';
+        html += '<span>🏠</span><span>Localhost Script</span>';
+        html += '</h3>';
+        html += '<p style="margin: 0 0 1rem 0; color: #6b7280; font-size: 0.875rem;">Use this script for local development. Always available and ready to use. Analytics tracking is included automatically.</p>';
+        html += '<div style="position: relative; background: #ffffff; border-radius: 4px; padding: 0.75rem; font-family: monospace; font-size: 0.875rem; border: 1px solid #d1d5db;">';
+        html += '<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;"><code>' + localhostCodeEscaped + '</code></pre>';
+        html += '<button class="btn-icon copy-domain-code-btn" data-code="' + localhostCodeAttr + '" style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.375rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px;" title="Copy code">';
+        html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
+        html += '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>';
+        html += '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>';
+        html += '</svg>';
+        html += '</button>';
+        html += '</div>';
+        html += '<small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.5rem;">Add this code before &lt;/body&gt; tag</small>';
+        html += '</div>';
+        
+        if (domains.length === 0) {
+            html += '<div class="empty-state"><p>No domains registered yet. Click "Register Domain" to add one.</p></div>';
+            listContainer.innerHTML = html;
+            return;
+        }
+        
+        html += '<div style="margin-top: 2rem;"><h3 style="margin-bottom: 1rem;">Registered Domains</h3></div>';
+        
+        html += domains.map(function(domain) {
+            var permissions = domain.permissions || {};
+            var permissionLevel = permissions.permission_level || 'read_write';
+            var readCollections = permissions.read_collections || [];
+            var writeCollections = permissions.write_collections || [];
+            var rateLimits = permissions.rate_limits || {};
             
-            return `
-                <div class="domain-card">
-                    <div class="domain-header">
-                        <div class="domain-info">
-                            <h3>${escapeHtml(domain.domain)}</h3>
-                            <div class="domain-badges">
-                                <span class="badge badge-${domain.status === 'active' ? 'success' : 'secondary'}">${domain.status || 'active'}</span>
-                                <span class="badge badge-${permissionLevel === 'read_write' ? 'primary' : 'info'}">${permissionLevel === 'read_write' ? 'Read & Write' : 'Read Only'}</span>
-                            </div>
-                        </div>
-                        <div class="domain-actions">
-                            <button class="btn btn-small btn-secondary" onclick="editDomain('${escapeHtml(domain.domain)}')">Edit</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteDomain('${escapeHtml(domain.domain)}')">Delete</button>
-                        </div>
-                    </div>
-                    <div class="domain-details">
-                        <div class="detail-row">
-                            <strong>Email:</strong> <span>${escapeHtml(domain.customer_email || 'N/A')}</span>
-                        </div>
-                        <div class="detail-row">
-                            <strong>Plan:</strong> <span>${escapeHtml(domain.plan || 'basic')}</span>
-                        </div>
-                        <div class="detail-row">
-                            <strong>Registered:</strong> <span>${domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A'}</span>
-                        </div>
-                        ${domain.expires_at ? `<div class="detail-row"><strong>Expires:</strong> <span>${new Date(domain.expires_at).toLocaleDateString()}</span></div>` : ''}
-                        <div class="detail-row">
-                            <strong>Rate Limits:</strong> 
-                            <span>Read: ${rateLimits.read?.limit || 100}/min, Write: ${rateLimits.write?.limit || 10}/hour</span>
-                        </div>
-                        ${readCollections.length > 0 ? `<div class="detail-row"><strong>Read Collections:</strong> <span>${readCollections.join(', ')}</span></div>` : ''}
-                        ${writeCollections.length > 0 ? `<div class="detail-row"><strong>Write Collections:</strong> <span>${writeCollections.join(', ')}</span></div>` : ''}
-                        ${domain.allowed_domains && domain.allowed_domains.length > 1 ? `<div class="detail-row"><strong>Additional Domains:</strong> <span>${domain.allowed_domains.slice(1).join(', ')}</span></div>` : ''}
-                    </div>
-                </div>
-            `;
+            // Build analytics HTML if enabled
+            var analyticsHtml = '';
+            console.log('Domain:', domain.domain, 'analytics_enabled:', domain.analytics_enabled);
+            if (domain.analytics_enabled) {
+                var domainName = String(domain.domain || '');
+                // Use relative path - the client library auto-detects the CMS URL from the script src
+                // The script will be hosted on the CMS server, so relative path works universally
+                var trackingCode = '<scr' + 'ipt src="/harucms-client.js" data-tracking-id="' + escapeHtml(domainName) + '"></scr' + 'ipt>';
+                var codeEscaped = escapeHtml(trackingCode);
+                var codeAttrEscaped = trackingCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                var analyticsSection = [];
+                analyticsSection.push('<div class="detail-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e0e0e0;">');
+                analyticsSection.push('<strong style="display: block; margin-bottom: 0.5rem;">📊 Analytics:</strong>');
+                analyticsSection.push('<span class="badge badge-success" style="margin-bottom: 0.5rem; display: inline-block;">Enabled</span>');
+                analyticsSection.push('<div style="margin-top: 0.75rem;">');
+                analyticsSection.push('<label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Integration Script:</label>');
+                analyticsSection.push('<div style="position: relative; background: #f3f4f6; border-radius: 4px; padding: 0.75rem; font-family: monospace; font-size: 0.875rem; border: 1px solid #d1d5db;">');
+                analyticsSection.push('<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;"><code>' + codeEscaped + '</code></pre>');
+                analyticsSection.push('<button class="btn-icon copy-domain-code-btn" data-code="' + codeAttrEscaped + '" style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.375rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px;" title="Copy code">');
+                analyticsSection.push('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">');
+                analyticsSection.push('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>');
+                analyticsSection.push('<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>');
+                analyticsSection.push('</svg>');
+                analyticsSection.push('</button>');
+                analyticsSection.push('</div>');
+                analyticsSection.push('<small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.5rem;">Add this code before &lt;/body&gt; tag. Analytics tracking is included automatically.</small>');
+                analyticsSection.push('</div>');
+                analyticsSection.push('</div>');
+                analyticsHtml = analyticsSection.join('');
+            }
+            
+            var domainEscaped = escapeHtml(domain.domain);
+            var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
+            var statusClass = domain.status === 'active' ? 'success' : 'secondary';
+            var statusText = domain.status || 'active';
+            var permClass = permissionLevel === 'read_write' ? 'primary' : 'info';
+            var permText = permissionLevel === 'read_write' ? 'Read & Write' : 'Read Only';
+            var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A';
+            var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
+            var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
+            var readColsHtml = readCollections.length > 0 ? '<div class="detail-row"><strong>Read Collections:</strong> <span>' + readCollections.join(', ') + '</span></div>' : '';
+            var writeColsHtml = writeCollections.length > 0 ? '<div class="detail-row"><strong>Write Collections:</strong> <span>' + writeCollections.join(', ') + '</span></div>' : '';
+            
+            return '<div class="domain-card">' +
+                '<div class="domain-header">' +
+                '<div class="domain-info">' +
+                '<h3>' + domainEscaped + '</h3>' +
+                '<div class="domain-badges">' +
+                '<span class="badge badge-' + statusClass + '">' + statusText + '</span>' +
+                '<span class="badge badge-' + permClass + '">' + permText + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="domain-actions">' +
+                '<button class="btn btn-small btn-secondary" data-domain="' + escapeHtml(domain.domain) + '" data-action="edit">Edit</button>' +
+                '<button class="btn btn-small btn-danger" data-domain="' + escapeHtml(domain.domain) + '" data-action="delete">Delete</button>' +
+                '</div>' +
+                '</div>' +
+                '<div class="domain-details">' +
+                '<div class="detail-row"><strong>Email:</strong> <span>' + emailEscaped + '</span></div>' +
+                '<div class="detail-row"><strong>Registered:</strong> <span>' + registeredDate + '</span></div>' +
+                '<div class="detail-row"><strong>Rate Limits:</strong> <span>Read: ' + readLimit + '/min, Write: ' + writeLimit + '/hour</span></div>' +
+                readColsHtml +
+                writeColsHtml +
+                analyticsHtml +
+                '</div>' +
+                '</div>';
         }).join('');
+        
+        listContainer.innerHTML = html;
+        
+        // Attach copy button listeners
+        var copyButtons = document.querySelectorAll('.copy-domain-code-btn');
+        for (var i = 0; i < copyButtons.length; i++) {
+            (function(btn) {
+                btn.addEventListener('click', function() {
+                    var code = btn.getAttribute('data-code');
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(code).then(function() {
+                            var originalHTML = btn.innerHTML;
+                            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>';
+                            setTimeout(function() {
+                                btn.innerHTML = originalHTML;
+                            }, 2000);
+                        });
+                    }
+                });
+            })(copyButtons[i]);
+        }
+        
+        // Attach edit/delete button listeners using event delegation
+        var domainActions = listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"]');
+        for (var i = 0; i < domainActions.length; i++) {
+            (function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var domain = btn.getAttribute('data-domain');
+                    var action = btn.getAttribute('data-action');
+                    if (action === 'edit' && window.editDomain) {
+                        window.editDomain(domain);
+                    } else if (action === 'delete' && window.deleteDomain) {
+                        window.deleteDomain(domain);
+                    }
+                });
+            })(domainActions[i]);
+        }
     }
     
     function escapeHtml(text) {
         if (!text) return '';
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
     
     // Expose functions globally
     window.loadDomains = loadDomains;
+    window.renderDomains = renderDomains;
 })();
 
-async function openAddDomainModal() {
-    document.getElementById('add-domain-modal').style.display = 'flex';
-    document.getElementById('add-domain-form').reset();
+function openAddDomainModal() {
+    console.log('openAddDomainModal called');
+    var modal = document.getElementById('add-domain-modal');
+    var form = document.getElementById('add-domain-form');
+    if (!modal) {
+        console.error('Add domain modal not found');
+        return;
+    }
+    console.log('Opening modal');
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    if (form) {
+        form.reset();
+    }
 }
 
 function closeAddDomainModal() {
-    document.getElementById('add-domain-modal').style.display = 'none';
+    var modal = document.getElementById('add-domain-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(function() {
+            modal.style.display = 'none';
+        }, 300); // Wait for transition
+    }
 }
+
+// Attach event listener to register domain button
+(function() {
+    function initDomainButtons() {
+        var registerBtn = document.getElementById('register-domain-btn');
+        if (registerBtn) {
+            registerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openAddDomainModal();
+            });
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDomainButtons);
+    } else {
+        initDomainButtons();
+    }
+})();
 
 async function registerDomain() {
     const form = document.getElementById('add-domain-form');
+    if (!form) {
+        showMessage('Error: Form not found', 'error');
+        return;
+    }
+    
     const formData = new FormData(form);
+    
+    // Get and validate required fields
+    const domain = (formData.get('domain') || '').trim();
+    const customerEmail = (formData.get('customer_email') || '').trim();
+    
+    if (!domain || !customerEmail) {
+        showMessage('Error: Domain and customer email are required', 'error');
+        return;
+    }
     
     const domainData = {
         action: 'register_domain',
-        domain: formData.get('domain').trim(),
-        customer_email: formData.get('customer_email').trim(),
-        permission_level: formData.get('permission_level'),
-        plan: formData.get('plan'),
-        expires_at: formData.get('expires_at') || null,
+        domain: domain,
+        customer_email: customerEmail,
+        permission_level: formData.get('permission_level') || 'read_write',
         read_limit: parseInt(formData.get('read_limit')) || 100,
         write_limit: parseInt(formData.get('write_limit')) || 10,
+        enable_analytics: formData.get('enable_analytics') === '1',
         _csrf: getCsrfToken()
     };
     
     try {
-        const response = await fetch('/api/license_management.php', {
+        console.log('Sending domain registration request:', domainData);
+        const response = await fetch('/api/domain_management.php', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(domainData)
         });
         
-        const result = await response.json();
+        console.log('Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse JSON response:', parseError);
+            console.error('Response text:', responseText);
+            showMessage('Error: Invalid response from server. Check console for details.', 'error');
+            return;
+        }
+        
+        console.log('Response data:', result);
         
         if (result.status === 'ok') {
             showMessage('Domain registered successfully!', 'success');
             closeAddDomainModal();
             loadDomains();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
         }
     } catch (error) {
+        console.error('Error registering domain:', error);
         showMessage('Error registering domain: ' + error.message, 'error');
     }
 }
 
-async function editDomain(domainName) {
+window.editDomain = async function(domainName) {
+    console.log('editDomain called with:', domainName);
     try {
-        const response = await fetch('/api/license_management.php?action=list_licenses');
+        const response = await fetch('/api/domain_management.php?action=list_licenses', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
         const data = await response.json();
+        console.log('Edit domain - response data:', data);
         
         if (data.status === 'ok' && data.data.licenses) {
             const domain = data.data.licenses.find(d => d.domain === domainName);
+            console.log('Found domain for editing:', domain);
             if (domain) {
                 const permissions = domain.permissions || {};
                 const rateLimits = permissions.rate_limits || {};
@@ -1854,20 +2670,35 @@ async function editDomain(domainName) {
                 document.getElementById('edit-domain-original').value = domainName;
                 document.getElementById('edit-domain-permission-level').value = permissions.permission_level || 'read_write';
                 document.getElementById('edit-domain-status').value = domain.status || 'active';
-                document.getElementById('edit-domain-expires').value = domain.expires_at ? new Date(domain.expires_at).toISOString().slice(0, 16) : '';
                 document.getElementById('edit-domain-read-limit').value = rateLimits.read?.limit || 100;
                 document.getElementById('edit-domain-write-limit').value = rateLimits.write?.limit || 10;
+                document.getElementById('edit-domain-enable-analytics').checked = domain.analytics_enabled || false;
                 
-                document.getElementById('edit-domain-modal').style.display = 'flex';
+                var editModal = document.getElementById('edit-domain-modal');
+                if (editModal) {
+                    editModal.style.display = 'flex';
+                    editModal.classList.add('active');
+                } else {
+                    console.error('Edit domain modal not found');
+                }
+            } else {
+                console.error('Domain not found:', domainName);
             }
         }
     } catch (error) {
+        console.error('Error loading domain details:', error);
         showMessage('Error loading domain details: ' + error.message, 'error');
     }
-}
+};
 
 function closeEditDomainModal() {
-    document.getElementById('edit-domain-modal').style.display = 'none';
+    var modal = document.getElementById('edit-domain-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(function() {
+            modal.style.display = 'none';
+        }, 300); // Wait for transition
+    }
 }
 
 async function updateDomain() {
@@ -1892,39 +2723,58 @@ async function updateDomain() {
             }
         },
         status: formData.get('status'),
-        expires_at: formData.get('expires_at') || null,
+        analytics_enabled: formData.get('enable_analytics') === '1',
         _csrf: getCsrfToken()
     };
     
     try {
-        const response = await fetch('/api/license_management.php', {
+        console.log('Sending update request:', updateData);
+        const response = await fetch('/api/domain_management.php', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updateData)
         });
         
-        const result = await response.json();
+        console.log('Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse JSON response:', parseError);
+            console.error('Response text:', responseText);
+            showMessage('Error: Invalid response from server. Check console for details.', 'error');
+            return;
+        }
+        
+        console.log('Response data:', result);
         
         if (result.status === 'ok') {
             showMessage('Domain updated successfully!', 'success');
             closeEditDomainModal();
             loadDomains();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
         }
     } catch (error) {
+        console.error('Error updating domain:', error);
         showMessage('Error updating domain: ' + error.message, 'error');
     }
 }
 
-async function deleteDomain(domainName) {
-    if (!confirm(`Are you sure you want to delete domain "${domainName}"? This will revoke all access.`)) {
+window.deleteDomain = async function(domainName) {
+    console.log('deleteDomain called with:', domainName);
+    if (!confirm('Are you sure you want to delete domain "' + domainName + '"? This will revoke all access.')) {
         return;
     }
     
     try {
-        const response = await fetch('/api/license_management.php', {
+        const response = await fetch('/api/domain_management.php', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'delete_license',
@@ -1934,6 +2784,7 @@ async function deleteDomain(domainName) {
         });
         
         const result = await response.json();
+        console.log('Delete domain - response:', result);
         
         if (result.status === 'ok') {
             showMessage('Domain deleted successfully!', 'success');
@@ -1942,74 +2793,79 @@ async function deleteDomain(domainName) {
             showMessage('Error: ' + result.message, 'error');
         }
     } catch (error) {
+        console.error('Error deleting domain:', error);
         showMessage('Error deleting domain: ' + error.message, 'error');
     }
-}
+};
 </script>
 
 <style>
 /* Domain Management Styles */
 .domains-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-6);
 }
 
 .domain-card {
-    background: var(--card-bg, #fff);
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 8px;
-    padding: 20px;
-    transition: box-shadow 0.2s;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--border-radius-s);
+    padding: var(--space-6);
+    transition: box-shadow 0.2s, border-color 0.2s;
 }
 
 .domain-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-color: var(--border-color);
 }
 
 .domain-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .domain-info h3 {
-    margin: 0 0 8px 0;
-    font-size: 1.1em;
-    color: var(--text-primary, #333);
+    margin: 0 0 var(--space-2) 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .domain-badges {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     flex-wrap: wrap;
+    margin-top: var(--space-2);
 }
 
 .domain-actions {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
 }
 
 .domain-details {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-2);
 }
 
 .detail-row {
     display: flex;
-    gap: 8px;
-    font-size: 0.9em;
-    color: var(--text-secondary, #666);
+    gap: var(--space-2);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
 }
 
 .detail-row strong {
     min-width: 120px;
-    color: var(--text-primary, #333);
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .loading-state, .empty-state, .error-state {
@@ -2044,21 +2900,18 @@ async function deleteDomain(domainName) {
     font-size: 0.9em;
 }
 
-/* Audit Log, Activity, Updates styles when in tabs */
-#audit-log .audit-log-page,
-#activity .activity-page,
+/* Activity Log, Updates styles when in tabs */
+#activity-log .activity-log-page,
 #updates .updates-page {
     padding: 0;
 }
 
-#audit-log .page-header,
-#activity .page-header,
+#activity-log .page-header,
 #updates .page-header {
     display: none;
 }
 
-#audit-log .main-actions-bar,
-#activity .main-actions-bar {
+#activity-log .main-actions-bar {
     margin-bottom: 1.5rem;
 }
 
@@ -2068,7 +2921,7 @@ async function deleteDomain(domainName) {
 }
 </style>
 
-<!-- Audit Log Script -->
+<!-- Combined Activity & Audit Log Script -->
 <script>
 (function() {
     'use strict';
@@ -2079,6 +2932,7 @@ async function deleteDomain(domainName) {
     let filteredLogs = [];
     const eventTypes = new Set();
     
+    // Initialize when tab is shown
     window.initAuditLog = function() {
         loadLogs();
         setupFilters();
@@ -2100,12 +2954,22 @@ async function deleteDomain(domainName) {
         }
     };
     
+    // Also initialize activity (for backward compatibility)
+    window.initActivity = window.initAuditLog;
+    
     function setupFilters() {
         const eventFilter = document.getElementById('event-filter');
+        const categoryFilter = document.getElementById('category-filter');
         const dateFilter = document.getElementById('date-filter');
         
         if (eventFilter) {
             eventFilter.addEventListener('change', function() {
+                filterLogs();
+            });
+        }
+        
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function() {
                 filterLogs();
             });
         }
@@ -2117,13 +2981,69 @@ async function deleteDomain(domainName) {
         }
     }
     
+    function getEventCategory(event) {
+        const contentEvents = ['create_entry', 'update_entry', 'delete_entry', 'create_collection', 'update_collection', 'delete_collection', 'publish_entry', 'unpublish_entry', 'scheduled_publish', 'review_action', 'settings_update', 'settings_save_all'];
+        const userEvents = ['create_user', 'update_user', 'delete_user', 'invitation_created', 'invitation_accepted', 'login_success', 'login_failed', 'logout'];
+        const systemEvents = ['rate_limited', 'plugin_activated', 'plugin_deactivated', 'plugin_deleted'];
+        
+        if (contentEvents.includes(event)) return 'content';
+        if (userEvents.includes(event)) return 'users';
+        if (systemEvents.includes(event)) return 'system';
+        return 'other';
+    }
+    
+    function formatEventDetails(log) {
+        const details = log.details || {};
+        let formatted = [];
+        
+        // Format based on event type
+        if (log.event === 'settings_update' || log.event === 'settings_save_all') {
+            if (details.category) formatted.push('Category: ' + details.category);
+            if (details.settings) {
+                const settingsList = Object.keys(details.settings).map(key => {
+                    const value = details.settings[key];
+                    if (typeof value === 'object') {
+                        return key + ': ' + JSON.stringify(value);
+                    }
+                    return key + ': ' + value;
+                });
+                formatted.push('Settings: ' + settingsList.join(', '));
+            }
+        } else if (log.event === 'update_entry' || log.event === 'create_entry') {
+            if (details.collection) formatted.push('Collection: ' + details.collection);
+            if (details.title) formatted.push('Title: ' + details.title);
+            if (details.id) formatted.push('ID: ' + details.id);
+        } else if (log.event === 'create_user' || log.event === 'update_user') {
+            if (details.email) formatted.push('Email: ' + details.email);
+            if (details.role) formatted.push('Role: ' + details.role);
+        }
+        
+        // Add any remaining details
+        Object.keys(details).forEach(key => {
+            if (!['category', 'settings', 'collection', 'title', 'id', 'email', 'role'].includes(key)) {
+                const value = details[key];
+                formatted.push(key + ': ' + (typeof value === 'object' ? JSON.stringify(value) : value));
+            }
+        });
+        
+        return formatted.length > 0 ? formatted.join(' | ') : (JSON.stringify(details, null, 2));
+    }
+    
     function filterLogs() {
         const eventFilter = document.getElementById('event-filter')?.value || '';
+        const categoryFilter = document.getElementById('category-filter')?.value || '';
         const dateFilter = document.getElementById('date-filter')?.value || '';
         
         filteredLogs = allLogs.filter(log => {
             if (eventFilter && log.event !== eventFilter) {
                 return false;
+            }
+            
+            if (categoryFilter && categoryFilter !== 'all') {
+                const category = getEventCategory(log.event);
+                if (category !== categoryFilter) {
+                    return false;
+                }
             }
             
             if (dateFilter) {
@@ -2145,46 +3065,83 @@ async function deleteDomain(domainName) {
         if (!tbody) return;
         
         if (refresh) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner">Loading...</div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;"><div class="spinner">Loading...</div></td></tr>';
         }
         
-        fetch('/api/log.php?action=list')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok' && data.logs) {
-                    allLogs = data.logs;
-                    
-                    allLogs.forEach(log => {
-                        if (log.event) {
-                            eventTypes.add(log.event);
-                        }
+        // Load both audit logs and activity
+        Promise.all([
+            fetch('/api/log.php?action=list').then(r => r.json()),
+            fetch('/api/activity.php?action=list&limit=1000').then(r => r.json())
+        ]).then(([logData, activityData]) => {
+            allLogs = [];
+            
+            // Merge audit logs
+            if (logData.status === 'ok' && logData.logs) {
+                logData.logs.forEach(log => {
+                    allLogs.push({
+                        ...log,
+                        category: getEventCategory(log.event),
+                        source: 'audit'
                     });
-                    
-                    const eventFilter = document.getElementById('event-filter');
-                    if (eventFilter) {
-                        eventFilter.innerHTML = '<option value="">All Events</option>';
-                        Array.from(eventTypes).sort().forEach(event => {
-                            const option = document.createElement('option');
-                            option.value = event;
-                            option.textContent = event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                            eventFilter.appendChild(option);
-                        });
+                    if (log.event) {
+                        eventTypes.add(log.event);
                     }
+                });
+            }
+            
+            // Merge activity feed (avoid duplicates)
+            if (activityData.status === 'ok' && activityData.activity) {
+                activityData.activity.forEach(activity => {
+                    // Check if we already have this event from audit log
+                    const exists = allLogs.some(log => 
+                        log.event === activity.event && 
+                        log.timestamp === activity.timestamp &&
+                        log.user === activity.user
+                    );
                     
-                    filteredLogs = allLogs;
-                    currentPage = 0;
-                    renderLogs();
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading logs</td></tr>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading logs:', error);
-                const tbody = document.getElementById('log-entries');
-                if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Error loading logs: ' + error.message + '</td></tr>';
-                }
-            });
+                    if (!exists) {
+                        allLogs.push({
+                            timestamp: activity.timestamp,
+                            user: activity.user,
+                            event: activity.event,
+                            ip: activity.details?.ip || 'Unknown',
+                            details: activity.details,
+                            category: activity.category || getEventCategory(activity.event),
+                            message: activity.message,
+                            source: 'activity'
+                        });
+                        if (activity.event) {
+                            eventTypes.add(activity.event);
+                        }
+                    }
+                });
+            }
+            
+            // Sort by timestamp (newest first)
+            allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            // Populate event filter
+            const eventFilter = document.getElementById('event-filter');
+            if (eventFilter) {
+                eventFilter.innerHTML = '<option value="">All Events</option>';
+                Array.from(eventTypes).sort().forEach(event => {
+                    const option = document.createElement('option');
+                    option.value = event;
+                    option.textContent = event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    eventFilter.appendChild(option);
+                });
+            }
+            
+            filteredLogs = allLogs;
+            currentPage = 0;
+            renderLogs();
+        }).catch(error => {
+            console.error('Error loading logs:', error);
+            const tbody = document.getElementById('log-entries');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">Error loading logs: ' + error.message + '</td></tr>';
+            }
+        });
     }
     
     function renderLogs() {
@@ -2196,7 +3153,7 @@ async function deleteDomain(domainName) {
         const logsToShow = filteredLogs.slice(0, endIndex);
         
         if (logsToShow.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No log entries found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">No log entries found</td></tr>';
             const loadMoreBtn = document.getElementById('load-more');
             if (loadMoreBtn) {
                 loadMoreBtn.style.display = 'none';
@@ -2207,16 +3164,20 @@ async function deleteDomain(domainName) {
         let html = '';
         logsToShow.forEach(log => {
             const timestamp = new Date(log.timestamp).toLocaleString();
-            const details = log.details ? JSON.stringify(log.details, null, 2) : '';
+            const category = log.category || getEventCategory(log.event);
+            const categoryBadge = category === 'content' ? 'badge-info' : category === 'users' ? 'badge-success' : category === 'system' ? 'badge-warning' : 'badge-secondary';
+            const formattedDetails = formatEventDetails(log);
+            const fullDetails = log.details ? JSON.stringify(log.details, null, 2) : '';
             
             html += `
-                <tr>
-                    <td>${timestamp}</td>
-                    <td>${escapeHtml(log.user || 'Unknown')}</td>
-                    <td><span class="badge badge-info">${escapeHtml(log.event || 'Unknown')}</span></td>
-                    <td>${escapeHtml(log.ip || 'Unknown')}</td>
-                    <td>
-                        ${details ? `<details><summary>View Details</summary><pre style="max-width: 400px; overflow: auto;">${escapeHtml(details)}</pre></details>` : '-'}
+                <tr style="border-bottom: 1px solid var(--border-light);">
+                    <td style="padding: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">${timestamp}</td>
+                    <td style="padding: 0.75rem; color: var(--text-primary);">${escapeHtml(log.user || 'Unknown')}</td>
+                    <td style="padding: 0.75rem;"><span class="badge ${categoryBadge}" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(log.event || 'Unknown')}</span></td>
+                    <td style="padding: 0.75rem;"><span class="badge badge-secondary" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(category)}</span></td>
+                    <td style="padding: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">${escapeHtml(log.ip || 'Unknown')}</td>
+                    <td style="padding: 0.75rem;">
+                        ${formattedDetails ? `<details><summary style="cursor: pointer; color: #3b82f6; text-decoration: underline;">View Details</summary><div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px; font-size: 0.875rem; max-width: 500px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap; word-break: break-word;">${escapeHtml(formattedDetails)}</pre></div></details>` : '-'}
                     </td>
                 </tr>
             `;
@@ -2231,149 +3192,15 @@ async function deleteDomain(domainName) {
     }
     
     function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-})();
-</script>
-
-<!-- Activity Feed Script -->
-<script>
-(function() {
-    'use strict';
     
-    let currentPage = 0;
-    const pageSize = 20;
-    let allActivity = [];
-    let filteredActivity = [];
-    let currentFilter = 'all';
-    
-    window.initActivity = function() {
-        loadActivity();
-        setupFilters();
-        
-        const refreshBtn = document.getElementById('refresh-activity');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
-                currentPage = 0;
-                loadActivity(true);
-            });
-        }
-        
-        const loadMoreBtn = document.getElementById('load-more-activity');
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', function() {
-                currentPage++;
-                renderActivity();
-            });
-        }
-    };
-    
-    function setupFilters() {
-        const categoryFilter = document.getElementById('category-filter');
-        if (categoryFilter) {
-            categoryFilter.addEventListener('change', function() {
-                currentFilter = this.value;
-                filterActivity();
-            });
-        }
-    }
-    
-    function filterActivity() {
-        if (currentFilter === 'all') {
-            filteredActivity = allActivity;
-        } else {
-            filteredActivity = allActivity.filter(item => item.category === currentFilter);
-        }
-        
-        currentPage = 0;
-        renderActivity();
-    }
-    
-    function loadActivity(refresh = false) {
-        const feed = document.getElementById('activity-feed');
-        if (!feed) return;
-        
-        if (refresh) {
-            feed.innerHTML = '<div class="text-center"><div class="spinner">Loading activity...</div></div>';
-        }
-        
-        fetch('/api/activity.php?action=list&limit=' + (pageSize * 2))
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok' && data.activity) {
-                    allActivity = data.activity;
-                    filteredActivity = allActivity;
-                    currentPage = 0;
-                    renderActivity();
-                } else {
-                    feed.innerHTML = '<div class="text-center">Error loading activity</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading activity:', error);
-                feed.innerHTML = '<div class="text-center">Error loading activity: ' + error.message + '</div>';
-            });
-    }
-    
-    function renderActivity() {
-        const feed = document.getElementById('activity-feed');
-        if (!feed) return;
-        
-        const startIndex = currentPage * pageSize;
-        const endIndex = startIndex + pageSize;
-        const itemsToShow = filteredActivity.slice(0, endIndex);
-        
-        if (itemsToShow.length === 0) {
-            feed.innerHTML = '<div class="text-center">No activity found</div>';
-            const loadMoreBtn = document.getElementById('load-more-activity');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
-            }
-            return;
-        }
-        
-        let html = '<div class="activity-timeline">';
-        itemsToShow.forEach((item, index) => {
-            const timestamp = new Date(item.timestamp).toLocaleString();
-            const isRecent = index < 5;
-            
-            html += `
-                <div class="activity-item ${isRecent ? 'recent' : ''}" style="border-left: 3px solid ${item.color || '#6c757d'};">
-                    <div class="activity-icon" style="background: ${item.color || '#6c757d'}20;">
-                        ${item.icon || '📌'}
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-message">${escapeHtml(item.message)}</div>
-                        <div class="activity-meta">
-                            <span class="activity-user">${escapeHtml(item.user)}</span>
-                            <span class="activity-time">${timestamp}</span>
-                        </div>
-                        ${item.details && Object.keys(item.details).length > 0 ? `
-                            <details class="activity-details">
-                                <summary>Details</summary>
-                                <pre style="max-width: 600px; overflow: auto; font-size: 0.875em; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-top: 8px;">${escapeHtml(JSON.stringify(item.details, null, 2))}</pre>
-                            </details>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        
-        feed.innerHTML = html;
-        
-        const loadMoreBtn = document.getElementById('load-more-activity');
-        if (loadMoreBtn) {
-            loadMoreBtn.style.display = (endIndex < filteredActivity.length) ? 'block' : 'none';
-        }
-    }
-    
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    // Auto-initialize if tab is active
+    if (document.getElementById('activity-log') && document.getElementById('activity-log').classList.contains('active')) {
+        setTimeout(initAuditLog, 100);
     }
 })();
 </script>
@@ -2384,6 +3211,10 @@ let updateData = null;
 let updateProgress = null;
 
 window.initUpdates = function() {
+    // Only initialize if elements exist (i.e., we're in the general tab)
+    const statusIndicator = document.getElementById('update-status');
+    if (!statusIndicator) return;
+    
     loadCurrentVersion();
     checkForUpdates();
     
@@ -2510,6 +3341,8 @@ async function downloadUpdate() {
     alert('Download functionality will be implemented in the future.');
 }
 </script>
+
+<script src="/admin/js/ai-connections.js"></script>
 
 <!-- Activity Feed Styles -->
 <style>
