@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\ContentEditor;
+namespace Birkly\FieldTypes\ContentEditor;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class ContentEditor extends BaseField {
     protected $config;
@@ -431,6 +431,26 @@ class ContentEditor extends BaseField {
     public function processLoadedValue($value) {
         // Return value as-is, even if empty
         return $value ?? '';
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Strip HTML tags and truncate
+        $text = trim(strip_tags((string)$value));
+        if ($text === '') {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Truncate with "..."
+        $max = $context['truncate'] ?? 60;
+        if (mb_strlen($text) > $max) {
+            $text = mb_substr($text, 0, $max - 3) . '...';
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '320px'; // ContentEditor fields need more space for rich content preview
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

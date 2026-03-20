@@ -1,0 +1,493 @@
+/* ============================================
+   Table Component - Unified System
+   ============================================ */
+
+/* Table Container */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--radius-lg, 0.75rem);
+  background: var(--bg-primary, #ffffff);
+}
+
+/* Base Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  text-align: left;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.table th {
+  background: var(--bg-secondary, #fafafa);
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover {
+  background: var(--bg-secondary, #fafafa);
+}
+
+/* Table Variants */
+.table--striped tbody tr:nth-child(even) {
+  background: var(--bg-secondary, #fafafa);
+}
+
+.table--bordered th,
+.table--bordered td {
+  border: 1px solid var(--border-light, #f3f4f6);
+}
+
+.table--hover tbody tr:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+
+/* Table Actions */
+.table .actions {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+.table .actions .btn {
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  font-size: 0.75rem;
+}
+
+/* Smart Table (Specialized for Entries) */
+.entries-smart-table {
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--border-radius-s, 4px);
+}
+
+.entries-smart-table .table-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  width: 100%;
+}
+
+.entries-smart-table .head-row,
+.entries-smart-table .table-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 100%;
+  transition: all var(--transition-normal, 200ms ease);
+  gap: 1px;
+  box-sizing: border-box;
+}
+
+.entries-smart-table .table-row:hover .cell {
+  background: var(--color-neutral-200, #F4F6F2);
+}
+
+.entries-smart-table .head-cell,
+.entries-smart-table .cell {
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  transition: all var(--transition-normal, 200ms ease);
+  border-radius: var(--border-radius-s, 4px);
+  margin-bottom: 1px;
+  min-width: 0;
+}
+
+.entries-smart-table .head-cell {
+  background: var(--color-neutral-200, #F4F6F2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #72746F);
+  letter-spacing: 0.02em;
+  height: 36px;
+}
+
+.entries-smart-table .cell {
+  background: var(--bg-elevated, #ffffff);
+}
+
+/* Smart Table Specialized Cells */
+.entries-smart-table .head-checkbox,
+.entries-smart-table .cell-checkbox {
+  width: 40px;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.entries-smart-table .head-drag,
+.entries-smart-table .cell-drag {
+  width: 40px;
+  flex-shrink: 0;
+  justify-content: center;
+  cursor: grab !important;
+}
+
+.entries-smart-table .head-sub-entries,
+.entries-smart-table .cell-sub-entries {
+  width: 60px;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.entries-smart-table .head-title,
+.entries-smart-table .cell-title {
+  min-width: 320px;
+  flex: 1 1 0%;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0%;
+  max-width: none;
+}
+
+.entries-smart-table .head-status,
+.entries-smart-table .cell-status {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.entries-smart-table .head-actions,
+.entries-smart-table .cell-actions {
+  width: max-content;
+  min-width: max-content;
+  flex-shrink: 0;
+  flex-grow: 0;
+  justify-content: flex-end;
+  position: sticky;
+  right: 0;
+  border-left: 1px solid var(--border-light, #f3f4f6);
+  z-index: 1;
+  box-shadow: -5px 0px 15px 0 rgba(0, 0, 0, 0.1);
+  background: var(--bg-elevated, #ffffff);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.entries-smart-table .head-actions {
+  background: var(--color-neutral-200, #F4F6F2);
+  right: 0;
+  z-index: 3;
+}
+
+.entries-smart-table .cell-drag,
+.entries-smart-table .cell-title,
+.entries-smart-table .cell-status,
+.entries-smart-table .cell-field {
+  cursor: pointer;
+}
+
+.entries-smart-table .head-field,
+.entries-smart-table .cell-field {
+  width: var(--col-field, 240px);
+  min-width: var(--col-field-min, var(--col-field, 240px));
+  max-width: var(--col-field, 240px);
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.entries-smart-table .table-viewport {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.entries-smart-table .table-body {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 100%;
+}
+
+.entries-smart-table .cell-drag {
+  cursor: grab;
+  color: var(--text-tertiary, #C4C6C1);
+}
+
+.entries-smart-table .cell-drag:active {
+  cursor: grabbing;
+}
+
+.entries-smart-table .cell-title .title-text {
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+}
+
+/* Selected Row */
+.entries-smart-table .table-row[data-entry-selected="true"] .cell {
+  background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  border-radius: var(--radius-md, 0.5rem);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-unpublished {
+  background: var(--warning-50, #fffbeb);
+  color: var(--warning-600, #d97706);
+}
+
+.status-published {
+  background: var(--success-50, #f0fdf4);
+  color: var(--success-600, #16a34a);
+}
+
+.status-archived {
+  background: var(--gray-100, #f3f4f6);
+  color: var(--gray-600, #4b5563);
+}
+
+/* Smart Table Status Badge Styles */
+.entries-smart-table .cell-status .status-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: capitalize;
+  background: var(--gray-100, #f3f4f6);
+  color: var(--gray-700, #374151);
+}
+
+.entries-smart-table .cell-status .status-badge.published {
+  background: var(--success-50, #f0fdf4);
+  color: var(--success-600, #16a34a);
+}
+
+.entries-smart-table .cell-status .status-badge.draft {
+  background: var(--warning-50, #fffbeb);
+  color: var(--warning-600, #d97706);
+}
+
+.entries-smart-table .cell-status .status-badge.pending_review,
+.entries-smart-table .cell-status .status-badge.review-status.pending {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.entries-smart-table .cell-status .status-badge.approved,
+.entries-smart-table .cell-status .status-badge.review-status.approved {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #28a745;
+}
+
+.entries-smart-table .cell-status .status-badge.rejected,
+.entries-smart-table .cell-status .status-badge.review-status.rejected {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #dc3545;
+}
+
+.entries-smart-table .cell-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reviewer-indicator {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-secondary, #72746F);
+  cursor: help;
+}
+
+/* Bulk Actions Toolbar */
+.bulk-actions-toolbar {
+  background: var(--bg-elevated, #ffffff);
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--border-radius-s, 4px);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  margin-bottom: var(--space-4, 1rem);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bulk-actions-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4, 1rem);
+}
+
+.bulk-actions-count {
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+}
+
+.bulk-actions-buttons {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* Header fields grid mirrors body fields grid */
+.entries-smart-table .fields-head-region {
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: fit-content;
+}
+
+.entries-smart-table .fields-region {
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+  overflow: hidden;
+  min-width: 0;
+  flex-shrink: 0;
+  flex-grow: 0;
+  width: fit-content;
+}
+
+.entries-smart-table .cell-field {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Allow field cells to wrap content when needed (for images, badges, etc.) */
+.entries-smart-table .cell-field .ft-media-preview,
+.entries-smart-table .cell-field .ft-gallery-preview-container,
+.entries-smart-table .cell-field .ft-gallery-count {
+  white-space: normal;
+  overflow: visible;
+}
+
+/* Fieldtype list fallback visuals */
+.ft-list-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--gray-100, #f3f4f6);
+  color: var(--gray-700, #374151);
+  font-size: 12px;
+}
+
+.ft-list-empty {
+  color: var(--text-tertiary, #C4C6C1);
+}
+
+/* Sub-entry count badge */
+.sub-entry-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-secondary, #fafafa);
+  color: var(--text-secondary, #72746F);
+  font-size: 0.75rem;
+  font-weight: 500;
+  min-width: 24px;
+  height: 24px;
+}
+
+.ft-list-text {
+  color: var(--text-secondary, #72746F);
+}
+
+/* Media preview in table cells */
+.ft-media-preview {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Gallery preview container */
+.ft-gallery-preview-container {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.ft-list-image-square {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.ft-gallery-preview {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.ft-gallery-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  background: var(--color-neutral-200, #F4F6F2);
+  color: var(--text-secondary, #72746F);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .table-container {
+    font-size: 0.875rem;
+  }
+  
+  .table {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .entries-smart-table .row-scroll {
+    grid-template-columns: 220px 120px 1fr;
+  }
+}
+
+/* ============================================
+   Drag & Drop States for Tables
+   ============================================ */
+.table-row.dragging {
+  opacity: 0.5;
+}
+
+.table-row.drag-over {
+  outline: 2px dashed var(--primary-400, #60a5fa);
+  background: var(--primary-50, #eff6ff);
+}
+
+.table-row:hover .cell-drag {
+  opacity: 1;
+}
+

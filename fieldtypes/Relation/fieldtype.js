@@ -1,4 +1,4 @@
-// Self-contained Relation Fieldtype for HaruCMS
+// Self-contained Relation Fieldtype for Birkly
 window.HaruFieldtypes = window.HaruFieldtypes || {};
 
 // Register Relation fieldtype configuration

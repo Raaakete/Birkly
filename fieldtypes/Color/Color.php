@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Color;
+namespace Birkly\FieldTypes\Color;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Color extends BaseField {
     protected $format; // hex, rgb, hsl
@@ -277,7 +277,7 @@ class Color extends BaseField {
         .color-field-wrapper {
             display: flex !important;
             flex-direction: column !important;
-            gap: 1rem !important;
+            gap: var(--space-4, 1rem) !important;
         }
         
         .color-picker-section {
@@ -293,55 +293,57 @@ class Color extends BaseField {
         .color-picker {
             width: 80px !important;
             height: 80px !important;
-            border: 3px solid var(--border-color, #ddd) !important;
-            border-radius: 12px !important;
+            border: 3px solid var(--border-medium, #e5e7eb) !important;
+            border-radius: var(--radius-lg, 0.75rem) !important;
             cursor: pointer !important;
             padding: 0 !important;
-            transition: all 0.3s !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+            transition: all var(--transition-base, 0.3s ease) !important;
+            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1)) !important;
         }
         
         .color-picker:hover {
-            border-color: var(--primary, #007bff) !important;
+            border-color: var(--primary-500, #3b82f6) !important;
             transform: scale(1.05) !important;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;
+            box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)) !important;
         }
         
         .color-inputs-section {
             display: flex !important;
             flex-direction: row !important;
-            gap: 0.75rem !important;
+            gap: var(--space-3, 0.75rem) !important;
         }
         
         .color-input-group {
             display: flex !important;
             flex-direction: column !important;
-            gap: 0.5rem !important;
+            gap: var(--space-2, 0.5rem) !important;
             flex: 1 !important;
         }
         
         .color-input-label {
             font-size: 0.875rem !important;
-            font-weight: 500 !important;
-            color: #666 !important;
+            font-weight: var(--font-medium, 500) !important;
+            color: var(--text-secondary, #72746F) !important;
         }
         
         .color-hex-input,
         .color-rgba-input {
             width: 100% !important;
-            padding: 0.625rem !important;
-            border: 1px solid var(--border-color, #ddd) !important;
-            border-radius: 6px !important;
+            padding: var(--space-3, 0.75rem) !important;
+            border: 1px solid var(--border-medium, #e5e7eb) !important;
+            border-radius: var(--radius-md, 0.5rem) !important;
             font-size: 0.9375rem !important;
-            font-family: 'Courier New', monospace !important;
-            transition: all 0.2s !important;
+            font-family: var(--font-family-mono, 'Courier New', monospace) !important;
+            background: var(--bg-primary, #ffffff) !important;
+            color: var(--text-primary, #20221D) !important;
+            transition: all var(--transition-fast, 150ms ease) !important;
         }
         
         .color-hex-input:focus,
         .color-rgba-input:focus {
-            border-color: var(--primary, #007bff) !important;
+            border-color: var(--primary-500, #3b82f6) !important;
             outline: none !important;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
         }
         CSS;
     }
@@ -388,6 +390,20 @@ class Color extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Show color swatch with hex code
+        $hex = $this->normalizeToHex($value);
+        return '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:20px;height:20px;background-color:' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . ';border-radius:4px;border:1px solid var(--border-light, #e5e7eb);flex-shrink:0;"></span><span class="ft-list-text" style="font-family:monospace;font-size:11px;">' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . '</span></div>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '80px'; // Color fields are narrow (just hex code display)
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

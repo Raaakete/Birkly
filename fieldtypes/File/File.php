@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\File;
+namespace Birkly\FieldTypes\File;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class File extends BaseField {
     public function getType(): string {
@@ -178,41 +178,43 @@ class File extends BaseField {
         .file-field {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--space-3, 0.75rem);
         }
         .file-preview-container {
             min-height: 100px;
-            border: 1px dashed #ddd;
-            border-radius: 4px;
-            padding: 12px;
+            border: 1px dashed var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            padding: var(--space-3, 0.75rem);
             display: flex;
             align-items: center;
             justify-content: center;
+            background: var(--bg-secondary, #fafafa);
         }
         .file-preview {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2, 0.5rem);
         }
         .file-icon {
-            font-size: 48px;
+            font-size: 3rem;
+            color: var(--text-secondary, #72746F);
         }
         .file-name {
-            font-weight: 500;
-            color: #333;
+            font-weight: var(--font-medium, 500);
+            color: var(--text-primary, #20221D);
         }
         .file-size {
             font-size: 0.875em;
-            color: #666;
+            color: var(--text-secondary, #72746F);
         }
         .file-placeholder {
-            color: #999;
+            color: var(--text-tertiary, #9ca3af);
             font-style: italic;
         }
         .file-controls {
             display: flex;
-            gap: 8px;
+            gap: var(--space-2, 0.5rem);
         }
         CSS;
     }
@@ -283,6 +285,37 @@ class File extends BaseField {
     public function processLoadedValue($value) {
         // Return as-is when loading
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        $fileId = $this->extractFileId($value);
+        if (empty($fileId)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        $fileInfo = $this->getFileInfo($fileId);
+        if ($fileInfo && isset($fileInfo['url'])) {
+            // Check if it's an image
+            if ($this->isImage($fileInfo['type'] ?? '')) {
+                // Show image preview
+                $url = htmlspecialchars($fileInfo['url'], ENT_QUOTES, 'UTF-8');
+                $name = htmlspecialchars($fileInfo['name'] ?? $fileId, ENT_QUOTES, 'UTF-8');
+                return '<img src="' . $url . '" alt="' . $name . '" class="ft-list-image-square">';
+            } else {
+                // Show file name for non-images
+                $name = htmlspecialchars($fileInfo['name'] ?? $fileId, ENT_QUOTES, 'UTF-8');
+                if (mb_strlen($name) > 30) {
+                    $name = mb_substr($name, 0, 27) . '...';
+                }
+                return '<span class="ft-list-text">' . $name . '</span>';
+            }
+        }
+        
+        return '<span class="ft-list-badge">' . htmlspecialchars($fileId, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '140px'; // File fields need space for filename display
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

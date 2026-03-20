@@ -84,11 +84,11 @@
 <h3>Slugs Explained</h3>
 <p>A <strong>slug</strong> is the URL-friendly version of your entry's title. For example:</p>
 <ul>
-    <li>Title: "Getting Started with HaruCMS"</li>
-    <li>Slug: "getting-started-with-harucms"</li>
+    <li>Title: "Getting Started with Birkly"</li>
+    <li>Slug: "getting-started-with-birkly"</li>
 </ul>
 
-<p>The slug is used in the URL when someone views your entry. HaruCMS automatically creates slugs from titles, but you can customize them if needed.</p>
+<p>The slug is used in the URL when someone views your entry. Birkly automatically creates slugs from titles, but you can customize them if needed.</p>
 
 <h3>Tips for Managing Entries</h3>
 <ul>

@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Secure Integration - HaruCMS Docs</title>
+  <title>Secure Integration - Birkly Docs</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="docs-app">
     <nav class="sidebar">
-      <div class="sidebar-header">HaruCMS Docs</div>
+      <div class="sidebar-header">Birkly Docs</div>
       <ul class="nav-links">
         <li><a href="index.html">Overview</a></li>
         <li><a href="getting-started.html">Getting Started</a></li>
@@ -31,20 +31,20 @@
       
       <div class="warning">
         <h3>⚠️ Security Notice</h3>
-        <p>This guide covers the secure, domain-based integration approach for HaruCMS. This is the recommended approach for production websites.</p>
+        <p>This guide covers the secure, domain-based integration approach for Birkly. This is the recommended approach for production websites.</p>
       </div>
 
       <h2>Overview</h2>
       
-      <p>HaruCMS provides a secure, domain-based authentication system that eliminates the security risks of public API keys. Instead of exposing API keys in your website's source code, the system validates requests based on the domain making the request.</p>
+      <p>Birkly provides a secure, domain-based authentication system that eliminates the security risks of public API keys. Instead of exposing API keys in your website's source code, the system validates requests based on the domain making the request.</p>
 
       <h2>How It Works</h2>
 
       <h3>1. Domain Registration</h3>
-      <p>Before a website can access HaruCMS content, its domain must be registered and licensed in the CMS admin panel.</p>
+      <p>Before a website can access Birkly content, its domain must be registered and licensed in the CMS admin panel.</p>
 
       <h3>2. Automatic Domain Validation</h3>
-      <p>When a website makes a request to the secure API, HaruCMS automatically:</p>
+      <p>When a website makes a request to the secure API, Birkly automatically:</p>
       <ul>
         <li>Extracts the domain from the request headers (Origin or Referer)</li>
         <li>Validates the domain against registered licenses</li>
@@ -61,10 +61,10 @@
 
       <h3>Step 1: Register Your Domain</h3>
       
-      <p>Contact HaruCMS support or use the admin panel to register your domain:</p>
+      <p>Contact Birkly support or use the admin panel to register your domain:</p>
       
       <ol>
-        <li>Go to <code>/admin/license-management.html</code> in your HaruCMS admin</li>
+        <li>Go to <code>/admin/license-management.html</code> in your Birkly admin</li>
         <li>Click "Add New License"</li>
         <li>Enter your primary domain (e.g., <code>example.com</code>)</li>
         <li>Optionally add up to 2 additional domains (e.g., <code>www.example.com</code>, <code>blog.example.com</code>)</li>
@@ -77,10 +77,10 @@
       <p>Replace the standard template with the secure version:</p>
       
       <pre><code>&lt;!-- Replace this --&gt;
-&lt;script src="https://your-harucms-domain.com/cms-template.js"&gt;&lt;/script&gt;
+&lt;script src="https://your-birkly-domain.com/cms-template.js"&gt;&lt;/script&gt;
 
 &lt;!-- With this --&gt;
-&lt;script src="https://your-harucms-domain.com/cms-template-secure.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="https://your-birkly-domain.com/cms-template-secure.js"&gt;&lt;/script&gt;</code></pre>
 
       <h3>Step 3: Your Website Code</h3>
       
@@ -107,7 +107,7 @@
         &lt;/div&gt;
     &lt;/div&gt;
     
-    &lt;script src="https://your-harucms-domain.com/cms-template-secure.js"&gt;&lt;/script&gt;
+    &lt;script src="https://your-birkly-domain.com/cms-template-secure.js"&gt;&lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
 
@@ -168,7 +168,7 @@
 
       <div class="error-example">
         <div style="background: #f44336; color: white; padding: 1rem; border-radius: 4px;">
-          <strong>License Error:</strong> Domain not licensed. Please contact support to register your domain for HaruCMS access.
+          <strong>License Error:</strong> Domain not licensed. Please contact support to register your domain for Birkly access.
         </div>
       </div>
 
@@ -179,7 +179,7 @@
       <pre><code>// Generate API key in admin panel
 const apiKey = 'your-api-key-here';
 
-fetch('https://your-harucms-domain.com/api/secure_public.php?action=list_entries&collection=blog', {
+fetch('https://your-birkly-domain.com/api/secure_public.php?action=list_entries&collection=blog', {
   headers: {
     'X-API-Key': apiKey
   }
@@ -204,7 +204,7 @@ fetch('https://your-harucms-domain.com/api/secure_public.php?action=list_entries
 
       <h2>Form Submissions (Pushing Data)</h2>
 
-      <p>The secure system also handles form submissions from your website to HaruCMS. This ensures that only authorized domains can submit data to your collections.</p>
+      <p>The secure system also handles form submissions from your website to Birkly. This ensures that only authorized domains can submit data to your collections.</p>
 
       <h3>Setting Up Form Submissions</h3>
 
@@ -262,7 +262,7 @@ HaruSecureForm.submitForm('contact_form', formData)
       <p>To migrate from the public API to the secure API:</p>
 
       <ol>
-        <li>Register your domain in the HaruCMS admin panel</li>
+        <li>Register your domain in the Birkly admin panel</li>
         <li>Replace <code>cms-template.js</code> with <code>cms-template-secure.js</code></li>
         <li>Test your website to ensure everything works</li>
         <li>Remove the old template reference</li>
@@ -274,7 +274,7 @@ HaruSecureForm.submitForm('contact_form', formData)
 
       <div class="troubleshooting">
         <h4>Domain not licensed error</h4>
-        <p><strong>Cause:</strong> Your domain isn't registered in HaruCMS</p>
+        <p><strong>Cause:</strong> Your domain isn't registered in Birkly</p>
         <p><strong>Solution:</strong> Contact support to register your domain</p>
 
         <h4>License expired error</h4>
@@ -291,8 +291,8 @@ HaruSecureForm.submitForm('contact_form', formData)
       <p>For help with domain registration, license management, or technical issues:</p>
       
       <ul>
-        <li>Email: support@harucms.com</li>
-        <li>Documentation: <a href="https://docs.harucms.com">docs.harucms.com</a></li>
+        <li>Email: support@birkly.com</li>
+        <li>Documentation: <a href="https://docs.birkly.com">docs.birkly.com</a></li>
         <li>Admin Panel: <code>/admin/license-management.html</code></li>
       </ul>
     </main>

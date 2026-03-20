@@ -50,21 +50,119 @@
     function initScheduledPublishing() {
         const statusSelect = document.getElementById('status');
         const publishScheduleGroup = document.getElementById('publish-schedule-group');
+        const expireScheduleGroup = document.getElementById('expire-schedule-group');
         const publishAtInput = document.getElementById('published_at');
         const expiresAtInput = document.getElementById('expires_at');
         
-        if (!statusSelect || !publishScheduleGroup) return;
+        if (!statusSelect) return;
         
         function toggleScheduleFields() {
             const status = statusSelect.value;
-            if (status === 'scheduled') {
-                publishScheduleGroup.style.display = 'block';
-            } else {
-                publishScheduleGroup.style.display = 'none';
+            const reviewerGroup = document.getElementById('reviewer-group');
+            
+            // Show publish date field when status is "scheduled"
+            if (publishScheduleGroup) {
+                if (status === 'scheduled') {
+                    publishScheduleGroup.style.display = 'block';
+                } else {
+                    publishScheduleGroup.style.display = 'none';
+                }
+            }
+            
+            // Show unpublish date field when status is "published"
+            if (expireScheduleGroup) {
+                if (status === 'published') {
+                    expireScheduleGroup.style.display = 'block';
+                } else {
+                    expireScheduleGroup.style.display = 'none';
+                }
+            }
+            
+            // Show reviewer field when status is "pending_review"
+            if (reviewerGroup) {
+                const reviewerSelect = document.getElementById('reviewer');
+                const reviewerHidden = document.getElementById('reviewer_hidden');
+                
+                if (status === 'pending_review') {
+                    reviewerGroup.style.display = 'block';
+                    // When showing, sync the hidden input value to the select if select is empty
+                    if (reviewerSelect && reviewerHidden) {
+                        // If select is empty but hidden has value, try to set select from hidden
+                        if (!reviewerSelect.value && reviewerHidden.value) {
+                            console.log('[EntryEditor] Setting reviewer select from hidden value:', reviewerHidden.value);
+                            // Try to find the option that matches the hidden value (could be ID or email)
+                            const hiddenValue = reviewerHidden.value.toLowerCase().trim();
+                            let found = false;
+                            for (let option of reviewerSelect.options) {
+                                const optionValue = option.value.toLowerCase().trim();
+                                const optionText = option.text.toLowerCase();
+                                // Match by value (ID) or by email in text
+                                if (optionValue === hiddenValue || optionText.includes('(' + hiddenValue + ')')) {
+                                    reviewerSelect.value = option.value;
+                                    console.log('[EntryEditor] Matched reviewer option:', option.value);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                console.warn('[EntryEditor] Could not find reviewer option for:', reviewerHidden.value);
+                            }
+                        } else if (reviewerSelect.value) {
+                            // Select has value, sync to hidden
+                            reviewerHidden.value = reviewerSelect.value;
+                            console.log('[EntryEditor] Synced reviewer hidden from select:', reviewerSelect.value);
+                        }
+                    }
+                } else {
+                    reviewerGroup.style.display = 'none';
+                    // When hiding, sync the reviewer value to the hidden input to preserve it
+                    if (reviewerSelect && reviewerHidden) {
+                        // Always preserve the select value (user ID) in the hidden input
+                        if (reviewerSelect.value) {
+                            reviewerHidden.value = reviewerSelect.value;
+                            console.log('[EntryEditor] Preserved reviewer in hidden input:', reviewerSelect.value);
+                        } else if (reviewerHidden.value) {
+                            console.log('[EntryEditor] Reviewer hidden already has value:', reviewerHidden.value);
+                        }
+                        // If select is empty but hidden has value, keep the hidden value
+                    }
+                }
             }
         }
         
-        // Initial state
+        // Keep hidden reviewer input in sync with select field - DO THIS BEFORE toggleScheduleFields
+        const reviewerSelect = document.getElementById('reviewer');
+        const reviewerHidden = document.getElementById('reviewer_hidden');
+        if (reviewerSelect && reviewerHidden) {
+            // CRITICAL: Initialize hidden input with select value FIRST (before any toggling)
+            // This preserves the reviewer value that was set by the PHP template
+            if (reviewerSelect.value) {
+                reviewerHidden.value = reviewerSelect.value;
+                console.log('[EntryEditor] Initialized reviewer_hidden with select value:', reviewerSelect.value);
+            } else if (reviewerHidden.value) {
+                // If select is empty but hidden has value, try to set select from hidden
+                // This handles the case where the field was hidden when page loaded
+                const hiddenValue = reviewerHidden.value.toLowerCase().trim();
+                for (let option of reviewerSelect.options) {
+                    const optionValue = option.value.toLowerCase().trim();
+                    const optionText = option.text.toLowerCase();
+                    // Match by value (ID) or by email in text
+                    if (optionValue === hiddenValue || optionText.includes('(' + hiddenValue + ')')) {
+                        reviewerSelect.value = option.value;
+                        console.log('[EntryEditor] Set reviewer select from hidden value:', option.value);
+                        break;
+                    }
+                }
+            }
+            
+            // Update hidden input when reviewer select changes
+            reviewerSelect.addEventListener('change', function() {
+                reviewerHidden.value = this.value || reviewerHidden.value;
+                console.log('[EntryEditor] Reviewer select changed, updated hidden:', reviewerHidden.value);
+            });
+        }
+        
+        // Initial state - run AFTER initializing reviewer fields
         toggleScheduleFields();
         
         // Update on status change
@@ -177,22 +275,48 @@
     
     function loadReviewers() {
         const reviewerSelect = document.getElementById('reviewer');
+        const reviewerHidden = document.getElementById('reviewer_hidden');
         if (!reviewerSelect) return;
+        
+        // CRITICAL: Save the current reviewer value before clearing the select
+        const currentReviewer = reviewerSelect.value || (reviewerHidden ? reviewerHidden.value : '');
+        console.log('[EntryEditor] loadReviewers - preserving current reviewer:', currentReviewer);
         
         // Fetch users with admin or editor role
         fetch('/api/users.php?action=list_users')
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok' && data.data && data.data.users) {
-                    reviewerSelect.innerHTML = '<option value="">No reviewer assigned</option>';
+                    reviewerSelect.innerHTML = '<option value="">Select a reviewer...</option>';
                     data.data.users.forEach(user => {
                         if (user.role === 'admin' || user.role === 'editor') {
                             const option = document.createElement('option');
-                            option.value = user.email || user.id;
-                            option.textContent = user.email || user.name || 'User';
+                            // Use user ID as value, not email
+                            option.value = user.id || user.email;
+                            const displayName = (user.name || user.email) + (user.email && user.name !== user.email ? ' (' + user.email + ')' : '');
+                            option.textContent = displayName;
                             reviewerSelect.appendChild(option);
                         }
                     });
+                    
+                    // Restore the saved reviewer value
+                    if (currentReviewer) {
+                        const normalizedCurrent = currentReviewer.toLowerCase().trim();
+                        // Try to find matching option by ID or email
+                        for (let option of reviewerSelect.options) {
+                            const optionValue = option.value.toLowerCase().trim();
+                            const optionText = option.text.toLowerCase();
+                            if (optionValue === normalizedCurrent || optionText.includes('(' + normalizedCurrent + ')')) {
+                                reviewerSelect.value = option.value;
+                                console.log('[EntryEditor] Restored reviewer value:', option.value);
+                                // Also update hidden input
+                                if (reviewerHidden) {
+                                    reviewerHidden.value = option.value;
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
             })
             .catch(error => {
@@ -651,30 +775,317 @@
         const form = document.getElementById('entry-form');
         if (!form) return;
 
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Sync all editor fields before submission
             document.querySelectorAll('.editor-field').forEach(syncEditorContent);
 
             // Let fieldtypes update their hidden inputs before save
+            // Use a Promise to ensure all async updates complete
+            const updateFieldtypes = new Promise((resolve) => {
             try {
-                document.dispatchEvent(new CustomEvent('beforeSaveEntry'));
+                    const event = new CustomEvent('beforeSaveEntry');
+                    document.dispatchEvent(event);
+                    // Give fieldtypes a moment to update their hidden inputs
+                    setTimeout(resolve, 100);
             } catch (err) {
                 console.error('beforeSaveEntry event dispatch failed:', err);
+                    resolve();
             }
+            });
+
+            // Wait for fieldtype updates before collecting form data
+            await updateFieldtypes;
 
             const formData = new FormData(form);
             
-            // Remove any 'action' field from FormData - we use URL query parameter instead
-            // This prevents conflicts between POST body and GET parameter
-            formData.delete('action');
+            // Check if this is a sub-entry (creating or editing)
+            const isSubEntry = form.querySelector('input[name="sub_collection"]') && form.querySelector('input[name="parent_entry_id"]');
+            const actionInput = form.querySelector('input[name="action"]');
+            const action = actionInput ? actionInput.value : (form.querySelector('input[name="sub_entry_id"]') ? 'update' : 'create');
             
-            // Call the API explicitly with action=save to avoid server-side routing ambiguity
-            fetch('/api/admin_entries.php?action=save', {
-                method: 'POST',
-                body: formData
-            })
+            let fetchPromise;
+            
+            if (isSubEntry) {
+                // Sub-entry create/update - use sub_entries API
+                const parentCollection = formData.get('parent_collection') || formData.get('collection');
+                const parentEntryId = formData.get('parent_entry_id');
+                const subCollection = formData.get('sub_collection');
+                const subEntryId = formData.get('sub_entry_id');
+                const parentSubCollection = formData.get('parent_sub_collection');
+                const parentSubEntryId = formData.get('parent_sub_entry_id');
+                
+                // Build data object from form (exclude meta fields)
+                const data = {};
+                for (const [key, value] of formData.entries()) {
+                    // Skip meta fields
+                    if (key === 'action' || key === 'collection' || key === 'parent_collection' || 
+                        key === 'parent_entry_id' || key === 'sub_collection' || key === 'sub_entry_id' || 
+                        key === 'parent_sub_collection' || key === 'parent_sub_entry_id' ||
+                        key === '_csrf' || key.startsWith('_')) {
+                        continue;
+                    }
+                    // Try to parse JSON values
+                    try {
+                        data[key] = JSON.parse(value);
+                    } catch {
+                        data[key] = value;
+                    }
+                }
+                
+                // Also collect from hidden inputs (for fieldtypes like Color)
+                const hiddenInputs = form.querySelectorAll('input[type="hidden"]');
+                hiddenInputs.forEach(input => {
+                    if (input.name && !input.name.startsWith('_') && 
+                        input.name !== 'action' && input.name !== 'collection' &&
+                        input.name !== 'parent_collection' && input.name !== 'parent_entry_id' &&
+                        input.name !== 'sub_collection' && input.name !== 'sub_entry_id' &&
+                        input.name !== 'parent_sub_collection' && input.name !== 'parent_sub_entry_id') {
+                        if (!data.hasOwnProperty(input.name)) {
+                            try {
+                                data[input.name] = JSON.parse(input.value);
+                            } catch {
+                                data[input.name] = input.value;
+                            }
+                        }
+                    }
+                });
+                
+                // Include parent sub-collection and sub-entry info for nested sub-entries
+                // Check both formData and hidden inputs (in case formData didn't capture them)
+                let finalParentSubCollection = parentSubCollection;
+                let finalParentSubEntryId = parentSubEntryId;
+                
+                if (!finalParentSubCollection || !finalParentSubEntryId) {
+                    const hiddenParentSubCollection = document.getElementById('hidden-parent-sub-collection');
+                    const hiddenParentSubEntryId = document.getElementById('hidden-parent-sub-entry-id');
+                    if (hiddenParentSubCollection && hiddenParentSubCollection.value) {
+                        finalParentSubCollection = hiddenParentSubCollection.value;
+                    }
+                    if (hiddenParentSubEntryId && hiddenParentSubEntryId.value) {
+                        finalParentSubEntryId = hiddenParentSubEntryId.value;
+                    }
+                }
+                
+                if (finalParentSubCollection && finalParentSubEntryId) {
+                    console.log('[EntryEditor] Setting parent_sub_collection from form:', finalParentSubCollection, 'parent_sub_entry_id:', finalParentSubEntryId);
+                    data['parent_sub_collection'] = finalParentSubCollection;
+                    data['parent_sub_entry_id'] = finalParentSubEntryId;
+                } else {
+                    console.log('[EntryEditor] No parentSubCollection or parentSubEntryId found');
+                    console.log('[EntryEditor] parentSubCollection:', finalParentSubCollection, 'parentSubEntryId:', finalParentSubEntryId);
+                }
+                
+                const requestBody = {
+                    action: action,
+                    parent_collection: parentCollection,
+                    parent_entry_id: parentEntryId,
+                    sub_collection: subCollection,
+                    data: data,
+                    _csrf: formData.get('_csrf')
+                };
+                
+                // Only include sub_entry_id if updating (not creating)
+                if (action === 'update' && subEntryId) {
+                    requestBody.sub_entry_id = subEntryId;
+                }
+                
+                fetchPromise = fetch('/api/sub_entries.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+            } else {
+                // Regular entry save
+                // Build FormData explicitly to ensure all fields are included
+                const finalFormData = new FormData();
+                
+                // Collect all fields in two passes:
+                // 1. First pass: collect regular inputs from editor-main (not sidebar)
+                // 2. Second pass: collect hidden inputs (which may override regular inputs)
+                // This ensures fieldtype-updated hidden inputs (like tags, multiselect) take precedence
+                
+                const fieldMap = new Map(); // Use Map to track the latest value for each field
+                
+                // First pass: collect all non-hidden inputs from the main editor area AND sidebar
+                const editorMain = form.querySelector('.editor-main');
+                const editorSidebar = form.querySelector('.editor-sidebar');
+                // Search in both main and sidebar, or whole form if neither exists
+                const searchScopes = [];
+                if (editorMain) searchScopes.push(editorMain);
+                if (editorSidebar) searchScopes.push(editorSidebar);
+                const searchScope = searchScopes.length > 0 ? searchScopes : [form];
+                const regularInputs = [];
+                searchScope.forEach(scope => {
+                    regularInputs.push(...scope.querySelectorAll('input:not([type="hidden"]), select, textarea'));
+                });
+                console.log('[EntryEditor] Found', regularInputs.length, 'regular form inputs in', editorMain ? 'editor-main' : 'form');
+                
+                regularInputs.forEach(input => {
+                    const name = input.name;
+                    if (!name) return;
+                    
+                    // Skip system fields
+                    if (name === 'action' || name === '_csrf' || name.startsWith('_')) {
+                        return;
+                    }
+                    
+                    // Handle different input types
+                    if (input.type === 'checkbox') {
+                        fieldMap.set(name, input.checked ? (input.value || '1') : '');
+                    } else if (input.type === 'radio') {
+                        if (input.checked) {
+                            fieldMap.set(name, input.value || '');
+                        }
+                    } else if (input.type === 'file') {
+                        if (input.files && input.files.length > 0) {
+                            // Files need special handling - store the input itself
+                            fieldMap.set(name, input);
+                        }
+                    } else {
+                        // For text, email, date, select, textarea, etc.
+                        const value = input.value || '';
+                        
+                        // Only set if we don't already have a non-empty value for this field
+                        // This prevents empty inputs from overwriting filled ones
+                        if (!fieldMap.has(name) || fieldMap.get(name) === '') {
+                            console.log('[EntryEditor] Collected regular field:', name, '=', value);
+                            fieldMap.set(name, value);
+                        } else if (value !== '') {
+                            // If we already have a value but this one is also non-empty, use the last one
+                            console.log('[EntryEditor] Updating regular field:', name, '=', value, '(was:', fieldMap.get(name), ')');
+                            fieldMap.set(name, value);
+                        } else {
+                            console.log('[EntryEditor] Skipping empty regular field:', name, '(already have value:', fieldMap.get(name), ')');
+                        }
+                    }
+                });
+                
+                // Second pass: collect hidden inputs from the entire form (fieldtypes use hidden inputs)
+                // BUT: only if the hidden input has a non-empty value, or if no regular input exists
+                const hiddenInputs = form.querySelectorAll('input[type="hidden"]');
+                console.log('[EntryEditor] Found', hiddenInputs.length, 'hidden inputs');
+                
+                hiddenInputs.forEach(input => {
+                    const name = input.name;
+                    if (!name) return;
+                    
+                    // Skip system fields
+                    if (name === 'action' || name === 'collection' || name === 'entry_id' || 
+                        name === '_csrf' || name.startsWith('_')) {
+                        return;
+                    }
+                    
+                    const value = input.value || '';
+                    
+                    // Only use hidden input if:
+                    // 1. It has a non-empty value, OR
+                    // 2. No regular input with this name exists yet
+                    const hasRegularInput = fieldMap.has(name);
+                    const isEmpty = value === '';
+                    
+                    if (!isEmpty || !hasRegularInput) {
+                        console.log('[EntryEditor] Collected hidden field:', name, '=', value, hasRegularInput ? '(overriding regular)' : '(new)');
+                        fieldMap.set(name, value);
+                    } else {
+                        console.log('[EntryEditor] Skipping empty hidden field:', name, '(regular input exists)');
+                    }
+                });
+                
+                // Now build FormData from the map
+                for (const [name, value] of fieldMap.entries()) {
+                    if (value && value.files) {
+                        // Handle file inputs
+                        for (let i = 0; i < value.files.length; i++) {
+                            finalFormData.append(name, value.files[i]);
+                        }
+                    } else {
+                        finalFormData.append(name, value);
+                    }
+                }
+                
+                // Add collection and entry_id if they exist
+                const collection = formData.get('collection');
+                const entryId = formData.get('entry_id');
+                if (collection) finalFormData.append('collection', collection);
+                if (entryId) finalFormData.append('entry_id', entryId);
+                
+                // Add CSRF token
+                const csrf = formData.get('_csrf');
+                if (csrf) finalFormData.append('_csrf', csrf);
+                
+                // Add status and slug from sidebar (these might not be in the main form inputs)
+                // Only add if they weren't already collected from form inputs
+                const status = formData.get('status');
+                const slug = formData.get('slug');
+                const publishedAt = formData.get('published_at');
+                const expiresAt = formData.get('expires_at');
+                if (status && !fieldMap.has('status')) finalFormData.append('status', status);
+                if (slug !== null && !fieldMap.has('slug')) finalFormData.append('slug', slug || '');
+                if (publishedAt && !fieldMap.has('published_at')) finalFormData.append('published_at', publishedAt);
+                if (expiresAt && !fieldMap.has('expires_at')) finalFormData.append('expires_at', expiresAt);
+                
+                // Always include reviewer field if it exists in the form (even if hidden or empty)
+                // This ensures the server can preserve the existing reviewer when the field is hidden
+                const reviewerField = form.querySelector('select[name="reviewer"]');
+                const reviewerHidden = form.querySelector('input[name="reviewer_hidden"]');
+                
+                // Sync: Update hidden input with select value before submission
+                // Always prefer the select value (user ID) over hidden value (which might be email)
+                if (reviewerField && reviewerHidden) {
+                    if (reviewerField.value) {
+                        // Select has a value (user ID) - use it
+                        reviewerHidden.value = reviewerField.value;
+                    }
+                    // If select is empty, keep the hidden value (preserves existing reviewer when field is hidden)
+                }
+                
+                // Use reviewer field value if available and not empty, otherwise use hidden input value
+                // Always prefer select value (user ID) over hidden value
+                let reviewerValue = '';
+                if (reviewerField && reviewerField.value) {
+                    reviewerValue = reviewerField.value; // This is always a user ID
+                } else if (reviewerHidden && reviewerHidden.value) {
+                    reviewerValue = reviewerHidden.value; // This might be ID or email, but server will handle it
+                }
+                
+                // Always include reviewer in form submission (even if empty, so server knows to preserve)
+                if (!fieldMap.has('reviewer')) {
+                    finalFormData.append('reviewer', reviewerValue);
+                } else {
+                    // Update if already in map (from regular input collection)
+                    finalFormData.set('reviewer', reviewerValue);
+                }
+                
+                // Always include reviewer_hidden for server-side preservation logic
+                if (reviewerHidden && !fieldMap.has('reviewer_hidden')) {
+                    finalFormData.append('reviewer_hidden', reviewerHidden.value || '');
+                }
+                
+                console.log('[EntryEditor] Reviewer submission - select value:', reviewerField?.value, 'hidden value:', reviewerHidden?.value, 'final value:', reviewerValue);
+                
+                // Debug: Log all form data being sent
+                console.log('[EntryEditor] Form data being sent:');
+                for (const [key, value] of finalFormData.entries()) {
+                    console.log('[EntryEditor]', key, '=', value);
+                }
+                
+                // Debug: Specifically log reviewer fields
+                const reviewerDebug = finalFormData.get('reviewer');
+                const reviewerHiddenDebug = finalFormData.get('reviewer_hidden');
+                console.log('[EntryEditor] Reviewer fields - reviewer:', reviewerDebug, 'reviewer_hidden:', reviewerHiddenDebug);
+                
+                // Call the API explicitly with action=save to avoid server-side routing ambiguity
+                fetchPromise = fetch('/api/admin_entries.php?action=save', {
+                    method: 'POST',
+                    body: finalFormData
+                });
+            }
+            
+            fetchPromise
             .then(async (response) => {
                 const raw = await response.text();
                 let data;
@@ -686,9 +1097,27 @@
                 // Check JSON body first - it's the source of truth
                 if (data && data.status === 'ok') {
                     // Success! Even if HTTP status code is 400 (server bug)
-                    // Get collection slug from form or config
-                    const collectionSlug = formData.get('collection') || config.collectionSlug || '';
-                    window.location.href = '/admin/index.php?page=entries&collection=' + encodeURIComponent(collectionSlug);
+                    if (isSubEntry) {
+                        // For sub-entries, redirect back to parent entry detail page
+                        const parentCollection = formData.get('parent_collection') || formData.get('collection');
+                        const parentEntryId = formData.get('parent_entry_id');
+                        const parentSubCollection = formData.get('parent_sub_collection');
+                        const parentSubEntryId = formData.get('parent_sub_entry_id');
+                        
+                        // Build redirect URL - if nested sub-entry, include parent sub-entry info
+                        let redirectUrl = `/admin/index.php?page=entry-detail&collection=${encodeURIComponent(parentCollection)}&entry=${encodeURIComponent(parentEntryId)}`;
+                        if (parentSubCollection && parentSubEntryId) {
+                            // Nested sub-entry - redirect to parent sub-entry detail page
+                            redirectUrl += `&sub_collection=${encodeURIComponent(parentSubCollection)}&sub_entry=${encodeURIComponent(parentSubEntryId)}`;
+                        }
+                        // Add cache-busting parameter to force refresh
+                        redirectUrl += `&_t=${Date.now()}`;
+                        window.location.href = redirectUrl;
+                    } else {
+                        // For regular entries, redirect to entries list
+                        const collectionSlug = formData.get('collection') || config.collectionSlug || '';
+                        window.location.href = '/admin/index.php?page=entries&collection=' + encodeURIComponent(collectionSlug);
+                    }
                 } else if (data && data.status === 'error') {
                     // Error in JSON body
                     alert('Error: ' + (data.message || raw || 'Unknown error'));

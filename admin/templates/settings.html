@@ -1,5 +1,9 @@
+<?php ?>
 <div class="page-header pt-m pb-m">
-  <div class="breadcrumbs"><span class="current">Settings</span></div>
+  <div class="page-header-left">
+    <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
+  </div>
+  <div class="page-header-actions"></div>
 </div>
 <div class="settings-page">
 
@@ -10,20 +14,20 @@
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
         </svg>
-        General
+        <?= __('admin.general') ?>
       </button>
       <button class="tab-btn" data-tab="users-roles">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
-        Users & Roles
+        <?= __('admin.users_and_roles') ?>
       </button>
       <button class="tab-btn" data-tab="plugins">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
         </svg>
-        Plugins
+        <?= __('admin.plugins') ?>
       </button>
       <button class="tab-btn" data-tab="security">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -31,14 +35,14 @@
           <circle cx="12" cy="16" r="1"></circle>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
-        Security
+        <?= __('admin.security') ?>
       </button>
       <button class="tab-btn" data-tab="api">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
-        API
+        <?= __('admin.api') ?>
       </button>
       <button class="tab-btn" data-tab="domains">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -46,7 +50,7 @@
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
-        Domains
+        <?= __('admin.domains') ?>
       </button>
       <button class="tab-btn" data-tab="activity-log">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -55,7 +59,7 @@
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
         </svg>
-        Activity & Audit Log
+        <?= __('admin.activity_and_audit_log') ?>
       </button>
       <button class="tab-btn" data-tab="ai-connections">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -63,28 +67,43 @@
           <path d="M2 17l10 5 10-5"></path>
           <path d="M2 12l10 5 10-5"></path>
         </svg>
-        AI Connections
+        <?= __('admin.ai_connections') ?>
+      </button>
+      <button class="tab-btn" data-tab="storage">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <?= __('admin.storage') ?>
       </button>
     </div>
 
     <div class="tab-content">
+      <?php
+      // UI Injection Point: settings_before_tabs
+      if (function_exists('render_ui_injections')) {
+          echo render_ui_injections('settings_before_tabs', []);
+      }
+      ?>
+      
       <!-- General Tab -->
       <div class="tab-pane active" id="general">
         <div class="main-actions-bar">
-          <button type="submit" form="general-form" class="btn btn-primary">Save Settings</button>
+          <button type="submit" form="general-form" class="btn btn-primary"><?= __('admin.save_settings') ?></button>
         </div>
         <form id="general-form" class="settings-form" enctype="multipart/form-data">
           <div class="settings-section">
-            <h2>Project Information</h2>
-            <p class="settings-help">These settings are for the admin panel only. They don't affect the websites you're building with HaruCMS.</p>
+            <h2><?= __('admin.project_information') ?></h2>
+            <p class="settings-help"><?= __('admin.project_information_help') ?></p>
             <div class="form-row">
               <div class="form-group">
-                <label for="project-name">Project Name</label>
+                <label for="project-name"><?= __('admin.project_name') ?></label>
                 <input type="text" id="project-name" name="projectName" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
-                <small>This name will be displayed in the admin panel (e.g., "Acme Corp CMS", "My Project")</small>
+                <small><?= __('admin.project_name_help') ?></small>
               </div>
               <div class="form-group">
-                <label for="site-timezone">Timezone</label>
+                <label for="site-timezone"><?= __('admin.timezone') ?></label>
                 <select id="site-timezone" name="siteTimezone">
                   <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
                   <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>Eastern Time</option>
@@ -95,79 +114,79 @@
               </div>
             </div>
             <div class="form-group">
-              <label for="project-description">Project Description (Optional)</label>
-              <textarea id="project-description" name="projectDescription" rows="3" placeholder="A brief description of this project"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
-              <small>Optional description for your reference in the admin panel</small>
+              <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
+              <textarea id="project-description" name="projectDescription" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
+              <small><?= __('admin.optional_description_help') ?></small>
             </div>
             <div class="form-group">
-              <label for="project-logo">Project Logo/Icon</label>
+              <label for="project-logo"><?= __('admin.project_logo') ?></label>
               <input type="file" id="project-logo" name="project_logo" accept="image/*">
-              <small>Upload a logo or icon for your project. This will be displayed in the sidebar and used as the favicon. If not provided, the default HaruCMS icon will be used.</small>
+              <small><?= __('admin.project_logo_help') ?></small>
               <?php if (!empty($settings['branding']['logoPath'])): ?>
                 <div style="margin-top: 0.5rem;">
-                  <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Current logo:</p>
-                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="Current logo" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                  <button type="button" id="remove-logo-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Remove Logo</button>
+                  <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;"><?= __('admin.current_logo') ?>:</p>
+                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                  <button type="button" id="remove-logo-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;"><?= __('admin.remove_logo') ?></button>
                 </div>
               <?php endif; ?>
               <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
-                <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Preview:</p>
-                <img id="logo-preview-img" src="" alt="Logo preview" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;"><?= __('admin.preview') ?>:</p>
+                <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
               </div>
             </div>
           </div>
 
           <div class="settings-section">
-            <h2>Media Settings</h2>
+            <h2><?= __('admin.media_settings') ?></h2>
             <div class="form-row">
               <div class="form-group">
-                <label for="media-max-upload-size">Max Upload Size (MB)</label>
+                <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
                 <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" value="<?= htmlspecialchars($settings['media']['maxUploadSize'] ?? '') ?>" min="1" max="100">
               </div>
               <div class="form-group">
-                <label for="media-image-quality">Image Quality (%)</label>
+                <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
                 <input type="number" id="media-image-quality" name="mediaImageQuality" value="<?= htmlspecialchars($settings['media']['imageQuality'] ?? '') ?>" min="10" max="100">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="media-thumbnail-width">Thumbnail Width (px)</label>
+                <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
                 <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" value="<?= htmlspecialchars($settings['media']['thumbnailWidth'] ?? '') ?>" min="50" max="1000">
               </div>
               <div class="form-group">
-                <label for="media-thumbnail-height">Thumbnail Height (px)</label>
+                <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
                 <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" value="<?= htmlspecialchars($settings['media']['thumbnailHeight'] ?? '') ?>" min="50" max="1000">
               </div>
             </div>
             <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= ($settings['media']['createThumbnails'] ?? '') === 'on' ? 'checked' : '' ?>>
-                <span>Create Thumbnails Automatically</span>
+                <span><?= __('admin.create_thumbnails_automatically') ?></span>
               </label>
             </div>
           </div>
 
           <div class="settings-section">
-            <h2>System Updates</h2>
+            <h2><?= __('admin.system_updates') ?></h2>
             <div class="updates-content">
               <!-- Current Version Card -->
               <div class="card">
                 <div class="card-header">
-                  <h3>Current Version</h3>
+                  <h3><?= __('admin.current_version') ?></h3>
                   <div class="version-badge current">
-                    <span id="current-version">Loading...</span>
+                    <span id="current-version"><?= __('admin.loading') ?>...</span>
                   </div>
                 </div>
                 <div class="card-body">
-                  <p>Your HaruCMS installation is running version <strong id="current-version-text">Loading...</strong></p>
+                  <p><?= __('admin.birkly_running_version') ?> <strong id="current-version-text"><?= __('admin.loading') ?>...</strong></p>
                   <div class="version-info">
                     <div class="info-item">
-                      <span class="label">Installation Date:</span>
-                      <span class="value" id="install-date">Unknown</span>
+                      <span class="label"><?= __('admin.installation_date') ?>:</span>
+                      <span class="value" id="install-date"><?= __('admin.unknown') ?></span>
                     </div>
                     <div class="info-item">
-                      <span class="label">Last Update:</span>
-                      <span class="value" id="last-update">Never</span>
+                      <span class="label"><?= __('admin.last_update') ?>:</span>
+                      <span class="value" id="last-update"><?= __('admin.never') ?></span>
                     </div>
                   </div>
                 </div>
@@ -176,11 +195,11 @@
               <!-- Update Status Card -->
               <div class="card" id="update-status-card">
                 <div class="card-header">
-                  <h3>Update Status</h3>
+                  <h3><?= __('admin.update_status') ?></h3>
                   <div class="update-status" id="update-status">
                     <div class="status-indicator loading">
                       <div class="spinner"></div>
-                      <span>Checking for updates...</span>
+                      <span><?= __('admin.checking_for_updates') ?>...</span>
                     </div>
                   </div>
                 </div>
@@ -214,7 +233,7 @@
       <div class="tab-pane" id="users-roles">
         <div class="settings-section">
           <div class="section-header">
-            <h2>User Management</h2>
+            <h2><?= __('admin.user_management') ?></h2>
             <div class="user-actions">
               <button class="btn btn-secondary" onclick="openInviteUserModal()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -235,8 +254,8 @@
           <div class="users-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
             <?php if (empty($users)): ?>
               <div class="empty-state">
-                <p>No users found.</p>
-                <button class="btn btn-primary" onclick="openAddUserModal()">Add First User</button>
+                <p><?= __('admin.no_users_found') ?></p>
+                <button class="btn btn-primary" onclick="openAddUserModal()"><?= __('admin.add_first_user') ?></button>
               </div>
             <?php else: ?>
               <?php foreach ($users as $user): ?>
@@ -323,7 +342,7 @@
       <!-- Plugins Tab -->
       <div class="tab-pane" id="plugins">
         <div class="settings-section">
-          <h2>Installed Plugins</h2>
+          <h2><?= __('admin.installed_plugins') ?></h2>
           <div class="plugins-grid">
             <?php foreach ($settings['plugins'] ?? [] as $pluginId => $plugin): ?>
             <div class="plugin-card">
@@ -364,24 +383,24 @@
       <!-- Security Tab -->
       <div class="tab-pane" id="security">
         <div class="main-actions-bar">
-          <button type="submit" form="security-form" class="btn btn-primary">Save Settings</button>
+          <button type="submit" form="security-form" class="btn btn-primary"><?= __('admin.save_settings') ?></button>
         </div>
         <form id="security-form" class="settings-form">
           <div class="settings-section">
-            <h2>Session Security</h2>
+            <h2><?= __('admin.session_security') ?></h2>
             <div class="form-row">
               <div class="form-group">
-                <label for="security-session-timeout">Session Timeout (minutes)</label>
+                <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
                 <input type="number" id="security-session-timeout" name="securitySessionTimeout" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
               </div>
               <div class="form-group">
-                <label for="security-max-login-attempts">Max Login Attempts</label>
+                <label for="security-max-login-attempts"><?= __('admin.max_login_attempts') ?></label>
                 <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="security-password-min-length">Password Min Length</label>
+                <label for="security-password-min-length"><?= __('admin.password_min_length') ?></label>
                 <input type="number" id="security-password-min-length" name="securityPasswordMinLength" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
               </div>
               <div class="form-group">
@@ -398,21 +417,33 @@
           </div>
 
           <div class="settings-section">
-            <h2>CSRF Protection</h2>
+            <h2><?= __('admin.csrf_protection') ?></h2>
             <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" id="security-enable-csrf" name="securityEnableCsrf" <?= ($settings['security']['enable_csrf'] ?? true) ? 'checked' : '' ?>>
-                <span>Enable CSRF Protection</span>
+                <span><?= __('admin.enable_csrf_protection') ?></span>
               </label>
             </div>
           </div>
 
+          <!-- 2FA is a per-user feature and is managed in Account settings, not global Settings -->
+
           <div class="settings-section">
-            <h2>Two-Factor Authentication (2FA)</h2>
-            <div id="2fa-status">
+            <h2><?= __('admin.plugin_security_denylist') ?></h2>
+            <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
+            <div id="denylist-management">
               <div class="text-center">
-                <div class="spinner">Loading 2FA status...</div>
+                <div class="spinner">Loading denylist...</div>
               </div>
+            </div>
+            <div style="margin-top: 1rem;">
+              <button type="button" class="btn btn-secondary" onclick="addDenylistResource()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Protected Resource
+              </button>
             </div>
           </div>
         </form>
@@ -421,8 +452,8 @@
       <!-- API Tab -->
       <div class="tab-pane" id="api">
         <div class="settings-section">
-          <h2>API Information</h2>
-          <p class="settings-help">The HaruCMS API allows external applications and domains to access your content programmatically. This page provides information about API endpoints and configuration.</p>
+          <h2><?= __('admin.api_information') ?></h2>
+          <p class="settings-help"><?= __('admin.api_info_help') ?></p>
           
           <div class="api-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
             <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
@@ -441,8 +472,8 @@
         </div>
 
         <div class="settings-section">
-          <h2>API Documentation</h2>
-          <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the HaruCMS documentation or contact your system administrator.</p>
+          <h2><?= __('admin.api_documentation') ?></h2>
+          <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the Birkly documentation or contact your system administrator.</p>
         </div>
       </div>
 
@@ -450,7 +481,7 @@
       <div class="tab-pane" id="domains">
         <div class="settings-section">
           <div class="section-header">
-            <h2>Domain Management & Analytics</h2>
+            <h2><?= __('admin.domain_management_and_analytics') ?></h2>
             <p class="section-description">Register domains to allow them to access your CMS content via the API. Optionally enable analytics tracking to monitor visitor statistics. Zero-dependency, self-hosted analytics with complete privacy.</p>
             <button class="btn btn-primary" id="register-domain-btn" onclick="openAddDomainModal()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -464,7 +495,7 @@
           <div id="domains-list" class="domains-grid">
             <div class="loading-state">
               <div class="spinner"></div>
-              <p>Loading domains...</p>
+              <p><?= __('admin.loading_domains') ?>...</p>
             </div>
           </div>
         </div>
@@ -474,14 +505,14 @@
       <div class="tab-pane" id="webhooks">
         <div class="settings-section">
           <div class="section-header">
-            <h2>Webhooks</h2>
+            <h2><?= __('admin.webhooks') ?></h2>
             <button class="btn btn-primary" onclick="window.location.href='/admin/index.php?page=webhooks'">
               Manage Webhooks
             </button>
           </div>
           <div class="webhooks-info">
-            <p>Webhooks allow you to receive real-time notifications when content changes occur.</p>
-            <p><a href="/admin/index.php?page=webhooks" class="btn btn-secondary">Go to Webhooks Management</a></p>
+            <p><?= __('admin.webhooks_description') ?></p>
+            <p><a href="/admin/index.php?page=webhooks" class="btn btn-secondary"><?= __('admin.go_to_webhooks_management') ?></a></p>
           </div>
         </div>
       </div>
@@ -533,11 +564,90 @@
         </div>
       </div>
 
+      <!-- Storage Tab -->
+      <div class="tab-pane" id="storage">
+        <div class="main-actions-bar">
+          <button type="submit" form="storage-form" class="btn btn-primary"><?= __('admin.save_storage_settings') ?></button>
+        </div>
+        <form id="storage-form" class="settings-form">
+          <div class="settings-section">
+            <h2><?= __('admin.storage_backend') ?></h2>
+            <p class="settings-help"><?= __('admin.storage_backend_help') ?></p>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
+                <select id="storage-backend" name="storage_backend" class="input">
+                  <option value="flatfile" <?= ($settings['storage']['backend'] ?? 'flatfile') === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
+                  <option value="sqlite" <?= ($settings['storage']['backend'] ?? '') === 'sqlite' ? 'selected' : '' ?>>SQLite Database</option>
+                  <option value="mysql" <?= ($settings['storage']['backend'] ?? '') === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
+                  <option value="postgresql" <?= ($settings['storage']['backend'] ?? '') === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
+                </select>
+                <small><?= __('admin.changing_storage_backend_warning') ?></small>
+              </div>
+            </div>
+            
+            <div id="database-config" style="display: <?= in_array($settings['storage']['backend'] ?? 'flatfile', ['sqlite', 'mysql', 'postgresql']) ? 'block' : 'none' ?>;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="db-host"><?= __('admin.database_host') ?></label>
+                  <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars($settings['storage']['db_host'] ?? 'localhost') ?>" class="input" placeholder="localhost">
+                </div>
+                <div class="form-group">
+                  <label for="db-port"><?= __('admin.database_port') ?></label>
+                  <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars($settings['storage']['db_port'] ?? '3306') ?>" class="input" placeholder="3306">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="db-name"><?= __('admin.database_name') ?></label>
+                  <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars($settings['storage']['db_name'] ?? '') ?>" class="input" placeholder="birkly">
+                </div>
+                <div class="form-group">
+                  <label for="db-user">Database User</label>
+                  <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars($settings['storage']['db_user'] ?? '') ?>" class="input" placeholder="username">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="db-password"><?= __('admin.database_password') ?></label>
+                  <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars($settings['storage']['db_password'] ?? '') ?>" class="input" placeholder="password">
+                </div>
+                <div class="form-group">
+                  <label for="db-prefix">Table Prefix</label>
+                  <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars($settings['storage']['db_prefix'] ?? 'birkly_') ?>" class="input" placeholder="birkly_">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <button type="button" class="btn btn-secondary" onclick="testDatabaseConnection()"><?= __('admin.test_connection') ?></button>
+                  <small id="db-test-result" style="margin-left: 1rem;"></small>
+                </div>
+              </div>
+            </div>
+            
+            <div class="settings-section" style="margin-top: 2rem;">
+              <h3><?= __('admin.migration') ?></h3>
+              <p class="settings-help"><?= __('admin.migration_help') ?></p>
+              <div class="form-row">
+                <div class="form-group">
+                  <button type="button" class="btn btn-secondary" onclick="migrateStorage()"><?= __('admin.start_migration') ?></button>
+                  <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
       <!-- Updates Tab -->
       <div class="tab-pane" id="ai-connections">
         <div class="ai-connections-settings">
           <div class="settings-section">
-            <h2>AI Connections</h2>
+            <h2><?= __('admin.ai_connections') ?></h2>
             <p class="settings-help">Connect your AI accounts to get AI assistance in creating and editing content. You can configure whether AI actions require approval or execute immediately.</p>
             
             <div class="connections-container">
@@ -562,7 +672,7 @@
             <!-- Approval Queue Panel -->
             <div class="approval-queue-panel" id="approval-queue-panel" style="margin-top: 2rem;">
               <div class="panel-header">
-                <h3>Approval Queue</h3>
+                <h3><?= __('admin.approval_queue') ?></h3>
                 <button class="btn-icon" id="toggle-queue-btn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 12 15 18 9"></polyline>
@@ -580,7 +690,7 @@
         <div class="modal" id="add-connection-modal" style="display: none;">
           <div class="modal-content">
             <div class="modal-header">
-              <h2 id="connection-modal-title">Add AI Connection</h2>
+              <h2 id="connection-modal-title"><?= __('admin.add_ai_connection') ?></h2>
               <button class="btn-icon modal-close" id="close-modal-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -591,7 +701,7 @@
             <form id="add-connection-form" class="modal-body">
               <input type="hidden" id="connection-id" name="id">
               <div class="form-group">
-                <label for="connection-provider">AI Provider</label>
+                <label for="connection-provider"><?= __('admin.ai_provider') ?></label>
                 <select id="connection-provider" name="provider" required>
                   <option value="">Select a provider...</option>
                 </select>
@@ -599,45 +709,45 @@
               </div>
               
               <div class="form-group">
-                <label for="connection-name">Connection Name</label>
-                <input type="text" id="connection-name" name="name" placeholder="My AI Assistant">
-                <small>Optional: Give this connection a friendly name</small>
+                <label for="connection-name"><?= __('admin.connection_name') ?></label>
+                <input type="text" id="connection-name" name="name" placeholder="<?= __('admin.my_ai_assistant_example') ?>">
+                <small><?= __('admin.connection_friendly_name_help') ?></small>
               </div>
               
               <div class="form-group" id="api-url-group" style="display: none;">
-                <label for="connection-api-url">API URL</label>
+                <label for="connection-api-url"><?= __('admin.api_url') ?></label>
                 <input type="url" id="connection-api-url" name="api_url" placeholder="https://api.example.com/v1/chat/completions">
                 <small>API endpoint URL (required for custom providers, optional for others)</small>
               </div>
               
               <div class="form-group" id="api-key-group">
-                <label for="connection-api-key">API Key</label>
+                <label for="connection-api-key"><?= __('admin.api_key') ?></label>
                 <input type="password" id="connection-api-key" name="api_key">
-                <small>Your API key from the AI provider. This is stored encrypted and never shared. (Not required for MCP)</small>
+                <small><?= __('admin.api_key_help') ?></small>
               </div>
               
               <div class="form-group">
-                <label for="connection-model">Model</label>
+                <label for="connection-model"><?= __('admin.model') ?></label>
                 <select id="connection-model" name="model">
                   <option value="">Default</option>
                 </select>
-                <input type="text" id="connection-model-custom" name="model_custom" placeholder="Enter model name" style="display: none; margin-top: 0.5rem;">
+                <input type="text" id="connection-model-custom" name="model_custom" placeholder="<?= __('admin.enter_model_name') ?>" style="display: none; margin-top: 0.5rem;">
                 <small>Select which AI model to use, or enter a custom model name</small>
               </div>
               
               <div class="form-group">
-                <label for="connection-role">Role</label>
+                <label for="connection-role"><?= __('admin.role') ?></label>
                 <select id="connection-role" name="role" required>
                   <option value="viewer">Viewer (Read-only)</option>
                   <option value="author" selected>Author (Create content)</option>
                   <option value="editor">Editor (Create & Edit)</option>
                   <option value="admin">Admin (Full access)</option>
                 </select>
-                <small>What permissions should this AI have?</small>
+                <small><?= __('admin.ai_permissions_help') ?></small>
               </div>
               
               <div class="form-group">
-                <label for="connection-shared-type">Who can use this connection?</label>
+                <label for="connection-shared-type"><?= __('admin.who_can_use_connection') ?></label>
                 <select id="connection-shared-type" name="shared_type" required>
                   <option value="none" selected>Only me (Private)</option>
                   <option value="all">All users</option>
@@ -647,11 +757,11 @@
               </div>
               
               <div class="form-group" id="allowed-users-group" style="display: none;">
-                <label for="connection-allowed-users">Select users</label>
+                <label for="connection-allowed-users"><?= __('admin.select_users') ?></label>
                 <div id="allowed-users-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
                   <div class="loading">Loading users...</div>
                 </div>
-                <small>Select which users can use this connection</small>
+                <small><?= __('admin.select_users_for_connection') ?></small>
               </div>
               
               <div class="form-group">
@@ -659,12 +769,12 @@
                   <input type="checkbox" id="connection-require-approval" name="require_approval" value="1" checked>
                   Require approval for AI actions
                 </label>
-                <small>If enabled, all AI actions will require manual approval before execution. If disabled, actions execute immediately.</small>
+                <small><?= __('admin.ai_approval_mode_help') ?></small>
               </div>
               
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="connection-submit-btn">Connect</button>
+                <button type="button" class="btn btn-secondary modal-close"><?= __('admin.cancel') ?></button>
+                <button type="submit" class="btn btn-primary" id="connection-submit-btn"><?= __('admin.connect') ?></button>
               </div>
             </form>
           </div>
@@ -681,22 +791,22 @@
   <div id="add-domain-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
-        <h2>Register Domain</h2>
+        <h2><?= __('admin.register_domain') ?></h2>
         <button class="modal-close-btn" onclick="closeAddDomainModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-domain-form">
           <div class="form-group">
-            <label for="domain-name">Domain Name *</label>
+            <label for="domain-name"><?= __('admin.domain_name') ?> *</label>
             <input type="text" id="domain-name" name="domain" required class="input" placeholder="example.com">
             <small class="text-muted">Enter the domain name without http:// or https://</small>
           </div>
           <div class="form-group">
-            <label for="domain-email">Customer Email *</label>
+            <label for="domain-email"><?= __('admin.customer_email') ?> *</label>
             <input type="email" id="domain-email" name="customer_email" required class="input" placeholder="customer@example.com">
           </div>
           <div class="form-group">
-            <label for="domain-permission-level">Permission Level</label>
+            <label for="domain-permission-level"><?= __('admin.permission_level') ?></label>
             <select id="domain-permission-level" name="permission_level" class="input">
               <option value="read_only">Read Only</option>
               <option value="read_write" selected>Read & Write</option>
@@ -705,18 +815,18 @@
           </div>
           <div class="form-row">
             <div class="form-group" style="flex: 1;">
-              <label>Read Rate Limit (per minute)</label>
+              <label><?= __('admin.read_rate_limit_per_minute') ?></label>
               <input type="number" id="domain-read-limit" name="read_limit" value="100" min="1" class="input">
             </div>
             <div class="form-group" style="flex: 1;">
-              <label>Write Rate Limit (per hour)</label>
+              <label><?= __('admin.write_rate_limit_per_hour') ?></label>
               <input type="number" id="domain-write-limit" name="write_limit" value="10" min="1" class="input">
             </div>
           </div>
           <div class="form-group">
             <label>
               <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
-              Enable Analytics Tracking
+              <?= __('admin.enable_analytics_tracking') ?>
             </label>
             <small class="text-muted">Track visitor statistics for this domain. Zero-dependency, self-hosted analytics with complete privacy.</small>
           </div>
@@ -733,24 +843,24 @@
   <div id="edit-domain-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
-        <h2>Edit Domain</h2>
+        <h2><?= __('admin.edit_domain') ?></h2>
         <button class="modal-close-btn" onclick="closeEditDomainModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-domain-form">
           <input type="hidden" id="edit-domain-original" name="original_domain">
           <div class="form-group">
-            <label for="edit-domain-permission-level">Permission Level</label>
+            <label for="edit-domain-permission-level"><?= __('admin.permission_level') ?></label>
             <select id="edit-domain-permission-level" name="permission_level" class="input">
               <option value="read_only">Read Only</option>
               <option value="read_write">Read & Write</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="edit-domain-status">Status</label>
+            <label for="edit-domain-status"><?= __('admin.status') ?></label>
             <select id="edit-domain-status" name="status" class="input">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="active"><?= __('admin.active') ?></option>
+              <option value="inactive"><?= __('admin.inactive') ?></option>
             </select>
           </div>
           <div class="form-row">
@@ -774,7 +884,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeEditDomainModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="updateDomain()">Update Domain</button>
+                <button type="button" class="btn btn-primary" onclick="updateDomain()"><?= __('admin.update_domain') ?></button>
       </div>
     </div>
   </div>
@@ -784,21 +894,21 @@
   <div id="add-role-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
-        <h2>Add New Role</h2>
+        <h2><?= __('admin.add_new_role') ?></h2>
         <button class="modal-close-btn" onclick="closeAddRoleModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-role-form">
           <div class="form-group">
-            <label for="role-name">Role Name</label>
+            <label for="role-name"><?= __('admin.role_name') ?></label>
             <input type="text" id="role-name" name="name" required class="input" placeholder="e.g., Content Manager">
           </div>
           <div class="form-group">
-            <label for="role-description">Description</label>
+            <label for="role-description"><?= __('admin.description') ?></label>
             <textarea id="role-description" name="description" class="input" rows="3" placeholder="Describe what this role can do"></textarea>
           </div>
           <div class="form-group">
-            <label>Permissions</label>
+            <label><?= __('admin.permissions') ?></label>
             <div class="permissions-grid" id="add-permissions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
               <!-- Permissions will be populated by JavaScript -->
             </div>
@@ -816,22 +926,22 @@
   <div id="edit-role-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
-        <h2>Edit Role</h2>
+        <h2><?= __('admin.edit_role') ?></h2>
         <button class="modal-close-btn" onclick="closeEditRoleModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-role-form">
           <input type="hidden" id="edit-role-id" name="id">
           <div class="form-group">
-            <label for="edit-role-name">Role Name</label>
+            <label for="edit-role-name"><?= __('admin.role_name') ?></label>
             <input type="text" id="edit-role-name" name="name" required class="input">
           </div>
           <div class="form-group">
-            <label for="edit-role-description">Description</label>
+            <label for="edit-role-description"><?= __('admin.description') ?></label>
             <textarea id="edit-role-description" name="description" class="input" rows="3"></textarea>
           </div>
           <div class="form-group">
-            <label>Permissions</label>
+            <label><?= __('admin.permissions') ?></label>
             <div class="permissions-grid" id="edit-permissions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
               <!-- Permissions will be populated by JavaScript -->
             </div>
@@ -840,96 +950,25 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeEditRoleModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="updateRole()">Update Role</button>
+                <button type="button" class="btn btn-primary" onclick="updateRole()"><?= __('admin.update_role') ?></button>
       </div>
     </div>
   </div>
 
-  <!-- 2FA Modals -->
-  <!-- Setup 2FA Modal -->
-  <div id="2fa-setup-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 500px;">
-      <div class="modal-header">
-        <h2>Setup Two-Factor Authentication</h2>
-        <button class="modal-close-btn" onclick="if(window.close2FASetupModal) { window.close2FASetupModal(); } else { document.getElementById('2fa-setup-modal').style.display = 'none'; }">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div id="2fa-setup-content">
-          <div class="text-center">
-            <div class="spinner">Initializing 2FA setup...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Disable 2FA Modal -->
-  <div id="2fa-disable-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 500px;">
-      <div class="modal-header">
-        <h2>Disable Two-Factor Authentication</h2>
-        <button class="modal-close-btn" onclick="close2FADisableModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>To disable 2FA, please enter your password and a verification code from your authenticator app.</p>
-        <form id="2fa-disable-form">
-          <div class="form-group">
-            <label for="disable-password">Password</label>
-            <input type="password" id="disable-password" name="password" class="input" required>
-          </div>
-          <div class="form-group">
-            <label for="disable-code">Verification Code (optional)</label>
-            <input type="text" id="disable-code" name="code" class="input" placeholder="000000" maxlength="6">
-            <small class="form-text">Enter a code from your authenticator app or leave blank</small>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="close2FADisableModal()">Cancel</button>
-            <button type="submit" class="btn btn-danger">Disable 2FA</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Regenerate Backup Codes Modal -->
-  <div id="2fa-regenerate-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 500px;">
-      <div class="modal-header">
-        <h2>Regenerate Backup Codes</h2>
-        <button class="modal-close-btn" onclick="close2FARegenerateModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>Warning: Regenerating backup codes will invalidate all existing backup codes.</p>
-        <form id="2fa-regenerate-form">
-          <div class="form-group">
-            <label for="regenerate-password">Password</label>
-            <input type="password" id="regenerate-password" name="password" class="input" required>
-          </div>
-          <div class="form-group">
-            <label for="regenerate-code">Verification Code (optional)</label>
-            <input type="text" id="regenerate-code" name="code" class="input" placeholder="000000" maxlength="6">
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="close2FARegenerateModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Regenerate Codes</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+  <!-- 2FA UI removed from Settings (managed per-user in Account) -->
 
   <!-- User Management Modals -->
   <!-- Invite User Modal -->
   <div id="invite-user-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Invite New User</h2>
+        <h2><?= __('admin.invite_new_user') ?></h2>
         <button class="modal-close-btn" onclick="closeInviteUserModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="invite-user-form">
           <div class="form-group">
-            <label for="invite-email">Email Address</label>
+            <label for="invite-email"><?= __('admin.email_address') ?></label>
             <input type="email" id="invite-email" name="email" required class="input" placeholder="user@example.com">
           </div>
           <div class="form-group">
@@ -961,17 +1000,17 @@
   <div id="add-user-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Add New User</h2>
+        <h2><?= __('admin.add_new_user') ?></h2>
         <button class="modal-close-btn" onclick="closeAddUserModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-user-form">
           <div class="form-group">
-            <label for="user-email">Email Address</label>
+            <label for="user-email"><?= __('admin.email_address') ?></label>
             <input type="email" id="user-email" name="email" required class="input">
           </div>
           <div class="form-group">
-            <label for="user-password">Password</label>
+            <label for="user-password"><?= __('admin.password') ?></label>
             <input type="password" id="user-password" name="password" required class="input" minlength="6">
           </div>
           <div class="form-group">
@@ -995,7 +1034,7 @@
   <div id="edit-user-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Edit User</h2>
+        <h2><?= __('admin.edit_user') ?></h2>
         <button class="modal-close-btn" onclick="closeEditUserModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -1006,7 +1045,7 @@
             <input type="email" id="edit-user-email" name="email" required class="input">
           </div>
           <div class="form-group">
-            <label for="edit-user-password">New Password (leave blank to keep current)</label>
+            <label for="edit-user-password"><?= __('admin.new_password_leave_blank') ?></label>
             <input type="password" id="edit-user-password" name="password" class="input" minlength="6">
           </div>
           <div class="form-group">
@@ -1562,7 +1601,7 @@ window.deleteRole = deleteRole;
         const removeLogoBtn = document.getElementById('remove-logo-btn');
         if (removeLogoBtn) {
             removeLogoBtn.addEventListener('click', async () => {
-                if (confirm('Are you sure you want to remove the logo? The default HaruCMS icon will be used.')) {
+                if (confirm('Are you sure you want to remove the logo? The default Birkly icon will be used.')) {
                     try {
                         const response = await fetch('/api/settings.php', {
                             method: 'POST',
@@ -1958,375 +1997,7 @@ async function deletePlugin(pluginId) {
     }
 }
 
-// 2FA Management Functions
-(function() {
-    'use strict';
-    
-    let setupSecret = null;
-    let setupBackupCodes = null;
-    
-    // Define the function first
-    async function open2FASetupModal() {
-        console.log('open2FASetupModal called');
-        var modal = document.getElementById('2fa-setup-modal');
-        var content = document.getElementById('2fa-setup-content');
-        
-        console.log('Modal element:', modal);
-        console.log('Content element:', content);
-        
-        if (!modal) {
-            console.error('2FA modal element not found');
-            alert('2FA modal not found. Please refresh the page.');
-            return;
-        }
-        
-        if (!content) {
-            console.error('2FA setup content element not found');
-            alert('2FA setup content not found. Please refresh the page.');
-            return;
-        }
-        
-        console.log('Showing modal');
-        // Modal uses .active class for visibility (CSS handles opacity/visibility)
-        modal.style.display = 'flex'; // Ensure it's in the DOM flow
-        modal.classList.add('active'); // This makes it visible via CSS
-        content.innerHTML = '<div class="text-center"><div class="spinner">Setting up 2FA...</div></div>';
-        
-        try {
-            console.log('Fetching 2FA setup...');
-            var response = await fetch('/api/2fa.php?action=setup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
-            console.log('Response status:', response.status);
-            
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-            }
-            
-            var data = await response.json();
-            console.log('Response data:', data);
-            
-            if (data.status === 'ok') {
-                setupSecret = data.data.secret;
-                setupBackupCodes = data.data.backup_codes;
-                
-                // Generate QR code URL
-                var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(data.data.qr_url);
-                var manualEntryKey = escapeHtml(data.data.manual_entry_key || '');
-                
-                content.innerHTML = (
-                    '<div class="2fa-setup-step1">' +
-                        '<h3 style="margin-top: 0;">Step 1: Scan QR Code</h3>' +
-                        '<p class="text-muted">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>' +
-                        '<div style="text-align: center; margin: 24px 0;">' +
-                            '<img src="' + qrUrl + '" alt="2FA QR Code" style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; background: white;">' +
-                        '</div>' +
-                        '<div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 16px 0;">' +
-                            '<p style="margin: 0; font-size: 0.875em; color: #666;"><strong>Manual Entry:</strong> If you cannot scan the QR code, enter this key manually:</p>' +
-                            '<code style="display: block; margin-top: 8px; font-size: 0.875em; word-break: break-all;">' + manualEntryKey + '</code>' +
-                        '</div>' +
-                        '<button class="btn btn-primary" onclick="window.verify2FASetup()">I have scanned the code</button>' +
-                        '<button class="btn btn-secondary" onclick="window.close2FASetupModal()" style="margin-left: 8px;">Cancel</button>' +
-                    '</div>' +
-                    '<div class="2fa-setup-step2" style="display: none;">' +
-                        '<h3 style="margin-top: 0;">Step 2: Verify Code</h3>' +
-                        '<p class="text-muted">Enter the 6-digit code from your authenticator app to verify setup:</p>' +
-                        '<div class="form-group">' +
-                            '<label for="setup-verify-code">Verification Code</label>' +
-                            '<input type="text" id="setup-verify-code" class="input" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.5rem;">' +
-                        '</div>' +
-                        '<button class="btn btn-primary" onclick="window.enable2FA()">Enable 2FA</button>' +
-                        '<button class="btn btn-secondary" onclick="window.close2FASetupModal()" style="margin-left: 8px;">Cancel</button>' +
-                    '</div>'
-                );
-            } else {
-                console.error('2FA setup failed:', data);
-                var errorMsg = escapeHtml(data.message || 'Unknown error');
-                content.innerHTML = '<p class="text-danger">Error: ' + errorMsg + '</p><button class="btn btn-secondary" onclick="window.close2FASetupModal()">Close</button>';
-            }
-        } catch (error) {
-            console.error('Error setting up 2FA:', error);
-            var errorMsg = escapeHtml(error.message || 'Unknown error');
-            content.innerHTML = '<p class="text-danger">Error setting up 2FA: ' + errorMsg + '</p><p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">Check the browser console for more details.</p><button class="btn btn-secondary" onclick="window.close2FASetupModal()">Close</button>';
-        }
-    }
-    
-    // Expose function to window IMMEDIATELY after definition (synchronously)
-    window.open2FASetupModal = open2FASetupModal;
-    
-    // Load 2FA status on page load
-    if (document.getElementById('2fa-status')) {
-        load2FAStatus();
-    }
-    
-    async function load2FAStatus() {
-        try {
-            var response = await fetch('/api/2fa.php?action=status');
-            var data = await response.json();
-            
-            if (data.status === 'ok') {
-                render2FAStatus(data.enabled, data.enabled_at, data.backup_codes_count);
-            } else {
-                document.getElementById('2fa-status').innerHTML = '<p class="text-muted">Error loading 2FA status</p>';
-            }
-        } catch (error) {
-            console.error('Error loading 2FA status:', error);
-            document.getElementById('2fa-status').innerHTML = '<p class="text-muted">Error loading 2FA status</p>';
-        }
-    }
-    
-    function escapeHtml(text) {
-        if (!text) return '';
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    function render2FAStatus(enabled, enabledAt, backupCodesCount) {
-        var container = document.getElementById('2fa-status');
-        
-        if (enabled) {
-            var enabledDate = enabledAt ? 'Enabled on ' + new Date(enabledAt).toLocaleDateString() : '';
-            var codesCount = backupCodesCount || 0;
-            container.innerHTML = 
-                '<div class="2fa-status-enabled">' +
-                    '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">' +
-                        '<span class="badge badge-success">Enabled</span>' +
-                        '<span class="text-muted">' + enabledDate + '</span>' +
-                    '</div>' +
-                    '<div style="margin-bottom: 16px;">' +
-                        '<p class="text-muted">You have ' + codesCount + ' backup codes remaining.</p>' +
-                    '</div>' +
-                    '<div style="display: flex; gap: 8px; flex-wrap: wrap;">' +
-                        '<button class="btn btn-secondary btn-sm" onclick="window.regenerate2FABackupCodes()">Regenerate Backup Codes</button>' +
-                        '<button class="btn btn-danger btn-sm" onclick="window.open2FADisableModal()">Disable 2FA</button>' +
-                    '</div>' +
-                '</div>';
-        } else {
-            container.innerHTML = 
-                '<div class="2fa-status-disabled">' +
-                    '<p class="text-muted" style="margin-bottom: 16px;">Two-factor authentication is not enabled for your account.</p>' +
-                    '<button class="btn btn-primary" id="enable-2fa-btn">Enable 2FA</button>' +
-                '</div>';
-            // Attach event listener immediately after creating button
-            var btn = document.getElementById('enable-2fa-btn');
-            if (btn) {
-                // Use both onclick and addEventListener for maximum compatibility
-                btn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('2FA button clicked');
-                    console.log('window.open2FASetupModal type:', typeof window.open2FASetupModal);
-                    if (typeof window.open2FASetupModal === 'function') {
-                        try {
-                            window.open2FASetupModal();
-                        } catch (err) {
-                            console.error('Error calling open2FASetupModal:', err);
-                            alert('Error opening 2FA setup: ' + err.message);
-                        }
-                    } else {
-                        console.error('open2FASetupModal is not a function');
-                        alert('2FA setup is not available. Please refresh the page.');
-                    }
-                    return false;
-                };
-            }
-        }
-    }
-    
-    async function verify2FASetup() {
-        document.querySelector('.2fa-setup-step1').style.display = 'none';
-        document.querySelector('.2fa-setup-step2').style.display = 'block';
-        document.getElementById('setup-verify-code').focus();
-    }
-    
-    async function enable2FA() {
-        var code = document.getElementById('setup-verify-code').value.trim();
-        
-        if (!code || code.length !== 6) {
-            alert('Please enter a valid 6-digit code');
-            return;
-        }
-        
-        try {
-            var response = await fetch('/api/2fa.php?action=enable', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code })
-            });
-            
-            var data = await response.json();
-            
-            if (data.status === 'ok') {
-                // Show backup codes
-                showBackupCodes(data.data.backup_codes);
-            } else {
-                alert('Error: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Error enabling 2FA:', error);
-            alert('Error enabling 2FA: ' + error.message);
-        }
-    }
-    
-    function showBackupCodes(codes) {
-        var content = document.getElementById('2fa-setup-content');
-        var codesHtml = codes.map(function(code) {
-            return escapeHtml(code);
-        }).join('<br>');
-        content.innerHTML = 
-            '<div class="2fa-setup-step3">' +
-                '<h3 style="margin-top: 0;">Step 3: Save Backup Codes</h3>' +
-                '<p style="color: var(--text-primary); background: var(--color-positiv, #e4f1ec); padding: 0.75rem; border-radius: 4px; border-left: 3px solid var(--color-primary);"><strong>Important:</strong> Save these backup codes in a safe place. You can use them to access your account if you lose your authenticator device.</p>' +
-                '<div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">' +
-                    '<code style="display: block; font-family: monospace; line-height: 2; font-size: 0.875em;">' +
-                        codesHtml +
-                    '</code>' +
-                '</div>' +
-                '<p class="text-muted">Each backup code can only be used once.</p>' +
-                '<button class="btn btn-primary" onclick="window.close2FASetupModal(); load2FAStatus();">Done</button>' +
-            '</div>';
-    }
-    
-    function close2FASetupModal() {
-        var modal = document.getElementById('2fa-setup-modal');
-        if (modal) {
-            modal.classList.remove('active');
-            setTimeout(function() {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        setupSecret = null;
-        setupBackupCodes = null;
-    }
-    
-    
-    function open2FADisableModal() {
-        document.getElementById('2fa-disable-modal').style.display = 'flex';
-    }
-    
-    function close2FADisableModal() {
-        document.getElementById('2fa-disable-modal').style.display = 'none';
-        document.getElementById('2fa-disable-form').reset();
-    }
-    
-    async function disable2FA() {
-        var form = document.getElementById('2fa-disable-form');
-        var formData = new FormData(form);
-        
-        var code = formData.get('code') || '';
-        var password = formData.get('password') || '';
-        
-        if (!password) {
-            alert('Password is required');
-            return;
-        }
-        
-        try {
-            var response = await fetch('/api/2fa.php?action=disable', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code, password: password })
-            });
-            
-            var data = await response.json();
-            
-            if (data.status === 'ok') {
-                alert('2FA disabled successfully');
-                close2FADisableModal();
-                load2FAStatus();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Error disabling 2FA:', error);
-            alert('Error disabling 2FA: ' + error.message);
-        }
-    }
-    
-    function open2FARegenerateModal() {
-        document.getElementById('2fa-regenerate-modal').style.display = 'flex';
-    }
-    
-    function close2FARegenerateModal() {
-        document.getElementById('2fa-regenerate-modal').style.display = 'none';
-        document.getElementById('2fa-regenerate-form').reset();
-    }
-    
-    async function regenerate2FABackupCodes() {
-        open2FARegenerateModal();
-    }
-    
-    async function regenerateBackupCodes() {
-        var form = document.getElementById('2fa-regenerate-form');
-        var formData = new FormData(form);
-        
-        var code = formData.get('code') || '';
-        var password = formData.get('password') || '';
-        
-        if (!password) {
-            alert('Password is required');
-            return;
-        }
-        
-        try {
-            var response = await fetch('/api/2fa.php?action=regenerate_backup_codes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code, password: password })
-            });
-            
-            var data = await response.json();
-            
-            if (data.status === 'ok') {
-                showBackupCodes(data.data.backup_codes);
-                close2FARegenerateModal();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        } catch (error) {
-            console.error('Error regenerating backup codes:', error);
-            alert('Error regenerating backup codes: ' + error.message);
-        }
-    }
-    
-    // Expose ALL functions to window - do this immediately
-    window.close2FASetupModal = close2FASetupModal;
-    window.verify2FASetup = verify2FASetup;
-    window.enable2FA = enable2FA;
-    window.open2FADisableModal = open2FADisableModal;
-    window.close2FADisableModal = close2FADisableModal;
-    window.open2FARegenerateModal = open2FARegenerateModal;
-    window.close2FARegenerateModal = close2FARegenerateModal;
-    window.regenerate2FABackupCodes = regenerate2FABackupCodes;
-    window.load2FAStatus = load2FAStatus;
-    
-    // Handle form submissions
-    document.getElementById('2fa-disable-form')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        disable2FA();
-    });
-    
-    document.getElementById('2fa-regenerate-form')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        regenerateBackupCodes();
-    });
-    
-    // Format code inputs
-    document.getElementById('setup-verify-code')?.addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
-    });
-    
-    document.getElementById('disable-code')?.addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
-    });
-    
-    document.getElementById('regenerate-code')?.addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
-    });
-})();
+// 2FA is managed per-user in Account settings (admin/templates/account.html)
 
 // Domain Management Functions
 (function() {
@@ -2380,7 +2051,7 @@ async function deletePlugin(pluginId) {
         
         // Build localhost script section (always visible)
         // Use relative path - the client library auto-detects the CMS URL from the script src
-        var localhostScript = '<scr' + 'ipt src="/harucms-client.js" data-tracking-id="localhost"></scr' + 'ipt>';
+        var localhostScript = '<scr' + 'ipt src="/birkly-client.js" data-tracking-id="localhost"></scr' + 'ipt>';
         var localhostCodeEscaped = escapeHtml(localhostScript);
         var localhostCodeAttr = localhostScript.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         
@@ -2423,7 +2094,7 @@ async function deletePlugin(pluginId) {
                 var domainName = String(domain.domain || '');
                 // Use relative path - the client library auto-detects the CMS URL from the script src
                 // The script will be hosted on the CMS server, so relative path works universally
-                var trackingCode = '<scr' + 'ipt src="/harucms-client.js" data-tracking-id="' + escapeHtml(domainName) + '"></scr' + 'ipt>';
+                var trackingCode = '<scr' + 'ipt src="/birkly-client.js" data-tracking-id="' + escapeHtml(domainName) + '"></scr' + 'ipt>';
                 var codeEscaped = escapeHtml(trackingCode);
                 var codeAttrEscaped = trackingCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 var analyticsSection = [];
@@ -3388,5 +3059,252 @@ async function downloadUpdate() {
     font-size: 0.875em;
     color: #666;
 }
+
+.denylist-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.denylist-item code {
+    background: var(--bg-secondary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: 'Courier New', monospace;
+}
 </style>
+
+<script>
+// Denylist Management
+async function loadDenylist() {
+    const container = document.getElementById('denylist-management');
+    if (!container) return;
+    
+    try {
+        const response = await fetch('/api/plugins_permissions.php?action=get_denylist');
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            const resources = result.data.resources || [];
+            renderDenylist(resources);
+        } else {
+            container.innerHTML = `<p class="error">Error loading denylist: ${result.message}</p>`;
+        }
+    } catch (error) {
+        container.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
+}
+
+function renderDenylist(resources) {
+    const container = document.getElementById('denylist-management');
+    if (!container) return;
+    
+    if (resources.length === 0) {
+        container.innerHTML = '<p class="settings-help">No protected resources. All collections are accessible to plugins (subject to capability checks).</p>';
+        return;
+    }
+    
+    let html = '<div class="denylist-list">';
+    resources.forEach(resource => {
+        html += `
+            <div class="denylist-item">
+                <code>${escapeHtml(resource)}</code>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeDenylistResource('${escapeHtml(resource)}')">
+                    Remove
+                </button>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+async function addDenylistResource() {
+    const resource = prompt('Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):');
+    if (!resource || resource.trim() === '') return;
+    
+    try {
+        const response = await fetch('/api/plugins_permissions.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'add_to_denylist',
+                resource: resource.trim(),
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Resource added to denylist', 'success');
+            loadDenylist();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+    }
+}
+
+async function removeDenylistResource(resource) {
+    if (!confirm(`Remove "${resource}" from the denylist?`)) return;
+    
+    try {
+        const response = await fetch('/api/plugins_permissions.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'remove_from_denylist',
+                resource: resource,
+                _csrf: getCsrfToken()
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            showMessage('Resource removed from denylist', 'success');
+            loadDenylist();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+    }
+}
+
+function getCsrfToken() {
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    return metaToken ? metaToken.getAttribute('content') : '';
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function showMessage(message, type) {
+    // Simple message display - you can enhance this
+    alert(message);
+}
+
+// Storage Settings
+document.getElementById('storage-backend')?.addEventListener('change', function() {
+    const dbConfig = document.getElementById('database-config');
+    if (dbConfig) {
+        dbConfig.style.display = ['sqlite', 'mysql', 'postgresql'].includes(this.value) ? 'block' : 'none';
+    }
+});
+
+function testDatabaseConnection() {
+    const backend = document.getElementById('storage-backend')?.value;
+    const host = document.getElementById('db-host')?.value;
+    const port = document.getElementById('db-port')?.value;
+    const name = document.getElementById('db-name')?.value;
+    const user = document.getElementById('db-user')?.value;
+    const password = document.getElementById('db-password')?.value;
+    const prefix = document.getElementById('db-prefix')?.value;
+    const resultEl = document.getElementById('db-test-result');
+    
+    if (!resultEl) return;
+    resultEl.textContent = 'Testing...';
+    resultEl.style.color = 'var(--text-secondary)';
+    
+    fetch('/api/settings.php?action=test_database', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            backend: backend,
+            host: host,
+            port: port,
+            name: name,
+            user: user,
+            password: password,
+            prefix: prefix,
+            _csrf: getCsrfToken()
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            resultEl.textContent = '✓ Connection successful';
+            resultEl.style.color = 'var(--success-600)';
+        } else {
+            resultEl.textContent = '✗ ' + (data.message || 'Connection failed');
+            resultEl.style.color = 'var(--error-600)';
+        }
+    })
+    .catch(error => {
+        resultEl.textContent = '✗ Error: ' + error.message;
+        resultEl.style.color = 'var(--error-600)';
+    });
+}
+
+function migrateStorage() {
+    if (!confirm('This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?')) {
+        return;
+    }
+    
+    const backend = document.getElementById('storage-backend')?.value;
+    if (!backend || backend === 'flatfile') {
+        alert('Please select a database backend first');
+        return;
+    }
+    
+    if (!confirm('Migration may take some time. Do not close this window. Continue?')) {
+        return;
+    }
+    
+    fetch('/api/settings.php?action=migrate_storage', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            backend: backend,
+            _csrf: getCsrfToken()
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            alert('Migration completed successfully!');
+        } else {
+            alert('Migration failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+// Load denylist when security tab is shown
+document.addEventListener('DOMContentLoaded', function() {
+    const securityTab = document.querySelector('[data-tab="security"]');
+    if (securityTab) {
+        securityTab.addEventListener('click', function() {
+            setTimeout(loadDenylist, 100); // Small delay to ensure tab is visible
+        });
+    }
+    
+    // Also load if we're already on security tab
+    if (window.location.hash === '#security' || document.querySelector('.tab-pane#security.active')) {
+        loadDenylist();
+    }
+});
+</script>
 

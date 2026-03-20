@@ -1,6 +1,6 @@
 <?php
 /**
- * Internationalization (i18n) System for HaruCMS
+ * Internationalization (i18n) System for Birkly
  * Handles language files, translations, and content localization
  */
 
@@ -22,8 +22,8 @@ class I18n {
             
             // First check user profile (user-level language)
             if (isset($_SESSION['user'])) {
-                require_once __DIR__ . '/../api/storage.php';
-                $userStorage = new Storage(__DIR__ . '/../users');
+                require_once __DIR__ . '/storage/StorageFactory.php';
+                $userStorage = StorageFactory::createStorage(__DIR__ . '/../users');
                 $userId = $_SESSION['user']['id'] ?? '';
                 if ($userId) {
                     $user = $userStorage->read($userId . '.json');

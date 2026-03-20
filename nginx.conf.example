@@ -1,8 +1,8 @@
-# HaruCMS Nginx config example
+# Birkly Nginx config example
 server {
     listen 80;
-    server_name harucms.local;
-    root /path/to/harucms;
+    server_name birkly.local;
+    root /path/to/birkly;
     index index.php;
 
     location / {

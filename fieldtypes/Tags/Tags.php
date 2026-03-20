@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Tags;
+namespace Birkly\FieldTypes\Tags;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Tags extends BaseField {
     public function getType(): string {
@@ -77,60 +77,62 @@ class Tags extends BaseField {
     }
     public function getCSS(): string {
         return <<<'CSS'
+        /* Tags Fieldtype - Uses system CSS variables */
         .tags-field-container {
-            margin-bottom: 1rem;
+            margin-bottom: var(--space-4, 1rem);
         }
         
         .tags-field {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 8px;
-            background: #fff;
+            border: 1px solid var(--border-light, #f3f4f6);
+            border-radius: var(--radius-md, 0.5rem);
+            padding: var(--space-2, 0.5rem);
+            background: var(--bg-primary, #ffffff);
             min-height: 40px;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 6px;
+            gap: var(--space-2, 0.5rem);
         }
         
         .tags-field:focus-within {
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+            border-color: var(--primary-500, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .tags-chips {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: var(--space-2, 0.5rem);
             flex: 1;
         }
         
         .tag-chip {
-            background: #e9ecef;
-            border: 1px solid #ced4da;
-            border-radius: 16px;
-            padding: 4px 12px;
-            font-size: 14px;
+            background: var(--bg-secondary, #fafafa);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-round, 9999px);
+            padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+            font-size: 0.875rem;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: var(--space-2, 0.5rem);
             max-width: 200px;
+            color: var(--text-primary, #20221D);
         }
         
         .tag-remove {
             cursor: pointer;
-            color: #6c757d;
+            color: var(--text-secondary, #72746F);
             font-weight: bold;
-            font-size: 16px;
+            font-size: 1rem;
             line-height: 1;
-            padding: 0 2px;
+            padding: 0 var(--space-1, 0.25rem);
             border-radius: 50%;
-            transition: all 0.2s;
+            transition: all var(--transition-fast, 150ms ease);
         }
         
         .tag-remove:hover {
-            background: #dc3545;
-            color: white;
+            background: var(--error-500, #ef4444);
+            color: var(--text-inverse, #ffffff);
         }
         
         .tags-field input {
@@ -139,7 +141,9 @@ class Tags extends BaseField {
             background: transparent;
             flex: 1;
             min-width: 120px;
-            padding: 4px 0;
+            padding: var(--space-1, 0.25rem) 0;
+            color: var(--text-primary, #20221D);
+            font-size: 1rem;
         }
         CSS;
     }
@@ -150,9 +154,69 @@ class Tags extends BaseField {
         return [];
     }
     public function processValue($value) {
-        return $value;
+        // Handle JSON strings from form submission
+        if (is_string($value)) {
+            // Try to decode JSON
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+            // If not JSON, treat as single tag (backward compatibility)
+            $trimmed = trim($value);
+            if ($trimmed !== '') {
+                return [$trimmed];
+            }
+        }
+        
+        // Ensure we return an array
+        if (is_array($value)) {
+            return array_values(array_filter($value, function($tag) {
+                return !empty(trim($tag));
+            }));
+        }
+        
+        return [];
     }
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Handle case where value might be a JSON string
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $value = $decoded;
+            } else {
+                $value = [];
+            }
+        }
+        
+        if (!is_array($value)) {
+            $value = [];
+        }
+        
+        $count = count($value);
+        if ($count === 0) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Show tags as badges (larger size)
+        $tags = array_slice($value, 0, 3);
+        $html = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+        foreach ($tags as $tag) {
+            $tagText = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
+            $html .= '<span class="ft-list-badge" style="font-size:12px;padding:4px 8px;">' . $tagText . '</span>';
+        }
+        if ($count > 3) {
+            $html .= '<span class="ft-list-badge" style="font-size:12px;padding:4px 8px;background:var(--color-neutral-200, #f3f4f6);">+' . ($count - 3) . '</span>';
+        }
+        $html .= '</div>';
+        
+        return $html;
+    }
+
+    public function getTableMinWidth(): string {
+        return '200px'; // Tags fields need space for multiple tag display
     }
 } 

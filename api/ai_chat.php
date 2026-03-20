@@ -1308,16 +1308,16 @@ function buildSystemPrompt($context, $aiUser) {
 
 // OLD COMPLEX PROMPT - KEPT FOR REFERENCE BUT NOT USED
 function buildSystemPromptOld($context, $aiUser) {
-    $prompt = "You are an AI assistant integrated into HaruCMS, a flat-file content management system.\n\n";
+    $prompt = "You are an AI assistant integrated into Birkly, a flat-file content management system.\n\n";
     $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
-    $prompt .= "CRITICAL CONTEXT: You are operating WITHIN HaruCMS.\n";
-    $prompt .= "All user questions are about THIS specific HaruCMS installation.\n";
+    $prompt .= "CRITICAL CONTEXT: You are operating WITHIN Birkly.\n";
+    $prompt .= "All user questions are about THIS specific Birkly installation.\n";
     $prompt .= "DO NOT provide generic web development advice (React, Vue, external APIs, etc.).\n";
-    $prompt .= "ALWAYS provide HaruCMS-specific solutions using HaruCMS templating syntax.\n";
+    $prompt .= "ALWAYS provide Birkly-specific solutions using Birkly templating syntax.\n";
     $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n\n";
     
     $prompt .= "SYSTEM INFORMATION:\n";
-    $prompt .= "- CMS Name: " . ($context['system_info']['cms_name'] ?? 'HaruCMS') . "\n";
+    $prompt .= "- CMS Name: " . ($context['system_info']['cms_name'] ?? 'Birkly') . "\n";
     $prompt .= "- Version: " . ($context['system_info']['version'] ?? '1.0') . "\n";
     $prompt .= "- Your role: " . ($aiUser['role'] ?? 'viewer') . "\n";
     $userPermissions = $context['system_info']['user_permissions'] ?? [];
@@ -1374,7 +1374,7 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
     $prompt .= "HARUCMS TEMPLATING SYSTEM - THIS IS HOW YOU DISPLAY COLLECTIONS ON WEBSITES\n";
     $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
-    $prompt .= "HaruCMS uses its OWN custom templating syntax with SINGLE braces: { like this }\n";
+    $prompt .= "Birkly uses its OWN custom templating syntax with SINGLE braces: { like this }\n";
     $prompt .= "NOT Twig, NOT Liquid, NOT any other templating engine.\n\n";
     
     $prompt .= "BASIC SYNTAX:\n";
@@ -1410,19 +1410,19 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "</html>\n\n";
     
     $prompt .= "KEY POINTS:\n";
-    $prompt .= "1. Include the HaruCMS client script: <script src=\"/cms-template.v2.js\"></script>\n";
+    $prompt .= "1. Include the Birkly client script: <script src=\"/cms-template.v2.js\"></script>\n";
     $prompt .= "2. Use {for each entry in 'collection-slug'} to loop through entries\n";
     $prompt .= "3. Use field names from the collection schema (e.g., { title }, { text }, { name })\n";
     $prompt .= "4. The client library automatically fetches and renders the content\n";
-    $prompt .= "5. Collections are accessed via the HaruCMS API, not external APIs\n\n";
+    $prompt .= "5. Collections are accessed via the Birkly API, not external APIs\n\n";
     
     $prompt .= "WHEN USERS ASK 'how to display collection X on my website':\n";
-    $prompt .= "1. Provide HaruCMS templating code using {for each entry in 'collection-slug'}\n";
+    $prompt .= "1. Provide Birkly templating code using {for each entry in 'collection-slug'}\n";
     $prompt .= "2. Show them how to include the client library script\n";
     $prompt .= "3. Use the actual field names from the collection schema\n";
     $prompt .= "4. DO NOT suggest React, Vue, external APIs, or other frameworks\n";
     $prompt .= "5. DO NOT suggest Twig, Liquid, or other templating engines\n";
-    $prompt .= "6. Reference the HaruCMS documentation provided below\n\n";
+    $prompt .= "6. Reference the Birkly documentation provided below\n\n";
     
     if (!empty($context['collections'])) {
         $prompt .= "AVAILABLE COLLECTIONS IN THIS HARUCMS INSTALLATION:\n";
@@ -1449,11 +1449,11 @@ function buildSystemPromptOld($context, $aiUser) {
         $prompt .= "- If a collection has a field named 'text', use 'text' in your data, NOT 'content'\n";
         $prompt .= "- Always check the schema fields before creating entries to use the correct field names\n\n";
     } else {
-        $prompt .= "NOTE: No collections are currently configured in this HaruCMS installation.\n\n";
+        $prompt .= "NOTE: No collections are currently configured in this Birkly installation.\n\n";
     }
     
     $prompt .= "YOUR CAPABILITIES:\n";
-    $prompt .= "- Answer questions about HaruCMS and this specific installation\n";
+    $prompt .= "- Answer questions about Birkly and this specific installation\n";
     $prompt .= "- List and view content from collections\n";
     $prompt .= "- CREATE NEW COLLECTIONS (if you have admin/editor permissions)\n";
     $prompt .= "- Create new entries in existing collections (if you have write permissions)\n";
@@ -1461,11 +1461,11 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "- Help users understand the CMS structure and collections\n\n";
     
     $prompt .= "IMPORTANT CONTEXT RULES:\n";
-    $prompt .= "1. When users ask 'what collections do I have' or 'which collections', they mean the collections in THIS HaruCMS installation listed above.\n";
+    $prompt .= "1. When users ask 'what collections do I have' or 'which collections', they mean the collections in THIS Birkly installation listed above.\n";
     $prompt .= "2. Always refer to the specific collections listed in the 'AVAILABLE COLLECTIONS' section above.\n";
-    $prompt .= "3. You are working within HaruCMS - not a generic system. Be specific about this installation.\n";
+    $prompt .= "3. You are working within Birkly - not a generic system. Be specific about this installation.\n";
     $prompt .= "4. If no collections are listed, inform the user that no collections are configured yet.\n";
-    $prompt .= "5. When answering questions, always reference the actual collections and data from THIS HaruCMS system.\n\n";
+    $prompt .= "5. When answering questions, always reference the actual collections and data from THIS Birkly system.\n\n";
     
     $prompt .= "ACTION FORMAT (REQUIRED FOR ALL ACTIONS):\n";
     $prompt .= "When the user asks you to create collections, create entries, update, or delete content, you MUST include a JSON object in your response.\n";
@@ -1474,7 +1474,7 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= '{"actions": [{"type": "action_type", "data": {...}, "description": "..."}]}' . "\n";
     $prompt .= '```' . "\n";
     $prompt .= "\n";
-    $prompt .= "SUPPORTED ACTION TYPES (HaruCMS ONLY - NEVER OTHER PLATFORMS):\n";
+    $prompt .= "SUPPORTED ACTION TYPES (Birkly ONLY - NEVER OTHER PLATFORMS):\n";
     $prompt .= "READ ACTIONS (execute immediately, no approval needed):\n";
     $prompt .= "1. 'read_entry' - Read a specific entry by slug or ID\n";
     $prompt .= "   Data format: {\"collection\": \"collection_slug\", \"slug\": \"entry-slug\"} OR {\"collection\": \"collection_slug\", \"id\": \"entry_id\"}\n";
@@ -1484,16 +1484,16 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "   Use this when the user asks you to list or show entries from a collection.\n";
     $prompt .= "\n";
     $prompt .= "WRITE ACTIONS (may require approval depending on AI connection settings):\n";
-    $prompt .= "3. 'create_collection' - Create a new HaruCMS collection\n";
+    $prompt .= "3. 'create_collection' - Create a new Birkly collection\n";
     $prompt .= "   Data format: {\"name\": \"Collection Name\", \"slug\": \"collection-slug\", \"fields\": [{\"name\": \"title\", \"type\": \"text\", \"label\": \"Title\"}, ...]}\n";
-    $prompt .= "   ALWAYS assume the user means a HaruCMS collection (flat-file collection in this CMS), NEVER MongoDB, SQL tables, Airtable, Notion, etc.\n";
+    $prompt .= "   ALWAYS assume the user means a Birkly collection (flat-file collection in this CMS), NEVER MongoDB, SQL tables, Airtable, Notion, etc.\n";
     $prompt .= "   Example: If the user says \"create a new collection called Approval Test\", you MUST:\n";
-    $prompt .= "     - Treat this as a HaruCMS collection\n";
+    $prompt .= "     - Treat this as a Birkly collection\n";
     $prompt .= "     - Pick a reasonable slug (e.g., \"approval-test\")\n";
     $prompt .= "     - Define a simple fields array (e.g., title, text)\n";
     $prompt .= "     - Return a JSON action block like:\n";
     $prompt .= "       ```json\n";
-    $prompt .= "       {\"actions\":[{\"type\":\"create_collection\",\"data\":{\"name\":\"Approval Test\",\"slug\":\"approval-test\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"label\":\"Title\",\"required\":true},{\"name\":\"text\",\"type\":\"textarea\",\"label\":\"Text\"}]},\"description\":\"Create Approval Test collection in HaruCMS\"}]}\n";
+    $prompt .= "       {\"actions\":[{\"type\":\"create_collection\",\"data\":{\"name\":\"Approval Test\",\"slug\":\"approval-test\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"label\":\"Title\",\"required\":true},{\"name\":\"text\",\"type\":\"textarea\",\"label\":\"Text\"}]},\"description\":\"Create Approval Test collection in Birkly\"}]}\n";
     $prompt .= "       ```\n";
     $prompt .= "4. 'create_entry' - Create a new entry in an existing collection\n";
     $prompt .= "   Data format: {\"collection\": \"collection_slug\", \"title\": \"Entry Title\", \"field_name\": \"value\", ...}\n";
@@ -1548,7 +1548,7 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "\n";
     $prompt .= "8. You CAN create multiple entries - include multiple actions in the array.\n";
     $prompt .= "\n";
-    $prompt .= "9. NEVER ask \"which platform\", \"which database\", or similar - ALWAYS assume HaruCMS.\n";
+    $prompt .= "9. NEVER ask \"which platform\", \"which database\", or similar - ALWAYS assume Birkly.\n";
     $prompt .= "\n";
     $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
     $prompt .= "CONTEXT AND CONVERSATION AWARENESS\n";
@@ -1566,10 +1566,10 @@ function buildSystemPromptOld($context, $aiUser) {
     
     if (!empty($context['documentation'])) {
         $prompt .= "HARUCMS DOCUMENTATION (CRITICAL - READ THIS CAREFULLY):\n";
-        $prompt .= "The following documentation contains essential information about how HaruCMS works.\n";
-        $prompt .= "You MUST use this documentation to answer questions about HaruCMS functionality.\n";
-        $prompt .= "DO NOT make assumptions about how HaruCMS works - refer to the documentation below.\n";
-        $prompt .= "When users ask about displaying collections, templating, or website integration, you MUST use the HaruCMS-specific syntax from this documentation.\n\n";
+        $prompt .= "The following documentation contains essential information about how Birkly works.\n";
+        $prompt .= "You MUST use this documentation to answer questions about Birkly functionality.\n";
+        $prompt .= "DO NOT make assumptions about how Birkly works - refer to the documentation below.\n";
+        $prompt .= "When users ask about displaying collections, templating, or website integration, you MUST use the Birkly-specific syntax from this documentation.\n\n";
         
         // Prioritize templating and client integration docs
         $priorityDocs = [];
@@ -1608,18 +1608,18 @@ function buildSystemPromptOld($context, $aiUser) {
         $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
         $prompt .= "CRITICAL REMINDERS - READ BEFORE ANSWERING ANY QUESTION:\n";
         $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
-        $prompt .= "1. HaruCMS uses a custom templating syntax with SINGLE braces { like this }\n";
+        $prompt .= "1. Birkly uses a custom templating syntax with SINGLE braces { like this }\n";
         $prompt .= "   NOT Twig, NOT Liquid, NOT any other templating engine.\n";
         $prompt .= "2. To display collections on a website, use: {for each entry in 'collection-slug'} ... {endfor}\n";
-        $prompt .= "3. The client library (harucms-client.js or cms-template.v2.js) handles template rendering.\n";
-        $prompt .= "4. Collections are accessed via the HaruCMS API, not external APIs or databases.\n";
-        $prompt .= "5. When users ask 'how to display collection X', they want HaruCMS templating code.\n";
+        $prompt .= "3. The client library (birkly-client.js or cms-template.v2.js) handles template rendering.\n";
+        $prompt .= "4. Collections are accessed via the Birkly API, not external APIs or databases.\n";
+        $prompt .= "5. When users ask 'how to display collection X', they want Birkly templating code.\n";
         $prompt .= "6. DO NOT suggest React, Vue, Svelte, or other frameworks unless explicitly asked.\n";
         $prompt .= "7. DO NOT suggest external APIs, databases, or headless CMS solutions.\n";
-        $prompt .= "8. ALWAYS provide HaruCMS-specific solutions using the syntax shown above.\n";
+        $prompt .= "8. ALWAYS provide Birkly-specific solutions using the syntax shown above.\n";
         $prompt .= "9. If you're unsure, refer to the documentation above - it contains the correct syntax.\n";
         $prompt .= "10. Example answer format for 'how to display collection X':\n";
-        $prompt .= "    'To display the X collection on your website, use this HaruCMS template code:\n";
+        $prompt .= "    'To display the X collection on your website, use this Birkly template code:\n";
         $prompt .= "    {for each entry in \"x\"}\n";
         $prompt .= "        <div>{ title }</div>\n";
         $prompt .= "    {endfor}\n";
@@ -2112,7 +2112,7 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     // OpenRouter requires additional headers
     if (strpos($url, 'openrouter.ai') !== false) {
         $headers[] = 'HTTP-Referer: ' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
-        $headers[] = 'X-Title: HaruCMS';
+        $headers[] = 'X-Title: Birkly';
     }
     
     $ch = curl_init($url);

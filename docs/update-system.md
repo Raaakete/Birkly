@@ -1,8 +1,8 @@
-# HaruCMS Update & Delivery System
+# Birkly Update & Delivery System
 
 ## 🎯 Overview
 
-HaruCMS features a comprehensive update and delivery system that allows seamless updates from GitHub releases without requiring server configuration or manual intervention.
+Birkly features a comprehensive update and delivery system that allows seamless updates from GitHub releases without requiring server configuration or manual intervention.
 
 ## 🏗️ System Architecture
 
@@ -68,11 +68,11 @@ Version Tags    → Automated Build → GitHub  → jsDelivr → Admin Panel →
 ```bash
 # Create GitHub repository
 git init
-git remote add origin https://github.com/yourusername/harucms.git
+git remote add origin https://github.com/yourusername/birkly.git
 
 # Add files
 git add .
-git commit -m "Initial HaruCMS release"
+git commit -m "Initial Birkly release"
 git push -u origin main
 
 # Create first release
@@ -85,8 +85,8 @@ git push origin v1.0.0
 Edit `core/version.php`:
 
 ```php
-private static $updateCheckUrl = 'https://api.github.com/repos/yourusername/harucms/releases/latest';
-private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/yourusername/harucms@';
+private static $updateCheckUrl = 'https://api.github.com/repos/yourusername/birkly/releases/latest';
+private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/yourusername/birkly@';
 ```
 
 ### **3. GitHub Actions Setup**
@@ -100,8 +100,8 @@ The `.github/workflows/release.yml` file handles:
 ### **4. CDN Configuration**
 
 jsDelivr automatically serves files from GitHub:
-- **Release Files** - `https://cdn.jsdelivr.net/gh/yourusername/harucms@v1.0.1/harucms.zip`
-- **Latest Release** - `https://cdn.jsdelivr.net/gh/yourusername/harucms@latest/harucms.zip`
+- **Release Files** - `https://cdn.jsdelivr.net/gh/yourusername/birkly@v1.0.1/birkly.zip`
+- **Latest Release** - `https://cdn.jsdelivr.net/gh/yourusername/birkly@latest/birkly.zip`
 
 ## 🔒 Security Features
 
@@ -167,8 +167,8 @@ Backup Creation → File Extraction → File Replacement → Version Update → 
 // In core/version.php
 private static $currentVersion = '1.0.0';
 private static $versionFile = __DIR__ . '/../VERSION';
-private static $updateCheckUrl = 'https://api.github.com/repos/yourusername/harucms/releases/latest';
-private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/yourusername/harucms@';
+private static $updateCheckUrl = 'https://api.github.com/repos/yourusername/birkly/releases/latest';
+private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/yourusername/birkly@';
 ```
 
 ### **Admin Settings**
@@ -263,4 +263,4 @@ For issues with the update system:
 
 ---
 
-This update system ensures HaruCMS can be easily maintained and updated while maintaining the core principles of simplicity, security, and user-friendliness.
+This update system ensures Birkly can be easily maintained and updated while maintaining the core principles of simplicity, security, and user-friendliness.

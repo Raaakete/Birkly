@@ -165,7 +165,7 @@ if ($action === 'create') {
     
     // Generate unique ID for AI user
     $aiId = 'ai_' . bin2hex(random_bytes(8));
-    $email = $provider . '@ai.harucms';
+    $email = $provider . '@ai.birkly';
     
     // Check if connection already exists (skip for MCP as multiple MCP connections are allowed)
     if ($provider !== 'mcp') {

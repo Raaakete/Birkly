@@ -95,7 +95,7 @@ function setup2FA($data) {
     ];
     
     // Generate QR code URL
-    $issuer = 'HaruCMS';
+    $issuer = 'Birkly';
     $accountName = $userEmail;
     $qrUrl = generateQRCodeURL($secret, $issuer, $accountName);
     
@@ -153,8 +153,14 @@ function enable2FA($data) {
     }
     
     // Save 2FA data to user file
-    $usersDir = __DIR__ . '/../data/users';
-    $userFile = $usersDir . '/' . sanitizeFilename($userEmail) . '.json';
+    // Check if users directory exists at root level, otherwise try data/users
+    // Use md5() to match the filename format used in users.php
+    $usersDir = __DIR__ . '/../users';
+    if (!is_dir($usersDir)) {
+        $usersDir = __DIR__ . '/../data/users';
+    }
+    $userId = md5(strtolower(trim($userEmail)));
+    $userFile = $usersDir . '/' . $userId . '.json';
     
     if (file_exists($userFile)) {
         $userData = json_decode(file_get_contents($userFile), true);
@@ -199,8 +205,13 @@ function disable2FA($data) {
     $password = $data['password'] ?? '';
     
     // Verify password first
-    $usersDir = __DIR__ . '/../data/users';
-    $userFile = $usersDir . '/' . sanitizeFilename($userEmail) . '.json';
+    // Use md5() to match the filename format used in users.php
+    $usersDir = __DIR__ . '/../users';
+    if (!is_dir($usersDir)) {
+        $usersDir = __DIR__ . '/../data/users';
+    }
+    $userId = md5(strtolower(trim($userEmail)));
+    $userFile = $usersDir . '/' . $userId . '.json';
     
     if (!file_exists($userFile)) {
         return ['status' => 'error', 'message' => 'User not found'];
@@ -243,8 +254,13 @@ function get2FAStatus() {
         return ['status' => 'error', 'message' => 'User email not found'];
     }
     
-    $usersDir = __DIR__ . '/../data/users';
-    $userFile = $usersDir . '/' . sanitizeFilename($userEmail) . '.json';
+    // Use md5() to match the filename format used in users.php
+    $usersDir = __DIR__ . '/../users';
+    if (!is_dir($usersDir)) {
+        $usersDir = __DIR__ . '/../data/users';
+    }
+    $userId = md5(strtolower(trim($userEmail)));
+    $userFile = $usersDir . '/' . $userId . '.json';
     
     if (!file_exists($userFile)) {
         return ['status' => 'ok', 'enabled' => false];
@@ -271,7 +287,7 @@ function generateQRCode() {
     }
     
     $userEmail = $_SESSION['user']['email'] ?? '';
-    $issuer = 'HaruCMS';
+    $issuer = 'Birkly';
     $qrUrl = generateQRCodeURL($setup['secret'], $issuer, $userEmail);
     
     return [
@@ -292,8 +308,13 @@ function regenerateBackupCodes($data) {
     $code = $data['code'] ?? '';
     $password = $data['password'] ?? '';
     
-    $usersDir = __DIR__ . '/../data/users';
-    $userFile = $usersDir . '/' . sanitizeFilename($userEmail) . '.json';
+    // Use md5() to match the filename format used in users.php
+    $usersDir = __DIR__ . '/../users';
+    if (!is_dir($usersDir)) {
+        $usersDir = __DIR__ . '/../data/users';
+    }
+    $userId = md5(strtolower(trim($userEmail)));
+    $userFile = $usersDir . '/' . $userId . '.json';
     
     if (!file_exists($userFile)) {
         return ['status' => 'error', 'message' => 'User not found'];
@@ -341,8 +362,13 @@ function regenerateBackupCodes($data) {
  * Verify TOTP code during login
  */
 function verify2FALogin($userEmail, $code, $isBackupCode = false) {
-    $usersDir = __DIR__ . '/../data/users';
-    $userFile = $usersDir . '/' . sanitizeFilename($userEmail) . '.json';
+    // Use md5() to match the filename format used in users.php
+    $usersDir = __DIR__ . '/../users';
+    if (!is_dir($usersDir)) {
+        $usersDir = __DIR__ . '/../data/users';
+    }
+    $userId = md5(strtolower(trim($userEmail)));
+    $userFile = $usersDir . '/' . $userId . '.json';
     
     if (!file_exists($userFile)) {
         return false;

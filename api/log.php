@@ -3,7 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
-// Security logging helper for HaruCMS
+// Security logging helper for Birkly
 
 require_once 'auth.php';
 

@@ -1,5 +1,5 @@
 <h2>Advanced JavaScript API</h2>
-<p>For developers who prefer to use custom JavaScript instead of the templating language, HaruCMS provides a direct JavaScript API to fetch and manipulate content.</p>
+<p>For developers who prefer to use custom JavaScript instead of the templating language, Birkly provides a direct JavaScript API to fetch and manipulate content.</p>
 
 <h3>Why Use the JavaScript API?</h3>
 <p>You might want to use the JavaScript API if you:</p>
@@ -394,7 +394,7 @@ export default BlogPosts;</code></pre>
 
 <h3>Domain Authentication</h3>
 
-<p>For security, your website's domain must be registered in HaruCMS:</p>
+<p>For security, your website's domain must be registered in Birkly:</p>
 
 <ol>
     <li>Go to <strong>Settings → Domains</strong> in the admin panel</li>

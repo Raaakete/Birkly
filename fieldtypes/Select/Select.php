@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Select;
+namespace Birkly\FieldTypes\Select;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Select extends BaseField {
     protected $options;
@@ -82,6 +82,28 @@ class Select extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Select shows the selected option label
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Try to find the label for this value
+        $label = $value;
+        foreach ($this->options as $opt) {
+            if (($opt['value'] ?? '') === $value) {
+                $label = $opt['label'] ?? $value;
+                break;
+            }
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '150px'; // Select fields need moderate space for option labels
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

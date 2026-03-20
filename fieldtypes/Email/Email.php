@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Email;
+namespace Birkly\FieldTypes\Email;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Email extends BaseField {
     protected $placeholder;
@@ -105,20 +105,22 @@ class Email extends BaseField {
         return <<<'CSS'
         .email-field {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
+            padding: var(--space-2, 0.5rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: var(--font-size-base, 1rem);
+            background: var(--bg-primary, #ffffff);
+            color: var(--text-primary, #20221D);
         }
         
         .email-field:focus {
-            border-color: var(--primary);
+            border-color: var(--primary-500, #3b82f6);
             outline: none;
-            box-shadow: 0 0 0 2px var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .email-field.error {
-            border-color: var(--danger);
+            border-color: var(--error-500, #ef4444);
         }
         CSS;
     }
@@ -161,6 +163,25 @@ class Email extends BaseField {
             return implode(', ', $value);
         }
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Truncate long email addresses
+        $email = (string)$value;
+        $max = 40;
+        if (mb_strlen($email) > $max) {
+            $email = mb_substr($email, 0, $max - 3) . '...';
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '200px'; // Email fields need moderate space for full addresses
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

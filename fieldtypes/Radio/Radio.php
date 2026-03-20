@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Radio;
+namespace Birkly\FieldTypes\Radio;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Radio extends BaseField {
     protected $options;
@@ -107,13 +107,13 @@ class Radio extends BaseField {
             user-select: none !important;
             font-size: 0.875rem !important;
             line-height: 1.4 !important;
-            color: #333 !important;
+            color: var(--text-primary, #20221D) !important;
         }
         
         .radio-input:focus + .radio-label {
-            outline: 2px solid var(--primary, #007bff) !important;
+            outline: 2px solid var(--primary-500, #3b82f6) !important;
             outline-offset: 2px !important;
-            border-radius: 2px !important;
+            border-radius: var(--radius-xs, 0.125rem) !important;
         }
         CSS;
     }
@@ -149,6 +149,27 @@ class Radio extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Find the label for this value
+        $label = $value;
+        foreach ($this->options as $opt) {
+            if (($opt['value'] ?? '') === $value) {
+                $label = $opt['label'] ?? $value;
+                break;
+            }
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '150px'; // Radio fields need space for option label display
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

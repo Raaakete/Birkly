@@ -1,20 +1,25 @@
 <div class="content-page">
     <div class="page-header pt-m pb-m">
-        <div class="breadcrumbs"><span class="current"><?= __('admin.content') ?></span></div>
+        <div class="page-header-left">
+            <div class="breadcrumbs"><span class="current">{translate 'admin.content'}</span></div>
+        </div>
+        <div class="page-header-actions"></div>
     </div>
     
     <div class="main-actions-bar">
-        <a class="btn btn-primary" href="/admin/index.php?page=collection-editor"><?= __('admin.new_collection') ?></a>
-        <button class="btn btn-secondary" id="new-group-btn"><?= __('admin.new_group') ?></button>
+        <a class="btn btn-primary" href="{admin_url 'collection-editor'}">{translate 'admin.new_collection'}</a>
+        <button class="btn btn-secondary" id="new-group-btn">{translate 'admin.new_group'}</button>
     </div>
     
     <!-- Data for JavaScript -->
-    <script type="application/json" id="content-data"><?= json_encode([
+    <script type="application/json" id="content-data">
+    <?php echo json_encode([
         'collections' => $collections ?? [],
         'groups' => $groups ?? []
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
+    </script>
     
-    <div id="collections-container" class="collections-container">
+    <div id="collections-container" class="collections-container mt-xl">
         <!-- Groups and collections will be rendered here by JavaScript -->
     </div>
 </div>
@@ -24,36 +29,23 @@
     <div class="modal-backdrop" onclick="this.closest('.modal').style.display='none'"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="group-modal-title"><?= __('admin.new_group') ?></h3>
+            <h3 id="group-modal-title">{translate 'admin.new_group'}</h3>
             <button class="modal-close" type="button">&times;</button>
         </div>
         <form id="group-form">
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="group-name"><?= __('admin.group_name') ?></label>
-                    <input type="text" id="group-name" name="name" required class="input" placeholder="<?= __('admin.enter_group_name') ?>">
+                    <label for="group-name">{translate 'admin.group_name'}</label>
+                    <input type="text" id="group-name" name="name" required class="input" placeholder="{translate 'admin.enter_group_name'}">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('group-modal').style.display='none'"><?= __('admin.cancel') ?></button>
-                <button type="submit" class="btn btn-primary" id="group-submit"><?= __('admin.create_group') ?></button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('group-modal').style.display='none'">{translate 'admin.cancel'}</button>
+                <button type="submit" class="btn btn-primary" id="group-submit">{translate 'admin.create_group'}</button>
             </div>
         </form>
     </div>
 </div>
 
-<script src="/admin/js/content-groups.js"></script>
-<script>
-// Initialize after DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.setupContentGroups) {
-            window.setupContentGroups();
-        }
-    });
-} else {
-    if (window.setupContentGroups) {
-        window.setupContentGroups();
-    }
-}
-</script>
+{include_script 'mouse-drag-drop.js'}
+{include_script 'content-groups.js'}

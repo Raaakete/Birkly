@@ -8,10 +8,7 @@
     
     let groups = [];
     let collections = [];
-    let draggedElement = null;
-    let draggedCollection = null;
-    let draggedGroupId = null;
-    let dropZonesSetup = false;
+    let dragDropManager = null;
     
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
@@ -39,30 +36,21 @@
                 collections = data.collections || [];
                 groups = data.groups || [];
                 renderGroupsAndCollections();
-                // Set up drop zones after rendering (only once)
-                setTimeout(function() {
-                    if (!dropZonesSetup) {
-                        setupDropZones();
-                    }
-                }, 100);
             } catch (e) {
                 console.error('Failed to parse content data:', e, 'Script content:', dataScript?.textContent?.substring(0, 100));
                 // Fallback: render empty state
                 renderGroupsAndCollections();
-                setTimeout(function() {
-                    setupDropZones();
-                }, 100);
             }
         } else {
             // No data script, render empty state
             renderGroupsAndCollections();
-            setTimeout(function() {
-                setupDropZones();
-            }, 100);
         }
         
         // Set up event listeners
         setupEventListeners();
+        
+        // Set up drag and drop
+        setupDragDrop();
     }
     
     function setupEventListeners() {
@@ -89,6 +77,80 @@
         }
     }
     
+    function setupDragDrop() {
+        const container = document.getElementById('collections-container');
+        if (!container) return;
+        
+        // Destroy existing manager if any
+        if (dragDropManager) {
+            dragDropManager.destroy();
+        }
+        
+        // Create new manager
+        dragDropManager = new MouseDragDropManager({
+            container: container,
+            groupSelector: '.collection-group',
+            groupHeaderSelector: '.group-header',
+            collectionSelector: '.collection-card',
+            collectionContainerSelector: '.group-collections, .ungrouped-collections',
+            
+            onGroupReorder: (fromIndex, toIndex) => {
+                // Reorder groups (exclude ungrouped)
+                const reorderableGroups = groups.filter(g => g.id !== 'ungrouped');
+                const draggedGroup = reorderableGroups[fromIndex];
+                
+                if (draggedGroup) {
+                    reorderableGroups.splice(fromIndex, 1);
+                    reorderableGroups.splice(toIndex, 0, draggedGroup);
+                    
+                    // Keep ungrouped at end
+                    const ungroupedGroup = groups.find(g => g.id === 'ungrouped');
+                    groups = [...reorderableGroups];
+                    if (ungroupedGroup) {
+                        groups.push(ungroupedGroup);
+                    }
+                    
+                    saveGroups();
+                }
+            },
+            
+            onCollectionReorder: (groupId, fromIndex, toIndex) => {
+                // Reorder within same group
+                const group = groups.find(g => g.id === groupId);
+                if (!group || !group.collections) return;
+                
+                const draggedCollection = group.collections[fromIndex];
+                group.collections.splice(fromIndex, 1);
+                group.collections.splice(toIndex, 0, draggedCollection);
+                
+                saveGroups();
+            },
+            
+            onCollectionMove: (collectionSlug, fromGroupId, toGroupId, toIndex) => {
+                // Remove from old group
+                if (fromGroupId && fromGroupId !== 'ungrouped') {
+                    const fromGroup = groups.find(g => g.id === fromGroupId);
+                    if (fromGroup && fromGroup.collections) {
+                        fromGroup.collections = fromGroup.collections.filter(slug => slug !== collectionSlug);
+                    }
+                }
+                
+                // Add to new group
+                if (toGroupId && toGroupId !== 'ungrouped') {
+                    const toGroup = groups.find(g => g.id === toGroupId);
+                    if (toGroup) {
+                        if (!toGroup.collections) {
+                            toGroup.collections = [];
+                        }
+                        toGroup.collections.splice(toIndex, 0, collectionSlug);
+                    }
+                }
+                
+                saveGroups();
+            }
+        });
+    }
+    
     function renderGroupsAndCollections() {
         const container = document.getElementById('collections-container');
         if (!container) {
@@ -100,8 +162,9 @@
         
         console.log('Rendering:', { groupsCount: groups.length, collectionsCount: collections.length });
         
-        // Render groups
+        // Render groups (skip ungrouped, handled separately)
         groups.forEach(group => {
+            if (group.id === 'ungrouped') return;
             const groupSection = createGroupSection(group);
             container.appendChild(groupSection);
         });
@@ -136,15 +199,54 @@
             const ungroupedSection = createUngroupedSection(ungroupedCollections);
             container.appendChild(ungroupedSection);
         }
+        
+        // Update drag and drop after render
+        if (dragDropManager) {
+            dragDropManager.update();
+        }
+        
+        // Re-initialize dropdowns for newly created collection cards
+        // The MutationObserver should handle this, but we'll do it explicitly to be sure
+        if (window.initDropdowns) {
+            setTimeout(() => {
+                window.initDropdowns();
+            }, 100);
+        }
     }
     
     function createGroupSection(group) {
         const section = document.createElement('div');
         section.className = 'collection-group';
         section.dataset.groupId = group.id;
+        // Make section draggable (SimpleDragDrop needs the item itself to be draggable)
+        // The handleSelector will ensure drag only starts from header
+        section.draggable = true;
+        section.setAttribute('draggable', 'true');
         
+        // Check if group is collapsed (stored in localStorage)
+        const isCollapsed = localStorage.getItem(`group-collapsed-${group.id}`) === 'true';
+        if (isCollapsed) {
+            section.classList.add('collapsed');
+        }
+        
+        // Header contains the drag handle
         const header = document.createElement('div');
         header.className = 'group-header';
+        header.style.cursor = 'move'; // Show move cursor
+        // Make header draggable - when dragging from header, the browser will drag
+        // the header, but SimpleDragDrop will find the group section (item) via closest()
+        // and use that for all drag logic
+        header.draggable = true;
+        header.setAttribute('draggable', 'true');
+        
+        // Add drag handle for group
+        const dragHandleWrapper = document.createElement('div');
+        dragHandleWrapper.className = 'group-drag-handle';
+        const dragHandle = document.createElement('img');
+        dragHandle.src = '/admin/assets/DotsSixVertical.svg';
+        dragHandle.alt = 'Drag to reorder group';
+        dragHandle.draggable = false;
+        dragHandleWrapper.appendChild(dragHandle);
         
         const title = document.createElement('h3');
         title.className = 'group-title';
@@ -152,6 +254,19 @@
         
         const actions = document.createElement('div');
         actions.className = 'group-actions';
+        
+        // Collapse/expand button
+        const collapseBtn = document.createElement('button');
+        collapseBtn.className = 'btn-icon group-collapse-btn';
+        collapseBtn.title = isCollapsed ? 'Expand Group' : 'Collapse Group';
+        collapseBtn.innerHTML = isCollapsed 
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"></path></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
+        collapseBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleGroupCollapse(section, group.id);
+        };
         
         const editBtn = document.createElement('button');
         editBtn.className = 'btn-icon';
@@ -165,18 +280,25 @@
         deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
         deleteBtn.onclick = () => deleteGroup(group.id);
         
+        // Prevent drag from buttons
+        [collapseBtn, editBtn, deleteBtn].forEach(btn => {
+            btn.addEventListener('dragstart', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                return false;
+            });
+        });
+        
+        actions.appendChild(collapseBtn);
         actions.appendChild(editBtn);
         actions.appendChild(deleteBtn);
+        header.appendChild(dragHandleWrapper);
         header.appendChild(title);
         header.appendChild(actions);
         
         const grid = document.createElement('div');
         grid.className = 'grid group-collections';
         grid.dataset.groupId = group.id;
-        grid.dataset.dropZone = 'group';
-        
-        // Add drop zone class
-        grid.classList.add('drop-zone');
         
         // Render collections in this group - respect order from group.collections
         let groupCollections = collections.filter(col => 
@@ -217,20 +339,51 @@
     function createUngroupedSection(collectionsList) {
         const section = document.createElement('div');
         section.className = 'collection-group ungrouped';
+        section.dataset.groupId = 'ungrouped';
+        
+        // Check if ungrouped is collapsed
+        const isCollapsed = localStorage.getItem('group-collapsed-ungrouped') === 'true';
+        if (isCollapsed) {
+            section.classList.add('collapsed');
+        }
         
         const header = document.createElement('div');
         header.className = 'group-header';
+        // Note: ungrouped header is NOT draggable (it's always last)
+        
+        // Add drag handle for ungrouped section (but make it non-draggable since it's always last)
+        const dragHandleWrapper = document.createElement('div');
+        dragHandleWrapper.className = 'group-drag-handle';
+        dragHandleWrapper.style.opacity = '0.3';
+        dragHandleWrapper.style.cursor = 'default';
         
         const title = document.createElement('h3');
         title.className = 'group-title';
         title.textContent = 'Ungrouped Collections';
         
+        const actions = document.createElement('div');
+        actions.className = 'group-actions';
+        
+        // Collapse/expand button for ungrouped
+        const collapseBtn = document.createElement('button');
+        collapseBtn.className = 'btn-icon group-collapse-btn';
+        collapseBtn.title = isCollapsed ? 'Expand Group' : 'Collapse Group';
+        collapseBtn.innerHTML = isCollapsed 
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"></path></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
+        collapseBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleGroupCollapse(section, 'ungrouped');
+        };
+        
+        actions.appendChild(collapseBtn);
+        header.appendChild(dragHandleWrapper);
         header.appendChild(title);
+        header.appendChild(actions);
         
         const grid = document.createElement('div');
         grid.className = 'grid ungrouped-collections';
-        grid.dataset.dropZone = 'ungrouped';
-        grid.classList.add('drop-zone');
         
         collectionsList.forEach(col => {
             const card = createCollectionCard(col, null);
@@ -290,50 +443,88 @@
         entryCount.appendChild(countBold);
         entryCount.appendChild(document.createTextNode(' entries'));
         
-        // 3-dot menu instead of separate edit/delete buttons
+        // Add sub-entries count if available
+        const subEntriesCount = collection.sub_entries_count || 0;
+        if (subEntriesCount > 0) {
+            const subEntriesSpan = document.createElement('span');
+            subEntriesSpan.className = 'sub-entries-count';
+            subEntriesSpan.textContent = ' +' + subEntriesCount;
+            entryCount.appendChild(subEntriesSpan);
+        }
+        
+        // 3-dot menu instead of separate edit/delete buttons - Unified Dropdown Component
         const menuWrapper = document.createElement('div');
-        menuWrapper.className = 'collection-menu-wrapper';
+        menuWrapper.className = 'dropdown collection-menu-wrapper';
         
         const menuButton = document.createElement('button');
-        menuButton.className = 'collection-menu-btn';
+        menuButton.className = 'dropdown-trigger collection-menu-btn';
         menuButton.setAttribute('aria-label', 'Collection options');
+        menuButton.setAttribute('aria-expanded', 'false');
+        menuButton.setAttribute('aria-haspopup', 'true');
         menuButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>';
-        menuButton.onclick = (e) => {
-            e.preventDefault();
+        // Let the unified dropdown system handle the click
+        // No custom onclick handler needed
+        
+        // Prevent drag from menu button
+        menuButton.addEventListener('dragstart', (e) => {
             e.stopPropagation();
-            toggleCollectionMenu(menuButton, collection);
-        };
+            e.preventDefault();
+            return false;
+        });
         
         const menuDropdown = document.createElement('div');
-        menuDropdown.className = 'collection-menu-dropdown';
-        menuDropdown.style.display = 'none';
+        menuDropdown.className = 'dropdown-menu dropdown-menu-right collection-menu-dropdown';
         
         const editItem = document.createElement('a');
-        editItem.className = 'collection-menu-item';
+        editItem.className = 'dropdown-item collection-menu-item';
         editItem.href = '/admin/index.php?page=collection-editor&collection=' + encodeURIComponent(collection.slug);
-        editItem.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg><span>Edit Collection</span>';
+        editItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg><span class="dropdown-item-label">Edit Collection</span>';
         editItem.onclick = (e) => {
             e.stopPropagation();
             // Let the link navigate normally
         };
         
         const duplicateItem = document.createElement('button');
-        duplicateItem.className = 'collection-menu-item';
-        duplicateItem.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Duplicate Collection</span>';
+        duplicateItem.className = 'dropdown-item collection-menu-item';
+        duplicateItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="dropdown-item-label">Duplicate Collection</span>';
         duplicateItem.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            closeAllMenus();
+            // Close dropdown by removing show/active classes
+            const dropdown = duplicateItem.closest('.dropdown');
+            if (dropdown) {
+                const menu = dropdown.querySelector('.dropdown-menu');
+                if (menu) {
+                    menu.classList.remove('show', 'active');
+                    menu.style.display = 'none';
+                }
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                if (trigger) {
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
+            }
             duplicateCollection(collection);
         };
         
         const deleteItem = document.createElement('button');
-        deleteItem.className = 'collection-menu-item collection-menu-item-danger';
-        deleteItem.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg><span>Delete Collection</span>';
+        deleteItem.className = 'dropdown-item dropdown-item-danger collection-menu-item collection-menu-item-danger';
+        deleteItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg><span class="dropdown-item-label">Delete Collection</span>';
         deleteItem.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            closeAllMenus();
+            // Close dropdown by removing show/active classes
+            const dropdown = deleteItem.closest('.dropdown');
+            if (dropdown) {
+                const menu = dropdown.querySelector('.dropdown-menu');
+                if (menu) {
+                    menu.classList.remove('show', 'active');
+                    menu.style.display = 'none';
+                }
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                if (trigger) {
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
+            }
             deleteCollection(collection);
         };
         
@@ -364,358 +555,27 @@
             window.location.href = '/admin/index.php?page=entries&collection=' + encodeURIComponent(collection.slug);
         });
         
-        // Drag event listeners
-        setupDragEvents(card, collection, groupId);
-        
-        return card;
-    }
-    
-    function toggleCollectionMenu(button, collection) {
-        // Close all other menus first
-        closeAllMenus();
-        
-        const dropdown = button.nextElementSibling;
-        if (dropdown && dropdown.classList.contains('collection-menu-dropdown')) {
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-            button.classList.toggle('active');
-        }
-    }
-    
-    function closeAllMenus() {
-        document.querySelectorAll('.collection-menu-dropdown').forEach(menu => {
-            menu.style.display = 'none';
-        });
-        document.querySelectorAll('.collection-menu-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-    }
-    
-    // Close menus when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.collection-menu-wrapper')) {
-            closeAllMenus();
-        }
-    });
-    
-    function setupDragEvents(card, collection, groupId) {
-        let dragStarted = false;
-        
-        // Handle dragstart - only from drag handle or card itself (not menu)
+        // Prevent drag from menu
         card.addEventListener('dragstart', function(e) {
-            // Don't start drag from menu
             if (e.target.closest('.collection-menu-wrapper')) {
                 e.preventDefault();
                 return false;
             }
-            
-            dragStarted = true;
-            draggedElement = this;
-            draggedCollection = collection;
-            draggedGroupId = groupId;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', collection.slug);
-            e.dataTransfer.setData('application/json', JSON.stringify({
-                slug: collection.slug,
-                groupId: groupId || null
-            }));
-            console.log('Drag started:', collection.slug, 'from group:', groupId || 'ungrouped');
         });
         
-        // Handle dragend
-        card.addEventListener('dragend', function(e) {
-            this.classList.remove('dragging');
-            
-            // Mark as just dragged to prevent click navigation
+        // Mark as just-dragged after drag ends (to prevent click navigation)
+        card.addEventListener('dragend', function() {
             this.classList.add('just-dragged');
             setTimeout(() => {
                 this.classList.remove('just-dragged');
-                dragStarted = false;
             }, 100);
-            
-            document.querySelectorAll('.drop-zone').forEach(zone => {
-                zone.classList.remove('drag-over');
-            });
-            removeDropIndicator();
-            console.log('Drag ended');
-            draggedElement = null;
-            draggedCollection = null;
-            draggedGroupId = null;
         });
         
-        // Prevent drag from menu button
-        const menuButton = card.querySelector('.collection-menu-btn');
-        if (menuButton) {
-            menuButton.addEventListener('dragstart', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                return false;
-            });
-        }
+        return card;
     }
     
-    // Set up drop zones using event delegation
-    function setupDropZones() {
-        const container = document.getElementById('collections-container');
-        if (!container) return;
-        
-        // Only set up once to avoid duplicate listeners
-        if (dropZonesSetup) {
-            console.log('Drop zones already set up, skipping');
-            return;
-        }
-        
-        dropZonesSetup = true;
-        
-        // Use event delegation on the container to handle all drop zones
-        container.addEventListener('dragover', function(e) {
-            const dropZone = e.target.closest('.drop-zone');
-            if (!dropZone) {
-                removeDropIndicator();
-                return;
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-            e.dataTransfer.dropEffect = 'move';
-            dropZone.classList.add('drag-over');
-            
-            // Show drop indicator
-            if (draggedElement && draggedCollection) {
-                const targetGroupId = dropZone.dataset.groupId || null;
-                const targetGroupIdNormalized = targetGroupId === '' || targetGroupId === undefined ? null : targetGroupId;
-                const draggedGroupIdNormalized = draggedGroupId === '' || draggedGroupId === undefined ? null : draggedGroupId;
-                
-                // Only show indicator if dropping in same group
-                if (targetGroupIdNormalized === draggedGroupIdNormalized) {
-                    showDropIndicator(e, dropZone);
-                } else {
-                    removeDropIndicator();
-                }
-            }
-        }, false);
-        
-        container.addEventListener('dragleave', function(e) {
-            const dropZone = e.target.closest('.drop-zone');
-            if (!dropZone) {
-                removeDropIndicator();
-                return;
-            }
-            
-            // Only remove if we're actually leaving the zone
-            if (!dropZone.contains(e.relatedTarget)) {
-                dropZone.classList.remove('drag-over');
-                removeDropIndicator();
-            }
-        }, false);
-        
-        container.addEventListener('drop', function(e) {
-            const dropZone = e.target.closest('.drop-zone');
-            if (!dropZone) {
-                console.log('Drop: No drop zone found');
-                removeDropIndicator();
-                return;
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-            dropZone.classList.remove('drag-over');
-            removeDropIndicator();
-            
-            if (!draggedElement || !draggedCollection) {
-                console.log('Drop: No dragged element or collection');
-                return;
-            }
-            
-            const targetGroupId = dropZone.dataset.groupId || null;
-            // Normalize both to null or string for comparison
-            const targetGroupIdNormalized = targetGroupId === '' || targetGroupId === undefined ? null : targetGroupId;
-            const draggedGroupIdNormalized = draggedGroupId === '' || draggedGroupId === undefined ? null : draggedGroupId;
-            
-            console.log('Drop: targetGroupId=', targetGroupIdNormalized, 'draggedGroupId=', draggedGroupIdNormalized);
-            
-            // Check if we're reordering within the same group (both null for ungrouped, or same string for grouped)
-            if (targetGroupIdNormalized === draggedGroupIdNormalized) {
-                console.log('Drop: Reordering within same group');
-                
-                // Get the drop indicator to find insertion point
-                const dropIndicator = document.querySelector('.drop-indicator');
-                let targetSlug = null;
-                let insertBefore = false;
-                
-                if (dropIndicator && dropIndicator.dataset.targetSlug) {
-                    // Use the drop indicator's target
-                    targetSlug = dropIndicator.dataset.targetSlug;
-                    insertBefore = dropIndicator.dataset.insertBefore === 'true';
-                    const isVertical = dropIndicator.dataset.isVertical === 'true';
-                    console.log('Drop: Using indicator target', targetSlug, 'insertBefore:', insertBefore, 'isVertical:', isVertical);
-                } else {
-                    // Fallback: find the target card
-                    let targetCard = e.target.closest('.collection-card');
-                    
-                    // If we didn't find a card, try to find the nearest card in the drop zone
-                    if (!targetCard) {
-                        const cards = Array.from(dropZone.querySelectorAll('.collection-card'));
-                        console.log('Drop: Found', cards.length, 'cards in drop zone');
-                        // Find the card that's closest to the drop point
-                        const dropY = e.clientY;
-                        let closestCard = null;
-                        let closestDistance = Infinity;
-                        
-                        cards.forEach(card => {
-                            if (card === draggedElement) return;
-                            const rect = card.getBoundingClientRect();
-                            const cardCenterY = rect.top + rect.height / 2;
-                            const distance = Math.abs(dropY - cardCenterY);
-                            if (distance < closestDistance) {
-                                closestDistance = distance;
-                                closestCard = card;
-                            }
-                        });
-                        
-                        targetCard = closestCard;
-                    }
-                    
-                    if (targetCard && targetCard !== draggedElement) {
-                        targetSlug = targetCard.dataset.collectionSlug;
-                    }
-                }
-                
-                if (targetSlug) {
-                    console.log('Drop: Reordering', draggedCollection.slug, 'to position of', targetSlug, 'insertBefore:', insertBefore);
-                    // Reorder within same group
-                    reorderCollectionInGroup(draggedCollection.slug, draggedGroupIdNormalized, targetSlug, insertBefore);
-                } else {
-                    console.log('Drop: No target card found, just refreshing');
-                    // Dropped in empty space, just refresh
-                    saveGroups();
-                }
-                return;
-            }
-            
-            console.log('Drop: Moving collection to different group');
-            // Move collection to new group
-            moveCollectionToGroup(draggedCollection.slug, draggedGroupIdNormalized, targetGroupIdNormalized);
-        }, false);
-    }
-    
-    function moveCollectionToGroup(collectionSlug, fromGroupId, toGroupId) {
-        // Remove from old group
-        if (fromGroupId) {
-            const fromGroup = groups.find(g => g.id === fromGroupId);
-            if (fromGroup && fromGroup.collections) {
-                fromGroup.collections = fromGroup.collections.filter(slug => slug !== collectionSlug);
-            }
-        }
-        
-        // Add to new group
-        if (toGroupId) {
-            const toGroup = groups.find(g => g.id === toGroupId);
-            if (toGroup) {
-                if (!toGroup.collections) {
-                    toGroup.collections = [];
-                }
-                if (!toGroup.collections.includes(collectionSlug)) {
-                    toGroup.collections.push(collectionSlug);
-                }
-            }
-        }
-        
-        // Save and re-render
-        saveGroups();
-    }
-    
-    function reorderCollectionInGroup(collectionSlug, groupId, targetSlug, insertBefore = false) {
-        console.log('ReorderCollectionInGroup:', collectionSlug, 'groupId:', groupId, 'targetSlug:', targetSlug, 'insertBefore:', insertBefore);
-        
-        if (!groupId || groupId === 'ungrouped') {
-            // Reordering in ungrouped - we need to track order in groups.json
-            // Create or update an "ungrouped" entry in groups to track order
-            let ungroupedGroup = groups.find(g => g.id === 'ungrouped');
-            if (!ungroupedGroup) {
-                ungroupedGroup = {
-                    id: 'ungrouped',
-                    name: 'Ungrouped Collections',
-                    collections: []
-                };
-                groups.push(ungroupedGroup);
-            }
-            
-            // Get all ungrouped collections
-            const ungroupedCollections = collections.filter(col => {
-                return !groups.some(g => g.id !== 'ungrouped' && g.collections && g.collections.includes(col.slug));
-            });
-            
-            // Build ordered list
-            if (!ungroupedGroup.collections || ungroupedGroup.collections.length === 0) {
-                // Initialize with current order
-                ungroupedGroup.collections = ungroupedCollections.map(col => col.slug);
-            }
-            
-            // Find current and target positions BEFORE removing
-            const currentIndex = ungroupedGroup.collections.indexOf(collectionSlug);
-            const targetIndex = ungroupedGroup.collections.indexOf(targetSlug);
-            
-            if (targetIndex !== -1 && currentIndex !== targetIndex) {
-                // Remove from current position first
-                ungroupedGroup.collections = ungroupedGroup.collections.filter(slug => slug !== collectionSlug);
-                
-                // Calculate new target index after removal
-                let newTargetIndex = targetIndex;
-                if (currentIndex < targetIndex) {
-                    // We removed an item before the target, so target index shifts down
-                    newTargetIndex = targetIndex - 1;
-                }
-                
-                // Insert at the correct position
-                const insertIndex = insertBefore ? newTargetIndex : newTargetIndex + 1;
-                ungroupedGroup.collections.splice(insertIndex, 0, collectionSlug);
-            } else if (targetIndex === -1) {
-                // Target not found, just remove and re-append
-                ungroupedGroup.collections = ungroupedGroup.collections.filter(slug => slug !== collectionSlug);
-                ungroupedGroup.collections.push(collectionSlug);
-            }
-            // If currentIndex === targetIndex, do nothing (dropped on itself)
-            
-            console.log('Ungrouped order after reorder:', ungroupedGroup.collections);
-        } else {
-            const group = groups.find(g => g.id === groupId);
-            if (!group || !group.collections) {
-                console.log('Group not found or has no collections');
-                return;
-            }
-            
-            // Find current and target positions BEFORE removing
-            const currentIndex = group.collections.indexOf(collectionSlug);
-            const targetIndex = group.collections.indexOf(targetSlug);
-            
-            if (targetIndex !== -1 && currentIndex !== targetIndex) {
-                // Remove from current position first
-                group.collections = group.collections.filter(slug => slug !== collectionSlug);
-                
-                // Calculate new target index after removal
-                let newTargetIndex = targetIndex;
-                if (currentIndex < targetIndex) {
-                    // We removed an item before the target, so target index shifts down
-                    newTargetIndex = targetIndex - 1;
-                }
-                
-                // Insert at the correct position
-                const insertIndex = insertBefore ? newTargetIndex : newTargetIndex + 1;
-                group.collections.splice(insertIndex, 0, collectionSlug);
-            } else if (targetIndex === -1) {
-                // Target not found, just remove and re-append
-                group.collections = group.collections.filter(slug => slug !== collectionSlug);
-                group.collections.push(collectionSlug);
-            }
-            // If currentIndex === targetIndex, do nothing (dropped on itself)
-            
-            console.log('Group order after reorder:', group.collections);
-        }
-        
-        // Save and re-render
-        saveGroups();
-    }
+    // Removed toggleCollectionMenu and closeAllMenus - now using unified dropdown system
+    // The unified dropdown.js handles all dropdown functionality
     
     function duplicateCollection(collection) {
         // Use id if available, otherwise try to find collection by slug
@@ -911,10 +771,6 @@
         .then(data => {
             if (data.status === 'ok') {
                 renderGroupsAndCollections();
-                        // Re-setup drop zones after render
-                setTimeout(function() {
-                    setupDropZones();
-                }, 100);
             } else {
                 alert('Failed to save groups: ' + (data.message || 'Unknown error'));
             }
@@ -925,116 +781,29 @@
         });
     }
     
-    // Drop indicator functions
-    function showDropIndicator(e, dropZone) {
-        const cards = Array.from(dropZone.querySelectorAll('.collection-card')).filter(card => card !== draggedElement);
-        if (cards.length === 0) {
-            removeDropIndicator();
-            return;
-        }
+    // Toggle group collapse/expand
+    function toggleGroupCollapse(groupSection, groupId) {
+        const isCollapsed = groupSection.classList.contains('collapsed');
+        const grid = groupSection.querySelector('.group-collections, .ungrouped-collections');
+        const collapseBtn = groupSection.querySelector('.group-collapse-btn');
         
-        const dropX = e.clientX;
-        const dropY = e.clientY;
-        let insertBefore = false;
-        let targetCard = null;
-        let minDistance = Infinity;
-        let isVertical = false; // Whether to show vertical or horizontal indicator
-        
-        // Find the card we're closest to
-        cards.forEach(card => {
-            const rect = card.getBoundingClientRect();
-            const cardTop = rect.top;
-            const cardBottom = rect.bottom;
-            const cardLeft = rect.left;
-            const cardRight = rect.right;
-            const cardCenterX = rect.left + rect.width / 2;
-            const cardCenterY = rect.top + rect.height / 2;
-            
-            // Calculate distances
-            const distanceToTop = Math.abs(dropY - cardTop);
-            const distanceToBottom = Math.abs(dropY - cardBottom);
-            const distanceToLeft = Math.abs(dropX - cardLeft);
-            const distanceToRight = Math.abs(dropX - cardRight);
-            
-            // Determine if we're closer horizontally or vertically
-            const horizontalDist = Math.min(distanceToLeft, distanceToRight);
-            const verticalDist = Math.min(distanceToTop, distanceToBottom);
-            
-            // Use the minimum distance
-            const minDist = Math.min(horizontalDist, verticalDist);
-            
-            if (minDist < minDistance) {
-                minDistance = minDist;
-                targetCard = card;
-                
-                // Determine insertion direction
-                if (verticalDist < horizontalDist) {
-                    // Closer to top/bottom - insert before/after vertically
-                    isVertical = false; // Horizontal line between rows
-                    insertBefore = distanceToTop < distanceToBottom;
-                } else {
-                    // Closer to left/right - insert before/after horizontally
-                    isVertical = true; // Vertical line between columns
-                    insertBefore = distanceToLeft < distanceToRight;
-                }
+        if (isCollapsed) {
+            groupSection.classList.remove('collapsed');
+            if (grid) grid.style.display = '';
+            if (collapseBtn) {
+                collapseBtn.title = 'Collapse Group';
+                collapseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
             }
-        });
-        
-        if (!targetCard) {
-            removeDropIndicator();
-            return;
-        }
-        
-        // Remove existing indicator
-        removeDropIndicator();
-        
-        // Create indicator
-        const indicator = document.createElement('div');
-        indicator.className = 'drop-indicator';
-        indicator.dataset.targetSlug = targetCard.dataset.collectionSlug;
-        indicator.dataset.insertBefore = insertBefore;
-        indicator.dataset.isVertical = isVertical;
-        
-        const rect = targetCard.getBoundingClientRect();
-        const dropZoneRect = dropZone.getBoundingClientRect();
-        
-        if (isVertical) {
-            // Vertical indicator between columns
-            if (insertBefore) {
-                indicator.style.left = (rect.left - dropZoneRect.left - 1) + 'px';
-            } else {
-                indicator.style.left = (rect.right - dropZoneRect.left + 1) + 'px';
-            }
-            indicator.style.top = (rect.top - dropZoneRect.top) + 'px';
-            indicator.style.width = '3px';
-            indicator.style.height = rect.height + 'px';
+            localStorage.setItem(`group-collapsed-${groupId}`, 'false');
         } else {
-            // Horizontal indicator between rows
-            if (insertBefore) {
-                indicator.style.top = (rect.top - dropZoneRect.top - 1) + 'px';
-            } else {
-                indicator.style.top = (rect.bottom - dropZoneRect.top + 1) + 'px';
+            groupSection.classList.add('collapsed');
+            if (grid) grid.style.display = 'none';
+            if (collapseBtn) {
+                collapseBtn.title = 'Expand Group';
+                collapseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"></path></svg>';
             }
-            indicator.style.left = (rect.left - dropZoneRect.left) + 'px';
-            indicator.style.width = rect.width + 'px';
-            indicator.style.height = '3px';
-        }
-        
-        indicator.style.position = 'absolute';
-        dropZone.style.position = 'relative';
-        dropZone.appendChild(indicator);
-    }
-    
-    function removeDropIndicator() {
-        const indicator = document.querySelector('.drop-indicator');
-        if (indicator) {
-            indicator.remove();
+            localStorage.setItem(`group-collapsed-${groupId}`, 'true');
         }
     }
-    
-    // Expose setupDropZones to be called after render
-    window.setupContentGroups = function() {
-        setupDropZones();
-    };
     
 })();

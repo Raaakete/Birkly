@@ -4,6 +4,10 @@
  * Serves templates and data for the admin panel
  */
 
+// CRITICAL: If being included (not called directly), skip all API execution
+// Check this FIRST before any other code that might output
+$__is_internal_include = isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__HARU_INTERNAL_CALL'] === true;
+
 require_once 'storage.php';
 
 // Load fieldtype base and simple autoloader so fieldtypes can be instantiated for list rendering
@@ -11,9 +15,16 @@ $baseFieldPath = __DIR__ . '/../fieldtypes/BaseField.php';
 if (file_exists($baseFieldPath)) {
     require_once $baseFieldPath;
 }
+
+// Load admin_fieldtypes.php to get getFieldtypeClass() function for plugin fieldtype support
+$adminFieldtypesPath = __DIR__ . '/admin_fieldtypes.php';
+if (file_exists($adminFieldtypesPath)) {
+    require_once $adminFieldtypesPath;
+}
+
 spl_autoload_register(function ($class) {
-    if (strpos($class, 'HaruCMS\\FieldTypes\\') === 0) {
-        $suffix = str_replace('HaruCMS\\FieldTypes\\', '', $class); // e.g., Media\Media
+    if (strpos($class, 'Birkly\\FieldTypes\\') === 0) {
+        $suffix = str_replace('Birkly\\FieldTypes\\', '', $class); // e.g., Media\Media
         $parts = explode('\\', $suffix);
         $leaf = end($parts);
         $dir = __DIR__ . '/../fieldtypes/' . $leaf;
@@ -22,13 +33,33 @@ spl_autoload_register(function ($class) {
             require_once $file;
         }
     }
+    
+    // Also handle plugin fieldtypes (e.g., UserManagement\Fieldtypes\Password)
+    if (strpos($class, '\\') !== false && strpos($class, 'Fieldtypes\\') !== false) {
+        $parts = explode('\\', $class);
+        $fieldtypeName = end($parts);
+        $pluginName = $parts[0] ?? '';
+        
+        // Look in plugins directory
+        $pluginsDir = __DIR__ . '/../plugins';
+        if (is_dir($pluginsDir)) {
+            $pluginDirs = glob($pluginsDir . '/*', GLOB_ONLYDIR);
+            foreach ($pluginDirs as $pluginDir) {
+                $fieldtypeFile = $pluginDir . '/fieldtypes/' . $fieldtypeName . '/' . $fieldtypeName . '.php';
+                if (file_exists($fieldtypeFile)) {
+                    require_once $fieldtypeFile;
+                    break;
+                }
+            }
+        }
+    }
 });
 
 // Simple database connection
 function getDatabase() {
     static $pdo = null;
     if ($pdo === null) {
-        $dbPath = __DIR__ . '/../database/harucms.db';
+        $dbPath = __DIR__ . '/../database/birkly.db';
         $pdo = new PDO("sqlite:$dbPath");
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
@@ -37,43 +68,96 @@ function getDatabase() {
 
 // Only set headers if this file is being called directly (not included)
 // When included via admin/index.php, headers are already sent, so skip
-if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+if (!$__is_internal_include && !headers_sent()) {
     header('Content-Type: application/json');
-    header('Access-Control-Allow-Origin: *');
+    
+    // SECURITY FIX: Replace wildcard CORS with origin whitelist
+    require_once __DIR__ . '/../core/cors.php';
+    set_cors_headers('admin');
 }
 
-$action = $_GET['action'] ?? '';
-
-switch ($action) {
-    case 'get_page_data':
-        $page = $_GET['page'] ?? 'dashboard';
-        $data = getPageData($page);
-        echo json_encode(['status' => 'ok', 'data' => $data]);
-        break;
+// Only execute API code if called directly (not included) AND action is set
+// When included via admin/index.php, we only want the functions, not the switch statement
+// CRITICAL: If being included, skip ALL API execution and go straight to function definitions
+if (!$__is_internal_include) {
+    // Might be a direct API call - check conditions
+    $action = $_GET['action'] ?? '';
+    $isDirectCall = isset($_SERVER['SCRIPT_NAME']) && basename($_SERVER['SCRIPT_NAME']) === 'admin_templates.php';
+    
+    // Only execute switch if this is definitely a direct API call with an action
+    if ($isDirectCall && !empty($action)) {
+        switch ($action) {
+        case 'get_page_data':
+            $page = $_GET['page'] ?? 'dashboard';
+            try {
+                $data = getPageData($page);
+                ob_clean();
+                echo json_encode(['status' => 'ok', 'data' => $data]);
+                if (ob_get_level() > 0) {
+                    ob_end_flush();
+                }
+            } catch (Exception $e) {
+                error_log("Error in get_page_data: " . $e->getMessage());
+                error_log("Stack trace: " . $e->getTraceAsString());
+                ob_clean();
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage(), 'data' => []]);
+                if (ob_get_level() > 0) {
+                    ob_end_flush();
+                }
+            }
+            exit;
+            break;
         
-    case 'list_templates':
-        $data = getTemplatesData();
-        echo json_encode(['status' => 'ok', 'data' => $data]);
-        break;
-        
-    case 'create_template':
-        $data = createTemplate();
-        echo json_encode($data);
-        break;
-        
-    case 'save_template':
-        $data = saveTemplate();
-        echo json_encode($data);
-        break;
-        
-    case 'delete_template':
-        $data = deleteTemplate();
-        echo json_encode($data);
-        break;
-        
-    default:
-        echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-        break;
+        case 'list_templates':
+            $data = getTemplatesData();
+            ob_clean();
+            echo json_encode(['status' => 'ok', 'data' => $data]);
+            if (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            exit;
+            break;
+            
+        case 'create_template':
+            $data = createTemplate();
+            ob_clean();
+            echo json_encode($data);
+            if (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            exit;
+            break;
+            
+        case 'save_template':
+            $data = saveTemplate();
+            ob_clean();
+            echo json_encode($data);
+            if (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            exit;
+            break;
+            
+        case 'delete_template':
+            $data = deleteTemplate();
+            ob_clean();
+            echo json_encode($data);
+            if (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            exit;
+            break;
+            
+        default:
+            ob_clean();
+            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+            if (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            exit;
+            break;
+        }
+    }
 }
 
 function getPageData($page) {
@@ -92,6 +176,8 @@ function getPageData($page) {
             return getCollectionEditorData();
         case 'entry-editor':
             return getEntryEditorData(true);
+        case 'entry-detail':
+            return getEntryDetailData();
         case 'entries':
             return getEntriesData();
         case 'templates':
@@ -100,10 +186,51 @@ function getPageData($page) {
             return getUsersData();
         case 'roles':
             return getRolesData();
+        case 'automation':
+            return getAutomationData();
         case 'onboarding':
             return getOnboardingData();
+        case 'plugins':
+            return getPluginsData();
+        case 'webhooks':
+            return getWebhooksData();
+        case 'help':
+            return getHelpData();
+        case 'updates':
+            return getUpdatesData();
+        case 'activity':
+            return getActivityData();
+        case 'audit-log':
+            return getAuditLogData();
         default:
             return ['error' => 'Page not found'];
+    }
+}
+
+function getAutomationData() {
+    try {
+        // Load automation system if available
+        if (file_exists(__DIR__ . '/../core/automation.php')) {
+            require_once __DIR__ . '/../core/automation.php';
+        }
+        if (file_exists(__DIR__ . '/../core/automation/init.php')) {
+            require_once __DIR__ . '/../core/automation/init.php';
+        }
+        
+        $automations = function_exists('get_automations') ? get_automations() : [];
+        $blocks = function_exists('get_all_automation_blocks') ? get_all_automation_blocks() : [];
+        
+        return [
+            'automations' => $automations,
+            'blocks' => $blocks
+        ];
+    } catch (Exception $e) {
+        error_log("Error in getAutomationData: " . $e->getMessage());
+        return [
+            'automations' => [],
+            'blocks' => [],
+            'error' => $e->getMessage()
+        ];
     }
 }
 
@@ -114,7 +241,8 @@ function getDashboardData() {
     
     // Get current user
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        require_once __DIR__ . '/session.php';
+        haru_secure_session_start();
     }
     $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
     $onboardingStatus = getOnboardingStatus($userId);
@@ -376,6 +504,105 @@ function getContentData() {
     $collectionsPath = __DIR__ . '/../content/collections';
     $collections = [];
     
+    // Helper function to recursively count all sub-entries for a collection
+    require_once __DIR__ . '/../core/sub_entries.php';
+    require_once __DIR__ . '/../core/storage/StorageFactory.php';
+    
+    function countAllSubEntriesForCollection($collectionSlug, $collectionData) {
+        $subCollections = $collectionData['sub_collections'] ?? [];
+        if (empty($subCollections)) {
+            return 0;
+        }
+        
+        $totalSubEntries = 0;
+        $entriesDir = __DIR__ . "/../content/collections/{$collectionSlug}/entries";
+        
+        if (!is_dir($entriesDir)) {
+            return 0;
+        }
+        
+        $entryFiles = glob($entriesDir . '/*.json');
+        if (!$entryFiles) {
+            return 0;
+        }
+        
+        // Use the same counting logic as entry-detail page for consistency
+        require_once __DIR__ . '/../core/sub_entries.php';
+        if (!function_exists('get_storage')) {
+            require_once __DIR__ . '/../core/storage/StorageFactory.php';
+        }
+        $storage = get_storage();
+        
+        // Helper to recursively count all sub-entries including nested ones
+        $countSubEntriesRecursive = function($collectionSlug, $entryId, $subCollection, $parentSubCollectionSlug = null, $parentSubEntryId = null) use (&$countSubEntriesRecursive, $storage) {
+            $subCollectionSlug = $subCollection['slug'] ?? '';
+            if (empty($subCollectionSlug)) {
+                return 0;
+            }
+            
+            $count = 0;
+            try {
+                if ($parentSubCollectionSlug && $parentSubEntryId) {
+                    // Nested sub-entry - count from nested path
+                    $nestedSubEntryPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}";
+                    try {
+                        $files = $storage->list($nestedSubEntryPath);
+                        // Count all .json files (same as entry-detail page)
+                        $count = count(array_filter($files, function($file) {
+                            return pathinfo($file, PATHINFO_EXTENSION) === 'json';
+                        }));
+                    } catch (Exception $e) {
+                        $count = 0;
+                    }
+                } else {
+                    // Top-level sub-entry - use the existing countSubEntries function for accuracy
+                    $count = countSubEntries($collectionSlug, $entryId, $subCollectionSlug);
+                }
+                
+                // Count nested sub-entries recursively
+                $nestedSubCollections = $subCollection['sub_collections'] ?? [];
+                if (!empty($nestedSubCollections)) {
+                    // Get all sub-entries for this sub-collection to count their nested entries
+                    $subEntryPath = $parentSubCollectionSlug && $parentSubEntryId 
+                        ? "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}"
+                        : "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$subCollectionSlug}";
+                    
+                    try {
+                        $files = $storage->list($subEntryPath);
+                        $subEntries = [];
+                        foreach ($files as $file) {
+                            if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
+                                $subEntryId = basename($file, '.json');
+                                $subEntries[] = $subEntryId;
+                            }
+                        }
+                        
+                        foreach ($subEntries as $subEntryId) {
+                            foreach ($nestedSubCollections as $nestedSubCollection) {
+                                $count += $countSubEntriesRecursive($collectionSlug, $entryId, $nestedSubCollection, $subCollectionSlug, $subEntryId);
+                            }
+                        }
+                    } catch (Exception $e) {
+                        // Path doesn't exist, continue
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error counting sub-entries: " . $e->getMessage());
+            }
+            
+            return $count;
+        };
+        
+        foreach ($entryFiles as $entryFile) {
+            $entryId = basename($entryFile, '.json');
+            foreach ($subCollections as $subCollection) {
+                $totalSubEntries += $countSubEntriesRecursive($collectionSlug, $entryId, $subCollection);
+            }
+        }
+        
+        return $totalSubEntries;
+    }
+    
     if (is_dir($collectionsPath)) {
         $collectionDirs = glob($collectionsPath . '/*', GLOB_ONLYDIR);
         foreach ($collectionDirs as $dir) {
@@ -386,6 +613,9 @@ function getContentData() {
                 $collectionData = json_decode(file_get_contents($collectionFile), true);
                 $entriesDir = $dir . '/entries';
                 $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json')) : 0;
+                
+                // Calculate sub-entries count
+                $subEntriesCount = countAllSubEntriesForCollection($collectionName, $collectionData);
                 
                 // Ensure we always have an ID - use id from collection.json, or generate one from slug
                 $collectionId = $collectionData['id'] ?? null;
@@ -399,7 +629,8 @@ function getContentData() {
                     'name' => $collectionData['name'] ?? $collectionData['title'] ?? $collectionName,
                     'slug' => $collectionName,
                     'description' => $collectionData['description'] ?? '',
-                    'entries_count' => $entriesCount
+                    'entries_count' => $entriesCount,
+                    'sub_entries_count' => $subEntriesCount
                 ];
             }
         }
@@ -424,74 +655,95 @@ function getContentData() {
 function getCollectionEditorData() {
     // Get collection data from URL parameters
     $collectionSlug = $_GET['collection'] ?? null;
+    $subCollectionSlug = $_GET['sub_collection'] ?? null;
+    $parentSubCollectionSlug = $_GET['parent_sub_collection'] ?? null;
     
-    // Get available fieldtypes with categories
+    // Check if this is a sub-collection editor
+    $isSubCollection = !empty($subCollectionSlug) || !empty($parentSubCollectionSlug);
+    
+    // Get available fieldtypes with categories (including plugin-registered ones)
     $fieldtypes = [];
-    $fieldtypesDir = __DIR__ . "/../fieldtypes";
     
     try {
-        if (is_dir($fieldtypesDir)) {
-            $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
-            if ($dirs === false) {
-                error_log("Failed to glob fieldtypes directory");
-            } else {
-                foreach ($dirs as $dir) {
-                    $fieldtypeName = basename($dir);
-                    
-                    // Skip special directories
-                    if (in_array($fieldtypeName, ['.', '..', 'Tag'])) {
-                        continue;
-                    }
-                    
-                    // Check if PHP file exists
-                    $phpFile = $dir . '/' . $fieldtypeName . '.php';
-                    if (!file_exists($phpFile)) {
-                        continue;
-                    }
-                    
-                    // Try to get fieldtype class and category
-                    $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
-                    
-                    // Try to load the class
-                    if (!class_exists($className)) {
-                        if (file_exists($phpFile)) {
-                            require_once $phpFile;
+        // Use the admin_fieldtypes API function to get fieldtypes (includes plugin fieldtypes)
+        // Prevent admin_fieldtypes.php from executing its switch statement when included
+        $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+        require_once __DIR__ . '/admin_fieldtypes.php';
+        if (function_exists('getAvailableFieldtypes')) {
+            $allFieldtypes = getAvailableFieldtypes();
+            foreach ($allFieldtypes as $ft) {
+                $fieldtypes[] = [
+                    'name' => $ft['name'] ?? strtolower($ft['type'] ?? ''),
+                    'type' => $ft['type'] ?? $ft['name'] ?? '',
+                    'label' => $ft['label'] ?? ucwords(str_replace(['_', '-'], ' ', $ft['name'] ?? '')),
+                    'category' => $ft['category'] ?? 'Misc',
+                    'config' => $ft['config'] ?? []
+                ];
+            }
+        } else {
+            // Fallback to directory scan if function not available
+            $fieldtypesDir = __DIR__ . "/../fieldtypes";
+            if (is_dir($fieldtypesDir)) {
+                $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
+                if ($dirs !== false) {
+                    foreach ($dirs as $dir) {
+                        $fieldtypeName = basename($dir);
+                        
+                        // Skip special directories
+                        if (in_array($fieldtypeName, ['.', '..', 'Tag'])) {
+                            continue;
                         }
-                    }
-                    
-                    // Verify class exists and extends BaseField
-                    if (class_exists($className)) {
-                        try {
-                            // Check if it extends BaseField
-                            if (!is_subclass_of($className, 'HaruCMS\\FieldTypes\\BaseField')) {
+                        
+                        // Check if PHP file exists
+                        $phpFile = $dir . '/' . $fieldtypeName . '.php';
+                        if (!file_exists($phpFile)) {
+                            continue;
+                        }
+                        
+                        // Try to get fieldtype class and category
+                        $className = "Birkly\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+                        
+                        // Try to load the class
+                        if (!class_exists($className)) {
+                            if (file_exists($phpFile)) {
+                                require_once $phpFile;
+                            }
+                        }
+                        
+                        // Verify class exists and extends BaseField
+                        if (class_exists($className)) {
+                            try {
+                                // Check if it extends BaseField
+                                if (!is_subclass_of($className, 'Birkly\\FieldTypes\\BaseField')) {
+                                    continue;
+                                }
+                                
+                                // Create a temporary instance to get config and category
+                                $tempConfig = [
+                                    'name' => 'temp',
+                                    'label' => ucfirst($fieldtypeName),
+                                    'required' => false
+                                ];
+                                $fieldtype = new $className($tempConfig);
+                                $config = $fieldtype->getAdminConfig();
+                                $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
+                                
+                                $fieldtypes[] = [
+                                    'name' => strtolower($fieldtypeName),
+                                    'label' => ucfirst($fieldtypeName),
+                                    'type' => $config['type'] ?? strtolower($fieldtypeName),
+                                    'category' => $category,
+                                    'config' => $config
+                                ];
+                            } catch (\Exception $e) {
+                                // Skip fieldtypes that can't be instantiated
+                                error_log("Error loading fieldtype {$fieldtypeName}: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+                                continue;
+                            } catch (\Throwable $e) {
+                                // Skip fieldtypes that can't be instantiated (PHP 7+)
+                                error_log("Error loading fieldtype {$fieldtypeName}: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
                                 continue;
                             }
-                            
-                            // Create a temporary instance to get config and category
-                            $tempConfig = [
-                                'name' => 'temp',
-                                'label' => ucfirst($fieldtypeName),
-                                'required' => false
-                            ];
-                            $fieldtype = new $className($tempConfig);
-                            $config = $fieldtype->getAdminConfig();
-                            $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
-                            
-                            $fieldtypes[] = [
-                                'name' => strtolower($fieldtypeName),
-                                'label' => ucfirst($fieldtypeName),
-                                'type' => $config['type'] ?? strtolower($fieldtypeName),
-                                'category' => $category,
-                                'config' => $config
-                            ];
-                        } catch (\Exception $e) {
-                            // Skip fieldtypes that can't be instantiated
-                            error_log("Error loading fieldtype {$fieldtypeName}: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
-                            continue;
-                        } catch (\Throwable $e) {
-                            // Skip fieldtypes that can't be instantiated (PHP 7+)
-                            error_log("Error loading fieldtype {$fieldtypeName}: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
-                            continue;
                         }
                     }
                 }
@@ -507,6 +759,62 @@ function getCollectionEditorData() {
     // Debug: Log fieldtypes found
     error_log("Found " . count($fieldtypes) . " fieldtypes: " . implode(', ', array_column($fieldtypes, 'name')));
     
+    // Handle sub-collection editor
+    if ($isSubCollection) {
+        if (!$collectionSlug) {
+            return ['error' => 'Collection parameter required'];
+        }
+        
+        // Get parent collection data
+        $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
+        if (!file_exists($collectionFile)) {
+            return ['error' => 'Collection not found'];
+        }
+        
+        $collectionData = json_decode(file_get_contents($collectionFile), true);
+        $collectionData['slug'] = $collectionSlug;
+        
+        // Get parent sub-collection if specified (for nested sub-collections)
+        $parentSubCollection = null;
+        if ($parentSubCollectionSlug) {
+            require_once __DIR__ . '/../core/sub_entries.php';
+            $parentSubCollection = getSubCollectionConfig($collectionSlug, $parentSubCollectionSlug);
+        }
+        
+        // If editing existing sub-collection, get its data
+        $subCollection = null;
+        if ($subCollectionSlug) {
+            require_once __DIR__ . '/../core/sub_entries.php';
+            // Use the recursive getSubCollectionConfig which handles nested sub-collections
+            $subCollection = getSubCollectionConfig($collectionSlug, $subCollectionSlug, $parentSubCollectionSlug);
+        }
+        
+        return [
+            'collection' => $collectionData,
+            'sub_collection' => $subCollection ?? [
+                'slug' => '',
+                'name' => '',
+                'description' => '',
+                'entry_method' => 'admin_only',
+                'auto_publish' => false,
+                'fields' => [],
+                'parent_sub_collection' => $parentSubCollectionSlug
+            ],
+            'parent_sub_collection' => $parentSubCollection,
+            'fieldtypes' => $fieldtypes,
+            'subCollection' => $subCollection ?? [
+                'slug' => '',
+                'name' => '',
+                'description' => '',
+                'entry_method' => 'admin_only',
+                'auto_publish' => false,
+                'fields' => [],
+                'parent_sub_collection' => $parentSubCollectionSlug
+            ]
+        ];
+    }
+    
+    // Handle regular collection editor
     if ($collectionSlug) {
         // Editing existing collection
         $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
@@ -556,6 +864,97 @@ function getEntryEditorData($includeFieldHtml = false) {
     // Get collection and entry data from URL parameters
     $collectionSlug = $_GET['collection'] ?? null;
     $entryId = $_GET['entry'] ?? null;
+    $subCollectionSlug = $_GET['sub_collection'] ?? null;
+    $subEntryId = $_GET['sub_entry'] ?? null;
+    $parentSubCollectionSlug = $_GET['parent_sub_collection'] ?? null;
+    $parentSubEntryId = $_GET['parent_sub_entry'] ?? null;
+    
+    // Debug logging - log full URL and all GET parameters
+    $fullUrl = $_SERVER['REQUEST_URI'] ?? 'unknown';
+    $allGetParams = json_encode($_GET);
+    $queryString = $_SERVER['QUERY_STRING'] ?? 'unknown';
+    $httpReferer = $_SERVER['HTTP_REFERER'] ?? 'unknown';
+    error_log("getEntryEditorData: Full URL: {$fullUrl}");
+    error_log("getEntryEditorData: Query string: {$queryString}");
+    error_log("getEntryEditorData: HTTP Referer: {$httpReferer}");
+    
+    // CRITICAL FIX: If entryId looks like a sub-entry ID (starts with 'sub_'), it's likely wrong
+    // This happens when clicking on a sub-entry from a sub-entry detail page incorrectly
+    // We need to extract the correct main entry ID and sub-entry info from the sub-entry itself
+    if (!empty($entryId) && strpos($entryId, 'sub_') === 0 && empty($subCollectionSlug) && empty($subEntryId)) {
+        error_log("getEntryEditorData: WARNING - entryId looks like a sub-entry ID but sub_collection is empty! entryId={$entryId}");
+        error_log("getEntryEditorData: Attempting to load sub-entry to extract parent info...");
+        
+        
+        // Try to find which sub-collection this sub-entry belongs to by searching all sub-collections
+        // This is a recovery mechanism for malformed URLs
+        if (!empty($collectionSlug)) {
+            require_once __DIR__ . '/../core/sub_entries.php';
+            // Load collection data from file
+            $collectionFile = __DIR__ . "/../content/collections/{$collectionSlug}/collection.json";
+            $collectionData = null;
+            if (file_exists($collectionFile)) {
+                $collectionData = json_decode(file_get_contents($collectionFile), true);
+                if ($collectionData) {
+                    $collectionData['slug'] = $collectionSlug;
+                    $collectionData['title'] = $collectionData['name'] ?? $collectionSlug;
+                }
+            }
+            if ($collectionData && !empty($collectionData['sub_collections'])) {
+                foreach ($collectionData['sub_collections'] as $subCol) {
+                    $subColSlug = $subCol['slug'] ?? '';
+                    if (empty($subColSlug)) continue;
+                    
+                    // Try to find the sub-entry in this sub-collection
+                    // We need to search through all entries to find which one has this sub-entry
+                    // This is a fallback - ideally the URL should be correct
+                    if (!function_exists('get_storage')) {
+                        require_once __DIR__ . '/../core/storage/StorageFactory.php';
+                    }
+                    $storage = get_storage();
+                    $entriesPath = "collections/{$collectionSlug}/entries";
+                    $files = $storage->list($entriesPath);
+                    $entries = [];
+                    foreach ($files as $file) {
+                        if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
+                            $entryData = $storage->read("{$entriesPath}/{$file}");
+                            if ($entryData) {
+                                $entryData['id'] = basename($file, '.json');
+                                $entries[] = $entryData;
+                            }
+                        }
+                    }
+                    
+                    foreach ($entries as $mainEntry) {
+                        $mainEntryId = $mainEntry['id'] ?? '';
+                        if (empty($mainEntryId)) continue;
+                        
+                        $subEntry = getSubEntry($collectionSlug, $mainEntryId, $subColSlug, $entryId);
+                        if ($subEntry) {
+                            // Found it! Update the parameters
+                            error_log("getEntryEditorData: Found sub-entry! Main entry: {$mainEntryId}, Sub-collection: {$subColSlug}");
+                            $originalSubEntryId = $entryId; // Store the original sub-entry ID
+                            $entryId = $mainEntryId; // Update to main entry ID
+                            $subCollectionSlug = $subColSlug;
+                            $subEntryId = $originalSubEntryId; // The original entryId was the sub-entry ID
+                            
+                            // IMPORTANT: Recalculate $isSubEntry after recovery
+                            $isSubEntry = !empty($subCollectionSlug) && (!empty($subEntryId) || !empty($entryId));
+                            
+                            break 2; // Break out of both loops
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Check if we're creating or editing a sub-entry
+    // Sub-entry if: sub_collection is present AND (sub_entry is present OR entry is present for parent)
+    $isSubEntry = !empty($subCollectionSlug) && (!empty($subEntryId) || !empty($entryId));
+    
+    // Check if we're creating a nested sub-entry (sub-entry of a sub-entry)
+    $isNestedSubEntry = !empty($parentSubCollectionSlug) && !empty($parentSubEntryId) && empty($subEntryId);
     
     if (!$collectionSlug) {
         return ['error' => 'Collection parameter required'];
@@ -574,37 +973,232 @@ function getEntryEditorData($includeFieldHtml = false) {
         $collectionData['name'] = $collectionData['title'];
     }
     
-    // Get fields from schema.json
+    // Get fields - either from sub-collection or parent collection
     $fields = [];
-    $schemaFile = __DIR__ . "/../content/collections/$collectionSlug/schema.json";
-    if (file_exists($schemaFile)) {
-        $schemaData = json_decode(file_get_contents($schemaFile), true);
-        if (isset($schemaData['fields'])) {
-            $fields = $schemaData['fields'];
+    if ($isSubEntry && !empty($subCollectionSlug)) {
+        // Load sub-collection configuration and use its fields
+        // getSubCollectionConfig now searches recursively for nested sub-collections
+        require_once __DIR__ . '/../core/sub_entries.php';
+        $subCollection = getSubCollectionConfig($collectionSlug, $subCollectionSlug);
+        
+        // If not found, try searching in nested sub-collections manually
+        if (!$subCollection) {
+            $allSubCollections = getSubCollections($collectionSlug);
+            foreach ($allSubCollections as $parentSubCol) {
+                $nested = $parentSubCol['sub_collections'] ?? [];
+                foreach ($nested as $nestedSubCol) {
+                    if (($nestedSubCol['slug'] ?? '') === $subCollectionSlug) {
+                        $subCollection = $nestedSubCol;
+                        break 2;
+                    }
+                }
+            }
+        }
+        
+        if ($subCollection) {
+            // Get fields from sub-collection (check both schema[fields] and fields)
+            $subFields = $subCollection['schema']['fields'] ?? $subCollection['fields'] ?? [];
+            $fields = $subFields;
             // Add id to each field
             foreach ($fields as $index => $field) {
-                $fields[$index]['id'] = 'field-' . $index;
+                $fields[$index]['id'] = 'sub-field-' . $index;
+            }
+        } else {
+            return ['error' => 'Sub-collection not found'];
+        }
+    } else {
+        // Get fields from parent collection schema.json
+        $schemaFile = __DIR__ . "/../content/collections/$collectionSlug/schema.json";
+        if (file_exists($schemaFile)) {
+            $schemaData = json_decode(file_get_contents($schemaFile), true);
+            if (isset($schemaData['fields'])) {
+                $fields = $schemaData['fields'];
+                // Add id to each field
+                foreach ($fields as $index => $field) {
+                    $fields[$index]['id'] = 'field-' . $index;
+                }
             }
         }
     }
     
-    // Get all available fieldtypes
-    $fieldtypes = [];
-    $fieldtypesDir = __DIR__ . '/../fieldtypes';
-    if (is_dir($fieldtypesDir)) {
-        $fieldtypeDirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
-        foreach ($fieldtypeDirs as $fieldtypeDir) {
-            $fieldtypeName = basename($fieldtypeDir);
+    
+    // Get all available fieldtypes (including plugin-registered ones)
+    // Use the admin_fieldtypes API function to get fieldtypes
+    // Prevent admin_fieldtypes.php from executing its switch statement when included
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once __DIR__ . '/admin_fieldtypes.php';
+    if (function_exists('getAvailableFieldtypes')) {
+        $allFieldtypes = getAvailableFieldtypes();
+        $fieldtypes = [];
+        foreach ($allFieldtypes as $ft) {
             $fieldtypes[] = [
-                'name' => strtolower($fieldtypeName),
-                'label' => $fieldtypeName
+                'name' => $ft['name'] ?? strtolower($ft['type'] ?? ''),
+                'type' => $ft['type'] ?? $ft['name'] ?? '',
+                'label' => $ft['label'] ?? ucwords(str_replace(['_', '-'], ' ', $ft['name'] ?? ''))
             ];
+        }
+    } else {
+        // Fallback to directory scan if function not available
+        $fieldtypes = [];
+        $fieldtypesDir = __DIR__ . '/../fieldtypes';
+        if (is_dir($fieldtypesDir)) {
+            $fieldtypeDirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
+            foreach ($fieldtypeDirs as $fieldtypeDir) {
+                $fieldtypeName = basename($fieldtypeDir);
+                $normalizedName = strtolower(str_replace('-', '', $fieldtypeName));
+                $fieldtypes[] = [
+                    'name' => $normalizedName,
+                    'type' => $normalizedName,
+                    'label' => ucwords(str_replace(['-', '_'], ' ', $fieldtypeName))
+                ];
+            }
         }
     }
     
     // Get entry data if editing
     $entry = null;
-    if ($entryId) {
+    if ($isSubEntry && $subEntryId && $entryId) {
+        // Load sub-entry data (editing existing sub-entry)
+        require_once __DIR__ . '/../core/sub_entries.php';
+        error_log("getEntryEditorData: Loading sub-entry - collection={$collectionSlug}, entry={$entryId}, sub_collection={$subCollectionSlug}, sub_entry={$subEntryId}, parent_sub_collection={$parentSubCollectionSlug}, parent_sub_entry={$parentSubEntryId}");
+        
+        // Check if this is a nested sub-entry (has parent sub-entry info in URL)
+        if (!empty($parentSubCollectionSlug) && !empty($parentSubEntryId)) {
+            // This is a nested sub-entry - need to load from nested path
+            if (!function_exists('get_storage')) {
+                require_once __DIR__ . '/../core/storage/StorageFactory.php';
+            }
+            try {
+                $storage = get_storage();
+                $nestedEntryPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}/{$subEntryId}.json";
+                error_log("getEntryEditorData: Trying nested path: {$nestedEntryPath}");
+                $entryData = $storage->read($nestedEntryPath);
+                if ($entryData) {
+                    $entry = $entryData;
+                    error_log("getEntryEditorData: Nested sub-entry loaded successfully");
+                } else {
+                    error_log("getEntryEditorData: Nested sub-entry not found at {$nestedEntryPath}");
+                }
+            } catch (Exception $e) {
+                error_log("getEntryEditorData: Error loading nested sub-entry: " . $e->getMessage());
+            }
+        }
+        
+        // If not found as nested, try first-level path
+        if (!$entry) {
+            error_log("getEntryEditorData: Trying first-level path for sub_entry_id={$subEntryId}");
+            
+            
+            $entry = getSubEntry($collectionSlug, $entryId, $subCollectionSlug, $subEntryId);
+            if ($entry) {
+                error_log("getEntryEditorData: First-level sub-entry loaded successfully");
+                // Ensure ID is set correctly
+                $entry['id'] = $subEntryId;
+                
+            } else {
+                error_log("getEntryEditorData: First-level sub-entry not found - checking if file exists");
+                
+                
+                // Try to list the directory to see what files are there
+                if (!function_exists('get_storage')) {
+                    require_once __DIR__ . '/../core/storage/StorageFactory.php';
+                }
+                try {
+                    $storage = get_storage();
+                    $listPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$subCollectionSlug}";
+                    $files = $storage->list($listPath);
+                    error_log("getEntryEditorData: Files in directory: " . json_encode($files));
+                    error_log("getEntryEditorData: Looking for: {$subEntryId}.json");
+                    
+                } catch (Exception $e) {
+                    error_log("getEntryEditorData: Error listing directory: " . $e->getMessage());
+                }
+            }
+        }
+        
+        if ($entry) {
+            $entry['id'] = $subEntryId;
+            $entry['_is_sub_entry'] = true;
+            $entry['_parent_collection'] = $collectionSlug;
+            $entry['_parent_entry_id'] = $entryId;
+            $entry['_sub_collection'] = $subCollectionSlug;
+            // Get parent entry title for breadcrumbs
+            $parentEntryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
+            if (file_exists($parentEntryFile)) {
+                $parentEntry = json_decode(file_get_contents($parentEntryFile), true);
+                $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
+            }
+            // Check if this is a nested sub-entry (has parent sub-entry info)
+            // This happens when editing a nested sub-entry
+            if (!empty($parentSubCollectionSlug) && !empty($parentSubEntryId)) {
+                $entry['_parent_sub_collection'] = $parentSubCollectionSlug;
+                $entry['_parent_sub_entry_id'] = $parentSubEntryId;
+                // Load parent sub-entry for breadcrumbs
+                $parentSubEntry = getSubEntry($collectionSlug, $entryId, $parentSubCollectionSlug, $parentSubEntryId);
+                if ($parentSubEntry) {
+                    $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? 'Parent Sub-Entry';
+                    $entry['_parent_sub_collection_slug'] = $parentSubCollectionSlug;
+                }
+            }
+        } else {
+            error_log("getEntryEditorData: Failed to load sub-entry - entry will be null, showing new entry form");
+        }
+    } elseif ($isSubEntry && $entryId && empty($subEntryId)) {
+        // Creating new sub-entry - load parent entry for context
+        if ($isNestedSubEntry) {
+            // Creating a nested sub-entry - load parent sub-entry for context
+            require_once __DIR__ . '/../core/sub_entries.php';
+            error_log("Loading parent sub-entry: collection={$collectionSlug}, entry={$entryId}, sub_collection={$parentSubCollectionSlug}, sub_entry={$parentSubEntryId}");
+            $parentSubEntry = getSubEntry($collectionSlug, $entryId, $parentSubCollectionSlug, $parentSubEntryId);
+            if ($parentSubEntry) {
+                error_log("Parent sub-entry loaded successfully");
+                // Create a new entry object for the nested sub-entry being created
+                $entry = [
+                    'title' => '',
+                    'status' => 'draft',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                $entry['_is_sub_entry'] = true; // This is a sub-entry
+                $entry['_parent_entry_id'] = $entryId; // Main entry ID
+                $entry['_sub_collection'] = $subCollectionSlug; // The sub-collection we're creating in
+                // Store parent info for nested sub-entry creation
+                $entry['_parent_sub_collection'] = $parentSubCollectionSlug;
+                $entry['_parent_sub_entry_id'] = $parentSubEntryId;
+                // Store parent sub-entry info for breadcrumbs
+                $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? 'Parent Sub-Entry';
+                $entry['_parent_sub_collection_slug'] = $parentSubCollectionSlug;
+                // Get main entry title for breadcrumbs
+                $parentEntryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
+                if (file_exists($parentEntryFile)) {
+                    $parentEntry = json_decode(file_get_contents($parentEntryFile), true);
+                    $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
+                }
+            } else {
+                error_log("Failed to load parent sub-entry - falling back to main entry");
+                // Fallback to main entry
+                $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
+                if (file_exists($entryFile)) {
+                    $entry = json_decode(file_get_contents($entryFile), true);
+                    $entry['id'] = $entryId;
+                    $entry['_is_sub_entry'] = false;
+                    $entry['_parent_entry_id'] = $entryId;
+                    $entry['_sub_collection'] = $subCollectionSlug;
+                }
+            }
+        } else {
+            // Creating first-level sub-entry - load parent entry for context
+            $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
+            if (file_exists($entryFile)) {
+                $entry = json_decode(file_get_contents($entryFile), true);
+                $entry['id'] = $entryId;
+                $entry['_is_sub_entry'] = false; // This is the parent
+                $entry['_parent_entry_id'] = $entryId;
+                $entry['_sub_collection'] = $subCollectionSlug;
+            }
+        }
+    } elseif ($entryId && !$isSubEntry) {
+        // Load parent entry data (regular entry editing)
         $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
         if (file_exists($entryFile)) {
             $entry = json_decode(file_get_contents($entryFile), true);
@@ -621,46 +1215,87 @@ function getEntryEditorData($includeFieldHtml = false) {
             'updated_at' => date('Y-m-d H:i:s')
         ],
         'fields' => $fields,
-        'fieldtypes' => $fieldtypes
+        'fieldtypes' => $fieldtypes,
+        'is_sub_entry' => $isSubEntry,
+        'sub_collection' => $subCollectionSlug,
+        'sub_entry_id' => $subEntryId, // Add sub_entry_id to payload so template can use it
+        'parent_collection' => $collectionSlug,
+        'parent_entry_id' => $entryId,
+        'parent_sub_collection' => $parentSubCollectionSlug,
+        'parent_sub_entry_id' => $parentSubEntryId
     ];
     
     // Always add mandatory title field at the top (not from schema)
     // This ensures every entry has a title, regardless of collection schema
-    $titleField = [
-        'name' => 'title',
-        'label' => 'Title',
-        'type' => 'text',
-        'required' => true,
-        'id' => 'field-title'
-    ];
-    
-    // Add title field HTML if including field HTML
-    if ($includeFieldHtml) {
-        require_once __DIR__ . '/../fieldtypes/BaseField.php';
-        require_once __DIR__ . '/../fieldtypes/Text/Text.php';
-        
-        $titleValue = $payload['entry']['title'] ?? '';
-        $titleFieldtype = new \HaruCMS\FieldTypes\Text\Text([
-            'name' => 'title',
-            'label' => 'Title',
-            'value' => $titleValue,
-            'required' => true,
-            'help' => '',
-            'group' => '',
-            'options' => []
-        ]);
-        
-        $titleField['html'] = $titleFieldtype->render();
+    // Check if title field already exists in fields (from schema)
+    $hasTitleField = false;
+    foreach ($payload['fields'] as $field) {
+        if (($field['name'] ?? '') === 'title') {
+            $hasTitleField = true;
+            break;
+        }
     }
     
-    // Prepend title field to fields array
-    $payload['fields'] = array_merge([$titleField], $payload['fields']);
+    // Always add title field if it doesn't exist
+    if (!$hasTitleField) {
+        $titleField = [
+            'name' => 'title',
+            'label' => 'Title',
+            'type' => 'text',
+            'required' => false, // Not mandatory - will auto-fill with entry ID if empty
+            'id' => 'field-title'
+        ];
+        
+        // Add title field HTML if including field HTML
+        if ($includeFieldHtml) {
+            require_once __DIR__ . '/../fieldtypes/BaseField.php';
+            require_once __DIR__ . '/../fieldtypes/Text/Text.php';
+            
+            // Get title value - if editing, use entry title (which might be the ID)
+            $titleValue = $payload['entry']['title'] ?? '';
+            // If creating new entry, leave empty (will be auto-filled with ID on save)
+            if (empty($payload['entry']['id'])) {
+                $titleValue = '';
+            }
+            
+            $titleFieldtype = new \Birkly\FieldTypes\Text\Text([
+                'name' => 'title',
+                'label' => 'Title',
+                'value' => $titleValue,
+                'required' => false, // Not mandatory
+                'help' => 'If left empty, the entry ID will be used as the title',
+                'group' => '',
+                'options' => []
+            ]);
+            
+            $titleField['html'] = $titleFieldtype->render();
+        }
+        
+        // Prepend title field to fields array
+        $payload['fields'] = array_merge([$titleField], $payload['fields']);
+    } else {
+        // If title field already exists, ensure it's not required
+        foreach ($payload['fields'] as $idx => $field) {
+            if (($field['name'] ?? '') === 'title') {
+                $payload['fields'][$idx]['required'] = false;
+                // Update HTML if it exists to remove required attribute
+                if ($includeFieldHtml && isset($field['html'])) {
+                    // Remove required attribute and asterisk from HTML
+                    $payload['fields'][$idx]['html'] = preg_replace('/\s+required/i', '', $field['html']);
+                    $payload['fields'][$idx]['html'] = preg_replace('/<span[^>]*class="[^"]*required[^"]*"[^>]*>\s*\*\s*<\/span>/i', '', $field['html']);
+                }
+                break;
+            }
+        }
+    }
 
     // Optionally embed rendered field HTML for template-driven editor
     if ($includeFieldHtml && !empty($fields)) {
         require_once __DIR__ . '/../fieldtypes/BaseField.php';
         // Include fieldtypes API in internal mode to avoid emitting output
         $____prevInternal = $GLOBALS['__HARU_INTERNAL_CALL'] ?? null;
+        $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+        // Prevent admin_fieldtypes.php from executing its switch statement when included
         $GLOBALS['__HARU_INTERNAL_CALL'] = true;
         require_once __DIR__ . '/admin_fieldtypes.php'; // Use the fieldtype loading functions
         if ($____prevInternal === null) {
@@ -738,6 +1373,12 @@ function getEntryEditorData($includeFieldHtml = false) {
                         }
                     }
                     
+                    // Add entry context for fieldtypes that need it (e.g., password fieldtype needs user_id)
+                    if (isset($payload['entry'])) {
+                        $fieldConfig['entry_id'] = $payload['entry']['id'] ?? '';
+                        $fieldConfig['user_id'] = $payload['entry']['user_id'] ?? '';
+                    }
+                    
                     $ft = new $className($fieldConfig);
                     
                     if (method_exists($ft, 'render')) {
@@ -805,7 +1446,7 @@ function getEntryEditorData($includeFieldHtml = false) {
                 foreach ($__fieldtypeJs as $i => $chunk) {
                     $file = $tempDir . "/fieldtypes-{$hash}-{$i}.js";
                     $wrapped = ";(function(){\n" . $chunk . "\n})();";
-                    @file_put_contents($file, "/* HaruCMS fieldtype chunk {$i} */\n'use strict';\n" . $wrapped . "\n");
+                    @file_put_contents($file, "/* Birkly fieldtype chunk {$i} */\n'use strict';\n" . $wrapped . "\n");
                     $jsFiles[] = "/temp/fieldtypes-{$hash}-{$i}.js";
                 }
             }
@@ -847,6 +1488,131 @@ function getEntriesData() {
             $entries[] = $entryData;
         }
     }
+    
+    // Apply order from order.json if it exists
+    $orderFile = __DIR__ . "/../content/collections/$collectionSlug/order.json";
+    if (file_exists($orderFile)) {
+        $order = json_decode(file_get_contents($orderFile), true);
+        if (is_array($order) && !empty($order)) {
+            // Create a map of entry IDs to entries
+            $entryMap = [];
+            foreach ($entries as $entry) {
+                $entryMap[$entry['id']] = $entry;
+            }
+            
+            // Rebuild entries array in the custom order
+            $orderedEntries = [];
+            foreach ($order as $entryId) {
+                if (isset($entryMap[$entryId])) {
+                    $orderedEntries[] = $entryMap[$entryId];
+                    unset($entryMap[$entryId]); // Remove from map
+                }
+            }
+            
+            // Add any entries that weren't in the order file (new entries)
+            foreach ($entryMap as $entry) {
+                $orderedEntries[] = $entry;
+            }
+            
+            $entries = $orderedEntries;
+        }
+    }
+    
+    // Get sub-collections to calculate sub-entry counts (including nested)
+    $subCollections = $collectionData['sub_collections'] ?? [];
+    if (!empty($subCollections)) {
+        require_once __DIR__ . '/../core/sub_entries.php';
+        
+        /**
+         * Recursively count all sub-entries including nested ones
+         */
+        function countAllSubEntriesRecursive($collectionSlug, $entryId, $subCollection, $parentSubCollectionSlug = null, $parentSubEntryId = null) {
+            $subCollectionSlug = $subCollection['slug'] ?? '';
+            if (empty($subCollectionSlug)) {
+                return 0;
+            }
+            
+            $count = 0;
+            try {
+                if ($parentSubCollectionSlug && $parentSubEntryId) {
+                    // Nested sub-entry - count from nested path
+                    $nestedSubEntryPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}";
+                    if (!function_exists('get_storage')) {
+                        require_once __DIR__ . '/../core/storage/StorageFactory.php';
+                    }
+                    try {
+                        $storage = get_storage();
+                        $files = $storage->list($nestedSubEntryPath);
+                        $count = count(array_filter($files, function($file) {
+                            return pathinfo($file, PATHINFO_EXTENSION) === 'json';
+                        }));
+                    } catch (Exception $e) {
+                        // Path doesn't exist yet, count is 0
+                        $count = 0;
+                    }
+                } else {
+                    // Top-level sub-entry
+                    $count = countSubEntries($collectionSlug, $entryId, $subCollectionSlug);
+                }
+                
+                // Count nested sub-entries recursively
+                $nestedSubCollections = $subCollection['sub_collections'] ?? [];
+                if (!empty($nestedSubCollections)) {
+                    // Get all sub-entries for this sub-collection
+                    if ($parentSubCollectionSlug && $parentSubEntryId) {
+                        // Get nested sub-entries
+                        $nestedSubEntryPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}";
+                        if (!function_exists('get_storage')) {
+                            require_once __DIR__ . '/../core/storage/StorageFactory.php';
+                        }
+                        try {
+                            $storage = get_storage();
+                            $files = $storage->list($nestedSubEntryPath);
+                            $subEntries = [];
+                            foreach ($files as $file) {
+                                if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
+                                    $entryData = $storage->read($file);
+                                    if ($entryData) {
+                                        $entryData['id'] = basename($file, '.json');
+                                        $subEntries[] = $entryData;
+                                    }
+                                }
+                            }
+                        } catch (Exception $e) {
+                            $subEntries = [];
+                        }
+                    } else {
+                        $subEntries = getSubEntries($collectionSlug, $entryId, $subCollectionSlug);
+                    }
+                    
+                    foreach ($subEntries as $subEntry) {
+                        $subEntryId = $subEntry['id'] ?? '';
+                        if ($subEntryId) {
+                            // Recursively count nested sub-entries for each sub-entry
+                            foreach ($nestedSubCollections as $nestedSubCollection) {
+                                $count += countAllSubEntriesRecursive($collectionSlug, $entryId, $nestedSubCollection, $subCollectionSlug, $subEntryId);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error counting sub-entries recursively: " . $e->getMessage());
+            }
+            
+            return $count;
+        }
+        
+        // Calculate sub-entry counts for each entry (including nested)
+        foreach ($entries as &$entry) {
+            if (empty($entry['id'])) continue;
+            $totalSubEntryCount = 0;
+            foreach ($subCollections as $subCollection) {
+                $totalSubEntryCount += countAllSubEntriesRecursive($collectionSlug, $entry['id'], $subCollection);
+            }
+            $entry['__sub_entry_count'] = $totalSubEntryCount;
+        }
+        unset($entry); // Break reference
+    }
 
     // Read field schema for list cell rendering
     $fields = [];
@@ -862,35 +1628,46 @@ function getEntriesData() {
     $entriesWithCells = [];
     // Build a width map per fieldtype (category)
     $typeWidths = [];
+    $typeMinWidths = [];
+    
+    // Load admin_fieldtypes.php to get getFieldtypeClass() function
+    if (!function_exists('getFieldtypeClass')) {
+        require_once __DIR__ . '/admin_fieldtypes.php';
+    }
+    
     foreach ($fields as $field) {
         $name = $field['name'] ?? null;
         $type = $field['type'] ?? null;
         if (!$name || !$type) continue;
         if (isset($typeWidths[$type])) continue;
         $width = null;
+        $minWidth = null;
         try {
-            $ftName = ucfirst(strtolower($type));
-            $class = "HaruCMS\\FieldTypes\\$ftName\\$ftName";
-            $file = __DIR__ . "/../fieldtypes/$ftName/$ftName.php";
-            if (!class_exists($class) && file_exists($file)) {
-                require_once $file;
-            }
-            if (class_exists($class)) {
+            // Use getFieldtypeClass() to properly handle case-insensitive directory matching
+            $class = getFieldtypeClass($type);
+            if ($class && class_exists($class)) {
                 $ft = new $class(['name' => $name]);
                 if (method_exists($ft, 'getListColumnWidth')) {
                     $width = $ft->getListColumnWidth();
                 }
+                if (method_exists($ft, 'getTableMinWidth')) {
+                    $minWidth = $ft->getTableMinWidth();
+                }
             }
         } catch (\Throwable $e) {
+            error_log("Error loading fieldtype {$type} for width calculation: " . $e->getMessage());
             $width = null;
+            $minWidth = null;
         }
         $typeWidths[$type] = $width ?: '240px';
+        $typeMinWidths[$type] = $minWidth ?: ($width ?: '240px');
     }
 
-    // Attach width to field definitions for header rendering
+    // Attach width and min-width to field definitions for header rendering
     foreach ($fields as $idx => $field) {
         $ftype = $field['type'] ?? '';
         $fields[$idx]['width'] = $typeWidths[$ftype] ?? '240px';
+        $fields[$idx]['min_width'] = $typeMinWidths[$ftype] ?? ($typeWidths[$ftype] ?? '240px');
     }
     // Provide a shared CSS var for field column width (from the first fieldtype or a default)
     $preferredWidth = '240px';
@@ -953,23 +1730,38 @@ function getEntriesData() {
             // Try to render via fieldtype class if present
             $rendered = null;
             try {
-                $fieldtypeClass = null;
-                $ftName = ucfirst(strtolower($type));
-                $candidate = "HaruCMS\\FieldTypes\\$ftName\\$ftName";
-                if (class_exists($candidate)) {
-                    $fieldtypeClass = $candidate;
+                // Use getFieldtypeClass to support both core and plugin fieldtypes
+                if (function_exists('getFieldtypeClass')) {
+                    $fieldtypeClass = getFieldtypeClass($type);
+                } else {
+                    // Fallback to core fieldtype namespace
+                    $ftName = ucfirst(strtolower($type));
+                    $fieldtypeClass = "Birkly\\FieldTypes\\$ftName\\$ftName";
+                    if (!class_exists($fieldtypeClass)) {
+                        $fieldtypeClass = null;
+                    }
                 }
 
-                if ($fieldtypeClass) {
-                    /** @var \HaruCMS\FieldTypes\BaseField $ft */
-                    $ft = new $fieldtypeClass([
+                if ($fieldtypeClass && class_exists($fieldtypeClass)) {
+                    /** @var \Birkly\FieldTypes\BaseField $ft */
+                    $ftConfig = [
                         'name' => $name,
                         'label' => $field['label'] ?? $name,
                         'value' => $value,
                         'required' => $field['required'] ?? false,
                         'help' => $field['help_text'] ?? '',
                         'group' => $field['group'] ?? 'Content',
-                    ]);
+                    ];
+                    
+                    // Add field-specific config (e.g., options for Select, collection for Relation)
+                    if (isset($field['options'])) {
+                        $ftConfig['options'] = $field['options'];
+                    }
+                    if (isset($field['collection'])) {
+                        $ftConfig['collection'] = $field['collection'];
+                    }
+                    
+                    $ft = new $fieldtypeClass($ftConfig);
                     if (method_exists($ft, 'renderListCell')) {
                         $rendered = $ft->renderListCell($value, ['entry' => $entry, 'field' => $field]);
                     }
@@ -1017,7 +1809,7 @@ function getEntriesData() {
         }
         $cells['__fields_html'] = $combined;
 
-        $entryWithCells = $entry;
+        $entryWithCells = $entry; // This preserves __sub_entry_count and all other entry properties
         $entryWithCells['__cells'] = $cells; // legacy access
         $entryWithCells['entryfields'] = $entryFieldPairs;
         // Flat ordered cells for rendering without dynamic lookups
@@ -1044,6 +1836,194 @@ function getEntriesData() {
         'entries' => $entriesWithCells,
         'list_column_width' => $preferredWidth
     ];
+}
+
+/**
+ * Process an entry for list display (renders fields, creates cells)
+ * Used by both getEntriesData() and getEntryDetailData()
+ */
+function processEntryForList($entry, $fields, $collectionData) {
+    // Build width map per fieldtype
+    $typeWidths = [];
+    $typeMinWidths = [];
+    foreach ($fields as $field) {
+        $type = $field['type'] ?? null;
+        if (!$type || isset($typeWidths[$type])) continue;
+        $width = null;
+        $minWidth = null;
+        try {
+            $ftName = ucfirst(strtolower($type));
+            $class = "Birkly\\FieldTypes\\$ftName\\$ftName";
+            $file = __DIR__ . "/../fieldtypes/$ftName/$ftName.php";
+            if (!class_exists($class) && file_exists($file)) {
+                require_once $file;
+            }
+            if (class_exists($class)) {
+                $ft = new $class(['name' => $field['name'] ?? '']);
+                if (method_exists($ft, 'getListColumnWidth')) {
+                    $width = $ft->getListColumnWidth();
+                }
+                if (method_exists($ft, 'getTableMinWidth')) {
+                    $minWidth = $ft->getTableMinWidth();
+                }
+            }
+        } catch (\Throwable $e) {
+            $width = null;
+            $minWidth = null;
+        }
+        $typeWidths[$type] = $width ?: '240px';
+        $typeMinWidths[$type] = $minWidth ?: ($width ?: '240px');
+    }
+    
+    // Attach min-width to field definitions
+    foreach ($fields as $idx => $field) {
+        $ftype = $field['type'] ?? '';
+        if (!isset($fields[$idx]['min_width'])) {
+            $fields[$idx]['min_width'] = $typeMinWidths[$ftype] ?? ($typeWidths[$ftype] ?? '240px');
+        }
+    }
+    
+    // Check if collection has multi-language enabled
+    $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
+    $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
+    $defaultLanguage = !empty($multilanguageLanguages) ? $multilanguageLanguages[0] : 'en';
+    
+    $cells = [];
+    // Title and status are mandatory in UI
+    $title = $entry['title'] ?? '';
+    if (empty($title) && $multilanguageEnabled && !empty($multilanguageLanguages)) {
+        if (isset($entry[$defaultLanguage]['title'])) {
+            $title = $entry[$defaultLanguage]['title'];
+        } else {
+            foreach ($multilanguageLanguages as $lang) {
+                if (isset($entry[$lang]['title']) && !empty($entry[$lang]['title'])) {
+                    $title = $entry[$lang]['title'];
+                    break;
+                }
+            }
+        }
+    }
+    if (empty($title)) {
+        $title = $entry['key'] ?? $entry['slug'] ?? 'Untitled';
+    }
+    $cells['__title'] = $title;
+    $cells['__status'] = $entry['status'] ?? 'draft';
+
+    $entryFieldPairs = [];
+    foreach ($fields as $field) {
+        $name = $field['name'] ?? null;
+        $type = $field['type'] ?? null;
+        
+        // If name is missing, try to generate it from label
+        if (empty($name) && !empty($field['label'])) {
+            $name = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $field['label'])));
+        }
+        
+        if (empty($name) || empty($type)) continue;
+
+        // For multi-language entries, extract value from language section
+        $value = $entry[$name] ?? ($field['default'] ?? null);
+        if ($value === null && $multilanguageEnabled && !empty($multilanguageLanguages)) {
+            if (isset($entry[$defaultLanguage][$name])) {
+                $value = $entry[$defaultLanguage][$name];
+            } else {
+                foreach ($multilanguageLanguages as $lang) {
+                    if (isset($entry[$lang][$name])) {
+                        $value = $entry[$lang][$name];
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Try to render via fieldtype class if present
+        $rendered = null;
+        try {
+            // Use getFieldtypeClass to support both core and plugin fieldtypes
+            if (function_exists('getFieldtypeClass')) {
+                $fieldtypeClass = getFieldtypeClass($type);
+            } else {
+                // Fallback to core fieldtype namespace
+                $ftName = ucfirst(strtolower($type));
+                $fieldtypeClass = "Birkly\\FieldTypes\\$ftName\\$ftName";
+                if (!class_exists($fieldtypeClass)) {
+                    $fieldtypeClass = null;
+                }
+            }
+
+            if ($fieldtypeClass && class_exists($fieldtypeClass)) {
+                /** @var \Birkly\FieldTypes\BaseField $ft */
+                $ftConfig = [
+                    'name' => $name,
+                    'label' => $field['label'] ?? $name,
+                    'value' => $value,
+                    'required' => $field['required'] ?? false,
+                    'help' => $field['help_text'] ?? '',
+                    'group' => $field['group'] ?? 'Content',
+                ];
+                
+                // Add field-specific config (e.g., options for Select, collection for Relation)
+                if (isset($field['options'])) {
+                    $ftConfig['options'] = $field['options'];
+                }
+                if (isset($field['collection'])) {
+                    $ftConfig['collection'] = $field['collection'];
+                }
+                
+                $ft = new $fieldtypeClass($ftConfig);
+                if (method_exists($ft, 'renderListCell')) {
+                    $rendered = $ft->renderListCell($value, ['entry' => $entry, 'field' => $field]);
+                }
+            }
+        } catch (\Throwable $e) {
+            $rendered = null;
+        }
+
+        if ($rendered === null) {
+            // Generic fallback
+            if (is_array($value)) {
+                $rendered = '<span class="ft-list-badge">' . count($value) . ' items</span>';
+            } else if (is_object($value)) {
+                $rendered = '<span class="ft-list-badge">object</span>';
+            } else {
+                $text = htmlspecialchars((string)($value ?? ''), ENT_QUOTES, 'UTF-8');
+                if ($text === '') $text = '<span class="ft-list-empty">–</span>';
+                $rendered = '<span class="ft-list-text">' . $text . '</span>';
+            }
+        }
+
+        $cells[$name] = strip_tags($rendered);
+        $cells[$name . '_html'] = $rendered;
+
+        $entryFieldPairs[] = [
+            'name' => $name,
+            'label' => $field['label'] ?? $name,
+            'type' => $type,
+            'width' => $typeWidths[$type] ?? '240px',
+            'value' => strip_tags($rendered),
+            'value_html' => $rendered
+        ];
+    }
+
+    $entryWithCells = $entry;
+    $entryWithCells['__cells'] = $cells;
+    $entryWithCells['entryfields'] = $entryFieldPairs;
+    $entryWithCells['row_cells'] = array_map(function ($pair) {
+        return [
+            'width' => $pair['width'] ?? '240px',
+            'html' => $pair['value_html'] ?? '<span class="ft-list-empty">–</span>'
+        ];
+    }, $entryFieldPairs);
+    
+    $rowCellsHtml = '';
+    foreach ($entryFieldPairs as $pair) {
+        $w = htmlspecialchars($pair['width'] ?? '240px', ENT_QUOTES, 'UTF-8');
+        $h = $pair['value_html'] ?? '<span class="ft-list-empty">–</span>';
+        $rowCellsHtml .= '<div class="cell cell-field" style="--col-w: '.$w.'">'.$h.'</div>';
+    }
+    $entryWithCells['row_cells_html'] = $rowCellsHtml;
+    
+    return $entryWithCells;
 }
 
 function getMediaData() {
@@ -1079,7 +2059,7 @@ function getSettingsData() {
     $settingsPath = __DIR__ . '/../settings';
     $settings = [
         'site' => [
-            'title' => 'HaruCMS',
+            'title' => 'Birkly',
             'description' => 'A headless CMS'
         ],
         'admin' => [
@@ -1103,6 +2083,22 @@ function getSettingsData() {
         }
     }
     
+    // Load plugins data
+    require_once __DIR__ . '/../core/plugins.php';
+    $plugins = get_all_plugins();
+    $settings['plugins'] = [];
+    foreach ($plugins as $pluginId => $plugin) {
+        $settings['plugins'][$pluginId] = [
+            'name' => $plugin['name'] ?? ucwords(str_replace(['_', '-'], ' ', $pluginId)),
+            'version' => $plugin['version'] ?? '1.0.0',
+            'description' => $plugin['description'] ?? '',
+            'author' => $plugin['author'] ?? 'Unknown',
+            'active' => $plugin['active'] ?? false,
+            'settings' => $plugin['settings'] ?? [],
+            'settings_schema' => $plugin['settings_schema'] ?? []
+        ];
+    }
+    
     return [
         'settings' => $settings,
         'users' => getUsersData()['users'],
@@ -1115,9 +2111,9 @@ function getAccountData() {
     if (!isset($_SESSION['user'])) {
         return ['error' => 'User not found'];
     }
-    
+
     $currentUser = $_SESSION['user'];
-    
+
     // Load full user data from storage to get name and avatar
     require_once __DIR__ . '/storage.php';
     $userStorage = new Storage(__DIR__ . '/../users');
@@ -1129,12 +2125,41 @@ function getAccountData() {
             $currentUser = array_merge($currentUser, $userData);
         }
     }
-    
+
     // Don't send password hash
     unset($currentUser['password']);
-    
+
+    // Get current language and available languages for language selector
+    $currentLanguage = getCurrentLanguage();
+    $availableLanguages = [];
+    if (class_exists('I18n')) {
+        $langs = I18n::getAvailableLanguages();
+        foreach ($langs as $code => $info) {
+            $availableLanguages[] = [
+                'code' => $code,
+                'name' => $info['name'] ?? $code,
+                'native_name' => $info['native_name'] ?? $code,
+                'flag' => $info['flag'] ?? ''
+            ];
+        }
+    }
+
+    // Get notification preferences (defaults if not set)
+    $notificationPreferences = $currentUser['notification_preferences'] ?? [
+        'entry_published' => true,
+        'entry_review' => true,
+        'entry_commented' => true,
+        'invitation_accepted' => true,
+        'role_changed' => true,
+        'system_updates' => true,
+        'security_events' => ($currentUser['role'] ?? 'viewer') === 'admin'
+    ];
+    $currentUser['notification_preferences'] = $notificationPreferences;
+
     return [
-        'user' => $currentUser
+        'user' => $currentUser,
+        'current_language' => $currentLanguage,
+        'available_languages' => $availableLanguages
     ];
 }
 
@@ -1390,7 +2415,7 @@ function getDefaultHomeTemplate() {
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 {{ site.title }}. Built with HaruCMS.</p>
+            <p>&copy; 2025 {{ site.title }}. Built with Birkly.</p>
         </div>
     </footer>
 </body>
@@ -1436,7 +2461,7 @@ function getDefaultPageTemplate() {
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 {{ site.title }}. Built with HaruCMS.</p>
+            <p>&copy; 2025 {{ site.title }}. Built with Birkly.</p>
         </div>
     </footer>
 </body>
@@ -1487,7 +2512,7 @@ function getDefaultPostTemplate() {
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 {{ site.title }}. Built with HaruCMS.</p>
+            <p>&copy; 2025 {{ site.title }}. Built with Birkly.</p>
         </div>
     </footer>
 </body>
@@ -1544,7 +2569,7 @@ function getDefaultListTemplate() {
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 {{ site.title }}. Built with HaruCMS.</p>
+            <p>&copy; 2025 {{ site.title }}. Built with Birkly.</p>
         </div>
     </footer>
 </body>
@@ -1605,7 +2630,8 @@ function getRolesData() {
 function getOnboardingData() {
     // Get current user
     if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+        require_once __DIR__ . '/session.php';
+        haru_secure_session_start();
     }
     $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
     
@@ -1657,6 +2683,493 @@ function getOnboardingData() {
             'name' => $_SESSION['user']['name'] ?? $_SESSION['user']['email'] ?? 'User',
             'email' => $_SESSION['user']['email'] ?? ''
         ]
+    ];
+}
+
+/**
+ * Get sub-collection editor data
+ * Similar to collection editor but for sub-collections
+ */
+/**
+ * Get entry detail data (main entry + sub-entries list)
+ */
+function getEntryDetailData() {
+    $collectionSlug = $_GET['collection'] ?? null;
+    $entryId = $_GET['entry'] ?? null;
+    $subCollectionSlug = $_GET['sub_collection'] ?? null;
+    $subEntryId = $_GET['sub_entry'] ?? null;
+    $parentSubCollectionSlug = $_GET['parent_sub_collection'] ?? null;
+    $parentSubEntryId = $_GET['parent_sub_entry'] ?? null;
+    
+    // Check if viewing a sub-entry detail page
+    $isSubEntryDetail = !empty($subCollectionSlug) && !empty($subEntryId);
+    // Check if viewing a nested sub-entry detail page
+    $isNestedSubEntryDetail = $isSubEntryDetail && !empty($parentSubCollectionSlug) && !empty($parentSubEntryId);
+    
+    if (!$collectionSlug || !$entryId) {
+        return ['error' => 'Collection and entry parameters required'];
+    }
+    
+    // Get collection data
+    $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
+    if (!file_exists($collectionFile)) {
+        return ['error' => 'Collection not found'];
+    }
+    
+    $collectionData = json_decode(file_get_contents($collectionFile), true);
+    $collectionData['slug'] = $collectionSlug;
+    
+    // Get entry data - either sub-entry or main entry
+    if ($isSubEntryDetail) {
+        // Load sub-entry data
+        require_once __DIR__ . '/../core/sub_entries.php';
+        
+        if ($isNestedSubEntryDetail) {
+            // This is a nested sub-entry - load from nested path
+            if (!function_exists('get_storage')) {
+                require_once __DIR__ . '/../core/storage/StorageFactory.php';
+            }
+            try {
+                $storage = get_storage();
+                $nestedEntryPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}/{$subEntryId}.json";
+                error_log("getEntryDetailData: Loading nested sub-entry from: {$nestedEntryPath}");
+                $entry = $storage->read($nestedEntryPath);
+            } catch (Exception $e) {
+                error_log("getEntryDetailData: Error loading nested sub-entry: " . $e->getMessage());
+                $entry = null;
+            }
+        } else {
+            // First-level sub-entry
+            $entry = getSubEntry($collectionSlug, $entryId, $subCollectionSlug, $subEntryId);
+        }
+        
+        if (!$entry) {
+            return ['error' => 'Sub-entry not found'];
+        }
+        $entry['id'] = $subEntryId;
+        $entry['_is_sub_entry'] = true;
+        $entry['_parent_entry_id'] = $entryId; // This is the parent entry ID (main entry)
+        $entry['_sub_collection'] = $subCollectionSlug; // This is the sub-collection of the sub-entry we're viewing
+        
+        if ($isNestedSubEntryDetail) {
+            // Store the parent sub-collection and sub-entry ID for nested sub-entry creation
+            // When viewing a nested sub-entry detail page, the parent sub-entry info comes from URL
+            $entry['_parent_sub_collection'] = $parentSubCollectionSlug;
+            $entry['_parent_sub_entry_id'] = $parentSubEntryId;
+        } else {
+            // When viewing a first-level sub-entry detail page, this sub-entry becomes the parent for nested sub-entries
+            $entry['_parent_sub_collection'] = $subCollectionSlug;
+            $entry['_parent_sub_entry_id'] = $subEntryId;
+        }
+        
+        // Get parent entry for context
+        $parentEntryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
+        if (file_exists($parentEntryFile)) {
+            $parentEntry = json_decode(file_get_contents($parentEntryFile), true);
+            $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
+        }
+        
+        // Get sub-collection config for fields (handle nested sub-collections)
+        // For nested sub-entries, we need to determine the parent sub-collection
+        // The subCollectionSlug could be a nested one, so we search recursively
+        $subCollection = getSubCollectionConfig($collectionSlug, $subCollectionSlug);
+        if (!$subCollection) {
+            // Try to find it as a nested sub-collection
+            $allSubCollections = getSubCollections($collectionSlug);
+            foreach ($allSubCollections as $parentSubCol) {
+                $nested = $parentSubCol['sub_collections'] ?? [];
+                foreach ($nested as $nestedSubCol) {
+                    if (($nestedSubCol['slug'] ?? '') === $subCollectionSlug) {
+                        $subCollection = $nestedSubCol;
+                        break 2;
+                    }
+                }
+            }
+        }
+        $fields = $subCollection['fields'] ?? $subCollection['schema']['fields'] ?? [];
+    } else {
+        // Load main entry data
+        $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
+        if (!file_exists($entryFile)) {
+            return ['error' => 'Entry not found'];
+        }
+        $entry = json_decode(file_get_contents($entryFile), true);
+        $entry['id'] = $entryId;
+        
+        // Get fields from schema
+        $fields = [];
+        $schemaFile = __DIR__ . "/../content/collections/$collectionSlug/schema.json";
+        if (file_exists($schemaFile)) {
+            $schemaData = json_decode(file_get_contents($schemaFile), true);
+            if (isset($schemaData['fields']) && is_array($schemaData['fields'])) {
+                $fields = $schemaData['fields'];
+            }
+        }
+    }
+    
+    // Process entry like in getEntriesData() - render fields for table display
+    $entryWithCells = processEntryForList($entry, $fields, $collectionData);
+    
+    // Get sub-collections - either from main collection or from sub-collection (for nested)
+    require_once __DIR__ . '/../core/sub_entries.php';
+    
+    if ($isSubEntryDetail) {
+        // Get nested sub-collections from the sub-collection config
+        if ($isNestedSubEntryDetail) {
+            // For nested sub-entries, get the sub-collection config for the sub-entry we're viewing
+            // This sub-collection's nested sub-collections are what we want to show
+            $subCollection = getSubCollectionConfig($collectionSlug, $subCollectionSlug);
+            if (!$subCollection) {
+                // Try to find it recursively
+                $allSubCollections = getSubCollections($collectionSlug);
+                foreach ($allSubCollections as $parentSubCol) {
+                    $nested = $parentSubCol['sub_collections'] ?? [];
+                    foreach ($nested as $nestedSubCol) {
+                        if (($nestedSubCol['slug'] ?? '') === $subCollectionSlug) {
+                            $subCollection = $nestedSubCol;
+                            break 2;
+                        }
+                    }
+                }
+            }
+            $subCollections = $subCollection['sub_collections'] ?? [];
+        } else {
+            // For first-level sub-entries, get nested sub-collections from the sub-collection config
+            $subCollection = getSubCollectionConfig($collectionSlug, $subCollectionSlug);
+            if (!$subCollection) {
+                // Try to find it recursively
+                $allSubCollections = getSubCollections($collectionSlug);
+                foreach ($allSubCollections as $parentSubCol) {
+                    if (($parentSubCol['slug'] ?? '') === $subCollectionSlug) {
+                        $subCollection = $parentSubCol;
+                        break;
+                    }
+                    $nested = $parentSubCol['sub_collections'] ?? [];
+                    foreach ($nested as $nestedSubCol) {
+                        if (($nestedSubCol['slug'] ?? '') === $subCollectionSlug) {
+                            $subCollection = $nestedSubCol;
+                            break 2;
+                        }
+                    }
+                }
+            }
+            $subCollections = $subCollection['sub_collections'] ?? [];
+        }
+    } else {
+        // Get top-level sub-collections
+        $subCollections = $collectionData['sub_collections'] ?? [];
+    }
+    
+    /**
+     * Recursively process sub-collections and their nested sub-collections
+     */
+    function processSubCollectionRecursive($subCollection, $collectionSlug, $parentEntryId, $collectionData, $parentSubCollectionSlug = null, $parentSubEntryId = null) {
+        $subCollectionSlug = $subCollection['slug'] ?? '';
+        if (empty($subCollectionSlug)) {
+            return null;
+        }
+        
+        $result = [
+            'sub_collection' => $subCollection,
+            'entries' => [],
+            'fields' => [],
+            'nested_sub_collections' => []
+        ];
+        
+        try {
+            // Get sub-entries for this sub-collection
+            if ($parentSubCollectionSlug && $parentSubEntryId) {
+                // Nested sub-entry - get from nested path directly
+                $nestedSubEntryPath = "collections/{$collectionSlug}/entries/{$parentEntryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}";
+                if (!function_exists('get_storage')) {
+                    require_once __DIR__ . '/../core/storage/StorageFactory.php';
+                }
+                try {
+                    $storage = get_storage();
+                    $files = $storage->list($nestedSubEntryPath);
+                    $subEntries = [];
+                    foreach ($files as $file) {
+                        if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
+                            // Skip dotfiles like .order.json
+                            if (strpos($file, '.') === 0) {
+                                continue;
+                            }
+                            
+                            // Use full path for reading
+                            $fullPath = "{$nestedSubEntryPath}/{$file}";
+                            $entryData = $storage->read($fullPath);
+                            if ($entryData) {
+                                // Ensure ID is set from filename
+                                $entryData['id'] = basename($file, '.json');
+                                $subEntries[] = $entryData;
+                            }
+                        }
+                    }
+                    
+                    // Apply custom order from .order.json if it exists
+                    try {
+                        $orderFilePath = "{$nestedSubEntryPath}/.order.json";
+                        $orderData = $storage->read($orderFilePath);
+                        if ($orderData && isset($orderData['order']) && is_array($orderData['order'])) {
+                            $customOrder = $orderData['order'];
+                            
+                            // Create a map of entry IDs to entries
+                            $entryMap = [];
+                            foreach ($subEntries as $entry) {
+                                $entryMap[$entry['id']] = $entry;
+                            }
+                            
+                            // Rebuild entries array in the custom order
+                            $orderedEntries = [];
+                            foreach ($customOrder as $entryId) {
+                                if (isset($entryMap[$entryId])) {
+                                    $orderedEntries[] = $entryMap[$entryId];
+                                    unset($entryMap[$entryId]); // Remove from map
+                                }
+                            }
+                            
+                            // Add any entries that weren't in the order file (new entries)
+                            foreach ($entryMap as $entry) {
+                                $orderedEntries[] = $entry;
+                            }
+                            
+                            $subEntries = $orderedEntries;
+                        }
+                    } catch (Exception $orderEx) {
+                        // If .order.json doesn't exist or can't be read, just use the default order
+                    }
+                } catch (Exception $e) {
+                    error_log("Error loading nested sub-entries: " . $e->getMessage());
+                    $subEntries = [];
+                }
+            } else {
+                // Top-level sub-entry
+                $subEntries = getSubEntries($collectionSlug, $parentEntryId, $subCollectionSlug);
+            }
+            
+            // Get sub-collection fields
+            $subFields = $subCollection['fields'] ?? $subCollection['schema']['fields'] ?? [];
+            
+            // Normalize sub-field definitions
+            foreach ($subFields as $idx => $subField) {
+                if (empty($subField['label']) && !empty($subField['name'])) {
+                    $subFields[$idx]['label'] = ucfirst(str_replace('_', ' ', $subField['name']));
+                }
+                if (empty($subField['name']) && !empty($subField['label'])) {
+                    $subFields[$idx]['name'] = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $subField['label'])));
+                }
+                if (empty($subFields[$idx]['name']) && empty($subFields[$idx]['label'])) {
+                    unset($subFields[$idx]);
+                    continue;
+                }
+                if (empty($subFields[$idx]['type'])) {
+                    unset($subFields[$idx]);
+                    continue;
+                }
+            }
+            $subFields = array_values($subFields);
+            
+            // Calculate field widths
+            $subTypeWidths = [];
+            $subTypeMinWidths = [];
+            foreach ($subFields as $subField) {
+                $type = $subField['type'] ?? null;
+                if (!$type || isset($subTypeWidths[$type])) continue;
+                $width = null;
+                $minWidth = null;
+                try {
+                    $ftName = ucfirst(strtolower($type));
+                    $class = "Birkly\\FieldTypes\\$ftName\\$ftName";
+                    $file = __DIR__ . "/../fieldtypes/$ftName/$ftName.php";
+                    if (!class_exists($class) && file_exists($file)) {
+                        require_once $file;
+                    }
+                    if (class_exists($class)) {
+                        $fieldName = $subField['name'] ?? '';
+                        $ft = new $class(['name' => $fieldName]);
+                        if (method_exists($ft, 'getListColumnWidth')) {
+                            $width = $ft->getListColumnWidth();
+                        }
+                        if (method_exists($ft, 'getTableMinWidth')) {
+                            $minWidth = $ft->getTableMinWidth();
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    $width = null;
+                    $minWidth = null;
+                }
+                $subTypeWidths[$type] = $width ?: '240px';
+                $subTypeMinWidths[$type] = $minWidth ?: ($width ?: '240px');
+            }
+            
+            foreach ($subFields as $idx => $subField) {
+                $ftype = $subField['type'] ?? '';
+                $subFields[$idx]['width'] = $subTypeWidths[$ftype] ?? '240px';
+                $subFields[$idx]['min_width'] = $subTypeMinWidths[$ftype] ?? ($subTypeWidths[$ftype] ?? '240px');
+            }
+            
+            // Process sub-entries for table display
+            $processedSubEntries = [];
+            foreach ($subEntries as $subEntry) {
+                $processedSubEntries[] = processEntryForList($subEntry, $subFields, $collectionData);
+            }
+            
+            $result['entries'] = $processedSubEntries;
+            $result['fields'] = $subFields;
+            
+            // Note: Nested sub-collections are handled per sub-entry
+            // When a sub-entry is clicked, it will show its own entry-detail page with nested sub-collections
+            // We don't need to process them here as they'll be loaded when viewing that sub-entry's detail page
+            
+        } catch (Exception $e) {
+            error_log("Error processing sub-collection {$subCollectionSlug}: " . $e->getMessage());
+        }
+        
+        return $result;
+    }
+    
+    // Get sub-entries for each sub-collection and process them (recursively handles nested sub-collections)
+    $subEntriesByCollection = [];
+    foreach ($subCollections as $subCollection) {
+        if ($isNestedSubEntryDetail) {
+            // For nested sub-entry detail pages, pass the parent sub-collection and sub-entry ID from URL
+            $processed = processSubCollectionRecursive($subCollection, $collectionSlug, $entryId, $collectionData, $subCollectionSlug, $subEntryId);
+        } elseif ($isSubEntryDetail) {
+            // For first-level sub-entry detail pages, pass the sub-collection and sub-entry ID
+            $processed = processSubCollectionRecursive($subCollection, $collectionSlug, $entryId, $collectionData, $subCollectionSlug, $subEntryId);
+        } else {
+            // For top-level sub-entries
+            $processed = processSubCollectionRecursive($subCollection, $collectionSlug, $entryId, $collectionData);
+        }
+        if ($processed) {
+            $subCollectionSlugLoop = $subCollection['slug'] ?? '';
+            $subEntriesByCollection[$subCollectionSlugLoop] = $processed;
+        }
+    }
+    
+    return [
+        'collection' => $collectionData,
+        'entry' => $entryWithCells,
+        'fields' => $fields,
+        'sub_collections' => $subCollections, // Sub-collection configs for the template
+        'sub_entries_by_collection' => $subEntriesByCollection,
+        'is_sub_entry' => $isSubEntryDetail,
+        'is_sub_entry_detail' => $isSubEntryDetail,
+        'is_nested_sub_entry_detail' => $isNestedSubEntryDetail ?? false,
+        'sub_collection' => $subCollectionSlug, // This is the sub-collection of the sub-entry we're viewing (e.g., "comments")
+        'sub_collection_slug' => $subCollectionSlug,
+        'sub_entry_id' => $subEntryId,
+        'parent_entry_id' => $entryId,
+        'parent_sub_collection_slug' => $parentSubCollectionSlug ?? null,
+        'parent_sub_entry_id' => $parentSubEntryId ?? null
+    ];
+}
+
+// ===== NEW PAGE DATA FUNCTIONS =====
+
+function getPluginsData() {
+    $pluginsPath = __DIR__ . '/../plugins';
+    $plugins = [];
+    
+    if (is_dir($pluginsPath)) {
+        $pluginDirs = glob($pluginsPath . '/*', GLOB_ONLYDIR);
+        foreach ($pluginDirs as $dir) {
+            $pluginName = basename($dir);
+            $manifestFile = $dir . '/manifest.json';
+            
+            if (file_exists($manifestFile)) {
+                $manifest = json_decode(file_get_contents($manifestFile), true);
+                $plugins[] = array_merge(['slug' => $pluginName], $manifest);
+            }
+        }
+    }
+    
+    return [
+        'plugins' => $plugins
+    ];
+}
+
+function getWebhooksData() {
+    $webhooksPath = __DIR__ . '/../data/webhooks.json';
+    $webhooks = [];
+    
+    if (file_exists($webhooksPath)) {
+        $webhooks = json_decode(file_get_contents($webhooksPath), true) ?? [];
+    }
+    
+    // Get collections for webhook configuration
+    $collectionsPath = __DIR__ . '/../content/collections';
+    $collections = [];
+    
+    if (is_dir($collectionsPath)) {
+        $collectionDirs = glob($collectionsPath . '/*', GLOB_ONLYDIR);
+        foreach ($collectionDirs as $dir) {
+            $collectionName = basename($dir);
+            $collectionFile = $dir . '/collection.json';
+            
+            if (file_exists($collectionFile)) {
+                $collectionData = json_decode(file_get_contents($collectionFile), true);
+                $collections[] = [
+                    'title' => $collectionData['name'] ?? $collectionName,
+                    'slug' => $collectionName
+                ];
+            }
+        }
+    }
+    
+    return [
+        'webhooks' => $webhooks,
+        'collections' => $collections
+    ];
+}
+
+function getHelpData() {
+    $section = $_GET['section'] ?? 'getting-started';
+    
+    // Validate section name (security)
+    $section = preg_replace('/[^a-z0-9_-]/', '', $section);
+    
+    return [
+        'current_section' => $section
+    ];
+}
+
+function getUpdatesData() {
+    $currentVersion = file_exists(__DIR__ . '/../VERSION') 
+        ? trim(file_get_contents(__DIR__ . '/../VERSION')) 
+        : '1.0.0';
+    
+    return [
+        'current_version' => $currentVersion,
+        'latest_version' => $currentVersion, // Would check remote in production
+        'updates_available' => false,
+        'changelog' => []
+    ];
+}
+
+function getActivityData() {
+    $activityPath = __DIR__ . '/../data/activity.json';
+    $activities = [];
+    
+    if (file_exists($activityPath)) {
+        $activities = json_decode(file_get_contents($activityPath), true) ?? [];
+    }
+    
+    return [
+        'activities' => $activities
+    ];
+}
+
+function getAuditLogData() {
+    $auditPath = __DIR__ . '/../data/audit.json';
+    $auditLogs = [];
+    
+    if (file_exists($auditPath)) {
+        $auditLogs = json_decode(file_get_contents($auditPath), true) ?? [];
+    }
+    
+    return [
+        'audit_logs' => $auditLogs
     ];
 }
 ?> 

@@ -1,7 +1,13 @@
 <?php
-namespace HaruCMS\FieldTypes\URL;
+namespace Birkly\FieldTypes\URL;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
+
+// Prevent fatal "Cannot redeclare class" errors if this file is included twice
+// (can happen on case-insensitive filesystems when referenced as Url/Url.php and URL/URL.php)
+if (class_exists(__NAMESPACE__ . '\\URL', false)) {
+    return;
+}
 
 class URL extends BaseField {
     protected $placeholder;
@@ -148,16 +154,18 @@ class URL extends BaseField {
         
         .url-input {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
+            padding: var(--space-2, 0.5rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: var(--font-size-base, 1rem);
+            background: var(--bg-primary, #ffffff);
+            color: var(--text-primary, #20221D);
         }
         
         .url-input:focus {
-            border-color: var(--primary);
+            border-color: var(--primary-500, #3b82f6);
             outline: none;
-            box-shadow: 0 0 0 2px var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .url-preview {
@@ -222,6 +230,25 @@ class URL extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Truncate long URLs
+        $url = (string)$value;
+        $max = 50;
+        if (mb_strlen($url) > $max) {
+            $url = mb_substr($url, 0, $max - 3) . '...';
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '220px'; // URL fields need space for full URLs
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

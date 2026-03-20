@@ -1,7 +1,7 @@
-# HaruCMS Robustness Roadmap
+# Birkly Robustness Roadmap
 
 ## Overview
-This document outlines the improvements needed to make HaruCMS production-ready and competitive with other CMS platforms.
+This document outlines the improvements needed to make Birkly production-ready and competitive with other CMS platforms.
 
 ## Priority 1: Core Robustness (2-3 weeks)
 
@@ -171,7 +171,7 @@ This document outlines the improvements needed to make HaruCMS production-ready 
 **Files to Modify:**
 - `api/upload.php` - Add image processing
 - `api/admin_media.php` - Add optimization options
-- `harucms-client.js` - Add lazy loading
+- `birkly-client.js` - Add lazy loading
 
 **Expected Impact:**
 - Better performance

@@ -1,41 +1,44 @@
 <div class="page-header pt-m pb-m">
-  <div class="breadcrumbs"><span class="current">Account Settings</span></div>
+  <div class="page-header-left">
+    <div class="breadcrumbs"><span class="current">{translate 'admin.account_settings'}</span></div>
+  </div>
+  <div class="page-header-actions"></div>
 </div>
 <div class="account-settings-page">
   <div class="settings-section">
-    <h2>Profile Information</h2>
+    <h2>{translate 'admin.profile_information'}</h2>
     <form id="account-profile-form" class="settings-form" enctype="multipart/form-data">
       <div class="form-group">
-        <label for="account-name">Name</label>
-        <input type="text" id="account-name" name="name" value="<?= htmlspecialchars($user['name'] ?? $user['email'] ?? '') ?>" required>
-        <small>Your display name in the admin panel</small>
+        <label for="account-name">{translate 'admin.name'}</label>
+        <input type="text" id="account-name" name="name" value="{user.name}" required>
+        <small>{translate 'admin.display_name_description'}</small>
       </div>
       
       <div class="form-group">
-        <label for="account-email">Email</label>
-        <input type="email" id="account-email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" disabled>
-        <small>Email cannot be changed</small>
+        <label for="account-email">{translate 'admin.email'}</label>
+        <input type="email" id="account-email" name="email" value="{user.email}" disabled>
+        <small>{translate 'admin.email_cannot_be_changed'}</small>
       </div>
       
       <div class="form-group">
-        <label for="account-avatar">Avatar</label>
+        <label for="account-avatar">{translate 'admin.avatar'}</label>
         <input type="file" id="account-avatar" name="avatar" accept="image/*">
-        <small>Upload a profile picture. Recommended size: 200x200px. If not provided, initials will be used.</small>
-        <?php if (!empty($user['avatar'])): ?>
+        <small>{translate 'admin.avatar_upload_instructions'}</small>
+        {if user.avatar exist}
           <div style="margin-top: 0.5rem;">
-            <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Current avatar:</p>
-            <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Current avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;">
-            <button type="button" id="remove-avatar-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">Remove Avatar</button>
+            <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">{translate 'admin.current_avatar'}:</p>
+            <img src="{user.avatar}" alt="Current avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;">
+            <button type="button" id="remove-avatar-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">{translate 'admin.remove_avatar'}</button>
           </div>
-        <?php endif; ?>
+        {endif}
         <div id="avatar-preview" style="margin-top: 0.5rem; display: none;">
-          <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">Preview:</p>
+          <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">{translate 'admin.preview'}:</p>
           <img id="avatar-preview-img" src="" alt="Avatar preview" style="width: 80px; height: 80px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;">
         </div>
       </div>
       
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Save Profile</button>
+        <button type="submit" class="btn btn-primary">{translate 'admin.save_profile'}</button>
       </div>
       
       <div id="account-message" class="settings-message" style="display: none;"></div>
@@ -43,23 +46,23 @@
   </div>
 
   <div class="settings-section">
-    <h2>Change Password</h2>
+    <h2>{translate 'admin.change_password'}</h2>
     <form id="account-password-form" class="settings-form">
       <div class="form-group">
-        <label for="current-password">Current Password *</label>
+        <label for="current-password">{translate 'admin.current_password'} *</label>
         <input type="password" id="current-password" name="current_password" required class="input" autocomplete="current-password">
       </div>
       <div class="form-group">
-        <label for="new-password">New Password *</label>
+        <label for="new-password">{translate 'admin.new_password'} *</label>
         <input type="password" id="new-password" name="new_password" required class="input" autocomplete="new-password" minlength="8">
-        <small class="text-muted">Password must be at least 8 characters long</small>
+        <small class="text-muted">{translate 'admin.password_min_length'}</small>
       </div>
       <div class="form-group">
-        <label for="confirm-password">Confirm New Password *</label>
+        <label for="confirm-password">{translate 'admin.confirm_new_password'} *</label>
         <input type="password" id="confirm-password" name="confirm_password" required class="input" autocomplete="new-password" minlength="8">
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Change Password</button>
+        <button type="submit" class="btn btn-primary">{translate 'admin.change_password'}</button>
       </div>
       
       <div id="password-message" class="settings-message" style="display: none;"></div>
@@ -67,258 +70,206 @@
   </div>
 
   <div class="settings-section">
-    <h2>Language Preferences</h2>
+    <h2>{translate 'admin.language_preferences'}</h2>
     <form id="account-language-form" class="settings-form">
       <div class="form-group">
-        <label for="account-language">Admin Panel Language</label>
+        <label for="account-language">{translate 'admin.admin_panel_language'}</label>
         <select id="account-language" name="language" class="input">
-          <?php
-          $currentLang = getCurrentLanguage();
-          $availableLangs = I18n::getAvailableLanguages();
-          foreach ($availableLangs as $langCode => $langInfo):
-          ?>
-            <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentLang ? 'selected' : '' ?>>
-              <?= htmlspecialchars($langInfo['native_name']) ?> <?= htmlspecialchars($langInfo['flag']) ?>
-            </option>
-          <?php endforeach; ?>
+          {for each lang in available_languages}
+            {if lang.code == current_language}
+              <option value="{lang.code}" selected>{lang.native_name} {lang.flag}</option>
+            {else}
+              <option value="{lang.code}">{lang.native_name} {lang.flag}</option>
+            {endif}
+          {endfor}
         </select>
-        <small>This setting only affects your admin panel language, not the system default.</small>
+        <small>{translate 'admin.language_setting_description'}</small>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Save Language</button>
+        <button type="submit" class="btn btn-primary">{translate 'admin.save_language'}</button>
       </div>
       
       <div id="language-message" class="settings-message" style="display: none;"></div>
     </form>
   </div>
+
+  <div class="settings-section">
+    <h2>{translate 'admin.two_factor_authentication'}</h2>
+    <div id="account-2fa-status">
+      <div class="text-center">
+        <div class="spinner">Loading 2FA status...</div>
+      </div>
+    </div>
+    <div id="account-2fa-message" class="settings-message" style="display: none;"></div>
+  </div>
+
+  <div class="settings-section">
+    <h2>Notification Preferences</h2>
+    <form id="account-notifications-form" class="settings-form">
+      <div class="form-group">
+        <p class="text-muted" style="margin-bottom: 1rem;">Choose which events you want to be notified about. Notifications appear in the bell icon in the top-right corner.</p>
+        
+        <div class="notification-preferences">
+          <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-primary);">Content Events</h3>
+          
+          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+            <div style="flex: 1; margin-right: 1rem;">
+              <div style="font-weight: 500; color: var(--text-primary);">Entry Published</div>
+              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when someone publishes an entry</small>
+            </div>
+            <label class="toggle-switch" style="flex-shrink: 0;">
+              <input type="checkbox" id="notify-entry-published" name="entry_published" {if user.notification_preferences.entry_published exist}{if user.notification_preferences.entry_published == true}checked{endif}{else}checked{endif}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+            <div style="flex: 1; margin-right: 1rem;">
+              <div style="font-weight: 500; color: var(--text-primary);">Entry Needs Review</div>
+              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when an entry is submitted for review</small>
+            </div>
+            <label class="toggle-switch" style="flex-shrink: 0;">
+              <input type="checkbox" id="notify-entry-review" name="entry_review" {if user.notification_preferences.entry_review exist}{if user.notification_preferences.entry_review == true}checked{endif}{else}checked{endif}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+            <div style="flex: 1; margin-right: 1rem;">
+              <div style="font-weight: 500; color: var(--text-primary);">Entry Commented</div>
+              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when someone comments on your entries</small>
+            </div>
+            <label class="toggle-switch" style="flex-shrink: 0;">
+              <input type="checkbox" id="notify-entry-commented" name="entry_commented" {if user.notification_preferences.entry_commented exist}{if user.notification_preferences.entry_commented == true}checked{endif}{else}checked{endif}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-primary);">User Events</h3>
+
+          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+            <div style="flex: 1; margin-right: 1rem;">
+              <div style="font-weight: 500; color: var(--text-primary);">Invitation Accepted</div>
+              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when someone accepts your invitation</small>
+            </div>
+            <label class="toggle-switch" style="flex-shrink: 0;">
+              <input type="checkbox" id="notify-invitation-accepted" name="invitation_accepted" {if user.notification_preferences.invitation_accepted exist}{if user.notification_preferences.invitation_accepted == true}checked{endif}{else}checked{endif}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+            <div style="flex: 1; margin-right: 1rem;">
+              <div style="font-weight: 500; color: var(--text-primary);">Role Changed</div>
+              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when your role or permissions change</small>
+            </div>
+            <label class="toggle-switch" style="flex-shrink: 0;">
+              <input type="checkbox" id="notify-role-changed" name="role_changed" {if user.notification_preferences.role_changed exist}{if user.notification_preferences.role_changed == true}checked{endif}{else}checked{endif}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-primary);">System Events</h3>
+
+          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+            <div style="flex: 1; margin-right: 1rem;">
+              <div style="font-weight: 500; color: var(--text-primary);">System Updates</div>
+              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when CMS updates are available</small>
+            </div>
+            <label class="toggle-switch" style="flex-shrink: 0;">
+              <input type="checkbox" id="notify-system-updates" name="system_updates" {if user.notification_preferences.system_updates exist}{if user.notification_preferences.system_updates == true}checked{endif}{else}checked{endif}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+            <div style="flex: 1; margin-right: 1rem;">
+              <div style="font-weight: 500; color: var(--text-primary);">Security Events</div>
+              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified about failed login attempts and security issues</small>
+            </div>
+            <label class="toggle-switch" style="flex-shrink: 0;">
+              <input type="checkbox" id="notify-security-events" name="security_events" {if user.notification_preferences.security_events exist}{if user.notification_preferences.security_events == true}checked{endif}{else}{if user.role == 'admin'}checked{endif}{endif}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Notification Preferences</button>
+      </div>
+      
+      <div id="notifications-message" class="settings-message" style="display: none;"></div>
+    </form>
+  </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Avatar preview
-    const avatarInput = document.getElementById('account-avatar');
-    if (avatarInput) {
-        avatarInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const preview = document.getElementById('avatar-preview');
-                    const previewImg = document.getElementById('avatar-preview-img');
-                    if (preview && previewImg) {
-                        previewImg.src = event.target.result;
-                        preview.style.display = 'block';
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-    
-    // Remove avatar
-    const removeAvatarBtn = document.getElementById('remove-avatar-btn');
-    if (removeAvatarBtn) {
-        removeAvatarBtn.addEventListener('click', async () => {
-            if (confirm('Are you sure you want to remove your avatar?')) {
-                try {
-                    const response = await fetch('/api/users.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            action: 'update_profile',
-                            avatar: '',
-                            _csrf: getCsrfToken()
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    if (result.status === 'ok') {
-                        showMessage('account-message', 'Avatar removed successfully!', 'success');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        showMessage('account-message', 'Error: ' + result.message, 'error');
-                    }
-                } catch (error) {
-                    showMessage('account-message', 'Error removing avatar: ' + error.message, 'error');
-                }
-            }
-        });
-    }
-    
-    // Profile form
-    const profileForm = document.getElementById('account-profile-form');
-    if (profileForm) {
-        profileForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(profileForm);
-            const avatarFile = formData.get('avatar');
-            
-            // Handle avatar upload if provided
-            let avatarPath = '';
-            if (avatarFile && avatarFile.size > 0) {
-                try {
-                    const avatarFormData = new FormData();
-                    avatarFormData.append('file', avatarFile);
-                    avatarFormData.append('_csrf', getCsrfToken());
-                    
-                    const uploadResponse = await fetch('/api/users.php?action=upload_avatar', {
-                        method: 'POST',
-                        body: avatarFormData
-                    });
-                    
-                    const uploadResult = await uploadResponse.json();
-                    if (uploadResult.status === 'ok') {
-                        avatarPath = uploadResult.data.avatarPath;
-                    } else {
-                        showMessage('account-message', 'Error uploading avatar: ' + (uploadResult.message || 'Unknown error'), 'error');
-                        return;
-                    }
-                } catch (error) {
-                    showMessage('account-message', 'Error uploading avatar: ' + error.message, 'error');
-                    return;
-                }
-            }
-            
-            // Update profile
-            try {
-                const updateData = {
-                    action: 'update_profile',
-                    name: formData.get('name'),
-                    _csrf: getCsrfToken()
-                };
-                
-                if (avatarPath) {
-                    updateData.avatar = avatarPath;
-                }
-                
-                const response = await fetch('/api/users.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(updateData)
-                });
-                
-                const result = await response.json();
-                if (result.status === 'ok') {
-                    showMessage('account-message', 'Profile updated successfully!', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showMessage('account-message', 'Error: ' + result.message, 'error');
-                }
-            } catch (error) {
-                showMessage('account-message', 'Error updating profile: ' + error.message, 'error');
-            }
-        });
-    }
-    
-    // Password form
-    const passwordForm = document.getElementById('account-password-form');
-    if (passwordForm) {
-        passwordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(passwordForm);
-            
-            const currentPassword = formData.get('current_password');
-            const newPassword = formData.get('new_password');
-            const confirmPassword = formData.get('confirm_password');
-            
-            if (newPassword !== confirmPassword) {
-                showMessage('password-message', 'New password and confirmation do not match', 'error');
-                return;
-            }
-            
-            if (newPassword.length < 8) {
-                showMessage('password-message', 'Password must be at least 8 characters long', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/users.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        action: 'change_password',
-                        current_password: currentPassword,
-                        new_password: newPassword,
-                        _csrf: getCsrfToken()
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.status === 'ok') {
-                    showMessage('password-message', 'Password changed successfully!', 'success');
-                    passwordForm.reset();
-                } else {
-                    showMessage('password-message', 'Error: ' + (result.message || 'Failed to change password'), 'error');
-                }
-            } catch (error) {
-                showMessage('password-message', 'Error changing password: ' + error.message, 'error');
-            }
-        });
-    }
-    
-    // Language form
-    const languageForm = document.getElementById('account-language-form');
-    if (languageForm) {
-        languageForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(languageForm);
-            const language = formData.get('language');
-            
-            try {
-                const response = await fetch('/api/users.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'set_language',
-                        language: language,
-                        _csrf: getCsrfToken()
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.status === 'ok') {
-                    showMessage('language-message', 'Language preference saved!', 'success');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    showMessage('language-message', 'Error: ' + (result.message || 'Failed to save language'), 'error');
-                }
-            } catch (error) {
-                showMessage('language-message', 'Error saving language: ' + error.message, 'error');
-            }
-        });
-    }
-    
-    function getCsrfToken() {
-        const metaToken = document.querySelector('meta[name="csrf-token"]');
-        if (metaToken) {
-            return metaToken.getAttribute('content');
-        }
-        return window.csrfToken || 'placeholder-token';
-    }
-    
-    function showMessage(elementId, message, type) {
-        const messageDiv = document.getElementById(elementId);
-        if (messageDiv) {
-            messageDiv.textContent = message;
-            messageDiv.className = 'settings-message ' + type;
-            messageDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 5000);
-        }
-    }
-});
-</script>
+<!-- 2FA Modals -->
+<div id="account-2fa-setup-modal" class="modal-backdrop" style="display: none;">
+  <div class="modal-content" style="max-width: 520px;">
+    <div class="modal-header">
+      <h2>{translate 'admin.setup_2fa'}</h2>
+      <button class="modal-close-btn" type="button" onclick="window.accountClose2FASetupModal && window.accountClose2FASetupModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="account-2fa-setup-content">
+        <div class="text-center"><div class="spinner">Initializing 2FA setup...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<div id="account-2fa-disable-modal" class="modal-backdrop" style="display: none;">
+  <div class="modal-content" style="max-width: 520px;">
+    <div class="modal-header">
+      <h2>{translate 'admin.disable_2fa'}</h2>
+      <button class="modal-close-btn" type="button" onclick="window.accountClose2FADisableModal && window.accountClose2FADisableModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>{translate 'admin.disable_2fa_instructions'}</p>
+      <form id="account-2fa-disable-form">
+        <div class="form-group">
+          <label for="account-disable-password">{translate 'admin.password'}</label>
+          <input type="password" id="account-disable-password" name="password" class="input" required>
+        </div>
+        <div class="form-group">
+          <label for="account-disable-code">Verification Code (optional)</label>
+          <input type="text" id="account-disable-code" name="code" class="input" placeholder="000000" maxlength="6">
+          <small class="form-text">Enter a code from your authenticator app or leave blank</small>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="window.accountClose2FADisableModal && window.accountClose2FADisableModal()">Cancel</button>
+          <button type="submit" class="btn btn-danger">{translate 'admin.disable_2fa'}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="account-2fa-regenerate-modal" class="modal-backdrop" style="display: none;">
+  <div class="modal-content" style="max-width: 520px;">
+    <div class="modal-header">
+      <h2>{translate 'admin.regenerate_backup_codes'}</h2>
+      <button class="modal-close-btn" type="button" onclick="window.accountClose2FARegenerateModal && window.accountClose2FARegenerateModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>{translate 'admin.regenerate_backup_codes_warning'}</p>
+      <form id="account-2fa-regenerate-form">
+        <div class="form-group">
+          <label for="account-regenerate-password">{translate 'admin.password'}</label>
+          <input type="password" id="account-regenerate-password" name="password" class="input" required>
+        </div>
+        <div class="form-group">
+          <label for="account-regenerate-code">Verification Code (optional)</label>
+          <input type="text" id="account-regenerate-code" name="code" class="input" placeholder="000000" maxlength="6">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="window.accountClose2FARegenerateModal && window.accountClose2FARegenerateModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">{translate 'admin.regenerate_backup_codes'}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{include_script 'account-settings.js'}

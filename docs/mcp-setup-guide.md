@@ -1,4 +1,4 @@
-# MCP Setup Guide for HaruCMS
+# MCP Setup Guide for Birkly
 
 ## What is MCP?
 
@@ -8,11 +8,11 @@ MCP (Model Context Protocol) is a protocol that allows AI assistants to connect 
 
 - ✅ **Claude Desktop** supports MCP
 - ❌ **ChatGPT Desktop** does NOT support MCP
-- ✅ **HaruCMS** has an MCP server implementation
+- ✅ **Birkly** has an MCP server implementation
 
-If you want to use ChatGPT, you should use the **OpenAI** provider connection in HaruCMS instead of MCP.
+If you want to use ChatGPT, you should use the **OpenAI** provider connection in Birkly instead of MCP.
 
-## Setting Up Claude Desktop with HaruCMS
+## Setting Up Claude Desktop with Birkly
 
 ### Step 1: Install Claude Desktop
 
@@ -20,9 +20,9 @@ If you want to use ChatGPT, you should use the **OpenAI** provider connection in
 2. Install it on your computer
 3. Sign in with your Anthropic account
 
-### Step 2: Create MCP Connection in HaruCMS
+### Step 2: Create MCP Connection in Birkly
 
-1. Go to **Settings > AI Connections** in your HaruCMS admin panel
+1. Go to **Settings > AI Connections** in your Birkly admin panel
 2. Click **"+ Add Connection"**
 3. Select **"MCP (Model Context Protocol)"** as the provider
 4. Fill in the connection details:
@@ -51,16 +51,16 @@ The config file is located at:
 
 #### Configuration Format:
 
-Edit the config file and add your HaruCMS MCP server:
+Edit the config file and add your Birkly MCP server:
 
 ```json
 {
   "mcpServers": {
-    "harucms": {
+    "birkly": {
       "command": "node",
       "args": [
         "-e",
-        "const http = require('http'); const url = require('url'); const querystring = require('querystring'); const server = http.createServer((req, res) => { const parsed = url.parse(req.url, true); const apiKey = parsed.query.api_key || req.headers['x-mcp-api-key']; if (!apiKey) { res.writeHead(401); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32000, message: 'API key required'}})); return; } let body = ''; req.on('data', chunk => { body += chunk; }); req.on('end', () => { const input = JSON.parse(body || '{}'); const method = input.method || parsed.query.method || ''; const params = input.params || {}; fetch('YOUR_HARUCMS_URL/api/mcp_server.php?method=' + method + '&api_key=' + apiKey, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-MCP-API-Key': apiKey}, body: JSON.stringify({method, params, id: input.id})}).then(r => r.json()).then(data => { res.writeHead(200, {'Content-Type': 'application/json'}); res.end(JSON.stringify(data)); }).catch(err => { res.writeHead(500); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32603, message: err.message}})); }); }); }); server.listen(0, () => { process.stdout.write(JSON.stringify({mcpServer: {name: 'harucms', version: '1.0.0'}}) + '\\n'); });"
+        "const http = require('http'); const url = require('url'); const querystring = require('querystring'); const server = http.createServer((req, res) => { const parsed = url.parse(req.url, true); const apiKey = parsed.query.api_key || req.headers['x-mcp-api-key']; if (!apiKey) { res.writeHead(401); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32000, message: 'API key required'}})); return; } let body = ''; req.on('data', chunk => { body += chunk; }); req.on('end', () => { const input = JSON.parse(body || '{}'); const method = input.method || parsed.query.method || ''; const params = input.params || {}; fetch('YOUR_HARUCMS_URL/api/mcp_server.php?method=' + method + '&api_key=' + apiKey, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-MCP-API-Key': apiKey}, body: JSON.stringify({method, params, id: input.id})}).then(r => r.json()).then(data => { res.writeHead(200, {'Content-Type': 'application/json'}); res.end(JSON.stringify(data)); }).catch(err => { res.writeHead(500); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32603, message: err.message}})); }); }); }); server.listen(0, () => { process.stdout.write(JSON.stringify({mcpServer: {name: 'birkly', version: '1.0.0'}}) + '\\n'); });"
       ],
       "env": {
         "HARUCMS_URL": "http://localhost:8080",
@@ -75,7 +75,7 @@ Edit the config file and add your HaruCMS MCP server:
 
 ### Step 4: Using HTTP MCP Bridge (Recommended)
 
-Since HaruCMS uses HTTP for MCP (not stdio), you'll need a bridge. Here's a simpler approach:
+Since Birkly uses HTTP for MCP (not stdio), you'll need a bridge. Here's a simpler approach:
 
 #### Option A: Use a Simple HTTP-to-MCP Bridge Script
 
@@ -116,7 +116,7 @@ process.stdin.on('data', async (chunk) => {
               resources: {}
             },
             serverInfo: {
-              name: 'HaruCMS MCP Server',
+              name: 'Birkly MCP Server',
               version: '1.0.0'
             }
           }
@@ -125,10 +125,10 @@ process.stdin.on('data', async (chunk) => {
         continue;
       }
       
-      // Forward other requests to HaruCMS
-      const harucmsUrl = new URL('/api/mcp_server.php', HARUCMS_URL);
-      harucmsUrl.searchParams.set('method', message.method);
-      harucmsUrl.searchParams.set('api_key', API_KEY);
+      // Forward other requests to Birkly
+      const birklyUrl = new URL('/api/mcp_server.php', HARUCMS_URL);
+      birklyUrl.searchParams.set('method', message.method);
+      birklyUrl.searchParams.set('api_key', API_KEY);
       
       const options = {
         method: 'POST',
@@ -138,9 +138,9 @@ process.stdin.on('data', async (chunk) => {
         }
       };
       
-      const protocol = harucmsUrl.protocol === 'https:' ? https : http;
+      const protocol = birklyUrl.protocol === 'https:' ? https : http;
       
-      const req = protocol.request(harucmsUrl, options, (res) => {
+      const req = protocol.request(birklyUrl, options, (res) => {
         let data = '';
         res.on('data', (chunk) => { data += chunk; });
         res.on('end', () => {
@@ -185,7 +185,7 @@ Then configure Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "harucms": {
+    "birkly": {
       "command": "node",
       "args": ["/path/to/mcp-bridge.js"],
       "env": {
@@ -206,7 +206,7 @@ After editing the config file, restart Claude Desktop completely. The MCP server
 1. Open Claude Desktop
 2. Start a new conversation
 3. Ask Claude: "What tools do you have access to?"
-4. Claude should list the HaruCMS tools:
+4. Claude should list the Birkly tools:
    - `list_collections`
    - `get_collection`
    - `list_entries`
@@ -220,7 +220,7 @@ If you want to use ChatGPT (not Claude), you have two options:
 
 ### Option 1: Use OpenAI Provider (Recommended)
 
-1. Go to **Settings > AI Connections** in HaruCMS
+1. Go to **Settings > AI Connections** in Birkly
 2. Add a new connection
 3. Select **"OpenAI"** as provider
 4. Enter your OpenAI API key
@@ -231,16 +231,16 @@ If you want to use ChatGPT (not Claude), you have two options:
 ChatGPT doesn't support MCP, but you could:
 - Use the OpenAI API directly
 - Create a custom integration using webhooks
-- Use the internal chat interface in HaruCMS
+- Use the internal chat interface in Birkly
 
 ## Troubleshooting
 
 ### MCP Server Not Connecting
 
-1. **Check the API Key**: Make sure you copied the correct MCP API key from HaruCMS
-2. **Check the URL**: Ensure `HARUCMS_URL` points to your HaruCMS installation
-3. **Check Network**: Make sure Claude Desktop can reach your HaruCMS server
-4. **Check Logs**: Look at `logs/php_errors.log` in HaruCMS for errors
+1. **Check the API Key**: Make sure you copied the correct MCP API key from Birkly
+2. **Check the URL**: Ensure `HARUCMS_URL` points to your Birkly installation
+3. **Check Network**: Make sure Claude Desktop can reach your Birkly server
+4. **Check Logs**: Look at `logs/php_errors.log` in Birkly for errors
 
 ### Claude Can't See Tools
 
@@ -251,7 +251,7 @@ ChatGPT doesn't support MCP, but you could:
 
 ### Permission Errors
 
-1. Make sure the MCP connection in HaruCMS has the right role/permissions
+1. Make sure the MCP connection in Birkly has the right role/permissions
 2. Check that the AI user has access to the collections you're trying to use
 
 ## Available MCP Tools

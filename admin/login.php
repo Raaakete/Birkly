@@ -1,5 +1,5 @@
 <?php
-// admin/login.php - Admin login page for HaruCMS
+// admin/login.php - Admin login page for Birkly
 
 // CRITICAL: Set Content-Type header FIRST before anything else
 // This ensures it's sent even if session_start() or includes output something
@@ -18,27 +18,40 @@ haru_secure_session_start();
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
 
-// Ensure Content-Type is still set (in case something cleared it)
+// SECURITY FIX: Set comprehensive security headers
+require_once __DIR__ . '/../api/validate.php';
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
-}
-
-// If user is already logged in, redirect to dashboard
-// Use absolute path to ensure correct routing
-if (isset($_SESSION['user'])) {
-    // Clear output buffer if exists
-    if (ob_get_level() > 0) {
-        ob_clean();
-    }
-    if (!headers_sent()) {
-        http_response_code(302);
-        header('Location: /admin/index.php?page=dashboard');
-    }
-    exit;
+    set_security_headers('admin');
 }
 
 $error = '';
 $success = '';
+$notice = '';
+
+// If user is already logged in AND has an allowed admin-panel role, redirect to dashboard.
+// If they're logged in as a public/demo user (role like "member"), let them switch accounts here
+// instead of causing a redirect loop between login and admin pages.
+if (isset($_SESSION['user'])) {
+    $currentRole = $_SESSION['user']['role'] ?? '';
+    $allowedAdminRoles = ['admin', 'editor', 'viewer'];
+
+    if (in_array($currentRole, $allowedAdminRoles, true)) {
+        // Clear output buffer if exists
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        if (!headers_sent()) {
+            http_response_code(302);
+            header('Location: /admin/index.php?page=dashboard');
+        }
+        exit;
+    }
+
+    $currentEmail = $_SESSION['user']['email'] ?? ($_SESSION['user']['id'] ?? 'unknown');
+    $notice = 'You are currently signed in as "' . $currentEmail . '" (role: ' . ($currentRole ?: 'unknown') . '). '
+        . 'This account cannot access the admin panel. You can sign in below to switch accounts, or log out.';
+}
 
 // Check if no users exist - redirect to onboarding for first user creation
 $GLOBALS['__HARU_INTERNAL_CALL'] = true;
@@ -69,25 +82,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Include authentication functions
         require_once __DIR__ . '/../api/auth.php';
-        require_once __DIR__ . '/../api/users.php';
+        // Note: We don't need api/users.php here - login.php has its own attemptLogin() function
         
         // Attempt login
         $loginResult = attemptLogin($email, $password);
         
         if ($loginResult['success']) {
-            // Check if 2FA is enabled for this user
-            // Set flag to prevent API from executing switch statement
+            // Check if 2FA is enabled for this user (per-user setting)
+            // Use the same user storage + ID scheme as api/2fa.php / api/users.php
             $GLOBALS['__HARU_INTERNAL_CALL'] = true;
             require_once __DIR__ . '/../api/2fa.php';
-            $usersDir = __DIR__ . '/../data/users';
-            $userFile = $usersDir . '/' . sanitizeFilename($email) . '.json';
+
+            $normalizedEmail = trim(strtolower($email));
+            $userId = md5($normalizedEmail);
+
+            // Prefer /users, fall back to /data/users (matches api/2fa.php)
+            $usersDir = __DIR__ . '/../users';
+            if (!is_dir($usersDir)) {
+                $usersDir = __DIR__ . '/../data/users';
+            }
+            $userFile = $usersDir . '/' . $userId . '.json';
             
             if (file_exists($userFile)) {
                 $userData = json_decode(file_get_contents($userFile), true);
                 if (isset($userData['2fa']['enabled']) && $userData['2fa']['enabled']) {
                     // Store email in session for 2FA verification
-                    $_SESSION['2fa_pending'] = $email;
-                    // Don't set user session yet - require 2FA verification first
+                    $_SESSION['2fa_pending'] = $normalizedEmail;
+                    // Don't keep full user session yet - require 2FA verification first
                     unset($_SESSION['user']);
                     // CRITICAL: Clear output buffer before redirect
                     if (ob_get_level() > 0) {
@@ -109,17 +130,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
                 $redirect = '/admin/' . $redirect;
             }
-            // CRITICAL: Clear output buffer before redirect
-            // Check if output buffer exists before trying to clean it
-            if (ob_get_level() > 0) {
-                ob_clean(); // Clear buffer content but keep buffer active
+            // CRITICAL: Clear ALL output buffers before redirect
+            // We need to end all buffers to prevent any output from being sent
+            while (ob_get_level() > 0) {
+                ob_end_clean();
             }
             // Now set redirect header
             if (!headers_sent()) {
                 http_response_code(302); // Explicitly set redirect status FIRST
                 header('Location: ' . $redirect);
             }
-            // Exit immediately - output buffer will be automatically discarded
+            // Exit immediately - no output should be sent
             exit;
         } else {
             $error = $loginResult['message'];
@@ -168,9 +189,9 @@ $storage = new Storage(__DIR__ . '/../settings');
 $adminSettings = $storage->read('admin.json') ?? [];
 $brandingSettings = $storage->read('branding.json') ?? [];
 
-$projectName = $adminSettings['project_name'] ?? 'HaruCMS';
+$projectName = $adminSettings['project_name'] ?? 'Birkly';
 $logoPath = $brandingSettings['logoPath'] ?? '';
-$defaultLogo = '/admin/assets/haru-icon.svg';
+$defaultLogo = '/admin/assets/birkly-icon.svg';
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 ?>
 <!DOCTYPE html>
@@ -393,6 +414,16 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         <?php if ($success): ?>
             <div class="success-message">
                 <?= htmlspecialchars($success) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($notice): ?>
+            <div class="success-message">
+                <?= htmlspecialchars($notice) ?>
+                <form method="POST" action="/admin/logout.php" style="margin-top: 10px;">
+                    <input type="hidden" name="_csrf" value="<?= htmlspecialchars(get_csrf_token()) ?>">
+                    <button type="submit" class="login-button" style="margin-top: 0;">Log out</button>
+                </form>
             </div>
         <?php endif; ?>
         

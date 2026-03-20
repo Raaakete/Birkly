@@ -1,0 +1,38 @@
+<!-- Action Bar Component
+     Parameters:
+     - primary_action: Primary button config ['label' => '...', 'url' => '...', 'form' => '...']
+     - secondary_actions: Array of secondary actions (optional)
+-->
+<div class="main-actions-bar">
+    {if primary_action exist}
+        {if primary_action.form exist}
+            <button type="submit" form="{primary_action.form}" class="btn btn-primary">
+                {primary_action.label}
+            </button>
+        {else}
+            {if primary_action.url exist}
+                <a href="{primary_action.url}" class="btn btn-primary">
+                    {primary_action.label}
+                </a>
+            {else}
+                <button type="button" class="btn btn-primary" id="{primary_action.id}">
+                    {primary_action.label}
+                </button>
+            {endif}
+        {endif}
+    {endif}
+    
+    {if secondary_actions exist}
+        {for each action in secondary_actions}
+            {if action.url exist}
+                <a href="{action.url}" class="btn btn-secondary">
+                    {action.label}
+                </a>
+            {else}
+                <button type="button" class="btn btn-secondary" id="{action.id}">
+                    {action.label}
+                </button>
+            {endif}
+        {endfor}
+    {endif}
+</div>

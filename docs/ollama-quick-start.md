@@ -1,4 +1,4 @@
-# Quick Start: Connect Ollama to HaruCMS
+# Quick Start: Connect Ollama to Birkly
 
 ## Step-by-Step Instructions
 
@@ -30,10 +30,10 @@
    - `ollama pull codellama` (good for code)
    - `ollama pull phi` (very small, very fast)
 
-### Step 3: Open HaruCMS Admin Panel
+### Step 3: Open Birkly Admin Panel
 
 1. Open your browser
-2. Go to your HaruCMS admin panel (usually `http://localhost:8080/admin`)
+2. Go to your Birkly admin panel (usually `http://localhost:8080/admin`)
 3. Log in if needed
 
 ### Step 4: Go to AI Connections Settings
@@ -123,7 +123,7 @@ If this fails, start Ollama.
 ```bash
 ollama list
 ```
-This shows all models you have. Make sure the model name matches what you selected in HaruCMS.
+This shows all models you have. Make sure the model name matches what you selected in Birkly.
 
 ### "Model not found"
 
@@ -132,7 +132,7 @@ This shows all models you have. Make sure the model name matches what you select
    ollama list
    ```
 
-2. In HaruCMS, make sure the model name matches exactly (case-sensitive)
+2. In Birkly, make sure the model name matches exactly (case-sensitive)
 
 3. If your model isn't in the dropdown, type it manually in the custom model field
 

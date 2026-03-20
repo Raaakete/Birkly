@@ -351,7 +351,7 @@ if (document.readyState === 'loading') {
 }
 
 // Initialize new fields as they're added using the interface
-if (!window.tagsObserver) {
+if (!window.tagsObserver && window.HaruFieldtypeInterface && typeof window.HaruFieldtypeInterface.createObserver === 'function') {
   const observerCallback = (mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
@@ -367,32 +367,59 @@ if (!window.tagsObserver) {
     });
   };
 
+  try {
   window.tagsObserver = window.HaruFieldtypeInterface.createObserver(observerCallback, { childList: true, subtree: true }, 'tags');
-  window.HaruFieldtypeInterface.getElements('body')[0] && window.tagsObserver.observe(document.body, { childList: true, subtree: true });
+    const body = window.HaruFieldtypeInterface.getElements('body')[0];
+    if (body && window.tagsObserver) {
+      window.tagsObserver.observe(body, { childList: true, subtree: true });
+    }
+  } catch (e) {
+    console.warn('[Tags] Could not create observer:', e);
+  }
 }
 
 // Listen for save events to update hidden inputs
+// Use a flag to prevent multiple handlers
+if (!window._tagsBeforeSaveHandlerAdded) {
+  window._tagsBeforeSaveHandlerAdded = true;
 document.addEventListener('beforeSaveEntry', function() {
   console.log('=== Tags fieldtype received beforeSaveEntry event ===');
-  const tagsFields = window.HaruFieldtypeInterface.getElements('.tags-field', document, 'Tags beforeSaveEntry');
+    
+    // Use standard DOM methods as fallback
+    const tagsFields = document.querySelectorAll('.tags-field');
   console.log('Found tags fields:', tagsFields.length);
+    
   tagsFields.forEach(field => {
     const fieldName = field.id.replace('tags_field_', '');
+      if (!fieldName) return;
+      
     console.log('Processing tags field:', fieldName);
-    const tags = window.HaruFieldtypes['tags'].getValue(fieldName);
+      
+      // Get tags from DOM chips (most reliable)
+      const chips = field.querySelectorAll('.tag-chip');
+      const tags = Array.from(chips).map(chip => {
+        const removeBtn = chip.querySelector('.tag-remove');
+        if (removeBtn) {
+          // Get text content and remove the × character
+          return chip.textContent.trim().replace(/×$/, '').trim();
+        }
+        return chip.textContent.trim();
+      }).filter(tag => tag !== '');
+      
     console.log('Current tags for field:', fieldName, ':', tags);
-    window.HaruFieldtypes['tags'].updateHiddenInput(fieldName, tags);
-    console.log('Tags fieldtype updated hidden input for:', fieldName, 'with tags:', tags);
     
-    // Debug: Check if hidden input was actually updated
-    const hiddenInput = window.HaruFieldtypeInterface.getElement(`field_${fieldName}_value`, 'Tags beforeSaveEntry debug');
+      // Update hidden input directly
+      const hiddenInput = document.getElementById('field_' + fieldName + '_value');
     if (hiddenInput) {
-      console.log('Hidden input value after update:', window.HaruFieldtypeInterface.getValue(hiddenInput, 'Tags beforeSaveEntry debug'));
+        const jsonValue = JSON.stringify(tags);
+        hiddenInput.value = jsonValue;
+        console.log('Tags fieldtype updated hidden input for:', fieldName, 'with tags:', tags, 'JSON:', jsonValue);
     } else {
       console.error('Hidden input not found for field:', fieldName);
     }
   });
 });
+}
 
 // Backward compatibility
 window.initTagsField = function(fieldName) {

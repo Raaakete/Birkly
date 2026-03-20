@@ -22,10 +22,28 @@ require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once 'log.php';
 require_once '../core/plugins.php';
+require_once '../core/plugins/security.php';
+require_once '../core/plugins/validation.php';
 
 // Use the PluginStorage class from core/plugins.php
 $storage = new PluginStorage('../settings');
-$input = sanitize_input(json_decode(file_get_contents('php://input'), true));
+
+// Enhanced input sanitization with validation
+$rawInput = json_decode(file_get_contents('php://input'), true);
+$input = [];
+if (is_array($rawInput)) {
+    foreach ($rawInput as $key => $value) {
+        // Basic sanitization
+        if (is_string($value)) {
+            $input[$key] = validate_plugin_input($value, 'string', ['max_length' => 10000]);
+        } elseif (is_array($value)) {
+            $input[$key] = validate_plugin_input($value, 'array');
+        } else {
+            $input[$key] = $value;
+        }
+    }
+}
+$input = array_merge($input, sanitize_input($input));
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
 // All actions require authentication and manage_plugins permission
@@ -87,18 +105,49 @@ if ($action === 'list') {
     exit;
 }
 
+// Check plugin dependencies
+if ($action === 'check_dependencies') {
+    requireAuth('manage_plugins');
+    
+    $plugin_id = $input['plugin_id'] ?? $_GET['plugin_id'] ?? '';
+    
+    if (empty($plugin_id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Plugin ID required']);
+        exit;
+    }
+    
+    $errors = check_plugin_dependencies($plugin_id);
+    
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'valid' => empty($errors),
+            'errors' => $errors
+        ]
+    ]);
+    exit;
+}
+
 // Activate plugin
 if ($action === 'activate') {
     $csrf = $input['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!validate_plugin_csrf($csrf)) {
+        log_plugin_security_event('permission_denied', ['action' => 'plugin_activate', 'reason' => 'invalid CSRF']);
         log_security_event('permission_denied', ['action' => 'plugin_activate', 'reason' => 'invalid CSRF']);
         echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
         exit;
     }
     
-    $plugin_id = $input['plugin_id'] ?? '';
-    if (empty($plugin_id)) {
-        echo json_encode(['status' => 'error', 'message' => 'Plugin ID required']);
+    // Validate plugin_id input
+    $plugin_id = validate_plugin_input($input['plugin_id'] ?? '', 'string', [
+        'required' => true,
+        'max_length' => 100,
+        'pattern' => '/^[a-z0-9_-]+$/i'
+    ]);
+    
+    if ($plugin_id === false || empty($plugin_id)) {
+        log_plugin_security_event('invalid_input', ['action' => 'plugin_activate', 'field' => 'plugin_id']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid plugin ID']);
         exit;
     }
     
@@ -113,6 +162,44 @@ if ($action === 'activate') {
     if (!empty($errors)) {
         echo json_encode(['status' => 'error', 'message' => 'Plugin validation failed: ' . implode(', ', $errors)]);
         exit;
+    }
+    
+    // Check dependencies before activation
+    if (function_exists('validate_plugin_activation')) {
+        $validation = validate_plugin_activation($plugin_id);
+        if (!$validation['valid']) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Plugin dependencies not met',
+                'errors' => $validation['errors']
+            ]);
+            exit;
+        }
+    }
+    
+    // Run migrations if needed
+    if (function_exists('plugin_needs_migration') && function_exists('run_plugin_migrations')) {
+        global $haru_plugins;
+        $plugin = $haru_plugins[$plugin_id] ?? null;
+        if ($plugin) {
+            $current_version = $plugin['version'] ?? '1.0.0';
+            $last_migrated = function_exists('get_plugin_last_migrated_version') 
+                ? get_plugin_last_migrated_version($plugin_id) 
+                : null;
+            
+            if ($last_migrated === null || version_compare($current_version, $last_migrated, '>')) {
+                // Run migrations
+                $migration_result = run_plugin_migrations($plugin_id, $last_migrated ?? '0.0.0', $current_version);
+                if (!$migration_result['success']) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Plugin activation failed during migration',
+                        'migration_errors' => $migration_result['messages']
+                    ]);
+                    exit;
+                }
+            }
+        }
     }
     
     set_plugin_state($plugin_id, true);

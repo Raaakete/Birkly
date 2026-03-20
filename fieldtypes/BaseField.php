@@ -1,10 +1,17 @@
 <?php
 /**
- * BaseField for HaruCMS Fieldtypes
+ * BaseField for Birkly Fieldtypes
  *
  * All fieldtypes must be self-contained in their own folder and use admin CSS for styling.
+ * 
+ * CSS Development Guidelines:
+ * - Use system CSS variables from core/variables.css (never hardcode colors/spacing)
+ * - Use system classes from components/ (buttons, forms, etc.) when possible
+ * - Only add custom CSS for fieldtype-specific functionality
+ * - Scope all styles to your fieldtype wrapper class
+ * - See docs/FIELDTYPE_CSS_GUIDE.md for complete guidelines
  */
-namespace HaruCMS\FieldTypes;
+namespace Birkly\FieldTypes;
 
 abstract class BaseField {
     protected $name;
@@ -135,10 +142,10 @@ abstract class BaseField {
             return '<span class="ft-list-empty">–</span>';
         }
 
-        // Truncate long strings for list view
+        // Truncate long strings for list view with "..." at the end
         $max = $context['truncate'] ?? 80;
         if (mb_strlen($string) > $max) {
-            $string = mb_substr($string, 0, $max - 1) . '…';
+            $string = mb_substr($string, 0, $max - 3) . '...';
         }
         // Basic escaping; allow minimal safe HTML via htmlspecialchars
         return '<span class="ft-list-text">' . htmlspecialchars($string, ENT_QUOTES, 'UTF-8') . '</span>';
@@ -150,5 +157,15 @@ abstract class BaseField {
      */
     public function getListColumnWidth(): string {
         return '240px';
+    }
+
+    /**
+     * Minimum width for this fieldtype's table cell.
+     * Fieldtypes can override to provide their minimum required width.
+     * This is used for CSS min-width to ensure cells don't shrink too much.
+     */
+    public function getTableMinWidth(): string {
+        // Default to the same as getListColumnWidth for backward compatibility
+        return $this->getListColumnWidth();
     }
 } 

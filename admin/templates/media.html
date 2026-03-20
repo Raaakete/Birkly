@@ -1,25 +1,28 @@
 <div class="page-header pt-m pb-m">
-    <div class="breadcrumbs"><span class="current">Media</span></div>
+    <div class="page-header-left">
+        <div class="breadcrumbs"><span class="current">{translate 'admin.media'}</span></div>
+    </div>
+    <div class="page-header-actions"></div>
 </div>
 
 
   <!-- Header -->
   <div class="media-header">
     <div class="header-actions">
-      <button class="btn btn-primary" onclick="uploadMedia()">Upload Media</button>
-      <button class="btn btn-secondary" onclick="createFolder()">New Folder</button>
+      <button class="btn btn-primary" onclick="uploadMedia()">{translate 'admin.upload_media'}</button>
+      <button class="btn btn-secondary" onclick="createFolder()">{translate 'admin.new_folder'}</button>
     </div>
     <div class="media-toolbar">
       <div class="toolbar-search">
-        <input type="text" id="media-search" placeholder="Search media..." class="search-input">
+        <input type="text" id="media-search" placeholder="{translate 'admin.search_media'}" class="search-input">
       </div>
       <div class="toolbar-filters">
         <select id="type-filter" class="filter-select">
-          <option value="">All Types</option>
-          <option value="image">Images</option>
-          <option value="video">Videos</option>
-          <option value="audio">Audio</option>
-          <option value="document">Documents</option>
+          <option value="">{translate 'admin.all_types'}</option>
+          <option value="image">{translate 'admin.images'}</option>
+          <option value="video">{translate 'admin.videos'}</option>
+          <option value="audio">{translate 'admin.audio'}</option>
+          <option value="document">{translate 'admin.documents'}</option>
         </select>
       </div>
     </div>
@@ -34,24 +37,22 @@
             <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2-2z"></path>
             <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
           </svg>
-          <span>All Media</span>
+          <span>{translate 'admin.all_media'}</span>
         </div>
         <div class="folder-item root" onclick="navigateToFolder('')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
           </svg>
-          <span>Root Folder</span>
+          <span>{translate 'admin.root_folder'}</span>
         </div>
         <div id="folder-list-container"></div>
       </div>
     </aside>
 
     <!-- Main Content -->
-      <!-- Media Grid -->
-      <div class="media-content" id="media-content">
-        <div class="media-grid" id="media-grid">
-          <div class="media-loading">Loading media...</div>
-        </div>
+    <main class="media-main">
+      <div class="media-grid" id="media-grid">
+        <div class="media-loading">{translate 'admin.loading_media'}</div>
       </div>
     </main>
   </div>
@@ -60,27 +61,27 @@
   <div id="upload-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Upload Media</h3>
+        <h3>{translate 'admin.upload_media'}</h3>
         <button class="modal-close" onclick="closeUploadModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="upload-form" enctype="multipart/form-data">
           <div class="form-group">
-            <label for="file-input">Select File</label>
+            <label for="file-input">{translate 'admin.select_file'}</label>
             <input type="file" id="file-input" name="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" required>
           </div>
           <div class="form-group">
-            <label for="upload-title">Title (optional)</label>
-            <input type="text" id="upload-title" name="title" placeholder="Enter a title for this media">
+            <label for="upload-title">{translate 'admin.title_optional'}</label>
+            <input type="text" id="upload-title" name="title" placeholder="{translate 'admin.enter_title'}">
           </div>
           <div class="form-group">
-            <label for="upload-folder">Current Folder: <span id="current-upload-folder">Root</span></label>
+            <label for="upload-folder">{translate 'admin.current_folder'}: <span id="current-upload-folder">{translate 'admin.root'}</span></label>
           </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="handleUpload()">Upload</button>
+        <button class="btn btn-secondary" onclick="closeUploadModal()">{translate 'admin.cancel'}</button>
+        <button class="btn btn-primary" onclick="handleUpload()">{translate 'admin.upload'}</button>
       </div>
     </div>
   </div>
@@ -89,16 +90,16 @@
   <div id="media-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="media-modal-title">Media Details</h3>
+        <h3 id="media-modal-title">{translate 'admin.media_details'}</h3>
         <button class="modal-close" onclick="closeMediaModal()">&times;</button>
       </div>
       <div class="modal-body" id="media-modal-body">
         <!-- Content will be populated by JavaScript -->
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="openMoveModal()">Move to Folder</button>
-        <button class="btn btn-danger" onclick="deleteCurrentMedia()">Delete</button>
-        <button class="btn btn-secondary" onclick="closeMediaModal()">Close</button>
+        <button class="btn btn-secondary" onclick="openMoveModal()">{translate 'admin.move_to_folder'}</button>
+        <button class="btn btn-danger" onclick="deleteCurrentMedia()">{translate 'admin.delete'}</button>
+        <button class="btn btn-secondary" onclick="closeMediaModal()">{translate 'admin.close'}</button>
       </div>
     </div>
   </div>
@@ -107,7 +108,7 @@
   <div id="move-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Move Media to Folder</h3>
+        <h3>{translate 'admin.move_to_folder'}</h3>
         <button class="modal-close" onclick="closeMoveModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -116,8 +117,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeMoveModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="confirmMove()">Move</button>
+        <button class="btn btn-secondary" onclick="closeMoveModal()">{translate 'admin.cancel'}</button>
+        <button class="btn btn-primary" onclick="confirmMove()">{translate 'admin.move'}</button>
       </div>
     </div>
   </div>
@@ -131,6 +132,12 @@ let currentMoveItem = null;
 let currentFolder = '';
 let folderData = [];
 let selectedMoveFolder = '';
+
+// CSRF helper
+function getCSRFToken() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute('content') : '';
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -480,7 +487,7 @@ function renderMediaGrid() {
     }
 
     const mediaCard = document.createElement('div');
-    mediaCard.className = 'media-card';
+    mediaCard.className = 'card';
 
     const itemId = String(item.id || '');
     const itemName = String(item.name || 'Untitled');
@@ -588,7 +595,7 @@ function filterMedia() {
     }
 
     const mediaCard = document.createElement('div');
-    mediaCard.className = 'media-card';
+    mediaCard.className = 'card';
 
     const itemId = String(item.id || '');
     const itemName = String(item.name || 'Untitled');
@@ -638,6 +645,7 @@ async function handleUpload() {
   const formData = new FormData(form);
   const uploadFolder = currentFolder === 'all' ? '' : currentFolder;
   formData.append('folder', uploadFolder);
+  formData.append('_csrf', getCSRFToken());
   
   try {
     const response = await fetch('/api/admin_media.php?action=upload', {
@@ -668,6 +676,7 @@ async function createFolder() {
   try {
     const formData = new FormData();
     formData.append('name', name);
+    formData.append('_csrf', getCSRFToken());
     
     const response = await fetch('/api/admin_media.php?action=create_folder', {
       method: 'POST',
@@ -703,6 +712,7 @@ async function renameFolder(folderPath) {
     const formData = new FormData();
     formData.append('old_name', folderPath);
     formData.append('new_name', newPath);
+    formData.append('_csrf', getCSRFToken());
     
     const response = await fetch('/api/admin_media.php?action=rename_folder', {
       method: 'POST',
@@ -750,6 +760,7 @@ async function deleteFolderWithOptions(folderPath) {
     const formData = new FormData();
     formData.append('name', folderPath);
     formData.append('handle_files', handleFiles);
+    formData.append('_csrf', getCSRFToken());
     
     const response = await fetch('/api/admin_media.php?action=delete_folder', {
       method: 'POST',
@@ -817,14 +828,14 @@ function getMediaPreviewHTML(item) {
   var type = item.type || '';
   var category = item.category || '';
   if (category === 'image') {
-    return '<img src="' + url + '" alt="" style="max-width: 100%; max-height: 300px;">';
+    return '<img src="' + url + '" alt="">';
   } else if (category === 'video') {
-    return '<video controls style="max-width: 100%; max-height: 300px;">' +
+    return '<video controls>' +
       '<source src="' + url + '" type="' + type + '">' +
       'Your browser does not support the video tag.' +
     '</video>';
   } else if (category === 'audio') {
-    return '<audio controls style="width: 100%;">' +
+    return '<audio controls>' +
       '<source src="' + url + '" type="' + type + '">' +
       'Your browser does not support the audio tag.' +
     '</audio>';
@@ -890,6 +901,7 @@ async function confirmMove() {
     const formData = new FormData();
     formData.append('id', currentMediaItem.id);
     formData.append('folder', selectedMoveFolder);
+    formData.append('_csrf', getCSRFToken());
     
     const response = await fetch('/api/admin_media.php?action=move_to_folder', {
       method: 'POST',
@@ -921,6 +933,7 @@ async function deleteMedia(id) {
   try {
     const formData = new FormData();
     formData.append('id', id);
+    formData.append('_csrf', getCSRFToken());
     
     const response = await fetch('/api/admin_media.php?action=delete', {
       method: 'POST',

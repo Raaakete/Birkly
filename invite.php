@@ -93,7 +93,7 @@ if ($invitation && $_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accept Invitation - HaruCMS</title>
+    <title>Accept Invitation - Birkly</title>
     <style>
         * {
             margin: 0;
@@ -271,7 +271,7 @@ if ($invitation && $_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="invitation-header">
             <div class="logo">H</div>
             <h1>Accept Invitation</h1>
-            <p>Set up your account to join HaruCMS</p>
+            <p>Set up your account to join Birkly</p>
         </div>
         
         <?php if ($error): ?>
@@ -297,7 +297,7 @@ if ($invitation && $_SERVER['REQUEST_METHOD'] === 'POST') {
             
         <?php elseif ($invitation): ?>
             <div class="invitation-info">
-                <h3>You're invited to join HaruCMS</h3>
+                <h3>You're invited to join Birkly</h3>
                 <p><strong>Email:</strong> <?= htmlspecialchars($invitation['email']) ?></p>
                 <p><strong>Role:</strong> <?= htmlspecialchars(ucfirst($invitation['role'])) ?></p>
                 <p><strong>Expires:</strong> <?= date('M j, Y g:i A', strtotime($invitation['expires_at'])) ?></p>

@@ -1,11 +1,11 @@
 /**
- * HaruCMS Template Engine
+ * Birkly Template Engine
  * Handles template inheritance, includes, and dynamic content loading
  */
 
-window.HaruCMS = window.HaruCMS || {};
+window.Birkly = window.Birkly || {};
 
-HaruCMS.TemplateEngine = {
+Birkly.TemplateEngine = {
     // Template cache
     templates: {},
     
@@ -285,7 +285,7 @@ HaruCMS.TemplateEngine = {
 };
 
 // Utility functions for templates
-HaruCMS.utils = {
+Birkly.utils = {
     /**
      * Format date
      */

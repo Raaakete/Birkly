@@ -1,0 +1,145 @@
+/* ============================================
+   Switch/Toggle Component - Unified System
+   ============================================ */
+
+/* Switch Container */
+.switch,
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Switch Input (Hidden) */
+.switch input[type="checkbox"],
+.toggle-switch input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+  margin: 0;
+  padding: 0;
+}
+
+/* Switch Slider */
+.switch__slider,
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-neutral-400, #D9DBD5);
+  transition: 0.3s;
+  border-radius: 20px;
+  display: block;
+}
+
+/* Switch Slider Knob */
+.switch__slider::before,
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Checked State */
+.switch input[type="checkbox"]:checked + .switch__slider,
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider {
+  background-color: var(--color-primary, #7CE3BF);
+}
+
+.switch input[type="checkbox"]:checked + .switch__slider::before,
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider:before {
+  transform: translateX(16px);
+}
+
+/* Focus State */
+.switch input[type="checkbox"]:focus + .switch__slider,
+.toggle-switch input[type="checkbox"]:focus + .toggle-slider {
+  box-shadow: 0 0 0 3px rgba(124, 227, 191, 0.2);
+}
+
+/* Disabled State */
+.switch input[type="checkbox"]:disabled + .switch__slider,
+.toggle-switch input[type="checkbox"]:disabled + .toggle-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.switch--disabled,
+.switch input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Hover State */
+.switch:hover .switch__slider:not(:disabled),
+.toggle-switch:hover .toggle-slider:not(:disabled) {
+  background-color: var(--color-neutral-500, #C4C6C1);
+}
+
+.switch input[type="checkbox"]:checked:hover + .switch__slider,
+.toggle-switch input[type="checkbox"]:checked:hover + .toggle-slider {
+  background-color: var(--color-primary-hover, #8CECCA);
+}
+
+/* Switch Sizes */
+.switch--sm,
+.switch--sm.toggle-switch {
+  width: 28px;
+  height: 16px;
+}
+
+.switch--sm .switch__slider::before,
+.switch--sm .toggle-slider:before {
+  height: 10px;
+  width: 10px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.switch--sm input[type="checkbox"]:checked + .switch__slider::before,
+.switch--sm input[type="checkbox"]:checked + .toggle-slider:before {
+  transform: translateX(12px);
+}
+
+.switch--lg,
+.switch--lg.toggle-switch {
+  width: 44px;
+  height: 24px;
+}
+
+.switch--lg .switch__slider::before,
+.switch--lg .toggle-slider:before {
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.switch--lg input[type="checkbox"]:checked + .switch__slider::before,
+.switch--lg input[type="checkbox"]:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Preference Item Context */
+.preference-item .switch,
+.preference-item .toggle-switch {
+  min-width: 32px;
+  min-height: 18px;
+  margin-left: auto;
+}
+

@@ -1,5 +1,5 @@
 <?php
-// Fallback router for HaruCMS
+// Fallback router for Birkly
 // Note: This file should NOT be used as a router for PHP built-in server
 // PHP files should execute directly without going through this router
 
@@ -23,24 +23,16 @@ if ($file && strpos($file, $root) === 0 && is_file($file)) {
     exit;
 }
 
-// Serve admin index.html for /admin or /
-if ($uri === '/admin' || $uri === '/admin/' || $uri === '/') {
-    $index = $root . '/admin/index.html';
-    if (file_exists($index)) {
-        header('Content-Type: text/html');
-        readfile($index);
-        exit;
-    }
+// Redirect /admin to /admin/index.php (not index.html - we use PHP for admin)
+if ($uri === '/admin' || $uri === '/admin/') {
+    header('Location: /admin/index.php?page=dashboard', true, 302);
+    exit;
 }
 
-// Fallback for /admin SPA
+// Fallback for /admin - redirect to PHP admin panel
 if (preg_match('#^/admin($|/)#', $_SERVER['REQUEST_URI'])) {
-    $index = $root . '/admin/index.html';
-    if (file_exists($index)) {
-        header('Content-Type: text/html');
-        readfile($index);
-        exit;
-    }
+    header('Location: /admin/index.php?page=dashboard', true, 302);
+    exit;
 }
 
 // 404 for other requests

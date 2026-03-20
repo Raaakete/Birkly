@@ -1,0 +1,56 @@
+<?php
+// Status badge component
+$status = $status ?? 'unpublished';
+// Ensure status is not empty - handle both null and empty string
+if (empty($status) || $status === '') {
+    $status = 'unpublished';
+}
+// Map old 'draft' status to 'unpublished' for backward compatibility
+if ($status === 'draft') {
+    $status = 'unpublished';
+}
+$statusClass = $status;
+
+// Translate status label
+$statusKey = $status;
+if (in_array($status, ['pending_review', 'published', 'unpublished', 'scheduled'])) {
+    // Use translation if available, otherwise use formatted label
+    $translated = __('admin.' . $statusKey);
+    $statusLabel = ($translated && $translated !== 'admin.' . $statusKey) ? $translated : ucfirst(str_replace('_', ' ', $status));
+} else {
+    $statusLabel = ucfirst(str_replace('_', ' ', $status));
+}
+
+// Add review status indicator if applicable
+if (in_array($status, ['pending_review', 'approved', 'rejected'])) {
+    $statusClass .= ' review-status';
+    if ($status === 'pending_review') {
+        $statusClass .= ' pending';
+    } elseif ($status === 'approved') {
+        $statusClass .= ' approved';
+    } elseif ($status === 'rejected') {
+        $statusClass .= ' rejected';
+    }
+}
+
+// Add reviewer info if available
+$reviewer = $reviewer ?? '';
+$reviewedBy = $reviewed_by ?? '';
+$reviewInfo = '';
+if ($reviewer) {
+    $reviewInfo = ' title="Assigned to: ' . htmlspecialchars($reviewer) . '"';
+} elseif ($reviewedBy) {
+    $reviewInfo = ' title="Reviewed by: ' . htmlspecialchars($reviewedBy) . '"';
+}
+?>
+<span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
+    <?= htmlspecialchars($statusLabel) ?>
+</span>
+<?php if ($status === 'pending_review' && $reviewer): ?>
+    <div class="reviewer-indicator" title="Assigned to: <?= htmlspecialchars($reviewer) ?>">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+    </div>
+<?php endif; ?>

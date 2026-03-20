@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Time;
+namespace Birkly\FieldTypes\Time;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Time extends BaseField {
     protected $format; // 12 or 24 hour format
@@ -94,16 +94,18 @@ class Time extends BaseField {
         return <<<'CSS'
         .time-field {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
+            padding: var(--space-2, 0.5rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: var(--font-size-base, 1rem);
+            background: var(--bg-primary, #ffffff);
+            color: var(--text-primary, #20221D);
         }
         
         .time-field:focus {
-            border-color: var(--primary);
+            border-color: var(--primary-500, #3b82f6);
             outline: none;
-            box-shadow: 0 0 0 2px var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         CSS;
     }
@@ -139,6 +141,23 @@ class Time extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Format time for display (HH:mm)
+        if (preg_match('/^(\d{2}:\d{2})/', $value, $matches)) {
+            return '<span class="ft-list-text">' . htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '80px'; // Time fields are narrow (HH:mm format)
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

@@ -13,16 +13,13 @@
     
     const cssUrl = wrapper.dataset.cssUrl;
     if (!cssUrl || !cssUrl.trim()) {
-      console.log('ContentEditor: No CSS URL configured');
       return;
     }
     
-    console.log('ContentEditor: Loading external CSS from:', cssUrl);
     
     // Check if CSS is already loaded for this URL (avoid duplicates)
     const existingStyle = document.querySelector(`style[data-content-editor-css][data-css-url="${cssUrl}"]`);
     if (existingStyle) {
-      console.log('ContentEditor: CSS already loaded');
       // Still add the class in case it wasn't added before
       editor.classList.add('post-content');
       return;
@@ -255,18 +252,38 @@
   function initContentEditors() {
     const wrappers = document.querySelectorAll('.content-editor-wrapper');
     wrappers.forEach(wrapper => {
+      // SECURITY FIX: Prevent double initialization
       if (wrapper.dataset.initialized === 'true') return;
       
       const fieldName = wrapper.dataset.fieldName;
+      if (!fieldName) {
+        console.warn('ContentEditor: Wrapper missing fieldName');
+        return;
+      }
+      
       const editor = wrapper.querySelector('.content-editor-area');
       const toolbar = wrapper.querySelector('.content-editor-toolbar');
       const hiddenInput = document.getElementById('field_' + fieldName);
       
-      if (!editor || !toolbar || !hiddenInput) return;
+      if (!editor || !toolbar || !hiddenInput) {
+        // Log missing elements for debugging but don't break
+        if (!editor) console.warn('ContentEditor: Editor element not found for field:', fieldName);
+        if (!toolbar) console.warn('ContentEditor: Toolbar element not found for field:', fieldName);
+        if (!hiddenInput) console.warn('ContentEditor: Hidden input not found for field:', fieldName);
+        return;
+      }
       
-      initEditor(editor, toolbar, hiddenInput, fieldName);
-      initFullscreen(wrapper, editor, toolbar, hiddenInput, fieldName);
+      // Mark as initialized BEFORE calling initEditor to prevent race conditions
       wrapper.dataset.initialized = 'true';
+      
+      try {
+        initEditor(editor, toolbar, hiddenInput, fieldName);
+        initFullscreen(wrapper, editor, toolbar, hiddenInput, fieldName);
+      } catch (e) {
+        console.error('ContentEditor: Error initializing editor for field:', fieldName, e);
+        // Reset initialization flag on error so it can be retried
+        wrapper.dataset.initialized = 'false';
+      }
     });
   }
 
@@ -431,9 +448,18 @@
             
             // Initial sync
             if (window.ContentEditorSync) {
-              window.ContentEditorSync.toHidden(editor, hiddenInput);
+              window.ContentEditorSync.toHidden(editor, hiddenInput, true);
+              // Setup automatic syncing on input events
+              window.ContentEditorSync.setupAutoSync(editor, hiddenInput);
             } else {
               syncToHidden(editor, hiddenInput);
+              // Setup basic auto-sync for legacy mode
+              editor.addEventListener('input', () => {
+                syncToHidden(editor, hiddenInput);
+              });
+              editor.addEventListener('blur', () => {
+                syncToHidden(editor, hiddenInput);
+              });
             }
             
             if (window.ContentEditorToolbar) {
@@ -848,8 +874,8 @@
       editor.innerHTML = '';
       editor.appendChild(fragment);
       
-      // Restore selection
-      window.ContentEditorSelection.restore();
+      // Restore selection with editor as root element
+      window.ContentEditorSelection.restore(editor);
     }
   }
 

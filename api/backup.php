@@ -18,7 +18,7 @@ $backupDirs = [
     '../media',
     '../settings'
 ];
-$backupFile = '../backup/harucms-backup-' . date('Ymd-His') . '.zip';
+$backupFile = '../backup/birkly-backup-' . date('Ymd-His') . '.zip';
 
 if (!is_dir('../backup')) mkdir('../backup', 0755, true);
 

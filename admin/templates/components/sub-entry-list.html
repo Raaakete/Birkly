@@ -1,0 +1,65 @@
+<!-- Sub-Entry List Component
+     Parameters:
+     - sub_collection: Sub-collection definition
+     - sub_entries: Array of sub-entries
+     - parent_entry_id: Parent entry ID
+     - collection_slug: Parent collection slug
+-->
+{if sub_collection exist}
+    <div class="sub-collection-section" data-sub-collection="{sub_collection.slug}">
+        <div class="sub-collection-header">
+            <h3>{sub_collection.title}</h3>
+            <a href="{admin_url 'entry-editor' collection='collection_slug' entry='parent_entry_id' sub_collection='sub_collection.slug'}" 
+               class="btn btn-primary btn-sm">
+                {translate 'admin.add'} {sub_collection.singular_title}
+            </a>
+        </div>
+        
+        {if sub_entries exist}
+            <div class="sub-entries-list">
+                {for each sub_entry in sub_entries}
+                    <div class="sub-entry-card" data-sub-entry-id="{sub_entry.id}">
+                        <div class="sub-entry-content">
+                            <div class="sub-entry-title">
+                                <a href="{admin_url 'entry-detail' collection='collection_slug' entry='parent_entry_id' sub_collection='sub_collection.slug' sub_entry='sub_entry.id'}">
+                                    {sub_entry.title}
+                                </a>
+                            </div>
+                            
+                            {if sub_entry.status exist}
+                                {component 'status-badge' status='sub_entry.status'}
+                            {endif}
+                            
+                            {if sub_entry._sub_entry_count}
+                                <span class="nested-count" title="Has nested sub-entries">
+                                    +{sub_entry._sub_entry_count} nested
+                                </span>
+                            {endif}
+                        </div>
+                        
+                        <div class="sub-entry-actions">
+                            <a href="{admin_url 'entry-editor' collection='collection_slug' entry='parent_entry_id' sub_collection='sub_collection.slug' sub_entry='sub_entry.id'}" 
+                               class="btn btn-sm">
+                                {translate 'admin.edit'}
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-sm btn-danger delete-sub-entry-btn" 
+                                    data-sub-entry-id="{sub_entry.id}"
+                                    data-sub-collection="{sub_collection.slug}">
+                                {translate 'admin.delete'}
+                            </button>
+                        </div>
+                    </div>
+                {endfor}
+            </div>
+        {else}
+            <div class="empty-state">
+                <p>{translate 'admin.no_sub_entries'}</p>
+                <a href="{admin_url 'entry-editor' collection='collection_slug' entry='parent_entry_id' sub_collection='sub_collection.slug'}" 
+                   class="btn btn-primary">
+                    {translate 'admin.add_first'} {sub_collection.singular_title}
+                </a>
+            </div>
+        {endif}
+    </div>
+{endif}

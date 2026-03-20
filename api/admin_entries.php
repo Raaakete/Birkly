@@ -12,6 +12,8 @@ define('ADMIN_ENTRIES_PHP_EXECUTED', true);
 // CRITICAL: Check authentication FIRST before any other logic
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/cache.php';
+require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/log.php';
 haru_secure_session_start();
 if (!isset($_SESSION['user'])) {
     while (ob_get_level() > 0) { ob_end_clean(); }
@@ -28,10 +30,9 @@ if (!isset($_SESSION['user'])) {
 if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     header('Content-Type: application/json');
     
-    // Enable CORS for development
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    // SECURITY FIX: Replace wildcard CORS with origin whitelist
+    require_once __DIR__ . '/../core/cors.php';
+    set_cors_headers('admin');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -94,12 +95,21 @@ if ($action === 'save') {
     }
 }
 
+// Debug: Log the parsed action
+error_log("admin_entries.php: Parsed action = '$action' (type: " . gettype($action) . ")");
+error_log("admin_entries.php: REQUEST_URI = " . ($_SERVER['REQUEST_URI'] ?? 'not set'));
+error_log("admin_entries.php: _GET['action'] = " . ($_GET['action'] ?? 'not set'));
+error_log("admin_entries.php: _POST['action'] = " . ($_POST['action'] ?? 'not set'));
+
 // Normalize: 'create' and 'update' both map to 'save'
-if ($action === 'create' || $action === 'update' || $action === '') {
+// Only normalize if action is empty, create, or update - don't override valid actions like 'bulk'
+if ($action === 'create' || $action === 'update') {
+    $action = 'save';
+} elseif ($action === '' || $action === null) {
     $action = 'save';
 }
 
-// Validate action is in allowed list (should always pass since we normalized to 'save')
+// Validate action is in allowed list
 $validActions = ['save', 'delete', 'list', 'versions', 'restore_version', 'review', 'bulk', 'diff'];
 if (!in_array($action, $validActions, true)) {
     // This should never happen, but just in case...
@@ -118,10 +128,29 @@ if (!in_array($action, $validActions, true)) {
         'debug' => [
             'action' => $action,
             'action_type' => gettype($action),
-            'valid_actions' => $validActions
+            'valid_actions' => $validActions,
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? 'not set',
+            'get_action' => $_GET['action'] ?? 'not set',
+            'post_action' => $_POST['action'] ?? 'not set',
+            'action_in_array' => in_array($action, $validActions, true)
         ]
     ]);
     exit;
+}
+
+// SECURITY: enforce permissions per action
+// - list/versions/diff: read-only
+// - save/restore_version/bulk publish/unpublish: write
+// - delete/bulk delete: delete
+if (in_array($action, ['save', 'restore_version'], true)) {
+    requireAuth('write');
+} elseif ($action === 'delete') {
+    requireAuth('delete');
+} elseif ($action === 'bulk') {
+    // bulk permission is determined inside performBulkOperation() (depends on bulk action)
+    requireAuth('write');
+} elseif (in_array($action, ['list', 'versions', 'diff'], true)) {
+    requireAuth('read');
 }
 
 switch ($action) {
@@ -177,12 +206,19 @@ switch ($action) {
         exit;
         break;
     case 'delete':
-        $result = deleteEntry();
-        while (ob_get_level() > 0) { ob_end_clean(); }
-        ob_start();
+        try {
+            $result = deleteEntry();
+        } catch (Exception $e) {
+            error_log("Error in deleteEntry: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            $result = ['status' => 'error', 'message' => 'Failed to delete entry: ' . $e->getMessage()];
+        }
+        ob_clean();
         error_reporting($oldErrorReporting);
         ini_set('display_errors', $oldDisplayErrors);
-        header('Content-Type: application/json');
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+        }
         echo json_encode($result);
         ob_end_flush();
         exit;
@@ -232,15 +268,48 @@ switch ($action) {
         exit;
         break;
     case 'bulk':
+        // Clean output buffers
+        while (ob_get_level() > 0) { 
+            ob_end_clean(); 
+        }
+        
+        // Call the function
         $result = performBulkOperation();
-        while (ob_get_level() > 0) { ob_end_clean(); }
-        ob_start();
+        
+        // Clean output buffers again
+        while (ob_get_level() > 0) { 
+            ob_end_clean(); 
+        }
+        
+        // Restore error reporting
         error_reporting($oldErrorReporting);
         ini_set('display_errors', $oldDisplayErrors);
-        header('Content-Type: application/json');
-        echo json_encode($result);
-        ob_end_flush();
-        exit;
+        
+        // Ensure result is an array
+        if (!is_array($result)) {
+            $result = ['status' => 'error', 'message' => 'Invalid response from bulk operation'];
+        }
+        
+        // Set HTTP status
+        $statusCode = (isset($result['status']) && $result['status'] === 'error') ? 400 : 200;
+        http_response_code($statusCode);
+        
+        // Send headers - must be before any output
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        
+        // Encode and send response
+        $json = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            $json = json_encode(['status' => 'error', 'message' => 'JSON encoding failed: ' . json_last_error_msg()]);
+        }
+        
+        // Send response
+        echo $json;
+        
+        // Exit immediately - no code after this
+        exit(0);
         break;
     case 'diff':
         $result = getVersionDiff();
@@ -278,7 +347,16 @@ switch ($action) {
 function saveEntry() {
     $collectionSlug = $_POST['collection'] ?? '';
     $entryId = $_POST['entry_id'] ?? '';
-    $action = $_POST['action'] ?? 'create';
+    // Check both POST and GET for action (form sends action=save in URL)
+    $action = $_POST['action'] ?? $_GET['action'] ?? 'create';
+    
+    // If entry_id is provided, it's an update, not a create
+    if (($action === 'save' || $action === 'create') && !empty($entryId)) {
+        $action = 'update';
+    }
+
+    // SECURITY: saving entries requires write permission
+    requireAuth('write');
     
     // Validate collection slug immediately
     if (empty($collectionSlug)) {
@@ -298,21 +376,40 @@ function saveEntry() {
         return ['status' => 'error', 'message' => 'Collection slug is required'];
     }
     
+    // SECURITY FIX: Sanitize collection slug and entry ID to prevent path traversal
+    require_once __DIR__ . '/validate.php';
+    $collectionSlug = sanitize_identifier($collectionSlug);
+    if ($collectionSlug === false) {
+        return ['status' => 'error', 'message' => 'Invalid collection identifier'];
+    }
+    
+    if (!empty($entryId)) {
+        $entryId = sanitize_identifier($entryId);
+        if ($entryId === false) {
+            return ['status' => 'error', 'message' => 'Invalid entry identifier'];
+        }
+    }
+    
     // Validate collection exists and get schema
-    $collectionDir = __DIR__ . "/../content/collections/$collectionSlug";
-    if (!is_dir($collectionDir)) {
-        return ['status' => 'error', 'message' => 'Collection not found'];
+    $baseDir = __DIR__ . "/../content/collections";
+    $collectionDir = sanitize_path($collectionSlug, $baseDir);
+    if ($collectionDir === false || !is_dir($collectionDir)) {
+        // SECURITY FIX: Use generic error message (admin context, but still good practice)
+        return ['status' => 'error', 'message' => 'Invalid collection'];
     }
     
     // Load schema to process fieldtypes
-    $schemaFile = "$collectionDir/schema.json";
+    $schemaFile = sanitize_path('schema.json', $collectionDir);
     $schema = [];
-    if (file_exists($schemaFile)) {
+    if ($schemaFile !== false && file_exists($schemaFile)) {
         $schema = json_decode(file_get_contents($schemaFile), true);
     }
     
     // Create entries directory if it doesn't exist
-    $entriesDir = "$collectionDir/entries";
+    $entriesDir = sanitize_path('entries', $collectionDir);
+    if ($entriesDir === false) {
+        return ['status' => 'error', 'message' => 'Invalid entries directory path'];
+    }
     if (!is_dir($entriesDir)) {
         mkdir($entriesDir, 0755, true);
     }
@@ -320,10 +417,15 @@ function saveEntry() {
     // Load existing entry if updating
     $entry = null;
     if ($action === 'update' && !empty($entryId)) {
-        $entryFile = "$entriesDir/$entryId.json";
+        $entryFile = sanitize_path($entryId . '.json', $entriesDir);
         if (file_exists($entryFile)) {
             $entry = json_decode(file_get_contents($entryFile), true);
+            error_log("DEBUG REVIEWER: Loaded existing entry, reviewer=" . ($entry['reviewer'] ?? 'none') . ", entryId=" . $entryId);
+        } else {
+            error_log("DEBUG REVIEWER: Entry file not found: " . $entryFile);
         }
+    } else {
+        error_log("DEBUG REVIEWER: Not loading entry - action=" . ($action ?? 'none') . ", entryId=" . ($entryId ?? 'none'));
     }
     
     // Generate entry ID if not provided (for new entries)
@@ -331,10 +433,10 @@ function saveEntry() {
         $entryId = uniqid();
     }
     
-    // Validate title (mandatory for all entries)
+    // Auto-fill title with entry ID if not provided
     $title = trim($entryData['title'] ?? '');
     if (empty($title)) {
-        return ['status' => 'error', 'message' => 'Title is required'];
+        $title = $entryId;
     }
     
     // Handle versioning for existing entries
@@ -349,11 +451,17 @@ function saveEntry() {
     }
     
     // Prepare entry data
+    // Map old 'draft' status to 'unpublished' for consistency
+    $status = $entryData['status'] ?? ($entry['status'] ?? 'unpublished');
+    if ($status === 'draft') {
+        $status = 'unpublished';
+    }
+    
     $entryOutput = [
         'id' => $entryId,
         'title' => $title,
         'slug' => $entryData['slug'] ?? '',
-        'status' => $entryData['status'] ?? ($entry['status'] ?? 'draft'),
+        'status' => $status,
         'version' => $currentVersion,
         'created_at' => $entry['created_at'] ?? date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
@@ -390,14 +498,88 @@ function saveEntry() {
         $entryOutput['translation_parent'] = $entry['translation_parent'];
     }
     
-    // Handle reviewer assignment if provided
-    if (isset($entryData['reviewer']) && !empty($entryData['reviewer'])) {
-        $entryOutput['reviewer'] = $entryData['reviewer'];
+    // Handle reviewer assignment
+    // Check both 'reviewer' and 'reviewer_hidden' fields
+    // Prefer 'reviewer' if it exists, otherwise use 'reviewer_hidden'
+    $reviewerValue = null;
+    $reviewerSubmitted = false;
+    
+    if (isset($entryData['reviewer'])) {
+        $reviewerSubmitted = true;
+        if ($entryData['reviewer'] !== '') {
+            $reviewerValue = $entryData['reviewer'];
+        }
+    } elseif (isset($entryData['reviewer_hidden'])) {
+        $reviewerSubmitted = true;
+        if ($entryData['reviewer_hidden'] !== '') {
+            $reviewerValue = $entryData['reviewer_hidden'];
+        }
+    }
+    
+    error_log("DEBUG REVIEWER: submitted=" . ($reviewerSubmitted ? 'yes' : 'no') . ", value=" . ($reviewerValue ?? 'null') . ", status=" . $status . ", existing=" . ($entry['reviewer'] ?? 'none'));
+    
+    if ($reviewerSubmitted) {
+        // Reviewer field was submitted (either visible or hidden)
+        if (!empty($reviewerValue)) {
+            // Reviewer was set - normalize it to user ID (not email)
+            // If it's an email, find the user ID
+            $normalizedReviewer = $reviewerValue;
+            if (strpos($reviewerValue, '@') !== false) {
+                // It's an email, find the user ID
+                $userFiles = glob(__DIR__ . '/../users/*.json');
+                foreach ($userFiles as $userFile) {
+                    $userData = json_decode(file_get_contents($userFile), true);
+                    if ($userData && strtolower(trim($userData['email'] ?? '')) === strtolower(trim($reviewerValue))) {
+                        $normalizedReviewer = $userData['id'] ?? $reviewerValue;
+                        error_log("DEBUG REVIEWER: Converted email to user ID: " . $reviewerValue . " -> " . $normalizedReviewer);
+                        break;
+                    }
+                }
+            }
+            $entryOutput['reviewer'] = $normalizedReviewer;
+            error_log("DEBUG REVIEWER: Setting reviewer to: " . $normalizedReviewer);
+        } else {
+            // Reviewer field is explicitly empty
+            if ($status === 'pending_review') {
+                // Status is pending_review and reviewer is empty - user explicitly cleared it
+                unset($entryOutput['reviewer']);
+                error_log("DEBUG REVIEWER: Clearing reviewer (status is pending_review)");
+            } elseif (isset($entry['reviewer']) && !empty($entry['reviewer'])) {
+                // Status is not pending_review and reviewer was empty (field was hidden) - preserve existing reviewer
+                $entryOutput['reviewer'] = $entry['reviewer'];
+                error_log("DEBUG REVIEWER: Preserving existing reviewer: " . $entry['reviewer']);
+            } else {
+                // No existing reviewer to preserve - remove it
+                unset($entryOutput['reviewer']);
+                error_log("DEBUG REVIEWER: No reviewer to preserve");
+            }
+        }
+    } elseif (isset($entry['reviewer']) && !empty($entry['reviewer'])) {
+        // Reviewer field not in POST at all, but exists in existing entry - preserve it
+        $entryOutput['reviewer'] = $entry['reviewer'];
+        error_log("DEBUG REVIEWER: Preserving reviewer from existing entry: " . $entry['reviewer']);
+    }
+    
+    // Don't save reviewer_hidden to the entry - it's only a form helper
+    // Also remove it from any existing entry data that might have it
+    if (isset($entryOutput['reviewer_hidden'])) {
+        unset($entryOutput['reviewer_hidden']);
+    }
+    if (isset($entry['reviewer_hidden'])) {
+        unset($entry['reviewer_hidden']);
     }
     
     // Handle review notes if provided
-    if (isset($entryData['review_notes']) && !empty($entryData['review_notes'])) {
-        $entryOutput['review_notes'] = $entryData['review_notes'];
+    if (isset($entryData['review_notes'])) {
+        if (!empty($entryData['review_notes'])) {
+            $entryOutput['review_notes'] = $entryData['review_notes'];
+        } else {
+            // Explicitly cleared - remove review notes
+            unset($entryOutput['review_notes']);
+        }
+    } elseif (isset($entry['review_notes']) && !empty($entry['review_notes'])) {
+        // Review notes not in POST, but exists in existing entry - preserve it
+        $entryOutput['review_notes'] = $entry['review_notes'];
     }
     
     // Handle scheduled publishing
@@ -484,7 +666,20 @@ function saveEntry() {
             $fieldType = $field['type'] ?? '';
             if (empty($fieldName)) continue;
             
-            $rawValue = $entryData[$fieldName] ?? null;
+            // Get raw value - check both direct key and array key (for FormData)
+            $rawValue = null;
+            if (isset($entryData[$fieldName])) {
+                $rawValue = $entryData[$fieldName];
+            } elseif (array_key_exists($fieldName, $entryData)) {
+                // Field exists but might be empty string
+                $rawValue = $entryData[$fieldName];
+            }
+            
+            // Default to empty string for text-like fields if not set
+            if ($rawValue === null && in_array($fieldType, ['text', 'email', 'url', 'textarea', 'wysiwyg', 'date', 'datetime', 'time'])) {
+                $rawValue = '';
+            }
+            
             $value = $rawValue;
         
         // Process value through fieldtype if it exists
@@ -514,13 +709,16 @@ function saveEntry() {
             }
         }
         
+            // Always set the value, even if null or empty (so fields can be cleared)
         $entryOutput[$fieldName] = $value;
     }
 }
     
     // Also add any other fields that might have been submitted but aren't in schema
     foreach ($entryData as $key => $value) {
-        if (!in_array($key, ['id', 'title', 'slug', 'status', 'created_at', 'updated_at', 'meta_title', 'meta_description']) 
+        // Skip system fields and form helper fields
+        // Also skip password field (used for user creation only, not stored in entry)
+        if (!in_array($key, ['id', 'title', 'slug', 'status', 'created_at', 'updated_at', 'meta_title', 'meta_description', 'reviewer_hidden', 'password']) 
             && !isset($entryOutput[$key])) {
             // Special handling for JSON strings
             if (is_string($value) && (str_starts_with($value, '[') || str_starts_with($value, '{'))) {
@@ -549,6 +747,11 @@ function saveEntry() {
         $entryOutput['slug'] = generateSlug($entryOutput['title']);
     }
     
+    // Allow plugins to modify entry before save (e.g., auto-create users from profile entries)
+    if (function_exists('apply_filters')) {
+        $entryOutput = apply_filters('before_entry_save', $entryOutput, $collectionSlug);
+    }
+    
     // Save entry to file
     $entryFile = "$entriesDir/$entryId.json";
     $jsonOutput = json_encode($entryOutput, JSON_PRETTY_PRINT);
@@ -560,6 +763,45 @@ function saveEntry() {
         // Invalidate cache for this collection
         $cache = new Cache();
         $cache->invalidateCollection($collectionSlug);
+        
+        // Allow plugins to react to entry save (e.g., sync status with user)
+        if (function_exists('do_action')) {
+            do_action('after_entry_save', $entryOutput, $collectionSlug, $entry);
+        }
+        
+        // Trigger automation system
+        if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
+            require_once __DIR__ . '/../core/automation/queue.php';
+            
+            $oldStatus = $entry['status'] ?? '';
+            $newStatus = $entryOutput['status'] ?? '';
+            
+            // Determine trigger type
+            if ($action === 'create') {
+                // Entry created
+                enqueue_automation('entry_created', [
+                    'entry' => $entryOutput,
+                    'collection' => $collectionSlug
+                ]);
+            } else {
+                // Entry updated
+                enqueue_automation('entry_updated', [
+                    'entry' => $entryOutput,
+                    'collection' => $collectionSlug,
+                    'old_entry' => $entry
+                ]);
+                
+                // Status changed trigger
+                if ($oldStatus !== $newStatus) {
+                    enqueue_automation('status_changed', [
+                        'entry' => $entryOutput,
+                        'collection' => $collectionSlug,
+                        'from_status' => $oldStatus,
+                        'to_status' => $newStatus
+                    ]);
+                }
+            }
+        }
         
         // Trigger webhooks
         if (file_exists(__DIR__ . '/webhooks.php')) {
@@ -596,6 +838,83 @@ function saveEntry() {
             ]);
         }
         
+        // Send notification to reviewer if entry is set to pending_review with a reviewer assigned
+        $entryStatus = $entryOutput['status'] ?? '';
+        $reviewerId = $entryOutput['reviewer'] ?? '';
+        
+        error_log("DEBUG: Checking notification - status=" . $entryStatus . ", reviewer=" . $reviewerId);
+        
+        if ($entryStatus === 'pending_review' && !empty($reviewerId)) {
+            // Get reviewer's email
+            $reviewerEmail = null;
+            $reviewerName = null;
+            
+            // Try to get reviewer info from user files
+            $userFiles = glob(__DIR__ . '/../users/*.json');
+            error_log("DEBUG: Looking for reviewer with ID=" . $reviewerId . ", found " . count($userFiles) . " user files");
+            
+            foreach ($userFiles as $userFile) {
+                $userData = json_decode(file_get_contents($userFile), true);
+                if ($userData) {
+                    // Check both ID and email match
+                    $userId = $userData['id'] ?? '';
+                    $userEmail = $userData['email'] ?? '';
+                    if ($userId === $reviewerId || $userEmail === $reviewerId) {
+                        $reviewerEmail = $userEmail ?: $userId; // Use email if available, otherwise use ID
+                        $reviewerName = $userData['name'] ?? $reviewerEmail;
+                        error_log("DEBUG: Found reviewer - email=" . $reviewerEmail . ", name=" . $reviewerName);
+                        break;
+                    }
+                }
+            }
+            
+            if (!$reviewerEmail) {
+                error_log("DEBUG: Reviewer not found for ID=" . $reviewerId);
+            }
+            
+            // If we found the reviewer, create a notification log entry for them
+            if ($reviewerEmail) {
+                require_once __DIR__ . '/log.php';
+                
+                // Use log_security_event but we need to set the user to the reviewer
+                // Since log_security_event uses $_SESSION['user']['email'], we'll write directly
+                $logDir = dirname(__DIR__) . '/logs';
+                if (!file_exists($logDir)) {
+                    mkdir($logDir, 0700, true);
+                }
+                $logFile = $logDir . '/security.log';
+                
+                $notificationEntry = [
+                    'timestamp' => date('c'),
+                    'user' => strtolower(trim($reviewerEmail)), // Normalize email: lowercase and trim
+                    'event' => 'review_action',
+                    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'details' => [
+                        'collection' => $collectionSlug,
+                        'id' => $entryId,
+                        'title' => $entryOutput['title'] ?? 'Untitled',
+                        'action' => 'pending_review',
+                        'reviewer' => strtolower(trim($reviewerEmail)), // Normalize email
+                        'assigned_by' => strtolower(trim($_SESSION['user']['email'] ?? 'unknown'))
+                    ]
+                ];
+                
+                $entryJson = json_encode($notificationEntry) . "\n";
+                $result = @file_put_contents($logFile, $entryJson, FILE_APPEND | LOCK_EX);
+                
+                // Force flush
+                if ($result !== false) {
+                    clearstatcache(false, $logFile);
+                    usleep(100000); // 0.1 second delay to ensure write
+                }
+                
+                // Log for debugging
+                error_log("Review notification: reviewer=" . $reviewerEmail . " (normalized: " . strtolower(trim($reviewerEmail)) . "), entry=" . $entryId . ", result=" . ($result !== false ? 'success (' . $result . ' bytes)' : 'failed') . ", logFile=" . $logFile);
+            } else {
+                error_log("Review notification NOT created: reviewer not found for ID=" . $reviewerId);
+            }
+        }
+        
         return [
             'status' => 'ok',
             'data' => [
@@ -611,11 +930,14 @@ function saveEntry() {
 }
 
 function deleteEntry() {
+    // SECURITY: deleting entries requires delete permission
+    requireAuth('delete');
+
     $collectionSlug = $_POST['collection'] ?? '';
     $entryId = $_POST['entry_id'] ?? '';
     
     if (empty($collectionSlug) || empty($entryId)) {
-        return ['error' => 'Collection slug and entry ID are required'];
+        return ['status' => 'error', 'message' => 'Collection slug and entry ID are required'];
     }
     
     $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
@@ -630,6 +952,15 @@ function deleteEntry() {
         // Invalidate cache for this collection
         $cache = new Cache();
         $cache->invalidateCollection($collectionSlug);
+        
+        // Trigger automation system
+        if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
+            require_once __DIR__ . '/../core/automation/queue.php';
+            enqueue_automation('entry_deleted', [
+                'entry' => $entryData,
+                'collection' => $collectionSlug
+            ]);
+        }
         
         // Trigger webhook
         if (file_exists(__DIR__ . '/webhooks.php')) {
@@ -646,7 +977,8 @@ function deleteEntry() {
             'message' => 'Entry deleted successfully'
         ];
     } else {
-        return ['error' => 'Failed to delete entry or entry not found'];
+        // SECURITY FIX: Use generic error message
+        return ['status' => 'error', 'message' => 'Failed to delete entry'];
     }
 }
 
@@ -717,7 +1049,7 @@ function listEntries() {
                     $entries[] = [
                         'id' => $entryId,
                         'title' => $title,
-                        'status' => $entryData['status'] ?? 'draft',
+                        'status' => ($entryData['status'] === 'draft' ? 'unpublished' : ($entryData['status'] ?? 'unpublished')),
                         'updated_at' => $entryData['updated_at'] ?? null,
                         'created_at' => $entryData['created_at'] ?? null
                     ];
@@ -762,12 +1094,17 @@ function listEntries() {
         $cachedEntries = array_values($cachedEntries);
     }
     
-    // Return simplified format for admin UI
+    // Return full entry data for admin UI (including status and dates)
     $result = [];
     foreach ($cachedEntries as $entry) {
         $result[] = [
-            'id' => $entry['id'],
-            'title' => $entry['title']
+            'id' => $entry['id'] ?? '',
+            'slug' => $entry['slug'] ?? $entry['id'] ?? '',
+            'title' => $entry['title'] ?? '',
+            'status' => ($entry['status'] === 'draft' ? 'unpublished' : ($entry['status'] ?? 'unpublished')),
+            'updated_at' => $entry['updated_at'] ?? $entry['modified_at'] ?? null,
+            'created_at' => $entry['created_at'] ?? null,
+            'modified_at' => $entry['modified_at'] ?? $entry['updated_at'] ?? $entry['created_at'] ?? null
         ];
     }
     
@@ -778,15 +1115,30 @@ function listEntries() {
  * Perform bulk operation on entries
  */
 function performBulkOperation() {
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    if (!$input) {
-        return ['status' => 'error', 'message' => 'Invalid request data'];
+    try {
+        // SECURITY: bulk operations are state-changing
+        // Permission depends on action:
+        // - publish/unpublish: write
+        // - delete: delete
+        requireAuth('write');
+
+        $rawInput = file_get_contents('php://input');
+        $input = json_decode($rawInput, true);
+        
+        if (!$input) {
+            error_log("performBulkOperation: Failed to decode JSON. Raw input: " . substr($rawInput, 0, 200));
+            return ['status' => 'error', 'message' => 'Invalid request data'];
+        }
+        
+        $collectionSlug = $input['collection'] ?? '';
+        $action = $input['action'] ?? '';
+        $entryIds = $input['entry_ids'] ?? [];
+        
+        error_log("performBulkOperation: collection=$collectionSlug, action=$action, entryIds=" . count($entryIds));
+    } catch (Exception $e) {
+        error_log("performBulkOperation: Exception at start: " . $e->getMessage());
+        return ['status' => 'error', 'message' => 'Error reading request: ' . $e->getMessage()];
     }
-    
-    $collectionSlug = $input['collection'] ?? '';
-    $action = $input['action'] ?? '';
-    $entryIds = $input['entry_ids'] ?? [];
     
     if (empty($collectionSlug)) {
         return ['status' => 'error', 'message' => 'Collection slug is required'];
@@ -796,36 +1148,56 @@ function performBulkOperation() {
         return ['status' => 'error', 'message' => 'Action is required'];
     }
     
+    // Now that we know the bulk action, enforce the correct permission
+    if ($action === 'delete') {
+        requireAuth('delete');
+    } else {
+        requireAuth('write');
+    }
+
     if (empty($entryIds) || !is_array($entryIds)) {
         return ['status' => 'error', 'message' => 'Entry IDs are required'];
     }
     
     // Validate CSRF token
+    error_log("performBulkOperation: Validating CSRF token");
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
+        error_log("performBulkOperation: CSRF token validation failed");
         log_security_event('permission_denied', ['action' => 'bulk_operation', 'reason' => 'invalid CSRF']);
         return ['status' => 'error', 'message' => 'Invalid CSRF token'];
     }
+    error_log("performBulkOperation: CSRF token validated");
     
     // Validate collection exists
+    error_log("performBulkOperation: Validating collection");
     $collectionDir = __DIR__ . "/../content/collections/$collectionSlug";
     if (!is_dir($collectionDir)) {
-        return ['status' => 'error', 'message' => 'Collection not found'];
+        error_log("performBulkOperation: Collection directory not found: $collectionDir");
+        // SECURITY FIX: Use generic error message (admin context, but still good practice)
+        return ['status' => 'error', 'message' => 'Invalid collection'];
     }
     
     $entriesDir = "$collectionDir/entries";
     if (!is_dir($entriesDir)) {
+        error_log("performBulkOperation: Entries directory not found: $entriesDir");
         return ['status' => 'error', 'message' => 'Entries directory not found'];
     }
+    error_log("performBulkOperation: Collection and entries directory validated");
     
     // Initialize cache for invalidation
+    error_log("performBulkOperation: Initializing cache");
     $cache = new Cache();
+    error_log("performBulkOperation: Cache initialized");
     
+    error_log("performBulkOperation: Starting to process entries");
     $successCount = 0;
     $errorCount = 0;
     $errors = [];
     
+    error_log("performBulkOperation: Processing " . count($entryIds) . " entries");
     foreach ($entryIds as $entryId) {
+        error_log("performBulkOperation: Processing entry $entryId");
         $entryFile = "$entriesDir/$entryId.json";
         
         if (!file_exists($entryFile)) {
@@ -842,61 +1214,78 @@ function performBulkOperation() {
         }
         
         try {
+            error_log("performBulkOperation: Processing action '$action' for entry $entryId");
             switch ($action) {
                 case 'publish':
+                    error_log("performBulkOperation: Setting status to published");
                     $entryData['status'] = 'published';
                     $entryData['updated_at'] = date('c');
                     break;
                     
                 case 'unpublish':
-                    $entryData['status'] = 'draft';
+                    error_log("performBulkOperation: Setting status to unpublished");
+                    $entryData['status'] = 'unpublished';
                     $entryData['updated_at'] = date('c');
                     break;
                     
                 case 'delete':
+                    error_log("performBulkOperation: Deleting entry");
                     if (unlink($entryFile)) {
+                        // Trigger automation system
+                        try {
+                            if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
+                                require_once __DIR__ . '/../core/automation/queue.php';
+                                enqueue_automation('entry_deleted', [
+                                    'entry' => $entryData,
+                                    'collection' => $collectionSlug
+                                ]);
+                            }
+                        } catch (Exception $e) {
+                            error_log("performBulkOperation: Error triggering automation: " . $e->getMessage());
+                        }
+                        
                         // Trigger webhook
-                        if (file_exists(__DIR__ . '/webhooks.php')) {
-                            require_once __DIR__ . '/webhooks.php';
-                            triggerWebhook('entry.deleted', [
-                                'collection' => $collectionSlug,
-                                'entry_id' => $entryId,
-                                'entry' => $entryData
-                            ]);
+                        try {
+                            if (file_exists(__DIR__ . '/webhooks.php')) {
+                                require_once __DIR__ . '/webhooks.php';
+                                triggerWebhook('entry.deleted', [
+                                    'collection' => $collectionSlug,
+                                    'entry_id' => $entryId,
+                                    'entry' => $entryData
+                                ]);
+                            }
+                        } catch (Exception $e) {
+                            error_log("performBulkOperation: Error triggering webhook: " . $e->getMessage());
                         }
                         $successCount++;
+                        error_log("performBulkOperation: Entry $entryId deleted successfully");
                     } else {
                         $errorCount++;
                         $errors[] = "Failed to delete entry $entryId";
+                        error_log("performBulkOperation: Failed to delete entry $entryId");
                     }
                     continue 2; // Skip to next entry
                     
                 default:
                     $errorCount++;
                     $errors[] = "Unknown action: $action";
+                    error_log("performBulkOperation: Unknown action '$action' for entry $entryId");
                     continue 2;
             }
             
             // Save entry (for publish/unpublish)
             if ($action !== 'delete') {
+                error_log("performBulkOperation: Encoding entry data");
                 $jsonOutput = json_encode($entryData, JSON_PRETTY_PRINT);
                 if ($jsonOutput === false) {
                     $errorCount++;
                     $errors[] = "Failed to encode entry $entryId: " . json_last_error_msg();
+                    error_log("performBulkOperation: Failed to encode entry $entryId: " . json_last_error_msg());
                     continue;
                 }
                 
+                error_log("performBulkOperation: Saving entry file");
                 if (file_put_contents($entryFile, $jsonOutput)) {
-                    // Trigger webhook
-                    if (file_exists(__DIR__ . '/webhooks.php')) {
-                        require_once __DIR__ . '/webhooks.php';
-                        $webhookEvent = $action === 'publish' ? 'entry.published' : 'entry.updated';
-                        triggerWebhook($webhookEvent, [
-                            'collection' => $collectionSlug,
-                            'entry_id' => $entryId,
-                            'entry' => $entryData
-                        ]);
-                    }
                     $successCount++;
                 } else {
                     $errorCount++;
@@ -906,28 +1295,33 @@ function performBulkOperation() {
         } catch (Exception $e) {
             $errorCount++;
             $errors[] = "Error processing entry $entryId: " . $e->getMessage();
+        } catch (Throwable $e) {
+            $errorCount++;
+            $errors[] = "Fatal error processing entry $entryId: " . $e->getMessage();
         }
     }
     
-    // Invalidate cache after bulk operation
-    $cache->invalidateCollection($collectionSlug);
-    
-    if ($errorCount > 0 && $successCount === 0) {
-        return [
-            'status' => 'error',
-            'message' => 'All operations failed',
-            'errors' => $errors,
-            'count' => 0
-        ];
+    // Invalidate cache after bulk operation (non-blocking)
+    try {
+        $cache->invalidateCollection($collectionSlug);
+    } catch (Exception $e) {
+        // Don't fail the operation if cache invalidation fails
+    } catch (Throwable $e) {
+        // Don't fail the operation if cache invalidation fails
     }
     
-    return [
-        'status' => 'ok',
-        'message' => "Successfully processed $successCount entr" . ($successCount === 1 ? 'y' : 'ies'),
+    // Build and return result
+    $result = [
+        'status' => ($errorCount > 0 && $successCount === 0) ? 'error' : 'ok',
+        'message' => $errorCount > 0 && $successCount === 0 
+            ? 'All operations failed' 
+            : "Successfully processed $successCount entr" . ($successCount === 1 ? 'y' : 'ies'),
         'count' => $successCount,
         'errors' => $errors,
         'error_count' => $errorCount
     ];
+    
+    return $result;
 }
 
 /**
@@ -1147,6 +1541,9 @@ function formatValue($value) {
  * Restore version
  */
 function restoreVersion() {
+    // SECURITY: restoring a version changes content
+    requireAuth('write');
+
     $rawInput = file_get_contents('php://input');
     $input = json_decode($rawInput, true);
     

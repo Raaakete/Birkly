@@ -1,5 +1,5 @@
 <h2>Key Concepts</h2>
-<p>Understanding these core concepts will help you make the most of HaruCMS.</p>
+<p>Understanding these core concepts will help you make the most of Birkly.</p>
 
 <h3>Collections</h3>
 <p>A <strong>collection</strong> is like a folder that organizes similar content together. Think of it as a content type.</p>
@@ -38,7 +38,7 @@
     <p>If "Blog Posts" is your collection, then:</p>
     <ul>
         <li>"10 Tips for Better Web Design" is an entry</li>
-        <li>"Getting Started with HaruCMS" is another entry</li>
+        <li>"Getting Started with Birkly" is another entry</li>
         <li>Each entry has its own title, content, and other fields</li>
     </ul>
 </div>

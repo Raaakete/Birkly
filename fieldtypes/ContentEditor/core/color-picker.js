@@ -4,7 +4,7 @@ window.ContentEditorColorPicker = {
    * Draw color wheel on canvas
    */
   drawColorWheel(canvas, brightness = 0.5) {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const radius = Math.min(centerX, centerY) - 2;
@@ -56,7 +56,7 @@ window.ContentEditorColorPicker = {
    * Draw brightness slider
    */
   drawBrightnessSlider(canvas, hue, saturation) {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const width = canvas.width;
     const height = canvas.height;
     

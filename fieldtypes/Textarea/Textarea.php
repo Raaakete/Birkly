@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Textarea;
+namespace Birkly\FieldTypes\Textarea;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Textarea extends BaseField {
     protected $rows;
@@ -78,6 +78,16 @@ class Textarea extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Textarea values can be longer, use shorter truncation
+        $context['truncate'] = $context['truncate'] ?? 60;
+        return parent::renderListCell($value, $context);
+    }
+
+    public function getTableMinWidth(): string {
+        return '200px'; // Textarea fields need moderate space for preview
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

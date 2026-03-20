@@ -1,7 +1,8 @@
 <?php
 // admin/logout.php - Logout handler for admin panel
 
-session_start();
+require_once __DIR__ . '/../api/session.php';
+haru_secure_session_start();
 
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
