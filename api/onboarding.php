@@ -168,10 +168,12 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             exit;
         }
         
-        // Validate password strength (minimum 8 characters)
-        if (strlen($password) < 8) {
+        // SECURITY FIX: Validate password strength
+        require_once __DIR__ . '/validate.php';
+        $passwordValidation = validate_password_strength($password);
+        if (!$passwordValidation['valid']) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Password must be at least 8 characters']);
+            echo json_encode(['status' => 'error', 'message' => $passwordValidation['message']]);
             exit;
         }
         

@@ -1,5 +1,5 @@
 <?php
-// Page renderer for HaruCMS
+// Page renderer for Birkly
 require_once 'templates/template_engine.php';
 
 // Get the page data (passed from router)
@@ -132,7 +132,7 @@ switch ($template) {
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 My Blog. Built with HaruCMS.</p>
+            <p>&copy; 2025 My Blog. Built with Birkly.</p>
         </div>
     </footer>
 </body>
@@ -193,7 +193,7 @@ HTML;
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 My Blog. Built with HaruCMS.</p>
+            <p>&copy; 2025 My Blog. Built with Birkly.</p>
         </div>
     </footer>
 </body>
@@ -241,7 +241,7 @@ HTML;
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 My Blog. Built with HaruCMS.</p>
+            <p>&copy; 2025 My Blog. Built with Birkly.</p>
         </div>
     </footer>
 </body>

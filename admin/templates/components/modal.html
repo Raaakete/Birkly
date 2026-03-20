@@ -1,0 +1,42 @@
+<!-- Modal Component
+     Parameters:
+     - modal_id: Unique modal ID
+     - title: Modal title
+     - content: Modal body content (raw HTML)
+     - form_id: Form ID if modal contains a form (optional)
+     - submit_label: Submit button label (optional, default: Save)
+     - cancel_label: Cancel button label (optional, default: Cancel)
+-->
+<div id="{modal_id}" class="modal" style="display: none;">
+    <div class="modal-backdrop" onclick="this.closest('.modal').style.display='none'"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>{title}</h3>
+            <button class="modal-close" type="button">&times;</button>
+        </div>
+        {if form_id exist}
+            <form id="{form_id}">
+                <div class="modal-body">
+                    {{content | raw}}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('{modal_id}').style.display='none'">
+                        {if cancel_label exist}{cancel_label}{else}Cancel{endif}
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        {if submit_label exist}{submit_label}{else}Save{endif}
+                    </button>
+                </div>
+            </form>
+        {else}
+            <div class="modal-body">
+                {{content | raw}}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('{modal_id}').style.display='none'">
+                    Close
+                </button>
+            </div>
+        {endif}
+    </div>
+</div>

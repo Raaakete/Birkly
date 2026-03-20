@@ -1,0 +1,65 @@
+/* ============================================
+   Tabs Component - Unified System
+   ============================================ */
+
+/* Tabs Container */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  margin-bottom: var(--space-6, 1.5rem);
+  background: var(--bg-primary, #ffffff);
+  border-radius: var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem) 0 0;
+  overflow-x: auto;
+}
+
+/* Tab Button */
+.tab {
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  background: none;
+  border: none;
+  color: var(--text-secondary, #72746F);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast, 150ms ease);
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--text-primary, #20221D);
+  background: var(--bg-secondary, #fafafa);
+}
+
+.tab.active {
+  color: var(--primary-600, #2563eb);
+  border-bottom-color: var(--primary-500, #3b82f6);
+  background: var(--bg-primary, #ffffff);
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .tab {
+    border-bottom: none;
+    border-right: 2px solid transparent;
+  }
+  
+  .tab.active {
+    border-right-color: var(--primary-500, #3b82f6);
+    border-bottom-color: transparent;
+  }
+}
+

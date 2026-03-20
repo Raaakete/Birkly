@@ -1,8 +1,9 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST');
-header('Access-Control-Allow-Headers: Content-Type');
+
+// SECURITY FIX: Replace wildcard CORS with origin whitelist
+require_once __DIR__ . '/../core/cors.php';
+set_cors_headers('admin'); // Metadata fetcher is admin-only
 
 // Simple metadata fetcher - like metatags.io
 function fetchWebsiteMetadata($url) {
@@ -11,7 +12,7 @@ function fetchWebsiteMetadata($url) {
         $context = stream_context_create([
             'http' => [
                 'timeout' => 10,
-                'user_agent' => 'Mozilla/5.0 (compatible; HaruCMS/1.0)'
+                'user_agent' => 'Mozilla/5.0 (compatible; Birkly/1.0)'
             ]
         ]);
         

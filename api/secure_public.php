@@ -1,5 +1,5 @@
 <?php
-// api/secure_public.php - Secure public read-only API for HaruCMS with domain authentication
+// api/secure_public.php - Secure public read-only API for Birkly with domain authentication
 header('Content-Type: application/json');
 
 // Handle preflight requests

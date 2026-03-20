@@ -6,22 +6,45 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 require_once 'session.php';
 haru_secure_session_start();
-// Only set headers if this file is being called directly (not included)
-// When included via admin/index.php, headers are already sent, so skip
-if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
-    header('Content-Type: application/json');
-}
 
 require_once 'storage.php';
 require_once 'auth.php';
 require_once 'validate.php';
+
+// Only set headers if this file is being called directly (not included)
+// When included via admin/index.php, headers are already sent, so skip
+if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    header('Content-Type: application/json');
+    // SECURITY FIX: Set security headers for API endpoints
+    if (function_exists('set_security_headers')) {
+        set_security_headers('api');
+    }
+}
 require_once 'rate_limit.php';
 require_once 'log.php';
 require_once '../core/csrf.php';
 
 // Use a storage instance that points to the users directory
-$storage = new Storage('../users');
-$input = sanitize_input(json_decode(file_get_contents('php://input'), true));
+// Check if users directory exists at root level, otherwise try data/users
+$usersDir = __DIR__ . '/../users';
+if (!is_dir($usersDir)) {
+    $usersDir = __DIR__ . '/../data/users';
+    // Create directory if it doesn't exist
+    if (!is_dir($usersDir)) {
+        @mkdir($usersDir, 0755, true);
+    }
+}
+$storage = new Storage($usersDir);
+$rawInput = file_get_contents('php://input');
+$input = !empty($rawInput) ? sanitize_input(json_decode($rawInput, true)) : [];
+if (json_last_error() !== JSON_ERROR_NONE) {
+    if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+        header('Content-Type: application/json');
+    }
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid JSON input: ' . json_last_error_msg()]);
+    exit;
+}
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
 // Helper function to hash passwords
@@ -50,18 +73,18 @@ if ($action === 'login') {
     $email = trim(strtolower($input['email'] ?? ''));
     $password = $input['password'] ?? '';
     $userFile = md5($email) . '.json';
-    file_put_contents(__DIR__ . '/../logs/login_debug.log', date('c') . ' | checking: ' . $userFile . ' | exists: ' . (file_exists(__DIR__ . '/../users/' . $userFile) ? 'yes' : 'no') . "\n", FILE_APPEND);
-    $user = $storage->read($userFile);
-    if (!$user) {
-        log_security_event('login_failed', ['email' => $email, 'reason' => 'user not found']);
-        echo json_encode(['status' => 'error', 'message' => 'User not found']);
-        exit;
-    }
     
-    file_put_contents(__DIR__ . '/../logs/login_debug.log', date('c') . ' | password: ' . $password . ' | hash: ' . ($user['password'] ?? 'NOHASH') . "\n", FILE_APPEND);
-    if (!verifyPassword($password, $user['password'])) {
-        log_security_event('login_failed', ['email' => $email, 'reason' => 'invalid credentials']);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid credentials']);
+    // SECURITY FIX: Removed password logging - passwords and hashes should never be logged
+    // Debug logging removed to prevent sensitive data exposure
+    
+    // SECURITY FIX: Use generic error message to prevent user enumeration
+    // Don't reveal whether user exists or password is wrong
+    $user = $storage->read($userFile);
+    if (!$user || !verifyPassword($password, $user['password'] ?? '')) {
+        // Log the actual reason internally, but return generic message to client
+        $reason = !$user ? 'user not found' : 'invalid credentials';
+        log_security_event('login_failed', ['email' => $email, 'reason' => $reason]);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid email or password']);
         exit;
     }
     
@@ -72,6 +95,10 @@ if ($action === 'login') {
     $user['name'] = $user['name'] ?? $user['email'];
     $user['avatar'] = $user['avatar'] ?? '';
     $user['language'] = $user['language'] ?? null;
+    
+    // SECURITY FIX: Regenerate session ID after successful login to prevent session fixation
+    // This invalidates any session ID that might have been set before authentication
+    session_regenerate_id(true);
     
     $_SESSION['user'] = $user;
     
@@ -155,6 +182,13 @@ if ($action === 'create_user') {
         exit;
     }
     
+    // SECURITY FIX: Validate password strength using helper function
+    $passwordValidation = validate_password_strength($password);
+    if (!$passwordValidation['valid']) {
+        echo json_encode(['status' => 'error', 'message' => $passwordValidation['message']]);
+        exit;
+    }
+    
     $userId = md5($email);
     if ($storage->read($userId . '.json')) {
         echo json_encode(['status' => 'error', 'message' => 'User already exists']);
@@ -170,13 +204,37 @@ if ($action === 'create_user') {
         'created_by' => $_SESSION['user']['id']
     ];
     
-    $result = $storage->write($userId . '.json', $user);
-    
-    echo json_encode([
-        'status' => $result ? 'ok' : 'error',
-        'message' => $result ? 'User created' : 'Failed to create user'
-    ]);
-    exit;
+    try {
+        $result = $storage->write($userId . '.json', $user);
+        
+        if (!$result) {
+            error_log('Failed to write user file: ' . $userId . '.json');
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Failed to create user: Could not save user data'
+            ]);
+            exit;
+        }
+        
+        // Remove password from response
+        unset($user['password']);
+        
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'User created successfully',
+            'data' => $user
+        ]);
+        exit;
+    } catch (Exception $e) {
+        error_log('Error creating user: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Failed to create user: ' . $e->getMessage()
+        ]);
+        exit;
+    }
 }
 
 // List users (admin only)
@@ -468,6 +526,59 @@ if ($action === 'set_language') {
     exit;
 }
 
+// Update notification preferences (current user only)
+if ($action === 'update_notification_preferences') {
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    
+    $preferences = $input['preferences'] ?? [];
+    if (!is_array($preferences)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid preferences format']);
+        exit;
+    }
+    
+    // Validate and sanitize preferences
+    $validPreferences = [
+        'entry_published' => isset($preferences['entry_published']) ? (bool)$preferences['entry_published'] : true,
+        'entry_review' => isset($preferences['entry_review']) ? (bool)$preferences['entry_review'] : true,
+        'entry_commented' => isset($preferences['entry_commented']) ? (bool)$preferences['entry_commented'] : true,
+        'invitation_accepted' => isset($preferences['invitation_accepted']) ? (bool)$preferences['invitation_accepted'] : true,
+        'role_changed' => isset($preferences['role_changed']) ? (bool)$preferences['role_changed'] : true,
+        'system_updates' => isset($preferences['system_updates']) ? (bool)$preferences['system_updates'] : true,
+        'security_events' => isset($preferences['security_events']) ? (bool)$preferences['security_events'] : false
+    ];
+    
+    // Save to user profile
+    $userId = $_SESSION['user']['id'];
+    $user = $storage->read($userId . '.json');
+    if (!$user) {
+        echo json_encode(['status' => 'error', 'message' => 'User not found']);
+        exit;
+    }
+    
+    $user['notification_preferences'] = $validPreferences;
+    $user['updated_at'] = date('c');
+    $result = $storage->write($userId . '.json', $user);
+    
+    // Update session
+    $_SESSION['user']['notification_preferences'] = $validPreferences;
+    
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Notification preferences saved' : 'Failed to save preferences'
+    ]);
+    exit;
+}
+
 // Change password (current user only)
 if ($action === 'change_password') {
     if (!isset($_SESSION['user'])) {
@@ -490,8 +601,10 @@ if ($action === 'change_password') {
         exit;
     }
     
-    if (strlen($newPassword) < 8) {
-        echo json_encode(['status' => 'error', 'message' => 'New password must be at least 8 characters long']);
+    // SECURITY FIX: Validate password strength using helper function
+    $passwordValidation = validate_password_strength($newPassword);
+    if (!$passwordValidation['valid']) {
+        echo json_encode(['status' => 'error', 'message' => $passwordValidation['message']]);
         exit;
     }
     
@@ -504,7 +617,8 @@ if ($action === 'change_password') {
     
     // Verify current password
     if (!verifyPassword($currentPassword, $user['password'])) {
-        echo json_encode(['status' => 'error', 'message' => 'Current password is incorrect']);
+        // SECURITY FIX: Use generic error message
+        echo json_encode(['status' => 'error', 'message' => 'Invalid current password']);
         exit;
     }
     

@@ -10,9 +10,10 @@ set_exception_handler(function($e) {
     exit;
 });
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+
+// SECURITY FIX: Replace wildcard CORS with origin whitelist
+require_once __DIR__ . '/../core/cors.php';
+set_cors_headers('admin'); // Fieldtypes API is admin-only
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);

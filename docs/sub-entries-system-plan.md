@@ -16,7 +16,7 @@
 
 ## Overview
 
-The Sub-Entries System is a flexible, hierarchical content relationship system that allows entries in one collection to have related entries in other collections. This enables users to build complex applications like forums, e-commerce platforms, project management systems, and more - all within HaruCMS.
+The Sub-Entries System is a flexible, hierarchical content relationship system that allows entries in one collection to have related entries in other collections. This enables users to build complex applications like forums, e-commerce platforms, project management systems, and more - all within Birkly.
 
 ### Key Concepts
 
@@ -1330,7 +1330,7 @@ haru.getAggregate('blog', 'blog_123', 'blog_comments', 'average', 'rating')
 
 ## Conclusion
 
-This Sub-Entries System provides a flexible, powerful foundation for building complex applications within HaruCMS. By supporting unlimited nesting, multiple sub-collection types, and rich querying capabilities, users can build forums, e-commerce platforms, project management systems, and much more.
+This Sub-Entries System provides a flexible, powerful foundation for building complex applications within Birkly. By supporting unlimited nesting, multiple sub-collection types, and rich querying capabilities, users can build forums, e-commerce platforms, project management systems, and much more.
 
 The phased implementation approach ensures we can deliver value incrementally while building toward a comprehensive solution. Each phase builds upon the previous, creating a robust and flexible system.
 

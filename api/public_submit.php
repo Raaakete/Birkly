@@ -1,13 +1,30 @@
 <?php
-// api/public_submit.php - Public submission endpoint for HaruCMS collections (with file upload support)
+// api/public_submit.php - Public submission endpoint for Birkly collections (with file upload support)
 header('Content-Type: application/json');
-require_once 'storage.php';
-require_once 'validate.php';
-require_once 'rate_limit.php';
-require_once 'log.php';
+require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/validate.php';
+require_once __DIR__ . '/rate_limit.php';
+require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/session.php';
 
-// Support both JSON and multipart/form-data
-if (strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') === 0) {
+// Public submits should use the site session scope (never create/admin sessions)
+if (function_exists('birkly_site_session_start')) {
+    birkly_site_session_start();
+}
+
+// Support JSON, multipart/form-data, and application/x-www-form-urlencoded
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (strpos($contentType, 'multipart/form-data') === 0) {
+    $input = $_POST;
+    $fields = [];
+    foreach ($input as $k => $v) {
+        if ($k === 'collection' || $k === '_csrf') continue;
+        $fields[$k] = $v;
+    }
+    $collectionSlug = $_POST['collection'] ?? '';
+    $csrf = $_POST['_csrf'] ?? '';
+} elseif (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !empty($_POST) && strpos($contentType, 'application/json') !== 0) {
+    // Regular HTML form POST
     $input = $_POST;
     $fields = [];
     foreach ($input as $k => $v) {
@@ -50,10 +67,12 @@ foreach ($collections as $d) {
         break;
     }
 }
-if (!$dir) respond(['status' => 'error', 'message' => 'Collection not found'], 400);
+// SECURITY FIX: Use generic error message to prevent collection enumeration
+if (!$dir) respond(['status' => 'error', 'message' => 'Invalid request'], 400);
 
 // Check if public submissions are allowed
-if (empty($collectionMeta['public_submission'])) {
+// Use entry_method === 'public_api' (consistent with other public API endpoints)
+if (($collectionMeta['entry_method'] ?? 'admin_only') !== 'public_api') {
     respond(['status' => 'error', 'message' => 'Public submissions not allowed for this collection'], 403);
 }
 
@@ -67,13 +86,28 @@ if (!$schema || !isset($schema['fields'])) {
 $cleanData = [];
 $errors = [];
 $fileFields = [];
+// Defer required validation for fields we can auto-populate generically
+$deferredRequired = [];
+
+// Resolve current site user from session snapshot (set by user_management plugin login)
+$currentUserId = $_SESSION['user']['id'] ?? null;
+$currentUserName = $_SESSION['user']['name'] ?? ($_SESSION['user']['username'] ?? null);
+
 foreach ($schema['fields'] as $field) {
     $name = $field['name'];
     $required = $field['required'] ?? false;
     $type = $field['type'] ?? 'text';
     $value = $fields[$name] ?? '';
     if ($required && trim($value) === '' && !isset($_FILES[$name])) {
-        $errors[] = "$name is required";
+        // Allow slug to be auto-generated later
+        if ($name === 'slug') {
+            $deferredRequired[] = $name;
+        } else if (in_array($name, ['author_user_id', 'author_id', 'author_name'], true) && $currentUserId) {
+            // Allow ownership fields to be auto-populated from session
+            $deferredRequired[] = $name;
+        } else {
+            $errors[] = "$name is required";
+        }
     }
     // Basic type validation (extend as needed)
     if ($type === 'email' && $value && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
@@ -86,6 +120,79 @@ foreach ($schema['fields'] as $field) {
         $cleanData[$name] = $value;
     } else {
         $cleanData[$name] = sanitize_string($value);
+    }
+}
+
+// -------------------------------------------------------------------------
+// Generic ownership + visibility defaults (system-wide, not project-specific)
+// -------------------------------------------------------------------------
+
+// If schema expects author fields, enforce them from the current session
+// (prevents spoofing and enforces ownership)
+foreach (['author_user_id', 'author_id'] as $authorField) {
+    foreach ($schema['fields'] as $f) {
+        if (($f['name'] ?? '') !== $authorField) continue;
+        $required = !empty($f['required']);
+        if ($required && !$currentUserId) {
+            respond(['status' => 'error', 'message' => 'Authentication required'], 401);
+        }
+        if ($currentUserId) {
+            $cleanData[$authorField] = (string)$currentUserId;
+        }
+        break;
+    }
+}
+
+// If schema contains author_name and we have it, set it from session
+foreach ($schema['fields'] as $f) {
+    if (($f['name'] ?? '') === 'author_name' && $currentUserName) {
+        $cleanData['author_name'] = (string)$currentUserName;
+        break;
+    }
+}
+
+// Default visibility settings from collection meta (if schema contains those fields)
+// This allows site admins to configure visibility per-collection without hardcoding.
+$defaultVisibility = $collectionMeta['default_visibility'] ?? null;
+$defaultRelField = $collectionMeta['default_visibility_relationship_field'] ?? null;
+$defaultRelMode = $collectionMeta['default_visibility_relationship_mode'] ?? null;
+
+foreach ($schema['fields'] as $f) {
+    $n = $f['name'] ?? '';
+    if ($n === 'visibility' && (trim((string)($cleanData['visibility'] ?? '')) === '') && $defaultVisibility) {
+        $cleanData['visibility'] = (string)$defaultVisibility;
+    }
+    if ($n === 'visibility_relationship_field' && (trim((string)($cleanData['visibility_relationship_field'] ?? '')) === '') && $defaultRelField) {
+        $cleanData['visibility_relationship_field'] = (string)$defaultRelField;
+    }
+    if ($n === 'visibility_relationship_mode' && (trim((string)($cleanData['visibility_relationship_mode'] ?? '')) === '') && $defaultRelMode) {
+        $cleanData['visibility_relationship_mode'] = (string)$defaultRelMode;
+    }
+}
+
+// Generic slug auto-generation (system-wide, not project-specific):
+// If schema contains a `slug` field and it's empty, generate it from the first meaningful text field.
+if (array_key_exists('slug', $cleanData) && trim((string)($cleanData['slug'] ?? '')) === '') {
+    $source = '';
+    foreach (['title', 'name', 'content'] as $candidate) {
+        $v = $cleanData[$candidate] ?? '';
+        if (is_string($v) && trim($v) !== '') { $source = $v; break; }
+    }
+    $source = trim($source);
+    if ($source !== '') {
+        $s = strtolower($source);
+        $s = preg_replace('/[^a-z0-9]+/', '-', $s);
+        $s = trim($s, '-');
+        if ($s === '') $s = 'entry';
+        $cleanData['slug'] = substr($s, 0, 80);
+    }
+}
+
+// Apply deferred required checks (e.g., slug after auto-generation)
+foreach ($deferredRequired as $name) {
+    $v = $cleanData[$name] ?? '';
+    if (is_string($v) && trim($v) === '') {
+        $errors[] = "$name is required";
     }
 }
 if ($errors) {
@@ -151,15 +258,27 @@ foreach ($fileFields as $name => $field) {
         $errors[] = "$name upload failed";
         continue;
     }
-    // Validate file type/size
+    // SECURITY FIX: Validate file type/size using detected MIME type from file content
     $allowedTypes = $field['allowed_types'] ?? ['image/jpeg','image/png','application/pdf'];
     $maxSize = $field['max_size'] ?? 5*1024*1024;
+    
+    // Always use finfo_file() to detect MIME type from file content, not client-provided type
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    $detectedMimeType = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
-    if (!in_array($mimeType, $allowedTypes)) {
+    
+    if (!in_array($detectedMimeType, $allowedTypes)) {
         $errors[] = "$name: Invalid file type";
         continue;
+    }
+    
+    // Additional validation for images
+    if (strpos($detectedMimeType, 'image/') === 0) {
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            $errors[] = "$name: Invalid image file";
+            continue;
+        }
     }
     if ($file['size'] > $maxSize) {
         $errors[] = "$name: File too large (max " . ($maxSize/1024/1024) . "MB)";
@@ -208,7 +327,7 @@ if ($ok && !empty($collectionMeta['notify_email'])) {
         }
     }
     $body .= "\nSubmitted at: " . $cleanData['created_at'] . "\nIP: $ip\n";
-    $headers = 'From: noreply@' . ($_SERVER['SERVER_NAME'] ?? 'harucms.local');
+    $headers = 'From: noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local');
     $sent = mail($to, $subject, $body, $headers);
     log_security_event('public_submission_email', ['collection' => $collectionSlug, 'id' => $id, 'to' => $to, 'sent' => $sent]);
 }

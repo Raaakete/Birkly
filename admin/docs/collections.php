@@ -1,5 +1,5 @@
 <h2>Collections</h2>
-<p>Collections are the foundation of organizing your content in HaruCMS. They group similar content together and define what information each piece of content should have.</p>
+<p>Collections are the foundation of organizing your content in Birkly. They group similar content together and define what information each piece of content should have.</p>
 
 <h3>What is a Collection?</h3>
 <p>A <strong>collection</strong> is a type of content. It's like creating a template that defines:</p>

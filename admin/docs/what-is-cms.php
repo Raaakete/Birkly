@@ -21,15 +21,15 @@
     <li>Add a blog post → You'd need to edit HTML code</li>
 </ul>
 
-<p>With a CMS like HaruCMS, you can:</p>
+<p>With a CMS like Birkly, you can:</p>
 <ul>
     <li>Click "Add New Entry" and fill out a form</li>
     <li>Click "Save" and your content is live</li>
     <li>No coding knowledge required!</li>
 </ul>
 
-<h3>How HaruCMS Works</h3>
-<p>HaruCMS takes a unique approach compared to traditional CMS platforms:</p>
+<h3>How Birkly Works</h3>
+<p>Birkly takes a unique approach compared to traditional CMS platforms:</p>
 
 <div class="example-box">
     <h4>Traditional CMS:</h4>
@@ -39,7 +39,7 @@
         <li>More complex, harder to backup</li>
     </ul>
     
-    <h4>HaruCMS:</h4>
+    <h4>Birkly:</h4>
     <ul>
         <li>Content stored as simple JSON files</li>
         <li>No database needed - just files</li>
@@ -49,7 +49,7 @@
 </div>
 
 <h3>Key Concepts</h3>
-<p>Before diving in, here are the main concepts you'll work with in HaruCMS:</p>
+<p>Before diving in, here are the main concepts you'll work with in Birkly:</p>
 
 <ul>
     <li><strong>Collections:</strong> Groups that organize your content (like "Blog Posts", "Products", "Team Members")</li>

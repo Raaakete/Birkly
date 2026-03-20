@@ -44,9 +44,9 @@ $storage = new Storage(__DIR__ . '/../../settings');
 $adminSettings = $storage->read('admin.json') ?? [];
 $brandingSettings = $storage->read('branding.json') ?? [];
 
-$projectName = $adminSettings['project_name'] ?? 'HaruCMS';
+$projectName = $adminSettings['project_name'] ?? 'Birkly';
 $logoPath = $brandingSettings['logoPath'] ?? '';
-$defaultLogo = '/admin/assets/haru-icon.svg';
+$defaultLogo = '/admin/assets/birkly-icon.svg';
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 // Get current user information for sidebar footer
@@ -73,13 +73,11 @@ if (empty($userAvatar)) {
         $avatarInitials = strtoupper(substr($userName, 0, 2));
     }
 }
-?>
-        <!-- Sidebar -->
-        <aside class="sidebar">
+?><aside class="sidebar">
         <div>
             <div class="sidebar-header">
                 <div id="brandingLogoSidebar" class="logo" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" style="width: 32px; height: 32px; flex-shrink: 0;">
+                    <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" style="width: 42px; height: 42px; flex-shrink: 0;">
                     <span style="color: white; font-weight: 600; font-size: 1rem;"><?= htmlspecialchars($projectName) ?></span>
                 </div>
             </div>
@@ -115,6 +113,13 @@ if (empty($userAvatar)) {
                     </li>
                 </ul>
 
+                <!-- UI Injection Point: admin_navigation_before_plugins -->
+                <?php
+                if (function_exists('render_ui_injections')) {
+                    echo render_ui_injections('admin_navigation_before_plugins', []);
+                }
+                ?>
+                
                 <!-- Second Section: Plugins (only show if plugins exist) -->
                 <?php if (!empty($activePluginNavigation)): ?>
                 <div class="nav-section" id="nav-plugins-section">
@@ -130,16 +135,31 @@ if (empty($userAvatar)) {
                     </ul>
                 </div>
                 <?php endif; ?>
+                
+                <!-- UI Injection Point: admin_navigation_after_plugins -->
+                <?php
+                if (function_exists('render_ui_injections')) {
+                    echo render_ui_injections('admin_navigation_after_plugins', []);
+                }
+                ?>
 
                 <!-- Third Section: Settings, Help, Logout -->
                 <ul class="nav-links" id="links-settings">
-                    <li class="nav-item <?= is_nav_active('settings') || is_nav_active('users') || is_nav_active('roles') || is_nav_active('plugins') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>">
+                    <li class="nav-item <?= is_nav_active('settings') || is_nav_active('roles') || is_nav_active('plugins') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>">
                         <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                             </svg>
                             <?= __('admin.settings') ?>
+                        </a>
+                    </li>
+                    <li class="nav-item <?= is_nav_active('automation') ? 'active' : '' ?>">
+                        <a href="<?= htmlspecialchars(admin_url('automation')) ?>" class="nav-link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                            Automation
                         </a>
                     </li>
                     <li class="nav-item">
@@ -156,8 +176,8 @@ if (empty($userAvatar)) {
                 </nav>
                 </div>
                 <div class="sidebar-footer">
-                    <div class="user-menu-wrapper">
-                        <button class="user-menu-trigger" id="user-menu-trigger" aria-label="User menu" aria-expanded="false">
+                    <div class="dropdown user-menu-wrapper">
+                        <button class="dropdown-trigger user-menu-trigger" id="user-menu-trigger" aria-label="User menu" aria-expanded="false" aria-haspopup="true">
                             <?php if (!empty($userAvatar)): ?>
                                 <img src="<?= htmlspecialchars($userAvatar) ?>" alt="<?= htmlspecialchars($userName) ?>" class="user-avatar">
                             <?php else: ?>
@@ -170,7 +190,7 @@ if (empty($userAvatar)) {
                                 <polyline points="6,9 12,15 18,9"></polyline>
                             </svg>
                         </button>
-                        <div class="user-menu-dropdown" id="user-menu-dropdown" style="display: none;">
+                        <div class="dropdown-menu dropdown-menu-right user-menu-dropdown" id="user-menu-dropdown">
                             <div class="user-menu-header">
                                 <div class="user-menu-avatar">
                                     <?php if (!empty($userAvatar)): ?>

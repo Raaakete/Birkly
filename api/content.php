@@ -3,10 +3,10 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
-session_start();
 header('Content-Type: application/json');
 
-require_once 'storage.php';
+require_once '../core/storage/StorageFactory.php';
+require_once '../api/session.php';
 require_once 'auth.php';
 require_once '../core/plugins.php';
 require_once '../core/cache.php';
@@ -14,14 +14,18 @@ require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once 'log.php';
 
-// Basic auth check
-if (!isset($_SESSION['user']) && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+// Use admin session for content API (must be before auth check)
+// haru_secure_session_start() is called inside requireAuth(), but we call it here too to ensure session is ready
+haru_secure_session_start();
+
+// Basic auth check (requireAuth will handle detailed checks for write operations)
+if ($_SERVER['REQUEST_METHOD'] !== 'GET' && !isset($_SESSION['user'])) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     exit;
 }
 
-$storage = new Storage('../content');
+$storage = get_storage('../content');
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
@@ -29,8 +33,8 @@ $action = $input['action'] ?? $_GET['action'] ?? '';
 if ($action === 'list_collections') {
     // Allow public access for read-only operations
     // requireAuth('manage_content');
-    global $haru_collections;
-    // Populate $haru_collections with core collections
+    global $birkly_collections;
+    // Populate $birkly_collections with core collections
     $collections = $storage->list('collections');
     foreach ($collections as $dir) {
         $meta = $storage->read("collections/$dir/collection.json");
@@ -42,21 +46,21 @@ if ($action === 'list_collections') {
             ];
             $storage->write("collections/$dir/collection.json", $meta);
         }
-        $haru_collections[$meta['slug']] = [
+        $birkly_collections[$meta['slug']] = [
             'path' => realpath("../content/collections/$dir"),
             'options' => []
         ];
     }
     // Now build result from all registered collections (core + plugins)
     $result = [];
-    foreach ($haru_collections as $slug => $info) {
+    foreach ($birkly_collections as $slug => $info) {
         if (!empty($info['options']['hidden'])) continue; // skip hidden collections
         $path = $info['path'];
         $metaFile = rtrim($path, '/').'/collection.json';
         if (file_exists($metaFile)) {
             $meta = json_decode(file_get_contents($metaFile), true);
             if ($meta) {
-                // Add entries_count
+                // Add entries_count including sub-entries
                 $entriesDir = rtrim($path, '/') . '/entries';
                 $entriesCount = 0;
                 if (file_exists($entriesDir) && is_dir($entriesDir)) {
@@ -64,7 +68,66 @@ if ($action === 'list_collections') {
                         return $f !== '.' && $f !== '..' && is_file($entriesDir . '/' . $f) && pathinfo($f, PATHINFO_EXTENSION) === 'json';
                     }));
                 }
+                
+                // Count sub-entries if collection has sub-collections
+                $subEntriesCount = 0;
+                if (!empty($meta['sub_collections']) && is_array($meta['sub_collections'])) {
+                    require_once __DIR__ . '/../core/sub_entries.php';
+                    require_once __DIR__ . '/../core/storage/StorageFactory.php';
+                    
+                    $collectionSlug = $meta['slug'] ?? basename($path);
+                    $entryFiles = glob($entriesDir . '/*.json');
+                    
+                    if ($entryFiles) {
+                        $storage = get_storage();
+                        foreach ($entryFiles as $entryFile) {
+                            $entryId = basename($entryFile, '.json');
+                            foreach ($meta['sub_collections'] as $subCollection) {
+                                $subCollectionSlug = $subCollection['slug'] ?? '';
+                                if ($subCollectionSlug) {
+                                    try {
+                                        $subCount = countSubEntries($collectionSlug, $entryId, $subCollectionSlug);
+                                        $subEntriesCount += $subCount;
+                                        
+                                        // Count nested sub-entries recursively
+                                        if (!empty($subCollection['sub_collections'])) {
+                                            $subEntryPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$subCollectionSlug}";
+                                            try {
+                                                $subEntryFiles = $storage->list($subEntryPath);
+                                                foreach ($subEntryFiles as $subEntryFile) {
+                                                    if (pathinfo($subEntryFile, PATHINFO_EXTENSION) === 'json') {
+                                                        $subEntryId = basename($subEntryFile, '.json');
+                                                        foreach ($subCollection['sub_collections'] as $nestedSubCollection) {
+                                                            $nestedSlug = $nestedSubCollection['slug'] ?? '';
+                                                            if ($nestedSlug) {
+                                                                $nestedPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$subCollectionSlug}/{$subEntryId}/sub_entries/{$nestedSlug}";
+                                                                try {
+                                                                    $nestedFiles = $storage->list($nestedPath);
+                                                                    $subEntriesCount += count(array_filter($nestedFiles, function($f) {
+                                                                        return pathinfo($f, PATHINFO_EXTENSION) === 'json';
+                                                                    }));
+                                                                } catch (Exception $e) {
+                                                                    // Path doesn't exist, continue
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } catch (Exception $e) {
+                                                // Path doesn't exist, continue
+                                            }
+                                        }
+                                    } catch (Exception $e) {
+                                        // Continue with next sub-collection
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 $meta['entries_count'] = $entriesCount;
+                $meta['total_entries'] = $entriesCount + $subEntriesCount;
                 $result[] = $meta;
             }
         }
@@ -435,6 +498,16 @@ if ($action === 'list_entries') {
         }
     }
     
+    // Apply permission filtering if user management plugin is active
+    if (function_exists('get_plugin_state') && get_plugin_state('user_management')) {
+        require_once __DIR__ . '/../plugins/user_management/includes/EntryPermissions.php';
+        $entryPermissions = new EntryPermissions();
+        $currentUserId = $entryPermissions->getCurrentUserId();
+        
+        // Filter entries by view permission
+        $cachedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $cachedEntries);
+    }
+    
     // Get language parameter
     $language = $input['language'] ?? $_GET['language'] ?? 'en';
     
@@ -522,11 +595,12 @@ if ($action === 'create_entry') {
         echo json_encode(['status' => 'error', 'message' => 'Collection and data required']);
         exit;
     }
-    // Require title
+    // Generate entry ID first
+    $id = uniqid();
+    // Auto-fill title with entry ID if not provided
     $title = trim($data['title'] ?? '');
     if ($title === '') {
-        echo json_encode(['status' => 'error', 'message' => 'Title is required']);
-        exit;
+        $title = $id;
     }
     // Generate slug
     function slugify($str) {
@@ -551,7 +625,6 @@ if ($action === 'create_entry') {
         $slug = $baseSlug . '-' . $i;
         $i++;
     }
-    $id = uniqid();
     // --- WYSIWYG HTML fix: build $cleanData ---
     $schema = $storage->read("collections/$dir/schema.json");
     $cleanData = [];
@@ -633,11 +706,10 @@ if ($action === 'update_entry') {
         echo json_encode(['status' => 'error', 'message' => 'Entry not found']);
         exit;
     }
-    // Require title
+    // Auto-fill title with entry ID if not provided
     $title = trim($data['title'] ?? '');
     if ($title === '') {
-        echo json_encode(['status' => 'error', 'message' => 'Title is required']);
-        exit;
+        $title = $id;
     }
     // Generate slug
     function slugify($str) {
@@ -721,13 +793,24 @@ if ($action === 'delete_entry') {
     $id = $input['id'] ?? '';
     $dir = '';
     $collections = $storage->list('collections');
+    
+    // Try to find collection by ID first, then by slug (like other endpoints)
     foreach ($collections as $d) {
         $m = $storage->read("collections/$d/collection.json");
-        if ($m && $m['id'] === $collection) {
-            $dir = $d;
-            break;
+        if ($m) {
+            // Check by ID
+            if (isset($m['id']) && $m['id'] === $collection) {
+                $dir = $d;
+                break;
+            }
+            // Check by slug
+            if (isset($m['slug']) && $m['slug'] === $collection) {
+                $dir = $d;
+                break;
+            }
         }
     }
+    
     if (!$dir) {
         echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
         exit;
@@ -774,7 +857,13 @@ if ($action === 'set_entry_order') {
     }
     $result = $storage->write("collections/$dir/order.json", $order);
     log_security_event('set_entry_order', ['collection' => $dir, 'order_count' => count($order)]);
-    echo json_encode(['status' => $result ? 'ok' : 'error']);
+    
+    if ($result) {
+        echo json_encode(['status' => 'ok', 'message' => 'Entry order saved successfully']);
+    } else {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Failed to save entry order']);
+    }
     exit;
 }
 
@@ -812,6 +901,82 @@ if ($action === 'get_schema') {
         'status' => 'ok',
         'data' => [ 'schema' => $schema, 'collection' => $meta ]
     ]);
+    exit;
+}
+
+if ($action === 'get_entry_with_children') {
+    $id = $input['id'] ?? $_GET['id'] ?? '';
+    $collection = $input['collection'] ?? $_GET['collection'] ?? '';
+    $include_children = isset($input['include_children']) ? (bool)$input['include_children'] : (isset($_GET['include_children']) ? (bool)$_GET['include_children'] : true);
+    $max_depth = isset($input['max_depth']) ? (int)$input['max_depth'] : (isset($_GET['max_depth']) ? (int)$_GET['max_depth'] : 3);
+    $sub_collections = $input['sub_collections'] ?? $_GET['sub_collections'] ?? null;
+    
+    if (empty($id) || empty($collection)) {
+        respond(['status' => 'error', 'message' => 'ID and collection required']);
+    }
+    
+    // Find collection directory
+    $dir = '';
+    $collections = $storage->list('collections');
+    foreach ($collections as $d) {
+        $m = $storage->read("collections/$d/collection.json");
+        if ($m && ($m['slug'] === $collection || $m['id'] === $collection)) {
+            $dir = $d;
+            break;
+        }
+    }
+    
+    if (!$dir) {
+        respond(['status' => 'error', 'message' => 'Collection not found']);
+    }
+    
+    $entry = $storage->read("collections/{$dir}/entries/{$id}.json");
+    if (!$entry) {
+        respond(['status' => 'error', 'message' => 'Entry not found']);
+    }
+    
+    $result = ['entry' => $entry];
+    
+    if ($include_children) {
+        require_once __DIR__ . '/../core/sub_entries.php';
+        
+        $children_data = [];
+        $collection_config = $storage->read("collections/{$dir}/collection.json");
+        $sub_cols = $collection_config['sub_collections'] ?? [];
+        
+        // Filter sub-collections if specified
+        if ($sub_collections && is_string($sub_collections)) {
+            $sub_collections = explode(',', $sub_collections);
+        }
+        
+        foreach ($sub_cols as $sub_col) {
+            $sub_col_slug = $sub_col['slug'] ?? '';
+            if (!$sub_col_slug) continue;
+            
+            // Filter if specific sub-collections requested
+            if ($sub_collections && !in_array($sub_col_slug, $sub_collections)) {
+                continue;
+            }
+            
+            $children = getSubEntries($collection, $id, $sub_col_slug, [], []);
+            
+            // Recursively get nested children if depth allows
+            if ($max_depth > 1) {
+                foreach ($children as &$child) {
+                    $nested = getDescendants($collection, $child['id'], $sub_col_slug, $max_depth - 1);
+                    if (!empty($nested)) {
+                        $child['children'] = $nested;
+                    }
+                }
+            }
+            
+            $children_data[$sub_col_slug] = $children;
+        }
+        
+        $result['children'] = $children_data;
+    }
+    
+    respond(['status' => 'ok', 'data' => $result]);
     exit;
 }
 

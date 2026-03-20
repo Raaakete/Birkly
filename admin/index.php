@@ -18,6 +18,49 @@ require_once __DIR__ . '/auth_middleware.php';
 // Require authentication for all admin pages
 requireAdminAuth();
 
+// Page access policy (UX + defense-in-depth).
+// Backend endpoints remain the source of truth; this prevents opening pages a role shouldn't even view.
+$requestedPage = isset($_GET['page']) && $_GET['page'] !== '' ? (string)$_GET['page'] : 'dashboard';
+$pageViewPermissions = [
+    // General
+    'dashboard' => 'read',
+    'help' => 'read',
+    'activity' => 'read',
+    'audit-log' => 'read',
+
+    // Content
+    'content' => 'read',
+    'entries' => 'read',
+    'entry-detail' => 'read',
+
+    // Editors (write screens)
+    'collection-editor' => 'manage_content',
+    'entry-editor' => 'write',
+
+    // Media
+    'media' => 'read_media',
+
+    // Settings & admin management
+    'settings' => 'read_settings',
+    'webhooks' => 'read_settings',
+    'roles' => 'manage_settings',
+    'users' => 'list_users',
+    'plugins' => 'manage_plugins',
+
+    // Account is always accessible to authenticated users
+    'account' => null,
+
+    // Onboarding is handled separately below (first-time setup)
+    'onboarding' => null,
+];
+
+if (array_key_exists($requestedPage, $pageViewPermissions)) {
+    $needed = $pageViewPermissions[$requestedPage];
+    if (is_string($needed) && $needed !== '') {
+        requireAdminPermission($needed);
+    }
+}
+
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
 
@@ -70,7 +113,9 @@ if ($page !== 'onboarding' && $onboardingStatus['is_first_time'] && !$onboarding
             'updates' => 'updates.html',
             'entries' => 'entries.html',
             'entry-editor' => 'entry-editor.html',
+            'entry-detail' => 'entry-detail.html',
             'collection-editor' => 'collection-editor.html',
+            'users' => 'settings.html', // Users UI currently lives in settings template section
             'roles' => 'roles.html',
             'plugins' => 'plugins.html',
             'audit-log' => 'audit-log.html',
@@ -98,24 +143,30 @@ function admin_url(string $page, array $params = []): string {
 }
 
 function fetch_admin_page_data(string $page, array $query = []): array {
-    // Include the admin templates API directly to avoid HTTP requests
+    // Include the admin templates API directly to get the functions
     $apiPath = $_SERVER['DOCUMENT_ROOT'] . '/api/admin_templates.php';
     if (file_exists($apiPath)) {
-        // Set up the environment for the API
-        $originalGet = $_GET;
-        $_GET = array_merge(['action' => 'get_page_data', 'page' => $page], $query);
+        // Set flag to prevent switch statement from executing AND prevent JSON headers
+        $GLOBALS['__HARU_INTERNAL_CALL'] = true;
         
-        // Capture output
-        ob_start();
-        include $apiPath;
-        $output = ob_get_clean();
+        // Include the file to get the functions
+        // Any output will be caught by the main output buffer started at the top of this file
+        try {
+            require_once $apiPath;
+        } catch (Throwable $e) {
+            error_log("Error including admin_templates.php: " . $e->getMessage());
+            return ['error' => $e->getMessage()];
+        }
         
-        // Restore original $_GET
-        $_GET = $originalGet;
-        
-        $json = json_decode($output, true);
-        if (is_array($json) && ($json['status'] ?? '') === 'ok' && isset($json['data'])) {
-            return $json['data'];
+        // Call getPageData directly instead of going through the switch
+        if (function_exists('getPageData')) {
+            try {
+                $data = getPageData($page);
+                return $data;
+            } catch (Exception $e) {
+                error_log("Error in fetch_admin_page_data for page '$page': " . $e->getMessage());
+                return ['error' => $e->getMessage()];
+            }
         }
     }
     return [];
@@ -242,11 +293,64 @@ $isOnboarding = ($page === 'onboarding');
                         echo '</div>';
                     }
                 }
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'account' || $page === 'entries' || $page === 'entry-editor' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'help') {
-                // Content, Settings, Account, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages use direct PHP instead of template parser
-                $data = fetch_admin_page_data($page, $_GET);
-                extract($data);
-                include $templatePath;
+            } elseif ($page === 'content' || $page === 'settings' || $page === 'account' || $page === 'entries' || $page === 'entry-editor' || $page === 'entry-detail' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'help') {
+                // Content, Settings, Account, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages
+                try {
+                    $data = fetch_admin_page_data($page, $_GET);
+                    if (isset($data['error'])) {
+                        echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                        echo '<h2>Error Loading Page</h2>';
+                        echo '<p>' . htmlspecialchars($data['error']) . '</p>';
+                        echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                        echo '</div>';
+                    } else {
+                        // Check if template uses PHP tags or template directives
+                        $templateContent = file_get_contents($templatePath);
+                        
+                        // IMPROVED LOGIC: If template starts with <?php, it's a pure PHP template
+                        // This avoids false positives from directive-like strings in PHP code
+                        $startsWithPhp = (strpos(ltrim($templateContent), '<?php') === 0);
+                        
+                        if ($startsWithPhp) {
+                            // Pure PHP template - use direct include
+                            extract($data);
+                            include $templatePath;
+                        } else {
+                            // Check for template directives
+                            $usesTemplateDirectives = (strpos($templateContent, '{translate') !== false || 
+                                                       strpos($templateContent, '{admin_url') !== false ||
+                                                       strpos($templateContent, '{for each') !== false ||
+                                                       strpos($templateContent, '{if ') !== false ||
+                                                       strpos($templateContent, '{include_script') !== false ||
+                                                       strpos($templateContent, '{include_style') !== false);
+                            
+                            if ($usesTemplateDirectives) {
+                                // Template with directives - use parser
+                                $output = render_template_file($templatePath, $data);
+                                if (empty($output)) {
+                                    echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                                    echo '<h2>Error Rendering Template</h2>';
+                                    echo '<p>The template rendered empty output.</p>';
+                                    echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                                    echo '</div>';
+                                } else {
+                                    echo $output;
+                                }
+                            } else {
+                                // Fallback to direct include
+                                extract($data);
+                                include $templatePath;
+                            }
+                        }
+                    }
+                } catch (Exception $e) {
+                    echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                    echo '<h2>Error Loading Page</h2>';
+                    echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
+                    echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                    echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                    echo '</div>';
+                }
             } elseif ($page === 'community_users') {
                 // Plugin page - load from plugin directory
                 $pluginPath = __DIR__ . '/../plugins/community_users/admin/community_users.html';
@@ -284,3 +388,14 @@ $isOnboarding = ($page === 'onboarding');
 
         <?php include __DIR__ . '/partials/layout_footer.php'; ?>
 <?php endif; ?>
+<?php
+// Ensure Content-Type is still set before flushing
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=utf-8');
+}
+
+// Flush output buffer to send content to browser
+while (ob_get_level() > 0) {
+    ob_end_flush();
+}
+?>

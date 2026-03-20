@@ -1,10 +1,10 @@
-# HaruCMS (PHP Version)
+# Birkly (PHP Version)
 
 A flat-file, modular, zero-dependency CMS designed for simplicity, security, and extensibility. Just upload and use—no npm, no database, no server setup required.
 
 ## 🚀 Quick Start
 
-**New to HaruCMS?** Open `0_START-HERE.html` in your browser for a complete setup guide with step-by-step instructions for local development or web server deployment.
+**New to Birkly?** Open `0_START-HERE.html` in your browser for a complete setup guide with step-by-step instructions for local development or web server deployment.
 
 ## Project Structure
 
@@ -22,7 +22,7 @@ A flat-file, modular, zero-dependency CMS designed for simplicity, security, and
 
 ### Local Development
 
-1. Download and extract HaruCMS.
+1. Download and extract Birkly.
 2. Open a terminal in the extracted folder and run:
    ```
    chmod +x ./start-server.sh
@@ -73,7 +73,7 @@ After running `php scripts/create-default-user.php` to create the default admin 
 
 ---
 
-For advanced configuration, see the documentation or contact the HaruCMS team.
+For advanced configuration, see the documentation or contact the Birkly team.
 
 ## Next Steps
 - Migrate/reuse admin UI HTML/CSS/JS into `/admin/`
@@ -85,9 +85,9 @@ For advanced configuration, see the documentation or contact the HaruCMS team.
 
 ---
 
-# HaruCMS Templating Language
+# Birkly Templating Language
 
-HaruCMS provides a powerful, zero-dependency templating language for rendering content in your static or headless sites. Below are all supported features and syntax:
+Birkly provides a powerful, zero-dependency templating language for rendering content in your static or headless sites. Below are all supported features and syntax:
 
 ## 1. Loops (Listing Entries)
 

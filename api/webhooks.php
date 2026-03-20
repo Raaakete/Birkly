@@ -125,9 +125,9 @@ function triggerWebhook($event, $data = []) {
             CURLOPT_POSTFIELDS => json_encode($payload),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'User-Agent: HaruCMS/1.0',
-                'X-HaruCMS-Event: ' . $event,
-                'X-HaruCMS-Signature: ' . generateWebhookSignature($webhook['secret'] ?? '', $payload)
+                'User-Agent: Birkly/1.0',
+                'X-Birkly-Event: ' . $event,
+                'X-Birkly-Signature: ' . generateWebhookSignature($webhook['secret'] ?? '', $payload)
             ],
             CURLOPT_TIMEOUT => 10,
             CURLOPT_CONNECTTIMEOUT => 5
@@ -333,7 +333,7 @@ function testWebhook($data) {
         'event' => 'test',
         'timestamp' => date('c'),
         'data' => [
-            'message' => 'This is a test webhook from HaruCMS',
+            'message' => 'This is a test webhook from Birkly',
             'webhook_id' => $webhookId
         ]
     ];
@@ -345,9 +345,9 @@ function testWebhook($data) {
         CURLOPT_POSTFIELDS => json_encode($payload),
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json',
-            'User-Agent: HaruCMS/1.0',
-            'X-HaruCMS-Event: test',
-            'X-HaruCMS-Signature: ' . generateWebhookSignature($webhook['secret'] ?? '', $payload)
+            'User-Agent: Birkly/1.0',
+            'X-Birkly-Event: test',
+            'X-Birkly-Signature: ' . generateWebhookSignature($webhook['secret'] ?? '', $payload)
         ],
         CURLOPT_TIMEOUT => 10,
         CURLOPT_CONNECTTIMEOUT => 5

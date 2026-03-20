@@ -2,7 +2,7 @@
 
 ## Overview
 
-The HaruCMS plugin system has been significantly enhanced to provide comprehensive plugin management capabilities. This system allows for plugin activation/deactivation, settings management, updates, and proper state handling.
+The Birkly plugin system has been significantly enhanced to provide comprehensive plugin management capabilities. This system allows for plugin activation/deactivation, settings management, updates, and proper state handling.
 
 ## Key Features
 

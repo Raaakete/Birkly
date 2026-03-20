@@ -1,40 +1,316 @@
-<div class="collection-editor-page">
+<?php
+// Ensure variables exist (they should be extracted from $data in admin/index.php)
+$collection = $collection ?? [];
+$sub_collection = $sub_collection ?? null;
+$subCollection = $subCollection ?? null;
+$parent_sub_collection = $parent_sub_collection ?? null;
+$fields = $fields ?? [];
+$fieldtypes = $fieldtypes ?? [];
+
+// Detect if this is a sub-collection editor
+$isSubCollection = !empty($sub_collection) || !empty($subCollection);
+$subCollectionData = $sub_collection ?? $subCollection ?? null;
+$parentSubCollectionData = $parent_sub_collection ?? null;
+$hasParentSubCollection = !empty($parentSubCollectionData);
+
+// Determine cancel URL - prioritize return_to, then HTTP_REFERER, then default
+$cancelUrl = null;
+if (!empty($_GET['return_to'])) {
+    $cancelUrl = $_GET['return_to'];
+} elseif (!empty($_SERVER['HTTP_REFERER'])) {
+    $referer = $_SERVER['HTTP_REFERER'];
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    if (strpos($referer, $_SERVER['HTTP_HOST']) !== false && $referer !== $currentUrl) {
+        $cancelUrl = $referer;
+    }
+}
+if (!$cancelUrl) {
+    if ($isSubCollection && !empty($_GET['entry'])) {
+        $collectionSlug = $collection['slug'] ?? $_GET['collection'] ?? '';
+        $cancelUrl = "/admin/index.php?page=entry-detail&collection=" . htmlspecialchars($collectionSlug) . "&entry=" . htmlspecialchars($_GET['entry']);
+        if (!empty($_GET['parent_sub_collection']) && !empty($_GET['parent_sub_entry'])) {
+            $cancelUrl .= "&sub_collection=" . htmlspecialchars($_GET['parent_sub_collection']) . "&sub_entry=" . htmlspecialchars($_GET['parent_sub_entry']);
+            if (!empty($_GET['parent_parent_sub_collection']) && !empty($_GET['parent_parent_sub_entry'])) {
+                $cancelUrl .= "&parent_sub_collection=" . htmlspecialchars($_GET['parent_parent_sub_collection']) . "&parent_sub_entry=" . htmlspecialchars($_GET['parent_parent_sub_entry']);
+            }
+        } elseif (!empty($_GET['sub_collection']) && !empty($_GET['sub_entry'])) {
+            $cancelUrl .= "&sub_collection=" . htmlspecialchars($_GET['sub_collection']) . "&sub_entry=" . htmlspecialchars($_GET['sub_entry']);
+            if (!empty($_GET['parent_parent_sub_collection']) && !empty($_GET['parent_parent_sub_entry'])) {
+                $cancelUrl .= "&parent_sub_collection=" . htmlspecialchars($_GET['parent_parent_sub_collection']) . "&parent_sub_entry=" . htmlspecialchars($_GET['parent_parent_sub_entry']);
+            }
+        }
+    } elseif ($isSubCollection) {
+        $collectionSlug = $collection['slug'] ?? $_GET['collection'] ?? '';
+        $cancelUrl = "/admin/index.php?page=entries&collection=" . htmlspecialchars($collectionSlug);
+    } else {
+        $cancelUrl = "/admin/index.php?page=content";
+    }
+}
+?><div class="collection-editor-page">
     <div class="page-header pt-m pb-m">
+        <div class="page-header-left">
         <div class="breadcrumbs">
             <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
-            <span class="current"><?= htmlspecialchars($collection['title'] ? __('admin.edit_collection') : __('admin.new_collection')) ?></span>
+            <?php if ($isSubCollection): ?>
+                <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
+                <span class="separator">›</span>
+                <span class="current"><?= !empty($subCollectionData['slug']) ? 'Edit Sub-Collection' : 'New Sub-Collection' ?></span>
+            <?php else: ?>
+                <span class="current"><?= htmlspecialchars(!empty($collection['title']) ? __('admin.edit_collection') : __('admin.new_collection')) ?></span>
+            <?php endif; ?>
         </div>
+        </div>
+        <div class="page-header-actions"></div>
     </div>
     
     <div class="main-actions-bar">
         <button type="submit" form="collection-form" class="btn btn-primary">
-            <?= $collection['title'] ? __('admin.save_collection') : __('admin.create_collection') ?>
+            <?php if ($isSubCollection): ?>
+                <?= !empty($subCollectionData['slug']) ? 'Save Sub-Collection' : 'Create Sub-Collection' ?>
+            <?php else: ?>
+                <?= !empty($collection['title']) ? __('admin.save_collection') : __('admin.create_collection') ?>
+            <?php endif; ?>
         </button>
-        <a href="/admin/index.php?page=content" class="btn btn-secondary">
+        <a href="<?= htmlspecialchars($cancelUrl) ?>" class="btn btn-secondary">
             <?= __('admin.cancel') ?>
         </a>
     </div>
     
     <form id="collection-form" class="collection-form" method="POST" action="/api/admin_collections.php">
-        <input type="hidden" name="action" value="<?= $collection['title'] ? 'update' : 'create' ?>">
-        <?php if ($collection['title']): ?>
-            <input type="hidden" name="collection_slug" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
+        <?php if ($isSubCollection): ?>
+            <input type="hidden" name="action" value="<?= !empty($subCollectionData['slug']) ? 'update_sub_collection' : 'add_sub_collection' ?>">
+            <input type="hidden" name="collection_slug" value="<?= htmlspecialchars($collection['slug'] ?? $_GET['collection'] ?? '') ?>">
+            <?php if (!empty($subCollectionData['slug'])): ?>
+                <input type="hidden" name="sub_collection_slug" value="<?= htmlspecialchars($subCollectionData['slug']) ?>">
+            <?php endif; ?>
+            <?php if (!empty($parentSubCollectionData)): ?>
+                <input type="hidden" name="parent_sub_collection_slug" value="<?= htmlspecialchars($parentSubCollectionData['slug'] ?? '') ?>">
+            <?php elseif (!empty($subCollectionData['parent_sub_collection'])): ?>
+                <input type="hidden" name="parent_sub_collection_slug" value="<?= htmlspecialchars($subCollectionData['parent_sub_collection']) ?>">
+            <?php endif; ?>
+        <?php else: ?>
+            <input type="hidden" name="action" value="<?= !empty($collection['title']) ? 'update' : 'create' ?>">
+            <?php if (!empty($collection['title'])): ?>
+                <input type="hidden" name="collection_slug" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
+            <?php endif; ?>
         <?php endif; ?>
         <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
         
         <div class="editor-layout">
             <div class="editor-main">
                 <div class="editor-content">
-                    <!-- Collection Title (Required, First Field) -->
+                    <!-- Parent Collection Notice (for sub-collections) -->
+                    <?php if ($isSubCollection): ?>
+                        <?php if ($hasParentSubCollection): ?>
+                            <div class="card" style="margin-bottom: var(--space-4, 16px); background: var(--info-50, #eff6ff); border: 1px solid var(--info-200, #bfdbfe);">
+                                <div style="padding: var(--space-3, 12px);">
+                                    <div style="display: flex; align-items: center; margin-bottom: var(--space-2, 8px);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-2, 8px); color: var(--info-600, #2563eb);">
+                                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                                        </svg>
+                                        <strong style="color: var(--info-900, #1e3a8a); font-size: 14px;">Nested Sub-Collection</strong>
+                                    </div>
+                                    <div style="font-size: 13px; color: var(--info-700, #1d4ed8); line-height: 1.5;">
+                                        <div style="margin-bottom: var(--space-1, 4px);">
+                                            <strong>Parent Collection:</strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?>
+                                        </div>
+                                        <div>
+                                            <strong>Parent Sub-Collection:</strong> <?= htmlspecialchars($parentSubCollectionData['name'] ?? 'Sub-Collection') ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="card" style="margin-bottom: var(--space-4, 16px); background: var(--info-50, #eff6ff); border: 1px solid var(--info-200, #bfdbfe);">
+                                <div style="padding: var(--space-3, 12px);">
+                                    <div style="display: flex; align-items: center; margin-bottom: var(--space-2, 8px);">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-2, 8px); color: var(--info-600, #2563eb);">
+                                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                                        </svg>
+                                        <strong style="color: var(--info-900, #1e3a8a); font-size: 14px;">Sub-Collection</strong>
+                                    </div>
+                                    <div style="font-size: 13px; color: var(--info-700, #1d4ed8); line-height: 1.5;">
+                                        <div>
+                                            <strong>Parent Collection:</strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?>
+                                        </div>
+                                        <div style="margin-top: var(--space-1, 4px);">
+                                            This sub-collection belongs to the parent collection above and will be attached to entries in that collection.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <!-- Collection/Sub-Collection Title (Required, First Field) -->
                     <div class="field-block">
                         <div class="field-header">
-                            <div class="field-title"><?= __('admin.collection_title') ?> <span class="required">*</span></div>
+                            <div class="field-title"><?= $isSubCollection ? 'Sub-Collection Name' : __('admin.collection_title') ?> <span class="required">*</span></div>
                         </div>
                         <div class="field-control">
-                            <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
+                            <?php if ($isSubCollection): ?>
+                                <input type="text" name="sub_collections[0][name]" id="name" class="input" value="<?= htmlspecialchars($subCollectionData['name'] ?? '') ?>" required placeholder="e.g., Comments">
+                            <?php else: ?>
+                                <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
+                            <?php endif; ?>
                         </div>
                     </div>
+                    
+                    <?php if ($isSubCollection): ?>
+                        <!-- Sub-Collection Fields Schema -->
+                        <div class="fields-section" style="margin-top: 2rem;">
+                            <h2 class="section-title">Sub-Collection Fields</h2>
+                            <p class="section-description">Define the fields that sub-entries in this sub-collection will have.</p>
+                            
+                            <div id="sub-collection-fields-container">
+                                <?php 
+                                $subFields = $subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? [];
+                                if (!empty($subFields)): 
+                                    foreach ($subFields as $fieldIndex => $subField): 
+                                ?>
+                                    <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>" style="margin-bottom: 1rem;">
+                                        <div class="fieldtype-header">
+                                            <div class="fieldtype-title">
+                                                <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($subField['type'] ?? 'Select Type')) ?></span>
+                                                <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
+                                            </div>
+                                            <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="3,6 5,6 21,6"></polyline>
+                                                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="fieldtype-body">
+                                            <div class="fieldtype-row">
+                                                <div class="fieldtype-field">
+                                                    <label>Display Name <span class="required">*</span></label>
+                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                </div>
+                                                <div class="fieldtype-field">
+                                                    <label>API Name</label>
+                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                </div>
+                                            </div>
+                                            <div class="fieldtype-row">
+                                                <div class="fieldtype-field">
+                                                    <label>Field Type</label>
+                                                    <select name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][type]" class="input sub-field-type-select" required>
+                                                        <option value="">Select type...</option>
+                                                        <?php foreach ($fieldtypes as $fieldtype): ?>
+                                                            <?php
+                                                            $subFieldType = $subField['type'] ?? '';
+                                                            $fieldtypeName = $fieldtype['name'] ?? '';
+                                                            $fieldtypeType = $fieldtype['type'] ?? $fieldtypeName;
+                                                            $isSelected = ($subFieldType === $fieldtypeName || $subFieldType === $fieldtypeType || 
+                                                                          strtolower(str_replace('-', '', $subFieldType)) === strtolower(str_replace('-', '', $fieldtypeName)) ||
+                                                                          strtolower(str_replace('-', '', $subFieldType)) === strtolower(str_replace('-', '', $fieldtypeType)));
+                                                            ?>
+                                                            <option value="<?= htmlspecialchars($fieldtypeType) ?>" <?= $isSelected ? 'selected' : '' ?>>
+                                                                <?= htmlspecialchars($fieldtype['label']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="fieldtype-field">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
+                                                        <span class="checkmark"></span>
+                                                        <span>Mandatory Field</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php 
+                                    endforeach; 
+                                endif; 
+                                ?>
+                            </div>
+                            
+                            <button type="button" id="add-sub-collection-field-btn" class="btn btn-secondary" style="margin-top: 1rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; vertical-align: middle;">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Add Field
+                            </button>
+                        </div>
+                        
+                        <!-- Sub-Collections Section (for nested sub-collections) -->
+                        <div class="fields-section" style="margin-top: 2rem;">
+                            <h2 class="section-title">Sub-Collections</h2>
+                            <p class="section-description">Configure nested sub-collections that can be attached to entries in this sub-collection. For example, a "Comments" sub-collection might have "Replies" as a nested sub-collection.</p>
+                            
+                            <div id="sub-collections-container">
+                                <?php 
+                                $nestedSubCollections = $subCollectionData['sub_collections'] ?? [];
+                                if (!empty($nestedSubCollections)): 
+                                    foreach ($nestedSubCollections as $index => $nestedSubCollection): 
+                                ?>
+                                    <div class="fieldtype-section" data-sub-collection-index="<?= $index ?>">
+                                        <div class="fieldtype-header">
+                                            <div class="fieldtype-title">
+                                                <span class="fieldtype-name"><?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?></span>
+                                            </div>
+                                            <button type="button" class="btn-icon remove-sub-collection-btn" title="Remove sub-collection">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="3,6 5,6 21,6"></polyline>
+                                                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="fieldtype-body">
+                                            <div class="fieldtype-row">
+                                                <div class="fieldtype-field">
+                                                    <label>Name <span class="required">*</span></label>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][name]" value="<?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?>" placeholder="e.g., Replies" class="input" required>
+                                                </div>
+                                                <div class="fieldtype-field">
+                                                    <label>Slug <span class="required">*</span></label>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][slug]" value="<?= htmlspecialchars($nestedSubCollection['slug'] ?? '') ?>" placeholder="e.g., replies" class="input" required>
+                                                </div>
+                                            </div>
+                                            <div class="fieldtype-row">
+                                                <div class="fieldtype-field">
+                                                    <label>Description</label>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][description]" value="<?= htmlspecialchars($nestedSubCollection['description'] ?? '') ?>" placeholder="Optional description" class="input">
+                                                </div>
+                                                <div class="fieldtype-field">
+                                                    <label>Entry Method</label>
+                                                    <select name="sub_collections[0][sub_collections][<?= $index ?>][entry_method]" class="input">
+                                                        <option value="admin_only" <?= ($nestedSubCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
+                                                        <option value="public_api" <?= ($nestedSubCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="fieldtype-row">
+                                                <div class="fieldtype-field">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" name="sub_collections[0][sub_collections][<?= $index ?>][auto_publish]" value="1" <?= !empty($nestedSubCollection['auto_publish']) ? 'checked' : '' ?>>
+                                                        <span class="checkmark"></span>
+                                                        <span>Auto-publish</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php 
+                                    endforeach; 
+                                endif; 
+                                ?>
+                            </div>
+                            
+                            <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Add Sub-Collection
+                            </button>
+                        </div>
+                    <?php else: ?>
                     
                     <!-- Custom Fieldtypes -->
                     <div class="fields-section">
@@ -46,6 +322,9 @@
                                 <?php foreach ($fields as $index => $field): ?>
                                     <div class="fieldtype-section" data-index="<?= $index ?>">
                                         <div class="fieldtype-header">
+                                            <div class="fieldtype-drag-handle">
+                                                <img src="/admin/assets/DotsSixVertical.svg" alt="Drag to reorder">
+                                            </div>
                                             <div class="fieldtype-title">
                                                 <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($field['type'] ?? 'Select Type')) ?></span>
                                                 <span class="fieldtype-name"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?></span>
@@ -127,11 +406,172 @@
                             Add Field
                         </button>
                     </div>
+                    
+                    <!-- Sub-Collections Section -->
+                    <div class="fields-section" style="margin-top: 2rem;">
+                        <h2 class="section-title">Sub-Collections</h2>
+                        <p class="section-description">Configure sub-collections that can be attached to entries in this collection. For example, a blog post collection might have "Comments" and "Ratings" as sub-collections.</p>
+                        
+                        <div id="sub-collections-container">
+                            <?php 
+                            $subCollections = $collection['sub_collections'] ?? [];
+                            if (!empty($subCollections)): 
+                                foreach ($subCollections as $index => $subCollection): 
+                            ?>
+                                <div class="fieldtype-section" data-sub-collection-index="<?= $index ?>">
+                                    <div class="fieldtype-header">
+                                        <div class="fieldtype-title">
+                                            <span class="fieldtype-name"><?= htmlspecialchars($subCollection['name'] ?? '') ?></span>
+                                        </div>
+                                        <button type="button" class="btn-icon remove-sub-collection-btn" title="Remove sub-collection">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="3,6 5,6 21,6"></polyline>
+                                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="fieldtype-body">
+                                        <div class="fieldtype-row">
+                                            <div class="fieldtype-field">
+                                                <label>Name <span class="required">*</span></label>
+                                                <input type="text" name="sub_collections[<?= $index ?>][name]" value="<?= htmlspecialchars($subCollection['name'] ?? '') ?>" placeholder="e.g., Comments" class="input" required>
+                                            </div>
+                                            <div class="fieldtype-field">
+                                                <label>Slug <span class="required">*</span></label>
+                                                <input type="text" name="sub_collections[<?= $index ?>][slug]" value="<?= htmlspecialchars($subCollection['slug'] ?? '') ?>" placeholder="e.g., comments" class="input" required>
+                                            </div>
+                                        </div>
+                                        <div class="fieldtype-row">
+                                            <div class="fieldtype-field">
+                                                <label>Description</label>
+                                                <input type="text" name="sub_collections[<?= $index ?>][description]" value="<?= htmlspecialchars($subCollection['description'] ?? '') ?>" placeholder="Optional description" class="input">
+                                            </div>
+                                            <div class="fieldtype-field">
+                                                <label>Entry Method</label>
+                                                <select name="sub_collections[<?= $index ?>][entry_method]" class="input">
+                                                    <option value="admin_only" <?= ($subCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
+                                                    <option value="public_api" <?= ($subCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="fieldtype-row">
+                                            <div class="fieldtype-field">
+                                                <label class="checkbox-label">
+                                                    <input type="checkbox" name="sub_collections[<?= $index ?>][auto_publish]" value="1" <?= !empty($subCollection['auto_publish']) ? 'checked' : '' ?>>
+                                                    <span>Auto-publish submissions (if Public API)</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Sub-Collection Fields Schema -->
+                                        <div class="sub-collection-fields-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                                            <h4 style="margin-bottom: 1rem; font-size: 0.9rem; font-weight: 600;">Fields Schema</h4>
+                                            <div class="sub-collection-fields-container" data-sub-collection-index="<?= $index ?>">
+                                                <?php 
+                                                // Check for fields in schema[fields] structure first (form sends this), then fall back to direct fields (saved structure)
+                                                $subFields = $subCollection['schema']['fields'] ?? $subCollection['fields'] ?? [];
+                                                if (!empty($subFields)): 
+                                                    foreach ($subFields as $fieldIndex => $subField): 
+                                                ?>
+                                                    <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>" style="margin-bottom: 1rem;">
+                                                        <div class="fieldtype-header">
+                                                            <div class="fieldtype-title">
+                                                                <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($subField['type'] ?? 'Select Type')) ?></span>
+                                                                <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
+                                                            </div>
+                                                            <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                    <polyline points="3,6 5,6 21,6"></polyline>
+                                                                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                        <div class="fieldtype-body">
+                                                            <div class="fieldtype-row">
+                                                                <div class="fieldtype-field">
+                                                                    <label>Display Name <span class="required">*</span></label>
+                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                                </div>
+                                                                <div class="fieldtype-field">
+                                                                    <label>API Name</label>
+                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                                </div>
+                                                            </div>
+                                                            <div class="fieldtype-row">
+                                                                <div class="fieldtype-field">
+                                                                    <label>Field Type</label>
+                                                                    <select name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][type]" class="input sub-field-type-select" required>
+                                                                        <option value="">Select type...</option>
+                                                                        <?php foreach ($fieldtypes as $fieldtype): ?>
+                                                                            <?php
+                                                                            $subFieldType = $subField['type'] ?? '';
+                                                                            $fieldtypeName = $fieldtype['name'] ?? '';
+                                                                            $fieldtypeType = $fieldtype['type'] ?? $fieldtypeName;
+                                                                            $isSelected = ($subFieldType === $fieldtypeName || $subFieldType === $fieldtypeType || 
+                                                                                          strtolower(str_replace('-', '', $subFieldType)) === strtolower(str_replace('-', '', $fieldtypeName)) ||
+                                                                                          strtolower(str_replace('-', '', $subFieldType)) === strtolower(str_replace('-', '', $fieldtypeType)));
+                                                                            ?>
+                                                                            <option value="<?= htmlspecialchars($fieldtypeType) ?>" <?= $isSelected ? 'selected' : '' ?>>
+                                                                                <?= htmlspecialchars($fieldtype['label']) ?>
+                                                                            </option>
+                                                                        <?php endforeach; ?>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="fieldtype-field">
+                                                                    <label class="checkbox-label">
+                                                                        <input type="checkbox" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
+                                                                        <span class="checkmark"></span>
+                                                                        <span>Mandatory Field</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php 
+                                                    endforeach; 
+                                                endif; 
+                                                ?>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="<?= $index ?>" style="margin-top: 0.5rem;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                </svg>
+                                                Add Field
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php 
+                                endforeach; 
+                            endif; 
+                            ?>
+                        </div>
+                        
+                        <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Sub-Collection
+                        </button>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
             
             <!-- Right Sidebar -->
             <div class="editor-sidebar">
+                <?php
+                // UI Injection Point
+                if (function_exists('render_ui_injections')) {
+                    if ($isSubCollection) {
+                        echo render_ui_injections('sub_collection_editor_sidebar_before', ['sub_collection' => $subCollectionData, 'collection' => $collection]);
+                    } else {
+                        echo render_ui_injections('collection_editor_sidebar_before', ['collection' => $collection]);
+                    }
+                }
+                ?>
                 <div class="sidebar-tabs">
                     <div class="tab-nav">
                         <button type="button" class="tab-btn active" data-tab="settings"><?= __('admin.settings') ?></button>
@@ -143,112 +583,211 @@
                         <!-- Settings Tab -->
                         <div class="tab-pane active" id="settings-tab">
                             <div class="card">
-                                <div class="info-item">
-                                    <label>ID</label>
-                                    <div class="info-value"><?= htmlspecialchars($collection['id'] ?? '—') ?></div>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <label>Slug</label>
-                                    <div class="info-value">
-                                        <span id="slug-display"><?= htmlspecialchars($collection['slug'] ?? 'auto-generated') ?></span>
-                                        <a href="#" id="change-slug-link" class="link">Change Slug</a>
+                                <?php if ($isSubCollection): ?>
+                                    <?php if (!empty($subCollectionData['slug'])): ?>
+                                        <div class="info-item">
+                                            <label>ID</label>
+                                            <div class="info-value"><?= htmlspecialchars($subCollectionData['slug']) ?></div>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <div class="info-item">
+                                        <label>Slug</label>
+                                        <div class="info-value">
+                                            <span id="slug-display"><?= htmlspecialchars($subCollectionData['slug'] ?? 'auto-generated') ?></span>
+                                            <a href="#" id="change-slug-link" class="link">Change Slug</a>
+                                        </div>
+                                        <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subCollectionData['slug'] ?? '') ?>" placeholder="auto-generated" style="display: none; margin-top: 0.5rem;">
                                     </div>
-                                    <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated" style="display: none; margin-top: 0.5rem;">
-                                </div>
-                                
-                                <div class="info-item">
-                                    <label>Description</label>
-                                    <textarea name="description" id="description" class="input" rows="3" placeholder="Describe what this collection is for"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <label>Default Sort Order</label>
-                                    <select name="sort" id="sort" class="input">
-                                        <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
-                                        <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
-                                        <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>><?= __('admin.title_az') ?></option>
-                                        <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>><?= __('admin.title_za') ?></option>
-                                        <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <label>Entry Method</label>
-                                    <select name="entry_method" id="entry_method" class="input">
-                                        <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                        <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
-                                    </select>
-                                    <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                        Choose how entries can be created for this collection
-                                    </small>
-                                </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Description</label>
+                                        <textarea name="sub_collections[0][description]" id="sub-collection-description" class="input" rows="3" placeholder="Describe what this sub-collection is for"><?= htmlspecialchars($subCollectionData['description'] ?? '') ?></textarea>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Default Sort Order</label>
+                                        <select name="sub_collections[0][sort]" id="sub-collection-sort" class="input">
+                                            <option value="created_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
+                                            <option value="created_asc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
+                                            <option value="title_asc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>><?= __('admin.title_az') ?></option>
+                                            <option value="title_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>><?= __('admin.title_za') ?></option>
+                                            <option value="updated_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Entry Method</label>
+                                        <select name="sub_collections[0][entry_method]" id="sub-collection-entry-method" class="input">
+                                            <option value="admin_only" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
+                                            <option value="public_api" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                        </select>
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Choose how entries can be created for this sub-collection
+                                        </small>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="info-item">
+                                        <label>ID</label>
+                                        <div class="info-value"><?= htmlspecialchars($collection['id'] ?? '—') ?></div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Slug</label>
+                                        <div class="info-value">
+                                            <span id="slug-display"><?= htmlspecialchars($collection['slug'] ?? 'auto-generated') ?></span>
+                                            <a href="#" id="change-slug-link" class="link">Change Slug</a>
+                                        </div>
+                                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated" style="display: none; margin-top: 0.5rem;">
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Description</label>
+                                        <textarea name="description" id="description" class="input" rows="3" placeholder="Describe what this collection is for"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Default Sort Order</label>
+                                        <select name="sort" id="sort" class="input">
+                                            <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
+                                            <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
+                                            <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>><?= __('admin.title_az') ?></option>
+                                            <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>><?= __('admin.title_za') ?></option>
+                                            <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <label>Entry Method</label>
+                                        <select name="entry_method" id="entry_method" class="input">
+                                            <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
+                                            <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                        </select>
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Choose how entries can be created for this collection
+                                        </small>
+                                    </div>
+                                <?php endif; ?>
                                 
                                 <!-- Multi-Language Configuration -->
                                 <div class="info-item" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
                                     <label><?= __('admin.multi_language_support') ?></label>
                                     <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
                                         <label class="toggle-switch">
-                                            <input type="checkbox" name="multilanguage_enabled" id="multilanguage_enabled" value="1" <?= !empty($collection['multilanguage']['enabled']) ? 'checked' : '' ?>>
+                                            <?php if ($isSubCollection): ?>
+                                                <input type="checkbox" name="sub_collections[0][multilanguage_enabled]" id="sub-collection-multilanguage_enabled" value="1" <?= !empty($subCollectionData['multilanguage']['enabled']) ? 'checked' : '' ?>>
+                                            <?php else: ?>
+                                                <input type="checkbox" name="multilanguage_enabled" id="multilanguage_enabled" value="1" <?= !empty($collection['multilanguage']['enabled']) ? 'checked' : '' ?>>
+                                            <?php endif; ?>
                                             <span class="toggle-slider"></span>
                                         </label>
-                                        <span style="font-weight: 500;">Enable multi-language support for this collection</span>
+                                        <span style="font-weight: 500;">Enable multi-language support for this <?= $isSubCollection ? 'sub-collection' : 'collection' ?></span>
                                     </div>
                                     <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
                                         When enabled, entries can have content in multiple languages
                                     </small>
                                     
-                                    <div id="multilanguage-settings" style="display: <?= !empty($collection['multilanguage']['enabled']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
-                                        <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;"><?= __('admin.languages') ?></label>
-                                        <div id="language-tags-container" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 40px; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-s); background: var(--bg-primary);">
-                                            <?php
-                                            $selectedLangs = $collection['multilanguage']['languages'] ?? [];
-                                            foreach ($selectedLangs as $langCode):
-                                            ?>
-                                                <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
-                                                    <?= htmlspecialchars(strtoupper($langCode)) ?>
-                                                    <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
-                                                    <input type="hidden" name="multilanguage_languages[]" value="<?= htmlspecialchars($langCode) ?>">
-                                                </span>
-                                            <?php endforeach; ?>
-                                            <input type="text" id="language-input" placeholder="Type language code or name..." style="border: none; outline: none; flex: 1; min-width: 200px; font-size: 0.875rem;" autocomplete="off">
+                                    <?php if ($isSubCollection): ?>
+                                        <div id="sub-collection-multilanguage-settings" style="display: <?= !empty($subCollectionData['multilanguage']['enabled']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                            <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;"><?= __('admin.languages') ?></label>
+                                            <div id="sub-collection-language-tags-container" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 40px; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-s); background: var(--bg-primary);">
+                                                <?php
+                                                $selectedLangs = $subCollectionData['multilanguage']['languages'] ?? [];
+                                                foreach ($selectedLangs as $langCode):
+                                                ?>
+                                                    <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
+                                                        <?= htmlspecialchars(strtoupper($langCode)) ?>
+                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
+                                                        <input type="hidden" name="sub_collections[0][multilanguage_languages][]" value="<?= htmlspecialchars($langCode) ?>">
+                                                    </span>
+                                                <?php endforeach; ?>
+                                                <input type="text" id="sub-collection-language-input" placeholder="Type language code or name..." style="border: none; outline: none; flex: 1; min-width: 200px; font-size: 0.875rem;" autocomplete="off">
+                                            </div>
+                                            <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                                Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
+                                            </small>
                                         </div>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                            Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
-                                        </small>
-                                    </div>
+                                    <?php else: ?>
+                                        <div id="multilanguage-settings" style="display: <?= !empty($collection['multilanguage']['enabled']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                            <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;"><?= __('admin.languages') ?></label>
+                                            <div id="language-tags-container" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 40px; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-s); background: var(--bg-primary);">
+                                                <?php
+                                                $selectedLangs = $collection['multilanguage']['languages'] ?? [];
+                                                foreach ($selectedLangs as $langCode):
+                                                ?>
+                                                    <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
+                                                        <?= htmlspecialchars(strtoupper($langCode)) ?>
+                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
+                                                        <input type="hidden" name="multilanguage_languages[]" value="<?= htmlspecialchars($langCode) ?>">
+                                                    </span>
+                                                <?php endforeach; ?>
+                                                <input type="text" id="language-input" placeholder="Type language code or name..." style="border: none; outline: none; flex: 1; min-width: 200px; font-size: 0.875rem;" autocomplete="off">
+                                            </div>
+                                            <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                                Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
+                                            </small>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                                 
                                 <!-- Public API Settings (shown when Public API is selected) -->
-                                <div id="public-api-settings" style="display: <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'block' : 'none' ?>; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                <?php if ($isSubCollection): ?>
+                                    <div id="sub-collection-public-api-settings" style="display: <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'block' : 'none' ?>; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                <?php else: ?>
+                                    <div id="public-api-settings" style="display: <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'block' : 'none' ?>; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                <?php endif; ?>
                                     <h4 style="font-size: 0.875rem; font-weight: 600; margin: 0 0 var(--space-3) 0; color: var(--text-primary);">Public API Settings</h4>
                                     
                                     <div class="info-item">
                                         <label>API Key</label>
                                         <div class="info-value" style="display: flex; align-items: center; gap: var(--space-2);">
-                                            <code id="api-key-display" style="font-size: 0.75rem; background: var(--bg-secondary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); flex: 1; word-break: break-all;">
-                                                <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : 'Not generated yet' ?>
-                                            </code>
-                                            <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <polyline points="23,4 23,10 17,10"></polyline>
-                                                    <polyline points="1,20 1,14 7,14"></polyline>
-                                                    <path d="M3.51,9a9,9 0 0,1 14.85-3.36L23,10M1,14l4.64,4.36A9,9 0 0,0 20.49,15"></path>
-                                                </svg>
-                                            </button>
-                                            <button type="button" id="copy-api-key-btn" class="btn btn-sm btn-secondary" title="Copy API key" <?= empty($collection['api_key']) ? 'disabled' : '' ?>>
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                </svg>
-                                            </button>
+                                            <?php if ($isSubCollection): ?>
+                                                <code id="sub-collection-api-key-display" style="font-size: 0.75rem; background: var(--bg-secondary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); flex: 1; word-break: break-all;">
+                                                    <?= !empty($subCollectionData['api_key']) ? htmlspecialchars($subCollectionData['api_key']) : 'Not generated yet' ?>
+                                                </code>
+                                                <button type="button" id="sub-collection-generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="23,4 23,10 17,10"></polyline>
+                                                        <polyline points="1,20 1,14 7,14"></polyline>
+                                                        <path d="M3.51,9a9,9 0 0,1 14.85-3.36L23,10M1,14l4.64,4.36A9,9 0 0,0 20.49,15"></path>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" id="sub-collection-copy-api-key-btn" class="btn btn-sm btn-secondary" title="Copy API key" <?= empty($subCollectionData['api_key']) ? 'disabled' : '' ?>>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                    </svg>
+                                                </button>
+                                                <input type="hidden" name="sub_collections[0][api_key]" id="sub-collection-api_key" value="<?= htmlspecialchars($subCollectionData['api_key'] ?? '') ?>">
+                                            <?php else: ?>
+                                                <code id="api-key-display" style="font-size: 0.75rem; background: var(--bg-secondary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); flex: 1; word-break: break-all;">
+                                                    <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : 'Not generated yet' ?>
+                                                </code>
+                                                <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="23,4 23,10 17,10"></polyline>
+                                                        <polyline points="1,20 1,14 7,14"></polyline>
+                                                        <path d="M3.51,9a9,9 0 0,1 14.85-3.36L23,10M1,14l4.64,4.36A9,9 0 0,0 20.49,15"></path>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" id="copy-api-key-btn" class="btn btn-sm btn-secondary" title="Copy API key" <?= empty($collection['api_key']) ? 'disabled' : '' ?>>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                    </svg>
+                                                </button>
+                                                <input type="hidden" name="api_key" id="api_key" value="<?= htmlspecialchars($collection['api_key'] ?? '') ?>">
+                                            <?php endif; ?>
                                         </div>
-                                        <input type="hidden" name="api_key" id="api_key" value="<?= htmlspecialchars($collection['api_key'] ?? '') ?>">
                                     </div>
                                     
                                     <div class="info-item">
                                         <label class="checkbox-label">
-                                            <input type="checkbox" name="api_settings[auto_publish]" value="1" <?= !empty($collection['api_settings']['auto_publish']) ? 'checked' : '' ?>>
+                                            <?php if ($isSubCollection): ?>
+                                                <input type="checkbox" name="sub_collections[0][api_settings][auto_publish]" value="1" <?= !empty($subCollectionData['api_settings']['auto_publish']) ? 'checked' : '' ?>>
+                                            <?php else: ?>
+                                                <input type="checkbox" name="api_settings[auto_publish]" value="1" <?= !empty($collection['api_settings']['auto_publish']) ? 'checked' : '' ?>>
+                                            <?php endif; ?>
                                             <span>Auto-publish submissions</span>
                                         </label>
                                         <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
@@ -258,7 +797,11 @@
                                     
                                     <div class="info-item">
                                         <label>Rate Limit (per hour)</label>
-                                        <input type="number" name="api_settings[rate_limit]" id="rate_limit" class="input" value="<?= htmlspecialchars($collection['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
+                                        <?php if ($isSubCollection): ?>
+                                            <input type="number" name="sub_collections[0][api_settings][rate_limit]" id="sub-collection-rate_limit" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
+                                        <?php else: ?>
+                                            <input type="number" name="api_settings[rate_limit]" id="rate_limit" class="input" value="<?= htmlspecialchars($collection['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
+                                        <?php endif; ?>
                                         <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
                                             Maximum number of submissions allowed per hour per API key
                                         </small>
@@ -266,7 +809,11 @@
                                     
                                     <div class="info-item">
                                         <label>Notification Email</label>
-                                        <input type="email" name="api_settings[notification_email]" id="notification_email" class="input" value="<?= htmlspecialchars($collection['api_settings']['notification_email'] ?? '') ?>" placeholder="email@example.com">
+                                        <?php if ($isSubCollection): ?>
+                                            <input type="email" name="sub_collections[0][api_settings][notification_email]" id="sub-collection-notification_email" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['notification_email'] ?? '') ?>" placeholder="email@example.com">
+                                        <?php else: ?>
+                                            <input type="email" name="api_settings[notification_email]" id="notification_email" class="input" value="<?= htmlspecialchars($collection['api_settings']['notification_email'] ?? '') ?>" placeholder="email@example.com">
+                                        <?php endif; ?>
                                         <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
                                             Optional: Receive email notifications when new entries are submitted
                                         </small>
@@ -274,29 +821,66 @@
                                     
                                     <div class="info-item">
                                         <label>CAPTCHA Provider</label>
-                                        <select name="api_settings[captcha_provider]" id="captcha_provider" class="input">
-                                            <option value="">None (use honeypot only)</option>
-                                            <option value="recaptcha_v3" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
-                                            <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
-                                        </select>
+                                        <?php if ($isSubCollection): ?>
+                                            <select name="sub_collections[0][api_settings][captcha_provider]" id="sub-collection-captcha_provider" class="input">
+                                                <option value="">None (use honeypot only)</option>
+                                                <option value="recaptcha_v3" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
+                                                <option value="hcaptcha" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
+                                            </select>
+                                        <?php else: ?>
+                                            <select name="api_settings[captcha_provider]" id="captcha_provider" class="input">
+                                                <option value="">None (use honeypot only)</option>
+                                                <option value="recaptcha_v3" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
+                                                <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
+                                            </select>
+                                        <?php endif; ?>
                                         <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
                                             Optional: Add CAPTCHA protection (requires configuration)
                                         </small>
                                     </div>
                                     
-                                    <div id="captcha-settings" style="display: <?= !empty($collection['api_settings']['captcha_provider']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
-                                        <div class="info-item">
-                                            <label>CAPTCHA Site Key</label>
-                                            <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                    <?php if ($isSubCollection): ?>
+                                        <div id="sub-collection-captcha-settings" style="display: <?= !empty($subCollectionData['api_settings']['captcha_provider']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                            <div class="info-item">
+                                                <label>CAPTCHA Site Key</label>
+                                                <input type="text" name="sub_collections[0][api_settings][captcha_site_key]" id="sub-collection-captcha_site_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                            </div>
+                                            <div class="info-item">
+                                                <label>CAPTCHA Secret Key</label>
+                                                <input type="text" name="sub_collections[0][api_settings][captcha_secret_key]" id="sub-collection-captcha_secret_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                            </div>
                                         </div>
-                                        <div class="info-item">
-                                            <label>CAPTCHA Secret Key</label>
-                                            <input type="text" name="api_settings[captcha_secret_key]" id="captcha_secret_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                    <?php else: ?>
+                                        <div id="captcha-settings" style="display: <?= !empty($collection['api_settings']['captcha_provider']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                            <div class="info-item">
+                                                <label>CAPTCHA Site Key</label>
+                                                <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                            </div>
+                                            <div class="info-item">
+                                                <label>CAPTCHA Secret Key</label>
+                                                <input type="text" name="api_settings[captcha_secret_key]" id="captcha_secret_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                            </div>
                                         </div>
-                                    </div>
+                                    <?php endif; ?>
                                 </div>
                                 
-                                <?php if ($collection['title']): ?>
+                                <?php if ($isSubCollection): ?>
+                                    <?php if (!empty($subCollectionData['slug'])): ?>
+                                        <?php
+                                        $createdAt = $subCollectionData['created_at'] ?? null;
+                                        $updatedAt = $subCollectionData['updated_at'] ?? null;
+                                        ?>
+                                        <div class="info-item">
+                                            <label>Created</label>
+                                            <div class="info-value"><?= $createdAt ? date('m.d.Y, g:i A', strtotime($createdAt)) : '—' ?></div>
+                                        </div>
+                                        
+                                        <div class="info-item">
+                                            <label>Last Update</label>
+                                            <div class="info-value"><?= $updatedAt ? date('m.d.Y, g:i A', strtotime($updatedAt)) : '—' ?></div>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php elseif ($collection['title']): ?>
                                     <?php
                                     $collectionFile = __DIR__ . "/../content/collections/" . ($collection['slug'] ?? '') . "/collection.json";
                                     $createdAt = null;
@@ -341,8 +925,10 @@
                                         <h4>Field slugs</h4>
                                     </div>
                                     <div class="field-slugs-list">
-                                        <?php if (!empty($fields)): ?>
-                                            <?php foreach ($fields as $field): ?>
+                                        <?php 
+                                        $displayFields = $isSubCollection ? ($subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? []) : $fields;
+                                        if (!empty($displayFields)): ?>
+                                            <?php foreach ($displayFields as $field): ?>
                                                 <?php
                                                 $fieldName = $field['name'] ?? '';
                                                 $fieldLabel = $field['label'] ?? $fieldName;
@@ -367,18 +953,66 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Entry Level Example -->
-                                <div class="templating-section">
-                                    <div class="section-header">
-                                        <h4>Entry Level Example</h4>
-                                        <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                            </svg>
-                                        </button>
+                                <?php if ($isSubCollection): ?>
+                                    <!-- Sub-Entry Level Example -->
+                                    <div class="templating-section">
+                                        <div class="section-header">
+                                            <h4>Sub-Entry Level Example</h4>
+                                            <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <pre class="code-example" id="entry-example-code"><code><?php
+$collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
+$subCollectionSlug = htmlspecialchars($subCollectionData['slug'] ?? 'sub-collection');
+$exampleEntrySlug = 'example-entry-slug';
+$exampleSubEntrySlug = 'example-sub-entry-slug';
+$entryExample = "{from '" . $collectionSlug . "' get entry '" . $exampleEntrySlug . "'}\n";
+$entryExample .= "  <h1>{ title }</h1>\n";
+$entryExample .= "  {for each sub_entry in '" . $subCollectionSlug . "'}\n";
+$entryExample .= "    <div class=\"sub-entry\">\n";
+$subFields = $subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? [];
+if (!empty($subFields)) {
+    foreach ($subFields as $field) {
+        $fieldName = $field['name'] ?? '';
+        $fieldLabel = $field['label'] ?? $fieldName;
+        if ($field['type'] === 'media') {
+            $entryExample .= "      <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+        } elseif ($field['type'] === 'boolean') {
+            $entryExample .= "      {if " . $fieldName . " is on}\n";
+            $entryExample .= "        <span>It is featured</span>\n";
+            $entryExample .= "      {endif}\n";
+        } elseif ($field['type'] === 'editor') {
+            $entryExample .= "      <div>{ " . $fieldName . " }</div>\n";
+        } elseif ($field['type'] === 'select') {
+            $entryExample .= "      <div>{ " . $fieldName . " }</div>\n";
+        } else {
+            $entryExample .= "      <div>{ " . $fieldName . " }</div>\n";
+        }
+    }
+}
+$entryExample .= "    </div>\n";
+$entryExample .= "  {endfor}\n";
+$entryExample .= "{endget}";
+echo htmlspecialchars($entryExample);
+?></code></pre>
                                     </div>
-                                    <pre class="code-example" id="entry-example-code"><code><?php
+                                <?php else: ?>
+                                    <!-- Entry Level Example -->
+                                    <div class="templating-section">
+                                        <div class="section-header">
+                                            <h4>Entry Level Example</h4>
+                                            <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <pre class="code-example" id="entry-example-code"><code><?php
 $collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
 $exampleSlug = 'example-entry-slug';
 $entryExample = "{from '" . $collectionSlug . "' get entry '" . $exampleSlug . "'}\n";
@@ -405,20 +1039,20 @@ if (!empty($fields)) {
 $entryExample .= "{endget}";
 echo htmlspecialchars($entryExample);
 ?></code></pre>
-                                </div>
-                                
-                                <!-- Collection Level Example -->
-                                <div class="templating-section">
-                                    <div class="section-header">
-                                        <h4>Collection Level Example</h4>
-                                        <button type="button" class="copy-btn" id="copy-collection-example" title="Copy to clipboard">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                            </svg>
-                                        </button>
                                     </div>
-                                    <pre class="code-example" id="collection-example-code"><code><?php
+                                    
+                                    <!-- Collection Level Example -->
+                                    <div class="templating-section">
+                                        <div class="section-header">
+                                            <h4>Collection Level Example</h4>
+                                            <button type="button" class="copy-btn" id="copy-collection-example" title="Copy to clipboard">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <pre class="code-example" id="collection-example-code"><code><?php
 $collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
 $collectionExample = "{for each entry in '" . $collectionSlug . "'}\n";
 $collectionExample .= "  <h1>{ title }</h1>\n";
@@ -444,10 +1078,15 @@ if (!empty($fields)) {
 $collectionExample .= "{endfor}";
 echo htmlspecialchars($collectionExample);
 ?></code></pre>
-                                </div>
+                                    </div>
+                                <?php endif; ?>
                                 
                                 <!-- Public API Form Code (only shown when Public API is enabled) -->
-                                <?php if (($collection['entry_method'] ?? 'admin_only') === 'public_api' && !empty($collection['api_key'])): ?>
+                                <?php 
+                                $entryMethod = $isSubCollection ? ($subCollectionData['entry_method'] ?? 'admin_only') : ($collection['entry_method'] ?? 'admin_only');
+                                $apiKey = $isSubCollection ? ($subCollectionData['api_key'] ?? '') : ($collection['api_key'] ?? '');
+                                if ($entryMethod === 'public_api' && !empty($apiKey)): 
+                                ?>
                                 <div class="templating-section">
                                     <div class="section-header">
                                         <h4>Embeddable Form Code</h4>
@@ -463,15 +1102,17 @@ echo htmlspecialchars($collectionExample);
                                     </p>
                                     <pre class="code-example" id="form-code"><code><?php
 $collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
-$apiKey = htmlspecialchars($collection['api_key'] ?? '');
-$apiUrl = htmlspecialchars('http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/api/public/collections.php?collection=' . $collectionSlug);
-$captchaProvider = $collection['api_settings']['captcha_provider'] ?? '';
-$captchaSiteKey = $collection['api_settings']['captcha_site_key'] ?? '';
+$subCollectionSlug = $isSubCollection ? htmlspecialchars($subCollectionData['slug'] ?? 'sub-collection') : '';
+$apiKey = htmlspecialchars($apiKey);
+$apiUrl = htmlspecialchars('http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/api/public_sub_entry.php?collection=' . $collectionSlug . ($isSubCollection ? '&sub_collection=' . $subCollectionSlug : ''));
+$captchaProvider = $isSubCollection ? ($subCollectionData['api_settings']['captcha_provider'] ?? '') : ($collection['api_settings']['captcha_provider'] ?? '');
+$captchaSiteKey = $isSubCollection ? ($subCollectionData['api_settings']['captcha_site_key'] ?? '') : ($collection['api_settings']['captcha_site_key'] ?? '');
 
-$formCode = '<form id="haru-form-' . $collectionSlug . '" class="haru-form">';
+$formCode = '<form id="haru-form-' . ($isSubCollection ? $subCollectionSlug : $collectionSlug) . '" class="haru-form">';
 $formCode .= "\n";
-if (!empty($fields)) {
-    foreach ($fields as $field) {
+$formFields = $isSubCollection ? ($subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? []) : $fields;
+if (!empty($formFields)) {
+    foreach ($formFields as $field) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         $fieldType = $field['type'] ?? 'text';
@@ -542,7 +1183,7 @@ $formCode .= '  <button type="submit" class="btn btn-primary">Submit</button>' .
 $formCode .= '</form>' . "\n";
 $formCode .= "\n";
 $formCode .= '<script>' . "\n";
-$formCode .= 'document.getElementById("haru-form-' . $collectionSlug . '").addEventListener("submit", async function(e) {' . "\n";
+$formCode .= 'document.getElementById("haru-form-' . ($isSubCollection ? $subCollectionSlug : $collectionSlug) . '").addEventListener("submit", async function(e) {' . "\n";
 $formCode .= '  e.preventDefault();' . "\n";
 $formCode .= '  const form = this;' . "\n";
 $formCode .= '  const submitBtn = form.querySelector("button[type=submit]");' . "\n";
@@ -612,6 +1253,16 @@ echo htmlspecialchars($formCode);
                         </div>
                     </div>
                 </div>
+                <?php
+                // UI Injection Point: collection_editor_sidebar_after
+                if (function_exists('render_ui_injections')) {
+                    if ($isSubCollection) {
+                        echo render_ui_injections('sub_collection_editor_sidebar_after', ['sub_collection' => $subCollectionData, 'collection' => $collection]);
+                    } else {
+                        echo render_ui_injections('collection_editor_sidebar_after', ['collection' => $collection]);
+                    }
+                }
+                ?>
             </div>
         </div>
     </form>
@@ -621,6 +1272,9 @@ echo htmlspecialchars($formCode);
 <script type="text/template" id="fieldtype-template">
     <div class="fieldtype-section" data-index="__INDEX__">
         <div class="fieldtype-header">
+            <div class="fieldtype-drag-handle">
+                <img src="/admin/assets/DotsSixVertical.svg" alt="Drag to reorder">
+            </div>
             <div class="fieldtype-title">
                 <span class="fieldtype-type">__TYPE__</span>
                 <span class="fieldtype-name">__NAME__</span>
@@ -979,7 +1633,7 @@ echo htmlspecialchars($formCode);
     width: 64px;
     height: 64px;
     margin-bottom: var(--space-3);
-    color: var(--primary-500);
+    color: var(--text-secondary, #64748b);
     background: var(--bg-tertiary);
     border-radius: var(--radius-md);
     padding: var(--space-3);
@@ -1300,6 +1954,8 @@ echo htmlspecialchars($formCode);
 }
 </style>
 
+<script src="/admin/js/mouse-drag-drop.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-generate slug from name
@@ -1382,6 +2038,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     const availableFieldtypes = <?php echo json_encode($fieldtypes ?? []); ?>;
+    // Also set window.fieldtypes for sub-collection fields
+    window.fieldtypes = availableFieldtypes;
+
+    function getFieldtypeIcon(name) {
+        const icons = {
+            contenteditor: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M7 7h6"></path><path d="M7 11h10"></path><path d="M7 15h4"></path><circle cx="16" cy="15" r="1.5"></circle></svg>',
+            email: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M22 6L12 13 2 6"></path></svg>',
+            tags: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29a1 1 0 001.42 0l6.58-6.58a1 1 0 000-1.42L12 2z"></path><circle cx="6.5" cy="6.5" r="1.5"></circle></svg>',
+            text: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"></path><line x1="12" y1="4" x2="12" y2="20"></line><line x1="8" y1="20" x2="16" y2="20"></line></svg>',
+            textarea: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="7" y1="7" x2="17" y2="7"></line><line x1="7" y1="10" x2="17" y2="10"></line><line x1="7" y1="13" x2="17" y2="13"></line><line x1="7" y1="16" x2="14" y2="16"></line></svg>',
+            url: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>',
+            number: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 6h10"></path><path d="M7 18h10"></path><path d="M7 6v12"></path><path d="M17 6v12"></path></svg>',
+            range: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="8" cy="12" r="2" fill="currentColor"></circle></svg>',
+            date: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+            datetime: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="15" r="4"></circle><line x1="12" y1="13" x2="12" y2="15"></line><line x1="12" y1="15" x2="14" y2="16"></line></svg>',
+            time: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+            checkbox: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><polyline points="9 12 11 14 15 10"></polyline></svg>',
+            color: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="8" r="3" fill="currentColor"></circle><path d="M12 14v6"></path><path d="M9 17h6"></path></svg>',
+            multiselect: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="12" height="4" rx="1"></rect><polyline points="6 7 7.5 8.5 10 6"></polyline><rect x="4" y="11" width="12" height="4" rx="1"></rect><polyline points="6 13 7.5 14.5 10 12"></polyline><rect x="4" y="17" width="12" height="4" rx="1"></rect></svg>',
+            radio: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><circle cx="12" cy="8" r="2" fill="currentColor"></circle><circle cx="12" cy="16" r="4"></circle></svg>',
+            select: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="12" x2="11" y2="12"></line><polyline points="8 10 12 14 16 10"></polyline></svg>',
+            media: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+            gallery: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>',
+            file: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>',
+            map: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+            relation: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path><circle cx="12" cy="12" r="2"></circle></svg>',
+            dynamicitems: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+            default: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line></svg>'
+        };
+        const key = (name || '').toLowerCase().replace(/[-_\s]/g, '');
+        return icons[key] || icons.default;
+    }
     
     function renderFieldtype(fieldIndex, fieldData = {}) {
         const template = document.getElementById('fieldtype-template').textContent;
@@ -1476,13 +2164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     fieldtypeCard.className = 'fieldtype-card';
                     fieldtypeCard.dataset.fieldtype = ft.name;
                     fieldtypeCard.innerHTML = `
-                        <div class="fieldtype-card-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="9" y1="3" x2="9" y2="21"></line>
-                                <line x1="3" y1="9" x2="21" y2="9"></line>
-                            </svg>
-                        </div>
+                        <div class="fieldtype-card-icon">${getFieldtypeIcon(ft.name)}</div>
                         <div class="fieldtype-card-name">${ft.label || ft.name}</div>
                     `;
                     fieldtypeCard.addEventListener('click', function() {
@@ -1544,13 +2226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         fieldtypeCard.className = 'fieldtype-card';
                         fieldtypeCard.dataset.fieldtype = ft.name;
                         fieldtypeCard.innerHTML = `
-                            <div class="fieldtype-card-icon">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <line x1="9" y1="3" x2="9" y2="21"></line>
-                                    <line x1="3" y1="9" x2="21" y2="9"></line>
-                                </svg>
-                            </div>
+                            <div class="fieldtype-card-icon">${getFieldtypeIcon(ft.name)}</div>
                             <div class="fieldtype-card-name">${ft.label || ft.name}</div>
                         `;
                         fieldtypeCard.addEventListener('click', function() {
@@ -1578,6 +2254,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                             
                             loadFieldtypeConfig(fieldIndex, selectedFieldtype, fieldElement);
+                            
+                            // Update indices and reinitialize drag drop after adding field
+                            updateFieldIndices();
+                            if (fieldtypeSorter) {
+                                fieldtypeSorter.destroy();
+                            }
+                            initFieldtypeDragDrop();
                             
                             const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
                             if (displayNameInput) {
@@ -1711,10 +2394,92 @@ document.addEventListener('DOMContentLoaded', function() {
     if (fieldsContainer) {
         fieldsContainer.addEventListener('click', function(e) {
             if (e.target.closest('.remove-field-btn')) {
-                e.target.closest('.fieldtype-section').remove();
+                const fieldSection = e.target.closest('.fieldtype-section');
+                fieldSection.remove();
+                updateFieldIndices();
             }
         });
     }
+    
+    // Function to update field indices after reordering or removal
+    function updateFieldIndices() {
+        if (!fieldsContainer) return;
+        
+        const fields = Array.from(fieldsContainer.querySelectorAll('.fieldtype-section'));
+        fields.forEach(function(field, newIndex) {
+            const oldIndex = field.getAttribute('data-index');
+            
+            // Always update to ensure consistency
+            field.setAttribute('data-index', newIndex);
+            
+            // Update all form field names if index changed
+            if (oldIndex !== String(newIndex)) {
+                // Update input/select/textarea names
+                field.querySelectorAll('input, select, textarea').forEach(function(input) {
+                    if (input.name && input.name.includes('fields[' + oldIndex + ']')) {
+                        input.name = input.name.replace('fields[' + oldIndex + ']', 'fields[' + newIndex + ']');
+                    }
+                });
+                
+                // Update data-field-index attributes
+                const configContainer = field.querySelector('.fieldtype-config');
+                if (configContainer) {
+                    configContainer.setAttribute('data-field-index', newIndex);
+                }
+                
+                // Update any IDs that reference the index
+                field.querySelectorAll('[id*="' + oldIndex + '"]').forEach(function(el) {
+                    if (el.id) {
+                        el.id = el.id.replace(oldIndex, newIndex);
+                    }
+                });
+            }
+        });
+    }
+    
+    // Initialize drag and drop for fieldtypes
+    let fieldtypeSorter = null;
+    function initFieldtypeDragDrop() {
+        if (!fieldsContainer) return;
+        
+        // Destroy existing sorter if any
+        if (fieldtypeSorter) {
+            fieldtypeSorter.destroy();
+        }
+        
+        // Create new sorter
+        fieldtypeSorter = new MouseDragDrop({
+            container: fieldsContainer,
+            itemSelector: '.fieldtype-section',
+            handleSelector: '.fieldtype-drag-handle',
+            onReorder: function(fromIndex, toIndex, placeholder, draggedItem) {
+                // MouseDragDrop now passes placeholder and draggedItem directly
+                // We must do this synchronously because cleanup() runs immediately after onReorder returns
+                
+                if (draggedItem && placeholder && placeholder.parentNode) {
+                    // Remove dragged field from its current position (it's still in DOM at original position)
+                    if (draggedItem.parentNode) {
+                        draggedItem.remove();
+                    }
+                    
+                    // Replace placeholder with dragged item
+                    placeholder.parentNode.insertBefore(draggedItem, placeholder);
+                    placeholder.remove();
+                    
+                    // Update all indices and form field names
+                    updateFieldIndices();
+                }
+            }
+        });
+    }
+    
+    // Initialize drag and drop when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initFieldtypeDragDrop);
+    } else {
+        initFieldtypeDragDrop();
+    }
+    
     
     // Form submission - collect option data before submit
     const form = document.getElementById('collection-form');
@@ -1850,17 +2615,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                // Check if response is OK
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Server error:', response.status, text);
+                        throw new Error(`Server error: ${response.status} - ${text.substring(0, 200)}`);
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.status === 'ok') {
                     // Redirect to content page
                     window.location.href = '/admin/index.php?page=content';
                 } else {
+                    console.error('API error:', data);
                     alert('Error: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error saving collection:', error);
                 alert('Error saving collection: ' + error.message);
             });
         });
@@ -2349,6 +3124,255 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Sub-Collections Management
+    const addSubCollectionBtn = document.getElementById('add-sub-collection-btn');
+    const subCollectionsContainer = document.getElementById('sub-collections-container');
+    
+    function getNextSubCollectionIndex() {
+        const existing = subCollectionsContainer.querySelectorAll('.fieldtype-section[data-sub-collection-index]');
+        let maxIndex = -1;
+        existing.forEach(function(item) {
+            const indexAttr = item.getAttribute('data-sub-collection-index');
+            if (indexAttr !== null) {
+                const idx = parseInt(indexAttr, 10);
+                if (!isNaN(idx) && idx > maxIndex) {
+                    maxIndex = idx;
+                }
+            }
+        });
+        return maxIndex + 1;
+    }
+    
+    function renderSubCollection(index, data = {}) {
+        const div = document.createElement('div');
+        div.className = 'fieldtype-section';
+        div.setAttribute('data-sub-collection-index', index);
+        div.innerHTML = `
+            <div class="fieldtype-header">
+                <div class="fieldtype-title">
+                    <span class="fieldtype-name">${data.name || 'New Sub-Collection'}</span>
+                </div>
+                <button type="button" class="btn-icon remove-sub-collection-btn" title="Remove sub-collection">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"></polyline>
+                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="fieldtype-body">
+                <div class="fieldtype-row">
+                    <div class="fieldtype-field">
+                        <label>Name <span class="required">*</span></label>
+                        <input type="text" name="sub_collections[${index}][name]" value="${data.name || ''}" placeholder="e.g., Comments" class="input" required>
+                    </div>
+                    <div class="fieldtype-field">
+                        <label>Slug <span class="required">*</span></label>
+                        <input type="text" name="sub_collections[${index}][slug]" value="${data.slug || ''}" placeholder="e.g., comments" class="input sub-collection-slug" required>
+                    </div>
+                </div>
+                <div class="fieldtype-row">
+                    <div class="fieldtype-field">
+                        <label>Description</label>
+                        <input type="text" name="sub_collections[${index}][description]" value="${data.description || ''}" placeholder="Optional description" class="input">
+                    </div>
+                    <div class="fieldtype-field">
+                        <label>Entry Method</label>
+                        <select name="sub_collections[${index}][entry_method]" class="input">
+                            <option value="admin_only" ${(data.entry_method || 'admin_only') === 'admin_only' ? 'selected' : ''}>Admin Only</option>
+                            <option value="public_api" ${(data.entry_method || '') === 'public_api' ? 'selected' : ''}>Public API</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="fieldtype-row">
+                    <div class="fieldtype-field">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sub_collections[${index}][auto_publish]" value="1" ${data.auto_publish ? 'checked' : ''}>
+                            <span>Auto-publish submissions (if Public API)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Sub-Collection Fields Schema -->
+                <div class="sub-collection-fields-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                    <h4 style="margin-bottom: 1rem; font-size: 0.9rem; font-weight: 600;">Fields Schema</h4>
+                    <div class="sub-collection-fields-container" data-sub-collection-index="${index}">
+                        ${((data.schema && data.schema.fields) || data.fields) ? (data.schema?.fields || data.fields || []).map((field, fieldIndex) => `
+                            <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
+                                <div class="fieldtype-header">
+                                    <div class="fieldtype-title">
+                                        <span class="fieldtype-type">${(field.type || 'Select Type').toUpperCase()}</span>
+                                        <span class="fieldtype-name">${field.label || field.name || ''}</span>
+                                    </div>
+                                    <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3,6 5,6 21,6"></polyline>
+                                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="fieldtype-body">
+                                    <div class="fieldtype-row">
+                                        <div class="fieldtype-field">
+                                            <label>Display Name <span class="required">*</span></label>
+                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][label]" value="${field.label || ''}" placeholder="Field label" class="input" required>
+                                        </div>
+                                        <div class="fieldtype-field">
+                                            <label>API Name</label>
+                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][name]" value="${field.name || ''}" placeholder="Field name" class="input">
+                                        </div>
+                                    </div>
+                                    <div class="fieldtype-row">
+                                        <div class="fieldtype-field">
+                                            <label>Field Type</label>
+                                            <select name="sub_collections[${index}][schema][fields][${fieldIndex}][type]" class="input sub-field-type-select" required>
+                                                <option value="">Select type...</option>
+                                                ${window.fieldtypes ? window.fieldtypes.map(ft => `
+                                                    <option value="${ft.type || ft.name}" ${(field.type === ft.type || field.type === ft.name) ? 'selected' : ''}>
+                                                        ${ft.label}
+                                                    </option>
+                                                `).join('') : ''}
+                                            </select>
+                                        </div>
+                                        <div class="fieldtype-field">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" name="sub_collections[${index}][schema][fields][${fieldIndex}][required]" value="1" ${field.required ? 'checked' : ''}>
+                                                <span class="checkmark"></span>
+                                                <span>Mandatory Field</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="${index}" style="margin-top: 0.5rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Field
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Auto-generate slug from name
+        const nameInput = div.querySelector('input[name="sub_collections[' + index + '][name]"]');
+        const slugInput = div.querySelector('input[name="sub_collections[' + index + '][slug]"]');
+        if (nameInput && slugInput && !data.slug) {
+            nameInput.addEventListener('input', function() {
+                if (!slugInput.dataset.manual) {
+                    const slug = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    slugInput.value = slug;
+                }
+            });
+            slugInput.addEventListener('input', function() {
+                this.dataset.manual = 'true';
+            });
+        }
+        
+        // Remove button handler
+        const removeBtn = div.querySelector('.remove-sub-collection-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to remove this sub-collection?')) {
+                    div.remove();
+                }
+            });
+        }
+        
+        return div;
+    }
+    
+    if (addSubCollectionBtn && subCollectionsContainer) {
+        addSubCollectionBtn.addEventListener('click', function() {
+            const index = getNextSubCollectionIndex();
+            const subCollectionElement = renderSubCollection(index);
+            subCollectionsContainer.appendChild(subCollectionElement);
+            
+            // Focus on name input
+            const nameInput = subCollectionElement.querySelector('input[name="sub_collections[' + index + '][name]"]');
+            if (nameInput) {
+                nameInput.focus();
+                subCollectionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+    }
+    
+    // Handle remove buttons for existing sub-collections
+    if (subCollectionsContainer) {
+        subCollectionsContainer.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-sub-collection-btn')) {
+                const btn = e.target.closest('.remove-sub-collection-btn');
+                const section = btn.closest('.fieldtype-section');
+                if (section && confirm('Are you sure you want to remove this sub-collection?')) {
+                    section.remove();
+                }
+            }
+            if (e.target.closest('.remove-sub-field-btn')) {
+                const btn = e.target.closest('.remove-sub-field-btn');
+                const fieldSection = btn.closest('.fieldtype-section[data-sub-field-index]');
+                if (fieldSection && confirm('Are you sure you want to remove this field?')) {
+                    fieldSection.remove();
+                }
+            }
+            if (e.target.closest('.add-sub-field-btn')) {
+                const btn = e.target.closest('.add-sub-field-btn');
+                const subCollectionIndex = btn.getAttribute('data-sub-collection-index');
+                const container = btn.previousElementSibling;
+                if (container && subCollectionIndex !== null) {
+                    const fieldIndex = container.querySelectorAll('.fieldtype-section[data-sub-field-index]').length;
+                    const fieldHtml = `
+                        <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
+                            <div class="fieldtype-header">
+                                <div class="fieldtype-title">
+                                    <span class="fieldtype-type">SELECT TYPE</span>
+                                    <span class="fieldtype-name">New Field</span>
+                                </div>
+                                <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3,6 5,6 21,6"></polyline>
+                                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="fieldtype-body">
+                                <div class="fieldtype-row">
+                                    <div class="fieldtype-field">
+                                        <label>Display Name <span class="required">*</span></label>
+                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][label]" value="" placeholder="Field label" class="input" required>
+                                    </div>
+                                    <div class="fieldtype-field">
+                                        <label>API Name</label>
+                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][name]" value="" placeholder="Field name" class="input">
+                                    </div>
+                                </div>
+                                <div class="fieldtype-row">
+                                    <div class="fieldtype-field">
+                                        <label>Field Type</label>
+                                        <select name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][type]" class="input sub-field-type-select" required>
+                                            <option value="">Select type...</option>
+                                            ${window.fieldtypes ? window.fieldtypes.map(ft => `
+                                                <option value="${ft.type || ft.name}">${ft.label}</option>
+                                            `).join('') : ''}
+                                        </select>
+                                    </div>
+                                    <div class="fieldtype-field">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][required]" value="1">
+                                            <span class="checkmark"></span>
+                                            <span>Mandatory Field</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', fieldHtml);
+                }
+            }
+        });
+    }
 });
-</script>
 </script>

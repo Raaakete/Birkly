@@ -1,5 +1,5 @@
 <h2>Templating Language</h2>
-<p>This guide explains the HaruCMS template language in a simple, human-readable way. You can copy the examples as-is. No programming knowledge required.</p>
+<p>This guide explains the Birkly template language in a simple, human-readable way. You can copy the examples as-is. No programming knowledge required.</p>
 
 <h3>Key ideas</h3>
 <ul>
@@ -47,7 +47,7 @@
 
 <h3>Showing a single entry</h3>
 <p>Load a specific entry (by slug) and then display it:</p>
-<pre><code>{from 'blog' get entry 'how-to-use-harucms'}
+<pre><code>{from 'blog' get entry 'how-to-use-birkly'}
 <h1>{ title }</h1>
 <time>{ date "F j, Y" }</time>
 { content }</code></pre>
@@ -75,7 +75,7 @@
 
 <h3>Media (images/files)</h3>
 <p>Get a media file URL, optionally with basic sizing:</p>
-<pre><code><img src="{ media 'haru-logo.svg' }" alt="HaruCMS">
+<pre><code><img src="{ media 'birkly-logo.svg' }" alt="Birkly">
 <img src="{ media 'hero.jpg' width=1200 height=600 crop="center" }" alt="Hero"></code></pre>
 
 <h3>Includes (re-use partial templates)</h3>

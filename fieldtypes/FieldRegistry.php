@@ -1,5 +1,5 @@
 <?php
-namespace HaruCMS\FieldTypes;
+namespace Birkly\FieldTypes;
 
 class FieldRegistry {
     private static $fieldTypes = [];
@@ -12,11 +12,32 @@ class FieldRegistry {
     }
 
     public static function getFieldType(string $type): ?string {
+        // First check plugin-registered fieldtypes (Fieldtype Shelf)
+        if (function_exists('is_plugin_fieldtype') && is_plugin_fieldtype($type)) {
+            $plugin_fieldtypes = get_plugin_fieldtypes();
+            if (isset($plugin_fieldtypes[$type])) {
+                $class = $plugin_fieldtypes[$type]['class'];
+                // Verify class is still available (plugin might have been deactivated)
+                if (class_exists($class)) {
+                    return $class;
+                }
+            }
+        }
+        
+        // Fall back to directory-discovered fieldtypes
         return self::$fieldTypes[$type] ?? null;
     }
 
     public static function getAvailableTypes(): array {
-        return array_keys(self::$fieldTypes);
+        $types = array_keys(self::$fieldTypes);
+        
+        // Also include plugin-registered fieldtypes
+        if (function_exists('get_plugin_fieldtypes')) {
+            $plugin_types = array_keys(get_plugin_fieldtypes());
+            $types = array_merge($types, $plugin_types);
+        }
+        
+        return array_unique($types);
     }
 
     public static function createField(string $type, array $config): BaseField {
@@ -66,7 +87,7 @@ class FieldRegistry {
             }
             
             // Construct class name
-            $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+            $className = "Birkly\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
             
             // Try to load the class
             if (!class_exists($className)) {

@@ -1,0 +1,805 @@
+<?php
+// This is an exact copy of entry-detail.html structure, using data from the new system
+// Variable mappings:
+// - $entry (from API) -> contains the entry data with __cells
+// - $collection (from API) -> contains collection data
+// - $fields (from API) -> contains field definitions
+// - $sub_entries_by_collection (from API) -> contains processed sub-entries
+// - $is_sub_entry_detail (from API) -> boolean for sub-entry pages
+// - $sub_collection_slug, $sub_entry_id, $parent_sub_collection_slug, $parent_sub_entry_id (from API)
+?>
+<div class="entry-detail-page">
+    <input type="hidden" name="_csrf" id="csrf-token" value="<?= get_csrf_token() ?>">
+    <div class="page-header pt-m pb-m">
+        <div class="page-header-left">
+        <div class="breadcrumbs">
+            <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
+            <span class="separator">›</span>
+            <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
+            <?php if (!empty($is_sub_entry_detail)): ?>
+                <span class="separator">›</span>
+                <a href="/admin/index.php?page=entry-detail&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['_parent_entry_id'] ?? '') ?>"><?= htmlspecialchars($entry['_parent_entry_title'] ?? 'Parent Entry') ?></a>
+                <span class="separator">›</span>
+                <span class="current"><?= htmlspecialchars($sub_collection_slug ?? 'Sub-Entry') ?>: <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
+            <?php else: ?>
+                <span class="separator">›</span>
+                <span class="current"><?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
+            <?php endif; ?>
+        </div>
+        </div>
+        <div class="page-header-actions"></div>
+    </div>
+    
+    
+    
+    <!-- Main Entry Table -->
+    <div style="margin-bottom: var(--space-6, 24px);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4, 16px);">
+            <h2 style="margin: 0;">Main Entry</h2>
+        </div>
+        
+        <div class="entries-smart-table">
+            <div class="table-viewport">
+                <div class="table-head">
+                    <div class="head-row" role="row">
+                        <div class="head-cell head-title" role="columnheader"><?= __('admin.title') ?></div>
+                        <div class="head-cell head-status" role="columnheader"><?= __('admin.status') ?></div>
+                        <div class="fields-head-region">
+                            <?php foreach ($fields as $field): ?>
+                                <div class="head-cell head-field" role="columnheader" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
+                                    <?= htmlspecialchars($field['name'] ?? $field['label'] ?? '') ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="head-cell head-actions" role="columnheader"><?= __('admin.actions') ?></div>
+                    </div>
+                </div>
+                
+                <div class="table-body">
+                    <div class="table-row" role="row" data-entry-id="<?= htmlspecialchars($entry['id'] ?? '') ?>">
+                        <div class="cell cell-title" role="cell">
+                            <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" class="title-text">
+                                <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?>
+                            </a>
+                        </div>
+                        <div class="cell cell-status" role="cell">
+                            <?php
+                            $status = $entry['__cells']['__status'] ?? $entry['status'] ?? 'unpublished';
+                            // Map old 'draft' status to 'unpublished' for backward compatibility
+                            if ($status === 'draft') {
+                                $status = 'unpublished';
+                            }
+                            $statusClass = $status;
+                            
+                            if (in_array($status, ['pending_review', 'published', 'unpublished', 'scheduled'])) {
+                                // Use translation if available, otherwise use formatted label
+                                $translated = __('admin.' . $status);
+                                $statusLabel = ($translated && $translated !== 'admin.' . $status) ? $translated : ucfirst(str_replace('_', ' ', $status));
+                            } else {
+                                $statusLabel = ucfirst(str_replace('_', ' ', $status));
+                            }
+                            ?>
+                            <span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>">
+                                <?= htmlspecialchars($statusLabel) ?>
+                            </span>
+                        </div>
+                        <div class="fields-region">
+                            <?php foreach ($fields as $field): ?>
+                                <div class="cell cell-field" role="cell" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
+                                    <?php
+                                    $fieldName = $field['name'];
+                                    $fieldValue = $entry['__cells'][$fieldName . '_html'] ?? $entry['__cells'][$fieldName] ?? '';
+                                    echo $fieldValue ?: '<span class="ft-list-empty" aria-label="No value">–</span>';
+                                    ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="cell cell-actions" role="cell">
+                            <?php
+                            $currentMainEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($entry['id'] ?? '');
+                            $mainEntryEditLink = "/admin/index.php?page=entry-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($entry['id'] ?? '') . "&return_to=" . urlencode($currentMainEntryDetailUrl);
+                            ?>
+                            <a class="btn mr-s" href="<?= $mainEntryEditLink ?>" aria-label="<?= __('admin.edit_entry') ?>">
+                                <?= __('admin.edit_entry') ?>
+                            </a>
+                            <?php if (empty($is_sub_entry_detail)): ?>
+                                <button type="button" class="btn btn-danger delete-main-entry-btn" aria-label="Delete entry">
+                                    <?= __('admin.delete') ?>
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sub-Entries Section -->
+    <?php if (!empty($sub_entries_by_collection)): ?>
+        <?php 
+        // Store the sub-collection and sub-entry ID of the page we're viewing
+        $viewingSubCollectionSlug = isset($sub_collection_slug) ? (string)$sub_collection_slug : null;
+        $viewingSubEntryId = isset($sub_entry_id) ? (string)$sub_entry_id : null;
+        $viewingParentSubCollectionSlug = isset($parent_sub_collection_slug) ? (string)$parent_sub_collection_slug : null;
+        $viewingParentSubEntryId = isset($parent_sub_entry_id) ? (string)$parent_sub_entry_id : null;
+        
+        $parentSubCollectionSlugForNested = $viewingSubCollectionSlug;
+        $parentSubEntryIdForNested = $viewingSubEntryId;
+        
+        $mainEntryIdForLinks = !empty($is_sub_entry_detail) && !empty($_GET['entry']) 
+            ? $_GET['entry'] 
+            : (!empty($entry['_parent_entry_id']) ? $entry['_parent_entry_id'] : ($entry['id'] ?? ''));
+        
+        ?>
+        <?php 
+        foreach ($sub_entries_by_collection as $subCollectionSlug => $subData): 
+            $subCollection = $subData['sub_collection'];
+            $subEntries = $subData['entries'];
+            $subFields = $subData['fields'] ?? [];
+        ?>
+            <div style="margin-bottom: var(--space-6, 24px); padding-top: var(--space-6, 32px);">
+                <!-- Sub-Collection Header -->
+                <div style="margin-bottom: var(--space-1, 16px); padding-top: var(--space-6, 32px); padding-bottom: var(--space-3, 12px); border-top: 1px solid var(--border-color, #e5e7eb);">
+                    <h2 style="margin: 0 0 var(--space-1, 4px) 0;"><?= htmlspecialchars($subCollection['name'] ?? $subCollectionSlug) ?></h2>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary, #6b7280);">
+                        <?= htmlspecialchars($subCollection['description'] ?? '') ?>
+                    </p>
+                </div>
+                
+                <!-- Sub-Collection Actions Row -->
+                <div class="collection-actions-bar" style="margin-bottom: var(--space-4, 16px);">
+                    <div class="collection-actions-bar-left">
+                        <?php
+                        $isNestedContext = !empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested);
+                        $mainEntryId = $isNestedContext ? ($entry['_parent_entry_id'] ?? '') : ($entry['id'] ?? '');
+                        $addSubEntryUrl = "/admin/index.php?page=entry-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($mainEntryId) . "&sub_collection=" . htmlspecialchars($subCollectionSlug);
+                        if ($isNestedContext) {
+                            $addSubEntryUrl .= "&parent_sub_collection=" . htmlspecialchars($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . htmlspecialchars($parentSubEntryIdForNested);
+                        }
+                        ?>
+                        <a href="<?= $addSubEntryUrl ?>" class="btn btn-primary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Sub-Entry
+                        </a>
+                    </div>
+                    
+                    <div class="collection-actions-bar-right">
+                        <!-- Filter -->
+                        <label for="sub-entry-status-filter-<?= htmlspecialchars($subCollectionSlug) ?>" class="collection-filter-label"><?= __('admin.filter') ?>:</label>
+                        <select id="sub-entry-status-filter-<?= htmlspecialchars($subCollectionSlug) ?>" class="sub-entry-status-filter collection-filter-select" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>" style="min-width: 150px;">
+                            <option value=""><?= __('admin.all_statuses') ?></option>
+                            <option value="published"><?= __('admin.published') ?></option>
+                            <option value="unpublished">Unpublished</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="pending_review">Pending for Review</option>
+                        </select>
+                        
+                        <!-- Sub-Collection Actions Dropdown (3-dot menu) -->
+                        <div class="dropdown collection-actions-dropdown">
+                            <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Sub-collection actions" aria-expanded="false" aria-haspopup="true" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="1"></circle>
+                                    <circle cx="12" cy="5" r="1"></circle>
+                                    <circle cx="12" cy="19" r="1"></circle>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
+                                <?php
+                                $currentPageUrl = "/admin/index.php?page=entry-detail&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($mainEntryIdForLinks);
+                                if (!empty($is_sub_entry_detail) && !empty($viewingSubCollectionSlug) && !empty($viewingSubEntryId)) {
+                                    $currentPageUrl .= "&sub_collection=" . htmlspecialchars($viewingSubCollectionSlug) . "&sub_entry=" . htmlspecialchars($viewingSubEntryId);
+                                    if (!empty($viewingParentSubCollectionSlug) && !empty($viewingParentSubEntryId)) {
+                                        $currentPageUrl .= "&parent_sub_collection=" . htmlspecialchars($viewingParentSubCollectionSlug) . "&parent_sub_entry=" . htmlspecialchars($viewingParentSubEntryId);
+                                    }
+                                }
+                                $returnToParam = "&return_to=" . urlencode($currentPageUrl);
+                                
+                                // Edit sub-collection URL - should open the sub-collection's schema editor
+                                $editSubCollectionUrl = "/admin/index.php?page=collection-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&sub_collection=" . htmlspecialchars($subCollectionSlug) . $returnToParam;
+                                
+                                // Add NEW nested sub-collection URL - parent_sub_collection indicates where to nest it  
+                                $addSubCollectionUrl = "/admin/index.php?page=collection-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&parent_sub_collection=" . htmlspecialchars($subCollectionSlug) . $returnToParam;
+                                
+                                // Debug: Log what we're generating
+                                error_log("Edit sub-collection URL: " . $editSubCollectionUrl);
+                                error_log("Add sub-collection URL: " . $addSubCollectionUrl);
+                                error_log("Current sub-collection slug: " . $subCollectionSlug);
+                                ?>
+                                <!-- DEBUG: Edit URL for sub-collection "<?= htmlspecialchars($subCollectionSlug) ?>": <?= htmlspecialchars($editSubCollectionUrl) ?> -->
+                                <a href="<?= htmlspecialchars($editSubCollectionUrl) ?>" class="dropdown-item collection-actions-item" aria-label="Edit this sub-collection">
+                                    <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    <span class="dropdown-item-label">Edit this sub-collection (<?= htmlspecialchars($subCollectionSlug) ?>)</span>
+                                </a>
+                                <!-- DEBUG: Add URL under "<?= htmlspecialchars($subCollectionSlug) ?>": <?= htmlspecialchars($addSubCollectionUrl) ?> -->
+                                <a href="<?= htmlspecialchars($addSubCollectionUrl) ?>" class="dropdown-item collection-actions-item" aria-label="Add a new sub-collection">
+                                    <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    <span class="dropdown-item-label">Add a new sub-collection under (<?= htmlspecialchars($subCollectionSlug) ?>)</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <?php 
+                $hasNestedSubCollections = !empty($subCollection['sub_collections']);
+                if ($hasNestedSubCollections) {
+                    require_once __DIR__ . '/../../core/sub_entries.php';
+                    foreach ($subEntries as &$subEntry) {
+                        $nestedCount = 0;
+                        foreach ($subCollection['sub_collections'] as $nestedSubCol) {
+                            $nestedSubColSlug = $nestedSubCol['slug'] ?? '';
+                            if ($nestedSubColSlug) {
+                                try {
+                                    $nestedSubEntryPath = "collections/{$collection['slug']}/entries/{$mainEntryIdForLinks}/sub_entries/{$subCollectionSlug}/{$subEntry['id']}/sub_entries/{$nestedSubColSlug}";
+                                    if (!function_exists('get_storage')) {
+                                        require_once __DIR__ . '/../../core/storage/StorageFactory.php';
+                                    }
+                                    $storage = get_storage();
+                                    $files = $storage->list($nestedSubEntryPath);
+                                    $nestedCount += count(array_filter($files, function($file) {
+                                        return pathinfo($file, PATHINFO_EXTENSION) === 'json';
+                                    }));
+                                } catch (Exception $e) {
+                                }
+                            }
+                        }
+                        $subEntry['__sub_entry_count'] = $nestedCount;
+                    }
+                    unset($subEntry);
+                }
+                ?>
+                <?php if (!empty($subEntries)): ?>
+                    <!-- Bulk Actions Toolbar -->
+                    <div id="bulk-actions-toolbar-<?= htmlspecialchars($subCollectionSlug) ?>" class="bulk-actions-toolbar sub-entry-bulk-toolbar" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>" style="display: none; margin-bottom: var(--space-4, 16px);">
+                        <div class="bulk-actions-content">
+                            <span class="bulk-actions-count">
+                                <span class="bulk-selected-count" id="bulk-selected-count-<?= htmlspecialchars($subCollectionSlug) ?>">0</span> <?= __('admin.selected') ?>
+                            </span>
+                            <div class="bulk-actions-buttons">
+                                <button type="button" class="btn btn-sm bulk-publish-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.publish') ?></button>
+                                <button type="button" class="btn btn-sm bulk-unpublish-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.unpublish') ?></button>
+                                <button type="button" class="btn btn-sm btn-danger bulk-delete-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.delete') ?></button>
+                                <button type="button" class="btn btn-sm btn-secondary bulk-cancel-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.cancel') ?></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <?php
+                    // Configure smart-table component for sub-entries
+                    // Temporarily override $entries and $fields for the component
+                    $originalEntries = $entries ?? null;
+                    $originalFields = $fields ?? null;
+                    $entries = $subEntries;
+                    $fields = $subFields;
+                    
+                    $options = [
+                        'show_checkbox' => true,
+                        'show_drag' => true,
+                        'show_sub_entries' => $hasNestedSubCollections,
+                        'checkbox_id_prefix' => 'sub-entry',
+                        'checkbox_class' => 'sub-entry-checkbox',
+                        'row_class' => 'sub-entry-row',
+                        'table_class' => 'sub-entries-table',
+                        'delete_callback' => 'delete-sub-entry-btn',
+                        'delete_data_attr' => 'data-sub-entry-id',
+                        'table_data_attrs' => 'data-sub-collection="' . htmlspecialchars($subCollectionSlug) . '"' . ($hasNestedSubCollections ? ' data-has-nested="true"' : ''),
+                        'checkbox_data_attrs' => 'data-sub-collection="' . htmlspecialchars($subCollectionSlug) . '"',
+                        'row_data_attrs' => 'data-sub-collection="' . htmlspecialchars($subCollectionSlug) . '"',
+                        'title_url_callback' => function($entry) use ($collection, $subCollectionSlug, $mainEntryIdForLinks, $hasNestedSubCollections, $is_sub_entry_detail, $parentSubCollectionSlugForNested, $parentSubEntryIdForNested, $viewingSubCollectionSlug, $viewingSubEntryId, $viewingParentSubCollectionSlug, $viewingParentSubEntryId) {
+                            $collectionSlug = $collection['slug'] ?? '';
+                            $entryId = $entry['id'] ?? '';
+                            
+                            // Build title URL - if entry has nested sub-collections, link to detail page with proper context
+                            if ($hasNestedSubCollections || ($entry['__sub_entry_count'] ?? 0) > 0) {
+                                $titleUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . "&sub_collection=" . urlencode($subCollectionSlug) . "&sub_entry=" . urlencode($entryId);
+                                
+                                // If we're viewing a nested sub-entry detail page, include parent sub-entry info
+                                if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)) {
+                                    $titleUrl .= "&parent_sub_collection=" . urlencode($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . urlencode($parentSubEntryIdForNested);
+                                }
+                                
+                                return $titleUrl;
+                            } else {
+                                // No nested sub-collections, link to editor
+                                $editorUrl = "/admin/index.php?page=entry-editor&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . "&sub_collection=" . urlencode($subCollectionSlug) . "&sub_entry=" . urlencode($entryId);
+                                
+                                // Include parent context if we're in a nested context
+                                if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)) {
+                                    $editorUrl .= "&parent_sub_collection=" . urlencode($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . urlencode($parentSubEntryIdForNested);
+                                }
+                                
+                                return $editorUrl;
+                            }
+                        },
+                        'edit_url_callback' => function($entry) use ($collection, $subCollectionSlug, $mainEntryIdForLinks, $hasNestedSubCollections, $is_sub_entry_detail, $parentSubCollectionSlugForNested, $parentSubEntryIdForNested, $viewingSubCollectionSlug, $viewingSubEntryId, $viewingParentSubCollectionSlug, $viewingParentSubEntryId) {
+                            $collectionSlug = $collection['slug'] ?? '';
+                            $entryId = $entry['id'] ?? '';
+                            
+                            // Build edit URL for sub-entry
+                            $subEntryEditLink = "/admin/index.php?page=entry-editor&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . "&sub_collection=" . urlencode($subCollectionSlug) . "&sub_entry=" . urlencode($entryId);
+                            
+                            // If we're viewing a nested sub-entry detail page, include parent sub-entry info
+                            if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)) {
+                                $subEntryEditLink .= "&parent_sub_collection=" . urlencode($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . urlencode($parentSubEntryIdForNested);
+                            }
+                            
+                            // Include return_to parameter
+                            if (!empty($is_sub_entry_detail)) {
+                                if (!empty($viewingParentSubCollectionSlug) && !empty($viewingParentSubEntryId)) {
+                                    $currentSubEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . 
+                                        "&sub_collection=" . urlencode($viewingSubCollectionSlug) . "&sub_entry=" . urlencode($viewingSubEntryId) .
+                                        "&parent_sub_collection=" . urlencode($viewingParentSubCollectionSlug) . "&parent_sub_entry=" . urlencode($viewingParentSubEntryId);
+                                } else {
+                                    $currentSubEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . 
+                                        "&sub_collection=" . urlencode($viewingSubCollectionSlug) . "&sub_entry=" . urlencode($viewingSubEntryId);
+                                }
+                            } else {
+                                $currentSubEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks);
+                            }
+                            $subEntryEditLink .= "&return_to=" . urlencode($currentSubEntryDetailUrl);
+                            
+                            return $subEntryEditLink;
+                        }
+                    ];
+                    
+                    // Include the smart-table component
+                    // Use __TEMPLATE_DIR__ if available (injected by template parser), otherwise fall back to __DIR__
+                    $templateDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
+                    $componentPath = $templateDir . '/components/smart-table.php';
+                    if (file_exists($componentPath)) {
+                        include $componentPath;
+                    } else {
+                        echo '<div class="error-message">Smart table component not found at: ' . htmlspecialchars($componentPath) . '</div>';
+                    }
+                    
+                    // Restore original variables if they existed
+                    if ($originalEntries !== null) {
+                        $entries = $originalEntries;
+                    }
+                    if ($originalFields !== null) {
+                        $fields = $originalFields;
+                    }
+                    ?>
+                <?php else: ?>
+                    <p class="empty-state">No sub-entries found.</p>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</div>
+
+<script>
+// Delete main entry
+document.querySelector('.delete-main-entry-btn')?.addEventListener('click', function() {
+    if (!confirm('<?= __('admin.confirm_delete') ?>')) return;
+    
+    fetch('/api/admin_entries.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({
+            action: 'delete',
+            collection: '<?= htmlspecialchars($collection['slug'] ?? '') ?>',
+            entry_id: '<?= htmlspecialchars($entry['id'] ?? '') ?>',
+            _csrf: document.getElementById('csrf-token').value
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'ok') {
+            window.location.href = '/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>';
+        } else {
+            alert('Error: ' + d.message);
+        }
+    });
+});
+
+// Delete sub-entries
+document.querySelectorAll('.delete-sub-entry-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        if (!confirm('<?= __('admin.confirm_delete') ?>')) return;
+        
+        const subCollection = this.getAttribute('data-sub-collection');
+        const subEntryId = this.getAttribute('data-sub-entry-id');
+        
+        fetch('/api/sub_entries.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                action: 'delete',
+                parent_collection: '<?= htmlspecialchars($collection['slug'] ?? '') ?>',
+                parent_entry_id: '<?= htmlspecialchars($entry['id'] ?? '') ?>',
+                sub_collection: subCollection,
+                sub_entry_id: subEntryId,
+                _csrf: document.getElementById('csrf-token').value
+            })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'ok') {
+                location.reload();
+            } else {
+                alert('Error: ' + d.message);
+            }
+        });
+    });
+});
+
+// Status filters
+document.querySelectorAll('.sub-entry-status-filter').forEach(select => {
+    select.addEventListener('change', function() {
+        const status = this.value;
+        const subCollection = this.getAttribute('data-sub-collection');
+        const rows = document.querySelectorAll(`.sub-entry-row[data-sub-collection="${subCollection}"]`);
+        
+        rows.forEach(row => {
+            if (!status) {
+                row.style.display = '';
+            } else {
+                const badge = row.querySelector('.status-badge');
+                row.style.display = badge?.classList.contains(status) ? '' : 'none';
+            }
+        });
+    });
+});
+
+// Bulk selection
+document.querySelectorAll('.select-all-sub-entries').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const subCollection = this.getAttribute('data-sub-collection');
+        const checkboxes = document.querySelectorAll(`.sub-entry-checkbox[data-sub-collection="${subCollection}"]`);
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        updateBulkToolbar(subCollection);
+    });
+});
+
+document.querySelectorAll('.sub-entry-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        updateBulkToolbar(this.getAttribute('data-sub-collection'));
+    });
+});
+
+function updateBulkToolbar(subCollection) {
+    const checkboxes = document.querySelectorAll(`.sub-entry-checkbox[data-sub-collection="${subCollection}"]:checked`);
+    const toolbar = document.getElementById(`bulk-actions-toolbar-${subCollection}`);
+    const countElement = document.getElementById(`bulk-selected-count-${subCollection}`);
+    
+    if (checkboxes.length > 0) {
+        if (toolbar) toolbar.style.display = 'block';
+        if (countElement) countElement.textContent = checkboxes.length;
+    } else {
+        if (toolbar) toolbar.style.display = 'none';
+    }
+}
+
+// Bulk actions
+document.querySelectorAll('.bulk-publish-btn, .bulk-unpublish-btn, .bulk-delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const operation = this.classList.contains('bulk-publish-btn') ? 'publish' : 
+                        this.classList.contains('bulk-unpublish-btn') ? 'unpublish' : 'delete';
+        const subCollection = this.getAttribute('data-sub-collection');
+        const checkboxes = document.querySelectorAll(`.sub-entry-checkbox[data-sub-collection="${subCollection}"]:checked`);
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (!ids.length) return;
+        if (operation === 'delete' && !confirm(`Delete ${ids.length} sub-entries?`)) return;
+        
+        // Build request payload
+        const payload = {
+            action: 'bulk',
+            operation,
+            parent_collection: '<?= htmlspecialchars($collection['slug'] ?? '') ?>',
+            parent_entry_id: '<?= htmlspecialchars($mainEntryIdForLinks ?? $entry['id'] ?? '') ?>',
+            sub_collection: subCollection,
+            sub_entry_ids: ids,
+            _csrf: document.getElementById('csrf-token').value
+        };
+        
+        // Include parent sub-entry context if we're viewing a nested sub-entry
+        <?php if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)): ?>
+        payload.parent_sub_collection = '<?= htmlspecialchars($parentSubCollectionSlugForNested) ?>';
+        payload.parent_sub_entry_id = '<?= htmlspecialchars($parentSubEntryIdForNested) ?>';
+        <?php endif; ?>
+        
+        fetch('/api/sub_entries.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'ok') {
+                location.reload();
+            } else {
+                alert('Error: ' + d.message);
+            }
+        })
+        .catch(err => {
+            console.error('Bulk operation error:', err);
+            alert('Error performing bulk operation: ' + err.message);
+        });
+    });
+});
+
+document.querySelectorAll('.bulk-cancel-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const subCollection = this.getAttribute('data-sub-collection');
+        document.querySelectorAll(`.sub-entry-checkbox[data-sub-collection="${subCollection}"]`).forEach(cb => cb.checked = false);
+        document.querySelector(`.select-all-sub-entries[data-sub-collection="${subCollection}"]`).checked = false;
+        updateBulkToolbar(subCollection);
+    });
+});
+
+// Dropdowns are now handled by unified dropdown.js
+
+// Smart back buttons - ALWAYS use referrer if available, otherwise use href fallback
+document.querySelectorAll('.back-button').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const referrer = document.referrer;
+        const currentHref = this.getAttribute('href');
+        
+        // Check if referrer is from our site and not the current page
+        const isInternalReferrer = referrer && 
+            referrer !== window.location.href &&
+            (referrer.includes(window.location.host) || referrer.startsWith('/'));
+        
+        if (isInternalReferrer) {
+            window.location.href = referrer;
+        } else if (currentHref && currentHref !== '#' && currentHref !== 'javascript:void(0)') {
+            window.location.href = currentHref;
+        } else {
+            window.history.back();
+        }
+    });
+});
+</script>
+
+<script>
+// Expose collection data to JavaScript
+window.collectionData = <?= json_encode($collection ?? []) ?>;
+window.collectionSlug = <?= json_encode($collection['slug'] ?? '') ?>;
+window.collectionId = <?= json_encode($collection['id'] ?? '') ?>;
+</script>
+
+<script src="/admin/js/mouse-drag-drop.js"></script>
+<script>
+// Initialize drag and drop for sub-entries tables using MouseDragDrop
+document.addEventListener('DOMContentLoaded', function() {
+    // Store sorters for each table
+    const subEntrySorters = new Map();
+    
+    // Initialize drag handlers for all sub-entries tables
+    const subEntriesTables = document.querySelectorAll('.sub-entries-table .table-body');
+    
+    subEntriesTables.forEach(tableBody => {
+        const subCollection = tableBody.closest('.sub-entries-table').dataset.subCollection;
+        
+        // Destroy existing sorter if any
+        if (subEntrySorters.has(tableBody)) {
+            subEntrySorters.get(tableBody).destroy();
+        }
+        
+        // Create new sorter
+        const sorter = new MouseDragDrop({
+            container: tableBody,
+            itemSelector: '.table-row',
+            handleSelector: '.cell-drag',
+            onReorder: function(fromIndex, toIndex, placeholder, draggedItem) {
+                // MouseDragDrop calls onReorder before cleanup, so placeholder is still in DOM
+                // We need to replace the placeholder with the dragged item
+                const draggedEntryId = draggedItem.dataset.entryId;
+                if (!draggedEntryId) return;
+                
+                // Replace placeholder with dragged item (if not already done)
+                if (draggedItem && placeholder && placeholder.parentNode) {
+                    // Remove dragged item from its current position (it's still in DOM at original position)
+                    if (draggedItem.parentNode) {
+                        draggedItem.remove();
+                    }
+                    
+                    // Replace placeholder with dragged item
+                    placeholder.parentNode.insertBefore(draggedItem, placeholder);
+                    placeholder.remove();
+                }
+                
+                // Find target entry ID based on new position
+                let targetEntryId = null;
+                let insertBefore = false;
+                
+                // After replacement, find the target based on dragged item's new position
+                if (draggedItem && draggedItem.parentNode) {
+                    const nextSibling = draggedItem.nextSibling;
+                    const prevSibling = draggedItem.previousSibling;
+                    
+                    // Check next sibling (we inserted before this row)
+                    if (nextSibling && nextSibling.classList && nextSibling.classList.contains('table-row')) {
+                        targetEntryId = nextSibling.dataset.entryId;
+                        insertBefore = true;
+                    }
+                    // Check previous sibling (we inserted after this row)
+                    else if (prevSibling && prevSibling.classList && prevSibling.classList.contains('table-row')) {
+                        targetEntryId = prevSibling.dataset.entryId;
+                        insertBefore = false;
+                    }
+                }
+                
+                // Fallback: use index-based calculation
+                if (!targetEntryId) {
+                    const allRows = Array.from(tableBody.querySelectorAll('.table-row'))
+                        .filter(row => row !== draggedItem);
+                    
+                    const draggedIndex = allRows.indexOf(draggedItem);
+                    if (draggedIndex > 0) {
+                        targetEntryId = allRows[draggedIndex - 1].dataset.entryId;
+                        insertBefore = false;
+                    } else if (draggedIndex < allRows.length - 1) {
+                        targetEntryId = allRows[draggedIndex + 1].dataset.entryId;
+                        insertBefore = true;
+                    }
+                }
+                
+                if (targetEntryId && draggedEntryId !== targetEntryId) {
+                    const draggedRow = draggedItem;
+                    const targetRow = tableBody.querySelector(`[data-entry-id="${targetEntryId}"]`);
+                    // Call API to save the new order
+                    reorderSubEntries(draggedEntryId, targetEntryId, insertBefore, subCollection, draggedRow, targetRow, tableBody);
+                }
+            }
+        });
+        
+        subEntrySorters.set(tableBody, sorter);
+    });
+    
+    async function reorderSubEntries(entryId, targetEntryId, insertBefore, subCollection, draggedRow, targetRow, tableBody) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const collectionSlug = urlParams.get('collection');
+        const parentEntryId = urlParams.get('entry');
+        const csrfToken = document.getElementById('csrf-token')?.value || '';
+        
+        // For sub-entries API, we need the collection slug (directory name), not ID
+        // The API uses the collection value directly as a directory path
+        const collectionIdentifier = window.collectionSlug || collectionSlug;
+        
+        if (!collectionIdentifier) {
+            console.error('[Reorder Sub-Entries] No collection slug found', {
+                windowSlug: window.collectionSlug,
+                urlSlug: collectionSlug
+            });
+            alert('Error: Collection not found. Please refresh the page.');
+            return;
+        }
+        
+        console.log('[Reorder Sub-Entries] Using collection slug:', collectionIdentifier);
+        
+        // Check if we're on a sub-entry detail page (nested sub-entries)
+        const parentSubCollection = urlParams.get('sub_collection');
+        const parentSubEntryId = urlParams.get('sub_entry');
+        
+        const requestData = {
+            collection: collectionIdentifier,
+            parent_entry_id: parentEntryId,
+            sub_collection: subCollection,
+            entry_id: entryId,
+            target_entry_id: targetEntryId,
+            insert_before: insertBefore,
+            _csrf: csrfToken
+        };
+        
+        // Add parent context for nested sub-entries
+        if (parentSubCollection && parentSubEntryId) {
+            requestData.parent_sub_collection = parentSubCollection;
+            requestData.parent_sub_entry_id = parentSubEntryId;
+        }
+        
+        try {
+            const response = await fetch('/api/sub_entries.php?action=reorder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'ok' || data.success) {
+                // DOM is already reordered by MouseDragDrop, just show success feedback
+                if (draggedRow) {
+                    // Show subtle success feedback
+                    draggedRow.style.transition = 'background-color 0.3s ease';
+                    draggedRow.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'; // green tint
+                    setTimeout(() => {
+                        draggedRow.style.backgroundColor = '';
+                        // Remove inline style after animation
+                        setTimeout(() => {
+                            draggedRow.style.transition = '';
+                        }, 300);
+                    }, 600);
+                }
+            } else {
+                alert('Failed to reorder entries: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Failed to reorder entries. Please try again.');
+        }
+    }
+    
+    /**
+     * Sync action cell widths between header and rows
+     * Ensures header action cell matches the width of row action cells
+     */
+    function syncActionCellWidths() {
+        const tables = document.querySelectorAll('.entries-smart-table');
+        
+        tables.forEach(table => {
+            const headActions = table.querySelector('.head-actions');
+            const rowActions = table.querySelectorAll('.cell-actions');
+            
+            if (!headActions || rowActions.length === 0) return;
+            
+            // Find the widest row action cell
+            let maxWidth = 0;
+            rowActions.forEach(cell => {
+                // Temporarily remove any inline styles to get natural width
+                const originalWidth = cell.style.width;
+                const originalMinWidth = cell.style.minWidth;
+                cell.style.width = '';
+                cell.style.minWidth = '';
+                
+                const width = cell.getBoundingClientRect().width;
+                if (width > maxWidth) {
+                    maxWidth = width;
+                }
+                
+                // Restore original styles
+                cell.style.width = originalWidth;
+                cell.style.minWidth = originalMinWidth;
+            });
+            
+            // Set header action cell to match the widest row action cell
+            // Use flex-basis instead of width to work better with flexbox
+            if (maxWidth > 0) {
+                headActions.style.flexBasis = maxWidth + 'px';
+                headActions.style.width = maxWidth + 'px';
+                headActions.style.minWidth = maxWidth + 'px';
+            }
+        });
+    }
+    
+    // Sync action cell widths on page load and window resize
+    function initializeActionCellSync() {
+        syncActionCellWidths();
+        
+        // Re-sync on window resize
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(syncActionCellWidths, 100);
+        });
+        
+        // Re-sync when table content changes (e.g., after AJAX updates)
+        const observer = new MutationObserver(function() {
+            syncActionCellWidths();
+        });
+        
+        document.querySelectorAll('.entries-smart-table').forEach(table => {
+            observer.observe(table, { childList: true, subtree: true });
+        });
+    }
+    
+    // Initialize action cell width sync
+    setTimeout(function() {
+        initializeActionCellSync();
+    }, 200);
+});
+</script>

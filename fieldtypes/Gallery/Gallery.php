@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Gallery;
+namespace Birkly\FieldTypes\Gallery;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Gallery extends BaseField {
     public function getType(): string {
@@ -144,7 +144,7 @@ class Gallery extends BaseField {
         .gallery-field {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--space-3, 0.75rem);
         }
         .gallery-preview {
             min-height: 100px;
@@ -152,17 +152,19 @@ class Gallery extends BaseField {
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
-            padding: 12px;
-            border: 1px dashed #ddd;
-            border-radius: 4px;
+            gap: var(--space-3, 0.75rem);
+            padding: var(--space-3, 0.75rem);
+            border: 1px dashed var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            background: var(--bg-secondary, #fafafa);
         }
         .gallery-item {
             position: relative;
             aspect-ratio: 1;
             overflow: hidden;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            border-radius: var(--radius-sm, 0.375rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            background: var(--bg-primary, #ffffff);
         }
         .gallery-item img {
             width: 100%;
@@ -171,35 +173,37 @@ class Gallery extends BaseField {
         }
         .gallery-remove {
             position: absolute;
-            top: 4px;
-            right: 4px;
+            top: var(--space-1, 0.25rem);
+            right: var(--space-1, 0.25rem);
             width: 24px;
             height: 24px;
-            border-radius: 50%;
+            border-radius: var(--radius-full, 50%);
             border: none;
-            background: rgba(255, 0, 0, 0.8);
-            color: white;
+            background: rgba(239, 68, 68, 0.8);
+            color: var(--text-inverse, #ffffff);
             cursor: pointer;
-            font-size: 18px;
+            font-size: 1.125rem;
             line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background var(--transition-fast, 150ms ease);
         }
         .gallery-remove:hover {
-            background: rgba(255, 0, 0, 1);
+            background: var(--error-500, #ef4444);
         }
         .gallery-empty {
-            padding: 24px;
+            padding: var(--space-6, 1.5rem);
             text-align: center;
-            color: #999;
+            color: var(--text-tertiary, #9ca3af);
             font-style: italic;
-            border: 1px dashed #ddd;
-            border-radius: 4px;
+            border: 1px dashed var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            background: var(--bg-secondary, #fafafa);
         }
         .gallery-controls {
             display: flex;
-            gap: 8px;
+            gap: var(--space-2, 0.5rem);
         }
         CSS;
     }
@@ -299,6 +303,59 @@ class Gallery extends BaseField {
         }
         
         return [];
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Ensure value is an array
+        if (!is_array($value)) {
+            if (is_string($value)) {
+                $decoded = json_decode($value, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $value = $decoded;
+                } else {
+                    $value = empty($value) ? [] : [$value];
+                }
+            } else {
+                $value = [];
+            }
+        }
+        
+        $count = count($value);
+        if ($count === 0) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Show max 3 preview images
+        $previews = [];
+        $previewCount = min(3, $count);
+        
+        for ($i = 0; $i < $previewCount; $i++) {
+            $mediaId = $value[$i] ?? '';
+            if (empty($mediaId)) continue;
+            
+            $mediaInfo = $this->getMediaInfo($mediaId);
+            if ($mediaInfo && isset($mediaInfo['url'])) {
+                $name = htmlspecialchars($mediaInfo['name'] ?? $mediaId, ENT_QUOTES, 'UTF-8');
+                $url = htmlspecialchars($mediaInfo['url'], ENT_QUOTES, 'UTF-8');
+                $previews[] = '<img src="' . $url . '" alt="' . $name . '" title="' . $name . '" class="ft-list-image-square">';
+            }
+        }
+        
+        $html = '<div class="ft-gallery-preview-container" style="display:flex;gap:4px;align-items:center;">';
+        $html .= implode('', $previews);
+        
+        // Add count badge if more than 3 items
+        if ($count > 3) {
+            $remaining = $count - 3;
+            $html .= '<span class="ft-gallery-count" style="display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;background:var(--color-neutral-200, #f3f4f6);color:var(--text-secondary, #6b7280);border-radius:4px;font-size:12px;font-weight:600;flex-shrink:0;">+' . $remaining . '</span>';
+        }
+        
+        $html .= '</div>';
+        return $html;
+    }
+
+    public function getTableMinWidth(): string {
+        return '150px'; // Gallery fields need space for thumbnail count display
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

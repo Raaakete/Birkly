@@ -1,0 +1,253 @@
+/* ============================================
+   Card Component - Unified System
+   ============================================ */
+
+/* Base Card */
+.card {
+  background: var(--bg-elevated, #ffffff);
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--border-radius-s, 4px);
+  padding: var(--space-6, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  transition: box-shadow var(--transition-fast, 150ms ease), border-color var(--transition-fast, 150ms ease);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+}
+
+.card h3 {
+  margin: 0 0 var(--space-4, 1rem) 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+}
+
+/* Make links inside cards behave like block and inherit color */
+.card > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Card Variants */
+.card--compact {
+  padding: var(--space-4, 1rem);
+  min-height: auto;
+}
+
+.card--elevated {
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+}
+
+.card--bordered {
+  border-width: 2px;
+  border-color: var(--border-medium, #e5e7eb);
+}
+
+/* Collection-specific card styles */
+.card .collection-header .title {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.card .collection-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #72746F);
+  margin-top: 0;
+}
+
+.card .collection-footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: var(--space-4, 1rem);
+  border-top: 1px solid var(--border-light, #f3f4f6);
+}
+
+/* Make collection cards clickable */
+a.card {
+  text-decoration: none;
+  color: var(--text-primary, #20221D);
+  transition: all 0.2s ease;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+a.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+}
+
+/* Collection Card Container */
+.collection-card {
+  position: relative;
+}
+
+.collection-card .drag-handle {
+  pointer-events: auto;
+  z-index: 5;
+}
+
+.collection-card .collection-menu-wrapper {
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* Collection card dragging state */
+.collection-card.dragging {
+  opacity: 0.5 !important;
+  cursor: grabbing !important;
+  pointer-events: none;
+}
+
+.collection-card.dragging * {
+  pointer-events: none;
+}
+
+/* Collection Header (standalone, not in .card) */
+.collection-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.collection-header .title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin: 0 0 var(--space-2, 0.5rem) 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-primary, #20221D);
+}
+
+/* Collection Description (standalone) */
+.collection-description {
+  color: var(--text-secondary, #72746F);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Collection Footer (standalone) */
+.collection-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+/* Entry Count */
+.entry-count {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  font-size: 0.875rem;
+  color: var(--text-secondary, #72746F);
+}
+
+.entry-count .sub-entries-count {
+  color: var(--text-tertiary, #9ca3af);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Collection Actions */
+.collection-actions {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+.collection-actions .btn {
+  padding: var(--space-2, 0.5rem);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md, 0.5rem);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.collection-actions .btn:hover {
+  background: var(--bg-primary, #ffffff);
+}
+
+.collection-actions .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Collection Menu (3-dot menu) - Uses Unified Dropdown Component */
+.collection-menu-wrapper.dropdown {
+  position: relative;
+  z-index: 10;
+}
+
+/* Override dropdown-trigger for collection menu button */
+.collection-menu-wrapper .dropdown-trigger.collection-menu-btn {
+  padding: var(--space-2, 0.5rem);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md, 0.5rem);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: var(--text-secondary, #72746F);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: auto;
+  min-width: auto;
+}
+
+.collection-menu-wrapper .dropdown-trigger.collection-menu-btn:hover {
+  background: var(--bg-hover, #f3f4f6);
+  color: var(--text-primary, #20221D);
+}
+
+.collection-menu-wrapper .dropdown-trigger.collection-menu-btn[aria-expanded="true"] {
+  background: var(--bg-hover, #f3f4f6);
+  color: var(--text-primary, #20221D);
+}
+
+/* Collection menu dropdown - positioned above the button */
+.collection-menu-wrapper .dropdown-menu.collection-menu-dropdown {
+  position: absolute;
+  bottom: 100%;
+  top: auto;
+  right: 0;
+  left: auto;
+  margin-bottom: var(--space-2, 0.5rem);
+  margin-top: 0;
+}
+
+/* Legacy support - ensure collection-menu-item works with unified dropdown */
+.collection-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+}
+
+.collection-menu-item svg {
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .card {
+    border-radius: var(--radius-md, 0.5rem);
+  }
+}
+

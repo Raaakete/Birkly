@@ -1,0 +1,247 @@
+/* ============================================
+   Button Component - Unified System
+   ============================================ */
+
+/* Base Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  border: 1px solid var(--border-medium, #e5e7eb);
+  border-radius: var(--border-radius-s, 4px);
+  background: var(--bg-elevated, #ffffff);
+  color: var(--text-primary, #20221D);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+  white-space: nowrap;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.btn:hover {
+  scale: 1.02;
+  background: var(--color-neutral-200, #F4F6F2);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary-500, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Button Variants */
+.btn--primary {
+  background: var(--color-primary, #7CE3BF);
+  color: var(--color-neutral-900, #20221D);
+  border-color: var(--color-primary, #7CE3BF);
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-hover, #8CECCA);
+  border-color: var(--color-primary-hover, #8CECCA);
+  color: var(--color-neutral-900, #20221D);
+}
+
+.btn--secondary {
+  background: var(--color-neutral-300, #E7EAE4);
+  color: var(--color-neutral-900, #20221D);
+  border-color: var(--color-neutral-300, #E7EAE4);
+}
+
+.btn--secondary:hover {
+  background: var(--color-neutral-400, #D9DBD5);
+  border-color: var(--color-neutral-400, #D9DBD5);
+}
+
+.btn--danger {
+  background: var(--error-500, #ef4444);
+  border-color: var(--error-500, #ef4444);
+  color: white;
+}
+
+.btn--danger:hover {
+  background: var(--error-600, #dc2626);
+  border-color: var(--error-600, #dc2626);
+}
+
+.btn--success {
+  background: var(--success-500, #22c55e);
+  border-color: var(--success-500, #22c55e);
+  color: white;
+}
+
+.btn--success:hover {
+  background: var(--success-600, #16a34a);
+  border-color: var(--success-600, #16a34a);
+}
+
+.btn--warning {
+  background: var(--warning-500, #f59e0b);
+  border-color: var(--warning-500, #f59e0b);
+  color: white;
+}
+
+.btn--warning:hover {
+  background: var(--warning-600, #d97706);
+  border-color: var(--warning-600, #d97706);
+}
+
+/* Button Sizes */
+.btn--sm {
+  padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+  font-size: 0.75rem;
+}
+
+.btn--lg {
+  padding: var(--space-3, 0.75rem) var(--space-6, 1.5rem);
+  font-size: 1rem;
+}
+
+/* Icon Button */
+.btn--icon {
+  padding: var(--space-2, 0.5rem);
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Button States */
+.btn--disabled,
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn--loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn--loading::after {
+  content: "";
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  top: 50%;
+  left: 50%;
+  margin-left: -0.5rem;
+  margin-top: -0.5rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Button as Link */
+a.btn {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+/* Full Width Button */
+.btn--full {
+  width: 100%;
+}
+
+/* ============================================
+   Backward Compatibility Aliases
+   ============================================ */
+/* Support both BEM (.btn--primary) and legacy (.btn-primary) naming */
+.btn-primary {
+  background: var(--color-primary, #7CE3BF);
+  color: var(--color-neutral-900, #20221D);
+  border-color: var(--color-primary, #7CE3BF);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover, #8CECCA);
+  border-color: var(--color-primary-hover, #8CECCA);
+  color: var(--color-neutral-900, #20221D);
+}
+
+.btn-secondary {
+  background: var(--color-neutral-300, #E7EAE4);
+  color: var(--color-neutral-900, #20221D);
+  border-color: var(--color-neutral-300, #E7EAE4);
+}
+
+.btn-secondary:hover {
+  background: var(--color-neutral-400, #D9DBD5);
+  border-color: var(--color-neutral-400, #D9DBD5);
+}
+
+.btn-danger {
+  background: var(--error-500, #ef4444);
+  border-color: var(--error-500, #ef4444);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: var(--error-600, #dc2626);
+  border-color: var(--error-600, #dc2626);
+}
+
+.btn-sm {
+  padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.btn-small {
+  padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* Icon Button (for remove buttons, etc.) */
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: var(--space-2, 8px);
+  cursor: pointer;
+  color: var(--text-secondary, #72746F);
+  border-radius: var(--radius-sm, 4px);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background: var(--error-100, #fee2e2);
+  color: var(--error-700, #b91c1c);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .btn {
+    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+    font-size: 0.875rem;
+  }
+}
+

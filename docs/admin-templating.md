@@ -1,8 +1,8 @@
-# HaruCMS Admin Templating System
+# Birkly Admin Templating System
 
 ## Overview
 
-The HaruCMS Admin Templating System provides a complete separation between admin frontend appearance and functionality, following the same philosophy as the main CMS content delivery system. This allows users to easily customize the admin panel's appearance without touching any PHP code or complex JavaScript.
+The Birkly Admin Templating System provides a complete separation between admin frontend appearance and functionality, following the same philosophy as the main CMS content delivery system. This allows users to easily customize the admin panel's appearance without touching any PHP code or complex JavaScript.
 
 ## Architecture
 
@@ -23,7 +23,7 @@ Admin Template → Template Engine → API → PHP Backend
 1. **Complete Separation of Concerns**: Frontend appearance is completely decoupled from backend functionality
 2. **Easy Customization**: Users can modify HTML/CSS templates without touching PHP or JavaScript
 3. **Consistency**: Uses the same templating syntax as the main CMS template engine
-4. **Simplicity**: Aligns with HaruCMS's philosophy of simple, elegant solutions
+4. **Simplicity**: Aligns with Birkly's philosophy of simple, elegant solutions
 5. **Maintainability**: Changes to appearance don't affect functionality
 
 ## File Structure
@@ -272,9 +272,9 @@ The `api/admin_templates.php` provides:
 
 ## Conclusion
 
-This templating system transforms the HaruCMS admin from a monolithic SPA into a flexible, template-driven interface that maintains the same simplicity and elegance as the main CMS while providing unprecedented customization capabilities.
+This templating system transforms the Birkly admin from a monolithic SPA into a flexible, template-driven interface that maintains the same simplicity and elegance as the main CMS while providing unprecedented customization capabilities.
 
-The system follows HaruCMS's core principles:
+The system follows Birkly's core principles:
 - **Simplicity**: Easy to understand and use
 - **Separation of Concerns**: Clear boundaries between layers
 - **No External Dependencies**: Everything works within the CMS

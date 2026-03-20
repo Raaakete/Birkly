@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide walks through implementing the new admin templating system in HaruCMS. The system provides complete separation between admin frontend appearance and functionality.
+This guide walks through implementing the new admin templating system in Birkly. The system provides complete separation between admin frontend appearance and functionality.
 
 ## Files Created
 
@@ -221,7 +221,7 @@ console.log('Data:', data);
 ### Debug Mode
 ```javascript
 // Enable debug logging
-HaruCMS.AdminEngine.debug = true;
+Birkly.AdminEngine.debug = true;
 ```
 
 ## Conclusion
@@ -230,6 +230,6 @@ The admin templating system provides a robust, maintainable solution that:
 - ✅ Solves the original SPA problems
 - ✅ Maintains all SPA benefits
 - ✅ Adds significant new capabilities
-- ✅ Aligns with HaruCMS philosophy
+- ✅ Aligns with Birkly philosophy
 
 The system is ready for implementation and will provide a much better foundation for the admin interface. 

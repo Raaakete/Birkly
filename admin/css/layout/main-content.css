@@ -1,0 +1,82 @@
+/* ============================================
+   Main Content Layout Component
+   ============================================ */
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  min-height: calc(100vh - var(--space-10, 2.5rem) * 2);
+  overflow-x: hidden;
+  padding: var(--space-10, 2.5rem);
+  background: var(--background-global, #f8f9f7);
+}
+
+/* Page Container */
+.page-container {
+  max-width: var(--container-width-large, 1920px);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Section */
+.section {
+  margin-bottom: var(--space-8, 2rem);
+}
+
+.section__header {
+  margin-bottom: var(--space-4, 1rem);
+  padding-bottom: var(--space-3, 0.75rem);
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.section__header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+}
+
+.section__body {
+  padding: var(--space-4, 1rem) 0;
+}
+
+/* Editor Layout */
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(600px, 3fr) minmax(300px, 1fr);
+  gap: var(--space-8, 2rem);
+}
+
+.editor-main {
+  min-width: 0;
+}
+
+.editor-sidebar {
+  min-width: 0;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: var(--space-4, 1rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--space-3, 0.75rem);
+  }
+}
+

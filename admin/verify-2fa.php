@@ -5,8 +5,12 @@ require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
 require_once __DIR__ . '/../core/csrf.php';
+// IMPORTANT: api/*.php files often auto-execute as JSON endpoints unless marked as internal.
+// This page must be accessible before a full admin session exists.
+$GLOBALS['__HARU_INTERNAL_CALL'] = true;
 require_once __DIR__ . '/../api/2fa.php';
-require_once __DIR__ . '/../api/users.php';
+// NOTE: Do NOT include api/users.php here — it parses php://input as JSON on include
+// and can break this form POST with "Invalid JSON input".
 
 // Check if 2FA verification is pending
 if (!isset($_SESSION['2fa_pending'])) {
@@ -22,15 +26,23 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $code = trim($_POST['code'] ?? '');
     $csrf = $_POST['_csrf'] ?? '';
-    $useBackupCode = isset($_POST['use_backup_code']);
+    // NOTE: use_backup_code is always present as a hidden input ("0"/"1")
+    $useBackupCode = (($_POST['use_backup_code'] ?? '0') === '1');
     
     if (!validate_csrf_token($csrf)) {
         $error = 'Invalid security token. Please try again.';
-    } elseif (empty($code)) {
+    } elseif (empty($code) && empty($_POST['backup_code'] ?? '')) {
         $error = 'Please enter your verification code.';
     } else {
         // Verify 2FA code (use backup code field if available)
-        $codeToVerify = $useBackupCode && !empty($_POST['backup_code']) ? $_POST['backup_code'] : $code;
+        $backupRaw = trim($_POST['backup_code'] ?? '');
+        if ($useBackupCode && $backupRaw !== '') {
+            // Backup codes are stored as 8 hex chars; accept with spaces/dashes and normalize
+            $codeToVerify = strtoupper(preg_replace('/[^A-Fa-f0-9]/', '', $backupRaw));
+        } else {
+            // TOTP: normalize to digits only (users sometimes paste with spaces)
+            $codeToVerify = preg_replace('/\D/', '', $code);
+        }
         if (verify2FALogin($email, $codeToVerify, $useBackupCode)) {
             // 2FA verified - complete login
             $userFile = md5($email) . '.json';
@@ -69,9 +81,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
-    <title>Verify Two-Factor Authentication - HaruCMS Admin</title>
+    <title>Verify Two-Factor Authentication - Birkly Admin</title>
     <link rel="stylesheet" href="/admin/css/style.css">
-    <link rel="shortcut icon" href="assets/haru_favicon.svg">
+    <link rel="shortcut icon" href="assets/birkly_favicon.svg">
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

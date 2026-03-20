@@ -1,7 +1,7 @@
 <?php
-// Database initialization script for HaruCMS
+// Database initialization script for Birkly
 
-$dbPath = __DIR__ . '/harucms.db';
+$dbPath = __DIR__ . '/birkly.db';
 
 try {
     $pdo = new PDO("sqlite:$dbPath");
@@ -56,14 +56,14 @@ try {
     
     $pdo->exec("
         INSERT OR IGNORE INTO entries (collection, title, slug, content, status) VALUES 
-        ('blog', 'Welcome to HaruCMS', 'welcome', 'This is your first blog post.', 'published'),
+        ('blog', 'Welcome to Birkly', 'welcome', 'This is your first blog post.', 'published'),
         ('pages', 'About Us', 'about', 'About our company.', 'published'),
         ('portfolio', 'Sample Project', 'sample-project', 'A sample portfolio project.', 'published')
     ");
     
     $pdo->exec("
         INSERT OR IGNORE INTO settings (key, value) VALUES 
-        ('site_title', 'HaruCMS'),
+        ('site_title', 'Birkly'),
         ('site_description', 'A headless CMS'),
         ('admin_email', 'admin@example.com')
     ");

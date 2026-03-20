@@ -1,5 +1,5 @@
 <?php
-// Minimal PHP Templating Engine for HaruCMS
+// Minimal PHP Templating Engine for Birkly
 class TemplateEngine {
     public static function render($template, $vars = []) {
         // Variable interpolation: {{ var }}

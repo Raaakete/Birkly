@@ -1,7 +1,7 @@
 # Email Invitation System
 
 ## Overview
-HaruCMS includes a built-in email invitation system that allows administrators to invite new users via email. Users receive an invitation link where they can set their own password.
+Birkly includes a built-in email invitation system that allows administrators to invite new users via email. Users receive an invitation link where they can set their own password.
 
 ## How It Works
 

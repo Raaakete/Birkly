@@ -1218,7 +1218,6 @@ window.ContentEditorCommands = {
     }
     
     saveBtn.addEventListener('click', () => {
-      console.log('Link dialog save clicked');
       const urlInput = dialog.querySelector('.link-url-input');
       const textInput = dialog.querySelector('.link-text-input');
       
@@ -1238,7 +1237,6 @@ window.ContentEditorCommands = {
       // Use URL as text if text is empty
       const linkText = text || url;
       
-      console.log('Creating link:', { url, linkText, existingLink: !!existingLink });
       
       if (existingLink) {
         // Edit existing link
@@ -1246,7 +1244,6 @@ window.ContentEditorCommands = {
         existingLink.textContent = linkText;
       } else {
         // Create new link
-        console.log('Creating new link...');
     const editor = dialog._dialogData?.editor || this.getActiveEditor();
         const originalSelectedText = dialog._dialogData?.selectedText || '';
         const savedRange = dialog._dialogData?.savedRange;
@@ -1278,7 +1275,6 @@ window.ContentEditorCommands = {
                 (startContainer.parentNode || startContainer === editor || editor.contains(startContainer)) &&
                 (endContainer.parentNode || endContainer === editor || editor.contains(endContainer))) {
               
-              console.log('Using saved range');
               // Restore the range
               selection.removeAllRanges();
               selection.addRange(savedRange.cloneRange());
@@ -1298,7 +1294,6 @@ window.ContentEditorCommands = {
                 newRange.collapse(true);
                 selection.removeAllRanges();
                 selection.addRange(newRange);
-                console.log('Link inserted using saved range');
               } else {
                 // Insert link at cursor
                 range.insertNode(link);
@@ -1309,10 +1304,8 @@ window.ContentEditorCommands = {
                 newRange.selectNodeContents(link);
                 selection.removeAllRanges();
                 selection.addRange(newRange);
-                console.log('Link inserted at cursor using saved range');
               }
             } else {
-              console.log('Saved range containers are invalid');
             }
           } catch (e) {
             console.error('Error using saved range:', e);
@@ -1321,8 +1314,7 @@ window.ContentEditorCommands = {
         
         // Strategy 2: Try to restore selection using ContentEditorSelection
         if (!linkInserted) {
-          console.log('Trying to restore selection...');
-          if (window.ContentEditorSelection.restore()) {
+          if (window.ContentEditorSelection.restore(editor)) {
             if (selection.rangeCount > 0) {
               try {
                 const range = selection.getRangeAt(0);
@@ -1338,7 +1330,6 @@ window.ContentEditorCommands = {
                   newRange.collapse(true);
                   selection.removeAllRanges();
                   selection.addRange(newRange);
-                  console.log('Link inserted using restored selection');
                 } else {
                   range.insertNode(link);
                   linkInserted = true;
@@ -1347,7 +1338,6 @@ window.ContentEditorCommands = {
                   newRange.selectNodeContents(link);
                   selection.removeAllRanges();
                   selection.addRange(newRange);
-                  console.log('Link inserted at cursor using restored selection');
                 }
               } catch (e) {
                 console.error('Error using restored selection:', e);
@@ -1358,7 +1348,6 @@ window.ContentEditorCommands = {
         
         // Strategy 3: Search for selected text and replace it
         if (!linkInserted && originalSelectedText) {
-          console.log('Trying to find and replace selected text:', originalSelectedText);
           try {
             // Focus editor
             editor.focus();
@@ -1407,7 +1396,6 @@ window.ContentEditorCommands = {
                 selection.removeAllRanges();
                 selection.addRange(newRange);
                 
-                console.log('Link inserted by finding and replacing text');
                 break;
               }
             }
@@ -1418,7 +1406,6 @@ window.ContentEditorCommands = {
         
         // Strategy 4: Final fallback - insert at current block or end of editor
         if (!linkInserted && editor) {
-          console.log('Using fallback insertion');
           try {
             // Focus editor first
             editor.focus();
@@ -1434,7 +1421,6 @@ window.ContentEditorCommands = {
               newRange.collapse(false);
               selection.removeAllRanges();
               selection.addRange(newRange);
-              console.log('Link inserted at end of current block');
             } else {
               // No block, create paragraph
               const p = document.createElement('p');
@@ -1447,7 +1433,6 @@ window.ContentEditorCommands = {
               newRange.collapse(false);
               selection.removeAllRanges();
               selection.addRange(newRange);
-              console.log('Link inserted in new paragraph');
             }
           } catch (e) {
             console.error('Error with fallback insertion:', e);
@@ -1458,7 +1443,6 @@ window.ContentEditorCommands = {
           console.error('Failed to insert link - no valid insertion point found');
           alert('Error: Could not insert link. Please try selecting text and clicking the link button again.');
         } else {
-          console.log('Link inserted successfully');
         }
       }
       
@@ -1527,7 +1511,6 @@ window.ContentEditorCommands = {
     });
     
     // Debug: Log dialog creation
-    console.log('Link dialog created', { 
       hasSaveBtn: !!saveBtn, 
       hasUrlInput: !!dialog.querySelector('.link-url-input'),
       hasTextInput: !!dialog.querySelector('.link-text-input'),
@@ -1987,8 +1970,6 @@ window.ContentEditorCommands = {
         e.stopPropagation();
       }
       
-      console.log('ContentEditor: Grid submit clicked');
-      console.log('ContentEditor: Input values', {
         cols: colsInput.value,
         rows: rowsInput.value,
         gap: gapInput.value,
@@ -2009,7 +1990,6 @@ window.ContentEditorCommands = {
       const borderRadius = parseInt(borderRadiusInput.value) || 0;
       const padding = parseInt(paddingInput.value) || 0;
       
-      console.log('ContentEditor: Parsed values', { cols, rows, gap, columnSize, styles: { bgColor, borderColor, borderWidth, borderRadius, padding } });
       
       const styles = {
         bgColor,
@@ -2020,22 +2000,17 @@ window.ContentEditorCommands = {
       };
       
       try {
-        console.log('ContentEditor: Calling createGridElement/updateGridElement');
         if (existingGrid) {
           this.updateGridElement(existingGrid, cols, rows, gap, columnSize, styles);
-          console.log('ContentEditor: Grid updated successfully');
         } else {
           this.createGridElement(cols, rows, gap, columnSize, styles);
-          console.log('ContentEditor: Grid created successfully');
         }
         
         // Verify grid was inserted before closing
         const editor = this.getActiveEditor();
         if (editor) {
           const grids = editor.querySelectorAll('.content-editor-grid');
-          console.log('ContentEditor: Grids in editor after creation:', grids.length);
           if (grids.length > 0) {
-            console.log('ContentEditor: Last grid element:', grids[grids.length - 1]);
           }
         }
         
@@ -2082,7 +2057,6 @@ window.ContentEditorCommands = {
 
   // Create grid element with inline CSS Grid styles
   createGridElement(cols, rows, gap, columnSize, styles = {}) {
-    console.log('ContentEditor: createGridElement called with', { cols, rows, gap, columnSize, styles });
     
     const editor = this.getActiveEditor();
     if (!editor) {
@@ -2090,7 +2064,6 @@ window.ContentEditorCommands = {
       return;
     }
     
-    console.log('ContentEditor: Active editor found', editor);
     
     // Get selection, but ensure it's within the editor, not the dialog
     const selection = window.getSelection();
@@ -2104,9 +2077,7 @@ window.ContentEditorCommands = {
       
       if (isInEditor) {
         range = currentRange;
-        console.log('ContentEditor: Using existing selection within editor');
       } else {
-        console.log('ContentEditor: Selection is not in editor, appending to end of editor');
         // Selection is in dialog or elsewhere, append to end of editor
         const lastChild = editor.lastElementChild || editor.lastChild;
         if (lastChild && lastChild.nodeType === Node.ELEMENT_NODE) {
@@ -2126,7 +2097,6 @@ window.ContentEditorCommands = {
       }
     } else {
       // No selection, append to end of editor
-      console.log('ContentEditor: No selection, appending to end of editor');
       const lastChild = editor.lastElementChild || editor.lastChild;
       if (lastChild && lastChild.nodeType === Node.ELEMENT_NODE) {
         // Insert after last block
@@ -2180,7 +2150,6 @@ window.ContentEditorCommands = {
     }
     
     // Insert grid - always insert as block-level element
-    console.log('ContentEditor: About to insert grid, range:', range, 'collapsed:', range ? range.collapsed : 'no range');
     
     try {
       if (!range) {
@@ -2202,7 +2171,6 @@ window.ContentEditorCommands = {
         
         if (block && block !== editor && editor.contains(block)) {
           // Insert after the block
-          console.log('ContentEditor: Inserting grid after block:', block.tagName);
           if (block.nextSibling) {
             block.parentNode.insertBefore(gridContainer, block.nextSibling);
           } else {
@@ -2210,12 +2178,10 @@ window.ContentEditorCommands = {
           }
         } else {
           // No block found or block is editor, append to editor
-          console.log('ContentEditor: Appending grid to editor');
           editor.appendChild(gridContainer);
         }
       }
       
-      console.log('ContentEditor: Grid inserted, checking if in DOM:', editor.contains(gridContainer));
       
       // Move cursor to first grid item
       const firstItem = gridContainer.querySelector('.content-editor-grid-item');
@@ -3882,8 +3848,8 @@ window.ContentEditorCommands = {
     window.ContentEditorSelection.save();
     
     // Check if media modal is available
-    if (window.HaruCMS && window.HaruCMS.MediaModal && typeof window.HaruCMS.MediaModal.open === 'function') {
-      window.HaruCMS.MediaModal.open((media) => {
+    if (window.Birkly && window.Birkly.MediaModal && typeof window.Birkly.MediaModal.open === 'function') {
+      window.Birkly.MediaModal.open((media) => {
         if (media && media.url) {
           // Use media title/name as alt text if available
           const altText = media.title || media.name || '';
@@ -3904,8 +3870,8 @@ window.ContentEditorCommands = {
     const editor = this.getActiveEditor();
     if (!editor) return;
     
-    // Restore selection
-    window.ContentEditorSelection.restore();
+    // Restore selection with editor as root element
+    window.ContentEditorSelection.restore(editor);
     
     const selection = window.getSelection();
     let range = null;
@@ -4540,7 +4506,13 @@ window.ContentEditorCommands = {
     const closeDialog = () => {
       document.body.removeChild(overlay);
       document.body.removeChild(dialog);
-      window.ContentEditorSelection.restore();
+      // Restore selection with active editor
+      const editor = this.getActiveEditor();
+      if (editor) {
+        window.ContentEditorSelection.restore(editor);
+      } else {
+        window.ContentEditorSelection.restore();
+      }
     };
 
     dialog.querySelector('.content-editor-dialog-close').addEventListener('click', closeDialog);
@@ -4715,7 +4687,6 @@ window.ContentEditorCommands = {
                 line-height: 1.5;
                 resize: vertical;
               " placeholder="// Component JavaScript
-console.log('Component loaded');">${component?.script || ''}</textarea>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -5636,7 +5607,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
 
   // Insert media embed element
   insertMediaEmbed(type, data) {
-    console.log('insertMediaEmbed called with:', type, data);
     
     const editor = this.getActiveEditor();
     if (!editor) {
@@ -5646,24 +5616,25 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
     
     const insertWithPayload = (payload) => {
       // Restore selection right before insertion
-      window.ContentEditorSelection.restore();
+      const editor = this.getActiveEditor();
+      if (editor) {
+        window.ContentEditorSelection.restore(editor);
+      } else {
+        window.ContentEditorSelection.restore();
+      }
       
       const selection = window.getSelection();
       let range = null;
       
       if (selection.rangeCount > 0) {
         range = selection.getRangeAt(0);
-        console.log('ContentEditor: Using existing selection range');
       } else {
-        console.log('ContentEditor: No selection, creating new range');
         const block = window.ContentEditorCommands.getCurrentBlock();
         if (block) {
           range = document.createRange();
           range.selectNodeContents(block);
           range.collapse(false);
-          console.log('ContentEditor: Created range in block:', block.tagName);
         } else {
-          console.log('ContentEditor: No block found, creating new paragraph');
           const newP = document.createElement('p');
           newP.innerHTML = '<br>';
           editor.appendChild(newP);
@@ -5717,7 +5688,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
         return;
       }
       
-      console.log('ContentEditor: Created embed element:', embedElement);
       this.setupEmbedElement(embedElement, type, finalData);
     
     // Insert embed as a block element
@@ -5759,7 +5729,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
         container = container.parentNode;
       }
       
-      console.log('ContentEditor: Current block found:', currentBlock ? currentBlock.tagName : 'none', 
                   'parent:', currentBlock ? currentBlock.parentNode?.nodeName : 'none',
                   'is in editor?', currentBlock ? editor.contains(currentBlock) : false);
       
@@ -5793,14 +5762,11 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
       // Insert into editor
       if (insertAfter && insertAfter.nextSibling) {
         editor.insertBefore(embedElement, insertAfter.nextSibling);
-        console.log('ContentEditor: Inserted embed after block:', insertAfter.tagName);
       } else if (insertAfter) {
         editor.appendChild(embedElement);
-        console.log('ContentEditor: Appended embed to editor (after block)');
       } else {
         // No block found, append to editor
         editor.appendChild(embedElement);
-        console.log('ContentEditor: Appended embed to editor (no block found)');
       }
       
       // Verify embed was inserted and is inside editor
@@ -5816,7 +5782,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
         editor.appendChild(embedElement);
       }
       
-      console.log('ContentEditor: Final embed location - parent:', embedElement.parentNode?.nodeName, 
                   'is in editor?', editor.contains(embedElement),
                   'editor children count:', editor.children.length);
       
@@ -6713,17 +6678,14 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
     componentsByData.forEach(c => componentSet.add(c));
     const components = Array.from(componentSet);
     
-    console.log('ContentEditor: Enhancing components, found:', components.length, 'by class:', componentsByClass.length, 'by data:', componentsByData.length);
     
     // If no components found, check the raw HTML and try to restore them
     if (components.length === 0) {
       const html = editor.innerHTML;
       const hasComponentSlug = html.includes('data-component-slug');
       const hasComponentClass = html.includes('content-editor-component');
-      console.log('ContentEditor: No components found in DOM. HTML contains data-component-slug:', hasComponentSlug, 'contains class:', hasComponentClass);
       
       if (hasComponentSlug || hasComponentClass) {
-        console.log('ContentEditor: HTML sample:', html.substring(0, 500));
         
         // Try to restore escaped components
         // The HTML contains escaped component tags like &lt;div class="content-editor-component"...
@@ -6778,7 +6740,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
         
         // Re-run component detection
         const restoredComponents = editor.querySelectorAll('.content-editor-component, [data-component-slug]');
-        console.log('ContentEditor: Restored', restoredComponents.length, 'components from escaped HTML');
         
         if (restoredComponents.length > 0) {
           // Process restored components
@@ -6819,7 +6780,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
     
     for (const component of components) {
       const componentSlug = component.dataset.componentSlug;
-      console.log('ContentEditor: Processing component:', componentSlug, 'has template data:', !!component.dataset.componentTemplate);
       
       // Add controls if not present
       if (!component.querySelector('.content-editor-component-controls')) {
@@ -6830,7 +6790,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
       // Use getAttribute to get raw value, not dataset which auto-decodes
       const rawTemplate = component.getAttribute('data-component-template');
       if (rawTemplate) {
-        console.log('ContentEditor: Found template in data attribute, processing...');
         // Component has template stored - try to process it
         await this.processComponentTemplate(component, rawTemplate);
         // Re-add controls after processing (processComponentTemplate replaces innerHTML)
@@ -6841,12 +6800,10 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
       // Otherwise, fetch from API and process
       if (componentSlug) {
         try {
-          console.log('ContentEditor: Fetching component from API:', componentSlug);
           const response = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(componentSlug)}`);
           const result = await response.json();
           
           if (result.success && result.component) {
-            console.log('ContentEditor: Component fetched, template has syntax:', /\{for\s+each|\{if\s+|\{endfor|\{endif|\{else/i.test(result.component.template || ''));
             
             // Store template in data attributes for future use (use setAttribute to avoid escaping)
             component.setAttribute('data-component-template', result.component.template || '');
@@ -6870,15 +6827,12 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
 
   // Process component template with templating engine
   async processComponentTemplate(componentElement, template) {
-    console.log('ContentEditor: processComponentTemplate called, template length:', template.length);
     
     // Decode HTML entities
     const templateText = this.unescapeHtml(template);
-    console.log('ContentEditor: Decoded template:', templateText.substring(0, 200));
     
     // Check if template has templating syntax
     const hasTemplatingSyntax = /\{for\s+each|\{if\s+|\{endfor|\{endif|\{else/i.test(templateText);
-    console.log('ContentEditor: Has templating syntax:', hasTemplatingSyntax);
     
     if (!hasTemplatingSyntax) {
       // Simple template - just render with variable replacement
@@ -6895,16 +6849,13 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
     // Extract collection names from template
     const collectionMatches = templateText.matchAll(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/gi);
     const collectionNames = [...new Set(Array.from(collectionMatches, m => m[1]))];
-    console.log('ContentEditor: Found collections in template:', collectionNames);
     
     // Fetch collection data
     const templateData = {};
     for (const collectionName of collectionNames) {
       try {
-        console.log('ContentEditor: Fetching collection:', collectionName);
         const response = await fetch(`/api/content.php?action=list_entries&collection=${encodeURIComponent(collectionName)}`);
         const result = await response.json();
-        console.log('ContentEditor: Collection response:', result.status, 'full response:', result);
         
         // API returns {status: 'ok', data: {entries: [...]}}
         let entries = [];
@@ -6918,11 +6869,9 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
           }
         }
         
-        console.log('ContentEditor: Collection', collectionName, 'has', entries.length, 'entries');
         templateData[collectionName] = entries;
         
         if (entries.length > 0) {
-          console.log('ContentEditor: First entry sample:', JSON.stringify(entries[0]).substring(0, 200));
         }
       } catch (error) {
         console.warn(`ContentEditor: Could not fetch collection data for ${collectionName}`, error);
@@ -6936,22 +6885,18 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
     
     // Merge entry data with collection data
     const allData = { ...entryData, ...templateData };
-    console.log('ContentEditor: Template data prepared, collections:', Object.keys(templateData), 'entry fields:', Object.keys(entryData));
     
     // Process template using the client-side renderer
     let rendered = templateText;
     
-    // Use the render function from harucms-client.js if available
-    if (window.HaruCMS && typeof window.HaruCMS.render === 'function') {
-      console.log('ContentEditor: Using window.HaruCMS.render');
-      rendered = window.HaruCMS.render(templateText, allData);
+    // Use the render function from birkly-client.js if available
+    if (window.Birkly && typeof window.Birkly.render === 'function') {
+      rendered = window.Birkly.render(templateText, allData);
     } else {
-      console.log('ContentEditor: Using fallback processTemplateBasic');
       // Fallback: basic processing
       rendered = this.processTemplateBasic(templateText, allData);
     }
     
-    console.log('ContentEditor: Template rendered, length:', rendered.length, 'preview:', rendered.substring(0, 200));
     
     // Update component content
     componentElement.innerHTML = rendered;
@@ -7017,7 +6962,6 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
         </div>`;
       }
       
-      console.log('ContentEditor: Processing loop for', collectionName, 'with', items.length, 'items');
       
       return items.map((item, index) => {
         let itemOutput = loopContent;
@@ -7813,7 +7757,12 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
     if (!color) return;
     
     // Restore selection first
-    window.ContentEditorSelection.restore();
+    const editor = this.getActiveEditor();
+    if (editor) {
+      window.ContentEditorSelection.restore(editor);
+    } else {
+      window.ContentEditorSelection.restore();
+    }
     
     const selection = window.getSelection();
     let range = null;
@@ -7886,7 +7835,12 @@ console.log('Component loaded');">${component?.script || ''}</textarea>
     if (!color) return;
     
     // Restore selection first
-    window.ContentEditorSelection.restore();
+    const editor = this.getActiveEditor();
+    if (editor) {
+      window.ContentEditorSelection.restore(editor);
+    } else {
+      window.ContentEditorSelection.restore();
+    }
     
     const selection = window.getSelection();
     let range = null;

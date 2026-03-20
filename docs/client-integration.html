@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HaruCMS Client Integration Guide</title>
+    <title>Birkly Client Integration Guide</title>
     <style>
         body { font-family: system-ui, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; }
         code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 3px; font-family: monospace; }
@@ -13,19 +13,19 @@
     </style>
 </head>
 <body>
-    <h1>HaruCMS Client Integration Guide</h1>
+    <h1>Birkly Client Integration Guide</h1>
     
-    <p>This guide shows how to integrate HaruCMS with your external website to display dynamic content.</p>
+    <p>This guide shows how to integrate Birkly with your external website to display dynamic content.</p>
 
     <h2>1. Basic Setup</h2>
     
-    <p>Include the HaruCMS script in your website:</p>
+    <p>Include the Birkly script in your website:</p>
     
-    <pre><code>&lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;</code></pre>
+    <pre><code>&lt;script src="https://your-birkly-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;</code></pre>
 
     <h2>2. Static Content (Legacy Mode)</h2>
     
-    <p>Use HaruCMS templating syntax directly in your HTML:</p>
+    <p>Use Birkly templating syntax directly in your HTML:</p>
     
     <div class="example">
         <h3>Example: Blog List</h3>
@@ -62,7 +62,7 @@
         &lt;!-- Content will be dynamically loaded here --&gt;
     &lt;/main&gt;
     
-    &lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;
+    &lt;script src="https://your-birkly-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;
     &lt;script&gt;
         // Enable routing mode
         window.location.hash = '#routing';
@@ -104,16 +104,16 @@
 
     <h2>6. JavaScript API</h2>
     
-    <p>Access HaruCMS functions programmatically:</p>
+    <p>Access Birkly functions programmatically:</p>
     
     <pre><code>// Navigate to a page
-window.HaruCMS.navigate('/blog/my-post');
+window.Birkly.navigate('/blog/my-post');
 
 // Get a specific entry
-const entry = await window.HaruCMS.getEntryBySlug('blog', 'my-post-slug');
+const entry = await window.Birkly.getEntryBySlug('blog', 'my-post-slug');
 
 // Make API calls directly
-const data = await window.HaruCMS.fetchAPI({
+const data = await window.Birkly.fetchAPI({
   action: 'list_entries',
   collection: 'blog'
 });</code></pre>
@@ -123,9 +123,9 @@ const data = await window.HaruCMS.fetchAPI({
     <p>You can customize the API base URL by modifying the script or setting a global variable:</p>
     
     <pre><code>&lt;script&gt;
-window.HARUCMS_API_BASE = 'https://your-harucms-domain.com/api/public.php';
+window.HARUCMS_API_BASE = 'https://your-birkly-domain.com/api/public.php';
 &lt;/script&gt;
-&lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="https://your-birkly-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;</code></pre>
 
     <h2>8. Example Integration</h2>
     
@@ -164,7 +164,7 @@ window.HARUCMS_API_BASE = 'https://your-harucms-domain.com/api/public.php';
         {/for}
     &lt;/div&gt;
     
-    &lt;script src="https://your-harucms-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;
+    &lt;script src="https://your-birkly-domain.com/cms-template.v2.js"&gt;&lt;/script&gt;
     &lt;script&gt;
         // Enable routing for dynamic navigation
         window.location.hash = '#routing';
@@ -176,10 +176,10 @@ window.HARUCMS_API_BASE = 'https://your-harucms-domain.com/api/public.php';
     <div class="warning">
         <h3>⚠️ Important Notes</h3>
         <ul>
-            <li>Your HaruCMS server must be accessible from your website's domain</li>
-            <li>CORS must be properly configured on your HaruCMS server</li>
+            <li>Your Birkly server must be accessible from your website's domain</li>
+            <li>CORS must be properly configured on your Birkly server</li>
             <li>The <code>api/public.php</code> endpoint must be publicly accessible</li>
-            <li>For production, consider using HTTPS for both your website and HaruCMS</li>
+            <li>For production, consider using HTTPS for both your website and Birkly</li>
         </ul>
     </div>
 
@@ -188,7 +188,7 @@ window.HARUCMS_API_BASE = 'https://your-harucms-domain.com/api/public.php';
     <p>Use the test website at <code>testwebsite/index.html</code> to see examples in action.</p>
     
     <p>To test locally:</p>
-    <pre><code># Start HaruCMS server
+    <pre><code># Start Birkly server
 php -S localhost:8001
 
 # Access test website

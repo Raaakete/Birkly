@@ -1,5 +1,5 @@
 #!/bin/bash
-# HaruCMS Development Server
+# Birkly Development Server
 # Starts the PHP built-in server with proper configuration
 #
 # Quick start (copy/paste into your terminal):
@@ -24,19 +24,19 @@ NC='\033[0m' # No Color
 
 # Function to print colored output
 print_status() {
-    echo -e "${BLUE}[HaruCMS]${NC} $1"
+    echo -e "${BLUE}[Birkly]${NC} $1"
 }
 
 print_success() {
-    echo -e "${GREEN}[HaruCMS]${NC} $1"
+    echo -e "${GREEN}[Birkly]${NC} $1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[HaruCMS]${NC} $1"
+    echo -e "${YELLOW}[Birkly]${NC} $1"
 }
 
 print_error() {
-    echo -e "${RED}[HaruCMS]${NC} $1"
+    echo -e "${RED}[Birkly]${NC} $1"
 }
 
 # Function to show usage
@@ -85,7 +85,7 @@ check_php() {
     if ! command -v php &> /dev/null; then
         print_error "PHP is not installed!"
         echo ""
-        echo "HaruCMS requires PHP to run. Please install PHP first:"
+        echo "Birkly requires PHP to run. Please install PHP first:"
         echo "  - Mac: Install via Homebrew (brew install php) or download from php.net"
         echo "  - Windows: Download from php.net or use XAMPP/WAMP"
         echo "  - Linux: Install via your package manager (apt install php, yum install php, etc.)"
@@ -107,7 +107,7 @@ check_php() {
     local major=$(echo $php_version | cut -d. -f1)
     local minor=$(echo $php_version | cut -d. -f2)
     if [ "$major" -lt 7 ] || ([ "$major" -eq 7 ] && [ "$minor" -lt 4 ]); then
-        print_warning "PHP version $php_version is quite old. HaruCMS works best with PHP 7.4+"
+        print_warning "PHP version $php_version is quite old. Birkly works best with PHP 7.4+"
     fi
 }
 
@@ -116,17 +116,17 @@ check_project() {
     cd "$ROOT_DIR"
     
     if [ ! -f "index.php" ]; then
-        print_error "index.php not found. Are you in the HaruCMS root directory?"
+        print_error "index.php not found. Are you in the Birkly root directory?"
         exit 1
     fi
     
     if [ ! -d "admin" ]; then
-        print_error "admin directory not found. This doesn't look like a HaruCMS installation."
+        print_error "admin directory not found. This doesn't look like a Birkly installation."
         exit 1
     fi
     
     if [ ! -d "api" ]; then
-        print_error "api directory not found. This doesn't look like a HaruCMS installation."
+        print_error "api directory not found. This doesn't look like a Birkly installation."
         exit 1
     fi
     
@@ -166,7 +166,7 @@ if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1024 ] || [ "$PORT" -gt 65535 ];
 fi
 
 # Main execution
-print_status "Starting HaruCMS Development Server..."
+print_status "Starting Birkly Development Server..."
 
 # Make script executable if it isn't already
 if [ ! -x "$0" ]; then

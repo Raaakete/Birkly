@@ -107,7 +107,7 @@ function getSupportedAiProviders() {
 function generateSystemContext($aiUser) {
     $context = [
         'system_info' => [
-            'cms_name' => 'HaruCMS',
+            'cms_name' => 'Birkly',
             'version' => '1.0',
             'user_role' => $aiUser['role'] ?? 'viewer',
             'user_permissions' => getPermissionsForRole($aiUser['role'] ?? 'viewer')
@@ -279,10 +279,10 @@ function convertRolePermissionsToFlatList($rolePermissions) {
             }
         }
         
-        // Map resource actions to flat permissions
+        // Map resource actions to flat permissions used across the API layer
         $resource = strtolower($resource);
         
-        // Collections/Content
+        // Collections/Content  → content & entry permissions
         if ($resource === 'collections' || $resource === 'content') {
             if (in_array('view', $actions) || in_array('read', $actions)) {
                 $flatPermissions[] = 'read';
@@ -296,34 +296,56 @@ function convertRolePermissionsToFlatList($rolePermissions) {
                 $flatPermissions[] = 'manage_content';
             }
         }
-        // Users
+        // Users  → user-management permissions
         elseif ($resource === 'users') {
-            if (in_array('view', $actions) || in_array('read', $actions) || in_array('create', $actions) || 
-                in_array('update', $actions) || in_array('delete', $actions) || in_array('write', $actions)) {
+            if (in_array('view', $actions) || in_array('read', $actions)) {
+                $flatPermissions[] = 'list_users';
+            }
+            if (in_array('create', $actions)) {
+                $flatPermissions[] = 'create_user';
+                $flatPermissions[] = 'list_users';
+                $flatPermissions[] = 'manage_users';
+            }
+            if (in_array('update', $actions) || in_array('write', $actions)) {
+                $flatPermissions[] = 'update_user';
+                $flatPermissions[] = 'list_users';
+                $flatPermissions[] = 'manage_users';
+            }
+            if (in_array('delete', $actions)) {
+                $flatPermissions[] = 'delete_user';
+                $flatPermissions[] = 'list_users';
                 $flatPermissions[] = 'manage_users';
             }
         }
-        // Media
+        // Media  → media permissions
         elseif ($resource === 'media') {
-            if (in_array('view', $actions) || in_array('read', $actions) || in_array('create', $actions) || 
-                in_array('update', $actions) || in_array('write', $actions)) {
+            if (in_array('view', $actions) || in_array('read', $actions)) {
+                $flatPermissions[] = 'read_media';
+            }
+            if (in_array('create', $actions) || in_array('upload', $actions)) {
+                $flatPermissions[] = 'upload';
                 $flatPermissions[] = 'manage_media';
-                if (in_array('create', $actions) || in_array('upload', $actions)) {
-                    $flatPermissions[] = 'upload';
-                }
+            }
+            if (in_array('update', $actions) || in_array('write', $actions)) {
+                $flatPermissions[] = 'manage_media';
+            }
+            if (in_array('delete', $actions)) {
+                $flatPermissions[] = 'manage_media';
             }
         }
-        // Plugins
+        // Plugins  → plugin-management permissions
         elseif ($resource === 'plugins') {
             if (in_array('view', $actions) || in_array('read', $actions) || in_array('create', $actions) || 
                 in_array('update', $actions) || in_array('delete', $actions) || in_array('write', $actions)) {
                 $flatPermissions[] = 'manage_plugins';
             }
         }
-        // Settings
+        // Settings  → settings-management permissions
         elseif ($resource === 'settings') {
-            if (in_array('view', $actions) || in_array('read', $actions) || in_array('update', $actions) || 
-                in_array('write', $actions)) {
+            if (in_array('view', $actions) || in_array('read', $actions)) {
+                $flatPermissions[] = 'read_settings';
+            }
+            if (in_array('update', $actions) || in_array('write', $actions)) {
                 $flatPermissions[] = 'manage_settings';
             }
         }
@@ -332,7 +354,10 @@ function convertRolePermissionsToFlatList($rolePermissions) {
         foreach ($actions as $action) {
             $action = strtolower($action);
             if (in_array($action, ['read', 'write', 'delete', 'manage_content', 'manage_users', 
-                                   'manage_media', 'manage_plugins', 'manage_settings', 'upload', '*', 'all'])) {
+                                   'manage_media', 'manage_plugins', 'manage_settings',
+                                   'upload', 'read_media', 'read_settings',
+                                   'create_user', 'update_user', 'delete_user', 'list_users',
+                                   '*', 'all'])) {
                 $flatPermissions[] = $action;
             }
         }

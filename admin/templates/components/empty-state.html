@@ -1,0 +1,14 @@
+<!-- Empty State Component
+     Parameters:
+     - message: Main message to display
+     - action_label: Label for action button (optional)
+     - action_url: URL for action button (optional)
+-->
+<div class="empty-state">
+    <p>{message}</p>
+    {if action_label exist}
+        {if action_url exist}
+            <a href="{action_url}" class="btn btn-primary">{action_label}</a>
+        {endif}
+    {endif}
+</div>

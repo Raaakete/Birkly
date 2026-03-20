@@ -1,13 +1,16 @@
 <div class="page-header pt-m pb-m">
-  <div class="breadcrumbs"><span class="current">Plugins</span></div>
+  <div class="page-header-left">
+    <div class="breadcrumbs"><span class="current">{translate 'admin.plugins'}</span></div>
+  </div>
+  <div class="page-header-actions"></div>
 </div>
 <div class="plugins-page">
     <div class="page-header">
-        <h1>Plugin Management</h1>
+        <h1><?= __('admin.plugin_management') ?></h1>
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=settings">Settings</a>
+            <a href="{admin_url 'settings'}">{translate 'admin.settings'}</a>
             <span class="separator">›</span>
-            <span class="current">Plugins</span>
+            <span class="current">{translate 'admin.plugins'}</span>
         </div>
     </div>
     
@@ -18,14 +21,14 @@
                 <polyline points="7,10 12,15 17,10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
-            Install Plugin
+            <?= __('admin.install_plugin') ?>
         </button>
     </div>
     
     <div class="plugins-container">
         <div class="plugins-grid" id="plugins-grid">
             <div class="loading-state">
-                <p>Loading plugins...</p>
+                <p><?= __('admin.loading_plugins') ?></p>
             </div>
         </div>
     </div>
@@ -35,25 +38,25 @@
 <div id="install-plugin-modal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Install Plugin</h2>
+            <h2><?= __('admin.install_plugin') ?></h2>
             <button class="modal-close-btn" onclick="closeInstallPluginModal()">&times;</button>
         </div>
         <div class="modal-body">
             <form id="install-plugin-form">
                 <div class="form-group">
-                    <label for="plugin-url">Plugin URL or ZIP File</label>
+                    <label for="plugin-url"><?= __('admin.plugin_url_or_zip') ?></label>
                     <input type="url" id="plugin-url" name="plugin_url" class="input" placeholder="https://example.com/plugin.zip">
-                    <small class="form-help">Enter a URL to a plugin ZIP file or upload a ZIP file</small>
+                    <small class="form-help"><?= __('admin.plugin_url_help') ?></small>
                 </div>
                 <div class="form-group">
-                    <label for="plugin-file">Or Upload Plugin File</label>
+                    <label for="plugin-file"><?= __('admin.or_upload_plugin_file') ?></label>
                     <input type="file" id="plugin-file" name="plugin_file" accept=".zip" class="input">
                 </div>
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeInstallPluginModal()">Cancel</button>
-            <button type="button" class="btn btn-primary" onclick="installPlugin()">Install Plugin</button>
+            <button type="button" class="btn btn-secondary" onclick="closeInstallPluginModal()"><?= __('admin.cancel') ?></button>
+            <button type="button" class="btn btn-primary" onclick="installPlugin()"><?= __('admin.install_plugin') ?></button>
         </div>
     </div>
 </div>
@@ -62,7 +65,7 @@
 <div id="plugin-settings-modal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="plugin-settings-title">Plugin Settings</h2>
+            <h2 id="plugin-settings-title"><?= __('admin.plugin_settings') ?></h2>
             <button class="modal-close-btn" onclick="closePluginSettingsModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -74,537 +77,29 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePluginSettingsModal()">Cancel</button>
-            <button type="button" class="btn btn-primary" onclick="savePluginSettings()">Save Settings</button>
+            <button type="button" class="btn btn-secondary" onclick="closePluginSettingsModal()"><?= __('admin.cancel') ?></button>
+            <button type="button" class="btn btn-primary" onclick="savePluginSettings()"><?= __('admin.save_settings') ?></button>
         </div>
     </div>
 </div>
 
-<style>
-.plugins-page {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.plugins-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-}
-
-.plugin-card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: box-shadow 0.2s;
-}
-
-.plugin-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.plugin-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-}
-
-.plugin-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: var(--text-primary);
-}
-
-.plugin-status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.status-badge {
-    display: inline-flex;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-transform: capitalize;
-}
-
-.status-badge.active {
-    background: var(--success-100);
-    color: var(--success-700);
-}
-
-.status-badge.inactive {
-    background: var(--gray-100);
-    color: var(--gray-700);
-}
-
-.plugin-info {
-    margin-bottom: 1rem;
-}
-
-.plugin-description {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.4;
-    margin-bottom: 0.5rem;
-}
-
-.plugin-meta {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.8rem;
-    color: var(--text-tertiary);
-}
-
-.plugin-meta span {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.plugin-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-}
-
-.btn-icon {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: var(--radius-sm);
-    transition: all 0.2s;
-}
-
-.btn-icon:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-}
-
-.btn-icon.danger:hover {
-    background: var(--error-100);
-    color: var(--error-700);
-}
-
-.loading-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-secondary);
-}
-
-.empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-secondary);
-}
-
-.empty-state p {
-    margin-bottom: 1rem;
-}
-
-.form-help {
-    display: block;
-    margin-top: 0.25rem;
-    font-size: 0.8rem;
-    color: var(--text-tertiary);
-}
-
-.settings-field {
-    margin-bottom: 1rem;
-}
-
-.settings-field label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.settings-field input,
-.settings-field select,
-.settings-field textarea {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-}
-
-.settings-field .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: normal;
-    cursor: pointer;
-}
-
-.settings-field .checkbox-label input[type="checkbox"] {
-    width: auto;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .plugins-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .plugin-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .plugin-actions {
-        width: 100%;
-        justify-content: flex-start;
-    }
-}
-</style>
-
-<script>
-let plugins = [];
-
-// Get CSRF token
-function getCsrfToken() {
-    const metaToken = document.querySelector('meta[name="csrf-token"]');
-    return metaToken ? metaToken.getAttribute('content') : '';
-}
-
-// Load plugins
-async function loadPlugins() {
-    try {
-        const response = await fetch('/api/plugins.php?action=list');
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            plugins = result.data.plugins || [];
-            renderPlugins();
-        } else {
-            showMessage('Error loading plugins: ' + result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Error loading plugins:', error);
-        showMessage('Error loading plugins: ' + error.message, 'error');
-    }
-}
-
-// Render plugins grid
-function renderPlugins() {
-    const grid = document.getElementById('plugins-grid');
-    
-    if (plugins.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state">
-                <p>No plugins found.</p>
-                <button class="btn btn-primary" onclick="openInstallPluginModal()">Install First Plugin</button>
-            </div>
-        `;
-        return;
-    }
-    
-    grid.innerHTML = plugins.map(plugin => `
-        <div class="plugin-card">
-            <div class="plugin-header">
-                <h3>${escapeHtml(plugin.name)}</h3>
-                <div class="plugin-status">
-                    <span class="status-badge ${plugin.active ? 'active' : 'inactive'}">
-                        ${plugin.active ? 'Active' : 'Inactive'}
-                    </span>
-                </div>
-            </div>
-            <div class="plugin-info">
-                <p class="plugin-description">${escapeHtml(plugin.description)}</p>
-                <div class="plugin-meta">
-                    <span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        ${escapeHtml(plugin.author)}
-                    </span>
-                    <span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 12l2 2 4-4"></path>
-                            <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path>
-                            <path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"></path>
-                            <path d="M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z"></path>
-                            <path d="M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z"></path>
-                        </svg>
-                        v${escapeHtml(plugin.version)}
-                    </span>
-                </div>
-            </div>
-            <div class="plugin-actions">
-                <button class="btn btn-sm ${plugin.active ? 'btn-secondary' : 'btn-primary'}" 
-                        onclick="togglePlugin('${plugin.id}', ${plugin.active})">
-                    ${plugin.active ? 'Deactivate' : 'Activate'}
-                </button>
-                ${plugin.has_settings ? `
-                    <button class="btn btn-sm btn-secondary" onclick="openPluginSettings('${plugin.id}')">
-                        Settings
-                    </button>
-                ` : ''}
-                <button class="btn-icon danger" onclick="confirmDeletePlugin('${plugin.id}', '${escapeHtml(plugin.name)}')" title="Delete Plugin">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3,6 5,6 21,6"></polyline>
-                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                    </svg>
-                </button>
+<!-- Plugin Permissions Modal -->
+<div id="plugin-permissions-modal" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h2 id="plugin-permissions-title"><?= __('admin.plugin_permissions') ?></h2>
+            <button class="modal-close-btn" onclick="closePluginPermissionsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="plugin-permissions-content">
+                <p><?= __('admin.loading_permissions') ?></p>
             </div>
         </div>
-    `).join('');
-}
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closePluginPermissionsModal()"><?= __('admin.close') ?></button>
+        </div>
+    </div>
+</div>
 
-// Utility functions
-function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, function(tag) {
-        const chars = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'};
-        return chars[tag] || tag;
-    });
-}
-
-function showMessage(message, type) {
-    let messageDiv = document.getElementById('plugin-message');
-    if (!messageDiv) {
-        messageDiv = document.createElement('div');
-        messageDiv.id = 'plugin-message';
-        messageDiv.className = 'message ' + type;
-        document.querySelector('.plugins-page').insertBefore(messageDiv, document.querySelector('.main-actions-bar'));
-    }
-    
-    messageDiv.textContent = message;
-    messageDiv.className = 'message ' + type;
-    messageDiv.style.display = 'block';
-    
-    setTimeout(() => {
-        messageDiv.style.display = 'none';
-    }, 5000);
-}
-
-// Modal functions
-function openInstallPluginModal() {
-    document.getElementById('install-plugin-modal').classList.add('active');
-    document.getElementById('install-plugin-form').reset();
-}
-
-function closeInstallPluginModal() {
-    document.getElementById('install-plugin-modal').classList.remove('active');
-}
-
-function openPluginSettingsModal() {
-    document.getElementById('plugin-settings-modal').classList.add('active');
-}
-
-function closePluginSettingsModal() {
-    document.getElementById('plugin-settings-modal').classList.remove('active');
-}
-
-// Plugin management functions
-async function togglePlugin(pluginId, currentState) {
-    const action = currentState ? 'deactivate' : 'activate';
-    
-    try {
-        const response = await fetch('/api/plugins.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: action,
-                plugin_id: pluginId,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage(`Plugin ${action}d successfully!`, 'success');
-            loadPlugins();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
-    }
-}
-
-function openPluginSettings(pluginId) {
-    const plugin = plugins.find(p => p.id === pluginId);
-    if (!plugin) return;
-    
-    document.getElementById('plugin-settings-id').value = pluginId;
-    document.getElementById('plugin-settings-title').textContent = `${plugin.name} Settings`;
-    
-    // Create settings form fields based on plugin settings
-    const settingsContainer = document.getElementById('plugin-settings-fields');
-    settingsContainer.innerHTML = '';
-    
-    if (plugin.settings && Object.keys(plugin.settings).length > 0) {
-        Object.entries(plugin.settings).forEach(([key, value]) => {
-            const fieldDiv = document.createElement('div');
-            fieldDiv.className = 'settings-field';
-            
-            const label = document.createElement('label');
-            label.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            fieldDiv.appendChild(label);
-            
-            if (typeof value === 'boolean') {
-                const checkboxLabel = document.createElement('label');
-                checkboxLabel.className = 'checkbox-label';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.name = key;
-                checkbox.checked = value;
-                
-                checkboxLabel.appendChild(checkbox);
-                checkboxLabel.appendChild(document.createTextNode(key.replace(/_/g, ' ')));
-                fieldDiv.appendChild(checkboxLabel);
-            } else if (typeof value === 'number') {
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.name = key;
-                input.value = value;
-                fieldDiv.appendChild(input);
-            } else {
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.name = key;
-                input.value = value;
-                fieldDiv.appendChild(input);
-            }
-            
-            settingsContainer.appendChild(fieldDiv);
-        });
-    } else {
-        settingsContainer.innerHTML = '<p>No settings available for this plugin.</p>';
-    }
-    
-    openPluginSettingsModal();
-}
-
-async function savePluginSettings() {
-    const form = document.getElementById('plugin-settings-form');
-    const formData = new FormData(form);
-    const pluginId = formData.get('plugin_id');
-    
-    const settings = {};
-    for (const [key, value] of formData.entries()) {
-        if (key !== 'plugin_id') {
-            settings[key] = value;
-        }
-    }
-    
-    try {
-        const response = await fetch('/api/plugins.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'save_settings',
-                plugin_id: pluginId,
-                settings: settings,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('Plugin settings saved successfully!', 'success');
-            closePluginSettingsModal();
-            loadPlugins();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error saving settings: ' + error.message, 'error');
-    }
-}
-
-async function installPlugin() {
-    const form = document.getElementById('install-plugin-form');
-    const formData = new FormData(form);
-    
-    const pluginData = {
-        action: 'install',
-        plugin_url: formData.get('plugin_url'),
-        _csrf: getCsrfToken()
-    };
-    
-    try {
-        const response = await fetch('/api/plugins.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(pluginData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('Plugin installed successfully!', 'success');
-            closeInstallPluginModal();
-            loadPlugins();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error installing plugin: ' + error.message, 'error');
-    }
-}
-
-function confirmDeletePlugin(pluginId, pluginName) {
-    if (confirm(`Are you sure you want to delete plugin "${pluginName}"? This action cannot be undone.`)) {
-        deletePlugin(pluginId);
-    }
-}
-
-async function deletePlugin(pluginId) {
-    try {
-        const response = await fetch('/api/plugins.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'delete',
-                plugin_id: pluginId,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('Plugin deleted successfully!', 'success');
-            loadPlugins();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error deleting plugin: ' + error.message, 'error');
-    }
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadPlugins();
-});
-</script>
+{include_style '../css/plugins.css'}
+{include_script 'plugin-ui.js'}

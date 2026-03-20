@@ -1,0 +1,50 @@
+<!-- Form Field Component
+     Parameters:
+     - field: Field definition object
+     - value: Current field value
+     - entry: Entry data (for context)
+-->
+<div class="form-field field-type-{field.type}" data-field-name="{field.name}">
+    <label for="field-{field.name}">
+        {field.label}
+        {if field.required == true}<span class="required">*</span>{endif}
+    </label>
+    
+    {if field.description exist}
+        <p class="field-description">{field.description}</p>
+    {endif}
+    
+    <div class="field-input-container" id="field-{field.name}-container">
+        <!-- Fieldtype will be rendered here by JavaScript -->
+        <!-- For now, show loading state -->
+        <div class="field-loading">Loading {field.type} field...</div>
+    </div>
+    
+    {if field.validation_message exist}
+        <p class="field-validation-message">{field.validation_message}</p>
+    {endif}
+</div>
+
+<script>
+// Initialize field type rendering
+(function() {
+    const fieldName = '{field.name}';
+    const fieldType = '{field.type}';
+    const fieldConfig = {json field};
+    const fieldValue = {json value};
+    
+    // Trigger fieldtype initialization
+    if (window.HaruFieldTypes && window.HaruFieldTypes.render) {
+        window.HaruFieldTypes.render(fieldName, fieldType, fieldConfig, fieldValue);
+    } else {
+        // Queue for later initialization
+        window.HaruFieldTypesQueue = window.HaruFieldTypesQueue || [];
+        window.HaruFieldTypesQueue.push({
+            fieldName: fieldName,
+            fieldType: fieldType,
+            fieldConfig: fieldConfig,
+            fieldValue: fieldValue
+        });
+    }
+})();
+</script>

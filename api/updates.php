@@ -1,5 +1,5 @@
 <?php
-// api/updates.php - HaruCMS Update Management API
+// api/updates.php - Birkly Update Management API
 
 require_once __DIR__ . '/session.php';
 haru_secure_session_start();
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 function checkForUpdates() {
     try {
-        $updateInfo = HaruVersion::checkForUpdates();
+        $updateInfo = BirklyVersion::checkForUpdates();
         
         if (isset($updateInfo['error'])) {
             log_security_event('update_check_failed', ['error' => $updateInfo['error'], 'user' => $_SESSION['user']['email']]);
@@ -93,7 +93,7 @@ function downloadUpdate($data) {
     }
     
     try {
-        $result = HaruVersion::downloadUpdate($version);
+        $result = BirklyVersion::downloadUpdate($version);
         
         if (isset($result['error'])) {
             log_security_event('update_download_failed', ['version' => $version, 'error' => $result['error'], 'user' => $_SESSION['user']['email']]);
@@ -133,7 +133,7 @@ function installUpdate($data) {
     }
     
     // Security check: ensure temp file is in temp directory and has expected name pattern
-    $expectedPattern = '/^harucms-update-' . preg_quote($version, '/') . '\.zip$/';
+    $expectedPattern = '/^birkly-update-' . preg_quote($version, '/') . '\.zip$/';
     if (!preg_match($expectedPattern, $tempFile)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid temp file']);
         return;
@@ -146,7 +146,7 @@ function installUpdate($data) {
     }
     
     try {
-        $result = HaruVersion::installUpdate($fullTempPath, $version);
+        $result = BirklyVersion::installUpdate($fullTempPath, $version);
         
         if (isset($result['error'])) {
             log_security_event('update_install_failed', ['version' => $version, 'error' => $result['error'], 'user' => $_SESSION['user']['email']]);
@@ -177,7 +177,7 @@ function installUpdate($data) {
 
 function getUpdateStatus() {
     try {
-        $status = HaruVersion::getUpdateStatus();
+        $status = BirklyVersion::getUpdateStatus();
         echo json_encode($status);
         
     } catch (Exception $e) {

@@ -89,10 +89,10 @@ if (!is_dir("$collectionsDir/blog")) {
         [
             [
                 'id' => 'demo-post-1',
-                'title' => 'Welcome to HaruCMS',
-                'slug' => 'welcome-to-harucms',
-                'excerpt' => 'Get started with HaruCMS and discover the power of flat-file content management. No database required, just simple JSON files and elegant simplicity.',
-                'content' => '<p>HaruCMS is a modern, flat-file content management system designed for simplicity and flexibility. Unlike traditional database-driven CMS platforms, HaruCMS uses simple JSON files to store your content.</p><p>This makes it fast, portable, and perfect for version control. Every change is tracked in your version control system, making collaboration and deployment effortless.</p>',
+                'title' => 'Welcome to Birkly',
+                'slug' => 'welcome-to-birkly',
+                'excerpt' => 'Get started with Birkly and discover the power of flat-file content management. No database required, just simple JSON files and elegant simplicity.',
+                'content' => '<p>Birkly is a modern, flat-file content management system designed for simplicity and flexibility. Unlike traditional database-driven CMS platforms, Birkly uses simple JSON files to store your content.</p><p>This makes it fast, portable, and perfect for version control. Every change is tracked in your version control system, making collaboration and deployment effortless.</p>',
                 'date' => date('Y-m-d', strtotime('-5 days')),
                 'status' => 'published',
                 'tags' => ['getting-started', 'cms', 'flat-file']
@@ -101,8 +101,8 @@ if (!is_dir("$collectionsDir/blog")) {
                 'id' => 'demo-post-2',
                 'title' => 'Creating Your First Content Entry',
                 'slug' => 'creating-your-first-content-entry',
-                'excerpt' => 'Learn how to create and manage content in HaruCMS with our step-by-step guide. We\'ll walk you through creating your first entry and understanding the editor.',
-                'content' => '<p>Creating content in HaruCMS is straightforward and intuitive. The admin panel provides a clean interface for managing all your content.</p><p>Follow these simple steps to create your first entry:</p><ol><li>Navigate to the Content section</li><li>Select your collection</li><li>Click "New Entry"</li><li>Fill in the fields</li><li>Save and publish</li></ol>',
+                'excerpt' => 'Learn how to create and manage content in Birkly with our step-by-step guide. We\'ll walk you through creating your first entry and understanding the editor.',
+                'content' => '<p>Creating content in Birkly is straightforward and intuitive. The admin panel provides a clean interface for managing all your content.</p><p>Follow these simple steps to create your first entry:</p><ol><li>Navigate to the Content section</li><li>Select your collection</li><li>Click "New Entry"</li><li>Fill in the fields</li><li>Save and publish</li></ol>',
                 'date' => date('Y-m-d', strtotime('-4 days')),
                 'status' => 'published',
                 'tags' => ['tutorial', 'guide', 'content']
@@ -111,8 +111,8 @@ if (!is_dir("$collectionsDir/blog")) {
                 'id' => 'demo-post-3',
                 'title' => 'Understanding Fieldtypes',
                 'slug' => 'understanding-fieldtypes',
-                'excerpt' => 'Explore the various fieldtypes available in HaruCMS and how to use them effectively. From text fields to rich content editors, learn what each type offers.',
-                'content' => '<p>HaruCMS comes with a variety of fieldtypes to suit different content needs. Each fieldtype is designed for a specific purpose.</p><p>Common fieldtypes include:</p><ul><li><strong>Text:</strong> Simple text input</li><li><strong>Textarea:</strong> Multi-line text</li><li><strong>Editor:</strong> Rich text editor with formatting</li><li><strong>Media:</strong> Image and file uploads</li><li><strong>Select:</strong> Dropdown selections</li><li><strong>Tags:</strong> Tag management</li></ul>',
+                'excerpt' => 'Explore the various fieldtypes available in Birkly and how to use them effectively. From text fields to rich content editors, learn what each type offers.',
+                'content' => '<p>Birkly comes with a variety of fieldtypes to suit different content needs. Each fieldtype is designed for a specific purpose.</p><p>Common fieldtypes include:</p><ul><li><strong>Text:</strong> Simple text input</li><li><strong>Textarea:</strong> Multi-line text</li><li><strong>Editor:</strong> Rich text editor with formatting</li><li><strong>Media:</strong> Image and file uploads</li><li><strong>Select:</strong> Dropdown selections</li><li><strong>Tags:</strong> Tag management</li></ul>',
                 'date' => date('Y-m-d', strtotime('-3 days')),
                 'status' => 'published',
                 'tags' => ['fieldtypes', 'features']
@@ -121,7 +121,7 @@ if (!is_dir("$collectionsDir/blog")) {
                 'id' => 'demo-post-4',
                 'title' => 'Working with Collections',
                 'slug' => 'working-with-collections',
-                'excerpt' => 'Collections are the foundation of content organization in HaruCMS. Learn how to create and manage collections effectively.',
+                'excerpt' => 'Collections are the foundation of content organization in Birkly. Learn how to create and manage collections effectively.',
                 'content' => '<p>Collections are groups of related content entries. They help you organize your content by type or purpose.</p><p>Each collection can have its own set of fields, making it flexible for different content types. You can create collections for blog posts, products, testimonials, or any other content type you need.</p>',
                 'date' => date('Y-m-d', strtotime('-2 days')),
                 'status' => 'published',
@@ -131,8 +131,8 @@ if (!is_dir("$collectionsDir/blog")) {
                 'id' => 'demo-post-5',
                 'title' => 'Customizing Your Website',
                 'slug' => 'customizing-your-website',
-                'excerpt' => 'Learn how to customize your website\'s appearance and functionality using HaruCMS\'s templating system.',
-                'content' => '<p>HaruCMS provides a simple yet powerful templating language that makes it easy to customize your website.</p><p>The templating system supports variables, loops, conditionals, and more. You can create dynamic pages that fetch and display your content automatically.</p>',
+                'excerpt' => 'Learn how to customize your website\'s appearance and functionality using Birkly\'s templating system.',
+                'content' => '<p>Birkly provides a simple yet powerful templating language that makes it easy to customize your website.</p><p>The templating system supports variables, loops, conditionals, and more. You can create dynamic pages that fetch and display your content automatically.</p>',
                 'date' => date('Y-m-d', strtotime('-1 day')),
                 'status' => 'published',
                 'tags' => ['templates', 'customization']
@@ -286,7 +286,7 @@ if (!is_dir("$collectionsDir/about")) {
                 'slug' => 'about',
                 'subtitle' => 'Learn more about our company and what we do',
                 'status' => 'published',
-                'content' => '<p>This is a demo website built with HaruCMS, a modern flat-file content management system.</p><h2>About HaruCMS</h2><p>HaruCMS is designed for simplicity and flexibility. Unlike traditional database-driven CMS platforms, HaruCMS uses simple JSON files to store your content, making it:</p><ul><li><strong>Fast:</strong> No database queries, just file reads</li><li><strong>Portable:</strong> Move your entire site by copying a folder</li><li><strong>Version-controlled:</strong> Every change is tracked in your version control system</li><li><strong>Secure:</strong> No SQL injection vulnerabilities</li><li><strong>Flexible:</strong> Edit content directly in your code editor if needed</li></ul><h2>This Demo Website</h2><p>This demo website showcases how easy it is to create a professional website with HaruCMS. The entire website uses minimal JavaScript—just one script tag to connect to the CMS. All content is fetched dynamically from the CMS and rendered using HaruCMS\'s simple templating language.</p><h2>Features</h2><p>This demo website includes:</p><ul><li>Dynamic blog posts from the CMS</li><li>Services showcase with featured items</li><li>Contact form with public API integration</li><li>Responsive design that works on all devices</li><li>Modern, clean interface</li></ul><h2>Get Started</h2><p>Ready to build your own website with HaruCMS? Visit our <a href="/demo-website/services.html">services page</a> to see what we offer, or <a href="/demo-website/contact.html">contact us</a> to learn more.</p>'
+                'content' => '<p>This is a demo website built with Birkly, a modern flat-file content management system.</p><h2>About Birkly</h2><p>Birkly is designed for simplicity and flexibility. Unlike traditional database-driven CMS platforms, Birkly uses simple JSON files to store your content, making it:</p><ul><li><strong>Fast:</strong> No database queries, just file reads</li><li><strong>Portable:</strong> Move your entire site by copying a folder</li><li><strong>Version-controlled:</strong> Every change is tracked in your version control system</li><li><strong>Secure:</strong> No SQL injection vulnerabilities</li><li><strong>Flexible:</strong> Edit content directly in your code editor if needed</li></ul><h2>This Demo Website</h2><p>This demo website showcases how easy it is to create a professional website with Birkly. The entire website uses minimal JavaScript—just one script tag to connect to the CMS. All content is fetched dynamically from the CMS and rendered using Birkly\'s simple templating language.</p><h2>Features</h2><p>This demo website includes:</p><ul><li>Dynamic blog posts from the CMS</li><li>Services showcase with featured items</li><li>Contact form with public API integration</li><li>Responsive design that works on all devices</li><li>Modern, clean interface</li></ul><h2>Get Started</h2><p>Ready to build your own website with Birkly? Visit our <a href="/demo-website/services.html">services page</a> to see what we offer, or <a href="/demo-website/contact.html">contact us</a> to learn more.</p>'
             ]
         ]
     );

@@ -1,6 +1,6 @@
 <?php
 /**
- * Cache Management for HaruCMS
+ * Cache Management for Birkly
  * Provides file-based caching for entries, collections, and search indexes
  */
 
@@ -307,6 +307,83 @@ class Cache {
         }
         
         return $results;
+    }
+    
+    /**
+     * Generic get method for key-value caching
+     * 
+     * @param string $key Cache key
+     * @return mixed Cached value or null if not found/expired
+     */
+    public function get($key) {
+        if (!$this->enabled) {
+            return null;
+        }
+        
+        $cacheFile = $this->cacheDir . '/kv/' . md5($key) . '.json';
+        
+        if (!file_exists($cacheFile)) {
+            return null;
+        }
+        
+        $cacheData = json_decode(file_get_contents($cacheFile), true);
+        
+        if (!$cacheData || !isset($cacheData['value'])) {
+            return null;
+        }
+        
+        // Check if cache is expired
+        if (isset($cacheData['expires_at']) && $cacheData['expires_at'] < time()) {
+            @unlink($cacheFile);
+            return null;
+        }
+        
+        return $cacheData['value'];
+    }
+    
+    /**
+     * Generic set method for key-value caching
+     * 
+     * @param string $key Cache key
+     * @param mixed $value Value to cache
+     * @param int $ttl Time to live in seconds (default: 3600 = 1 hour)
+     * @return bool True on success
+     */
+    public function set($key, $value, $ttl = 3600) {
+        if (!$this->enabled) {
+            return false;
+        }
+        
+        $kvDir = $this->cacheDir . '/kv';
+        if (!is_dir($kvDir)) {
+            mkdir($kvDir, 0755, true);
+        }
+        
+        $cacheFile = $kvDir . '/' . md5($key) . '.json';
+        
+        $cacheData = [
+            'value' => $value,
+            'created_at' => time(),
+            'expires_at' => time() + $ttl
+        ];
+        
+        return file_put_contents($cacheFile, json_encode($cacheData, JSON_PRETTY_PRINT)) !== false;
+    }
+    
+    /**
+     * Generic delete method for key-value caching
+     * 
+     * @param string $key Cache key
+     * @return bool True on success
+     */
+    public function delete($key) {
+        $cacheFile = $this->cacheDir . '/kv/' . md5($key) . '.json';
+        
+        if (file_exists($cacheFile)) {
+            return @unlink($cacheFile);
+        }
+        
+        return true;
     }
 }
 

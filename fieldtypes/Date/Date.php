@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Date;
+namespace Birkly\FieldTypes\Date;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Date extends BaseField {
     public function getType(): string {
@@ -77,6 +77,31 @@ class Date extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Format date for display
+        $date = $value;
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            // Already in YYYY-MM-DD format, use as-is
+            return '<span class="ft-list-text">' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+        
+        // Try to parse and format
+        try {
+            $dateObj = new \DateTime($date);
+            return '<span class="ft-list-text">' . htmlspecialchars($dateObj->format('Y-m-d'), ENT_QUOTES, 'UTF-8') . '</span>';
+        } catch (\Exception $e) {
+            return '<span class="ft-list-text">' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+    }
+
+    public function getTableMinWidth(): string {
+        return '100px'; // Date fields need less space (YYYY-MM-DD format)
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

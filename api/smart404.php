@@ -264,7 +264,7 @@ function generate404HTML($siteBaseUrl, $cmsApiUrl, $collectionsData) {
         
         function updateSEO(content) {
             const title = content.title || content.name || 'Content';
-            const description = content.description || content.content || content.bio || 'Content from HaruCMS';
+            const description = content.description || content.content || content.bio || 'Content from Birkly';
             
             // Update page title
             document.title = title;

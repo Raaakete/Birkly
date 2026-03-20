@@ -24,7 +24,7 @@ function requireAdminAuth() {
         
         // Redirect to login page
         $loginUrl = '/admin/login.php';
-        if (isset($_GET['page'])) {
+        if (isset($_GET['page']) && isset($_SERVER['REQUEST_URI'])) {
             $loginUrl .= '?redirect=' . urlencode($_SERVER['REQUEST_URI']);
         }
         header('Location: ' . $loginUrl);
@@ -59,11 +59,24 @@ function requireAdminPermission($permission) {
     requireAdminAuth(); // First ensure user is authenticated
     
     if (!checkPermission($_SESSION['user'], $permission)) {
+        // UX: For MPA navigation, redirect back to dashboard and show a unified modal there.
+        // API endpoints still return JSON 403; this is only for page navigation.
+        $fromPage = isset($_GET['page']) ? (string)$_GET['page'] : '';
+        $redirect = '/admin/index.php?page=dashboard&permission_denied=1'
+            . ($permission ? ('&needed=' . urlencode((string)$permission)) : '')
+            . ($fromPage ? ('&from=' . urlencode($fromPage)) : '');
+
+        if (!headers_sent()) {
+            header('Location: ' . $redirect);
+            exit;
+        }
+
+        // Fallback if headers already sent: minimal HTML.
         http_response_code(403);
         echo '<div class="error-page">
                 <h1>Access Denied</h1>
                 <p>You do not have permission to access this page.</p>
-                <a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>
+                <a href="' . htmlspecialchars($redirect) . '" class="btn btn-primary">Back</a>
               </div>';
         exit;
     }

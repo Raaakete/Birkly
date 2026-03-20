@@ -1,19 +1,19 @@
 console.log('theme.js loaded');
 /**
- * HaruCMS Admin Theme
+ * Birkly Admin Theme
  * Theme management for the admin interface
  */
 
-window.HaruCMS = window.HaruCMS || {};
+window.Birkly = window.Birkly || {};
 
-HaruCMS.Theme = {
+Birkly.Theme = {
     // Current theme
     currentTheme: 'light',
     
     // Initialize theme
     init() {
         // Load saved theme preference
-        const savedTheme = localStorage.getItem('harucms_theme');
+        const savedTheme = localStorage.getItem('birkly_theme');
         if (savedTheme) {
             this.setTheme(savedTheme);
         }
@@ -26,7 +26,7 @@ HaruCMS.Theme = {
     setTheme(theme) {
         this.currentTheme = theme;
         document.body.setAttribute('data-theme', theme);
-        localStorage.setItem('harucms_theme', theme);
+        localStorage.setItem('birkly_theme', theme);
     },
     
     // Toggle theme
@@ -43,5 +43,5 @@ HaruCMS.Theme = {
 
 // Initialize theme when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    HaruCMS.Theme.init();
+    Birkly.Theme.init();
 }); 

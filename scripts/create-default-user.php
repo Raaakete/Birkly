@@ -3,7 +3,7 @@
 /**
  * Create Default Admin User Script
  * 
- * This script creates the default admin user for HaruCMS.
+ * This script creates the default admin user for Birkly.
  * Run this after a fresh installation if you don't have a user account.
  * 
  * Usage: php scripts/create-default-user.php

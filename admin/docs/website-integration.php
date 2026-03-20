@@ -1,14 +1,14 @@
 <h2>Website Integration</h2>
-<p>This section explains how to connect your website to HaruCMS so it can display your content.</p>
+<p>This section explains how to connect your website to Birkly so it can display your content.</p>
 
 <h3>Overview</h3>
-<p>HaruCMS uses a <strong>client library</strong> that automatically connects your website to the CMS. You don't need to write complex code - just add one script tag to your HTML!</p>
+<p>Birkly uses a <strong>client library</strong> that automatically connects your website to the CMS. You don't need to write complex code - just add one script tag to your HTML!</p>
 
 <h3>The Simple Way</h3>
-<p>To connect your website to HaruCMS:</p>
+<p>To connect your website to Birkly:</p>
 
 <ol>
-    <li>Add the HaruCMS client library script to your HTML file</li>
+    <li>Add the Birkly client library script to your HTML file</li>
     <li>Use the templating language in your HTML</li>
     <li>That's it! Your content will automatically load</li>
 </ol>
@@ -16,11 +16,11 @@
 <h3>Adding the Client Library</h3>
 <p>Add this script tag before the closing <code>&lt;/body&gt;</code> tag in your HTML:</p>
 
-<pre><code>&lt;script src="https://your-cms-domain.com/harucms-client.js" 
+<pre><code>&lt;script src="https://your-cms-domain.com/birkly-client.js" 
         data-cms-url="https://your-cms-domain.com"&gt;&lt;/script&gt;</code></pre>
 
 <p><strong>For local development:</strong></p>
-<pre><code>&lt;script src="/harucms-client.js" 
+<pre><code>&lt;script src="/birkly-client.js" 
         data-cms-url="http://localhost:8080"&gt;&lt;/script&gt;</code></pre>
 
 <p>The client library automatically:</p>
@@ -43,7 +43,7 @@
 <h3>Manual Collection Specification</h3>
 <p>If you want to explicitly specify which collection to use, add the <code>data-collection</code> attribute:</p>
 
-<pre><code>&lt;script src="/harucms-client.js" 
+<pre><code>&lt;script src="/birkly-client.js" 
         data-cms-url="http://localhost:8080"
         data-collection="blog"&gt;&lt;/script&gt;</code></pre>
 
@@ -61,7 +61,7 @@
 </ol>
 
 <h3>Complete Example</h3>
-<p>Here's a complete example of an HTML file connected to HaruCMS:</p>
+<p>Here's a complete example of an HTML file connected to Birkly:</p>
 
 <pre><code>&lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
@@ -115,8 +115,8 @@
         &lt;p&gt;&copy; My Website {{ current_year }}&lt;/p&gt;
     &lt;/footer&gt;
     
-    &lt;!-- HaruCMS Client Library --&gt;
-    &lt;script src="/harucms-client.js" 
+    &lt;!-- Birkly Client Library --&gt;
+    &lt;script src="/birkly-client.js" 
             data-cms-url="http://localhost:8080"&gt;&lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
@@ -133,7 +133,7 @@
     &lt;div class="content"&gt;{{ content|raw }}&lt;/div&gt;
 &lt;/article&gt;
 
-&lt;script src="/harucms-client.js" 
+&lt;script src="/birkly-client.js" 
         data-cms-url="http://localhost:8080"
         data-collection="blog"&gt;&lt;/script&gt;</code></pre>
 
@@ -145,7 +145,7 @@
 </ul>
 
 <h3>Domain Registration</h3>
-<p>For security, you need to register your website's domain in HaruCMS:</p>
+<p>For security, you need to register your website's domain in Birkly:</p>
 
 <ol>
     <li>Go to <strong>Settings → Domains</strong> in the admin panel</li>
@@ -174,5 +174,5 @@
     <li>Verify your collection name matches the template syntax</li>
 </ol>
 
-<p>Congratulations! You now know how to integrate HaruCMS with your website!</p>
+<p>Congratulations! You now know how to integrate Birkly with your website!</p>
 

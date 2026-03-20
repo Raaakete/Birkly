@@ -1,5 +1,5 @@
 <h2>Client Library</h2>
-<p>The HaruCMS client library is a JavaScript file that automatically connects your website to your CMS and handles all the heavy lifting for you.</p>
+<p>The Birkly client library is a JavaScript file that automatically connects your website to your CMS and handles all the heavy lifting for you.</p>
 
 <h3>What Does It Do?</h3>
 <p>The client library automatically:</p>
@@ -14,7 +14,7 @@
 <h3>How to Include It</h3>
 <p>Add the script tag just before <code>&lt;/body&gt;</code>:</p>
 
-<pre><code>&lt;script src="/harucms-client.js" 
+<pre><code>&lt;script src="/birkly-client.js" 
         data-cms-url="http://localhost:8080"&gt;&lt;/script&gt;</code></pre>
 
 <h3>Configuration Attributes</h3>
@@ -119,14 +119,14 @@
 <ul>
     <li>Open Developer Tools (F12)</li>
     <li>Go to the Console tab</li>
-    <li>Look for messages starting with "HaruCMS:"</li>
+    <li>Look for messages starting with "Birkly:"</li>
 </ul>
 
 <p>Common console messages:</p>
 <ul>
-    <li><code>HaruCMS: Fetching entry by slug</code> - Loading a specific entry</li>
-    <li><code>HaruCMS: Processing templates</code> - Rendering templates</li>
-    <li><code>HaruCMS: Error loading post</code> - Something went wrong (check the details)</li>
+    <li><code>Birkly: Fetching entry by slug</code> - Loading a specific entry</li>
+    <li><code>Birkly: Processing templates</code> - Rendering templates</li>
+    <li><code>Birkly: Error loading post</code> - Something went wrong (check the details)</li>
 </ul>
 
 <h3>That's It!</h3>

@@ -3,7 +3,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
-// File upload security and processing for HaruCMS
+// File upload security and processing for Birkly
 
 require_once 'storage.php';
 require_once 'validate.php';
@@ -46,14 +46,24 @@ class FileUpload {
             return false;
         }
 
-        // Check file type
+        // SECURITY FIX: Validate MIME type from file content, not client-provided type
+        // Client-provided $file['type'] can be spoofed - always use finfo_file()
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        $detectedMimeType = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
 
-        if (!in_array($mimeType, $this->settings['allowed_types'])) {
+        // Validate detected MIME type (from file content)
+        if (!in_array($detectedMimeType, $this->settings['allowed_types'])) {
             $this->errors[] = 'Invalid file type';
             return false;
+        }
+        
+        // Cross-validate: Check that client-provided type matches detected type
+        // If they don't match, it could be a spoofing attempt
+        $clientMimeType = $file['type'] ?? '';
+        if (!empty($clientMimeType) && $clientMimeType !== $detectedMimeType) {
+            // Log potential spoofing attempt but don't block (client type might be wrong due to browser)
+            error_log("File upload MIME type mismatch: client={$clientMimeType}, detected={$detectedMimeType}, file={$file['name']}");
         }
 
         // Additional image validation

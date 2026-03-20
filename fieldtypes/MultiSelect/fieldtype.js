@@ -6,6 +6,9 @@
         window.HaruFieldtypes = {};
     }
     
+    // Store state per field
+    const fieldStates = {};
+    
     window.HaruFieldtypes['multiselect'] = {
         init: function(fieldName) {
             const field = document.getElementById('multiselect_field_' + fieldName);
@@ -15,24 +18,32 @@
             const badgesContainer = document.getElementById('multiselect_badges_' + fieldName);
             const optionsContainer = document.getElementById('multiselect_options_' + fieldName);
             
-            let selectedValues = [];
+            // Initialize or load state
+            if (!fieldStates[fieldName]) {
+                fieldStates[fieldName] = {
+                    selectedValues: []
+                };
+            }
             
-            // Load initial values
+            const state = fieldStates[fieldName];
+            
+            // Load initial values from hidden input
             if (hiddenInput && hiddenInput.value) {
                 try {
-                    selectedValues = JSON.parse(hiddenInput.value);
-                    if (!Array.isArray(selectedValues)) {
-                        selectedValues = [];
+                    const parsed = JSON.parse(hiddenInput.value);
+                    if (Array.isArray(parsed)) {
+                        state.selectedValues = parsed;
                     }
                 } catch (e) {
-                    selectedValues = [];
+                    state.selectedValues = [];
                 }
             }
             
             // Update hidden input and badges
             function updateValue() {
                 if (hiddenInput) {
-                    hiddenInput.value = JSON.stringify(selectedValues);
+                    hiddenInput.value = JSON.stringify(state.selectedValues);
+                    console.log('[MultiSelect] Updated hidden input for', fieldName, ':', hiddenInput.value);
                 }
                 updateBadges();
                 updateCheckboxes();
@@ -42,7 +53,7 @@
                 if (!badgesContainer) return;
                 
                 badgesContainer.innerHTML = '';
-                selectedValues.forEach(val => {
+                state.selectedValues.forEach(val => {
                     // Find option label from checkbox
                     const checkbox = optionsContainer.querySelector('.multiselect-option-checkbox[value="' + val.replace(/"/g, '&quot;') + '"]');
                     const label = checkbox ? checkbox.closest('.multiselect-option-label').querySelector('.multiselect-option-text').textContent : val;
@@ -60,32 +71,30 @@
                 
                 const checkboxes = optionsContainer.querySelectorAll('.multiselect-option-checkbox');
                 checkboxes.forEach(checkbox => {
-                    checkbox.checked = selectedValues.includes(checkbox.value);
+                    checkbox.checked = state.selectedValues.includes(checkbox.value);
                 });
             }
             
             // Handle checkbox changes
             if (optionsContainer) {
-                optionsContainer.addEventListener('change', function(e) {
+                // Remove old listeners by cloning
+                const newContainer = optionsContainer.cloneNode(true);
+                optionsContainer.parentNode.replaceChild(newContainer, optionsContainer);
+                
+                newContainer.addEventListener('change', function(e) {
                     if (e.target.classList.contains('multiselect-option-checkbox')) {
                         const value = e.target.value;
                         if (e.target.checked) {
-                            if (!selectedValues.includes(value)) {
-                                selectedValues.push(value);
+                            if (!state.selectedValues.includes(value)) {
+                                state.selectedValues.push(value);
                             }
                         } else {
-                            selectedValues = selectedValues.filter(v => v !== value);
+                            state.selectedValues = state.selectedValues.filter(v => v !== value);
                         }
                         updateValue();
                     }
                 });
             }
-            
-            // Remove value
-            this.removeValue = function(fieldName, value) {
-                selectedValues = selectedValues.filter(v => v !== value);
-                updateValue();
-            };
             
             // Initialize
             updateBadges();
@@ -118,9 +127,71 @@
         },
         
         removeValue: function(fieldName, value) {
-            // Implementation in init
+            if (fieldStates[fieldName]) {
+                fieldStates[fieldName].selectedValues = fieldStates[fieldName].selectedValues.filter(v => v !== value);
+                this.updateValue(fieldName);
+            }
+        },
+        
+        updateValue: function(fieldName) {
+            const hiddenInput = document.getElementById('field_' + fieldName + '_value');
+            const badgesContainer = document.getElementById('multiselect_badges_' + fieldName);
+            const optionsContainer = document.getElementById('multiselect_options_' + fieldName);
+            
+            if (!fieldStates[fieldName]) return;
+            const state = fieldStates[fieldName];
+            
+            if (hiddenInput) {
+                hiddenInput.value = JSON.stringify(state.selectedValues);
+            }
+            
+            // Update badges
+            if (badgesContainer) {
+                badgesContainer.innerHTML = '';
+                state.selectedValues.forEach(val => {
+                    const checkbox = optionsContainer ? optionsContainer.querySelector('.multiselect-option-checkbox[value="' + val.replace(/"/g, '&quot;') + '"]') : null;
+                    const label = checkbox ? checkbox.closest('.multiselect-option-label').querySelector('.multiselect-option-text').textContent : val;
+                    
+                    const badge = document.createElement('span');
+                    badge.className = 'multiselect-badge';
+                    badge.setAttribute('data-value', val);
+                    badge.innerHTML = label + '<span class="badge-remove" onclick="window.HaruFieldtypes[\'multiselect\'].removeValue(\'' + fieldName + '\', \'' + val.replace(/'/g, "\\'") + '\')">×</span>';
+                    badgesContainer.appendChild(badge);
+                });
+            }
+            
+            // Update checkboxes
+            if (optionsContainer) {
+                const checkboxes = optionsContainer.querySelectorAll('.multiselect-option-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = state.selectedValues.includes(checkbox.value);
+                });
+            }
         }
     };
+    
+    // Listen for save events to update hidden inputs
+    document.addEventListener('beforeSaveEntry', function() {
+        console.log('[MultiSelect] beforeSaveEntry event received');
+        const multiselectFields = document.querySelectorAll('.multiselect-field');
+        multiselectFields.forEach(field => {
+            const fieldName = field.id.replace('multiselect_field_', '');
+            if (fieldName && fieldStates[fieldName]) {
+                const state = fieldStates[fieldName];
+                const hiddenInput = document.getElementById('field_' + fieldName + '_value');
+                if (hiddenInput) {
+                    // Sync from checkboxes to state
+                    const optionsContainer = document.getElementById('multiselect_options_' + fieldName);
+                    if (optionsContainer) {
+                        const checkboxes = optionsContainer.querySelectorAll('.multiselect-option-checkbox:checked');
+                        state.selectedValues = Array.from(checkboxes).map(cb => cb.value);
+                    }
+                    hiddenInput.value = JSON.stringify(state.selectedValues);
+                    console.log('[MultiSelect] Updated hidden input for', fieldName, ':', hiddenInput.value);
+        }
+            }
+        });
+    });
     
     // Auto-initialize
     function initAllMultiSelectFields() {
