@@ -1,22 +1,31 @@
 <?php
+// CRITICAL: Suppress ALL errors and warnings FIRST, before anything else
+error_reporting(0);
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
+
+// CRITICAL: Start output buffering IMMEDIATELY to catch any stray output
+ob_start();
+
 // Only set headers if this file is being called directly (not included)
 // When included via admin/index.php, headers are already sent, so skip
 if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     header('Content-Type: application/json');
     
-    // Handle CORS
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    // SECURITY FIX: Replace wildcard CORS with origin whitelist
+    require_once __DIR__ . '/../core/cors.php';
+    set_cors_headers('admin');
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
+// Debug: Log the request (this will always run now, even if there are errors later)
+error_log("=== admin_collections.php called ===");
+error_log("Method: " . $_SERVER['REQUEST_METHOD']);
+error_log("POST keys: " . implode(', ', array_keys($_POST ?? [])));
+if (!empty($_POST['sub_collections'])) {
+    error_log("Sub-collections present in POST: " . (is_array($_POST['sub_collections']) ? count($_POST['sub_collections']) : 'not array'));
 }
-
-// Debug: Log the request
-error_log("admin_collections.php called with method: " . $_SERVER['REQUEST_METHOD']);
-error_log("POST data: " . print_r($_POST, true));
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -25,8 +34,292 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// SECURITY FIX: Require CSRF protection for all POST requests
+require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/auth.php';
+haru_secure_session_start();
+
+// SECURITY: Require authentication + permission for collection mutations
+// Collections and sub-collections are part of content management.
+requireAuth('manage_content');
+
+$csrf = $_POST['_csrf'] ?? '';
+if (!validate_csrf_token($csrf)) {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+    exit;
+}
+
 try {
-    // Get form data
+    // Check for sub-collection specific actions
+    $action = $_POST['action'] ?? '';
+    
+    // Handle add_sub_collection action (standalone sub-collection creation)
+    if ($action === 'add_sub_collection') {
+        $collectionSlug = $_POST['collection_slug'] ?? '';
+        $parentSubCollectionSlug = $_POST['parent_sub_collection_slug'] ?? null;
+        
+        if (empty($collectionSlug)) {
+            throw new Exception('Collection slug is required');
+        }
+        
+        // Load existing collection
+        $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
+        if (!file_exists($collectionFile)) {
+            throw new Exception('Collection not found');
+        }
+        
+        $collectionData = json_decode(file_get_contents($collectionFile), true);
+        
+        // Determine where to add the sub-collection
+        if ($parentSubCollectionSlug) {
+            // Nested sub-collection - add to parent sub-collection
+            $existingSubCollections = $collectionData['sub_collections'] ?? [];
+            $parentSubCollection = null;
+            $parentIndex = null;
+            foreach ($existingSubCollections as $idx => $subCol) {
+                if (($subCol['slug'] ?? '') === $parentSubCollectionSlug) {
+                    $parentSubCollection = $subCol;
+                    $parentIndex = $idx;
+                    break;
+                }
+            }
+            if (!$parentSubCollection) {
+                throw new Exception('Parent sub-collection not found');
+            }
+            $targetSubCollections = $parentSubCollection['sub_collections'] ?? [];
+        } else {
+            // Top-level sub-collection
+            $existingSubCollections = $collectionData['sub_collections'] ?? [];
+            $targetSubCollections = $existingSubCollections;
+            $parentSubCollection = null;
+            $parentIndex = null;
+        }
+        
+        // Get sub-collection data from form
+        $subCollections = $_POST['sub_collections'] ?? [];
+        if (empty($subCollections) || !is_array($subCollections)) {
+            throw new Exception('Sub-collection data is required');
+        }
+        
+        $subCollectionData = $subCollections[0] ?? [];
+        if (empty($subCollectionData['name']) || empty($subCollectionData['slug'])) {
+            throw new Exception('Sub-collection name and slug are required');
+        }
+        
+        // Process sub-collection fields
+        $subCollectionFields = $subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? [];
+        $processedSubFields = [];
+        
+        foreach ($subCollectionFields as $fieldId => $fieldData) {
+            $fieldName = $fieldData['name'] ?? '';
+            $fieldLabel = $fieldData['label'] ?? '';
+            $fieldType = $fieldData['type'] ?? '';
+            
+            if (empty($fieldName) && !empty($fieldLabel)) {
+                $fieldName = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldLabel)));
+            }
+            
+            if (empty($fieldName) || empty($fieldType)) {
+                continue;
+            }
+            
+            $field = [
+                'name' => strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldName))),
+                'label' => !empty($fieldLabel) ? $fieldLabel : $fieldName,
+                'type' => $fieldType,
+                'required' => !empty($fieldData['required']),
+                'id' => $fieldId
+            ];
+            
+            if (in_array($fieldType, ['select', 'radio', 'multiselect']) && isset($fieldData['options'])) {
+                $field['options'] = is_array($fieldData['options']) ? $fieldData['options'] : array_map('trim', explode(',', $fieldData['options']));
+            }
+            
+            if (isset($fieldData['default']) && $fieldData['default'] !== '') {
+                $field['default'] = $fieldData['default'];
+            }
+            
+            $processedSubFields[] = $field;
+        }
+        
+        $newSubCollection = [
+            'slug' => trim($subCollectionData['slug']),
+            'name' => trim($subCollectionData['name']),
+            'description' => trim($subCollectionData['description'] ?? ''),
+            'entry_method' => $subCollectionData['entry_method'] ?? 'admin_only',
+            'auto_publish' => !empty($subCollectionData['auto_publish']),
+            'fields' => $processedSubFields,
+            'parent_field' => $parentSubCollectionSlug ? ($parentSubCollectionSlug . '_id') : ($collectionSlug . '_id'),
+            'parent_sub_collection' => $parentSubCollectionSlug
+        ];
+        
+        // Add to target sub-collections
+        $targetSubCollections[] = $newSubCollection;
+        
+        if ($parentSubCollectionSlug) {
+            // Update nested sub-collection
+            $existingSubCollections[$parentIndex]['sub_collections'] = $targetSubCollections;
+            $collectionData['sub_collections'] = $existingSubCollections;
+        } else {
+            // Update top-level sub-collections
+            $collectionData['sub_collections'] = $targetSubCollections;
+        }
+        
+        // Save collection
+        if (file_put_contents($collectionFile, json_encode($collectionData, JSON_PRETTY_PRINT)) === false) {
+            throw new Exception('Failed to save sub-collection');
+        }
+        
+        ob_clean();
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Sub-collection created successfully',
+            'data' => [
+                'sub_collection' => $newSubCollection
+            ]
+        ]);
+        ob_end_flush();
+        exit;
+    }
+    
+    // Handle update_sub_collection action (standalone sub-collection editing)
+    if ($action === 'update_sub_collection') {
+        $collectionSlug = $_POST['collection_slug'] ?? '';
+        $subCollectionSlug = $_POST['sub_collection_slug'] ?? '';
+        $parentSubCollectionSlug = $_POST['parent_sub_collection_slug'] ?? null;
+        
+        if (empty($collectionSlug) || empty($subCollectionSlug)) {
+            throw new Exception('Collection slug and sub-collection slug are required');
+        }
+        
+        // Load existing collection
+        $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
+        if (!file_exists($collectionFile)) {
+            throw new Exception('Collection not found');
+        }
+        
+        $collectionData = json_decode(file_get_contents($collectionFile), true);
+        $existingSubCollections = $collectionData['sub_collections'] ?? [];
+        
+        // Find and update the sub-collection (check nested if parent_sub_collection_slug is provided)
+        $found = false;
+        $targetSubCollections = null;
+        $targetIndex = null;
+        $parentIndex = null;
+        
+        if ($parentSubCollectionSlug) {
+            // Look for nested sub-collection
+            foreach ($existingSubCollections as $pIdx => $parentSubCol) {
+                if (($parentSubCol['slug'] ?? '') === $parentSubCollectionSlug) {
+                    $parentIndex = $pIdx;
+                    $nestedSubCollections = $parentSubCol['sub_collections'] ?? [];
+                    foreach ($nestedSubCollections as $nIdx => $nestedSubCol) {
+                        if (($nestedSubCol['slug'] ?? '') === $subCollectionSlug) {
+                            $targetSubCollections = &$nestedSubCollections;
+                            $targetIndex = $nIdx;
+                            $found = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        } else {
+            // Look for top-level sub-collection
+            foreach ($existingSubCollections as $index => $subCollection) {
+                if (($subCollection['slug'] ?? '') === $subCollectionSlug) {
+                    $targetSubCollections = &$existingSubCollections;
+                    $targetIndex = $index;
+                    $found = true;
+                    break;
+                }
+            }
+        }
+        
+        if ($found && $targetSubCollections !== null && $targetIndex !== null) {
+            $subCollection = $targetSubCollections[$targetIndex];
+                // Get updated sub-collection data from form
+                $subCollections = $_POST['sub_collections'] ?? [];
+                $subCollectionData = $subCollections[0] ?? [];
+                
+                // Process sub-collection fields
+                $subCollectionFields = $subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? [];
+                $processedSubFields = [];
+                
+                foreach ($subCollectionFields as $fieldId => $fieldData) {
+                    $fieldName = $fieldData['name'] ?? '';
+                    $fieldLabel = $fieldData['label'] ?? '';
+                    $fieldType = $fieldData['type'] ?? '';
+                    
+                    if (empty($fieldName) && !empty($fieldLabel)) {
+                        $fieldName = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldLabel)));
+                    }
+                    
+                    if (empty($fieldName) || empty($fieldType)) {
+                        continue;
+                    }
+                    
+                    $field = [
+                        'name' => strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldName))),
+                        'label' => !empty($fieldLabel) ? $fieldLabel : $fieldName,
+                        'type' => $fieldType,
+                        'required' => !empty($fieldData['required']),
+                        'id' => $fieldId
+                    ];
+                    
+                    if (in_array($fieldType, ['select', 'radio', 'multiselect']) && isset($fieldData['options'])) {
+                        $field['options'] = is_array($fieldData['options']) ? $fieldData['options'] : array_map('trim', explode(',', $fieldData['options']));
+                    }
+                    
+                    if (isset($fieldData['default']) && $fieldData['default'] !== '') {
+                        $field['default'] = $fieldData['default'];
+                    }
+                    
+                    $processedSubFields[] = $field;
+                }
+                
+            $targetSubCollections[$targetIndex] = [
+                'slug' => trim($subCollectionData['slug'] ?? $subCollectionSlug),
+                'name' => trim($subCollectionData['name'] ?? $subCollection['name']),
+                'description' => trim($subCollectionData['description'] ?? ''),
+                'entry_method' => $subCollectionData['entry_method'] ?? 'admin_only',
+                'auto_publish' => !empty($subCollectionData['auto_publish']),
+                'fields' => $processedSubFields,
+                'parent_field' => $subCollection['parent_field'] ?? ($parentSubCollectionSlug ? ($parentSubCollectionSlug . '_id') : ($collectionSlug . '_id')),
+                'parent_sub_collection' => $parentSubCollectionSlug ?? ($subCollection['parent_sub_collection'] ?? null),
+                'sub_collections' => $subCollection['sub_collections'] ?? []
+            ];
+            
+            if ($parentSubCollectionSlug && $parentIndex !== null) {
+                $existingSubCollections[$parentIndex]['sub_collections'] = $targetSubCollections;
+            }
+        }
+        
+        if (!$found) {
+            throw new Exception('Sub-collection not found');
+        }
+        
+        $collectionData['sub_collections'] = $existingSubCollections;
+        
+        // Save collection
+        if (file_put_contents($collectionFile, json_encode($collectionData, JSON_PRETTY_PRINT)) === false) {
+            throw new Exception('Failed to update sub-collection');
+        }
+        
+        ob_clean();
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Sub-collection updated successfully',
+            'data' => [
+                'sub_collection' => $existingSubCollections[$index]
+            ]
+        ]);
+        ob_end_flush();
+        exit;
+    }
+    
+    // Get form data (for regular collection operations)
     $name = $_POST['name'] ?? '';
     $slug = $_POST['slug'] ?? '';
     $description = $_POST['description'] ?? '';
@@ -38,6 +331,7 @@ try {
     $apiSettings = $_POST['api_settings'] ?? [];
     $multilanguageEnabled = !empty($_POST['multilanguage_enabled']);
     $multilanguageLanguages = $_POST['multilanguage_languages'] ?? [];
+    $subCollections = $_POST['sub_collections'] ?? [];
     
     error_log("Processing form data:");
     error_log("name: " . $name);
@@ -106,7 +400,7 @@ try {
     if ($entryMethod === 'public_api' && empty($apiKey)) {
         // Generate a secure random API key
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        $apiKey = 'haru_';
+        $apiKey = 'birkly_';
         for ($i = 0; $i < 32; $i++) {
             $apiKey .= $chars[random_int(0, strlen($chars) - 1)];
         }
@@ -163,6 +457,139 @@ try {
                 $existingCollection['api_settings'],
                 $collectionData['api_settings']
             );
+        }
+    }
+    
+    // Process and save sub-collections
+    error_log("Raw sub_collections POST data: " . print_r($subCollections, true));
+    
+    if (is_array($subCollections) && count($subCollections) > 0) {
+        $processedSubCollections = [];
+        foreach ($subCollections as $subCollectionIndex => $subCollectionData) {
+            error_log("Processing sub-collection index: $subCollectionIndex");
+            error_log("Sub-collection data keys: " . implode(', ', array_keys($subCollectionData)));
+            
+            if (empty($subCollectionData['slug']) || empty($subCollectionData['name'])) {
+                error_log("Skipping sub-collection: missing slug or name");
+                continue; // Skip invalid sub-collections
+            }
+            
+            // Debug: Log sub-collection data structure
+            // Extract fields from schema if present, otherwise use fields directly
+            $subCollectionFields = [];
+            
+            // Check for schema[fields] structure (form sends: sub_collections[index][schema][fields][fieldIndex][type])
+            if (isset($subCollectionData['schema']['fields']) && is_array($subCollectionData['schema']['fields'])) {
+                $subCollectionFields = $subCollectionData['schema']['fields'];
+                error_log("Found fields in schema[fields] structure: " . count($subCollectionFields));
+            } 
+            // Check for direct fields structure (backward compatibility)
+            elseif (isset($subCollectionData['fields']) && is_array($subCollectionData['fields'])) {
+                $subCollectionFields = $subCollectionData['fields'];
+                error_log("Found fields in direct fields structure: " . count($subCollectionFields));
+            } else {
+                error_log("No fields found in sub-collection data. Available keys: " . implode(', ', array_keys($subCollectionData)));
+                if (isset($subCollectionData['schema'])) {
+                    error_log("Schema structure: " . print_r($subCollectionData['schema'], true));
+                }
+            }
+            
+            // Debug logging
+            error_log("Sub-collection '" . ($subCollectionData['name'] ?? 'unnamed') . "': Found " . count($subCollectionFields) . " fields");
+            if (count($subCollectionFields) > 0) {
+                error_log("First field sample: " . json_encode(array_slice($subCollectionFields, 0, 1, true)));
+            }
+            
+            // Process sub-collection fields similar to main collection fields
+            $processedSubFields = [];
+            if (is_array($subCollectionFields) && count($subCollectionFields) > 0) {
+                foreach ($subCollectionFields as $fieldId => $fieldData) {
+                    error_log("Processing field ID: $fieldId, data: " . print_r($fieldData, true));
+                    
+                    // Check if field has required data - be more lenient with name (can be auto-generated from label)
+                    $fieldName = $fieldData['name'] ?? '';
+                    $fieldLabel = $fieldData['label'] ?? '';
+                    $fieldType = $fieldData['type'] ?? '';
+                    
+                    // If name is empty but label exists, generate name from label
+                    if (empty($fieldName) && !empty($fieldLabel)) {
+                        $fieldName = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldLabel)));
+                    }
+                    
+                    // Skip if still no name or no type
+                    if (empty($fieldName) || empty($fieldType)) {
+                        error_log("Skipping field: missing name or type (name: '$fieldName', type: '$fieldType')");
+                        continue; // Skip invalid fields
+                    }
+                    
+                    $field = [
+                        'name' => strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldName))),
+                        'label' => !empty($fieldLabel) ? $fieldLabel : $fieldName,
+                        'type' => $fieldType,
+                        'required' => !empty($fieldData['required']),
+                        'id' => $fieldId
+                    ];
+                    
+                    // Add field-specific settings based on fieldtype (simplified version)
+                    
+                    // Handle options for select, radio, multiselect
+                    if (in_array($fieldType, ['select', 'radio', 'multiselect'])) {
+                        if (isset($fieldData['options']) && is_array($fieldData['options'])) {
+                            $field['options'] = $fieldData['options'];
+                        } elseif (isset($fieldData['options']) && is_string($fieldData['options'])) {
+                            // Handle comma-separated options string
+                            $field['options'] = array_map('trim', explode(',', $fieldData['options']));
+                        }
+                    }
+                    
+                    // Handle default value
+                    if (isset($fieldData['default']) && $fieldData['default'] !== '') {
+                        $field['default'] = $fieldData['default'];
+                    }
+                    
+                    // Handle placeholder
+                    if (isset($fieldData['placeholder']) && $fieldData['placeholder'] !== '') {
+                        $field['placeholder'] = $fieldData['placeholder'];
+                    }
+                    
+                    // Handle help text
+                    if (isset($fieldData['help']) && $fieldData['help'] !== '') {
+                        $field['help'] = $fieldData['help'];
+                    }
+                    
+                    error_log("Processed field: " . json_encode($field));
+                    $processedSubFields[] = $field;
+                }
+            } else {
+                error_log("No fields to process for sub-collection '" . ($subCollectionData['name'] ?? 'unnamed') . "'");
+            }
+            
+            $subCollection = [
+                'slug' => trim($subCollectionData['slug']),
+                'name' => trim($subCollectionData['name']),
+                'description' => trim($subCollectionData['description'] ?? ''),
+                'entry_method' => $subCollectionData['entry_method'] ?? 'admin_only',
+                'auto_publish' => !empty($subCollectionData['auto_publish']),
+                'fields' => $processedSubFields
+            ];
+            
+            // Auto-generate parent field reference
+            $parentFieldName = $slug . '_id';
+            $subCollection['parent_field'] = $parentFieldName;
+            
+            error_log("Final sub-collection structure: " . json_encode($subCollection, JSON_PRETTY_PRINT));
+            $processedSubCollections[] = $subCollection;
+        }
+        $collectionData['sub_collections'] = $processedSubCollections;
+        error_log("Total processed sub-collections: " . count($processedSubCollections));
+    } else {
+        error_log("No sub-collections to process or empty array");
+        // Preserve existing sub_collections if not provided
+        if ($existingCollection && isset($existingCollection['sub_collections'])) {
+            $collectionData['sub_collections'] = $existingCollection['sub_collections'];
+            error_log("Preserving existing sub-collections: " . count($existingCollection['sub_collections']));
+        } else {
+            $collectionData['sub_collections'] = [];
         }
     }
     
@@ -412,6 +839,7 @@ try {
         mkdir($entriesDir, 0755, true);
     }
     
+    ob_clean();
     echo json_encode([
         'status' => 'ok',
         'message' => 'Collection saved successfully',
@@ -420,12 +848,27 @@ try {
             'name' => $name
         ]
     ]);
+    ob_end_flush();
     
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    error_log("Error in admin_collections.php: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    
     http_response_code(400);
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+    }
     echo json_encode([
         'status' => 'error',
         'message' => $e->getMessage()
     ]);
+    if (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+    exit;
 }
 ?> 

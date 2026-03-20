@@ -47,8 +47,8 @@ The system automatically discovers fieldtypes by:
 ### 3. Class Naming Convention
 
 - **Directory name** = **Class name** (e.g., `Text/` → `Text` class)
-- **Namespace**: `HaruCMS\FieldTypes\{FieldtypeName}\{FieldtypeName}`
-- **Example**: `fieldtypes/Email/Email.php` → `HaruCMS\FieldTypes\Email\Email`
+- **Namespace**: `Birkly\FieldTypes\{FieldtypeName}\{FieldtypeName}`
+- **Example**: `fieldtypes/Email/Email.php` → `Birkly\FieldTypes\Email\Email`
 
 ### 4. Auto-Discovery Implementation
 
@@ -57,7 +57,7 @@ The system automatically discovers fieldtypes by:
 // Scans fieldtypes directory and auto-registers all fieldtypes
 foreach (glob($fieldtypesDir . '/*', GLOB_ONLYDIR) as $typeDir) {
     $type = basename($typeDir);
-    $class = "HaruCMS\\FieldTypes\\$type\\$type";
+    $class = "Birkly\\FieldTypes\\$type\\$type";
     if (class_exists($class)) {
         FieldRegistry::register(strtolower($type), $class);
     }
@@ -141,9 +141,9 @@ These are convenience mappings, not hardcoded fieldtypes.
 ```php
 // fieldtypes/Phone/Phone.php
 <?php
-namespace HaruCMS\FieldTypes\Phone;
+namespace Birkly\FieldTypes\Phone;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Phone extends BaseField {
     public function getType(): string {

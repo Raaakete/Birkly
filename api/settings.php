@@ -33,7 +33,7 @@ $action = $_POST['action'] ?? $input['action'] ?? $_GET['action'] ?? '';
 // Default settings structure
 $defaultSettings = [
     'site' => [
-        'name' => 'HaruCMS',
+        'name' => 'Birkly',
         'description' => 'A simple, flat-file CMS',
         'url' => '',
         'timezone' => 'UTC',
@@ -42,7 +42,7 @@ $defaultSettings = [
         'time_format' => 'H:i:s'
     ],
     'admin' => [
-        'project_name' => 'HaruCMS',
+        'project_name' => 'Birkly',
         'project_description' => '',
         'cms_url' => '',
         'items_per_page' => 20,

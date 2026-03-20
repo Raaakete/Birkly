@@ -21,7 +21,7 @@
 
 ## Overview
 
-The Plugin System is designed to be fully self-contained, allowing plugins to extend HaruCMS functionality while maintaining security, isolation, and clear boundaries. Plugins can:
+The Plugin System is designed to be fully self-contained, allowing plugins to extend Birkly functionality while maintaining security, isolation, and clear boundaries. Plugins can:
 
 - **Extend Core Functionality**: Add features to collections, entries, admin UI
 - **Interact with Core**: Modify behavior through hooks and capabilities
@@ -44,7 +44,7 @@ The Plugin System is designed to be fully self-contained, allowing plugins to ex
 
 The plugin system can be visualized as a building with three types of rooms:
 
-### 🏛️ The Core Room (HaruCMS Core)
+### 🏛️ The Core Room (Birkly Core)
 
 **Purpose:** The foundation and rule-maker of the entire system.
 
@@ -59,6 +59,7 @@ The plugin system can be visualized as a building with three types of rooms:
 - **Data Shelves**: Content hooks (before/after save), collection hooks, entry hooks, validation hooks
 - **Service Shelves**: Service registry for plugin-to-plugin communication
 - **Operation Shelves**: Lifecycle hooks (activate/deactivate), migration hooks, scheduled tasks
+- **Template Shelves**: Template function registration (for template-first plugin architecture)
 
 **Door Policy:**
 - Capability checks: Does the plugin have permission?
@@ -148,6 +149,14 @@ The plugin system can be visualized as a building with three types of rooms:
 - `plugin_deactivated` - React to plugin deactivation
 - `scheduled_task` - Register scheduled tasks
 - `migration_hook` - Handle data migrations
+
+#### Template Shelves (NEW - Critical for Template-First Architecture)
+- `template_functions` - Register functions callable from templates
+  - Allows plugins to provide template functions like `{user_current}`, `{user_can}`, etc.
+  - Functions are called during template rendering
+  - Supports arguments: `{user_can 'edit' 'blog'}`
+  - Primary interface for user-facing plugin functionality
+  - Enables template-first architecture (templates use functions, REST APIs optional)
 
 ### 🔒 Security Model
 
@@ -261,7 +270,16 @@ Standardized APIs for plugin-to-plugin communication:
 - Data sharing (with permissions)
 - Dependency management
 
-### 5. Security First
+### 5. Template-First Architecture (NEW)
+Plugins provide template functions as primary interface:
+- Template functions registered via `register_template_function()`
+- Functions callable directly in templates: `{user_current}`, `{user_can 'edit' 'blog'}`
+- Template parser integrates function calls during rendering
+- REST APIs are optional (for AJAX, SPAs, etc.)
+- Enables users to build websites using template language
+- Functions return template-compatible data (strings, arrays, objects)
+
+### 6. Security First
 - Sandboxed execution
 - Input validation
 - Output sanitization
@@ -573,12 +591,14 @@ plugins/
 - **Event Bus**: `$haru_hooks` (global array with event names)
 - **UI Directory**: `$haru_ui_injections` (global array)
 - **Navigation**: `$haru_admin_pages` (global array)
+- **Template Functions Registry**: `$haru_template_functions` (global array) - NEW
 
 #### Shelves → Hook/Injection Points
 - **UI Shelves**: Template hooks like `<?php echo render_ui_injections('collection_editor_sidebar'); ?>`
 - **Data Shelves**: Action hooks like `do_action('before_entry_save', $entry_data);`
 - **Service Shelves**: Service registration like `register_plugin_service('user_management', 'user_service', 'UserService');`
 - **Operation Shelves**: Lifecycle hooks like `do_action('plugin_activated', $plugin_id);`
+- **Template Shelves**: Function registration like `register_template_function('user_current', $callback);` - NEW
 
 **Example: Plugin Placing Item on Shelf**
 
@@ -1209,6 +1229,415 @@ function check_plugin_dependencies($plugin_id) {
 
 ---
 
+## Template Function Registration System (NEW - Critical Feature)
+
+### Why Template Functions Are Needed
+
+**Problem Identified:**
+The current template parser only handles variables from data arrays (`{variable}` → `$variable`). There's no mechanism for plugins to register functions that can be called from templates.
+
+**Impact:**
+- **HIGH PRIORITY**: This is the PRIMARY interface for user-facing plugins (like the user management plugin)
+- Users need to build websites using template language, not just REST APIs
+- Template-first architecture requires function registration
+- Enables natural template syntax: `{user_current}`, `{user_can 'edit' 'blog'}`
+
+**Alignment with Architecture:**
+- Fits perfectly into "Rooms and Shelves" model
+- Template functions are a new type of "Template Shelf"
+- Plugins place functions on the shelf, template parser calls them
+- Follows same security model (capability checks, denylist, isolation)
+
+### Conceptual Model Integration
+
+**Template Functions as a Shelf:**
+- **Shelf Name**: `template_functions`
+- **Location**: Template parser (rendering phase)
+- **Purpose**: Allow plugins to register callable functions
+- **Access Control**: Same as other shelves (capability checks, denylist)
+
+**How It Works:**
+1. Plugin registers function: `register_template_function('user_current', $callback)`
+2. Function placed on "Template Shelf" (registered in `$haru_template_functions`)
+3. Template parser detects function call: `{user_current}`
+4. Parser calls registered function
+5. Function returns data → template renders with data
+
+### Template Function Registration API
+
+**File:** `core/plugins/template_functions.php` (new file)
+
+```php
+<?php
+/**
+ * Template Function Registration for Birkly
+ * 
+ * Allows plugins to register functions callable from templates.
+ * Follows the "Rooms and Shelves" model - plugins place functions on the Template Shelf.
+ */
+
+// Global template functions registry (part of The Lobby)
+$haru_template_functions = [];
+
+/**
+ * Register a template function (Place function on Template Shelf)
+ * 
+ * @param string $name Function name (e.g., 'user_current', 'user_can')
+ * @param callable $callback Function callback
+ * @param array $options Options:
+ *   - 'description' (string): Function description
+ *   - 'arguments' (array): Expected arguments with types
+ *   - 'required_capability' (string): Capability required to use this function
+ * 
+ * @return bool True on success
+ */
+function register_template_function($name, $callback, $options = []) {
+    global $haru_template_functions;
+    
+    // Get plugin ID from backtrace (identify which Plugin Room)
+    $plugin_id = null;
+    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+    if (isset($backtrace[1]['file'])) {
+        $file = $backtrace[1]['file'];
+        global $haru_plugins;
+        if (isset($haru_plugins)) {
+            foreach ($haru_plugins as $pid => $plugin) {
+                if (strpos($file, $plugin['path'] ?? '') !== false) {
+                    $plugin_id = $pid;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Check capability if required (Door Policy)
+    $required_capability = $options['required_capability'] ?? null;
+    if ($required_capability && $plugin_id) {
+        if (!has_plugin_capability($plugin_id, $required_capability)) {
+            return false; // Permission denied
+        }
+    }
+    
+    // Place function on Template Shelf (register in The Lobby)
+    $haru_template_functions[$name] = [
+        'callback' => $callback,
+        'plugin_id' => $plugin_id,
+        'description' => $options['description'] ?? '',
+        'arguments' => $options['arguments'] ?? [],
+        'required_capability' => $required_capability,
+        'registered_at' => date('c')
+    ];
+    
+    return true;
+}
+
+/**
+ * Get a template function (Core retrieves from Template Shelf)
+ * 
+ * @param string $name Function name
+ * @return callable|null Function callback or null if not found/inactive
+ */
+function get_template_function($name) {
+    global $haru_template_functions;
+    
+    if (!isset($haru_template_functions[$name])) {
+        return null; // Function not on shelf
+    }
+    
+    $func_data = $haru_template_functions[$name];
+    $plugin_id = $func_data['plugin_id'];
+    
+    // Check if plugin is active (Door Policy)
+    if ($plugin_id) {
+        global $haru_plugins;
+        if (isset($haru_plugins[$plugin_id]) && !($haru_plugins[$plugin_id]['active'] ?? false)) {
+            return null; // Plugin room is closed (inactive)
+        }
+    }
+    
+    return $func_data['callback'];
+}
+
+/**
+ * Get all registered template functions (for discovery/debugging)
+ * 
+ * @return array All registered functions with metadata
+ */
+function get_all_template_functions() {
+    global $haru_template_functions;
+    
+    // Filter by active plugins (only show functions from active Plugin Rooms)
+    $active_functions = [];
+    foreach ($haru_template_functions as $name => $func_data) {
+        $plugin_id = $func_data['plugin_id'];
+        
+        if ($plugin_id) {
+            global $haru_plugins;
+            if (isset($haru_plugins[$plugin_id]) && !($haru_plugins[$plugin_id]['active'] ?? false)) {
+                continue; // Skip inactive plugins
+            }
+        }
+        
+        $active_functions[$name] = $func_data;
+    }
+    
+    return $active_functions;
+}
+```
+
+### Template Parser Integration
+
+**File to Modify:** `admin/template_parser.php`
+
+**Enhancement Required:**
+The template parser needs to detect function calls and invoke registered template functions. This must happen AFTER variable handling to avoid conflicts.
+
+**Implementation:**
+```php
+// In parseNaturalSyntax() method, add after variable handling (after line ~201)
+
+// Handle template function calls: {function_name} or {function_name('arg1', 'arg2')}
+// This must come AFTER variable handling to avoid conflicts
+$parsed = preg_replace_callback(
+    '/\{\s*([a-zA-Z0-9_]+)\s*(?:\(([^)]*)\))?\s*\}/',
+    function($matches) {
+        $func_name = trim($matches[1]);
+        $args_str = isset($matches[2]) ? trim($matches[2]) : '';
+        
+        // Skip if it's a control keyword (already handled)
+        $controlStarts = ['if', 'else', 'endif', 'for', 'foreach', 'endfor', 'endforeach', 
+                         'from', 'get', 'has', 'exist', 'render', 'fieldtype', 'include', 
+                         'media', 'url', 'count'];
+        foreach ($controlStarts as $kw) {
+            if (strpos($func_name, $kw) === 0) {
+                return '{' . $func_name . '}'; // Keep as-is
+            }
+        }
+        
+        // Check if it's a registered template function (Core checks Template Shelf)
+        $template_func = get_template_function($func_name);
+        if ($template_func) {
+            // Parse arguments
+            $args = [];
+            if (!empty($args_str)) {
+                // Parse arguments: supports strings ('arg'), numbers, variables
+                // Simple parser - can be enhanced for complex cases
+                preg_match_all('/(?:[\'"]([^\'"]*)[\'"]|([a-zA-Z0-9_\.]+))/', $args_str, $arg_matches);
+                foreach ($arg_matches[0] as $arg) {
+                    $arg = trim($arg);
+                    // If quoted, it's a string literal
+                    if (preg_match('/^[\'"](.*)[\'"]$/', $arg, $quote_match)) {
+                        $args[] = $quote_match[1];
+                    } else {
+                        // It's a variable - convert to PHP variable access
+                        $parts = explode('.', $arg);
+                        $php_var = '$' . array_shift($parts);
+                        foreach ($parts as $p) {
+                            $php_var .= "['" . $p . "']";
+                        }
+                        $args[] = $php_var;
+                    }
+                }
+            }
+            
+            // Generate PHP code to call function
+            $php_args = [];
+            foreach ($args as $i => $arg) {
+                if (is_string($arg) && strpos($arg, '$') === 0) {
+                    // It's a variable reference
+                    $php_args[] = $arg;
+                } else {
+                    // It's a literal value
+                    $php_args[] = var_export($arg, true);
+                }
+            }
+            
+            $php_call = 'call_user_func(' . var_export($template_func, true);
+            if (!empty($php_args)) {
+                $php_call .= ', [' . implode(', ', $php_args) . ']';
+            }
+            $php_call .= ')';
+            
+            // Return escaped output (functions should return safe data)
+            return '<?= htmlspecialchars(' . $php_call . ' ?? "", ENT_QUOTES, "UTF-8") ?>';
+        }
+        
+        // Not a function, treat as variable (existing behavior)
+        $parts = explode('.', $func_name);
+        $php = '$' . array_shift($parts);
+        foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+        return '<?= htmlspecialchars(' . $php . ' ?? "", ENT_QUOTES, "UTF-8") ?>';
+    },
+    $parsed
+);
+```
+
+### Security Considerations
+
+**Template Function Security (Door Policy):**
+
+1. **Capability Checks**: Functions can require capabilities
+   ```php
+   register_template_function('user_can', $callback, [
+       'required_capability' => 'read_users'
+   ]);
+   ```
+
+2. **Active Plugin Check**: Only functions from active plugins are callable
+   - Inactive plugin → function not available
+   - Plugin deactivated → function removed from shelf
+
+3. **Output Sanitization**: All function outputs are escaped by default
+   - Functions return data, parser escapes it
+   - Raw output only if function explicitly returns HTML (use with caution)
+
+4. **Input Validation**: Function arguments are parsed and validated
+   - String arguments are sanitized
+   - Variable references are checked for existence
+
+5. **Error Isolation**: Function errors don't break template rendering
+   - Try/catch around function calls
+   - Errors logged, template continues rendering
+
+### Example: User Plugin Using Template Functions
+
+**Plugin Registration:**
+```php
+// plugins/user_management/plugin.php (Plugin Room)
+// Place functions on Template Shelf
+
+register_template_function('user_current', function() {
+    $service = new UserService();
+    return $service->getCurrentUser();
+}, [
+    'description' => 'Get current logged-in user',
+    'arguments' => []
+]);
+
+register_template_function('user_can', function($action, $context = null) {
+    $service = new UserService();
+    $user = $service->getCurrentUser();
+    if (!$user) return false;
+    return $service->userCan($user['id'], $action, $context);
+}, [
+    'description' => 'Check if current user can perform action',
+    'arguments' => [
+        ['name' => 'action', 'type' => 'string', 'required' => true],
+        ['name' => 'context', 'type' => 'string', 'required' => false]
+    ]
+]);
+
+register_template_function('user_tier', function() {
+    $service = new UserService();
+    $user = $service->getCurrentUser();
+    if (!$user) return 'guest';
+    return $service->getUserTier($user['id']);
+}, [
+    'description' => 'Get current user tier',
+    'arguments' => []
+]);
+```
+
+**Template Usage:**
+```html
+<!-- User's template (uses Template Shelf) -->
+{if user_current exist}
+    <p>Welcome, {user_current.name}!</p>
+    <p>Your tier: {user_tier}</p>
+    
+    {if user_can 'create_entries' 'blog'}
+        <a href="/create-post">Create Post</a>
+    {endif}
+    
+    {if user_tier == 'premium'}
+        <div class="premium-badge">Premium Member</div>
+    {endif}
+{else}
+    <a href="/login">Login</a>
+{endif}
+```
+
+### Integration with Existing Systems
+
+**Alignment with Architecture:**
+
+1. **Rooms and Shelves Model**: ✅ Perfect fit
+   - Template functions are a new "Template Shelf"
+   - Plugins place functions on shelf
+   - Core (template parser) retrieves and calls functions
+
+2. **Security Model**: ✅ Consistent
+   - Same capability checks
+   - Same denylist protection
+   - Same active plugin filtering
+
+3. **Service Registry**: ✅ Complementary
+   - Template functions for template rendering
+   - Services for plugin-to-plugin communication
+   - Both use same registration pattern
+
+4. **Hook System**: ✅ Different purpose
+   - Hooks: System events (before/after actions)
+   - Template functions: Template rendering (user-facing)
+   - Both follow same security model
+
+**Differences from Initial Plan:**
+
+1. **NEW Feature**: Template function registration wasn't in original plan
+   - **Why**: Discovered during user plugin design
+   - **Impact**: Critical for template-first architecture
+   - **Status**: Must be implemented before user plugin
+
+2. **Template-First vs API-First**: 
+   - **Original Plan**: Focused on admin UI injection, hooks, services
+   - **New Requirement**: Template functions for user-facing templates
+   - **Alignment**: Both are valid - templates for user sites, APIs for admin/SPAs
+
+3. **No Conflicts**: Template functions complement existing systems
+   - Doesn't replace hooks, services, or UI injection
+   - Adds new capability for template rendering
+   - Follows same patterns and security model
+
+### Plugin Metadata Extension
+
+**Add to `plugin.json`:**
+```json
+{
+  "template_functions": [
+    {
+      "name": "user_current",
+      "description": "Get current logged-in user",
+      "arguments": []
+    },
+    {
+      "name": "user_can",
+      "description": "Check if user can perform action",
+      "arguments": [
+        {"name": "action", "type": "string", "required": true},
+        {"name": "context", "type": "string", "required": false}
+      ]
+    }
+  ]
+}
+```
+
+### Implementation Priority
+
+**Status**: **CRITICAL - Must implement before user plugin**
+
+**Reasoning:**
+- User plugin's PRIMARY interface is template functions
+- Template-first architecture requires this feature
+- Without it, users must use REST APIs (not ideal for template-based sites)
+- All other plugin systems are ready; this is the missing piece
+
+**Estimated Effort**: 2-4 hours
+- Create `core/plugins/template_functions.php` (1 hour)
+- Modify `admin/template_parser.php` (1-2 hours)
+- Test and refine (1 hour)
+
+---
+
 ## Hook System Enhancement
 
 ### Enhanced Hook Registration
@@ -1618,10 +2047,33 @@ function plugin_api_handler($plugin_id, $action, $data) {
 
 ---
 
-### Phase 6: Example Plugins
+### Phase 6: Template Function System (NEW - Critical)
 
 **Tasks:**
-1. Create User Management plugin example
+1. Create `core/plugins/template_functions.php`
+2. Implement `register_template_function()` API
+3. Modify `admin/template_parser.php` to handle function calls
+4. Add function argument parsing
+5. Implement security checks (capability, active plugin)
+6. Test with simple plugin example
+7. Document template function usage
+
+**Deliverables:**
+- Template function registration system
+- Template parser integration
+- Security implementation
+- Documentation and examples
+
+**Estimated Time:** 2-4 hours (can be done in Phase 1 or before Phase 6)
+
+**Priority:** **CRITICAL** - Required before user plugin development
+
+---
+
+### Phase 7: Example Plugins
+
+**Tasks:**
+1. Create User Management plugin example (uses template functions)
 2. Create Payment plugin example
 3. Create integration example
 4. Write plugin development guide
@@ -1694,8 +2146,38 @@ register_ui_injection('user_management', 'collection_editor_sidebar',
   ]
 );
 
-// Register service
+// Register service (for plugin-to-plugin communication)
 register_plugin_service('user_management', 'user_service', 'UserService');
+
+// Register template functions (for template-first architecture)
+register_template_function('user_current', function() {
+    $service = new UserService();
+    return $service->getCurrentUser();
+}, [
+    'description' => 'Get current logged-in user'
+]);
+
+register_template_function('user_can', function($action, $context = null) {
+    $service = new UserService();
+    $user = $service->getCurrentUser();
+    if (!$user) return false;
+    return $service->userCan($user['id'], $action, $context);
+}, [
+    'description' => 'Check if current user can perform action',
+    'arguments' => [
+        ['name' => 'action', 'type' => 'string', 'required' => true],
+        ['name' => 'context', 'type' => 'string', 'required' => false]
+    ]
+]);
+
+register_template_function('user_tier', function() {
+    $service = new UserService();
+    $user = $service->getCurrentUser();
+    if (!$user) return 'guest';
+    return $service->getUserTier($user['id']);
+}, [
+    'description' => 'Get current user tier'
+]);
 
 // Register hooks
 register_hook('before_entry_create', function($collection, $entry_data) {
@@ -1847,14 +2329,69 @@ HaruPluginUI.register('user_management', 'collection_editor_sidebar', {
 
 ---
 
-## Conclusion
+## Template Function System Summary
 
-This Plugin System Architecture provides a robust, secure, and flexible foundation for extending HaruCMS. By implementing capabilities, permissions, UI injection, and plugin communication, we enable developers to create powerful, integrated plugins while maintaining security and system stability.
+### Why This Feature Was Added
 
-The phased implementation approach ensures we can deliver value incrementally, starting with core capabilities and building toward a comprehensive plugin ecosystem.
+During analysis of the plugin system's readiness for the user management plugin, we discovered that **template function registration was missing**. This is critical because:
+
+1. **Template-First Architecture**: The user plugin (and many future plugins) need to provide functions callable from templates, not just REST APIs
+2. **User Experience**: Users should build websites using template language (`{user_current}`, `{user_can}`), not JavaScript/AJAX
+3. **Architectural Alignment**: Template functions fit perfectly into the "Rooms and Shelves" model as a new "Template Shelf"
+4. **Completeness**: All other plugin systems are ready; this was the missing piece
+
+### How It Aligns with Initial Architecture
+
+**Perfect Alignment:**
+- ✅ Follows "Rooms and Shelves" metaphor (Template Shelf)
+- ✅ Uses same security model (capability checks, denylist, active plugin filtering)
+- ✅ Follows same registration pattern (register → core manages → template parser calls)
+- ✅ Complements existing systems (hooks, services, UI injection)
+
+**No Conflicts:**
+- Template functions are for **template rendering** (user-facing)
+- Hooks are for **system events** (before/after actions)
+- Services are for **plugin-to-plugin communication**
+- UI injection is for **admin panel** components
+- All serve different purposes, work together
+
+**Enhancement, Not Change:**
+- Adds new capability without modifying existing systems
+- Extends template parser (adds function call detection)
+- New registry (`$haru_template_functions`) in The Lobby
+- No breaking changes to existing functionality
+
+### Implementation Status
+
+**Current Status**: **NOT IMPLEMENTED** - Must be done before user plugin
+
+**Required Files:**
+1. `core/plugins/template_functions.php` (new file)
+2. `admin/template_parser.php` (modification)
+
+**Integration Points:**
+- Load in `core/plugins.php` (after other plugin systems)
+- Template parser calls during rendering phase
+- Functions available in all templates (admin and public)
+
+**Security:**
+- Capability checks (optional per function)
+- Active plugin filtering (automatic)
+- Output sanitization (automatic)
+- Error isolation (try/catch)
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2024-01-15  
-**Status:** Planning Phase
+## Conclusion
+
+This Plugin System Architecture provides a robust, secure, and flexible foundation for extending Birkly. By implementing capabilities, permissions, UI injection, plugin communication, and **template function registration**, we enable developers to create powerful, integrated plugins while maintaining security and system stability.
+
+The phased implementation approach ensures we can deliver value incrementally, starting with core capabilities and building toward a comprehensive plugin ecosystem.
+
+**Key Addition**: Template function registration system has been added as a critical feature required for template-first plugin architecture, perfectly aligned with the existing "Rooms and Shelves" model.
+
+---
+
+**Document Version:** 1.1  
+**Last Updated:** 2025-01-20  
+**Status:** Planning Phase (Template Functions Added)

@@ -1,4 +1,4 @@
-// HaruCMS Fieldtypes MPA Compatibility Shim (safe, minimal)
+// Birkly Fieldtypes MPA Compatibility Shim (safe, minimal)
 (function() {
   // Ensure namespace objects exist
   if (!window.HaruFieldtypes) { window.HaruFieldtypes = {}; }

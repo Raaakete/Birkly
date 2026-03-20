@@ -27,7 +27,89 @@ class TemplateParser {
     private function parseNaturalSyntax($template) {
         $parsed = $template;
         
-        // FIRST: Support single-brace variables {variable} directly (new syntax)
+        // FIRST: Process function-like directives BEFORE simple variables
+        // Handle {translate 'key'} or {__ 'key'} syntax for i18n (must be before simple variable handler)
+        $parsed = preg_replace_callback(
+            '/\{(?:translate|__)\s+[\'"]([^\'"]+)[\'"]\}/',
+            function($matches) {
+                $key = $matches[1];
+                return '<?= __(\'' . addslashes($key) . '\') ?>';
+            },
+            $parsed
+        );
+        
+        // Handle {admin_url 'page'} or {admin_url 'page' param='value'} syntax (must be before simple variable handler)
+        // Supports: {admin_url 'entry-editor'} or {admin_url 'entry-editor' collection='collection.slug'}
+        $parsed = preg_replace_callback(
+            '/\{admin_url\s+[\'"]([^\'"]+)[\'"]\s*(?:(?:param|collection|entry|sub_collection|sub_entry)=[\'"]([^\'"]+)[\'"])?\}/',
+            function($matches) {
+                $page = $matches[1];
+                // For now, just return the basic admin_url - parameters will be handled via query string in template
+                return '<?= admin_url(\'' . addslashes($page) . '\') ?>';
+            },
+            $parsed
+        );
+        
+        // Handle {admin_url 'page'} with query string parameters appended (e.g., {admin_url 'entry-editor'}?collection={collection.slug})
+        // This pattern matches: {admin_url 'page'}?param={variable}
+        $parsed = preg_replace_callback(
+            '/\{admin_url\s+[\'"]([^\'"]+)[\'"]\}\?([a-zA-Z_]+)=\{([a-zA-Z0-9_\.]+)\}/',
+            function($matches) {
+                $page = $matches[1];
+                $paramName = $matches[2];
+                $varPath = $matches[3];
+                // Build PHP variable from dot notation
+                $parts = explode('.', $varPath);
+                $php = '$' . array_shift($parts);
+                foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+                return '<?= admin_url(\'' . addslashes($page) . '\', [\'' . addslashes($paramName) . '\' => ' . $php . ' ?? \'\']) ?>';
+            },
+            $parsed
+        );
+        
+        // Handle {include_script 'filename.js'} syntax (must be before simple variable handler)
+        $parsed = preg_replace_callback(
+            '/\{include_script\s+[\'"]([^\'"]+)[\'"]?\}/',
+            function($matches) {
+                $filename = $matches[1];
+                // Ensure .js extension
+                if (!preg_match('/\.js$/', $filename)) {
+                    $filename .= '.js';
+                }
+                return '<script src="/admin/js/' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '"></script>';
+            },
+            $parsed
+        );
+        
+        // Handle {include_style 'filename.css'} syntax (must be before simple variable handler)
+        $parsed = preg_replace_callback(
+            '/\{include_style\s+[\'"]([^\'"]+)[\'"]?\}/',
+            function($matches) {
+                $filename = $matches[1];
+                // Ensure .css extension
+                if (!preg_match('/\.css$/', $filename)) {
+                    $filename .= '.css';
+                }
+                return '<link rel="stylesheet" href="/admin/css/' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '">';
+            },
+            $parsed
+        );
+        
+        // Handle {json variable} or {json variable.property} syntax for JSON encoding (must be before simple variable handler)
+        $parsed = preg_replace_callback(
+            '/\{json\s+([a-zA-Z0-9_\.]+)\}/',
+            function($matches) {
+                $var = trim($matches[1]);
+                // Build PHP variable from dot notation: a.b.c -> $a['b']['c']
+                $parts = explode('.', $var);
+                $php = '$' . array_shift($parts);
+                foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+                return '<?= json_encode(' . $php . ' ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>';
+            },
+            $parsed
+        );
+        
+        // THEN: Support single-brace variables {variable} directly (new syntax)
         // Skip control keywords, and render variables with safe defaults.
         // Rule: editor fields like "content" are raw; everything else escaped.
         $parsed = preg_replace_callback(
@@ -35,7 +117,7 @@ class TemplateParser {
             function($matches) {
                 $var = trim($matches[1]);
                 // Skip if it's a control keyword token (beginning of a block)
-                $controlStarts = ['if', 'else', 'endif', 'for', 'foreach', 'endfor', 'endforeach', 'from', 'get', 'has', 'exist', 'render', 'fieldtype', 'include', 'media', 'url', 'count'];
+                $controlStarts = ['if', 'else', 'endif', 'for', 'foreach', 'endfor', 'endforeach', 'from', 'get', 'has', 'exist', 'render', 'fieldtype', 'include', 'media', 'url', 'count', 'json', 'translate', '__', 'admin_url'];
                 foreach ($controlStarts as $kw) {
                     if (strpos($var, $kw) === 0) {
                         return '{' . $var . '}';
@@ -192,6 +274,31 @@ class TemplateParser {
                 $phpConditions = [];
                 foreach ($parts as $part) {
                     $part = trim($part);
+
+                    // Helper: convert identifiers/dot-paths to PHP vars (lang.code -> $lang['code'])
+                    $toPhpVar = function(string $expr): string {
+                        $expr = trim($expr);
+                        if ($expr === '') return "''";
+                        // literals
+                        if (preg_match('/^(true|false|null)$/i', $expr)) return strtolower($expr);
+                        if (preg_match('/^\d+(\.\d+)?$/', $expr)) return $expr;
+                        // already quoted string
+                        if ((str_starts_with($expr, "'") && str_ends_with($expr, "'")) || (str_starts_with($expr, "\"") && str_ends_with($expr, "\""))) {
+                            return $expr;
+                        }
+                        // dot-notation var
+                        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/', $expr)) {
+                            $parts = explode('.', $expr);
+                            $php = '$' . array_shift($parts);
+                            foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+                            return '(' . $php . ' ?? null)';
+                        }
+                        // simple identifier
+                        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $expr)) {
+                            return '($' . $expr . ' ?? null)';
+                        }
+                        return $expr; // fallback (already PHP-ish)
+                    };
                     
                     // Handle boolean comparisons: == true or == false
                     if (preg_match('/^(.+?)\s*==\s*(true|false)$/i', $part, $subMatches)) {
@@ -253,8 +360,16 @@ class TemplateParser {
                         $valueEscaped = addslashes($value);
                         $phpConditions[] = '(' . $phpVar . ' ?? \'\') !== \'' . $valueEscaped . '\'';
                     } else {
-                        // Fallback: treat as raw condition (might be handled by other patterns)
-                        $phpConditions[] = $part;
+                        // Handle var-to-var comparisons like: lang.code == current_language
+                        if (preg_match('/^(.+?)\s*(==|!=)\s*(.+)$/', $part, $m)) {
+                            $left = $toPhpVar($m[1]);
+                            $op = $m[2];
+                            $right = $toPhpVar($m[3]);
+                            $phpConditions[] = $left . ' ' . $op . ' ' . $right;
+                        } else {
+                            // Fallback: treat as raw condition (might be handled by other patterns)
+                            $phpConditions[] = $part;
+                        }
                     }
                 }
                 
@@ -396,6 +511,12 @@ function render_template($template, $data = []) {
 function render_template_file($templatePath, $data = []) {
     if (!file_exists($templatePath)) {
         return '<div class="error">Template not found: ' . htmlspecialchars($templatePath) . '</div>';
+    }
+    
+    // Define __TEMPLATE_DIR__ constant for use in templates (for component includes)
+    $templateDir = dirname($templatePath);
+    if (!defined('__TEMPLATE_DIR__')) {
+        define('__TEMPLATE_DIR__', $templateDir);
     }
     
     $template = file_get_contents($templatePath);

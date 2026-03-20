@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/plugins.php';
-// core/admin.php - Core administration functionality for HaruCMS
+// core/admin.php - Core administration functionality for Birkly
 
 // Register core admin pages
 function register_core_admin_pages() {

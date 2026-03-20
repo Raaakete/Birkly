@@ -1,37 +1,32 @@
+<?php
+// Onboarding page - first-time setup wizard
+$onboardingData = $onboarding_data ?? [];
+$hasDemoWebsite = !empty($onboardingData['demo_content']['has_demo_website']);
+
+// Load settings for logo/branding
+$root = $project_root ?? dirname(dirname(dirname(__FILE__)));
+if (file_exists($root . '/api/storage.php')) {
+    require_once $root . '/api/storage.php';
+    $storage = new Storage($root . '/settings');
+    $adminSettings = $storage->read('admin.json') ?? [];
+    $brandingSettings = $storage->read('branding.json') ?? [];
+    
+    $projectName = $adminSettings['project_name'] ?? 'Birkly';
+    $logoPath = $brandingSettings['logoPath'] ?? '';
+} else {
+    $projectName = 'Birkly';
+    $logoPath = '';
+}
+
+$defaultLogo = '/admin/assets/birkly-icon.svg';
+$logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
+?>
+
 <div class="onboarding-page">
     <div class="onboarding-container">
         <!-- Onboarding Header with Logo -->
         <div class="onboarding-header">
-            <?php
-            // Load settings to get logo
-            // Use project_root variable passed from index.php
-            // When template is rendered via eval(), __DIR__ refers to the eval context
-            // So we use the project_root variable passed from index.php
-            $root = isset($project_root) ? $project_root : (function() {
-                // Fallback: try to find project root by looking for api/storage.php
-                $currentDir = __DIR__;
-                // Try current directory and up to 3 levels up
-                for ($i = 0; $i <= 3; $i++) {
-                    $testPath = $i === 0 ? $currentDir : $currentDir . str_repeat('/..', $i);
-                    $realPath = realpath($testPath);
-                    if ($realPath && file_exists($realPath . '/api/storage.php')) {
-                        return $realPath;
-                    }
-                }
-                // Last resort: assume admin/templates structure
-                return dirname(dirname(__DIR__));
-            })();
-            require_once $root . '/api/storage.php';
-            $storage = new Storage($root . '/settings');
-            $adminSettings = $storage->read('admin.json') ?? [];
-            $brandingSettings = $storage->read('branding.json') ?? [];
-            
-            $projectName = $adminSettings['project_name'] ?? 'HaruCMS';
-            $logoPath = $brandingSettings['logoPath'] ?? '';
-            $defaultLogo = '/admin/assets/haru-icon.svg';
-            $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
-            ?>
-            <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="onboarding-logo">
+            <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?>" class="onboarding-logo">
             <h1 class="onboarding-header-title"><?= htmlspecialchars($projectName) ?></h1>
         </div>
         
@@ -41,18 +36,18 @@
                 <div class="step-header">
                     <div class="step-indicator">
                         <span class="step-number">1</span>
-                        <span class="step-label">Create Admin Account</span>
+                        <span class="step-label"><?= __('admin.create_admin_account') ?></span>
                     </div>
                 </div>
                 
                 <div class="welcome-header">
-                    <h1>Welcome to HaruCMS!</h1>
-                    <p class="welcome-subtitle">Let's create your admin account to get started.</p>
+                    <h1><?= __('admin.welcome_to_birkly_exclamation') ?></h1>
+                    <p class="welcome-subtitle"><?= __('admin.create_admin_account_subtitle') ?></p>
                 </div>
                 
                 <form id="first-user-form" class="onboarding-form">
                     <div class="form-group" id="form-group-name">
-                        <label for="first-user-name">Name</label>
+                        <label for="first-user-name"><?= __('admin.name') ?></label>
                         <input 
                             type="text" 
                             id="first-user-name" 
@@ -62,15 +57,15 @@
                             placeholder="John Doe"
                             minlength="2"
                         >
-                        <small class="form-help">Your display name in the admin panel</small>
-                        <div class="form-feedback error">Name must be at least 2 characters</div>
-                        <div class="form-feedback success">✓ Name looks good</div>
+                        <small class="form-help"><?= __('admin.display_name_help') ?></small>
+                        <div class="form-feedback error"><?= __('admin.name_min_length') ?></div>
+                        <div class="form-feedback success">✓ <?= __('admin.name_looks_good') ?></div>
                         <div class="form-icon error">⚠</div>
                         <div class="form-icon success">✓</div>
                     </div>
                     
                     <div class="form-group" id="form-group-email">
-                        <label for="first-user-email">Email Address</label>
+                        <label for="first-user-email"><?= __('admin.email_address') ?></label>
                         <input 
                             type="email" 
                             id="first-user-email" 
@@ -79,51 +74,51 @@
                             autocomplete="email"
                             placeholder="admin@example.com"
                         >
-                        <small class="form-help">This will be your admin login email</small>
-                        <div class="form-feedback error">Please enter a valid email address</div>
-                        <div class="form-feedback success">✓ Email looks good</div>
+                        <small class="form-help"><?= __('admin.admin_login_email') ?></small>
+                        <div class="form-feedback error"><?= __('admin.enter_valid_email') ?></div>
+                        <div class="form-feedback success">✓ <?= __('admin.email_looks_good') ?></div>
                         <div class="form-icon error">⚠</div>
                         <div class="form-icon success">✓</div>
                     </div>
                     
                     <div class="form-group" id="form-group-password">
-                        <label for="first-user-password">Password</label>
+                        <label for="first-user-password"><?= __('admin.password') ?></label>
                         <input 
                             type="password" 
                             id="first-user-password" 
                             name="password" 
                             required 
                             autocomplete="new-password"
-                            placeholder="Enter a secure password"
+                            placeholder="<?= __('admin.enter_secure_password') ?>"
                             minlength="8"
                         >
-                        <small class="form-help">Minimum 8 characters</small>
-                        <div class="form-feedback error">Password must be at least 8 characters</div>
-                        <div class="form-feedback success">✓ Password looks good</div>
+                        <small class="form-help"><?= __('admin.minimum_8_characters') ?></small>
+                        <div class="form-feedback error"><?= __('admin.password_min_length') ?></div>
+                        <div class="form-feedback success">✓ <?= __('admin.password_looks_good') ?></div>
                         <div class="form-icon error">⚠</div>
                         <div class="form-icon success">✓</div>
                     </div>
                     
                     <div class="form-group" id="form-group-password-confirm">
-                        <label for="first-user-password-confirm">Confirm Password</label>
+                        <label for="first-user-password-confirm"><?= __('admin.confirm_password') ?></label>
                         <input 
                             type="password" 
                             id="first-user-password-confirm" 
                             name="password_confirm" 
                             required 
                             autocomplete="new-password"
-                            placeholder="Confirm your password"
+                            placeholder="<?= __('admin.confirm_your_password') ?>"
                             minlength="8"
                         >
-                        <div class="form-feedback error">Passwords do not match</div>
-                        <div class="form-feedback success">✓ Passwords match</div>
+                        <div class="form-feedback error"><?= __('admin.passwords_do_not_match') ?></div>
+                        <div class="form-feedback success">✓ <?= __('admin.passwords_match') ?></div>
                         <div class="form-icon error">⚠</div>
                         <div class="form-icon success">✓</div>
                     </div>
                     
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-large">
-                            Create Admin Account
+                            <?= __('admin.create_admin_account') ?>
                         </button>
                     </div>
                     
@@ -136,34 +131,34 @@
         <div class="onboarding-step" id="step-welcome" data-step="1">
             <div class="onboarding-content">
                 <div class="welcome-header">
-                    <h1>Welcome to HaruCMS!</h1>
-                    <p class="welcome-subtitle">Let's get you set up in just a few steps.</p>
+                    <h1><?= __('admin.welcome_to_birkly_exclamation') ?></h1>
+                    <p class="welcome-subtitle"><?= __('admin.setup_in_few_steps') ?></p>
                 </div>
                 
                 <div class="welcome-features">
                     <div class="feature-card">
                         <div class="feature-icon">📝</div>
-                        <h3>Content Management</h3>
-                        <p>Create and manage your content with ease</p>
+                        <h3><?= __('admin.content_management') ?></h3>
+                        <p><?= __('admin.create_manage_content') ?></p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🎨</div>
-                        <h3>Flexible Fieldtypes</h3>
-                        <p>Choose from a variety of content field types</p>
+                        <h3><?= __('admin.flexible_fieldtypes') ?></h3>
+                        <p><?= __('admin.variety_content_types') ?></p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">🚀</div>
-                        <h3>Fast & Simple</h3>
-                        <p>No database, no complex setup needed</p>
+                        <h3><?= __('admin.fast_and_simple') ?></h3>
+                        <p><?= __('admin.no_database_needed') ?></p>
                     </div>
                 </div>
                 
                 <div class="onboarding-actions">
                     <button class="btn btn-primary btn-large" onclick="onboarding.nextStep()">
-                        Get Started
+                        <?= __('admin.get_started') ?>
                     </button>
                     <button class="btn btn-secondary btn-large" onclick="onboarding.skip()">
-                        Skip Setup
+                        <?= __('admin.skip_setup') ?>
                     </button>
                 </div>
             </div>
@@ -175,42 +170,42 @@
                 <div class="step-header">
                     <div class="step-indicator">
                         <span class="step-number">2</span>
-                        <span class="step-label">Project Information</span>
+                        <span class="step-label"><?= __('admin.project_information') ?></span>
                     </div>
                 </div>
                 
                 <form id="site-info-form" class="onboarding-form" enctype="multipart/form-data">
                     <div class="form-group" id="form-group-project-name">
-                        <label for="project-name">Project Name</label>
-                        <input type="text" id="project-name" name="project_name" placeholder="My Project" required minlength="2">
-                        <small class="form-help">This name will be displayed in the admin panel (e.g., "Acme Corp CMS", "My Project")</small>
-                        <div class="form-feedback error">Project name must be at least 2 characters</div>
-                        <div class="form-feedback success">✓ Project name looks good</div>
+                        <label for="project-name"><?= __('admin.project_name') ?></label>
+                        <input type="text" id="project-name" name="project_name" placeholder="<?= __('admin.my_project') ?>" required minlength="2">
+                        <small class="form-help"><?= __('admin.project_name_help') ?></small>
+                        <div class="form-feedback error"><?= __('admin.project_name_min_length') ?></div>
+                        <div class="form-feedback success">✓ <?= __('admin.project_name_looks_good') ?></div>
                         <div class="form-icon error">⚠</div>
                         <div class="form-icon success">✓</div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="project-logo">Project Logo/Icon (Optional)</label>
+                        <label for="project-logo"><?= __('admin.project_logo') ?> (<?= __('admin.optional') ?>)</label>
                         <input type="file" id="project-logo" name="project_logo" accept="image/*">
-                        <small>Upload a logo or icon for your project. This will be displayed in the sidebar and used as the favicon. If not provided, the default HaruCMS icon will be used.</small>
+                        <small><?= __('admin.project_logo_help') ?></small>
                         <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
-                            <img id="logo-preview-img" src="" alt="Logo preview" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
+                            <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="project-description">Project Description (Optional)</label>
-                        <textarea id="project-description" name="project_description" rows="3" placeholder="A brief description of this project"></textarea>
-                        <small>Optional description for your reference in the admin panel</small>
+                        <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
+                        <textarea id="project-description" name="project_description" rows="3" placeholder="<?= __('admin.brief_description') ?>"></textarea>
+                        <small><?= __('admin.optional_description_help') ?></small>
                     </div>
                     
                     <div class="onboarding-actions">
                         <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
-                            Back
+                            <?= __('admin.back') ?>
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            Continue
+                            <?= __('admin.continue') ?>
                         </button>
                     </div>
                 </form>
@@ -223,48 +218,48 @@
                 <div class="step-header">
                     <div class="step-indicator">
                         <span class="step-number">3</span>
-                        <span class="step-label">Demo Content</span>
+                        <span class="step-label"><?= __('admin.demo_content') ?></span>
                     </div>
-                    <p class="step-description">HaruCMS ships with demo content by default to help you learn the system. Would you like to keep it or start fresh?</p>
+                    <p class="step-description"><?= __('admin.demo_content_description') ?></p>
                 </div>
                 
                 <div class="demo-options">
                     <div class="demo-card keep-card" onclick="onboarding.keepDemoContent()">
                         <div class="demo-card-header">
-                            <h3>Keep Demo Content</h3>
+                            <h3><?= __('admin.keep_demo_content') ?></h3>
                         </div>
                         <div class="demo-card-body">
-                            <p>Keep the demo content and website to explore and learn from. You can modify or delete it later.</p>
+                            <p><?= __('admin.keep_demo_content_help') ?></p>
                         </div>
-                        {if onboarding_data.demo_content.has_demo_website == true}
+                        <?php if ($hasDemoWebsite): ?>
                             <div class="demo-website-info">
-                                <p><strong>Demo Website:</strong> A simple website is available at <code>/demo-website</code></p>
+                                <p><strong><?= __('admin.demo_website') ?>:</strong> <?= __('admin.demo_website_available') ?> <code>/demo-website</code></p>
                             </div>
-                            {endif}
+                        <?php endif; ?>
                         <div class="demo-card-footer">
-                            <button class="btn btn-primary btn-small">Keep</button>
+                            <button class="btn btn-primary btn-small"><?= __('admin.keep') ?></button>
                         </div>
                     </div>
                     
                     <div class="demo-card delete-card" onclick="onboarding.deleteDemoContent()">
                         <div class="demo-card-header">
-                            <h3>Start Fresh</h3>
+                            <h3><?= __('admin.start_fresh') ?></h3>
                         </div>
                         <div class="demo-card-body">
-                            <p>Remove all demo content and start with a clean slate. You'll create your own content from scratch.</p>
+                            <p><?= __('admin.start_fresh_help') ?></p>
                         </div>
                         <div class="demo-card-footer">
-                            <button class="btn btn-secondary btn-small">Delete</button>
+                            <button class="btn btn-secondary btn-small"><?= __('admin.delete') ?></button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="onboarding-actions" style="display: none;" id="demo-content-actions">
                     <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
-                        Back
+                        <?= __('admin.back') ?>
                     </button>
                     <button type="button" class="btn btn-primary" onclick="onboarding.nextStep()" id="continue-from-demo">
-                        Continue
+                        <?= __('admin.continue') ?>
                     </button>
                 </div>
             </div>
@@ -275,12 +270,13 @@
             <div class="progress-bar">
                 <div class="progress-fill" id="progress-fill"></div>
             </div>
-                <div class="progress-steps">
-                <span class="progress-step active" data-step="1">Welcome</span>
-                <span class="progress-step" data-step="2">Project Info</span>
-                <span class="progress-step" data-step="3">Demo Website</span>
+            <div class="progress-steps">
+                <span class="progress-step active" data-step="1"><?= __('admin.welcome') ?></span>
+                <span class="progress-step" data-step="2"><?= __('admin.project_info') ?></span>
+                <span class="progress-step" data-step="3"><?= __('admin.demo_website') ?></span>
             </div>
         </div>
     </div>
 </div>
 
+<script src="/admin/js/onboarding.js"></script>

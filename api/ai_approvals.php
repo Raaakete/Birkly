@@ -494,10 +494,9 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             }
         }
         
-        // Prepare entry data - ensure we have at least a title
-        if (empty($entryData['title']) && empty($entryData['name'])) {
-            // Try to generate a title from other fields
-            $entryData['title'] = $entryData['title'] ?? $entryData['name'] ?? 'Untitled Entry';
+        // Auto-fill title with entry ID if not provided
+        if (empty(trim($entryData['title'] ?? ''))) {
+            $entryData['title'] = $entryId;
         }
         
         // Use AI user ID or original user ID for attribution
@@ -630,6 +629,12 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     foreach ($updateData as $key => $value) {
         $entry[$key] = $value;
     }
+    
+    // Auto-fill title with entry ID if not provided or empty
+    if (empty(trim($entry['title'] ?? ''))) {
+        $entry['title'] = $entryId;
+    }
+    
     $entry['updated_at'] = date('c');
     $entry['updated_by'] = $updatedBy;
     

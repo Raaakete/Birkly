@@ -1,242 +1,361 @@
-
-    <!-- Onboarding Completion Modal -->
-    <div class="modal" id="onboarding-complete-modal" style="display: none;">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>🎉 You're All Set!</h2>
-                <button class="modal-close" id="onboarding-complete-close" aria-label="Close">×</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: var(--space-6, 1.5rem); color: var(--text-secondary, #64748b);">
-                    Your HaruCMS is ready to use. Here's what you can do next:
-                </p>
+<?php
+// Dashboard - entry point for the admin panel
+$onboardingData = $onboarding ?? [];
+$isFirstTime = !empty($onboardingData['is_first_time']) && !$onboardingData['completed'];
+$showOnboarding = $isFirstTime && !empty($onboardingData['checklist']);
+?><!-- Onboarding Completion Modal -->
+<div class="modal" id="onboarding-complete-modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2>🎉 <?= __('admin.you_are_all_set') ?></h2>
+            <button class="modal-close" id="onboarding-complete-close" aria-label="<?= __('admin.close') ?>">×</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: var(--space-6, 1.5rem); color: var(--text-secondary, #64748b);">
+                <?= __('admin.birkly_ready_message') ?>
+            </p>
+            
+            <div style="display: grid; gap: var(--space-4, 1rem); margin-bottom: var(--space-6, 1.5rem);">
+                <div class="card" style="padding: var(--space-4, 1rem);">
+                    <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
+                        <div style="font-size: 2rem; flex-shrink: 0;">📝</div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;"><?= __('admin.create_first_entry') ?></h3>
+                            <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
+                                <?= __('admin.start_adding_content') ?>
+                            </p>
+                            <a href="/admin/index.php?page=content" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
+                        </div>
+                    </div>
+                </div>
                 
-                <div style="display: grid; gap: var(--space-4, 1rem); margin-bottom: var(--space-6, 1.5rem);">
-                    <div class="card" style="padding: var(--space-4, 1rem);">
-                        <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
-                            <div style="font-size: 2rem; flex-shrink: 0;">📝</div>
-                            <div style="flex: 1;">
-                                <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;">Create Your First Entry</h3>
-                                <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
-                                    Start adding content to your collections
-                                </p>
-                                <a href="/admin/index.php?page=content" class="btn btn-primary btn-small">Go to Content</a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card" id="demo-website-card" style="padding: var(--space-4, 1rem); display: none;">
-                        <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
-                            <div style="font-size: 2rem; flex-shrink: 0;">🌐</div>
-                            <div style="flex: 1;">
-                                <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;">View Demo Website</h3>
-                                <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
-                                    Explore the demo website with sample content
-                                </p>
-                                <a href="#" id="demo-website-link" target="_blank" class="btn btn-primary btn-small" style="display: none;">Open Demo Website</a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card" style="padding: var(--space-4, 1rem);">
-                        <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
-                            <div style="font-size: 2rem; flex-shrink: 0;">📚</div>
-                            <div style="flex: 1;">
-                                <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;">Read the Documentation</h3>
-                                <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
-                                    Learn more about HaruCMS features
-                                </p>
-                                <a href="/docs" target="_blank" class="btn btn-secondary btn-small">View Docs</a>
-                            </div>
+                <div class="card" style="padding: var(--space-4, 1rem);">
+                    <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
+                        <div style="font-size: 2rem; flex-shrink: 0;">📚</div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;"><?= __('admin.read_documentation') ?></h3>
+                            <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
+                                <?= __('admin.learn_more_features') ?>
+                            </p>
+                            <a href="/admin/index.php?page=help" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: var(--space-4, 1rem) var(--space-6, 1.5rem); border-top: 1px solid var(--border-light, #e2e8f0); display: flex; justify-content: flex-end;">
-                <button class="btn btn-primary" id="onboarding-complete-close-btn">Get Started</button>
-            </div>
+        </div>
+        <div class="modal-footer" style="padding: var(--space-4, 1rem) var(--space-6, 1.5rem); border-top: 1px solid var(--border-light, #e2e8f0); display: flex; justify-content: flex-end;">
+            <button class="btn btn-primary" id="onboarding-complete-close-btn"><?= __('admin.get_started') ?></button>
         </div>
     </div>
+</div>
 
-    <div class="page-header pt-m pb-m">
+<div class="page-header pt-m pb-m">
+    <div class="page-header-left">
         <div class="breadcrumbs"><span class="current"><?= __('admin.dashboard') ?></span></div>
     </div>
+    <div class="page-header-actions"></div>
+</div>
 
-    <div>
-        {if onboarding exist}
-        {if onboarding.completed == false && onboarding.is_first_time == true}
-            <p><?= __('admin.welcome_to_harucms_exclamation') ?> <?= __('admin.complete_steps') ?></p>
-        {else}
-            <p><?= __('admin.welcome_to_harucms') ?></p>
-        {endif}
-    {else}
-        <p><?= __('admin.welcome_to_harucms') ?></p>
-    {endif}
-    </div>
-    
-    {if onboarding exist}
-        {if onboarding.completed == false && onboarding.is_first_time == true}
-            <!-- Welcome Dashboard for New Users -->
-            <div class="welcome-dashboard">
-                <div class="welcome-card">
-                    <div class="welcome-header">
-                        <h2><?= __('admin.welcome_to_harucms_exclamation') ?></h2>
-                        <p><?= __('admin.complete_steps') ?></p>
-                    </div>
-                    
-                    <div class="checklist-progress">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: {{ (onboarding.checklist_progress.completed / onboarding.checklist_progress.total) * 100 }}%"></div>
-                        </div>
-                        <div class="progress-text">
-                            {{ onboarding.checklist_progress.completed }} of {{ onboarding.checklist_progress.total }} completed
-                        </div>
-                    </div>
-                    
-                    <div class="checklist">
-                        {foreach onboarding.checklist as item}
-                            <div class="checklist-item {if item.completed}completed{endif}">
-                                <div class="checklist-checkbox">
-                                    {if item.completed}
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                                        </svg>
-                                    {else}
-                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                                            <circle cx="10" cy="10" r="9"/>
-                                        </svg>
-                                    {endif}
-                                </div>
-                                <div class="checklist-label">
-                                    <a href="{{ item.link }}">{{ item.label }}</a>
-                                </div>
-                            </div>
-                        {endforeach}
-                    </div>
-                    
-                    <div class="quick-actions">
-                        <h3><?= __('admin.quick_actions') ?></h3>
-                        <div class="action-buttons">
-                            <a href="/admin/index.php?page=content" class="btn btn-primary">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 4H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2m-4-2v4m0-4h4m0 0V2"/>
-                                </svg>
-                                <?= __('admin.create_collection') ?>
-                            </a>
-                            <a href="/admin/index.php?page=media" class="btn btn-secondary">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="14" height="14" rx="2"/>
-                                    <circle cx="7" cy="7" r="1.5"/>
-                                    <path d="M3 12l4-4 4 4 6-6"/>
-                                </svg>
-                                <?= __('admin.upload_media') ?>
-                            </a>
-                            <a href="/admin/index.php?page=settings" class="btn btn-secondary">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="10" cy="10" r="3"/>
-                                    <path d="M10 1v2m0 14v2m9-9h-2M3 10H1m15.364-6.364l-1.414 1.414M4.05 15.95l-1.414 1.414m12.728 0l-1.414-1.414M4.05 4.05L2.636 2.636"/>
-                                </svg>
-                                <?= __('admin.settings') ?>
-                            </a>
-                        </div>
-                    </div>
+
+<?php if ($showOnboarding): ?>
+    <!-- Welcome Dashboard for New Users -->
+    <div class="welcome-dashboard">
+        <div class="welcome-card">
+            <div class="welcome-header">
+                <h2><?= __('admin.welcome_to_birkly_exclamation') ?></h2>
+                <p><?= __('admin.complete_steps') ?></p>
+            </div>
+            
+            <div class="checklist-progress">
+                <div class="progress-bar-container">
+                    <?php
+                    $total = count($onboardingData['checklist'] ?? []);
+                    $completed = 0;
+                    foreach (($onboardingData['checklist'] ?? []) as $item) {
+                        if (!empty($item['completed'])) {
+                            $completed++;
+                        }
+                    }
+                    $progressPercent = $total > 0 ? ($completed / $total) * 100 : 0;
+                    ?>
+                    <div class="progress-bar-fill" style="width: <?= $progressPercent ?>%"></div>
+                </div>
+                <div class="progress-text">
+                    <?= $completed ?> <?= __('admin.of') ?> <?= $total ?> <?= __('admin.completed') ?>
                 </div>
             </div>
-        {endif}
-    {endif}
-    
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>
-            </div>
-            <div class="stat-content">
-                <h3>{from stats get collections}</h3>
-                <p><?= __('admin.collections') ?></p>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            </div>
-            <div class="stat-content">
-                <h3>{from stats get total_entries}</h3>
-                <p><?= __('admin.total_entries') ?></p>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"></path><path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path><path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"></path><path d="M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z"></path><path d="M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z"></path></svg>
-            </div>
-            <div class="stat-content">
-                <h3>{from stats get published}</h3>
-                <p><?= __('admin.published') ?></p>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-            </div>
-            <div class="stat-content">
-                <h3>{from stats get drafts}</h3>
-                <p><?= __('admin.drafts') ?></p>
+            
+            <div class="checklist">
+                <?php foreach (($onboardingData['checklist'] ?? []) as $item): ?>
+                    <div class="checklist-item <?= !empty($item['completed']) ? 'completed' : '' ?>">
+                        <div class="checklist-checkbox">
+                            <?php if (!empty($item['completed'])): ?>
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                </svg>
+                            <?php else: ?>
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="10" cy="10" r="9"/>
+                                </svg>
+                            <?php endif; ?>
+                        </div>
+                        <div class="checklist-label">
+                            <a href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>
+<?php endif; ?>
+
+<!-- Dashboard Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>
+        </div>
+        <div class="stat-content">
+            <h3 id="stat-collections"><span class="loading">...</span></h3>
+            <p><?= __('admin.collections') ?></p>
+        </div>
+    </div>
     
-    {if onboarding exist}
-        {if onboarding.completed == true || onboarding.is_first_time == false}
-            <div class="dashboard-content">
-                <div class="recent-activity">
-                    <div class="activity-header">
-                        <h2><?= __('admin.recent_activity') ?></h2>
-                        <div class="activity-filters">
-                            <button class="activity-filter-btn active" data-filter="all">All</button>
-                            <button class="activity-filter-btn" data-filter="content">Content</button>
-                            <button class="activity-filter-btn" data-filter="users">Users</button>
-                            <button class="activity-filter-btn" data-filter="system">System</button>
-                        </div>
-                    </div>
-                    <div class="activity-list">
-                        {if recent_activity exist}
-                            {for activity in recent_activity}
-                                <div class="activity-item" data-category="{from activity get category}">
-                                    <div class="activity-icon">{from activity get icon}</div>
-                                    <div class="activity-content">
-                                        <p>{from activity get message}</p>
-                                        <span class="activity-time">{from activity get created_at}</span>
-                                    </div>
-                                </div>
-                            {endfor}
-                        {else}
-                            <p class="empty-state"><?= __('admin.no_recent_activity') ?></p>
-                        {endif}
-                    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </div>
+        <div class="stat-content">
+            <h3 id="stat-total-entries"><span class="loading">...</span></h3>
+            <p><?= __('admin.total_entries') ?></p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"></path><path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path><path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"></path><path d="M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z"></path><path d="M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z"></path></svg>
+        </div>
+        <div class="stat-content">
+            <h3 id="stat-published"><span class="loading">...</span></h3>
+            <p><?= __('admin.published') ?></p>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+        </div>
+        <div class="stat-content">
+            <h3 id="stat-drafts"><span class="loading">...</span></h3>
+            <p><?= __('admin.drafts') ?></p>
+        </div>
+    </div>
+</div>
+
+<?php if (!$showOnboarding): ?>
+    <!-- Main Dashboard Content -->
+    <div class="dashboard-content">
+        <!-- Analytics Section (Moved to Top) -->
+        <div class="dashboard-section analytics-section" id="analytics-section" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title"><?= __('admin.website_analytics') ?></h2>
+                <a href="/admin/index.php?page=settings#domains" class="section-link"><?= __('admin.manage_domains_analytics') ?> →</a>
+            </div>
+            <div class="analytics-content" id="analytics-content">
+                <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
+            </div>
+        </div>
+        
+        <!-- Recent Collections, Entries, and Activity Side by Side -->
+        <div class="dashboard-content-row dashboard-three-column">
+            <!-- Recent Collections -->
+            <div class="dashboard-section recent-collections">
+                <div class="section-header">
+                    <h2 class="section-title"><?= __('admin.recent_collections') ?></h2>
+                    <a href="/admin/index.php?page=content" class="section-link"><?= __('admin.view_all') ?> →</a>
                 </div>
+                <div class="collections-list" id="recent-collections-list">
+                    <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
+                </div>
+            </div>
+            
+            <!-- Recent Entries -->
+            <div class="dashboard-section recent-entries-section">
+                <div class="section-header">
+                    <h2 class="section-title"><?= __('admin.recent_entries') ?></h2>
+                    <a href="/admin/index.php?page=content" class="section-link"><?= __('admin.view_all') ?> →</a>
+                </div>
+                <div class="entries-list" id="recent-entries-list">
+                    <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
+                </div>
+            </div>
+            
+        <!-- Recent Activity -->
+            <div class="dashboard-section recent-activity">
+            <div class="activity-header">
+                    <h2 class="section-title"><?= __('admin.recent_activity') ?></h2>
+                <div class="activity-filters">
+                    <button class="activity-filter-btn active" data-filter="all"><?= __('admin.all') ?></button>
+                    <button class="activity-filter-btn" data-filter="content"><?= __('admin.content') ?></button>
+                    <button class="activity-filter-btn" data-filter="users"><?= __('admin.users') ?></button>
+                    <button class="activity-filter-btn" data-filter="system"><?= __('admin.system') ?></button>
+                </div>
+            </div>
+            <div class="activity-list" id="activity-list">
+                    <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Health -->
+        <div class="dashboard-section system-health">
+            <h2 class="section-title"><?= __('admin.system_health') ?></h2>
+            <div class="health-metrics" id="system-health-metrics">
+                <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
+            </div>
+        </div>
+        
+        <!-- Plugin Widgets -->
+        <div class="dashboard-section plugin-widgets" id="plugin-widgets-section" style="display: none;">
+            <h2 class="section-title"><?= __('admin.plugin_widgets') ?></h2>
+            <div class="plugin-widgets-content" id="plugin-widgets-content">
+                <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
+<script>
+// Dashboard data loading
+(function() {
+    const csrfToken = document.getElementById('csrf-token')?.value;
+    
+    // Escape HTML helper
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Load dashboard stats
+    function loadStats() {
+        fetch('/api/dashboard.php?action=stats')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'ok' && data.data && data.data.stats) {
+                    const stats = data.data.stats;
+                    document.getElementById('stat-collections').textContent = stats.collections || '0';
+                    document.getElementById('stat-total-entries').textContent = stats.total_entries || '0';
+                    document.getElementById('stat-published').textContent = stats.published || '0';
+                    document.getElementById('stat-drafts').textContent = stats.drafts || '0';
+                } else {
+                    // Fallback if no stats available
+                    document.getElementById('stat-collections').textContent = '0';
+                    document.getElementById('stat-total-entries').textContent = '0';
+                    document.getElementById('stat-published').textContent = '0';
+                    document.getElementById('stat-drafts').textContent = '0';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading stats:', err);
+                // Show 0 values on error
+                document.getElementById('stat-collections').textContent = '0';
+                document.getElementById('stat-total-entries').textContent = '0';
+                document.getElementById('stat-published').textContent = '0';
+                document.getElementById('stat-drafts').textContent = '0';
+            });
+    }
+    
+    
+    // Load recent collections (from content API)
+    function loadRecentCollections() {
+        const collectionsList = document.getElementById('recent-collections-list');
+        if (!collectionsList) return;
+        
+        fetch('/api/content.php?action=list_collections')
+            .then(r => r.json())
+            .then(data => {
+                // Handle different response formats
+                let collections = [];
+                if (data.status === 'ok' && data.data && data.data.collections && Array.isArray(data.data.collections)) {
+                    collections = data.data.collections;
+                } else if (data.status === 'ok' && data.data && Array.isArray(data.data)) {
+                    collections = data.data;
+                } else if (Array.isArray(data)) {
+                    collections = data;
+                } else if (data.data && Array.isArray(data.data)) {
+                    collections = data.data;
+                }
                 
-                <div class="recent-collections">
-                    <h2><?= __('admin.recent_collections') ?></h2>
-                    <div class="collections-list">
-                        {if recent_collections exist}
-                            {for collection in recent_collections}
-                                <div class="collection-item">
-                                    <div class="collection-info">
-                                        <h4>{from collection get title}</h4>
-                                        <p>{from collection get entries_count} <?= __('admin.entries') ?></p>
-                                    </div>
-                                    <a class="btn-small" href="/admin/index.php?page=entries&collection={from collection get slug}"><?= __('admin.view') ?></a>
+                // Sort by most recently modified (if available) or by name
+                collections.sort((a, b) => {
+                    const dateA = a.modified_at || a.updated_at || a.created_at || 0;
+                    const dateB = b.modified_at || b.updated_at || b.created_at || 0;
+                    if (dateA && dateB) {
+                        return new Date(dateB) - new Date(dateA);
+                    }
+                    const nameA = (a.name || a.title || a.slug || '').toLowerCase();
+                    const nameB = (b.name || b.title || b.slug || '').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+                
+                const recentCollections = collections.slice(0, 5); // Show first 5
+                    
+                if (recentCollections.length === 0) {
+                    collectionsList.innerHTML = '<p class="empty-state"><?= __('admin.no_collections_found') ?></p>';
+                    return;
+                }
+                    
+                collectionsList.innerHTML = recentCollections.map(collection => {
+                        const name = collection.name || collection.title || collection.slug || 'Untitled';
+                        const entriesCount = collection.total_entries || collection.entries_count || 0;
+                        const slug = collection.slug || '';
+                        
+                        return `
+                        <div class="collection-item">
+                            <div class="collection-info">
+                                    <h4>${escapeHtml(name)}</h4>
+                                    <p>${entriesCount} ${entriesCount === 1 ? '<?= __('admin.entry') ?>' : '<?= __('admin.entries') ?>'}</p>
                                 </div>
-                            {endfor}
-                        {else}
-                            <p><?= __('admin.no_collections_found') ?></p>
-                        {endif}
-                    </div>
-                </div>
-            </div>
-        {endif}
-    {endif}
-
+                                <a class="btn btn-sm" href="/admin/index.php?page=entries&collection=${encodeURIComponent(slug)}"><?= __('admin.view') ?></a>
+                            </div>
+                        `;
+                    }).join('');
+            })
+            .catch(err => {
+                console.error('Error loading collections:', err);
+                collectionsList.innerHTML = '<p class="empty-state error"><?= __('admin.error_loading_data') ?></p>';
+            });
+    }
+    
+    // Escape HTML helper
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Onboarding modal handlers
+    const onboardingModal = document.getElementById('onboarding-complete-modal');
+    const closeModal = () => {
+        if (onboardingModal) onboardingModal.style.display = 'none';
+    };
+    
+    document.getElementById('onboarding-complete-close')?.addEventListener('click', closeModal);
+    document.getElementById('onboarding-complete-close-btn')?.addEventListener('click', closeModal);
+    
+    // Check if onboarding just completed
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('onboarding_complete') === 'true' && onboardingModal) {
+        onboardingModal.style.display = 'flex';
+    }
+    
+    // Load dashboard data on page load
+    loadStats();
+    <?php if (!$showOnboarding): ?>
+    loadRecentCollections();
+    <?php endif; ?>
+})();
+</script>
+<script src="/admin/js/dashboard.js"></script>

@@ -4,6 +4,60 @@ $fieldtypeAssets = [];
 if (isset($fieldtype_assets)) {
     $fieldtypeAssets = $fieldtype_assets;
 }
+
+// Helper function to get user information
+function getUserInfo($userId) {
+    if (empty($userId)) return null;
+    
+    // Try multiple possible paths
+    $possiblePaths = [
+        __DIR__ . '/../../users/' . $userId . '.json',
+        dirname(__DIR__) . '/../users/' . $userId . '.json',
+        $_SERVER['DOCUMENT_ROOT'] . '/users/' . $userId . '.json'
+    ];
+    
+    foreach ($possiblePaths as $userFile) {
+        if (file_exists($userFile)) {
+            $userData = json_decode(file_get_contents($userFile), true);
+            if ($userData) {
+                return [
+                    'name' => $userData['name'] ?? $userData['username'] ?? '',
+                    'email' => $userData['email'] ?? '',
+                    'id' => $userData['id'] ?? $userId
+                ];
+            }
+        }
+    }
+    
+    // Also try using Storage class if available
+    if (class_exists('Storage')) {
+        try {
+            $storage = new Storage('../users');
+            $userData = $storage->read($userId . '.json');
+            if ($userData) {
+                return [
+                    'name' => $userData['name'] ?? $userData['username'] ?? '',
+                    'email' => $userData['email'] ?? '',
+                    'id' => $userData['id'] ?? $userId
+                ];
+            }
+        } catch (Exception $e) {
+            // Storage not available or error
+        }
+    }
+    
+    return null;
+}
+
+// Check if this is a sub-entry
+$subCollectionSlug = $sub_collection ?? $_GET['sub_collection'] ?? null;
+$subEntryId = $sub_entry_id ?? $_GET['sub_entry'] ?? null;
+$entryId = $parent_entry_id ?? $_GET['entry'] ?? null;
+$parentSubCollectionSlug = $parent_sub_collection ?? $_GET['parent_sub_collection'] ?? null;
+$parentSubEntryId = $parent_sub_entry_id ?? $_GET['parent_sub_entry'] ?? null;
+$isSubEntry = isset($is_sub_entry) ? $is_sub_entry : (!empty($subCollectionSlug));
+$isNestedSubEntry = !empty($parentSubCollectionSlug) && !empty($parentSubEntryId);
+$formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?action=save';
 ?>
 <div class="entry-editor-page">
 <?php if (!empty($fieldtypeAssets['css'])): ?>
@@ -11,27 +65,53 @@ if (isset($fieldtype_assets)) {
 <?php endif; ?>
     
     <div class="page-header pt-m pb-m">
+        <div class="page-header-left">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
-            <span class="separator">›</span>
-            <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
-            <span class="separator">›</span>
-            <span class="current"><?= !empty($entry['title']) ? htmlspecialchars($entry['title']) : __('admin.new_entry') ?></span>
+            <?php if (!empty($breadcrumbs)): ?>
+                <?php foreach ($breadcrumbs as $crumb): ?>
+                    <?php if ($crumb['is_current']): ?>
+                        <span class="current"><?= htmlspecialchars($crumb['label']) ?></span>
+                    <?php else: ?>
+                        <a href="<?= htmlspecialchars($crumb['url']) ?>"><?= htmlspecialchars($crumb['label']) ?></a>
+                        <span class="separator">›</span>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
+                <span class="separator">›</span>
+                <span class="current"><?= __('admin.entry_editor') ?></span>
+            <?php endif; ?>
         </div>
+        </div>
+        <div class="page-header-actions"></div>
     </div>
     
     <div class="main-actions-bar">
         <button type="submit" form="entry-form" class="btn btn-primary">
             <?= !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry') ?>
         </button>
-        <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>" class="btn btn-secondary">
-            <?= __('admin.cancel') ?>
-        </a>
+        <?php if (!empty($cancel_url)): ?>
+            <a href="<?= htmlspecialchars($cancel_url) ?>" class="btn btn-secondary">
+                <?= __('admin.cancel') ?>
+            </a>
+        <?php endif; ?>
     </div>
     
-    <form id="entry-form" class="entry-form" method="POST" action="/api/admin_entries.php?action=save" aria-label="<?= !empty($entry['id']) ? 'Edit entry form' : 'Create new entry form' ?>">
+    <form id="entry-form" class="entry-form" method="POST" action="<?= htmlspecialchars($formAction) ?>">
         <input type="hidden" name="collection" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
-        <?php if (!empty($entry['id'])): ?>
+        <?php if ($isSubEntry): ?>
+            <input type="hidden" name="action" value="<?= !empty($subEntryId) ? 'update' : 'create' ?>">
+            <input type="hidden" name="parent_collection" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
+            <input type="hidden" name="parent_entry_id" value="<?= htmlspecialchars($entryId ?? '') ?>">
+            <input type="hidden" name="sub_collection" value="<?= htmlspecialchars($subCollectionSlug) ?>">
+            <?php if ($isNestedSubEntry): ?>
+                <input type="hidden" name="parent_sub_collection" value="<?= htmlspecialchars($parentSubCollectionSlug) ?>">
+                <input type="hidden" name="parent_sub_entry_id" value="<?= htmlspecialchars($parentSubEntryId) ?>">
+            <?php endif; ?>
+            <?php if (!empty($subEntryId)): ?>
+                <input type="hidden" name="sub_entry_id" value="<?= htmlspecialchars($subEntryId) ?>">
+            <?php endif; ?>
+        <?php elseif (!empty($entry['id'])): ?>
             <input type="hidden" name="entry_id" value="<?= htmlspecialchars($entry['id']) ?>">
         <?php endif; ?>
         <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
@@ -39,112 +119,37 @@ if (isset($fieldtype_assets)) {
         <div class="editor-layout">
             <div class="editor-main">
                 <div class="editor-content">
-                    <?php
-                    // Check if collection has multi-language enabled
-                    $multilanguageEnabled = !empty($collection['multilanguage']['enabled']);
-                    $multilanguageLanguages = $collection['multilanguage']['languages'] ?? [];
-                    $defaultLang = !empty($multilanguageLanguages) ? $multilanguageLanguages[0] : 'en';
-                    ?>
-                    
-                    <?php if ($multilanguageEnabled && !empty($multilanguageLanguages)): ?>
-                        <!-- Language Tabs -->
-                        <div class="language-tabs-container" style="margin-bottom: var(--space-6);">
-                            <div class="language-tabs-nav" style="display: flex; gap: var(--space-2); border-bottom: 2px solid var(--border-color);">
-                                <?php foreach ($multilanguageLanguages as $langCode): ?>
-                                    <button type="button" class="language-tab-btn <?= $langCode === $defaultLang ? 'active' : '' ?>" data-lang="<?= htmlspecialchars($langCode) ?>">
-                                        <?= htmlspecialchars(strtoupper($langCode)) ?>
-                                    </button>
-                                <?php endforeach; ?>
-                            </div>
-                            
-                            <!-- Language Tab Content -->
-                            <?php foreach ($multilanguageLanguages as $langCode): ?>
-                                <div class="language-tab-content" data-lang="<?= htmlspecialchars($langCode) ?>" style="display: <?= $langCode === $defaultLang ? 'block' : 'none' ?>; margin-top: var(--space-4);">
-                                    <?php if (!empty($fields)): ?>
-                                        <?php foreach ($fields as $field): ?>
-                                            <div class="field-block">
-                                                <div class="field-header">
-                                                    <div class="field-title"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?><?= !empty($field['required']) ? ' <span class="required">*</span>' : '' ?></div>
-                                                    <?php if (!empty($field['required'])): ?>
-                                                        <div class="field-subtitle">Required</div>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="field-control">
-                                                    <?php if (!empty($field['html'])): ?>
-                                                        <?php
-                                                        // Replace field names with language-specific names
-                                                        $fieldName = $field['name'] ?? '';
-                                                        $langFieldName = $langCode . '[' . $fieldName . ']';
-                                                        $langHtml = str_replace('name="' . $fieldName . '"', 'name="' . $langFieldName . '"', $field['html']);
-                                                        $langHtml = str_replace('id="field_' . $fieldName . '"', 'id="field_' . $langCode . '_' . $fieldName . '"', $langHtml);
-                                                        // Get value from language-specific data
-                                                        $langValue = $entry[$langCode][$fieldName] ?? '';
-                                                        
-                                                        // For complex fieldtypes (like dynamicitems), the value might be an array
-                                                        // We need to JSON encode it and update the hidden input
-                                                        if (is_array($langValue)) {
-                                                            $langValueJson = htmlspecialchars(json_encode($langValue), ENT_QUOTES, 'UTF-8');
-                                                            // Update hidden input value for dynamicitems (pattern: id="field_{name}_value")
-                                                            $hiddenInputPattern = '/id="field_' . preg_quote($langCode . '_' . $fieldName, '/') . '_value"[^>]*value="[^"]*"/';
-                                                            if (preg_match($hiddenInputPattern, $langHtml)) {
-                                                                $langHtml = preg_replace($hiddenInputPattern, 'id="field_' . htmlspecialchars($langCode . '_' . $fieldName) . '_value" value="' . $langValueJson . '"', $langHtml);
-                                                            } else {
-                                                                // Try to find the hidden input by name pattern
-                                                                $namePattern = '/name="' . preg_quote($langFieldName, '/') . '"[^>]*value="[^"]*"/';
-                                                                if (preg_match($namePattern, $langHtml)) {
-                                                                    $langHtml = preg_replace($namePattern, 'name="' . htmlspecialchars($langFieldName) . '" value="' . $langValueJson . '"', $langHtml);
-                                                                }
-                                                            }
-                                                        } else {
-                                                            // Simple string value
-                                                            if (preg_match('/value="[^"]*"/', $langHtml)) {
-                                                                $langHtml = preg_replace('/value="[^"]*"/', 'value="' . htmlspecialchars($langValue) . '"', $langHtml);
-                                                            } else {
-                                                                $langHtml = str_replace('>', ' value="' . htmlspecialchars($langValue) . '">', $langHtml);
-                                                            }
-                                                        }
-                                                        echo $langHtml;
-                                                        ?>
-                                                    <?php else: ?>
-                                                        <?php
-                                                        $fieldName = $field['name'] ?? '';
-                                                        $langFieldName = $langCode . '[' . $fieldName . ']';
-                                                        $langValue = $entry[$langCode][$fieldName] ?? '';
-                                                        ?>
-                                                        <input type="text" name="<?= htmlspecialchars($langFieldName) ?>" id="field_<?= htmlspecialchars($langCode) ?>_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($langValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
+                    <?php if (!empty($fields)): ?>
+                        <?php foreach ($fields as $field): ?>
+                            <div class="field-block">
+                                <div class="field-header">
+                                    <div class="field-title">
+                                        <?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?>
+                                        <?php if (!empty($field['required'])): ?>
+                                            <span class="required">*</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php if (!empty($field['required'])): ?>
+                                        <div class="field-subtitle"><?= __('admin.required') ?></div>
                                     <?php endif; ?>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php else: ?>
-                        <!-- Single Language (No Tabs) -->
-                        <?php if (!empty($fields)): ?>
-                            <?php foreach ($fields as $field): ?>
-                                <div class="field-block">
-                                    <div class="field-header">
-                                        <div class="field-title"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?><?= !empty($field['required']) ? ' <span class="required">*</span>' : '' ?></div>
-                                        <?php if (!empty($field['required'])): ?>
-                                            <div class="field-subtitle">Required</div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="field-control">
-                                        <?php if (!empty($field['html'])): ?>
-                                            <?= $field['html'] ?>
-                                        <?php else: ?>
-                                            <?php
-                                            $fieldName = $field['name'] ?? '';
-                                            $fieldValue = $entry[$fieldName] ?? '';
-                                            ?>
-                                            <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($fieldValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
-                                        <?php endif; ?>
-                                    </div>
+                                <div class="field-control">
+                                    <?php if (!empty($field['html'])): ?>
+                                        <?= $field['html'] ?>
+                                    <?php else: ?>
+                                        <?php
+                                        $fieldName = $field['name'] ?? '';
+                                        $fieldValue = $entry[$fieldName] ?? '';
+                                        ?>
+                                        <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($fieldValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
+                                    <?php endif; ?>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <p><?= __('admin.no_fields_defined') ?></p>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -153,220 +158,239 @@ if (isset($fieldtype_assets)) {
             <div class="editor-sidebar">
                 <div class="sidebar-tabs">
                     <div class="tab-nav">
-                        <button type="button" class="tab-btn active" data-tab="publish">Publish</button>
-                        <button type="button" class="tab-btn" data-tab="translations">Translations</button>
-                        <button type="button" class="tab-btn" data-tab="seo">SEO</button>
+                        <button type="button" class="tab-btn active" data-tab="general">General</button>
+                        <button type="button" class="tab-btn" data-tab="metadata">Meta Data</button>
                         <button type="button" class="tab-btn" data-tab="templating">Templating</button>
                     </div>
                     
                     <div class="tab-content">
-                        <!-- Publish Tab -->
-                        <div class="tab-pane active" id="publish-tab">
-                            <div class="card">
-                                <div class="form-group">
-                                    <label for="status">Status</label>
-                                    <select name="status" id="status" class="input">
-                                        <option value="draft" <?= ($entry['status'] ?? 'draft') === 'draft' ? 'selected' : '' ?>>Draft</option>
-                                        <option value="published" <?= ($entry['status'] ?? 'draft') === 'published' ? 'selected' : '' ?>>Published</option>
-                                        <option value="scheduled" <?= ($entry['status'] ?? 'draft') === 'scheduled' ? 'selected' : '' ?>>Scheduled</option>
-                                        <option value="pending_review" <?= ($entry['status'] ?? 'draft') === 'pending_review' ? 'selected' : '' ?>>Pending Review</option>
-                                        <option value="approved" <?= ($entry['status'] ?? 'draft') === 'approved' ? 'selected' : '' ?>>Approved</option>
-                                        <option value="rejected" <?= ($entry['status'] ?? 'draft') === 'rejected' ? 'selected' : '' ?>>Rejected</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group" id="reviewer-group" style="display: none;">
-                                    <label for="reviewer">Assign Reviewer</label>
-                                    <select name="reviewer" id="reviewer" class="input">
-                                        <option value="">No reviewer assigned</option>
-                                        <!-- Reviewers will be populated via JavaScript -->
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group" id="review-notes-group" style="display: none;">
-                                    <label for="review_notes">Review Notes</label>
-                                    <textarea name="review_notes" id="review_notes" class="input" rows="3" placeholder="Add review notes..."><?= htmlspecialchars($entry['review_notes'] ?? '') ?></textarea>
-                                </div>
-                                
-                                <?php 
-                                $currentStatus = $entry['status'] ?? 'draft';
-                                $isReviewStatus = in_array($currentStatus, ['pending_review', 'approved', 'rejected']);
-                                $canReview = isset($_SESSION['user']['role']) && in_array($_SESSION['user']['role'], ['admin', 'editor']);
-                                ?>
-                                <?php if ($isReviewStatus && $canReview): ?>
-                                <div class="form-group review-actions" id="review-actions" style="background: var(--bg-elevated); padding: var(--space-4); border-radius: var(--border-radius-s); border: 1px solid var(--border-light); margin-top: var(--space-4);">
-                                    <label style="font-weight: 600; margin-bottom: var(--space-2); display: block;">Review Actions</label>
-                                    <div class="action-buttons" style="display: flex; gap: 8px; flex-wrap: wrap;" role="group" aria-label="Review actions">
-                                        <button type="button" class="btn btn-success btn-sm" id="approve-entry" aria-label="Approve this entry">
-                                            ✓ Approve
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm" id="reject-entry" aria-label="Reject this entry">
-                                            ✗ Reject
-                                        </button>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="request-changes" aria-label="Request changes to this entry">
-                                            ↻ Request Changes
-                                        </button>
+                        <!-- General Information Tab -->
+                        <div class="tab-pane active" id="general-tab">
+                            <div class="form-group">
+                                <label for="slug">Slug</label>
+                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="Auto-generated">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    URL-friendly identifier for this entry
+                                </small>
+                            </div>
+                            
+                            <div class="info-item" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                <label for="status">Status</label>
+                                <select name="status" id="status" class="input">
+                                    <option value="unpublished" <?= in_array($entry['status'] ?? 'unpublished', ['unpublished', 'draft']) ? 'selected' : '' ?>>Unpublished</option>
+                                    <option value="published" <?= ($entry['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
+                                    <option value="scheduled" <?= ($entry['status'] ?? '') === 'scheduled' ? 'selected' : '' ?>>Scheduled</option>
+                                    <option value="pending_review" <?= ($entry['status'] ?? '') === 'pending_review' ? 'selected' : '' ?>>Pending for Review</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Scheduled: Show Publish At field -->
+                            <div class="form-group" id="publish-schedule-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'scheduled' ? 'block' : 'none' ?>;">
+                                <label for="published_at">Publish At</label>
+                                <input type="datetime-local" name="published_at" id="published_at" class="input" 
+                                       value="<?= !empty($entry['published_at']) ? date('Y-m-d\TH:i', strtotime($entry['published_at'])) : '' ?>"
+                                       data-value="<?= htmlspecialchars($entry['published_at'] ?? '') ?>">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    The entry will be automatically published at this date and time
+                                </small>
+                            </div>
+                            
+                            <!-- Published: Show Unpublish At field -->
+                            <div class="form-group" id="expire-schedule-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'published' ? 'block' : 'none' ?>;">
+                                <label for="expires_at">Unpublish At</label>
+                                <input type="datetime-local" name="expires_at" id="expires_at" class="input"
+                                       value="<?= !empty($entry['expires_at']) ? date('Y-m-d\TH:i', strtotime($entry['expires_at'])) : '' ?>"
+                                       data-value="<?= htmlspecialchars($entry['expires_at'] ?? '') ?>">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    Optional: The entry will be automatically unpublished at this date and time
+                                </small>
+                            </div>
+                            
+                            <!-- Pending Review: Show Reviewer selection -->
+                            <div class="form-group" id="reviewer-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? 'block' : 'none' ?>;">
+                                <label for="reviewer">Notify Reviewer</label>
+                                <select name="reviewer" id="reviewer" class="input">
+                                    <option value="">Select a reviewer...</option>
+                                    <?php
+                                    // Load users for reviewer selection
+                                    $users = [];
+                                    $userFiles = glob(__DIR__ . '/../../users/*.json');
+                                    foreach ($userFiles as $userFile) {
+                                        $userData = json_decode(file_get_contents($userFile), true);
+                                        if ($userData && (!isset($userData['type']) || $userData['type'] !== 'ai')) {
+                                            $users[] = $userData;
+                                        }
+                                    }
+                                    
+                                    $currentReviewer = $entry['reviewer'] ?? '';
+                                    foreach ($users as $user):
+                                        $userId = $user['id'] ?? '';
+                                        $userEmail = $user['email'] ?? '';
+                                        $userName = $user['name'] ?? $userEmail;
+                                        $displayName = $userName . ($userEmail && $userName !== $userEmail ? ' (' . $userEmail . ')' : '');
+                                        // Match by both ID and email (case-insensitive)
+                                        $selected = (
+                                            (!empty($currentReviewer) && (
+                                                strtolower(trim($currentReviewer)) === strtolower(trim($userId)) ||
+                                                strtolower(trim($currentReviewer)) === strtolower(trim($userEmail))
+                                            ))
+                                        ) ? 'selected' : '';
+                                    ?>
+                                        <option value="<?= htmlspecialchars($userId) ?>" <?= $selected ?>><?= htmlspecialchars($displayName) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <!-- Hidden input to preserve reviewer value when field is hidden -->
+                                <input type="hidden" name="reviewer_hidden" id="reviewer_hidden" value="<?= htmlspecialchars($currentReviewer) ?>">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    Select a user to notify when this entry is submitted for review
+                                </small>
+                            </div>
+                            
+                            <!-- Entry Information Section -->
+                            <div class="entry-info-section" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                <?php if (!empty($entry['id'])): ?>
+                                    <div class="entry-info-item">
+                                        <div class="entry-info-label">Entry ID</div>
+                                        <div class="entry-info-value entry-info-id"><?= htmlspecialchars($entry['id']) ?></div>
                                     </div>
-                                    <?php if (!empty($entry['review_notes'])): ?>
-                                        <div style="margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border-light);">
-                                            <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Review Notes:</label>
-                                            <div style="margin-top: var(--space-1); padding: var(--space-2); background: var(--bg-secondary); border-radius: var(--border-radius-s); font-size: 13px; color: var(--text-primary);">
-                                                <?= nl2br(htmlspecialchars($entry['review_notes'])) ?>
+                                <?php endif; ?>
+                                
+                                <div class="entry-info-row">
+                                    <?php if (!empty($entry['created_at'])): ?>
+                                        <div class="entry-info-item entry-info-half">
+                                            <div class="entry-info-label">Created</div>
+                                            <div class="entry-info-value">
+                                                <div class="entry-info-date"><?= htmlspecialchars(date('Y-m-d', strtotime($entry['created_at']))) ?></div>
+                                                <div class="entry-info-time"><?= htmlspecialchars(date('H:i:s', strtotime($entry['created_at']))) ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (!empty($entry['updated_at'])): ?>
+                                        <div class="entry-info-item entry-info-half">
+                                            <div class="entry-info-label">Updated</div>
+                                            <div class="entry-info-value">
+                                                <div class="entry-info-date"><?= htmlspecialchars(date('Y-m-d', strtotime($entry['updated_at']))) ?></div>
+                                                <div class="entry-info-time"><?= htmlspecialchars(date('H:i:s', strtotime($entry['updated_at']))) ?></div>
                                             </div>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <?php endif; ?>
                                 
-                                <?php if (!empty($entry['reviewer'])): ?>
-                                <div class="form-group">
-                                    <label>Assigned Reviewer</label>
-                                    <div class="form-text"><?= htmlspecialchars($entry['reviewer']) ?></div>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($entry['reviewed_at'])): ?>
-                                <div class="form-group">
-                                    <label>Reviewed</label>
-                                    <div class="form-text"><?= htmlspecialchars($entry['reviewed_at']) ?></div>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($entry['reviewed_by'])): ?>
-                                <div class="form-group">
-                                    <label>Reviewed By</label>
-                                    <div class="form-text"><?= htmlspecialchars($entry['reviewed_by']) ?></div>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <div class="form-group" id="publish-schedule-group" style="display: none;">
-                                    <label for="published_at">Schedule Publish Date</label>
-                                    <input type="datetime-local" name="published_at" id="published_at" class="input" value="" aria-describedby="published_at_help" <?= !empty($entry['published_at']) ? 'data-value="' . htmlspecialchars($entry['published_at']) . '"' : '' ?>>
-                                    <small class="form-text" id="published_at_help">Leave empty to publish immediately</small>
-                                </div>
-                                
-                                <div class="form-group" id="expire-schedule-group">
-                                    <label for="expires_at">Schedule Unpublish Date</label>
-                                    <input type="datetime-local" name="expires_at" id="expires_at" class="input" value="" aria-describedby="expires_at_help" <?= !empty($entry['expires_at']) ? 'data-value="' . htmlspecialchars($entry['expires_at']) . '"' : '' ?>>
-                                    <small class="form-text" id="expires_at_help">Optional: automatically unpublish on this date</small>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="slug">Slug</label>
-                                    <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="auto-generated">
-                                </div>
-                                
-                                <?php if (!empty($entry['id'])): ?>
-                                    <div class="info-item">
-                                        <label>Created</label>
-                                        <div class="info-value"><?= !empty($entry['created_at']) ? date('m.d.Y, g:i A', strtotime($entry['created_at'])) : '—' ?></div>
-                                    </div>
-                                    
-                                    <div class="info-item">
-                                        <label>Updated</label>
-                                        <div class="info-value"><?= !empty($entry['updated_at']) ? date('m.d.Y, g:i A', strtotime($entry['updated_at'])) : '—' ?></div>
-                                    </div>
-                                    
-                                    <div class="info-item">
-                                        <label>Version</label>
-                                        <div class="info-value">
-                                            v<?= htmlspecialchars($entry['version'] ?? 1) ?>
-                                            <a href="#" id="view-versions" class="link" style="margin-left: 8px;" aria-label="View version history for this entry">View History</a>
+                                <div class="entry-info-row">
+                                    <?php 
+                                    // Show Created By user information
+                                    $createdByUserId = $entry['created_by'] ?? null;
+                                    if ($createdByUserId): 
+                                        $createdByUser = getUserInfo($createdByUserId);
+                                        ?>
+                                        <div class="entry-info-item entry-info-half">
+                                            <div class="entry-info-label">Created By</div>
+                                            <div class="entry-info-value">
+                                                <?php if ($createdByUser): ?>
+                                                    <div class="entry-info-user-name"><?= htmlspecialchars($createdByUser['name'] ?: $createdByUser['email'] ?: $createdByUserId) ?></div>
+                                                    <?php if ($createdByUser['email'] && $createdByUser['name']): ?>
+                                                        <div class="entry-info-user-email"><?= htmlspecialchars($createdByUser['email']) ?></div>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <div class="entry-info-user-name"><?= htmlspecialchars($createdByUserId) ?></div>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                    </div>
-                                <?php endif; ?>
+                                    <?php elseif (isset($_SESSION['user'])): 
+                                        // Fallback: show current user if entry doesn't have created_by
+                                        $currentUser = $_SESSION['user'];
+                                        ?>
+                                        <div class="entry-info-item entry-info-half">
+                                            <div class="entry-info-label">Created By</div>
+                                            <div class="entry-info-value">
+                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? 'Unknown') ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <?php 
+                                    // Show Last Updated By user information
+                                    $updatedByUserId = $entry['updated_by'] ?? null;
+                                    if ($updatedByUserId): 
+                                        $updatedByUser = getUserInfo($updatedByUserId);
+                                        ?>
+                                        <div class="entry-info-item entry-info-half">
+                                            <div class="entry-info-label">Updated By</div>
+                                            <div class="entry-info-value">
+                                                <?php if ($updatedByUser): ?>
+                                                    <div class="entry-info-user-name"><?= htmlspecialchars($updatedByUser['name'] ?: $updatedByUser['email'] ?: $updatedByUserId) ?></div>
+                                                    <?php if ($updatedByUser['email'] && $updatedByUser['name']): ?>
+                                                        <div class="entry-info-user-email"><?= htmlspecialchars($updatedByUser['email']) ?></div>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <div class="entry-info-user-name"><?= htmlspecialchars($updatedByUserId) ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    <?php elseif (isset($_SESSION['user'])): 
+                                        // Fallback: show current user if entry doesn't have updated_by
+                                        $currentUser = $_SESSION['user'];
+                                        ?>
+                                        <div class="entry-info-item entry-info-half">
+                                            <div class="entry-info-label">Updated By</div>
+                                            <div class="entry-info-value">
+                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? 'Unknown') ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Translations Tab -->
-                        <div class="tab-pane" id="translations-tab">
-                            <div class="card">
-                                <?php
-                                require_once __DIR__ . '/../../core/i18n.php';
-                                $availableLangs = I18n::getAvailableLanguages();
-                                $currentLang = $entry['language'] ?? getCurrentLanguage();
-                                $translations = $entry['translations'] ?? [];
-                                $translationParent = $entry['translation_parent'] ?? '';
-                                ?>
-                                
-                                <div class="form-group">
-                                    <label for="entry_language"><?= __('admin.content_language') ?></label>
-                                    <select name="language" id="entry_language" class="input">
-                                        <?php foreach ($availableLangs as $langCode => $langInfo): ?>
-                                            <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentLang ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($langInfo['native_name']) ?> <?= htmlspecialchars($langInfo['flag']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <small class="form-text">The language of this entry's content</small>
-                                </div>
-                                
-                                <?php if (!empty($translationParent)): ?>
-                                    <div class="form-group">
-                                        <label>Translation Of</label>
-                                        <div class="form-text">
-                                            <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($translationParent) ?>" class="btn btn-sm">
-                                                View Original Entry
-                                            </a>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="form-group">
-                                    <label>Available Translations</label>
-                                    <div id="translations-list" class="translations-list">
-                                        <?php if (!empty($translations)): ?>
-                                            <?php foreach ($translations as $langCode => $entryId): ?>
-                                                <?php if (isset($availableLangs[$langCode])): ?>
-                                                    <div class="translation-item">
-                                                        <span class="translation-lang"><?= htmlspecialchars($availableLangs[$langCode]['native_name']) ?> <?= htmlspecialchars($availableLangs[$langCode]['flag']) ?></span>
-                                                        <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entryId) ?>" class="btn btn-sm">
-                                                            Edit
-                                                        </a>
-                                                    </div>
-                                                <?php endif; ?>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <p class="form-text" style="color: var(--text-secondary);">No translations available</p>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                
-                                <?php if (!empty($entry['id'])): ?>
-                                    <div class="form-group">
-                                        <label>Create Translation</label>
-                                        <select id="create-translation-lang" class="input" style="margin-bottom: var(--space-2);">
-                                            <option value="">Select language...</option>
-                                            <?php foreach ($availableLangs as $langCode => $langInfo): ?>
-                                                <?php if ($langCode !== $currentLang && !isset($translations[$langCode])): ?>
-                                                    <option value="<?= htmlspecialchars($langCode) ?>">
-                                                        <?= htmlspecialchars($langInfo['native_name']) ?> <?= htmlspecialchars($langInfo['flag']) ?>
-                                                    </option>
-                                                <?php endif; ?>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <button type="button" id="create-translation-btn" class="btn btn-primary btn-sm" disabled>
-                                            Create Translation
-                                        </button>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <input type="hidden" name="translation_parent" id="translation_parent" value="<?= htmlspecialchars($translationParent) ?>">
-                                <input type="hidden" name="translations" id="translations" value="<?= htmlspecialchars(json_encode($translations)) ?>">
+                        <!-- Meta Data Tab -->
+                        <div class="tab-pane" id="metadata-tab">
+                            <div class="form-group">
+                                <label for="meta_title">Meta Title</label>
+                                <input type="text" name="meta_title" id="meta_title" class="input" value="<?= htmlspecialchars($entry['meta_title'] ?? '') ?>" placeholder="Page title for search engines">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    The title that appears in search engine results (recommended: 50-60 characters)
+                                </small>
                             </div>
-                        </div>
-                        
-                        <!-- SEO Tab -->
-                        <div class="tab-pane" id="seo-tab">
-                            <div class="card">
-                                <div class="form-group">
-                                    <label for="meta_title">Meta Title</label>
-                                    <input type="text" name="meta_title" id="meta_title" class="input" value="<?= htmlspecialchars($entry['meta_title'] ?? '') ?>" placeholder="SEO title">
-                                </div>
-                                <div class="form-group">
-                                    <label for="meta_description">Meta Description</label>
-                                    <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="SEO description"><?= htmlspecialchars($entry['meta_description'] ?? '') ?></textarea>
-                                </div>
+                            
+                            <div class="form-group">
+                                <label for="meta_description">Meta Description</label>
+                                <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="Brief description for search engines"><?= htmlspecialchars($entry['meta_description'] ?? '') ?></textarea>
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    A brief description that appears in search engine results (recommended: 150-160 characters)
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="meta_keywords">Meta Keywords</label>
+                                <input type="text" name="meta_keywords" id="meta_keywords" class="input" value="<?= htmlspecialchars($entry['meta_keywords'] ?? '') ?>" placeholder="keyword1, keyword2, keyword3">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    Comma-separated keywords for search engines (optional)
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="og_title">Open Graph Title</label>
+                                <input type="text" name="og_title" id="og_title" class="input" value="<?= htmlspecialchars($entry['og_title'] ?? '') ?>" placeholder="Title for social media sharing">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    The title shown when this page is shared on social media (defaults to meta title if empty)
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="og_description">Open Graph Description</label>
+                                <textarea name="og_description" id="og_description" class="input" rows="3" placeholder="Description for social media sharing"><?= htmlspecialchars($entry['og_description'] ?? '') ?></textarea>
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    The description shown when this page is shared on social media (defaults to meta description if empty)
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="og_image">Open Graph Image</label>
+                                <input type="text" name="og_image" id="og_image" class="input" value="<?= htmlspecialchars($entry['og_image'] ?? '') ?>" placeholder="URL to image for social media sharing">
+                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    URL to an image that will be displayed when this page is shared on social media (recommended: 1200x630px)
+                                </small>
                             </div>
                         </div>
                         
@@ -384,7 +408,8 @@ if (isset($fieldtype_assets)) {
                                         <h4>Field slugs</h4>
                                     </div>
                                     <div class="field-slugs-list">
-                                        <?php if (!empty($fields)): ?>
+                                        <?php 
+                                        if (!empty($fields)): ?>
                                             <?php foreach ($fields as $field): ?>
                                                 <?php
                                                 $fieldName = $field['name'] ?? '';
@@ -405,7 +430,7 @@ if (isset($fieldtype_assets)) {
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <p class="text-muted">No fields defined yet.</p>
+                                            <p class="text-muted">No fields defined yet. Add fields to see their slugs.</p>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -423,23 +448,22 @@ if (isset($fieldtype_assets)) {
                                     </div>
                                     <pre class="code-example" id="entry-example-code"><code><?php
 $collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
-$entrySlug = !empty($entry['slug']) ? htmlspecialchars($entry['slug']) : 'example-entry-slug';
-$entryExample = "{from '" . $collectionSlug . "' get entry '" . $entrySlug . "'}\n";
+$exampleSlug = !empty($entry['slug']) ? htmlspecialchars($entry['slug']) : 'example-entry-slug';
+$entryExample = "{from '" . $collectionSlug . "' get entry '" . $exampleSlug . "'}\n";
 $entryExample .= "  <h1>{ title }</h1>\n";
 if (!empty($fields)) {
     foreach ($fields as $field) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
-        $fieldType = $field['type'] ?? '';
-        if ($fieldType === 'media') {
+        if ($field['type'] === 'media') {
             $entryExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
-        } elseif ($fieldType === 'boolean') {
+        } elseif ($field['type'] === 'boolean') {
             $entryExample .= "  {if " . $fieldName . " is on}\n";
             $entryExample .= "    <span>It is featured</span>\n";
             $entryExample .= "  {endif}\n";
-        } elseif ($fieldType === 'editor') {
+        } elseif ($field['type'] === 'editor') {
             $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        } elseif ($fieldType === 'select') {
+        } elseif ($field['type'] === 'select') {
             $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
         } else {
             $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
@@ -470,16 +494,15 @@ if (!empty($fields)) {
     foreach ($fields as $field) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
-        $fieldType = $field['type'] ?? '';
-        if ($fieldType === 'media') {
+        if ($field['type'] === 'media') {
             $collectionExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
-        } elseif ($fieldType === 'boolean') {
+        } elseif ($field['type'] === 'boolean') {
             $collectionExample .= "  {if " . $fieldName . " is on}\n";
             $collectionExample .= "    <span>It is featured</span>\n";
             $collectionExample .= "  {endif}\n";
-        } elseif ($fieldType === 'editor') {
+        } elseif ($field['type'] === 'editor') {
             $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        } elseif ($fieldType === 'select') {
+        } elseif ($field['type'] === 'select') {
             $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
         } else {
             $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
@@ -499,36 +522,272 @@ echo htmlspecialchars($collectionExample);
     </form>
 </div>
 
-<!-- Entry Editor JavaScript -->
-<div id="entry-editor-config" data-collection-slug="<?= htmlspecialchars($collection['slug'] ?? '') ?>"></div>
-<script src="/admin/js/entry-editor.js"></script>
+<style>
+/* Sidebar Tabs Styles */
+.sidebar-tabs {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
 
-<?php if (!empty($fieldtypeAssets['js_files'])): ?>
-    <?php foreach ($fieldtypeAssets['js_files'] as $src): ?>
-        <script src="<?= htmlspecialchars($src) ?>" defer></script>
+.tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tab-btn.active {
+    color: var(--primary-600);
+    border-bottom-color: var(--primary-600);
+    background: var(--bg-primary);
+}
+
+.tab-content {
+    padding: var(--space-4);
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Templating Tab Styles */
+.templating-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.templating-intro {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-4) 0;
+}
+
+.templating-intro a {
+    color: var(--primary-600);
+    text-decoration: underline;
+}
+
+.templating-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.section-header h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.field-slugs-list {
+    padding: var(--space-3) var(--space-4);
+}
+
+.field-slug-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.field-slug-item:last-child {
+    border-bottom: none;
+}
+
+.field-slug-label {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.field-slug-value {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.field-slug-value code {
+    background: var(--bg-primary);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.813rem;
+    color: var(--primary-700);
+    border: 1px solid var(--border-light);
+}
+
+.copy-btn {
+    background: transparent;
+    border: none;
+    padding: var(--space-1);
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.code-example {
+    margin: 0;
+    padding: var(--space-4);
+    background: var(--bg-primary);
+    border: none;
+    border-radius: 0;
+    overflow-x: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.813rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.code-example code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    white-space: pre;
+}
+
+/* Entry Information Section */
+.entry-info-section {
+    background: var(--bg-secondary, #f9fafb);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    padding: var(--space-4, 1rem);
+    margin-bottom: var(--space-4, 1rem);
+}
+
+.entry-info-item {
+    margin-bottom: var(--space-3, 0.75rem);
+}
+
+.entry-info-item:last-child {
+    margin-bottom: 0;
+}
+
+.entry-info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3, 0.75rem);
+    margin-bottom: var(--space-3, 0.75rem);
+}
+
+.entry-info-row:last-child {
+    margin-bottom: 0;
+}
+
+.entry-info-item.entry-info-half {
+    margin-bottom: 0;
+}
+
+.entry-info-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--space-1, 0.25rem);
+}
+
+.entry-info-value {
+    font-size: 0.875rem;
+    color: var(--text-primary, #111827);
+    line-height: 1.5;
+}
+
+.entry-info-id {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.813rem;
+    background: var(--bg-primary, #ffffff);
+    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+    border-radius: var(--radius-sm, 0.25rem);
+    border: 1px solid var(--border-light, #e5e7eb);
+    word-break: break-all;
+}
+
+.entry-info-date {
+    font-weight: 500;
+    color: var(--text-primary, #111827);
+    margin-bottom: 0.125rem;
+}
+
+.entry-info-time {
+    font-size: 0.813rem;
+    color: var(--text-secondary, #6b7280);
+}
+
+.entry-info-user-name {
+    font-weight: 500;
+    color: var(--text-primary, #111827);
+    margin-bottom: 0.125rem;
+}
+
+.entry-info-user-email {
+    font-size: 0.813rem;
+    color: var(--text-secondary, #6b7280);
+}
+</style>
+
+<?php if (!empty($fieldtypeAssets['js_files']) && is_array($fieldtypeAssets['js_files'])): ?>
+    <?php foreach ($fieldtypeAssets['js_files'] as $jsFile): ?>
+        <script src="<?= htmlspecialchars($jsFile) ?>"></script>
     <?php endforeach; ?>
 <?php endif; ?>
-
-<!-- Direct Editor assets (robust, isolated) -->
-<script src="/fieldtypes/Editor/core/commands.js" defer></script>
-<script src="/fieldtypes/Editor/core/bus.js" defer></script>
-<script src="/fieldtypes/Editor/core/model.js" defer></script>
-<script src="/fieldtypes/Editor/core/ops.js" defer></script>
-<script src="/fieldtypes/Editor/core/selection.js" defer></script>
-<script src="/fieldtypes/Editor/view/grid.js" defer></script>
-<script src="/fieldtypes/Editor/modes/advanced.js" defer></script>
-<script src="/fieldtypes/Editor/modes/wysiwyg.js" defer></script>
-<script src="/fieldtypes/Editor/modes/markdown.js" defer></script>
-<script src="/fieldtypes/Editor/modes/html.js" defer></script>
-<script src="/fieldtypes/Editor/modes/block.js" defer></script>
-<script src="/fieldtypes/Editor/ui/wysiwygToolbar.js" defer></script>
-<script src="/fieldtypes/Editor/ui/markdownToolbar.js" defer></script>
-<script src="/fieldtypes/Editor/ui/blockToolbar.js" defer></script>
-<script src="/fieldtypes/Editor/fieldtype.js" defer></script>
-
+<script src="/admin/js/entry-editor.js"></script>
 <script>
+// Tab switching for sidebar tabs
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const tabName = this.dataset.tab;
@@ -544,48 +803,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Copy to clipboard functionality
-    function copyToClipboard(text, button) {
-        navigator.clipboard.writeText(text).then(function() {
-            const originalHTML = button.innerHTML;
-            button.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>';
-            button.style.color = 'var(--success-600)';
-            setTimeout(function() {
-                button.innerHTML = originalHTML;
-                button.style.color = '';
-            }, 2000);
-        }).catch(function(err) {
-            console.error('Failed to copy:', err);
-            alert('Failed to copy to clipboard');
-        });
-    }
-    
-    // Copy field slugs
-    document.querySelectorAll('.field-slug-item .copy-btn').forEach(function(btn) {
+    // Copy button functionality for templating tab
+    document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const text = this.getAttribute('data-copy');
-            copyToClipboard(text, this);
+            const copyText = this.getAttribute('data-copy');
+            let textToCopy = '';
+            
+            if (copyText) {
+                textToCopy = copyText;
+            } else {
+                // Try to find code element in parent section
+                const codeElement = this.closest('.templating-section')?.querySelector('code');
+                if (codeElement) {
+                    textToCopy = codeElement.textContent || codeElement.innerText;
+                }
+            }
+            
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Visual feedback
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    this.style.color = 'var(--success-500, #22c55e)';
+                    setTimeout(() => {
+                        this.innerHTML = originalHTML;
+                        this.style.color = '';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                });
+            }
         });
     });
-    
-    // Copy entry example
-    const copyEntryBtn = document.getElementById('copy-entry-example');
-    if (copyEntryBtn) {
-        copyEntryBtn.addEventListener('click', function() {
-            const codeElement = document.getElementById('entry-example-code');
-            const text = codeElement.textContent || codeElement.innerText;
-            copyToClipboard(text, this);
-        });
-    }
-    
-    // Copy collection example
-    const copyCollectionBtn = document.getElementById('copy-collection-example');
-    if (copyCollectionBtn) {
-        copyCollectionBtn.addEventListener('click', function() {
-            const codeElement = document.getElementById('collection-example-code');
-            const text = codeElement.textContent || codeElement.innerText;
-            copyToClipboard(text, this);
-        });
-    }
 });
 </script>

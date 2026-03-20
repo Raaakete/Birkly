@@ -3,13 +3,39 @@
 
 <script src="/admin/js/utils.js"></script>
 <script src="/admin/js/theme.js"></script>
+<script src="/admin/js/dropdown.js"></script>
+<script src="/admin/js/custom-select.js"></script>
 <script src="/admin/js/ai-chat-button.js"></script>
     <script src="/admin/js/fieldtypes-shim.js"></script>
     <script src="/admin/js/media-modal.js?v=20250804-15"></script>
     <script src="/admin/js/accessibility.js"></script>
-    <?php if (isset($page) && $page === 'dashboard'): ?>
-    <script src="/admin/js/dashboard.js"></script>
-    <?php endif; ?>
+    <?php if (isset($page) && $page === 'dashboard'): ?><script src="/admin/js/dashboard.js"></script><?php endif; ?>
+
+    <script>
+    // If user was redirected due to missing permission, show unified modal.
+    (function() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('permission_denied') === '1') {
+                const from = params.get('from') || '';
+                const needed = params.get('needed') || '';
+                if (window.Birkly && window.Birkly.Utils && typeof window.Birkly.Utils.showPermissionDenied === 'function') {
+                    window.Birkly.Utils.showPermissionDenied({
+                        action: from ? `Open ${from}` : 'Open page',
+                        url: needed ? `Requires: ${needed}` : ''
+                    });
+                }
+                // Clean URL (remove params)
+                params.delete('permission_denied');
+                params.delete('from');
+                params.delete('needed');
+                const newQuery = params.toString();
+                const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '') + window.location.hash;
+                window.history.replaceState({}, '', newUrl);
+            }
+        } catch (_) {}
+    })();
+    </script>
     
     <!-- Logout functionality -->
     <script>
@@ -49,26 +75,82 @@
         }
     });
     
-    // User menu dropdown
-    const userMenuTrigger = document.getElementById('user-menu-trigger');
-    const userMenuDropdown = document.getElementById('user-menu-dropdown');
-    
-    if (userMenuTrigger && userMenuDropdown) {
-        userMenuTrigger.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const isExpanded = userMenuTrigger.getAttribute('aria-expanded') === 'true';
-            userMenuDropdown.style.display = isExpanded ? 'none' : 'block';
-            userMenuTrigger.setAttribute('aria-expanded', !isExpanded);
-        });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
-                userMenuDropdown.style.display = 'none';
-                userMenuTrigger.setAttribute('aria-expanded', 'false');
+    // User menu dropdown - Run immediately if DOM is ready, otherwise wait
+    (function() {
+        function moveUserMenuToHeader() {
+            console.log('[UI Fix] Attempting to move user menu to header...');
+            const userMenuWrapper = document.querySelector('.sidebar-footer .user-menu-wrapper');
+            const pageHeaderActions = document.querySelector('.page-header-actions');
+            
+            console.log('[UI Fix] userMenuWrapper:', userMenuWrapper);
+            console.log('[UI Fix] pageHeaderActions:', pageHeaderActions);
+
+            if (userMenuWrapper && pageHeaderActions) {
+                console.log('[UI Fix] Moving user menu to header...');
+                // Move the existing user menu into the header
+                pageHeaderActions.appendChild(userMenuWrapper);
+                userMenuWrapper.classList.add('topbar-user-menu');
+
+                // Add search and notification buttons to the left of the avatar
+                const fragment = document.createDocumentFragment();
+
+                const searchBtn = document.createElement('button');
+                searchBtn.className = 'topbar-icon-btn';
+                searchBtn.type = 'button';
+                searchBtn.setAttribute('aria-label', 'Search');
+                searchBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>';
+
+                // Create wrapper for notifications button to position dropdown - Unified Dropdown System
+                const notificationsWrapper = document.createElement('div');
+                notificationsWrapper.className = 'dropdown notifications-wrapper';
+                
+                const notificationsBtn = document.createElement('button');
+                notificationsBtn.className = 'dropdown-trigger topbar-icon-btn notifications-btn';
+                notificationsBtn.type = 'button';
+                notificationsBtn.id = 'notifications-btn';
+                notificationsBtn.setAttribute('aria-label', 'Notifications');
+                notificationsBtn.setAttribute('aria-expanded', 'false');
+                notificationsBtn.setAttribute('aria-haspopup', 'true');
+                notificationsBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg><span class="notification-badge" id="notification-badge" style="display: none;">0</span>';
+                
+                notificationsWrapper.appendChild(notificationsBtn);
+
+                fragment.appendChild(searchBtn);
+                fragment.appendChild(notificationsWrapper);
+                pageHeaderActions.insertBefore(fragment, userMenuWrapper);
+                
+                // Trigger notifications setup after button is created
+                if (window.setupNotifications) {
+                    setTimeout(window.setupNotifications, 100);
+                }
+                console.log('[UI Fix] User menu moved successfully!');
+            } else {
+                console.warn('[UI Fix] Could not find userMenuWrapper or pageHeaderActions');
             }
-        });
-    }
+
+            const userMenuTrigger = document.getElementById('user-menu-trigger');
+            const userMenuDropdown = document.getElementById('user-menu-dropdown');
+            
+            // User menu is now handled by unified dropdown.js
+            // Just ensure it has the right classes
+            if (userMenuTrigger && userMenuDropdown) {
+                // Make sure trigger has dropdown-trigger class
+                if (!userMenuTrigger.classList.contains('dropdown-trigger')) {
+                    userMenuTrigger.classList.add('dropdown-trigger');
+                }
+            }
+        }
+        
+        // Run immediately if DOM is ready, otherwise wait for DOMContentLoaded
+        console.log('[UI Fix] Document readyState:', document.readyState);
+        if (document.readyState === 'loading') {
+            console.log('[UI Fix] Waiting for DOMContentLoaded...');
+            document.addEventListener('DOMContentLoaded', moveUserMenuToHeader);
+        } else {
+            console.log('[UI Fix] DOM already ready, running immediately...');
+            moveUserMenuToHeader();
+        }
+    })();
     
     // Language switcher (user-level)
     const languageSelect = document.getElementById('user-language-select');
@@ -120,7 +202,6 @@
         const sessionDemoUrl = '';
         const sessionDemoChoice = '';
         <?php endif; ?>
-        
         if (showModal || demoWebsiteUrl || demoChoice) {
             const modal = document.getElementById('onboarding-complete-modal');
             if (modal) {
@@ -193,6 +274,719 @@
             });
         }
     });
+    </script>
+    
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="search-overlay" style="display: none;">
+        <div class="search-overlay-backdrop" onclick="closeSearch()"></div>
+        <div class="search-overlay-content">
+            <div class="search-input-wrapper">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+                </svg>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search collections, entries, media, users..."
+                    autocomplete="off"
+                />
+                <button class="search-close" onclick="closeSearch()" aria-label="Close search">×</button>
+            </div>
+            <div class="search-results" id="search-results">
+                <div class="search-empty-state">
+                    <p>Type to search...</p>
+                </div>
+            </div>
+            <div class="search-footer">
+                <kbd>↑</kbd><kbd>↓</kbd> Navigate • <kbd>Enter</kbd> Open • <kbd>Esc</kbd> Close
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search Functionality -->
+    <script>
+    (function() {
+        let searchTimeout = null;
+        let currentResults = [];
+        let selectedIndex = -1;
+        
+        // Open search overlay
+        function openSearch() {
+            const overlay = document.getElementById('search-overlay');
+            const input = document.getElementById('search-input');
+            if (overlay && input) {
+                overlay.style.display = 'flex';
+                setTimeout(() => {
+                    input.focus();
+                }, 100);
+            }
+        }
+        
+        // Close search overlay
+        function closeSearch() {
+            const overlay = document.getElementById('search-overlay');
+            const input = document.getElementById('search-input');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+            if (input) {
+                input.value = '';
+            }
+            currentResults = [];
+            selectedIndex = -1;
+            renderResults([]);
+        }
+        
+        // Perform search
+        function performSearch(query) {
+            if (!query || query.trim().length < 2) {
+                renderResults([]);
+                return;
+            }
+            
+            const resultsContainer = document.getElementById('search-results');
+            if (resultsContainer) {
+                resultsContainer.innerHTML = '<div class="search-loading"><p>Searching...</p></div>';
+            }
+            
+            fetch(`/api/search.php?q=${encodeURIComponent(query)}&limit=20`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Search API response:', data);
+                    if (data.status === 'ok') {
+                        currentResults = data.results || [];
+                        selectedIndex = -1;
+                        renderResults(currentResults);
+                    } else {
+                        console.error('Search API error:', data.message || 'Unknown error');
+                        renderResults([]);
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    const resultsContainer = document.getElementById('search-results');
+                    if (resultsContainer) {
+                        resultsContainer.innerHTML = '<div class="search-empty-state"><p>Error: ' + escapeHtml(error.message) + '</p></div>';
+                    }
+                });
+        }
+        
+        // Render search results
+        function renderResults(results) {
+            const resultsContainer = document.getElementById('search-results');
+            if (!resultsContainer) return;
+            
+            if (results.length === 0) {
+                const query = document.getElementById('search-input')?.value || '';
+                if (query.trim().length < 2) {
+                    resultsContainer.innerHTML = '<div class="search-empty-state"><p>Type to search...</p></div>';
+                } else {
+                    resultsContainer.innerHTML = '<div class="search-empty-state"><p>No results found</p></div>';
+                }
+                return;
+            }
+            
+            // Group results by type
+            const grouped = {};
+            results.forEach(result => {
+                const type = result.type || 'other';
+                if (!grouped[type]) {
+                    grouped[type] = [];
+                }
+                grouped[type].push(result);
+            });
+            
+            // Type labels
+            const typeLabels = {
+                'collection': '📁 Collections',
+                'entry': '📝 Entries',
+                'sub_entry': '💬 Sub-Entries',
+                'media': '🖼️ Media',
+                'user': '👤 Users',
+                'plugin': '🔌 Plugins'
+            };
+            
+            let html = '';
+            Object.keys(grouped).forEach(type => {
+                const typeResults = grouped[type];
+                const label = typeLabels[type] || type;
+                html += `<div class="search-results-group">
+                    <div class="search-results-group-header">${label} (${typeResults.length})</div>
+                    <div class="search-results-list">`;
+                
+                typeResults.forEach((result, index) => {
+                    const globalIndex = results.indexOf(result);
+                    html += `<div class="search-result-item ${selectedIndex === globalIndex ? 'selected' : ''}" 
+                        data-index="${globalIndex}" 
+                        data-url="${result.url || '#'}"
+                        onclick="selectSearchResult(${globalIndex})">
+                        <span class="search-result-icon">${result.icon || '📌'}</span>
+                        <div class="search-result-content">
+                            <div class="search-result-title">${escapeHtml(result.title || 'Untitled')}</div>
+                            <div class="search-result-subtitle">${escapeHtml(result.subtitle || '')}</div>
+                        </div>
+                    </div>`;
+                });
+                
+                html += `</div></div>`;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        // Select search result
+        function selectSearchResult(index) {
+            if (currentResults[index] && currentResults[index].url) {
+                window.location.href = currentResults[index].url;
+            }
+        }
+        
+        // Navigate results with keyboard
+        function navigateResults(direction) {
+            if (currentResults.length === 0) return;
+            
+            if (direction === 'up') {
+                selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : currentResults.length - 1;
+            } else if (direction === 'down') {
+                selectedIndex = selectedIndex < currentResults.length - 1 ? selectedIndex + 1 : 0;
+            }
+            
+            renderResults(currentResults);
+            
+            // Scroll selected item into view
+            const selectedItem = document.querySelector(`.search-result-item[data-index="${selectedIndex}"]`);
+            if (selectedItem) {
+                selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+        
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Initialize search
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            const searchOverlay = document.getElementById('search-overlay');
+            
+            // Wire search icon button
+            const searchBtn = document.querySelector('.topbar-icon-btn[aria-label="Search"]');
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openSearch();
+                });
+            }
+            
+            // Search input events
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const query = e.target.value.trim();
+                    
+                    // Debounce search
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        performSearch(query);
+                    }, 300);
+                });
+                
+                // Keyboard navigation
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        navigateResults('down');
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        navigateResults('up');
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (selectedIndex >= 0 && currentResults[selectedIndex]) {
+                            selectSearchResult(selectedIndex);
+                        }
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        closeSearch();
+                    }
+                });
+            }
+            
+            // Close on backdrop click
+            const backdrop = document.querySelector('.search-overlay-backdrop');
+            if (backdrop) {
+                backdrop.addEventListener('click', closeSearch);
+            }
+            
+            // Global keyboard shortcut: Cmd+K / Ctrl+K
+            document.addEventListener('keydown', function(e) {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    openSearch();
+                }
+            });
+        });
+        
+        // Expose functions globally
+        window.openSearch = openSearch;
+        window.closeSearch = closeSearch;
+        window.selectSearchResult = selectSearchResult;
+    })();
+    </script>
+    
+    <!-- Notifications Dropdown (will be moved to notifications-wrapper by JS) - Unified Dropdown System -->
+    <div class="dropdown-menu dropdown-menu-right notifications-dropdown" id="notifications-dropdown">
+        <div class="notifications-header">
+            <h3>Notifications</h3>
+            <button class="mark-all-read-btn" id="mark-all-read-btn" style="display: none;">Mark all as read</button>
+        </div>
+        <div class="notifications-list" id="notifications-list">
+            <div class="notifications-loading">Loading notifications...</div>
+        </div>
+        <div class="notifications-footer">
+            <a href="/admin/index.php?page=activity">View all activity</a>
+        </div>
+    </div>
+    
+    <!-- Notifications Functionality -->
+    <script>
+    (function() {
+        let notifications = [];
+        let unreadCount = 0;
+        let isDropdownOpen = false;
+        
+        const notificationsBtn = document.getElementById('notifications-btn');
+        const notificationsDropdown = document.getElementById('notifications-dropdown');
+        const notificationsList = document.getElementById('notifications-list');
+        const notificationBadge = document.getElementById('notification-badge');
+        const markAllReadBtn = document.getElementById('mark-all-read-btn');
+        
+        // Expose loadNotifications globally for test button
+        window.loadNotifications = loadNotifications;
+        
+        // Load notifications
+        function loadNotifications() {
+            fetch('/api/notifications.php?action=list_recent&limit=20')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error! status: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Notifications loaded:', data);
+                    if (data.status === 'ok') {
+                        notifications = data.notifications || [];
+                        unreadCount = data.unread_count || 0;
+                        console.log('Found', notifications.length, 'notifications,', unreadCount, 'unread');
+                        updateBadge();
+                        renderNotifications();
+                    } else {
+                        console.error('Failed to load notifications:', data.message);
+                        showError('Failed to load notifications: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Notifications error:', error);
+                    showError('Error loading notifications: ' + error.message);
+                });
+        }
+        
+        // Update badge
+        function updateBadge() {
+            // Re-find badge in case it was recreated
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount.toString();
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+        
+        // Render notifications
+        function renderNotifications() {
+            if (!notificationsList) return;
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = '<div class="notifications-empty">No notifications</div>';
+                if (markAllReadBtn) markAllReadBtn.style.display = 'none';
+                return;
+            }
+            
+            const hasUnread = notifications.some(n => !n.read);
+            if (markAllReadBtn) {
+                markAllReadBtn.style.display = hasUnread ? 'block' : 'none';
+            }
+            
+            const html = notifications.map(notif => {
+                const timeAgo = formatTimeAgo(notif.timestamp);
+                const readClass = notif.read ? 'read' : 'unread';
+                // Use data attributes and event delegation instead of inline onclick
+                const dataAttrs = `data-notification-id="${notif.id}" ${notif.link ? `data-notification-link="${notif.link}"` : ''}`;
+                
+                return `
+                    <div class="notification-item ${readClass}" ${dataAttrs}>
+                        <div class="notification-icon" style="background-color: var(--notif-color-${notif.color || 'gray'}, #e5e7eb);">
+                            ${notif.icon || '📢'}
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-message">${escapeHtml(notif.message)}</div>
+                            <div class="notification-meta">
+                                <span class="notification-user">${escapeHtml(notif.user)}</span>
+                                <span class="notification-time">${timeAgo}</span>
+                            </div>
+                        </div>
+                        ${!notif.read ? '<div class="notification-dot"></div>' : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            notificationsList.innerHTML = html;
+            
+            // Add click handlers using event delegation
+            notificationsList.querySelectorAll('.notification-item').forEach(item => {
+                item.style.cursor = 'pointer';
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const notificationId = this.getAttribute('data-notification-id');
+                    const link = this.getAttribute('data-notification-link');
+                    
+                    if (notificationId) {
+                        // Mark as read first, then navigate
+                        markAsRead(notificationId).then(() => {
+                            if (link) {
+                                window.location.href = link;
+                            }
+                        }).catch(error => {
+                            console.error('Error marking notification as read:', error);
+                            // Still navigate even if marking as read fails
+                            if (link) {
+                                window.location.href = link;
+                            }
+                        });
+                    } else if (link) {
+                        window.location.href = link;
+                    }
+                });
+            });
+        }
+        
+        // Format time ago
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffMs = now - time;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return time.toLocaleDateString();
+        }
+        
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Show error
+        function showError(message) {
+            if (notificationsList) {
+                notificationsList.innerHTML = `<div class="notifications-error">${escapeHtml(message)}</div>`;
+            }
+        }
+        
+        // Mark notification as read - returns a Promise
+        window.markAsRead = function(notificationId) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!csrf) {
+                console.error('CSRF token not found');
+                return Promise.reject('CSRF token not found');
+            }
+            
+            return fetch('/api/notifications.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'mark_read',
+                    id: notificationId,
+                    _csrf: csrf
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'ok') {
+                    // Update local state
+                    const notif = notifications.find(n => n.id === notificationId);
+                    if (notif) {
+                        notif.read = true;
+                        unreadCount = Math.max(0, unreadCount - 1);
+                        updateBadge();
+                        renderNotifications();
+                    }
+                    return data;
+                } else {
+                    throw new Error(data.message || 'Failed to mark notification as read');
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+                throw error;
+            });
+        };
+        
+        // Mark all as read
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (!csrf) {
+                    console.error('CSRF token not found');
+                    return;
+                }
+                
+                fetch('/api/notifications.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'mark_all_read',
+                        _csrf: csrf
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        notifications.forEach(n => n.read = true);
+                        unreadCount = 0;
+                        updateBadge();
+                        renderNotifications();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking all as read:', error);
+                });
+            });
+        }
+        
+        // Toggle dropdown - Now handled by unified dropdown.js, but we need to load notifications
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notifications-dropdown');
+            const btn = document.getElementById('notifications-btn');
+            if (!dropdown || !btn) return;
+            
+            // Ensure dropdown is in the right place
+            const notificationsWrapper = document.querySelector('.notifications-wrapper');
+            if (notificationsWrapper && dropdown.parentNode !== notificationsWrapper) {
+                notificationsWrapper.appendChild(dropdown);
+            }
+            
+            // Check if opening (not closing)
+            const isOpen = dropdown.classList.contains('show') || dropdown.classList.contains('active') || dropdown.style.display === 'flex';
+            if (!isOpen) {
+                // Only load when opening
+                loadNotifications();
+            }
+        }
+        
+        // Expose toggleNotifications globally
+        window.toggleNotifications = toggleNotifications;
+        
+        // Hook into unified dropdown system to load notifications when opened
+        document.addEventListener('click', function(e) {
+            const btn = document.getElementById('notifications-btn');
+            if (btn && btn.contains(e.target)) {
+                setTimeout(toggleNotifications, 10);
+            }
+        });
+        
+        // Move dropdown to wrapper - must happen after DOM is ready
+        function initializeDropdown() {
+            const notificationsWrapper = document.querySelector('.notifications-wrapper');
+            if (notificationsWrapper && notificationsDropdown) {
+                // Only move if not already a child
+                if (notificationsDropdown.parentNode !== notificationsWrapper) {
+                    notificationsWrapper.appendChild(notificationsDropdown);
+                    console.log('Notifications dropdown moved to wrapper');
+                }
+            } else {
+                console.warn('Notifications wrapper or dropdown not found', {
+                    wrapper: !!notificationsWrapper,
+                    dropdown: !!notificationsDropdown
+                });
+            }
+        }
+        
+        // Initialize dropdown and button
+        let setupNotificationsAttempts = 0;
+        const maxSetupAttempts = 20; // Max 10 seconds (20 * 500ms)
+        
+        function setupNotifications() {
+            // Re-find button in case it was created dynamically
+            const btn = document.getElementById('notifications-btn');
+            const dropdown = document.getElementById('notifications-dropdown');
+            
+            if (!btn) {
+                setupNotificationsAttempts++;
+                if (setupNotificationsAttempts < maxSetupAttempts) {
+                    console.warn('Notifications button not found yet, will retry... (' + setupNotificationsAttempts + '/' + maxSetupAttempts + ')');
+                    // Retry after a delay
+                    setTimeout(setupNotifications, 500);
+                } else {
+                    console.warn('Notifications button not found after ' + maxSetupAttempts + ' attempts. Giving up.');
+                }
+                return;
+            }
+            
+            // Reset attempts counter on success
+            setupNotificationsAttempts = 0;
+            
+            if (!dropdown) {
+                console.error('Notifications dropdown not found');
+                return;
+            }
+            
+            // Ensure dropdown is hidden on initialization
+            dropdown.classList.remove('show', 'active');
+            dropdown.style.display = 'none';
+            
+            // Update references
+            if (btn !== notificationsBtn) {
+                // Button was recreated, update reference
+                window.notificationsBtn = btn;
+            }
+            if (dropdown !== notificationsDropdown) {
+                window.notificationsDropdown = dropdown;
+            }
+            
+            // Move dropdown to wrapper FIRST - this is critical for dropdown.js to find it
+            initializeDropdown();
+            
+            // Ensure dropdown is in the wrapper
+            const wrapper = document.querySelector('.notifications-wrapper');
+            if (wrapper && dropdown.parentNode !== wrapper) {
+                wrapper.appendChild(dropdown);
+            }
+            
+            // Re-initialize dropdown.js for this dynamically created button
+            // Wait a bit for DOM to settle, then trigger re-initialization
+            setTimeout(function() {
+                if (window.initDropdowns) {
+                    window.initDropdowns();
+                }
+            }, 50);
+            
+            // Hook into dropdown open to load notifications
+            // Watch for when dropdown becomes visible
+            const checkIfOpen = function() {
+                const isOpen = dropdown.classList.contains('show') || dropdown.classList.contains('active') || dropdown.style.display === 'flex';
+                if (isOpen && !isDropdownOpen) {
+                    isDropdownOpen = true;
+                    loadNotifications();
+                } else if (!isOpen) {
+                    isDropdownOpen = false;
+                }
+            };
+            
+            // Watch for class/style changes
+            const observer = new MutationObserver(checkIfOpen);
+            observer.observe(dropdown, {
+                attributes: true,
+                attributeFilter: ['class', 'style']
+            });
+            
+            // Also check immediately on button click (before dropdown.js toggles)
+            btn.addEventListener('click', function() {
+                setTimeout(checkIfOpen, 5);
+            }, { once: false });
+            
+            console.log('Notifications system initialized');
+        }
+        
+        // Expose setupNotifications globally so it can be called from button creation code
+        window.setupNotifications = setupNotifications;
+        
+        // Initialize - wait for button to be created
+        function initNotifications() {
+            // Wait for the button to be created by the other script
+            let attempts = 0;
+            const maxAttempts = 5; // Reduced since button creation now triggers setup
+            
+            const checkAndSetup = () => {
+                const btn = document.getElementById('notifications-btn');
+                if (btn) {
+                    // Button found, setup notifications
+                    setupNotifications();
+                } else if (attempts < maxAttempts) {
+                    // Button not found yet, retry
+                    attempts++;
+                    setTimeout(checkAndSetup, 300);
+                }
+                // Silently give up if max attempts reached
+            };
+            
+            // Only check if DOM is already loaded, otherwise wait for DOMContentLoaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', checkAndSetup);
+            } else {
+                // DOM already loaded, check immediately
+                checkAndSetup();
+            }
+        }
+        
+        initNotifications();
+        
+        // Load unread count on page load
+        function loadUnreadCount() {
+            fetch('/api/notifications.php?action=unread_count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        unreadCount = data.unread_count || 0;
+                        updateBadge();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading unread count:', error);
+                });
+        }
+        
+        // Load unread count on page load
+        loadUnreadCount();
+        
+        // Refresh unread count every 30 seconds
+        setInterval(loadUnreadCount, 30000);
+        
+        // Expose loadUnreadCount globally
+        window.loadUnreadCount = loadUnreadCount;
+    })();
     </script>
     
     <!-- No SPA router/scripts in MPA mode -->

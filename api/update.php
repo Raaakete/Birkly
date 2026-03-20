@@ -1,5 +1,5 @@
 <?php
-// HaruCMS Safe Updater v1.0
+// Birkly Safe Updater v1.0
 header('Content-Type: application/json');
 
 // --- CONFIG ---

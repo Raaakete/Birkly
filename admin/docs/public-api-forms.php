@@ -1,5 +1,5 @@
 <h2>Public API Forms</h2>
-<p>HaruCMS allows you to create collections that accept submissions from external websites. This is perfect for contact forms, newsletter signups, feedback forms, and more.</p>
+<p>Birkly allows you to create collections that accept submissions from external websites. This is perfect for contact forms, newsletter signups, feedback forms, and more.</p>
 
 <h3>What is Entry Method?</h3>
 <p>Each collection has an <strong>Entry Method</strong> that determines how entries can be created:</p>
@@ -30,7 +30,7 @@
 
 <h3>Using Public API Forms on Your Website</h3>
 
-<p>There are two ways to create forms that submit to your HaruCMS collection:</p>
+<p>There are two ways to create forms that submit to your Birkly collection:</p>
 
 <h4>Method 1: Template-First Form (Recommended)</h4>
 
@@ -57,7 +57,7 @@
 {endentry}
 &lt;/div&gt;
 
-&lt;script src="/harucms-client.js" 
+&lt;script src="/birkly-client.js" 
         data-cms-url="https://your-cms-domain.com"&gt;&lt;/script&gt;</code></pre>
 
 <p><strong>How it works:</strong></p>
@@ -83,7 +83,7 @@
     {public_form 'contact'}
 &lt;/div&gt;
 
-&lt;script src="/harucms-client.js" 
+&lt;script src="/birkly-client.js" 
         data-cms-url="https://your-cms-domain.com"&gt;&lt;/script&gt;</code></pre>
 
 <p><strong>How it works:</strong></p>
@@ -182,7 +182,7 @@
         {endentry}
     &lt;/div&gt;
     
-    &lt;script src="/harucms-client.js" 
+    &lt;script src="/birkly-client.js" 
             data-cms-url="https://your-cms-domain.com"&gt;&lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>

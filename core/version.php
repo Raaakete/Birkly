@@ -1,22 +1,24 @@
 <?php
-// core/version.php - HaruCMS Version Management System
+// core/version.php - Birkly Version Management System
 
-class HaruVersion {
+class BirklyVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
-    private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/haru/releases/latest';
+    // NOTE: GitHub repository must be renamed from 'haru' to 'birkly' for this to work
+    private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/birkly/releases/latest';
     
     /**
      * Get download URL for a specific version
      */
     private static function getDownloadUrl(string $version): string {
-        return "https://github.com/Raaakete/haru/archive/refs/tags/v{$version}.zip";
+        // NOTE: GitHub repository must be renamed from 'haru' to 'birkly' for this to work
+        return "https://github.com/Raaakete/birkly/archive/refs/tags/v{$version}.zip";
     }
 
     /**
      * Build common HTTP headers for GitHub requests. Supports private repos via token.
      * Token sources (first found wins):
-     *  - env HARU_GITHUB_TOKEN
+     *  - env BIRKLY_GITHUB_TOKEN
      *  - settings/security.json key "github_token"
      */
     private static function getGithubHeaders(string $userAgent): array {
@@ -25,7 +27,7 @@ class HaruVersion {
             'Accept: application/vnd.github+json'
         ];
 
-        $token = getenv('HARU_GITHUB_TOKEN');
+        $token = getenv('BIRKLY_GITHUB_TOKEN');
         if (!$token) {
             $securityFile = __DIR__ . '/../settings/security.json';
             if (file_exists($securityFile)) {
@@ -62,7 +64,7 @@ class HaruVersion {
         $currentVersion = self::getCurrentVersion();
         
         try {
-            $headers = self::getGithubHeaders('HaruCMS/' . $currentVersion);
+            $headers = self::getGithubHeaders('Birkly/' . $currentVersion);
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 15,
@@ -90,7 +92,7 @@ class HaruVersion {
                     return ['error' => 'No releases found. Publish a GitHub Release (not only a tag).'];
                 }
                 if (($release['status'] ?? null) == 401 || ($release['status'] ?? null) == 403) {
-                    return ['error' => 'GitHub private repo detected. Add a token in settings/security.json as {"github_token":"..."} or set env HARU_GITHUB_TOKEN.'];
+                    return ['error' => 'GitHub private repo detected. Add a token in settings/security.json as {"github_token":"..."} or set env BIRKLY_GITHUB_TOKEN.'];
                 }
                 return ['error' => 'GitHub API error: ' . ($release['message'] ?? 'Unknown error')];
             }
@@ -122,11 +124,11 @@ class HaruVersion {
      */
     public static function downloadUpdate(string $version): array {
         $downloadUrl = self::getDownloadUrl($version);
-        $tempFile = sys_get_temp_dir() . '/harucms-update-' . $version . '.zip';
+        $tempFile = sys_get_temp_dir() . '/birkly-update-' . $version . '.zip';
         
         try {
             // Download the update
-            $headers = self::getGithubHeaders('HaruCMS/' . self::getCurrentVersion());
+            $headers = self::getGithubHeaders('Birkly/' . self::getCurrentVersion());
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 300,
@@ -221,14 +223,14 @@ class HaruVersion {
             }
             
             // Extract to temporary directory first
-            $tempExtractDir = sys_get_temp_dir() . '/harucms-extract-' . uniqid();
+            $tempExtractDir = sys_get_temp_dir() . '/birkly-extract-' . uniqid();
             if (!$zip->extractTo($tempExtractDir)) {
                 $zip->close();
                 return ['error' => 'Failed to extract update'];
             }
             $zip->close();
             
-            // GitHub zipball extracts to a subdirectory (haru-VERSION/)
+            // GitHub zipball extracts to a subdirectory (birkly-VERSION/)
             // Find the actual CMS root inside the extracted directory
             $extractedContents = scandir($tempExtractDir);
             $actualCmsRoot = null;

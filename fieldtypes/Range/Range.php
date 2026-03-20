@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Range;
+namespace Birkly\FieldTypes\Range;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Range extends BaseField {
     protected $min;
@@ -130,20 +130,20 @@ class Range extends BaseField {
         .range-field-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: var(--space-3, 0.75rem);
         }
         
         .range-input-group {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: var(--space-4, 1rem);
         }
         
         .range-slider {
             flex: 1;
             height: 6px;
-            border-radius: 3px;
-            background: #ddd;
+            border-radius: var(--radius-sm, 0.375rem);
+            background: var(--border-medium, #e5e7eb);
             outline: none;
             -webkit-appearance: none;
             cursor: pointer;
@@ -153,8 +153,8 @@ class Range extends BaseField {
         .range-slider::-webkit-slider-runnable-track {
             width: 100%;
             height: 6px;
-            border-radius: 3px;
-            background: #ddd;
+            border-radius: var(--radius-sm, 0.375rem);
+            background: var(--border-medium, #e5e7eb);
         }
         
         .range-slider::-webkit-slider-thumb {
@@ -162,61 +162,61 @@ class Range extends BaseField {
             appearance: none;
             width: 20px;
             height: 20px;
-            border-radius: 50%;
-            background: var(--primary, #007bff);
+            border-radius: var(--radius-full, 50%);
+            background: var(--primary-500, #3b82f6);
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            border: 2px solid #fff;
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+            border: 2px solid var(--bg-primary, #ffffff);
             margin-top: -7px;
-            transition: all 0.2s;
+            transition: all var(--transition-fast, 150ms ease);
         }
         
         .range-slider::-webkit-slider-thumb:hover {
             transform: scale(1.15);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
         }
         
         .range-slider::-moz-range-track {
             width: 100%;
             height: 6px;
-            border-radius: 3px;
-            background: #ddd;
+            border-radius: var(--radius-sm, 0.375rem);
+            background: var(--border-medium, #e5e7eb);
             border: none;
         }
         
         .range-slider::-moz-range-thumb {
             width: 20px;
             height: 20px;
-            border-radius: 50%;
-            background: var(--primary, #007bff);
+            border-radius: var(--radius-full, 50%);
+            background: var(--primary-500, #3b82f6);
             cursor: pointer;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: all 0.2s;
+            border: 2px solid var(--bg-primary, #ffffff);
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+            transition: all var(--transition-fast, 150ms ease);
         }
         
         .range-slider::-moz-range-thumb:hover {
             transform: scale(1.15);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
         }
         
         .range-value {
             min-width: 60px;
             text-align: center;
             font-weight: 600;
-            font-size: 1rem;
-            color: var(--primary, #007bff);
-            padding: 0.25rem 0.5rem;
-            background: #f0f7ff;
-            border-radius: 4px;
+            font-size: var(--font-size-base, 1rem);
+            color: var(--primary-500, #3b82f6);
+            padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+            background: var(--primary-50, #eff6ff);
+            border-radius: var(--radius-sm, 0.375rem);
         }
         
         .range-labels {
             display: flex;
             justify-content: space-between;
             font-size: 0.875rem;
-            color: #6c757d;
-            padding: 0 0.25rem;
+            color: var(--text-secondary, #72746F);
+            padding: 0 var(--space-1, 0.25rem);
         }
         CSS;
     }
@@ -259,6 +259,24 @@ class Range extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if ($value === null || $value === '') {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Show numeric value
+        $number = is_numeric($value) ? (float)$value : $value;
+        if (is_float($number) && $number == (int)$number) {
+            $number = (int)$number;
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars((string)$number, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '80px'; // Range fields are narrow (just numeric value)
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

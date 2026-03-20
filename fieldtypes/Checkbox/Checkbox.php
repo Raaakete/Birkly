@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Checkbox;
+namespace Birkly\FieldTypes\Checkbox;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Checkbox extends BaseField {
     public function getType(): string {
@@ -26,6 +26,7 @@ class Checkbox extends BaseField {
 
     public function getCSS(): string {
         return <<<'CSS'
+        /* Checkbox Fieldtype - Uses system CSS variables */
         .checkbox-field-wrapper {
             display: flex;
             align-items: center;
@@ -53,8 +54,8 @@ class Checkbox extends BaseField {
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
-            transition: 0.3s;
+            background-color: var(--border-medium, #e5e7eb);
+            transition: var(--transition-base, 0.3s ease);
             border-radius: 28px;
         }
         
@@ -65,14 +66,14 @@ class Checkbox extends BaseField {
             width: 20px;
             left: 4px;
             bottom: 4px;
-            background-color: white;
-            transition: 0.3s;
+            background-color: var(--bg-primary, #ffffff);
+            transition: var(--transition-base, 0.3s ease);
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.2));
         }
         
         .checkbox-switch-input:checked + .checkbox-switch-slider {
-            background-color: var(--primary, #007bff);
+            background-color: var(--success-500, #22c55e);
         }
         
         .checkbox-switch-input:checked + .checkbox-switch-slider:before {
@@ -80,7 +81,7 @@ class Checkbox extends BaseField {
         }
         
         .checkbox-switch-input:focus + .checkbox-switch-slider {
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
         }
         CSS;
     }
@@ -126,5 +127,17 @@ class Checkbox extends BaseField {
 
     public function processLoadedValue($value) {
         return (bool)$value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Checkbox shows Yes/No or checkmark
+        if ($value === true || $value === '1' || $value === 1 || $value === 'true') {
+            return '<span class="ft-list-badge" style="background:var(--success-50, #d1fae5);color:var(--success-700, #065f46);">✓</span>';
+        }
+        return '<span class="ft-list-empty">–</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '60px'; // Checkbox fields are very narrow (just Yes/No)
     }
 } 

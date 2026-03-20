@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Map;
+namespace Birkly\FieldTypes\Map;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Map extends BaseField {
     public function getType(): string {
@@ -118,21 +118,21 @@ class Map extends BaseField {
         .map-field {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--space-3, 0.75rem);
         }
         .map-preview {
-            background: #f8f9fa;
+            background: var(--bg-secondary, #fafafa);
             position: relative;
         }
         .map-controls {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--space-3, 0.75rem);
         }
         .map-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: var(--space-3, 0.75rem);
         }
         CSS;
     }
@@ -186,6 +186,33 @@ class Map extends BaseField {
 
     public function processLoadedValue($value) {
         return $this->parseValue($value);
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        $location = $this->parseValue($value);
+        if (!$location) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        $lat = $location['lat'] ?? $location[0] ?? 0;
+        $lng = $location['lng'] ?? $location[1] ?? 0;
+        $address = $location['address'] ?? '';
+        
+        if ($address) {
+            // Truncate address if too long
+            if (mb_strlen($address) > 40) {
+                $address = mb_substr($address, 0, 37) . '...';
+            }
+            return '<span class="ft-list-text">' . htmlspecialchars($address, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+        
+        // Show coordinates
+        $coords = number_format($lat, 6) . ', ' . number_format($lng, 6);
+        return '<span class="ft-list-text" style="font-family:monospace;font-size:11px;">' . htmlspecialchars($coords, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '180px'; // Map fields need space for coordinates display
     }
 }
 

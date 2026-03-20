@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI integration system allows users to connect their own AI accounts (OpenAI, Anthropic, Google, etc.) to HaruCMS. The AI can help create and edit content, but all actions require human approval before execution.
+The AI integration system allows users to connect their own AI accounts (OpenAI, Anthropic, Google, etc.) to Birkly. The AI can help create and edit content, but all actions require human approval before execution.
 
 ## Key Features
 
@@ -88,7 +88,7 @@ The AI integration system allows users to connect their own AI accounts (OpenAI,
 1. User creates MCP connection in admin panel
 2. System generates MCP API key
 3. User configures external AI tool (Claude Desktop, etc.) with MCP server URL and key
-4. External AI can now call HaruCMS tools
+4. External AI can now call Birkly tools
 5. All actions still go through approval queue
 
 ## Security

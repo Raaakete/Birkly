@@ -1,6 +1,6 @@
 <?php
 /**
- * HaruCMS Self-Hosted Analytics API
+ * Birkly Self-Hosted Analytics API
  * Zero-dependency analytics tracking endpoint
  * 
  * Receives tracking data from websites and stores it locally
@@ -12,14 +12,11 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS, GET');
-header('Access-Control-Allow-Headers: Content-Type');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+// SECURITY FIX: Replace wildcard CORS with origin whitelist
+// Analytics API should allow registered domains only
+require_once __DIR__ . '/../core/cors.php';
+set_cors_headers('public');
 
 require_once 'storage.php';
 require_once 'rate_limit.php';
@@ -215,18 +212,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'inline_script') {
     if (empty($trackingId) || empty($cmsUrl)) {
         http_response_code(400);
         header('Content-Type: text/javascript');
-        echo 'console.error("HaruCMS Analytics: trackingId and cmsUrl are required");';
+        echo 'console.error("Birkly Analytics: trackingId and cmsUrl are required");';
         exit;
     }
     
     // Read the analytics script file
-    $scriptPath = __DIR__ . '/../harucms-analytics.js';
+    $scriptPath = __DIR__ . '/../birkly-analytics.js';
     $scriptContent = file_exists($scriptPath) ? file_get_contents($scriptPath) : '';
     
     if (empty($scriptContent)) {
         http_response_code(500);
         header('Content-Type: text/javascript');
-        echo 'console.error("HaruCMS Analytics: Script file not found");';
+        echo 'console.error("Birkly Analytics: Script file not found");';
         exit;
     }
     
@@ -239,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'inline_script') {
     $inlineScript .= "    var cmsUrl = (" . json_encode($cmsUrl) . " || '').replace(/\\/\\$/, '');\n";
     $inlineScript .= "    \n";
     $inlineScript .= "    if (!trackingId || !cmsUrl) {\n";
-    $inlineScript .= "        console.warn('HaruCMS Analytics: trackingId and cmsUrl are required');\n";
+    $inlineScript .= "        console.warn('Birkly Analytics: trackingId and cmsUrl are required');\n";
     $inlineScript .= "        return;\n";
     $inlineScript .= "    }\n";
     $inlineScript .= "    \n";
@@ -548,7 +545,10 @@ function getAnalyticsData($trackingId, $startDate, $endDate) {
     ];
 }
 
-// Default response
-http_response_code(400);
-echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+// Default response - only execute if called directly, not when included
+if (!isset($GLOBALS['__HARU_INTERNAL_CALL']) && basename($_SERVER['PHP_SELF'] ?? '') === basename(__FILE__)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+    exit;
+}
 

@@ -1,7 +1,7 @@
-# HaruCMS Onboarding System - Implementation Plan
+# Birkly Onboarding System - Implementation Plan
 
 ## Overview
-A comprehensive onboarding system to help new users get started with HaruCMS quickly and effectively.
+A comprehensive onboarding system to help new users get started with Birkly quickly and effectively.
 
 ## Core Components
 
@@ -89,7 +89,7 @@ A comprehensive onboarding system to help new users get started with HaruCMS qui
 ### 4. Demo Website/Frontend (Optional)
 **What it is:**
 - Complete example frontend templates
-- Demonstrates HaruCMS templating language
+- Demonstrates Birkly templating language
 - Multiple style options (minimal, corporate, blog, portfolio)
 - Working example site visitors can browse
 
@@ -159,7 +159,7 @@ A comprehensive onboarding system to help new users get started with HaruCMS qui
 - Can be run on first login or manually
 
 **Steps:**
-1. **Welcome** - Introduction to HaruCMS
+1. **Welcome** - Introduction to Birkly
 2. **Site Information** - Title, description, logo upload
 3. **Admin User** - Create first admin (if not exists)
 4. **Security** - Set password policy, enable 2FA option

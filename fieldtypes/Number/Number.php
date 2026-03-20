@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Number;
+namespace Birkly\FieldTypes\Number;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Number extends BaseField {
     protected $min;
@@ -110,6 +110,24 @@ class Number extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if ($value === null || $value === '') {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Format number for display
+        $number = is_numeric($value) ? (float)$value : $value;
+        if (is_float($number) && $number == (int)$number) {
+            $number = (int)$number;
+        }
+        
+        return '<span class="ft-list-text">' . htmlspecialchars((string)$number, ENT_QUOTES, 'UTF-8') . '</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '80px'; // Number fields are narrow
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

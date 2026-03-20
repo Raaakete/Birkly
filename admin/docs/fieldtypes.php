@@ -9,7 +9,7 @@
     <h4>Text</h4>
     <p><strong>Use for:</strong> Short, single-line text</p>
     <p><strong>Examples:</strong> Titles, names, labels, short descriptions</p>
-    <p><strong>Example values:</strong> "Welcome to HaruCMS", "John Doe", "Category: Technology"</p>
+    <p><strong>Example values:</strong> "Welcome to Birkly", "John Doe", "Category: Technology"</p>
 </div>
 
 <div class="example-box">

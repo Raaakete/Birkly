@@ -1,6 +1,6 @@
-// Media Modal System for HaruCMS
-window.HaruCMS = window.HaruCMS || {};
-window.HaruCMS.MediaModal = {
+// Media Modal System for Birkly
+window.Birkly = window.Birkly || {};
+window.Birkly.MediaModal = {
     isOpen: false,
     currentCallback: null,
     
@@ -93,7 +93,7 @@ window.HaruCMS.MediaModal = {
             <div class="media-modal" style="background: white; border-radius: 8px; width: 80%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column;">
                 <div class="media-modal-header" style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin: 0;">Select Media</h3>
-                    <button type="button" class="media-modal-close" onclick="HaruCMS.MediaModal.close()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                    <button type="button" class="media-modal-close" onclick="Birkly.MediaModal.close()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
                 </div>
                 <div class="media-modal-content" style="padding: 20px; flex: 1; overflow-y: auto;">
                     <div class="media-upload-section" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
@@ -107,12 +107,22 @@ window.HaruCMS.MediaModal = {
                     </div>
                 </div>
                 <div class="media-modal-footer" style="padding: 20px; border-top: 1px solid #ddd; text-align: right;">
-                    <button type="button" class="btn btn-secondary" onclick="HaruCMS.MediaModal.close()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="Birkly.MediaModal.close()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         `;
         
         console.log('Modal HTML created:', this.modal.outerHTML.substring(0, 200) + '...');
+
+        // Permission gating (UX only): hide upload controls if user can't upload
+        try {
+            const perms = window.Birkly?.currentUser?.permissions || [];
+            const canUpload = Array.isArray(perms) && (perms.includes('*') || perms.includes('upload') || perms.includes('manage_media'));
+            const uploadSection = this.modal.querySelector('.media-upload-section');
+            if (!canUpload && uploadSection) {
+                uploadSection.style.display = 'none';
+            }
+        } catch (_) {}
         
         // Add event listeners
         this.modal.addEventListener('click', (e) => {
@@ -126,6 +136,16 @@ window.HaruCMS.MediaModal = {
         const fileInput = this.modal.querySelector('#media-upload');
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
+                // Permission gating (UX only): block upload attempt for users without upload permission
+                try {
+                    const perms = window.Birkly?.currentUser?.permissions || [];
+                    const canUpload = Array.isArray(perms) && (perms.includes('*') || perms.includes('upload') || perms.includes('manage_media'));
+                    if (!canUpload) {
+                        window.Birkly?.Utils?.showPermissionDenied?.({ action: 'Upload media' });
+                        e.target.value = '';
+                        return;
+                    }
+                } catch (_) {}
                 this.handleFileUpload(e.target.files[0]);
             });
         }
@@ -271,7 +291,7 @@ window.HaruCMS.MediaModal = {
 };
 
 // Create alias for easier access
-window.MediaModal = window.HaruCMS.MediaModal;
+window.MediaModal = window.Birkly.MediaModal;
 
 // Add CSS for media modal
 const mediaModalCSS = `

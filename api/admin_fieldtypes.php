@@ -1,6 +1,6 @@
 <?php
 /**
- * HaruCMS Admin Fieldtypes API
+ * Birkly Admin Fieldtypes API
  * 
  * Handles dynamic loading and rendering of fieldtypes
  */
@@ -9,26 +9,50 @@
 // When included via admin/index.php, headers are already sent, so skip
 if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     header('Content-Type: application/json');
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
     
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        exit(0);
-    }
+    // SECURITY FIX: Replace wildcard CORS with origin whitelist
+    require_once __DIR__ . '/../core/cors.php';
+    set_cors_headers('admin');
 }
 
 require_once __DIR__ . '/../fieldtypes/BaseField.php';
 
+// Load plugins to ensure plugin fieldtypes are registered
+require_once __DIR__ . '/../core/plugins.php';
+if (function_exists('load_plugins')) {
+    load_plugins();
+}
+
 // Autoload fieldtypes
 spl_autoload_register(function ($class) {
-    // Check if it's a HaruCMS fieldtype
-    if (strpos($class, 'HaruCMS\\FieldTypes\\') === 0) {
-        $fieldtypeName = str_replace('HaruCMS\\FieldTypes\\', '', $class);
+    // Check if it's a Birkly fieldtype
+    if (strpos($class, 'Birkly\\FieldTypes\\') === 0) {
+        $fieldtypeName = str_replace('Birkly\\FieldTypes\\', '', $class);
         $fieldtypeName = str_replace('\\', '/', $fieldtypeName);
         $file = __DIR__ . "/../fieldtypes/{$fieldtypeName}.php";
         if (file_exists($file)) {
             require_once $file;
+        }
+    }
+    
+    // Check if it's a plugin fieldtype (e.g., UserManagement\Fieldtypes\User)
+    if (strpos($class, '\\') !== false && strpos($class, 'Fieldtypes\\') !== false) {
+        // Try to find the class file in plugins
+        $parts = explode('\\', $class);
+        $fieldtypeName = end($parts);
+        $pluginName = $parts[0] ?? '';
+        
+        // Look in plugins directory
+        $pluginsDir = __DIR__ . '/../plugins';
+        if (is_dir($pluginsDir)) {
+            $pluginDirs = glob($pluginsDir . '/*', GLOB_ONLYDIR);
+            foreach ($pluginDirs as $pluginDir) {
+                $fieldtypeFile = $pluginDir . '/fieldtypes/' . $fieldtypeName . '/' . $fieldtypeName . '.php';
+                if (file_exists($fieldtypeFile)) {
+                    require_once $fieldtypeFile;
+                    break;
+                }
+            }
         }
     }
 });
@@ -36,6 +60,37 @@ spl_autoload_register(function ($class) {
 function getFieldtypeClass($fieldtypeName) {
     // Normalize fieldtype name (handle various formats)
     $normalized = strtolower(trim($fieldtypeName));
+    
+    // First, check plugin-registered fieldtypes (Fieldtype Shelf)
+    if (function_exists('is_plugin_fieldtype') && is_plugin_fieldtype($normalized)) {
+        $plugin_fieldtypes = get_plugin_fieldtypes();
+        if (isset($plugin_fieldtypes[$normalized])) {
+            $class = $plugin_fieldtypes[$normalized]['class'];
+            // Load class file if needed
+            if (!class_exists($class)) {
+                // Try to find and load the class file
+                $classParts = explode('\\', $class);
+                $fieldtypeName = end($classParts);
+                $pluginName = $classParts[0] ?? '';
+                
+                $pluginsDir = __DIR__ . '/../plugins';
+                if (is_dir($pluginsDir)) {
+                    $pluginDirs = glob($pluginsDir . '/*', GLOB_ONLYDIR);
+                    foreach ($pluginDirs as $pluginDir) {
+                        $fieldtypeFile = $pluginDir . '/fieldtypes/' . $fieldtypeName . '/' . $fieldtypeName . '.php';
+                        if (file_exists($fieldtypeFile)) {
+                            require_once $fieldtypeFile;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (class_exists($class)) {
+                return $class;
+            }
+        }
+    }
     
     // Handle special aliases (these are just convenience mappings, not hardcoded fieldtypes)
     $aliases = [
@@ -88,7 +143,7 @@ function getFieldtypeClass($fieldtypeName) {
     
     // Construct class name from directory name
     // Directory name should match class name (e.g., "Text" directory => "Text" class)
-    $className = "HaruCMS\\FieldTypes\\{$matchedName}\\{$matchedName}";
+    $className = "Birkly\\FieldTypes\\{$matchedName}\\{$matchedName}";
     
     // Try loading the file
     $fieldtypeFile = "{$matchedDir}/{$matchedName}.php";
@@ -135,14 +190,80 @@ function renderFieldtype($fieldtypeName, $config) {
 }
 
 function getAvailableFieldtypes() {
-    $fieldtypesDir = __DIR__ . '/../fieldtypes';
     $fieldtypes = [];
+    
+    // First, get plugin-registered fieldtypes
+    if (function_exists('get_plugin_fieldtypes')) {
+        $plugin_fieldtypes = get_plugin_fieldtypes();
+        foreach ($plugin_fieldtypes as $type => $data) {
+            $className = $data['class'];
+            
+            // Load class if needed
+            if (!class_exists($className)) {
+                // Try to find and load the class file
+                $classParts = explode('\\', $className);
+                $fieldtypeName = end($classParts);
+                
+                $pluginsDir = __DIR__ . '/../plugins';
+                if (is_dir($pluginsDir)) {
+                    $pluginDirs = glob($pluginsDir . '/*', GLOB_ONLYDIR);
+                    foreach ($pluginDirs as $pluginDir) {
+                        $fieldtypeFile = $pluginDir . '/fieldtypes/' . $fieldtypeName . '/' . $fieldtypeName . '.php';
+                        if (file_exists($fieldtypeFile)) {
+                            require_once $fieldtypeFile;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (class_exists($className)) {
+                try {
+                    // Create a temporary instance to get config
+                    $tempConfig = [
+                        'name' => 'temp',
+                        'label' => ucfirst($type),
+                        'required' => false
+                    ];
+                    $fieldtype = new $className($tempConfig);
+                    $config = $fieldtype->getAdminConfig();
+                    $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
+                    
+                    $fieldtypes[] = [
+                        'name' => $type,
+                        'type' => $type,
+                        'label' => ucwords(str_replace(['_', '-'], ' ', $type)),
+                        'category' => $category,
+                        'config' => $config
+                    ];
+                } catch (Exception $e) {
+                    error_log("Error loading plugin fieldtype '{$type}': " . $e->getMessage());
+                }
+            }
+        }
+    }
+    
+    // Then, get directory-discovered fieldtypes
+    $fieldtypesDir = __DIR__ . '/../fieldtypes';
     
     if (is_dir($fieldtypesDir)) {
         $dirs = glob($fieldtypesDir . '/*', GLOB_ONLYDIR);
         foreach ($dirs as $dir) {
             $fieldtypeName = basename($dir);
             $className = getFieldtypeClass($fieldtypeName);
+            
+            // Skip if already added from plugin
+            $normalized = strtolower($fieldtypeName);
+            $alreadyAdded = false;
+            foreach ($fieldtypes as $ft) {
+                if (strtolower($ft['name']) === $normalized || strtolower($ft['type']) === $normalized) {
+                    $alreadyAdded = true;
+                    break;
+                }
+            }
+            if ($alreadyAdded) {
+                continue;
+            }
             
             if ($className) {
                 try {

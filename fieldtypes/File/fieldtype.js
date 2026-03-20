@@ -22,7 +22,7 @@
         if (selectBtn) {
             selectBtn.addEventListener('click', function() {
                 // Check if media modal exists (try both possible locations)
-                const mediaModal = window.HaruCMS?.MediaModal || window.MediaModal;
+                const mediaModal = window.Birkly?.MediaModal || window.MediaModal;
                 if (mediaModal && typeof mediaModal.open === 'function') {
                     mediaModal.open({
                         onSelect: function(media) {

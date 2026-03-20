@@ -1,8 +1,8 @@
-# Using Ollama with HaruCMS
+# Using Ollama with Birkly
 
 ## Quick Setup
 
-Ollama is already fully supported in HaruCMS! You don't need MCP to use Ollama.
+Ollama is already fully supported in Birkly! You don't need MCP to use Ollama.
 
 ### Step 1: Install and Run Ollama
 
@@ -17,9 +17,9 @@ Ollama is already fully supported in HaruCMS! You don't need MCP to use Ollama.
    ollama pull codellama
    ```
 
-### Step 2: Add Ollama Connection in HaruCMS
+### Step 2: Add Ollama Connection in Birkly
 
-1. Go to **Settings > AI Connections** in your HaruCMS admin panel
+1. Go to **Settings > AI Connections** in your Birkly admin panel
 2. Click **"+ Add Connection"**
 3. Select **"Ollama (Local)"** as the provider
 4. Configure:
@@ -37,7 +37,7 @@ Ollama is already fully supported in HaruCMS! You don't need MCP to use Ollama.
 
 1. Click the **yellow AI button** in the bottom-right corner of any admin page
 2. Select your Ollama connection
-3. Start chatting! The AI will have full access to your HaruCMS system context
+3. Start chatting! The AI will have full access to your Birkly system context
 
 ## Available Models
 
@@ -58,11 +58,11 @@ To use a custom model, just type its name in the model field when creating the c
 **Ollama doesn't support MCP** because:
 - Ollama is a local LLM server, not an MCP client
 - MCP is a protocol for connecting AI assistants (like Claude Desktop) to external tools
-- HaruCMS already provides all the functionality you need through direct integration
+- Birkly already provides all the functionality you need through direct integration
 
 ## What You Get
 
-When using Ollama directly in HaruCMS, you get:
+When using Ollama directly in Birkly, you get:
 
 ✅ **Full system context** - The AI knows about your collections, schemas, and documentation  
 ✅ **Content creation** - Can create and edit entries  
@@ -104,7 +104,7 @@ This is actually **better** than MCP because:
    ollama list
    ```
 
-3. **Use exact model name**: Make sure the model name in HaruCMS matches exactly what Ollama shows
+3. **Use exact model name**: Make sure the model name in Birkly matches exactly what Ollama shows
 
 ### Slow Responses
 
@@ -118,7 +118,7 @@ If Ollama runs on a different machine or port:
 
 1. **Remote Ollama**: Change API URL to `http://your-server-ip:11434/api/chat`
 2. **Custom Port**: Change API URL to `http://localhost:YOUR_PORT/api/chat`
-3. **Docker**: Use `http://host.docker.internal:11434/api/chat` if HaruCMS is in Docker
+3. **Docker**: Use `http://host.docker.internal:11434/api/chat` if Birkly is in Docker
 
 ## Comparison: Ollama Direct vs MCP
 
@@ -130,5 +130,5 @@ If Ollama runs on a different machine or port:
 | Maintenance | ⭐⭐⭐ Easy | ⭐⭐ Needs bridge updates |
 | **Recommendation** | ✅ **Use this!** | ❌ Not needed |
 
-**Conclusion**: Just use Ollama directly in HaruCMS. It's simpler, faster, and gives you everything you need!
+**Conclusion**: Just use Ollama directly in Birkly. It's simpler, faster, and gives you everything you need!
 

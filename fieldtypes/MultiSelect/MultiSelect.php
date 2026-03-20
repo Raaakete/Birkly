@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\MultiSelect;
+namespace Birkly\FieldTypes\MultiSelect;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class MultiSelect extends BaseField {
     protected $options;
@@ -142,51 +142,51 @@ class MultiSelect extends BaseField {
     public function getCSS(): string {
         return <<<'CSS'
         .multiselect-field {
-            border: 1px solid var(--border-color, #ddd);
-            border-radius: 6px;
-            padding: 12px;
-            background: #fff;
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-md, 0.5rem);
+            padding: var(--space-3, 0.75rem);
+            background: var(--bg-primary, #ffffff);
         }
         
         .multiselect-badges {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: var(--space-2, 0.5rem);
+            margin-bottom: var(--space-3, 0.75rem);
             min-height: 40px;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 4px;
+            padding: var(--space-2, 0.5rem);
+            background: var(--bg-secondary, #fafafa);
+            border-radius: var(--radius-sm, 0.375rem);
         }
         
         .multiselect-badges:empty::before {
             content: "No options selected";
-            color: #999;
+            color: var(--text-tertiary, #9ca3af);
             font-style: italic;
             font-size: 0.875rem;
         }
         
         .multiselect-badge {
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
-            border-radius: 20px;
-            padding: 6px 14px;
+            background: var(--primary-50, #eff6ff);
+            border: 1px solid var(--primary-200, #bfdbfe);
+            border-radius: var(--radius-full, 9999px);
+            padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
             font-size: 0.875rem;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            color: #1976d2;
+            gap: var(--space-2, 0.5rem);
+            color: var(--primary-700, #1d4ed8);
         }
         
         .badge-remove {
             cursor: pointer;
-            color: #1976d2;
+            color: var(--primary-700, #1d4ed8);
             font-weight: bold;
-            font-size: 18px;
+            font-size: 1.125rem;
             line-height: 1;
-            padding: 0 4px;
-            border-radius: 50%;
-            transition: all 0.2s;
+            padding: 0 var(--space-1, 0.25rem);
+            border-radius: var(--radius-full, 50%);
+            transition: all var(--transition-fast, 150ms ease);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -195,38 +195,38 @@ class MultiSelect extends BaseField {
         }
         
         .badge-remove:hover {
-            background: #dc3545;
-            color: white;
+            background: var(--error-500, #ef4444);
+            color: var(--text-inverse, #ffffff);
         }
         
         .multiselect-options-list {
             display: flex !important;
             flex-direction: column !important;
-            gap: 0.375rem !important;
+            gap: var(--space-2, 0.5rem) !important;
             max-height: 250px !important;
             overflow-y: auto !important;
-            padding: 6px !important;
-            background: #fafafa !important;
-            border-radius: 4px !important;
+            padding: var(--space-2, 0.5rem) !important;
+            background: var(--bg-secondary, #fafafa) !important;
+            border-radius: var(--radius-sm, 0.375rem) !important;
         }
         
         .multiselect-option-item {
-            background: #fff !important;
-            border: 1px solid #e0e0e0 !important;
-            border-radius: 3px !important;
-            transition: all 0.2s !important;
+            background: var(--bg-primary, #ffffff) !important;
+            border: 1px solid var(--border-light, #f3f4f6) !important;
+            border-radius: var(--radius-sm, 0.375rem) !important;
+            transition: all var(--transition-fast, 150ms ease) !important;
         }
         
         .multiselect-option-item:hover {
-            border-color: var(--primary, #007bff) !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+            border-color: var(--primary-500, #3b82f6) !important;
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1)) !important;
         }
         
         .multiselect-option-label {
             display: flex !important;
             align-items: center !important;
-            gap: 0.5rem !important;
-            padding: 0.4375rem 0.625rem !important;
+            gap: var(--space-2, 0.5rem) !important;
+            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem) !important;
             cursor: pointer !important;
             margin: 0 !important;
         }
@@ -241,14 +241,14 @@ class MultiSelect extends BaseField {
         
         .multiselect-option-text {
             font-size: 0.875rem !important;
-            color: #333 !important;
+            color: var(--text-primary, #20221D) !important;
             user-select: none !important;
             line-height: 1.4 !important;
         }
         
         .multiselect-option-checkbox:checked + .multiselect-option-text {
             font-weight: 500;
-            color: var(--primary, #007bff);
+            color: var(--primary-500, #3b82f6);
         }
         CSS;
     }
@@ -304,6 +304,49 @@ class MultiSelect extends BaseField {
         }
         
         return is_array($value) ? $value : [];
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Handle case where value might be a JSON string
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $value = $decoded;
+            } else {
+                $value = [];
+            }
+        }
+        
+        if (!is_array($value)) {
+            $value = [];
+        }
+        
+        $count = count($value);
+        if ($count === 0) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Show selected option labels
+        $labels = [];
+        foreach (array_slice($value, 0, 3) as $val) {
+            foreach ($this->options as $opt) {
+                if (($opt['value'] ?? '') === $val) {
+                    $labels[] = $opt['label'] ?? $val;
+                    break;
+                }
+            }
+        }
+        
+        $previewText = implode(', ', $labels);
+        if ($count > 3) {
+            $previewText .= '...';
+        }
+        
+        return '<span class="ft-list-badge">' . $count . ' selected</span> <span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);margin-left:4px;">(' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . ')</span>';
+    }
+
+    public function getTableMinWidth(): string {
+        return '180px'; // MultiSelect fields need space for multiple selected items
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

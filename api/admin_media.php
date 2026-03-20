@@ -1,16 +1,29 @@
 <?php
 header('Content-Type: application/json');
 
-// Enable CORS for development
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+// SECURITY FIX: Replace wildcard CORS with origin whitelist
+require_once __DIR__ . '/../core/cors.php';
+set_cors_headers('admin');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
+// SECURITY FIX: Require CSRF protection for state-changing operations
+require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/auth.php';
+haru_secure_session_start();
 
 $action = $_GET['action'] ?? 'list';
+
+// SECURITY: enforce permissions by media action
+// - list/folders: read_media (viewer allowed)
+// - upload: upload
+// - all other actions mutate media/folders: manage_media
+if ($action === 'list' || $action === 'folders') {
+    requireAuth('read_media');
+} elseif ($action === 'upload') {
+    requireAuth('upload');
+} else {
+    requireAuth('manage_media');
+}
 
 switch ($action) {
     case 'list':
@@ -226,6 +239,12 @@ function scanFoldersRecursively($baseDir, $relativePath) {
 }
 
 function createFolder() {
+    // SECURITY FIX: Require CSRF token
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return ['error' => 'Invalid CSRF token'];
+    }
+    
     $folderName = $_POST['name'] ?? '';
     if (empty($folderName)) {
         return ['error' => 'Folder name is required'];
@@ -253,8 +272,36 @@ function createFolder() {
 }
 
 function uploadMedia() {
+    // SECURITY FIX: Require CSRF token for file uploads
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return [
+            'status'  => 'error',
+            'message' => 'Invalid CSRF token'
+        ];
+    }
+    
+    // SECURITY FIX: Add rate limiting for file uploads
+    require_once __DIR__ . '/rate_limit.php';
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userId = $_SESSION['user']['id'] ?? $ip;
+    
+    // Rate limit: 30 uploads per 5 minutes per user/IP
+    $rateLimiter = new RateLimiter('admin_media_upload_' . $userId, 30, 300);
+    if (!$rateLimiter->check()) {
+        $retryAfter = $rateLimiter->getRetryAfter();
+        return [
+            'status'      => 'error',
+            'message'     => 'Too many upload attempts. Please try again later.',
+            'retry_after' => $retryAfter
+        ];
+    }
+    
     if (!isset($_FILES['file'])) {
-        return ['error' => 'No file uploaded'];
+        return [
+            'status'  => 'error',
+            'message' => 'No file uploaded'
+        ];
     }
     
     $file = $_FILES['file'];
@@ -275,7 +322,7 @@ function uploadMedia() {
         $mediaDir = $folderPath;
     }
     
-    // Validate file
+    // SECURITY FIX: Validate file type using detected MIME type from file content
     $allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
         'video/mp4', 'video/webm', 'video/ogg',
@@ -285,12 +332,34 @@ function uploadMedia() {
         'application/zip', 'application/x-rar-compressed'
     ];
     
-    if (!in_array($file['type'], $allowedTypes)) {
-        return ['error' => 'Invalid file type. Only images, videos, audio, documents, and archives are allowed.'];
+    // Always use finfo_file() to detect MIME type from file content, not client-provided type
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $detectedMimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    if (!in_array($detectedMimeType, $allowedTypes)) {
+        return [
+            'status'  => 'error',
+            'message' => 'Invalid file type. Only images, videos, audio, documents, and archives are allowed.'
+        ];
+    }
+    
+    // Additional validation for images
+    if (strpos($detectedMimeType, 'image/') === 0) {
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            return [
+                'status'  => 'error',
+                'message' => 'Invalid image file. File does not appear to be a valid image.'
+            ];
+        }
     }
     
     if ($file['size'] > 50 * 1024 * 1024) { // 50MB limit
-        return ['error' => 'File too large. Maximum size is 50MB.'];
+        return [
+            'status'  => 'error',
+            'message' => 'File too large. Maximum size is 50MB.'
+        ];
     }
     
     // Generate unique filename
@@ -299,54 +368,63 @@ function uploadMedia() {
     $filepath = $mediaDir . '/' . $filename;
     
     // Move uploaded file
-    if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        $mediaId = generateMediaId($filename);
-        
-        // Get file info
-        $fileType = mime_content_type($filepath);
-        $fileSize = filesize($filepath);
-        $dimensions = getImageDimensions($filepath, $fileType);
-        
-        // Save metadata
-        $metadata = [
-            'id' => $mediaId,
-            'name' => $file['name'],
-            'title' => $_POST['title'] ?? $file['name'],
-            'url' => '/media/' . ($folder ? $folder . '/' : '') . $filename,
-            'type' => $fileType,
-            'size' => $fileSize,
-            'created_at' => date('Y-m-d H:i:s'),
-            'uploaded_by' => 'Admin',
-            'folder' => $folder,
-            'dimensions' => $dimensions,
-            'ext' => $extension
-        ];
-        
-        saveMetadata($metadata);
-        
+    if (!move_uploaded_file($file['tmp_name'], $filepath)) {
         return [
-            'status' => 'ok',
-            'data' => [
-                'id' => $mediaId,
-                'name' => $file['name'],
-                'title' => $metadata['title'],
-                'url' => $metadata['url'],
-                'type' => $fileType,
-                'category' => getMediaCategory($fileType),
-                'size' => $fileSize,
-                'size_formatted' => formatFileSize($fileSize),
-                'uploaded_at' => $metadata['created_at'],
-                'uploaded_by' => $metadata['uploaded_by'],
-                'folder' => $folder,
-                'dimensions' => $dimensions
-            ]
+            'status'  => 'error',
+            'message' => 'Failed to save file'
         ];
-    } else {
-        return ['error' => 'Failed to save file'];
     }
+    
+    $mediaId = generateMediaId($filename);
+    
+    // Get file info
+    $fileType = mime_content_type($filepath);
+    $fileSize = filesize($filepath);
+    $dimensions = getImageDimensions($filepath, $fileType);
+    
+    // Save metadata
+    $metadata = [
+        'id'         => $mediaId,
+        'name'       => $file['name'],
+        'title'      => $_POST['title'] ?? $file['name'],
+        'url'        => '/media/' . ($folder ? $folder . '/' : '') . $filename,
+        'type'       => $fileType,
+        'size'       => $fileSize,
+        'created_at' => date('Y-m-d H:i:s'),
+        'uploaded_by'=> 'Admin',
+        'folder'     => $folder,
+        'dimensions' => $dimensions,
+        'ext'        => $extension
+    ];
+    
+    saveMetadata($metadata);
+    
+    return [
+        'status' => 'ok',
+        'data'   => [
+            'id'              => $mediaId,
+            'name'            => $file['name'],
+            'title'           => $metadata['title'],
+            'url'             => $metadata['url'],
+            'type'            => $fileType,
+            'category'        => getMediaCategory($fileType),
+            'size'            => $fileSize,
+            'size_formatted'  => formatFileSize($fileSize),
+            'uploaded_at'     => $metadata['created_at'],
+            'uploaded_by'     => $metadata['uploaded_by'],
+            'folder'          => $folder,
+            'dimensions'      => $dimensions
+        ]
+    ];
 }
 
 function deleteMedia() {
+    // SECURITY FIX: Require CSRF token for deletions
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return ['error' => 'Invalid CSRF token'];
+    }
+    
     $mediaId = $_POST['id'] ?? '';
     if (empty($mediaId)) {
         return ['error' => 'No media ID provided'];
@@ -376,6 +454,12 @@ function deleteMedia() {
 }
 
 function moveMedia() {
+    // SECURITY FIX: Require CSRF token
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return ['error' => 'Invalid CSRF token'];
+    }
+    
     $mediaId = $_POST['id'] ?? '';
     $folder = $_POST['folder'] ?? '';
     
@@ -419,6 +503,12 @@ function moveMedia() {
 }
 
 function updateMedia() {
+    // SECURITY FIX: Require CSRF token
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return ['error' => 'Invalid CSRF token'];
+    }
+    
     $mediaId = $_POST['id'] ?? '';
     $title = $_POST['title'] ?? '';
     
@@ -506,6 +596,12 @@ function saveMetadata($metadata) {
 }
 
 function renameFolder() {
+    // SECURITY FIX: Require CSRF token
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return ['error' => 'Invalid CSRF token'];
+    }
+    
     $oldName = $_POST['old_name'] ?? '';
     $newName = $_POST['new_name'] ?? '';
     
@@ -543,6 +639,12 @@ function renameFolder() {
 }
 
 function deleteFolder() {
+    // SECURITY FIX: Require CSRF token
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return ['error' => 'Invalid CSRF token'];
+    }
+    
     $folderName = $_POST['name'] ?? '';
     $handleFiles = $_POST['handle_files'] ?? 'move'; // 'move' or 'delete'
     
@@ -636,6 +738,12 @@ function deleteFolder() {
 }
 
 function moveToFolder() {
+    // SECURITY FIX: Require CSRF token
+    $csrf = $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        return ['error' => 'Invalid CSRF token'];
+    }
+    
     $mediaId = $_POST['id'] ?? '';
     $folder = $_POST['folder'] ?? '';
     

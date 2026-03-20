@@ -1,0 +1,241 @@
+/* ============================================
+   Fieldtype CSS API
+   ============================================
+   
+   This file provides common CSS patterns and utilities
+   specifically for fieldtype developers.
+   
+   Fieldtypes should use system CSS variables and classes
+   from the main admin CSS, but this file provides
+   fieldtype-specific patterns and helpers.
+   
+   ============================================ */
+
+/* ============================================
+   Fieldtype Container Patterns
+   ============================================ */
+
+/* Standard fieldtype wrapper */
+.fieldtype-wrapper {
+  background: var(--bg-elevated, #ffffff);
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--radius-md, 0.5rem);
+  padding: var(--space-4, 1rem);
+  position: relative;
+}
+
+/* Fieldtype with toolbar */
+.fieldtype-with-toolbar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated, #ffffff);
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--radius-md, 0.5rem);
+  overflow: hidden;
+}
+
+/* ============================================
+   Fieldtype Toolbar Pattern
+   ============================================ */
+
+.fieldtype-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-3, 0.75rem);
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  background: var(--bg-secondary, #fafafa);
+  flex-wrap: wrap;
+}
+
+.fieldtype-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  padding-right: var(--space-3, 0.75rem);
+  margin-right: var(--space-3, 0.75rem);
+  border-right: 1px solid var(--border-light, #f3f4f6);
+}
+
+.fieldtype-toolbar-group:last-child {
+  margin-right: 0;
+  padding-right: 0;
+  border-right: none;
+}
+
+.fieldtype-toolbar-spacer {
+  flex: 1;
+}
+
+/* ============================================
+   Fieldtype Content Area
+   ============================================ */
+
+.fieldtype-content {
+  padding: var(--space-4, 1rem);
+  min-height: 200px;
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #20221D);
+}
+
+.fieldtype-content:focus-within {
+  outline: 2px solid var(--primary-500, #3b82f6);
+  outline-offset: -2px;
+}
+
+/* ============================================
+   Fieldtype Preview/Display Patterns
+   ============================================ */
+
+/* Grid preview (for media, gallery, etc.) */
+.fieldtype-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-3, 0.75rem);
+  margin-top: var(--space-4, 1rem);
+}
+
+/* List preview */
+.fieldtype-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  margin-top: var(--space-4, 1rem);
+}
+
+/* Preview item */
+.fieldtype-preview-item {
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--radius-sm, 0.375rem);
+  padding: var(--space-2, 0.5rem);
+  background: var(--bg-primary, #ffffff);
+  transition: border-color var(--transition-fast, 150ms ease);
+  position: relative;
+}
+
+.fieldtype-preview-item:hover {
+  border-color: var(--primary-500, #3b82f6);
+}
+
+.fieldtype-preview-item-actions {
+  position: absolute;
+  top: var(--space-1, 0.25rem);
+  right: var(--space-1, 0.25rem);
+  display: flex;
+  gap: var(--space-1, 0.25rem);
+  opacity: 0;
+  transition: opacity var(--transition-fast, 150ms ease);
+}
+
+.fieldtype-preview-item:hover .fieldtype-preview-item-actions {
+  opacity: 1;
+}
+
+/* ============================================
+   Fieldtype Empty State
+   ============================================ */
+
+.fieldtype-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8, 2rem);
+  text-align: center;
+  color: var(--text-secondary, #72746F);
+  min-height: 200px;
+}
+
+.fieldtype-empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4, 1rem);
+  opacity: 0.5;
+}
+
+.fieldtype-empty-state-text {
+  font-size: 0.875rem;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+/* ============================================
+   Fieldtype Loading State
+   ============================================ */
+
+.fieldtype-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8, 2rem);
+  min-height: 200px;
+  color: var(--text-secondary, #72746F);
+}
+
+.fieldtype-loading::after {
+  content: '';
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--border-light, #f3f4f6);
+  border-top-color: var(--primary-500, #3b82f6);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Fieldtype Error State
+   ============================================ */
+
+.fieldtype-error {
+  padding: var(--space-4, 1rem);
+  background: var(--error-50, #fef2f2);
+  border: 1px solid var(--error-200, #fecaca);
+  border-radius: var(--radius-md, 0.5rem);
+  color: var(--error-700, #b91c1c);
+  font-size: 0.875rem;
+  margin-top: var(--space-2, 0.5rem);
+}
+
+/* ============================================
+   Fieldtype Help Text
+   ============================================ */
+
+.fieldtype-help {
+  margin-top: var(--space-2, 0.5rem);
+  font-size: 0.75rem;
+  color: var(--text-secondary, #72746F);
+  line-height: 1.4;
+}
+
+/* ============================================
+   Fieldtype Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .fieldtype-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .fieldtype-toolbar-group {
+    border-right: none;
+    border-bottom: 1px solid var(--border-light, #f3f4f6);
+    padding-right: 0;
+    margin-right: 0;
+    padding-bottom: var(--space-2, 0.5rem);
+    margin-bottom: var(--space-2, 0.5rem);
+  }
+  
+  .fieldtype-toolbar-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  
+  .fieldtype-preview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--space-2, 0.5rem);
+  }
+}
+

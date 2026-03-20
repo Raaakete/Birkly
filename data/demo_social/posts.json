@@ -1,0 +1,49 @@
+{
+    "posts": [
+        {
+            "id": "p_1bdc0e6f0a69",
+            "author_id": "user_44db31501b09115a50e905bae0c8e5aa",
+            "content": "Hello Birkly! This is Alice. Welcome to the demo social feed.",
+            "created_at": "2026-01-12T14:35:23+00:00",
+            "likes": [
+                "user_8c71e1efdfdc31b61a1616d8f22613b6"
+            ],
+            "comments": [
+                {
+                    "id": "c_bc13e98267f4",
+                    "user": {
+                        "id": "user_8c71e1efdfdc31b61a1616d8f22613b6",
+                        "name": "OttoDerRitter",
+                        "username": "OttoDerRitter"
+                    },
+                    "text": "thats cool!",
+                    "created_at": "2026-01-12T14:37:44+00:00"
+                }
+            ]
+        },
+        {
+            "id": "p_66016ffbc2ea",
+            "author_id": "user_d7c33bc667a22164bc62615c29d4fa89",
+            "content": "Bob here. Try following people, liking posts, and leaving comments.",
+            "created_at": "2026-01-12T14:35:23+00:00",
+            "likes": [],
+            "comments": []
+        },
+        {
+            "id": "p_794ff6f38b2e",
+            "author_id": "user_279ed464d96a4d9ce58fa804832a4d28",
+            "content": "Carol says hi! This demo is seeded so new users can connect immediately.",
+            "created_at": "2026-01-12T14:35:23+00:00",
+            "likes": [],
+            "comments": []
+        },
+        {
+            "id": "p_6d9c6ae041f85063",
+            "author_id": "user_d0e23ba734b202f59ea3148bd4084257",
+            "content": "Hi I'm Paul and new to this site",
+            "created_at": "2026-01-12T15:07:44+00:00",
+            "likes": [],
+            "comments": []
+        }
+    ]
+}

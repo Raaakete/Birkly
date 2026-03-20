@@ -1,4 +1,4 @@
-# HaruCMS Ideas & Feature Inspirations
+# Birkly Ideas & Feature Inspirations
 
 ## Fieldtypes & Content Blocks
 - Multi-item fieldtype (repeatable fields/groups)

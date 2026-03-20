@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * MCP Bridge for HaruCMS
- * Connects Claude Desktop (stdio MCP) to HaruCMS (HTTP MCP)
+ * MCP Bridge for Birkly
+ * Connects Claude Desktop (stdio MCP) to Birkly (HTTP MCP)
  * 
  * Usage:
  *   1. Make this file executable: chmod +x mcp-bridge.js
  *   2. Set environment variables:
- *      - HARUCMS_URL: Your HaruCMS URL (e.g., http://localhost:8080)
- *      - HARUCMS_API_KEY: Your MCP API key from HaruCMS
+ *      - HARUCMS_URL: Your Birkly URL (e.g., http://localhost:8080)
+ *      - HARUCMS_API_KEY: Your MCP API key from Birkly
  *   3. Configure in Claude Desktop config file
  */
 
@@ -47,7 +47,7 @@ process.stdin.on('data', async (chunk) => {
               resources: {}
             },
             serverInfo: {
-              name: 'HaruCMS MCP Server',
+              name: 'Birkly MCP Server',
               version: '1.0.0'
             }
           }
@@ -56,12 +56,12 @@ process.stdin.on('data', async (chunk) => {
         continue;
       }
       
-      // Forward other requests to HaruCMS HTTP endpoint
-      const harucmsUrl = new URL('/api/mcp_server.php', HARUCMS_URL);
-      harucmsUrl.searchParams.set('method', message.method);
-      harucmsUrl.searchParams.set('api_key', API_KEY);
+      // Forward other requests to Birkly HTTP endpoint
+      const birklyUrl = new URL('/api/mcp_server.php', HARUCMS_URL);
+      birklyUrl.searchParams.set('method', message.method);
+      birklyUrl.searchParams.set('api_key', API_KEY);
       
-      const urlObj = new URL(harucmsUrl.toString());
+      const urlObj = new URL(birklyUrl.toString());
       const options = {
         hostname: urlObj.hostname,
         port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),

@@ -1,251 +1,56 @@
+<!-- Activity Feed Page -->
 <div class="page-header pt-m pb-m">
-  <div class="breadcrumbs"><span class="current">Activity</span></div>
+    <div class="page-header-left">
+        <div class="breadcrumbs">
+            <a href="{admin_url 'dashboard'}">{translate 'admin.dashboard'}</a>
+            <span class="separator">›</span>
+            <span class="current">{translate 'admin.activity'}</span>
+        </div>
+    </div>
+    <div class="page-header-actions"></div>
 </div>
+
 <div class="activity-page">
     <div class="page-header">
-        <h1>Activity Feed</h1>
-        <div class="breadcrumbs">
-            <a href="/admin/index.php?page=dashboard">Dashboard</a>
-            <span class="separator">›</span>
-            <span class="current">Activity Feed</span>
-        </div>
+        <h1>{translate 'admin.activity_feed'}</h1>
     </div>
     
     <div class="main-actions-bar">
         <div class="filters">
             <select id="category-filter" class="input">
-                <option value="all">All Activity</option>
-                <option value="content">Content</option>
-                <option value="users">Users</option>
-                <option value="system">System</option>
+                <option value="all">{translate 'admin.all_activity'}</option>
+                <option value="content">{translate 'admin.content'}</option>
+                <option value="users">{translate 'admin.users'}</option>
+                <option value="system">{translate 'admin.system'}</option>
             </select>
-            <button class="btn btn-secondary" id="refresh-activity">Refresh</button>
+            <button class="btn btn-secondary" id="refresh-activity">{translate 'admin.refresh'}</button>
         </div>
     </div>
     
     <div class="activity-feed" id="activity-feed">
         <div class="text-center">
-            <div class="spinner">Loading activity...</div>
+            <div class="spinner">{translate 'admin.loading_activity'}...</div>
         </div>
     </div>
     
     <div class="pagination">
-        <button class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
+        <button class="btn btn-secondary" id="load-more" style="display: none;">{translate 'admin.load_more'}</button>
     </div>
 </div>
 
+<!-- Initialize Activity JavaScript -->
+{include_script 'activity.js'}
+
 <script>
-(function() {
-    'use strict';
-    
-    let currentPage = 0;
-    const pageSize = 20;
-    let allActivity = [];
-    let filteredActivity = [];
-    let currentFilter = 'all';
-    
-    function init() {
-        loadActivity();
-        setupFilters();
-        
-        document.getElementById('refresh-activity')?.addEventListener('click', function() {
-            currentPage = 0;
-            loadActivity(true);
-        });
-        
-        document.getElementById('load-more')?.addEventListener('click', function() {
-            currentPage++;
-            renderActivity();
-        });
+// Expose data for JavaScript
+window.activityData = {
+    csrfToken: '{csrf_token}'
+};
+
+// Initialize activity feed when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.initActivityFeed) {
+        window.initActivityFeed(window.activityData);
     }
-    
-    function setupFilters() {
-        const categoryFilter = document.getElementById('category-filter');
-        
-        categoryFilter?.addEventListener('change', function() {
-            currentFilter = this.value;
-            filterActivity();
-        });
-    }
-    
-    function filterActivity() {
-        if (currentFilter === 'all') {
-            filteredActivity = allActivity;
-        } else {
-            filteredActivity = allActivity.filter(item => item.category === currentFilter);
-        }
-        
-        currentPage = 0;
-        renderActivity();
-    }
-    
-    function loadActivity(refresh = false) {
-        const feed = document.getElementById('activity-feed');
-        if (!feed) return;
-        
-        if (refresh) {
-            feed.innerHTML = '<div class="text-center"><div class="spinner">Loading activity...</div></div>';
-        }
-        
-        fetch('/api/activity.php?action=list&limit=' + (pageSize * 2))
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok' && data.activity) {
-                    allActivity = data.activity;
-                    filteredActivity = allActivity;
-                    currentPage = 0;
-                    renderActivity();
-                } else {
-                    feed.innerHTML = '<div class="text-center">Error loading activity</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading activity:', error);
-                feed.innerHTML = '<div class="text-center">Error loading activity: ' + error.message + '</div>';
-            });
-    }
-    
-    function renderActivity() {
-        const feed = document.getElementById('activity-feed');
-        if (!feed) return;
-        
-        const startIndex = currentPage * pageSize;
-        const endIndex = startIndex + pageSize;
-        const itemsToShow = filteredActivity.slice(0, endIndex);
-        
-        if (itemsToShow.length === 0) {
-            feed.innerHTML = '<div class="text-center">No activity found</div>';
-            document.getElementById('load-more').style.display = 'none';
-            return;
-        }
-        
-        let html = '<div class="activity-timeline">';
-        itemsToShow.forEach((item, index) => {
-            const timestamp = new Date(item.timestamp).toLocaleString();
-            const isRecent = index < 5;
-            
-            html += `
-                <div class="activity-item ${isRecent ? 'recent' : ''}" style="border-left: 3px solid ${item.color || '#6c757d'};">
-                    <div class="activity-icon" style="background: ${item.color || '#6c757d'}20;">
-                        ${item.icon || '📌'}
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-message">${escapeHtml(item.message)}</div>
-                        <div class="activity-meta">
-                            <span class="activity-user">${escapeHtml(item.user)}</span>
-                            <span class="activity-time">${timestamp}</span>
-                        </div>
-                        ${item.details && Object.keys(item.details).length > 0 ? `
-                            <details class="activity-details">
-                                <summary>Details</summary>
-                                <pre style="max-width: 600px; overflow: auto; font-size: 0.875em; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-top: 8px;">${escapeHtml(JSON.stringify(item.details, null, 2))}</pre>
-                            </details>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        
-        feed.innerHTML = html;
-        
-        // Show/hide load more button
-        const loadMoreBtn = document.getElementById('load-more');
-        if (loadMoreBtn) {
-            loadMoreBtn.style.display = (endIndex < filteredActivity.length) ? 'block' : 'none';
-        }
-    }
-    
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-})();
+});
 </script>
-
-<style>
-.activity-timeline {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.activity-item {
-    display: flex;
-    gap: 16px;
-    padding: 16px;
-    margin-bottom: 16px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.activity-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.activity-item.recent {
-    border-left-width: 4px;
-}
-
-.activity-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-}
-
-.activity-content {
-    flex: 1;
-}
-
-.activity-message {
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
-}
-
-.activity-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 0.875em;
-    color: #666;
-}
-
-.activity-user {
-    font-weight: 500;
-}
-
-.activity-time {
-    color: #999;
-}
-
-.activity-details {
-    margin-top: 8px;
-    font-size: 0.875em;
-}
-
-.activity-details summary {
-    cursor: pointer;
-    color: #0066cc;
-    user-select: none;
-}
-
-.activity-details summary:hover {
-    text-decoration: underline;
-}
-</style>
-

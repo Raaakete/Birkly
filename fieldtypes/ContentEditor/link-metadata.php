@@ -33,7 +33,7 @@ curl_setopt_array($ch, [
     CURLOPT_MAXREDIRS => 5,
     CURLOPT_TIMEOUT => 10,
     CURLOPT_CONNECTTIMEOUT => 5,
-    CURLOPT_USERAGENT => 'HaruCMS-ContentEditor/1.0 (+https://github.com/)',
+    CURLOPT_USERAGENT => 'Birkly-ContentEditor/1.0 (+https://github.com/)',
     CURLOPT_SSL_VERIFYPEER => false,
     CURLOPT_SSL_VERIFYHOST => false,
 ]);

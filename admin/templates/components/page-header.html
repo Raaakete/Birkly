@@ -1,0 +1,19 @@
+<!-- Page Header Component
+     Parameters:
+     - breadcrumbs: Array of breadcrumb items [['url' => '...', 'label' => '...'], ...]
+     - current: Current page title (string)
+-->
+<div class="page-header pt-m pb-m">
+    <div class="page-header-left">
+        <div class="breadcrumbs">
+            {if breadcrumbs exist}
+                {for each crumb in breadcrumbs}
+                    <a href="{crumb.url}">{crumb.label}</a>
+                    <span class="separator">›</span>
+                {endfor}
+            {endif}
+            <span class="current">{current}</span>
+        </div>
+    </div>
+    <div class="page-header-actions"></div>
+</div>

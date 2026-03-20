@@ -22,7 +22,7 @@ header('Content-Type: text/html; charset=utf-8');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Test - HaruCMS</title>
+    <title>Server Test - Birkly</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -45,7 +45,7 @@ header('Content-Type: text/html; charset=utf-8');
     </style>
 </head>
 <body>
-    <h1>🧪 HaruCMS Server Test</h1>
+    <h1>🧪 Birkly Server Test</h1>
     
     <div class="test-result">
         <h2>Test Results:</h2>

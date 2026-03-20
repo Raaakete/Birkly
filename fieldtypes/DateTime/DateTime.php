@@ -1,7 +1,13 @@
 <?php
-namespace HaruCMS\FieldTypes\DateTime;
+namespace Birkly\FieldTypes\DateTime;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
+
+// Prevent fatal "Cannot redeclare class" errors if this file is included twice
+// (can happen on case-insensitive filesystems when referenced as Datetime/Datetime.php and DateTime/DateTime.php)
+if (class_exists(__NAMESPACE__ . '\\DateTime', false)) {
+    return;
+}
 
 class DateTime extends BaseField {
     public function getType(): string {
@@ -81,6 +87,29 @@ class DateTime extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        if (empty($value)) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Format datetime for display
+        try {
+            // Handle datetime-local format (YYYY-MM-DDTHH:mm)
+            if (preg_match('/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/', $value, $matches)) {
+                return '<span class="ft-list-text">' . htmlspecialchars($matches[1] . ' ' . $matches[2], ENT_QUOTES, 'UTF-8') . '</span>';
+            }
+            
+            $dateObj = new \DateTime($value);
+            return '<span class="ft-list-text">' . htmlspecialchars($dateObj->format('Y-m-d H:i'), ENT_QUOTES, 'UTF-8') . '</span>';
+        } catch (\Exception $e) {
+            return '<span class="ft-list-text">' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+    }
+
+    public function getTableMinWidth(): string {
+        return '140px'; // DateTime fields need moderate space (YYYY-MM-DD HH:mm)
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

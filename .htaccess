@@ -1,4 +1,4 @@
-# HaruCMS .htaccess
+# Birkly .htaccess
 
 # Serve existing files directly
 RewriteEngine On
@@ -10,8 +10,8 @@ RewriteRule ^ - [L]
 RewriteCond %{REQUEST_FILENAME} \.php$
 RewriteRule ^ - [L]
 
-# SPA fallback for /admin
-RewriteRule ^admin($|/) /admin/index.html [L]
+# Redirect /admin to PHP admin panel (not static HTML)
+RewriteRule ^admin($|/) /admin/index.php?page=dashboard [L,R=302]
 
 # Security headers
 <IfModule mod_headers.c>

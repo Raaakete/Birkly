@@ -13,15 +13,9 @@ ini_set('error_log', __DIR__ . '/../../logs/php_errors.log');
 
 header('Content-Type: application/json');
 
-// Handle CORS
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-API-Key');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+// SECURITY FIX: Replace wildcard CORS with origin whitelist
+require_once __DIR__ . '/../../core/cors.php';
+set_cors_headers('public');
 
 require_once __DIR__ . '/../rate_limit.php';
 require_once __DIR__ . '/../log.php';
@@ -53,8 +47,16 @@ if (empty($apiKey)) {
 }
 
 // Load collection configuration
-$collectionFile = __DIR__ . '/../../content/collections/' . $collectionSlug . '/collection.json';
-if (!file_exists($collectionFile)) {
+// SECURITY FIX: Sanitize collection slug to prevent path traversal
+require_once __DIR__ . '/validate.php';
+$collectionSlug = sanitize_identifier($collectionSlug);
+if ($collectionSlug === false) {
+    respond(['status' => 'error', 'message' => 'Invalid collection identifier'], 400);
+}
+
+$baseDir = __DIR__ . '/../../content/collections';
+$collectionFile = sanitize_path($collectionSlug . '/collection.json', $baseDir);
+if ($collectionFile === false || !file_exists($collectionFile)) {
     respond(['status' => 'error', 'message' => 'Collection not found'], 404);
 }
 
@@ -104,7 +106,11 @@ if (!$rateLimiter->check()) {
 }
 
 // Load collection schema
-$schemaFile = __DIR__ . '/../../content/collections/' . $collectionSlug . '/schema.json';
+// SECURITY FIX: Use sanitized path
+$schemaFile = sanitize_path($collectionSlug . '/schema.json', $baseDir);
+if ($schemaFile === false || !file_exists($schemaFile)) {
+    respond(['status' => 'error', 'message' => 'Collection schema not found'], 404);
+}
 if (!file_exists($schemaFile)) {
     respond(['status' => 'error', 'message' => 'Collection schema not found'], 500);
 }
@@ -235,7 +241,8 @@ if (!empty($errors)) {
 // Create entry
 $entryId = uniqid('entry_');
 $entryData['id'] = $entryId;
-$entryData['title'] = $entryData['title'] ?? 'Untitled Entry'; // Ensure title exists
+// Auto-fill title with entry ID if not provided
+$entryData['title'] = $entryData['title'] ?? $entryId;
 $entryData['status'] = $autoPublish ? 'published' : 'draft';
 $entryData['created_at'] = date('Y-m-d H:i:s');
 $entryData['updated_at'] = date('Y-m-d H:i:s');
@@ -243,7 +250,11 @@ $entryData['submitted_via'] = 'public_api';
 $entryData['submitted_ip'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
 // Save entry
-$entriesDir = __DIR__ . '/../../content/collections/' . $collectionSlug . '/entries';
+// SECURITY FIX: Use sanitized path
+$entriesDir = sanitize_path($collectionSlug . '/entries', $baseDir);
+if ($entriesDir === false) {
+    respond(['status' => 'error', 'message' => 'Invalid collection path'], 400);
+}
 if (!is_dir($entriesDir)) {
     mkdir($entriesDir, 0755, true);
 }
@@ -277,7 +288,7 @@ if (!empty($notificationEmail)) {
         $body .= "$key: " . (is_array($value) ? json_encode($value) : $value) . "\n";
     }
     
-    $headers = 'From: noreply@' . ($_SERVER['SERVER_NAME'] ?? 'harucms.local');
+    $headers = 'From: noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local');
     @mail($notificationEmail, $subject, $body, $headers);
 }
 

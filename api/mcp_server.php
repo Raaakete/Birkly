@@ -1,7 +1,7 @@
 <?php
 /**
  * MCP (Model Context Protocol) Server
- * Allows external AI tools (Claude Desktop, etc.) to connect to HaruCMS
+ * Allows external AI tools (Claude Desktop, etc.) to connect to Birkly
  */
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
@@ -117,7 +117,7 @@ function handleInitialize($aiUser) {
             'resources' => []
         ],
         'serverInfo' => [
-            'name' => 'HaruCMS MCP Server',
+            'name' => 'Birkly MCP Server',
             'version' => '1.0.0'
         ]
     ];
@@ -378,13 +378,13 @@ function handleResourcesList() {
     return [
         'resources' => [
             [
-                'uri' => 'harucms://collections',
+                'uri' => 'birkly://collections',
                 'name' => 'All Collections',
                 'description' => 'List of all content collections',
                 'mimeType' => 'application/json'
             ],
             [
-                'uri' => 'harucms://documentation',
+                'uri' => 'birkly://documentation',
                 'name' => 'Documentation',
                 'description' => 'System documentation',
                 'mimeType' => 'text/markdown'
@@ -397,14 +397,14 @@ function handleResourcesList() {
 function handleResourceRead($params) {
     $uri = $params['uri'] ?? '';
     
-    if ($uri === 'harucms://collections') {
+    if ($uri === 'birkly://collections') {
         $result = handleListCollections();
         return [
             'contents' => $result['content']
         ];
     }
     
-    if ($uri === 'harucms://documentation') {
+    if ($uri === 'birkly://documentation') {
         $docsDir = __DIR__ . '/../docs';
         $docs = [];
         if (is_dir($docsDir)) {

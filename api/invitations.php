@@ -233,7 +233,7 @@ function getInviteUrl($token) {
 }
 
 function sendInvitationEmail($email, $inviteUrl, $role, $expiresDays) {
-    $siteName = 'HaruCMS'; // Could be loaded from settings
+    $siteName = 'Birkly'; // Could be loaded from settings
     
     $subject = "Invitation to join $siteName";
     
@@ -262,7 +262,7 @@ function sendInvitationEmail($email, $inviteUrl, $role, $expiresDays) {
         'Content-type: text/html; charset=UTF-8',
         'From: ' . ($_SESSION['user']['email'] ?? 'noreply@localhost'),
         'Reply-To: ' . ($_SESSION['user']['email'] ?? 'noreply@localhost'),
-        'X-Mailer: HaruCMS'
+        'X-Mailer: Birkly'
     ];
     
     // Try to send the email

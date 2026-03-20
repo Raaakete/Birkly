@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Text;
+namespace Birkly\FieldTypes\Text;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Text extends BaseField {
     protected $placeholder;
@@ -115,24 +115,26 @@ class Text extends BaseField {
         return <<<CSS
         .text-field {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
+            padding: var(--space-2, 0.5rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: var(--font-size-base, 1rem);
+            background: var(--bg-primary, #ffffff);
+            color: var(--text-primary, #20221D);
         }
         
         .text-field:focus {
-            border-color: var(--primary);
+            border-color: var(--primary-500, #3b82f6);
             outline: none;
-            box-shadow: 0 0 0 2px var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .text-field.error {
-            border-color: var(--danger);
+            border-color: var(--error-500, #ef4444);
         }
         
         .text-field.error:focus {
-            box-shadow: 0 0 0 2px var(--danger-light);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
         }
         CSS;
     }
@@ -173,6 +175,15 @@ class Text extends BaseField {
 
     public function processLoadedValue($value) {
         return $value;
+    }
+
+    public function renderListCell($value, array $context = []): string {
+        // Use parent's renderListCell which handles truncation with "..."
+        return parent::renderListCell($value, $context);
+    }
+
+    public function getTableMinWidth(): string {
+        return '180px'; // Text fields need moderate space for preview
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {

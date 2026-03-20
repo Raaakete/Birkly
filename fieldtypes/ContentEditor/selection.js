@@ -79,25 +79,50 @@ window.ContentEditorSelection = {
 
   // Restore saved selection
   restore(rootElement = null) {
+    const selection = window.getSelection();
+    
     // Try to restore from serialized data first (more robust)
-    if (this.savedSelectionData && rootElement) {
-      try {
-        const startNode = this.getNodeFromPath(rootElement, this.savedSelectionData.startPath);
-        const endNode = this.getNodeFromPath(rootElement, this.savedSelectionData.endPath);
-        
-        if (startNode && endNode) {
-          const range = document.createRange();
-          range.setStart(startNode, Math.min(this.savedSelectionData.startOffset, startNode.textContent ? startNode.textContent.length : 0));
-          range.setEnd(endNode, Math.min(this.savedSelectionData.endOffset, endNode.textContent ? endNode.textContent.length : 0));
-          
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(range);
-          this.savedRange = range.cloneRange();
-          return true;
+    if (this.savedSelectionData) {
+      // If rootElement not provided, try to find it from saved range
+      if (!rootElement && this.savedRange) {
+        try {
+          const commonAncestor = this.savedRange.commonAncestorContainer;
+          if (commonAncestor) {
+            // Find the editor element (content-editor-area)
+            let editor = commonAncestor;
+            while (editor && !editor.classList?.contains('content-editor-area')) {
+              editor = editor.parentElement;
+            }
+            if (editor) {
+              rootElement = editor;
+            }
+          }
+        } catch (e) {
+          // Ignore errors
         }
-      } catch (e) {
-        console.warn('Failed to restore from serialized data:', e);
+      }
+      
+      if (this.savedSelectionData && rootElement) {
+        try {
+          const startNode = this.getNodeFromPath(rootElement, this.savedSelectionData.startPath);
+          const endNode = this.getNodeFromPath(rootElement, this.savedSelectionData.endPath);
+          
+          if (startNode && endNode) {
+            const range = document.createRange();
+            const startMaxOffset = startNode.textContent ? startNode.textContent.length : (startNode.childNodes ? startNode.childNodes.length : 0);
+            const endMaxOffset = endNode.textContent ? endNode.textContent.length : (endNode.childNodes ? endNode.childNodes.length : 0);
+            
+            range.setStart(startNode, Math.min(this.savedSelectionData.startOffset, startMaxOffset));
+            range.setEnd(endNode, Math.min(this.savedSelectionData.endOffset, endMaxOffset));
+            
+            selection.removeAllRanges();
+            selection.addRange(range);
+            this.savedRange = range.cloneRange();
+            return true;
+          }
+        } catch (e) {
+          // Fall through to saved range fallback
+        }
       }
     }
     
@@ -105,16 +130,41 @@ window.ContentEditorSelection = {
     if (!this.savedRange) {
       return false;
     }
+    
     try {
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(this.savedRange.cloneRange());
-      return true;
+      // Validate that the range is still in the DOM
+      const startContainer = this.savedRange.startContainer;
+      const endContainer = this.savedRange.endContainer;
+      
+      // Check if containers are still in the DOM
+      if (startContainer && endContainer) {
+        let startInDOM = false;
+        let endInDOM = false;
+        
+        // Check if node is in document
+        try {
+          startInDOM = document.contains(startContainer) || startContainer === document || startContainer.nodeType === Node.DOCUMENT_NODE;
+          endInDOM = document.contains(endContainer) || endContainer === document || endContainer.nodeType === Node.DOCUMENT_NODE;
+        } catch (e) {
+          // If document.contains throws, try parentNode traversal
+          startInDOM = startContainer.parentNode !== null || startContainer === document;
+          endInDOM = endContainer.parentNode !== null || endContainer === document;
+        }
+        
+        if (startInDOM && endInDOM) {
+          selection.removeAllRanges();
+          selection.addRange(this.savedRange.cloneRange());
+          return true;
+        }
+      }
     } catch (e) {
+      // Range is invalid, clear it
       this.savedRange = null;
       this.savedSelectionData = null;
       return false;
     }
+    
+    return false;
   },
 
   // Clear saved selection

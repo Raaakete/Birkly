@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\DynamicItems;
+namespace Birkly\FieldTypes\DynamicItems;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class DynamicItems extends BaseField {
     public function getType(): string {
@@ -54,7 +54,7 @@ class DynamicItems extends BaseField {
                 }
                 
                 // Load the class file
-                $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+                $className = "Birkly\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
                 if (!class_exists($className)) {
                     require_once $phpFile;
                 }
@@ -146,7 +146,7 @@ class DynamicItems extends BaseField {
                 }
                 
                 // Load the class file
-                $className = "HaruCMS\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
+                $className = "Birkly\\FieldTypes\\{$fieldtypeName}\\{$fieldtypeName}";
                 if (!class_exists($className)) {
                     require_once $phpFile;
                 }
@@ -224,44 +224,44 @@ class DynamicItems extends BaseField {
     public function getCSS(): string {
         return <<<'CSS'
         .block-field {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            background: #f8f9fa;
-            margin-bottom: 1rem;
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-md, 0.5rem);
+            padding: var(--space-5, 1.25rem);
+            background: var(--bg-secondary, #fafafa);
+            margin-bottom: var(--space-4, 1rem);
         }
         
         .block-items {
-            margin-bottom: 20px;
+            margin-bottom: var(--space-5, 1.25rem);
             min-height: 80px;
-            background: #fff;
-            border: 2px dashed #dee2e6;
-            border-radius: 6px;
-            padding: 16px;
+            background: var(--bg-primary, #ffffff);
+            border: 2px dashed var(--border-light, #f3f4f6);
+            border-radius: var(--radius-md, 0.5rem);
+            padding: var(--space-4, 1rem);
         }
         
         .block-items:empty::before {
             content: "No blocks yet. Click 'Add Block' to get started.";
-            color: #6c757d;
+            color: var(--text-secondary, #72746F);
             font-style: italic;
             text-align: center;
             display: block;
-            padding: 40px 20px;
+            padding: var(--space-10, 2.5rem) var(--space-5, 1.25rem);
         }
         
         .block-item {
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            background: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.2s;
+            border: 1px solid var(--border-light, #f3f4f6);
+            border-radius: var(--radius-md, 0.5rem);
+            margin-bottom: var(--space-4, 1rem);
+            background: var(--bg-primary, #ffffff);
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+            transition: all var(--transition-fast, 150ms ease);
             overflow: hidden;
         }
         
         .block-item:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            border-color: #007bff;
+            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+            border-color: var(--primary-500, #3b82f6);
         }
         
         .block-item:last-child {
@@ -272,127 +272,75 @@ class DynamicItems extends BaseField {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
+            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+            background: var(--bg-secondary, #fafafa);
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
         }
         
         .block-item-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: var(--space-3, 0.75rem);
             flex: 1;
         }
         
         .block-item-label {
             font-weight: 600;
-            color: #212529;
-            font-size: 14px;
+            color: var(--text-primary, #20221D);
+            font-size: 0.875rem;
         }
         
         .block-item-type {
-            padding: 2px 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            font-size: 11px;
+            padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+            background: var(--bg-hover, #f3f4f6);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: 0.6875rem;
             text-transform: uppercase;
-            color: #6c757d;
+            color: var(--text-secondary, #72746F);
             font-weight: 500;
         }
         
         .block-item-name {
-            padding: 2px 8px;
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            font-size: 11px;
-            color: #6c757d;
-            font-family: monospace;
+            padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+            background: var(--bg-primary, #ffffff);
+            border: 1px solid var(--border-light, #f3f4f6);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: 0.6875rem;
+            color: var(--text-secondary, #72746F);
+            font-family: var(--font-family-mono, monospace);
         }
         
         .block-item-actions {
             display: flex;
-            gap: 8px;
+            gap: var(--space-2, 0.5rem);
         }
         
         .block-item-content {
-            padding: 16px;
+            padding: var(--space-4, 1rem);
         }
         
         .block-loading {
-            padding: 20px;
+            padding: var(--space-5, 1.25rem);
             text-align: center;
-            color: #6c757d;
+            color: var(--text-secondary, #72746F);
             font-style: italic;
         }
         
         .block-error {
-            padding: 16px;
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-            color: #721c24;
+            padding: var(--space-4, 1rem);
+            background: var(--error-50, #fef2f2);
+            border: 1px solid var(--error-200, #fecaca);
+            border-radius: var(--radius-sm, 0.375rem);
+            color: var(--error-700, #b91c1c);
         }
         
         .block-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2, 0.5rem);
         }
         
-        .btn {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        
-        .btn:hover {
-            background: #f8f9fa;
-            border-color: #007bff;
-        }
-        
-        .btn-primary {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        
-        .btn-primary:hover {
-            background: #0056b3;
-            border-color: #0056b3;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            border-color: #6c757d;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-            border-color: #545b62;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-            border-color: #dc3545;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-            border-color: #bd2130;
-        }
-        
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 12px;
-        }
+        /* Buttons use system button classes - no custom styles needed */
         
         /* Modal Styles */
         .dynamicitems-modal-overlay {
@@ -401,18 +349,18 @@ class DynamicItems extends BaseField {
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: var(--bg-overlay, rgba(0, 0, 0, 0.5));
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10000;
-            padding: 20px;
+            z-index: var(--z-index-modal, 10000);
+            padding: var(--space-5, 1.25rem);
         }
         
         .dynamicitems-modal {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            background: var(--bg-primary, #ffffff);
+            border-radius: var(--radius-md, 0.5rem);
+            box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
             max-width: 600px;
             width: 100%;
             max-height: 90vh;
@@ -425,39 +373,40 @@ class DynamicItems extends BaseField {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
+            padding: var(--space-5, 1.25rem);
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
         }
         
         .dynamicitems-modal-header h3 {
             margin: 0;
-            font-size: 18px;
+            font-size: 1.125rem;
             font-weight: 600;
+            color: var(--text-primary, #20221D);
         }
         
         .dynamicitems-modal-close {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 1.5rem;
             cursor: pointer;
-            color: #6c757d;
+            color: var(--text-secondary, #72746F);
             padding: 0;
             width: 30px;
             height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s;
+            border-radius: var(--radius-sm, 0.375rem);
+            transition: all var(--transition-fast, 150ms ease);
         }
         
         .dynamicitems-modal-close:hover {
-            background: #f8f9fa;
-            color: #212529;
+            background: var(--bg-secondary, #fafafa);
+            color: var(--text-primary, #20221D);
         }
         
         .dynamicitems-modal-body {
-            padding: 20px;
+            padding: var(--space-5, 1.25rem);
             overflow-y: auto;
             flex: 1;
         }
@@ -465,64 +414,66 @@ class DynamicItems extends BaseField {
         .dynamicitems-modal-footer {
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
-            padding: 20px;
-            border-top: 1px solid #e9ecef;
-            background: #f8f9fa;
+            gap: var(--space-3, 0.75rem);
+            padding: var(--space-5, 1.25rem);
+            border-top: 1px solid var(--border-light, #f3f4f6);
+            background: var(--bg-secondary, #fafafa);
         }
         
         .dynamicitems-form-group {
-            margin-bottom: 20px;
+            margin-bottom: var(--space-5, 1.25rem);
         }
         
         .dynamicitems-form-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: var(--space-2, 0.5rem);
             font-weight: 500;
-            color: #212529;
-            font-size: 14px;
+            color: var(--text-primary, #20221D);
+            font-size: 0.875rem;
         }
         
         .dynamicitems-form-group label .required {
-            color: #dc3545;
+            color: var(--error-500, #ef4444);
         }
         
         .dynamicitems-form-group small {
             display: block;
-            margin-top: 4px;
-            color: #6c757d;
-            font-size: 12px;
+            margin-top: var(--space-1, 0.25rem);
+            color: var(--text-secondary, #72746F);
+            font-size: 0.75rem;
         }
         
         .dynamicitems-form-group .input {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: 0.875rem;
             font-family: inherit;
+            background: var(--bg-primary, #ffffff);
+            color: var(--text-primary, #20221D);
         }
         
         .dynamicitems-form-group .input:focus {
             outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+            border-color: var(--primary-500, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .dynamicitems-form-group input[type="checkbox"] {
-            margin-right: 8px;
+            margin-right: var(--space-2, 0.5rem);
         }
         
         #block-settings-container {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
+            margin-top: var(--space-5, 1.25rem);
+            padding-top: var(--space-5, 1.25rem);
+            border-top: 1px solid var(--border-light, #f3f4f6);
         }
         
         #block-settings-content {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 4px;
+            background: var(--bg-secondary, #fafafa);
+            padding: var(--space-4, 1rem);
+            border-radius: var(--radius-sm, 0.375rem);
         }
         CSS;
     }
@@ -539,6 +490,10 @@ class DynamicItems extends BaseField {
         return $value;
     }
     
+    public function getTableMinWidth(): string {
+        return '250px'; // DynamicItems fields need space for item count display
+    }
+
     public function processLoadedValue($value) {
         return $value;
     }
@@ -567,22 +522,35 @@ class DynamicItems extends BaseField {
             return '<span class="ft-list-empty">–</span>';
         }
         
-        // Show count and preview of first few items
-        $preview = [];
-        foreach (array_slice($value, 0, 3) as $item) {
-            if (isset($item['value'])) {
-                $itemValue = is_array($item['value']) ? json_encode($item['value']) : (string)$item['value'];
-                $itemValue = mb_substr($itemValue, 0, 30);
-                $preview[] = htmlspecialchars($itemValue, ENT_QUOTES, 'UTF-8');
+        // Show count badge and preview of item types
+        $itemTypes = [];
+        $typeCounts = [];
+        
+        foreach ($value as $item) {
+            $itemType = $item['type'] ?? 'unknown';
+            if (!isset($typeCounts[$itemType])) {
+                $typeCounts[$itemType] = 0;
+            }
+            $typeCounts[$itemType]++;
+        }
+        
+        // Build preview text showing item types
+        $previewParts = [];
+        foreach ($typeCounts as $type => $typeCount) {
+            $typeLabel = ucfirst(str_replace('_', ' ', $type));
+            if ($typeCount === 1) {
+                $previewParts[] = $typeLabel;
+            } else {
+                $previewParts[] = $typeLabel . ' (' . $typeCount . ')';
             }
         }
         
-        $previewText = implode(', ', $preview);
-        if ($count > 3) {
+        $previewText = implode(', ', array_slice($previewParts, 0, 2));
+        if (count($previewParts) > 2) {
             $previewText .= '...';
         }
         
         return '<span class="ft-list-badge">' . $count . ' item' . ($count === 1 ? '' : 's') . '</span>' .
-               ($previewText ? ' <span class="ft-list-text">(' . $previewText . ')</span>' : '');
+               ($previewText ? ' <span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);">(' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . ')</span>' : '');
     }
 } 

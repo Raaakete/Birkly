@@ -1,5 +1,5 @@
 {
-    "name": "harucms/harucms",
+    "name": "birkly/birkly",
     "description": "A flat-file headless CMS",
     "type": "project",
     "require": {
@@ -7,8 +7,8 @@
     },
     "autoload": {
         "psr-4": {
-            "HaruCMS\\": "src/",
-            "HaruCMS\\FieldTypes\\": "fieldtypes/"
+            "Birkly\\": "src/",
+            "Birkly\\FieldTypes\\": "fieldtypes/"
         }
     }
 } 

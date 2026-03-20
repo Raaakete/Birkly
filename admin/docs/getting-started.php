@@ -1,5 +1,5 @@
 <h2>Getting Started</h2>
-<p>Welcome to HaruCMS! This guide will help you understand what a CMS is, how to use HaruCMS, and how to get your first website up and running.</p>
+<p>Welcome to Birkly! This guide will help you understand what a CMS is, how to use Birkly, and how to get your first website up and running.</p>
 
 <h3>What is a CMS?</h3>
 <p>A <strong>Content Management System (CMS)</strong> is software that helps you create, manage, and organize content for your website without needing to write code. Think of it as a user-friendly interface that lets you:</p>
@@ -10,8 +10,8 @@
     <li>Update your website easily whenever you need to</li>
 </ul>
 
-<h3>Why HaruCMS?</h3>
-<p>HaruCMS is different from traditional CMS platforms because it uses a simple file-based approach instead of a database. This means:</p>
+<h3>Why Birkly?</h3>
+<p>Birkly is different from traditional CMS platforms because it uses a simple file-based approach instead of a database. This means:</p>
 <ul>
     <li><strong>Simplicity:</strong> Your content is stored as easy-to-read JSON files</li>
     <li><strong>Speed:</strong> No database queries means faster page loads</li>
@@ -29,7 +29,7 @@
     <li><strong>Connect Your Website:</strong> Use the client library to display your content on your website</li>
 </ol>
 
-<p><strong>Note:</strong> HaruCMS doesn't manage a specific website - it just provides content. Each website using the CMS should define its own title and settings. The Project Name you set during onboarding is only for the admin panel branding.</p>
+<p><strong>Note:</strong> Birkly doesn't manage a specific website - it just provides content. Each website using the CMS should define its own title and settings. The Project Name you set during onboarding is only for the admin panel branding.</p>
 
 <p>Ready to dive deeper? Continue reading the sections below to learn about each feature in detail!</p>
 

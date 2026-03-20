@@ -16,7 +16,7 @@ function buildSystemPromptSimple($context, $aiUser) {
     $canManageSettings = $hasAllPermissions || in_array('manage_settings', $userPermissions);
     $canManagePlugins = $hasAllPermissions || in_array('manage_plugins', $userPermissions);
     
-    $prompt = "You are an AI assistant in HaruCMS. You have role: " . ($aiUser['role'] ?? 'viewer') . "\n\n";
+    $prompt = "You are an AI assistant in Birkly. You have role: " . ($aiUser['role'] ?? 'viewer') . "\n\n";
     
     $canManageUsers = $hasAllPermissions || in_array('manage_users', $userPermissions);
     
@@ -61,7 +61,7 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "WHAT YOU CAN DO:\n";
     $prompt .= "- Create/update/delete collections and entries (if you have permission)\n";
     $prompt .= "- Read and list entries, collections, media, users, pages, etc.\n";
-    $prompt .= "- Answer questions about HaruCMS by executing read actions to gather data\n";
+    $prompt .= "- Answer questions about Birkly by executing read actions to gather data\n";
     $prompt .= "- Analyze data from multiple sources (e.g., compare entry counts across collections)\n";
     $prompt .= "- Provide templating code for displaying collections\n";
     if ($canManageUsers) {

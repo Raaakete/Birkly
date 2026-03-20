@@ -21,12 +21,9 @@ if ($uri === false || $uri === null) {
     return false;
 }
 
-// Check if this is a demo website request - handle it with demo-website-router.php
-if (preg_match('#^/demo-blog#', $uri)) {
-    require_once __DIR__ . '/demo-website-router.php';
-    // demo-website-router.php will exit() if it handles the request
-    // If it returns false, fall through to normal handling
-}
+// No special demo routing:
+// - demo websites are plain static HTML + `birkly-client.js`
+// - keep the built-in router minimal and deterministic
 
 // Get the actual file path
 $file = __DIR__ . $uri;

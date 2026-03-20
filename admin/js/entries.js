@@ -89,7 +89,19 @@
                 })
             });
             
-            const data = await response.json();
+            const responseText = await response.text();
+            console.log('[Bulk Operation] Response status:', response.status);
+            console.log('[Bulk Operation] Response text:', responseText);
+            
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('[Bulk Operation] Failed to parse JSON:', e);
+                return { status: 'error', message: 'Invalid JSON response: ' + responseText.substring(0, 100) };
+            }
+            
+            console.log('[Bulk Operation] Parsed data:', data);
             return data;
         } catch (error) {
             console.error('Bulk operation error:', error);
@@ -271,6 +283,70 @@
         bulkCancelBtn.addEventListener('click', handleBulkCancel);
     }
     
+    // Handle individual entry deletion
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-entry-btn')) {
+            const btn = e.target.closest('.delete-entry-btn');
+            const entryId = btn.dataset.entryId;
+            if (entryId) {
+                deleteEntry(entryId);
+            }
+        }
+    });
+    
+    /**
+     * Delete a single entry
+     */
+    async function deleteEntry(entryId) {
+        if (!confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
+            return;
+        }
+        
+        // Use collection ID if available, otherwise fall back to slug
+        const collectionIdentifier = window.collectionId || collectionSlug;
+        
+        if (!collectionIdentifier) {
+            alert('Error: Collection information not available. Please refresh the page and try again.');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/content.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'delete_entry',
+                    collection: collectionIdentifier,
+                    id: entryId,
+                    _csrf: getCSRFToken()
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'ok') {
+                // Remove the entry row from the DOM
+                const row = document.querySelector(`.table-row[data-entry-id="${entryId}"]`);
+                if (row) {
+                    row.remove();
+                    // Update bulk UI in case this entry was selected
+                    selectedEntries.delete(entryId);
+                    updateBulkUI();
+                } else {
+                    // If row not found, reload the page
+                    window.location.reload();
+                }
+            } else {
+                alert('Error: ' + (result.message || 'Failed to delete entry'));
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+            console.error('Delete entry error:', error);
+        }
+    }
+    
     // Initialize UI
     updateBulkUI();
     
@@ -285,7 +361,15 @@
                 const statusBadge = row.querySelector('.status-badge');
                 if (!statusBadge) return;
                 
-                const status = statusBadge.textContent.trim().toLowerCase().replace(/\s+/g, '_');
+                let status = statusBadge.textContent.trim().toLowerCase().replace(/\s+/g, '_');
+                // Map "draft" to "unpublished" for backward compatibility
+                if (status === 'draft') {
+                    status = 'unpublished';
+                }
+                // Map "pending for review" to "pending_review"
+                if (status === 'pending_for_review') {
+                    status = 'pending_review';
+                }
                 
                 if (!filterValue || status === filterValue) {
                     row.style.display = '';
@@ -299,110 +383,8 @@
     // ============================================
     // Drag and Drop Reordering for Entries
     // ============================================
+    // Now handled by MouseDragDrop in initializeEntryDragHandlers()
     
-    let draggedRow = null;
-    let draggedEntryId = null;
-    
-    const tableBody = document.querySelector('.table-body');
-    if (tableBody) {
-        // Set up drop zone handlers first
-        tableBody.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.dataTransfer.dropEffect = 'move';
-            
-            if (!draggedRow || !draggedEntryId) return;
-            
-            // Find the row we're hovering over
-            const targetRow = e.target.closest('.table-row');
-            if (targetRow && targetRow !== draggedRow) {
-                showEntryDropIndicator(e, targetRow);
-            } else {
-                removeEntryDropIndicator();
-            }
-        });
-        
-        tableBody.addEventListener('dragleave', function(e) {
-            // Only remove indicator if we're actually leaving the table body
-            if (!tableBody.contains(e.relatedTarget)) {
-                removeEntryDropIndicator();
-            }
-        });
-        
-        tableBody.addEventListener('drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            removeEntryDropIndicator();
-            
-            if (!draggedRow || !draggedEntryId) return;
-            
-            const dropIndicator = document.querySelector('.entry-drop-indicator');
-            let targetEntryId = null;
-            let insertBefore = false;
-            
-            if (dropIndicator && dropIndicator.dataset.targetEntryId) {
-                targetEntryId = dropIndicator.dataset.targetEntryId;
-                insertBefore = dropIndicator.dataset.insertBefore === 'true';
-            } else {
-                // Fallback: find target row
-                const targetRow = e.target.closest('.table-row');
-                if (targetRow && targetRow !== draggedRow) {
-                    targetEntryId = targetRow.dataset.entryId;
-                    // Determine if we should insert before or after
-                    const dropY = e.clientY;
-                    const rect = targetRow.getBoundingClientRect();
-                    insertBefore = dropY < rect.top + rect.height / 2;
-                }
-            }
-            
-            if (targetEntryId && targetEntryId !== draggedEntryId) {
-                reorderEntries(draggedEntryId, targetEntryId, insertBefore);
-            }
-        });
-    }
-    
-    /**
-     * Show drop indicator for entry reordering
-     */
-    function showEntryDropIndicator(e, targetRow) {
-        removeEntryDropIndicator();
-        
-        const dropY = e.clientY;
-        const rect = targetRow.getBoundingClientRect();
-        const insertBefore = dropY < rect.top + rect.height / 2;
-        
-        const indicator = document.createElement('div');
-        indicator.className = 'entry-drop-indicator';
-        indicator.dataset.targetEntryId = targetRow.dataset.entryId;
-        indicator.dataset.insertBefore = insertBefore;
-        
-        const tableBody = document.querySelector('.table-body');
-        const tableBodyRect = tableBody.getBoundingClientRect();
-        
-        if (insertBefore) {
-            indicator.style.top = (rect.top - tableBodyRect.top - 1) + 'px';
-        } else {
-            indicator.style.top = (rect.bottom - tableBodyRect.top + 1) + 'px';
-        }
-        
-        indicator.style.left = '0';
-        indicator.style.width = '100%';
-        indicator.style.height = '3px';
-        indicator.style.position = 'absolute';
-        
-        tableBody.style.position = 'relative';
-        tableBody.appendChild(indicator);
-    }
-    
-    /**
-     * Remove drop indicator
-     */
-    function removeEntryDropIndicator() {
-        const indicator = document.querySelector('.entry-drop-indicator');
-        if (indicator) {
-            indicator.remove();
-        }
-    }
     
     /**
      * Reorder entries
@@ -434,19 +416,41 @@
         
         // Save new order
         try {
+            // Use collection ID if available, otherwise fall back to slug
+            const collectionIdentifier = window.collectionId || collectionSlug;
+            
+            if (!collectionIdentifier) {
+                console.error('[Reorder] No collection identifier found');
+                alert('Error: Collection not found. Please refresh the page.');
+                return;
+            }
+            
+            console.log('[Reorder] Using collection identifier:', collectionIdentifier);
+            
             const response = await fetch('/api/content.php?action=set_entry_order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    collection: collectionSlug,
+                    collection: collectionIdentifier,
                     order: currentOrder,
                     _csrf: getCSRFToken()
                 })
             });
             
-            const data = await response.json();
+            const responseText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('[Reorder] Failed to parse JSON:', e, 'Response:', responseText);
+                alert('Error saving entry order: Invalid response from server');
+                return;
+            }
+            
+            console.log('[Reorder] Response:', data);
+            
             if (data.status === 'ok') {
                 // Reorder DOM elements to match new order
                 const tableBody = document.querySelector('.table-body');
@@ -475,99 +479,79 @@
     }
     
     /**
-     * Initialize drag handlers for entry rows
+     * Initialize drag handlers for entry rows using MouseDragDrop
      */
+    let entrySorter = null;
+    
     function initializeEntryDragHandlers() {
-        const rows = document.querySelectorAll('.table-row');
-        console.log('Initializing drag handlers for', rows.length, 'rows');
+        const tableBody = document.querySelector('.table-body');
+        if (!tableBody) return;
         
-        if (rows.length === 0) {
-            console.warn('No table rows found!');
-            return;
+        // Destroy existing sorter if any
+        if (entrySorter) {
+            entrySorter.destroy();
         }
         
-        rows.forEach((row, index) => {
-            const dragCell = row.querySelector('.cell-drag');
-            const entryId = row.dataset.entryId;
-            
-            console.log(`Row ${index}: entryId=${entryId}, dragCell=`, dragCell);
-            
-            if (!dragCell) {
-                console.warn(`Row ${index} has no drag cell!`);
-                return;
-            }
-            
-            if (row.hasAttribute('data-drag-initialized')) {
-                console.log(`Row ${index} already initialized`);
-                return;
-            }
-            
-            // Make row draggable
-            row.draggable = true;
-            dragCell.style.cursor = 'grab';
-            row.setAttribute('data-drag-initialized', 'true');
-            
-            // Prevent default drag behavior on the SVG inside
-            const svg = dragCell.querySelector('svg');
-            if (svg) {
-                svg.draggable = false;
-            }
-            
-            // Track if drag started from handle
-            let dragStartedFromHandle = false;
-            
-            // Mouse down on drag handle
-            dragCell.addEventListener('mousedown', function(e) {
-                console.log('Mouse down on drag handle for entry:', entryId);
-                dragStartedFromHandle = true;
-                e.stopPropagation();
-            });
-            
-            // Mouse down anywhere else on row - reset flag
-            row.addEventListener('mousedown', function(e) {
-                if (!e.target.closest('.cell-drag')) {
-                    dragStartedFromHandle = false;
-                }
-            });
-            
-            // Drag start
-            row.addEventListener('dragstart', function(e) {
-                console.log('Drag start event fired', {
-                    target: e.target,
-                    entryId: entryId,
-                    startedFromHandle: dragStartedFromHandle
-                });
+        // Create new sorter
+        entrySorter = new MouseDragDrop({
+            container: tableBody,
+            itemSelector: '.table-row',
+            handleSelector: '.cell-drag',
+            onReorder: function(fromIndex, toIndex, placeholder, draggedItem) {
+                // MouseDragDrop has already moved the dragged item to placeholder position
+                // We need to determine the target entry ID from the placeholder's position
+                const draggedEntryId = draggedItem.dataset.entryId;
+                if (!draggedEntryId) return;
                 
-                // Only allow drag if started from handle
-                if (!dragStartedFromHandle) {
-                    console.log('Drag prevented - not started from handle');
-                    e.preventDefault();
-                    return false;
+                // Find target entry ID based on placeholder position
+                let targetEntryId = null;
+                let insertBefore = false;
+                
+                if (placeholder && placeholder.parentNode) {
+                    // Check next sibling (insert before this row)
+                    let sibling = placeholder.nextSibling;
+                    while (sibling) {
+                        if (sibling.classList && sibling.classList.contains('table-row')) {
+                            targetEntryId = sibling.dataset.entryId;
+                            insertBefore = true;
+                            break;
+                        }
+                        sibling = sibling.nextSibling;
+                    }
+                    
+                    // If no next sibling, check previous sibling (insert after this row)
+                    if (!targetEntryId) {
+                        sibling = placeholder.previousSibling;
+                        while (sibling) {
+                            if (sibling.classList && sibling.classList.contains('table-row')) {
+                                targetEntryId = sibling.dataset.entryId;
+                                insertBefore = false;
+                                break;
+                            }
+                            sibling = sibling.previousSibling;
+                        }
+                    }
                 }
                 
-                draggedRow = this;
-                draggedEntryId = entryId;
-                console.log('Starting drag for entry:', draggedEntryId);
+                // Fallback: use index-based calculation
+                if (!targetEntryId) {
+                    const allRows = Array.from(tableBody.querySelectorAll('.table-row'))
+                        .filter(row => row !== draggedItem && !row.classList.contains('drag-placeholder'));
+                    
+                    if (toIndex < allRows.length) {
+                        targetEntryId = allRows[toIndex].dataset.entryId;
+                        insertBefore = true;
+                    } else if (allRows.length > 0) {
+                        targetEntryId = allRows[allRows.length - 1].dataset.entryId;
+                        insertBefore = false;
+                    }
+                }
                 
-                this.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', draggedEntryId);
-                this.style.opacity = '0.5';
-            });
-            
-            // Drag end
-            row.addEventListener('dragend', function(e) {
-                console.log('Drag end');
-                this.classList.remove('dragging');
-                this.style.opacity = '';
-                removeEntryDropIndicator();
-                draggedRow = null;
-                draggedEntryId = null;
-                dragStartedFromHandle = false;
-            });
+                if (targetEntryId && draggedEntryId !== targetEntryId) {
+                    reorderEntries(draggedEntryId, targetEntryId, insertBefore);
+                }
+            }
         });
-        
-        console.log('Drag handlers initialized for', rows.length, 'rows');
     }
     
     // Initialize drag handlers on page load
@@ -575,5 +559,76 @@
     setTimeout(function() {
         initializeEntryDragHandlers();
     }, 100);
+    
+    /**
+     * Sync action cell widths between header and rows
+     * Ensures header action cell matches the width of row action cells
+     */
+    function syncActionCellWidths() {
+        const tables = document.querySelectorAll('.entries-smart-table');
+        
+        tables.forEach(table => {
+            const headActions = table.querySelector('.head-actions');
+            const rowActions = table.querySelectorAll('.cell-actions');
+            
+            if (!headActions || rowActions.length === 0) return;
+            
+            // Find the widest row action cell
+            let maxWidth = 0;
+            rowActions.forEach(cell => {
+                // Temporarily remove any inline styles to get natural width
+                const originalWidth = cell.style.width;
+                const originalMinWidth = cell.style.minWidth;
+                cell.style.width = '';
+                cell.style.minWidth = '';
+                
+                const width = cell.getBoundingClientRect().width;
+                if (width > maxWidth) {
+                    maxWidth = width;
+                }
+                
+                // Restore original styles
+                cell.style.width = originalWidth;
+                cell.style.minWidth = originalMinWidth;
+            });
+            
+            // Set header action cell to match the widest row action cell
+            // Use flex-basis instead of width to work better with flexbox
+            if (maxWidth > 0) {
+                headActions.style.flexBasis = maxWidth + 'px';
+                headActions.style.width = maxWidth + 'px';
+                headActions.style.minWidth = maxWidth + 'px';
+                
+                // Set CSS variable for padding calculation in fields-region
+                table.style.setProperty('--action-cell-width', maxWidth + 'px');
+            }
+        });
+    }
+    
+    // Sync action cell widths on page load and window resize
+    function initializeActionCellSync() {
+        syncActionCellWidths();
+        
+        // Re-sync on window resize
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(syncActionCellWidths, 100);
+        });
+        
+        // Re-sync when table content changes (e.g., after AJAX updates)
+        const observer = new MutationObserver(function() {
+            syncActionCellWidths();
+        });
+        
+        document.querySelectorAll('.entries-smart-table').forEach(table => {
+            observer.observe(table, { childList: true, subtree: true });
+        });
+    }
+    
+    // Initialize action cell width sync
+    setTimeout(function() {
+        initializeActionCellSync();
+    }, 200);
 })();
 

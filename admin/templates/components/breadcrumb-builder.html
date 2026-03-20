@@ -1,0 +1,58 @@
+<!-- Breadcrumb Builder Component
+     Parameters:
+     - page: Base page name (e.g., 'content', 'entries')
+     - collection: Collection data object
+     - entry: Entry data object (optional)
+     - is_sub_entry: Boolean for sub-entry context
+     - sub_collection: Sub-collection slug (optional)
+     - parent_entry_id: Parent entry ID for sub-entries
+     - is_nested_sub_entry: Boolean for nested sub-entries
+     - parent_sub_collection: Parent sub-collection slug (optional)
+     - parent_sub_entry_id: Parent sub-entry ID (optional)
+-->
+<div class="breadcrumbs">
+    <!-- Content Home -->
+    <a href="{admin_url 'content'}">{translate 'admin.content'}</a>
+    <span class="separator">›</span>
+    
+    <!-- Collection -->
+    {if collection exist}
+        <a href="{admin_url 'entries' collection='collection.slug'}">{collection.name}</a>
+        <span class="separator">›</span>
+    {endif}
+    
+    <!-- Sub-entry navigation -->
+    {if is_sub_entry == true}
+        {if parent_entry_id exist}
+            <!-- Link to main entry -->
+            <a href="{admin_url 'entry-detail' collection='collection.slug' entry='parent_entry_id'}">
+                {if entry._parent_entry_title exist}{entry._parent_entry_title}{else}Parent Entry{endif}
+            </a>
+            <span class="separator">›</span>
+            
+            <!-- Nested sub-entry: show parent sub-entry -->
+            {if is_nested_sub_entry == true}
+                {if parent_sub_collection exist}
+                    {if parent_sub_entry_id exist}
+                        <a href="{admin_url 'entry-detail' collection='collection.slug' entry='parent_entry_id' sub_collection='parent_sub_collection' sub_entry='parent_sub_entry_id'}">
+                            {parent_sub_collection}: 
+                            {if entry._parent_sub_entry_title exist}{entry._parent_sub_entry_title}{else}Parent Sub-Entry{endif}
+                        </a>
+                        <span class="separator">›</span>
+                    {endif}
+                {endif}
+            {endif}
+        {endif}
+        
+        <!-- Current sub-entry -->
+        <span class="current">
+            {if sub_collection exist}{sub_collection}: {endif}
+            {if entry.title exist}{entry.title}{else}{translate 'admin.new_entry'}{endif}
+        </span>
+    {else}
+        <!-- Regular entry -->
+        <span class="current">
+            {if entry.title exist}{entry.title}{else}{translate 'admin.new_entry'}{endif}
+        </span>
+    {endif}
+</div>

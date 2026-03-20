@@ -1,6 +1,6 @@
 # Testing the Onboarding System
 
-This guide explains how to test the onboarding system in HaruCMS.
+This guide explains how to test the onboarding system in Birkly.
 
 ## Quick Test Methods
 
@@ -49,7 +49,7 @@ This script will:
 
 If you have a development environment, test with a completely fresh installation:
 
-1. Copy HaruCMS to a new directory
+1. Copy Birkly to a new directory
 2. Set up a new PHP server
 3. Visit the admin panel
 4. You should see the onboarding wizard
@@ -119,7 +119,7 @@ If you have a development environment, test with a completely fresh installation
 
 4. **Complete Site Info**:
    - Enter site title: "Test Site"
-   - Enter description: "Testing HaruCMS"
+   - Enter description: "Testing Birkly"
    - Click "Continue"
 
 5. **Select Demo Content**:

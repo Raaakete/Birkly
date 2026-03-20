@@ -1,14 +1,9 @@
 <?php
 header('Content-Type: application/json');
 
-// Enable CORS for development
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
+// SECURITY FIX: Replace wildcard CORS with origin whitelist
+require_once __DIR__ . '/../core/cors.php';
+set_cors_headers('admin'); // Media API is admin-only
 
 $action = $_GET['action'] ?? 'list';
 
@@ -162,6 +157,21 @@ function formatFileSize($bytes) {
 }
 
 function uploadMedia() {
+    // SECURITY FIX: Add rate limiting for file uploads
+    require_once __DIR__ . '/rate_limit.php';
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userId = $_SESSION['user']['id'] ?? $ip;
+    
+    // Rate limit: 20 uploads per 5 minutes per user/IP
+    $rateLimiter = new RateLimiter('media_upload_' . $userId, 20, 300);
+    if (!$rateLimiter->check()) {
+        $retryAfter = $rateLimiter->getRetryAfter();
+        return [
+            'error' => 'Too many upload attempts. Please try again later.',
+            'retry_after' => $retryAfter
+        ];
+    }
+    
     if (!isset($_FILES['file'])) {
         return ['error' => 'No file uploaded'];
     }
@@ -208,14 +218,48 @@ function uploadMedia() {
         return ['error' => 'File type not allowed for security reasons.'];
     }
     
-    // Validate MIME type
-    if (!in_array($file['type'], $allowedMimeTypes)) {
+    // SECURITY FIX: Validate MIME type from file content, not client-provided type
+    // Client-provided $file['type'] can be spoofed - always use finfo_file()
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $detectedMimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    // Validate detected MIME type (from file content)
+    if (!in_array($detectedMimeType, $allowedMimeTypes)) {
         return ['error' => 'Invalid file type. Only images, documents, and media files are allowed.'];
+    }
+    
+    // Cross-validate: MIME type must match extension
+    $mimeToExtension = [
+        'image/jpeg' => ['jpg', 'jpeg'],
+        'image/png' => ['png'],
+        'image/gif' => ['gif'],
+        'image/webp' => ['webp'],
+        'image/svg+xml' => ['svg'],
+        'application/pdf' => ['pdf'],
+        'text/plain' => ['txt'],
+        'text/csv' => ['csv'],
+        'application/zip' => ['zip'],
+        'video/mp4' => ['mp4'],
+        'audio/mpeg' => ['mp3']
+    ];
+    
+    $expectedExtensions = $mimeToExtension[$detectedMimeType] ?? [];
+    if (!empty($expectedExtensions) && !in_array($extension, $expectedExtensions)) {
+        return ['error' => 'File extension does not match detected file type. Possible file spoofing attempt.'];
     }
     
     // Validate extension
     if (!in_array($extension, $allowedExtensions)) {
         return ['error' => 'Invalid file extension. Only safe file types are allowed.'];
+    }
+    
+    // Additional validation for images
+    if (strpos($detectedMimeType, 'image/') === 0) {
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            return ['error' => 'Invalid image file. File does not appear to be a valid image.'];
+        }
     }
     
     // File size limit: 10MB for images, 50MB for other files

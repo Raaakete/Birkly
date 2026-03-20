@@ -1,0 +1,51 @@
+<!-- Activity Timeline Component
+     Parameters:
+     - activities: Array of activity items
+     - show_limit: Number of items to show (optional)
+-->
+{if activities exist}
+    <div class="activity-timeline">
+        <h3>{translate 'admin.activity'}</h3>
+        
+        {for each activity in activities}
+            <div class="activity-item" data-activity-id="{activity.id}">
+                <div class="activity-icon">
+                    {if activity.type == 'created'}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                    {endif}
+                    {if activity.type == 'updated'}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    {endif}
+                    {if activity.type == 'deleted'}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                        </svg>
+                    {endif}
+                </div>
+                
+                <div class="activity-content">
+                    <div class="activity-description">
+                        {activity.description}
+                    </div>
+                    <div class="activity-meta">
+                        {if activity.user exist}
+                            <span class="activity-user">{activity.user}</span>
+                        {endif}
+                        {if activity.timestamp exist}
+                            <span class="activity-time">{activity.timestamp}</span>
+                        {endif}
+                    </div>
+                </div>
+            </div>
+        {endfor}
+    </div>
+{else}
+    <div class="activity-timeline">
+        <p class="empty-activity">{translate 'admin.no_activity'}</p>
+    </div>
+{endif}

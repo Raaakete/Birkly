@@ -1,43 +1,112 @@
+<!-- Help Page - Simple Documentation Display -->
 <div class="page-header pt-m pb-m">
-  <div class="breadcrumbs"><span class="current">Help</span></div>
+    <div class="page-header-left">
+        <div class="breadcrumbs">
+            <span class="current">{translate 'admin.help'}</span>
+        </div>
+    </div>
+    <div class="page-header-actions"></div>
 </div>
-<?php
-// Get the documentation section from URL parameter
-$section = $_GET['section'] ?? 'getting-started';
-$sections = [
-    'getting-started' => 'Getting Started',
-    'what-is-cms' => 'What is a CMS?',
-    'concepts' => 'Key Concepts',
-    'collections' => 'Collections',
-    'entries' => 'Entries',
-    'media' => 'Media',
-    'fieldtypes' => 'Field Types',
-    'templating' => 'Templating Language',
-    'website-integration' => 'Website Integration',
-    'client-library' => 'Client Library',
-    'public-api-forms' => 'Public API Forms',
-    'advanced-javascript' => 'Advanced JavaScript API'
-];
-$currentSectionTitle = $sections[$section] ?? 'Getting Started';
-?>
+
 <div class="help-page">
     <div class="help-header">
-        <h1>Documentation</h1>
-        <p class="help-subtitle">Everything you need to know about HaruCMS</p>
+        <h1><?= __('admin.documentation') ?></h1>
+        <p class="help-subtitle"><?= __('admin.everything_you_need_to_know') ?></p>
     </div>
     
     <div class="help-layout">
         <div class="help-content">
-            <?php include __DIR__ . '/../docs/' . $section . '.php'; ?>
+            <?php 
+            // Include the appropriate documentation section
+            $section = isset($current_section) ? $current_section : 'getting-started';
+            
+            // Try different file extensions
+            $docPath = null;
+            $extensions = ['.html', '.md', '.php'];
+            foreach ($extensions as $ext) {
+                $testPath = __DIR__ . '/../docs/' . $section . $ext;
+                if (file_exists($testPath)) {
+                    $docPath = $testPath;
+                    break;
+                }
+            }
+            
+            if ($docPath) {
+                if (pathinfo($docPath, PATHINFO_EXTENSION) === 'md') {
+                    // For markdown files, display as pre-formatted text (simple solution)
+                    echo '<div class="markdown-content">';
+                    echo '<pre style="white-space: pre-wrap; font-family: inherit; background: none; padding: 0; border: none;">';
+                    echo htmlspecialchars(file_get_contents($docPath));
+                    echo '</pre>';
+                    echo '</div>';
+                } else {
+                    // For HTML files, extract only the main content (not the full document structure)
+                    $htmlContent = file_get_contents($docPath);
+                    
+                    // Extract content between <main> tags if they exist
+                    if (preg_match('/<main[^>]*>(.*?)<\/main>/s', $htmlContent, $matches)) {
+                        echo $matches[1];
+                    } 
+                    // Otherwise extract content between <body> tags
+                    elseif (preg_match('/<body[^>]*>(.*?)<\/body>/s', $htmlContent, $matches)) {
+                        // Remove any sidebar/nav elements
+                        $bodyContent = $matches[1];
+                        $bodyContent = preg_replace('/<nav[^>]*class="[^"]*sidebar[^"]*"[^>]*>.*?<\/nav>/s', '', $bodyContent);
+                        $bodyContent = preg_replace('/<aside[^>]*>.*?<\/aside>/s', '', $bodyContent);
+                        
+                        // Extract just the main content div if it exists
+                        if (preg_match('/<div[^>]*class="[^"]*main-content[^"]*"[^>]*>(.*?)<\/div>/s', $bodyContent, $contentMatch)) {
+                            echo $contentMatch[1];
+                        } else {
+                            echo $bodyContent;
+                        }
+                    }
+                    // Fallback: include as-is (for PHP files)
+                    else {
+                        include $docPath;
+                    }
+                }
+            } else {
+                echo '<div class="alert alert-info">';
+                echo '<h3>' . __('admin.documentation_section_not_found') . '</h3>';
+                echo '<p>Section: <code>' . htmlspecialchars($section) . '</code></p>';
+                echo '<p>This documentation section is coming soon. In the meantime, check out the other available sections in the sidebar.</p>';
+                echo '</div>';
+            }
+            ?>
         </div>
         
         <aside class="help-sidebar">
             <nav class="help-nav">
                 <ul class="help-nav-list">
-                    <?php foreach ($sections as $key => $title): ?>
+                    <?php 
+                    // Dynamically find available documentation files
+                    $docsDir = __DIR__ . '/../docs/';
+                    $availableDocs = [];
+                    
+                    if (is_dir($docsDir)) {
+                        $files = glob($docsDir . '*.{html,md}', GLOB_BRACE);
+                        foreach ($files as $file) {
+                            $basename = basename($file);
+                            $section = pathinfo($basename, PATHINFO_FILENAME);
+                            // Skip index
+                            if ($section === 'index') continue;
+                            // Convert filename to readable title
+                            $title = ucwords(str_replace(['-', '_'], ' ', $section));
+                            $availableDocs[$section] = $title;
+                        }
+                    }
+                    
+                    // Sort alphabetically
+                    asort($availableDocs);
+                    
+                    $currentSection = isset($current_section) ? $current_section : 'getting-started';
+                    
+                    foreach ($availableDocs as $key => $title):
+                    ?>
                         <li class="help-nav-item">
-                            <a href="/admin/index.php?page=help&section=<?= htmlspecialchars($key) ?>" 
-                               class="help-nav-link <?= $section === $key ? 'active' : '' ?>">
+                            <a href="<?= admin_url('help', ['section' => $key]) ?>" 
+                               class="help-nav-link <?= $currentSection === $key ? 'active' : '' ?>">
                                 <?= htmlspecialchars($title) ?>
                             </a>
                         </li>
@@ -47,4 +116,3 @@ $currentSectionTitle = $sections[$section] ?? 'Getting Started';
         </aside>
     </div>
 </div>
-

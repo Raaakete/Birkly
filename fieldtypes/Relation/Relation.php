@@ -1,7 +1,7 @@
 <?php
-namespace HaruCMS\FieldTypes\Relation;
+namespace Birkly\FieldTypes\Relation;
 
-use HaruCMS\FieldTypes\BaseField;
+use Birkly\FieldTypes\BaseField;
 
 class Relation extends BaseField {
     protected $collection;
@@ -144,48 +144,48 @@ class Relation extends BaseField {
     public function getCSS(): string {
         return <<<'CSS'
         .relation-field {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 16px;
-            background: #f8f9fa;
-            margin-bottom: 1rem;
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-md, 0.5rem);
+            padding: var(--space-4, 1rem);
+            background: var(--bg-secondary, #fafafa);
+            margin-bottom: var(--space-4, 1rem);
         }
         
         .relation-list {
-            margin-bottom: 16px;
+            margin-bottom: var(--space-4, 1rem);
             min-height: 60px;
-            padding: 12px;
-            background: #fff;
-            border: 2px dashed #dee2e6;
-            border-radius: 6px;
-            transition: all 0.2s;
+            padding: var(--space-3, 0.75rem);
+            background: var(--bg-primary, #ffffff);
+            border: 2px dashed var(--border-light, #f3f4f6);
+            border-radius: var(--radius-md, 0.5rem);
+            transition: all var(--transition-fast, 150ms ease);
         }
         
         .relation-list:empty::before {
             content: "No relations selected";
-            color: #6c757d;
+            color: var(--text-secondary, #72746F);
             font-style: italic;
             text-align: center;
             display: block;
-            padding: 20px;
+            padding: var(--space-5, 1.25rem);
         }
         
         .relation-entry {
-            padding: 12px 16px;
-            background: #e3f2fd;
-            border: 1px solid #bbdefb;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            font-size: 14px;
+            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+            background: var(--primary-50, #eff6ff);
+            border: 1px solid var(--primary-200, #bfdbfe);
+            border-radius: var(--radius-md, 0.5rem);
+            margin-bottom: var(--space-2, 0.5rem);
+            font-size: 0.875rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.2s;
+            transition: all var(--transition-fast, 150ms ease);
         }
         
         .relation-entry:hover {
-            background: #d1ecf1;
-            border-color: #a8d8e0;
+            background: var(--primary-100, #dbeafe);
+            border-color: var(--primary-300, #93c5fd);
         }
         
         .relation-entry:last-child {
@@ -195,46 +195,42 @@ class Relation extends BaseField {
         .relation-info {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: var(--space-1, 0.25rem);
         }
         
         .relation-title {
-            font-weight: 500;
-            color: #2c3e50;
+            font-weight: var(--font-medium, 500);
+            color: var(--text-primary, #20221D);
         }
         
         .collection-info {
-            font-size: 12px;
-            color: #6c757d;
+            font-size: 0.75rem;
+            color: var(--text-secondary, #72746F);
             font-style: italic;
         }
         
         .relation-controls {
             display: flex;
-            gap: 12px;
+            gap: var(--space-3, 0.75rem);
             align-items: center;
         }
         
         .select-relation-btn {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            font-weight: 500;
+            gap: var(--space-2, 0.5rem);
+            padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+            font-weight: var(--font-medium, 500);
         }
         
         .remove-all-relation-btn {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
+            gap: var(--space-2, 0.5rem);
+            padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
         }
         
-        .btn-sm {
-            padding: 4px 8px;
-            font-size: 12px;
-            border-radius: 4px;
-        }
+        /* Buttons use system button classes - .btn-sm is defined in system buttons.css */
         
         .modal {
             position: fixed;
@@ -242,67 +238,67 @@ class Relation extends BaseField {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: var(--bg-overlay, rgba(0, 0, 0, 0.5));
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: var(--z-index-modal, 1000);
         }
         
         .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            background: var(--bg-primary, #ffffff);
+            border-radius: var(--radius-md, 0.5rem);
+            box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
             overflow: hidden;
         }
         
         .card-header {
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-            padding: 16px 20px;
+            background: var(--bg-secondary, #fafafa);
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+            padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
         }
         
         .card-body {
-            padding: 20px;
+            padding: var(--space-5, 1.25rem);
         }
         
         .card-footer {
-            background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-            padding: 16px 20px;
+            background: var(--bg-secondary, #fafafa);
+            border-top: 1px solid var(--border-light, #f3f4f6);
+            padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
         }
         
         .relation-picker-item {
             cursor: pointer;
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            border: 1px solid #ddd;
-            transition: all 0.2s;
-            background: #fff;
+            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+            border-radius: var(--radius-md, 0.5rem);
+            margin-bottom: var(--space-2, 0.5rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            transition: all var(--transition-fast, 150ms ease);
+            background: var(--bg-primary, #ffffff);
         }
         
         .relation-picker-item:hover {
-            border-color: #007bff;
-            background: #f8f9ff;
+            border-color: var(--primary-500, #3b82f6);
+            background: var(--primary-50, #eff6ff);
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
         }
         
         .relation-picker-item.selected {
-            background: #e0e7ff;
-            border-color: #007bff;
-            box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+            background: var(--primary-100, #dbeafe);
+            border-color: var(--primary-500, #3b82f6);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
         }
         
         .relation-title {
-            font-weight: 500;
-            margin-bottom: 4px;
+            font-weight: var(--font-medium, 500);
+            margin-bottom: var(--space-1, 0.25rem);
         }
         
         .relation-meta {
-            font-size: 12px;
-            color: #666;
+            font-size: 0.75rem;
+            color: var(--text-secondary, #72746F);
         }
         
         .flex {
@@ -318,15 +314,15 @@ class Relation extends BaseField {
         }
         
         .gap-2 {
-            gap: 8px;
+            gap: var(--space-2, 0.5rem);
         }
         
         .gap-8 {
-            gap: 8px;
+            gap: var(--space-2, 0.5rem);
         }
         
         .h3 {
-            font-size: 18px;
+            font-size: 1.125rem;
             font-weight: 600;
             margin: 0;
         }
@@ -335,78 +331,30 @@ class Relation extends BaseField {
             margin: 0;
         }
         
-        .btn {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .btn:hover {
-            background: #f8f9fa;
-            border-color: #007bff;
-        }
-        
-        .btn-primary {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        
-        .btn-primary:hover {
-            background: #0056b3;
-            border-color: #0056b3;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            border-color: #6c757d;
-        }
-        
-        .btn-secondary:hover {
-            background: #545b62;
-            border-color: #545b62;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-            border-color: #dc3545;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-            border-color: #bd2130;
-        }
+        /* Buttons use system button classes - no custom styles needed */
         
         .input {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+            border: 1px solid var(--border-medium, #e5e7eb);
+            border-radius: var(--radius-sm, 0.375rem);
+            font-size: 0.875rem;
+            background: var(--bg-primary, #ffffff);
+            color: var(--text-primary, #20221D);
         }
         
         .input:focus {
             outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            border-color: var(--primary-500, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .text-muted {
-            color: #6c757d;
+            color: var(--text-secondary, #72746F);
         }
         
         .text-danger {
-            color: #dc3545;
+            color: var(--error-500, #ef4444);
         }
         
         /* Icon styles */
@@ -422,7 +370,7 @@ class Relation extends BaseField {
         .icon-close::before {
             content: "×";
             font-weight: bold;
-            font-size: 16px;
+            font-size: 1rem;
         }
         CSS;
     }
@@ -472,6 +420,144 @@ class Relation extends BaseField {
     public function getDefaultValue() { return null; }
     public function processValue($value) { return $value; }
     public function processLoadedValue($value) { return $value; }
+
+    public function renderListCell($value, array $context = []): string {
+        // Handle case where value is already a JSON string
+        if (is_string($value) && (str_starts_with($value, '[') || str_starts_with($value, '{'))) {
+            try {
+                $decoded = json_decode($value, true);
+                if ($decoded !== null) {
+                    $value = $decoded;
+                }
+            } catch (\Exception $e) {
+                // If JSON decode fails, use as is
+            }
+        }
+        
+        // Ensure value is an array
+        if (!is_array($value)) {
+            $value = empty($value) ? [] : [$value];
+        }
+        
+        $count = count($value);
+        if ($count === 0) {
+            return '<span class="ft-list-empty">–</span>';
+        }
+        
+        // Extract entry IDs from relation objects (they may be stored as objects with id/collection)
+        $entryIds = [];
+        foreach ($value as $item) {
+            if (is_array($item) && isset($item['id'])) {
+                // New format: object with id, collection, etc.
+                $entryIds[] = $item['id'];
+            } elseif (is_object($item) && isset($item->id)) {
+                // Object format
+                $entryIds[] = $item->id;
+            } elseif (is_string($item) || is_numeric($item)) {
+                // Old format: just an ID string
+                $entryIds[] = (string)$item;
+            }
+        }
+        
+        // Try to get entry titles from context or by loading entries
+        $titles = [];
+        $field = $context['field'] ?? [];
+        // Get collection from field config or from fieldtype's own config
+        $collectionSlug = $field['collection'] ?? $this->collection ?? '';
+        
+        // Try to get titles from context entry data if available
+        $entry = $context['entry'] ?? null;
+        if ($entry && isset($entry['__relation_titles_' . $this->name])) {
+            $titles = $entry['__relation_titles_' . $this->name];
+        } else {
+            // Fallback: try to load entry titles from filesystem
+            // For relation objects, we might have different collections per entry
+            $contentDir = __DIR__ . '/../../content';
+            $collectionsDir = $contentDir . '/collections';
+            
+            if (is_dir($collectionsDir)) {
+                // Try to find collection directory
+                $collectionDir = null;
+                if ($collectionSlug) {
+                    $dirs = scandir($collectionsDir);
+                    foreach ($dirs as $dir) {
+                        if ($dir === '.' || $dir === '..') continue;
+                        $metaFile = "$collectionsDir/$dir/collection.json";
+                        if (file_exists($metaFile)) {
+                            $meta = json_decode(file_get_contents($metaFile), true);
+                            if ($meta && ($meta['slug'] === $collectionSlug || $meta['id'] === $collectionSlug)) {
+                                $collectionDir = $dir;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Load titles for each entry ID
+                foreach (array_slice($entryIds, 0, 3) as $entryId) {
+                    if (empty($entryId)) continue;
+                    
+                    $found = false;
+                    
+                    // If we have a specific collection, try that first
+                    if ($collectionDir) {
+                        $entryFile = "$collectionsDir/$collectionDir/entries/$entryId.json";
+                        if (file_exists($entryFile)) {
+                            $entryData = json_decode(file_get_contents($entryFile), true);
+                            if ($entryData) {
+                                $title = $entryData['title'] ?? $entryId;
+                                $titles[] = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+                                $found = true;
+                            }
+                        }
+                    }
+                    
+                    // If not found, search all collections
+                    if (!$found) {
+                        $dirs = scandir($collectionsDir);
+                        foreach ($dirs as $dir) {
+                            if ($dir === '.' || $dir === '..') continue;
+                            $entryFile = "$collectionsDir/$dir/entries/$entryId.json";
+                            if (file_exists($entryFile)) {
+                                $entryData = json_decode(file_get_contents($entryFile), true);
+                                if ($entryData) {
+                                    $title = $entryData['title'] ?? $entryId;
+                                    $titles[] = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+                                    $found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // If still not found, just show the ID
+                    if (!$found) {
+                        $titles[] = htmlspecialchars($entryId, ENT_QUOTES, 'UTF-8');
+                    }
+                }
+            } else {
+                // Can't find collections directory, just show IDs
+                foreach (array_slice($entryIds, 0, 3) as $entryId) {
+                    $titles[] = htmlspecialchars($entryId, ENT_QUOTES, 'UTF-8');
+                }
+            }
+        }
+        
+        // Build preview
+        $previewText = implode(', ', $titles);
+        if ($count > 3) {
+            $previewText .= '...';
+        }
+        
+        $badge = '<span class="ft-list-badge">' . $count . ' related</span>';
+        $text = $previewText ? '<span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);margin-left:4px;">(' . $previewText . ')</span>' : '';
+        
+        return $badge . $text;
+    }
+
+    public function getTableMinWidth(): string {
+        return '200px'; // Relation fields need space for related entry titles
+    }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {
         $collection = htmlspecialchars($existingData['collection'] ?? '');
