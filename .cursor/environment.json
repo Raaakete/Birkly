@@ -1,0 +1,9 @@
+{
+  "install": "echo 'Birkly CMS — zero npm install required'",
+  "terminals": [
+    {
+      "name": "birkly-cms",
+      "command": "php -S localhost:8080 -t . server-router.php"
+    }
+  ]
+}
