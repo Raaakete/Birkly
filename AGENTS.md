@@ -42,6 +42,7 @@ Run existing tests or manual smoke checks before opening PRs. Verify admin login
 
 ## Roadmap workflow
 
-1. **Product agent** updates `docs/roadmap/ROADMAP.md` via PR
-2. **Lead agent** executes milestones, delegates to specialist subagents
-3. Cross-repo tasks must list dependency order in the roadmap (CMS → sites → docs)
+1. **Initial plan:** Human and **product-planner** collaborate; planner waits for explicit approval before the first roadmap PR
+2. **Later updates:** Planner may apply **small** roadmap edits alone (status, subtasks, clarifications); **major** changes require human approval first — see `docs/roadmap/ROADMAP.md` § Plan governance
+3. **Lead agent** executes approved milestones; delegates to specialist subagents
+4. Cross-repo tasks must list dependency order in the roadmap (CMS → sites → docs)
