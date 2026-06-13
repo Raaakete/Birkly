@@ -1,5 +1,5 @@
 {
-  "install": "echo 'Birkly CMS — zero npm install required'",
+  "install": "command -v php >/dev/null 2>&1 || { sudo apt-get update -qq && sudo apt-get install -y php-cli php-mbstring php-xml php-curl php-gd php-zip; }",
   "terminals": [
     {
       "name": "birkly-cms",
