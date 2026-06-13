@@ -1,5 +1,25 @@
 # Birkly Platform Roadmap
 
+## Plan governance
+
+Human and product-planner agent share ownership of this file.
+
+| Change type | Who decides | Planner action |
+|-------------|-------------|----------------|
+| **Initial roadmap** | Human + planner together | Ask questions → draft in Plan mode → **wait for approval** → then PR |
+| **Small updates** | Planner autonomously | Edit directly; PR when batching status or clarity updates |
+| **Major updates** | Human must approve first | Propose change → **wait for approval** → then edit / PR |
+
+**Small updates include:** task status, wording, subtasks under existing milestones, path/owner fixes, notes/blockers.
+
+**Major updates include:** new/removed milestones, vision changes, new cross-repo epics, milestone reprioritization, significant scope or timeline shifts.
+
+When in doubt, treat as major and ask the human.
+
+### Approved baseline
+
+_Not set yet — first product-planner session will establish this after human approval._
+
 ## Vision
 
 Build a reliable, zero-dependency flat-file CMS (Birkly) and maintain two reference client sites (Birkly Website, Kekaba) plus synced documentation — all driven by a cloud agent team with clear milestones and acceptance criteria.
