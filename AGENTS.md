@@ -40,6 +40,14 @@ php -S localhost:8080 -t . server-router.php
 
 Run existing tests or manual smoke checks before opening PRs. Verify admin login, API endpoints, and affected templates when changing core CMS code.
 
+## Cursor Cloud specific instructions
+
+- Cloud VMs run Ubuntu. PHP is installed via `.cursor/environment.json` `install` script.
+- **Multi-repo layout:** In a multi-repo environment, repos clone as siblings (e.g. `/workspace` = Birkly, siblings nearby). If only `/workspace` exists with one repo, the multi-repo environment is not attached — report FAIL and ask the human to fix the cloud environment in the dashboard.
+- CMS dev server (Birkly repo root): `php -S localhost:8080 -t . server-router.php`
+- Client sites are static HTML; serve with `python3 -m http.server 8000` when needed.
+- Do not commit runtime data (see Architecture rules above).
+
 ## Roadmap workflow
 
 1. **Initial plan:** Human and **product-planner** collaborate; planner waits for explicit approval before the first roadmap PR
