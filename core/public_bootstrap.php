@@ -105,3 +105,31 @@ if (!function_exists('birkly_public_load_active_plugins')) {
     }
 }
 
+/**
+ * Load only plugins needed for a specific template function (M2-T4).
+ * Falls back to loading all active plugins when $name is null.
+ */
+if (!function_exists('birkly_public_load_plugins_for_template_function')) {
+    function birkly_public_load_plugins_for_template_function(?string $name = null): void {
+        if ($name === null || $name === '') {
+            birkly_public_load_active_plugins();
+            return;
+        }
+
+        if (function_exists('get_template_function') && get_template_function($name)) {
+            return;
+        }
+
+        foreach (get_all_plugins() as $pid => $plugin) {
+            if (empty($plugin['active'])) continue;
+            $file = $plugin['path'] . '/plugin.php';
+            if (file_exists($file)) {
+                include_once $file;
+            }
+            if (function_exists('get_template_function') && get_template_function($name)) {
+                return;
+            }
+        }
+    }
+}
+

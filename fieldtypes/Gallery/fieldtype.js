@@ -149,7 +149,7 @@
         }
         
         function loadMediaInfo(mediaId) {
-            return fetch(`/api/media.php?action=get&id=${mediaId}`)
+            return fetch(`/api/admin_media.php?action=get&id=${encodeURIComponent(mediaId)}`, { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'ok' && data.data) {
@@ -170,9 +170,12 @@
             const uploadPromises = Array.from(files).map(file => {
                 const formData = new FormData();
                 formData.append('file', file);
-                
-                return fetch('/api/media.php?action=upload', {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                if (csrf) formData.append('_csrf', csrf);
+
+                return fetch('/api/admin_media.php?action=upload', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     body: formData
                 })
                 .then(response => {
