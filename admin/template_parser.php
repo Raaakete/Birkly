@@ -38,14 +38,36 @@ class TemplateParser {
             $parsed
         );
         
-        // Handle {admin_url 'page'} or {admin_url 'page' param='value'} syntax (must be before simple variable handler)
-        // Supports: {admin_url 'entry-editor'} or {admin_url 'entry-editor' collection='collection.slug'}
+        // Handle {admin_url 'page'} with optional query params: collection='collection.slug'
         $parsed = preg_replace_callback(
-            '/\{admin_url\s+[\'"]([^\'"]+)[\'"]\s*(?:(?:param|collection|entry|sub_collection|sub_entry)=[\'"]([^\'"]+)[\'"])?\}/',
+            '/\{admin_url\s+[\'"]([^\'"]+)[\'"]([^}]*)\}/',
             function($matches) {
                 $page = $matches[1];
-                // For now, just return the basic admin_url - parameters will be handled via query string in template
-                return '<?= admin_url(\'' . addslashes($page) . '\') ?>';
+                $attrs = trim($matches[2]);
+                if ($attrs === '') {
+                    return '<?= admin_url(\'' . addslashes($page) . '\') ?>';
+                }
+
+                $params = [];
+                if (preg_match_all('/(\w+)=[\'"]([^\'"]+)[\'"]/', $attrs, $attrMatches, PREG_SET_ORDER)) {
+                    foreach ($attrMatches as $am) {
+                        $key = $am[1];
+                        $val = $am[2];
+                        if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/', $val)) {
+                            $parts = explode('.', $val);
+                            $php = '$' . array_shift($parts);
+                            foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+                            $params[] = "'" . addslashes($key) . "' => (" . $php . " ?? '')";
+                        } else {
+                            $params[] = "'" . addslashes($key) . "' => '" . addslashes($val) . "'";
+                        }
+                    }
+                }
+
+                if (empty($params)) {
+                    return '<?= admin_url(\'' . addslashes($page) . '\') ?>';
+                }
+                return '<?= admin_url(\'' . addslashes($page) . '\', [' . implode(', ', $params) . ']) ?>';
             },
             $parsed
         );
@@ -95,6 +117,19 @@ class TemplateParser {
             $parsed
         );
         
+        // Handle {count variable} syntax (must be before simple variable handler)
+        $parsed = preg_replace_callback(
+            '/\{count\s+([a-zA-Z0-9_\.]+)\}/',
+            function($matches) {
+                $var = trim($matches[1]);
+                $parts = explode('.', $var);
+                $php = '$' . array_shift($parts);
+                foreach ($parts as $p) { $php .= "['" . $p . "']"; }
+                return '<?= is_array(' . $php . ') ? count(' . $php . ') : 0 ?>';
+            },
+            $parsed
+        );
+
         // Handle {json variable} or {json variable.property} syntax for JSON encoding (must be before simple variable handler)
         $parsed = preg_replace_callback(
             '/\{json\s+([a-zA-Z0-9_\.]+)\}/',

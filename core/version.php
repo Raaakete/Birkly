@@ -306,7 +306,7 @@ class BirklyVersion {
             'plugins/',
             'templates/',
             'index.php',
-            'render_page.php',
+            'archive/legacy-templating/render_page.php',
             'VERSION'
         ];
         
