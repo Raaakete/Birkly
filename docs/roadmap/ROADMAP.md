@@ -196,7 +196,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 5: Test and QA infrastructure
 
-- **Status:** not started
+- **Status:** in review
 - **Repos:** Birkly
 - **Goal:** Regressions caught automatically
 - **Values:** Robust, inspectable
@@ -204,10 +204,10 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 **Tasks**
 
-- [ ] **M5-T1** PHPUnit (or equivalent) for auth boundaries
-- [ ] **M5-T2** Template parser directive tests
-- [ ] **M5-T3** Security regression fixtures in `tests/fixtures/`
-- [ ] **M5-T4** Update `qa-verifier` agent with runnable harness reference
+- [x] **M5-T1** PHPUnit (or equivalent) for auth boundaries
+- [x] **M5-T2** Template parser directive tests
+- [x] **M5-T3** Security regression fixtures in `tests/fixtures/`
+- [x] **M5-T4** Update `qa-verifier` agent with runnable harness reference
 
 **Acceptance criteria**
 
