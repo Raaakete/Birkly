@@ -12,6 +12,26 @@ set_security_headers('api');
 
 require_once __DIR__ . '/../core/storage/StorageFactory.php';
 require_once __DIR__ . '/../core/cache.php';
+require_once __DIR__ . '/rate_limit.php';
+
+function birkly_public_rate_limit($bucket, $limit = 120, $window = 60) {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $safeIp = preg_replace('/[^a-zA-Z0-9._-]/', '_', $ip);
+    $rateLimiter = new RateLimiter('public_' . $bucket . '_' . $safeIp, $limit, $window);
+    if (!$rateLimiter->check()) {
+        http_response_code(429);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Too many requests',
+            'retry_after' => $rateLimiter->getRetryAfter()
+        ]);
+        exit;
+    }
+}
+
+// M2-T4: Rate-limit all public API traffic
+birkly_public_rate_limit('api', 120, 60);
+
 $storage = get_storage(__DIR__ . '/../content');
 $input = array_merge($_GET, $_POST);
 $action = $input['action'] ?? '';
@@ -40,6 +60,7 @@ function respond($data) {
  * NOTE: This is required because client-side rendering cannot execute PHP callbacks.
  */
 if ($action === 'template_functions_list') {
+    birkly_public_rate_limit('template_functions_list', 20, 60);
     // Public template function discovery can be memory-heavy on the PHP built-in server
     // because the process is long-lived; give it more headroom.
     @ini_set('memory_limit', '512M');
@@ -113,6 +134,7 @@ if ($action === 'template_functions_list') {
 }
 
 if ($action === 'template_function_call') {
+    birkly_public_rate_limit('template_function_call', 30, 60);
     // Public template function calls can be memory-heavy on the PHP built-in server
     // because the process is long-lived; give it more headroom.
     @ini_set('memory_limit', '512M');
@@ -130,7 +152,6 @@ if ($action === 'template_function_call') {
         }
 
         require_once __DIR__ . '/../core/public_bootstrap.php';
-        birkly_public_load_active_plugins();
 
         // Support both JSON (application/json) and form-encoded (application/x-www-form-urlencoded) requests
         $name = '';
@@ -164,6 +185,9 @@ if ($action === 'template_function_call') {
         if (!is_string($name) || $name === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $name)) {
             respond(['status' => 'error', 'message' => 'Invalid function name']);
         }
+
+        // M2-T4: load only plugins that may register this template function
+        birkly_public_load_plugins_for_template_function($name);
 
         if (!function_exists('get_template_function')) {
             respond(['status' => 'ok', 'data' => ['result' => null]]); // Return null instead of error

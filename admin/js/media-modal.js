@@ -173,7 +173,7 @@ window.Birkly.MediaModal = {
         
         try {
             console.log('Fetching media from API...');
-            const response = await fetch('/api/media.php?action=list');
+            const response = await fetch('/api/admin_media.php?action=list', { credentials: 'same-origin' });
             const result = await response.json();
             
             // Check if modal is still open before rendering
@@ -254,10 +254,13 @@ window.Birkly.MediaModal = {
         
         const formData = new FormData();
         formData.append('file', file);
-        
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        if (csrf) formData.append('_csrf', csrf);
+
         try {
-            const response = await fetch('/api/media.php?action=upload', {
+            const response = await fetch('/api/admin_media.php?action=upload', {
                 method: 'POST',
+                credentials: 'same-origin',
                 body: formData
             });
             
