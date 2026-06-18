@@ -101,7 +101,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 - [x] **M1-T7** Product-planner roadmap PR (this document + baseline)
 - [ ] **M1-T8** Configure Resend secrets in cloud env (`RESEND_API_KEY`, `AGENT_DIGEST_FROM`) — **human**
 - [ ] **M1-T9** Add GitHub Actions CI: PHP lint + smoke test on PR
-- [ ] **M1-T10** Run lead-engineer on Milestone 2
+- [x] **M1-T10** Run lead-engineer on Milestone 2
 
 **Acceptance criteria**
 
@@ -115,7 +115,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 2: CMS security boundary
 
-- **Status:** not started
+- **Status:** complete (merged PR #4, 2026-06-18)
 - **Repos:** Birkly
 - **Goal:** No unauthenticated access to admin data or media
 - **Values:** Security by default
@@ -123,11 +123,11 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 **Tasks**
 
-- [ ] **M2-T1** Lock down or remove public GET on `api/content.php` (draft exposure)
-- [ ] **M2-T2** Migrate fieldtypes/admin off legacy `api/media.php`; auth-wrap or remove
-- [ ] **M2-T3** Fix path traversal in media delete (`api/media.php`)
-- [ ] **M2-T4** Rate-limit `api/public.php`; reduce plugin bootstrap cost for `template_function_call`
-- [ ] **M2-T5** Add auth regression tests (PHPUnit or smoke probes)
+- [x] **M2-T1** Lock down or remove public GET on `api/content.php` (draft exposure)
+- [x] **M2-T2** Migrate fieldtypes/admin off legacy `api/media.php`; auth-wrap or remove
+- [x] **M2-T3** Fix path traversal in media delete (`api/media.php`)
+- [x] **M2-T4** Rate-limit `api/public.php`; reduce plugin bootstrap cost for `template_function_call`
+- [x] **M2-T5** Add auth regression tests (PHPUnit or smoke probes)
 
 **Acceptance criteria**
 
