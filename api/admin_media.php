@@ -17,7 +17,7 @@ $action = $_GET['action'] ?? 'list';
 // - list/folders: read_media (viewer allowed)
 // - upload: upload
 // - all other actions mutate media/folders: manage_media
-if ($action === 'list' || $action === 'folders') {
+if ($action === 'list' || $action === 'folders' || $action === 'get') {
     requireAuth('read_media');
 } elseif ($action === 'upload') {
     requireAuth('upload');
@@ -28,6 +28,9 @@ if ($action === 'list' || $action === 'folders') {
 switch ($action) {
     case 'list':
         echo json_encode(listMedia());
+        break;
+    case 'get':
+        echo json_encode(getMediaItem());
         break;
     case 'upload':
         echo json_encode(uploadMedia());
@@ -418,29 +421,111 @@ function uploadMedia() {
     ];
 }
 
+function validateMediaId($mediaId) {
+    if (empty($mediaId) || !is_string($mediaId)) {
+        return false;
+    }
+    if (!preg_match('/^[a-zA-Z0-9_-]+$/', $mediaId)) {
+        return false;
+    }
+    if (strpos($mediaId, '..') !== false || strpos($mediaId, '/') !== false || strpos($mediaId, '\\') !== false) {
+        return false;
+    }
+    return true;
+}
+
+function getMediaItem() {
+    $mediaId = $_GET['id'] ?? '';
+    if (!validateMediaId($mediaId)) {
+        return ['status' => 'error', 'message' => 'Invalid media ID'];
+    }
+
+    $mediaDir = realpath(__DIR__ . '/../media');
+    if (!$mediaDir) {
+        return ['status' => 'error', 'message' => 'Media directory not found'];
+    }
+
+    $metadataPath = $mediaDir . '/.metadata.json';
+    if (file_exists($metadataPath)) {
+        $metadata = json_decode(file_get_contents($metadataPath), true);
+        if ($metadata && isset($metadata[$mediaId])) {
+            $item = $metadata[$mediaId];
+            $ext = isset($item['ext']) ? preg_replace('/[^a-zA-Z0-9]/', '', $item['ext']) : '';
+            $folder = $item['folder'] ?? '';
+            $filePath = $folder
+                ? $mediaDir . '/' . $folder . '/' . $mediaId . ($ext ? '.' . $ext : '')
+                : $mediaDir . '/' . $mediaId . ($ext ? '.' . $ext : '');
+            $realPath = realpath($filePath);
+            if ($realPath && strpos($realPath, $mediaDir) === 0 && is_file($realPath)) {
+                return [
+                    'status' => 'ok',
+                    'data' => [
+                        'id' => $item['id'] ?? $mediaId,
+                        'name' => $item['name'] ?? $mediaId,
+                        'url' => $item['url'] ?? '/media/' . $mediaId . ($ext ? '.' . $ext : ''),
+                        'type' => $item['type'] ?? mime_content_type($realPath),
+                        'size' => $item['size'] ?? filesize($realPath),
+                        'size_formatted' => formatFileSize($item['size'] ?? filesize($realPath)),
+                    ]
+                ];
+            }
+        }
+    }
+
+    $matches = glob($mediaDir . '/' . $mediaId . '.*');
+    if ($matches) {
+        $realPath = realpath($matches[0]);
+        if ($realPath && strpos($realPath, $mediaDir) === 0 && is_file($realPath)) {
+            return [
+                'status' => 'ok',
+                'data' => [
+                    'id' => $mediaId,
+                    'name' => basename($realPath),
+                    'url' => '/media/' . basename($realPath),
+                    'type' => mime_content_type($realPath),
+                    'size' => filesize($realPath),
+                    'size_formatted' => formatFileSize(filesize($realPath)),
+                ]
+            ];
+        }
+    }
+
+    return ['status' => 'error', 'message' => 'Media not found'];
+}
+
 function deleteMedia() {
     // SECURITY FIX: Require CSRF token for deletions
     $csrf = $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
         return ['error' => 'Invalid CSRF token'];
     }
-    
+
     $mediaId = $_POST['id'] ?? '';
-    if (empty($mediaId)) {
-        return ['error' => 'No media ID provided'];
+    if (!validateMediaId($mediaId)) {
+        return ['error' => 'Invalid media ID'];
     }
-    
-    $mediaDir = __DIR__ . '/../media';
+
+    $mediaDir = realpath(__DIR__ . '/../media');
+    if (!$mediaDir) {
+        return ['error' => 'Media directory not found'];
+    }
     $metadataPath = $mediaDir . '/.metadata.json';
-    
+
     // Load metadata to find the file
     if (file_exists($metadataPath)) {
         $metadata = json_decode(file_get_contents($metadataPath), true);
         if (isset($metadata[$mediaId])) {
             $item = $metadata[$mediaId];
-            $filepath = $mediaDir . '/' . $mediaId . '.' . $item['ext'];
-            
-            if (file_exists($filepath) && unlink($filepath)) {
+            $folder = $item['folder'] ?? '';
+            $filepath = $folder
+                ? $mediaDir . '/' . $folder . '/' . $mediaId . '.' . $item['ext']
+                : $mediaDir . '/' . $mediaId . '.' . $item['ext'];
+            $realPath = realpath($filepath);
+            if (!$realPath || strpos($realPath, $mediaDir) !== 0) {
+                return ['error' => 'Invalid media path'];
+            }
+
+            if (file_exists($realPath) && unlink($realPath)) {
                 // Remove from metadata
                 unset($metadata[$mediaId]);
                 file_put_contents($metadataPath, json_encode($metadata, JSON_PRETTY_PRINT));
