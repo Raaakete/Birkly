@@ -551,4 +551,28 @@ function requireApiKeyAuth() {
         'domain' => $validation['domain'],
         'license_id' => $validation['license']['id'] ?? 'unknown'
     ]);
+}
+
+/**
+ * True when the CMS itself is running on a local dev host (server-side only).
+ * Used by page_bundle/snapshot — does not bypass auth based on client Origin.
+ */
+function birkly_request_is_local_dev(): bool {
+    $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+    if ($host === '') {
+        return false;
+    }
+    if (strpos($host, ':') !== false) {
+        $host = explode(':', $host, 2)[0];
+    }
+    $localHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
+    if (in_array($host, $localHosts, true)) {
+        return true;
+    }
+    foreach (['.local', '.test', '.dev'] as $suffix) {
+        if (strlen($host) > strlen($suffix) && substr($host, -strlen($suffix)) === $suffix) {
+            return true;
+        }
+    }
+    return false;
 } 
