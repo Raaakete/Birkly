@@ -38,19 +38,5 @@
     </div>
 </div>
 
-<!-- Initialize Activity JavaScript -->
+<!-- Initialize Activity JavaScript (M3-T4: no inline logic in template) -->
 {include_script 'activity.js'}
-
-<script>
-// Expose data for JavaScript
-window.activityData = {
-    csrfToken: '{csrf_token}'
-};
-
-// Initialize activity feed when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.initActivityFeed) {
-        window.initActivityFeed(window.activityData);
-    }
-});
-</script>
