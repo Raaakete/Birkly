@@ -196,7 +196,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 5: Test and QA infrastructure
 
-- **Status:** in review
+- **Status:** complete (merged PR #10, 2026-06-18)
 - **Repos:** Birkly
 - **Goal:** Regressions caught automatically
 - **Values:** Robust, inspectable
