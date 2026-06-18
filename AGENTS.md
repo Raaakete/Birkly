@@ -54,3 +54,9 @@ Run existing tests or manual smoke checks before opening PRs. Verify admin login
 2. **Later updates:** Planner may apply **small** roadmap edits alone (status, subtasks, clarifications); **major** changes require human approval first — see `docs/roadmap/ROADMAP.md` § Plan governance
 3. **Lead agent** executes approved milestones; delegates to specialist subagents
 4. Cross-repo tasks must list dependency order in the roadmap (CMS → sites → docs)
+
+## Project values and reporting
+
+- **Values (mandatory):** `docs/PROJECT_VALUES.md` — dependency-free core, UI decoupled from functionality, self-contained extensions
+- **Daily digest:** `docs/agent-ops/REPORTING.md` — email to human by 06:45 CEST (07:00 review); run `php scripts/send-agent-digest.php`
+- **Session smoke test:** `scripts/agent-smoke-test.sh`
