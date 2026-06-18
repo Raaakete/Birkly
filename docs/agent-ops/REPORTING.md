@@ -1,14 +1,18 @@
 # Agent reporting and autonomy
 
-How the Birkly cloud agent team reports to the human owner while working autonomously. All agents read this file at session start. Values gate: `docs/PROJECT_VALUES.md`.
+How the Birkly cloud agent team reports to the human owner while working autonomously. All agents read this file at session start.
+
+**Values:** `docs/PROJECT_VALUES.md`  
+**Merge policy (no human per-PR review):** `docs/agent-ops/AUTONOMOUS_EXECUTION.md`
 
 ## Principles
 
 1. **Silence during work blocks = progress** — no hourly noise.
-2. **Daily digest at 07:00 CEST** — narrative summary of what happened.
+2. **Daily digest at 07:00 CEST** — narrative summary of what happened (especially **merges**, not review requests).
 3. **P0/P1 escalations stop work immediately** — do not wait for the digest.
-4. **PRs are the audit trail**; digests summarize them in plain language.
+4. **PRs are the audit trail**; digests summarize outcomes in plain language.
 5. **Approved baseline in `docs/roadmap/ROADMAP.md`** is the contract; scope changes need human approval.
+6. **Agents merge in-scope work** after CI + qa-verifier (+ design-reviewer for UI) — see AUTONOMOUS_EXECUTION.md.
 
 ## Daily digest (email + file)
 
@@ -61,8 +65,8 @@ Receiving at ProtonMail is fine. Sending uses **Resend** (plain PHP + curl — n
 |--------|-------|------|---------------|
 | **Session bootstrap** | First agent in session | Session start | Only if FAIL |
 | **Task completion** | Specialist → lead-engineer | After each task chunk | No |
-| **Daily digest** | lead-engineer → human | By 06:45 CEST | Review at 07:00 |
-| **Milestone status** | lead-engineer → human | At milestone breakpoints | Review PRs |
+| **Daily digest** | lead-engineer → human | By 06:45 CEST | Read outcomes at 07:00 — not PR review |
+| **Milestone status** | lead-engineer → human | When milestone completes | Optional ack |
 | **Blocker / decision** | Any → human | Immediately | Yes (P0/P1) |
 | **Roadmap delta** | product-planner → human | After merge or major proposal | Major only |
 
@@ -111,6 +115,8 @@ Next: [concrete actions]
 | Scope exceeds roadmap task | Escalate P1; do not expand | Yes |
 | Cross-repo dependency in milestone | Lead reorders | No |
 | Test failure (first cycle) | Fix and re-run | No |
+| Gate failure after 2 fix cycles | P1 escalation | Yes |
+| In-scope PR, all gates pass | lead-engineer merges | No |
 | Security / secrets / data leak | Stop, P0 | Yes |
 | Major roadmap change | Planner proposes, waits | Yes |
 | Cloud env FAIL (single repo) | Stop all, P0 | Yes (dashboard) |
@@ -120,10 +126,12 @@ Next: [concrete actions]
 
 ## PR conventions
 
+See **`docs/agent-ops/AUTONOMOUS_EXECUTION.md`** for merge gates and PR template.
+
 - **Branch:** `cursor/<descriptive-name>-24b5` (cloud agents) or `m[N]-<slug>` (milestone work)
-- **Title:** `[M[N]] Short description`
-- **Body:** task ID (`M[N]-T[N]`), acceptance checklist, related PRs, test evidence, **values check**
-- **Draft** until qa-verifier pass (design-reviewer for UI)
+- **Title:** `[M[N]-T[N]] Short description`
+- **Body:** task ID, acceptance checklist, `./scripts/ci-check.sh` evidence, qa-verifier + design-reviewer sign-off, **values check**
+- **Merge:** lead-engineer when gates pass — **do not** request human review for routine work
 - **One PR per repo** for cross-repo work; link siblings in description
 - **product-planner** PRs are roadmap/docs only — not mixed with implementation
 

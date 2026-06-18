@@ -22,7 +22,9 @@ When in doubt, treat as major and ask the human.
 
 **Priorities (next 4–8 weeks):** **A** agent infrastructure + **B** CMS stability (security, templating consolidation, client rendering performance). Client sites and docs are **maintenance-only**, gated on CMS milestones.
 
-**Governance artifacts:** `docs/PROJECT_VALUES.md`, `docs/agent-ops/REPORTING.md` (daily email digest to `keven@protonmail.com` by 06:45 CEST for 07:00 review).
+**Governance artifacts:** `docs/PROJECT_VALUES.md`, `docs/agent-ops/REPORTING.md`, `docs/agent-ops/AUTONOMOUS_EXECUTION.md` (daily digest 07:00 CEST; agents merge in-scope work without per-PR human review).
+
+**Autonomous execution approved:** **2026-06-18** — human approves milestones; agent team tests, reviews, and merges within task IDs.
 
 **Analysis basis:** Code inspection and smoke tests (June 2026) — not legacy internal planning docs alone.
 
@@ -35,6 +37,8 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 **Values:** See `docs/PROJECT_VALUES.md`.
 
 **Reporting:** See `docs/agent-ops/REPORTING.md`.
+
+**Autonomous execution:** See `docs/agent-ops/AUTONOMOUS_EXECUTION.md`.
 
 ---
 
@@ -87,7 +91,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 - **Status:** in progress
 - **Repos:** Birkly
-- **Goal:** Agents boot, verify environment, report daily, and hand off work reliably
+- **Goal:** Agents boot, verify environment, report daily, merge autonomously within approved tasks
 - **Values:** Governance, inspectability
 
 **Tasks**
@@ -100,16 +104,20 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 - [x] **M1-T6** Add `docs/PROJECT_VALUES.md`
 - [x] **M1-T7** Product-planner roadmap PR (this document + baseline)
 - [ ] **M1-T8** Configure Resend secrets in cloud env (`RESEND_API_KEY`, `AGENT_DIGEST_FROM`) — **human**
-- [ ] **M1-T9** Add GitHub Actions CI: PHP lint + smoke test on PR
+- [x] **M1-T9** Add GitHub Actions CI: `./scripts/ci-check.sh` on PR
 - [x] **M1-T10** Run lead-engineer on Milestone 2
+- [x] **M1-T11** Codify autonomous execution policy (`docs/agent-ops/AUTONOMOUS_EXECUTION.md` + agent role updates)
+- [ ] **M1-T12** GitHub branch protection: require `CI` check; allow agent merge without human review — **human/infra**
 
 **Acceptance criteria**
 
 - Smoke test exits 0 on cloud VM with four sibling repos
+- CI workflow runs on every PR to `main`
 - Daily digest writes to `docs/agent-ops/daily-reports/YYYY-MM-DD.md`
 - Email sends to `keven@protonmail.com` once Resend secrets configured
 - Values and reporting docs merged to `main`
-- Human receives first narrative digest by 07:00 CEST on an active agent day
+- lead-engineer merges in-scope PRs after CI + qa-verifier (no human per-PR review)
+- Human receives daily narrative digest by 07:00 CEST on active agent days
 
 ---
 
@@ -139,7 +147,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 3: Templating consolidation and UI decoupling
 
-- **Status:** in review
+- **Status:** complete (merged PR #6, 2026-06-18)
 - **Repos:** Birkly, Birkly-Docs
 - **Goal:** One canonical template language; presentation separated from logic
 - **Values:** Separation of concerns, UI decoupling, simplicity
