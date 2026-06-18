@@ -38,11 +38,11 @@ for f in api/content.php api/media.php api/admin_media.php api/public.php api/pa
   fi
 done
 
-# Template smoke (M3: must pass)
-if php "$ROOT/test-new-template.php" >/dev/null 2>&1; then
-  report "OK: test-new-template.php"
+# M5 regression harness (template parser + auth boundaries)
+if php "$ROOT/tests/run.php"; then
+  report "OK: tests/run.php"
 else
-  report "FAIL: test-new-template.php"
+  report "FAIL: tests/run.php"
   FAIL=1
 fi
 
@@ -55,21 +55,6 @@ for repo in Birkly-Website kekaba Birkly-Docs; do
     report "WARN: sibling repo $repo not found at $PARENT/$repo"
   fi
 done
-
-if [[ "$FAIL" -ne 0 ]]; then
-  report "RESULT: FAIL"
-  exit 1
-fi
-
-# M2-T5: Auth boundary probes
-if [[ -x "$ROOT/scripts/auth-probe.sh" ]]; then
-  if "$ROOT/scripts/auth-probe.sh"; then
-    report "OK: auth-probe.sh"
-  else
-    report "FAIL: auth-probe.sh"
-    FAIL=1
-  fi
-fi
 
 if [[ "$FAIL" -ne 0 ]]; then
   report "RESULT: FAIL"
