@@ -139,7 +139,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 3: Templating consolidation and UI decoupling
 
-- **Status:** not started
+- **Status:** in review
 - **Repos:** Birkly, Birkly-Docs
 - **Goal:** One canonical template language; presentation separated from logic
 - **Values:** Separation of concerns, UI decoupling, simplicity
@@ -147,11 +147,11 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 **Tasks**
 
-- [ ] **M3-T1** Declare canonical syntax (`{for each}`) in Birkly-Docs
-- [ ] **M3-T2** Deprecate/archive orphaned `render_page.php` + `templates/template_engine.php`
-- [ ] **M3-T3** Fix failing directives (e.g. `{count}` — fails in `test-new-template.php`)
-- [ ] **M3-T4** Audit admin pages mixing inline JS + logic; align with `docs/admin-templating.md`
-- [ ] **M3-T5** Plan safe replacement for `eval()` in `admin/template_parser.php`
+- [x] **M3-T1** Declare canonical syntax (`{for each}`) in Birkly-Docs
+- [x] **M3-T2** Deprecate/archive orphaned `render_page.php` + `templates/template_engine.php`
+- [x] **M3-T3** Fix failing directives (e.g. `{count}` — fails in `test-new-template.php`)
+- [x] **M3-T4** Audit admin pages mixing inline JS + logic; align with `docs/admin-templating.md`
+- [x] **M3-T5** Plan safe replacement for `eval()` in `admin/template_parser.php`
 
 **Acceptance criteria**
 
