@@ -18,12 +18,9 @@ require_once 'log.php';
 // haru_secure_session_start() is called inside requireAuth(), but we call it here too to ensure session is ready
 haru_secure_session_start();
 
-// Basic auth check (requireAuth will handle detailed checks for write operations)
-if ($_SERVER['REQUEST_METHOD'] !== 'GET' && !isset($_SESSION['user'])) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
-    exit;
-}
+// M2-T1: Admin content API requires authentication. Public read uses api/public.php
+// (published entries only). Unauthenticated GET previously exposed drafts.
+requireAuth('manage_content');
 
 $storage = get_storage('../content');
 $input = json_decode(file_get_contents('php://input'), true);
@@ -31,8 +28,6 @@ $action = $input['action'] ?? $_GET['action'] ?? '';
 
 // Handle collections
 if ($action === 'list_collections') {
-    // Allow public access for read-only operations
-    // requireAuth('manage_content');
     global $birkly_collections;
     // Populate $birkly_collections with core collections
     $collections = $storage->list('collections');
@@ -407,8 +402,6 @@ if ($action === 'duplicate_collection') {
 
 // Handle entries
 if ($action === 'list_entries') {
-    // Allow public access for read-only operations
-    // requireAuth('manage_content');
     $collection = $input['collection'] ?? $_GET['collection'] ?? '';
     $id = $input['id'] ?? $_GET['id'] ?? '';
     $dir = '';
@@ -981,8 +974,6 @@ if ($action === 'get_entry_with_children') {
 }
 
 if ($action === 'get_entry') {
-    // Allow public access for read-only operations
-    // requireAuth('manage_content');
     $collection = $input['collection'] ?? $_GET['collection'] ?? '';
     $entryId = $input['id'] ?? $_GET['id'] ?? '';
     $slug = $input['slug'] ?? $_GET['slug'] ?? '';
