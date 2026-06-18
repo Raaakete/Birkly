@@ -29,7 +29,7 @@ for f in server-router.php AGENTS.md docs/roadmap/ROADMAP.md docs/PROJECT_VALUES
 done
 
 # PHP syntax on critical API files
-for f in api/content.php api/media.php api/public.php admin/template_parser.php; do
+for f in api/content.php api/media.php api/admin_media.php api/public.php core/public_bootstrap.php admin/template_parser.php; do
   if php -l "$ROOT/$f" >/dev/null 2>&1; then
     report "OK: syntax $f"
   else
@@ -54,6 +54,21 @@ for repo in Birkly-Website kekaba Birkly-Docs; do
     report "WARN: sibling repo $repo not found at $PARENT/$repo"
   fi
 done
+
+if [[ "$FAIL" -ne 0 ]]; then
+  report "RESULT: FAIL"
+  exit 1
+fi
+
+# M2-T5: Auth boundary probes
+if [[ -x "$ROOT/scripts/auth-probe.sh" ]]; then
+  if "$ROOT/scripts/auth-probe.sh"; then
+    report "OK: auth-probe.sh"
+  else
+    report "FAIL: auth-probe.sh"
+    FAIL=1
+  fi
+fi
 
 if [[ "$FAIL" -ne 0 ]]; then
   report "RESULT: FAIL"

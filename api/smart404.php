@@ -5,9 +5,13 @@
  */
 
 require_once '../core/csrf.php';
-require_once '../api/content.php';
+require_once '../api/auth.php';
+require_once '../api/session.php';
 
 header('Content-Type: application/json');
+
+haru_secure_session_start();
+requireAuth('manage_content');
 
 // Verify CSRF token
 if (!verifyCSRFToken()) {
@@ -236,7 +240,7 @@ function generate404HTML($siteBaseUrl, $cmsApiUrl, $collectionsData) {
         async function fetchContent(collection, slug) {
             try {
                 // Try to fetch by slug first
-                let response = await fetch(\`\${CMS_API_URL}/content.php?action=get_entry&collection=\${collection}&slug=\${slug}\`);
+                let response = await fetch(\`\${CMS_API_URL}/public.php?action=get_entry&collection=\${collection}&slug=\${slug}\`);
                 let data = await response.json();
                 
                 if (data.status === 'ok' && data.data.entry) {
@@ -244,7 +248,7 @@ function generate404HTML($siteBaseUrl, $cmsApiUrl, $collectionsData) {
                 }
                 
                 // If not found by slug, try to fetch all entries and find by filename
-                response = await fetch(\`\${CMS_API_URL}/content.php?action=list_entries&collection=\${collection}\`);
+                response = await fetch(\`\${CMS_API_URL}/public.php?action=list_entries&collection=\${collection}\`);
                 data = await response.json();
                 
                 if (data.status === 'ok' && data.data.entries) {
