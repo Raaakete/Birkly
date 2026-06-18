@@ -78,6 +78,12 @@ curl -s -X POST http://localhost:8080/api/page_bundle.php \
 
 On localhost, domain auth is bypassed via `birkly_request_is_local_dev()`.
 
+### Hydrate path (baked pages)
+
+Baked pages (`<meta name="birkly-baked" content="1">`) should load `birkly-hydrate.js` instead of the full client. Hydrate keeps publish-time HTML and skips live API round-trips. When no snapshot exists, hydrate falls back to `birkly-client.js`.
+
+The full client also calls `tryLoadPageSnapshot()` before `loadPageBundle()` so snapshot cache is used when available.
+
 ## Acceptance mapping (M4)
 
 - **M4-T1** — Parallel collection fetch + bundle pre-load in `init()`

@@ -32,6 +32,11 @@ This directory contains the modular components of the Birkly client library.
    - `collectBundleRequests()` - Build batch read list from DOM + templates
    - `applyBundleResponse()` - Populate `Birkly.pageBundle` cache
    - `loadPageBundle()` - POST to `api/page_bundle.php`
+   - `tryLoadPageSnapshot()` - Load publish-time snapshot (inline or `page_snapshot.php`)
+
+### Hydrate script (baked pages)
+
+**birkly-hydrate.js** — lightweight alternative to full `birkly-client.js` when publish-time snapshots exist. See file header for usage.
 
 ## Usage
 

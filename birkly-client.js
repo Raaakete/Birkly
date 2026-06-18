@@ -686,6 +686,82 @@
                 return false;
             }
         };
+
+        Birkly.bundle.detectPageRoute = function () {
+            const pageMeta = document.querySelector('meta[name="birkly-page"]');
+            const slugMeta = document.querySelector('meta[name="birkly-slug"]');
+            if (pageMeta && pageMeta.content) {
+                const page = pageMeta.content.trim();
+                if (!/^[a-zA-Z0-9_-]+$/.test(page)) return null;
+                const slug = slugMeta && slugMeta.content ? slugMeta.content.trim() : '';
+                if (slug && !/^[a-zA-Z0-9_-]+$/.test(slug)) return null;
+                return { page, slug: slug || null };
+            }
+            const path = (window.location.pathname || '').toLowerCase();
+            const file = path.split('/').pop() || 'index.html';
+            if (file === '' || file === 'index.html') return { page: 'index', slug: null };
+            const base = file.replace(/\.html$/, '');
+            if (!/^[a-z0-9_-]+$/.test(base)) return null;
+            const slugParam = new URLSearchParams(window.location.search).get('slug');
+            if (slugParam && /^[a-zA-Z0-9_-]+$/.test(slugParam)) {
+                return { page: base, slug: slugParam };
+            }
+            return { page: base, slug: null };
+        };
+
+        Birkly.bundle.consumeInlinePageSnapshot = function (route) {
+            const inline = window.BIRKLY_PAGE_SNAPSHOT || window.KEKABA_PAGE_SNAPSHOT;
+            if (!inline || !inline.data) return null;
+            if (inline.page !== route.page) return null;
+            const inlineSlug = inline.slug || null;
+            if ((route.slug || null) !== inlineSlug) return null;
+            return {
+                requests: Array.isArray(inline.requests) ? inline.requests : [],
+                data: inline.data,
+                errors: Array.isArray(inline.errors) ? inline.errors : [],
+                rendered: inline.rendered || null,
+                source: 'inline'
+            };
+        };
+
+        Birkly.bundle.tryLoadPageSnapshot = async function () {
+            const route = Birkly.bundle.detectPageRoute();
+            if (!route) return false;
+
+            try {
+                let json = Birkly.bundle.consumeInlinePageSnapshot(route);
+                let source = json ? json.source : 'network';
+
+                if (!json) {
+                    let url = Birkly.cmsUrl + '/api/page_snapshot.php?page=' + encodeURIComponent(route.page);
+                    if (route.slug) {
+                        url += '&slug=' + encodeURIComponent(route.slug);
+                    }
+                    const res = await fetch(url, { credentials: 'include' });
+                    const body = await res.json().catch(() => ({}));
+                    if (!res.ok || body.status !== 'ok' || !body.data) {
+                        return false;
+                    }
+                    json = {
+                        requests: Array.isArray(body.requests) ? body.requests : [],
+                        data: body.data,
+                        errors: Array.isArray(body.errors) ? body.errors : [],
+                        rendered: body.rendered || null
+                    };
+                }
+
+                Birkly.bundle.applyBundleResponse(json.requests, {
+                    data: json.data,
+                    errors: json.errors
+                });
+                document.documentElement.classList.add('birkly-snapshot-page');
+                Birkly.log('Birkly: Page snapshot loaded:', route.page, route.slug || '', Object.keys(json.data).length, 'keys', '(' + source + ')');
+                return true;
+            } catch (err) {
+                Birkly.warn('Birkly: page snapshot failed', err);
+                return false;
+            }
+        };
     })();
     
     // Create aliases for backward compatibility (except renderConditionals which is a function below)
@@ -700,6 +776,7 @@
     const collectBundleRequests = Birkly.bundle.collectBundleRequests;
     const applyBundleResponse = Birkly.bundle.applyBundleResponse;
     const loadPageBundle = Birkly.bundle.loadPageBundle;
+    const tryLoadPageSnapshot = Birkly.bundle.tryLoadPageSnapshot;
 
     // ---------------------------------------------------------------------
     // Plugin Template Functions (template-first, plugin self-contained)
@@ -5035,7 +5112,8 @@
         Birkly.log('Birkly: API endpoint detected:', Birkly.apiEndpoint);
 
         const bundleRequests = collectBundleRequests();
-        if (bundleRequests.length > 0) {
+        const snapshotLoaded = bundleRequests.length > 0 ? await tryLoadPageSnapshot() : false;
+        if (!snapshotLoaded && bundleRequests.length > 0) {
             await loadPageBundle(bundleRequests);
         }
 

@@ -19,7 +19,7 @@ fi
 report "OK: php $(php -r 'echo PHP_VERSION;')"
 
 # Key files exist
-for f in server-router.php AGENTS.md docs/roadmap/ROADMAP.md docs/PROJECT_VALUES.md; do
+for f in server-router.php AGENTS.md docs/roadmap/ROADMAP.md docs/PROJECT_VALUES.md birkly-hydrate.js; do
   if [[ -f "$ROOT/$f" ]]; then
     report "OK: $f"
   else
