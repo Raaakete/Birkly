@@ -434,6 +434,19 @@ function validateMediaId($mediaId) {
     return true;
 }
 
+function validateMediaFolder($folder) {
+    if ($folder === '' || $folder === 'all') {
+        return true;
+    }
+    if (!is_string($folder)) {
+        return false;
+    }
+    if (strpos($folder, '..') !== false || strpos($folder, '/') !== false || strpos($folder, '\\') !== false) {
+        return false;
+    }
+    return preg_match('/^[a-zA-Z0-9_-]+$/', $folder) === 1;
+}
+
 function getMediaItem() {
     $mediaId = $_GET['id'] ?? '';
     if (!validateMediaId($mediaId)) {
@@ -547,12 +560,18 @@ function moveMedia() {
     
     $mediaId = $_POST['id'] ?? '';
     $folder = $_POST['folder'] ?? '';
-    
-    if (empty($mediaId)) {
-        return ['error' => 'No media ID provided'];
+
+    if (!validateMediaId($mediaId)) {
+        return ['error' => 'Invalid media ID'];
     }
-    
-    $mediaDir = __DIR__ . '/../media';
+    if (!validateMediaFolder($folder)) {
+        return ['error' => 'Invalid folder name'];
+    }
+
+    $mediaDir = realpath(__DIR__ . '/../media');
+    if (!$mediaDir) {
+        return ['error' => 'Media directory not found'];
+    }
     $metadataPath = $mediaDir . '/.metadata.json';
     
     // Load metadata
@@ -596,12 +615,15 @@ function updateMedia() {
     
     $mediaId = $_POST['id'] ?? '';
     $title = $_POST['title'] ?? '';
-    
-    if (empty($mediaId)) {
-        return ['error' => 'No media ID provided'];
+
+    if (!validateMediaId($mediaId)) {
+        return ['error' => 'Invalid media ID'];
     }
-    
-    $mediaDir = __DIR__ . '/../media';
+
+    $mediaDir = realpath(__DIR__ . '/../media');
+    if (!$mediaDir) {
+        return ['error' => 'Media directory not found'];
+    }
     $metadataPath = $mediaDir . '/.metadata.json';
     
     // Load metadata
@@ -831,12 +853,18 @@ function moveToFolder() {
     
     $mediaId = $_POST['id'] ?? '';
     $folder = $_POST['folder'] ?? '';
-    
-    if (empty($mediaId)) {
-        return ['status' => 'error', 'message' => 'Media ID is required'];
+
+    if (!validateMediaId($mediaId)) {
+        return ['status' => 'error', 'message' => 'Invalid media ID'];
     }
-    
-    $mediaDir = __DIR__ . '/../media';
+    if (!validateMediaFolder($folder)) {
+        return ['status' => 'error', 'message' => 'Invalid folder name'];
+    }
+
+    $mediaDir = realpath(__DIR__ . '/../media');
+    if (!$mediaDir) {
+        return ['status' => 'error', 'message' => 'Media directory not found'];
+    }
     $metadataPath = $mediaDir . '/.metadata.json';
     
     // Load metadata
