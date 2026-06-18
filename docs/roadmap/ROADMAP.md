@@ -18,118 +18,249 @@ When in doubt, treat as major and ask the human.
 
 ### Approved baseline
 
-_Not set yet — first product-planner session will establish this after human approval._
+**2026-06-16** — Initial roadmap approved by human (Keven).
+
+**Priorities (next 4–8 weeks):** **A** agent infrastructure + **B** CMS stability (security, templating consolidation, client rendering performance). Client sites and docs are **maintenance-only**, gated on CMS milestones.
+
+**Governance artifacts:** `docs/PROJECT_VALUES.md`, `docs/agent-ops/REPORTING.md` (daily email digest to `keven@protonmail.com` by 06:45 CEST for 07:00 review).
+
+**Analysis basis:** Code inspection and smoke tests (June 2026) — not legacy internal planning docs alone.
+
+---
 
 ## Vision
 
-Build a reliable, zero-dependency flat-file CMS (Birkly) and maintain two reference client sites (Birkly Website, Kekaba) plus synced documentation — all driven by a cloud agent team with clear milestones and acceptance criteria.
+Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, secure, flexible, and robust — with UI decoupled from functionality so design can evolve without breaking features. Maintain two reference client sites (Birkly-Website, kekaba) and synced documentation (Birkly-Docs), driven by a cloud agent team with clear milestones, values alignment, and daily reporting.
 
-## Current state
+**Values:** See `docs/PROJECT_VALUES.md`.
+
+**Reporting:** See `docs/agent-ops/REPORTING.md`.
+
+---
+
+## Current state (verified June 2026)
 
 | Repo | Status |
 |------|--------|
-| Birkly (CMS) | Active development, GitHub connected |
-| Birkly-Website | Local work ahead of remote; reconnecting to GitHub |
-| kekaba | New empty repo; site code being pushed |
-| Birkly-Docs | Active, separate repo |
+| **Birkly (CMS)** | Feature-rich; **not production-ready** as a security boundary. Critical gaps: open `api/content.php` GET, legacy `api/media.php`, three templating stacks, ~5.5k-line client renderer with N+1 API calls, no CI/PHPUnit. |
+| **Birkly-Website** | Beta marketing site on GitHub; embedded `Birkly-0.1/`; docs vendored under `docs/`; `beta_*` CMS content not in git; 4 broken homepage doc links. |
+| **kekaba** | Full site in repo (14 HTML pages, bake/publish pipeline); **most demanding Birkly client**; production CMS path issues documented; `Birkly-0.1/content/` not in git. |
+| **Birkly-Docs** | 38 topics, working build; last changelog Feb 2025; not wired into CMS Help. |
+| **Agent infra** | Roles + cloud bootstrap ~50% done; multi-repo cloud env working in current VM; smoke test + digest scripts added in M1 PR. |
+
+---
+
+## Cross-repo ordering
+
+```
+Week 1–2:  M1 Agent ops ───────────────────────────────►
+Week 2–4:       M2 CMS security ──────────────────────►
+Week 3–6:            M3 Templating + UI decoupling ──►
+Week 5–8:                 M4 Client performance ─────►
+Week 2–8:  M5 Test/QA infrastructure ═══════════════►  (parallel)
+Week 6–8:                              M6 Site hygiene (minimal) ►
+```
+
+**CMS always first.** Sites get maintenance-only work gated on CMS milestones. Docs update on CMS release, not in parallel.
+
+---
+
+## Explicit deferrals (4–8 weeks)
+
+| Defer | Reason |
+|-------|--------|
+| Kekaba new pages/collections | Adds CMS surface before platform stable |
+| CMS Help → Birkly-Docs wiring | Large UX change |
+| Database/SQL backend | Not on critical path |
+| Feedback widget, legal pack | Post-alpha |
+| Full responsive CSS / dark mode rework | UX polish |
+| Plugin scaffolding CLI | Convenience, not blocker |
+| Birkly-Website production deploy | Pin CMS first |
+| Full docs corpus refresh | On-change at release only |
+| NPM package for docs | No consumer depends on it |
+
+---
 
 ## Milestones
 
-### Milestone 1: Agent infrastructure
+### Milestone 1: Agent foundation and governance
 
-- **Status**: in progress
-- **Repos**: Birkly
-- **Goal**: Cloud agents can boot, read roadmap, and delegate work
+- **Status:** in progress
+- **Repos:** Birkly
+- **Goal:** Agents boot, verify environment, report daily, and hand off work reliably
+- **Values:** Governance, inspectability
 
 **Tasks**
 
-- [x] Add `AGENTS.md` and `.cursor/agents/` team roles to Birkly
-- [x] Add `.cursor/environment.json` for cloud VM bootstrap
-- [ ] Configure multi-repo cloud environment (Birkly, Birkly-Website, kekaba, Birkly-Docs)
-- [ ] Run product-planner agent to refine this roadmap via PR
-- [ ] Run lead-engineer agent on Milestone 2
+- [x] **M1-T1** Add `AGENTS.md` and `.cursor/agents/` team roles
+- [x] **M1-T2** Add `.cursor/environment.json` for cloud VM bootstrap
+- [x] **M1-T3** Configure multi-repo cloud environment (all four repos visible)
+- [x] **M1-T4** Add `scripts/agent-smoke-test.sh`
+- [x] **M1-T5** Add `scripts/send-agent-digest.php` + `docs/agent-ops/REPORTING.md`
+- [x] **M1-T6** Add `docs/PROJECT_VALUES.md`
+- [x] **M1-T7** Product-planner roadmap PR (this document + baseline)
+- [ ] **M1-T8** Configure Resend secrets in cloud env (`RESEND_API_KEY`, `AGENT_DIGEST_FROM`) — **human**
+- [ ] **M1-T9** Add GitHub Actions CI: PHP lint + smoke test on PR
+- [ ] **M1-T10** Run lead-engineer on Milestone 2
 
 **Acceptance criteria**
 
-- All four repos have at least one commit on GitHub
-- Cloud environment snapshot passes a smoke test (PHP server starts, repos visible)
-- Team config merged to Birkly `main`
+- Smoke test exits 0 on cloud VM with four sibling repos
+- Daily digest writes to `docs/agent-ops/daily-reports/YYYY-MM-DD.md`
+- Email sends to `keven@protonmail.com` once Resend secrets configured
+- Values and reporting docs merged to `main`
+- Human receives first narrative digest by 07:00 CEST on an active agent day
 
 ---
 
-### Milestone 2: Repo hygiene and CMS sync
+### Milestone 2: CMS security boundary
 
-- **Status**: not started
-- **Repos**: Birkly, Birkly-Website, kekaba
-- **Goal**: Each client site has a clean git history; embedded `Birkly-0.1/` copies are documented
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** No unauthenticated access to admin data or media
+- **Values:** Security by default
+- **Depends on:** M1-T10
 
 **Tasks**
 
-- [ ] Document CMS vendoring policy: when and how to sync `Birkly-0.1/` from Birkly releases
-- [ ] Ensure `.gitignore` excludes runtime data in all site repos
-- [ ] Align Birkly-Website local state with GitHub remote
-- [ ] Push kekaba site structure (HTML, components, CMS embed)
+- [ ] **M2-T1** Lock down or remove public GET on `api/content.php` (draft exposure)
+- [ ] **M2-T2** Migrate fieldtypes/admin off legacy `api/media.php`; auth-wrap or remove
+- [ ] **M2-T3** Fix path traversal in media delete (`api/media.php`)
+- [ ] **M2-T4** Rate-limit `api/public.php`; reduce plugin bootstrap cost for `template_function_call`
+- [ ] **M2-T5** Add auth regression tests (PHPUnit or smoke probes)
 
 **Acceptance criteria**
 
-- No runtime secrets or user data in any repo
-- README in each site repo explains local dev and CMS embed
-- Lead agent can clone all repos and start dev servers
+- Unauthenticated content/media admin endpoints return 401/403
+- qa-verifier sign-off on auth probe script
+- Values check: security by default ✅
 
 ---
 
-### Milestone 3: Birkly Website beta polish
+### Milestone 3: Templating consolidation and UI decoupling
 
-- **Status**: not started
-- **Repos**: Birkly-Website, Birkly-Docs
-- **Goal**: Marketing site reflects current beta features; docs stay in sync
+- **Status:** not started
+- **Repos:** Birkly, Birkly-Docs
+- **Goal:** One canonical template language; presentation separated from logic
+- **Values:** Separation of concerns, UI decoupling, simplicity
+- **Depends on:** M2-T1 (security stable before large template changes)
 
 **Tasks**
 
-- [ ] Audit pages: index, blog, roadmap, docs, sponsors
-- [ ] Reconcile docs approach (submodule vs embedded docs folder)
-- [ ] Fix broken links and stale content
-- [ ] QA pass on mobile and accessibility
+- [ ] **M3-T1** Declare canonical syntax (`{for each}`) in Birkly-Docs
+- [ ] **M3-T2** Deprecate/archive orphaned `render_page.php` + `templates/template_engine.php`
+- [ ] **M3-T3** Fix failing directives (e.g. `{count}` — fails in `test-new-template.php`)
+- [ ] **M3-T4** Audit admin pages mixing inline JS + logic; align with `docs/admin-templating.md`
+- [ ] **M3-T5** Plan safe replacement for `eval()` in `admin/template_parser.php`
 
 **Acceptance criteria**
 
-- All main pages load over HTTP with no console errors
-- Docs page renders content correctly
-- design-reviewer and qa-verifier sign off
+- `test-new-template.php` passes all cases
+- No three-engine confusion in docs
+- At least one admin page refactored as template-driven reference
+- Values check: UI decoupling ✅
 
 ---
 
-### Milestone 4: Kekaba site launch prep
+### Milestone 4: Client rendering performance
 
-- **Status**: not started
-- **Repos**: kekaba, Birkly
-- **Goal**: Kekaba site ready for content fill and deploy
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** `birkly-client.js` scales for kekaba-class sites without N+1 API storms
+- **Values:** Robust, easy to use
+- **Depends on:** M3-T1
 
 **Tasks**
 
-- [ ] Push full site template and components to kekaba repo
-- [ ] Configure CMS collections for kekaba content model
-- [ ] Set up publish/bake pipeline (if not already)
-- [ ] Deploy smoke test on staging
+- [ ] **M4-T1** Parallel collection fetch in `birkly-client.js`
+- [ ] **M4-T2** Batch or coalesce template-function API calls
+- [ ] **M4-T3** Continue module split (`birkly-client-modules/`)
+- [ ] **M4-T4** Harden `page_snapshot.php` + `page_bundle.php` under domain auth
+- [ ] **M4-T5** Benchmark kekaba index load (round-trip count documented)
 
 **Acceptance criteria**
 
-- Content editors can add blog posts and pages via Birkly admin
-- Static publish output is generated correctly
-- No hardcoded production secrets in repo
+- Documented reduction in API round-trips on kekaba index pattern
+- Hydrate path works without full-client fallback on baked pages
+- Values check: dependency-free client (vanilla JS) ✅
+
+---
+
+### Milestone 5: Test and QA infrastructure
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** Regressions caught automatically
+- **Values:** Robust, inspectable
+- **Depends on:** M1-T9 (runs in parallel from week 2)
+
+**Tasks**
+
+- [ ] **M5-T1** PHPUnit (or equivalent) for auth boundaries
+- [ ] **M5-T2** Template parser directive tests
+- [ ] **M5-T3** Security regression fixtures in `tests/fixtures/`
+- [ ] **M5-T4** Update `qa-verifier` agent with runnable harness reference
+
+**Acceptance criteria**
+
+- CI fails on auth regression
+- qa-verifier can run documented test command
+
+---
+
+### Milestone 6: Site hygiene (minimal, gated)
+
+- **Status:** not started
+- **Repos:** Birkly-Website, kekaba, Birkly-Docs
+- **Goal:** Sites do not block CMS work; no new features
+- **Depends on:** M4-T4 (kekaba deploy alignment after CMS snapshots stable)
+
+**Tasks**
+
+- [ ] **M6-T1** Birkly-Website: fix 4 broken homepage doc links; add `DEV.md`
+- [ ] **M6-T2** Document CMS vendoring policy (`Birkly-0.1/` sync from releases)
+- [ ] **M6-T3** kekaba: align loader CMS URL + root `.htaccess` (one folder name)
+- [ ] **M6-T4** Birkly-Docs: on-change update rule documented in README
+
+**Acceptance criteria**
+
+- Birkly-Website fresh-clone dev setup documented
+- kekaba CMS URL reachable on host (minimal deploy pass)
+- No site feature work beyond hygiene
+
+---
+
+## Success at 4–8 weeks
+
+| Repo | Target |
+|------|--------|
+| **Birkly** | Security boundary closed; one template language; client perf improved; CI green |
+| **Birkly-Website** | Dev setup documented; broken links fixed |
+| **kekaba** | CMS URL reachable; loader/htaccess aligned — no new features |
+| **Birkly-Docs** | On-change updates when CMS milestones ship |
+| **Agent ops** | Daily 07:00 CEST email digest + values gate on all PRs |
 
 ---
 
 ## Task handoff format
 
-When the product agent adds tasks, use this structure:
+Task IDs: `M[N]-T[N]` (e.g. `M2-T3`).
 
 ```markdown
-### Task: [title]
-- **Owner**: cms-developer | frontend-developer | docs-writer | qa-verifier | design-reviewer
+### Task: M[N]-T[N] [title]
+- **Owner**: cms-developer | frontend-developer | docs-writer | qa-verifier | design-reviewer | lead-engineer
 - **Repo(s)**: Birkly | Birkly-Website | kekaba | Birkly-Docs
 - **Files**: path/to/files
-- **Depends on**: [task id or "none"]
+- **Depends on**: M[N]-T[N] | none
+- **Values check**: which values apply; any trade-offs
 - **Acceptance criteria**:
   - ...
 ```
+
+### Lead → specialist brief (add)
+
+- Branch name, related PRs, context paragraph, deadline if any
+
+### Specialist → lead completion (add)
+
+- Verdict, verification commands run, PR link, follow-ups, values check
