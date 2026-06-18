@@ -58,5 +58,7 @@ Run existing tests or manual smoke checks before opening PRs. Verify admin login
 ## Project values and reporting
 
 - **Values (mandatory):** `docs/PROJECT_VALUES.md` — dependency-free core, UI decoupled from functionality, self-contained extensions
+- **Autonomous execution:** `docs/agent-ops/AUTONOMOUS_EXECUTION.md` — agents test, review, and merge in-scope work; human approves milestones only
 - **Daily digest:** `docs/agent-ops/REPORTING.md` — email to human by 06:45 CEST (07:00 review); run `php scripts/send-agent-digest.php`
+- **CI before merge:** `./scripts/ci-check.sh`
 - **Session smoke test:** `scripts/agent-smoke-test.sh`
