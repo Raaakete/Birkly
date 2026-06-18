@@ -13,6 +13,9 @@ When invoked:
 1. Read the task acceptance criteria from the handoff or ROADMAP.md
 2. Inspect changed files (git diff) and test the affected behavior
 3. Run **`./scripts/ci-check.sh`** (or confirm CI workflow is green on the PR)
+   - Primary harness: **`php tests/run.php`** (`tests/README.md`)
+   - Auth fixtures: `tests/fixtures/auth_boundary.json`
+   - Template suite: `tests/template_parser_test.php`
 4. For CMS changes: verify admin, API, and templating still work
 5. For site changes: load pages over HTTP, check console for errors, test key user flows
 6. For cross-repo changes: confirm dependency order was respected
