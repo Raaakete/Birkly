@@ -218,7 +218,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 6: Site hygiene (minimal, gated)
 
-- **Status:** in review
+- **Status:** complete (merged PR #12, Birkly-Website #1, kekaba #1, Birkly-Docs #2)
 - **Repos:** Birkly-Website, kekaba, Birkly-Docs
 - **Goal:** Sites do not block CMS work; no new features
 - **Depends on:** M4-T4 (kekaba deploy alignment after CMS snapshots stable)
