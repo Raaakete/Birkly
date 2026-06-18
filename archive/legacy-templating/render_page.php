@@ -1,6 +1,6 @@
 <?php
 // Page renderer for Birkly
-require_once 'templates/template_engine.php';
+require_once __DIR__ . '/template_engine.php';
 
 // Get the page data (passed from router)
 $pageData = $pageData ?? null;
