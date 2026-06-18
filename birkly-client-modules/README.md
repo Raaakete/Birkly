@@ -27,6 +27,17 @@ This directory contains the modular components of the Birkly client library.
    - `processNestedLoops()` - Nested loop handling
    - `extractLoopContent()` - Loop content extraction
 
+5. **birkly-bundle.js** - Page bundle (M4)
+   - `getTemplateCollectionSlugs()` - Collection slugs from template source
+   - `collectBundleRequests()` - Build batch read list from DOM + templates
+   - `applyBundleResponse()` - Populate `Birkly.pageBundle` cache
+   - `loadPageBundle()` - POST to `api/page_bundle.php`
+   - `tryLoadPageSnapshot()` - Load publish-time snapshot (inline or `page_snapshot.php`)
+
+### Hydrate script (baked pages)
+
+**birkly-hydrate.js** — lightweight alternative to full `birkly-client.js` when publish-time snapshots exist. See file header for usage.
+
 ## Usage
 
 ### Option 1: Separate Module Files (Development)
@@ -38,6 +49,7 @@ Load modules in order before the main file:
 <script src="birkly-client-modules/birkly-date.js"></script>
 <script src="birkly-client-modules/birkly-conditionals.js"></script>
 <script src="birkly-client-modules/birkly-loops.js"></script>
+<script src="birkly-client-modules/birkly-bundle.js"></script>
 <script src="birkly-client.js"></script>
 ```
 

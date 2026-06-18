@@ -147,7 +147,11 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 3: Templating consolidation and UI decoupling
 
+<<<<<<< HEAD
 - **Status:** complete (merged PR #6, 2026-06-18)
+=======
+- **Status:** complete
+>>>>>>> a44ede4 ([M4] Client rendering performance — page bundle, parallel fetch, module split)
 - **Repos:** Birkly, Birkly-Docs
 - **Goal:** One canonical template language; presentation separated from logic
 - **Values:** Separation of concerns, UI decoupling, simplicity
@@ -172,7 +176,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 4: Client rendering performance
 
-- **Status:** not started
+- **Status:** in review
 - **Repos:** Birkly
 - **Goal:** `birkly-client.js` scales for kekaba-class sites without N+1 API storms
 - **Values:** Robust, easy to use
@@ -180,11 +184,11 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 **Tasks**
 
-- [ ] **M4-T1** Parallel collection fetch in `birkly-client.js`
-- [ ] **M4-T2** Batch or coalesce template-function API calls
-- [ ] **M4-T3** Continue module split (`birkly-client-modules/`)
-- [ ] **M4-T4** Harden `page_snapshot.php` + `page_bundle.php` under domain auth
-- [ ] **M4-T5** Benchmark kekaba index load (round-trip count documented)
+- [x] **M4-T1** Parallel collection fetch in `birkly-client.js`
+- [x] **M4-T2** Batch or coalesce template-function API calls
+- [x] **M4-T3** Continue module split (`birkly-client-modules/`)
+- [x] **M4-T4** Harden `page_snapshot.php` + `page_bundle.php` under domain auth
+- [x] **M4-T5** Benchmark kekaba index load (round-trip count documented)
 
 **Acceptance criteria**
 
