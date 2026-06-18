@@ -18,11 +18,14 @@
             e.preventDefault();
             
             const formData = new FormData(this);
-            
-            fetch('/api/media.php', {
+            const csrf = csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
+            if (csrf) formData.append('_csrf', csrf);
+
+            fetch('/api/admin_media.php?action=upload', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
-                    'X-CSRF-Token': csrfToken
+                    'X-CSRF-Token': csrf
                 },
                 body: formData
             })
@@ -57,12 +60,18 @@
             const mediaId = this.getAttribute('data-media-id');
             
             if (confirm('Are you sure you want to delete this media file?')) {
-                fetch('/api/media.php?id=' + mediaId, {
-                    method: 'DELETE',
+                const csrf = csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const body = new FormData();
+                body.append('id', mediaId);
+                if (csrf) body.append('_csrf', csrf);
+
+                fetch('/api/admin_media.php?action=delete', {
+                    method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
-                        'X-CSRF-Token': csrfToken,
-                        'Content-Type': 'application/json'
-                    }
+                        'X-CSRF-Token': csrf
+                    },
+                    body: body
                 })
                 .then(response => response.json())
                 .then(data => {
