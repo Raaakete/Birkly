@@ -48,46 +48,60 @@ admin/
 
 ## Template Syntax
 
-The admin templating system uses the same syntax as the main CMS template engine:
+**Canonical syntax** uses single braces and plain English — `{for each entry in entries}`, `{if x exist}`, `{collection.title}`. This matches the public site templating language documented in [Birkly-Docs canonical syntax](https://github.com/Raaakete/Birkly-Docs/blob/main/03-templating/canonical-syntax.md).
+
+Legacy double-brace `{{ variable }}` is still parsed for backward compatibility but should not be used in new admin templates.
 
 ### Variables
 ```html
-{{ page_title }}
-{{ collection.name }}
-{{ entry.created_at }}
+{collection.title}
+{entry.created_at}
 ```
 
 ### Conditionals
 ```html
-{{ if collections }}
-  <div>Collections found</div>
-{{ else }}
-  <div>No collections</div>
-{{ endif }}
+{if entries exist}
+  <div>Entries found</div>
+{else}
+  <div>No entries</div>
+{endif}
 ```
 
 ### Loops
 ```html
-{{ for collection in collections }}
-  <div class="collection">
-    <h3>{{ collection.name }}</h3>
-    <p>{{ collection.description }}</p>
+{for each entry in entries}
+  <div class="entry">
+    <h3>{entry.title}</h3>
   </div>
-{{ endfor }}
+{endfor}
 ```
 
-### Template Inheritance
+### Admin helpers
 ```html
-{{ extends "base.html" }}
-
-{{ block "content" }}
-  <div>Page content here</div>
-{{ endblock }}
+<a href="{admin_url 'entries'}">Entries</a>
+<a href="{admin_url 'entry-editor' collection='collection.slug'}">Edit</a>
+{translate 'admin.dashboard'}
+{include_script 'activity.js'}
+Total: {count entries}
 ```
 
-### Includes
+## Reference page pattern (M3-T4)
+
+`admin/templates/activity.html` is the template-driven reference:
+
+- **Template:** markup + `{translate}` + `{include_script}` only — no inline `<script>` business logic
+- **Behavior:** `admin/js/activity.js` fetches from API, binds DOM events, renders
+- **CSRF:** read from `<meta name="csrf-token">` in layout (not inline `window.*Data`)
+
+Do not add fetch/API logic inside admin HTML templates.
+
+## Legacy syntax (deprecated)
+
+The following double-brace examples are **deprecated** — kept for migration reference only:
+
 ```html
-{{ include "components/table.html" with entries=recent_entries, columns="title,created_at" }}
+{{ page_title }}
+{{ for collection in collections }} ... {{ endfor }}
 ```
 
 ## How It Works

@@ -38,11 +38,12 @@ for f in api/content.php api/media.php api/admin_media.php api/public.php core/p
   fi
 done
 
-# Template smoke (non-fatal warnings allowed)
+# Template smoke (M3: must pass)
 if php "$ROOT/test-new-template.php" >/dev/null 2>&1; then
   report "OK: test-new-template.php"
 else
-  report "WARN: test-new-template.php has failures (known M3 work)"
+  report "FAIL: test-new-template.php"
+  FAIL=1
 fi
 
 # Multi-repo siblings (cloud environment)
