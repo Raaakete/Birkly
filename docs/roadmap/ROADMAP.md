@@ -218,17 +218,17 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 6: Site hygiene (minimal, gated)
 
-- **Status:** not started
+- **Status:** in review
 - **Repos:** Birkly-Website, kekaba, Birkly-Docs
 - **Goal:** Sites do not block CMS work; no new features
 - **Depends on:** M4-T4 (kekaba deploy alignment after CMS snapshots stable)
 
 **Tasks**
 
-- [ ] **M6-T1** Birkly-Website: fix 4 broken homepage doc links; add `DEV.md`
-- [ ] **M6-T2** Document CMS vendoring policy (`Birkly-0.1/` sync from releases)
-- [ ] **M6-T3** kekaba: align loader CMS URL + root `.htaccess` (one folder name)
-- [ ] **M6-T4** Birkly-Docs: on-change update rule documented in README
+- [x] **M6-T1** Birkly-Website: fix 4 broken homepage doc links; add `DEV.md`
+- [x] **M6-T2** Document CMS vendoring policy (`Birkly-0.1/` sync from releases)
+- [x] **M6-T3** kekaba: align loader CMS URL + root `.htaccess` (one folder name)
+- [x] **M6-T4** Birkly-Docs: on-change update rule documented in README
 
 **Acceptance criteria**
 
