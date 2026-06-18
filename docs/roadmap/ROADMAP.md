@@ -147,11 +147,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 3: Templating consolidation and UI decoupling
 
-<<<<<<< HEAD
 - **Status:** complete (merged PR #6, 2026-06-18)
-=======
-- **Status:** complete
->>>>>>> a44ede4 ([M4] Client rendering performance — page bundle, parallel fetch, module split)
 - **Repos:** Birkly, Birkly-Docs
 - **Goal:** One canonical template language; presentation separated from logic
 - **Values:** Separation of concerns, UI decoupling, simplicity
@@ -176,7 +172,7 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ### Milestone 4: Client rendering performance
 
-- **Status:** in review
+- **Status:** complete (merged PR #7, 2026-06-18)
 - **Repos:** Birkly
 - **Goal:** `birkly-client.js` scales for kekaba-class sites without N+1 API storms
 - **Values:** Robust, easy to use
