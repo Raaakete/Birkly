@@ -4173,25 +4173,17 @@ window.ContentEditorCommands = {
     window.ContentEditorSelection.save();
 
     try {
-      // Fetch components list
-      const response = await fetch('/api/components.php?action=list');
-      const result = await response.json();
-      
-      if (!result.success) {
-        alert('Failed to load components: ' + (result.error || 'Unknown error'));
-        return;
-      }
-
-      const components = result.components || [];
+      const registry = window.ContentEditorComponentRegistry;
+      const components = await registry.list();
       
       // If editing existing component, find it
       let selectedComponent = null;
       if (existingComponent) {
         const componentSlug = existingComponent.dataset.componentSlug;
-        const componentResponse = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(componentSlug)}`);
-        const componentResult = await componentResponse.json();
-        if (componentResult.success) {
-          selectedComponent = componentResult.component;
+        try {
+          selectedComponent = await registry.get(componentSlug);
+        } catch (e) {
+          console.warn('ContentEditor: Could not load component', componentSlug);
         }
       }
 
@@ -4305,8 +4297,10 @@ window.ContentEditorCommands = {
               </div>
             ` : `
               <div class="component-list" style="display: flex; flex-direction: column; gap: 8px;">
-                ${components.map(comp => `
-                  <div class="component-list-item" data-slug="${comp.slug}" style="
+                ${components.map(comp => {
+                  const isBundled = window.ContentEditorComponentRegistry && window.ContentEditorComponentRegistry.isBundled(comp);
+                  return `
+                  <div class="component-list-item" data-slug="${comp.slug}" data-bundled="${isBundled ? 'true' : 'false'}" style="
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
@@ -4316,11 +4310,11 @@ window.ContentEditorCommands = {
                     border-radius: 6px;
                   ">
                     <div style="flex: 1;">
-                      <div style="font-weight: 500; color: #111827; margin-bottom: 4px;">${comp.name}</div>
+                      <div style="font-weight: 500; color: #111827; margin-bottom: 4px;">${comp.name}${isBundled ? ' <span style="font-size:10px;font-weight:600;color:#6b7280;background:#f3f4f6;padding:2px 6px;border-radius:4px;margin-left:6px;">Built-in</span>' : ''}</div>
                       ${comp.description ? `<div style="font-size: 12px; color: #6b7280;">${comp.description}</div>` : ''}
                       <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">Category: ${comp.category || 'uncategorized'}</div>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    ${isBundled ? '' : `<div style="display: flex; gap: 8px;">
                       <button type="button" class="component-action-btn component-edit-action" data-slug="${comp.slug}" title="Edit" style="
                         width: 32px;
                         height: 32px;
@@ -4357,9 +4351,10 @@ window.ContentEditorCommands = {
                           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
                       </button>
-                    </div>
+                    </div>`}
                   </div>
-                `).join('')}
+                `;
+                }).join('')}
               </div>
             `}
           </div>
@@ -4456,11 +4451,8 @@ window.ContentEditorCommands = {
         e.stopPropagation();
         const slug = btn.dataset.slug;
         try {
-          const response = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(slug)}`);
-          const result = await response.json();
-          if (result.success && result.component) {
-            this.showComponentEditor(dialog, overlay, result.component, components);
-          }
+          const component = await window.ContentEditorComponentRegistry.get(slug);
+          this.showComponentEditor(dialog, overlay, component, components);
         } catch (error) {
           console.error('Error loading component', error);
           alert('Failed to load component');
@@ -4478,10 +4470,7 @@ window.ContentEditorCommands = {
         }
         
         try {
-          const response = await fetch(`/api/components.php?action=delete&slug=${encodeURIComponent(slug)}`, {
-            method: 'POST'
-          });
-          const result = await response.json();
+          const result = await window.ContentEditorComponentRegistry.delete(slug);
           
           if (result.success) {
             // Remove from list
@@ -4525,16 +4514,7 @@ window.ContentEditorCommands = {
         if (!currentSelection) return;
 
         try {
-          // Fetch component data
-          const response = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(currentSelection)}`);
-          const result = await response.json();
-          
-          if (!result.success || !result.component) {
-            alert('Failed to load component');
-            return;
-          }
-
-          const component = result.component;
+          const component = await window.ContentEditorComponentRegistry.get(currentSelection);
           
           // Get entry data for templating (from the form or current entry)
           const entryData = this.getEntryDataForComponent(editor);
@@ -4779,8 +4759,7 @@ window.ContentEditorCommands = {
         let entryCount = 0;
         
         if (isEditing) {
-          const entriesResponse = await fetch(`/api/components.php?action=find_entries&slug=${encodeURIComponent(componentData.slug)}`);
-          const entriesResult = await entriesResponse.json();
+          const entriesResult = await window.ContentEditorComponentRegistry.findEntries(componentData.slug);
           
           if (entriesResult.success && entriesResult.entries && entriesResult.entries.length > 0) {
             entryCount = entriesResult.entries.length;
@@ -4796,15 +4775,7 @@ window.ContentEditorCommands = {
         }
         
         // Save the component first
-        const response = await fetch('/api/components.php?action=save', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(componentData)
-        });
-
-        const result = await response.json();
+        const result = await window.ContentEditorComponentRegistry.save(componentData);
 
         if (!result.success) {
           alert('Failed to save component: ' + (result.error || 'Unknown error'));
@@ -4813,15 +4784,7 @@ window.ContentEditorCommands = {
         
         // Now update entries if requested (component is already saved at this point)
         if (shouldUpdateEntries) {
-          const updateResponse = await fetch('/api/components.php?action=update_entries', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ slug: componentData.slug })
-          });
-          
-          const updateResult = await updateResponse.json();
+          const updateResult = await window.ContentEditorComponentRegistry.updateEntries(componentData.slug);
           if (updateResult.success) {
             alert(`Component updated successfully!\n\nUpdated ${updateResult.updated} entr${updateResult.updated === 1 ? 'y' : 'ies'}.`);
           } else {
@@ -5172,15 +5135,10 @@ window.ContentEditorCommands = {
     const storedUpdatedAt = componentElement.getAttribute('data-component-updated-at');
     
     try {
-      const response = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(componentSlug)}`);
-      const result = await response.json();
-      
-      if (result.success && result.component) {
-        const currentUpdatedAt = result.component.updated_at || '';
-        // Compare timestamps - if stored is older or missing, there's an update
-        if (!storedUpdatedAt || (currentUpdatedAt && currentUpdatedAt > storedUpdatedAt)) {
-          hasUpdate = true;
-        }
+      const component = await window.ContentEditorComponentRegistry.get(componentSlug);
+      const currentUpdatedAt = component.updated_at || '';
+      if (!storedUpdatedAt || (currentUpdatedAt && currentUpdatedAt > storedUpdatedAt)) {
+        hasUpdate = true;
       }
     } catch (error) {
       console.warn('ContentEditor: Could not check for component updates', error);
@@ -5234,14 +5192,7 @@ window.ContentEditorCommands = {
         }
         
         try {
-          // Fetch latest component data
-          const response = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(componentSlug)}`);
-          const result = await response.json();
-          
-          if (!result.success || !result.component) {
-            alert('Failed to load component update');
-            return;
-          }
+          const component = await window.ContentEditorComponentRegistry.get(componentSlug);
           
           const editor = this.getActiveEditor();
           if (!editor) return;
@@ -5250,7 +5201,7 @@ window.ContentEditorCommands = {
           const entryData = this.getEntryDataForComponent(editor);
           
           // Create updated component element
-          const updatedElement = this.createComponentElement(result.component, entryData);
+          const updatedElement = this.createComponentElement(component, entryData);
           
           // Replace the old component
           componentElement.parentNode.replaceChild(updatedElement, componentElement);
@@ -6752,17 +6703,14 @@ window.ContentEditorCommands = {
               } else {
                 // Fetch from API
                 try {
-                  const response = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(componentSlug)}`);
-                  const result = await response.json();
-                  if (result.success && result.component) {
-                    component.setAttribute('data-component-template', result.component.template || '');
-                    component.setAttribute('data-component-style', result.component.style || '');
-                    component.setAttribute('data-component-script', result.component.script || '');
-                    component.setAttribute('data-component-auto-scope', result.component.auto_scope_css !== false ? 'true' : 'false');
-                    component.setAttribute('data-component-execute-js', result.component.execute_js !== false ? 'true' : 'false');
-                    component.setAttribute('data-component-updated-at', result.component.updated_at || '');
-                    await this.processComponentTemplate(component, result.component.template || '');
-                  }
+                  const comp = await window.ContentEditorComponentRegistry.get(componentSlug);
+                  component.setAttribute('data-component-template', comp.template || '');
+                  component.setAttribute('data-component-style', comp.style || '');
+                  component.setAttribute('data-component-script', comp.script || '');
+                  component.setAttribute('data-component-auto-scope', comp.auto_scope_css !== false ? 'true' : 'false');
+                  component.setAttribute('data-component-execute-js', comp.execute_js !== false ? 'true' : 'false');
+                  component.setAttribute('data-component-updated-at', comp.updated_at || '');
+                  await this.processComponentTemplate(component, comp.template || '');
                 } catch (error) {
                   console.warn('ContentEditor: Could not reload component', componentSlug, error);
                 }
@@ -6800,24 +6748,17 @@ window.ContentEditorCommands = {
       // Otherwise, fetch from API and process
       if (componentSlug) {
         try {
-          const response = await fetch(`/api/components.php?action=get&slug=${encodeURIComponent(componentSlug)}`);
-          const result = await response.json();
+          const comp = await window.ContentEditorComponentRegistry.get(componentSlug);
           
-          if (result.success && result.component) {
-            
-            // Store template in data attributes for future use (use setAttribute to avoid escaping)
-            component.setAttribute('data-component-template', result.component.template || '');
-            component.setAttribute('data-component-style', result.component.style || '');
-            component.setAttribute('data-component-script', result.component.script || '');
-            component.setAttribute('data-component-auto-scope', result.component.auto_scope_css !== false ? 'true' : 'false');
-            component.setAttribute('data-component-execute-js', result.component.execute_js !== false ? 'true' : 'false');
-            component.setAttribute('data-component-updated-at', result.component.updated_at || '');
-            
-            // Process the template
-            await this.processComponentTemplate(component, result.component.template || '');
-            // Re-add controls after processing (processComponentTemplate replaces innerHTML)
-            await this.addComponentControls(component);
-          }
+          component.setAttribute('data-component-template', comp.template || '');
+          component.setAttribute('data-component-style', comp.style || '');
+          component.setAttribute('data-component-script', comp.script || '');
+          component.setAttribute('data-component-auto-scope', comp.auto_scope_css !== false ? 'true' : 'false');
+          component.setAttribute('data-component-execute-js', comp.execute_js !== false ? 'true' : 'false');
+          component.setAttribute('data-component-updated-at', comp.updated_at || '');
+          
+          await this.processComponentTemplate(component, comp.template || '');
+          await this.addComponentControls(component);
         } catch (error) {
           console.warn('ContentEditor: Could not reload component', componentSlug, error);
         }
