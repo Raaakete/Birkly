@@ -263,6 +263,7 @@
       
       const editor = wrapper.querySelector('.content-editor-area');
       const toolbar = wrapper.querySelector('.content-editor-toolbar');
+      const htmlSource = wrapper.querySelector('.content-editor-html-source');
       const hiddenInput = document.getElementById('field_' + fieldName);
       
       if (!editor || !toolbar || !hiddenInput) {
@@ -277,7 +278,7 @@
       wrapper.dataset.initialized = 'true';
       
       try {
-        initEditor(editor, toolbar, hiddenInput, fieldName);
+        initEditor(editor, toolbar, hiddenInput, fieldName, wrapper, htmlSource);
         initFullscreen(wrapper, editor, toolbar, hiddenInput, fieldName);
       } catch (e) {
         console.error('ContentEditor: Error initializing editor for field:', fieldName, e);
@@ -288,7 +289,7 @@
   }
 
   // Initialize a single editor instance
-  function initEditor(editor, toolbar, hiddenInput, fieldName) {
+  function initEditor(editor, toolbar, hiddenInput, fieldName, wrapper, htmlSource) {
     // CRITICAL: Ensure editor is always a div with content-editor-area class
     if (!editor.classList.contains('content-editor-area')) {
       console.error('Editor must be a div with content-editor-area class!');
@@ -466,6 +467,10 @@
               window.ContentEditorToolbar.updateState(editor, toolbar);
             } else {
               updateToolbarState(editor, toolbar);
+            }
+
+            if (window.ContentEditorSync && wrapper) {
+              window.ContentEditorSync.setupModeTabs(wrapper, editor, toolbar, hiddenInput, htmlSource);
             }
           }
 
@@ -937,8 +942,9 @@
       // Copy editor content
       fullscreenEditor.innerHTML = editor.innerHTML;
       
-      // Initialize the fullscreen editor
-      initEditor(fullscreenEditor, fullscreenToolbar, hiddenInput, fieldName);
+      // Initialize the fullscreen editor (visual surface only)
+      const fsWrapper = overlay.querySelector('.content-editor-fullscreen-wrapper');
+      initEditor(fullscreenEditor, fullscreenToolbar, hiddenInput, fieldName, fsWrapper, null);
       
       // Close button handler
       const closeBtn = overlay.querySelector('.content-editor-fullscreen-close');
@@ -961,7 +967,11 @@
       if (!isFullscreen || !fullscreenEditor) return;
       editor.innerHTML = fullscreenEditor.innerHTML;
       if (window.ContentEditorSync) {
-        window.ContentEditorSync.toHidden(editor, hiddenInput);
+        window.ContentEditorSync.toHidden(editor, hiddenInput, true);
+        const htmlSource = wrapper.querySelector('.content-editor-html-source');
+        if (htmlSource && window.ContentEditorSync.getMode(wrapper) === 'html') {
+          window.ContentEditorSync.syncHtmlSourceFromHidden(htmlSource, hiddenInput);
+        }
       } else {
         syncToHidden(editor, hiddenInput);
       }
@@ -970,6 +980,13 @@
     // Open fullscreen
     function openFullscreen() {
       if (isFullscreen) return;
+
+      if (window.ContentEditorSync) {
+        window.ContentEditorSync.syncWrapperToHidden(wrapper, true);
+        if (window.ContentEditorSync.getMode(wrapper) === 'html') {
+          editor.innerHTML = hiddenInput.value || '';
+        }
+      }
       
       const overlay = createFullscreenOverlay();
       

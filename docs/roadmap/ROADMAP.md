@@ -300,7 +300,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M3 — ContentEditor fieldtype
 
-- **Status:** not started
+- **Status:** in progress (T1–T4 complete)
 - **Repos:** Birkly (fieldtype only — **no core forks**)
 - **Goal:** Fix broken editor; Notion-like UX; visual ↔ HTML; project CSS preview; reusable components
 - **Values:** Self-contained fieldtype, dependency-free JS, pure HTML storage
@@ -316,10 +316,10 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Tasks**
 
-- [ ] **P2-M3-T1** Stabilize: alias/register `editor` → `content-editor`; fix demo schemas (`editor`/`media` → valid types)
-- [ ] **P2-M3-T2** Remove dead `EditorModes` paths in entry-editor integration
-- [ ] **P2-M3-T3** Visual ↔ HTML tabs with reliable round-trip (`sync-manager.js`)
-- [ ] **P2-M3-T4** HTML round-trip tests in fieldtype folder
+- [x] **P2-M3-T1** Stabilize: alias/register `editor` → `content-editor`; fix demo schemas (`editor`/`media` → valid types)
+- [x] **P2-M3-T2** Remove dead `EditorModes` paths in entry-editor integration
+- [x] **P2-M3-T3** Visual ↔ HTML tabs with reliable round-trip (`sync-manager.js`)
+- [x] **P2-M3-T4** HTML round-trip tests in fieldtype folder
 - [ ] **P2-M3-T5** Project CSS preview (URLs in fieldtype or collection config; load in editor only)
 - [ ] **P2-M3-T6** Component registry + insert/edit (HTML+CSS+JS+template) — all under ContentEditor/
 - [ ] **P2-M3-T7** Modularize commands per ARCHITECTURE_PROPOSAL Phase 1–2

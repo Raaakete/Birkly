@@ -12,7 +12,7 @@
 | Onboarding wizard (fresh user) | Onboarding | **partial** | P2-M5 | P2-R06/R07 — demo content skips forced wizard; completion state unset. |
 | Create collection + fields | Collections | **pass** | — | P2-R12 fixed: `create_collection` accepts `fields`, `schema.fields`, or bare field list (`collection_schema_test.php`). |
 | Create/edit/publish entry | Entries | **pass** | — | P2-R03 Select flat options render (`select_options_test.php`). P2-R11 slug preserved on title-only update (`entry_slug_test.php`). Legacy `editor`/`media` resolve via aliases (#16). |
-| ContentEditor visual ↔ HTML save/reload | ContentEditor | **partial** | **P2-M3** | P2-R01: demo `editor` fields render via alias. P2-R05: no visual/HTML tabs yet; P2-R04 dead `EditorModes` paths remain. |
+| ContentEditor visual ↔ HTML save/reload | ContentEditor | **pass** | — | Visual/HTML tabs in fieldtype; `sync-manager.js` round-trip; `EditorModes` dead paths removed from entry-editor (#19). |
 | Media upload + pick in field | Media | **pass** | — | P2-R02: `media` alias → `file` fieldtype; upload API unchanged (P2-M1 pass). |
 | Collection groups + drag/drop | Groups/DnD | **partial** | **P2-M4** | P2-R08–R10 unchanged; browser QA deferred to P2-M4. |
 | Settings (domains, plugins) | Settings | **pass** | — | Unchanged from P2-M1 baseline. |
@@ -24,8 +24,8 @@
 
 | Verdict | P2-M1 | Post P2-M2-T2 |
 |---------|-------|---------------|
-| pass | 4 | 7 |
-| partial | 6 | 4 |
+| pass | 4 | 8 |
+| partial | 6 | 3 |
 | fail | 1 | 0 |
 
 ## P2-M2 P1 register status
