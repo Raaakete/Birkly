@@ -122,7 +122,6 @@
                         if (header || (group.draggable === true || group.getAttribute('draggable') === 'true')) {
                             // Clear any previous drag state
                             this.currentDragType = 'group';
-                            console.log('Group drag started');
                         }
                     }
                 } else {
@@ -140,7 +139,6 @@
             this.groupDragEndHandler = (e) => {
                 // Always clean up if this was a group drag, regardless of target
                 if (this.currentDragType === 'group') {
-                    console.log('Cleaning up group drag');
                     // Remove dragging class from all groups
                     this.getGroups().forEach(g => {
                         g.classList.remove('dragging');
@@ -171,11 +169,10 @@
             // Create sorter for groups (only draggable from header)
             this.groupSorter = new SimpleDragDrop({
                 container: this.container,
-                itemSelector: this.groupSelector,
+                itemSelector: this.groupSelector + ':not(.ungrouped)',
                 handleSelector: this.groupHeaderSelector,
-                dropIndicatorClass: 'group-drop-indicator', // Use group-specific indicator class
+                dropIndicatorClass: 'group-drop-indicator',
                 onReorder: (fromIndex, toIndex) => {
-                    console.log('Group reorder:', fromIndex, 'to', toIndex);
                     this.onGroupReorder(fromIndex, toIndex);
                 }
             });
@@ -237,8 +234,6 @@
                     container: collectionContainer,
                     itemSelector: this.collectionSelector,
                     onReorder: (fromIndex, toIndex) => {
-                        console.log('SimpleDragDrop onReorder called:', fromIndex, 'to', toIndex, 'groupId:', groupId);
-                        // Reordering within same group
                         const collections = this.getCollectionsInGroup(groupElement);
                         if (fromIndex >= 0 && fromIndex < collections.length) {
                             const collectionSlug = collections[fromIndex].dataset.collectionSlug;
@@ -247,10 +242,8 @@
                     }
                 });
                 const itemCount = collectionContainer.querySelectorAll(this.collectionSelector).length;
-                console.log('Initializing SimpleDragDrop for group:', groupId, 'container:', collectionContainer, 'items:', itemCount);
                 if (itemCount > 0) {
                     sorter.init();
-                    console.log('SimpleDragDrop initialized for group:', groupId);
                 } else {
                     console.warn('No items found for SimpleDragDrop in group:', groupId);
                 }
@@ -290,7 +283,6 @@
                     this.currentDragType = 'collection';
                     this.draggedCollection = card;
                     this.draggedCollectionGroupId = card.dataset.groupId || null;
-                    console.log('Collection drag started:', this.draggedCollectionGroupId);
                 }
             }, true); // Capture phase - runs FIRST
 
@@ -299,7 +291,6 @@
             const cleanupDrag = (e) => {
                 const card = e.target.closest(this.collectionSelector);
                 if (card) {
-                    console.log('Cleaning up drag for card');
                     // Always clean up dragging state
                     card.classList.remove('dragging');
                     card.style.opacity = '';
@@ -410,7 +401,6 @@
                     return;
                 }
 
-                console.log('Cross-group drop:', draggedSlug, 'from', draggedGroupId, 'to', groupId);
                 e.preventDefault();
                 e.stopPropagation();
                 collectionContainer.classList.remove('drag-over');
