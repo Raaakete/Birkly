@@ -86,8 +86,8 @@
             dragDropManager.destroy();
         }
         
-        // Create new manager
-        dragDropManager = new MouseDragDropManager({
+        // Create new manager (HTML5 drag; excludes ungrouped from group reorder)
+        dragDropManager = new NestedDragDropManager({
             container: container,
             groupSelector: '.collection-group',
             groupHeaderSelector: '.group-header',
@@ -95,7 +95,6 @@
             collectionContainerSelector: '.group-collections, .ungrouped-collections',
             
             onGroupReorder: (fromIndex, toIndex) => {
-                // Reorder groups (exclude ungrouped)
                 const reorderableGroups = groups.filter(g => g.id !== 'ungrouped');
                 const draggedGroup = reorderableGroups[fromIndex];
                 
@@ -103,7 +102,6 @@
                     reorderableGroups.splice(fromIndex, 1);
                     reorderableGroups.splice(toIndex, 0, draggedGroup);
                     
-                    // Keep ungrouped at end
                     const ungroupedGroup = groups.find(g => g.id === 'ungrouped');
                     groups = [...reorderableGroups];
                     if (ungroupedGroup) {
@@ -114,41 +112,61 @@
                 }
             },
             
-            onCollectionReorder: (groupId, fromIndex, toIndex) => {
-                // Reorder within same group
-                const group = groups.find(g => g.id === groupId);
-                if (!group || !group.collections) return;
-                
-                const draggedCollection = group.collections[fromIndex];
-                group.collections.splice(fromIndex, 1);
-                group.collections.splice(toIndex, 0, draggedCollection);
-                
+            onCollectionReorder: (collectionSlug, fromGroupId, toGroupId, toIndex) => {
+                const groupId = toGroupId || 'ungrouped';
+                let group = groups.find(g => g.id === groupId);
+                if (!group && groupId === 'ungrouped') {
+                    group = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
+                    groups.push(group);
+                }
+                if (!group) return;
+                if (!group.collections) {
+                    group.collections = [];
+                }
+
+                const fromIndex = group.collections.indexOf(collectionSlug);
+                if (fromIndex === -1) {
+                    group.collections.splice(toIndex, 0, collectionSlug);
+                } else {
+                    group.collections.splice(fromIndex, 1);
+                    group.collections.splice(toIndex, 0, collectionSlug);
+                }
+
                 saveGroups();
             },
             
             onCollectionMove: (collectionSlug, fromGroupId, toGroupId, toIndex) => {
-                // Remove from old group
-                if (fromGroupId && fromGroupId !== 'ungrouped') {
-                    const fromGroup = groups.find(g => g.id === fromGroupId);
-                    if (fromGroup && fromGroup.collections) {
-                        fromGroup.collections = fromGroup.collections.filter(slug => slug !== collectionSlug);
-                    }
-                }
-                
-                // Add to new group
-                if (toGroupId && toGroupId !== 'ungrouped') {
-                    const toGroup = groups.find(g => g.id === toGroupId);
+                const normalizedTo = toGroupId || 'ungrouped';
+
+                groups.forEach(group => {
+                    if (!group.collections) return;
+                    group.collections = group.collections.filter(slug => slug !== collectionSlug);
+                });
+
+                if (normalizedTo !== 'ungrouped') {
+                    const toGroup = groups.find(g => g.id === normalizedTo);
                     if (toGroup) {
                         if (!toGroup.collections) {
                             toGroup.collections = [];
                         }
                         toGroup.collections.splice(toIndex, 0, collectionSlug);
                     }
+                } else {
+                    let ungroupedGroup = groups.find(g => g.id === 'ungrouped');
+                    if (!ungroupedGroup) {
+                        ungroupedGroup = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
+                        groups.push(ungroupedGroup);
+                    }
+                    if (!ungroupedGroup.collections) {
+                        ungroupedGroup.collections = [];
+                    }
+                    ungroupedGroup.collections.splice(toIndex, 0, collectionSlug);
                 }
-                
+
                 saveGroups();
             }
         });
+        dragDropManager.init();
     }
     
     function renderGroupsAndCollections() {
@@ -159,8 +177,6 @@
         }
         
         container.innerHTML = '';
-        
-        console.log('Rendering:', { groupsCount: groups.length, collectionsCount: collections.length });
         
         // Render groups (skip ungrouped, handled separately)
         groups.forEach(group => {
@@ -191,8 +207,6 @@
                 return indexA - indexB;
             });
         }
-        
-        console.log('Ungrouped collections:', ungroupedCollections.length);
         
         // Always show ungrouped section if there are collections or groups
         if (ungroupedCollections.length > 0 || groups.length > 0) {

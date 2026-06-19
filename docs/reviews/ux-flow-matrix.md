@@ -1,8 +1,8 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-06-18 (post P2-M2-T2 fixes, PRs #16–#17)  
+**Last updated:** 2026-06-18 (post P2-M4, PR #20)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
-**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (5 suites)
+**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (7 suites)
 
 ## Matrix
 
@@ -24,8 +24,8 @@
 
 | Verdict | P2-M1 | Post P2-M2-T2 |
 |---------|-------|---------------|
-| pass | 4 | 8 |
-| partial | 6 | 3 |
+| pass | 4 | 9 |
+| partial | 6 | 2 |
 | fail | 1 | 0 |
 
 ## P2-M2 P1 register status

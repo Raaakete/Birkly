@@ -13,6 +13,7 @@ require_once '../core/cache.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once '../core/collection_schema.php';
+require_once '../core/collection_groups.php';
 require_once 'log.php';
 
 // Use admin session for content API (must be before auth check)
@@ -1108,6 +1109,18 @@ if ($action === 'count') {
     exit;
 }
 
+if ($action === 'list_groups') {
+    requireAuth('manage_content');
+    $groups = birkly_load_collection_groups();
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'groups' => $groups,
+        ],
+    ]);
+    exit;
+}
+
 if ($action === 'save_groups') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -1117,15 +1130,29 @@ if ($action === 'save_groups') {
     }
     requireAuth('manage_content');
     $groups = $input['groups'] ?? [];
-    $result = file_put_contents(__DIR__ . '/../content/collections/groups.json', json_encode($groups, JSON_PRETTY_PRINT));
+    if (!is_array($groups)) {
+        echo json_encode(['status' => 'error', 'message' => 'Groups must be an array']);
+        exit;
+    }
+    $result = birkly_save_collection_groups($groups);
     echo json_encode([
-        'status' => $result !== false ? 'ok' : 'error',
-        'message' => $result !== false ? 'Groups saved' : 'Failed to save groups'
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Groups saved' : 'Failed to save groups'
     ]);
     exit;
 }
 
-// Default response
+// Unknown action — avoid misleading default success payload (P2-R08)
+if ($action !== '') {
+    http_response_code(400);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Unknown action: ' . $action,
+    ]);
+    exit;
+}
+
+// Default response (no action specified)
 $collections = $storage->list('collections');
 $totalEntries = 0;
 foreach ($collections as $collection) {

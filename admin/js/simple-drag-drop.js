@@ -70,7 +70,6 @@
                 return;
             }
 
-            console.log('SimpleDragDrop init:', this.itemSelector, 'container:', this.container);
 
             // Set up event listeners on container (event delegation)
             // Use capture phase to ensure we handle events before other handlers
@@ -82,7 +81,6 @@
 
             // Make items draggable
             this.updateDraggableItems();
-            console.log('SimpleDragDrop: made', this.getItems().length, 'items draggable');
 
             // Create drop indicator
             this.createDropIndicator();
@@ -96,7 +94,6 @@
          */
         updateDraggableItems() {
             const items = this.getItems();
-            console.log('SimpleDragDrop updateDraggableItems: found', items.length, 'items');
             items.forEach(item => {
                 // Check if we should make this item draggable
                 if (this.handleSelector) {
@@ -222,7 +219,6 @@
                 }
             }
 
-            console.log('SimpleDragDrop: dragstart', this.itemSelector, item, 'draggable:', item.getAttribute('draggable'));
             
             // ALWAYS clean up any previous drag state first (important!)
             if (this.draggedItem && this.draggedItem !== item) {
@@ -276,12 +272,10 @@
             // Log for groups to debug
             if (this.itemSelector === '.collection-group') {
                 if (!this.draggedItem) {
-                    console.log('SimpleDragDrop: dragover .collection-group - no draggedItem yet');
                 }
             } else {
                 // Reduced logging for other items
                 if (Math.random() < 0.01) {
-                    console.log('SimpleDragDrop: dragover', this.itemSelector, 'draggedItem:', this.draggedItem);
                 }
             }
             
@@ -367,7 +361,6 @@
                 this.hideDropIndicator();
                 // Log for groups to debug
                 if (this.itemSelector === '.collection-group') {
-                    console.log('SimpleDragDrop: dragover .collection-group - no valid target item');
                 }
                 // Don't return - we've already prevented default, so keep the drag alive
                 return;
@@ -377,7 +370,6 @@
             if (!this.container.contains(targetItem)) {
                 this.hideDropIndicator();
                 if (this.itemSelector === '.collection-group') {
-                    console.log('SimpleDragDrop: dragover .collection-group - target not in container');
                 }
                 return;
             }
@@ -574,7 +566,6 @@
 
             // Log only occasionally to reduce spam
             if (Math.random() < 0.1) {
-                console.log('SimpleDragDrop: drop event', this.itemSelector);
             }
 
             // Get target index from indicator or calculate it
@@ -650,14 +641,12 @@
 
             // Validate indices
             if (targetIndex === null || targetIndex < 0 || this.draggedIndex < 0) {
-                console.log('SimpleDragDrop: invalid drop target', targetIndex, this.draggedIndex);
                 this.hideDropIndicator();
                 this.isProcessingDrop = false; // Reset flag on early return
                 return;
             }
 
             if (targetIndex === this.draggedIndex) {
-                console.log('SimpleDragDrop: drop on same position', targetIndex);
                 this.hideDropIndicator();
                 this.isProcessingDrop = false; // Reset flag on early return
                 return;
@@ -682,7 +671,6 @@
             // Validate final index
             const items = this.getItems();
             if (finalIndex < 0 || finalIndex > items.length) {
-                console.log('SimpleDragDrop: invalid final index', finalIndex, 'items.length:', items.length);
                 this.hideDropIndicator();
                 this.isProcessingDrop = false; // Reset flag on early return
                 return;
@@ -690,7 +678,6 @@
 
             // Log only occasionally
             if (Math.random() < 0.1) {
-                console.log('SimpleDragDrop: calling onReorder', this.draggedIndex, 'to', finalIndex);
             }
             
             // Call reorder callback
@@ -712,7 +699,6 @@
          */
         handleDragEnd(e) {
             // Don't log every dragend - too spammy
-            // console.log('SimpleDragDrop: dragend', this.itemSelector);
             
             // CRITICAL: If we're processing a drop, delay cleanup until after drop completes
             // This prevents clearing draggedItem before the drop handler finishes
