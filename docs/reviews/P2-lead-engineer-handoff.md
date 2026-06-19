@@ -81,3 +81,7 @@ Start with P2-M2-T2: fix blog status Select error (P2-R03) and demo fieldtype re
 ## Videos
 
 Record short clips when fixing P2-M3, P2-M4, P2-M5 for human review (optional per milestone, required at P2-M7 kekaba prod).
+
+## Internal specs (P2-M8-T3)
+
+See **`docs/reviews/internal-specs-index.md`** for milestone → spec path mapping. Platform changelog: **`docs/changelog/CHANGELOG-PLATFORM.md`**.

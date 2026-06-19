@@ -410,23 +410,24 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M8 — Documentation pipeline
 
-- **Status:** not started (ongoing across Phase 2)
+- **Status:** complete (PR pending)
 - **Repos:** Birkly, Birkly-Docs
 
 **Rule:** Internal docs first → Birkly-Docs when milestone acceptance met.
 
 **Tasks**
 
-- [ ] **P2-M8-T1** `docs/changelog/CHANGELOG-PLATFORM.md` — per merge batch
-- [ ] **P2-M8-T2** Sync Birkly-Docs after P2-M3, P2-M4, P2-M5 acceptance
-- [ ] **P2-M8-T3** Link internal specs from roadmap handoffs
+- [x] **P2-M8-T1** `docs/changelog/CHANGELOG-PLATFORM.md` — per merge batch
+- [x] **P2-M8-T2** Sync Birkly-Docs after P2-M3, P2-M4, P2-M5 acceptance (+ M6/M7 client stack)
+- [x] **P2-M8-T3** Link internal specs from roadmap handoffs — `docs/reviews/internal-specs-index.md`
 
 ---
 
 ### P2-M9 — Agent ops closure
 
-- **Status:** not started
+- **Status:** complete (agent tasks); human infra pending (M1-T8, M1-T12)
 - **Tasks:** M1-T8 Resend, M1-T12 branch protection, daily digest habit
+- **Notes:** `docs/reviews/p2-m9-agent-ops-notes.md`
 
 ---
 
