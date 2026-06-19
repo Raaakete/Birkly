@@ -15,6 +15,7 @@ $suites = [
     '../fieldtypes/ContentEditor/tests/html_roundtrip_test.php',
     '../fieldtypes/ContentEditor/tests/preview_css_test.php',
     '../fieldtypes/ContentEditor/tests/component_registry_test.php',
+    '../fieldtypes/ContentEditor/tests/commands_registry_test.php',
 ];
 
 $root = dirname(__DIR__);
