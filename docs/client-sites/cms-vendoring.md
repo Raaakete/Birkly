@@ -13,7 +13,14 @@ Client sites (Birkly-Website, kekaba, etc.) embed the platform as **`Birkly-0.1/
 ## Upgrade workflow
 
 1. Note the Birkly commit or milestone PR merged on platform `main`.
-2. Copy platform files into `site/Birkly-0.1/` (rsync or manual), preserving site-only paths if any:
+2. Copy platform files into `site/Birkly-0.1/` using the canonical script:
+   ```bash
+   # From Birkly repo root
+   ./scripts/sync-client-embed.sh /path/to/kekaba scripts/fixtures/kekaba-embed-excludes.txt
+   ./scripts/patch-kekaba-plugins.php.sh /path/to/kekaba/Birkly-0.1/core/plugins.php
+   ./scripts/sync-client-embed.sh /path/to/Birkly-Website
+   ```
+   Or rsync manually, preserving site-only paths:
    - `site/kekaba_publish.php` (kekaba)
    - Local `content/` (never from git)
 3. Verify client assets synced: `birkly-client.js`, `birkly-hydrate.js`, `birkly-client-modules/`, `api/page_bundle.php`, `api/page_snapshot.php`.

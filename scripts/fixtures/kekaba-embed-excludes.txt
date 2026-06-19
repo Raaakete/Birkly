@@ -1,0 +1,9 @@
+# Kekaba site-specific paths inside Birkly-0.1 — preserve during platform sync.
+site/
+core/publish_performance.php
+core/media_thumbnail.php
+core/media_resolve.php
+core/birkly_template_render.php
+api/media_thumb.php
+templates/template_engine.php
+templates/template_engine.js
