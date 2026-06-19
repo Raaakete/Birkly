@@ -209,16 +209,13 @@ if ($action === 'template_function_call') {
 }
 
 if ($action === 'list_collections') {
+    require_once __DIR__ . '/../core/collection_meta.php';
     $collections = $storage->list('collections');
     $result = [];
     foreach ($collections as $dir) {
         $meta = $storage->read("collections/$dir/collection.json");
         if ($meta) {
-            $result[] = [
-                'id' => $meta['id'],
-                'title' => $meta['title'],
-                'slug' => $meta['slug']
-            ];
+            $result[] = birkly_normalize_collection_meta($meta, $dir);
         }
     }
     respond(['status'=>'ok','data'=>['collections'=>$result]]);

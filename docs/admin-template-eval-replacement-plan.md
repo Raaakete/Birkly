@@ -1,6 +1,6 @@
 # Admin template parser: safe eval() replacement plan (M3-T5)
 
-**Status:** Plan only — implementation deferred until M3 acceptance criteria are met on current parser.
+**Status:** Implemented (P2-M6) — `admin/template_safe_renderer.php` validates compiled PHP and renders via temp `include` (no `eval()`).
 
 ## Problem
 
