@@ -13,6 +13,7 @@ define('ADMIN_ENTRIES_PHP_EXECUTED', true);
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/entry_slug.php';
 require_once __DIR__ . '/log.php';
 haru_secure_session_start();
 if (!isset($_SESSION['user'])) {
@@ -742,10 +743,13 @@ function saveEntry() {
         $entryOutput['meta_description'] = $entryData['meta_description'];
     }
     
-    // Auto-generate slug from title if empty
-    if (empty($entryOutput['slug'])) {
-        $entryOutput['slug'] = generateSlug($entryOutput['title']);
-    }
+    // Auto-generate slug from title only when missing (preserve slug on title-only updates)
+    $entryOutput['slug'] = birkly_resolve_entry_slug(
+        $action,
+        $entryData,
+        $entry ?: null,
+        $entryOutput['title']
+    );
     
     // Allow plugins to modify entry before save (e.g., auto-create users from profile entries)
     if (function_exists('apply_filters')) {
@@ -983,22 +987,7 @@ function deleteEntry() {
 }
 
 function generateSlug($title) {
-    // Convert to lowercase
-    $slug = strtolower($title);
-    
-    // Replace spaces with hyphens
-    $slug = preg_replace('/\s+/', '-', $slug);
-    
-    // Remove special characters except hyphens
-    $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
-    
-    // Remove multiple consecutive hyphens
-    $slug = preg_replace('/-+/', '-', $slug);
-    
-    // Remove leading and trailing hyphens
-    $slug = trim($slug, '-');
-    
-    return $slug;
+    return birkly_generate_slug((string)$title);
 }
 
 function listEntries() {
