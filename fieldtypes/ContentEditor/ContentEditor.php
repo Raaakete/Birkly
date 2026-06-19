@@ -388,6 +388,7 @@ class ContentEditor extends BaseField {
             __DIR__ . '/core/dom-utils.js',
             __DIR__ . '/core/sync-manager.js',
             __DIR__ . '/core/preview-css.js',
+            __DIR__ . '/core/component-registry.js',
             __DIR__ . '/core/toolbar-manager.js',
             __DIR__ . '/core/keyboard-handler.js',
             __DIR__ . '/core/history-manager.js',

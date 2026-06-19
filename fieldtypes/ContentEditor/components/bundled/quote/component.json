@@ -1,0 +1,10 @@
+{
+    "slug": "quote",
+    "name": "Block Quote",
+    "description": "Styled quotation with attribution",
+    "category": "content",
+    "auto_scope_css": true,
+    "execute_js": false,
+    "created_at": "2026-06-18 00:00:00",
+    "updated_at": "2026-06-18 00:00:00"
+}
