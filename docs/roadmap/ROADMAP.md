@@ -256,7 +256,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 2 — milestones
 
-**Ordering:** P2-M1 (done) → P2-M2 → P2-M3a–b → P2-M4 → P2-M3c–e → P2-M5 → P2-M6 → P2-M7 → P2-M8 (ongoing) → P2-M9.
+**Ordering:** P2-M1 → P2-M2 → P2-M3 → P2-M4 → P2-M5 → P2-M6 → P2-M7 → P2-M8 → P2-M9 — **Phase 2 milestones complete** (human: M1-T8 Resend, M1-T12 branch protection).
 
 **CMS always first.** Cross-repo: Birkly → sites → Birkly-Docs.
 
@@ -410,7 +410,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M8 — Documentation pipeline
 
-- **Status:** complete (PR pending)
+- **Status:** complete (PR #28, Birkly-Docs #3)
 - **Repos:** Birkly, Birkly-Docs
 
 **Rule:** Internal docs first → Birkly-Docs when milestone acceptance met.
