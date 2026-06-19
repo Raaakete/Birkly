@@ -78,8 +78,8 @@ if (!is_dir("$collectionsDir/blog")) {
             ['name' => 'title', 'type' => 'text', 'label' => 'Title', 'required' => true],
             ['name' => 'slug', 'type' => 'text', 'label' => 'Slug', 'required' => true],
             ['name' => 'excerpt', 'type' => 'textarea', 'label' => 'Excerpt', 'required' => false],
-            ['name' => 'content', 'type' => 'editor', 'label' => 'Content', 'required' => true],
-            ['name' => 'featured_image', 'type' => 'media', 'label' => 'Featured Image', 'required' => false],
+            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => true],
+            ['name' => 'featured_image', 'type' => 'file', 'label' => 'Featured Image', 'required' => false],
             ['name' => 'category', 'type' => 'text', 'label' => 'Category', 'required' => false],
             ['name' => 'tags', 'type' => 'tags', 'label' => 'Tags', 'required' => false],
             ['name' => 'author', 'type' => 'text', 'label' => 'Author', 'required' => false],
@@ -153,7 +153,7 @@ if (!is_dir("$collectionsDir/services")) {
             ['name' => 'title', 'type' => 'text', 'label' => 'Title', 'required' => true],
             ['name' => 'slug', 'type' => 'text', 'label' => 'Slug', 'required' => true],
             ['name' => 'description', 'type' => 'textarea', 'label' => 'Description', 'required' => true],
-            ['name' => 'content', 'type' => 'editor', 'label' => 'Content', 'required' => false],
+            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => false],
             ['name' => 'icon', 'type' => 'text', 'label' => 'Icon', 'required' => false],
             ['name' => 'price', 'type' => 'text', 'label' => 'Price', 'required' => false],
             ['name' => 'featured', 'type' => 'boolean', 'label' => 'Featured', 'required' => false],
@@ -276,7 +276,7 @@ if (!is_dir("$collectionsDir/about")) {
             ['name' => 'title', 'type' => 'text', 'label' => 'Title', 'required' => true],
             ['name' => 'slug', 'type' => 'text', 'label' => 'Slug', 'required' => true],
             ['name' => 'subtitle', 'type' => 'text', 'label' => 'Subtitle', 'required' => false],
-            ['name' => 'content', 'type' => 'editor', 'label' => 'Content', 'required' => true],
+            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => true],
             ['name' => 'status', 'type' => 'select', 'label' => 'Status', 'options' => [['label' => 'Draft', 'value' => 'draft'], ['label' => 'Published', 'value' => 'published']], 'default' => 'published']
         ],
         [
