@@ -1,0 +1,28 @@
+/**
+ * Demo preview stylesheet for ContentEditor project CSS preview (P2-M3-T5).
+ * Scoped to .content-editor-area in the admin; uses .post-content hooks.
+ */
+.content-editor-area.post-content h1,
+.content-editor-area.post-content h2,
+.content-editor-area.post-content h3 {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.content-editor-area.post-content p {
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.content-editor-area.post-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.content-editor-area.post-content blockquote {
+  border-left: 4px solid #93c5fd;
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  color: #374151;
+  background: #eff6ff;
+}
