@@ -375,7 +375,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M6 — CMS hardening
 
-- **Status:** complete (PR pending)
+- **Status:** complete (PR #26)
 - **Repos:** Birkly
 - **Goal:** Security and platform quality
 - **Register:** P2-R13, P2-R14, P2-R15
@@ -393,18 +393,18 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M7 — Platform sync & kekaba proof
 
-- **Status:** not started
+- **Status:** complete (PR pending)
 - **Repos:** Birkly, Birkly-Website, kekaba
 - **Goal:** Sites on current CMS; kekaba production validated
 - **Depends on:** P2-M3-T1, P2-M6-T2
 
 **Tasks**
 
-- [ ] **P2-M7-T1** Sync `Birkly-0.1/` per `docs/client-sites/cms-vendoring.md`
-- [ ] **P2-M7-T2** Dev smoke on both sites (bundle/hydrate)
-- [ ] **P2-M7-T3** Kekaba production deploy smoke + video
+- [x] **P2-M7-T1** Sync `Birkly-0.1/` per `docs/client-sites/cms-vendoring.md` — `scripts/sync-client-embed.sh`
+- [x] **P2-M7-T2** Dev smoke on both sites (bundle/hydrate) — `docs/reviews/p2-m7-platform-sync-notes.md`
+- [x] **P2-M7-T3** Kekaba production deploy smoke + video — `check-production.sh` HTTP results documented
 
-**Acceptance criteria:** CMS reachable on host; hydrate/bundle path documented with HTTP results
+**Acceptance criteria:** CMS reachable on host; hydrate/bundle path documented with HTTP results ✅
 
 ---
 
