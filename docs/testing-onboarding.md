@@ -45,7 +45,34 @@ This script will:
 - Remove onboarding progress
 - Keep your demo content packs intact
 
-### Method 3: Fresh Installation Test
+### Method 3: Fresh Installation Test (recommended for CI / agents)
+
+Use the project bootstrap scripts on a clean `content/` tree (no committed runtime data):
+
+```bash
+# From Birkly repo root
+php scripts/create-default-user.php    # admin@localhost / admin123 (dev only)
+php scripts/create-demo-content.php    # optional: pre-install demo collections + entries
+
+# Reset only onboarding progress (keeps demo content — tests wizard after bootstrap)
+php scripts/reset-onboarding.php --keep-entries
+
+# Start CMS
+php -S localhost:8080 -t . server-router.php
+```
+
+1. Open `http://localhost:8080/admin/login.php`
+2. Log in with the dev admin user
+3. You should be redirected to `/admin/index.php?page=onboarding` **even when demo entries exist**
+4. Complete or skip the wizard; dashboard should show the welcome checklist when skipped, or the completion modal when finished
+
+To simulate a completely empty site (no entries):
+
+```bash
+php scripts/reset-onboarding.php       # clears entries + onboarding files
+```
+
+### Method 4: Legacy full-directory copy
 
 If you have a development environment, test with a completely fresh installation:
 
@@ -252,7 +279,13 @@ Open browser DevTools (F12) and check:
 
 ## Common Issues
 
-### Issue: Onboarding doesn't appear
+### Issue: Onboarding doesn't appear after demo bootstrap
+**Solution**: 
+- Onboarding redirect uses `setup_wizard_completed`, not “no entries on disk”
+- Run `php scripts/reset-onboarding.php --keep-entries` then log in again
+- Check onboarding file: `cat users/*_onboarding.json` — `setup_wizard_completed` should be false until you finish or skip
+
+### Issue: Onboarding doesn't appear (empty site)
 **Solution**: 
 - Check if content exists: `ls content/collections/*/entries/*.json`
 - Check onboarding file: `cat users/*_onboarding.json`
@@ -264,6 +297,12 @@ Open browser DevTools (F12) and check:
 - Verify manifest.json files: `cat demo-content/blog/manifest.json`
 - Check file permissions: `ls -la demo-content/`
 - Check API response in browser DevTools Network tab
+
+### Issue: Welcome checklist missing on dashboard
+**Solution**:
+- Dashboard merges API checklist data with session status (fixed in P2-M5)
+- Ensure `setup_wizard_completed` is true and `completed` is false after skip
+- Refresh the dashboard page
 
 ### Issue: Checklist not updating
 **Solution**:

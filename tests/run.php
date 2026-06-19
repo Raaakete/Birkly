@@ -17,6 +17,7 @@ $suites = [
     '../fieldtypes/ContentEditor/tests/component_registry_test.php',
     '../fieldtypes/ContentEditor/tests/commands_registry_test.php',
     '../fieldtypes/ContentEditor/tests/readme_test.php',
+    'onboarding_test.php',
 ];
 
 $root = dirname(__DIR__);
