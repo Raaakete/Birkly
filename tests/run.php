@@ -9,6 +9,8 @@ $suites = [
     'template_parser_test.php',
     'auth_boundary_test.php',
     'select_options_test.php',
+    'entry_slug_test.php',
+    'collection_schema_test.php',
 ];
 
 $root = dirname(__DIR__);
