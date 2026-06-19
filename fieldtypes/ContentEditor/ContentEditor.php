@@ -28,6 +28,9 @@ class ContentEditor extends BaseField {
         $cssUrlAttr = $cssUrl ? ' data-css-url="' . $cssUrl . '"' : '';
         $metadataEndpoint = htmlspecialchars('/fieldtypes/ContentEditor/link-metadata.php', ENT_QUOTES, 'UTF-8');
         $metadataAttr = ' data-link-metadata="' . $metadataEndpoint . '"';
+        $tabVisualId = 'tab_visual_' . $this->name;
+        $tabHtmlId = 'tab_html_' . $this->name;
+        $panelHtmlId = 'panel_html_' . $this->name;
         
         return <<<HTML
         <div class="content-editor-wrapper" data-field-name="{$this->name}"{$cssUrlAttr}{$metadataAttr}>
@@ -347,10 +350,19 @@ class ContentEditor extends BaseField {
                     </button>
                 </div>
             </div>
+            <div class="content-editor-mode-tabs" role="tablist" aria-label="Editor mode for {$this->label}">
+                <button type="button" class="content-editor-mode-tab is-active" id="{$tabVisualId}" data-mode="visual" role="tab" aria-selected="true" aria-controls="editor_{$this->name}" tabindex="0">Visual</button>
+                <button type="button" class="content-editor-mode-tab" id="{$tabHtmlId}" data-mode="html" role="tab" aria-selected="false" aria-controls="{$panelHtmlId}" tabindex="-1">HTML</button>
+            </div>
+            <div class="content-editor-body">
             <div class="content-editor-area" 
                  id="editor_{$this->name}" 
+                 role="tabpanel"
+                 aria-labelledby="{$tabVisualId}"
                  contenteditable="true"
                  data-field-name="{$this->name}">{$value}</div>
+            <textarea class="content-editor-html-source" id="{$panelHtmlId}" role="tabpanel" aria-labelledby="{$tabHtmlId}" spellcheck="false" aria-label="HTML source for {$this->label}" hidden></textarea>
+            </div>
             <input type="hidden" name="{$this->name}" id="{$fieldId}" value="{$value}" {$required}>
         </div>
         HTML;

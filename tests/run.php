@@ -11,6 +11,7 @@ $suites = [
     'select_options_test.php',
     'entry_slug_test.php',
     'collection_schema_test.php',
+    '../fieldtypes/ContentEditor/tests/html_roundtrip_test.php',
 ];
 
 $root = dirname(__DIR__);
