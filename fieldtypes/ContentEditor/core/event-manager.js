@@ -215,7 +215,7 @@ window.ContentEditorEventManager = {
       
       if (command === 'formatBlock' && value) {
         // Format block command - ensure we have a valid value
-        window.ContentEditorCommands.execute('formatBlock', value);
+        window.ContentEditorCommandRegistry.execute('formatBlock', value);
         // Small delay to ensure DOM is updated
         setTimeout(() => {
           if (window.ContentEditorToolbar) {
@@ -227,7 +227,7 @@ window.ContentEditorEventManager = {
         }, 10);
       } else if (command && command.startsWith('justify')) {
         // Alignment commands
-        window.ContentEditorCommands.execute(command, value);
+        window.ContentEditorCommandRegistry.execute(command, value);
         setTimeout(() => {
           if (window.ContentEditorToolbar) {
             window.ContentEditorToolbar.updateState(editor, toolbar);
@@ -238,7 +238,7 @@ window.ContentEditorEventManager = {
         }, 10);
       } else if (command && (command === 'insertVideo' || command === 'insertAudio' || command === 'insertMaps' || command === 'insertLinkPreview' || command === 'insertIframe' || command === 'insertCustomEmbed')) {
         // Media embed commands
-        window.ContentEditorCommands.execute(command, value);
+        window.ContentEditorCommandRegistry.execute(command, value);
         // Close dropdown after command
         const dropdown = dropdownItem.closest('.toolbar-dropdown');
         if (dropdown) {
@@ -320,7 +320,7 @@ window.ContentEditorEventManager = {
       }
     } else {
       // Other commands
-      window.ContentEditorCommands.execute(command, value);
+      window.ContentEditorCommandRegistry.execute(command, value);
       
       // Save state to history after command
       if (window.ContentEditorHistory) {

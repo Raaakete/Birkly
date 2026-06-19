@@ -1,72 +1,70 @@
-// Command registry for ContentEditor
-// This is a wrapper around the existing ContentEditorCommands system
-// Eventually, individual commands will be registered here
+// Command registry for ContentEditor (P2-M3-T7 Phase 1–2)
 window.ContentEditorCommandRegistry = {
-  /**
-   * Registry of commands
-   */
   commands: new Map(),
 
   /**
-   * Register a command
-   * @param {string} name - Command name
-   * @param {Object} command - Command object with execute method
+   * Commands routed through the modular registry (Phase 2).
    */
+  modularCommands: new Set([
+    'bold', 'italic', 'underline', 'strikethrough',
+    'formatBlock', 'insertUnorderedList', 'insertOrderedList',
+  ]),
+
   register(name, command) {
     this.commands.set(name, command);
   },
 
-  /**
-   * Execute a command
-   * @param {string} name - Command name
-   * @param {*} value - Optional value for the command
-   * @param {Element} editor - The editor element (optional, will be detected)
-   */
   execute(name, value = null, editor = null) {
-    // First, try to find command in registry
     const registeredCommand = this.commands.get(name);
-    if (registeredCommand && registeredCommand.execute) {
+    if (registeredCommand && typeof registeredCommand.execute === 'function') {
       if (!editor) {
         editor = window.ContentEditorDOMUtils?.findEditorArea();
       }
-      return registeredCommand.execute(editor, value);
+
+      if (window.ContentEditorSelection) {
+        window.ContentEditorSelection.save();
+      }
+
+      try {
+        registeredCommand.execute(editor, value);
+        if (window.ContentEditorHistory && name !== 'undo' && name !== 'redo') {
+          setTimeout(() => window.ContentEditorHistory.saveState(), 50);
+        }
+      } catch (e) {
+        console.error('Error executing command:', name, e);
+      } finally {
+        if (window.ContentEditorSelection) {
+          window.ContentEditorSelection.clear();
+        }
+      }
+      return;
     }
-    
-    // Fallback to legacy ContentEditorCommands system
+
     if (window.ContentEditorCommands && window.ContentEditorCommands.execute) {
       return window.ContentEditorCommands.execute(name, value);
     }
-    
+
     console.warn(`Command "${name}" not found`);
   },
 
-  /**
-   * Check if a command exists
-   * @param {string} name - Command name
-   * @returns {boolean}
-   */
   has(name) {
-    return this.commands.has(name) || 
-           (window.ContentEditorCommands && typeof window.ContentEditorCommands.execute === 'function');
+    return this.commands.has(name) ||
+      (window.ContentEditorCommands && typeof window.ContentEditorCommands.execute === 'function');
   },
 
-  /**
-   * Get all registered command names
-   * @returns {string[]}
-   */
+  isModular(name) {
+    return this.commands.has(name) && this.modularCommands.has(name);
+  },
+
   getCommandNames() {
     const registered = Array.from(this.commands.keys());
-    // Add legacy commands if they exist
     if (window.ContentEditorCommands) {
-      const legacyCommands = ['bold', 'italic', 'underline', 'strikethrough', 'formatBlock', 
-                             'insertUnorderedList', 'insertOrderedList'];
-      legacyCommands.forEach(cmd => {
+      ['createLink', 'justifyLeft', 'insertTable', 'insertComponent'].forEach((cmd) => {
         if (!registered.includes(cmd)) {
           registered.push(cmd);
         }
       });
     }
     return registered;
-  }
+  },
 };
-
