@@ -4,6 +4,9 @@ namespace Birkly\FieldTypes\ContentEditor;
 use Birkly\FieldTypes\BaseField;
 
 class ContentEditor extends BaseField {
+    /** Default bundled preview stylesheet (overridden per field via css_url). */
+    public const DEFAULT_PREVIEW_CSS = '/fieldtypes/ContentEditor/preview/demo-preview.css';
+
     protected $config;
     
     public function __construct(array $config) {
@@ -331,6 +334,7 @@ class ContentEditor extends BaseField {
                 
                 <!-- History & View Group (Right Side) -->
                 <div class="toolbar-group toolbar-group-right" data-group="history-view">
+                    <span class="content-editor-preview-badge" data-preview-state="idle" hidden aria-live="polite"></span>
                     <button type="button" class="toolbar-btn" data-command="undo" title="Undo - Undo last action (Ctrl+Z)">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 7v6h6"></path>
@@ -383,6 +387,7 @@ class ContentEditor extends BaseField {
             // Core utilities
             __DIR__ . '/core/dom-utils.js',
             __DIR__ . '/core/sync-manager.js',
+            __DIR__ . '/core/preview-css.js',
             __DIR__ . '/core/toolbar-manager.js',
             __DIR__ . '/core/keyboard-handler.js',
             __DIR__ . '/core/history-manager.js',
@@ -421,6 +426,7 @@ class ContentEditor extends BaseField {
             'required' => $this->required,
             'help' => $this->help,
             'group' => $this->group,
+            'css_url' => $this->config['css_url'] ?? '',
         ];
     }
 
@@ -467,12 +473,13 @@ class ContentEditor extends BaseField {
 
     public function getConfigUI($fieldIndex, $existingData = []): string {
         $cssUrl = htmlspecialchars($existingData['css_url'] ?? '', ENT_QUOTES, 'UTF-8');
+        $defaultCss = self::DEFAULT_PREVIEW_CSS;
         
         return <<<HTML
             <div class="field-config-section">
                 <label>CSS Preview URL</label>
-                <input type="url" name="fields[{$fieldIndex}][css_url]" class="input" value="{$cssUrl}" placeholder="https://example.com/styles.css">
-                <small class="form-text">Link an external CSS file to preview how content will look on your website. This CSS will be applied to this ContentEditor field in the entry editor.</small>
+                <input type="url" name="fields[{$fieldIndex}][css_url]" class="input" value="{$cssUrl}" placeholder="{$defaultCss}">
+                <small class="form-text">Link an external CSS file to preview how content will look on your website. This CSS will be applied to this ContentEditor field in the entry editor. Example: <code>/demo-website/styles.css</code> or bundled <code>{$defaultCss}</code>.</small>
             </div>
         HTML;
     }
