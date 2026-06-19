@@ -8,7 +8,40 @@ class Select extends BaseField {
 
     public function __construct(array $config) {
         parent::__construct($config);
-        $this->options = $config['options'] ?? [];
+        $this->options = self::normalizeOptions($config['options'] ?? []);
+    }
+
+    /**
+     * Accept label/value objects or flat strings (legacy comma-separated saves).
+     *
+     * @param array<int, string|array{label?: string, value?: string}> $options
+     * @return array<int, array{label: string, value: string}>
+     */
+    public static function normalizeOptions(array $options): array {
+        $normalized = [];
+        foreach ($options as $opt) {
+            if (is_string($opt)) {
+                $opt = trim($opt);
+                if ($opt === '') {
+                    continue;
+                }
+                $normalized[] = [
+                    'label' => $opt,
+                    'value' => strtolower(preg_replace('/[^a-z0-9]+/', '_', $opt)),
+                ];
+                continue;
+            }
+            if (!is_array($opt)) {
+                continue;
+            }
+            $value = (string)($opt['value'] ?? $opt['label'] ?? '');
+            $label = (string)($opt['label'] ?? $value);
+            if ($value === '' && $label === '') {
+                continue;
+            }
+            $normalized[] = ['label' => $label, 'value' => $value !== '' ? $value : $label];
+        }
+        return $normalized;
     }
 
     public function getType(): string {
