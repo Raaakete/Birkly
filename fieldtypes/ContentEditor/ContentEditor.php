@@ -396,8 +396,12 @@ class ContentEditor extends BaseField {
             __DIR__ . '/core/event-manager.js',
             // Selection utilities
             __DIR__ . '/selection.js',
-            // Command system
+            // Command system (modular Phase 2)
+            __DIR__ . '/commands/inline-format.js',
+            __DIR__ . '/commands/block-format.js',
+            __DIR__ . '/commands/base-command.js',
             __DIR__ . '/commands/registry.js',
+            __DIR__ . '/commands/bootstrap.js',
             __DIR__ . '/commands.js', // Legacy commands (backward compatibility)
             // Main editor
             __DIR__ . '/editor.js',

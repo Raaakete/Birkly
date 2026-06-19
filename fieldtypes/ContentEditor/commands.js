@@ -104,44 +104,9 @@ window.ContentEditorCommands = {
 
   // Check if element or selection is wrapped in tag
   isWrappedInTag(element, tagName) {
-    if (!element) return false;
-    
-    const tags = Array.isArray(tagName) ? tagName.map(t => t.toUpperCase()) : [tagName.toUpperCase()];
-    let current = element.nodeType === Node.TEXT_NODE ? element.parentElement : element;
-    
-    // Also check for alternative tags (b/strong, i/em, s/del)
-    const tagMap = {
-      'B': ['B', 'STRONG'],
-      'STRONG': ['B', 'STRONG'],
-      'I': ['I', 'EM'],
-      'EM': ['I', 'EM'],
-      'S': ['S', 'DEL', 'STRIKE'],
-      'DEL': ['S', 'DEL', 'STRIKE'],
-      'U': ['U']
-    };
-    
-    while (current && current !== document.body) {
-      const currentTag = current.tagName.toUpperCase();
-      
-      // Check direct match
-      if (tags.includes(currentTag)) {
-        return true;
-      }
-      
-      // Check alternative tags
-      for (const tag of tags) {
-        if (tagMap[tag] && tagMap[tag].includes(currentTag)) {
-          return true;
-        }
-      }
-      
-      // Don't go beyond contentEditable area
-      if (current.contentEditable === 'true') {
-        break;
-      }
-      current = current.parentElement;
+    if (window.ContentEditorInlineFormat) {
+      return window.ContentEditorInlineFormat.isWrappedInTag(element, tagName);
     }
-    return false;
   },
 
   // Check if tag is inline or block
@@ -166,703 +131,51 @@ window.ContentEditorCommands = {
 
   // Wrap selection or element with tag
   wrapWithTag(tagName, value = null) {
-    const selection = window.getSelection();
-    
-    // Normalize tag names
-    const tagMap = {
-      'bold': 'b',
-      'italic': 'i',
-      'underline': 'u',
-      'strikethrough': 's'
-    };
-    tagName = tagMap[tagName] || tagName;
-    
-    // Alternative tags for checking
-    const altTags = {
-      'b': ['b', 'strong'],
-      'strong': ['b', 'strong'],
-      'i': ['i', 'em'],
-      'em': ['i', 'em'],
-      's': ['s', 'del'],
-      'del': ['s', 'del'],
-      'u': ['u']
-    };
-    const checkTags = altTags[tagName.toLowerCase()] || [tagName];
-    
-    // For block-level tags (headings, paragraphs), always use formatBlock
-    if (this.isBlockTag(tagName)) {
-      this.formatBlock(tagName);
-      return;
-    }
-    
-    // From here on, we're dealing with inline tags (b, i, u, s)
-    
-    if (!selection.rangeCount || selection.isCollapsed) {
-      // No selection or collapsed: format entire block's CONTENT (not the block itself)
-      const block = this.getCurrentBlock();
-      if (!block) return;
-      
-      // Check if block's content is already wrapped in this inline tag
-      const isWrapped = checkTags.some(tag => {
-        // Check if block itself is wrapped (shouldn't happen, but check anyway)
-        if (this.isWrappedInTag(block, tag)) {
-          return true;
-        }
-        // Check if all direct children are wrapped in this tag
-        const children = Array.from(block.childNodes);
-        if (children.length === 0) return false;
-        
-        // If there's a single child that is the inline tag, it's wrapped
-        if (children.length === 1 && children[0].nodeType === Node.ELEMENT_NODE) {
-          const childTag = children[0].tagName.toUpperCase();
-          if (checkTags.some(t => t.toUpperCase() === childTag)) {
-            return true;
-          }
-        }
-        
-        // Check if all text content is wrapped
-        const textNodes = this.getTextNodes(block);
-        if (textNodes.length > 0) {
-          return textNodes.every(tn => {
-            let parent = tn.parentElement;
-            while (parent && parent !== block) {
-              const parentTag = parent.tagName.toUpperCase();
-              if (checkTags.some(t => t.toUpperCase() === parentTag)) {
-                return true;
-              }
-              parent = parent.parentElement;
-            }
-            return false;
-          });
-        }
-        return false;
-      });
-      
-      if (isWrapped) {
-        // Unwrap: remove inline tags from block's content
-        this.unwrapInlineFromBlock(block, checkTags);
-      } else {
-        // Wrap: wrap block's CONTENT with inline tag (not the block itself)
-        this.wrapBlockContent(block, tagName);
-      }
-      return;
-    }
-
-    const range = selection.getRangeAt(0);
-    
-    // Check if already wrapped in any alternative tag
-    const isWrapped = checkTags.some(tag => 
-      this.isWrappedInTag(range.commonAncestorContainer, tag)
-    );
-    
-    if (isWrapped) {
-      // Unwrap all alternative tags - but only once
-      for (const tag of checkTags) {
-        if (this.isWrappedInTag(range.commonAncestorContainer, tag)) {
-          this.unwrapSelection(range, tag);
-          break; // Only unwrap once
-        }
-      }
-    } else {
-      // Wrap selection with inline tag
-      try {
-        // Ensure range is valid
-        if (range.collapsed) {
-          // Collapsed selection, wrap the block's content instead
-          const block = this.getCurrentBlock();
-          if (block) {
-            const isWrapped = checkTags.some(tag => this.isWrappedInTag(block, tag));
-            if (!isWrapped) {
-              this.wrapBlockContent(block, tagName);
-            }
-          }
-          return;
-        }
-        
-        const contents = range.extractContents();
-        // Remove empty text nodes
-        const fragment = document.createDocumentFragment();
-        Array.from(contents.childNodes).forEach(node => {
-          if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
-            return; // Skip empty text nodes
-          }
-          fragment.appendChild(node);
-        });
-        
-        if (fragment.childNodes.length === 0) {
-          // No content to wrap, wrap block content instead
-          const block = this.getCurrentBlock();
-          if (block) {
-            const isWrapped = checkTags.some(tag => this.isWrappedInTag(block, tag));
-            if (!isWrapped) {
-              this.wrapBlockContent(block, tagName);
-            }
-          }
-          return;
-        }
-        
-        const wrapper = document.createElement(tagName);
-        if (value) {
-          wrapper.setAttribute(tagName === 'a' ? 'href' : 'value', value);
-        }
-        wrapper.appendChild(fragment);
-        range.insertNode(wrapper);
-        
-        // Select the wrapped content
-        const newRange = document.createRange();
-        newRange.selectNodeContents(wrapper);
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-      } catch (e) {
-        console.error('Error wrapping selection:', e);
-        // Fallback: try to wrap block content
-        const block = this.getCurrentBlock();
-        if (block) {
-          const isWrapped = checkTags.some(tag => this.isWrappedInTag(block, tag));
-          if (!isWrapped) {
-            this.wrapBlockContent(block, tagName);
-          }
-        }
-      }
+    if (window.ContentEditorInlineFormat) {
+      return window.ContentEditorInlineFormat.wrapWithTag(tagName, value);
     }
   },
   
   // Wrap block's content with inline tag (not the block itself)
   wrapBlockContent(block, inlineTag) {
-    // Don't wrap if block is already wrapped at the block level
-    if (this.isWrappedInTag(block, inlineTag)) {
-      return;
+    if (window.ContentEditorInlineFormat) {
+      return window.ContentEditorInlineFormat.wrapBlockContent(block, inlineTag);
     }
-    
-    // Check if all content is already wrapped
-    const children = Array.from(block.childNodes);
-    if (children.length === 0) {
-      // Empty block, just add a br wrapped in the inline tag
-      const wrapper = document.createElement(inlineTag);
-      wrapper.innerHTML = '<br>';
-      block.appendChild(wrapper);
-      return;
-    }
-    
-    // Check if all direct children are already wrapped in this tag
-    const allWrapped = children.every(child => {
-      if (child.nodeType === Node.TEXT_NODE) {
-        // Text node - check if parent is wrapped
-        return child.parentElement && this.isWrappedInTag(child.parentElement, inlineTag);
-      } else if (child.nodeType === Node.ELEMENT_NODE) {
-        return this.isWrappedInTag(child, inlineTag);
-      }
-      return false;
-    });
-    
-    if (allWrapped) {
-      // Already wrapped, don't double-wrap
-      return;
-    }
-    
-    // Create wrapper
-    const wrapper = document.createElement(inlineTag);
-    
-    // Move all children of block into wrapper
-    while (block.firstChild) {
-      wrapper.appendChild(block.firstChild);
-    }
-    
-    // Add wrapper to block
-    block.appendChild(wrapper);
   },
   
   // Unwrap inline tags from block's content
   unwrapInlineFromBlock(block, tags) {
-    // Find and unwrap inline tags that wrap block's content
-    const children = Array.from(block.childNodes);
-    
-    children.forEach(child => {
-      if (child.nodeType === Node.ELEMENT_NODE) {
-        const tagUpper = child.tagName.toUpperCase();
-        if (tags.some(t => t.toUpperCase() === tagUpper)) {
-          // This is an inline tag we want to unwrap
-          while (child.firstChild) {
-            block.insertBefore(child.firstChild, child);
-          }
-          block.removeChild(child);
-        } else {
-          // Recursively unwrap from child
-          this.unwrapInlineFromBlock(child, tags);
-        }
-      }
-    });
+    if (window.ContentEditorInlineFormat) {
+      return window.ContentEditorInlineFormat.unwrapInlineFromBlock(block, tags);
+    }
   },
 
   // Wrap element with tag (deprecated - use wrapBlockContent for inline tags)
   wrapElement(element, tagName) {
-    // Only use this for inline tags wrapping other inline elements
-    // For blocks, use formatBlock. For block content, use wrapBlockContent.
-    if (this.isBlockTag(tagName)) {
-      console.warn('wrapElement should not be used for block tags. Use formatBlock instead.');
-      return;
+    if (window.ContentEditorInlineFormat) {
+      return window.ContentEditorInlineFormat.wrapElement(element, tagName);
     }
-    const wrapper = document.createElement(tagName);
-    element.parentNode.insertBefore(wrapper, element);
-    wrapper.appendChild(element);
   },
 
   // Unwrap tag from element
   unwrapTag(element, tagName) {
-    const tags = Array.isArray(tagName) ? tagName.map(t => t.toUpperCase()) : [tagName.toUpperCase()];
-    
-    // Alternative tags
-    const altTags = {
-      'B': ['B', 'STRONG'],
-      'STRONG': ['B', 'STRONG'],
-      'I': ['I', 'EM'],
-      'EM': ['I', 'EM'],
-      'S': ['S', 'DEL', 'STRIKE'],
-      'DEL': ['S', 'DEL', 'STRIKE'],
-      'U': ['U']
-    };
-    
-    // Expand tags with alternatives
-    const allTags = [];
-    tags.forEach(tag => {
-      allTags.push(tag);
-      if (altTags[tag]) {
-        allTags.push(...altTags[tag]);
-      }
-    });
-    
-    let current = element;
-    
-    while (current && current !== document.body) {
-      if (allTags.includes(current.tagName.toUpperCase())) {
-        const parent = current.parentNode;
-        while (current.firstChild) {
-          parent.insertBefore(current.firstChild, current);
-        }
-        parent.removeChild(current);
-        return;
-      }
-      current = current.parentElement;
+    if (window.ContentEditorInlineFormat) {
+      return window.ContentEditorInlineFormat.unwrapTag(element, tagName);
     }
   },
 
   // Unwrap selection
   unwrapSelection(range, tagName) {
-    const tags = Array.isArray(tagName) ? tagName.map(t => t.toUpperCase()) : [tagName.toUpperCase()];
-    
-    // Alternative tags
-    const altTags = {
-      'B': ['B', 'STRONG'],
-      'STRONG': ['B', 'STRONG'],
-      'I': ['I', 'EM'],
-      'EM': ['I', 'EM'],
-      'S': ['S', 'DEL', 'STRIKE'],
-      'DEL': ['S', 'DEL', 'STRIKE'],
-      'U': ['U']
-    };
-    
-    // Expand tags with alternatives
-    const allTags = [];
-    tags.forEach(tag => {
-      allTags.push(tag);
-      if (altTags[tag]) {
-        allTags.push(...altTags[tag]);
-      }
-    });
-    
-    let container = range.commonAncestorContainer;
-    
-    if (container.nodeType === Node.TEXT_NODE) {
-      container = container.parentElement;
-    }
-    
-    while (container && container !== document.body) {
-      if (allTags.includes(container.tagName.toUpperCase())) {
-        const parent = container.parentNode;
-        
-        try {
-          const beforeRange = document.createRange();
-          beforeRange.setStartBefore(container);
-          beforeRange.setEnd(range.startContainer, range.startOffset);
-          
-          const afterRange = document.createRange();
-          afterRange.setStart(range.endContainer, range.endOffset);
-          afterRange.setEndAfter(container);
-          
-          const beforeFragment = beforeRange.extractContents();
-          const afterFragment = afterRange.extractContents();
-          const contents = Array.from(container.childNodes);
-          
-          parent.insertBefore(beforeFragment, container);
-          contents.forEach(child => {
-            parent.insertBefore(child, container);
-          });
-          parent.insertBefore(afterFragment, container);
-          parent.removeChild(container);
-          
-          // Restore selection - try to maintain original selection
-          const sel = window.getSelection();
-          try {
-            const newRange = document.createRange();
-            if (beforeFragment.firstChild) {
-              newRange.setStartAfter(beforeFragment.lastChild);
-            } else if (afterFragment.firstChild) {
-              newRange.setStartBefore(afterFragment.firstChild);
-            } else {
-              newRange.setStart(parent, 0);
-            }
-            newRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-          } catch (e) {
-            // Fallback: select after unwrapped content
-            const newRange = document.createRange();
-            newRange.selectNodeContents(parent);
-            newRange.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-          }
-        } catch (e) {
-          console.error('Error unwrapping selection:', e);
-        }
-        return;
-      }
-      container = container.parentElement;
+    if (window.ContentEditorInlineFormat) {
+      return window.ContentEditorInlineFormat.unwrapSelection(range, tagName);
     }
   },
 
   // Format block (change tag)
   formatBlock(tagName) {
-    // Normalize tag name to lowercase
-    tagName = (tagName || 'p').toLowerCase();
-    
-    // Validate tag name
-    const validBlockTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'pre'];
-    if (!validBlockTags.includes(tagName)) {
-      console.error('Invalid block tag:', tagName);
-      return;
+    if (window.ContentEditorBlockFormat) {
+      return window.ContentEditorBlockFormat.formatBlock(tagName);
     }
-    
-    const selection = window.getSelection();
-    let block = this.getCurrentBlock();
-    
-    // Find the editor area (should be div.content-editor-area)
-    let editorArea = null;
-    if (selection.rangeCount > 0) {
-      let element = selection.getRangeAt(0).commonAncestorContainer;
-      while (element && element.nodeType === Node.ELEMENT_NODE) {
-        if (element.classList && element.classList.contains('content-editor-area')) {
-          editorArea = element;
-          break;
-        }
-        element = element.parentElement;
-      }
-    }
-    
-    // Fallback: query selector
-    if (!editorArea) {
-      editorArea = document.querySelector('.content-editor-area[contenteditable="true"]');
-    }
-    
-    if (!editorArea || !editorArea.classList || !editorArea.classList.contains('content-editor-area')) {
-      console.error('Editor area not found');
-      return;
-    }
-    
-    // CRITICAL: Never replace the editor area itself!
-    // The editor area must always remain a div with class content-editor-area
-    
-    if (!block) {
-      // No block found - we need to create one or wrap existing content
-      if (!selection.rangeCount) {
-        // No selection, create at end of editor
-        const newBlock = document.createElement(tagName);
-        newBlock.innerHTML = '<br>';
-        editorArea.appendChild(newBlock);
-        
-        const newRange = document.createRange();
-        newRange.selectNodeContents(newBlock);
-        newRange.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-        newBlock.focus();
-        return;
-      }
-      
-      // We have a selection but no block - wrap selection in new block
-      const range = selection.getRangeAt(0);
-      
-      // Check if selection is directly in editor area (no block wrapper)
-      const ancestor = range.commonAncestorContainer;
-      const isDirectInEditor = ancestor === editorArea || 
-                                (ancestor.parentElement && ancestor.parentElement === editorArea) ||
-                                (ancestor.nodeType === Node.TEXT_NODE && ancestor.parentElement === editorArea);
-      
-      if (isDirectInEditor) {
-        // Selection is at editor level, wrap it in a block
-        try {
-          // Get all content from selection
-          const contents = range.extractContents();
-          const newBlock = document.createElement(tagName);
-          
-          // Move all contents to new block
-          if (contents.childNodes.length > 0) {
-            while (contents.firstChild) {
-              newBlock.appendChild(contents.firstChild);
-            }
-          } else {
-            // Empty selection, just add br
-            newBlock.innerHTML = '<br>';
-          }
-          
-          // Insert the new block at the range position
-          range.insertNode(newBlock);
-          
-          // If there's content after, we might need to clean up
-          // Select the new block
-          const newRange = document.createRange();
-          newRange.selectNodeContents(newBlock);
-          newRange.collapse(false);
-          selection.removeAllRanges();
-          selection.addRange(newRange);
-          newBlock.focus();
-        } catch (e) {
-          console.error('Error creating block:', e);
-          // Fallback: create at end
-          const newBlock = document.createElement(tagName);
-          newBlock.innerHTML = '<br>';
-          editorArea.appendChild(newBlock);
-          const newRange = document.createRange();
-          newRange.selectNodeContents(newBlock);
-          newRange.collapse(false);
-          selection.removeAllRanges();
-          selection.addRange(newRange);
-          newBlock.focus();
-        }
-        return;
-      }
-      
-      // Fallback: create new block at end
-      const newBlock = document.createElement(tagName);
-      newBlock.innerHTML = '<br>';
-      editorArea.appendChild(newBlock);
-      
-      const newRange = document.createRange();
-      newRange.selectNodeContents(newBlock);
-      newRange.collapse(false);
-      selection.removeAllRanges();
-      selection.addRange(newRange);
-      newBlock.focus();
-      return;
-    }
-    
-    // CRITICAL CHECK: Never replace the editor area!
-    // Ensure block is a valid Element before checking properties
-    if (!block || block.nodeType !== Node.ELEMENT_NODE) {
-      // Block is not valid, create a new one
-      const newBlock = document.createElement(tagName);
-      newBlock.innerHTML = '<br>';
-      editorArea.appendChild(newBlock);
-      
-      const newRange = document.createRange();
-      newRange.selectNodeContents(newBlock);
-      newRange.collapse(false);
-      selection.removeAllRanges();
-      selection.addRange(newRange);
-      newBlock.focus();
-      return;
-    }
-    
-    if (block === editorArea || (block.classList && block.classList.contains('content-editor-area'))) {
-      // This should never happen, but if it does, create a new block instead
-      const newBlock = document.createElement(tagName);
-      newBlock.innerHTML = '<br>';
-      editorArea.appendChild(newBlock);
-      
-      const newRange = document.createRange();
-      newRange.selectNodeContents(newBlock);
-      newRange.collapse(false);
-      selection.removeAllRanges();
-      selection.addRange(newRange);
-      newBlock.focus();
-      return;
-    }
-    
-    // Ensure block has tagName property (it's an Element)
-    if (!block.tagName) {
-      console.error('Block is not a valid element:', block);
-      return;
-    }
-    
-    // Special handling: if block is a list item (LI) and we're converting to a non-list tag
-    // We need to remove it from the list structure first
-    if (block.tagName === 'LI' && tagName !== 'li' && tagName !== 'ul' && tagName !== 'ol') {
-      const list = block.parentElement;
-      if (list && (list.tagName === 'UL' || list.tagName === 'OL')) {
-        // Create new block with the desired tag
-        const newBlock = document.createElement(tagName);
-        newBlock.innerHTML = block.innerHTML;
-        
-        // Remove any inline styles that might cause indentation
-        newBlock.style.marginLeft = '0';
-        newBlock.style.paddingLeft = '0';
-        newBlock.style.margin = '';
-        newBlock.style.padding = '';
-        
-        // Save selection position
-        let offset = 0;
-        if (selection.rangeCount > 0) {
-          try {
-            const range = selection.getRangeAt(0);
-            const blockRange = document.createRange();
-            blockRange.selectNodeContents(block);
-            blockRange.setEnd(range.startContainer, range.startOffset);
-            offset = blockRange.toString().length;
-          } catch (e) {
-            offset = 0;
-          }
-        }
-        
-        // Replace list item with new block
-        if (list.children.length === 1) {
-          // Last item in list, replace entire list with new block
-          list.parentNode.replaceChild(newBlock, list);
-        } else {
-          // Multiple items in list - remove the list item and place new block after the list
-          // First, remove the list item
-          block.remove();
-          // Then insert the new block after the list
-          if (list.nextSibling) {
-            list.parentNode.insertBefore(newBlock, list.nextSibling);
-          } else {
-            list.parentNode.appendChild(newBlock);
-          }
-        }
-        
-        // Restore cursor position
-        const newRange = document.createRange();
-        const textNodes = this.getTextNodes(newBlock);
-        
-        if (textNodes.length > 0 && offset > 0) {
-          let currentOffset = 0;
-          for (const textNode of textNodes) {
-            const nodeLength = textNode.textContent.length;
-            if (currentOffset + nodeLength >= offset) {
-              const pos = Math.min(offset - currentOffset, nodeLength);
-              newRange.setStart(textNode, pos);
-              newRange.setEnd(textNode, pos);
-              break;
-            }
-            currentOffset += nodeLength;
-          }
-          if (!newRange.startContainer || !newRange.endContainer) {
-            newRange.selectNodeContents(newBlock);
-            newRange.collapse(false);
-          }
-        } else {
-          newRange.selectNodeContents(newBlock);
-          newRange.collapse(false);
-        }
-        
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-        newBlock.focus();
-        return;
-      }
-    }
-    
-    // Don't change if already the same tag (except for paragraph, allow toggle)
-    if (block.tagName.toUpperCase() === tagName.toUpperCase() && tagName.toUpperCase() !== 'P') {
-      // Already the same tag, do nothing
-      return;
-    }
-    
-    // Save selection position before replacing block
-    let offset = 0;
-    let range = null;
-    if (selection.rangeCount > 0) {
-      range = selection.getRangeAt(0);
-      try {
-        const blockRange = document.createRange();
-        blockRange.selectNodeContents(block);
-        blockRange.setEnd(range.startContainer, range.startOffset);
-        offset = blockRange.toString().length;
-      } catch (e) {
-        offset = 0;
-      }
-    }
-    
-    // Create new block with same content
-    const newBlock = document.createElement(tagName);
-    
-    // Copy innerHTML (content) from old block
-    newBlock.innerHTML = block.innerHTML;
-    
-    // Remove any inline styles that might cause indentation (especially from lists)
-    // This ensures paragraphs/headings don't inherit list indentation
-    newBlock.style.marginLeft = '0';
-    newBlock.style.paddingLeft = '0';
-    newBlock.style.margin = '';
-    newBlock.style.padding = '';
-    
-    // Copy attributes (except style, class, id which might conflict)
-    if (block.attributes && block.attributes.length > 0) {
-      Array.from(block.attributes).forEach(attr => {
-        if (!['style', 'class', 'id'].includes(attr.name)) {
-          newBlock.setAttribute(attr.name, attr.value);
-        }
-      });
-    }
-    
-    // Ensure block has a parent before replacing
-    if (!block.parentNode) {
-      console.error('Block has no parent node:', block);
-      return;
-    }
-    
-    // Replace block with new block (but never replace editor area!)
-    try {
-      block.parentNode.replaceChild(newBlock, block);
-    } catch (e) {
-      console.error('Error replacing block:', e, { block, newBlock, tagName });
-      return;
-    }
-    
-    // Restore cursor position
-    const newRange = document.createRange();
-    const textNodes = this.getTextNodes(newBlock);
-    
-    if (textNodes.length > 0 && offset > 0) {
-      let currentOffset = 0;
-      for (const textNode of textNodes) {
-        const nodeLength = textNode.textContent.length;
-        if (currentOffset + nodeLength >= offset) {
-          const pos = Math.min(offset - currentOffset, nodeLength);
-          newRange.setStart(textNode, pos);
-          newRange.setEnd(textNode, pos);
-          break;
-        }
-        currentOffset += nodeLength;
-      }
-      if (!newRange.startContainer || !newRange.endContainer) {
-        // Fallback: end of block
-        newRange.selectNodeContents(newBlock);
-        newRange.collapse(false);
-      }
-    } else {
-      // No text nodes or offset is 0, place at end
-      newRange.selectNodeContents(newBlock);
-      newRange.collapse(false);
-    }
-    
-    selection.removeAllRanges();
-    selection.addRange(newRange);
-    
-    // Focus the new block
-    newBlock.focus();
-    
-    // Ensure editor area maintains focus
-    editorArea.focus();
   },
   
   // Get all text nodes in element
@@ -1008,79 +321,30 @@ window.ContentEditorCommands = {
 
   // Toggle list
   toggleList(listType) {
-    const block = this.getCurrentBlock();
-    if (!block) return;
-    
-    const listTag = listType.toUpperCase();
-    const isListItem = block.tagName === 'LI';
-    
-    if (isListItem) {
-      // Already in a list, check if we should remove it
-      const list = block.parentElement;
-      if (list.tagName === listTag) {
-        // Remove from list
-        this.removeFromList(block);
-      } else {
-        // Change list type
-        this.changeListType(block, listType);
-      }
-    } else {
-      // Create new list
-      this.createList(block, listType);
+    if (window.ContentEditorBlockFormat) {
+      return window.ContentEditorBlockFormat.toggleList(listType);
     }
   },
 
   // Create list from block
   createList(block, listType) {
-    const list = document.createElement(listType);
-    const li = document.createElement('li');
-    li.innerHTML = block.innerHTML;
-    list.appendChild(li);
-    block.parentNode.replaceChild(list, block);
-    
-    // Move cursor to list item
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(li);
-    range.collapse(false);
-    selection.removeAllRanges();
-    selection.addRange(range);
+    if (window.ContentEditorBlockFormat) {
+      return window.ContentEditorBlockFormat.createList(block, listType);
+    }
   },
 
   // Remove from list
   removeFromList(li) {
-    const list = li.parentElement;
-    const p = document.createElement('p');
-    p.innerHTML = li.innerHTML;
-    
-    if (list.children.length === 1) {
-      // Last item, replace list with paragraph
-      list.parentNode.replaceChild(p, list);
-    } else {
-      // Replace li with p
-      list.replaceChild(p, li);
+    if (window.ContentEditorBlockFormat) {
+      return window.ContentEditorBlockFormat.removeFromList(li);
     }
-    
-    // Move cursor
-    const selection = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(p);
-    range.collapse(false);
-    selection.removeAllRanges();
-    selection.addRange(range);
   },
 
   // Change list type
   changeListType(li, newType) {
-    const oldList = li.parentElement;
-    const newList = document.createElement(newType);
-    
-    // Move all items
-    while (oldList.firstChild) {
-      newList.appendChild(oldList.firstChild);
+    if (window.ContentEditorBlockFormat) {
+      return window.ContentEditorBlockFormat.changeListType(li, newType);
     }
-    
-    oldList.parentNode.replaceChild(newList, oldList);
   },
 
   // Create or edit link
