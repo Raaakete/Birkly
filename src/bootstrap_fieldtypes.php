@@ -26,4 +26,18 @@ foreach (glob($fieldtypesDir . '/*', GLOB_ONLYDIR) as $typeDir) {
     if (class_exists($class)) {
         FieldRegistry::register(strtolower($type), $class);
     }
+}
+
+// Legacy schema aliases (demo content and AI actions)
+$legacyAliases = [
+    'editor' => 'contenteditor',
+    'wysiwyg' => 'contenteditor',
+    'content-editor' => 'contenteditor',
+    'media' => 'file',
+];
+foreach ($legacyAliases as $alias => $target) {
+    $class = FieldRegistry::getFieldType($target);
+    if ($class) {
+        FieldRegistry::register($alias, $class);
+    }
 } 

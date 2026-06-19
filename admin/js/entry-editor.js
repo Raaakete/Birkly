@@ -666,9 +666,24 @@
     }
 
     /**
+     * Sync ContentEditor fieldtypes before form submission
+     */
+    function syncContentEditorFields() {
+        document.querySelectorAll('.content-editor-wrapper').forEach(function(wrapper) {
+            if (window.ContentEditorSync && typeof window.ContentEditorSync.syncWrapperToHidden === 'function') {
+                window.ContentEditorSync.syncWrapperToHidden(wrapper, true);
+            }
+        });
+    }
+
+    /**
      * Sync editor content to hidden input before form submission
      */
     function syncEditorContent(editorWrapper) {
+        if (editorWrapper.querySelector('.content-editor-wrapper')) {
+            return;
+        }
+
         const hidden = editorWrapper.querySelector('input[type="hidden"][id$="_value"]');
         if (!hidden) return;
 
@@ -734,8 +749,6 @@
                     .replace(/`([^`]+)`/g, '<code>$1</code>');
             } else if (activeMode === 'html' && ht) {
                 hidden.value = ht.value || '';
-            } else if (activeMode === 'block' && window.EditorModes?.block?.toHTML && block) {
-                hidden.value = String(window.EditorModes.block.toHTML(block) || '');
             } else {
                 // Ultimate fallback: try to read from any visible surface
                 const surface = advanced || wys || md || ht;
@@ -779,6 +792,7 @@
             e.preventDefault();
             
             // Sync all editor fields before submission
+            syncContentEditorFields();
             document.querySelectorAll('.editor-field').forEach(syncEditorContent);
 
             // Let fieldtypes update their hidden inputs before save
@@ -1180,24 +1194,29 @@
             }
         });
 
-        // Initialize Editor fieldtypes
+        // Initialize legacy multi-mode editor fieldtypes (not ContentEditor)
         document.querySelectorAll('.editor-field').forEach(function(wrap) {
+            if (wrap.querySelector('.content-editor-wrapper')) {
+                return;
+            }
+            if (!wrap.querySelector('.ed-advanced') && !wrap.querySelector('.ed-wysiwyg') && !wrap.querySelector('.ed-html')) {
+                return;
+            }
+
             const evt = new CustomEvent('fieldtype:init', { 
                 detail: { fieldtype: 'editor', element: wrap } 
             });
             document.dispatchEvent(evt);
             
-            // Post-init value restore: wait for Advanced mode to initialize, then restore content
+            // Post-init value restore for legacy Advanced mode surfaces
             const hidden = wrap.querySelector('input[type="hidden"][id$="_value"]');
             const adv = wrap.querySelector('.ed-advanced');
             const isAdvancedActive = adv && (adv.style.display === 'block' || adv.style.display === '');
-            // Read initial value injected by server if present
             const initialRaw = wrap.getAttribute('data-initial-value') || '';
             
-            // If hidden is empty but initial value exists, seed it first
             if (hidden && !hidden.value && initialRaw) {
                 const ta0 = document.createElement('textarea');
-                ta0.innerHTML = initialRaw; // decode entities
+                ta0.innerHTML = initialRaw;
                 hidden.value = ta0.value || '';
             }
 
@@ -1209,40 +1228,17 @@
                 };
                 const val = decode(hidden.value || initialRaw || '');
                 
-                // Wait for Advanced mode to be initialized (with timeout)
-                let attempts = 0;
-                const restoreInterval = setInterval(function() {
-                    attempts++;
-                    if (attempts > 20) { // 2 seconds max wait
-                        clearInterval(restoreInterval);
-                        return;
-                    }
-                    
-                    // Try to restore using Advanced API
-                    if (window.EditorModes && window.EditorModes.advanced && typeof window.EditorModes.advanced.setValue === 'function') {
-                        try {
-                            window.EditorModes.advanced.init(wrap); // Ensure initialized
-                            window.EditorModes.advanced.setValue(val);
-                            clearInterval(restoreInterval);
-                        } catch (err) {
-                            // Continue trying
-                            console.debug('Advanced init attempt ' + attempts, err);
+                const contentEl = wrap.querySelector('.ed-advanced .advanced-content');
+                if (contentEl) {
+                    contentEl.innerHTML = val;
+                } else if (adv) {
+                    setTimeout(function() {
+                        const contentEl2 = wrap.querySelector('.ed-advanced .advanced-content');
+                        if (contentEl2) {
+                            contentEl2.innerHTML = val;
                         }
-                    } else {
-                        // Fallback: direct DOM manipulation
-                        const contentEl = wrap.querySelector('.ed-advanced .advanced-content');
-                        if (contentEl) {
-                            contentEl.innerHTML = val;
-                            clearInterval(restoreInterval);
-                        } else if (adv && adv.querySelector('.advanced-toolbar')) {
-                            // Advanced toolbar exists, content div should be there soon
-                            setTimeout(function() {
-                                const contentEl2 = wrap.querySelector('.ed-advanced .advanced-content');
-                                if (contentEl2) contentEl2.innerHTML = val;
-                            }, 100);
-                        }
-                    }
-                }, 100);
+                    }, 100);
+                }
             }
             
             // Set up continuous sync for Advanced mode to keep hidden input updated
