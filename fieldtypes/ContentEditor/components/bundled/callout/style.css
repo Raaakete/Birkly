@@ -1,0 +1,19 @@
+.ce-callout {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  margin: 1rem 0;
+}
+
+.ce-callout__title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.ce-callout__text {
+  margin: 0;
+  color: #1e3a8a;
+  line-height: 1.5;
+}
