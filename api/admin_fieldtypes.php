@@ -97,6 +97,9 @@ function getFieldtypeClass($fieldtypeName) {
         'tag' => 'tags', // Tag fieldtype uses Tags class
         'dynamic-items' => 'dynamicitems',
         'content-editor' => 'contenteditor', // ContentEditor fieldtype directory name
+        'editor' => 'contenteditor', // Legacy demo schemas
+        'wysiwyg' => 'contenteditor',
+        'media' => 'file', // Legacy demo schemas (use file or gallery)
     ];
     
     if (isset($aliases[$normalized])) {

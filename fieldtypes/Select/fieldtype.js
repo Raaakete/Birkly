@@ -1,11 +1,30 @@
 window.HaruFieldtypes = window.HaruFieldtypes || {};
+
+function normalizeSelectOptions(options) {
+  return (options || []).map(function(opt) {
+    if (typeof opt === 'string') {
+      var trimmed = opt.trim();
+      if (!trimmed) return null;
+      return {
+        label: trimmed,
+        value: trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '_')
+      };
+    }
+    if (!opt || typeof opt !== 'object') return null;
+    var value = opt.value != null ? String(opt.value) : (opt.label != null ? String(opt.label) : '');
+    var label = opt.label != null ? String(opt.label) : value;
+    if (!value && !label) return null;
+    return { label: label || value, value: value || label };
+  }).filter(Boolean);
+}
+
 window.HaruFieldtypes['select'] = {
   label: 'Select',
   category: 'input',
   dynamicItemsEligible: false,
   render: function(fieldConfig, value) {
     let options = `<option value="">Select ${fieldConfig.label || fieldConfig.name}</option>`;
-    (fieldConfig.options || []).forEach(opt => {
+    normalizeSelectOptions(fieldConfig.options).forEach(opt => {
       options += `<option value="${opt.value}"${value == opt.value ? ' selected' : ''}>${opt.label}</option>`;
     });
     return `<select class="input" name="${fieldConfig.name}" id="field_${fieldConfig.name}" ${fieldConfig.required ? 'required' : ''}>${options}</select>`;
