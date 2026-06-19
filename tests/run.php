@@ -13,6 +13,7 @@ $suites = [
     'collection_schema_test.php',
     'collection_groups_test.php',
     '../fieldtypes/ContentEditor/tests/html_roundtrip_test.php',
+    '../fieldtypes/ContentEditor/tests/preview_css_test.php',
 ];
 
 $root = dirname(__DIR__);
