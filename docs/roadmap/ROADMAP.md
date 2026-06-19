@@ -280,7 +280,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M2 — UX flow audit & fix program
 
-- **Status:** not started
+- **Status:** complete (PRs #16–#17, matrix #18)
 - **Repos:** Birkly
 - **Goal:** Find and fix broken admin/product flows (qa-verifier + browser)
 - **Values:** Robust, easy to use
@@ -289,10 +289,10 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Tasks**
 
-- [ ] **P2-M2-T1** Maintain `docs/reviews/ux-flow-matrix.md` from P2-M1 matrix
-- [ ] **P2-M2-T2** Fix P1 entry/collection bugs (Select options, slug regeneration, create_collection schema)
-- [ ] **P2-M2-T3** Re-run full flow matrix; video any remaining failures
-- [ ] **P2-M2-T4** All P1 matrix rows pass
+- [x] **P2-M2-T1** Maintain `docs/reviews/ux-flow-matrix.md` from P2-M1 matrix
+- [x] **P2-M2-T2** Fix P1 entry/collection bugs (Select options, slug regeneration, create_collection schema)
+- [x] **P2-M2-T3** Re-run full flow matrix; video any remaining failures
+- [x] **P2-M2-T4** All P1 matrix rows pass
 
 **Acceptance criteria:** No P1 failures in UX matrix; `./scripts/ci-check.sh` + `php tests/run.php` pass
 
