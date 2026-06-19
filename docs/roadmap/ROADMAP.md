@@ -300,7 +300,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M3 — ContentEditor fieldtype
 
-- **Status:** in progress (T1–T5 complete)
+- **Status:** in progress (T1–T6 complete)
 - **Repos:** Birkly (fieldtype only — **no core forks**)
 - **Goal:** Fix broken editor; Notion-like UX; visual ↔ HTML; project CSS preview; reusable components
 - **Values:** Self-contained fieldtype, dependency-free JS, pure HTML storage
@@ -321,7 +321,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 - [x] **P2-M3-T3** Visual ↔ HTML tabs with reliable round-trip (`sync-manager.js`)
 - [x] **P2-M3-T4** HTML round-trip tests in fieldtype folder
 - [x] **P2-M3-T5** Project CSS preview (URLs in fieldtype or collection config; load in editor only)
-- [ ] **P2-M3-T6** Component registry + insert/edit (HTML+CSS+JS+template) — all under ContentEditor/
+- [x] **P2-M3-T6** Component registry + insert/edit (HTML+CSS+JS+template) — all under ContentEditor/
 - [ ] **P2-M3-T7** Modularize commands per ARCHITECTURE_PROPOSAL Phase 1–2
 - [ ] **P2-M3-T8** Internal doc `fieldtypes/ContentEditor/README.md` (not Birkly-Docs until stable)
 
