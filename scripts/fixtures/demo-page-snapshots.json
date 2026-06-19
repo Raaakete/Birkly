@@ -1,0 +1,30 @@
+{
+  "language": "en",
+  "pages": [
+    {
+      "page": "index",
+      "requests": [
+        { "type": "list_entries", "into": "blog", "collection": "blog" },
+        { "type": "list_entries", "into": "services", "collection": "services" }
+      ]
+    },
+    {
+      "page": "blog",
+      "requests": [
+        { "type": "list_entries", "into": "blog", "collection": "blog" }
+      ]
+    },
+    {
+      "page": "services",
+      "requests": [
+        { "type": "list_entries", "into": "services", "collection": "services" }
+      ]
+    },
+    {
+      "page": "about",
+      "requests": [
+        { "type": "get_entry", "into": "about", "collection": "about", "slug": "about" }
+      ]
+    }
+  ]
+}

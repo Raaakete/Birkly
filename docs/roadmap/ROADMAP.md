@@ -375,19 +375,19 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M6 — CMS hardening
 
-- **Status:** not started
+- **Status:** complete (PR pending)
 - **Repos:** Birkly
 - **Goal:** Security and platform quality
 - **Register:** P2-R13, P2-R14, P2-R15
 
 **Tasks**
 
-- [ ] **P2-M6-T1** Remove `eval()` — `docs/admin-template-eval-replacement-plan.md`
-- [ ] **P2-M6-T2** Snapshot generation in dev/demo pipeline
-- [ ] **P2-M6-T3** Public API metadata consistency
-- [ ] **P2-M6-T4** Client/admin logging cleanup
+- [x] **P2-M6-T1** Remove `eval()` — `admin/template_safe_renderer.php` + `docs/admin-template-eval-replacement-plan.md`
+- [x] **P2-M6-T2** Snapshot generation in dev/demo pipeline — `scripts/generate-page-snapshots.php`
+- [x] **P2-M6-T3** Public API metadata consistency — `core/collection_meta.php`
+- [x] **P2-M6-T4** Client/admin logging cleanup — `admin/js/entry-editor.js`
 
-**Acceptance criteria:** No `eval(` in template parser; snapshots available in dev smoke
+**Acceptance criteria:** No `eval(` in template parser; snapshots available in dev smoke ✅
 
 ---
 

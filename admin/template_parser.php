@@ -489,40 +489,9 @@ class TemplateParser {
     }
     
     private function renderWithData($parsed, $data) {
-        // Extract variables from data
-        extract($data);
-        
-        // Start output buffering
-        ob_start();
-        
-        // Enable error reporting temporarily
-        $oldErrorReporting = error_reporting(E_ALL);
-        $oldDisplayErrors = ini_get('display_errors');
-        ini_set('display_errors', '0');
-        
-        try {
-            // Evaluate the parsed template
-            eval('?>' . $parsed . '<?php');
-        } catch (Throwable $e) {
-            ob_end_clean();
-            error_reporting($oldErrorReporting);
-            ini_set('display_errors', $oldDisplayErrors);
-            throw new Exception('Template rendering error: ' . $e->getMessage() . ' at line ' . $e->getLine(), 0, $e);
-        }
-        
-        // Restore error reporting
-        error_reporting($oldErrorReporting);
-        ini_set('display_errors', $oldDisplayErrors);
-        
-        // Get the output
-        $output = ob_get_clean();
-        
-        // Check for eval errors
-        if ($output === false) {
-            throw new Exception('Template rendering failed: Output buffering error');
-        }
-        
-        return $output;
+        require_once __DIR__ . '/template_safe_renderer.php';
+
+        return TemplateSafeRenderer::render($parsed, $this, $data);
     }
     
     private function renderFieldtype($fieldtypeName, $field) {
