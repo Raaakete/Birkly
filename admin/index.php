@@ -99,8 +99,11 @@ if (isset($_SESSION['user'])) {
 
 // If first-time setup and onboarding not completed, redirect to welcome
 $page = isset($_GET['page']) && $_GET['page'] !== '' ? $_GET['page'] : 'dashboard';
-if ($page !== 'onboarding' && $onboardingStatus['is_first_time'] && !$onboardingStatus['completed']) {
-    $page = 'onboarding';
+if ($page !== 'onboarding' && isset($_SESSION['user'])) {
+    $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+    if (shouldRedirectToOnboarding($userId)) {
+        $page = 'onboarding';
+    }
 }
 
         // Whitelist of allowed pages → template file map
@@ -248,8 +251,10 @@ $isOnboarding = ($page === 'onboarding');
                 // Pass query params so entry-editor receives collection/entry ids
                 $data = fetch_admin_page_data($page, $_GET);
                 
-                // For dashboard, ensure onboarding data is included
-                if ($page === 'dashboard') {
+                // Merge session onboarding status into dashboard payload (keep checklist from API)
+                if ($page === 'dashboard' && isset($data['onboarding']) && is_array($data['onboarding'])) {
+                    $data['onboarding'] = array_merge($data['onboarding'], $onboardingStatus);
+                } elseif ($page === 'dashboard') {
                     $data['onboarding'] = $onboardingStatus;
                 }
                 
