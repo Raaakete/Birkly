@@ -12,6 +12,7 @@ require_once '../core/plugins.php';
 require_once '../core/cache.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
+require_once '../core/collection_schema.php';
 require_once 'log.php';
 
 // Use admin session for content API (must be before auth check)
@@ -189,7 +190,7 @@ if ($action === 'create_collection') {
     }
     $meta = [ 'id' => $id, 'title' => $title, 'slug' => $slug ];
     $storage->write("collections/$dir/collection.json", $meta);
-    $schema = $input['schema'] ?? [];
+    $schema = birkly_normalize_collection_schema($input);
     $storage->write("collections/$dir/schema.json", $schema);
     log_security_event('create_collection', ['id' => $id, 'title' => $title, 'slug' => $slug]);
     echo json_encode([
