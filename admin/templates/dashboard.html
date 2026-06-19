@@ -1,8 +1,10 @@
 <?php
 // Dashboard - entry point for the admin panel
 $onboardingData = $onboarding ?? [];
-$isFirstTime = !empty($onboardingData['is_first_time']) && !$onboardingData['completed'];
-$showOnboarding = $isFirstTime && !empty($onboardingData['checklist']);
+$wizardDone = !empty($onboardingData['setup_wizard_completed']);
+$fullyComplete = !empty($onboardingData['completed']);
+$showOnboarding = $wizardDone && !$fullyComplete && !empty($onboardingData['checklist']);
+$isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 ?><!-- Onboarding Completion Modal -->
 <div class="modal" id="onboarding-complete-modal" style="display: none;">
     <div class="modal-backdrop"></div>
