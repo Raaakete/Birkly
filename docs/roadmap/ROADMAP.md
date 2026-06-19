@@ -336,7 +336,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M4 — Collection groups & drag-and-drop
 
-- **Status:** not started
+- **Status:** complete (PR pending)
 - **Repos:** Birkly
 - **Goal:** Reliable group reorder, in-group reorder, cross-group move
 - **Depends on:** P2-M2 (stable content admin)
@@ -345,10 +345,10 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Tasks**
 
-- [ ] **P2-M4-T1** Reproduce and document DnD failure modes
-- [ ] **P2-M4-T2** Consolidate on `NestedDragDropManager`; remove debug noise
-- [ ] **P2-M4-T3** Add `list_groups` API action (or document intentional SSR-only)
-- [ ] **P2-M4-T4** Persist + reload verification; video walkthrough
+- [x] **P2-M4-T1** Reproduce and document DnD failure modes
+- [x] **P2-M4-T2** Consolidate on `NestedDragDropManager`; remove debug noise
+- [x] **P2-M4-T3** Add `list_groups` API action (or document intentional SSR-only)
+- [x] **P2-M4-T4** Persist + reload verification; video walkthrough
 
 **Acceptance criteria:** Three DnD scenarios pass after refresh; UX matrix row green
 
