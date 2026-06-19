@@ -21,6 +21,34 @@ function hasUsers() {
     return count($files) > 0;
 }
 
+// Helper to normalize user key for onboarding file storage
+function normalizeOnboardingUserKey($userId) {
+    if ($userId === null || $userId === '') {
+        return md5('unknown');
+    }
+    $userId = (string) $userId;
+    if (filter_var($userId, FILTER_VALIDATE_EMAIL)) {
+        return md5(strtolower(trim($userId)));
+    }
+    // User id is already md5(email) in Birkly user records
+    if (preg_match('/^[a-f0-9]{32}$/i', $userId)) {
+        return strtolower($userId);
+    }
+    return md5(strtolower(trim($userId)));
+}
+
+// Whether the setup wizard should be shown (independent of pre-installed demo content)
+function shouldRedirectToOnboarding($userId = null) {
+    if (!hasUsers()) {
+        return true;
+    }
+    if ($userId === null) {
+        return false;
+    }
+    $status = getOnboardingStatus($userId);
+    return !($status['setup_wizard_completed'] ?? false);
+}
+
 // Helper to check if this is a first-time setup
 function isFirstTimeSetup() {
     // First check if there are any users - if not, it's definitely first-time
@@ -68,13 +96,14 @@ function getOnboardingStatus($userId = null) {
     
     // Check user-specific onboarding
     $userStorage = new Storage('../users');
-    $userOnboardingFile = md5($userId) . '_onboarding.json';
+    $userOnboardingFile = normalizeOnboardingUserKey($userId) . '_onboarding.json';
     $userOnboarding = $userStorage->read($userOnboardingFile) ?? [];
     
     return [
         'needs_first_user' => $needsFirstUser,
         'is_first_time' => $isFirstTime,
         'completed' => $userOnboarding['completed'] ?? false,
+        'skipped' => $userOnboarding['skipped'] ?? false,
         'setup_wizard_completed' => $userOnboarding['setup_wizard_completed'] ?? false,
         'demo_content_installed' => $userOnboarding['demo_content_installed'] ?? false,
         'demo_template_installed' => $userOnboarding['demo_template_installed'] ?? false,
@@ -88,7 +117,7 @@ function getOnboardingStatus($userId = null) {
 // Helper to save onboarding progress
 function saveOnboardingProgress($userId, $data) {
     $userStorage = new Storage('../users');
-    $userOnboardingFile = md5($userId) . '_onboarding.json';
+    $userOnboardingFile = normalizeOnboardingUserKey($userId) . '_onboarding.json';
     
     $existing = $userStorage->read($userOnboardingFile) ?? [];
     $updated = array_merge($existing, $data);
@@ -225,7 +254,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             'message' => 'First admin user created and logged in',
             'data' => [
                 'user' => $user,
-                'onboarding' => getOnboardingStatus($userId)
+                'onboarding' => getOnboardingStatus($user['email'])
             ]
         ]);
         exit;
@@ -268,6 +297,21 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         if (isset($input['progress'])) {
             $updates['progress'] = is_array($input['progress']) ? $input['progress'] : [];
         }
+
+        $userStorage = new Storage('../users');
+        $existing = $userStorage->read(normalizeOnboardingUserKey($userId) . '_onboarding.json') ?? [];
+
+        // Store ad-hoc progress flags (e.g. demo_content_kept)
+        $reserved = ['step', 'setup_wizard_completed', 'demo_content_installed', 'demo_template_installed', 'progress'];
+        foreach ($input as $key => $value) {
+            if (in_array($key, $reserved, true)) {
+                continue;
+            }
+            if (!isset($updates['progress']) || !is_array($updates['progress'])) {
+                $updates['progress'] = $existing['progress'] ?? [];
+            }
+            $updates['progress'][$key] = $value;
+        }
         
         saveOnboardingProgress($userId, $updates);
         
@@ -288,8 +332,15 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         
         $progressData = [
             'completed' => true,
+            'setup_wizard_completed' => true,
             'completed_at' => date('c')
         ];
+        
+        if ($demoContentChoice === 'keep') {
+            $progressData['demo_content_installed'] = true;
+        } elseif ($demoContentChoice === 'delete') {
+            $progressData['demo_content_installed'] = false;
+        }
         
         // Store demo website URL if provided
         if ($demoWebsiteUrl) {
@@ -321,8 +372,8 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
         
         saveOnboardingProgress($userId, [
-            'completed' => true,
             'skipped' => true,
+            'setup_wizard_completed' => true,
             'completed_at' => date('c')
         ]);
         
