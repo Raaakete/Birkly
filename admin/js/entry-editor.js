@@ -89,7 +89,6 @@
                     if (reviewerSelect && reviewerHidden) {
                         // If select is empty but hidden has value, try to set select from hidden
                         if (!reviewerSelect.value && reviewerHidden.value) {
-                            console.log('[EntryEditor] Setting reviewer select from hidden value:', reviewerHidden.value);
                             // Try to find the option that matches the hidden value (could be ID or email)
                             const hiddenValue = reviewerHidden.value.toLowerCase().trim();
                             let found = false;
@@ -99,18 +98,15 @@
                                 // Match by value (ID) or by email in text
                                 if (optionValue === hiddenValue || optionText.includes('(' + hiddenValue + ')')) {
                                     reviewerSelect.value = option.value;
-                                    console.log('[EntryEditor] Matched reviewer option:', option.value);
                                     found = true;
                                     break;
                                 }
                             }
                             if (!found) {
-                                console.warn('[EntryEditor] Could not find reviewer option for:', reviewerHidden.value);
                             }
                         } else if (reviewerSelect.value) {
                             // Select has value, sync to hidden
                             reviewerHidden.value = reviewerSelect.value;
-                            console.log('[EntryEditor] Synced reviewer hidden from select:', reviewerSelect.value);
                         }
                     }
                 } else {
@@ -120,9 +116,7 @@
                         // Always preserve the select value (user ID) in the hidden input
                         if (reviewerSelect.value) {
                             reviewerHidden.value = reviewerSelect.value;
-                            console.log('[EntryEditor] Preserved reviewer in hidden input:', reviewerSelect.value);
                         } else if (reviewerHidden.value) {
-                            console.log('[EntryEditor] Reviewer hidden already has value:', reviewerHidden.value);
                         }
                         // If select is empty but hidden has value, keep the hidden value
                     }
@@ -138,7 +132,6 @@
             // This preserves the reviewer value that was set by the PHP template
             if (reviewerSelect.value) {
                 reviewerHidden.value = reviewerSelect.value;
-                console.log('[EntryEditor] Initialized reviewer_hidden with select value:', reviewerSelect.value);
             } else if (reviewerHidden.value) {
                 // If select is empty but hidden has value, try to set select from hidden
                 // This handles the case where the field was hidden when page loaded
@@ -149,7 +142,6 @@
                     // Match by value (ID) or by email in text
                     if (optionValue === hiddenValue || optionText.includes('(' + hiddenValue + ')')) {
                         reviewerSelect.value = option.value;
-                        console.log('[EntryEditor] Set reviewer select from hidden value:', option.value);
                         break;
                     }
                 }
@@ -158,7 +150,6 @@
             // Update hidden input when reviewer select changes
             reviewerSelect.addEventListener('change', function() {
                 reviewerHidden.value = this.value || reviewerHidden.value;
-                console.log('[EntryEditor] Reviewer select changed, updated hidden:', reviewerHidden.value);
             });
         }
         
@@ -280,7 +271,6 @@
         
         // CRITICAL: Save the current reviewer value before clearing the select
         const currentReviewer = reviewerSelect.value || (reviewerHidden ? reviewerHidden.value : '');
-        console.log('[EntryEditor] loadReviewers - preserving current reviewer:', currentReviewer);
         
         // Fetch users with admin or editor role
         fetch('/api/users.php?action=list_users')
@@ -308,7 +298,6 @@
                             const optionText = option.text.toLowerCase();
                             if (optionValue === normalizedCurrent || optionText.includes('(' + normalizedCurrent + ')')) {
                                 reviewerSelect.value = option.value;
-                                console.log('[EntryEditor] Restored reviewer value:', option.value);
                                 // Also update hidden input
                                 if (reviewerHidden) {
                                     reviewerHidden.value = option.value;
@@ -770,15 +759,6 @@
                 hidden.value = surface.innerHTML || surface.value || '';
             }
         }
-        
-        // Debug log to help diagnose issues
-        if (activeMode === 'advanced' && !hidden.value) {
-            console.warn('Advanced mode sync: hidden value is empty', {
-                editorWrapper: editorWrapper,
-                advanced: advanced,
-                contentEl: advanced ? advanced.querySelector('.advanced-content') : null
-            });
-        }
     }
 
     /**
@@ -883,12 +863,8 @@
                 }
                 
                 if (finalParentSubCollection && finalParentSubEntryId) {
-                    console.log('[EntryEditor] Setting parent_sub_collection from form:', finalParentSubCollection, 'parent_sub_entry_id:', finalParentSubEntryId);
                     data['parent_sub_collection'] = finalParentSubCollection;
                     data['parent_sub_entry_id'] = finalParentSubEntryId;
-                } else {
-                    console.log('[EntryEditor] No parentSubCollection or parentSubEntryId found');
-                    console.log('[EntryEditor] parentSubCollection:', finalParentSubCollection, 'parentSubEntryId:', finalParentSubEntryId);
                 }
                 
                 const requestBody = {
@@ -936,7 +912,6 @@
                 searchScope.forEach(scope => {
                     regularInputs.push(...scope.querySelectorAll('input:not([type="hidden"]), select, textarea'));
                 });
-                console.log('[EntryEditor] Found', regularInputs.length, 'regular form inputs in', editorMain ? 'editor-main' : 'form');
                 
                 regularInputs.forEach(input => {
                     const name = input.name;
@@ -966,14 +941,11 @@
                         // Only set if we don't already have a non-empty value for this field
                         // This prevents empty inputs from overwriting filled ones
                         if (!fieldMap.has(name) || fieldMap.get(name) === '') {
-                            console.log('[EntryEditor] Collected regular field:', name, '=', value);
                             fieldMap.set(name, value);
                         } else if (value !== '') {
                             // If we already have a value but this one is also non-empty, use the last one
-                            console.log('[EntryEditor] Updating regular field:', name, '=', value, '(was:', fieldMap.get(name), ')');
                             fieldMap.set(name, value);
                         } else {
-                            console.log('[EntryEditor] Skipping empty regular field:', name, '(already have value:', fieldMap.get(name), ')');
                         }
                     }
                 });
@@ -981,7 +953,6 @@
                 // Second pass: collect hidden inputs from the entire form (fieldtypes use hidden inputs)
                 // BUT: only if the hidden input has a non-empty value, or if no regular input exists
                 const hiddenInputs = form.querySelectorAll('input[type="hidden"]');
-                console.log('[EntryEditor] Found', hiddenInputs.length, 'hidden inputs');
                 
                 hiddenInputs.forEach(input => {
                     const name = input.name;
@@ -1002,10 +973,8 @@
                     const isEmpty = value === '';
                     
                     if (!isEmpty || !hasRegularInput) {
-                        console.log('[EntryEditor] Collected hidden field:', name, '=', value, hasRegularInput ? '(overriding regular)' : '(new)');
                         fieldMap.set(name, value);
                     } else {
-                        console.log('[EntryEditor] Skipping empty hidden field:', name, '(regular input exists)');
                     }
                 });
                 
@@ -1079,18 +1048,10 @@
                     finalFormData.append('reviewer_hidden', reviewerHidden.value || '');
                 }
                 
-                console.log('[EntryEditor] Reviewer submission - select value:', reviewerField?.value, 'hidden value:', reviewerHidden?.value, 'final value:', reviewerValue);
                 
                 // Debug: Log all form data being sent
-                console.log('[EntryEditor] Form data being sent:');
                 for (const [key, value] of finalFormData.entries()) {
-                    console.log('[EntryEditor]', key, '=', value);
                 }
-                
-                // Debug: Specifically log reviewer fields
-                const reviewerDebug = finalFormData.get('reviewer');
-                const reviewerHiddenDebug = finalFormData.get('reviewer_hidden');
-                console.log('[EntryEditor] Reviewer fields - reviewer:', reviewerDebug, 'reviewer_hidden:', reviewerHiddenDebug);
                 
                 // Call the API explicitly with action=save to avoid server-side routing ambiguity
                 fetchPromise = fetch('/api/admin_entries.php?action=save', {
@@ -1104,9 +1065,6 @@
                 const raw = await response.text();
                 let data;
                 try { data = JSON.parse(raw); } catch(_e) { data = null; }
-                console.log('[EntryEditor] save response status:', response.status);
-                console.log('[EntryEditor] save response raw:', raw);
-                console.log('[EntryEditor] save response parsed:', data);
                 
                 // Check JSON body first - it's the source of truth
                 if (data && data.status === 'ok') {
@@ -1278,7 +1236,6 @@
                             
                             // Store observer on wrapper for cleanup if needed
                             wrap._editorSyncObserver = observer;
-                            console.log('[Entry Editor] Continuous sync set up for Advanced mode');
                             return true;
                         }
                     }
@@ -1310,7 +1267,6 @@
                     
                     // Store observer on wrapper for cleanup if needed
                     wrap._editorSyncObserver = observer;
-                    console.log('[Entry Editor] Continuous sync set up for Advanced mode');
                     return true;
                 }
                 return false;
@@ -1324,7 +1280,6 @@
                     clearInterval(syncInterval);
                 } else if (syncAttempts > 50) { // 5 seconds max wait
                     clearInterval(syncInterval);
-                    console.warn('[Entry Editor] Failed to set up continuous sync for Advanced mode after 5 seconds');
                 }
             }, 100);
 

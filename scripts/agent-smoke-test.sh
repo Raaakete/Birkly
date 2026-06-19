@@ -46,6 +46,19 @@ else
   FAIL=1
 fi
 
+# P2-M6: dev page snapshots available for hydrate smoke
+if php "$ROOT/scripts/generate-page-snapshots.php" >/dev/null 2>&1; then
+  if [[ -f "$ROOT/cache/page-snapshots/index.json" ]]; then
+    report "OK: page snapshots generated"
+  else
+    report "FAIL: page snapshots missing index.json"
+    FAIL=1
+  fi
+else
+  report "FAIL: generate-page-snapshots.php"
+  FAIL=1
+fi
+
 # Multi-repo siblings (cloud environment)
 PARENT="$(dirname "$ROOT")"
 for repo in Birkly-Website kekaba Birkly-Docs; do

@@ -297,3 +297,15 @@ echo "\n✅ Demo content creation complete!\n";
 echo "Collections created: Blog, Services, Contact, About\n";
 echo "You can now use the demo website at /demo-website/\n";
 
+// Generate page bundle snapshots for dev/hydrate smoke (P2-M6-T2)
+$snapshotScript = "$baseDir/scripts/generate-page-snapshots.php";
+if (is_file($snapshotScript)) {
+    echo "\nGenerating page snapshots...\n";
+    passthru('php ' . escapeshellarg($snapshotScript), $code);
+    if ($code === 0) {
+        echo "✅ Page snapshots generated in cache/page-snapshots/\n";
+    } else {
+        echo "⚠️  Page snapshot generation failed (exit $code)\n";
+    }
+}
+
