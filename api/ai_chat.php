@@ -1664,9 +1664,16 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
 // Execute action directly (when approval not required)
 // Execute read actions (read_entry, list_entries) - these don't need approval
 function executeReadAction($actionData, $aiUser) {
+    require_once __DIR__ . '/../core/ai_permissions.php';
+
+    $actionType = $actionData['type'] ?? '';
+    $denied = birkly_ai_enforce_action_permission($aiUser, $actionType);
+    if ($denied !== null) {
+        return $denied;
+    }
+
     require_once __DIR__ . '/storage.php';
     
-    $actionType = $actionData['type'] ?? '';
     $actionPayload = $actionData['data'] ?? [];
     
     $contentStorage = new Storage('../content');
