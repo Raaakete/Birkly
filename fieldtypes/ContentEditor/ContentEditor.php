@@ -399,6 +399,9 @@ class ContentEditor extends BaseField {
             // Command system (modular Phase 2)
             __DIR__ . '/commands/inline-format.js',
             __DIR__ . '/commands/block-format.js',
+            // Block system (P3-M12) — after block-format (manager delegates to it)
+            __DIR__ . '/blocks/block-registry.js',
+            __DIR__ . '/blocks/block-manager.js',
             __DIR__ . '/commands/base-command.js',
             __DIR__ . '/commands/registry.js',
             __DIR__ . '/commands/bootstrap.js',
@@ -518,7 +521,7 @@ class ContentEditor extends BaseField {
         }
         
         // Ensure content starts with a block element only if needed
-        if (!preg_match('/^<(p|div|h[1-6]|ul|ol|blockquote|pre)/i', $trimmed)) {
+        if (!preg_match('/^<(p|div|h[1-6]|ul|ol|blockquote|pre|table|hr)/i', $trimmed)) {
             $html = '<p>' . $html . '</p>';
         }
         

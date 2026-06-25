@@ -162,6 +162,10 @@
       }
     });
 
+            if (window.ContentEditorBlockManager) {
+              window.ContentEditorBlockManager.initializeEditor(editor);
+            }
+
             // Initialize table controls for existing tables
             const existingTables = editor.querySelectorAll('table.content-editor-table[data-editable-table="true"]');
             existingTables.forEach(table => {

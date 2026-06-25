@@ -10,6 +10,14 @@ window.ContentEditorBlockFormat = {
   },
 
   formatBlock(tagName) {
+  if (window.ContentEditorBlockManager && !this._inFormatBlock) {
+    return window.ContentEditorBlockManager.formatBlock(tagName);
+  }
+
+  return this.formatBlockImpl(tagName);
+  },
+
+  formatBlockImpl(tagName) {
   // Normalize tag name to lowercase
   tagName = (tagName || 'p').toLowerCase();
   
@@ -343,6 +351,14 @@ window.ContentEditorBlockFormat = {
 },
 
   toggleList(listType) {
+  if (window.ContentEditorBlockManager && !this._inToggleList) {
+    return window.ContentEditorBlockManager.toggleList(listType);
+  }
+
+  return this.toggleListImpl(listType);
+  },
+
+  toggleListImpl(listType) {
   const block = this.getCurrentBlock();
   if (!block) return;
   
