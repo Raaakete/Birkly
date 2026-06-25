@@ -17,11 +17,43 @@ class TemplateParser {
     }
     
     public function render($template) {
-        // Parse natural templating syntax
-        $parsed = $this->parseNaturalSyntax($template);
-        
-        // Render with data
-        return $this->renderWithData($parsed, $this->data);
+        [$masked, $trustedPhpBlocks] = $this->maskExistingPhpBlocks($template);
+        $parsed = $this->parseNaturalSyntax($masked);
+        $parsed = $this->unmaskPhpBlocks($parsed, $trustedPhpBlocks);
+
+        return $this->renderWithData($parsed, $this->data, array_values($trustedPhpBlocks));
+    }
+
+    /**
+     * Preserve developer-authored PHP in admin templates; only parser output is validated.
+     *
+     * @return array{0: string, 1: array<string, string>}
+     */
+    private function maskExistingPhpBlocks(string $template): array
+    {
+        $blocks = [];
+        $masked = preg_replace_callback(
+            '/<\?(?:php\s|=)(.*?)(?:\?>)/s',
+            function ($matches) use (&$blocks) {
+                $key = '___BIRKLY_TRUSTED_PHP_' . count($blocks) . '___';
+                $blocks[$key] = $matches[0];
+                return $key;
+            },
+            $template
+        );
+
+        return [$masked, $blocks];
+    }
+
+  /**
+     * @param array<string, string> $blocks
+     */
+    private function unmaskPhpBlocks(string $parsed, array $blocks): string
+    {
+        foreach ($blocks as $key => $block) {
+            $parsed = str_replace($key, $block, $parsed);
+        }
+        return $parsed;
     }
     
     private function parseNaturalSyntax($template) {
@@ -488,10 +520,10 @@ class TemplateParser {
         return $parsed;
     }
     
-    private function renderWithData($parsed, $data) {
+    private function renderWithData($parsed, $data, array $trustedPhpBlocks = []) {
         require_once __DIR__ . '/template_safe_renderer.php';
 
-        return TemplateSafeRenderer::render($parsed, $this, $data);
+        return TemplateSafeRenderer::render($parsed, $this, $data, $trustedPhpBlocks);
     }
     
     private function renderFieldtype($fieldtypeName, $field) {
