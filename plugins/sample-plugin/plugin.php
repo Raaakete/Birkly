@@ -7,6 +7,10 @@ if (!get_plugin_state('sample-plugin')) {
     return;
 }
 
+if (function_exists('register_admin_page')) {
+    register_admin_page('sample_plugin', __DIR__ . '/admin/sample_plugin.html');
+}
+
 // Hook to log content save events
 register_hook('after_content_save', function($collection, $entry) {
     $enable_logging = get_plugin_setting('sample-plugin', 'enable_logging', true);

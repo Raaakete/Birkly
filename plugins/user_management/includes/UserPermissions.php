@@ -14,12 +14,12 @@ class UserPermissions {
     private $service;
     private $tiers;
     
-    // Default role permissions
+    // Default role permissions (CMS-style roles kept for compatibility)
     private $rolePermissions = [
         'admin' => [
-            'global' => ['*'], // All permissions
-            'collections' => ['*'], // All collections
-            'entries' => ['*'] // All entries
+            'global' => ['*'],
+            'collections' => ['*'],
+            'entries' => ['*']
         ],
         'editor' => [
             'global' => ['read', 'create_entries', 'edit_entries', 'delete_own_entries'],
@@ -35,7 +35,28 @@ class UserPermissions {
             'global' => ['read'],
             'collections' => [],
             'entries' => []
-        ]
+        ],
+        // Site user roles (user_management plugin)
+        'member' => [
+            'global' => ['read'],
+            'collections' => [],
+            'entries' => []
+        ],
+        'subscriber' => [
+            'global' => ['read'],
+            'collections' => [],
+            'entries' => []
+        ],
+        'premium' => [
+            'global' => ['read', 'create_entries', 'edit_own_entries', 'delete_own_entries'],
+            'collections' => [],
+            'entries' => []
+        ],
+        'vip' => [
+            'global' => ['read', 'create_entries', 'edit_own_entries', 'delete_own_entries'],
+            'collections' => [],
+            'entries' => []
+        ],
     ];
     
     public function __construct() {
@@ -155,14 +176,13 @@ class UserPermissions {
         }
         
         // Check collection-level permissions
+        $collection = null;
         if ($context && isset($permissions['collections'])) {
             // Context can be collection name or array with collection and entry
             if (is_string($context)) {
                 $collection = $context;
             } elseif (is_array($context) && isset($context['collection'])) {
                 $collection = $context['collection'];
-            } else {
-                $collection = null;
             }
             
             if ($collection && isset($permissions['collections'][$collection])) {
@@ -184,6 +204,18 @@ class UserPermissions {
                     }
                 }
             }
+        }
+
+        // Collection tier matrix (admin-configured metadata)
+        if ($collection === null && $context) {
+            if (is_string($context)) {
+                $collection = $context;
+            } elseif (is_array($context) && isset($context['collection'])) {
+                $collection = $context['collection'];
+            }
+        }
+        if ($collection && $this->checkCollectionTierPermission($user_id, $collection, $action, $context)) {
+            return true;
         }
         
         // Check entry-level permissions
@@ -234,6 +266,55 @@ class UserPermissions {
         }
         
         return false;
+    }
+
+    /**
+     * Check collection permissions configured per tier in plugin metadata.
+     */
+    private function checkCollectionTierPermission($user_id, $collection, $action, $context = null) {
+        $config = $this->storage->readMetadata('collection_permissions');
+        if (!is_array($config) || !isset($config[$collection]) || !is_array($config[$collection])) {
+            return false;
+        }
+
+        $tier = $this->tiers->getUserTier($user_id);
+        $tierPerms = $config[$collection][$tier] ?? null;
+        if (!is_array($tierPerms)) {
+            return false;
+        }
+
+        $authorId = null;
+        if (is_array($context) && isset($context['author_id'])) {
+            $authorId = $context['author_id'];
+        }
+        $isOwner = $authorId && (string) $authorId === (string) $user_id;
+
+        switch ($action) {
+            case 'create':
+            case 'create_entries':
+                return !empty($tierPerms['create']);
+            case 'edit':
+            case 'update':
+            case 'edit_entries':
+            case 'edit_own':
+            case 'edit_own_entries':
+                if (!empty($tierPerms['edit_all'])) {
+                    return true;
+                }
+                return $isOwner && !empty($tierPerms['edit_own']);
+            case 'delete':
+            case 'delete_entries':
+            case 'delete_own':
+            case 'delete_own_entries':
+                if (!empty($tierPerms['delete_all'])) {
+                    return true;
+                }
+                return $isOwner && !empty($tierPerms['delete_own']);
+            case 'publish':
+                return !empty($tierPerms['publish']);
+            default:
+                return !empty($tierPerms[$action]);
+        }
     }
     
     /**
