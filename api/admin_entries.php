@@ -15,6 +15,10 @@ require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/entry_slug.php';
 require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/../core/plugins.php';
+if (function_exists('load_plugins')) {
+    load_plugins();
+}
 haru_secure_session_start();
 if (!isset($_SESSION['user'])) {
     while (ob_get_level() > 0) { ob_end_clean(); }
@@ -750,6 +754,19 @@ function saveEntry() {
         $entry ?: null,
         $entryOutput['title']
     );
+
+    if ($action === 'create') {
+        try {
+            if (function_exists('apply_filters_strict')) {
+                $entryOutput = apply_filters_strict('before_entry_create', $entryOutput, $collectionSlug);
+            }
+            if (function_exists('do_action_strict')) {
+                do_action_strict('before_entry_create', $collectionSlug, $entryOutput);
+            }
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
     
     // Allow plugins to modify entry before save (e.g., auto-create users from profile entries)
     if (function_exists('apply_filters')) {
@@ -773,9 +790,9 @@ function saveEntry() {
             do_action('after_entry_save', $entryOutput, $collectionSlug, $entry);
         }
         
-        // Trigger automation system
-        if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
-            require_once __DIR__ . '/../core/automation/queue.php';
+        // Trigger automation system (when plugin active)
+        require_once __DIR__ . '/../core/automation/bootstrap.php';
+        if (automation_bootstrap()) {
             
             $oldStatus = $entry['status'] ?? '';
             $newStatus = $entryOutput['status'] ?? '';
@@ -951,15 +968,23 @@ function deleteEntry() {
     if (file_exists($entryFile)) {
         $entryData = json_decode(file_get_contents($entryFile), true);
     }
+
+    try {
+        if (function_exists('do_action_strict')) {
+            do_action_strict('before_entry_delete', $collectionSlug, $entryId, $entryData);
+        }
+    } catch (Exception $e) {
+        return ['status' => 'error', 'message' => $e->getMessage()];
+    }
     
     if (file_exists($entryFile) && unlink($entryFile)) {
         // Invalidate cache for this collection
         $cache = new Cache();
         $cache->invalidateCollection($collectionSlug);
         
-        // Trigger automation system
-        if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
-            require_once __DIR__ . '/../core/automation/queue.php';
+        // Trigger automation system (when plugin active)
+        require_once __DIR__ . '/../core/automation/bootstrap.php';
+        if (automation_bootstrap()) {
             enqueue_automation('entry_deleted', [
                 'entry' => $entryData,
                 'collection' => $collectionSlug
@@ -1220,10 +1245,10 @@ function performBulkOperation() {
                 case 'delete':
                     error_log("performBulkOperation: Deleting entry");
                     if (unlink($entryFile)) {
-                        // Trigger automation system
+                        // Trigger automation system (when plugin active)
                         try {
-                            if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
-                                require_once __DIR__ . '/../core/automation/queue.php';
+                            require_once __DIR__ . '/../core/automation/bootstrap.php';
+                            if (automation_bootstrap()) {
                                 enqueue_automation('entry_deleted', [
                                     'entry' => $entryData,
                                     'collection' => $collectionSlug
