@@ -73,7 +73,7 @@ Start with P3-M2-T1: enforce checkPermission() in api/ai_chat.php executeReadAct
 
 | Milestone | Focus | Key paths |
 |-----------|-------|-----------|
-| P3-M2 | AI security | `api/ai_chat.php`, `api/ai_approvals.php`, `api/mcp_server.php` |
+| P3-M2 | AI security | `core/ai_permissions.php`, `api/ai_chat.php`, `api/ai_approvals.php`, `api/mcp_server.php` |
 | P3-M3 | BYOAI setup | `api/ai_connections.php`, `api/ai_helpers.php`, `docs/ai/` |
 | P3-M4 | AI chat | `admin/js/ai-chat-button.js` |
 | P3-M5 | MCP | `api/mcp_server.php`, `mcp-bridge.js` |

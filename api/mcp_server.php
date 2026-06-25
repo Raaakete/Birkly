@@ -197,8 +197,18 @@ function handleToolsList() {
 
 // Call a tool
 function handleToolCall($params, $aiUser) {
+    require_once __DIR__ . '/../core/ai_permissions.php';
+
     $toolName = $params['name'] ?? '';
     $arguments = $params['arguments'] ?? [];
+
+    $denied = birkly_ai_enforce_action_permission($aiUser, $toolName);
+    if ($denied !== null) {
+        return [
+            'isError' => true,
+            'content' => [['type' => 'text', 'text' => $denied['message']]],
+        ];
+    }
     
     switch ($toolName) {
         case 'list_collections':

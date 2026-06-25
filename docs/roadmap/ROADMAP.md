@@ -517,10 +517,10 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Tasks**
 
-- [ ] **P3-M2-T1** `checkPermission()` on all AI read/write actions and MCP tools
+- [x] **P3-M2-T1** `checkPermission()` on all AI read/write actions and MCP tools
 - [ ] **P3-M2-T2** ACLs: connection owner, approval permissions, fix `shared`/`shared_type` bug
 - [ ] **P3-M2-T3** Role picker from `settings/roles.json`; **new connections default `require_approval: true`**
-- [ ] **P3-M2-T4** `tests/ai_permissions_test.php` in CI
+- [x] **P3-M2-T4** `tests/ai_permissions_test.php` in CI
 
 ---
 

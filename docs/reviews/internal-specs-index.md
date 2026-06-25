@@ -19,6 +19,7 @@ Links from roadmap milestones to in-repo specifications. Use when implementing o
 | P2-M6 | Safe renderer | `admin/template_safe_renderer.php` |
 | P2-M6 | Page snapshots | `scripts/generate-page-snapshots.php`, `api/page_snapshot.php` |
 | P2-M6 | Collection metadata | `core/collection_meta.php` |
+| P3-M2 | AI RBAC | `core/ai_permissions.php`, `tests/ai_permissions_test.php` |
 | P2-M7 | CMS vendoring | `docs/client-sites/cms-vendoring.md` |
 | P2-M7 | Sync script | `scripts/sync-client-embed.sh` |
 | P2-M7 | Smoke notes | `docs/reviews/p2-m7-platform-sync-notes.md` |
