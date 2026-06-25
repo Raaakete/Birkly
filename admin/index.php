@@ -141,21 +141,22 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'audit-log' => 'audit-log.html',
             'activity' => 'activity.html',
             'webhooks' => 'webhooks.html',
-            'automation' => 'automation.html',
             'onboarding' => 'onboarding.html',
             'help' => 'help.html',
             'feedback' => 'feedback.html',
-            'automation' => null,
             'community_users' => null,
             'sample_plugin' => null,
         ];
 
-// Plugin admin pages from register_admin_page() — template null = include plugin HTML directly
+// Plugin admin pages from register_admin_page() — null = include plugin HTML directly
 foreach ($birkly_admin_pages as $pluginPageSlug => $pluginPageFile) {
-    $allowedPages[$pluginPageSlug] = null;
+    if (!array_key_exists($pluginPageSlug, $allowedPages)) {
+        $allowedPages[$pluginPageSlug] = null;
+    }
 }
 
-$isPluginAdminPage = array_key_exists($page, $birkly_admin_pages);
+$isPluginAdminPage = array_key_exists($page, $birkly_admin_pages)
+    && ($allowedPages[$page] ?? null) === null;
 
 $templateFile = $allowedPages[$page] ?? 'dashboard.html';
 $templatePath = $templateFile ? __DIR__ . '/templates/' . $templateFile : null;
@@ -212,7 +213,7 @@ $isOnboarding = ($page === 'onboarding');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setup - HaruCMS</title>
+    <title>Setup - Birkly</title>
     <link rel="stylesheet" href="/admin/css/style.css">
     <link rel="stylesheet" href="/admin/css/onboarding.css">
     <?php
@@ -325,7 +326,10 @@ $isOnboarding = ($page === 'onboarding');
                         echo '</div>';
                     }
                 }
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'account' || $page === 'entries' || $page === 'entry-editor' || $page === 'entry-detail' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'automation' || $page === 'help') {
+            } elseif (in_array($page, [
+                'content', 'settings', 'entries', 'entry-editor', 'entry-detail', 'collection-editor',
+                'users', 'roles', 'plugins', 'webhooks', 'help', 'feedback', 'audit-log', 'activity', 'updates',
+            ], true)) {
                 // Content, Settings, Account, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages
                 try {
                     $data = fetch_admin_page_data($page, $_GET);
