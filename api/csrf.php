@@ -6,18 +6,12 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 require_once 'session.php';
 // IMPORTANT:
 // This endpoint is used by both:
-// - Admin panel JS (should use admin session)
-// - Public website client library (should use site session)
+// - Admin panel JS (default PHP session / PHPSESSID)
+// - Public website client library (birkly_site_sid)
 //
-// To avoid leaking admin cookies onto public pages, we detect scope:
-// - If the request already has an admin session cookie, use admin scope.
-// - Otherwise use site scope.
-$hasAdminCookie = isset($_COOKIE['birkly_admin_sid']) && $_COOKIE['birkly_admin_sid'] !== '';
-if ($hasAdminCookie) {
-    haru_secure_session_start();
-} else {
-    birkly_site_session_start();
-}
+// Scope is resolved in birkly_csrf_session_start() so onboarding and admin
+// share the same CSRF session as settings.php and other admin APIs.
+birkly_csrf_session_start();
 header('Content-Type: application/json');
 require_once '../core/csrf.php';
 
