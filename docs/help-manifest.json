@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "docs_base_url": "https://docs.birkly.com",
   "topics": [
     {
@@ -8,6 +8,13 @@
       "keywords": ["start", "setup", "onboarding", "first steps", "welcome"],
       "snapshot": "/admin/docs/snapshots/getting-started.md",
       "docs_path": "00-overview/getting-started.html"
+    },
+    {
+      "id": "closed-alpha",
+      "title": "Closed alpha guide",
+      "keywords": ["alpha", "beta", "tester", "feedback", "invite", "waitlist"],
+      "snapshot": "/admin/docs/snapshots/closed-alpha.md",
+      "docs_path": "00-overview/closed-alpha-guide.html"
     },
     {
       "id": "dashboard",
@@ -45,6 +52,20 @@
       "docs_path": "01-admin/ai-overview.html"
     },
     {
+      "id": "ai-connections",
+      "title": "AI connections",
+      "keywords": ["ai connections", "provider", "api key", "model", "role", "byoai"],
+      "snapshot": "/admin/docs/snapshots/ai-connections.md",
+      "docs_path": "01-admin/ai-connections.html"
+    },
+    {
+      "id": "mcp",
+      "title": "MCP connections",
+      "keywords": ["mcp", "claude desktop", "model context protocol", "external", "bridge"],
+      "snapshot": "/admin/docs/snapshots/mcp-connections.md",
+      "docs_path": "01-admin/mcp-connections.html"
+    },
+    {
       "id": "automation",
       "title": "Automation",
       "keywords": ["automation", "workflow", "trigger", "webhook", "schedule", "slack"],
@@ -56,14 +77,14 @@
       "title": "User management plugin",
       "keywords": ["user plugin", "registration", "login", "members", "community", "password"],
       "snapshot": "/admin/docs/snapshots/user-plugin.md",
-      "docs_path": "06-extensibility/plugins.html"
+      "docs_path": "06-extensibility/user-plugin.html"
     },
     {
       "id": "content-editor",
       "title": "ContentEditor field",
       "keywords": ["content editor", "rich text", "blocks", "html", "fieldtype", "wysiwyg"],
       "snapshot": "/admin/docs/snapshots/content-editor.md",
-      "docs_path": "02-content/field-types.html"
+      "docs_path": "02-content/content-editor.html"
     },
     {
       "id": "plugins",
