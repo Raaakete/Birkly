@@ -20,10 +20,12 @@
 | Public API list collections | API | **pass** | P2-M6 | `public_collection_meta_test.php` — contact `id` fallback (#26). |
 | Demo website / client render | Client | **pass** | P2-M6/M7 | `page_snapshot_test.php`; browser/curl `page_snapshot.php?page=index` → `status: ok`. |
 | page_bundle / page_snapshot | M4 APIs | **pass** | P2-M6 | Snapshots generated via `scripts/generate-page-snapshots.php`; dev smoke documented in P2-M7 notes. |
-| CMS update check UI | Ops | **not tested** | P3-M2 | Alpha row — pending P3-M2-T1 |
-| Backup create/restore | Ops | **not tested** | P3-M2 | Alpha row — pending P3-M2-T2 |
-| Alpha feedback submit → admin | Feedback | **not built** | P3-M3 | Alpha row — pending P3-M3 |
-| Help home + doc search | Help | **not built** | P3-M4 | Alpha row — pending P3-M4 |
+| AI connect + role assign | BYOAI | **partial** | P3-M2/M3 | Connections work; RBAC not enforced on execute |
+| Admin AI chat (read action) | BYOAI | **partial** | P3-M4 | Floating chat works; structured tools pending |
+| AI write → approval queue | BYOAI | **partial** | P3-M2/M4 | Queue exists; ACL + role enforcement weak |
+| MCP external connect | BYOAI | **partial** | P3-M5 | HTTP MCP + bridge; role scope pending |
+| Automation builder page | Automation | **fail** | P3-M6 | Sidebar link exists; `?page=automation` not routed |
+| Automation trigger → log | Automation | **not tested** | P3-M7 | Backend wired; UI unreachable |
 
 ## Summary counts
 

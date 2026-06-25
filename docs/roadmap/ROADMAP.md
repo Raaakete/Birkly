@@ -26,6 +26,14 @@ When in doubt, treat as major and ask the human.
 
 **2026-06-25 — Phase 3 proposed** (closed alpha readiness — awaiting human approval)
 
+**2026-06-25 — Phase 3 reprioritized** (Keven)
+
+**Priorities:** **Bring your own AI (BYOAI)** + **Automation as a fully functional plugin**. Closed-alpha items (feedback, Help wiring, kekaba content expansion) deferred to Phase 4 unless human overrides.
+
+**BYOAI principles:** User connects their own provider (OpenAI, Claude, Gemini, Ollama, custom). AI is a **real user** with an assigned **role**; permissions enforced at execution time, not prompt-only. Connected AI receives **curated Birkly context and rules upfront**. Admin **AI chat** uses connected accounts. **Bidirectional:** external AI connects to Birkly (MCP) and Birkly can expose integration surfaces for AI tools.
+
+**Automation principles:** Move from incomplete core feature → **self-contained plugin** (`plugins/automation/`). Admin builder reachable and production-usable; plugins can register blocks and broadcast events.
+
 **Priorities:** **Birkly CMS always first** unless human overrides. Robust, flexible, fast system aligned with `docs/PROJECT_VALUES.md`.
 
 **Phase 2 themes:** UX flow audit & fixes · **ContentEditor** (Notion-like, self-contained fieldtype) · collection groups/DnD · onboarding · CMS hardening · platform sync/kekaba proof · internal docs → Birkly-Docs when stable.
@@ -467,164 +475,201 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Horizon:** 4–8 weeks (theme-based; no calendar estimates for agents).
 
-**Priorities:** **Closed alpha readiness** — production proof, feedback loop, Help v1, targeted hardening, reference sites, alpha docs. **Birkly CMS always first** unless human overrides.
+**Priorities:** **BYOAI** (connect own AI, role-based AI users, admin chat, bidirectional MCP) + **Automation plugin** (fully functional, extensible). **Birkly CMS always first.**
 
 **Ordering:** P3-M1 → P3-M2 → P3-M3 → P3-M4 → P3-M5 → P3-M6 → P3-M7 → P3-M8 → P3-M9.
 
-**Cross-repo:** Birkly → Birkly-Website / kekaba → Birkly-Docs.
+**Cross-repo:** Birkly → Birkly-Docs (AI + automation docs). Sites unchanged unless human requests embed sync.
 
-**ContentEditor rule (unchanged):** All editor code in `fieldtypes/ContentEditor/` only; stored value = pure HTML.
+**Existing prototype:** `api/ai_connections.php`, `api/ai_chat.php`, `api/ai_approvals.php`, `api/mcp_server.php`, `core/automation/` (~70% backend, admin page not routed). See `docs/ai-integration-plan.md`, `docs/automation-system.md`.
 
-**Status:** **proposed** — awaiting human approval (2026-06-25).
+**Status:** **proposed** — awaiting human approval (2026-06-25, reprioritized).
 
-### P3-M1 — Closed alpha validation gate
+---
+
+### P3-M1 — AI & automation baseline gate
 
 - **Status:** in progress
-- **Repos:** Birkly, kekaba (human deploy)
-- **Goal:** Confirm production-ready baseline before alpha invite
+- **Repos:** Birkly
+- **Goal:** Audit existing AI/automation code; define gaps before build; human infra check
 
 **Tasks**
 
-- [ ] **P3-M1-T1** Human: deploy synced `Birkly-0.1/` to kekaba production; re-run `scripts/check-production.sh`
-- [ ] **P3-M1-T2** Human: M1-T8 Resend secrets + M1-T12 branch protection (or document blockers)
-- [x] **P3-M1-T3** Alpha readiness register — `docs/reviews/2026-06-25-alpha-readiness-register.md`
-- [ ] **P3-M1-T4** Extend UX matrix with alpha rows (update UI, backup, feedback, Help)
-- [ ] **P3-M1-T5** Human sign-off on alpha gate
+- [ ] **P3-M1-T1** Human: M1-T8 Resend + M1-T12 branch protection (or document blockers)
+- [x] **P3-M1-T2** Baseline register — `docs/reviews/2026-06-25-alpha-readiness-register.md` (extend with AI/automation rows)
+- [x] **P3-M1-T3** AI/automation gap doc — `docs/reviews/p3-m1-ai-automation-audit.md` (RBAC gaps, dead UI, routing bugs)
+- [x] **P3-M1-T4** UX matrix rows: AI connect → chat → approve action; automation create → trigger → log
+- [ ] **P3-M1-T5** Human sign-off on Phase 3 scope (BYOAI + automation plugin)
 
-**Acceptance criteria:** Kekaba prod smoke post-deploy; alpha register reviewed; extended matrix defined; human sign-off
+**Acceptance criteria:** Gap doc reviewed; matrix rows defined; human approves reprioritized Phase 3
 
 ---
 
-### P3-M2 — Production hardening (CMS)
+### P3-M2 — AI security & role enforcement
 
 - **Status:** not started
 - **Repos:** Birkly
-- **Goal:** Update/backup verification; targeted security/ops gaps for real users
+- **Goal:** AI as real user — permissions enforced on every read/write, not prompt-only
+- **Values:** Security by default, separation of concerns
 - **Depends on:** P3-M1-T5
+- **Refs:** `api/ai_chat.php`, `api/ai_approvals.php`, `api/mcp_server.php`, `api/auth.php`
 
 **Tasks**
 
-- [ ] **P3-M2-T1** Update system E2E harness (`api/updates.php`, smoke script)
-- [ ] **P3-M2-T2** Backup & restore smoke — `docs/reviews/p3-m2-backup-notes.md`
-- [ ] **P3-M2-T3** Targeted security backlog (alpha P0/P1 only)
-- [ ] **P3-M2-T4** Ops logging hygiene
-- [ ] **P3-M2-T5** Matrix rows: update UI + backup/restore → pass
+- [ ] **P3-M2-T1** Enforce `checkPermission()` on all AI read actions (`executeReadAction`) using AI user's role
+- [ ] **P3-M2-T2** Enforce role + ownership on write actions and MCP tool calls (`executeAiAction`, `mcp_server.php`)
+- [ ] **P3-M2-T3** Fix ACLs: connection update/delete by `created_by`; approval approve/reject by permission; fix `shared` vs `shared_type` bug in chat
+- [ ] **P3-M2-T4** Settings UI: role picker reads from `settings/roles.json` (not hardcoded 4 roles only)
+- [ ] **P3-M2-T5** Tests: `tests/ai_permissions_test.php` — role denies delete, allows read per role
+
+**Acceptance criteria:** Viewer-role AI cannot delete collections; admin approval ACL enforced; tests in CI
 
 ---
 
-### P3-M3 — Alpha feedback system
+### P3-M3 — BYOAI connections & curated context
 
 - **Status:** not started
 - **Repos:** Birkly
-- **Goal:** In-app feedback for alpha testers; flat-file storage; admin triage
+- **Goal:** Production-ready connection management; AI learns Birkly rules upfront (curated, not raw docs dump)
 - **Depends on:** P3-M2-T1
+- **Refs:** `api/ai_helpers.php`, `api/ai_chat_simple_prompt.php`, `docs/PROJECT_VALUES.md`
 
 **Tasks**
 
-- [ ] **P3-M3-T1** Feedback entry + modal form
-- [ ] **P3-M3-T2** `api/feedback.php` — auth, CSRF, rate limit
-- [ ] **P3-M3-T3** Admin feedback list + status workflow
-- [ ] **P3-M3-T4** Privacy notice copy
-- [ ] **P3-M3-T5** Matrix row: feedback submit → admin view → pass
+- [ ] **P3-M3-T1** Curated context pack — `docs/ai/birkly-context-pack.md` (+ loader in `generateSystemContext()`): values, permissions model, action catalog, fieldtypes summary
+- [ ] **P3-M3-T2** Provider matrix: OpenAI, Anthropic, Google, OpenRouter, Ollama, custom URL — refresh model lists; validate key on save
+- [ ] **P3-M3-T3** Connection CRUD polish in Settings → AI Connections; remove dead chat code from `ai-connections.js`
+- [ ] **P3-M3-T4** Encrypt/rotate API keys; never log secrets; scrub `list_users` from exposing AI connection metadata
+- [ ] **P3-M3-T5** Rename HaruCMS remnants in prompts → Birkly
+
+**Acceptance criteria:** New connection passes key validation; system prompt uses curated pack (not full `docs/` tree); no secrets in logs
 
 ---
 
-### P3-M4 — CMS Help ↔ Birkly-Docs wiring (v1)
+### P3-M4 — Admin AI chat & structured actions
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** Reliable admin chat with connected AI; structured tool execution replacing brittle JSON-in-text parsing
+- **Depends on:** P3-M3-T1, P3-M2
+- **Refs:** `admin/js/ai-chat-button.js`, `api/ai_chat.php`
+
+**Constraints**
+
+- Chat UI stays template-driven (floating button + modal); no npm in core
+- Write actions respect `require_approval` per connection; default **on** for destructive ops
+
+**Tasks**
+
+- [ ] **P3-M4-T1** Structured action schema — `api/ai_tools.php` or registry inside `ai_helpers.php` (tool definitions per role)
+- [ ] **P3-M4-T2** Provider adapters: native function/tool calling where supported (OpenAI, Anthropic); fallback parser for Ollama/custom
+- [ ] **P3-M4-T3** Chat UX: connection picker, conversation history, approval status inline, error surfacing
+- [ ] **P3-M4-T4** Conversation storage hygiene — `data/ai_conversations/` gitignored; cleanup script
+- [ ] **P3-M4-T5** Matrix row: connect AI → chat “list blog entries” → read result → **pass**
+
+**Acceptance criteria:** Chat completes read action without regex fallback on OpenAI/Anthropic; write action lands in approval queue; browser QA recorded
+
+---
+
+### P3-M5 — Bidirectional AI connect (Birkly ↔ external AI)
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** External AI tools connect to Birkly; documented bridge for Claude Desktop / compatible clients
+- **Depends on:** P3-M2-T2, P3-M4-T1
+- **Refs:** `api/mcp_server.php`, `mcp-bridge.js`, `docs/mcp-setup-guide.md`
+
+**Tasks**
+
+- [ ] **P3-M5-T1** Harden MCP server: role-scoped tools, rate limits, API key rotation UI
+- [ ] **P3-M5-T2** MCP tool catalog aligned with chat action registry (same permissions)
+- [ ] **P3-M5-T3** `mcp-bridge.js` + setup guide tested on cloud VM; env vars documented (`BIRKLY_URL`, `BIRKLY_MCP_API_KEY`)
+- [ ] **P3-M5-T4** Optional: Birkly → external webhook/event surface for “notify connected AI” (defer payload design if blocked)
+- [ ] **P3-M5-T5** Matrix row: MCP `list_collections` + `get_entry` with viewer-role key → **pass**
+
+**Acceptance criteria:** Claude Desktop (or curl MCP shim) lists collections with role-limited key; write creates approval record
+
+---
+
+### P3-M6 — Automation plugin extraction & admin wiring
+
+- **Status:** not started
+- **Repos:** Birkly (`plugins/automation/`)
+- **Goal:** Automation becomes a real plugin; admin builder reachable
+- **Values:** Self-contained plugin, UI decoupled from engine
+- **Depends on:** P3-M1-T5
+- **Refs:** `core/automation/`, `admin/templates/automation.html`, `admin/index.php`
+
+**Tasks**
+
+- [ ] **P3-M6-T1** Move `core/automation/*` → `plugins/automation/` with `plugin.json`; bootstrap via plugin loader
+- [ ] **P3-M6-T2** Gate feature: inactive plugin disables sidebar link, API routes, and entry hooks
+- [ ] **P3-M6-T3** Wire `?page=automation` in `admin/index.php` (`$allowedPages` + render branch)
+- [ ] **P3-M6-T4** Consolidate JS: migrate inline `automation.html` logic → `admin/js/automation.js`; delete stale patterns
+- [ ] **P3-M6-T5** Fix `registry.php` `$haru_plugins` → `$birkly_plugins` attribution bug
+
+**Acceptance criteria:** Fresh install with plugin active → automation page loads; deactivate → hooks silent; `ci-check.sh` pass
+
+---
+
+### P3-M7 — Automation plugin full functionality
+
+- **Status:** not started
+- **Repos:** Birkly (`plugins/automation/`)
+- **Goal:** End-to-end automations: create, test, trigger, queue, logs; plugin extensibility
+- **Depends on:** P3-M6-T3
+- **Refs:** `docs/automation-architecture-plan.md`, `api/automation.php`
+
+**Tasks**
+
+- [ ] **P3-M7-T1** Builder UI: create/edit automation, pick trigger/conditions/actions from registry, save to `settings/automations.json`
+- [ ] **P3-M7-T2** Test-run + template preview buttons (APIs exist — wire UI)
+- [ ] **P3-M7-T3** Secure `process_queue` / `process_scheduled` (token or CLI-only); document cron in plugin README
+- [ ] **P3-M7-T4** `register_plugin_action()` helper + sample plugin registers a custom action block
+- [ ] **P3-M7-T5** Webhook inbound UI for `automation_webhook_config.json`
+- [ ] **P3-M7-T6** Tests: `tests/automation_plugin_test.php` — entry_created trigger → action log entry
+- [ ] **P3-M7-T7** Matrix row: create automation → publish entry → log shows execution → **pass**
+
+**Acceptance criteria:** Entry publish fires automation; queue processes; plugin example block visible in palette; tests pass
+
+---
+
+### P3-M8 — Documentation (internal + Birkly-Docs)
 
 - **Status:** not started
 - **Repos:** Birkly, Birkly-Docs
-- **Goal:** Curated Birkly-Docs surface in admin Help; contextual links
-- **Depends on:** P3-M3-T1
+- **Goal:** SSOT docs for BYOAI and automation plugin
+- **Depends on:** P3-M4, P3-M7 acceptance
+- **Rule:** Internal docs first → Birkly-Docs when milestone met
 
 **Tasks**
 
-- [ ] **P3-M4-T1** Alpha doc manifest (Help sections → Birkly-Docs paths)
-- [ ] **P3-M4-T2** Help renderer v1 (static HTML snapshot or configured base URL)
-- [ ] **P3-M4-T3** Client-side search over manifest
-- [ ] **P3-M4-T4** Contextual “?” links on key admin pages
-- [ ] **P3-M4-T5** Matrix row: Help home + search → pass
+- [ ] **P3-M8-T1** Internal: `docs/ai/BYOAI-ARCHITECTURE.md` — users-as-AI, roles, approval, MCP
+- [ ] **P3-M8-T2** Internal: `plugins/automation/README.md` — install, cron, webhooks, extend blocks
+- [ ] **P3-M8-T3** Birkly-Docs: `06-integrations/ai-connections.md` — connect OpenAI/Claude/Ollama, chat, approvals
+- [ ] **P3-M8-T4** Birkly-Docs: `06-integrations/automation.md` — triggers, actions, plugin blocks
+- [ ] **P3-M8-T5** Birkly-Docs: `06-integrations/mcp-setup.md` — external AI connect to Birkly
+- [ ] **P3-M8-T6** Changelog batch in `docs/changelog/CHANGELOG-PLATFORM.md`
+
+**Acceptance criteria:** Docs cover connect → chat → approve → MCP path; automation plugin setup without reading source
 
 ---
 
-### P3-M5 — ContentEditor maturity (block system)
-
-- **Status:** not started
-- **Repos:** Birkly (`fieldtypes/ContentEditor/` only)
-- **Goal:** Block manager + ≥2 new component types
-- **Depends on:** P3-M2
-
-**Tasks**
-
-- [ ] **P3-M5-T1** `blocks/block-manager.js` + `block-registry.js`
-- [ ] **P3-M5-T2** Migrate paragraph/heading/list to block registry
-- [ ] **P3-M5-T3** Add ≥2 new components (table, image embed, or divider)
-- [ ] **P3-M5-T4** Extend round-trip tests + browser QA
-- [ ] **P3-M5-T5** Internal README; handoff for Birkly-Docs page (P3-M8)
-
----
-
-### P3-M6 — Kekaba production proof & content expansion
-
-- **Status:** not started
-- **Repos:** kekaba (+ Birkly if APIs needed)
-- **Goal:** Production-validated client; first new pages/collections post–Phase 2 deferral
-- **Depends on:** P3-M1-T1, P3-M5-T3 (if ContentEditor bodies)
-
-**Tasks**
-
-- [ ] **P3-M6-T1** Post-deploy production checklist
-- [ ] **P3-M6-T2** Alpha content scope doc — `docs/reviews/p3-m6-kekaba-scope.md`
-- [ ] **P3-M6-T3** Implement pages/collections in kekaba repo
-- [ ] **P3-M6-T4** Snapshot/bundle smoke on new pages
-- [ ] **P3-M6-T5** Production HTTP verification
-
----
-
-### P3-M7 — Birkly-Website closed alpha surface
-
-- **Status:** not started
-- **Repos:** Birkly-Website, Birkly-Docs
-- **Goal:** Closed alpha messaging, waitlist, legal links
-- **Depends on:** P3-M3-T4, P3-M6-T1
-
-**Tasks**
-
-- [ ] **P3-M7-T1** Update beta/alpha copy collections
-- [ ] **P3-M7-T2** Wire `beta_legal` entries (terms, privacy)
-- [ ] **P3-M7-T3** Sync `Birkly-0.1/`; dev smoke waitlist + roadmap
-- [ ] **P3-M7-T4** `DEV.md` alpha preview instructions
-
----
-
-### P3-M8 — Alpha documentation pack
-
-- **Status:** not started
-- **Repos:** Birkly-Docs, Birkly (changelog)
-- **Goal:** Docs alpha testers need on day one
-
-**Tasks**
-
-- [ ] **P3-M8-T1** `00-overview/closed-alpha-guide.md`
-- [ ] **P3-M8-T2** `02-content/content-editor.md`
-- [ ] **P3-M8-T3** `07-operations/known-issues.md`
-- [ ] **P3-M8-T4** Changelog batch for Phase 3
-- [ ] **P3-M8-T5** Verify P3-M4 manifest links resolve
-
----
-
-### P3-M9 — Alpha launch closure & agent ops
+### P3-M9 — Phase 3 closure & ops
 
 - **Status:** not started
 - **Repos:** Birkly
-- **Goal:** Human infra closure; alpha go/no-go checklist
-- **Depends on:** P3-M1–P3-M8 (or documented waivers)
+- **Goal:** CI coverage, UX matrix green for AI/automation rows, human sign-off
+- **Depends on:** P3-M2–P3-M8
 
 **Tasks**
 
-- [ ] **P3-M9-T1** Confirm M1-T8 digest + M1-T12 branch protection
-- [ ] **P3-M9-T2** `docs/reviews/p3-alpha-launch-checklist.md`
-- [ ] **P3-M9-T3** Mark `CLOSED_ALPHA_ROADMAP.md` superseded
-- [ ] **P3-M9-T4** Final UX matrix run + digest narrative
+- [ ] **P3-M9-T1** Full UX matrix re-run for AI + automation rows
+- [ ] **P3-M9-T2** `docs/reviews/p3-phase3-closure-checklist.md`
+- [ ] **P3-M9-T3** Remove committed runtime AI data from repo; confirm `.gitignore` for `data/ai_*`
+- [ ] **P3-M9-T4** Daily digest + human review slot for Phase 3 completion
+
+**Acceptance criteria:** Matrix AI/automation rows pass; closure checklist signed; no runtime secrets in git
 
 ---
 
@@ -632,14 +677,17 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 | Defer | Reason |
 |-------|--------|
+| Closed alpha feedback widget | Phase 4 — after AI/automation stable |
+| CMS Help ↔ Birkly-Docs full wiring | Phase 4 |
+| Kekaba content expansion / prod deploy | Human-scheduled; not blocking P3 |
+| Birkly-Website closed-alpha messaging | Phase 4 |
+| ContentEditor block system (slash menu, block drag) | Phase 4 |
 | Database/SQL backend | Not on critical path |
-| Plugin scaffolding CLI | Convenience |
 | Full dark mode / responsive admin rework | UX polish |
-| Plugin marketplace; automation plugin conversion | Post-alpha |
-| Feedback screenshot upload | P3-M3 MVP without attachments |
-| Help: tutorials, code playground, video hub | P3-M4 v1 is read + search |
-| GDPR full suite | Minimal legal copy in P3-M3/M7 first |
-| Birkly-Website production deploy | Human optional |
+| Plugin marketplace | Post-alpha |
+| AI screenshot upload in chat | Not MVP |
+| Birkly → external AI push/webhooks (full) | P3-M5-T4 optional; deepen in Phase 4 if needed |
+| Automation visual drag-drop canvas | Form builder sufficient for P3 |
 
 ---
 
@@ -647,20 +695,22 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 | Area | Target |
 |------|--------|
-| **Production** | Kekaba prod deploy verified; update + backup smokes documented |
-| **Alpha loop** | Feedback submit + admin triage works |
-| **Help** | Birkly-Docs wired in admin; search v1 |
-| **ContentEditor** | Block system + ≥2 new components |
-| **kekaba** | Alpha-scoped content on production |
-| **Birkly-Website** | Closed alpha messaging + legal in repo |
-| **Docs** | Alpha guide, ContentEditor page, known issues |
-| **You** | M1-T8/T12 closed or waived; launch checklist sign-off |
+| **BYOAI** | Connect OpenAI/Claude/Ollama; admin chat works; role permissions enforced |
+| **AI context** | Curated Birkly rules pack loaded upfront; not unbounded docs dump |
+| **Bidirectional** | MCP connect with role-scoped tools + documented bridge |
+| **Approvals** | Write actions queue; ACL on approve/reject |
+| **Automation plugin** | Extracted, activatable, admin UI reachable |
+| **Automation E2E** | Create automation → trigger on entry → log proof |
+| **Plugin extensibility** | Sample plugin registers custom action block |
+| **Docs** | BYOAI + automation + MCP in Birkly-Docs |
+| **CI** | `ai_permissions_test.php` + `automation_plugin_test.php` pass |
+| **You** | M1-T8/T12 closed or waived; Phase 3 scope sign-off |
 
 ---
 
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]

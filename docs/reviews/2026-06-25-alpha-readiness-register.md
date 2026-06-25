@@ -14,8 +14,15 @@ Findings for **Phase 3 closed alpha** gate (P3-M1). Severity: **P0** blocker · 
 | P3-A08 | security | Session | Session ID regeneration on login not verified in test harness (CLOSED_ALPHA item; may already be fixed — needs audit). | P2 | P3-M2-T3 |
 | P3-A09 | content | kekaba | No new alpha-scoped pages/collections since Phase 2 deferral; production content gap for alpha story. | P2 | P3-M6 |
 | P3-A10 | content | Birkly-Website | Beta site lacks closed-alpha messaging and updated legal copy for feedback data practices. | P2 | P3-M7 |
-| P3-A11 | docs | Birkly-Docs | No `closed-alpha-guide.md` or dedicated ContentEditor doc page for testers. | P1 | P3-M8 |
-| P3-A12 | ux | ContentEditor | Block system (ARCHITECTURE_PROPOSAL Phase 2–3) not started; slash menu / block drag still deferred. | P3 | P3-M5 |
+| P3-A11 | docs | Birkly-Docs | No `closed-alpha-guide.md` or dedicated ContentEditor doc page for testers. | P2 | **Deferred → Phase 4** |
+| P3-A12 | ux | ContentEditor | Block system not started. | P3 | **Deferred → Phase 4** |
+| P3-A13 | feature | BYOAI | AI permissions prompt-only; not enforced at execution — security gap. | P0 | P3-M2 |
+| P3-A14 | feature | BYOAI | No curated Birkly rules/context pack; full docs dump is expensive and inconsistent. | P1 | P3-M3 |
+| P3-A15 | feature | BYOAI | Chat uses brittle JSON-in-text action parsing vs structured tools. | P1 | P3-M4 |
+| P3-A16 | feature | BYOAI | MCP writes lack role checks; shared-connection bug in chat. | P1 | P3-M2, P3-M5 |
+| P3-A17 | feature | Automation | Admin automation page not routed — builder unreachable. | P0 | P3-M6 |
+| P3-A18 | architecture | Automation | Still core, not plugin; cannot deactivate or ship independently. | P1 | P3-M6 |
+| P3-A19 | feature | Automation | No plugin registers custom blocks; registry attribution bug. | P2 | P3-M7 |
 
 ## Closed from Phase 2 (no re-open)
 
@@ -28,8 +35,8 @@ Findings for **Phase 3 closed alpha** gate (P3-M1). Severity: **P0** blocker · 
 
 ## Human sign-off (P3-M1-T5)
 
-- [ ] Register reviewed
-- [ ] kekaba production deploy completed or waived (date / reason): ___________
-- [ ] Approved to proceed with P3-M2 execution
+- [ ] Register + AI/automation audit reviewed
+- [ ] Phase 3 scope approved: **BYOAI + automation plugin** (closed-alpha items deferred to Phase 4)
+- [ ] kekaba production deploy (optional this phase): ___________
 
 **Reviewer:** ___________ **Date:** ___________
