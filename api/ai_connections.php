@@ -150,6 +150,17 @@ if ($action === 'create') {
         echo json_encode(['status' => 'error', 'message' => 'API key is required']);
         exit;
     }
+
+    if ($provider !== 'mcp' && $provider !== 'ollama' && !empty($apiKey)) {
+        $validation = validateApiKeyForProvider($provider, $apiKey, $apiUrl);
+        if (!$validation['valid']) {
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+            }
+            echo json_encode(['status' => 'error', 'message' => 'API key validation failed: ' . $validation['message']]);
+            exit;
+        }
+    }
     
     // Generate unique ID for AI user
     $aiId = 'ai_' . bin2hex(random_bytes(8));

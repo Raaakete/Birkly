@@ -104,10 +104,15 @@ function buildSystemPromptSimple($context, $aiUser) {
         $prompt .= "\nUse EXACT field names from above when creating entries.\n\n";
     }
     
-    $prompt .= "HARUCMS TEMPLATING (for display questions):\n";
+    $prompt .= "BIRKLY TEMPLATING (for display questions):\n";
     $prompt .= "- Syntax: {for each entry in 'collection-slug'} ... {endfor}\n";
     $prompt .= "- Include: <script src=\"/cms-template.v2.js\"></script>\n";
     $prompt .= "- Use field names: { title }, { text }, etc.\n\n";
+
+    if (!empty($context['context_pack'])) {
+        $prompt .= "BIRKLY REFERENCE:\n";
+        $prompt .= $context['context_pack'] . "\n\n";
+    }
     
     return $prompt;
 }
