@@ -441,7 +441,7 @@ if (function_exists('register_api_endpoint')) {
 
 // Register admin pages (Phase 5)
 if (function_exists('register_admin_page')) {
-    register_admin_page('users', __DIR__ . '/admin/users.html');
+    register_admin_page('site_users', __DIR__ . '/admin/site_users.html');
     register_admin_page('user_tiers', __DIR__ . '/admin/tiers.html');
     register_admin_page('user_groups', __DIR__ . '/admin/groups.html');
 }
@@ -450,29 +450,89 @@ if (function_exists('register_admin_page')) {
 if (function_exists('register_hook')) {
     require_once __DIR__ . '/includes/UserAuth.php';
     require_once __DIR__ . '/includes/UserPermissions.php';
-    
+    require_once __DIR__ . '/includes/EntryPermissions.php';
+
+    if (!function_exists('user_management_is_cms_admin_request')) {
+        function user_management_is_cms_admin_request() {
+            if (!isset($_SESSION['user']) || !is_array($_SESSION['user'])) {
+                return false;
+            }
+            if (function_exists('checkPermission')) {
+                $user = $_SESSION['user'];
+                return checkPermission($user, 'write')
+                    || checkPermission($user, 'delete')
+                    || checkPermission($user, 'manage_content');
+            }
+            $role = $_SESSION['user']['role'] ?? '';
+            return in_array($role, ['admin', 'editor', 'author'], true);
+        }
+    }
+
+    if (!function_exists('user_management_guard_entry_create')) {
+        function user_management_guard_entry_create($collection, $entry) {
+            if (user_management_is_cms_admin_request()) {
+                return $entry;
+            }
+
+            $auth = new UserAuth();
+            $user = $auth->getCurrentUser();
+            if (!$user) {
+                throw new Exception('Authentication required to create entries');
+            }
+
+            $permissions = new UserPermissions();
+            if (!$permissions->userCan($user['id'], 'create', $collection)) {
+                throw new Exception('Permission denied: Cannot create entries in this collection');
+            }
+
+            if (!isset($entry['author_id']) && !isset($entry['author_user_id'])) {
+                $entry['author_id'] = $user['id'];
+            }
+
+            return $entry;
+        }
+    }
+
+    if (!function_exists('user_management_guard_entry_delete')) {
+        function user_management_guard_entry_delete($collection, $entry_id, $entry = null) {
+            if (user_management_is_cms_admin_request()) {
+                return true;
+            }
+
+            $auth = new UserAuth();
+            $user = $auth->getCurrentUser();
+            if (!$user) {
+                throw new Exception('Authentication required to delete entries');
+            }
+
+            if ($entry === null && function_exists('get_entry')) {
+                $entry = get_entry($collection, $entry_id);
+            }
+            if (!is_array($entry) && is_string($entry_id)) {
+                $entryPath = dirname(dirname(__DIR__)) . "/content/collections/$collection/entries/$entry_id.json";
+                if (file_exists($entryPath)) {
+                    $entry = json_decode(file_get_contents($entryPath), true);
+                }
+            }
+
+            $entryPermissions = new EntryPermissions();
+            if (!is_array($entry) || !$entryPermissions->canDeleteEntry($user['id'], $entry, $collection)) {
+                throw new Exception('Permission denied: Cannot delete this entry');
+            }
+
+            return true;
+        }
+    }
+
     register_hook('before_entry_create', function($collection, $entry) {
-        $auth = new UserAuth();
-        $user = $auth->getCurrentUser();
-        
-        if (!$user) {
-            throw new Exception('Authentication required to create entries');
-        }
-        
-        $permissions = new UserPermissions();
-        $canCreate = $permissions->userCan($user['id'], 'create', $collection);
-        
-        if (!$canCreate) {
-            throw new Exception('Permission denied: Cannot create entries in this collection');
-        }
-        
-        // Auto-populate author_id if not set
-        if (!isset($entry['author_id'])) {
-            $entry['author_id'] = $user['id'];
-        }
-        
-        return $entry;
+        return user_management_guard_entry_create($collection, $entry);
     });
+
+    if (function_exists('add_filter')) {
+        add_filter('before_entry_create', function($entry, $collection) {
+            return user_management_guard_entry_create($collection, $entry);
+        }, 10);
+    }
     
     register_hook('before_entry_save', function($collection, $entry) {
         $auth = new UserAuth();
@@ -505,35 +565,7 @@ if (function_exists('register_hook')) {
     });
     
     register_hook('before_entry_delete', function($collection, $entry_id) {
-        $auth = new UserAuth();
-        $user = $auth->getCurrentUser();
-        
-        if (!$user) {
-            throw new Exception('Authentication required to delete entries');
-        }
-        
-        // Get entry to check ownership
-        if (function_exists('get_entry')) {
-            $entry = get_entry($collection, $entry_id);
-        } else {
-            $entry = null;
-        }
-        
-        $permissions = new UserPermissions();
-        
-        $context = [
-            'collection' => $collection,
-            'entry' => $entry_id,
-            'author_id' => $entry['author_id'] ?? null
-        ];
-        
-        $canDelete = $permissions->userCan($user['id'], 'delete', $context);
-        
-        if (!$canDelete) {
-            throw new Exception('Permission denied: Cannot delete this entry');
-        }
-        
-        return true;
+        return user_management_guard_entry_delete($collection, $entry_id);
     });
     
     // Auto-create user from profile entry when entry is saved

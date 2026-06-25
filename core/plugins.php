@@ -150,37 +150,49 @@ function register_hook($event, $callback, $priority = 10) {
 }
 
 function do_action($event, ...$args) {
+    birkly_run_action_hooks($event, false, ...$args);
+}
+
+/**
+ * Run action hooks and rethrow exceptions (for permission guard hooks).
+ */
+function do_action_strict($event, ...$args) {
+    birkly_run_action_hooks($event, true, ...$args);
+}
+
+function birkly_run_action_hooks($event, $strict, ...$args) {
     global $birkly_hooks;
-    if (isset($birkly_hooks[$event])) {
-        foreach ($birkly_hooks[$event] as $hook_data) {
-            $callback = $hook_data['callback'];
-            $plugin_id = $hook_data['plugin_id'];
-            
-            // Only execute hooks from active plugins (or core hooks)
-            $should_execute = true;
-            if ($plugin_id !== null) {
-                $plugin = get_all_plugins()[$plugin_id] ?? null;
-                if ($plugin && !($plugin['active'] ?? false)) {
-                    $should_execute = false;
-                }
+    if (!isset($birkly_hooks[$event])) {
+        return;
+    }
+    foreach ($birkly_hooks[$event] as $hook_data) {
+        $callback = $hook_data['callback'];
+        $plugin_id = $hook_data['plugin_id'];
+
+        $should_execute = true;
+        if ($plugin_id !== null) {
+            $plugin = get_all_plugins()[$plugin_id] ?? null;
+            if ($plugin && !($plugin['active'] ?? false)) {
+                $should_execute = false;
             }
-            
-            if ($should_execute) {
-                try {
-                    // For dashboard_stats, handle the array reference specially
-                    if ($event === 'dashboard_stats' && !empty($args) && is_array($args[0])) {
-                        $callback($args[0]); // Pass the array directly by reference
-                    } else {
-                        call_user_func_array($callback, $args);
-                    }
-                } catch (Exception $e) {
-                    // Log error but continue with other hooks (error isolation)
-                    error_log("Hook error in event '$event' from plugin '$plugin_id': " . $e->getMessage());
-                    // Continue execution - don't break other hooks
-                } catch (Error $e) {
-                    // Log fatal errors too
-                    error_log("Fatal hook error in event '$event' from plugin '$plugin_id': " . $e->getMessage());
-                    // Continue execution
+        }
+
+        if ($should_execute) {
+            try {
+                if ($event === 'dashboard_stats' && !empty($args) && is_array($args[0])) {
+                    $callback($args[0]);
+                } else {
+                    call_user_func_array($callback, $args);
+                }
+            } catch (Exception $e) {
+                error_log("Hook error in event '$event' from plugin '$plugin_id': " . $e->getMessage());
+                if ($strict) {
+                    throw $e;
+                }
+            } catch (Error $e) {
+                error_log("Fatal hook error in event '$event' from plugin '$plugin_id': " . $e->getMessage());
+                if ($strict) {
+                    throw $e;
                 }
             }
         }
@@ -247,6 +259,17 @@ function add_filter($filter_name, $callback, $priority = 10) {
  * @return mixed Filtered value
  */
 function apply_filters($filter_name, $value, ...$args) {
+    return birkly_run_filters($filter_name, $value, false, ...$args);
+}
+
+/**
+ * Apply filters and rethrow exceptions (for permission guard filters).
+ */
+function apply_filters_strict($filter_name, $value, ...$args) {
+    return birkly_run_filters($filter_name, $value, true, ...$args);
+}
+
+function birkly_run_filters($filter_name, $value, $strict, ...$args) {
     global $birkly_filters;
     
     if (!isset($birkly_filters[$filter_name])) {
@@ -259,7 +282,6 @@ function apply_filters($filter_name, $value, ...$args) {
         $callback = $filter_data['callback'];
         $plugin_id = $filter_data['plugin_id'];
         
-        // Only execute filters from active plugins (or core filters)
         $should_execute = true;
         if ($plugin_id !== null) {
             $plugin = get_all_plugins()[$plugin_id] ?? null;
@@ -270,16 +292,17 @@ function apply_filters($filter_name, $value, ...$args) {
         
         if ($should_execute) {
             try {
-                // Pass the current value and additional args
                 $filtered_value = call_user_func_array($callback, array_merge([$filtered_value], $args));
             } catch (Exception $e) {
-                // Log error but continue with other filters (error isolation)
                 error_log("Filter error in '$filter_name' from plugin '$plugin_id': " . $e->getMessage());
-                // Continue with previous value
+                if ($strict) {
+                    throw $e;
+                }
             } catch (Error $e) {
-                // Log fatal errors too
                 error_log("Fatal filter error in '$filter_name' from plugin '$plugin_id': " . $e->getMessage());
-                // Continue with previous value
+                if ($strict) {
+                    throw $e;
+                }
             }
         }
     }
@@ -348,6 +371,7 @@ function load_plugins($plugins_dir = null) {
             // Initialize plugin in registry, preserving existing state
             $existing_state = $birkly_plugins[$plugin_id] ?? [];
             $defaultActive = $existing_state['active'] ?? false;
+            // Automation was core before P3-M6 — default active on first discovery
             if ($plugin_id === 'automation' && !array_key_exists('automation', $persistedPluginStates)) {
                 $defaultActive = true;
                 $automationDefaultActivated = true;
