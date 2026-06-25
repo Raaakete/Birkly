@@ -169,6 +169,7 @@ function attemptLogin($email, $password) {
     
     // Login successful - set session
     unset($user['password']); // Don't store password in session
+    session_regenerate_id(true);
     $_SESSION['user'] = $user;
     $_SESSION['last_activity'] = time();
     

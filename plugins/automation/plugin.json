@@ -1,0 +1,8 @@
+{
+  "id": "automation",
+  "name": "Automation",
+  "version": "0.1.0",
+  "description": "Workflow automation: triggers, conditions, and actions. Queue processor and plugin action samples.",
+  "author": "Birkly",
+  "requires": "0.1.0"
+}

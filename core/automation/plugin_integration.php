@@ -57,6 +57,20 @@ function broadcast_plugin_event($event_name, $context = []) {
 }
 
 /**
+ * Register a plugin-provided automation action block.
+ *
+ * @param string $block_id Action identifier
+ * @param array $config Block configuration (name, schema, handler, …)
+ * @return bool
+ */
+function register_plugin_action($block_id, $config) {
+    if (!function_exists('register_automation_block')) {
+        return false;
+    }
+    return register_automation_block('action', $block_id, $config);
+}
+
+/**
  * Register plugin event trigger block
  * 
  * This is a special trigger type that listens for plugin events

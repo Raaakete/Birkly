@@ -29,7 +29,7 @@ for f in server-router.php AGENTS.md docs/roadmap/ROADMAP.md docs/PROJECT_VALUES
 done
 
 # PHP syntax on critical API files
-for f in api/content.php api/media.php api/admin_media.php api/public.php api/page_bundle.php api/page_snapshot.php core/public_read.php core/page_bundle_runner.php core/public_bootstrap.php admin/template_parser.php; do
+for f in api/content.php api/media.php api/admin_media.php api/public.php api/page_bundle.php api/page_snapshot.php api/automation.php api/updates.php core/public_read.php core/page_bundle_runner.php core/public_bootstrap.php core/version.php admin/template_parser.php plugins/automation/cli/process_queue.php; do
   if php -l "$ROOT/$f" >/dev/null 2>&1; then
     report "OK: syntax $f"
   else
