@@ -25,6 +25,7 @@ $pageViewPermissions = [
     // General
     'dashboard' => 'read',
     'help' => 'read',
+    'feedback' => 'manage_settings',
     'activity' => 'read',
     'audit-log' => 'read',
 
@@ -140,6 +141,7 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'webhooks' => 'webhooks.html',
             'onboarding' => 'onboarding.html',
             'help' => 'help.html',
+            'feedback' => 'feedback.html',
             'automation' => null,
             'community_users' => null,
             'sample_plugin' => null,

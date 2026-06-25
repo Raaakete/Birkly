@@ -25,6 +25,7 @@ $suites = [
     'ai_tool_registry_test.php',
     'automation_plugin_test.php',
     'user_plugin_permissions_test.php',
+    'feedback_test.php',
 ];
 
 $root = dirname(__DIR__);
