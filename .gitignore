@@ -51,6 +51,10 @@ database/*.db
 # Plugin runtime state (per-install; plugin code lives under plugins/)
 data/plugins/
 
+# AI runtime data (conversations, approvals)
+data/ai_*
+data/feedback/
+
 # PHP dependencies
 vendor/
 composer.lock
