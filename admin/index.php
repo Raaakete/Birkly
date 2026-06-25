@@ -222,7 +222,7 @@ $isOnboarding = ($page === 'onboarding');
     $storage = new Storage(__DIR__ . '/../settings');
     $brandingSettings = $storage->read('branding.json') ?? [];
     $logoPath = $brandingSettings['logoPath'] ?? '';
-    $faviconUrl = !empty($logoPath) ? $logoPath : '/admin/assets/haru-icon.svg';
+    $faviconUrl = !empty($logoPath) ? $logoPath : '/admin/assets/birkly-icon.svg';
     ?>
     <link rel="shortcut icon" href="<?= htmlspecialchars($faviconUrl) ?>">
 </head>
