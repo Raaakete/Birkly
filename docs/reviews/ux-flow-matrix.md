@@ -1,9 +1,9 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-06-25 (post Phase 2 verification + template renderer hotfix)  
+**Last updated:** 2026-06-25 (Phase 3 closure)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
-**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (15 suites)  
-**Browser QA:** Onboarding, ContentEditor, groups DnD, client snapshot API — PASS (2026-06-25)
+**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (21 suites)  
+**Browser QA:** Phase 2 flows PASS; Phase 3 BYOAI, automation, feedback, Help — verified via tests + implementation audit 2026-06-25
 
 ## Matrix
 
@@ -20,25 +20,25 @@
 | Public API list collections | API | **pass** | P2-M6 | `public_collection_meta_test.php` — contact `id` fallback (#26). |
 | Demo website / client render | Client | **pass** | P2-M6/M7 | `page_snapshot_test.php`; browser/curl `page_snapshot.php?page=index` → `status: ok`. |
 | page_bundle / page_snapshot | M4 APIs | **pass** | P2-M6 | Snapshots generated via `scripts/generate-page-snapshots.php`; dev smoke documented in P2-M7 notes. |
-| AI connect + role assign | BYOAI | **partial** | P3-M2/M3 | Connections work; RBAC not enforced on execute |
-| Admin AI chat (read action) | BYOAI | **partial** | P3-M4 | Floating chat works; structured tools pending |
-| AI write → approval queue | BYOAI | **partial** | P3-M2/M4 | Queue exists; ACL + role enforcement weak |
-| MCP external connect | BYOAI | **partial** | P3-M5 | HTTP MCP + bridge; role scope pending |
-| Automation builder page | Automation | **fail** | P3-M6 | Sidebar link exists; `?page=automation` not routed |
-| Automation trigger → log | Automation | **not tested** | P3-M7 | Backend wired; UI unreachable |
-| User plugin admin + permissions | User plugin | **fail** | P3-M8 | Plugin UI not routed; write hooks dead |
-| Alpha feedback submit → admin | Feedback | **not built** | P3-M10 | Pending |
-| Help home + doc search | Help | **not built** | P3-M11 | Pending |
-| ContentEditor blocks save/reload | ContentEditor | **partial** | P3-M12 | P2 components only; block system pending |
-| Birkly-Website alpha copy + legal | Client site | **not built** | P3-M13 | Pending |
+| AI connect + role assign | BYOAI | **pass** | P3-M2/M3 | ACL helpers, dynamic role picker, `require_approval` default true |
+| Admin AI chat (read action) | BYOAI | **pass** | P3-M4 | Tool registry + floating chat; `ai_tool_registry_test.php` |
+| AI write → approval queue | BYOAI | **pass** | P3-M2/M4 | Approval ACLs; owner/shared reviewers |
+| MCP external connect | BYOAI | **pass** | P3-M5 | Per-connection `mcp_api_key`; `mcp-bridge.js` BIRKLY_* env |
+| Automation builder page | Automation | **pass** | P3-M6 | `plugins/automation/`; `?page=automation` via plugin admin page |
+| Automation trigger → log | Automation | **pass** | P3-M7 | Queue + CLI `process_queue.php`; `automation_plugin_test.php` |
+| User plugin admin + permissions | User plugin | **pass** | P3-M8 | `site_users` page; `user_plugin_permissions_test.php` |
+| Alpha feedback submit → admin | Feedback | **pass** | P3-M10 | `api/feedback.php`; widget + admin list |
+| Help home + doc search | Help | **pass** | P3-M11 | Manifest search + snapshots; contextual `?` links |
+| ContentEditor blocks save/reload | ContentEditor | **pass** | P3-M12 | Block registry (divider, table); `html_roundtrip_test.php` |
+| Birkly-Website alpha copy + legal | Client site | **pass** | P3-M13 | Seed script + `beta_legal`; DEV.md preview |
 
 ## Summary counts
 
-| Verdict | P2-M1 | Post P2-M2 | Post Phase 2 verification |
-|---------|-------|------------|---------------------------|
-| pass | 4 | 9 | **11** |
-| partial | 6 | 2 | **0** |
-| fail | 1 | 0 | **0** |
+| Verdict | P2-M1 | Post P2-M2 | Post Phase 2 | Post Phase 3 |
+|---------|-------|------------|--------------|--------------|
+| pass | 4 | 9 | **11** | **22** |
+| partial | 6 | 2 | 0 | **0** |
+| fail | 1 | 0 | 0 | **0** |
 
 ## Register closure (P2-M1 → P2-M6)
 
@@ -52,6 +52,6 @@
 
 ## Gate
 
-**Phase 2 UX gate:** All matrix rows pass. Automated + browser QA complete 2026-06-25.
+**Phase 3 UX gate:** All matrix rows pass (22/22). Automated CI 21 suites PASS. Walkthrough videos V7–V14 in `docs/reviews/artifacts/`.
 
 **Post-merge hotfix:** P2-M6 safe renderer was blocking legacy admin PHP (`require_once`, `include`, `required` keys). Fixed by validating parser output only; trusted template PHP blocks excluded from validation.

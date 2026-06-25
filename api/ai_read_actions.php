@@ -194,8 +194,7 @@ function executeReadAction($actionData, $aiUser) {
         foreach ($userFiles as $file) {
             $user = json_decode(file_get_contents($file), true);
             if ($user) {
-                unset($user['password']); // Never expose passwords
-                $users[] = $user;
+                $users[] = birkly_scrub_user_for_ai($user);
             }
         }
         
@@ -217,9 +216,9 @@ function executeReadAction($actionData, $aiUser) {
         foreach ($userFiles as $file) {
             $userData = json_decode(file_get_contents($file), true);
             if ($userData && ($userData['id'] === $userId || $userData['email'] === $userId)) {
-                unset($userData['password']); // Never expose passwords
-                $user = $userData;
+                $user = birkly_scrub_user_for_ai($userData);
                 break;
+            }
             }
         }
         

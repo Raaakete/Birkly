@@ -101,8 +101,122 @@ function getSupportedAiProviders() {
 }
 
 /**
+ * Load curated AI context pack (not full docs dump).
+ */
+function loadBirklyContextPack(): string
+{
+    $packFile = __DIR__ . '/../docs/ai/birkly-context-pack.md';
+    if (!is_file($packFile)) {
+        return '';
+    }
+    return trim((string) file_get_contents($packFile));
+}
+
+/**
+ * Strip sensitive fields from user records returned to AI.
+ */
+function birkly_scrub_user_for_ai(array $user): array
+{
+    $sensitive = [
+        'password', 'api_key_encrypted', 'mcp_api_key',
+        'password_hash', 'reset_token', 'verification_token',
+    ];
+    foreach ($sensitive as $field) {
+        unset($user[$field]);
+    }
+    return $user;
+}
+
+/**
+ * Validate provider API key with a lightweight request (best-effort).
+ *
+ * @return array{valid: bool, message: string}
+ */
+function validateApiKeyForProvider(string $provider, string $apiKey, string $apiUrl = ''): array
+{
+    if ($provider === 'mcp' || $provider === 'ollama') {
+        return ['valid' => true, 'message' => 'No key validation required'];
+    }
+
+    if ($apiKey === '') {
+        return ['valid' => false, 'message' => 'API key is required'];
+    }
+
+    if (!function_exists('curl_init')) {
+        return ['valid' => true, 'message' => 'Skipped validation (curl unavailable)'];
+    }
+
+    $providers = getSupportedAiProviders();
+    if (!isset($providers[$provider])) {
+        return ['valid' => false, 'message' => 'Unsupported provider'];
+    }
+
+    $url = $apiUrl ?: ($providers[$provider]['api_url'] ?? '');
+    if ($url === '') {
+        return ['valid' => true, 'message' => 'Skipped validation (no URL)'];
+    }
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_HTTPHEADER => match ($provider) {
+            'anthropic' => [
+                'Content-Type: application/json',
+                'x-api-key: ' . $apiKey,
+                'anthropic-version: 2023-06-01',
+            ],
+            'google' => ['Content-Type: application/json'],
+            default => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $apiKey,
+            ],
+        },
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => match ($provider) {
+            'anthropic' => json_encode([
+                'model' => 'claude-3-haiku-20240307',
+                'max_tokens' => 1,
+                'messages' => [['role' => 'user', 'content' => 'ping']],
+            ]),
+            'google' => json_encode(['contents' => [['parts' => [['text' => 'ping']]]]]),
+            default => json_encode([
+                'model' => 'gpt-3.5-turbo',
+                'max_tokens' => 1,
+                'messages' => [['role' => 'user', 'content' => 'ping']],
+            ]),
+        },
+    ]);
+
+    if ($provider === 'google') {
+        curl_setopt($ch, CURLOPT_URL, rtrim($url, '/') . '/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey));
+    }
+
+    curl_exec($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($curlError !== '') {
+        return ['valid' => false, 'message' => 'Connection failed: ' . $curlError];
+    }
+
+    if ($httpCode === 401 || $httpCode === 403) {
+        return ['valid' => false, 'message' => 'Invalid API key (HTTP ' . $httpCode . ')'];
+    }
+
+    if ($httpCode >= 200 && $httpCode < 500) {
+        return ['valid' => true, 'message' => 'Key accepted (HTTP ' . $httpCode . ')'];
+    }
+
+    return ['valid' => false, 'message' => 'Provider returned HTTP ' . $httpCode];
+}
+
+/**
  * Generate system context for AI
- * Includes collections, schemas, permissions, and documentation
+ * Includes collections, schemas, permissions, and curated documentation
  */
 function generateSystemContext($aiUser) {
     $context = [
@@ -113,7 +227,7 @@ function generateSystemContext($aiUser) {
             'user_permissions' => getPermissionsForRole($aiUser['role'] ?? 'viewer')
         ],
         'collections' => [],
-        'documentation' => []
+        'context_pack' => loadBirklyContextPack()
     ];
     
     // Load collections
@@ -145,57 +259,6 @@ function generateSystemContext($aiUser) {
                     ];
                 }
             }
-        }
-    }
-    
-    // Load documentation - include both .md and .html files
-    $docsDir = __DIR__ . '/../docs';
-    $adminDocsDir = __DIR__ . '/../admin/docs';
-    
-    // Load from main docs directory
-    if (is_dir($docsDir)) {
-        $docFiles = array_merge(
-            glob($docsDir . '/*.md') ?: [],
-            glob($docsDir . '/*.html') ?: []
-        );
-        foreach ($docFiles as $docFile) {
-            $content = file_get_contents($docFile);
-            // Extract text content from HTML files (strip tags but keep structure)
-            if (pathinfo($docFile, PATHINFO_EXTENSION) === 'html') {
-                // Remove script and style tags
-                $content = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '', $content);
-                $content = preg_replace('/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi', '', $content);
-                // Convert HTML to readable text while preserving structure
-                $content = strip_tags($content);
-                $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            }
-            $context['documentation'][] = [
-                'file' => basename($docFile),
-                'content' => $content
-            ];
-        }
-    }
-    
-    // Load from admin/docs directory (PHP files that contain documentation)
-    if (is_dir($adminDocsDir)) {
-        $adminDocFiles = glob($adminDocsDir . '/*.php');
-        foreach ($adminDocFiles as $docFile) {
-            $content = file_get_contents($docFile);
-            // Extract content from PHP files (they contain HTML documentation)
-            // Remove PHP tags and extract the HTML content
-            $content = preg_replace('/<\?php\s*/', '', $content);
-            $content = preg_replace('/\?>/', '', $content);
-            // Remove script and style tags
-            $content = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '', $content);
-            $content = preg_replace('/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi', '', $content);
-            // Convert HTML to readable text
-            $content = strip_tags($content);
-            $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            
-            $context['documentation'][] = [
-                'file' => 'admin/' . basename($docFile),
-                'content' => $content
-            ];
         }
     }
     
