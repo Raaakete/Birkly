@@ -46,6 +46,7 @@ $pageViewPermissions = [
     'roles' => 'manage_settings',
     'users' => 'list_users',
     'plugins' => 'manage_plugins',
+    'automation' => 'manage_content',
 
     // Account is always accessible to authenticated users
     'account' => null,
@@ -75,6 +76,16 @@ header('Referrer-Policy: no-referrer');
 
 // Include template parser
 require_once __DIR__ . '/template_parser.php';
+
+// Load plugin registry (admin pages registered via register_admin_page)
+require_once __DIR__ . '/../core/plugins.php';
+if (function_exists('load_plugins')) {
+    load_plugins();
+}
+global $birkly_admin_pages;
+if (!is_array($birkly_admin_pages)) {
+    $birkly_admin_pages = [];
+}
 
 // Check onboarding status - show welcome screen if needed
 // Note: auth_middleware.php already starts the session, but we need onboarding functions
@@ -126,15 +137,22 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'webhooks' => 'webhooks.html',
             'onboarding' => 'onboarding.html',
             'help' => 'help.html',
+            'automation' => null,
             'community_users' => null, // Plugin page - handled dynamically
             'sample_plugin' => null // Plugin page - handled dynamically
         ];
 
+foreach ($birkly_admin_pages as $pluginPageSlug => $pluginPageFile) {
+    $allowedPages[$pluginPageSlug] = null;
+}
+
+$isPluginAdminPage = array_key_exists($page, $birkly_admin_pages);
+
 $templateFile = $allowedPages[$page] ?? 'dashboard.html';
 $templatePath = $templateFile ? __DIR__ . '/templates/' . $templateFile : null;
 
-// Fallback if template missing or page not implemented
-if (!$templatePath || !file_exists($templatePath)) {
+// Fallback if template missing (never downgrade plugin admin pages)
+if (!$isPluginAdminPage && $page !== 'automation' && (!$templatePath || !file_exists($templatePath))) {
     $page = 'dashboard';
     $templatePath = __DIR__ . '/templates/dashboard.html';
 }
@@ -356,6 +374,33 @@ $isOnboarding = ($page === 'onboarding');
                     echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
                     echo '</div>';
                 }
+            } elseif ($isPluginAdminPage) {
+                $pluginPath = $birkly_admin_pages[$page] ?? '';
+                if ($pluginPath !== '' && file_exists($pluginPath)) {
+                    $pluginContent = file_get_contents($pluginPath);
+                    $usesTemplateDirectives = (strpos($pluginContent, '{translate') !== false
+                        || strpos($pluginContent, '{include_script') !== false
+                        || strpos($pluginContent, '{admin_url') !== false);
+                    if ($usesTemplateDirectives && function_exists('render_template_file')) {
+                        $data = fetch_admin_page_data($page, $_GET);
+                        $output = render_template_file($pluginPath, $data ?? []);
+                        echo $output ?: '<div class="error">Failed to render plugin page</div>';
+                    } else {
+                        include $pluginPath;
+                    }
+                } else {
+                    echo '<div class="coming-soon">';
+                    echo '<h1>Plugin Not Found</h1>';
+                    echo '<p>The plugin page could not be loaded.</p>';
+                    echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
+                    echo '</div>';
+                }
+            } elseif ($page === 'automation' && !get_plugin_state('automation')) {
+                echo '<div class="coming-soon">';
+                echo '<h1>Automation Unavailable</h1>';
+                echo '<p>The Automation plugin is not active. Enable it from the Plugins page.</p>';
+                echo '<a href="' . admin_url('plugins') . '" class="btn btn-primary">Go to Plugins</a>';
+                echo '</div>';
             } elseif ($page === 'community_users') {
                 // Plugin page - load from plugin directory
                 $pluginPath = __DIR__ . '/../plugins/community_users/admin/community_users.html';
