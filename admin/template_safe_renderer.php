@@ -6,33 +6,28 @@
 
 class TemplateSafeRenderer
 {
-    /** Tokens forbidden inside PHP blocks of compiled templates. */
-    private const FORBIDDEN_PHP = [
-        'eval', 'exec', 'system', 'shell_exec', 'passthru', 'proc_open', 'popen',
-        'require', 'include', 'require_once', 'include_once',
-        'file_get_contents', 'file_put_contents', 'fopen', 'fwrite', 'unlink',
-        'rmdir', 'mkdir', 'chmod', 'chown', 'chgrp', 'rename', 'copy',
-        '$_GET', '$_POST', '$_SERVER', '$_ENV', '$_FILES', '$_COOKIE', '$_REQUEST',
-        'GLOBALS', 'get_defined_vars', 'create_function', 'assert(', 'preg_replace',
-        'call_user_func', 'call_user_func_array', 'Reflection', 'new ', 'function ',
-        'class ', 'trait ', 'interface ', 'namespace ', 'use ', 'goto ', 'global ',
-        '`',
-    ];
-
     /**
+     * @param string[] $trustedPhpBlocks Original template PHP blocks (developer-authored, not parser output)
      * @throws InvalidArgumentException when compiled output fails safety checks
      */
-    public static function validate(string $compiled): void
+    public static function validate(string $compiled, array $trustedPhpBlocks = []): void
     {
         if ($compiled === '') {
             return;
         }
 
-        if (preg_match('/<\?(?!php[\s=]|=)/', $compiled)) {
+        $check = $compiled;
+        foreach ($trustedPhpBlocks as $block) {
+            if ($block !== '') {
+                $check = str_replace($block, '', $check);
+            }
+        }
+
+        if (preg_match('/<\?(?!php[\s=]|=)/', $check)) {
             throw new InvalidArgumentException('Template contains disallowed PHP open tags');
         }
 
-        foreach (self::extractPhpBlocks($compiled) as $php) {
+        foreach (self::extractPhpBlocks($check) as $php) {
             self::validatePhpBlock($php);
         }
     }
@@ -51,11 +46,33 @@ class TemplateSafeRenderer
 
     private static function validatePhpBlock(string $php): void
     {
-        $lower = strtolower($php);
+        $patterns = [
+            '/\beval\s*\(/i',
+            '/\b(exec|system|shell_exec|passthru|proc_open|popen)\s*\(/i',
+            '/\b(require|include)(_once)?\s+/i',
+            '/\b(file_get_contents|file_put_contents|fopen|fwrite|unlink)\s*\(/i',
+            '/\b(rmdir|mkdir|chmod|chown|chgrp|rename|copy)\s*\(/i',
+            '/\$_(GET|POST|SERVER|ENV|FILES|COOKIE|REQUEST)\b/i',
+            '/\bGLOBALS\b/',
+            '/\bget_defined_vars\s*\(/i',
+            '/\bcreate_function\s*\(/i',
+            '/\bassert\s*\(/i',
+            '/\bpreg_replace\s*\(/i',
+            '/\bcall_user_func(_array)?\s*\(/i',
+            '/\bReflection\b/',
+            '/\bnew\s+[A-Za-z_]/',
+            '/\bfunction\s+[A-Za-z_]/',
+            '/\b(class|trait|interface)\s+[A-Za-z_]/',
+            '/\bnamespace\s+[A-Za-z_]/',
+            '/\buse\s+[A-Za-z_]/',
+            '/\bgoto\s+[A-Za-z_]/',
+            '/\bglobal\s+\$/',
+            '/`/',
+        ];
 
-        foreach (self::FORBIDDEN_PHP as $token) {
-            if (strpos($lower, strtolower($token)) !== false) {
-                throw new InvalidArgumentException('Template contains disallowed construct: ' . $token);
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $php)) {
+                throw new InvalidArgumentException('Template contains disallowed construct');
             }
         }
 
@@ -73,9 +90,9 @@ class TemplateSafeRenderer
      *
      * @throws Exception on render failure
      */
-    public static function render(string $compiled, object $context, array $data = []): string
+    public static function render(string $compiled, object $context, array $data = [], array $trustedPhpBlocks = []): string
     {
-        self::validate($compiled);
+        self::validate($compiled, $trustedPhpBlocks);
 
         $tmp = tempnam(sys_get_temp_dir(), 'birkly_tpl_');
         if ($tmp === false) {
