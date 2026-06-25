@@ -18,16 +18,28 @@ require_once __DIR__ . '/../core/automation.php';
 require_once __DIR__ . '/../core/automation/registry.php';
 require_once __DIR__ . '/../core/automation/executor.php';
 require_once __DIR__ . '/../core/automation/queue.php';
+require_once __DIR__ . '/../core/automation/init.php';
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/api_response.php';
+require_once __DIR__ . '/../plugins/automation/includes/cron_auth.php';
 
 // Require admin authentication for most actions
 $input = json_decode(file_get_contents('php://input'), true);
+if (!is_array($input)) {
+    $input = [];
+}
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
-// Public actions (no auth required)
-$publicActions = ['process_queue'];
+// Cron-only actions (CLI or shared secret token)
+$cronActions = ['process_queue', 'process_scheduled'];
 
-if (!in_array($action, $publicActions) && !isset($_SESSION['user'])) {
+if (in_array($action, $cronActions, true)) {
+    if (!automation_verify_cron_request()) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
+        exit;
+    }
+} elseif (!isset($_SESSION['user'])) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     exit;
@@ -242,12 +254,12 @@ if ($action === 'test') {
             'data' => $execution_results
         ]);
     } catch (Exception $e) {
+        $safe = api_sanitize_error_message($e, 'Automation test failed');
         echo json_encode([
             'status' => 'error',
-            'message' => $e->getMessage(),
+            'message' => $safe,
             'data' => [
                 'success' => false,
-                'error' => $e->getMessage()
             ]
         ]);
     }
@@ -270,6 +282,7 @@ if ($action === 'process_queue') {
 
 // Preview template
 if ($action === 'preview_template') {
+    requireAuth('manage_content');
     require_once __DIR__ . '/../core/automation/template_preview.php';
     
     $template = $input['template'] ?? '';
@@ -347,6 +360,93 @@ if ($action === 'queue_status') {
     echo json_encode([
         'status' => 'ok',
         'data' => ['queue' => $status]
+    ]);
+    exit;
+}
+
+// Inbound webhook configuration (admin)
+if ($action === 'list_webhooks') {
+    requireAuth('manage_content');
+    $storage = StorageFactory::createStorage(__DIR__ . '/../settings');
+    $webhooks = $storage->read('automation_webhook_config.json') ?? [];
+    if (!is_array($webhooks)) {
+        $webhooks = [];
+    }
+    // Never expose raw tokens in list — mask for display
+    $safe = array_map(function ($wh) {
+        $token = $wh['token'] ?? '';
+        $wh['token_preview'] = $token !== '' ? substr($token, 0, 8) . '…' : '';
+        unset($wh['token']);
+        $wh['url'] = '/api/automation_webhook.php?id=' . urlencode($wh['id'] ?? '') . '&token=<token>';
+        return $wh;
+    }, array_values($webhooks));
+    echo json_encode(['status' => 'ok', 'data' => ['webhooks' => $safe]]);
+    exit;
+}
+
+if ($action === 'create_webhook') {
+    requireAuth('manage_content');
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $name = trim($input['name'] ?? 'Inbound Webhook');
+    $storage = StorageFactory::createStorage(__DIR__ . '/../settings');
+    $webhooks = $storage->read('automation_webhook_config.json') ?? [];
+    if (!is_array($webhooks)) {
+        $webhooks = [];
+    }
+    $id = 'wh_' . bin2hex(random_bytes(8));
+    $token = bin2hex(random_bytes(16));
+    $webhook = [
+        'id' => $id,
+        'name' => $name,
+        'token' => $token,
+        'active' => true,
+        'created_at' => date('c'),
+    ];
+    $webhooks[] = $webhook;
+    $storage->write('automation_webhook_config.json', $webhooks);
+    $webhook['url'] = '/api/automation_webhook.php?id=' . urlencode($id) . '&token=' . urlencode($token);
+    echo json_encode(['status' => 'ok', 'data' => ['webhook' => $webhook]]);
+    exit;
+}
+
+if ($action === 'delete_webhook') {
+    requireAuth('manage_content');
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $webhook_id = $input['webhook_id'] ?? '';
+    if ($webhook_id === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Webhook ID required']);
+        exit;
+    }
+    $storage = StorageFactory::createStorage(__DIR__ . '/../settings');
+    $webhooks = $storage->read('automation_webhook_config.json') ?? [];
+    if (!is_array($webhooks)) {
+        $webhooks = [];
+    }
+    $filtered = array_values(array_filter($webhooks, function ($wh) use ($webhook_id) {
+        return ($wh['id'] ?? '') !== $webhook_id;
+    }));
+    $storage->write('automation_webhook_config.json', $filtered);
+    echo json_encode(['status' => 'ok', 'message' => 'Webhook deleted']);
+    exit;
+}
+
+if ($action === 'get_cron_info') {
+    requireAuth('manage_settings');
+    $token = automation_get_cron_token();
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'token_preview' => substr($token, 0, 8) . '…',
+            'cli_command' => 'php plugins/automation/cli/process_queue.php 10',
+        ]
     ]);
     exit;
 }

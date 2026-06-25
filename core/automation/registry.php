@@ -44,9 +44,9 @@ function register_automation_block($type, $block_id, $config) {
     $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
     if (isset($backtrace[1]['file'])) {
         $file = $backtrace[1]['file'];
-        global $haru_plugins;
-        if (isset($haru_plugins)) {
-            foreach ($haru_plugins as $pid => $plugin) {
+        global $birkly_plugins;
+        if (isset($birkly_plugins)) {
+            foreach ($birkly_plugins as $pid => $plugin) {
                 if (strpos($file, $plugin['path'] ?? '') !== false) {
                     $plugin_id = $pid;
                     break;
