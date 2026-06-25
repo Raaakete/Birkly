@@ -1398,7 +1398,7 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "   - This is NOT optional - it's based on your role and permissions\n\n";
     
     $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
-    $prompt .= "HARUCMS TEMPLATING SYSTEM - THIS IS HOW YOU DISPLAY COLLECTIONS ON WEBSITES\n";
+    $prompt .= "BIRKLY TEMPLATING SYSTEM - THIS IS HOW YOU DISPLAY COLLECTIONS ON WEBSITES\n";
     $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
     $prompt .= "Birkly uses its OWN custom templating syntax with SINGLE braces: { like this }\n";
     $prompt .= "NOT Twig, NOT Liquid, NOT any other templating engine.\n\n";
@@ -1451,7 +1451,7 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "6. Reference the Birkly documentation provided below\n\n";
     
     if (!empty($context['collections'])) {
-        $prompt .= "AVAILABLE COLLECTIONS IN THIS HARUCMS INSTALLATION:\n";
+        $prompt .= "AVAILABLE COLLECTIONS IN THIS BIRKLY INSTALLATION:\n";
         foreach ($context['collections'] as $collection) {
             $prompt .= "- " . ($collection['name'] ?? $collection['slug']) . " (slug: " . $collection['slug'] . ")\n";
             if (!empty($collection['fields'])) {
@@ -1591,7 +1591,7 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "All actions require human approval before execution (unless approval is disabled in your connection settings).\n\n";
     
     if (!empty($context['documentation'])) {
-        $prompt .= "HARUCMS DOCUMENTATION (CRITICAL - READ THIS CAREFULLY):\n";
+        $prompt .= "BIRKLY DOCUMENTATION (CRITICAL - READ THIS CAREFULLY):\n";
         $prompt .= "The following documentation contains essential information about how Birkly works.\n";
         $prompt .= "You MUST use this documentation to answer questions about Birkly functionality.\n";
         $prompt .= "DO NOT make assumptions about how Birkly works - refer to the documentation below.\n";

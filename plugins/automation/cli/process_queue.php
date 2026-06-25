@@ -14,7 +14,11 @@ if (php_sapi_name() !== 'cli') {
 $root = dirname(__DIR__, 3);
 chdir($root);
 
-require_once $root . '/core/automation/init.php';
+require_once $root . '/core/automation/bootstrap.php';
+if (!automation_bootstrap()) {
+    fwrite(STDERR, "Automation plugin is not active.\n");
+    exit(1);
+}
 require_once __DIR__ . '/../includes/cron_auth.php';
 
 $limit = isset($argv[1]) ? max(1, (int) $argv[1]) : 10;
