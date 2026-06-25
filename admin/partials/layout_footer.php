@@ -6,6 +6,8 @@
 <script src="/admin/js/dropdown.js"></script>
 <script src="/admin/js/custom-select.js"></script>
 <script src="/admin/js/ai-chat-button.js"></script>
+<script src="/admin/js/feedback-button.js"></script>
+<script src="/admin/js/contextual-help.js"></script>
     <script src="/admin/js/fieldtypes-shim.js"></script>
     <script src="/admin/js/media-modal.js?v=20250804-15"></script>
     <script src="/admin/js/accessibility.js"></script>
@@ -990,6 +992,7 @@
     </script>
     
     <!-- No SPA router/scripts in MPA mode -->
+<?php include __DIR__ . '/feedback-widget.php'; ?>
 </body>
 </html>
 
