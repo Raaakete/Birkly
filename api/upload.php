@@ -67,10 +67,24 @@ class FileUpload {
         }
 
         // Additional image validation
-        if (strpos($mimeType, 'image/') === 0) {
+        if (strpos($detectedMimeType, 'image/') === 0) {
             if (!$this->validateImage($file['tmp_name'])) {
                 return false;
             }
+        }
+
+        // Reject dangerous extensions even when MIME looks acceptable
+        $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+        $blockedExtensions = ['php', 'phtml', 'php3', 'php4', 'php5', 'phar', 'cgi', 'pl', 'exe', 'sh', 'bat', 'cmd', 'js', 'html', 'htm', 'svg'];
+        if ($ext !== '' && in_array($ext, $blockedExtensions, true)) {
+            $this->errors[] = 'File extension not allowed';
+            return false;
+        }
+
+        // SVG can carry script — only allow if explicitly in allowed types and sanitized elsewhere
+        if ($detectedMimeType === 'image/svg+xml' && !in_array('image/svg+xml', $this->settings['allowed_types'], true)) {
+            $this->errors[] = 'SVG uploads are disabled';
+            return false;
         }
 
         return true;
