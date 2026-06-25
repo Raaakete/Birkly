@@ -47,7 +47,7 @@ Storage: `content/automation/` or plugin data dir (workflows + execution logs).
 ## Admin
 
 1. **Settings → Plugins** — enable **Automation**.
-2. Open **Automation** in sidebar.
+2. Open **Automation** in the sidebar.
 3. Create workflow → pick trigger → add conditions/actions → enable.
 4. **Logs** tab shows executions, errors, and payloads (redacted secrets).
 
