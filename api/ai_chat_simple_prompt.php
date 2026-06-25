@@ -5,6 +5,8 @@
  */
 
 function buildSystemPromptSimple($context, $aiUser) {
+    require_once __DIR__ . '/../core/ai_tool_registry.php';
+
     $userPermissions = $context['system_info']['user_permissions'] ?? [];
     $hasAllPermissions = in_array('*', $userPermissions);
     $canCreateCollections = $hasAllPermissions || in_array('manage_content', $userPermissions);
@@ -83,26 +85,9 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "4. FOR QUESTIONS REQUIRING DATA: When users ask questions that need data (e.g., 'which collection has the most entries?', 'how many users are there?'), you MUST execute the necessary read actions to gather the data, then analyze it and provide the answer. DO NOT just explain how to do it - DO IT.\n";
     $prompt .= "5. CHAINING ACTIONS: You can execute multiple read actions in sequence. Example: To find which collection has the most entries, first execute list_collections, then for each collection execute list_entries, then compare the counts and provide the answer.\n\n";
     
-    $prompt .= "SUPPORTED ACTIONS:\n";
-    $prompt .= "READ ACTIONS (execute immediately, no approval):\n";
-    $prompt .= "- read_entry, list_entries, list_collections, read_collection\n";
-    $prompt .= "- list_media, read_media, list_users, read_user\n";
-    $prompt .= "- read_settings, list_pages, read_page, list_activity\n";
-    $prompt .= "- list_roles, read_role, list_plugins\n\n";
-    $prompt .= "WRITE ACTIONS (may require approval):\n";
-    $prompt .= "- create_collection, update_collection, delete_collection\n";
-    $prompt .= "- create_entry, update_entry, delete_entry\n";
-    $prompt .= "- upload_media, delete_media, update_media\n";
-    $prompt .= "- create_media_folder, delete_media_folder, move_media\n";
-    $prompt .= "- update_settings, create_page, update_page, delete_page\n";
-    if ($canManageUsers) {
-        $prompt .= "- update_user, delete_user (you have permission)\n";
-        $prompt .= "- create_role, update_role, delete_role (you have permission)\n";
-    }
-    $prompt .= "- activate_plugin, deactivate_plugin\n";
-    $prompt .= "- Note: There is NO create_user action - users must be created via admin panel\n\n";
-    
-    $prompt .= "ACTION FORMAT:\n";
+    $prompt .= birkly_ai_tools_prompt_section($aiUser) . "\n";
+    $prompt .= "Note: There is NO create_user action - users must be created via admin panel\n\n";
+    $prompt .= "ACTION FORMAT (fallback when native tools unavailable):\n";
     $prompt .= "```json\n";
     $prompt .= "{\"actions\":[{\"type\":\"create_entry\",\"data\":{\"collection\":\"slug\",\"title\":\"...\"},\"description\":\"...\"}]}\n";
     $prompt .= "```\n\n";

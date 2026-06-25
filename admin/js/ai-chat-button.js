@@ -406,15 +406,12 @@
                 }
                 
                 if (result.data.requires_approval && result.data.actions_created > 0) {
-                    // Show approval cards in the chat
+                    addChatMessage('system',
+                        `${result.data.actions_created} action(s) pending approval. Review below or in Settings → AI Approvals.`);
                     if (result.data.approvals && result.data.approvals.length > 0) {
                         result.data.approvals.forEach(approval => {
                             addApprovalCard(approval);
                         });
-                    } else {
-                        // Fallback message if approval details not available
-                        addChatMessage('system', 
-                            `${result.data.actions_created} action(s) created and waiting for approval.`);
                     }
                 }
                 
@@ -438,8 +435,8 @@
         }
     }
 
-    // Restore chat state from localStorage
-    function restoreChatState() {
+    // Restore chat state from localStorage and server history when available
+    async function restoreChatState() {
         try {
             const savedConnectionId = localStorage.getItem(STORAGE_KEY_CONNECTION);
             const savedConversationId = localStorage.getItem(STORAGE_KEY_CONVERSATION);
@@ -449,8 +446,13 @@
                 currentConnection = availableConnections.find(c => c.id === savedConnectionId);
                 conversationId = savedConversationId || 'conv_' + Date.now();
                 
-                // Restore messages if they exist
-                if (savedMessages) {
+                // Prefer server history when conversation id exists
+                if (conversationId) {
+                    await loadHistoryFromServer(conversationId, savedConnectionId);
+                }
+
+                // Fall back to localStorage if server had no messages
+                if (chatMessages.length === 0 && savedMessages) {
                     try {
                         chatMessages = JSON.parse(savedMessages);
                     } catch (e) {
@@ -461,6 +463,25 @@
             }
         } catch (error) {
             console.error('Error restoring chat state:', error);
+        }
+    }
+
+    async function loadHistoryFromServer(convId, connectionId) {
+        try {
+            const params = new URLSearchParams({
+                action: 'get_history',
+                conversation_id: convId,
+                ai_connection_id: connectionId
+            });
+            const response = await fetch('/api/ai_chat.php?' + params.toString());
+            const result = await response.json();
+            if (result.status === 'ok' && Array.isArray(result.data?.messages) && result.data.messages.length > 0) {
+                chatMessages = result.data.messages
+                    .filter(m => m.role === 'user' || m.role === 'assistant')
+                    .map(m => ({ role: m.role, content: m.content }));
+            }
+        } catch (error) {
+            console.error('Error loading chat history from server:', error);
         }
     }
 
@@ -590,6 +611,9 @@
         const actionType = approval.action_type || 'unknown';
         const actionTypeLabel = actionType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         const description = approval.description || 'No description';
+        const status = approval.status || 'pending';
+        const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+        const statusClass = 'ai-chat-approval-status-' + status;
         
         // Format action data for display
         let actionDataHtml = '';
@@ -608,17 +632,22 @@
             <div class="ai-chat-approval-card">
                 <div class="ai-chat-approval-header">
                     <div class="ai-chat-approval-type">${escapeHtml(actionTypeLabel)}</div>
-                    <div class="ai-chat-approval-time">${formatTime(approval.created_at)}</div>
+                    <div class="ai-chat-approval-meta">
+                        <span class="ai-chat-approval-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+                        <span class="ai-chat-approval-time">${formatTime(approval.created_at)}</span>
+                    </div>
                 </div>
                 <div class="ai-chat-approval-description">${escapeHtml(description)}</div>
                 ${actionDataHtml ? `<div class="ai-chat-approval-data">${actionDataHtml}</div>` : ''}
                 <div class="ai-chat-approval-actions">
+                    ${status === 'pending' ? `
                     <button class="btn btn-sm btn-success" onclick="aiChatButton.approveAction('${approval.id}')">
                         ✓ Approve
                     </button>
                     <button class="btn btn-sm btn-danger" onclick="aiChatButton.rejectAction('${approval.id}')">
                         ✗ Reject
                     </button>
+                    ` : `<div class="ai-chat-approval-status ${statusClass}">${status === 'approved' ? '✓ Approved' : status === 'rejected' ? '✗ Rejected' : escapeHtml(statusLabel)}</div>`}
                 </div>
             </div>
         `;

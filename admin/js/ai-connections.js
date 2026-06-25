@@ -109,13 +109,13 @@
         }
         
         list.innerHTML = connections.map(conn => {
-            const isMCP = conn.provider === 'mcp';
-            const mcpInfo = isMCP && conn.mcp_url ? `
+            const mcpUrl = conn.mcp_url || (window.location.origin + '/api/mcp_server.php');
+            const mcpInfo = `
                 <div class="connection-mcp-info" style="font-size: 0.75rem; color: #666; margin-top: 0.5rem; padding: 0.5rem; background: #f5f5f5; border-radius: 4px;">
                     <div style="margin-bottom: 0.5rem;">
                         <label style="font-weight: 600; display: block; margin-bottom: 0.25rem;">MCP Server URL:</label>
                         <div style="display: flex; gap: 0.25rem; align-items: center;">
-                            <input type="text" value="${escapeHtml(conn.mcp_url)}" readonly style="flex: 1; padding: 0.25rem; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: white;" id="mcp-url-${conn.id}">
+                            <input type="text" value="${escapeHtml(mcpUrl)}" readonly style="flex: 1; padding: 0.25rem; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: white;" id="mcp-url-${conn.id}">
                             <button class="btn-icon" onclick="copyToClipboard('mcp-url-${conn.id}')" title="Copy URL" style="padding: 0.25rem;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -124,11 +124,12 @@
                             </button>
                         </div>
                     </div>
-                    ${conn.mcp_api_key ? `
                     <div>
                         <label style="font-weight: 600; display: block; margin-bottom: 0.25rem;">MCP API Key:</label>
-                        <div style="display: flex; gap: 0.25rem; align-items: center;">
-                            <input type="text" value="${escapeHtml(conn.mcp_api_key)}" readonly style="flex: 1; padding: 0.25rem; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: white; font-family: monospace;" id="mcp-key-${conn.id}">
+                        <div style="display: flex; gap: 0.25rem; align-items: center; flex-wrap: wrap;">
+                            <input type="password" value="" placeholder="Click Reveal to show key" readonly style="flex: 1; min-width: 12rem; padding: 0.25rem; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: white; font-family: monospace;" id="mcp-key-${conn.id}">
+                            <button type="button" class="btn btn-sm" onclick="aiConnections.revealMcpKey('${conn.id}')">Reveal</button>
+                            <button type="button" class="btn btn-sm" onclick="aiConnections.rotateMcpKey('${conn.id}')">Rotate</button>
                             <button class="btn-icon" onclick="copyToClipboard('mcp-key-${conn.id}')" title="Copy API Key" style="padding: 0.25rem;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -136,13 +137,13 @@
                                 </svg>
                             </button>
                         </div>
+                        <p style="margin: 0.35rem 0 0; font-size: 0.7rem; color: #888;">Per-connection key — scoped to role <strong>${escapeHtml(conn.role)}</strong></p>
                     </div>
-                    ` : ''}
                 </div>
-            ` : '';
+            `;
             
             return `
-            <div class="connection-item" data-connection-id="${conn.id}" data-is-mcp="${isMCP}">
+            <div class="connection-item" data-connection-id="${conn.id}">
                 <div class="connection-info">
                     <div class="connection-name">${escapeHtml(conn.name || conn.provider)}</div>
                     <div class="connection-meta">
@@ -914,6 +915,61 @@ function updateProviderFields() {
         }
     }
 
+    // Reveal MCP API key for a connection
+    async function revealMcpKey(connectionId) {
+        try {
+            const response = await fetch(`/api/ai_connections.php?action=get&id=${encodeURIComponent(connectionId)}`);
+            const result = await response.json();
+            if (result.status !== 'ok' || !result.data?.connection?.mcp_api_key) {
+                showError('MCP key not available. Try rotating to generate a new key.');
+                return;
+            }
+            const input = document.getElementById('mcp-key-' + connectionId);
+            if (input) {
+                input.type = 'text';
+                input.value = result.data.connection.mcp_api_key;
+            }
+        } catch (error) {
+            console.error('Error revealing MCP key:', error);
+            showError('Failed to load MCP key');
+        }
+    }
+
+    // Rotate MCP API key
+    async function rotateMcpKey(connectionId) {
+        if (!confirm('Rotate MCP API key? External tools using the old key will stop working until updated.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/ai_connections.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'rotate_mcp_key',
+                    id: connectionId,
+                    _csrf: csrfToken
+                })
+            });
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                const key = result.data?.mcp_api_key || result.data?.connection?.mcp_api_key || '';
+                const input = document.getElementById('mcp-key-' + connectionId);
+                if (input && key) {
+                    input.type = 'text';
+                    input.value = key;
+                }
+                showSuccess('MCP API key rotated. Update Claude Desktop / bridge config with the new key.');
+            } else {
+                showError('Failed to rotate key: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error rotating MCP key:', error);
+            showError('Error rotating MCP key');
+        }
+    }
+
     // Delete connection
     async function deleteConnection(connectionId) {
         if (!confirm('Delete this AI connection? This cannot be undone.')) return;
@@ -998,7 +1054,9 @@ function updateProviderFields() {
         editConnection,
         deleteConnection,
         approveAction,
-        rejectAction
+        rejectAction,
+        revealMcpKey,
+        rotateMcpKey
     };
     
     // Export copy function globally
