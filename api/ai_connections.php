@@ -21,6 +21,7 @@ require_once 'auth.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once 'ai_helpers.php';
+require_once __DIR__ . '/../core/ai_tool_registry.php';
 
 // Include log.php but prevent it from executing its API endpoints
 $GLOBALS['__HARU_INTERNAL_CALL'] = true;
@@ -60,7 +61,7 @@ if ($action === 'list') {
                     }
 
                     // Don't send encrypted API key
-                    unset($user['api_key_encrypted']);
+                    unset($user['api_key_encrypted'], $user['mcp_api_key']);
                     $aiConnections[] = $user;
                 }
             } catch (Exception $e) {
@@ -171,7 +172,8 @@ if ($action === 'create') {
         }
     }
     
-    // Create AI user
+    // Create AI user (every connection gets a per-connection MCP key)
+    $mcpApiKey = bin2hex(random_bytes(32));
     $aiUser = [
         'id' => $aiId,
         'email' => $email,
@@ -186,18 +188,12 @@ if ($action === 'create') {
         'shared_type' => $sharedType,
         'allowed_users' => $sharedType === 'specific' ? $allowedUsers : [],
         'require_approval' => $requireApproval,
+        'mcp_api_key' => $mcpApiKey,
+        'mcp_url' => birkly_ai_mcp_server_url(),
         'created_at' => date('c'),
         'created_by' => $_SESSION['user']['id'],
         'status' => 'active'
     ];
-    
-    // For MCP, generate MCP API key and URL
-    if ($provider === 'mcp') {
-        $mcpApiKey = bin2hex(random_bytes(32));
-        $aiUser['mcp_api_key'] = $mcpApiKey;
-        $aiUser['mcp_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . 
-                             '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/api/mcp_server.php';
-    }
     
     // Clear output buffers before writing
     while (ob_get_level() > 0) {
@@ -440,6 +436,9 @@ if ($action === 'get') {
     }
     
     unset($aiUser['api_key_encrypted']);
+    if (!birkly_ai_user_can_manage_connection($aiUser, $currentUserId, $_SESSION['user'] ?? [])) {
+        unset($aiUser['mcp_api_key']);
+    }
     if (!headers_sent()) {
         header('Content-Type: application/json');
     }
@@ -500,6 +499,60 @@ if ($action === 'get_users') {
     echo json_encode([
         'status' => 'ok',
         'data' => ['users' => $userList]
+    ]);
+    exit;
+}
+
+if ($action === 'rotate_mcp_key') {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $aiId = $input['id'] ?? '';
+    if (empty($aiId)) {
+        echo json_encode(['status' => 'error', 'message' => 'AI connection ID required']);
+        exit;
+    }
+
+    $aiUser = $storage->read($aiId . '.json');
+    if (!$aiUser || !isset($aiUser['type']) || $aiUser['type'] !== 'ai') {
+        echo json_encode(['status' => 'error', 'message' => 'AI connection not found']);
+        exit;
+    }
+
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    if (!birkly_ai_user_can_manage_connection($aiUser, $currentUserId, $_SESSION['user'] ?? [])) {
+        echo json_encode(['status' => 'error', 'message' => 'You do not have permission to rotate this MCP key']);
+        exit;
+    }
+
+    $newKey = bin2hex(random_bytes(32));
+    $aiUser['mcp_api_key'] = $newKey;
+    $aiUser['mcp_url'] = $aiUser['mcp_url'] ?? birkly_ai_mcp_server_url();
+    $aiUser['updated_at'] = date('c');
+    $aiUser['updated_by'] = $currentUserId;
+
+    $result = $storage->write($aiId . '.json', $aiUser);
+
+    log_security_event('ai_mcp_key_rotated', [
+        'ai_user_id' => $aiId,
+        'rotated_by' => $currentUserId,
+    ]);
+
+    unset($aiUser['api_key_encrypted']);
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'MCP API key rotated' : 'Failed to rotate MCP key',
+        'data' => [
+            'connection' => $aiUser,
+            'mcp_api_key' => $newKey,
+        ],
     ]);
     exit;
 }
