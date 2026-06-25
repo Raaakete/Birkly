@@ -232,6 +232,8 @@ if ($action === 'reject') {
 
 // Execute AI action (internal function)
 function executeAiAction($approval) {
+    require_once __DIR__ . '/../core/ai_permissions.php';
+
     $actionType = $approval['action_type'];
     $actionData = $approval['action_data'];
     
@@ -240,6 +242,11 @@ function executeAiAction($approval) {
     $aiUser = $usersStorage->read($approval['ai_user_id'] . '.json');
     if (!$aiUser) {
         return ['success' => false, 'message' => 'AI user not found'];
+    }
+
+    $denied = birkly_ai_enforce_action_permission($aiUser, $actionType);
+    if ($denied !== null) {
+        return $denied;
     }
     
     // Store original user ID for logging/attribution

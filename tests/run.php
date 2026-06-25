@@ -21,6 +21,7 @@ $suites = [
     'template_safe_renderer_test.php',
     'public_collection_meta_test.php',
     'page_snapshot_test.php',
+    'ai_permissions_test.php',
 ];
 
 $root = dirname(__DIR__);
