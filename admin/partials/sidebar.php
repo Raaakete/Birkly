@@ -162,6 +162,20 @@ if (empty($userAvatar)) {
                             Automation
                         </a>
                     </li>
+                    <?php
+                    $canManageFeedback = isset($_SESSION['user']) && function_exists('checkPermission')
+                        && checkPermission($_SESSION['user'], 'manage_settings');
+                    if ($canManageFeedback):
+                    ?>
+                    <li class="nav-item">
+                        <a href="<?= htmlspecialchars(admin_url('feedback')) ?>" class="nav-link <?= is_nav_active('feedback') ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            Alpha Feedback
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
