@@ -24,6 +24,8 @@ When in doubt, treat as major and ask the human.
 
 **2026-06-19 — Phase 2** (Keven, after P2-M1 review gate)
 
+**2026-06-25 — Phase 3 proposed** (closed alpha readiness — awaiting human approval)
+
 **Priorities:** **Birkly CMS always first** unless human overrides. Robust, flexible, fast system aligned with `docs/PROJECT_VALUES.md`.
 
 **Phase 2 themes:** UX flow audit & fixes · **ContentEditor** (Notion-like, self-contained fieldtype) · collection groups/DnD · onboarding · CMS hardening · platform sync/kekaba proof · internal docs → Birkly-Docs when stable.
@@ -50,17 +52,19 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-06-19)
+## Current state (verified 2026-06-25)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 1 complete on `main`: auth boundary, templating consolidation, client bundle/snapshot APIs, CI + `tests/run.php`. **Phase 2 gaps:** ContentEditor broken on demo entries (legacy `editor`/`media` types), no visual/HTML tabs, `eval()` in admin parser, collection groups DnD fragile, onboarding state inconsistent. See issue register. |
-| **Birkly-Website** | M6 hygiene merged; embedded `Birkly-0.1/` **not synced** to platform `main`. |
-| **kekaba** | M6 loader/htaccess aligned in repo; production not re-validated post-M4; embed not synced. |
-| **Birkly-Docs** | On-change rule documented; ContentEditor not documented yet. |
-| **Agent ops** | CI + autonomous merge active. Resend digest (M1-T8) and branch protection (M1-T12) pending human. P2-M1 review gate in PR #14. |
+| **Birkly (CMS)** | Phase 1 + Phase 2 **complete** on `main`. UX matrix: **11/11 pass** (`docs/reviews/ux-flow-matrix.md`). Template safe renderer hotfix merged (PR #30). |
+| **Birkly-Website** | `Birkly-0.1/` synced post–PR #30 (site PR #3). Beta waitlist + roadmap collections in repo; closed-alpha messaging not yet updated. |
+| **kekaba** | Embed synced post–PR #30 (site PR #3). Dev + `check-production.sh` smoke documented. **Human:** production deploy of synced embed still pending. |
+| **Birkly-Docs** | P2-M8 sync done; ContentEditor in `02-content/field-types.md`. Alpha tester guide + Help manifest pending Phase 3. |
+| **Agent ops** | CI + autonomous merge active. **Human pending:** M1-T8 Resend secrets, M1-T12 branch protection. |
 
-**Issue register:** `docs/reviews/2026-06-18-issue-register.md`
+**Supersedes for planning:** `docs/CLOSED_ALPHA_ROADMAP.md` (2026-01-26, pre–Phase 1–2) — reference only; Phase 3 below is the active plan.
+
+**Issue register (Phase 2):** `docs/reviews/2026-06-18-issue-register.md` — closed.
 
 ---
 
@@ -456,6 +460,201 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 | **kekaba** | Production smoke green |
 | **Docs** | Internal changelog + Birkly-Docs on milestone completion |
 | **You** | Daily digest; no per-PR review |
+
+---
+
+## Phase 3 — milestones
+
+**Horizon:** 4–8 weeks (theme-based; no calendar estimates for agents).
+
+**Priorities:** **Closed alpha readiness** — production proof, feedback loop, Help v1, targeted hardening, reference sites, alpha docs. **Birkly CMS always first** unless human overrides.
+
+**Ordering:** P3-M1 → P3-M2 → P3-M3 → P3-M4 → P3-M5 → P3-M6 → P3-M7 → P3-M8 → P3-M9.
+
+**Cross-repo:** Birkly → Birkly-Website / kekaba → Birkly-Docs.
+
+**ContentEditor rule (unchanged):** All editor code in `fieldtypes/ContentEditor/` only; stored value = pure HTML.
+
+**Status:** **proposed** — awaiting human approval (2026-06-25).
+
+### P3-M1 — Closed alpha validation gate
+
+- **Status:** in progress
+- **Repos:** Birkly, kekaba (human deploy)
+- **Goal:** Confirm production-ready baseline before alpha invite
+
+**Tasks**
+
+- [ ] **P3-M1-T1** Human: deploy synced `Birkly-0.1/` to kekaba production; re-run `scripts/check-production.sh`
+- [ ] **P3-M1-T2** Human: M1-T8 Resend secrets + M1-T12 branch protection (or document blockers)
+- [x] **P3-M1-T3** Alpha readiness register — `docs/reviews/2026-06-25-alpha-readiness-register.md`
+- [ ] **P3-M1-T4** Extend UX matrix with alpha rows (update UI, backup, feedback, Help)
+- [ ] **P3-M1-T5** Human sign-off on alpha gate
+
+**Acceptance criteria:** Kekaba prod smoke post-deploy; alpha register reviewed; extended matrix defined; human sign-off
+
+---
+
+### P3-M2 — Production hardening (CMS)
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** Update/backup verification; targeted security/ops gaps for real users
+- **Depends on:** P3-M1-T5
+
+**Tasks**
+
+- [ ] **P3-M2-T1** Update system E2E harness (`api/updates.php`, smoke script)
+- [ ] **P3-M2-T2** Backup & restore smoke — `docs/reviews/p3-m2-backup-notes.md`
+- [ ] **P3-M2-T3** Targeted security backlog (alpha P0/P1 only)
+- [ ] **P3-M2-T4** Ops logging hygiene
+- [ ] **P3-M2-T5** Matrix rows: update UI + backup/restore → pass
+
+---
+
+### P3-M3 — Alpha feedback system
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** In-app feedback for alpha testers; flat-file storage; admin triage
+- **Depends on:** P3-M2-T1
+
+**Tasks**
+
+- [ ] **P3-M3-T1** Feedback entry + modal form
+- [ ] **P3-M3-T2** `api/feedback.php` — auth, CSRF, rate limit
+- [ ] **P3-M3-T3** Admin feedback list + status workflow
+- [ ] **P3-M3-T4** Privacy notice copy
+- [ ] **P3-M3-T5** Matrix row: feedback submit → admin view → pass
+
+---
+
+### P3-M4 — CMS Help ↔ Birkly-Docs wiring (v1)
+
+- **Status:** not started
+- **Repos:** Birkly, Birkly-Docs
+- **Goal:** Curated Birkly-Docs surface in admin Help; contextual links
+- **Depends on:** P3-M3-T1
+
+**Tasks**
+
+- [ ] **P3-M4-T1** Alpha doc manifest (Help sections → Birkly-Docs paths)
+- [ ] **P3-M4-T2** Help renderer v1 (static HTML snapshot or configured base URL)
+- [ ] **P3-M4-T3** Client-side search over manifest
+- [ ] **P3-M4-T4** Contextual “?” links on key admin pages
+- [ ] **P3-M4-T5** Matrix row: Help home + search → pass
+
+---
+
+### P3-M5 — ContentEditor maturity (block system)
+
+- **Status:** not started
+- **Repos:** Birkly (`fieldtypes/ContentEditor/` only)
+- **Goal:** Block manager + ≥2 new component types
+- **Depends on:** P3-M2
+
+**Tasks**
+
+- [ ] **P3-M5-T1** `blocks/block-manager.js` + `block-registry.js`
+- [ ] **P3-M5-T2** Migrate paragraph/heading/list to block registry
+- [ ] **P3-M5-T3** Add ≥2 new components (table, image embed, or divider)
+- [ ] **P3-M5-T4** Extend round-trip tests + browser QA
+- [ ] **P3-M5-T5** Internal README; handoff for Birkly-Docs page (P3-M8)
+
+---
+
+### P3-M6 — Kekaba production proof & content expansion
+
+- **Status:** not started
+- **Repos:** kekaba (+ Birkly if APIs needed)
+- **Goal:** Production-validated client; first new pages/collections post–Phase 2 deferral
+- **Depends on:** P3-M1-T1, P3-M5-T3 (if ContentEditor bodies)
+
+**Tasks**
+
+- [ ] **P3-M6-T1** Post-deploy production checklist
+- [ ] **P3-M6-T2** Alpha content scope doc — `docs/reviews/p3-m6-kekaba-scope.md`
+- [ ] **P3-M6-T3** Implement pages/collections in kekaba repo
+- [ ] **P3-M6-T4** Snapshot/bundle smoke on new pages
+- [ ] **P3-M6-T5** Production HTTP verification
+
+---
+
+### P3-M7 — Birkly-Website closed alpha surface
+
+- **Status:** not started
+- **Repos:** Birkly-Website, Birkly-Docs
+- **Goal:** Closed alpha messaging, waitlist, legal links
+- **Depends on:** P3-M3-T4, P3-M6-T1
+
+**Tasks**
+
+- [ ] **P3-M7-T1** Update beta/alpha copy collections
+- [ ] **P3-M7-T2** Wire `beta_legal` entries (terms, privacy)
+- [ ] **P3-M7-T3** Sync `Birkly-0.1/`; dev smoke waitlist + roadmap
+- [ ] **P3-M7-T4** `DEV.md` alpha preview instructions
+
+---
+
+### P3-M8 — Alpha documentation pack
+
+- **Status:** not started
+- **Repos:** Birkly-Docs, Birkly (changelog)
+- **Goal:** Docs alpha testers need on day one
+
+**Tasks**
+
+- [ ] **P3-M8-T1** `00-overview/closed-alpha-guide.md`
+- [ ] **P3-M8-T2** `02-content/content-editor.md`
+- [ ] **P3-M8-T3** `07-operations/known-issues.md`
+- [ ] **P3-M8-T4** Changelog batch for Phase 3
+- [ ] **P3-M8-T5** Verify P3-M4 manifest links resolve
+
+---
+
+### P3-M9 — Alpha launch closure & agent ops
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** Human infra closure; alpha go/no-go checklist
+- **Depends on:** P3-M1–P3-M8 (or documented waivers)
+
+**Tasks**
+
+- [ ] **P3-M9-T1** Confirm M1-T8 digest + M1-T12 branch protection
+- [ ] **P3-M9-T2** `docs/reviews/p3-alpha-launch-checklist.md`
+- [ ] **P3-M9-T3** Mark `CLOSED_ALPHA_ROADMAP.md` superseded
+- [ ] **P3-M9-T4** Final UX matrix run + digest narrative
+
+---
+
+## Phase 3 deferrals
+
+| Defer | Reason |
+|-------|--------|
+| Database/SQL backend | Not on critical path |
+| Plugin scaffolding CLI | Convenience |
+| Full dark mode / responsive admin rework | UX polish |
+| Plugin marketplace; automation plugin conversion | Post-alpha |
+| Feedback screenshot upload | P3-M3 MVP without attachments |
+| Help: tutorials, code playground, video hub | P3-M4 v1 is read + search |
+| GDPR full suite | Minimal legal copy in P3-M3/M7 first |
+| Birkly-Website production deploy | Human optional |
+
+---
+
+## Phase 3 success criteria
+
+| Area | Target |
+|------|--------|
+| **Production** | Kekaba prod deploy verified; update + backup smokes documented |
+| **Alpha loop** | Feedback submit + admin triage works |
+| **Help** | Birkly-Docs wired in admin; search v1 |
+| **ContentEditor** | Block system + ≥2 new components |
+| **kekaba** | Alpha-scoped content on production |
+| **Birkly-Website** | Closed alpha messaging + legal in repo |
+| **Docs** | Alpha guide, ContentEditor page, known issues |
+| **You** | M1-T8/T12 closed or waived; launch checklist sign-off |
 
 ---
 

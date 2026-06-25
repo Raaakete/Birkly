@@ -20,6 +20,10 @@
 | Public API list collections | API | **pass** | P2-M6 | `public_collection_meta_test.php` — contact `id` fallback (#26). |
 | Demo website / client render | Client | **pass** | P2-M6/M7 | `page_snapshot_test.php`; browser/curl `page_snapshot.php?page=index` → `status: ok`. |
 | page_bundle / page_snapshot | M4 APIs | **pass** | P2-M6 | Snapshots generated via `scripts/generate-page-snapshots.php`; dev smoke documented in P2-M7 notes. |
+| CMS update check UI | Ops | **not tested** | P3-M2 | Alpha row — pending P3-M2-T1 |
+| Backup create/restore | Ops | **not tested** | P3-M2 | Alpha row — pending P3-M2-T2 |
+| Alpha feedback submit → admin | Feedback | **not built** | P3-M3 | Alpha row — pending P3-M3 |
+| Help home + doc search | Help | **not built** | P3-M4 | Alpha row — pending P3-M4 |
 
 ## Summary counts
 
