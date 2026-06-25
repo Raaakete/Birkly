@@ -26,6 +26,11 @@
 | MCP external connect | BYOAI | **partial** | P3-M5 | HTTP MCP + bridge; role scope pending |
 | Automation builder page | Automation | **fail** | P3-M6 | Sidebar link exists; `?page=automation` not routed |
 | Automation trigger → log | Automation | **not tested** | P3-M7 | Backend wired; UI unreachable |
+| User plugin admin + permissions | User plugin | **fail** | P3-M8 | Plugin UI not routed; write hooks dead |
+| Alpha feedback submit → admin | Feedback | **not built** | P3-M10 | Pending |
+| Help home + doc search | Help | **not built** | P3-M11 | Pending |
+| ContentEditor blocks save/reload | ContentEditor | **partial** | P3-M12 | P2 components only; block system pending |
+| Birkly-Website alpha copy + legal | Client site | **not built** | P3-M13 | Pending |
 
 ## Summary counts
 

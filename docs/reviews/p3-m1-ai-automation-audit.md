@@ -44,6 +44,8 @@ Baseline for Phase 3 reprioritization (BYOAI + automation plugin). Complements `
 
 ## Human decisions needed
 
-- [ ] Approve automation **move to plugin** (deactivatable) vs keep core with plugin-style API only
-- [ ] Default `require_approval` for new AI connections: recommend **true**
-- [ ] MCP API keys: one key per AI connection or site-wide MCP key?
+- [x] Approve automation **move to deactivatable plugin** — **yes** (Keven 2026-06-25)
+- [x] Default `require_approval` for new AI connections — **yes** (Keven 2026-06-25)
+- [x] MCP keys — **per AI connection** (Keven 2026-06-25)
+- [x] Phase 3 includes closed-alpha essentials (feedback, Help, ContentEditor blocks, Birkly-Website) — **yes**; kekaba deferred
+- [x] User plugin review/harden/fix in Phase 3 — **yes** (P3-M8)

@@ -22,7 +22,7 @@ Findings for **Phase 3 closed alpha** gate (P3-M1). Severity: **P0** blocker · 
 | P3-A16 | feature | BYOAI | MCP writes lack role checks; shared-connection bug in chat. | P1 | P3-M2, P3-M5 |
 | P3-A17 | feature | Automation | Admin automation page not routed — builder unreachable. | P0 | P3-M6 |
 | P3-A18 | architecture | Automation | Still core, not plugin; cannot deactivate or ship independently. | P1 | P3-M6 |
-| P3-A19 | feature | Automation | No plugin registers custom blocks; registry attribution bug. | P2 | P3-M7 |
+| P3-A20 | feature | User plugin | Admin UI orphaned (`page=users` → settings, not plugin UI); permissions not on writes. | P0 | P3-M8 |
 
 ## Closed from Phase 2 (no re-open)
 
@@ -35,8 +35,9 @@ Findings for **Phase 3 closed alpha** gate (P3-M1). Severity: **P0** blocker · 
 
 ## Human sign-off (P3-M1-T5)
 
-- [ ] Register + AI/automation audit reviewed
-- [ ] Phase 3 scope approved: **BYOAI + automation plugin** (closed-alpha items deferred to Phase 4)
-- [ ] kekaba production deploy (optional this phase): ___________
+- [x] Register + AI/automation audit reviewed
+- [x] Phase 3 scope approved: BYOAI + automation plugin + user plugin + closed-alpha essentials (kekaba deferred)
+- [x] Decisions locked: deactivatable automation plugin; default AI approval on; MCP key per connection
+- [ ] kekaba production deploy (deferred): ___________
 
-**Reviewer:** ___________ **Date:** ___________
+**Reviewer:** Keven **Date:** 2026-06-25
