@@ -329,12 +329,23 @@ const onboarding = {
         }
         return null;
     },
+
+    resetSiteInfoSubmitButton(submitBtn, label = 'Continue') {
+        if (!submitBtn) return;
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = label;
+    },
     
     async saveSiteInfo() {
         const form = document.getElementById('site-info-form');
         if (!form) return;
         
         const submitBtn = form.querySelector('button[type="submit"]');
+        const continueLabel = submitBtn ? (submitBtn.dataset.defaultLabel || submitBtn.textContent.trim() || 'Continue') : 'Continue';
+        if (submitBtn && !submitBtn.dataset.defaultLabel) {
+            submitBtn.dataset.defaultLabel = continueLabel;
+        }
         const projectName = document.getElementById('project-name').value.trim();
         
         // Validate project name
@@ -364,11 +375,7 @@ const onboarding = {
         const csrfToken = await this.getCSRFToken();
         if (!csrfToken) {
             alert('Failed to get security token. Please refresh the page and try again.');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('loading');
-                submitBtn.textContent = 'Continue';
-            }
+            this.resetSiteInfoSubmitButton(submitBtn, continueLabel);
             return;
         }
         
@@ -393,11 +400,13 @@ const onboarding = {
                     logoPath = uploadResult.data.logoPath;
                 } else {
                     alert('Failed to upload logo: ' + (uploadResult.message || 'Unknown error'));
+                    this.resetSiteInfoSubmitButton(submitBtn, continueLabel);
                     return;
                 }
             } catch (error) {
                 console.error('Error uploading logo:', error);
                 alert('Failed to upload logo. Please try again.');
+                this.resetSiteInfoSubmitButton(submitBtn, continueLabel);
                 return;
             }
         }
@@ -450,11 +459,13 @@ const onboarding = {
                 this.nextStep();
             } else {
                 alert('Failed to save project information: ' + (data.message || 'Unknown error'));
+                this.resetSiteInfoSubmitButton(submitBtn, continueLabel);
             }
         })
         .catch(error => {
             console.error('Error saving project info:', error);
             alert('Failed to save project information. Please try again.');
+            this.resetSiteInfoSubmitButton(submitBtn, continueLabel);
         });
     },
     
