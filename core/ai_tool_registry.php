@@ -1,0 +1,189 @@
+<?php
+/**
+ * P3-M4: Role-scoped AI tool definitions derived from core/ai_permissions.php.
+ */
+
+require_once __DIR__ . '/ai_permissions.php';
+
+/** @return array<string, array{name: string, description: string, category: string, inputSchema: array}> */
+function birkly_ai_tool_definitions(): array
+{
+    return [
+        'read_entry' => ['name' => 'read_entry', 'description' => 'Read a specific entry by collection slug and entry slug or ID', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection']]],
+        'list_entries' => ['name' => 'list_entries', 'description' => 'List entries in a collection', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'limit' => ['type' => 'number']], 'required' => ['collection']]],
+        'read_collection' => ['name' => 'read_collection', 'description' => 'Get details and schema of a collection', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
+        'list_collections' => ['name' => 'list_collections', 'description' => 'List all content collections', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'get_collection' => ['name' => 'get_collection', 'description' => 'Get details of a specific collection (MCP alias)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
+        'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'list_media' => ['name' => 'list_media', 'description' => 'List media library files', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'read_media' => ['name' => 'read_media', 'description' => 'Read metadata for a media file', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'list_users' => ['name' => 'list_users', 'description' => 'List human users', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'read_user' => ['name' => 'read_user', 'description' => 'Read a user by ID or email', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'email' => ['type' => 'string']]]],
+        'read_settings' => ['name' => 'read_settings', 'description' => 'Read system settings', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'list_roles' => ['name' => 'list_roles', 'description' => 'List defined roles', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'read_role' => ['name' => 'read_role', 'description' => 'Read a role by ID or name', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'name' => ['type' => 'string']]]],
+        'list_pages' => ['name' => 'list_pages', 'description' => 'List site pages', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'read_page' => ['name' => 'read_page', 'description' => 'Read a page by slug or ID', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'id' => ['type' => 'string']]]],
+        'list_activity' => ['name' => 'list_activity', 'description' => 'List recent activity log entries', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['limit' => ['type' => 'number']]]],
+        'list_plugins' => ['name' => 'list_plugins', 'description' => 'List installed plugins', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'create_collection' => ['name' => 'create_collection', 'description' => 'Create a new content collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array']], 'required' => ['name', 'slug']]],
+        'update_collection' => ['name' => 'update_collection', 'description' => 'Update an existing collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['slug']]],
+        'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
+        'create_entry' => ['name' => 'create_entry', 'description' => 'Create a new entry in a collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
+        'update_entry' => ['name' => 'update_entry', 'description' => 'Update an existing entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'id']]],
+        'delete_entry' => ['name' => 'delete_entry', 'description' => 'Delete an entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection', 'id']]],
+        'upload_media' => ['name' => 'upload_media', 'description' => 'Upload a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'delete_media' => ['name' => 'delete_media', 'description' => 'Delete a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'update_media' => ['name' => 'update_media', 'description' => 'Update media metadata', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['id']]],
+        'create_media_folder' => ['name' => 'create_media_folder', 'description' => 'Create a media folder', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string']], 'required' => ['name']]],
+        'delete_media_folder' => ['name' => 'delete_media_folder', 'description' => 'Delete a media folder', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string']], 'required' => ['name']]],
+        'move_media' => ['name' => 'move_media', 'description' => 'Move a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'folder' => ['type' => 'string']], 'required' => ['id']]],
+        'update_settings' => ['name' => 'update_settings', 'description' => 'Update system settings', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['category' => ['type' => 'string'], 'data' => ['type' => 'object']]]],
+        'create_page' => ['name' => 'create_page', 'description' => 'Create a new page', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'update_page' => ['name' => 'update_page', 'description' => 'Update an existing page', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'data' => ['type' => 'object']]]],
+        'update_user' => ['name' => 'update_user', 'description' => 'Update a user account', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'data' => ['type' => 'object']]]],
+        'delete_user' => ['name' => 'delete_user', 'description' => 'Delete a user account', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']]]],
+        'create_role' => ['name' => 'create_role', 'description' => 'Create a new role', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'update_role' => ['name' => 'update_role', 'description' => 'Update a role', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'delete_role' => ['name' => 'delete_role', 'description' => 'Delete a role', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']]]],
+        'delete_page' => ['name' => 'delete_page', 'description' => 'Delete a page', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']]]],
+        'activate_plugin' => ['name' => 'activate_plugin', 'description' => 'Activate a plugin', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']]]],
+        'deactivate_plugin' => ['name' => 'deactivate_plugin', 'description' => 'Deactivate a plugin', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']]]],
+    ];
+}
+
+/** @return array<string, array> */
+function birkly_ai_tools_for_user(array $aiUser): array
+{
+    $definitions = birkly_ai_tool_definitions();
+    $allowed = [];
+    foreach (birkly_ai_action_permission_map() as $actionType => $_) {
+        if (!isset($definitions[$actionType])) {
+            continue;
+        }
+        if (birkly_ai_user_can_action($aiUser, $actionType)) {
+            $allowed[$actionType] = $definitions[$actionType];
+        }
+    }
+    return $allowed;
+}
+
+function birkly_ai_is_read_action(string $actionType): bool
+{
+    $definitions = birkly_ai_tool_definitions();
+    return isset($definitions[$actionType]) && ($definitions[$actionType]['category'] ?? '') === 'read';
+}
+
+function birkly_ai_tools_openai_format(array $aiUser): array
+{
+    $tools = [];
+    foreach (birkly_ai_tools_for_user($aiUser) as $def) {
+        $tools[] = ['type' => 'function', 'function' => ['name' => $def['name'], 'description' => $def['description'], 'parameters' => $def['inputSchema']]];
+    }
+    return $tools;
+}
+
+function birkly_ai_tools_mcp_format(array $aiUser): array
+{
+    $tools = [];
+    foreach (birkly_ai_tools_for_user($aiUser) as $def) {
+        $tools[] = ['name' => $def['name'], 'description' => $def['description'], 'inputSchema' => $def['inputSchema']];
+    }
+    return $tools;
+}
+
+function birkly_ai_tools_prompt_section(array $aiUser): string
+{
+    $lines = ["AVAILABLE TOOLS (use JSON actions or native tool calls):"];
+    foreach (birkly_ai_tools_for_user($aiUser) as $def) {
+        $lines[] = '- ' . $def['name'] . ' [' . $def['category'] . ']: ' . $def['description'];
+    }
+    return implode("\n", $lines) . "\n";
+}
+
+function birkly_ai_tool_calls_to_actions(array $toolCalls): array
+{
+    $actions = [];
+    foreach ($toolCalls as $call) {
+        $name = $call['function']['name'] ?? $call['name'] ?? '';
+        if ($name === '') {
+            continue;
+        }
+        $rawArgs = $call['function']['arguments'] ?? $call['arguments'] ?? '{}';
+        $args = is_string($rawArgs) ? (json_decode($rawArgs, true) ?: []) : (is_array($rawArgs) ? $rawArgs : []);
+        if (in_array($name, ['create_entry', 'update_entry'], true) && isset($args['data']) && is_array($args['data'])) {
+            $inner = $args['data'];
+            unset($args['data']);
+            $args = array_merge($args, $inner);
+        }
+        $type = $name === 'get_collection' ? 'read_collection' : $name;
+        if ($type === 'read_collection' && isset($args['slug']) && !isset($args['collection'])) {
+            $args = ['slug' => $args['slug']];
+        }
+        $actions[] = ['type' => $type, 'data' => $args, 'description' => $name];
+    }
+    return $actions;
+}
+
+function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array $aiUser, string $source = 'mcp'): array
+{
+    require_once __DIR__ . '/../api/storage.php';
+    require_once __DIR__ . '/../api/ai_helpers.php';
+
+    $actionType = $toolName === 'get_collection' ? 'read_collection' : $toolName;
+    if ($toolName === 'get_collection' && isset($arguments['slug'])) {
+        $arguments = ['slug' => $arguments['slug']];
+    }
+
+    $denied = birkly_ai_enforce_action_permission($aiUser, $actionType);
+    if ($denied !== null) {
+        return ['isError' => true, 'content' => [['type' => 'text', 'text' => $denied['message']]]];
+    }
+
+    if ($actionType === 'get_system_context') {
+        return ['content' => [['type' => 'text', 'text' => json_encode(generateSystemContext($aiUser), JSON_PRETTY_PRINT)]]];
+    }
+
+    if (birkly_ai_is_read_action($actionType)) {
+        require_once __DIR__ . '/../api/ai_read_actions.php';
+        $result = executeReadAction(['type' => $actionType, 'data' => $arguments], $aiUser);
+        if (!($result['success'] ?? false)) {
+            return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Action failed']]];
+        }
+        return ['content' => [['type' => 'text', 'text' => json_encode($result['data'] ?? $result, JSON_PRETTY_PRINT)]]];
+    }
+
+    $requireApproval = $aiUser['require_approval'] ?? true;
+    if (is_string($requireApproval)) {
+        $requireApproval = in_array(strtolower($requireApproval), ['1', 'true', 'yes', 'on'], true);
+    }
+
+    if ($requireApproval) {
+        $approvalStorage = new Storage('../data/ai_approvals');
+        $approvalId = 'approval_' . bin2hex(random_bytes(8));
+        $approvalStorage->write($approvalId . '.json', [
+            'id' => $approvalId,
+            'ai_user_id' => $aiUser['id'],
+            'action_type' => $actionType,
+            'action_data' => $arguments,
+            'description' => ucfirst(str_replace('_', ' ', $actionType)),
+            'status' => 'pending',
+            'created_at' => date('c'),
+            'source' => $source,
+        ]);
+        return ['content' => [['type' => 'text', 'text' => 'Action requested. Approval ID: ' . $approvalId]]];
+    }
+
+    require_once __DIR__ . '/../api/ai_approvals.php';
+    $result = executeAiAction(['action_type' => $actionType, 'action_data' => $arguments, 'ai_user_id' => $aiUser['id']]);
+    if (!($result['success'] ?? false)) {
+        return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Execution failed']]];
+    }
+    return ['content' => [['type' => 'text', 'text' => json_encode($result, JSON_PRETTY_PRINT)]]];
+}
+
+function birkly_ai_mcp_server_url(): string
+{
+    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    return $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/api/mcp_server.php';
+}

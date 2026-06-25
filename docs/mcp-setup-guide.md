@@ -20,18 +20,18 @@ If you want to use ChatGPT, you should use the **OpenAI** provider connection in
 2. Install it on your computer
 3. Sign in with your Anthropic account
 
-### Step 2: Create MCP Connection in Birkly
+### Step 2: Create an AI Connection in Birkly
 
 1. Go to **Settings > AI Connections** in your Birkly admin panel
 2. Click **"+ Add Connection"**
-3. Select **"MCP (Model Context Protocol)"** as the provider
+3. Select any provider (OpenAI, Anthropic, MCP, etc.)
 4. Fill in the connection details:
    - **Connection Name**: e.g., "My Claude Desktop"
-   - **Role**: Choose the permissions (Editor recommended)
+   - **Role**: Choose the permissions (Editor recommended for writes; Viewer for read-only MCP)
    - **Who can use**: Choose access level
    - **Require approval**: Enable if you want to review AI actions
 5. Click **"Connect"**
-6. **Copy the MCP Server URL and API Key** that are displayed
+6. Use **Reveal** or copy the **MCP Server URL** and **MCP API Key** shown on the connection card (every AI connection gets its own per-connection MCP key)
 
 ### Step 3: Configure Claude Desktop
 
@@ -63,8 +63,8 @@ Edit the config file and add your Birkly MCP server:
         "const http = require('http'); const url = require('url'); const querystring = require('querystring'); const server = http.createServer((req, res) => { const parsed = url.parse(req.url, true); const apiKey = parsed.query.api_key || req.headers['x-mcp-api-key']; if (!apiKey) { res.writeHead(401); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32000, message: 'API key required'}})); return; } let body = ''; req.on('data', chunk => { body += chunk; }); req.on('end', () => { const input = JSON.parse(body || '{}'); const method = input.method || parsed.query.method || ''; const params = input.params || {}; fetch('YOUR_HARUCMS_URL/api/mcp_server.php?method=' + method + '&api_key=' + apiKey, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-MCP-API-Key': apiKey}, body: JSON.stringify({method, params, id: input.id})}).then(r => r.json()).then(data => { res.writeHead(200, {'Content-Type': 'application/json'}); res.end(JSON.stringify(data)); }).catch(err => { res.writeHead(500); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32603, message: err.message}})); }); }); }); server.listen(0, () => { process.stdout.write(JSON.stringify({mcpServer: {name: 'birkly', version: '1.0.0'}}) + '\\n'); });"
       ],
       "env": {
-        "HARUCMS_URL": "http://localhost:8080",
-        "HARUCMS_API_KEY": "YOUR_MCP_API_KEY_HERE"
+        "BIRKLY_URL": "http://localhost:8080",
+        "BIRKLY_MCP_API_KEY": "YOUR_MCP_API_KEY_HERE"
       }
     }
   }
@@ -88,8 +88,8 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 
-const HARUCMS_URL = process.env.HARUCMS_URL || 'http://localhost:8080';
-const API_KEY = process.env.HARUCMS_API_KEY || '';
+const BIRKLY_URL = process.env.BIRKLY_URL || process.env.HARUCMS_URL || 'http://localhost:8080';
+const API_KEY = process.env.BIRKLY_MCP_API_KEY || process.env.HARUCMS_API_KEY || '';
 
 // MCP stdio server
 process.stdin.setEncoding('utf8');
@@ -126,7 +126,7 @@ process.stdin.on('data', async (chunk) => {
       }
       
       // Forward other requests to Birkly
-      const birklyUrl = new URL('/api/mcp_server.php', HARUCMS_URL);
+      const birklyUrl = new URL('/api/mcp_server.php', BIRKLY_URL);
       birklyUrl.searchParams.set('method', message.method);
       birklyUrl.searchParams.set('api_key', API_KEY);
       
@@ -189,8 +189,8 @@ Then configure Claude Desktop:
       "command": "node",
       "args": ["/path/to/mcp-bridge.js"],
       "env": {
-        "HARUCMS_URL": "http://localhost:8080",
-        "HARUCMS_API_KEY": "YOUR_MCP_API_KEY_FROM_HARUCMS"
+        "BIRKLY_URL": "http://localhost:8080",
+        "BIRKLY_MCP_API_KEY": "YOUR_MCP_API_KEY_FROM_BIRKLY"
       }
     }
   }
@@ -238,7 +238,7 @@ ChatGPT doesn't support MCP, but you could:
 ### MCP Server Not Connecting
 
 1. **Check the API Key**: Make sure you copied the correct MCP API key from Birkly
-2. **Check the URL**: Ensure `HARUCMS_URL` points to your Birkly installation
+2. **Check the URL**: Ensure `BIRKLY_URL` (or legacy `HARUCMS_URL`) points to your Birkly installation
 3. **Check Network**: Make sure Claude Desktop can reach your Birkly server
 4. **Check Logs**: Look at `logs/php_errors.log` in Birkly for errors
 
