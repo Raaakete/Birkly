@@ -67,6 +67,7 @@
    Global Features
    ============================================ */
 @import url('ai-chat-button.css');
+@import url('feedback-button.css');
 
 /* ============================================
    Legacy Styles (if any remain)
