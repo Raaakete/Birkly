@@ -16,7 +16,7 @@
   </div>
   
   <div class="main-actions-bar">
-    <button class="btn btn-primary" onclick="openCreateAutomationModal()">
+    <button type="button" class="btn btn-primary" id="create-workflow-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -32,6 +32,17 @@
       </div>
     </div>
   </div>
+
+  <!-- Inbound webhooks (stub UI) -->
+  <div class="automation-section webhook-section">
+    <h3>Inbound Webhooks</h3>
+    <p class="form-help">External systems can trigger automations via signed webhook URLs. Create a webhook, then use a <strong>Webhook Inbound</strong> trigger in your automation.</p>
+    <div class="webhook-create-row">
+      <input type="text" id="new-webhook-name" class="input" placeholder="Webhook name">
+      <button type="button" class="btn btn-secondary" id="create-webhook-btn">Create Webhook</button>
+    </div>
+    <div id="inbound-webhooks-list" class="inbound-webhooks-list"></div>
+  </div>
 </div>
 
 <!-- Create/Edit Automation Modal -->
@@ -39,7 +50,7 @@
   <div class="modal-content" style="max-width: 900px;">
     <div class="modal-header">
       <h2 id="automation-modal-title">{translate 'admin.create_automation'}</h2>
-      <button class="modal-close-btn" onclick="closeAutomationModal()">&times;</button>
+      <button type="button" class="modal-close-btn" onclick="closeAutomationModal()">&times;</button>
     </div>
     <div class="modal-body">
       <form id="automation-form">
@@ -57,55 +68,32 @@
           </label>
         </div>
         
-        <!-- Trigger Section -->
         <div class="automation-section">
           <h3>{translate 'admin.trigger'}</h3>
           <p class="form-help">{translate 'admin.trigger_help'}</p>
-          
           <div class="form-group">
             <label for="trigger-type">{translate 'admin.trigger_type'} <span class="required">*</span></label>
             <select id="trigger-type" name="trigger[type]" class="input" required>
               <option value="">{translate 'admin.select_trigger'}</option>
             </select>
           </div>
-          
-          <div id="trigger-config" class="trigger-config" style="display: none;">
-            <!-- Trigger-specific configuration will be loaded here -->
-          </div>
+          <div id="trigger-config" class="trigger-config" style="display: none;"></div>
         </div>
         
-        <!-- Conditions Section -->
         <div class="automation-section">
           <h3>{translate 'admin.conditions_optional'}</h3>
           <p class="form-help">{translate 'admin.conditions_help'}</p>
-          
-          <div id="conditions-list" class="conditions-list">
-            <!-- Conditions will be added here -->
-          </div>
-          
+          <div id="conditions-list" class="conditions-list"></div>
           <button type="button" class="btn btn-secondary btn-sm" onclick="addCondition()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
             {translate 'admin.add_condition'}
           </button>
         </div>
         
-        <!-- Actions Section -->
         <div class="automation-section">
           <h3>{translate 'admin.actions'} <span class="required">*</span></h3>
           <p class="form-help">{translate 'admin.actions_help'}</p>
-          
-          <div id="actions-list" class="actions-list">
-            <!-- Actions will be added here -->
-          </div>
-          
+          <div id="actions-list" class="actions-list"></div>
           <button type="button" class="btn btn-secondary btn-sm" onclick="addAction()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
             {translate 'admin.add_action'}
           </button>
         </div>
@@ -115,6 +103,17 @@
             <input type="checkbox" id="stop-on-failure" name="stop_on_failure">
             <span>{translate 'admin.stop_on_first_failure'}</span>
           </label>
+        </div>
+
+        <div class="automation-section preview-section">
+          <h3>Test &amp; Preview</h3>
+          <p class="form-help">Dry-run the saved automation or preview template variables in action fields.</p>
+          <div class="preview-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="automation-test-btn">Test Run</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="template-preview-btn">Preview Template</button>
+          </div>
+          <pre id="automation-test-result" class="preview-output"></pre>
+          <pre id="template-preview-output" class="preview-output"></pre>
         </div>
       </form>
     </div>
@@ -130,7 +129,7 @@
   <div class="modal-content" style="max-width: 1000px;">
     <div class="modal-header">
       <h2 id="automation-logs-title">{translate 'admin.execution_logs'}</h2>
-      <button class="modal-close-btn" onclick="closeLogsModal()">&times;</button>
+      <button type="button" class="modal-close-btn" onclick="closeLogsModal()">&times;</button>
     </div>
     <div class="modal-body">
       <div id="automation-logs-content">
@@ -144,17 +143,8 @@
 </div>
 
 <style>
-.automation-page {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.automation-list {
-  display: grid;
-  gap: 1rem;
-}
-
+.automation-page { padding: 20px; max-width: 1400px; margin: 0 auto; }
+.automation-list { display: grid; gap: 1rem; }
 .automation-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
@@ -164,731 +154,39 @@
   justify-content: space-between;
   align-items: flex-start;
 }
-
-.automation-card-header {
-  flex: 1;
-}
-
-.automation-card h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2rem;
-}
-
+.automation-card-header { flex: 1; }
+.automation-card h3 { margin: 0 0 0.5rem 0; font-size: 1.2rem; }
 .automation-card-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
+  display: flex; gap: 1rem; font-size: 0.875rem;
+  color: var(--text-secondary); margin-bottom: 0.5rem; flex-wrap: wrap;
 }
-
-.automation-card-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
+.automation-card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .automation-section {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-sm);
+  margin-bottom: 2rem; padding: 1rem;
+  background: var(--bg-elevated); border-radius: var(--radius-sm);
 }
-
-.automation-section h3 {
-  margin-top: 0;
-  font-size: 1.1rem;
-}
-
+.automation-section h3 { margin-top: 0; font-size: 1.1rem; }
 .condition-item, .action-item {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
+  margin-bottom: 1rem; padding: 1rem;
+  background: var(--bg-secondary); border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
 }
-
-.block-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
+.block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.block-header h4 { margin: 0; font-size: 1rem; }
+.block-config { margin-top: 0.75rem; }
+.webhook-section { margin-top: 2rem; }
+.webhook-create-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; max-width: 480px; }
+.webhook-card {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.75rem; border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm); margin-bottom: 0.5rem;
 }
-
-.block-header h4 {
-  margin: 0;
-  font-size: 1rem;
+.preview-output {
+  margin-top: 0.75rem; padding: 0.75rem; background: var(--bg-secondary);
+  border-radius: var(--radius-sm); font-size: 0.85rem; white-space: pre-wrap;
+  min-height: 2rem;
 }
-
-.block-config {
-  margin-top: 0.75rem;
-}
+.preview-actions { display: flex; gap: 0.5rem; }
 </style>
 
-<script>
-let automations = [];
-let availableBlocks = { triggers: [], conditions: [], actions: [] };
-let currentAutomation = null;
-
-// Load automations
-async function loadAutomations() {
-  try {
-    const response = await fetch('/api/automation.php?action=list');
-    const result = await response.json();
-    
-    if (result.status === 'ok') {
-      automations = result.data.automations || [];
-      renderAutomations();
-    } else {
-      showMessage('Error loading automations: ' + result.message, 'error');
-    }
-  } catch (error) {
-    console.error('Error loading automations:', error);
-    showMessage('Error loading automations: ' + error.message, 'error');
-  }
-}
-
-// Load available blocks
-async function loadBlocks() {
-  try {
-    const response = await fetch('/api/automation.php?action=get_blocks');
-    const result = await response.json();
-    
-    if (result.status === 'ok') {
-      availableBlocks = result.data.blocks || { triggers: [], conditions: [], actions: [] };
-      populateTriggerSelect();
-    }
-  } catch (error) {
-    console.error('Error loading blocks:', error);
-  }
-}
-
-function populateTriggerSelect() {
-  const select = document.getElementById('trigger-type');
-  if (!select) return;
-  
-  select.innerHTML = '<option value="">Select trigger...</option>';
-  
-  Object.keys(availableBlocks.triggers || {}).forEach(triggerId => {
-    const trigger = availableBlocks.triggers[triggerId];
-    const option = document.createElement('option');
-    option.value = triggerId;
-    option.textContent = trigger.name || triggerId;
-    select.appendChild(option);
-  });
-}
-
-function renderAutomations() {
-  const container = document.getElementById('automation-list');
-  if (!container) return;
-  
-  if (automations.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <p>No automations yet.</p>
-        <button class="btn btn-primary" onclick="openCreateAutomationModal()">Create First Automation</button>
-      </div>
-    `;
-    return;
-  }
-  
-  container.innerHTML = automations.map(automation => `
-    <div class="automation-card">
-      <div class="automation-card-header">
-        <h3>${escapeHtml(automation.name || 'Untitled')}</h3>
-        <div class="automation-card-meta">
-          <span class="status-badge ${automation.enabled ? 'active' : 'inactive'}">
-            ${automation.enabled ? 'Enabled' : 'Disabled'}
-          </span>
-          <span>Trigger: ${escapeHtml(automation.trigger?.type || 'unknown')}</span>
-          <span>${automation.actions?.length || 0} action(s)</span>
-        </div>
-      </div>
-      <div class="automation-card-actions">
-        <button class="btn btn-sm btn-secondary" onclick="editAutomation('${automation.id}')">Edit</button>
-        <button class="btn btn-sm btn-secondary" onclick="viewLogs('${automation.id}')">Logs</button>
-        <button class="btn btn-sm ${automation.enabled ? 'btn-warning' : 'btn-primary'}" 
-                onclick="toggleAutomation('${automation.id}', ${automation.enabled})">
-          ${automation.enabled ? 'Disable' : 'Enable'}
-        </button>
-        <button class="btn btn-sm btn-danger" onclick="deleteAutomation('${automation.id}')">Delete</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function openCreateAutomationModal() {
-  currentAutomation = null;
-  document.getElementById('automation-modal-title').textContent = 'Create Automation';
-  document.getElementById('automation-form').reset();
-  document.getElementById('automation-id').value = '';
-  document.getElementById('conditions-list').innerHTML = '';
-  document.getElementById('actions-list').innerHTML = '';
-  document.getElementById('trigger-config').style.display = 'none';
-  document.getElementById('automation-modal').classList.add('active');
-}
-
-function closeAutomationModal() {
-  document.getElementById('automation-modal').classList.remove('active');
-}
-
-async function editAutomation(automationId) {
-  try {
-    const response = await fetch(`/api/automation.php?action=get&automation_id=${encodeURIComponent(automationId)}`);
-    const result = await response.json();
-    
-    if (result.status === 'ok') {
-      currentAutomation = result.data.automation;
-      populateAutomationForm(currentAutomation);
-      document.getElementById('automation-modal-title').textContent = 'Edit Automation';
-      document.getElementById('automation-modal').classList.add('active');
-    } else {
-      showMessage('Error loading automation: ' + result.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Error: ' + error.message, 'error');
-  }
-}
-
-function populateAutomationForm(automation) {
-  document.getElementById('automation-id').value = automation.id || '';
-  document.getElementById('automation-name').value = automation.name || '';
-  document.getElementById('automation-enabled').checked = automation.enabled !== false;
-  document.getElementById('stop-on-failure').checked = automation.stop_on_failure || false;
-  
-  // Set trigger
-  if (automation.trigger) {
-    document.getElementById('trigger-type').value = automation.trigger.type || '';
-    loadTriggerConfig(automation.trigger.type, automation.trigger.config || {});
-  }
-  
-  // Populate conditions
-  const conditionsList = document.getElementById('conditions-list');
-  conditionsList.innerHTML = '';
-  if (automation.conditions) {
-    automation.conditions.forEach((condition, index) => {
-      addConditionToForm(condition, index);
-    });
-  }
-  
-  // Populate actions
-  const actionsList = document.getElementById('actions-list');
-  actionsList.innerHTML = '';
-  if (automation.actions) {
-    automation.actions.forEach((action, index) => {
-      addActionToForm(action, index);
-    });
-  }
-}
-
-function loadTriggerConfig(triggerType, config = {}) {
-  const container = document.getElementById('trigger-config');
-  if (!triggerType) {
-    container.style.display = 'none';
-    return;
-  }
-  
-  const trigger = availableBlocks.triggers[triggerType];
-  if (!trigger) {
-    container.style.display = 'none';
-    return;
-  }
-  
-  container.style.display = 'block';
-  container.innerHTML = '';
-  
-  const schema = trigger.schema || {};
-  Object.keys(schema).forEach(field => {
-    const fieldSchema = schema[field];
-    const div = document.createElement('div');
-    div.className = 'form-group';
-    
-    const label = document.createElement('label');
-    label.textContent = fieldSchema.label || field;
-    if (fieldSchema.required) {
-      label.innerHTML += ' <span class="required">*</span>';
-    }
-    div.appendChild(label);
-    
-    let input;
-    if (fieldSchema.type === 'select') {
-      input = document.createElement('select');
-      input.className = 'input';
-      input.name = `trigger[config][${field}]`;
-      if (fieldSchema.options) {
-        fieldSchema.options.forEach(opt => {
-          const option = document.createElement('option');
-          option.value = opt.value;
-          option.textContent = opt.label;
-          if (config[field] === opt.value) {
-            option.selected = true;
-          }
-          input.appendChild(option);
-        });
-      }
-    } else {
-      input = document.createElement('input');
-      input.type = fieldSchema.type || 'text';
-      input.className = 'input';
-      input.name = `trigger[config][${field}]`;
-      input.value = config[field] || '';
-    }
-    
-    if (fieldSchema.required) {
-      input.required = true;
-    }
-    
-    div.appendChild(input);
-    container.appendChild(div);
-  });
-}
-
-document.getElementById('trigger-type')?.addEventListener('change', function() {
-  loadTriggerConfig(this.value);
-});
-
-function addCondition() {
-  const conditionsList = document.getElementById('conditions-list');
-  const index = conditionsList.children.length;
-  addConditionToForm({ type: '', config: {} }, index);
-}
-
-function addConditionToForm(condition, index) {
-  const conditionsList = document.getElementById('conditions-list');
-  const div = document.createElement('div');
-  div.className = 'condition-item';
-  div.dataset.index = index;
-  
-  const conditionBlocks = availableBlocks.conditions || {};
-  const options = Object.keys(conditionBlocks).map(id => {
-    const block = conditionBlocks[id];
-    return `<option value="${id}" ${condition.type === id ? 'selected' : ''}>${block.name || id}</option>`;
-  }).join('');
-  
-  div.innerHTML = `
-    <div class="block-header">
-      <h4>Condition ${index + 1}</h4>
-      <button type="button" class="btn-icon" onclick="removeCondition(${index})">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3,6 5,6 21,6"></polyline>
-          <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-        </svg>
-      </button>
-    </div>
-    <div class="form-group">
-      <label>Condition Type</label>
-      <select name="conditions[${index}][type]" class="input condition-type-select" onchange="loadConditionConfig(${index}, this.value)">
-        <option value="">Select condition...</option>
-        ${options}
-      </select>
-    </div>
-    <div class="block-config condition-config-${index}"></div>
-  `;
-  
-  conditionsList.appendChild(div);
-  
-  if (condition.type) {
-    loadConditionConfig(index, condition.type, condition.config || {});
-  }
-}
-
-function addAction() {
-  const actionsList = document.getElementById('actions-list');
-  const index = actionsList.children.length;
-  addActionToForm({ type: '', config: {} }, index);
-}
-
-function addActionToForm(action, index) {
-  const actionsList = document.getElementById('actions-list');
-  const div = document.createElement('div');
-  div.className = 'action-item';
-  div.dataset.index = index;
-  
-  const actionBlocks = availableBlocks.actions || {};
-  const options = Object.keys(actionBlocks).map(id => {
-    const block = actionBlocks[id];
-    return `<option value="${id}" ${action.type === id ? 'selected' : ''}>${block.name || id}</option>`;
-  }).join('');
-  
-  div.innerHTML = `
-    <div class="block-header">
-      <h4>Action ${index + 1}</h4>
-      <button type="button" class="btn-icon" onclick="removeAction(${index})">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3,6 5,6 21,6"></polyline>
-          <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-        </svg>
-      </button>
-    </div>
-    <div class="form-group">
-      <label>Action Type <span class="required">*</span></label>
-      <select name="actions[${index}][type]" class="input action-type-select" required onchange="loadActionConfig(${index}, this.value)">
-        <option value="">Select action...</option>
-        ${options}
-      </select>
-    </div>
-    <div class="block-config action-config-${index}"></div>
-  `;
-  
-  actionsList.appendChild(div);
-  
-  if (action.type) {
-    loadActionConfig(index, action.type, action.config || {});
-  }
-}
-
-function loadConditionConfig(index, conditionType, config = {}) {
-  const container = document.querySelector(`.condition-config-${index}`);
-  if (!container || !conditionType) {
-    return;
-  }
-  
-  const condition = availableBlocks.conditions[conditionType];
-  if (!condition) {
-    container.innerHTML = '';
-    return;
-  }
-  
-  renderBlockConfig(container, condition.schema || {}, config, `conditions[${index}][config]`);
-}
-
-function loadActionConfig(index, actionType, config = {}) {
-  const container = document.querySelector(`.action-config-${index}`);
-  if (!container || !actionType) {
-    return;
-  }
-  
-  const action = availableBlocks.actions[actionType];
-  if (!action) {
-    container.innerHTML = '';
-    return;
-  }
-  
-  renderBlockConfig(container, action.schema || {}, config, `actions[${index}][config]`);
-}
-
-function renderBlockConfig(container, schema, config, namePrefix) {
-  container.innerHTML = '';
-  
-  Object.keys(schema).forEach(field => {
-    const fieldSchema = schema[field];
-    const div = document.createElement('div');
-    div.className = 'form-group';
-    
-    const label = document.createElement('label');
-    label.textContent = fieldSchema.label || field;
-    if (fieldSchema.required) {
-      label.innerHTML += ' <span class="required">*</span>';
-    }
-    div.appendChild(label);
-    
-    let input;
-    if (fieldSchema.type === 'select') {
-      input = document.createElement('select');
-      input.className = 'input';
-      input.name = `${namePrefix}[${field}]`;
-      if (fieldSchema.options) {
-        fieldSchema.options.forEach(opt => {
-          const option = document.createElement('option');
-          option.value = opt.value;
-          option.textContent = opt.label;
-          if (config[field] === opt.value) {
-            option.selected = true;
-          }
-          input.appendChild(option);
-        });
-      }
-    } else if (fieldSchema.type === 'textarea') {
-      input = document.createElement('textarea');
-      input.className = 'input';
-      input.name = `${namePrefix}[${field}]`;
-      input.rows = fieldSchema.rows || 4;
-      input.value = config[field] || '';
-    } else {
-      input = document.createElement('input');
-      input.type = fieldSchema.type || 'text';
-      input.className = 'input';
-      input.name = `${namePrefix}[${field}]`;
-      input.value = config[field] || '';
-      if (fieldSchema.placeholder) {
-        input.placeholder = fieldSchema.placeholder;
-      }
-    }
-    
-    if (fieldSchema.required) {
-      input.required = true;
-    }
-    
-    if (fieldSchema.description) {
-      const help = document.createElement('small');
-      help.className = 'form-help';
-      help.textContent = fieldSchema.description;
-      div.appendChild(help);
-    }
-    
-    div.appendChild(input);
-    container.appendChild(div);
-  });
-}
-
-function removeCondition(index) {
-  const item = document.querySelector(`.condition-item[data-index="${index}"]`);
-  if (item) {
-    item.remove();
-  }
-}
-
-function removeAction(index) {
-  const item = document.querySelector(`.action-item[data-index="${index}"]`);
-  if (item) {
-    item.remove();
-  }
-}
-
-async function saveAutomation() {
-  const form = document.getElementById('automation-form');
-  const formData = new FormData(form);
-  
-  const automationData = {
-    name: formData.get('name'),
-    enabled: formData.get('enabled') === 'on',
-    stop_on_failure: formData.get('stop_on_failure') === 'on',
-    trigger: {
-      type: formData.get('trigger[type]'),
-      config: {}
-    },
-    conditions: [],
-    actions: []
-  };
-  
-  // Collect trigger config
-  formData.forEach((value, key) => {
-    if (key.startsWith('trigger[config]')) {
-      const field = key.replace('trigger[config][', '').replace(']', '');
-      automationData.trigger.config[field] = value;
-    }
-  });
-  
-  // Collect conditions
-  const conditionItems = document.querySelectorAll('.condition-item');
-  conditionItems.forEach((item, index) => {
-    const typeSelect = item.querySelector('.condition-type-select');
-    if (typeSelect && typeSelect.value) {
-      const condition = { type: typeSelect.value, config: {} };
-      formData.forEach((value, key) => {
-        if (key.startsWith(`conditions[${index}][config]`)) {
-          const field = key.replace(`conditions[${index}][config][`, '').replace(']', '');
-          condition.config[field] = value;
-        }
-      });
-      automationData.conditions.push(condition);
-    }
-  });
-  
-  // Collect actions
-  const actionItems = document.querySelectorAll('.action-item');
-  actionItems.forEach((item, index) => {
-    const typeSelect = item.querySelector('.action-type-select');
-    if (typeSelect && typeSelect.value) {
-      const action = { type: typeSelect.value, config: {} };
-      formData.forEach((value, key) => {
-        if (key.startsWith(`actions[${index}][config]`)) {
-          const field = key.replace(`actions[${index}][config][`, '').replace(']', '');
-          action.config[field] = value;
-        }
-      });
-      automationData.actions.push(action);
-    }
-  });
-  
-  // Validate
-  if (!automationData.name || !automationData.trigger.type || automationData.actions.length === 0) {
-    showMessage('Please fill in all required fields', 'error');
-    return;
-  }
-  
-  try {
-    const automationId = formData.get('automation_id');
-    const action = automationId ? 'update' : 'create';
-    const url = '/api/automation.php?action=' + action;
-    
-    if (automationId) {
-      automationData.automation_id = automationId;
-    }
-    
-    automationData._csrf = getCsrfToken();
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(automationData)
-    });
-    
-    const result = await response.json();
-    
-    if (result.status === 'ok') {
-      showMessage('Automation saved successfully!', 'success');
-      closeAutomationModal();
-      loadAutomations();
-    } else {
-      showMessage('Error: ' + result.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Error: ' + error.message, 'error');
-  }
-}
-
-async function toggleAutomation(automationId, currentState) {
-  const automation = automations.find(a => a.id === automationId);
-  if (!automation) return;
-  
-  automation.enabled = !currentState;
-  
-  try {
-    const response = await fetch('/api/automation.php?action=update', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        automation_id: automationId,
-        enabled: automation.enabled,
-        _csrf: getCsrfToken()
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (result.status === 'ok') {
-      loadAutomations();
-    } else {
-      showMessage('Error: ' + result.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Error: ' + error.message, 'error');
-  }
-}
-
-async function deleteAutomation(automationId) {
-  if (!confirm('Are you sure you want to delete this automation?')) return;
-  
-  try {
-    const response = await fetch('/api/automation.php?action=delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        automation_id: automationId,
-        _csrf: getCsrfToken()
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (result.status === 'ok') {
-      showMessage('Automation deleted successfully!', 'success');
-      loadAutomations();
-    } else {
-      showMessage('Error: ' + result.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Error: ' + error.message, 'error');
-  }
-}
-
-async function viewLogs(automationId) {
-  const automation = automations.find(a => a.id === automationId);
-  if (!automation) return;
-  
-  document.getElementById('automation-logs-title').textContent = `Logs: ${automation.name}`;
-  document.getElementById('automation-logs-modal').classList.add('active');
-  
-  const content = document.getElementById('automation-logs-content');
-  content.innerHTML = '<div class="loading-state">Loading logs...</div>';
-  
-  try {
-    const response = await fetch(`/api/automation.php?action=get_logs&automation_id=${encodeURIComponent(automationId)}&limit=50`);
-    const result = await response.json();
-    
-    if (result.status === 'ok') {
-      const logs = result.data.logs || [];
-      renderLogs(logs);
-    } else {
-      content.innerHTML = `<div class="error-state">Error: ${result.message}</div>`;
-    }
-  } catch (error) {
-    content.innerHTML = `<div class="error-state">Error: ${error.message}</div>`;
-  }
-}
-
-function renderLogs(logs) {
-  const content = document.getElementById('automation-logs-content');
-  
-  if (logs.length === 0) {
-    content.innerHTML = '<p class="form-text">No execution logs yet.</p>';
-    return;
-  }
-  
-  let html = '<div class="logs-list">';
-  logs.forEach(log => {
-    const status = log.status || 'unknown';
-    const executedAt = log.executed_at ? new Date(log.executed_at).toLocaleString() : '';
-    const runtime = log.runtime_ms ? `${log.runtime_ms.toFixed(2)}ms` : '';
-    
-    html += `
-      <div class="log-item ${status}">
-        <div class="log-header">
-          <span class="log-status ${status}">${status}</span>
-          <span class="log-time">${executedAt}</span>
-          ${runtime ? `<span class="log-runtime">${runtime}</span>` : ''}
-        </div>
-        ${log.errors && log.errors.length > 0 ? `
-          <div class="log-errors">
-            <strong>Errors:</strong>
-            <ul>
-              ${log.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-        ${log.results && log.results.length > 0 ? `
-          <div class="log-results">
-            <strong>Results:</strong>
-            <ul>
-              ${log.results.map(r => `<li>${escapeHtml(r.action_type || 'action')}: ${r.success ? 'Success' : 'Failed'}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  });
-  html += '</div>';
-  content.innerHTML = html;
-}
-
-function closeLogsModal() {
-  document.getElementById('automation-logs-modal').classList.remove('active');
-}
-
-function getCsrfToken() {
-  const metaToken = document.querySelector('meta[name="csrf-token"]');
-  return metaToken ? metaToken.getAttribute('content') : '';
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function showMessage(message, type) {
-  alert(message); // Simple implementation - can be enhanced
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-  loadBlocks();
-  loadAutomations();
-});
-</script>
+{include_script 'automation.js'}

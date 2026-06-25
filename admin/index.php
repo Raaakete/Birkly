@@ -43,6 +43,8 @@ $pageViewPermissions = [
     // Settings & admin management
     'settings' => 'read_settings',
     'webhooks' => 'read_settings',
+    'automation' => 'manage_content',
+    'updates' => 'manage_settings',
     'roles' => 'manage_settings',
     'users' => 'list_users',
     'plugins' => 'manage_plugins',
@@ -124,6 +126,7 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'audit-log' => 'audit-log.html',
             'activity' => 'activity.html',
             'webhooks' => 'webhooks.html',
+            'automation' => 'automation.html',
             'onboarding' => 'onboarding.html',
             'help' => 'help.html',
             'community_users' => null, // Plugin page - handled dynamically
@@ -298,7 +301,7 @@ $isOnboarding = ($page === 'onboarding');
                         echo '</div>';
                     }
                 }
-            } elseif ($page === 'content' || $page === 'settings' || $page === 'account' || $page === 'entries' || $page === 'entry-editor' || $page === 'entry-detail' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'help') {
+            } elseif ($page === 'content' || $page === 'settings' || $page === 'account' || $page === 'entries' || $page === 'entry-editor' || $page === 'entry-detail' || $page === 'collection-editor' || $page === 'users' || $page === 'roles' || $page === 'plugins' || $page === 'webhooks' || $page === 'automation' || $page === 'help') {
                 // Content, Settings, Account, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages
                 try {
                     $data = fetch_admin_page_data($page, $_GET);
