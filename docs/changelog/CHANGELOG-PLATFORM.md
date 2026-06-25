@@ -6,6 +6,19 @@ Format: milestone batch → PRs → user-visible summary.
 
 ---
 
+## 2026-06-25 — Phase 2 verification hotfix
+
+| PR | Summary |
+|----|---------|
+| (pending) | Template safe renderer: validate parser output only |
+
+- **Regression fix:** P2-M6 safe renderer blocked legitimate admin template PHP (`require_once`, `include`, `required` field keys), breaking onboarding, entry editor, and entries list.
+- **Fix:** Mask developer-authored PHP blocks before validation; use word-boundary checks for parser-generated PHP.
+- **Verification:** 15 test suites PASS; browser QA PASS for onboarding, ContentEditor, groups DnD, `page_snapshot` API.
+- **Docs:** `docs/reviews/ux-flow-matrix.md` updated — all Phase 2 matrix rows green.
+
+---
+
 ## 2026-06-19 — P2-M7 Platform sync & kekaba proof
 
 | PR | Repo | Summary |

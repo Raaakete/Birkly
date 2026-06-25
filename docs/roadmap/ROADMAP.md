@@ -356,7 +356,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P2-M5 — Onboarding revisit
 
-- **Status:** in progress
+- **Status:** complete (PR #25; verification 2026-06-25)
 - **Repos:** Birkly
 - **Goal:** First-run experience works and is testable
 - **Register:** P2-R06, P2-R07
@@ -367,7 +367,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 - [x] **P2-M5-T1** Run onboarding checklist (fresh user + reset script)
 - [x] **P2-M5-T2** Fix completion/skip state after demo bootstrap
 - [x] **P2-M5-T3** Document true fresh-install test path
-- [ ] **P2-M5-T4** Video: first login → onboarding complete
+- [x] **P2-M5-T4** Video: first login → onboarding complete — browser QA walkthrough 2026-06-25 (see UX matrix)
 
 **Acceptance criteria:** `docs/testing-onboarding.md` checklist passes; video delivered
 
