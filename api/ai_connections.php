@@ -55,26 +55,13 @@ if ($action === 'list') {
             try {
                 $user = $storage->read($userFile);
                 if ($user && isset($user['type']) && $user['type'] === 'ai') {
-                    // Check if user can see this connection
-                    $isOwner = isset($user['created_by']) && $user['created_by'] === $currentUserId;
-                    // Handle both old format (shared: true/false) and new format (shared_type: 'none'/'all'/'specific')
-                    $sharedType = $user['shared_type'] ?? ($user['shared'] === true ? 'all' : ($user['shared'] === 'all' ? 'all' : ($user['shared'] === 'specific' ? 'specific' : 'none')));
-                    $canAccess = false;
-                    
-                    if ($isOwner) {
-                        $canAccess = true;
-                    } elseif ($sharedType === 'all') {
-                        $canAccess = true;
-                    } elseif ($sharedType === 'specific') {
-                        $allowedUsers = $user['allowed_users'] ?? [];
-                        $canAccess = in_array($currentUserId, $allowedUsers);
+                    if (!birkly_ai_user_can_access_connection($user, $currentUserId)) {
+                        continue;
                     }
-                    
-                    if ($canAccess) {
-                        // Don't send encrypted API key
-                        unset($user['api_key_encrypted']);
-                        $aiConnections[] = $user;
-                    }
+
+                    // Don't send encrypted API key
+                    unset($user['api_key_encrypted']);
+                    $aiConnections[] = $user;
                 }
             } catch (Exception $e) {
                 error_log("Error reading user file $userFile: " . $e->getMessage());
@@ -271,6 +258,12 @@ if ($action === 'update') {
         echo json_encode(['status' => 'error', 'message' => 'AI connection not found']);
         exit;
     }
+
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    if (!birkly_ai_user_can_manage_connection($aiUser, $currentUserId, $_SESSION['user'] ?? [])) {
+        echo json_encode(['status' => 'error', 'message' => 'You do not have permission to update this connection']);
+        exit;
+    }
     
     error_log("AI Connection Update: Before update, require_approval=" . var_export($aiUser['require_approval'] ?? 'not set', true));
     
@@ -385,6 +378,15 @@ if ($action === 'delete') {
         echo json_encode(['status' => 'error', 'message' => 'AI connection not found']);
         exit;
     }
+
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    if (!birkly_ai_user_can_manage_connection($aiUser, $currentUserId, $_SESSION['user'] ?? [])) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+        }
+        echo json_encode(['status' => 'error', 'message' => 'You do not have permission to delete this connection']);
+        exit;
+    }
     
     $result = $storage->delete($aiId . '.json');
     
@@ -425,6 +427,15 @@ if ($action === 'get') {
             header('Content-Type: application/json');
         }
         echo json_encode(['status' => 'error', 'message' => 'AI connection not found']);
+        exit;
+    }
+
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    if (!birkly_ai_user_can_access_connection($aiUser, $currentUserId)) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+        }
+        echo json_encode(['status' => 'error', 'message' => 'You do not have access to this connection']);
         exit;
     }
     

@@ -378,6 +378,100 @@ function convertRolePermissionsToFlatList($rolePermissions) {
  * Get permissions for a role (by ID or name)
  * Returns a flat list of permissions like ['read', 'write', 'manage_content', '*']
  */
+/**
+ * Normalize shared_type from connection record (handles legacy boolean shared field).
+ */
+function birkly_ai_normalize_shared_type(array $connection): string
+{
+    if (isset($connection['shared_type']) && is_string($connection['shared_type'])) {
+        $type = $connection['shared_type'];
+        if (in_array($type, ['none', 'all', 'specific'], true)) {
+            return $type;
+        }
+    }
+
+    $shared = $connection['shared'] ?? false;
+    if ($shared === true || $shared === 'all') {
+        return 'all';
+    }
+    if ($shared === 'specific') {
+        return 'specific';
+    }
+
+    return 'none';
+}
+
+/**
+ * Whether a human user may use (chat with) an AI connection.
+ */
+function birkly_ai_user_can_access_connection(array $connection, string $userId): bool
+{
+    if ($userId === '') {
+        return false;
+    }
+
+    if (isset($connection['created_by']) && $connection['created_by'] === $userId) {
+        return true;
+    }
+
+    $sharedType = birkly_ai_normalize_shared_type($connection);
+    if ($sharedType === 'all') {
+        return true;
+    }
+    if ($sharedType === 'specific') {
+        return in_array($userId, $connection['allowed_users'] ?? [], true);
+    }
+
+    return false;
+}
+
+/**
+ * Whether a human user may update/delete an AI connection.
+ */
+function birkly_ai_user_can_manage_connection(array $connection, string $userId, ?array $currentUser = null): bool
+{
+    if ($userId === '') {
+        return false;
+    }
+
+    if (isset($connection['created_by']) && $connection['created_by'] === $userId) {
+        return true;
+    }
+
+    if ($currentUser !== null && checkPermission($currentUser, '*')) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Whether a human user may view/approve/reject an approval for an AI connection.
+ */
+function birkly_ai_user_can_review_approval(array $approval, string $userId, ?array $currentUser = null): bool
+{
+    if ($userId === '') {
+        return false;
+    }
+
+    $aiUserId = $approval['ai_user_id'] ?? '';
+    if ($aiUserId === '') {
+        return false;
+    }
+
+    $usersStorage = new Storage('../users');
+    $aiUser = $usersStorage->read($aiUserId . '.json');
+    if (!$aiUser || ($aiUser['type'] ?? '') !== 'ai') {
+        return false;
+    }
+
+    if (birkly_ai_user_can_manage_connection($aiUser, $userId, $currentUser)) {
+        return true;
+    }
+
+    return birkly_ai_user_can_access_connection($aiUser, $userId);
+}
+
 function getPermissionsForRole($roleIdOrName) {
     if (empty($roleIdOrName)) {
         return [];

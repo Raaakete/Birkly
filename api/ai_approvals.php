@@ -23,6 +23,7 @@ require_once 'auth.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once 'log.php';
+require_once 'ai_helpers.php';
 
 $storage = new Storage('../data/ai_approvals');
 $input = sanitize_input(json_decode(file_get_contents('php://input'), true));
@@ -76,6 +77,8 @@ if ($action === 'create') {
 if ($action === 'list') {
     $status = $_GET['status'] ?? 'all';
     $approvalList = [];
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    $currentUser = $_SESSION['user'] ?? [];
     
     // Check if storage directory exists
     if (is_dir($storage->basePath)) {
@@ -84,6 +87,9 @@ if ($action === 'list') {
         foreach ($approvals as $approvalFile) {
             $approval = $storage->read($approvalFile);
             if ($approval) {
+                if (!birkly_ai_user_can_review_approval($approval, $currentUserId, $currentUser)) {
+                    continue;
+                }
                 if ($status === 'all' || ($approval['status'] ?? '') === $status) {
                     $approvalList[] = $approval;
                 }
@@ -118,6 +124,12 @@ if ($action === 'get') {
         echo json_encode(['status' => 'error', 'message' => 'Approval not found']);
         exit;
     }
+
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    if (!birkly_ai_user_can_review_approval($approval, $currentUserId, $_SESSION['user'] ?? [])) {
+        echo json_encode(['status' => 'error', 'message' => 'You do not have permission to view this approval']);
+        exit;
+    }
     
     echo json_encode([
         'status' => 'ok',
@@ -148,6 +160,12 @@ if ($action === 'approve') {
     
     if ($approval['status'] !== 'pending') {
         echo json_encode(['status' => 'error', 'message' => 'Approval already processed']);
+        exit;
+    }
+
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    if (!birkly_ai_user_can_review_approval($approval, $currentUserId, $_SESSION['user'] ?? [])) {
+        echo json_encode(['status' => 'error', 'message' => 'You do not have permission to approve this action']);
         exit;
     }
     
@@ -206,6 +224,12 @@ if ($action === 'reject') {
     
     if ($approval['status'] !== 'pending') {
         echo json_encode(['status' => 'error', 'message' => 'Approval already processed']);
+        exit;
+    }
+
+    $currentUserId = $_SESSION['user']['id'] ?? '';
+    if (!birkly_ai_user_can_review_approval($approval, $currentUserId, $_SESSION['user'] ?? [])) {
+        echo json_encode(['status' => 'error', 'message' => 'You do not have permission to reject this action']);
         exit;
     }
     
