@@ -66,7 +66,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     
     <div class="page-header pt-m pb-m">
         <div class="page-header-left">
-        <div class="breadcrumbs">
+        <div class="breadcrumbs" data-help-topic="entry-editor">
             <?php if (!empty($breadcrumbs)): ?>
                 <?php foreach ($breadcrumbs as $crumb): ?>
                     <?php if ($crumb['is_current']): ?>

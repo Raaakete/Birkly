@@ -53,6 +53,7 @@ data/plugins/
 
 # AI runtime data (conversations, approvals)
 data/ai_*
+data/feedback/
 
 # PHP dependencies
 vendor/
