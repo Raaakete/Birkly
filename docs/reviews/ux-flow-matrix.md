@@ -20,6 +20,17 @@
 | Public API list collections | API | **pass** | P2-M6 | `public_collection_meta_test.php` — contact `id` fallback (#26). |
 | Demo website / client render | Client | **pass** | P2-M6/M7 | `page_snapshot_test.php`; browser/curl `page_snapshot.php?page=index` → `status: ok`. |
 | page_bundle / page_snapshot | M4 APIs | **pass** | P2-M6 | Snapshots generated via `scripts/generate-page-snapshots.php`; dev smoke documented in P2-M7 notes. |
+| AI connect + role assign | BYOAI | **partial** | P3-M2/M3 | Connections work; RBAC not enforced on execute |
+| Admin AI chat (read action) | BYOAI | **partial** | P3-M4 | Floating chat works; structured tools pending |
+| AI write → approval queue | BYOAI | **partial** | P3-M2/M4 | Queue exists; ACL + role enforcement weak |
+| MCP external connect | BYOAI | **partial** | P3-M5 | HTTP MCP + bridge; role scope pending |
+| Automation builder page | Automation | **fail** | P3-M6 | Sidebar link exists; `?page=automation` not routed |
+| Automation trigger → log | Automation | **not tested** | P3-M7 | Backend wired; UI unreachable |
+| User plugin admin + permissions | User plugin | **fail** | P3-M8 | Plugin UI not routed; write hooks dead |
+| Alpha feedback submit → admin | Feedback | **not built** | P3-M10 | Pending |
+| Help home + doc search | Help | **not built** | P3-M11 | Pending |
+| ContentEditor blocks save/reload | ContentEditor | **partial** | P3-M12 | P2 components only; block system pending |
+| Birkly-Website alpha copy + legal | Client site | **not built** | P3-M13 | Pending |
 
 ## Summary counts
 

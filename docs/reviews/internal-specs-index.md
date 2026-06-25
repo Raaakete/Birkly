@@ -27,4 +27,4 @@ Links from roadmap milestones to in-repo specifications. Use when implementing o
 | Agent ops | Autonomous merge | `docs/agent-ops/AUTONOMOUS_EXECUTION.md` |
 | Values | Project values | `docs/PROJECT_VALUES.md` |
 
-**Execution handoff:** `docs/reviews/P2-lead-engineer-handoff.md`
+**Execution handoff:** `docs/reviews/P3-lead-engineer-handoff.md` (Phase 3) · `docs/reviews/P2-lead-engineer-handoff.md` (Phase 2, complete)
