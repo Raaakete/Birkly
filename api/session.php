@@ -63,4 +63,49 @@ function birkly_admin_session_start() {
         'samesite' => 'Strict'
     ]);
     session_start();
+}
+
+/**
+ * Resolve which session scope CSRF tokens should use.
+ * Returns one of: admin, cms, site.
+ */
+function birkly_resolve_csrf_session_scope(array $cookies, string $referer = ''): string {
+    if (!empty($cookies['birkly_admin_sid'])) {
+        return 'admin';
+    }
+
+    if (!empty($cookies['PHPSESSID'])) {
+        return 'cms';
+    }
+
+    if (strpos($referer, '/admin/') !== false) {
+        return 'cms';
+    }
+
+    if (!empty($cookies['birkly_site_sid'])) {
+        return 'site';
+    }
+
+    return 'site';
+}
+
+/**
+ * Start the session used for CSRF token generation/validation.
+ * Admin panel and onboarding use the default PHP session (PHPSESSID).
+ * Public website client library uses the site session (birkly_site_sid).
+ */
+function birkly_csrf_session_start(): void {
+    $scope = birkly_resolve_csrf_session_scope($_COOKIE, $_SERVER['HTTP_REFERER'] ?? '');
+
+    if ($scope === 'admin') {
+        birkly_admin_session_start();
+        return;
+    }
+
+    if ($scope === 'cms') {
+        haru_secure_session_start();
+        return;
+    }
+
+    birkly_site_session_start();
 } 

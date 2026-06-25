@@ -18,6 +18,7 @@ $suites = [
     '../fieldtypes/ContentEditor/tests/commands_registry_test.php',
     '../fieldtypes/ContentEditor/tests/readme_test.php',
     'onboarding_test.php',
+    'csrf_session_scope_test.php',
     'admin_routing_test.php',
     'template_safe_renderer_test.php',
     'public_collection_meta_test.php',
