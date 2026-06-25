@@ -4,13 +4,8 @@ require_once __DIR__ . '/plugins.php';
 
 // Register core admin pages
 function register_core_admin_pages() {
-    if (function_exists('register_admin_page')) {
-        register_admin_page('dashboard', '/admin/dashboard.html');
-        register_admin_page('content', '/admin/content.html');
-        register_admin_page('media', '/admin/media.html');
-        // Users are managed within settings, not as a separate admin page
-        register_admin_page('settings', '/admin/settings.html');
-    }
+    // Core CMS pages are routed via admin/index.php $allowedPages — not the plugin admin registry.
+    // register_admin_page() is for plugins only; registering core slugs here broke routing in P3-M8.
 }
 
 // Hook to add core dashboard stats
