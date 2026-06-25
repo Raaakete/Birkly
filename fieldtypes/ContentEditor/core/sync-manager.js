@@ -45,12 +45,15 @@ window.ContentEditorSync = {
         
         // Ensure at least one block element if there's content
         const hasText = html.replace(/<[^>]+>/g, '').trim().length > 0;
-        const hasBlockElements = html.match(/<(p|div|h[1-6]|ul|ol|blockquote|pre|table)/i);
+        const hasBlockElements = html.match(/<(p|div|h[1-6]|ul|ol|blockquote|pre|table|hr)/i);
         
         if (!hasText && !hasBlockElements) {
           html = '';
         }
         
+        // Strip editor-only block metadata before save
+        html = html.replace(/\s*data-block-type="[^"]*"/gi, '');
+
         // Only update if content actually changed
         if (hiddenInput.value !== html) {
           hiddenInput.value = html;
