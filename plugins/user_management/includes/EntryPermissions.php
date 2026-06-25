@@ -8,14 +8,17 @@
 
 require_once __DIR__ . '/UserAuth.php';
 require_once __DIR__ . '/UserStorage.php';
+require_once __DIR__ . '/UserPermissions.php';
 
 class EntryPermissions {
     private $auth;
     private $storage;
+    private $permissions;
     
     public function __construct() {
         $this->auth = new UserAuth();
         $this->storage = new UserStorage();
+        $this->permissions = new UserPermissions();
     }
     
     /**
@@ -97,21 +100,27 @@ class EntryPermissions {
      * @param array $entry Entry data
      * @return bool
      */
-    public function canEditEntry($user_id, $entry) {
+    public function canEditEntry($user_id, $entry, $collection = null) {
         if (!$user_id) {
             return false;
         }
-        
-        // Author can always edit their own entries
+
         $author_id = $entry['author_id'] ?? ($entry['author_user_id'] ?? null);
-        if ($author_id === $user_id) {
+        $context = [
+            'collection' => $collection,
+            'entry' => $entry['id'] ?? null,
+            'author_id' => $author_id,
+        ];
+
+        if ($this->permissions->userCan($user_id, 'edit', $context)) {
             return true;
         }
-        
-        // Check admin-configured permissions (role-based)
-        // TODO: Integrate with UserPermissions class for role checks
-        // For now, only author can edit
-        
+
+        // Author can edit own when tier matrix grants edit_own
+        if ($author_id && (string) $author_id === (string) $user_id) {
+            return $this->permissions->userCan($user_id, 'edit_own', $context);
+        }
+
         return false;
     }
     
@@ -122,20 +131,26 @@ class EntryPermissions {
      * @param array $entry Entry data
      * @return bool
      */
-    public function canDeleteEntry($user_id, $entry) {
+    public function canDeleteEntry($user_id, $entry, $collection = null) {
         if (!$user_id) {
             return false;
         }
-        
-        // Author can delete their own entries
+
         $author_id = $entry['author_id'] ?? ($entry['author_user_id'] ?? null);
-        if ($author_id === $user_id) {
+        $context = [
+            'collection' => $collection,
+            'entry' => $entry['id'] ?? null,
+            'author_id' => $author_id,
+        ];
+
+        if ($this->permissions->userCan($user_id, 'delete', $context)) {
             return true;
         }
-        
-        // Check admin-configured permissions (role-based)
-        // TODO: Integrate with UserPermissions class for role checks
-        
+
+        if ($author_id && (string) $author_id === (string) $user_id) {
+            return $this->permissions->userCan($user_id, 'delete_own', $context);
+        }
+
         return false;
     }
     

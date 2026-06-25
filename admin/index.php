@@ -45,6 +45,9 @@ $pageViewPermissions = [
     'webhooks' => 'read_settings',
     'roles' => 'manage_settings',
     'users' => 'list_users',
+    'site_users' => 'manage_users',
+    'user_tiers' => 'manage_users',
+    'user_groups' => 'manage_users',
     'plugins' => 'manage_plugins',
 
     // Account is always accessible to authenticated users
@@ -75,6 +78,16 @@ header('Referrer-Policy: no-referrer');
 
 // Include template parser
 require_once __DIR__ . '/template_parser.php';
+
+// Load plugin registry (admin pages registered via register_admin_page)
+require_once __DIR__ . '/../core/plugins.php';
+if (function_exists('load_plugins')) {
+    load_plugins();
+}
+global $birkly_admin_pages;
+if (!is_array($birkly_admin_pages)) {
+    $birkly_admin_pages = [];
+}
 
 // Check onboarding status - show welcome screen if needed
 // Note: auth_middleware.php already starts the session, but we need onboarding functions
@@ -124,17 +137,22 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'audit-log' => 'audit-log.html',
             'activity' => 'activity.html',
             'webhooks' => 'webhooks.html',
-            'onboarding' => 'onboarding.html',
-            'help' => 'help.html',
-            'community_users' => null, // Plugin page - handled dynamically
-            'sample_plugin' => null // Plugin page - handled dynamically
-        ];
+    'onboarding' => 'onboarding.html',
+    'help' => 'help.html',
+    'sample_plugin' => null, // legacy; also registered via register_admin_page when active
+];
 
+// Plugin admin pages from register_admin_page() — template null = include plugin HTML directly
+foreach ($birkly_admin_pages as $pluginPageSlug => $pluginPageFile) {
+    $allowedPages[$pluginPageSlug] = null;
+}
+
+$isPluginAdminPage = array_key_exists($page, $birkly_admin_pages);
 $templateFile = $allowedPages[$page] ?? 'dashboard.html';
 $templatePath = $templateFile ? __DIR__ . '/templates/' . $templateFile : null;
 
-// Fallback if template missing or page not implemented
-if (!$templatePath || !file_exists($templatePath)) {
+// Fallback if template missing or page not implemented (never downgrade plugin pages)
+if (!$isPluginAdminPage && (!$templatePath || !file_exists($templatePath))) {
     $page = 'dashboard';
     $templatePath = __DIR__ . '/templates/dashboard.html';
 }
@@ -356,27 +374,14 @@ $isOnboarding = ($page === 'onboarding');
                     echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
                     echo '</div>';
                 }
-            } elseif ($page === 'community_users') {
-                // Plugin page - load from plugin directory
-                $pluginPath = __DIR__ . '/../plugins/community_users/admin/community_users.html';
-                if (file_exists($pluginPath)) {
+            } elseif ($isPluginAdminPage) {
+                $pluginPath = $birkly_admin_pages[$page] ?? '';
+                if ($pluginPath !== '' && file_exists($pluginPath)) {
                     include $pluginPath;
                 } else {
                     echo '<div class="coming-soon">';
                     echo '<h1>Plugin Not Found</h1>';
-                    echo '<p>The Community Users plugin page could not be loaded.</p>';
-                    echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
-                    echo '</div>';
-                }
-            } elseif ($page === 'sample_plugin') {
-                // Plugin page - load from plugin directory
-                $pluginPath = __DIR__ . '/../plugins/sample-plugin/admin/sample_plugin.html';
-                if (file_exists($pluginPath)) {
-                    include $pluginPath;
-                } else {
-                    echo '<div class="coming-soon">';
-                    echo '<h1>Plugin Not Found</h1>';
-                    echo '<p>The Sample Plugin page could not be loaded.</p>';
+                    echo '<p>The plugin page could not be loaded.</p>';
                     echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
                     echo '</div>';
                 }
