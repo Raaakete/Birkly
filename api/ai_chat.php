@@ -100,20 +100,7 @@ if ($action === 'chat') {
         
         // Check if current user can access this connection
         $currentUserId = $_SESSION['user']['id'] ?? '';
-        $isOwner = isset($aiUser['created_by']) && $aiUser['created_by'] === $currentUserId;
-        $shared = $aiUser['shared'] ?? 'none'; // 'none', 'all', or 'specific'
-        $canAccess = false;
-        
-        if ($isOwner) {
-            $canAccess = true;
-        } elseif ($shared === 'all') {
-            $canAccess = true;
-        } elseif ($shared === 'specific') {
-            $allowedUsers = $aiUser['allowed_users'] ?? [];
-            $canAccess = in_array($currentUserId, $allowedUsers);
-        }
-        
-        if (!$canAccess) {
+        if (!birkly_ai_user_can_access_connection($aiUser, $currentUserId)) {
             if (!headers_sent()) {
                 header('Content-Type: application/json');
             }

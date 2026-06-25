@@ -190,6 +190,7 @@
             // Initialize field visibility after providers are loaded
             updateProviderFields();
         });
+        loadRoles();
         loadUsers();
         updateSharedTypeFields();
     }
@@ -272,6 +273,49 @@
             console.error('Error loading providers:', error);
         }
         return null;
+    }
+
+    // Load roles from settings/roles.json for AI connection role picker
+    async function loadRoles(selectedRole = null) {
+        const select = document.getElementById('connection-role');
+        if (!select) return;
+
+        const legacyRoles = [
+            { id: 'viewer', name: 'Viewer', description: 'Read-only' },
+            { id: 'author', name: 'Author', description: 'Create content' },
+            { id: 'editor', name: 'Editor', description: 'Create & Edit' },
+            { id: 'admin', name: 'Admin', description: 'Full access' }
+        ];
+
+        try {
+            const response = await fetch('/api/roles.php?action=list_roles');
+            const result = await response.json();
+            const roles = (result.status === 'ok' && Array.isArray(result.roles) && result.roles.length > 0)
+                ? result.roles
+                : legacyRoles;
+
+            select.innerHTML = roles.map(role => {
+                const roleId = role.id || role.name || '';
+                const label = role.name || roleId;
+                const desc = role.description ? ` (${role.description})` : '';
+                return `<option value="${escapeHtml(roleId)}">${escapeHtml(label)}${escapeHtml(desc)}</option>`;
+            }).join('');
+
+            if (selectedRole) {
+                select.value = selectedRole;
+            } else if (!select.value && roles.length > 0) {
+                const authorRole = roles.find(r => (r.id || r.name) === 'author');
+                select.value = authorRole ? 'author' : (roles[0].id || roles[0].name || '');
+            }
+        } catch (error) {
+            console.error('Error loading roles:', error);
+            select.innerHTML = legacyRoles.map(role =>
+                `<option value="${role.id}">${escapeHtml(role.name)} (${escapeHtml(role.description)})</option>`
+            ).join('');
+            if (selectedRole) {
+                select.value = selectedRole;
+            }
+        }
     }
 
 // Update provider models
@@ -543,6 +587,7 @@ function updateProviderFields() {
 
             // Ensure providers and users are loaded before populating fields
             await loadProviders();
+            await loadRoles(conn.role);
             await loadUsers();
 
             // Populate form fields
