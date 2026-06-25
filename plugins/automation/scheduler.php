@@ -5,8 +5,8 @@
  * Handles scheduled (cron-like) automation triggers.
  */
 
-require_once __DIR__ . '/../storage/StorageFactory.php';
-require_once __DIR__ . '/../automation.php';
+require_once __DIR__ . '/../../core/storage/StorageFactory.php';
+require_once __DIR__ . '/automation.php';
 require_once __DIR__ . '/queue.php';
 require_once __DIR__ . '/blocks/triggers_scheduled.php';
 

@@ -5,7 +5,7 @@
  * Prevents automations from executing too frequently.
  */
 
-require_once __DIR__ . '/../storage/StorageFactory.php';
+require_once __DIR__ . '/../../core/storage/StorageFactory.php';
 
 /**
  * Check if automation can execute (rate limit check)

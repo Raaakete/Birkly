@@ -209,12 +209,13 @@ function getPageData($page) {
 
 function getAutomationData() {
     try {
-        // Load automation system if available
-        if (file_exists(__DIR__ . '/../core/automation.php')) {
-            require_once __DIR__ . '/../core/automation.php';
-        }
-        if (file_exists(__DIR__ . '/../core/automation/init.php')) {
-            require_once __DIR__ . '/../core/automation/init.php';
+        require_once __DIR__ . '/../core/automation/bootstrap.php';
+        if (!automation_bootstrap()) {
+            return [
+                'automations' => [],
+                'blocks' => [],
+                'plugin_inactive' => true
+            ];
         }
         
         $automations = function_exists('get_automations') ? get_automations() : [];

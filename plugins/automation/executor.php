@@ -5,7 +5,7 @@
  * Executes automations when triggers fire.
  */
 
-require_once __DIR__ . '/../automation.php';
+require_once __DIR__ . '/automation.php';
 require_once __DIR__ . '/registry.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/blocks/triggers.php';

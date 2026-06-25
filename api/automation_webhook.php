@@ -1,8 +1,6 @@
 <?php
 /**
  * Automation Webhook Inbound Trigger for Birkly
- * 
- * Allows external systems to trigger automations via webhook.
  */
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
@@ -12,25 +10,27 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../core/automation/queue.php';
+require_once __DIR__ . '/../core/automation/bootstrap.php';
+if (!automation_bootstrap()) {
+    http_response_code(404);
+    echo json_encode(['status' => 'error', 'message' => 'Automation plugin is not active']);
+    exit;
+}
+
 require_once __DIR__ . '/../core/storage/StorageFactory.php';
 
-// Get webhook configuration
 $storage = StorageFactory::createStorage(__DIR__ . '/../settings');
 $webhook_config = $storage->read('automation_webhook_config.json') ?? [];
 
-// Get webhook token from URL or header
 $webhook_token = $_GET['token'] ?? $_SERVER['HTTP_X_WEBHOOK_TOKEN'] ?? '';
 $webhook_id = $_GET['id'] ?? $_SERVER['HTTP_X_WEBHOOK_ID'] ?? '';
 
-// Validate webhook token
 if (empty($webhook_token) || empty($webhook_id)) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Webhook token and ID required']);
     exit;
 }
 
-// Find webhook configuration
 $webhook = null;
 foreach ($webhook_config as $config) {
     if (($config['id'] ?? '') === $webhook_id && ($config['token'] ?? '') === $webhook_token) {
@@ -45,23 +45,19 @@ if (!$webhook) {
     exit;
 }
 
-// Check if webhook is active
 if (!($webhook['active'] ?? true)) {
     http_response_code(403);
     echo json_encode(['status' => 'error', 'message' => 'Webhook is inactive']);
     exit;
 }
 
-// Get payload
 $payload = json_decode(file_get_contents('php://input'), true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    $payload = $_POST; // Fallback to POST data
+    $payload = $_POST;
 }
 
-// Rate limiting (optional)
-$rate_limit = $webhook['rate_limit'] ?? 100; // per hour
+$rate_limit = $webhook['rate_limit'] ?? 100;
 if (function_exists('check_automation_rate_limit')) {
-    require_once __DIR__ . '/../core/automation/rate_limit.php';
     $rate_limit_key = 'webhook_' . $webhook_id;
     if (!check_automation_rate_limit($rate_limit_key, $rate_limit)) {
         http_response_code(429);
@@ -70,7 +66,6 @@ if (function_exists('check_automation_rate_limit')) {
     }
 }
 
-// Enqueue automation with webhook context
 $context = array_merge($payload ?? [], [
     'webhook_id' => $webhook_id,
     'webhook_name' => $webhook['name'] ?? '',
@@ -79,16 +74,12 @@ $context = array_merge($payload ?? [], [
     'ip' => $_SERVER['REMOTE_ADDR'] ?? ''
 ]);
 
-// Trigger automation
 enqueue_automation('webhook_inbound', $context);
 
-// Log webhook trigger
 if (function_exists('log_automation_execution')) {
-    require_once __DIR__ . '/../core/automation.php';
     log_automation_execution('webhook_' . $webhook_id, $context, [], []);
 }
 
-// Return success
 echo json_encode([
     'status' => 'ok',
     'message' => 'Webhook received and queued',
