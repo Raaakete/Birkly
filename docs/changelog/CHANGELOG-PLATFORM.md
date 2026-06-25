@@ -6,6 +6,19 @@ Format: milestone batch → PRs → user-visible summary.
 
 ---
 
+## 2026-06-25 — P3-M14 Documentation pack
+
+| Area | Summary |
+|------|---------|
+| Internal | `docs/ai/BYOAI-ARCHITECTURE.md` — BYOAI component map, RBAC, MCP per-connection |
+| Plugins | `plugins/automation/README.md` — deactivatable automation plugin ops |
+| Ops | `docs/user-plugin-ops.md` — user plugin enablement, permissions, troubleshooting |
+| Help | `docs/help-manifest.json` v2 — MCP, closed-alpha, content-editor, user-plugin doc paths |
+
+Birkly-Docs: closed-alpha guide, MCP connections, ContentEditor blocks, user plugin pages; changelog and manifest updated.
+
+---
+
 ## 2026-06-25 — Phase 2 verification hotfix
 
 | PR | Summary |
