@@ -45,6 +45,9 @@ $pageViewPermissions = [
     'webhooks' => 'read_settings',
     'roles' => 'manage_settings',
     'users' => 'list_users',
+    'site_users' => 'manage_users',
+    'user_tiers' => 'manage_users',
+    'user_groups' => 'manage_users',
     'plugins' => 'manage_plugins',
     'automation' => 'manage_content',
 
@@ -138,10 +141,11 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'onboarding' => 'onboarding.html',
             'help' => 'help.html',
             'automation' => null,
-            'community_users' => null, // Plugin page - handled dynamically
-            'sample_plugin' => null // Plugin page - handled dynamically
+            'community_users' => null,
+            'sample_plugin' => null,
         ];
 
+// Plugin admin pages from register_admin_page() — template null = include plugin HTML directly
 foreach ($birkly_admin_pages as $pluginPageSlug => $pluginPageFile) {
     $allowedPages[$pluginPageSlug] = null;
 }
@@ -401,30 +405,6 @@ $isOnboarding = ($page === 'onboarding');
                 echo '<p>The Automation plugin is not active. Enable it from the Plugins page.</p>';
                 echo '<a href="' . admin_url('plugins') . '" class="btn btn-primary">Go to Plugins</a>';
                 echo '</div>';
-            } elseif ($page === 'community_users') {
-                // Plugin page - load from plugin directory
-                $pluginPath = __DIR__ . '/../plugins/community_users/admin/community_users.html';
-                if (file_exists($pluginPath)) {
-                    include $pluginPath;
-                } else {
-                    echo '<div class="coming-soon">';
-                    echo '<h1>Plugin Not Found</h1>';
-                    echo '<p>The Community Users plugin page could not be loaded.</p>';
-                    echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
-                    echo '</div>';
-                }
-            } elseif ($page === 'sample_plugin') {
-                // Plugin page - load from plugin directory
-                $pluginPath = __DIR__ . '/../plugins/sample-plugin/admin/sample_plugin.html';
-                if (file_exists($pluginPath)) {
-                    include $pluginPath;
-                } else {
-                    echo '<div class="coming-soon">';
-                    echo '<h1>Plugin Not Found</h1>';
-                    echo '<p>The Sample Plugin page could not be loaded.</p>';
-                    echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
-                    echo '</div>';
-                }
             } else {
                 // Show "coming soon" for unimplemented pages
                 echo '<div class="coming-soon">';
