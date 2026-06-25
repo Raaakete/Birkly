@@ -80,7 +80,8 @@ function checkForUpdates() {
         
     } catch (Exception $e) {
         log_security_event('update_check_error', ['error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        echo json_encode(['status' => 'error', 'message' => 'Update check failed: ' . $e->getMessage()]);
+        require_once __DIR__ . '/../core/api_response.php';
+        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Update check failed')]);
     }
 }
 
@@ -119,7 +120,8 @@ function downloadUpdate($data) {
         
     } catch (Exception $e) {
         log_security_event('update_download_error', ['version' => $version, 'error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        echo json_encode(['status' => 'error', 'message' => 'Download failed: ' . $e->getMessage()]);
+        require_once __DIR__ . '/../core/api_response.php';
+        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Download failed')]);
     }
 }
 
@@ -171,7 +173,8 @@ function installUpdate($data) {
         
     } catch (Exception $e) {
         log_security_event('update_install_error', ['version' => $version, 'error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        echo json_encode(['status' => 'error', 'message' => 'Installation failed: ' . $e->getMessage()]);
+        require_once __DIR__ . '/../core/api_response.php';
+        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Installation failed')]);
     }
 }
 
@@ -182,7 +185,8 @@ function getUpdateStatus() {
         
     } catch (Exception $e) {
         log_security_event('update_status_error', ['error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        echo json_encode(['status' => 'error', 'message' => 'Failed to get update status: ' . $e->getMessage()]);
+        require_once __DIR__ . '/../core/api_response.php';
+        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Failed to get update status')]);
     }
 }
 ?>
