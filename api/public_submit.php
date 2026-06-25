@@ -6,6 +6,10 @@ require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/../core/plugins.php';
+if (function_exists('load_plugins')) {
+    load_plugins();
+}
 
 // Public submits should use the site session scope (never create/admin sessions)
 if (function_exists('birkly_site_session_start')) {
@@ -309,6 +313,18 @@ $cleanData['id'] = $id;
 $cleanData['created_at'] = date('c');
 $cleanData['updated_at'] = date('c');
 $cleanData['status'] = $collectionMeta['default_public_status'] ?? 'pending';
+
+try {
+    if (function_exists('apply_filters_strict')) {
+        $cleanData = apply_filters_strict('before_entry_create', $cleanData, $collectionSlug);
+    }
+    if (function_exists('do_action_strict')) {
+        do_action_strict('before_entry_create', $collectionSlug, $cleanData);
+    }
+} catch (Exception $e) {
+    respond(['status' => 'error', 'message' => $e->getMessage()], 403);
+}
+
 $entryPath = "collections/$dir/entries/$id.json";
 $ok = $storage->write($entryPath, $cleanData);
 
