@@ -326,6 +326,9 @@ function load_plugins($plugins_dir = null) {
     
     // Load plugin states first
     load_plugin_states();
+    $settingsStorage = new PluginStorage(__DIR__ . '/../settings');
+    $persistedPluginStates = $settingsStorage->read('plugins.json') ?? [];
+    $automationDefaultActivated = false;
     
     // Check if plugins directory exists
     if (!is_dir($plugins_dir)) {
@@ -344,11 +347,15 @@ function load_plugins($plugins_dir = null) {
             
             // Initialize plugin in registry, preserving existing state
             $existing_state = $birkly_plugins[$plugin_id] ?? [];
-            // New plugins default to inactive - user must activate them manually
+            $defaultActive = $existing_state['active'] ?? false;
+            if ($plugin_id === 'automation' && !array_key_exists('automation', $persistedPluginStates)) {
+                $defaultActive = true;
+                $automationDefaultActivated = true;
+            }
             $birkly_plugins[$plugin_id] = array_merge($metadata, [
                 'id' => $plugin_id,
                 'path' => $path,
-                'active' => $existing_state['active'] ?? false, // Default to inactive for new plugins
+                'active' => $defaultActive,
                 'settings' => $existing_state['settings'] ?? []
             ]);
             
@@ -389,6 +396,10 @@ function load_plugins($plugins_dir = null) {
 
     // Cleanup: remove empty legacy plugin folders (e.g. after renames)
     birkly_cleanup_empty_plugin_dir($plugins_dir . '/social_demo');
+
+    if ($automationDefaultActivated) {
+        save_plugin_states();
+    }
 }
 
 // Plugin settings management
@@ -484,11 +495,6 @@ require_once __DIR__ . '/plugins/validation.php';
 require_once __DIR__ . '/plugins/template_functions.php';
 require_once __DIR__ . '/plugins/fieldtype_shelf.php';
 
-// Load automation system (before plugins so plugins can register blocks)
-if (file_exists(__DIR__ . '/automation/init.php')) {
-    require_once __DIR__ . '/automation/init.php';
-}
-
 // Load core admin functionality
 require_once __DIR__ . '/admin.php';
 
@@ -513,11 +519,6 @@ if (file_exists(__DIR__ . '/plugins/scheduled_tasks.php')) {
 // Load plugins at startup (only once)
 if (!isset($GLOBALS['haru_plugins_loaded'])) {
     load_plugins();
-    
-    // Initialize plugin automation blocks after plugins are loaded
-    if (function_exists('init_plugin_automation_blocks')) {
-        init_plugin_automation_blocks();
-    }
     
     $GLOBALS['haru_plugins_loaded'] = true;
 } 

@@ -773,9 +773,9 @@ function saveEntry() {
             do_action('after_entry_save', $entryOutput, $collectionSlug, $entry);
         }
         
-        // Trigger automation system
-        if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
-            require_once __DIR__ . '/../core/automation/queue.php';
+        // Trigger automation system (when plugin active)
+        require_once __DIR__ . '/../core/automation/bootstrap.php';
+        if (automation_bootstrap()) {
             
             $oldStatus = $entry['status'] ?? '';
             $newStatus = $entryOutput['status'] ?? '';
@@ -957,9 +957,9 @@ function deleteEntry() {
         $cache = new Cache();
         $cache->invalidateCollection($collectionSlug);
         
-        // Trigger automation system
-        if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
-            require_once __DIR__ . '/../core/automation/queue.php';
+        // Trigger automation system (when plugin active)
+        require_once __DIR__ . '/../core/automation/bootstrap.php';
+        if (automation_bootstrap()) {
             enqueue_automation('entry_deleted', [
                 'entry' => $entryData,
                 'collection' => $collectionSlug
@@ -1220,10 +1220,10 @@ function performBulkOperation() {
                 case 'delete':
                     error_log("performBulkOperation: Deleting entry");
                     if (unlink($entryFile)) {
-                        // Trigger automation system
+                        // Trigger automation system (when plugin active)
                         try {
-                            if (file_exists(__DIR__ . '/../core/automation/queue.php')) {
-                                require_once __DIR__ . '/../core/automation/queue.php';
+                            require_once __DIR__ . '/../core/automation/bootstrap.php';
+                            if (automation_bootstrap()) {
                                 enqueue_automation('entry_deleted', [
                                     'entry' => $entryData,
                                     'collection' => $collectionSlug

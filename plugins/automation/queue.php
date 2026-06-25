@@ -5,7 +5,7 @@
  * Handles async execution of automations to avoid blocking requests.
  */
 
-require_once __DIR__ . '/../storage/StorageFactory.php';
+require_once __DIR__ . '/../../core/storage/StorageFactory.php';
 require_once __DIR__ . '/executor.php';
 
 /**

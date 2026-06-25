@@ -154,14 +154,6 @@ if (empty($userAvatar)) {
                             <?= __('admin.settings') ?>
                         </a>
                     </li>
-                    <li class="nav-item <?= is_nav_active('automation') ? 'active' : '' ?>">
-                        <a href="<?= htmlspecialchars(admin_url('automation')) ?>" class="nav-link">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
-                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                            </svg>
-                            Automation
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
