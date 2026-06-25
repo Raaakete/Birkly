@@ -886,6 +886,10 @@ window.ContentEditorCommands = {
 
   // Insert horizontal rule
   insertHorizontalRule() {
+    if (window.ContentEditorBlockManager) {
+      return window.ContentEditorBlockManager.insertDivider();
+    }
+
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
     
@@ -918,6 +922,33 @@ window.ContentEditorCommands = {
 
   // Insert table
   insertTable() {
+    if (window.ContentEditorBlockManager) {
+      const editor = this.getActiveEditor();
+      if (!editor) return;
+
+      const dialog = this.createTableDialog({
+        title: 'Insert Table',
+        primaryLabel: 'Insert',
+        rows: 3,
+        cols: 3,
+        onConfirm: ({ rows, cols }) => {
+          window.ContentEditorBlockManager.insertTable(editor, rows, cols);
+        },
+      });
+
+      document.body.appendChild(dialog);
+
+      setTimeout(() => {
+        dialog.classList.add('active');
+        const rowsInput = dialog.querySelector('.table-rows-input');
+        if (rowsInput) {
+          rowsInput.focus();
+          rowsInput.select();
+        }
+      }, 10);
+      return;
+    }
+
     const editor = this.getActiveEditor();
     if (!editor) return;
     
