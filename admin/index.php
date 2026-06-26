@@ -212,6 +212,7 @@ $isOnboarding = ($page === 'onboarding');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token()); ?>">
     <title>Setup - Birkly</title>
     <script>
       window.Birkly = window.Birkly || {};

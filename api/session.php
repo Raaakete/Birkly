@@ -5,16 +5,18 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 // Secure session initialization for HaruCMS
 
+require_once __DIR__ . '/../core/birkly_paths.php';
+
 function haru_secure_session_start() {
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? null) == 443;
-    $params = session_get_cookie_params();
+    $cookiePath = birkly_session_cookie_path();
     session_set_cookie_params([
-        'lifetime' => $params['lifetime'],
-        'path' => $params['path'],
-        'domain' => $params['domain'],
+        'lifetime' => 0,
+        'path' => $cookiePath,
+        'domain' => '',
         'secure' => $secure,
         'httponly' => true,
-        'samesite' => 'Strict'
+        'samesite' => 'Lax'
     ]);
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -30,16 +32,16 @@ function birkly_site_session_start() {
     if (session_status() !== PHP_SESSION_NONE) {
         return;
     }
-    $params = session_get_cookie_params();
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? null) == 443;
+    $cookiePath = birkly_session_cookie_path();
     session_name('birkly_site_sid');
     session_set_cookie_params([
-        'lifetime' => $params['lifetime'],
-        'path' => '/',
-        'domain' => $params['domain'],
+        'lifetime' => 0,
+        'path' => $cookiePath,
+        'domain' => '',
         'secure' => $secure,
         'httponly' => true,
-        'samesite' => 'Strict'
+        'samesite' => 'Lax'
     ]);
     session_start();
 }
@@ -51,16 +53,16 @@ function birkly_admin_session_start() {
     if (session_status() !== PHP_SESSION_NONE) {
         return;
     }
-    $params = session_get_cookie_params();
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? null) == 443;
+    $cookiePath = birkly_session_cookie_path();
     session_name('birkly_admin_sid');
     session_set_cookie_params([
-        'lifetime' => $params['lifetime'],
-        'path' => '/',
-        'domain' => $params['domain'],
+        'lifetime' => 0,
+        'path' => $cookiePath,
+        'domain' => '',
         'secure' => $secure,
         'httponly' => true,
-        'samesite' => 'Strict'
+        'samesite' => 'Lax'
     ]);
     session_start();
 }
@@ -69,7 +71,14 @@ function birkly_admin_session_start() {
  * Resolve which session scope CSRF tokens should use.
  * Returns one of: admin, cms, site.
  */
-function birkly_resolve_csrf_session_scope(array $cookies, string $referer = ''): string {
+function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '', string $requestUri = ''): string {
+    $uri = $requestUri !== '' ? $requestUri : ($_SERVER['REQUEST_URI'] ?? '');
+
+    // Admin panel and CMS API always share the main PHP session
+    if ($uri !== '' && preg_match('#/(admin|api)(/|$|\?)#', $uri)) {
+        return 'cms';
+    }
+
     if (!empty($cookies['birkly_admin_sid'])) {
         return 'admin';
     }
@@ -95,7 +104,11 @@ function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '')
  * Public website client library uses the site session (birkly_site_sid).
  */
 function birkly_csrf_session_start(): void {
-    $scope = birkly_resolve_csrf_session_scope($_COOKIE, $_SERVER['HTTP_REFERER'] ?? '');
+    $scope = birkly_resolve_csrf_session_scope(
+        $_COOKIE,
+        $_SERVER['HTTP_REFERER'] ?? '',
+        $_SERVER['REQUEST_URI'] ?? ''
+    );
 
     if ($scope === 'admin') {
         birkly_admin_session_start();
