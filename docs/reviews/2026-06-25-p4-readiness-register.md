@@ -1,46 +1,39 @@
-# P4 readiness register
+# P4 readiness register — 2026-06-25
 
-**Date:** 2026-06-25  
-**Phase:** 4 — MCP decoupling + alpha UX hardening  
-**Human approval:** Keven (2026-06-25)
+Phase 4 gate (P4-M1). Human approved scope 2026-06-25.
 
-## Baseline
+## Locked decisions
 
-| Item | Status |
-|------|--------|
-| Phase 3 complete on `main` | ✅ |
-| CI / `php tests/run.php` | ✅ 23 suites (pre-P4-M2) |
-| Post-P3 hotfixes merged | ✅ Onboarding CSRF (#34), admin routing (#33), AI chat picker (#35) |
-| UX matrix | 22/22 P3 rows pass; P4 rows added below |
+| ID | Decision |
+|----|----------|
+| P4-D01 | MCP inbound decoupled from outbound BYOAI |
+| P4-D02 | Storage: `settings/mcp_endpoints.json` + `core/mcp_endpoints.php` |
+| P4-D03 | Legacy per-connection `mcp_api_key`: 90-day dual-resolve |
+| P4-D04 | Settings → MCP Connections tab; empty state; no auto keys |
+| P4-D05 | Multi-profile MCP (role per endpoint) |
+| P4-D06 | OAuth = spike only; no P4 production OAuth without P5 approval |
+| P4-D07 | Human notified **only at P4-M11** after full internal QA |
+| P4-D08 | Kekaba deferred |
 
-## P4 entry criteria
+## Findings to address in P4
 
-| Criterion | Met |
-|-----------|-----|
-| Human approved Phase 4 scope once | ✅ |
-| Locked decisions documented in ROADMAP | ✅ |
-| Lead handoff doc present | ✅ |
-| No blocking P0 from Phase 3 | ✅ |
+| ID | Area | Finding | Severity | Milestone |
+|----|------|---------|----------|-----------|
+| P4-R01 | MCP UX | MCP buried in AI Connections; keys tied to outbound rows | P1 | P4-M3, P4-M4 |
+| P4-R02 | MCP | Non-technical users expect subscription login = API access | P1 | P4-M7, P4-M9 |
+| P4-R03 | UX | Onboarding browser QA was thin; CSRF/CSS hotfixes (#34) | P1 | P4-M2 |
+| P4-R04 | UX | Admin routing regression risk (#33) | P1 | P4-M2 |
+| P4-R05 | BYOAI | AI chat stuck on deleted connections (fixed #35 — regression test) | P2 | P4-M2 |
+| P4-R06 | MCP | No audit log / rotation grace for inbound keys | P2 | P4-M5 |
+| P4-R07 | Docs | Inbound vs outbound not split in Birkly-Docs | P2 | P4-M9 |
+| P4-R08 | Marketing | Birkly-Website may overstate consumer AI access | P2 | P4-M10 |
+| P4-R09 | OAuth | Consumer OAuth bridge speculative | P3 | P4-M8 spike |
+| P4-R10 | Clients | Cursor/Windsurf MCP compatibility unverified | P3 | P4-M6 |
 
-## Known gaps entering P4
+## Human sign-off
 
-| Gap | Target milestone |
-|-----|------------------|
-| Onboarding lacked HTTP E2E (CSRF regression) | P4-M2 |
-| Admin routing HTTP not in CI | P4-M2 |
-| AI chat stale connection after delete | P4-M2 + #35 |
-| MCP coupled to outbound AI connection rows | P4-M3/M4 |
-| Consumer OAuth UX undefined | P4-M8 spike |
+- [x] Phase 4 scope approved
+- [x] End-result-only review model (no per-PR human approval)
+- [ ] Kekaba (deferred): ___________
 
-## P4 success criteria (exit)
-
-- Standalone MCP endpoint profiles in Settings
-- Legacy MCP keys migrated with 90-day dual-resolve
-- Onboarding + routing + AI connection regressions in CI
-- Docs split inbound MCP vs outbound BYOAI
-- Videos V15–V17; matrix all P4 rows green
-- **One human notification** at P4-M11-T5
-
-## Values check
-
-✅ aligned — dependency-free core; MCP/BYOAI logic in API layer; no OAuth ship without explicit P5 approval.
+**Reviewer:** Keven **Date:** 2026-06-25

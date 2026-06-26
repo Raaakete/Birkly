@@ -1,6 +1,6 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-06-25 (P4-M2 in progress)  
+**Last updated:** 2026-06-25 (P4-M2 complete)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
 **Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (26 suites after P4-M2)  
 **Browser QA:** Phase 2–3 flows PASS; P4 onboarding/routing/AI connection — HTTP E2E in CI (P4-M2)

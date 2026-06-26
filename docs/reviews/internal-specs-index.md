@@ -28,4 +28,12 @@ Links from roadmap milestones to in-repo specifications. Use when implementing o
 | Agent ops | Autonomous merge | `docs/agent-ops/AUTONOMOUS_EXECUTION.md` |
 | Values | Project values | `docs/PROJECT_VALUES.md` |
 
-**Execution handoff:** `docs/reviews/P3-lead-engineer-handoff.md` (Phase 3) · `docs/reviews/P2-lead-engineer-handoff.md` (Phase 2, complete)
+**Execution handoff:** `docs/reviews/P4-lead-engineer-handoff.md` (Phase 4) · `docs/reviews/P3-lead-engineer-handoff.md` (Phase 3) · `docs/reviews/P2-lead-engineer-handoff.md` (Phase 2)
+
+| P4-M1 | P4 readiness register | `docs/reviews/2026-06-25-p4-readiness-register.md` |
+| P4-M2 | Browser QA checklist | `docs/reviews/p4-browser-qa-checklist.md` |
+| P4-M3–M5 | MCP endpoints | `core/mcp_endpoints.php`, `api/mcp_endpoints.php`, `api/mcp_server.php` |
+| P4-M6 | MCP setup | `docs/mcp-setup-guide.md`, `mcp-bridge.js` |
+| P4-M7 | BYOAI | `docs/ai/BYOAI-ARCHITECTURE.md`, `api/ai_connections.php` |
+| P4-M8 | OAuth spike | `docs/reviews/p4-oauth-spike.md` |
+| P4-M9 | Birkly-Docs | `Birkly-Docs/01-admin/mcp-connections.md`, `ai-connections.md` |

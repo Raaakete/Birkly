@@ -42,7 +42,28 @@ When in doubt, treat as major and ask the human.
 
 **User plugin principles:** Review, harden, fix `plugins/user_management/` (~75% built; admin wiring broken, permissions not enforced on writes).
 
-**Autonomous execution:** Human approves **Phase 3 milestone block once** (this PR). Lead-engineer executes P3-M1→P3-M15 without per-step human approval. Human notified when Phase 3 complete (digest + email if M1-T8 configured) with videos and examples.
+**Autonomous execution:** Human approves **Phase 3 milestone block once** (PR #31). Lead-engineer executes P3-M1→P3-M15 without per-step human approval. Human notified when Phase 3 complete (digest + email if M1-T8 configured) with videos and examples.
+
+**2026-06-25 — Phase 4 approved** (Keven)
+
+**Priorities:** **MCP inbound first-class** (decoupled from outbound BYOAI) · alpha UX hardening · BYOAI wizard polish · OAuth spike (discovery only). **Kekaba deferred.**
+
+**Human decisions (locked):**
+
+| Decision | Choice |
+|----------|--------|
+| BYOAI outbound | Unchanged — user brings API credentials |
+| Approval + role enforcement | No regression |
+| MCP storage | Standalone endpoint profiles (`settings/mcp_endpoints.json` + `core/mcp_endpoints.php`) |
+| Legacy MCP keys | 90-day dual-resolve via migration script |
+| MCP Settings UI | Dedicated **MCP Connections** tab; visible empty state; no auto-generated keys |
+| Multi-profile MCP | Yes — multiple endpoints, each with role + key |
+| OAuth | Spike only in P4; implementation only in Phase 5+ if go/no-go approves |
+| Human touchpoints | **End of Phase 4 only** — after full internal QA, videos, matrix green |
+
+**Two-channel model:** Outbound = Birkly → provider API (`api/ai_chat.php`). Inbound = external client → `api/mcp_server.php` (no outbound API key on Birkly).
+
+**Autonomous execution:** Human approves **Phase 4 once** (this approval). Lead executes P4-M1→P4-M11; **do not notify human until P4-M11** after qa-verifier, design-reviewer, and videos complete.
 
 **Phase 2 themes:** (complete) UX flows · ContentEditor · groups/DnD · onboarding · hardening · platform sync.
 
@@ -72,15 +93,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 1 + Phase 2 + **Phase 3 complete** on `main`. UX matrix: **22/22 pass** (`docs/reviews/ux-flow-matrix.md`). CI: 21 test suites. |
-| **Birkly-Website** | `Birkly-0.1/` synced post–PR #30 (site PR #3). Beta waitlist + roadmap collections in repo; closed-alpha messaging not yet updated. |
-| **kekaba** | Embed synced post–PR #30 (site PR #3). Dev + `check-production.sh` smoke documented. **Human:** production deploy of synced embed still pending. |
-| **Birkly-Docs** | P2-M8 sync done; ContentEditor in `02-content/field-types.md`. Alpha tester guide + Help manifest pending Phase 3. |
-| **Agent ops** | CI + autonomous merge active. **Human pending:** M1-T8 Resend secrets, M1-T12 branch protection. |
+| **Birkly (CMS)** | Phase 1–3 **complete** on `main`. UX matrix: **22/22 pass** (`docs/reviews/ux-flow-matrix.md`). CI: 21 test suites. **Phase 4 approved** — MCP decoupling + UX hardening. |
+| **Birkly-Website** | `Birkly-0.1/` synced; P4-M10 will verify AI/MCP marketing copy. |
+| **kekaba** | Embed synced; **deferred** (content + prod deploy). |
+| **Birkly-Docs** | P3 integration docs; P4 splits inbound MCP vs outbound BYOAI. |
+| **Agent ops** | Autonomous merge active. M1-T8/T12 human pending. |
 
-**Supersedes for planning:** `docs/CLOSED_ALPHA_ROADMAP.md` (2026-01-26, pre–Phase 1–2) — reference only; Phase 3 below is the active plan.
+**Phase 4 handoff:** `docs/reviews/P4-lead-engineer-handoff.md`
 
-**Issue register (Phase 2):** `docs/reviews/2026-06-18-issue-register.md` — closed.
+**Issue register (P4):** `docs/reviews/2026-06-25-p4-readiness-register.md`
 
 ---
 
@@ -487,7 +508,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Ordering:** P3-M1 → … → P3-M15 (see below). Cross-repo: Birkly → Birkly-Docs → Birkly-Website.
 
-**Status:** **approved** (2026-06-25, Keven). Lead-engineer executes autonomously per `docs/reviews/P3-lead-engineer-handoff.md`.
+**Status:** **approved** (2026-06-25, Keven). Lead-engineer executes autonomously per `docs/reviews/P3-lead-engineer-handoff.md`. **Phase 3 complete on `main`** — see P3-M15 closure artifacts.
 
 **Existing prototype:** AI APIs + floating chat (~70%, RBAC weak); `core/automation/` (~88% backend, admin not routed); `plugins/user_management/` (~75%, admin orphaned).
 
@@ -762,39 +783,28 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 4 — milestones
 
-**Approved:** 2026-06-25 (Keven). **Autonomous execution:** lead-engineer executes P4-M1→P4-M11 without per-milestone human approval. **Human notified once** at P4-M11-T5.
+**Horizon:** theme-based; no calendar estimates for agents.
 
-**Theme:** MCP inbound decoupling + alpha UX hardening + BYOAI polish + OAuth discovery (no ship without P5).
+**Priorities:** MCP inbound decoupling · alpha UX hardening · BYOAI wizard · OAuth spike (docs only). **CMS always first.** **Kekaba deferred.**
 
-**Locked decisions**
+**Ordering:** P4-M1 → … → P4-M11. Cross-repo: Birkly → Birkly-Docs → Birkly-Website.
 
-| Decision | Choice |
-|----------|--------|
-| BYOAI outbound | Unchanged — user API keys; Birkly calls provider |
-| Approval default | `require_approval` **true**; role enforcement at execution |
-| MCP inbound | Standalone endpoint profiles in `settings/mcp_endpoints.json` + `core/mcp_endpoints.php` |
-| Legacy MCP keys | 90-day dual-resolve after `migrate-mcp-endpoints.php` |
-| Settings UX | Dedicated **MCP Connections** tab; empty state; no auto-generated keys on install |
-| Multi-profile MCP | Each endpoint: name, role, key, `require_approval` |
-| OAuth | Spike doc only (P4-M8); **no production OAuth** unless separate P5 approval |
-| Kekaba | **Deferred** |
+**Status:** **approved** (2026-06-25, Keven). Execute per `docs/reviews/P4-lead-engineer-handoff.md`. **Human reviews end result only at P4-M11** (after internal QA + videos).
 
-**Two channels:** Outbound admin chat (`api/ai_chat.php` → provider) · Inbound MCP (`api/mcp_server.php` → endpoint profile). Shared: `core/ai_permissions.php`, `core/ai_tool_registry.php`, approval queue.
-
-**Ordering:** P4-M2 → … → P4-M11. Cross-repo: Birkly → Birkly-Docs → Birkly-Website.
+**Architecture:** Outbound BYOAI (`api/ai_chat.php`, `api_key_encrypted`) and inbound MCP (`api/mcp_server.php`, endpoint `mcp_api_key`) are **independent channels** sharing `core/ai_permissions.php` + `core/ai_tool_registry.php`.
 
 ---
 
-### P4-M1 — Baseline gate
+### P4-M1 — Phase 4 validation gate
 
-- **Status:** complete
+- **Status:** complete (human approved 2026-06-25)
 - **Repos:** Birkly
 
 **Tasks**
 
-- [x] **P4-M1-T1** Readiness register — `docs/reviews/2026-06-25-p4-readiness-register.md`
-- [x] **P4-M1-T2** Lead handoff — `docs/reviews/P4-lead-engineer-handoff.md`
-- [x] **P4-M1-T3** UX matrix P4 rows drafted
+- [x] **P4-M1-T1** P4 readiness register — `docs/reviews/2026-06-25-p4-readiness-register.md`
+- [x] **P4-M1-T2** Re-run UX matrix; add P4 rows
+- [ ] **P4-M1-T3** Browser QA checklist — `docs/reviews/p4-browser-qa-checklist.md`
 - [x] **P4-M1-T4** Human sign-off — Phase 4 scope approved
 
 ---
@@ -803,140 +813,181 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 - **Status:** complete
 - **Repos:** Birkly
-- **Goal:** Regression tests for onboarding E2E, admin routing HTTP, AI stale connection
+- **Goal:** Onboarding E2E, admin routing smoke, AI chat stale-connection regression
+- **Depends on:** P4-M1-T4
+- **Refs:** PR #33, #34, #35, #37; `tests/onboarding_e2e_test.php`
 
 **Tasks**
 
-- [x] **P4-M2-T1** `tests/onboarding_e2e_test.php` — first user → CSRF → project save → skip
-- [x] **P4-M2-T2** `tests/admin_routing_http_test.php` — core pages render correct templates
-- [x] **P4-M2-T3** `tests/ai_chat_connection_test.php` — delete removes connection from list/chat
-- [x] **P4-M2-T4** UX matrix rows updated; CI 26+ suites pass
+- [x] **P4-M2-T1** Onboarding E2E test (`tests/onboarding_e2e_test.php`) — CSRF + project save
+- [x] **P4-M2-T2** `tests/admin_routing_http_test.php` — HTTP routing for core admin pages
+- [x] **P4-M2-T3** `tests/ai_chat_connection_test.php` — delete removes connection; chat rejects
+- [x] **P4-M2-T4** Matrix rows: onboarding + admin routes + AI delete → **pass** (26 CI suites)
+
+**Acceptance criteria:** HTTP E2E regressions in CI for onboarding, routing, AI stale connection
 
 ---
 
-### P4-M3 — MCP endpoint model + migration
+### P4-M3 — MCP endpoint model & migration
 
-- **Status:** pending
+- **Status:** not started
 - **Repos:** Birkly
-- **Depends on:** P4-M2
+- **Goal:** Standalone inbound MCP profiles; legacy key dual-resolve
+- **Depends on:** P4-M1-T4
+- **Values:** Security by default; credential separation
 
 **Tasks**
 
-- [ ] **P4-M3-T1** `core/mcp_endpoints.php` + `settings/mcp_endpoints.json` schema
-- [ ] **P4-M3-T2** `scripts/migrate-mcp-endpoints.php` from `users/*.json` mcp_api_key
-- [ ] **P4-M3-T3** `api/mcp_server.php` dual-resolve (endpoint profile + legacy 90-day)
-- [ ] **P4-M3-T4** `tests/mcp_endpoints_test.php`
+- [ ] **P4-M3-T1** `core/mcp_endpoints.php` + `settings/mcp_endpoints.json` CRUD
+- [ ] **P4-M3-T2** `api/mcp_endpoints.php` — create/list/rotate/revoke (auth + CSRF)
+- [ ] **P4-M3-T3** `api/mcp_server.php` resolves endpoint profiles; **90-day** dual-resolve legacy `users/*.json` `mcp_api_key`
+- [ ] **P4-M3-T4** `scripts/migrate-mcp-endpoints.php`
+- [ ] **P4-M3-T5** `tests/mcp_endpoints_test.php`
+
+**Acceptance criteria:** Inbound works without outbound AI row; migration idempotent; tests in CI
 
 ---
 
-### P4-M4 — MCP Settings UI
+### P4-M4 — MCP Settings UI (first-class)
 
-- **Status:** pending
+- **Status:** not started
 - **Repos:** Birkly
-- **Depends on:** P4-M3
+- **Goal:** Settings → **MCP Connections** tab; multi-profile; not buried in AI Connections
+- **Depends on:** P4-M3-T2
 
 **Tasks**
 
-- [ ] **P4-M4-T1** Dedicated MCP Connections tab (empty state default)
-- [ ] **P4-M4-T2** CRUD UI for endpoint profiles; demote MCP block on outbound add flow
-- [ ] **P4-M4-T3** design-reviewer sign-off on MCP tab
+- [ ] **P4-M4-T1** Settings tab + empty state (no auto-generated keys)
+- [ ] **P4-M4-T2** Create/rotate/revoke UI; role + `require_approval` per endpoint
+- [ ] **P4-M4-T3** Demote/remove MCP-as-outbound-provider from AI Connections add flow
+- [ ] **P4-M4-T4** Copy snippets: URL, key, `mcp-bridge.js` command
+- [ ] **P4-M4-T5** Matrix + internal video V16: MCP endpoint without outbound AI → **pass**
+
+**Acceptance criteria:** design-reviewer pass; non-technical path documented in UI
 
 ---
 
 ### P4-M5 — MCP hardening
 
-- **Status:** pending
+- **Status:** not started
 - **Repos:** Birkly
-- **Depends on:** P4-M4
+- **Depends on:** P4-M3-T3, P4-M4-T2
 
 **Tasks**
 
-- [ ] **P4-M5-T1** Rate limits on `api/mcp_server.php`
-- [ ] **P4-M5-T2** MCP audit log (`data/mcp_audit/` or logs)
-- [ ] **P4-M5-T3** Key rotation grace period + tests
+- [ ] **P4-M5-T1** Per-endpoint rate limits
+- [ ] **P4-M5-T2** MCP audit log (tool, endpoint id, timestamp; no secrets)
+- [ ] **P4-M5-T3** Key rotation with 24h grace unless revoked
+- [ ] **P4-M5-T4** Failed-auth lockout + admin visibility
+- [ ] **P4-M5-T5** `tests/mcp_hardening_test.php`
+
+**Acceptance criteria:** Audit trail on `tools/call`; writes still use approval queue
 
 ---
 
-### P4-M6 — MCP client guides + compatibility
+### P4-M6 — MCP client compatibility & guides
 
-- **Status:** pending
+- **Status:** not started
 - **Repos:** Birkly, Birkly-Docs
-- **Depends on:** P4-M5
+- **Depends on:** P4-M4-T4, P4-M5-T1
 
 **Tasks**
 
-- [ ] **P4-M6-T1** Compatibility matrix (Claude Desktop, Cursor, OpenAI MCP, curl)
-- [ ] **P4-M6-T2** Per-client setup wizards in Help/Docs
-- [ ] **P4-M6-T3** Verify Claude Desktop + curl probes; video V16
+- [ ] **P4-M6-T1** Refresh `docs/mcp-setup-guide.md`; `BIRKLY_URL` naming
+- [ ] **P4-M6-T2** Cursor/Windsurf HTTP MCP section (experimental label if unverified)
+- [ ] **P4-M6-T3** Generic HTTP MCP examples
+- [ ] **P4-M6-T4** `docs/reviews/p4-mcp-client-matrix.md`
+- [ ] **P4-M6-T5** QA verify Claude Desktop or curl shim — video evidence in V16
+
+**Acceptance criteria:** ≥1 client path verified on cloud VM
 
 ---
 
-### P4-M7 — BYOAI wizard + copy
+### P4-M7 — BYOAI outbound UX polish
 
-- **Status:** pending
+- **Status:** not started
 - **Repos:** Birkly
-- **Depends on:** P4-M2
+- **Depends on:** P4-M2-T3
 
 **Tasks**
 
-- [ ] **P4-M7-T1** Connection setup wizard (API key vs subscription clarity)
-- [ ] **P4-M7-T2** In-chat connection picker polish (merged PR #35 baseline)
-- [ ] **P4-M7-T3** Video V17 BYOAI wizard
+- [ ] **P4-M7-T1** Connection wizard: provider → key → test call → role/approval
+- [ ] **P4-M7-T2** Clear validation errors (invalid key, model, rate limit)
+- [ ] **P4-M7-T3** Copy: API key vs consumer subscription (ChatGPT Plus / Claude Pro ≠ API)
+- [ ] **P4-M7-T4** Ollama unreachable detection + doc link
+- [ ] **P4-M7-T5** Matrix + internal video V17: outbound connect → chat → approval → **pass**
+
+**Acceptance criteria:** Wizard completes without reading source code
 
 ---
 
-### P4-M8 — OAuth spike (discovery only)
+### P4-M8 — OAuth / device-flow discovery spike
 
-- **Status:** pending
-- **Repos:** Birkly
-- **Depends on:** P4-M7
+- **Status:** not started
+- **Repos:** Birkly (docs only unless go approved for P5)
+- **Depends on:** P4-M7-T3
 
 **Tasks**
 
-- [ ] **P4-M8-T1** `docs/ai/oauth-feasibility.md` — provider landscape, go/no-go
-- [ ] **P4-M8-T2** UX mock for “Connect with …” if feasible; else document MCP path for consumers
+- [ ] **P4-M8-T1** `docs/reviews/p4-oauth-spike.md` — providers, limits, security
+- [ ] **P4-M8-T2** Optional device-code evaluation (no core dependency)
+- [ ] **P4-M8-T3** Go/no-go table; if go → propose **P5** milestone (not P4 code)
+- [ ] **P4-M8-T4** UI remains API-key wizard on no-go
+
+**Acceptance criteria:** Written go/no-go; **no OAuth production code in P4 without separate approval**
 
 ---
 
-### P4-M9 — Docs split inbound/outbound
+### P4-M9 — Documentation & Help manifest
 
-- **Status:** pending
-- **Repos:** Birkly-Docs, Birkly
-- **Depends on:** P4-M4, P4-M6
+- **Status:** not started
+- **Repos:** Birkly, Birkly-Docs
+- **Depends on:** P4-M6-T1, P4-M7-T3
 
 **Tasks**
 
-- [ ] **P4-M9-T1** Split AI connections vs MCP connections docs
-- [ ] **P4-M9-T2** Help manifest v2; contextual links in Settings
+- [ ] **P4-M9-T1** Update `docs/ai/BYOAI-ARCHITECTURE.md` (two-channel diagram)
+- [ ] **P4-M9-T2** Birkly-Docs: `01-admin/mcp-connections.md` (new) + `ai-connections.md` (outbound only)
+- [ ] **P4-M9-T3** Birkly-Docs: `ai-chat-and-actions.md` approval flow
+- [ ] **P4-M9-T4** Help manifest v2 + contextual links on MCP tab
+- [ ] **P4-M9-T5** `docs/changelog/CHANGELOG-PLATFORM.md` P4 batch
+
+**Acceptance criteria:** Docs never imply subscription login replaces API key
 
 ---
 
-### P4-M10 — Birkly-Website alpha copy
+### P4-M10 — Birkly-Website closed-alpha verification
 
-- **Status:** pending
-- **Repos:** Birkly-Website
-- **Depends on:** P4-M9
+- **Status:** not started
+- **Repos:** Birkly-Website, Birkly-Docs
+- **Depends on:** P4-M9-T2
+- **Note:** Kekaba still deferred
 
 **Tasks**
 
-- [ ] **P4-M10-T1** Alpha copy: MCP inbound + BYOAI outbound messaging
-- [ ] **P4-M10-T2** Legal/privacy lines for MCP audit if applicable
+- [ ] **P4-M10-T1** Audit beta/roadmap copy for AI/MCP accuracy
+- [ ] **P4-M10-T2** Legal/privacy: MCP audit logs + feedback practices
+- [ ] **P4-M10-T3** Dev smoke: waitlist, roadmap, legal; sync `Birkly-0.1/` if APIs changed
+
+**Acceptance criteria:** `DEV.md` fresh-clone path works
 
 ---
 
-### P4-M11 — Phase 4 closure
+### P4-M11 — Phase 4 closure & human handoff
 
-- **Status:** pending
+- **Status:** not started
 - **Repos:** Birkly (+ cross-repo)
 - **Depends on:** P4-M2–P4-M10
 
 **Tasks**
 
-- [ ] **P4-M11-T1** Full UX matrix re-run — all P4 rows pass
-- [ ] **P4-M11-T2** Videos V15 (onboarding), V16 (MCP inbound), V17 (BYOAI wizard)
-- [ ] **P4-M11-T3** `docs/reviews/p4-phase4-closure-checklist.md`
+- [ ] **P4-M11-T1** Full UX matrix — **all P4 rows pass**
+- [ ] **P4-M11-T2** Videos V15 (onboarding), V16 (MCP), V17 (BYOAI) in `docs/reviews/artifacts/`
+- [ ] **P4-M11-T3** `docs/reviews/p4-phase4-closure-checklist.md` + examples index
 - [ ] **P4-M11-T4** Mark Phase 4 complete in roadmap
-- [ ] **P4-M11-T5** **Notify human once** — digest + email **"Phase 4 complete — review end result"**
+- [ ] **P4-M11-T5** **Notify human once:** digest + email **"Phase 4 complete — review end result"** — only after qa-verifier + design-reviewer sign-off on full phase
+
+**Acceptance criteria:** CI includes mcp + onboarding + routing tests; matrix green; videos delivered; **single notification to human**
 
 ---
 
@@ -944,10 +995,26 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 | Defer | Reason |
 |-------|--------|
-| Kekaba content + production deploy | Human-scheduled |
-| OAuth implementation | P4-M8 spike only; P5 if go |
-| SQL, dark mode, plugin marketplace | Post-alpha polish |
-| Core npm/composer | Values violation |
+| **Kekaba** pages + production deploy | Human defer |
+| OAuth **implementation** (if spike no-go) | Phase 5+ |
+| SQL backend, dark mode, plugin marketplace, NPM in core | Unchanged |
+| Birkly → external AI push/webhooks | Post-MCP hardening |
+| Consumer OAuth without API scope | Speculative |
+
+---
+
+## Phase 4 success criteria
+
+| Area | Target |
+|------|--------|
+| **MCP inbound** | Standalone endpoints; Settings tab; migration; hardening |
+| **MCP clients** | Claude Desktop verified; client matrix |
+| **BYOAI outbound** | Wizard + API-key vs subscription clarity |
+| **Security** | Approval default + role checks unchanged |
+| **Alpha UX** | Onboarding + routing matrix green |
+| **OAuth** | Spike go/no-go doc only |
+| **Docs** | Inbound/outbound split in Birkly-Docs + Help |
+| **Delivery** | Videos V15–V17; **human notified once at P4-M11 after internal review** |
 
 ---
 
