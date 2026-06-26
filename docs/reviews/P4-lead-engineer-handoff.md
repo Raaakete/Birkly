@@ -128,3 +128,13 @@ Start with P4-M2-T1: onboarding E2E test or scripted browser QA.
 ## Escalation to human
 
 **P0 only:** security regression, data loss, CI permanently red with no fix path. Everything else: fix and continue. **Never** escalate for scope confirmation — Phase 4 is fully approved.
+
+---
+
+## Execution status (lead-engineer)
+
+| Milestone | Status | Notes |
+|-----------|--------|-------|
+| P4-M1 | complete | Roadmap + handoff merged |
+| P4-M2 | complete | PR #37 — 26 CI suites; HTTP E2E onboarding/routing/AI delete |
+| P4-M3 | next | MCP endpoint model |

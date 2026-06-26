@@ -1,9 +1,9 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-06-25 (Phase 3 closure)  
+**Last updated:** 2026-06-25 (P4-M2 complete)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
-**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (21 suites)  
-**Browser QA:** Phase 2 flows PASS; Phase 3 BYOAI, automation, feedback, Help — verified via tests + implementation audit 2026-06-25
+**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (26 suites after P4-M2)  
+**Browser QA:** Phase 2–3 flows PASS; P4 onboarding/routing/AI connection — HTTP E2E in CI (P4-M2)
 
 ## Matrix
 
@@ -31,14 +31,21 @@
 | Help home + doc search | Help | **pass** | P3-M11 | Manifest search + snapshots; contextual `?` links |
 | ContentEditor blocks save/reload | ContentEditor | **pass** | P3-M12 | Block registry (divider, table); `html_roundtrip_test.php` |
 | Birkly-Website alpha copy + legal | Client site | **pass** | P3-M13 | Seed script + `beta_legal`; DEV.md preview |
+| Onboarding E2E (CSRF + project save) | Onboarding | **pass** | P4-M2 | `onboarding_e2e_test.php` — create user → CSRF → settings → skip |
+| Admin routing HTTP (content/media/settings) | Admin | **pass** | P4-M2 | `admin_routing_http_test.php` — pages render distinct templates |
+| AI connection delete → chat rejects | BYOAI | **pass** | P4-M2 | `ai_chat_connection_test.php`; header picker PR #35 |
+| MCP standalone endpoints | MCP | **pending** | P4-M3/M4 | `settings/mcp_endpoints.json` not yet shipped |
+| MCP client setup (Claude Desktop) | MCP | **pending** | P4-M6 | Video V16 |
+| BYOAI connection wizard | BYOAI | **pending** | P4-M7 | Video V17 |
 
 ## Summary counts
 
 | Verdict | P2-M1 | Post P2-M2 | Post Phase 2 | Post Phase 3 |
 |---------|-------|------------|--------------|--------------|
-| pass | 4 | 9 | **11** | **22** |
-| partial | 6 | 2 | 0 | **0** |
-| fail | 1 | 0 | 0 | **0** |
+| pass | 4 | 9 | **11** | **22** | **25** |
+| partial | 6 | 2 | 0 | **0** | **0** |
+| fail | 1 | 0 | 0 | **0** | **0** |
+| pending | — | — | — | — | **3** |
 
 ## Register closure (P2-M1 → P2-M6)
 

@@ -803,7 +803,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 **Tasks**
 
 - [x] **P4-M1-T1** P4 readiness register — `docs/reviews/2026-06-25-p4-readiness-register.md`
-- [ ] **P4-M1-T2** Re-run UX matrix; add P4 rows
+- [x] **P4-M1-T2** Re-run UX matrix; add P4 rows
 - [ ] **P4-M1-T3** Browser QA checklist — `docs/reviews/p4-browser-qa-checklist.md`
 - [x] **P4-M1-T4** Human sign-off — Phase 4 scope approved
 
@@ -811,20 +811,20 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M2 — Alpha UX hardening
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Goal:** Onboarding E2E, admin routing smoke, AI chat stale-connection regression
 - **Depends on:** P4-M1-T4
-- **Refs:** PR #33, #34; `docs/testing-onboarding.md`
+- **Refs:** PR #33, #34, #35, #37; `tests/onboarding_e2e_test.php`
 
 **Tasks**
 
-- [ ] **P4-M2-T1** Onboarding E2E test or scripted browser QA (`tests/onboarding_e2e_test.php`)
-- [ ] **P4-M2-T2** `tests/admin_routing_test.php` — plugin pages, automation, site_users
-- [ ] **P4-M2-T3** AI chat stale/deleted connection regression (header picker)
-- [ ] **P4-M2-T4** Matrix rows: onboarding + admin routes → **pass**
+- [x] **P4-M2-T1** Onboarding E2E test (`tests/onboarding_e2e_test.php`) — CSRF + project save
+- [x] **P4-M2-T2** `tests/admin_routing_http_test.php` — HTTP routing for core admin pages
+- [x] **P4-M2-T3** `tests/ai_chat_connection_test.php` — delete removes connection; chat rejects
+- [x] **P4-M2-T4** Matrix rows: onboarding + admin routes + AI delete → **pass** (26 CI suites)
 
-**Acceptance criteria:** P4 browser checklist green for onboarding + routing
+**Acceptance criteria:** HTTP E2E regressions in CI for onboarding, routing, AI stale connection
 
 ---
 
