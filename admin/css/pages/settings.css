@@ -761,22 +761,37 @@
 }
 
 .wizard-step-indicator.active .wizard-step-num {
-    background: var(--primary);
+    background: var(--color-primary, var(--primary-500, #3b82f6));
     color: white;
 }
 
 .wizard-step-indicator.completed .wizard-step-num {
-    background: var(--success, #22c55e);
+    background: var(--success-600, #16a34a);
     color: white;
 }
 
 .wizard-error {
     padding: var(--space-3);
     margin-bottom: var(--space-3);
-    background: #fef2f2;
-    color: #b91c1c;
+    background: var(--error-50, #fef2f2);
+    color: var(--error-700, #b91c1c);
     border-radius: var(--border-radius-s);
     font-size: 0.875rem;
+}
+
+.ai-tab-mcp-note {
+    margin: 0 0 var(--space-4);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.mcp-connections-settings .panel-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.copy-snippet-row {
+    flex-wrap: wrap;
 }
 
 .byoai-key-explainer {

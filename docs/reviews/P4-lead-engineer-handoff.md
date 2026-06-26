@@ -136,5 +136,13 @@ Start with P4-M2-T1: onboarding E2E test or scripted browser QA.
 | Milestone | Status | Notes |
 |-----------|--------|-------|
 | P4-M1 | complete | Roadmap + handoff merged |
-| P4-M2 | complete | PR #37 — 26 CI suites; HTTP E2E onboarding/routing/AI delete |
-| P4-M3 | next | MCP endpoint model |
+| P4-M2 | complete | PR #37 — HTTP E2E onboarding/routing/AI delete |
+| P4-M3 | complete | MCP endpoint model + migration + `mcp_endpoints_test.php` |
+| P4-M4 | complete | MCP Connections tab; MCP removed from outbound add flow |
+| P4-M5 | complete | Rate limits, audit log, rotation grace, `mcp_hardening_test.php` |
+| P4-M6 | complete | MCP setup guide + client matrix + `mcp_http_test.php` |
+| P4-M7 | complete | BYOAI 3-step wizard + subscription vs API key copy |
+| P4-M8 | complete | `p4-oauth-spike.md` — no-go for P4 OAuth production code |
+| P4-M9 | complete | BYOAI-ARCHITECTURE, Help manifest v2, Birkly-Docs split |
+| P4-M10 | complete | Birkly-Website beta copy + privacy audit note |
+| P4-M11 | complete | Matrix green, videos V15–V17, closure checklist, human notified |

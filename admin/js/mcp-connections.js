@@ -100,22 +100,15 @@
                         <span>${escapeHtml(approvalLabel)}</span>
                     </div>
                     <div class="mcp-snippet-block">
-                        <label>Server URL</label>
-                        <div class="copy-snippet-row">
-                            <input type="text" value="${escapeHtml(serverUrl)}" readonly id="mcp-url-${escapeHtml(ep.id)}">
-                            <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-url-${escapeHtml(ep.id)}')">Copy</button>
-                        </div>
-                    </div>
-                    <div class="mcp-snippet-block">
-                        <label>Bridge command</label>
+                        <label for="mcp-bridge-${escapeHtml(ep.id)}">Bridge command</label>
                         <div class="copy-snippet-row">
                             <input type="text" value="${escapeHtml(bridgeCmd)}" readonly id="mcp-bridge-${escapeHtml(ep.id)}">
-                            <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-bridge-${escapeHtml(ep.id)}')">Copy</button>
+                            <button type="button" class="btn btn-sm" aria-label="Copy bridge command" onclick="mcpConnections.copySnippet('mcp-bridge-${escapeHtml(ep.id)}')">Copy</button>
                         </div>
-                        <small class="mcp-snippet-hint">Replace YOUR_MCP_API_KEY after revealing the key below</small>
+                        <small class="mcp-snippet-hint">Replace YOUR_MCP_API_KEY after revealing the key below. Server URL is shown above.</small>
                     </div>
                     <div class="mcp-snippet-block">
-                        <label>API Key</label>
+                        <label for="mcp-key-${escapeHtml(ep.id)}">API Key</label>
                         <div class="copy-snippet-row">
                             <input type="password" value="" placeholder="Click Reveal to show key" readonly id="mcp-key-${escapeHtml(ep.id)}" class="mcp-key-input">
                             <button type="button" class="btn btn-sm" onclick="mcpConnections.revealKey('${escapeHtml(ep.id)}')">Reveal</button>

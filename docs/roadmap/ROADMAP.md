@@ -804,7 +804,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 - [x] **P4-M1-T1** P4 readiness register — `docs/reviews/2026-06-25-p4-readiness-register.md`
 - [x] **P4-M1-T2** Re-run UX matrix; add P4 rows
-- [ ] **P4-M1-T3** Browser QA checklist — `docs/reviews/p4-browser-qa-checklist.md`
+- [x] **P4-M1-T3** Browser QA checklist — `docs/reviews/p4-browser-qa-checklist.md`
 - [x] **P4-M1-T4** Human sign-off — Phase 4 scope approved
 
 ---
@@ -830,7 +830,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M3 — MCP endpoint model & migration
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Goal:** Standalone inbound MCP profiles; legacy key dual-resolve
 - **Depends on:** P4-M1-T4
@@ -838,11 +838,11 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Tasks**
 
-- [ ] **P4-M3-T1** `core/mcp_endpoints.php` + `settings/mcp_endpoints.json` CRUD
-- [ ] **P4-M3-T2** `api/mcp_endpoints.php` — create/list/rotate/revoke (auth + CSRF)
-- [ ] **P4-M3-T3** `api/mcp_server.php` resolves endpoint profiles; **90-day** dual-resolve legacy `users/*.json` `mcp_api_key`
-- [ ] **P4-M3-T4** `scripts/migrate-mcp-endpoints.php`
-- [ ] **P4-M3-T5** `tests/mcp_endpoints_test.php`
+- [x] **P4-M3-T1** `core/mcp_endpoints.php` + `settings/mcp_endpoints.json` CRUD
+- [x] **P4-M3-T2** `api/mcp_endpoints.php` — create/list/rotate/revoke (auth + CSRF)
+- [x] **P4-M3-T3** `api/mcp_server.php` resolves endpoint profiles; **90-day** dual-resolve legacy `users/*.json` `mcp_api_key`
+- [x] **P4-M3-T4** `scripts/migrate-mcp-endpoints.php`
+- [x] **P4-M3-T5** `tests/mcp_endpoints_test.php`
 
 **Acceptance criteria:** Inbound works without outbound AI row; migration idempotent; tests in CI
 
@@ -850,18 +850,18 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M4 — MCP Settings UI (first-class)
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Goal:** Settings → **MCP Connections** tab; multi-profile; not buried in AI Connections
 - **Depends on:** P4-M3-T2
 
 **Tasks**
 
-- [ ] **P4-M4-T1** Settings tab + empty state (no auto-generated keys)
-- [ ] **P4-M4-T2** Create/rotate/revoke UI; role + `require_approval` per endpoint
-- [ ] **P4-M4-T3** Demote/remove MCP-as-outbound-provider from AI Connections add flow
-- [ ] **P4-M4-T4** Copy snippets: URL, key, `mcp-bridge.js` command
-- [ ] **P4-M4-T5** Matrix + internal video V16: MCP endpoint without outbound AI → **pass**
+- [x] **P4-M4-T1** Settings tab + empty state (no auto-generated keys)
+- [x] **P4-M4-T2** Create/rotate/revoke UI; role + `require_approval` per endpoint
+- [x] **P4-M4-T3** Demote/remove MCP-as-outbound-provider from AI Connections add flow
+- [x] **P4-M4-T4** Copy snippets: URL, key, `mcp-bridge.js` command
+- [x] **P4-M4-T5** Matrix + internal video V16: MCP endpoint without outbound AI → **pass**
 
 **Acceptance criteria:** design-reviewer pass; non-technical path documented in UI
 
@@ -869,17 +869,17 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M5 — MCP hardening
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Depends on:** P4-M3-T3, P4-M4-T2
 
 **Tasks**
 
-- [ ] **P4-M5-T1** Per-endpoint rate limits
-- [ ] **P4-M5-T2** MCP audit log (tool, endpoint id, timestamp; no secrets)
-- [ ] **P4-M5-T3** Key rotation with 24h grace unless revoked
-- [ ] **P4-M5-T4** Failed-auth lockout + admin visibility
-- [ ] **P4-M5-T5** `tests/mcp_hardening_test.php`
+- [x] **P4-M5-T1** Per-endpoint rate limits
+- [x] **P4-M5-T2** MCP audit log (tool, endpoint id, timestamp; no secrets)
+- [x] **P4-M5-T3** Key rotation with 24h grace unless revoked
+- [x] **P4-M5-T4** Failed-auth lockout + admin visibility
+- [x] **P4-M5-T5** `tests/mcp_hardening_test.php`
 
 **Acceptance criteria:** Audit trail on `tools/call`; writes still use approval queue
 
@@ -887,17 +887,17 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M6 — MCP client compatibility & guides
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly, Birkly-Docs
 - **Depends on:** P4-M4-T4, P4-M5-T1
 
 **Tasks**
 
-- [ ] **P4-M6-T1** Refresh `docs/mcp-setup-guide.md`; `BIRKLY_URL` naming
-- [ ] **P4-M6-T2** Cursor/Windsurf HTTP MCP section (experimental label if unverified)
-- [ ] **P4-M6-T3** Generic HTTP MCP examples
-- [ ] **P4-M6-T4** `docs/reviews/p4-mcp-client-matrix.md`
-- [ ] **P4-M6-T5** QA verify Claude Desktop or curl shim — video evidence in V16
+- [x] **P4-M6-T1** Refresh `docs/mcp-setup-guide.md`; `BIRKLY_URL` naming
+- [x] **P4-M6-T2** Cursor/Windsurf HTTP MCP section (experimental label if unverified)
+- [x] **P4-M6-T3** Generic HTTP MCP examples
+- [x] **P4-M6-T4** `docs/reviews/p4-mcp-client-matrix.md`
+- [x] **P4-M6-T5** QA verify Claude Desktop or curl shim — video evidence in V16
 
 **Acceptance criteria:** ≥1 client path verified on cloud VM
 
@@ -905,17 +905,17 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M7 — BYOAI outbound UX polish
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Depends on:** P4-M2-T3
 
 **Tasks**
 
-- [ ] **P4-M7-T1** Connection wizard: provider → key → test call → role/approval
-- [ ] **P4-M7-T2** Clear validation errors (invalid key, model, rate limit)
-- [ ] **P4-M7-T3** Copy: API key vs consumer subscription (ChatGPT Plus / Claude Pro ≠ API)
-- [ ] **P4-M7-T4** Ollama unreachable detection + doc link
-- [ ] **P4-M7-T5** Matrix + internal video V17: outbound connect → chat → approval → **pass**
+- [x] **P4-M7-T1** Connection wizard: provider → key → test call → role/approval
+- [x] **P4-M7-T2** Clear validation errors (invalid key, model, rate limit)
+- [x] **P4-M7-T3** Copy: API key vs consumer subscription (ChatGPT Plus / Claude Pro ≠ API)
+- [x] **P4-M7-T4** Ollama unreachable detection + doc link
+- [x] **P4-M7-T5** Matrix + internal video V17: outbound connect → chat → approval → **pass**
 
 **Acceptance criteria:** Wizard completes without reading source code
 
@@ -923,16 +923,16 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M8 — OAuth / device-flow discovery spike
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly (docs only unless go approved for P5)
 - **Depends on:** P4-M7-T3
 
 **Tasks**
 
-- [ ] **P4-M8-T1** `docs/reviews/p4-oauth-spike.md` — providers, limits, security
-- [ ] **P4-M8-T2** Optional device-code evaluation (no core dependency)
-- [ ] **P4-M8-T3** Go/no-go table; if go → propose **P5** milestone (not P4 code)
-- [ ] **P4-M8-T4** UI remains API-key wizard on no-go
+- [x] **P4-M8-T1** `docs/reviews/p4-oauth-spike.md` — providers, limits, security
+- [x] **P4-M8-T2** Optional device-code evaluation (no core dependency)
+- [x] **P4-M8-T3** Go/no-go table; if go → propose **P5** milestone (not P4 code)
+- [x] **P4-M8-T4** UI remains API-key wizard on no-go
 
 **Acceptance criteria:** Written go/no-go; **no OAuth production code in P4 without separate approval**
 
@@ -940,17 +940,17 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M9 — Documentation & Help manifest
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly, Birkly-Docs
 - **Depends on:** P4-M6-T1, P4-M7-T3
 
 **Tasks**
 
-- [ ] **P4-M9-T1** Update `docs/ai/BYOAI-ARCHITECTURE.md` (two-channel diagram)
-- [ ] **P4-M9-T2** Birkly-Docs: `01-admin/mcp-connections.md` (new) + `ai-connections.md` (outbound only)
-- [ ] **P4-M9-T3** Birkly-Docs: `ai-chat-and-actions.md` approval flow
-- [ ] **P4-M9-T4** Help manifest v2 + contextual links on MCP tab
-- [ ] **P4-M9-T5** `docs/changelog/CHANGELOG-PLATFORM.md` P4 batch
+- [x] **P4-M9-T1** Update `docs/ai/BYOAI-ARCHITECTURE.md` (two-channel diagram)
+- [x] **P4-M9-T2** Birkly-Docs: `01-admin/mcp-connections.md` (new) + `ai-connections.md` (outbound only)
+- [x] **P4-M9-T3** Birkly-Docs: `ai-chat-and-actions.md` approval flow
+- [x] **P4-M9-T4** Help manifest v2 + contextual links on MCP tab
+- [x] **P4-M9-T5** `docs/changelog/CHANGELOG-PLATFORM.md` P4 batch
 
 **Acceptance criteria:** Docs never imply subscription login replaces API key
 
@@ -958,16 +958,16 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M10 — Birkly-Website closed-alpha verification
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly-Website, Birkly-Docs
 - **Depends on:** P4-M9-T2
 - **Note:** Kekaba still deferred
 
 **Tasks**
 
-- [ ] **P4-M10-T1** Audit beta/roadmap copy for AI/MCP accuracy
-- [ ] **P4-M10-T2** Legal/privacy: MCP audit logs + feedback practices
-- [ ] **P4-M10-T3** Dev smoke: waitlist, roadmap, legal; sync `Birkly-0.1/` if APIs changed
+- [x] **P4-M10-T1** Audit beta/roadmap copy for AI/MCP accuracy
+- [x] **P4-M10-T2** Legal/privacy: MCP audit logs + feedback practices
+- [x] **P4-M10-T3** Dev smoke: waitlist, roadmap, legal; sync `Birkly-0.1/` if APIs changed
 
 **Acceptance criteria:** `DEV.md` fresh-clone path works
 
@@ -975,17 +975,17 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4-M11 — Phase 4 closure & human handoff
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly (+ cross-repo)
 - **Depends on:** P4-M2–P4-M10
 
 **Tasks**
 
-- [ ] **P4-M11-T1** Full UX matrix — **all P4 rows pass**
-- [ ] **P4-M11-T2** Videos V15 (onboarding), V16 (MCP), V17 (BYOAI) in `docs/reviews/artifacts/`
-- [ ] **P4-M11-T3** `docs/reviews/p4-phase4-closure-checklist.md` + examples index
-- [ ] **P4-M11-T4** Mark Phase 4 complete in roadmap
-- [ ] **P4-M11-T5** **Notify human once:** digest + email **"Phase 4 complete — review end result"** — only after qa-verifier + design-reviewer sign-off on full phase
+- [x] **P4-M11-T1** Full UX matrix — **all P4 rows pass**
+- [x] **P4-M11-T2** Videos V15 (onboarding), V16 (MCP), V17 (BYOAI) in `docs/reviews/artifacts/`
+- [x] **P4-M11-T3** `docs/reviews/p4-phase4-closure-checklist.md` + examples index
+- [x] **P4-M11-T4** Mark Phase 4 complete in roadmap
+- [x] **P4-M11-T5** **Notify human once:** digest + email **"Phase 4 complete — review end result"** — only after qa-verifier + design-reviewer sign-off on full phase
 
 **Acceptance criteria:** CI includes mcp + onboarding + routing tests; matrix green; videos delivered; **single notification to human**
 

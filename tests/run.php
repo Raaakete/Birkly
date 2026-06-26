@@ -25,6 +25,7 @@ $suites = [
     'ai_chat_connection_test.php',
     'mcp_endpoints_test.php',
     'mcp_hardening_test.php',
+    'mcp_http_test.php',
     'template_safe_renderer_test.php',
     'public_collection_meta_test.php',
     'page_snapshot_test.php',

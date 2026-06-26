@@ -97,7 +97,9 @@
             return;
         }
 
-        list.innerHTML = outbound.map(conn => `
+        list.innerHTML = `
+            <p class="connection-mcp-note ai-tab-mcp-note">For Claude Desktop or other external MCP clients, use the <a href="#mcp-connections" class="mcp-tab-link">MCP Connections</a> tab.</p>
+        ` + outbound.map(conn => `
             <div class="connection-item" data-connection-id="${conn.id}">
                 <div class="connection-info">
                     <div class="connection-name">${escapeHtml(conn.name || conn.provider)}</div>
@@ -105,7 +107,6 @@
                         <span class="connection-provider">${escapeHtml(conn.provider)}</span>
                         <span class="connection-role">${escapeHtml(conn.role)}</span>
                     </div>
-                    <p class="connection-mcp-note">For Claude Desktop or other external MCP clients, use the <a href="#mcp-connections" class="mcp-tab-link">MCP Connections</a> tab.</p>
                 </div>
                 <div class="connection-status ${conn.status === 'active' ? 'active' : 'inactive'}">
                     ${conn.status === 'active' ? '●' : '○'}
