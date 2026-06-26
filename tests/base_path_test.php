@@ -43,6 +43,13 @@ function with_script_name(string $script, callable $fn): void
     }
 }
 
+with_script_name('/birkly-test/Birkly-0.1/admin/index.php', function () {
+    test_assert(
+        'subfolder session cookie path',
+        birkly_session_cookie_path() === '/birkly-test/Birkly-0.1/'
+    );
+});
+
 with_script_name('/admin/index.php', function () {
     test_assert('root install base path empty', birkly_base_path() === '');
     test_assert('root admin_url', admin_url('content') === '/admin/index.php?page=content');

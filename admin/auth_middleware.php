@@ -8,6 +8,8 @@ require_once __DIR__ . '/../api/session.php';
 // Start secure session
 haru_secure_session_start();
 
+require_once __DIR__ . '/../core/csrf.php';
+
 // Check if user is authenticated
 function requireAdminAuth() {
     // Check if user is logged in
