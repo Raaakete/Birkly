@@ -6,6 +6,21 @@ Format: milestone batch → PRs → user-visible summary.
 
 ---
 
+## 2026-06-26 — Phase 4 documentation batch (P4-M6–M9)
+
+| Area | Summary |
+|------|---------|
+| Architecture | `docs/ai/BYOAI-ARCHITECTURE.md` — two-channel model (outbound BYOAI vs inbound MCP), `settings/mcp_endpoints.json` |
+| MCP setup | `docs/mcp-setup-guide.md` — MCP Connections tab, `BIRKLY_URL`, `migrate-mcp-endpoints.php` |
+| Reviews | `docs/reviews/p4-mcp-client-matrix.md` — Claude (verified), Cursor (experimental), curl HTTP |
+| Reviews | `docs/reviews/p4-oauth-spike.md` — OAuth no-go for P4; API key vs subscription; MCP for non-technical users |
+| Help | `docs/help-manifest.json` — `mcp-connections` topic v2 split from outbound `ai-connections`; admin snapshots |
+| Docs site | Birkly-Docs: inbound MCP vs outbound AI connections, chat connection picker |
+
+Birkly-Website: beta roadmap/features copy aligned with inbound MCP and API-key messaging.
+
+---
+
 ## 2026-06-25 — P3-M14 Documentation pack
 
 | Area | Summary |

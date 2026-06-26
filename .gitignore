@@ -54,6 +54,8 @@ data/plugins/
 # AI runtime data (conversations, approvals)
 data/ai_*
 data/feedback/
+data/mcp_audit/
+data/mcp_rate/
 
 # PHP dependencies
 vendor/

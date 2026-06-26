@@ -90,12 +90,6 @@ function getSupportedAiProviders() {
             'type' => 'custom',
             'custom_models' => true,
             'requires_url' => true
-        ],
-        'mcp' => [
-            'name' => 'MCP (Model Context Protocol)',
-            'models' => ['any'],
-            'api_url' => 'mcp://',
-            'type' => 'mcp'
         ]
     ];
 }
