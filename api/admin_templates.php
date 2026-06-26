@@ -9,6 +9,7 @@
 $__is_internal_include = isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__HARU_INTERNAL_CALL'] === true;
 
 require_once 'storage.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
 
 // Load fieldtype base and simple autoloader so fieldtypes can be instantiated for list rendering
 $baseFieldPath = __DIR__ . '/../fieldtypes/BaseField.php';
@@ -438,37 +439,37 @@ function getDashboardData() {
             'id' => 'setup_complete',
             'label' => 'Complete site setup',
             'completed' => $onboardingStatus['setup_wizard_completed'] ?? false,
-            'link' => '/admin/index.php?page=onboarding'
+            'link' => birkly_admin_url('onboarding')
         ],
         [
             'id' => 'first_collection',
             'label' => 'Create your first collection',
             'completed' => count($collections) > 0,
-            'link' => '/admin/index.php?page=content'
+            'link' => birkly_admin_url('content')
         ],
         [
             'id' => 'first_entry',
             'label' => 'Add your first entry',
             'completed' => $totalEntries > 0,
-            'link' => count($collections) > 0 ? '/admin/index.php?page=entry-editor&collection=' . $collections[0]['slug'] : '/admin/index.php?page=content'
+            'link' => count($collections) > 0 ? birkly_admin_url('entry-editor', ['collection' => $collections[0]['slug']]) : birkly_admin_url('content'),
         ],
         [
             'id' => 'upload_media',
             'label' => 'Upload media files',
             'completed' => false, // Could check media directory
-            'link' => '/admin/index.php?page=media'
+            'link' => birkly_admin_url('media')
         ],
         [
             'id' => 'configure_settings',
             'label' => 'Configure site settings',
             'completed' => false, // Could check if settings were customized
-            'link' => '/admin/index.php?page=settings'
+            'link' => birkly_admin_url('settings')
         ],
         [
             'id' => 'create_template',
             'label' => 'Set up your first template (optional)',
             'completed' => false,
-            'link' => '/admin/index.php?page=templates'
+            'link' => birkly_admin_url('templates')
         ]
     ];
     

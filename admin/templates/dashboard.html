@@ -27,7 +27,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                             <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
                                 <?= __('admin.start_adding_content') ?>
                             </p>
-                            <a href="/admin/index.php?page=content" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
+                            <a href="<?= admin_url('content') ?>\" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
                         </div>
                     </div>
                 </div>
@@ -40,7 +40,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                             <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
                                 <?= __('admin.learn_more_features') ?>
                             </p>
-                            <a href="/admin/index.php?page=help" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
+                            <a href="<?= admin_url('help') ?>\" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
                         </div>
                     </div>
                 </div>
@@ -162,7 +162,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
         <div class="dashboard-section analytics-section" id="analytics-section" style="display: none;">
             <div class="section-header">
                 <h2 class="section-title"><?= __('admin.website_analytics') ?></h2>
-                <a href="/admin/index.php?page=settings#domains" class="section-link"><?= __('admin.manage_domains_analytics') ?> →</a>
+                <a href="<?= admin_url('settings') ?>#domains" class="section-link"><?= __('admin.manage_domains_analytics') ?> →</a>
             </div>
             <div class="analytics-content" id="analytics-content">
                 <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
@@ -175,7 +175,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
             <div class="dashboard-section recent-collections">
                 <div class="section-header">
                     <h2 class="section-title"><?= __('admin.recent_collections') ?></h2>
-                    <a href="/admin/index.php?page=content" class="section-link"><?= __('admin.view_all') ?> →</a>
+                    <a href="<?= admin_url('content') ?>\" class="section-link"><?= __('admin.view_all') ?> →</a>
                 </div>
                 <div class="collections-list" id="recent-collections-list">
                     <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
@@ -186,7 +186,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
             <div class="dashboard-section recent-entries-section">
                 <div class="section-header">
                     <h2 class="section-title"><?= __('admin.recent_entries') ?></h2>
-                    <a href="/admin/index.php?page=content" class="section-link"><?= __('admin.view_all') ?> →</a>
+                    <a href="<?= admin_url('content') ?>\" class="section-link"><?= __('admin.view_all') ?> →</a>
                 </div>
                 <div class="entries-list" id="recent-entries-list">
                     <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
@@ -320,7 +320,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                                     <h4>${escapeHtml(name)}</h4>
                                     <p>${entriesCount} ${entriesCount === 1 ? '<?= __('admin.entry') ?>' : '<?= __('admin.entries') ?>'}</p>
                                 </div>
-                                <a class="btn btn-sm" href="/admin/index.php?page=entries&collection=${encodeURIComponent(slug)}"><?= __('admin.view') ?></a>
+                                <a class="btn btn-sm" href="${(window.Birkly && Birkly.adminUrl) ? Birkly.adminUrl('entries', {collection: slug}) : '/admin/index.php?page=entries&collection=' + encodeURIComponent(slug)}"><?= __('admin.view') ?></a>
                             </div>
                         `;
                     }).join('');
@@ -360,4 +360,4 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
     <?php endif; ?>
 })();
 </script>
-<script src="/admin/js/dashboard.js"></script>
+<script src="<?= birkly_url('/admin/js/dashboard.js') ?>"></script>

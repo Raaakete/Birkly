@@ -22,6 +22,7 @@ $suites = [
     'csrf_session_scope_test.php',
     'admin_routing_test.php',
     'admin_routing_http_test.php',
+    'base_path_test.php',
     'ai_chat_connection_test.php',
     'mcp_endpoints_test.php',
     'mcp_hardening_test.php',
