@@ -52,6 +52,38 @@ try {
     test_assert('create_first_user HTTP 200', $create['code'] === 200, 'code ' . $create['code']);
     test_assert('create_first_user status ok', ($createData['status'] ?? '') === 'ok', $create['body']);
 
+    $dashboardProbe = birkly_test_http_request($base . '/admin/index.php?page=dashboard', [
+        'cookie_file' => $cookieFile,
+    ]);
+    test_assert('dashboard reachable after create_first_user', $dashboardProbe['code'] === 200);
+    test_assert('session kept after create (not login page)', stripos($dashboardProbe['body'], 'Welcome Back') === false);
+
+    $loginCookieFile = sys_get_temp_dir() . '/birkly-e2e-login-cookies-' . getmypid() . '.txt';
+    @unlink($loginCookieFile);
+    touch($loginCookieFile);
+
+    $loginGet = birkly_test_http_request($base . '/admin/login.php', ['cookie_file' => $loginCookieFile]);
+    test_assert('login page HTTP 200', $loginGet['code'] === 200, 'code ' . $loginGet['code']);
+    preg_match('/name="_csrf"\s+value="([^"]+)"/', $loginGet['body'], $csrfMatch);
+    $loginCsrf = $csrfMatch[1] ?? '';
+    test_assert('login page csrf present', $loginCsrf !== '');
+
+    $loginPost = birkly_test_http_request($base . '/admin/login.php', [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
+        'body' => http_build_query([
+            'email' => $testEmail,
+            'password' => $testPassword,
+            '_csrf' => $loginCsrf,
+        ]),
+        'cookie_file' => $loginCookieFile,
+    ]);
+    test_assert(
+        'login POST accepts csrf token',
+        stripos($loginPost['body'], 'Invalid security token') === false,
+        substr($loginPost['body'], 0, 300)
+    );
+
     $csrfResponse = birkly_test_http_request($base . '/api/csrf.php', [
         'cookie_file' => $cookieFile,
         'headers' => ['Referer: ' . $base . '/admin/index.php?page=onboarding'],
@@ -131,6 +163,9 @@ try {
     birkly_test_remove_directory($backupUsers);
     birkly_test_remove_directory($backupSettings);
     @unlink($cookieFile);
+    if (isset($loginCookieFile)) {
+        @unlink($loginCookieFile);
+    }
     birkly_test_http_server_stop($serverPid);
 }
 

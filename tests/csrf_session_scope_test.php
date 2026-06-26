@@ -30,11 +30,21 @@ test_assert(
 );
 
 test_assert(
-    'PHPSESSID wins over site cookie',
-    birkly_resolve_csrf_session_scope([
-        'PHPSESSID' => 'cms123',
-        'birkly_site_sid' => 'site123',
-    ]) === 'cms'
+    'api request uri uses cms scope over site cookie',
+    birkly_resolve_csrf_session_scope(
+        ['birkly_site_sid' => 'site123'],
+        '',
+        '/birkly-test/Birkly-0.1/api/csrf.php'
+    ) === 'cms'
+);
+
+test_assert(
+    'admin request uri uses cms scope without referer',
+    birkly_resolve_csrf_session_scope(
+        ['birkly_site_sid' => 'site123'],
+        '',
+        '/birkly-test/Birkly-0.1/admin/login.php'
+    ) === 'cms'
 );
 
 exit(test_finish('csrf_session_scope_test'));

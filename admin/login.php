@@ -75,8 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $csrf = $_POST['_csrf'] ?? '';
     
-    // Validate CSRF token (simplified for now)
+    // Validate CSRF token
     if (!validate_csrf_token($csrf)) {
+        generate_csrf_token();
         $error = 'Invalid security token. Please try again.';
     } elseif (empty($email) || empty($password)) {
         $error = 'Please enter both email and password.';
@@ -429,7 +430,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             </div>
         <?php endif; ?>
         
-        <form class="login-form" method="POST">
+        <form class="login-form" method="POST" action="<?= htmlspecialchars(birkly_url('/admin/login.php')) ?>">
             <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
             
             <div class="form-group">
