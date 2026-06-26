@@ -1,9 +1,9 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-06-25 (P4-M2 complete)  
+**Last updated:** 2026-06-26 (Phase 4 complete)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
-**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (26 suites after P4-M2)  
-**Browser QA:** Phase 2–3 flows PASS; P4 onboarding/routing/AI connection — HTTP E2E in CI (P4-M2)
+**Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (29 suites)  
+**Browser QA:** P4 HTTP E2E in CI; MCP `mcp_http_test.php`; design-reviewer approved MCP tab + BYOAI wizard
 
 ## Matrix
 
@@ -23,7 +23,7 @@
 | AI connect + role assign | BYOAI | **pass** | P3-M2/M3 | ACL helpers, dynamic role picker, `require_approval` default true |
 | Admin AI chat (read action) | BYOAI | **pass** | P3-M4 | Tool registry + floating chat; `ai_tool_registry_test.php` |
 | AI write → approval queue | BYOAI | **pass** | P3-M2/M4 | Approval ACLs; owner/shared reviewers |
-| MCP external connect | BYOAI | **pass** | P3-M5 | Per-connection `mcp_api_key`; `mcp-bridge.js` BIRKLY_* env |
+| MCP external connect | MCP | **pass** | P4-M3/M6 | Standalone endpoints; `mcp_http_test.php`; `mcp-bridge.js` |
 | Automation builder page | Automation | **pass** | P3-M6 | `plugins/automation/`; `?page=automation` via plugin admin page |
 | Automation trigger → log | Automation | **pass** | P3-M7 | Queue + CLI `process_queue.php`; `automation_plugin_test.php` |
 | User plugin admin + permissions | User plugin | **pass** | P3-M8 | `site_users` page; `user_plugin_permissions_test.php` |
@@ -34,18 +34,18 @@
 | Onboarding E2E (CSRF + project save) | Onboarding | **pass** | P4-M2 | `onboarding_e2e_test.php` — create user → CSRF → settings → skip |
 | Admin routing HTTP (content/media/settings) | Admin | **pass** | P4-M2 | `admin_routing_http_test.php` — pages render distinct templates |
 | AI connection delete → chat rejects | BYOAI | **pass** | P4-M2 | `ai_chat_connection_test.php`; header picker PR #35 |
-| MCP standalone endpoints | MCP | **pending** | P4-M3/M4 | `settings/mcp_endpoints.json` not yet shipped |
-| MCP client setup (Claude Desktop) | MCP | **pending** | P4-M6 | Video V16 |
-| BYOAI connection wizard | BYOAI | **pending** | P4-M7 | Video V17 |
+| MCP standalone endpoints | MCP | **pass** | P4-M3/M4 | `settings/mcp_endpoints.json`, Settings MCP tab, `mcp_endpoints_test.php` |
+| MCP client setup (Claude Desktop) | MCP | **pass** | P4-M6 | `mcp_http_test.php`; `p4-mcp-client-matrix.md`; video V16 |
+| BYOAI connection wizard | BYOAI | **pass** | P4-M7 | 3-step wizard; API key vs subscription copy; video V17 |
 
 ## Summary counts
 
-| Verdict | P2-M1 | Post P2-M2 | Post Phase 2 | Post Phase 3 |
-|---------|-------|------------|--------------|--------------|
-| pass | 4 | 9 | **11** | **22** | **25** |
+| Verdict | P2-M1 | Post P2-M2 | Post Phase 2 | Post Phase 3 | Post Phase 4 |
+|---------|-------|------------|--------------|--------------|--------------|
+| pass | 4 | 9 | **11** | **22** | **28** |
 | partial | 6 | 2 | 0 | **0** | **0** |
 | fail | 1 | 0 | 0 | **0** | **0** |
-| pending | — | — | — | — | **3** |
+| pending | — | — | — | — | **0** |
 
 ## Register closure (P2-M1 → P2-M6)
 
@@ -59,6 +59,6 @@
 
 ## Gate
 
-**Phase 3 UX gate:** All matrix rows pass (22/22). Automated CI 21 suites PASS. Walkthrough videos V7–V14 in `docs/reviews/artifacts/`.
+**Phase 4 UX gate:** All matrix rows pass (28/28). Automated CI 29 suites PASS. Walkthrough videos V15–V17 in `docs/reviews/artifacts/`.
 
 **Post-merge hotfix:** P2-M6 safe renderer was blocking legacy admin PHP (`require_once`, `include`, `required` keys). Fixed by validating parser output only; trusted template PHP blocks excluded from validation.

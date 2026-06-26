@@ -69,6 +69,13 @@
         </svg>
         <?= __('admin.ai_connections') ?>
       </button>
+      <button class="tab-btn" data-tab="mcp-connections" data-help-topic="mcp-connections">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"></path>
+        </svg>
+        MCP Connections
+      </button>
       <button class="tab-btn" data-tab="storage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -688,7 +695,7 @@
 
         <!-- Add / Edit Connection Modal -->
         <div class="modal" id="add-connection-modal" style="display: none;">
-          <div class="modal-content">
+          <div class="modal-content connection-wizard-modal">
             <div class="modal-header">
               <h2 id="connection-modal-title"><?= __('admin.add_ai_connection') ?></h2>
               <button class="btn-icon modal-close" id="close-modal-btn">
@@ -700,78 +707,215 @@
             </div>
             <form id="add-connection-form" class="modal-body">
               <input type="hidden" id="connection-id" name="id">
+
+              <div id="connection-wizard-steps" class="connection-wizard-steps">
+                <div class="wizard-step-indicator active" data-step="1">
+                  <span class="wizard-step-num">1</span>
+                  <span class="wizard-step-label">Provider</span>
+                </div>
+                <div class="wizard-step-indicator" data-step="2">
+                  <span class="wizard-step-num">2</span>
+                  <span class="wizard-step-label">Credentials</span>
+                </div>
+                <div class="wizard-step-indicator" data-step="3">
+                  <span class="wizard-step-num">3</span>
+                  <span class="wizard-step-label">Permissions</span>
+                </div>
+              </div>
+
+              <div id="wizard-error" class="wizard-error" style="display: none;" role="alert"></div>
+
+              <!-- Step 1: Provider -->
+              <div class="wizard-panel" data-wizard-step="1">
+                <div class="form-group">
+                  <label for="connection-provider"><?= __('admin.ai_provider') ?></label>
+                  <select id="connection-provider" name="provider" required>
+                    <option value="">Select a provider...</option>
+                  </select>
+                  <small>Choose the AI service you want to connect for outbound chat</small>
+                </div>
+              </div>
+
+              <!-- Step 2: Credentials -->
+              <div class="wizard-panel" data-wizard-step="2" style="display: none;">
+                <div class="byoai-key-explainer">
+                  <strong>API key required — not the same as a subscription</strong>
+                  <p>ChatGPT Plus, Claude Pro, and similar consumer plans do <em>not</em> include API access. You need a separate API key from your provider's developer console (e.g. platform.openai.com, console.anthropic.com).</p>
+                </div>
+
+                <div class="form-group">
+                  <label for="connection-name"><?= __('admin.connection_name') ?></label>
+                  <input type="text" id="connection-name" name="name" placeholder="<?= __('admin.my_ai_assistant_example') ?>">
+                  <small><?= __('admin.connection_friendly_name_help') ?></small>
+                </div>
+
+                <div class="form-group" id="api-url-group" style="display: none;">
+                  <label for="connection-api-url"><?= __('admin.api_url') ?></label>
+                  <input type="url" id="connection-api-url" name="api_url" placeholder="https://api.example.com/v1/chat/completions">
+                  <small id="api-url-hint">API endpoint URL (required for custom providers)</small>
+                </div>
+
+                <div class="form-group" id="api-key-group">
+                  <label for="connection-api-key"><?= __('admin.api_key') ?></label>
+                  <input type="password" id="connection-api-key" name="api_key" autocomplete="off">
+                  <small><?= __('admin.api_key_help') ?></small>
+                </div>
+
+                <div class="form-group" id="ollama-hint" style="display: none;">
+                  <div class="byoai-key-explainer ollama-hint-box">
+                    <strong>Ollama runs locally</strong>
+                    <p>No API key needed. Make sure Ollama is running on your machine (default: <code>http://localhost:11434</code>). Birkly must be able to reach that URL from the server.</p>
+                  </div>
+                </div>
+
+                <div class="form-group" id="test-connection-group">
+                  <button type="button" class="btn btn-secondary" id="test-connection-btn">Test connection</button>
+                  <span id="test-connection-status" class="test-connection-status"></span>
+                </div>
+              </div>
+
+              <!-- Step 3: Permissions -->
+              <div class="wizard-panel" data-wizard-step="3" style="display: none;">
+                <div class="form-group">
+                  <label for="connection-model"><?= __('admin.model') ?></label>
+                  <select id="connection-model" name="model">
+                    <option value="">Default</option>
+                  </select>
+                  <input type="text" id="connection-model-custom" name="model_custom" placeholder="<?= __('admin.enter_model_name') ?>" style="display: none; margin-top: 0.5rem;">
+                  <small>Select which AI model to use, or enter a custom model name</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="connection-role"><?= __('admin.role') ?></label>
+                  <select id="connection-role" name="role" required>
+                    <option value="">Loading roles...</option>
+                  </select>
+                  <small><?= __('admin.ai_permissions_help') ?></small>
+                </div>
+
+                <div class="form-group">
+                  <label for="connection-shared-type"><?= __('admin.who_can_use_connection') ?></label>
+                  <select id="connection-shared-type" name="shared_type" required>
+                    <option value="none" selected>Only me (Private)</option>
+                    <option value="all">All users</option>
+                    <option value="specific">Specific users</option>
+                  </select>
+                  <small>Choose who can access and use this AI connection</small>
+                </div>
+
+                <div class="form-group" id="allowed-users-group" style="display: none;">
+                  <label for="connection-allowed-users"><?= __('admin.select_users') ?></label>
+                  <div id="allowed-users-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
+                    <div class="loading">Loading users...</div>
+                  </div>
+                  <small><?= __('admin.select_users_for_connection') ?></small>
+                </div>
+
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox" id="connection-require-approval" name="require_approval" value="1" checked>
+                    Require approval for AI actions
+                  </label>
+                  <small><?= __('admin.ai_approval_mode_help') ?></small>
+                </div>
+              </div>
+
+              <!-- Edit mode: all fields visible (no wizard) -->
+              <div id="edit-connection-fields" style="display: none;"></div>
+
+              <div class="modal-footer connection-wizard-footer">
+                <button type="button" class="btn btn-secondary" id="wizard-back-btn" style="display: none;">Back</button>
+                <button type="button" class="btn btn-secondary modal-close"><?= __('admin.cancel') ?></button>
+                <button type="button" class="btn btn-primary" id="wizard-next-btn">Next</button>
+                <button type="submit" class="btn btn-primary" id="connection-submit-btn" style="display: none;"><?= __('admin.connect') ?></button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- MCP Connections Tab -->
+      <div class="tab-pane" id="mcp-connections">
+        <div class="mcp-connections-settings">
+          <div class="settings-section">
+            <h2>MCP Connections</h2>
+            <p class="settings-help">Connect external AI tools (e.g. Claude Desktop) to your Birkly site via the Model Context Protocol. Each endpoint gets its own API key and role.</p>
+
+            <div class="connections-container">
+              <div class="connections-panel">
+                <div class="panel-header">
+                  <h3>MCP Endpoints</h3>
+                  <button class="btn btn-primary" id="add-mcp-endpoint-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Endpoint
+                  </button>
+                </div>
+
+                <div class="mcp-server-url-block" id="mcp-global-server-url" style="display: none;">
+                  <label>MCP Server URL</label>
+                  <div class="copy-snippet-row">
+                    <input type="text" id="mcp-server-url-input" readonly>
+                    <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-server-url-input')">Copy</button>
+                  </div>
+                </div>
+
+                <div class="connections-list" id="mcp-endpoints-list">
+                  <div class="loading">Loading endpoints...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add MCP Endpoint Modal -->
+        <div class="modal" id="add-mcp-modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2 id="mcp-modal-title">Add MCP Endpoint</h2>
+              <button class="btn-icon modal-close" data-mcp-modal-close>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <form id="add-mcp-form" class="modal-body">
               <div class="form-group">
-                <label for="connection-provider"><?= __('admin.ai_provider') ?></label>
-                <select id="connection-provider" name="provider" required>
-                  <option value="">Select a provider...</option>
-                </select>
-                <small>Choose the AI service you want to connect</small>
+                <label for="mcp-endpoint-name">Endpoint name</label>
+                <input type="text" id="mcp-endpoint-name" name="name" required placeholder="e.g. Claude Desktop">
+                <small>A friendly name to identify this MCP client</small>
               </div>
-              
+
               <div class="form-group">
-                <label for="connection-name"><?= __('admin.connection_name') ?></label>
-                <input type="text" id="connection-name" name="name" placeholder="<?= __('admin.my_ai_assistant_example') ?>">
-                <small><?= __('admin.connection_friendly_name_help') ?></small>
-              </div>
-              
-              <div class="form-group" id="api-url-group" style="display: none;">
-                <label for="connection-api-url"><?= __('admin.api_url') ?></label>
-                <input type="url" id="connection-api-url" name="api_url" placeholder="https://api.example.com/v1/chat/completions">
-                <small>API endpoint URL (required for custom providers, optional for others)</small>
-              </div>
-              
-              <div class="form-group" id="api-key-group">
-                <label for="connection-api-key"><?= __('admin.api_key') ?></label>
-                <input type="password" id="connection-api-key" name="api_key">
-                <small><?= __('admin.api_key_help') ?></small>
-              </div>
-              
-              <div class="form-group">
-                <label for="connection-model"><?= __('admin.model') ?></label>
-                <select id="connection-model" name="model">
-                  <option value="">Default</option>
-                </select>
-                <input type="text" id="connection-model-custom" name="model_custom" placeholder="<?= __('admin.enter_model_name') ?>" style="display: none; margin-top: 0.5rem;">
-                <small>Select which AI model to use, or enter a custom model name</small>
-              </div>
-              
-              <div class="form-group">
-                <label for="connection-role"><?= __('admin.role') ?></label>
-                <select id="connection-role" name="role" required>
+                <label for="mcp-endpoint-role">Role</label>
+                <select id="mcp-endpoint-role" name="role" required>
                   <option value="">Loading roles...</option>
                 </select>
-                <small><?= __('admin.ai_permissions_help') ?></small>
+                <small>Permissions granted to tools called via this endpoint</small>
               </div>
-              
-              <div class="form-group">
-                <label for="connection-shared-type"><?= __('admin.who_can_use_connection') ?></label>
-                <select id="connection-shared-type" name="shared_type" required>
-                  <option value="none" selected>Only me (Private)</option>
-                  <option value="all">All users</option>
-                  <option value="specific">Specific users</option>
-                </select>
-                <small>Choose who can access and use this AI connection</small>
-              </div>
-              
-              <div class="form-group" id="allowed-users-group" style="display: none;">
-                <label for="connection-allowed-users"><?= __('admin.select_users') ?></label>
-                <div id="allowed-users-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
-                  <div class="loading">Loading users...</div>
-                </div>
-                <small><?= __('admin.select_users_for_connection') ?></small>
-              </div>
-              
+
               <div class="form-group">
                 <label>
-                  <input type="checkbox" id="connection-require-approval" name="require_approval" value="1" checked>
-                  Require approval for AI actions
+                  <input type="checkbox" id="mcp-require-approval" name="require_approval" value="1" checked>
+                  Require approval for write actions
                 </label>
-                <small><?= __('admin.ai_approval_mode_help') ?></small>
+                <small>When enabled, destructive or write operations need admin approval</small>
               </div>
-              
+
+              <div id="mcp-create-key-reveal" class="mcp-key-reveal" style="display: none;">
+                <p><strong>Save this API key now</strong> — it won't be shown again unless you reveal or rotate it.</p>
+                <div class="copy-snippet-row">
+                  <input type="text" id="mcp-new-key-display" readonly>
+                  <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-new-key-display')">Copy</button>
+                </div>
+              </div>
+
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary modal-close"><?= __('admin.cancel') ?></button>
-                <button type="submit" class="btn btn-primary" id="connection-submit-btn"><?= __('admin.connect') ?></button>
+                <button type="button" class="btn btn-secondary" data-mcp-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create Endpoint</button>
               </div>
             </form>
           </div>
@@ -3011,6 +3155,7 @@ async function downloadUpdate() {
 </script>
 
 <script src="/admin/js/ai-connections.js"></script>
+<script src="/admin/js/mcp-connections.js"></script>
 
 <!-- Activity Feed Styles -->
 <style>

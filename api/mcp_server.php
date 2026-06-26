@@ -1,6 +1,6 @@
 <?php
 /**
- * MCP (Model Context Protocol) Server — P3-M5
+ * MCP (Model Context Protocol) Server — P3-M5 / P4-M3 inbound endpoints
  */
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
@@ -15,6 +15,7 @@ require_once 'auth.php';
 require_once 'ai_helpers.php';
 require_once 'log.php';
 require_once __DIR__ . '/../core/ai_tool_registry.php';
+require_once __DIR__ . '/../core/mcp_endpoints.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 $method = $input['method'] ?? $_GET['method'] ?? '';
@@ -32,9 +33,11 @@ if (empty($apiKey)) {
     exit;
 }
 
-$aiUser = findAiUserByMcpKey($apiKey);
+$aiUser = birkly_mcp_resolve_actor_by_key($apiKey);
+$endpointId = $aiUser['id'] ?? 'unknown';
 
 if (!$aiUser) {
+    birkly_mcp_record_failed_auth($apiKey);
     http_response_code(401);
     echo json_encode([
         'jsonrpc' => '2.0',
@@ -44,8 +47,23 @@ if (!$aiUser) {
     exit;
 }
 
+if (($aiUser['type'] ?? '') === 'mcp_endpoint' && !birkly_mcp_check_rate_limit($endpointId)) {
+    http_response_code(429);
+    echo json_encode([
+        'jsonrpc' => '2.0',
+        'id' => $input['id'] ?? null,
+        'error' => ['code' => -32000, 'message' => 'Rate limit exceeded'],
+    ]);
+    exit;
+}
+
+if (($aiUser['type'] ?? '') === 'mcp_endpoint') {
+    birkly_mcp_reset_failed_auth($endpointId);
+}
+
 $result = null;
 $error = null;
+$toolName = $params['name'] ?? '';
 
 switch ($method) {
     case 'initialize':
@@ -67,6 +85,9 @@ switch ($method) {
         $error = ['code' => -32601, 'message' => 'Method not found'];
 }
 
+$success = $error === null && !($result['isError'] ?? false);
+birkly_mcp_audit_log($endpointId, $method, $toolName, $success);
+
 echo json_encode([
     'jsonrpc' => '2.0',
     'id' => $input['id'] ?? null,
@@ -74,24 +95,12 @@ echo json_encode([
     'error' => $error,
 ]);
 
-function findAiUserByMcpKey(string $apiKey): ?array
-{
-    $usersStorage = new Storage('../users');
-    foreach ($usersStorage->list('') as $userFile) {
-        $user = $usersStorage->read($userFile);
-        if ($user && ($user['type'] ?? '') === 'ai' && isset($user['mcp_api_key']) && hash_equals($user['mcp_api_key'], $apiKey)) {
-            return $user;
-        }
-    }
-    return null;
-}
-
 function handleInitialize(array $aiUser): array
 {
     return [
         'protocolVersion' => '2024-11-05',
         'capabilities' => ['tools' => [], 'resources' => []],
-        'serverInfo' => ['name' => 'Birkly MCP Server', 'version' => '1.0.0'],
+        'serverInfo' => ['name' => 'Birkly MCP Server', 'version' => '1.1.0'],
     ];
 }
 
