@@ -566,7 +566,7 @@
                 card.classList.remove('just-dragged');
                 return;
             }
-            window.location.href = '/admin/index.php?page=entries&collection=' + encodeURIComponent(collection.slug);
+            window.location.href = Birkly.url('/admin/index.php?page=entries&collection=') + encodeURIComponent(collection.slug);
         });
         
         // Prevent drag from menu

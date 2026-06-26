@@ -116,6 +116,7 @@ if ($operation === 'delete') {
     // Check if user functions are available, if not, load public_bootstrap (which checks for existing functions)
     if (!function_exists('birkly_get_current_user')) {
         require_once __DIR__ . '/../core/public_bootstrap.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
         if (function_exists('birkly_public_load_active_plugins')) {
             birkly_public_load_active_plugins();
         }
@@ -292,7 +293,7 @@ if ($result) {
         $message .= "Parent Entry: {$parentTitle}\n";
         $message .= "Sub-Entry ID: {$result['id']}\n";
         $message .= "Status: Draft (pending review)\n\n";
-        $message .= "Review at: " . (isset($_SERVER['HTTP_HOST']) ? "http://{$_SERVER['HTTP_HOST']}" : '') . "/admin/index.php?page=entry-editor&collection={$parent_collection}&entry={$parent_entry_id}";
+        $message .= "Review at: " . (isset($_SERVER['HTTP_HOST']) ? "http://{$_SERVER['HTTP_HOST']}" : '') . birkly_admin_url('entry-editor', ['collection' => $parent_collection, 'entry' => $parent_entry_id]);
         
         @mail($notificationEmail, $subject, $message);
     }

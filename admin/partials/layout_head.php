@@ -20,24 +20,26 @@
     ?>
     <script>
       window.Birkly = window.Birkly || {};
+      window.Birkly.basePath = <?= birkly_base_path_json() ?>;
       window.Birkly.currentUser = window.Birkly.currentUser || {};
       window.Birkly.currentUser.role = <?= json_encode($currentRole) ?>;
       window.Birkly.currentUser.permissions = <?= json_encode(array_values(array_unique(array_filter($currentPermissions)))) ?>;
     </script>
     <title>Birkly Admin</title>
     <!-- Main Stylesheet - Imports all CSS modules -->
-    <link rel="stylesheet" href="/admin/css/style.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <?php
     // Load settings to get logo for favicon
     require_once __DIR__ . '/../../api/storage.php';
     $storage = new Storage(__DIR__ . '/../../settings');
     $brandingSettings = $storage->read('branding.json') ?? [];
     $logoPath = $brandingSettings['logoPath'] ?? '';
-    $faviconUrl = !empty($logoPath) ? $logoPath : '/admin/assets/birkly-icon.svg';
+    $faviconUrl = !empty($logoPath) ? $logoPath : birkly_url('/admin/assets/birkly-icon.svg');
 ?><link rel="shortcut icon" href="<?= htmlspecialchars($faviconUrl) ?>">
     
     <!-- Plugin UI System -->
-    <script src="/admin/js/plugin-ui.js" defer></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/plugin-ui.js')) ?>" defer></script>
     
     <!-- Page uses no per-page JS here; global JS loaded in footer -->
 </head>

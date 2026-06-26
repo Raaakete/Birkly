@@ -1,6 +1,7 @@
 <?php
 // admin/auth_middleware.php - Authentication middleware for admin panel
 
+require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../api/auth.php';
 require_once __DIR__ . '/../api/session.php';
 
@@ -23,7 +24,7 @@ function requireAdminAuth() {
         }
         
         // Redirect to login page
-        $loginUrl = '/admin/login.php';
+        $loginUrl = birkly_url('/admin/login.php');
         if (isset($_GET['page']) && isset($_SERVER['REQUEST_URI'])) {
             $loginUrl .= '?redirect=' . urlencode($_SERVER['REQUEST_URI']);
         }
@@ -37,7 +38,7 @@ function requireAdminAuth() {
     if (isset($_SESSION['last_activity']) && ($now - $_SESSION['last_activity']) > $timeout) {
         session_unset();
         session_destroy();
-        header('Location: /admin/login.php?timeout=1');
+        header('Location: ' . birkly_url('/admin/login.php?timeout=1'));
         exit;
     }
     
@@ -47,7 +48,7 @@ function requireAdminAuth() {
     // Check if user has admin access
     $userRole = $_SESSION['user']['role'] ?? 'viewer';
     if (!in_array($userRole, ['admin', 'editor', 'viewer'])) {
-        header('Location: /admin/login.php?error=access_denied');
+        header('Location: ' . birkly_url('/admin/login.php?error=access_denied'));
         exit;
     }
     
@@ -62,9 +63,14 @@ function requireAdminPermission($permission) {
         // UX: For MPA navigation, redirect back to dashboard and show a unified modal there.
         // API endpoints still return JSON 403; this is only for page navigation.
         $fromPage = isset($_GET['page']) ? (string)$_GET['page'] : '';
-        $redirect = '/admin/index.php?page=dashboard&permission_denied=1'
-            . ($permission ? ('&needed=' . urlencode((string)$permission)) : '')
-            . ($fromPage ? ('&from=' . urlencode($fromPage)) : '');
+        $redirectParams = ['permission_denied' => '1'];
+        if ($permission) {
+            $redirectParams['needed'] = (string) $permission;
+        }
+        if ($fromPage) {
+            $redirectParams['from'] = $fromPage;
+        }
+        $redirect = birkly_admin_url('dashboard', $redirectParams);
 
         if (!headers_sent()) {
             header('Location: ' . $redirect);

@@ -616,14 +616,14 @@ const onboarding = {
                     params.set('demo_choice', this.demoContentChoice);
                 }
                 const queryString = params.toString();
-                window.location.href = '/admin/index.php?page=dashboard' + (queryString ? '&' + queryString : '');
+                window.location.href = Birkly.url('/admin/index.php?page=dashboard') + (queryString ? '&' + queryString : '');
             } else {
                 alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error completing onboarding:', error);
             // Redirect anyway
-            window.location.href = '/admin/index.php?page=dashboard';
+            window.location.href = Birkly.url('/admin/index.php?page=dashboard');
         }
     },
     
@@ -650,14 +650,14 @@ const onboarding = {
             const data = await response.json();
             if (data.status === 'ok') {
                 // Redirect to dashboard
-                window.location.href = '/admin/index.php?page=dashboard';
+                window.location.href = Birkly.url('/admin/index.php?page=dashboard');
             } else {
                 alert('Failed to skip onboarding: ' + (data.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error skipping onboarding:', error);
             // Redirect anyway
-            window.location.href = '/admin/index.php?page=dashboard';
+            window.location.href = Birkly.url('/admin/index.php?page=dashboard');
         }
     }
 };

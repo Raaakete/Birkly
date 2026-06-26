@@ -11,6 +11,7 @@ if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 }
 
 require_once 'storage.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
 require_once 'users.php';
 require_once 'auth.php';
 require_once 'validate.php';
@@ -141,7 +142,7 @@ if ($action === 'upload_logo') {
     
     // Move uploaded file
     if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        $logoPath = '/admin/assets/' . $filename;
+        $logoPath = birkly_url('/admin/assets/' . $filename);
         
         // Save to branding settings
         $branding = $storage->read('branding.json') ?? [];

@@ -12,6 +12,8 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 // CRITICAL: Start output buffering IMMEDIATELY to catch any stray output
 ob_start();
 
+require_once __DIR__ . '/../core/birkly_paths.php';
+
 // Helper function for directory size (define early)
 if (!function_exists('getDirectorySize')) {
     function getDirectorySize($directory) {
@@ -305,7 +307,7 @@ if ($action === 'notifications') {
                         'type' => 'info',
                         'title' => 'Pending AI Approvals',
                         'message' => "You have {$pendingCount} pending AI action" . ($pendingCount > 1 ? 's' : '') . " requiring approval",
-                        'link' => '/admin/index.php?page=settings&tab=ai_approvals',
+                        'link' => birkly_admin_url('settings', ['tab' => 'ai_approvals']),
                         'icon' => '🤖',
                         'priority' => 'medium'
                     ];
@@ -331,7 +333,7 @@ if ($action === 'notifications') {
                         'type' => 'warning',
                         'title' => 'System Errors Detected',
                         'message' => "{$errorCount} recent error" . ($errorCount > 1 ? 's' : '') . " found in logs",
-                        'link' => '/admin/index.php?page=settings&tab=logs',
+                        'link' => birkly_admin_url('settings', ['tab' => 'logs']),
                         'icon' => '⚠️',
                         'priority' => 'high'
                     ];
@@ -352,7 +354,7 @@ if ($action === 'notifications') {
                     'type' => 'warning',
                     'title' => 'High Storage Usage',
                     'message' => "Media storage is using {$storageUsedMB}MB. Consider cleaning up unused files.",
-                    'link' => '/admin/index.php?page=media',
+                    'link' => birkly_admin_url('media'),
                     'icon' => '💾',
                     'priority' => 'low'
                 ];

@@ -1,5 +1,8 @@
 <?php
 // Fallback router for Birkly
+
+require_once __DIR__ . '/core/birkly_paths.php';
+
 // Note: This file should NOT be used as a router for PHP built-in server
 // PHP files should execute directly without going through this router
 
@@ -25,13 +28,13 @@ if ($file && strpos($file, $root) === 0 && is_file($file)) {
 
 // Redirect /admin to /admin/index.php (not index.html - we use PHP for admin)
 if ($uri === '/admin' || $uri === '/admin/') {
-    header('Location: /admin/index.php?page=dashboard', true, 302);
+    header('Location: ' . birkly_admin_url('dashboard'), true, 302);
     exit;
 }
 
 // Fallback for /admin - redirect to PHP admin panel
 if (preg_match('#^/admin($|/)#', $_SERVER['REQUEST_URI'])) {
-    header('Location: /admin/index.php?page=dashboard', true, 302);
+    header('Location: ' . birkly_admin_url('dashboard'), true, 302);
     exit;
 }
 
