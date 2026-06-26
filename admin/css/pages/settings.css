@@ -623,6 +623,204 @@
 }
 
 /* ============================================
+   MCP Connections Settings
+   ============================================ */
+
+.mcp-connections-settings {
+    padding: 0;
+}
+
+.mcp-connections-settings .settings-section {
+    margin-bottom: 0;
+}
+
+.mcp-server-url-block {
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
+    background: var(--bg);
+    border-radius: var(--border-radius-s);
+    border: 1px solid var(--border-color);
+}
+
+.mcp-server-url-block label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: var(--space-2);
+}
+
+.mcp-snippet-block {
+    margin-top: var(--space-3);
+    font-size: 0.8125rem;
+}
+
+.mcp-snippet-block label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+    color: var(--text-secondary);
+}
+
+.mcp-snippet-hint {
+    display: block;
+    margin-top: var(--space-1);
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+}
+
+.copy-snippet-row {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+}
+
+.copy-snippet-row input {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-2);
+    font-size: 0.75rem;
+    font-family: monospace;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-s);
+    background: var(--bg);
+}
+
+.mcp-endpoint-item {
+    cursor: default;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.mcp-endpoint-status.active {
+    color: var(--success);
+}
+
+.mcp-endpoint-status.inactive {
+    color: var(--text-tertiary);
+}
+
+.mcp-key-reveal {
+    padding: var(--space-3);
+    background: var(--primary-light, #f0f7ff);
+    border-radius: var(--border-radius-s);
+    margin-bottom: var(--space-3);
+}
+
+.mcp-key-reveal p {
+    margin: 0 0 var(--space-2);
+    font-size: 0.875rem;
+}
+
+.connection-mcp-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: var(--space-2) 0 0;
+}
+
+.connection-mcp-note a {
+    color: var(--primary);
+}
+
+/* ============================================
+   BYOAI Connection Wizard
+   ============================================ */
+
+.connection-wizard-steps {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.wizard-step-indicator {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    opacity: 0.5;
+    font-size: 0.75rem;
+}
+
+.wizard-step-indicator.active,
+.wizard-step-indicator.completed {
+    opacity: 1;
+}
+
+.wizard-step-num {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-hover);
+    font-weight: 600;
+    font-size: 0.8125rem;
+}
+
+.wizard-step-indicator.active .wizard-step-num {
+    background: var(--primary);
+    color: white;
+}
+
+.wizard-step-indicator.completed .wizard-step-num {
+    background: var(--success, #22c55e);
+    color: white;
+}
+
+.wizard-error {
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+    background: #fef2f2;
+    color: #b91c1c;
+    border-radius: var(--border-radius-s);
+    font-size: 0.875rem;
+}
+
+.byoai-key-explainer {
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+    background: var(--bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-s);
+    font-size: 0.875rem;
+}
+
+.byoai-key-explainer p {
+    margin: var(--space-2) 0 0;
+    color: var(--text-secondary);
+}
+
+.ollama-hint-box code {
+    font-size: 0.8125rem;
+}
+
+.test-connection-status {
+    margin-left: var(--space-2);
+    font-size: 0.875rem;
+}
+
+.test-connection-status.success {
+    color: var(--success);
+}
+
+.test-connection-status.error {
+    color: var(--error);
+}
+
+.test-connection-status.pending {
+    color: var(--text-secondary);
+}
+
+.connection-wizard-footer {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
+}
+
+/* ============================================
    User Info & Avatar Styles
    ============================================ */
 .user-info {

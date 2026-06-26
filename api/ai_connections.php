@@ -142,8 +142,8 @@ if ($action === 'create') {
         exit;
     }
     
-    // API key not required for MCP or Ollama
-    if ($provider !== 'mcp' && $provider !== 'ollama' && empty($apiKey)) {
+    // API key not required for Ollama
+    if ($provider !== 'ollama' && empty($apiKey)) {
         if (!headers_sent()) {
             header('Content-Type: application/json');
         }
@@ -151,7 +151,7 @@ if ($action === 'create') {
         exit;
     }
 
-    if ($provider !== 'mcp' && $provider !== 'ollama' && !empty($apiKey)) {
+    if ($provider !== 'ollama' && !empty($apiKey)) {
         $validation = validateApiKeyForProvider($provider, $apiKey, $apiUrl);
         if (!$validation['valid']) {
             if (!headers_sent()) {
@@ -166,25 +166,22 @@ if ($action === 'create') {
     $aiId = 'ai_' . bin2hex(random_bytes(8));
     $email = $provider . '@ai.birkly';
     
-    // Check if connection already exists (skip for MCP as multiple MCP connections are allowed)
-    if ($provider !== 'mcp') {
-        $existingUsers = $storage->list('');
-        foreach ($existingUsers as $userFile) {
-            $user = $storage->read($userFile);
-            if ($user && isset($user['type']) && $user['type'] === 'ai' && 
-                isset($user['provider']) && $user['provider'] === $provider &&
-                isset($user['created_by']) && $user['created_by'] === $_SESSION['user']['id']) {
-                if (!headers_sent()) {
-                    header('Content-Type: application/json');
-                }
-                echo json_encode(['status' => 'error', 'message' => 'Connection for this provider already exists']);
-                exit;
+    // Check if connection already exists
+    $existingUsers = $storage->list('');
+    foreach ($existingUsers as $userFile) {
+        $user = $storage->read($userFile);
+        if ($user && isset($user['type']) && $user['type'] === 'ai' && 
+            isset($user['provider']) && $user['provider'] === $provider &&
+            isset($user['created_by']) && $user['created_by'] === $_SESSION['user']['id']) {
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
             }
+            echo json_encode(['status' => 'error', 'message' => 'Connection for this provider already exists']);
+            exit;
         }
     }
     
-    // Create AI user (every connection gets a per-connection MCP key)
-    $mcpApiKey = bin2hex(random_bytes(32));
+    // Create AI user (outbound BYOAI — MCP keys are managed separately)
     $aiUser = [
         'id' => $aiId,
         'email' => $email,
@@ -192,15 +189,13 @@ if ($action === 'create') {
         'name' => $name ?: $providers[$provider]['name'],
         'role' => $role,
         'provider' => $provider,
-        'api_key_encrypted' => $provider !== 'mcp' ? encryptApiKey($apiKey) : '',
+        'api_key_encrypted' => encryptApiKey($apiKey),
         'api_url' => $apiUrl ?: ($providers[$provider]['api_url'] ?? ''),
         'model' => $model ?: ($providers[$provider]['models'][0] ?? ''),
         'shared' => $sharedType !== 'none',
         'shared_type' => $sharedType,
         'allowed_users' => $sharedType === 'specific' ? $allowedUsers : [],
         'require_approval' => $requireApproval,
-        'mcp_api_key' => $mcpApiKey,
-        'mcp_url' => birkly_ai_mcp_server_url(),
         'created_at' => date('c'),
         'created_by' => $_SESSION['user']['id'],
         'status' => 'active'
@@ -456,6 +451,55 @@ if ($action === 'get') {
     echo json_encode([
         'status' => 'ok',
         'data' => ['connection' => $aiUser]
+    ]);
+    exit;
+}
+
+// Test API key without creating a connection (BYOAI wizard)
+if ($action === 'test') {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $provider = $input['provider'] ?? '';
+    $apiKey = $input['api_key'] ?? '';
+    $apiUrl = $input['api_url'] ?? '';
+
+    if (empty($provider)) {
+        echo json_encode(['status' => 'error', 'message' => 'Provider is required']);
+        exit;
+    }
+
+    $providers = getSupportedAiProviders();
+    if (!isset($providers[$provider])) {
+        echo json_encode(['status' => 'error', 'message' => 'Unsupported provider']);
+        exit;
+    }
+
+    if ($provider === 'ollama') {
+        echo json_encode([
+            'status' => 'ok',
+            'data' => ['valid' => true, 'message' => 'Ollama does not require an API key'],
+        ]);
+        exit;
+    }
+
+    if (empty($apiKey)) {
+        echo json_encode(['status' => 'error', 'message' => 'API key is required']);
+        exit;
+    }
+
+    $validation = validateApiKeyForProvider($provider, $apiKey, $apiUrl);
+    echo json_encode([
+        'status' => $validation['valid'] ? 'ok' : 'error',
+        'message' => $validation['message'],
+        'data' => $validation,
     ]);
     exit;
 }

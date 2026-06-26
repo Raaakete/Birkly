@@ -1,6 +1,6 @@
 /**
  * AI Connections Management
- * Handles AI connection management, chat interface, and approval queue
+ * Handles outbound BYOAI connection management and approval queue
  */
 
 (function() {
@@ -10,40 +10,36 @@
     let initialized = false;
     let isEditMode = false;
     let currentEditingConnection = null;
+    let wizardStep = 1;
+    const WIZARD_MAX_STEP = 3;
+    let providersCache = null;
+    let connectionTestPassed = false;
 
-    // Initialize only when AI Connections tab is shown
     function initAiConnections() {
         if (initialized) return;
         initialized = true;
-        
+
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         loadConnections();
         loadApprovalQueue();
         setupEventListeners();
-        
-        // Auto-refresh approval queue every 30 seconds
+
         setInterval(loadApprovalQueue, 30000);
     }
 
-    // Watch for tab changes
     document.addEventListener('DOMContentLoaded', function() {
-        // Check if AI Connections tab is active
         const aiTab = document.querySelector('[data-tab="ai-connections"]');
         const aiPane = document.getElementById('ai-connections');
-        
+
         if (aiTab && aiPane) {
-            // Initialize if tab is already active
             if (aiTab.classList.contains('active') || aiPane.classList.contains('active')) {
                 initAiConnections();
             }
-            
-            // Watch for tab clicks
             aiTab.addEventListener('click', function() {
                 setTimeout(initAiConnections, 100);
             });
         }
-        
-        // Also watch for hash changes (deep linking)
+
         window.addEventListener('hashchange', function() {
             if (window.location.hash === '#ai-connections') {
                 setTimeout(initAiConnections, 100);
@@ -51,98 +47,57 @@
         });
     });
 
-    // Setup event listeners
     function setupEventListeners() {
-        // Add connection button
         document.getElementById('add-connection-btn')?.addEventListener('click', showAddConnectionModal);
-        
-        // Close modal buttons
-        document.querySelectorAll('.modal-close').forEach(btn => {
+
+        document.querySelectorAll('#add-connection-modal .modal-close').forEach(btn => {
             btn.addEventListener('click', hideAddConnectionModal);
         });
-        
-        // Add / Edit connection form
+
         document.getElementById('add-connection-form')?.addEventListener('submit', handleConnectionSubmit);
-        
-    // Provider change - update models and show/hide fields
-    document.getElementById('connection-provider')?.addEventListener('change', function() {
-        updateProviderModels();
-        updateProviderFields();
-    });
-    
-    // Shared type change - show/hide user selection
-    document.getElementById('connection-shared-type')?.addEventListener('change', function() {
-        updateSharedTypeFields();
-    });
-        
-        // Toggle approval queue
+        document.getElementById('wizard-next-btn')?.addEventListener('click', wizardNext);
+        document.getElementById('wizard-back-btn')?.addEventListener('click', wizardBack);
+        document.getElementById('test-connection-btn')?.addEventListener('click', testConnection);
+
+        document.getElementById('connection-provider')?.addEventListener('change', function() {
+            updateProviderModels();
+            updateProviderFields();
+            connectionTestPassed = false;
+            clearTestStatus();
+        });
+
+        document.getElementById('connection-shared-type')?.addEventListener('change', updateSharedTypeFields);
         document.getElementById('toggle-queue-btn')?.addEventListener('click', toggleApprovalQueue);
     }
 
-    // Load AI connections
     async function loadConnections() {
         try {
             const response = await fetch('/api/ai_connections.php?action=list');
             const result = await response.json();
-            
+
             if (result && result.status === 'ok' && result.data) {
                 renderConnections(result.data.connections || []);
             } else {
-                const errorMsg = result?.message || 'Unknown error';
-                console.error('Failed to load connections:', errorMsg, result);
-                renderConnections([]); // Show empty state instead of error popup
+                renderConnections([]);
             }
         } catch (error) {
             console.error('Error loading connections:', error);
-            renderConnections([]); // Show empty state instead of error popup
+            renderConnections([]);
         }
     }
 
-    // Render connections list
     function renderConnections(connections) {
         const list = document.getElementById('connections-list');
         if (!list) return;
-        
-        if (connections.length === 0) {
-            list.innerHTML = '<div class="empty-state"><p>No AI connections yet. Click "Add Connection" to get started.</p></div>';
+
+        const outbound = connections.filter(conn => conn.provider !== 'mcp');
+
+        if (outbound.length === 0) {
+            list.innerHTML = '<div class="empty-state"><p>No AI connections yet. Click "Add Connection" to connect your API provider.</p></div>';
             return;
         }
-        
-        list.innerHTML = connections.map(conn => {
-            const mcpUrl = conn.mcp_url || (window.location.origin + '/api/mcp_server.php');
-            const mcpInfo = `
-                <div class="connection-mcp-info" style="font-size: 0.75rem; color: #666; margin-top: 0.5rem; padding: 0.5rem; background: #f5f5f5; border-radius: 4px;">
-                    <div style="margin-bottom: 0.5rem;">
-                        <label style="font-weight: 600; display: block; margin-bottom: 0.25rem;">MCP Server URL:</label>
-                        <div style="display: flex; gap: 0.25rem; align-items: center;">
-                            <input type="text" value="${escapeHtml(mcpUrl)}" readonly style="flex: 1; padding: 0.25rem; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: white;" id="mcp-url-${conn.id}">
-                            <button class="btn-icon" onclick="copyToClipboard('mcp-url-${conn.id}')" title="Copy URL" style="padding: 0.25rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 0.25rem;">MCP API Key:</label>
-                        <div style="display: flex; gap: 0.25rem; align-items: center; flex-wrap: wrap;">
-                            <input type="password" value="" placeholder="Click Reveal to show key" readonly style="flex: 1; min-width: 12rem; padding: 0.25rem; font-size: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: white; font-family: monospace;" id="mcp-key-${conn.id}">
-                            <button type="button" class="btn btn-sm" onclick="aiConnections.revealMcpKey('${conn.id}')">Reveal</button>
-                            <button type="button" class="btn btn-sm" onclick="aiConnections.rotateMcpKey('${conn.id}')">Rotate</button>
-                            <button class="btn-icon" onclick="copyToClipboard('mcp-key-${conn.id}')" title="Copy API Key" style="padding: 0.25rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <p style="margin: 0.35rem 0 0; font-size: 0.7rem; color: #888;">Per-connection key — scoped to role <strong>${escapeHtml(conn.role)}</strong></p>
-                    </div>
-                </div>
-            `;
-            
-            return `
+
+        list.innerHTML = outbound.map(conn => `
             <div class="connection-item" data-connection-id="${conn.id}">
                 <div class="connection-info">
                     <div class="connection-name">${escapeHtml(conn.name || conn.provider)}</div>
@@ -150,7 +105,7 @@
                         <span class="connection-provider">${escapeHtml(conn.provider)}</span>
                         <span class="connection-role">${escapeHtml(conn.role)}</span>
                     </div>
-                    ${mcpInfo}
+                    <p class="connection-mcp-note">For Claude Desktop or other external MCP clients, use the <a href="#mcp-connections" class="mcp-tab-link">MCP Connections</a> tab.</p>
                 </div>
                 <div class="connection-status ${conn.status === 'active' ? 'active' : 'inactive'}">
                     ${conn.status === 'active' ? '●' : '○'}
@@ -170,38 +125,45 @@
                     </button>
                 </div>
             </div>
-        `;
-        }).join('');
-        
-        // No click handlers needed - chat is now in floating button
+        `).join('');
+
+        list.querySelectorAll('.mcp-tab-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const mcpTab = document.querySelector('[data-tab="mcp-connections"]');
+                if (mcpTab) mcpTab.click();
+            });
+        });
     }
 
-    // Show add connection modal (create mode)
     function showAddConnectionModal() {
         const modal = document.getElementById('add-connection-modal');
         if (!modal) return;
 
         isEditMode = false;
         currentEditingConnection = null;
-        resetConnectionForm(); // This will reset checkbox to default (checked)
+        wizardStep = 1;
+        connectionTestPassed = false;
+        resetConnectionForm();
+        setWizardMode(true);
         updateConnectionModalTitleAndButton();
 
         modal.style.display = 'flex';
         loadProviders().then(() => {
-            // Initialize field visibility after providers are loaded
             updateProviderFields();
+            showWizardStep(1);
         });
         loadRoles();
         loadUsers();
         updateSharedTypeFields();
     }
 
-    // Hide add connection modal
     function hideAddConnectionModal() {
         const modal = document.getElementById('add-connection-modal');
         if (modal) {
             modal.style.display = 'none';
             resetConnectionForm();
+            hideWizardError();
         }
     }
 
@@ -215,9 +177,7 @@
         if (idInput) idInput.value = '';
 
         const providerSelect = document.getElementById('connection-provider');
-        if (providerSelect) {
-            providerSelect.disabled = false;
-        }
+        if (providerSelect) providerSelect.disabled = false;
 
         const apiUrlGroup = document.getElementById('api-url-group');
         const apiKeyGroup = document.getElementById('api-key-group');
@@ -231,13 +191,189 @@
             modelSelect.innerHTML = '<option value="">Default</option>';
         }
 
-        // Reset require_approval checkbox to default (checked = true)
         const requireApprovalCheckbox = document.getElementById('connection-require-approval');
-        if (requireApprovalCheckbox) {
-            requireApprovalCheckbox.checked = true;
+        if (requireApprovalCheckbox) requireApprovalCheckbox.checked = true;
+
+        clearTestStatus();
+        connectionTestPassed = false;
+        updateConnectionModalTitleAndButton();
+    }
+
+    function setWizardMode(enabled) {
+        const stepsEl = document.getElementById('connection-wizard-steps');
+        const backBtn = document.getElementById('wizard-back-btn');
+        const nextBtn = document.getElementById('wizard-next-btn');
+        const submitBtn = document.getElementById('connection-submit-btn');
+
+        if (stepsEl) stepsEl.style.display = enabled ? 'flex' : 'none';
+
+        if (enabled) {
+            if (backBtn) backBtn.style.display = wizardStep > 1 ? 'inline-block' : 'none';
+            if (nextBtn) nextBtn.style.display = wizardStep < WIZARD_MAX_STEP ? 'inline-block' : 'none';
+            if (submitBtn) submitBtn.style.display = wizardStep === WIZARD_MAX_STEP ? 'inline-block' : 'none';
+        } else {
+            if (backBtn) backBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'inline-block';
+            document.querySelectorAll('.wizard-panel').forEach(panel => {
+                panel.style.display = 'block';
+            });
+        }
+    }
+
+    function showWizardStep(step) {
+        wizardStep = step;
+        document.querySelectorAll('.wizard-panel').forEach(panel => {
+            const panelStep = parseInt(panel.getAttribute('data-wizard-step'), 10);
+            panel.style.display = panelStep === step ? 'block' : 'none';
+        });
+        document.querySelectorAll('.wizard-step-indicator').forEach(ind => {
+            const indStep = parseInt(ind.getAttribute('data-step'), 10);
+            ind.classList.toggle('active', indStep === step);
+            ind.classList.toggle('completed', indStep < step);
+        });
+        setWizardMode(true);
+        hideWizardError();
+    }
+
+    function wizardNext() {
+        hideWizardError();
+
+        if (wizardStep === 1) {
+            const provider = document.getElementById('connection-provider')?.value;
+            if (!provider) {
+                showWizardError('Please select a provider.');
+                return;
+            }
+            updateProviderFields();
+            updateProviderModels();
+            showWizardStep(2);
+            return;
         }
 
-        updateConnectionModalTitleAndButton();
+        if (wizardStep === 2) {
+            const provider = document.getElementById('connection-provider')?.value;
+            const apiKey = document.getElementById('connection-api-key')?.value || '';
+            const apiUrl = document.getElementById('connection-api-url')?.value || '';
+
+            if (provider === 'custom' && !apiUrl) {
+                showWizardError('API URL is required for custom providers.');
+                return;
+            }
+            if (provider !== 'ollama' && !apiKey) {
+                showWizardError('API key is required. Consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access — get a key from your provider\'s developer console.');
+                return;
+            }
+            if (provider !== 'ollama' && !connectionTestPassed) {
+                showWizardError('Please test the connection before continuing, or fix any errors shown.');
+                return;
+            }
+
+            loadRoles();
+            updateProviderModels();
+            showWizardStep(3);
+        }
+    }
+
+    function wizardBack() {
+        if (wizardStep > 1) {
+            showWizardStep(wizardStep - 1);
+        }
+    }
+
+    function showWizardError(message) {
+        const el = document.getElementById('wizard-error');
+        if (el) {
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+    }
+
+    function hideWizardError() {
+        const el = document.getElementById('wizard-error');
+        if (el) {
+            el.textContent = '';
+            el.style.display = 'none';
+        }
+    }
+
+    function clearTestStatus() {
+        const status = document.getElementById('test-connection-status');
+        if (status) {
+            status.textContent = '';
+            status.className = 'test-connection-status';
+        }
+    }
+
+    async function testConnection() {
+        const provider = document.getElementById('connection-provider')?.value;
+        const apiKey = document.getElementById('connection-api-key')?.value || '';
+        const apiUrl = document.getElementById('connection-api-url')?.value || '';
+        const statusEl = document.getElementById('test-connection-status');
+        const testBtn = document.getElementById('test-connection-btn');
+
+        if (!provider) {
+            showWizardError('Select a provider first.');
+            return;
+        }
+
+        if (provider === 'ollama') {
+            connectionTestPassed = true;
+            if (statusEl) {
+                statusEl.textContent = 'Ollama does not require a key — ensure the server can reach your local Ollama URL.';
+                statusEl.className = 'test-connection-status success';
+            }
+            return;
+        }
+
+        if (!apiKey) {
+            showWizardError('Enter an API key before testing.');
+            return;
+        }
+
+        if (testBtn) testBtn.disabled = true;
+        if (statusEl) {
+            statusEl.textContent = 'Testing…';
+            statusEl.className = 'test-connection-status pending';
+        }
+
+        try {
+            const response = await fetch('/api/ai_connections.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'test',
+                    provider,
+                    api_key: apiKey,
+                    api_url: apiUrl,
+                    _csrf: csrfToken
+                })
+            });
+            const result = await response.json();
+
+            if (result.status === 'ok' && result.data?.valid) {
+                connectionTestPassed = true;
+                if (statusEl) {
+                    statusEl.textContent = result.data.message || 'Connection successful';
+                    statusEl.className = 'test-connection-status success';
+                }
+            } else {
+                connectionTestPassed = false;
+                const msg = formatSaveError(result?.message || 'Connection test failed');
+                if (statusEl) {
+                    statusEl.textContent = msg;
+                    statusEl.className = 'test-connection-status error';
+                }
+            }
+        } catch (error) {
+            connectionTestPassed = false;
+            if (statusEl) {
+                statusEl.textContent = 'Network error — could not reach Birkly server.';
+                statusEl.className = 'test-connection-status error';
+            }
+        } finally {
+            if (testBtn) testBtn.disabled = false;
+        }
     }
 
     function updateConnectionModalTitleAndButton() {
@@ -254,21 +390,23 @@
         }
     }
 
-    // Load providers
     async function loadProviders() {
         try {
             const response = await fetch('/api/ai_connections.php?action=providers');
             const result = await response.json();
-            
+
             if (result.status === 'ok') {
+                providersCache = result.data.providers;
                 const select = document.getElementById('connection-provider');
                 if (select) {
+                    const outbound = Object.entries(providersCache)
+                        .filter(([key]) => key !== 'mcp');
                     select.innerHTML = '<option value="">Select a provider...</option>' +
-                        Object.entries(result.data.providers).map(([key, provider]) =>
+                        outbound.map(([key, provider]) =>
                             `<option value="${key}">${escapeHtml(provider.name)}</option>`
                         ).join('');
                 }
-                return result.data.providers;
+                return providersCache;
             }
         } catch (error) {
             console.error('Error loading providers:', error);
@@ -276,7 +414,6 @@
         return null;
     }
 
-    // Load roles from settings/roles.json for AI connection role picker
     async function loadRoles(selectedRole = null) {
         const select = document.getElementById('connection-role');
         if (!select) return;
@@ -313,176 +450,183 @@
             select.innerHTML = legacyRoles.map(role =>
                 `<option value="${role.id}">${escapeHtml(role.name)} (${escapeHtml(role.description)})</option>`
             ).join('');
-            if (selectedRole) {
-                select.value = selectedRole;
+            if (selectedRole) select.value = selectedRole;
+        }
+    }
+
+    function updateProviderModels() {
+        const providerSelect = document.getElementById('connection-provider');
+        const modelSelect = document.getElementById('connection-model');
+        const modelCustom = document.getElementById('connection-model-custom');
+        if (!providerSelect || !modelSelect) return;
+
+        const provider = providerSelect.value;
+        if (!provider) {
+            modelSelect.innerHTML = '<option value="">Default</option>';
+            if (modelCustom) modelCustom.style.display = 'none';
+            return;
+        }
+
+        const providers = providersCache;
+        if (!providers) {
+            fetch('/api/ai_connections.php?action=providers')
+                .then(r => r.json())
+                .then(result => {
+                    if (result.status === 'ok') {
+                        providersCache = result.data.providers;
+                        populateModels(provider);
+                    }
+                })
+                .catch(err => console.error('Error loading models:', err));
+            return;
+        }
+        populateModels(provider);
+    }
+
+    function populateModels(provider) {
+        const modelSelect = document.getElementById('connection-model');
+        const modelCustom = document.getElementById('connection-model-custom');
+        if (!modelSelect || !providersCache || !providersCache[provider]) return;
+
+        const providerInfo = providersCache[provider];
+        const models = providerInfo.models || [];
+        const customModels = providerInfo.custom_models || false;
+
+        if (customModels && models.length === 0) {
+            modelSelect.style.display = 'none';
+            if (modelCustom) {
+                modelCustom.style.display = 'block';
+                modelCustom.required = true;
+            }
+        } else {
+            modelSelect.style.display = 'block';
+            if (modelCustom) {
+                modelCustom.style.display = 'none';
+                modelCustom.required = false;
+            }
+            modelSelect.innerHTML = '<option value="">Default</option>' +
+                models.map(model => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`).join('');
+
+            if (customModels && modelCustom) {
+                modelCustom.style.display = 'block';
+                modelCustom.placeholder = 'Or enter custom model name';
+                modelCustom.required = false;
             }
         }
     }
 
-// Update provider models
-function updateProviderModels() {
-    const providerSelect = document.getElementById('connection-provider');
-    const modelSelect = document.getElementById('connection-model');
-    const modelCustom = document.getElementById('connection-model-custom');
-    if (!providerSelect || !modelSelect) return;
-    
-    const provider = providerSelect.value;
-    if (!provider) {
-        modelSelect.innerHTML = '<option value="">Default</option>';
-        if (modelCustom) modelCustom.style.display = 'none';
-        return;
-    }
-    
-    // Load models for selected provider
-    fetch('/api/ai_connections.php?action=providers')
-        .then(r => r.json())
-        .then(result => {
-            if (result.status === 'ok' && result.data.providers[provider]) {
-                const providerInfo = result.data.providers[provider];
-                const models = providerInfo.models || [];
-                const customModels = providerInfo.custom_models || false;
-                
-                if (customModels && models.length === 0) {
-                    // Custom provider - show text input
-                    modelSelect.style.display = 'none';
-                    if (modelCustom) {
-                        modelCustom.style.display = 'block';
-                        modelCustom.required = true;
-                    }
-                } else {
-                    // Standard provider - show dropdown
-                    modelSelect.style.display = 'block';
-                    if (modelCustom) {
-                        modelCustom.style.display = 'none';
-                        modelCustom.required = false;
-                    }
-                    modelSelect.innerHTML = '<option value="">Default</option>' +
-                        models.map(model => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`).join('');
-                    
-                    // If custom_models is true, also allow custom input
-                    if (customModels && modelCustom) {
-                        modelCustom.style.display = 'block';
-                        modelCustom.placeholder = 'Or enter custom model name';
-                        modelCustom.required = false;
+    async function loadUsers() {
+        try {
+            const response = await fetch('/api/ai_connections.php?action=get_users');
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                const usersList = document.getElementById('allowed-users-list');
+                if (usersList) {
+                    if (result.data.users && result.data.users.length > 0) {
+                        usersList.innerHTML = result.data.users.map(user => `
+                            <label style="display: block; padding: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="allowed_users[]" value="${escapeHtml(user.id)}" class="user-checkbox">
+                                <span>${escapeHtml(user.name || user.email)} (${escapeHtml(user.role)})</span>
+                            </label>
+                        `).join('');
+                    } else {
+                        usersList.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
                     }
                 }
             }
-        })
-        .catch(err => console.error('Error loading models:', err));
-}
-
-// Load users for selection
-async function loadUsers() {
-    try {
-        const response = await fetch('/api/ai_connections.php?action=get_users');
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
+        } catch (error) {
+            console.error('Error loading users:', error);
             const usersList = document.getElementById('allowed-users-list');
-            if (usersList) {
-                if (result.data.users && result.data.users.length > 0) {
-                    usersList.innerHTML = result.data.users.map(user => `
-                        <label style="display: block; padding: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" name="allowed_users[]" value="${escapeHtml(user.id)}" class="user-checkbox">
-                            <span>${escapeHtml(user.name || user.email)} (${escapeHtml(user.role)})</span>
-                        </label>
-                    `).join('');
-                } else {
-                    usersList.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
+            if (usersList) usersList.innerHTML = '<div class="error">Error loading users</div>';
+        }
+    }
+
+    function updateSharedTypeFields() {
+        const sharedType = document.getElementById('connection-shared-type');
+        const allowedUsersGroup = document.getElementById('allowed-users-group');
+
+        if (!sharedType || !allowedUsersGroup) return;
+
+        if (sharedType.value === 'specific') {
+            allowedUsersGroup.style.display = 'block';
+        } else {
+            allowedUsersGroup.style.display = 'none';
+            document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+        }
+    }
+
+    function updateProviderFields() {
+        const providerSelect = document.getElementById('connection-provider');
+        const apiKeyGroup = document.getElementById('api-key-group');
+        const apiUrlGroup = document.getElementById('api-url-group');
+        const apiKeyInput = document.getElementById('connection-api-key');
+        const ollamaHint = document.getElementById('ollama-hint');
+        const testGroup = document.getElementById('test-connection-group');
+        const apiUrlHint = document.getElementById('api-url-hint');
+
+        if (!providerSelect) return;
+
+        const provider = providerSelect.value;
+
+        if (apiUrlGroup) {
+            if (provider === 'custom' || provider === 'ollama') {
+                apiUrlGroup.style.display = 'block';
+                const apiUrlInput = document.getElementById('connection-api-url');
+                if (apiUrlInput) {
+                    apiUrlInput.required = provider === 'custom';
+                    if (provider === 'ollama' && !apiUrlInput.value) {
+                        apiUrlInput.placeholder = 'http://localhost:11434/api/chat';
+                    }
                 }
+                if (apiUrlHint && provider === 'ollama') {
+                    apiUrlHint.textContent = 'Local Ollama URL (default: http://localhost:11434/api/chat)';
+                }
+            } else {
+                apiUrlGroup.style.display = 'none';
+                const apiUrlInput = document.getElementById('connection-api-url');
+                if (apiUrlInput) apiUrlInput.required = false;
             }
         }
-    } catch (error) {
-        console.error('Error loading users:', error);
-        const usersList = document.getElementById('allowed-users-list');
-        if (usersList) {
-            usersList.innerHTML = '<div class="error">Error loading users</div>';
+
+        if (apiKeyGroup && apiKeyInput) {
+            if (provider === 'ollama') {
+                apiKeyGroup.style.display = 'none';
+                apiKeyInput.required = false;
+            } else {
+                apiKeyGroup.style.display = 'block';
+                apiKeyInput.required = true;
+            }
+        }
+
+        if (ollamaHint) {
+            ollamaHint.style.display = provider === 'ollama' ? 'block' : 'none';
+        }
+
+        if (testGroup) {
+            testGroup.style.display = provider ? 'block' : 'none';
         }
     }
-}
 
-// Update shared type fields visibility
-function updateSharedTypeFields() {
-    const sharedType = document.getElementById('connection-shared-type');
-    const allowedUsersGroup = document.getElementById('allowed-users-group');
-    
-    if (!sharedType || !allowedUsersGroup) return;
-    
-    if (sharedType.value === 'specific') {
-        allowedUsersGroup.style.display = 'block';
-    } else {
-        allowedUsersGroup.style.display = 'none';
-        // Uncheck all user checkboxes
-        document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
-    }
-}
-
-// Update provider-specific fields visibility
-function updateProviderFields() {
-    const providerSelect = document.getElementById('connection-provider');
-    const apiKeyGroup = document.getElementById('api-key-group');
-    const apiUrlGroup = document.getElementById('api-url-group');
-    const apiKeyInput = document.getElementById('connection-api-key');
-    
-    if (!providerSelect) return;
-    
-    const provider = providerSelect.value;
-    
-    // Show/hide API URL field
-    if (apiUrlGroup) {
-        if (provider === 'custom' || provider === 'ollama') {
-            apiUrlGroup.style.display = 'block';
-            const apiUrlInput = document.getElementById('connection-api-url');
-            if (apiUrlInput) apiUrlInput.required = provider === 'custom';
-        } else {
-            apiUrlGroup.style.display = 'none';
-            const apiUrlInput = document.getElementById('connection-api-url');
-            if (apiUrlInput) apiUrlInput.required = false;
-        }
-    }
-    
-    // Show/hide API key field
-    if (apiKeyGroup && apiKeyInput) {
-        if (provider === 'mcp') {
-            apiKeyGroup.style.display = 'none';
-            apiKeyInput.required = false;
-        } else {
-            apiKeyGroup.style.display = 'block';
-            apiKeyInput.required = provider !== 'ollama'; // Ollama doesn't need API key
-        }
-    }
-}
-
-    // Handle create / update connection submit
     async function handleConnectionSubmit(e) {
         e.preventDefault();
 
         const formData = new FormData(e.target);
         const modelSelect = document.getElementById('connection-model');
         const modelCustom = document.getElementById('connection-model-custom');
-        const model = modelCustom && modelCustom.style.display !== 'none' 
-            ? modelCustom.value 
+        const model = modelCustom && modelCustom.style.display !== 'none'
+            ? modelCustom.value
             : (formData.get('model') || '');
         const idInput = document.getElementById('connection-id');
         const connectionId = idInput ? (idInput.value || '') : '';
 
-        // Get selected users
         const allowedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
 
         let payload;
         if (connectionId) {
-            // Update existing connection
-            // Get require_approval - read checkbox state directly
             const requireApprovalCheckbox = document.getElementById('connection-require-approval');
-            if (!requireApprovalCheckbox) {
-                console.error('ERROR: connection-require-approval checkbox not found!');
-            }
             const requireApproval = requireApprovalCheckbox ? Boolean(requireApprovalCheckbox.checked) : false;
-            
-            console.log('Checkbox element:', requireApprovalCheckbox);
-            console.log('Checkbox checked state:', requireApprovalCheckbox ? requireApprovalCheckbox.checked : 'checkbox not found');
-            console.log('requireApproval value:', requireApproval, 'type:', typeof requireApproval);
-            
+
             const updates = {
                 name: formData.get('name') || '',
                 api_url: formData.get('api_url') || '',
@@ -490,30 +634,17 @@ function updateProviderFields() {
                 role: formData.get('role') || 'author',
                 shared_type: formData.get('shared_type') || 'none',
                 allowed_users: allowedUsers,
-                require_approval: requireApproval  // Explicitly ensure it's a boolean
+                require_approval: requireApproval
             };
-            
-            // Verify require_approval is actually a boolean before sending
-            if (typeof updates.require_approval !== 'boolean') {
-                console.error('ERROR: require_approval is not a boolean! Value:', updates.require_approval, 'Type:', typeof updates.require_approval);
-                updates.require_approval = Boolean(updates.require_approval);
-            }
-            
-            // Remove empty string values (but keep booleans and other valid values)
+
             Object.keys(updates).forEach(key => {
                 if (updates[key] === '' && key !== 'api_url' && key !== 'model') {
                     delete updates[key];
                 }
             });
-            
-            console.log('Updating connection:', connectionId);
-            console.log('Updates object:', updates);
-            console.log('Updates JSON:', JSON.stringify(updates, null, 2));
 
             const apiKey = formData.get('api_key') || '';
-            if (apiKey) {
-                updates.api_key = apiKey;
-            }
+            if (apiKey) updates.api_key = apiKey;
 
             payload = {
                 action: 'update',
@@ -522,7 +653,6 @@ function updateProviderFields() {
                 _csrf: csrfToken
             };
         } else {
-            // Create new connection
             payload = {
                 action: 'create',
                 provider: formData.get('provider'),
@@ -544,31 +674,51 @@ function updateProviderFields() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            
+
             const result = await response.json();
-            
+
             if (result && result.status === 'ok') {
                 hideAddConnectionModal();
-                // Reload connections after a short delay to ensure it's saved
-                setTimeout(() => {
-                    loadConnections();
-                }, 100);
+                setTimeout(() => loadConnections(), 100);
                 showSuccess(connectionId ? 'AI connection updated successfully' : 'AI connection created successfully');
                 window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
                     detail: { action: connectionId ? 'update' : 'create', id: result.data?.id || connectionId }
                 }));
             } else {
-                const errorMsg = result?.message || 'Unknown error';
-                console.error('Connection save error:', result);
-                showError('Failed to ' + (connectionId ? 'update' : 'create') + ' connection: ' + errorMsg);
+                showError(formatSaveError(result?.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error saving connection:', error);
-            showError('Error saving connection');
+            showError('Could not reach the server. Check your network connection and try again.');
         }
     }
 
-    // Edit existing connection (load and open modal)
+    function formatSaveError(message) {
+        const m = String(message);
+        if (m.includes('Invalid API key') || m.includes('HTTP 401') || m.includes('HTTP 403')) {
+            return 'Invalid API key. Make sure you copied the key from your provider\'s developer console — ChatGPT Plus and Claude Pro subscriptions do not include API access.';
+        }
+        if (m.includes('rate limit') || m.includes('HTTP 429')) {
+            return 'Rate limited by the provider. Wait a moment and try again, or check your API plan limits.';
+        }
+        if (m.includes('Unsupported provider')) {
+            return 'This provider is not supported for outbound connections.';
+        }
+        if (m.includes('already exists')) {
+            return 'You already have a connection for this provider. Edit the existing connection or delete it first.';
+        }
+        if (m.includes('API key is required')) {
+            return 'API key is required. Get one from your provider\'s developer portal (not from a consumer subscription).';
+        }
+        if (m.includes('API URL is required')) {
+            return 'API URL is required for custom providers.';
+        }
+        if (m.includes('validation failed')) {
+            return m.replace('API key validation failed: ', 'Connection test failed: ');
+        }
+        return m;
+    }
+
     async function editConnection(connectionId) {
         try {
             const response = await fetch(`/api/ai_connections.php?action=get&id=${encodeURIComponent(connectionId)}`);
@@ -586,15 +736,13 @@ function updateProviderFields() {
             const modal = document.getElementById('add-connection-modal');
             if (!modal) return;
 
-            // Reset form first (but we'll override checkbox value below)
             resetConnectionForm();
+            setWizardMode(false);
 
-            // Ensure providers and users are loaded before populating fields
             await loadProviders();
             await loadRoles(conn.role);
             await loadUsers();
 
-            // Populate form fields
             const idInput = document.getElementById('connection-id');
             const providerSelect = document.getElementById('connection-provider');
             const nameInput = document.getElementById('connection-name');
@@ -609,7 +757,7 @@ function updateProviderFields() {
 
             if (providerSelect) {
                 providerSelect.value = conn.provider || '';
-                providerSelect.disabled = true; // Provider cannot be changed after creation
+                providerSelect.disabled = true;
                 updateProviderFields();
                 updateProviderModels();
             }
@@ -617,11 +765,9 @@ function updateProviderFields() {
             if (nameInput) nameInput.value = conn.name || '';
             if (apiUrlInput) apiUrlInput.value = conn.api_url || '';
 
-            // Model: attempt to select from list, fallback to custom
             if (modelSelect && modelCustom) {
                 const modelValue = conn.model || '';
                 if (modelValue) {
-                    // Wait a tick for models to be populated
                     setTimeout(() => {
                         const option = Array.from(modelSelect.options).find(opt => opt.value === modelValue);
                         if (option) {
@@ -635,21 +781,16 @@ function updateProviderFields() {
                             modelCustom.value = modelValue;
                         }
                     }, 150);
-                } else {
-                    modelSelect.value = '';
                 }
             }
 
-            if (roleSelect && conn.role) {
-                roleSelect.value = conn.role;
-            }
+            if (roleSelect && conn.role) roleSelect.value = conn.role;
 
             if (sharedTypeSelect) {
                 const sharedType = conn.shared_type || (conn.shared ? 'all' : 'none');
                 sharedTypeSelect.value = sharedType;
                 updateSharedTypeFields();
 
-                // Preselect allowed users if specific
                 if (sharedType === 'specific' && Array.isArray(conn.allowed_users)) {
                     document.querySelectorAll('.user-checkbox').forEach(cb => {
                         cb.checked = conn.allowed_users.includes(cb.value);
@@ -658,14 +799,12 @@ function updateProviderFields() {
             }
 
             if (requireApprovalCheckbox) {
-                // Handle both boolean and string values
                 const requireApproval = conn.require_approval;
                 if (typeof requireApproval === 'string') {
                     requireApprovalCheckbox.checked = (requireApproval === '1' || requireApproval === 'true' || requireApproval === 'yes');
                 } else {
                     requireApprovalCheckbox.checked = !!requireApproval;
                 }
-                // Ensure the value is set correctly for form submission
                 requireApprovalCheckbox.value = '1';
             }
 
@@ -677,34 +816,31 @@ function updateProviderFields() {
         }
     }
 
-    // Load approval queue
     async function loadApprovalQueue() {
         try {
             const response = await fetch('/api/ai_approvals.php?action=list&status=pending');
             const result = await response.json();
-            
+
             if (result && result.status === 'ok' && result.data) {
                 renderApprovalQueue(result.data.approvals || []);
             } else {
-                // Silently fail - just show empty queue
                 renderApprovalQueue([]);
             }
         } catch (error) {
             console.error('Error loading approval queue:', error);
-            renderApprovalQueue([]); // Show empty state
+            renderApprovalQueue([]);
         }
     }
 
-    // Render approval queue
     function renderApprovalQueue(approvals) {
         const queue = document.getElementById('approval-queue-content');
         if (!queue) return;
-        
+
         if (approvals.length === 0) {
             queue.innerHTML = '<div class="empty-state"><p>No pending approvals</p></div>';
             return;
         }
-        
+
         queue.innerHTML = approvals.map(approval => `
             <div class="approval-item">
                 <div class="approval-header">
@@ -715,34 +851,24 @@ function updateProviderFields() {
                 </div>
                 <div class="approval-description">${escapeHtml(approval.description || 'No description')}</div>
                 <div class="approval-actions">
-                    <button class="btn btn-sm btn-success" onclick="aiConnections.approveAction('${approval.id}')">
-                        Approve
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="aiConnections.rejectAction('${approval.id}')">
-                        Reject
-                    </button>
+                    <button class="btn btn-sm btn-success" onclick="aiConnections.approveAction('${approval.id}')">Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="aiConnections.rejectAction('${approval.id}')">Reject</button>
                 </div>
             </div>
         `).join('');
     }
 
-    // Approve action
     async function approveAction(approvalId) {
         if (!confirm('Approve this action?')) return;
-        
+
         try {
             const response = await fetch('/api/ai_approvals.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'approve',
-                    id: approvalId,
-                    _csrf: csrfToken
-                })
+                body: JSON.stringify({ action: 'approve', id: approvalId, _csrf: csrfToken })
             });
-            
             const result = await response.json();
-            
+
             if (result.status === 'ok') {
                 showSuccess('Action approved');
                 loadApprovalQueue();
@@ -750,15 +876,13 @@ function updateProviderFields() {
                 showError('Failed to approve: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
-            console.error('Error approving action:', error);
             showError('Error approving action');
         }
     }
 
-    // Reject action
     async function rejectAction(approvalId) {
         const reason = prompt('Reason for rejection (optional):');
-        
+
         try {
             const response = await fetch('/api/ai_approvals.php', {
                 method: 'POST',
@@ -770,9 +894,8 @@ function updateProviderFields() {
                     _csrf: csrfToken
                 })
             });
-            
             const result = await response.json();
-            
+
             if (result.status === 'ok') {
                 showSuccess('Action rejected');
                 loadApprovalQueue();
@@ -780,83 +903,21 @@ function updateProviderFields() {
                 showError('Failed to reject: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
-            console.error('Error rejecting action:', error);
             showError('Error rejecting action');
         }
     }
 
-    // Reveal MCP API key for a connection
-    async function revealMcpKey(connectionId) {
-        try {
-            const response = await fetch(`/api/ai_connections.php?action=get&id=${encodeURIComponent(connectionId)}`);
-            const result = await response.json();
-            if (result.status !== 'ok' || !result.data?.connection?.mcp_api_key) {
-                showError('MCP key not available. Try rotating to generate a new key.');
-                return;
-            }
-            const input = document.getElementById('mcp-key-' + connectionId);
-            if (input) {
-                input.type = 'text';
-                input.value = result.data.connection.mcp_api_key;
-            }
-        } catch (error) {
-            console.error('Error revealing MCP key:', error);
-            showError('Failed to load MCP key');
-        }
-    }
-
-    // Rotate MCP API key
-    async function rotateMcpKey(connectionId) {
-        if (!confirm('Rotate MCP API key? External tools using the old key will stop working until updated.')) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/ai_connections.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'rotate_mcp_key',
-                    id: connectionId,
-                    _csrf: csrfToken
-                })
-            });
-            const result = await response.json();
-
-            if (result.status === 'ok') {
-                const key = result.data?.mcp_api_key || result.data?.connection?.mcp_api_key || '';
-                const input = document.getElementById('mcp-key-' + connectionId);
-                if (input && key) {
-                    input.type = 'text';
-                    input.value = key;
-                }
-                showSuccess('MCP API key rotated. Update Claude Desktop / bridge config with the new key.');
-            } else {
-                showError('Failed to rotate key: ' + (result.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error rotating MCP key:', error);
-            showError('Error rotating MCP key');
-        }
-    }
-
-    // Delete connection
     async function deleteConnection(connectionId) {
         if (!confirm('Delete this AI connection? This cannot be undone.')) return;
-        
+
         try {
             const response = await fetch('/api/ai_connections.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'delete',
-                    id: connectionId,
-                    _csrf: csrfToken
-                })
+                body: JSON.stringify({ action: 'delete', id: connectionId, _csrf: csrfToken })
             });
-            
             const result = await response.json();
-            
+
             if (result.status === 'ok') {
                 showSuccess('Connection deleted');
                 loadConnections();
@@ -867,12 +928,10 @@ function updateProviderFields() {
                 showError('Failed to delete: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
-            console.error('Error deleting connection:', error);
             showError('Error deleting connection');
         }
     }
 
-    // Toggle approval queue
     function toggleApprovalQueue() {
         const content = document.getElementById('approval-queue-content');
         if (content) {
@@ -880,7 +939,6 @@ function updateProviderFields() {
         }
     }
 
-    // Utility functions
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -888,52 +946,21 @@ function updateProviderFields() {
     }
 
     function formatTime(isoString) {
-        const date = new Date(isoString);
-        return date.toLocaleString();
+        return new Date(isoString).toLocaleString();
     }
 
     function showError(message) {
-        // Simple alert for now - could be enhanced with a toast system
         alert('Error: ' + message);
     }
 
     function showSuccess(message) {
-        // Simple alert for now - could be enhanced with a toast system
         alert('Success: ' + message);
     }
 
-    // Copy to clipboard function
-    function copyToClipboard(inputId) {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.select();
-            input.setSelectionRange(0, 99999); // For mobile devices
-            try {
-                document.execCommand('copy');
-                // Show temporary success message
-                const originalValue = input.value;
-                input.value = 'Copied!';
-                setTimeout(() => {
-                    input.value = originalValue;
-                }, 1000);
-            } catch (err) {
-                console.error('Failed to copy:', err);
-            }
-        }
-    }
-
-    // Export functions for onclick handlers
     window.aiConnections = {
         editConnection,
         deleteConnection,
         approveAction,
-        rejectAction,
-        revealMcpKey,
-        rotateMcpKey
+        rejectAction
     };
-    
-    // Export copy function globally
-    window.copyToClipboard = copyToClipboard;
-
 })();
-
