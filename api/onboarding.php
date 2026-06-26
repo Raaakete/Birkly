@@ -7,18 +7,12 @@
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/../core/birkly_users.php';
 
 // Helper functions - always available (even when included)
 // Helper to check if there are any users
 function hasUsers() {
-    $usersDir = __DIR__ . '/../users';
-    if (!is_dir($usersDir)) {
-        return false;
-    }
-    $files = array_filter(scandir($usersDir), function($f) {
-        return $f !== '.' && $f !== '..' && pathinfo($f, PATHINFO_EXTENSION) === 'json';
-    });
-    return count($files) > 0;
+    return birkly_has_users();
 }
 
 // Helper to normalize user key for onboarding file storage
@@ -207,10 +201,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         }
         
         // Create users directory if it doesn't exist
-        $usersDir = __DIR__ . '/../users';
-        if (!is_dir($usersDir)) {
-            mkdir($usersDir, 0755, true);
-        }
+        $usersDir = birkly_users_write_dir();
         
         // Create first admin user
         require_once __DIR__ . '/storage.php';
