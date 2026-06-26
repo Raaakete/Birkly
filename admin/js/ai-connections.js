@@ -554,6 +554,9 @@ function updateProviderFields() {
                     loadConnections();
                 }, 100);
                 showSuccess(connectionId ? 'AI connection updated successfully' : 'AI connection created successfully');
+                window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
+                    detail: { action: connectionId ? 'update' : 'create', id: result.data?.id || connectionId }
+                }));
             } else {
                 const errorMsg = result?.message || 'Unknown error';
                 console.error('Connection save error:', result);
@@ -857,6 +860,9 @@ function updateProviderFields() {
             if (result.status === 'ok') {
                 showSuccess('Connection deleted');
                 loadConnections();
+                window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
+                    detail: { action: 'delete', id: connectionId }
+                }));
             } else {
                 showError('Failed to delete: ' + (result.message || 'Unknown error'));
             }
