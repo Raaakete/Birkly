@@ -4,15 +4,106 @@
 class BirklyVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
-    // NOTE: GitHub repository must be renamed from 'haru' to 'birkly' for this to work
-    private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/birkly/releases/latest';
+    // GitHub repository for update checks and downloads
+    private static $githubRepo = 'Raaakete/Birkly';
+    private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/Birkly/releases/latest';
     
     /**
      * Get download URL for a specific version
      */
     private static function getDownloadUrl(string $version): string {
-        // NOTE: GitHub repository must be renamed from 'haru' to 'birkly' for this to work
-        return "https://github.com/Raaakete/birkly/archive/refs/tags/v{$version}.zip";
+        $tag = 'v' . ltrim($version, 'v');
+        return 'https://github.com/' . self::$githubRepo . '/archive/refs/tags/' . $tag . '.zip';
+    }
+
+    /**
+     * Fetch JSON from GitHub with auth headers when configured.
+     */
+    private static function fetchGithubJson(string $url): ?array
+    {
+        $headers = self::getGithubHeaders('Birkly/' . self::getCurrentVersion());
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 15,
+                'ignore_errors' => true,
+                'header' => implode("\r\n", $headers),
+            ],
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            return null;
+        }
+
+        $data = json_decode($response, true);
+        return is_array($data) ? $data : null;
+    }
+
+    /**
+     * Resolve latest release metadata (formal release or newest git tag).
+     */
+    private static function fetchLatestReleaseMeta(): array
+    {
+        $release = self::fetchGithubJson(self::$updateCheckUrl);
+        if ($release && isset($release['tag_name']) && !isset($release['message'])) {
+            return $release;
+        }
+
+        // Fallback: tags work without a published GitHub Release asset
+        $tags = self::fetchGithubJson('https://api.github.com/repos/' . self::$githubRepo . '/tags');
+        if (!$tags || !is_array($tags) || $tags === []) {
+            if (is_array($release) && isset($release['message'])) {
+                if (($release['status'] ?? null) == 401 || ($release['status'] ?? null) == 403) {
+                    return ['error' => 'GitHub private repo detected. Add a token in settings/security.json as {"github_token":"..."} or set env BIRKLY_GITHUB_TOKEN.'];
+                }
+                if (($release['status'] ?? null) == 404) {
+                    return ['error' => 'No releases or tags found on GitHub. Publish a release or push a version tag (e.g. v1.0.4).'];
+                }
+                return ['error' => 'GitHub API error: ' . ($release['message'] ?? 'Unknown error')];
+            }
+            return ['error' => 'Unable to check for updates. Repository may be private or unreachable.'];
+        }
+
+        usort($tags, static function ($a, $b) {
+            return version_compare(ltrim((string) ($b['name'] ?? '0'), 'v'), ltrim((string) ($a['name'] ?? '0'), 'v'));
+        });
+
+        $tagName = (string) ($tags[0]['name'] ?? '');
+        if ($tagName === '') {
+            return ['error' => 'No valid version tags found on GitHub.'];
+        }
+
+        return [
+            'tag_name' => $tagName,
+            'body' => '',
+            'zipball_url' => self::getDownloadUrl(ltrim($tagName, 'v')),
+            'published_at' => '',
+            'prerelease' => false,
+        ];
+    }
+
+    /**
+     * Locate CMS root prefix inside a GitHub source archive (e.g. "Birkly-1.0.3/").
+     */
+    private static function findZipCmsPrefix(ZipArchive $zip): ?string
+    {
+        if ($zip->locateName('index.php') !== false && $zip->locateName('admin/index.php') !== false) {
+            return '';
+        }
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+            if (!is_string($name) || !preg_match('#^([^/]+)/index\.php$#', $name, $m)) {
+                continue;
+            }
+            $prefix = $m[1] . '/';
+            if ($zip->locateName($prefix . 'admin/index.php') !== false
+                && $zip->locateName($prefix . 'core/version.php') !== false) {
+                return $prefix;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -64,41 +155,10 @@ class BirklyVersion {
         $currentVersion = self::getCurrentVersion();
         
         try {
-            $headers = self::getGithubHeaders('Birkly/' . $currentVersion);
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 15,
-                    'ignore_errors' => true,
-                    'header' => implode("\r\n", $headers)
-                ]
-            ]);
+            $release = self::fetchLatestReleaseMeta();
             
-            $response = @file_get_contents(self::$updateCheckUrl, false, $context);
-            
-            // Check for HTTP errors
-            if ($response === false) {
-                $error = error_get_last();
-                if (isset($error['message']) && strpos($error['message'], '404') !== false) {
-                    return ['error' => 'No releases found. Please create a GitHub Release for version ' . $currentVersion . ' or later.'];
-                }
-                return ['error' => 'Unable to check for updates. Repository may be private or unreachable.'];
-            }
-            
-            $release = json_decode($response, true);
-            
-            // Check if GitHub returned an error message
-            if (isset($release['message']) && isset($release['documentation_url'])) {
-                if (($release['status'] ?? null) == 404) {
-                    return ['error' => 'No releases found. Publish a GitHub Release (not only a tag).'];
-                }
-                if (($release['status'] ?? null) == 401 || ($release['status'] ?? null) == 403) {
-                    return ['error' => 'GitHub private repo detected. Add a token in settings/security.json as {"github_token":"..."} or set env BIRKLY_GITHUB_TOKEN.'];
-                }
-                return ['error' => 'GitHub API error: ' . ($release['message'] ?? 'Unknown error')];
-            }
-            
-            if (!$release || !isset($release['tag_name'])) {
-                return ['error' => 'Invalid release data from GitHub'];
+            if (isset($release['error'])) {
+                return ['error' => $release['error']];
             }
             
             $latestVersion = ltrim($release['tag_name'], 'v');
@@ -139,7 +199,7 @@ class BirklyVersion {
             
             $zipContent = @file_get_contents($downloadUrl, false, $context);
             if (!$zipContent) {
-                return ['error' => 'Failed to download update (private repo? add HARU_GITHUB_TOKEN)'];
+                return ['error' => 'Failed to download update. For private repos set BIRKLY_GITHUB_TOKEN or settings/security.json github_token.'];
             }
             
             // Save to temporary file
@@ -172,28 +232,31 @@ class BirklyVersion {
      * Verify update package integrity
      */
     private static function verifyUpdateIntegrity(string $filePath, string $version): bool {
-        // Check file size (minimum 1MB, maximum 100MB)
         $fileSize = filesize($filePath);
-        if ($fileSize < 1024 * 1024 || $fileSize > 100 * 1024 * 1024) {
+        // Reject empty/corrupt downloads; GitHub archives vary in size
+        if ($fileSize < 10 * 1024 || $fileSize > 100 * 1024 * 1024) {
             return false;
         }
         
-        // Verify it's a valid ZIP file
         $zip = new ZipArchive();
         if ($zip->open($filePath) !== TRUE) {
             return false;
         }
+
+        $prefix = self::findZipCmsPrefix($zip);
+        if ($prefix === null) {
+            $zip->close();
+            return false;
+        }
         
-        // Check for required files
         $requiredFiles = [
             'index.php',
             'admin/index.php',
-            'api/index.php',
-            'core/version.php'
+            'core/version.php',
         ];
         
         foreach ($requiredFiles as $file) {
-            if ($zip->locateName($file) === false) {
+            if ($zip->locateName($prefix . $file) === false) {
                 $zip->close();
                 return false;
             }
@@ -222,26 +285,22 @@ class BirklyVersion {
                 return ['error' => 'Failed to open update package'];
             }
             
-            // Extract to temporary directory first
+            // GitHub zipball extracts to a subdirectory (Birkly-1.0.3/)
+            $prefix = self::findZipCmsPrefix($zip);
+            if ($prefix === null) {
+                $zip->close();
+                return ['error' => 'CMS files not found in update package'];
+            }
+
             $tempExtractDir = sys_get_temp_dir() . '/birkly-extract-' . uniqid();
             if (!$zip->extractTo($tempExtractDir)) {
                 $zip->close();
                 return ['error' => 'Failed to extract update'];
             }
             $zip->close();
-            
-            // GitHub zipball extracts to a subdirectory (birkly-VERSION/)
-            // Find the actual CMS root inside the extracted directory
-            $extractedContents = scandir($tempExtractDir);
-            $actualCmsRoot = null;
-            foreach ($extractedContents as $item) {
-                if ($item !== '.' && $item !== '..' && is_dir($tempExtractDir . '/' . $item)) {
-                    $actualCmsRoot = $tempExtractDir . '/' . $item;
-                    break;
-                }
-            }
-            
-            if (!$actualCmsRoot || !file_exists($actualCmsRoot . '/index.php')) {
+
+            $actualCmsRoot = $prefix === '' ? $tempExtractDir : $tempExtractDir . '/' . rtrim($prefix, '/');
+            if (!file_exists($actualCmsRoot . '/index.php')) {
                 return ['error' => 'CMS files not found in update package'];
             }
             
@@ -454,6 +513,14 @@ class BirklyVersion {
         }
         
         return rmdir($dir);
+    }
+    
+    /**
+     * @internal Used by tests to validate update ZIP layout.
+     */
+    public static function validateUpdatePackageForTest(string $filePath, string $version): bool
+    {
+        return self::verifyUpdateIntegrity($filePath, $version);
     }
     
     /**

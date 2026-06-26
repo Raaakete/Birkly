@@ -82,12 +82,14 @@ git push origin v1.0.0
 
 ### **2. Configure Update URLs**
 
-Edit `core/version.php`:
+Edit `core/version.php` (defaults):
 
 ```php
-private static $updateCheckUrl = 'https://api.github.com/repos/yourusername/birkly/releases/latest';
-private static $downloadBaseUrl = 'https://cdn.jsdelivr.net/gh/yourusername/birkly@';
+private static $githubRepo = 'Raaakete/Birkly';
+private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/Birkly/releases/latest';
 ```
+
+Update checks use **GitHub Releases** when available, and fall back to the newest **git tag** if no release is published. Private repositories require `BIRKLY_GITHUB_TOKEN` or `settings/security.json` → `github_token`.
 
 ### **3. GitHub Actions Setup**
 

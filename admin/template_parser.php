@@ -141,7 +141,8 @@ class TemplateParser {
                 if (!preg_match('/\.js$/', $filename)) {
                     $filename .= '.js';
                 }
-                return '<script src="/admin/js/' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '"></script>';
+                $jsPath = '/admin/js/' . $filename;
+                return '<?= \'<script src="\' . htmlspecialchars(birkly_url(\'' . addslashes($jsPath) . '\')) . \'"></script>\' ?>';
             },
             $parsed
         );
@@ -155,7 +156,8 @@ class TemplateParser {
                 if (!preg_match('/\.css$/', $filename)) {
                     $filename .= '.css';
                 }
-                return '<link rel="stylesheet" href="/admin/css/' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '">';
+                $cssPath = '/admin/css/' . $filename;
+                return '<?= \'<link rel="stylesheet" href="\' . htmlspecialchars(birkly_url(\'' . addslashes($cssPath) . '\')) . \'">\' ?>';
             },
             $parsed
         );
