@@ -13,6 +13,7 @@ ob_start();
 
 // Now include dependencies (output buffering will catch any output)
 require_once __DIR__ . '/../core/birkly_paths.php';
+require_once __DIR__ . '/../core/birkly_users.php';
 require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
@@ -69,6 +70,9 @@ if (!hasUsers()) {
     exit;
 }
 
+// Ensure CSRF token exists for this session before handling POST
+generate_csrf_token();
+
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
@@ -96,16 +100,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require_once __DIR__ . '/../api/2fa.php';
 
             $normalizedEmail = trim(strtolower($email));
-            $userId = md5($normalizedEmail);
+            $userId = birkly_user_id_from_email($email);
 
-            // Prefer /users, fall back to /data/users (matches api/2fa.php)
-            $usersDir = __DIR__ . '/../users';
-            if (!is_dir($usersDir)) {
-                $usersDir = __DIR__ . '/../data/users';
-            }
-            $userFile = $usersDir . '/' . $userId . '.json';
+            $userFile = birkly_user_account_path($email);
             
-            if (file_exists($userFile)) {
+            if ($userFile !== null && file_exists($userFile)) {
                 $userData = json_decode(file_get_contents($userFile), true);
                 if (isset($userData['2fa']['enabled']) && $userData['2fa']['enabled']) {
                     // Store email in session for 2FA verification
@@ -152,20 +151,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Helper function to attempt login
 function attemptLogin($email, $password) {
-    $email = trim(strtolower($email));
-    $userFile = md5($email) . '.json';
-    $usersDir = __DIR__ . '/../users';
-    
-    if (!file_exists($usersDir . '/' . $userFile)) {
-        return ['success' => false, 'message' => 'Invalid email or password.'];
-    }
-    
-    $user = json_decode(file_get_contents($usersDir . '/' . $userFile), true);
+    $user = birkly_load_user_account($email);
     if (!$user) {
         return ['success' => false, 'message' => 'Invalid email or password.'];
     }
     
-    if (!password_verify($password, $user['password'])) {
+    if (!password_verify($password, $user['password'] ?? '')) {
         return ['success' => false, 'message' => 'Invalid email or password.'];
     }
     
