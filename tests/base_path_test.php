@@ -94,4 +94,20 @@ with_script_name('/Birkly-0.1/admin/index.php', function () {
     );
 });
 
+with_script_name('/admin/login.php', function () {
+    $prevUri = $_SERVER['REQUEST_URI'] ?? null;
+    $_SERVER['REQUEST_URI'] = '/Birkly-main/admin/login.php';
+    birkly_paths_reset_cache();
+    test_assert(
+        'request uri fallback when script is rewritten to root',
+        birkly_base_path() === '/Birkly-main'
+    );
+    if ($prevUri === null) {
+        unset($_SERVER['REQUEST_URI']);
+    } else {
+        $_SERVER['REQUEST_URI'] = $prevUri;
+    }
+    birkly_paths_reset_cache();
+});
+
 echo "\nbase_path_test: PASS\n";

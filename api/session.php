@@ -7,8 +7,24 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 require_once __DIR__ . '/../core/birkly_paths.php';
 
+function birkly_request_is_secure(): bool
+{
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+    if (($_SERVER['SERVER_PORT'] ?? null) == 443) {
+        return true;
+    }
+    $forwarded = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $_SERVER['HTTP_X_FORWARDED_SSL'] ?? '';
+    if (is_string($forwarded) && strtolower($forwarded) === 'https') {
+        return true;
+    }
+
+    return false;
+}
+
 function haru_secure_session_start() {
-    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? null) == 443;
+    $secure = birkly_request_is_secure();
     $cookiePath = birkly_session_cookie_path();
     session_set_cookie_params([
         'lifetime' => 0,
@@ -32,7 +48,7 @@ function birkly_site_session_start() {
     if (session_status() !== PHP_SESSION_NONE) {
         return;
     }
-    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? null) == 443;
+    $secure = birkly_request_is_secure();
     $cookiePath = birkly_session_cookie_path();
     session_name('birkly_site_sid');
     session_set_cookie_params([
@@ -53,7 +69,7 @@ function birkly_admin_session_start() {
     if (session_status() !== PHP_SESSION_NONE) {
         return;
     }
-    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? null) == 443;
+    $secure = birkly_request_is_secure();
     $cookiePath = birkly_session_cookie_path();
     session_name('birkly_admin_sid');
     session_set_cookie_params([

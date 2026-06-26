@@ -23,17 +23,13 @@ if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 }
 require_once 'rate_limit.php';
 require_once 'log.php';
-require_once '../core/csrf.php';
+require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/birkly_users.php';
 
 // Use a storage instance that points to the users directory
-// Check if users directory exists at root level, otherwise try data/users
-$usersDir = __DIR__ . '/../users';
+$usersDir = birkly_users_write_dir();
 if (!is_dir($usersDir)) {
-    $usersDir = __DIR__ . '/../data/users';
-    // Create directory if it doesn't exist
-    if (!is_dir($usersDir)) {
-        @mkdir($usersDir, 0755, true);
-    }
+    @mkdir($usersDir, 0755, true);
 }
 $storage = new Storage($usersDir);
 $rawInput = file_get_contents('php://input');
