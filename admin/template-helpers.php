@@ -4,6 +4,8 @@
  * These functions are called from templates to perform complex operations
  */
 
+require_once __DIR__ . '/../core/birkly_paths.php';
+
 /**
  * Build breadcrumbs for entry editor/detail pages
  * Returns array of breadcrumb items with label and url
@@ -14,7 +16,7 @@ function build_entry_breadcrumbs($data) {
     // Add "Content" link
     $breadcrumbs[] = [
         'label' => __('admin.content'),
-        'url' => '/admin/index.php?page=content',
+        'url' => birkly_admin_url('content'),
         'is_current' => false
     ];
     
@@ -23,7 +25,7 @@ function build_entry_breadcrumbs($data) {
     $collectionName = $data['collection']['name'] ?? $data['collection']['title'] ?? $collectionSlug ?? 'Collection';
     $breadcrumbs[] = [
         'label' => $collectionName,
-        'url' => '/admin/index.php?page=entries&collection=' . urlencode($collectionSlug),
+        'url' => birkly_admin_url('entries', ['collection' => $collectionSlug]),
         'is_current' => false
     ];
     
@@ -34,7 +36,7 @@ function build_entry_breadcrumbs($data) {
         
         $breadcrumbs[] = [
             'label' => $mainEntryTitle,
-            'url' => '/admin/index.php?page=entry-detail&collection=' . urlencode($collectionSlug) . '&entry=' . urlencode($mainEntryId),
+            'url' => birkly_admin_url('entry-detail', ['collection' => $collectionSlug, 'entry' => $mainEntryId]),
             'is_current' => false
         ];
         
@@ -46,10 +48,12 @@ function build_entry_breadcrumbs($data) {
             
             $breadcrumbs[] = [
                 'label' => $parentSubCollectionSlug . ': ' . $parentSubEntryTitle,
-                'url' => '/admin/index.php?page=entry-detail&collection=' . urlencode($collectionSlug) . 
-                        '&entry=' . urlencode($mainEntryId) . 
-                        '&sub_collection=' . urlencode($parentSubCollectionSlug) . 
-                        '&sub_entry=' . urlencode($parentSubEntryId),
+                'url' => birkly_admin_url('entry-detail', [
+                    'collection' => $collectionSlug,
+                    'entry' => $mainEntryId,
+                    'sub_collection' => $parentSubCollectionSlug,
+                    'sub_entry' => $parentSubEntryId,
+                ]),
                 'is_current' => false
             ];
         }
@@ -93,10 +97,12 @@ function build_cancel_url($data) {
         
         // Check for cancel_to parameters (explicitly passed)
         if (!empty($_GET['cancel_to_sub_collection']) && !empty($_GET['cancel_to_sub_entry'])) {
-            return '/admin/index.php?page=entry-detail&collection=' . urlencode($collectionSlug) . 
-                   '&entry=' . urlencode($mainEntryId) . 
-                   '&sub_collection=' . urlencode($_GET['cancel_to_sub_collection']) . 
-                   '&sub_entry=' . urlencode($_GET['cancel_to_sub_entry']);
+            return birkly_admin_url('entry-detail', [
+                'collection' => $collectionSlug,
+                'entry' => $mainEntryId,
+                'sub_collection' => $_GET['cancel_to_sub_collection'],
+                'sub_entry' => $_GET['cancel_to_sub_entry'],
+            ]);
         }
         
         // If editing existing sub-entry with nested sub-collections, go to sub-entry detail
@@ -112,37 +118,38 @@ function build_cancel_url($data) {
             }
             
             if ($hasNestedSubCollections) {
-                $url = '/admin/index.php?page=entry-detail&collection=' . urlencode($collectionSlug) . 
-                       '&entry=' . urlencode($mainEntryId) . 
-                       '&sub_collection=' . urlencode($currentSubCollectionSlug) . 
-                       '&sub_entry=' . urlencode($data['sub_entry_id']);
-                
-                // Include parent sub-entry info if this is nested
+                $params = [
+                    'collection' => $collectionSlug,
+                    'entry' => $mainEntryId,
+                    'sub_collection' => $currentSubCollectionSlug,
+                    'sub_entry' => $data['sub_entry_id'],
+                ];
                 if (!empty($data['parent_sub_collection']) && !empty($data['parent_sub_entry_id'])) {
-                    $url .= '&parent_sub_collection=' . urlencode($data['parent_sub_collection']) . 
-                           '&parent_sub_entry=' . urlencode($data['parent_sub_entry_id']);
+                    $params['parent_sub_collection'] = $data['parent_sub_collection'];
+                    $params['parent_sub_entry'] = $data['parent_sub_entry_id'];
                 }
-                
-                return $url;
+                return birkly_admin_url('entry-detail', $params);
             }
         }
         
         // If creating nested sub-entry, go back to parent sub-entry detail
         if (!empty($data['parent_sub_collection']) && !empty($data['parent_sub_entry_id'])) {
-            return '/admin/index.php?page=entry-detail&collection=' . urlencode($collectionSlug) . 
-                   '&entry=' . urlencode($mainEntryId) . 
-                   '&sub_collection=' . urlencode($data['parent_sub_collection']) . 
-                   '&sub_entry=' . urlencode($data['parent_sub_entry_id']);
+            return birkly_admin_url('entry-detail', [
+                'collection' => $collectionSlug,
+                'entry' => $mainEntryId,
+                'sub_collection' => $data['parent_sub_collection'],
+                'sub_entry' => $data['parent_sub_entry_id'],
+            ]);
         }
         
         // For first-level sub-entries: Always return to parent entry detail page
         // The presence of parent_entry_id means we came from an entry detail page
         if (!empty($mainEntryId)) {
-            return '/admin/index.php?page=entry-detail&collection=' . urlencode($collectionSlug) . '&entry=' . urlencode($mainEntryId);
+            return birkly_admin_url('entry-detail', ['collection' => $collectionSlug, 'entry' => $mainEntryId]);
         }
         
         // Fallback to entries list (shouldn't normally reach here for sub-entries)
-        return '/admin/index.php?page=entries&collection=' . urlencode($collectionSlug);
+        return birkly_admin_url('entries', ['collection' => $collectionSlug]);
     }
     
     // For regular entries
@@ -159,8 +166,10 @@ function build_cancel_url($data) {
             // If came from entry-detail page, go back there
             if (!empty($refererParams['page']) && $refererParams['page'] === 'entry-detail' &&
                 !empty($refererParams['entry']) && !empty($refererParams['collection'])) {
-                return '/admin/index.php?page=entry-detail&collection=' . urlencode($refererParams['collection']) . 
-                       '&entry=' . urlencode($refererParams['entry']);
+                return birkly_admin_url('entry-detail', [
+                    'collection' => $refererParams['collection'],
+                    'entry' => $refererParams['entry'],
+                ]);
             }
         }
     }

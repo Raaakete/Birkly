@@ -46,7 +46,7 @@ $brandingSettings = $storage->read('branding.json') ?? [];
 
 $projectName = $adminSettings['project_name'] ?? 'Birkly';
 $logoPath = $brandingSettings['logoPath'] ?? '';
-$defaultLogo = '/admin/assets/birkly-icon.svg';
+$defaultLogo = birkly_url('/admin/assets/birkly-icon.svg');
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 // Get current user information for sidebar footer
@@ -86,7 +86,7 @@ if (empty($userAvatar)) {
                 <ul class="nav-links" id="links-main">
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>">
-                            <img src="/admin/assets/Speedometer.svg" alt="<?= __('admin.dashboard') ?>" class="nav-icon mr-xs"> <?= __('admin.dashboard') ?>
+                            <img src="<?= htmlspecialchars(birkly_url('/admin/assets/Speedometer.svg')) ?>" alt="<?= __('admin.dashboard') ?>" class="nav-icon mr-xs"> <?= __('admin.dashboard') ?>
                         </a>
                     </li>
                     <li class="nav-item <?= is_nav_active('content') || is_nav_active('entries') || is_nav_active('entry-editor') || is_nav_active('collection-editor') ? 'active' : '' ?>">

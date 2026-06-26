@@ -12,6 +12,7 @@ if (!headers_sent()) {
 ob_start();
 
 // Now include dependencies (output buffering will catch any output)
+require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
@@ -43,7 +44,7 @@ if (isset($_SESSION['user'])) {
         }
         if (!headers_sent()) {
             http_response_code(302);
-            header('Location: /admin/index.php?page=dashboard');
+            header('Location: ' . birkly_admin_url('dashboard'));
         }
         exit;
     }
@@ -63,7 +64,7 @@ if (!hasUsers()) {
     }
     if (!headers_sent()) {
         http_response_code(302);
-        header('Location: /admin/index.php?page=onboarding');
+        header('Location: ' . birkly_admin_url('onboarding'));
     }
     exit;
 }
@@ -116,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     if (!headers_sent()) {
                         http_response_code(302);
-                        header('Location: /admin/verify-2fa.php');
+                        header('Location: ' . birkly_url('/admin/verify-2fa.php'));
                     }
                     exit;
                 }
@@ -125,10 +126,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // No 2FA - proceed with normal login
             // Redirect to dashboard or original page
             // Use absolute path to ensure correct routing
-            $redirect = $_GET['redirect'] ?? '/admin/index.php?page=dashboard';
-            // If redirect is relative, make it absolute
+            $redirect = $_GET['redirect'] ?? birkly_admin_url('dashboard');
+            // If redirect is relative, make it absolute under the install base
             if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
-                $redirect = '/admin/' . $redirect;
+                $redirect = birkly_url('/admin/' . ltrim($redirect, '/'));
             }
             // CRITICAL: Clear ALL output buffers before redirect
             // We need to end all buffers to prevent any output from being sent
@@ -192,7 +193,7 @@ $brandingSettings = $storage->read('branding.json') ?? [];
 
 $projectName = $adminSettings['project_name'] ?? 'Birkly';
 $logoPath = $brandingSettings['logoPath'] ?? '';
-$defaultLogo = '/admin/assets/birkly-icon.svg';
+$defaultLogo = birkly_url('/admin/assets/birkly-icon.svg');
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 ?>
 <!DOCTYPE html>
@@ -202,7 +203,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
     <title>Login - <?= htmlspecialchars($projectName) ?> Admin</title>
-    <link rel="stylesheet" href="/admin/css/style.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="<?= htmlspecialchars($logoUrl) ?>">
     <style>
         /* Use admin panel CSS variables */
@@ -421,7 +422,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         <?php if ($notice): ?>
             <div class="success-message">
                 <?= htmlspecialchars($notice) ?>
-                <form method="POST" action="/admin/logout.php" style="margin-top: 10px;">
+                <form method="POST" action="<?= htmlspecialchars(birkly_url('/admin/logout.php')) ?>" style="margin-top: 10px;">
                     <input type="hidden" name="_csrf" value="<?= htmlspecialchars(get_csrf_token()) ?>">
                     <button type="submit" class="login-button" style="margin-top: 0;">Log out</button>
                 </form>

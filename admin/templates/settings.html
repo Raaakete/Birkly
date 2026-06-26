@@ -519,7 +519,7 @@
           </div>
           <div class="webhooks-info">
             <p><?= __('admin.webhooks_description') ?></p>
-            <p><a href="/admin/index.php?page=webhooks" class="btn btn-secondary"><?= __('admin.go_to_webhooks_management') ?></a></p>
+            <p><a href="<?= admin_url('webhooks') ?>\" class="btn btn-secondary"><?= __('admin.go_to_webhooks_management') ?></a></p>
           </div>
         </div>
       </div>
@@ -3154,8 +3154,8 @@ async function downloadUpdate() {
 }
 </script>
 
-<script src="/admin/js/ai-connections.js"></script>
-<script src="/admin/js/mcp-connections.js"></script>
+<script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>
+<script src="<?= birkly_url('/admin/js/mcp-connections.js') ?>"></script>
 
 <!-- Activity Feed Styles -->
 <style>

@@ -1,17 +1,17 @@
         </main>
     </div>
 
-<script src="/admin/js/utils.js"></script>
-<script src="/admin/js/theme.js"></script>
-<script src="/admin/js/dropdown.js"></script>
-<script src="/admin/js/custom-select.js"></script>
-<script src="/admin/js/ai-chat-button.js"></script>
-<script src="/admin/js/feedback-button.js"></script>
-<script src="/admin/js/contextual-help.js"></script>
-    <script src="/admin/js/fieldtypes-shim.js"></script>
-    <script src="/admin/js/media-modal.js?v=20250804-15"></script>
-    <script src="/admin/js/accessibility.js"></script>
-    <?php if (isset($page) && $page === 'dashboard'): ?><script src="/admin/js/dashboard.js"></script><?php endif; ?>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/theme.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/dropdown.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/custom-select.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/ai-chat-button.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/feedback-button.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/contextual-help.js')) ?>"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtypes-shim.js')) ?>"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20250804-15')) ?>"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"></script>
+    <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>"></script><?php endif; ?>
 
     <script>
     // If user was redirected due to missing permission, show unified modal.
@@ -49,7 +49,7 @@
                     logoutBtn.textContent = 'Logging out...';
                     logoutBtn.disabled = true;
                     
-                    fetch('/admin/logout.php', {
+                    fetch(Birkly.url('/admin/logout.php'), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -59,7 +59,7 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'ok') {
-                            window.location.href = '/admin/login.php';
+                            window.location.href = Birkly.url('/admin/login.php');
                         } else {
                             alert('Error logging out: ' + data.message);
                             logoutBtn.textContent = 'Logout';
@@ -555,7 +555,7 @@
             <div class="notifications-loading">Loading notifications...</div>
         </div>
         <div class="notifications-footer">
-            <a href="/admin/index.php?page=activity">View all activity</a>
+            <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>">View all activity</a>
         </div>
     </div>
     

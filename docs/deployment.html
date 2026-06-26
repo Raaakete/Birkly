@@ -37,6 +37,13 @@
         <li>See <code>nginx.conf.example</code> and <code>nginx.conf.sample</code> for Nginx</li>
         <li>Use <code>.htaccess</code> for Apache (sample provided)</li>
       </ul>
+      <h2>Subdirectory installs</h2>
+      <p>Birkly can run in a subfolder (e.g. <code>https://example.com/birkly-test/Birkly-0.1/admin/</code>). Admin links, API calls, and assets are prefixed automatically from the request path.</p>
+      <ul>
+        <li><strong>Auto-detect:</strong> base path is derived from <code>SCRIPT_NAME</code> (no config required in most cases).</li>
+        <li><strong>Override:</strong> set <code>base_path</code> in <code>settings/admin.json</code> (e.g. <code>"/birkly-test/Birkly-0.1"</code>, no trailing slash).</li>
+        <li><strong>Alternative:</strong> point a subdomain or vhost document root at the Birkly folder for a clean <code>/admin/</code> URL.</li>
+      </ul>
       <h2>Backups</h2>
       <ul>
         <li>Use the admin UI or <code>/api/backup.php</code> to create/restore backups</li>
