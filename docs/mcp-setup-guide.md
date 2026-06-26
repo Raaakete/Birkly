@@ -1,278 +1,163 @@
 # MCP Setup Guide for Birkly
 
+Connect external AI clients to your Birkly instance via **inbound MCP** (Model Context Protocol). This path is separate from **outbound BYOAI** (admin chat with your provider API keys).
+
+## Two paths (don't mix them up)
+
+| Goal | Where to configure |
+|------|-------------------|
+| Chat **inside** Birkly admin with OpenAI, Claude API, Ollama, etc. | **Settings → AI Connections** (outbound; requires provider **API key**) |
+| **Claude Desktop**, Cursor, or scripts calling Birkly tools | **Settings → MCP Connections** (inbound; Birkly-issued **MCP endpoint key** only) |
+
+Consumer subscriptions (ChatGPT Plus, Claude Pro) do **not** replace API keys for outbound chat. For non-technical users, inbound MCP is often the simpler path.
+
 ## What is MCP?
 
-MCP (Model Context Protocol) is a protocol that allows AI assistants to connect to external tools and data sources. Currently, **Claude Desktop** (Anthropic's desktop app) is the primary client that supports MCP.
+MCP lets AI assistants connect to external tools and data sources. Birkly exposes CMS tools at `POST /api/mcp_server.php`, scoped by each endpoint's role.
 
-## Important Note
+**Client support (see `docs/reviews/p4-mcp-client-matrix.md`):**
 
-- ✅ **Claude Desktop** supports MCP
-- ❌ **ChatGPT Desktop** does NOT support MCP
-- ✅ **Birkly** has an MCP server implementation
+- ✅ **Claude Desktop** — verified (stdio bridge)
+- ⚠️ **Cursor** — experimental
+- 🔜 **OpenAI MCP** — emerging
+- ✅ **curl / HTTP** — verified for testing
 
-If you want to use ChatGPT, you should use the **OpenAI** provider connection in Birkly instead of MCP.
+## Step 1: Create an MCP endpoint in Birkly
 
-## Setting Up Claude Desktop with Birkly
+1. Open **Settings → MCP Connections** (dedicated tab — not AI Connections).
+2. If the list is empty, use **Add MCP endpoint** (keys are never auto-generated on install).
+3. Fill in:
+   - **Name** — e.g. "Claude Desktop — Editor"
+   - **Role** — Viewer (read-only) or Editor/Author for writes
+   - **Require approval** — recommended for production (writes go to approval queue)
+4. Save and **copy the MCP API key** when shown (you can rotate later; previous key has 24h grace unless revoked).
 
-### Step 1: Install Claude Desktop
+The server URL is your Birkly base URL + `/api/mcp_server.php`.
 
-1. Download Claude Desktop from: https://claude.ai/download
-2. Install it on your computer
-3. Sign in with your Anthropic account
+### Upgrading from Phase 3 (legacy per-AI-connection MCP keys)
 
-### Step 2: Create an AI Connection in Birkly
+If you previously used provider **MCP** under AI Connections, migrate to standalone endpoints:
 
-1. Go to **Settings > AI Connections** in your Birkly admin panel
-2. Click **"+ Add Connection"**
-3. Select any provider (OpenAI, Anthropic, MCP, etc.)
-4. Fill in the connection details:
-   - **Connection Name**: e.g., "My Claude Desktop"
-   - **Role**: Choose the permissions (Editor recommended for writes; Viewer for read-only MCP)
-   - **Who can use**: Choose access level
-   - **Require approval**: Enable if you want to review AI actions
-5. Click **"Connect"**
-6. Use **Reveal** or copy the **MCP Server URL** and **MCP API Key** shown on the connection card (every AI connection gets its own per-connection MCP key)
-
-### Step 3: Configure Claude Desktop
-
-Claude Desktop uses a configuration file to connect to MCP servers.
-
-#### On macOS:
-The config file is located at:
-```
-~/Library/Application Support/Claude/claude_desktop_config.json
+```bash
+# From Birkly repo root
+php scripts/migrate-mcp-endpoints.php --dry-run   # preview
+php scripts/migrate-mcp-endpoints.php             # migrate
 ```
 
-#### On Windows:
-The config file is located at:
-```
-%APPDATA%\Claude\claude_desktop_config.json
-```
+This copies legacy `mcp_api_key` values from AI connection rows into `settings/mcp_endpoints.json`. Old keys keep working for **90 days** (dual-resolve), then use MCP Connections only.
 
-#### Configuration Format:
+## Step 2: Install Claude Desktop (recommended client)
 
-Edit the config file and add your Birkly MCP server:
+1. Download from https://claude.ai/download
+2. Install and sign in with your Anthropic account (this is for the **desktop app**, not a Birkly API key)
+
+## Step 3: Configure the bridge
+
+Birkly ships `mcp-bridge.js` at the CMS root. It translates Claude's stdio MCP to Birkly's HTTP endpoint.
+
+### Environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `BIRKLY_URL` | Your Birkly base URL (e.g. `http://localhost:8080`) — **preferred name** |
+| `BIRKLY_MCP_API_KEY` | Endpoint key from MCP Connections |
+| `HARUCMS_URL` / `HARUCMS_API_KEY` | Legacy aliases; still accepted |
+
+### Claude Desktop config
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "birkly": {
       "command": "node",
-      "args": [
-        "-e",
-        "const http = require('http'); const url = require('url'); const querystring = require('querystring'); const server = http.createServer((req, res) => { const parsed = url.parse(req.url, true); const apiKey = parsed.query.api_key || req.headers['x-mcp-api-key']; if (!apiKey) { res.writeHead(401); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32000, message: 'API key required'}})); return; } let body = ''; req.on('data', chunk => { body += chunk; }); req.on('end', () => { const input = JSON.parse(body || '{}'); const method = input.method || parsed.query.method || ''; const params = input.params || {}; fetch('YOUR_HARUCMS_URL/api/mcp_server.php?method=' + method + '&api_key=' + apiKey, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-MCP-API-Key': apiKey}, body: JSON.stringify({method, params, id: input.id})}).then(r => r.json()).then(data => { res.writeHead(200, {'Content-Type': 'application/json'}); res.end(JSON.stringify(data)); }).catch(err => { res.writeHead(500); res.end(JSON.stringify({jsonrpc: '2.0', error: {code: -32603, message: err.message}})); }); }); }); server.listen(0, () => { process.stdout.write(JSON.stringify({mcpServer: {name: 'birkly', version: '1.0.0'}}) + '\\n'); });"
-      ],
+      "args": ["/absolute/path/to/mcp-bridge.js"],
       "env": {
         "BIRKLY_URL": "http://localhost:8080",
-        "BIRKLY_MCP_API_KEY": "YOUR_MCP_API_KEY_HERE"
+        "BIRKLY_MCP_API_KEY": "YOUR_MCP_ENDPOINT_KEY"
       }
     }
   }
 }
 ```
 
-**However**, the above is complex. A simpler approach is to use an HTTP-based MCP bridge.
+Use the path to `mcp-bridge.js` inside your Birkly installation. On a production server, run the bridge on a machine that can reach `BIRKLY_URL`.
 
-### Step 4: Using HTTP MCP Bridge (Recommended)
+### Step 4: Restart Claude Desktop
 
-Since Birkly uses HTTP for MCP (not stdio), you'll need a bridge. Here's a simpler approach:
+Restart completely after editing the config. The MCP server should connect on startup.
 
-#### Option A: Use a Simple HTTP-to-MCP Bridge Script
+### Step 5: Verify
 
-Create a file `mcp-bridge.js`:
+1. Open Claude Desktop → new conversation
+2. Ask: "What tools do you have access to?"
+3. Expect Birkly tools: `list_collections`, `get_collection`, `list_entries`, `create_entry`, `update_entry`, `get_system_context`, etc.
 
-```javascript
-#!/usr/bin/env node
+## Cursor (experimental)
 
-const http = require('http');
-const https = require('https');
-const url = require('url');
+Some Cursor builds support MCP via stdio or HTTP. Try the same `mcp-bridge.js` command as Claude Desktop, or configure HTTP to `{BIRKLY_URL}/api/mcp_server.php` with header `X-MCP-API-Key`. Cursor support is **experimental** — see `docs/reviews/p4-mcp-client-matrix.md`.
 
-const BIRKLY_URL = process.env.BIRKLY_URL || process.env.HARUCMS_URL || 'http://localhost:8080';
-const API_KEY = process.env.BIRKLY_MCP_API_KEY || process.env.HARUCMS_API_KEY || '';
+## HTTP testing with curl
 
-// MCP stdio server
-process.stdin.setEncoding('utf8');
+```bash
+export BIRKLY_URL="http://localhost:8080"
+export BIRKLY_MCP_API_KEY="your_key"
 
-let requestId = 0;
-const pendingRequests = {};
-
-process.stdin.on('data', async (chunk) => {
-  const lines = chunk.toString().split('\n').filter(l => l.trim());
-  
-  for (const line of lines) {
-    try {
-      const message = JSON.parse(line);
-      
-      if (message.method === 'initialize') {
-        // Send initialize response
-        const response = {
-          jsonrpc: '2.0',
-          id: message.id,
-          result: {
-            protocolVersion: '2024-11-05',
-            capabilities: {
-              tools: {},
-              resources: {}
-            },
-            serverInfo: {
-              name: 'Birkly MCP Server',
-              version: '1.0.0'
-            }
-          }
-        };
-        process.stdout.write(JSON.stringify(response) + '\n');
-        continue;
-      }
-      
-      // Forward other requests to Birkly
-      const birklyUrl = new URL('/api/mcp_server.php', BIRKLY_URL);
-      birklyUrl.searchParams.set('method', message.method);
-      birklyUrl.searchParams.set('api_key', API_KEY);
-      
-      const options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-MCP-API-Key': API_KEY
-        }
-      };
-      
-      const protocol = birklyUrl.protocol === 'https:' ? https : http;
-      
-      const req = protocol.request(birklyUrl, options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          try {
-            const response = JSON.parse(data);
-            response.id = message.id;
-            process.stdout.write(JSON.stringify(response) + '\n');
-          } catch (e) {
-            process.stdout.write(JSON.stringify({
-              jsonrpc: '2.0',
-              id: message.id,
-              error: { code: -32700, message: 'Parse error' }
-            }) + '\n');
-          }
-        });
-      });
-      
-      req.on('error', (err) => {
-        process.stdout.write(JSON.stringify({
-          jsonrpc: '2.0',
-          id: message.id,
-          error: { code: -32603, message: err.message }
-        }) + '\n');
-      });
-      
-      req.write(JSON.stringify({
-        method: message.method,
-        params: message.params,
-        id: message.id
-      }));
-      req.end();
-      
-    } catch (e) {
-      // Ignore parse errors
-    }
-  }
-});
+curl -sS -X POST "${BIRKLY_URL}/api/mcp_server.php" \
+  -H "Content-Type: application/json" \
+  -H "X-MCP-API-Key: ${BIRKLY_MCP_API_KEY}" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}'
 ```
 
-Then configure Claude Desktop:
+## Using ChatGPT instead of MCP
 
-```json
-{
-  "mcpServers": {
-    "birkly": {
-      "command": "node",
-      "args": ["/path/to/mcp-bridge.js"],
-      "env": {
-        "BIRKLY_URL": "http://localhost:8080",
-        "BIRKLY_MCP_API_KEY": "YOUR_MCP_API_KEY_FROM_BIRKLY"
-      }
-    }
-  }
-}
-```
+ChatGPT does not support Birkly MCP. For in-admin chat:
 
-### Step 5: Restart Claude Desktop
-
-After editing the config file, restart Claude Desktop completely. The MCP server should connect automatically.
-
-### Step 6: Verify Connection
-
-1. Open Claude Desktop
-2. Start a new conversation
-3. Ask Claude: "What tools do you have access to?"
-4. Claude should list the Birkly tools:
-   - `list_collections`
-   - `get_collection`
-   - `list_entries`
-   - `create_entry`
-   - `update_entry`
-   - `get_system_context`
-
-## Using ChatGPT Instead
-
-If you want to use ChatGPT (not Claude), you have two options:
-
-### Option 1: Use OpenAI Provider (Recommended)
-
-1. Go to **Settings > AI Connections** in Birkly
-2. Add a new connection
-3. Select **"OpenAI"** as provider
-4. Enter your OpenAI API key
-5. Use the floating AI button in the admin panel to chat
-
-### Option 2: Use ChatGPT with Custom Integration
-
-ChatGPT doesn't support MCP, but you could:
-- Use the OpenAI API directly
-- Create a custom integration using webhooks
-- Use the internal chat interface in Birkly
+1. **Settings → AI Connections** → Add **OpenAI** (or another provider)
+2. Enter your **OpenAI API key** from the developer dashboard (not ChatGPT Plus login)
+3. Use the floating AI button in the admin panel
 
 ## Troubleshooting
 
-### MCP Server Not Connecting
+### MCP server not connecting
 
-1. **Check the API Key**: Make sure you copied the correct MCP API key from Birkly
-2. **Check the URL**: Ensure `BIRKLY_URL` (or legacy `HARUCMS_URL`) points to your Birkly installation
-3. **Check Network**: Make sure Claude Desktop can reach your Birkly server
-4. **Check Logs**: Look at `logs/php_errors.log` in Birkly for errors
+1. **Key** — from **MCP Connections**, not AI Connections
+2. **URL** — `BIRKLY_URL` must reach your instance (no trailing path except what the bridge adds)
+3. **Network** — desktop app must reach the server (firewall, HTTPS cert)
+4. **Logs** — `logs/php_errors.log`; MCP audit under `data/mcp_audit/` (no secrets in entries)
 
-### Claude Can't See Tools
+### Claude can't see tools
 
-1. Restart Claude Desktop completely
-2. Check the config file syntax (must be valid JSON)
-3. Verify the MCP bridge script is executable
-4. Check that the API key is correct
+1. Restart Claude Desktop fully
+2. Validate JSON config syntax
+3. Confirm `node` can run `mcp-bridge.js`
+4. Re-copy or rotate MCP key in admin
 
-### Permission Errors
+### Permission errors
 
-1. Make sure the MCP connection in Birkly has the right role/permissions
-2. Check that the AI user has access to the collections you're trying to use
+1. Check endpoint **role** in MCP Connections
+2. Writes with **require approval** appear in the approval queue (same as admin chat)
+3. Viewer role cannot call write tools
 
-## Available MCP Tools
+## Available MCP tools
 
-Once connected, Claude can use these tools:
+- **list_collections** — List content collections
+- **get_collection** — Collection schema/details
+- **list_entries** — Entries in a collection
+- **create_entry** / **update_entry** — Writes (may require approval)
+- **get_system_context** — Curated CMS context for the model
 
-- **list_collections**: List all content collections
-- **get_collection**: Get details of a specific collection
-- **list_entries**: List entries in a collection
-- **create_entry**: Create a new entry (requires approval if enabled)
-- **update_entry**: Update an existing entry (requires approval if enabled)
-- **get_system_context**: Get full system context including schemas and documentation
-
-## Example Usage
-
-Once connected, you can ask Claude:
+## Example prompts (Claude Desktop)
 
 - "List all my content collections"
-- "Show me the entries in the 'blog' collection"
-- "Create a new blog post about AI integration"
-- "Update the entry with ID '123' in the 'pages' collection"
+- "Show entries in the blog collection"
+- "Create a draft blog post titled Hello World"
+- "What fields does the products collection have?"
 
-All create/update actions will go through the approval queue if you enabled "Require approval" when creating the MCP connection.
+## Related docs
 
+- `docs/reviews/p4-mcp-client-matrix.md` — client compatibility
+- `docs/ai/BYOAI-ARCHITECTURE.md` — inbound vs outbound architecture
+- Birkly-Docs: `01-admin/mcp-connections.md`
