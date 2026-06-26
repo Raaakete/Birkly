@@ -248,6 +248,8 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         haru_secure_session_start();
         $_SESSION['user'] = $user;
         $_SESSION['last_activity'] = time();
+        require_once __DIR__ . '/../core/csrf.php';
+        generate_csrf_token();
         
         echo json_encode([
             'status' => 'ok',

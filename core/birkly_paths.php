@@ -29,6 +29,14 @@ function birkly_base_path(): string
 }
 
 /**
+ * Web path prefix for session cookies (covers admin + api under the install).
+ */
+function birkly_session_cookie_path(): string
+{
+    $base = birkly_base_path();
+    return $base === '' ? '/' : $base . '/';
+}
+/**
  * Join base path with a root-relative URL path.
  */
 function birkly_url(string $path): string
