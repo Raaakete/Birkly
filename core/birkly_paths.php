@@ -24,6 +24,9 @@ function birkly_base_path(): string
     }
 
     $detected = birkly_paths_detect_from_script();
+    if ($detected === '') {
+        $detected = birkly_paths_detect_from_request_uri();
+    }
     $GLOBALS['__birkly_base_path'] = $detected;
     return $detected;
 }
@@ -98,6 +101,28 @@ function birkly_paths_detect_from_script(): string
     $basename = basename($script);
     if ($script !== '' && in_array($basename, $rootScripts, true)
         && preg_match('#^(.*)/' . preg_quote($basename, '#') . '$#', $script, $m)) {
+        return $m[1] === '' ? '' : rtrim($m[1], '/');
+    }
+
+    return '';
+}
+
+/**
+ * Fallback when SCRIPT_NAME is rewritten (Apache/LiteSpeed) but REQUEST_URI shows the real path.
+ */
+function birkly_paths_detect_from_request_uri(): string
+{
+    $uri = str_replace('\\', '/', $_SERVER['REQUEST_URI'] ?? '');
+    if ($uri === '') {
+        return '';
+    }
+
+    $path = parse_url($uri, PHP_URL_PATH);
+    if (!is_string($path) || $path === '') {
+        return '';
+    }
+
+    if (preg_match('#^(.*)/(?:admin|api)/#', $path, $m)) {
         return $m[1] === '' ? '' : rtrim($m[1], '/');
     }
 
