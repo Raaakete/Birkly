@@ -24,6 +24,13 @@
             restoreChatState();
         });
         createFloatingButton();
+
+        window.addEventListener('birkly:ai-connection-changed', function() {
+            loadConnections().then(() => {
+                validateCurrentConnection();
+                renderConnectionDropdown();
+            });
+        });
     });
 
     // Load available AI connections
@@ -93,7 +100,12 @@
             <div class="ai-chat-header">
                 <div class="ai-chat-header-info">
                     <h3>AI Assistant</h3>
-                    <span class="ai-chat-status" id="ai-chat-status"></span>
+                    <div class="ai-chat-connection-picker">
+                        <label for="ai-chat-connection-select" class="sr-only">AI connection</label>
+                        <select id="ai-chat-connection-select" class="ai-chat-connection-select" title="Choose AI connection">
+                            <option value="">Loading connections...</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="ai-chat-header-actions">
                     <button class="btn-icon" id="ai-chat-fullscreen-btn" title="Toggle fullscreen">
@@ -131,7 +143,7 @@
                     </div>
                 </div>
             </div>
-            <div class="ai-chat-connection-selector" id="ai-chat-connection-selector">
+            <div class="ai-chat-connection-selector" id="ai-chat-connection-selector" style="display: none;" aria-hidden="true">
                 <div class="ai-chat-connection-list" id="ai-chat-connection-list">
                     <div class="loading">Loading connections...</div>
                 </div>
@@ -149,12 +161,23 @@
                 sendChatMessage();
             }
         });
+
+        document.getElementById('ai-chat-connection-select')?.addEventListener('change', function(e) {
+            const connectionId = e.target.value;
+            if (!connectionId) return;
+            if (currentConnection && currentConnection.id === connectionId) return;
+            if (chatMessages.length > 0 && !confirm('Switch AI connection? This starts a new chat.')) {
+                e.target.value = currentConnection?.id || '';
+                return;
+            }
+            selectConnection(connectionId);
+        });
         
         // Add new chat button
         addNewChatButton();
         
-        // Load connections into selector
-        renderConnectionSelector();
+        // Load connections into header dropdown
+        renderConnectionDropdown();
         
         // Restore chat state if available
         if (currentConnection && chatMessages.length > 0) {
@@ -163,22 +186,69 @@
     }
 
     // Show chat window
-    function showChatWindow() {
+    async function showChatWindow() {
         const chatWindow = document.getElementById('ai-chat-window');
         if (!chatWindow) {
             createChatWindow();
-            return;
+            return showChatWindow();
         }
-        
+
+        await loadConnections();
+        validateCurrentConnection();
+        renderConnectionDropdown();
+
         chatWindow.style.display = 'flex';
-        
-        // Check if we have connections
+
         if (availableConnections.length === 0) {
             showNoConnectionMessage();
-        } else if (!currentConnection && availableConnections.length > 0) {
-            // Auto-select first connection if none selected
+        } else if (!currentConnection) {
             selectConnection(availableConnections[0].id);
+        } else {
+            updateConnectionDropdownValue();
         }
+    }
+
+    function validateCurrentConnection() {
+        if (!currentConnection) {
+            return;
+        }
+
+        const stillExists = availableConnections.some(conn => conn.id === currentConnection.id);
+        if (!stillExists) {
+            clearChatState();
+            currentConnection = null;
+            const messages = document.getElementById('ai-chat-messages');
+            if (messages) {
+                messages.innerHTML = '<div class="ai-chat-welcome"><p>Your previous AI connection was removed. Choose a connection to continue.</p></div>';
+            }
+        }
+    }
+
+    function updateConnectionDropdownValue() {
+        const select = document.getElementById('ai-chat-connection-select');
+        if (select && currentConnection) {
+            select.value = currentConnection.id;
+        }
+    }
+
+    function renderConnectionDropdown() {
+        const select = document.getElementById('ai-chat-connection-select');
+        if (!select) return;
+
+        if (availableConnections.length === 0) {
+            select.innerHTML = '<option value="">No connections available</option>';
+            select.disabled = true;
+            return;
+        }
+
+        select.disabled = false;
+        select.innerHTML = availableConnections.map(conn => {
+            const label = conn.name || conn.provider;
+            const meta = `${conn.provider} • ${conn.role || 'admin'}`;
+            return `<option value="${conn.id}">${escapeHtml(label)} (${escapeHtml(meta)})</option>`;
+        }).join('');
+
+        updateConnectionDropdownValue();
     }
 
     // Hide chat window
@@ -210,40 +280,17 @@
         }
     }
 
-    // Render connection selector
+    // Legacy bottom connection list (kept hidden; header dropdown is primary)
     function renderConnectionSelector() {
-        const selector = document.getElementById('ai-chat-connection-selector');
-        const list = document.getElementById('ai-chat-connection-list');
-        
-        if (!selector || !list) return;
-        
-        if (availableConnections.length === 0) {
-            list.innerHTML = '<div class="empty-state"><p>No AI connections available. <a href="/admin/index.php?page=settings#ai-connections">Set one up in Settings</a>.</p></div>';
-            selector.style.display = 'block';
-            return;
-        }
-        
-        if (availableConnections.length === 1) {
-            // Only one connection, hide selector and auto-select
-            selector.style.display = 'none';
-            selectConnection(availableConnections[0].id);
-            return;
-        }
-        
-        // Multiple connections - show selector
-        selector.style.display = 'block';
-        list.innerHTML = availableConnections.map(conn => `
-            <div class="ai-chat-connection-item" onclick="aiChatButton.selectConnection('${conn.id}')">
-                <div class="ai-chat-connection-name">${escapeHtml(conn.name || conn.provider)}</div>
-                <div class="ai-chat-connection-meta">${escapeHtml(conn.provider)} • ${escapeHtml(conn.role)}</div>
-            </div>
-        `).join('');
+        renderConnectionDropdown();
     }
 
     // Select connection
     function selectConnection(connectionId) {
+        const switching = currentConnection && currentConnection.id !== connectionId;
+
         // If switching connections, start a new conversation
-        if (currentConnection && currentConnection.id !== connectionId) {
+        if (switching) {
             clearChatState();
         }
         
@@ -257,15 +304,7 @@
                         conversationId = 'conv_' + Date.now();
                     }
                     
-                    // Hide selector
-                    const selector = document.getElementById('ai-chat-connection-selector');
-                    if (selector) selector.style.display = 'none';
-                    
-                    // Update header
-                    const status = document.getElementById('ai-chat-status');
-                    if (status) {
-                        status.textContent = currentConnection.name || currentConnection.provider;
-                    }
+                    updateConnectionDropdownValue();
                     
                     // Restore or clear messages
                     const messages = document.getElementById('ai-chat-messages');
@@ -275,7 +314,7 @@
                             updateChatUI();
                         } else {
                             // Show welcome
-                            messages.innerHTML = '<div class="ai-chat-welcome"><p>Chat started. Ask the AI to help you create or edit content.</p></div>';
+                            messages.innerHTML = '<div class="ai-chat-welcome"><p>Chat started with <strong>' + escapeHtml(currentConnection.name || currentConnection.provider) + '</strong>. Ask the AI to help you create or edit content.</p></div>';
                         }
                     }
                     
@@ -289,6 +328,10 @@
                     document.getElementById('ai-chat-input')?.focus();
                     
                     saveChatState();
+                } else {
+                    showError('Failed to load connection: ' + (result.message || 'Unknown error'));
+                    validateCurrentConnection();
+                    renderConnectionDropdown();
                 }
             })
             .catch(err => {
@@ -460,7 +503,11 @@
                         chatMessages = [];
                     }
                 }
+            } else if (savedConnectionId) {
+                clearChatState();
             }
+
+            renderConnectionDropdown();
         } catch (error) {
             console.error('Error restoring chat state:', error);
         }
