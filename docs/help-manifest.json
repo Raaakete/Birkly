@@ -53,15 +53,16 @@
     },
     {
       "id": "ai-connections",
-      "title": "AI connections",
-      "keywords": ["ai connections", "provider", "api key", "model", "role", "byoai"],
+      "title": "AI connections (outbound)",
+      "keywords": ["ai connections", "provider", "api key", "model", "role", "byoai", "openai", "anthropic", "ollama", "subscription", "wizard"],
       "snapshot": "/admin/docs/snapshots/ai-connections.md",
       "docs_path": "01-admin/ai-connections.html"
     },
     {
-      "id": "mcp",
-      "title": "MCP connections",
-      "keywords": ["mcp", "claude desktop", "model context protocol", "external", "bridge"],
+      "id": "mcp-connections",
+      "title": "MCP connections (inbound)",
+      "version": 2,
+      "keywords": ["mcp", "mcp connections", "claude desktop", "model context protocol", "inbound", "endpoint", "bridge", "cursor", "external client"],
       "snapshot": "/admin/docs/snapshots/mcp-connections.md",
       "docs_path": "01-admin/mcp-connections.html"
     },
