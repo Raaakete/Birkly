@@ -1,6 +1,7 @@
 <?php
 // admin/verify-2fa.php - 2FA verification page
 
+require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
@@ -58,10 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Redirect to dashboard
                     // Use absolute path to ensure correct routing
-                    $redirect = $_GET['redirect'] ?? '/admin/index.php?page=dashboard';
-                    // If redirect is relative, make it absolute
+                    $redirect = $_GET['redirect'] ?? birkly_admin_url('dashboard');
                     if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
-                        $redirect = '/admin/' . $redirect;
+                        $redirect = birkly_url('/admin/' . ltrim($redirect, '/'));
                     }
                     header('Location: ' . $redirect);
                     exit;
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
     <title>Verify Two-Factor Authentication - Birkly Admin</title>
-    <link rel="stylesheet" href="/admin/css/style.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="assets/birkly_favicon.svg">
     <style>
         body {

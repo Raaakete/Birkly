@@ -38,6 +38,7 @@ header('Content-Type: application/json');
 
 // SECURITY FIX: Replace wildcard CORS with origin whitelist
 require_once __DIR__ . '/../core/cors.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
 set_cors_headers('admin'); // Search API is admin-only
 
 try {
@@ -350,7 +351,7 @@ function searchCollections($storage, $query, $limit) {
                     'id' => $slug,
                     'title' => $name,
                     'subtitle' => 'Collection',
-                    'url' => "/admin/index.php?page=entries&collection=" . urlencode($slug),
+                    'url' => birkly_admin_url('entries', ['collection' => $slug]),
                     'icon' => '📁',
                     'match_score' => $score
                 ];
@@ -449,7 +450,7 @@ function searchEntries($storage, $query, $limit) {
                             'id' => $entryId,
                             'title' => $title,
                             'subtitle' => "{$collectionName} • {$statusLabel}",
-                            'url' => "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($entryId),
+                            'url' => birkly_admin_url('entry-detail', ['collection' => $collectionSlug, 'entry' => $entryId]),
                             'icon' => '📝',
                             'match_score' => $score
                         ];
@@ -565,12 +566,17 @@ function searchSubEntriesRecursive($storage, $query, $queryLower, $parentCollect
                 $collectionName = getCollectionName($storage, $parentCollection);
                 $parentTitle = getEntryTitle($storage, $parentCollection, $parentEntryId);
                 
-                // Build URL
-                $url = "/admin/index.php?page=entry-detail&collection=" . urlencode($parentCollection) . "&entry=" . urlencode($parentEntryId);
+                $urlParams = [
+                    'collection' => $parentCollection,
+                    'entry' => $parentEntryId,
+                    'sub_collection' => $subCollectionSlug,
+                    'sub_entry' => $subEntryId,
+                ];
                 if ($parentSubCollection && $parentSubEntryId) {
-                    $url .= "&sub_collection=" . urlencode($parentSubCollection) . "&sub_entry=" . urlencode($parentSubEntryId);
+                    $urlParams['parent_sub_collection'] = $parentSubCollection;
+                    $urlParams['parent_sub_entry'] = $parentSubEntryId;
                 }
-                $url .= "&sub_collection=" . urlencode($subCollectionSlug) . "&sub_entry=" . urlencode($subEntryId);
+                $url = birkly_admin_url('entry-detail', $urlParams);
                 
                 $subtitle = "{$subCollectionSlug} • {$collectionName}";
                 if ($parentSubCollection) {
@@ -639,7 +645,7 @@ function searchMedia($query, $limit) {
                     'id' => $id,
                     'title' => $filename,
                     'subtitle' => "{$typeLabel} • {$sizeFormatted}",
-                    'url' => "/admin/index.php?page=media&file=" . urlencode($id),
+                    'url' => birkly_admin_url('media', ['file' => $id]),
                     'icon' => getMediaIcon($type),
                     'match_score' => $score
                 ];
@@ -695,7 +701,7 @@ function searchUsers($query, $limit) {
                     'id' => $email,
                     'title' => $name ?: $email,
                     'subtitle' => "{$email} • " . ucfirst($role),
-                    'url' => "/admin/index.php?page=settings&tab=users",
+                    'url' => birkly_admin_url('settings', ['tab' => 'users']),
                     'icon' => '👤',
                     'match_score' => $score
                 ];

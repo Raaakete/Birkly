@@ -169,13 +169,12 @@ if (!$isPluginAdminPage && $page !== 'automation' && (!$templatePath || !file_ex
 
 // Helper to build URL with query
 function admin_url(string $page, array $params = []): string {
-    $query = http_build_query(array_merge(['page' => $page], $params));
-    return '/admin/index.php' . ($query ? ('?' . $query) : '');
+    return birkly_admin_url($page, $params);
 }
 
 function fetch_admin_page_data(string $page, array $query = []): array {
     // Include the admin templates API directly to get the functions
-    $apiPath = $_SERVER['DOCUMENT_ROOT'] . '/api/admin_templates.php';
+    $apiPath = birkly_project_root() . '/api/admin_templates.php';
     if (file_exists($apiPath)) {
         // Set flag to prevent switch statement from executing AND prevent JSON headers
         $GLOBALS['__HARU_INTERNAL_CALL'] = true;
@@ -214,15 +213,19 @@ $isOnboarding = ($page === 'onboarding');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup - Birkly</title>
-    <link rel="stylesheet" href="/admin/css/style.css">
-    <link rel="stylesheet" href="/admin/css/onboarding.css">
+    <script>
+      window.Birkly = window.Birkly || {};
+      window.Birkly.basePath = <?= birkly_base_path_json() ?>;
+    </script>
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/onboarding.css')) ?>">
     <?php
     // Load settings to get logo for favicon
     require_once __DIR__ . '/../api/storage.php';
     $storage = new Storage(__DIR__ . '/../settings');
     $brandingSettings = $storage->read('branding.json') ?? [];
     $logoPath = $brandingSettings['logoPath'] ?? '';
-    $faviconUrl = !empty($logoPath) ? $logoPath : '/admin/assets/birkly-icon.svg';
+    $faviconUrl = !empty($logoPath) ? $logoPath : birkly_url('/admin/assets/birkly-icon.svg');
     ?>
     <link rel="shortcut icon" href="<?= htmlspecialchars($faviconUrl) ?>">
 </head>
@@ -263,8 +266,9 @@ $isOnboarding = ($page === 'onboarding');
         }
         ?>
     </div>
-    <script src="/admin/js/utils.js"></script>
-    <script src="/admin/js/onboarding.js"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/onboarding.js')) ?>"></script>
 </body>
 </html>
 <?php else: ?>
@@ -291,7 +295,7 @@ $isOnboarding = ($page === 'onboarding');
                     echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
                     echo '<h2>Error Loading Page</h2>';
                     echo '<p>' . htmlspecialchars($data['error']) . '</p>';
-                    echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                    echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
                     echo '</div>';
                 } else {
                     try {
@@ -312,7 +316,7 @@ $isOnboarding = ($page === 'onboarding');
                                 echo 'Entry ID: ' . htmlspecialchars($data['entry']['id'] ?? 'N/A') . "\n";
                             }
                             echo '</pre>';
-                            echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                            echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
                             echo '</div>';
                         } else {
                             echo $output;
@@ -322,7 +326,7 @@ $isOnboarding = ($page === 'onboarding');
                         echo '<h2>Template Rendering Error</h2>';
                         echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
                         echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-                        echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                        echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
                         echo '</div>';
                     }
                 }
@@ -337,7 +341,7 @@ $isOnboarding = ($page === 'onboarding');
                         echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
                         echo '<h2>Error Loading Page</h2>';
                         echo '<p>' . htmlspecialchars($data['error']) . '</p>';
-                        echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                        echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
                         echo '</div>';
                     } else {
                         // Check if template uses PHP tags or template directives
@@ -367,7 +371,7 @@ $isOnboarding = ($page === 'onboarding');
                                     echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
                                     echo '<h2>Error Rendering Template</h2>';
                                     echo '<p>The template rendered empty output.</p>';
-                                    echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                                    echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
                                     echo '</div>';
                                 } else {
                                     echo $output;
@@ -384,7 +388,7 @@ $isOnboarding = ($page === 'onboarding');
                     echo '<h2>Error Loading Page</h2>';
                     echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
                     echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-                    echo '<a href="/admin/index.php?page=dashboard" class="btn btn-primary">Back to Dashboard</a>';
+                    echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
                     echo '</div>';
                 }
             } elseif ($isPluginAdminPage) {

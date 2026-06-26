@@ -11,6 +11,7 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 require_once 'session.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
 haru_secure_session_start();
 
 if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
@@ -178,7 +179,7 @@ function formatNotification($entry, $currentUserEmail) {
             $notification['color'] = 'blue';
             $notification['category'] = 'content';
             if (isset($details['collection']) && isset($details['id'])) {
-                $notification['link'] = '/admin/index.php?page=content&collection=' . urlencode($details['collection']) . '&entry=' . urlencode($details['id']);
+                $notification['link'] = birkly_admin_url('content', ['collection' => $details['collection'], 'entry' => $details['id']]);
             }
             break;
             
@@ -192,7 +193,7 @@ function formatNotification($entry, $currentUserEmail) {
             $notification['color'] = 'green';
             $notification['category'] = 'content';
             if (isset($details['collection']) && isset($details['id'])) {
-                $notification['link'] = '/admin/index.php?page=content&collection=' . urlencode($details['collection']) . '&entry=' . urlencode($details['id']);
+                $notification['link'] = birkly_admin_url('content', ['collection' => $details['collection'], 'entry' => $details['id']]);
             }
             break;
             
@@ -207,7 +208,7 @@ function formatNotification($entry, $currentUserEmail) {
             $notification['category'] = 'content';
             if (isset($details['collection']) && isset($details['id'])) {
                 // Link directly to the entry editor
-                $notification['link'] = '/admin/index.php?page=entry-editor&collection=' . urlencode($details['collection']) . '&entry=' . urlencode($details['id']);
+                $notification['link'] = birkly_admin_url('entry-editor', ['collection' => $details['collection'], 'entry' => $details['id']]);
             }
             break;
             
@@ -219,7 +220,7 @@ function formatNotification($entry, $currentUserEmail) {
             $notification['icon'] = '👋';
             $notification['color'] = 'green';
             $notification['category'] = 'users';
-            $notification['link'] = '/admin/index.php?page=users';
+            $notification['link'] = birkly_admin_url('users');
             break;
             
         case 'role_changed':
@@ -230,7 +231,7 @@ function formatNotification($entry, $currentUserEmail) {
             $notification['icon'] = '🔑';
             $notification['color'] = 'purple';
             $notification['category'] = 'users';
-            $notification['link'] = '/admin/index.php?page=account';
+            $notification['link'] = birkly_admin_url('account');
             break;
             
         case 'login_failed':
@@ -239,7 +240,7 @@ function formatNotification($entry, $currentUserEmail) {
                 $notification['icon'] = '⚠️';
                 $notification['color'] = 'red';
                 $notification['category'] = 'security';
-                $notification['link'] = '/admin/index.php?page=account';
+                $notification['link'] = birkly_admin_url('account');
             } else {
                 return null; // Don't show other users' failed logins
             }

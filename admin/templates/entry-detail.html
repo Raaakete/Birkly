@@ -13,7 +13,7 @@
     <div class="page-header pt-m pb-m">
         <div class="page-header-left">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
+            <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
             <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
             <?php if (!empty($is_sub_entry_detail)): ?>
@@ -571,7 +571,7 @@ window.collectionSlug = <?= json_encode($collection['slug'] ?? '') ?>;
 window.collectionId = <?= json_encode($collection['id'] ?? '') ?>;
 </script>
 
-<script src="/admin/js/mouse-drag-drop.js"></script>
+<script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"></script>
 <script>
 // Initialize drag and drop for sub-entries tables using MouseDragDrop
 document.addEventListener('DOMContentLoaded', function() {

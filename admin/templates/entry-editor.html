@@ -77,7 +77,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                     <?php endif; ?>
                 <?php endforeach; ?>
             <?php else: ?>
-                <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
+                <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
                 <span class="separator">›</span>
                 <span class="current"><?= __('admin.entry_editor') ?></span>
             <?php endif; ?>
@@ -456,7 +456,7 @@ if (!empty($fields)) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $entryExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+            $entryExample .= "  <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
         } elseif ($field['type'] === 'boolean') {
             $entryExample .= "  {if " . $fieldName . " is on}\n";
             $entryExample .= "    <span>It is featured</span>\n";
@@ -495,7 +495,7 @@ if (!empty($fields)) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $collectionExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+            $collectionExample .= "  <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
         } elseif ($field['type'] === 'boolean') {
             $collectionExample .= "  {if " . $fieldName . " is on}\n";
             $collectionExample .= "    <span>It is featured</span>\n";
@@ -784,7 +784,7 @@ echo htmlspecialchars($collectionExample);
         <script src="<?= htmlspecialchars($jsFile) ?>"></script>
     <?php endforeach; ?>
 <?php endif; ?>
-<script src="/admin/js/entry-editor.js"></script>
+<script src="<?= birkly_url('/admin/js/entry-editor.js') ?>"></script>
 <script>
 // Tab switching for sidebar tabs
 document.addEventListener('DOMContentLoaded', function() {

@@ -8,6 +8,7 @@ require_once 'session.php';
 haru_secure_session_start();
 
 require_once 'storage.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
 require_once 'auth.php';
 require_once 'validate.php';
 
@@ -461,7 +462,7 @@ if ($action === 'upload_avatar') {
     
     // Move uploaded file
     if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        $avatarPath = '/admin/assets/avatars/' . $filename;
+        $avatarPath = birkly_url('/admin/assets/avatars/' . $filename);
         
         echo json_encode([
             'status' => 'ok',

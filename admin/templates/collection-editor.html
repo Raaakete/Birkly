@@ -50,7 +50,7 @@ if (!$cancelUrl) {
     <div class="page-header pt-m pb-m">
         <div class="page-header-left">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=content"><?= __('admin.content') ?></a>
+            <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
             <?php if ($isSubCollection): ?>
                 <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
@@ -323,7 +323,7 @@ if (!$cancelUrl) {
                                     <div class="fieldtype-section" data-index="<?= $index ?>">
                                         <div class="fieldtype-header">
                                             <div class="fieldtype-drag-handle">
-                                                <img src="/admin/assets/DotsSixVertical.svg" alt="Drag to reorder">
+                                                <img src="<?= birkly_url('/admin/assets/DotsSixVertical.svg') ?>\" alt="Drag to reorder">
                                             </div>
                                             <div class="fieldtype-title">
                                                 <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($field['type'] ?? 'Select Type')) ?></span>
@@ -973,14 +973,14 @@ $exampleSubEntrySlug = 'example-sub-entry-slug';
 $entryExample = "{from '" . $collectionSlug . "' get entry '" . $exampleEntrySlug . "'}\n";
 $entryExample .= "  <h1>{ title }</h1>\n";
 $entryExample .= "  {for each sub_entry in '" . $subCollectionSlug . "'}\n";
-$entryExample .= "    <div class=\"sub-entry\">\n";
+$entryExample .= "    <div class=\"sub-entry">\n";
 $subFields = $subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? [];
 if (!empty($subFields)) {
     foreach ($subFields as $field) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $entryExample .= "      <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+            $entryExample .= "      <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
         } elseif ($field['type'] === 'boolean') {
             $entryExample .= "      {if " . $fieldName . " is on}\n";
             $entryExample .= "        <span>It is featured</span>\n";
@@ -1022,7 +1022,7 @@ if (!empty($fields)) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $entryExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+            $entryExample .= "  <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
         } elseif ($field['type'] === 'boolean') {
             $entryExample .= "  {if " . $fieldName . " is on}\n";
             $entryExample .= "    <span>It is featured</span>\n";
@@ -1061,7 +1061,7 @@ if (!empty($fields)) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $collectionExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
+            $collectionExample .= "  <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
         } elseif ($field['type'] === 'boolean') {
             $collectionExample .= "  {if " . $fieldName . " is on}\n";
             $collectionExample .= "    <span>It is featured</span>\n";
@@ -1273,7 +1273,7 @@ echo htmlspecialchars($formCode);
     <div class="fieldtype-section" data-index="__INDEX__">
         <div class="fieldtype-header">
             <div class="fieldtype-drag-handle">
-                <img src="/admin/assets/DotsSixVertical.svg" alt="Drag to reorder">
+                <img src="<?= birkly_url('/admin/assets/DotsSixVertical.svg') ?>\" alt="Drag to reorder">
             </div>
             <div class="fieldtype-title">
                 <span class="fieldtype-type">__TYPE__</span>
@@ -1954,7 +1954,7 @@ echo htmlspecialchars($formCode);
 }
 </style>
 
-<script src="/admin/js/mouse-drag-drop.js"></script>
+<script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

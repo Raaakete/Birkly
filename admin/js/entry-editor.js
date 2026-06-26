@@ -1088,7 +1088,7 @@
                     } else {
                         // For regular entries, redirect to entries list
                         const collectionSlug = formData.get('collection') || config.collectionSlug || '';
-                        window.location.href = '/admin/index.php?page=entries&collection=' + encodeURIComponent(collectionSlug);
+                        window.location.href = Birkly.url('/admin/index.php?page=entries&collection=') + encodeURIComponent(collectionSlug);
                     }
                 } else if (data && data.status === 'error') {
                     // Error in JSON body
@@ -1422,7 +1422,7 @@
                         })
                         .then(() => {
                             // Redirect to new translation
-                            window.location.href = `/admin/index.php?page=entry-editor&collection=${collectionSlug}&entry=${data.data.id}`;
+                            window.location.href = Birkly.url(`/admin/index.php?page=entry-editor&collection=${collectionSlug}&entry=${data.data.id}`);
                         })
                         .catch(error => {
                             console.error('Error updating parent translations:', error);

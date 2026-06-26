@@ -5,6 +5,8 @@
  * Parses natural templating syntax and renders it with data
  */
 
+require_once __DIR__ . '/../core/birkly_paths.php';
+
 class TemplateParser {
     private $data = [];
     
@@ -100,6 +102,15 @@ class TemplateParser {
                     return '<?= admin_url(\'' . addslashes($page) . '\') ?>';
                 }
                 return '<?= admin_url(\'' . addslashes($page) . '\', [' . implode(', ', $params) . ']) ?>';
+            },
+            $parsed
+        );
+        
+        // Handle {birkly_url '/path'}
+        $parsed = preg_replace_callback(
+            '/\{birkly_url\s+[\'"]([^\'"]+)[\'"]\}/',
+            function ($matches) {
+                return '<?= birkly_url(\'' . addslashes($matches[1]) . '\') ?>';
             },
             $parsed
         );
