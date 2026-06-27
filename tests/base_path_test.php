@@ -110,4 +110,25 @@ with_script_name('/admin/login.php', function () {
     birkly_paths_reset_cache();
 });
 
+$prevDocRoot = $_SERVER['DOCUMENT_ROOT'] ?? null;
+$_SERVER['SCRIPT_NAME'] = '/admin/login.php';
+$_SERVER['REQUEST_URI'] = '/admin/login.php';
+$_SERVER['REDIRECT_URL'] = '/Birkly-main/admin/login.php';
+birkly_paths_reset_cache();
+test_assert(
+    'redirect url fallback when rewrite strips subdirectory from script and uri',
+    birkly_base_path() === '/Birkly-main'
+);
+test_assert(
+    'redirect url fallback sets subdirectory cookie path',
+    birkly_session_cookie_path() === '/Birkly-main/'
+);
+unset($_SERVER['SCRIPT_NAME'], $_SERVER['REQUEST_URI'], $_SERVER['REDIRECT_URL']);
+if ($prevDocRoot === null) {
+    unset($_SERVER['DOCUMENT_ROOT']);
+} else {
+    $_SERVER['DOCUMENT_ROOT'] = $prevDocRoot;
+}
+birkly_paths_reset_cache();
+
 echo "\nbase_path_test: PASS\n";

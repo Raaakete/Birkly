@@ -23,12 +23,30 @@ function birkly_base_path(): string
         return $override;
     }
 
-    $detected = birkly_paths_detect_from_script();
-    if ($detected === '') {
-        $detected = birkly_paths_detect_from_request_uri();
-    }
+    $detected = birkly_paths_detect();
     $GLOBALS['__birkly_base_path'] = $detected;
     return $detected;
+}
+
+/**
+ * Pick the best base-path candidate from script, URI, redirect, and filesystem.
+ */
+function birkly_paths_detect(): string
+{
+    $candidates = array_values(array_filter([
+        birkly_paths_detect_from_script(),
+        birkly_paths_detect_from_request_uri(),
+        birkly_paths_detect_from_redirect_url(),
+        birkly_paths_detect_from_filesystem(),
+    ], static fn(string $path): bool => $path !== ''));
+
+    if ($candidates === []) {
+        return '';
+    }
+
+    usort($candidates, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
+
+    return $candidates[0];
 }
 
 /**
@@ -127,6 +145,54 @@ function birkly_paths_detect_from_request_uri(): string
     }
 
     return '';
+}
+
+/**
+ * Apache/LiteSpeed internal redirect URL (original path before rewrite).
+ */
+function birkly_paths_detect_from_redirect_url(): string
+{
+    $redirect = str_replace('\\', '/', $_SERVER['REDIRECT_URL'] ?? '');
+    if ($redirect === '') {
+        return '';
+    }
+
+    if (preg_match('#^(.*)/(?:admin|api)/#', $redirect, $m)) {
+        return $m[1] === '' ? '' : rtrim($m[1], '/');
+    }
+
+    return '';
+}
+
+/**
+ * Derive web path from DOCUMENT_ROOT vs Birkly install directory (rewrite-safe).
+ */
+function birkly_paths_detect_from_filesystem(): string
+{
+    $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+    if ($docRoot === '') {
+        return '';
+    }
+
+    $docRootReal = realpath($docRoot);
+    $projectReal = realpath(birkly_project_root());
+    if ($docRootReal === false || $projectReal === false) {
+        return '';
+    }
+
+    $docRootReal = str_replace('\\', '/', $docRootReal);
+    $projectReal = str_replace('\\', '/', $projectReal);
+
+    if ($projectReal === $docRootReal) {
+        return '';
+    }
+
+    if (!str_starts_with($projectReal, $docRootReal . '/')) {
+        return '';
+    }
+
+    $relative = substr($projectReal, strlen($docRootReal));
+    return rtrim($relative, '/');
 }
 
 function birkly_paths_read_override(): ?string
