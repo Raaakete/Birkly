@@ -7,6 +7,30 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 require_once __DIR__ . '/../core/birkly_paths.php';
 
+/** CMS admin/API session cookie name (avoids PHPSESSID collisions with host sites). */
+define('BIRKLY_CMS_SESSION_NAME', 'birkly_cms_sid');
+
+function birkly_trust_forwarded_proto(): bool
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $cached = false;
+    $settingsFile = dirname(__DIR__) . '/settings/security.json';
+    if (!is_readable($settingsFile)) {
+        return $cached;
+    }
+
+    $data = json_decode((string) file_get_contents($settingsFile), true);
+    if (is_array($data) && !empty($data['trust_forwarded_proto'])) {
+        $cached = true;
+    }
+
+    return $cached;
+}
+
 function birkly_request_is_secure(): bool
 {
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
@@ -15,15 +39,21 @@ function birkly_request_is_secure(): bool
     if (($_SERVER['SERVER_PORT'] ?? null) == 443) {
         return true;
     }
-    $forwarded = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $_SERVER['HTTP_X_FORWARDED_SSL'] ?? '';
-    if (is_string($forwarded) && strtolower($forwarded) === 'https') {
-        return true;
+
+    if (birkly_trust_forwarded_proto()) {
+        $forwarded = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $_SERVER['HTTP_X_FORWARDED_SSL'] ?? '';
+        if (is_string($forwarded) && strtolower($forwarded) === 'https') {
+            return true;
+        }
     }
 
     return false;
 }
 
 function haru_secure_session_start() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_name(BIRKLY_CMS_SESSION_NAME);
+    }
     $secure = birkly_request_is_secure();
     $cookiePath = birkly_session_cookie_path();
     session_set_cookie_params([
@@ -97,6 +127,10 @@ function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '',
 
     if (!empty($cookies['birkly_admin_sid'])) {
         return 'admin';
+    }
+
+    if (!empty($cookies['birkly_cms_sid'])) {
+        return 'cms';
     }
 
     if (!empty($cookies['PHPSESSID'])) {
