@@ -11,6 +11,11 @@ echo "CSRF session scope tests\n\n";
 
 test_assert(
     'logged-in admin uses cms scope',
+    birkly_resolve_csrf_session_scope(['birkly_cms_sid' => 'abc123']) === 'cms'
+);
+
+test_assert(
+    'legacy PHPSESSID still uses cms scope',
     birkly_resolve_csrf_session_scope(['PHPSESSID' => 'abc123']) === 'cms'
 );
 
