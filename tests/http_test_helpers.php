@@ -80,6 +80,7 @@ function birkly_test_http_request(string $url, array $options = []): array
     $ch = curl_init($url);
     $curlOpts = [
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => true,
         CURLOPT_CUSTOMREQUEST => $method,
         CURLOPT_HTTPHEADER => $headers,
         CURLOPT_CONNECTTIMEOUT => 3,
@@ -99,9 +100,12 @@ function birkly_test_http_request(string $url, array $options = []): array
     curl_setopt_array($ch, $curlOpts);
     $responseBody = (string) curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $headers = substr($responseBody, 0, $headerSize);
+    $body = substr($responseBody, $headerSize);
     curl_close($ch);
 
-    return ['code' => $code, 'body' => $responseBody];
+    return ['code' => $code, 'body' => $body, 'headers' => $headers];
 }
 
 function birkly_test_backup_directory(string $sourceDir, string $backupDir): void
