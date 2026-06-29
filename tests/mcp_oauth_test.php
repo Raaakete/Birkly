@@ -55,7 +55,7 @@ try {
     $pr = birkly_test_http_request($base . '/.well-known/oauth-protected-resource');
     $prData = birkly_test_json_decode($pr['body']);
     test_assert('protected resource HTTP 200', $pr['code'] === 200);
-    test_assert('protected resource has resource URL', str_contains($prData['resource'] ?? '', '/api/mcp_server.php'));
+    test_assert('protected resource has resource URL', str_contains($prData['resource'] ?? '', '/mcp'));
     test_assert('protected resource lists authorization_servers', !empty($prData['authorization_servers']));
 
     $as = birkly_test_http_request($base . '/.well-known/oauth-authorization-server');
