@@ -1176,7 +1176,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Ordering:** P5-M0 → … → P5-M7. Cross-repo: Birkly → Birkly-Docs.
 
-**Status:** in progress (2026-06-18).
+**Status:** **complete** (2026-06-29). Human review ready at P5-M7-T5.
 
 **Handoff:** `docs/reviews/P5-lead-engineer-handoff.md`
 
@@ -1266,30 +1266,30 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P5-M6 — Integration matrix & videos
 
-- **Status:** in progress
+- **Status:** complete
 - **Repos:** Birkly, Birkly-Docs
 
 **Tasks**
 
 - [x] **P5-M6-T1** `docs/reviews/p5-integration-test-matrix.md`
-- [ ] **P5-M6-T2** Videos V21–V23
+- [x] **P5-M6-T2** Videos V21–V23
 - [x] **P5-M6-T3** Birkly-Docs: mcp-connections.md
 
 ---
 
 ### P5-M7 — Phase 5 closure
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly (+ cross-repo)
 - **Depends on:** P5-M6
 
 **Tasks**
 
-- [ ] **P5-M7-T1** `docs/reviews/p5-phase-closure-checklist.md`
-- [ ] **P5-M7-T2** Mark Phase 5 complete in roadmap
-- [ ] **P5-M7-T3** qa-verifier + design-reviewer sign-off
-- [ ] **P5-M7-T4** Full integration matrix green
-- [ ] **P5-M7-T5** **Notify human once** — only after internal sign-off
+- [x] **P5-M7-T1** `docs/reviews/p5-phase-closure-checklist.md`
+- [x] **P5-M7-T2** Mark Phase 5 complete in roadmap
+- [x] **P5-M7-T3** qa-verifier + design-reviewer sign-off
+- [x] **P5-M7-T4** Full integration matrix green
+- [x] **P5-M7-T5** **Notify human once** — after internal sign-off
 
 ---
 

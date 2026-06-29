@@ -355,6 +355,11 @@ function birkly_mcp_oauth_resolve_endpoint_for_client(string $clientId): ?array
         return $enabled[0];
     }
 
+    // CIMD clients (Claude/ChatGPT) use the site-wide /mcp URL — map to the newest OAuth endpoint.
+    if (birkly_mcp_oauth_is_cimd_client_id($clientId) && count($enabled) > 0) {
+        return $enabled[count($enabled) - 1];
+    }
+
     return null;
 }
 
