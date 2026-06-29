@@ -869,97 +869,6 @@
         }
     }
 
-    async function loadApprovalQueue() {
-        try {
-            const response = await fetch('/api/ai_approvals.php?action=list&status=pending');
-            const result = await response.json();
-
-            if (result && result.status === 'ok' && result.data) {
-                renderApprovalQueue(result.data.approvals || []);
-            } else {
-                renderApprovalQueue([]);
-            }
-        } catch (error) {
-            console.error('Error loading approval queue:', error);
-            renderApprovalQueue([]);
-        }
-    }
-
-    function renderApprovalQueue(approvals) {
-        const queue = document.getElementById('approval-queue-content');
-        if (!queue) return;
-
-        if (approvals.length === 0) {
-            queue.innerHTML = '<div class="empty-state"><p>No pending approvals</p></div>';
-            return;
-        }
-
-        queue.innerHTML = approvals.map(approval => `
-            <div class="approval-item">
-                <div class="approval-header">
-                    <div class="approval-info">
-                        <strong>${escapeHtml(approval.action_type)}</strong>
-                        <span class="approval-time">${formatTime(approval.created_at)}</span>
-                    </div>
-                </div>
-                <div class="approval-description">${escapeHtml(approval.description || 'No description')}</div>
-                <div class="approval-actions">
-                    <button class="btn btn-sm btn-success" onclick="aiConnections.approveAction('${approval.id}')">Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="aiConnections.rejectAction('${approval.id}')">Reject</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    async function approveAction(approvalId) {
-        if (!confirm('Approve this action?')) return;
-
-        try {
-            const response = await fetch('/api/ai_approvals.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'approve', id: approvalId, _csrf: csrfToken })
-            });
-            const result = await response.json();
-
-            if (result.status === 'ok') {
-                showSuccess('Action approved');
-                loadApprovalQueue();
-            } else {
-                showError('Failed to approve: ' + (result.message || 'Unknown error'));
-            }
-        } catch (error) {
-            showError('Error approving action');
-        }
-    }
-
-    async function rejectAction(approvalId) {
-        const reason = prompt('Reason for rejection (optional):');
-
-        try {
-            const response = await fetch('/api/ai_approvals.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'reject',
-                    id: approvalId,
-                    reason: reason || 'No reason provided',
-                    _csrf: csrfToken
-                })
-            });
-            const result = await response.json();
-
-            if (result.status === 'ok') {
-                showSuccess('Action rejected');
-                loadApprovalQueue();
-            } else {
-                showError('Failed to reject: ' + (result.message || 'Unknown error'));
-            }
-        } catch (error) {
-            showError('Error rejecting action');
-        }
-    }
-
     async function deleteConnection(connectionId) {
         if (!confirm('Delete this AI connection? This cannot be undone.')) return;
 
@@ -985,16 +894,6 @@
         }
     }
 
-    function toggleApprovalQueue() {
-        const content = document.getElementById('approval-queue-content');
-        const btn = document.getElementById('toggle-queue-btn');
-        if (content) {
-            const hidden = content.style.display === 'none';
-            content.style.display = hidden ? 'block' : 'none';
-            if (btn) btn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
-        }
-    }
-
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -1015,8 +914,6 @@
 
     window.aiConnections = {
         editConnection,
-        deleteConnection,
-        approveAction,
-        rejectAction
+        deleteConnection
     };
 })();

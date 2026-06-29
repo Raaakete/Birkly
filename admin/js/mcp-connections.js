@@ -164,7 +164,7 @@
                 <div class="connection-info">
                     <div class="connection-name-row">
                         <div class="connection-name">${escapeHtml(ep.name || ep.id)}</div>
-                        <span class="mcp-type-pill">OAuth connector</span>
+                        <span class="mcp-type-pill">App connection</span>
                     </div>
                     <div class="connection-meta">
                         <span class="connection-role">${escapeHtml(ep.role || 'viewer')}</span>
@@ -302,14 +302,14 @@
 
             if (result && result.status === 'ok') {
                 const endpointId = result.data?.id || '';
+                if (submitBtn) submitBtn.textContent = 'Done — close when ready';
+                await loadEndpoints();
                 const successPanel = document.getElementById('mcp-create-success');
                 const urlInput = document.getElementById('mcp-new-connector-url');
                 if (successPanel && urlInput) {
                     urlInput.value = serverUrl;
                     successPanel.style.display = 'block';
                 }
-                if (submitBtn) submitBtn.textContent = 'Done — close when ready';
-                await loadEndpoints();
                 if (endpointId) {
                     setTimeout(() => {
                         const panel = document.getElementById('mcp-setup-panel-' + endpointId);

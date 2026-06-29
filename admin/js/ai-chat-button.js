@@ -98,7 +98,7 @@
         button.addEventListener('click', toggleChatWindow);
         const badge = document.createElement('span');
         badge.id = 'ai-chat-approval-badge';
-        badge.className = 'ai-chat-approval-badge';
+        badge.className = 'ai-chat-fab-badge';
         badge.style.display = 'none';
         badge.setAttribute('aria-hidden', 'true');
         button.appendChild(badge);
@@ -107,16 +107,19 @@
 
     function updateApprovalBadge() {
         const badge = document.getElementById('ai-chat-approval-badge');
+        const button = document.getElementById('ai-chat-floating-btn');
         const count = pendingApprovals.length;
         if (!badge) return;
         if (count > 0) {
             badge.textContent = count > 9 ? '9+' : String(count);
             badge.style.display = 'flex';
             badge.setAttribute('aria-hidden', 'false');
+            if (button) button.setAttribute('aria-label', `AI Assistant, ${count} pending approval${count === 1 ? '' : 's'}`);
         } else {
             badge.textContent = '';
             badge.style.display = 'none';
             badge.setAttribute('aria-hidden', 'true');
+            if (button) button.setAttribute('aria-label', 'AI Assistant');
         }
         const tabBadge = document.getElementById('ai-chat-approvals-tab-badge');
         if (tabBadge) {
@@ -176,8 +179,14 @@
         if (messagesPanel) messagesPanel.style.display = view === 'messages' ? 'flex' : 'none';
         if (approvalsPanel) approvalsPanel.style.display = view === 'approvals' ? 'block' : 'none';
         if (inputContainer) inputContainer.style.display = view === 'messages' ? 'block' : 'none';
-        if (tabMessages) tabMessages.classList.toggle('active', view === 'messages');
-        if (tabApprovals) tabApprovals.classList.toggle('active', view === 'approvals');
+        if (tabMessages) {
+            tabMessages.classList.toggle('active', view === 'messages');
+            tabMessages.setAttribute('aria-selected', view === 'messages' ? 'true' : 'false');
+        }
+        if (tabApprovals) {
+            tabApprovals.classList.toggle('active', view === 'approvals');
+            tabApprovals.setAttribute('aria-selected', view === 'approvals' ? 'true' : 'false');
+        }
         if (view === 'approvals') renderApprovalQueuePanel();
     }
 
@@ -809,7 +818,7 @@
                 <div class="ai-chat-approval-header">
                     <div class="ai-chat-approval-type">${escapeHtml(actionTypeLabel)}</div>
                     <div class="ai-chat-approval-meta">
-                        <span class="ai-chat-approval-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+                        <span class="ai-chat-approval-status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>
                         <span class="ai-chat-approval-time">${formatTime(approval.created_at)}</span>
                     </div>
                 </div>
