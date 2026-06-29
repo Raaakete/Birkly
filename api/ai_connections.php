@@ -23,6 +23,8 @@ require_once '../core/csrf.php';
 require_once 'ai_helpers.php';
 require_once __DIR__ . '/../core/ai_tool_registry.php';
 
+ensureEncryptionKeyBootstrapped();
+
 // Include log.php but prevent it from executing its API endpoints
 $GLOBALS['__HARU_INTERNAL_CALL'] = true;
 require_once 'log.php';
@@ -152,12 +154,16 @@ if ($action === 'create') {
     }
 
     if ($provider !== 'ollama' && !empty($apiKey)) {
-        $validation = validateApiKeyForProvider($provider, $apiKey, $apiUrl);
+        $validation = validateProviderConnection($provider, $apiKey, $apiUrl);
         if (!$validation['valid']) {
             if (!headers_sent()) {
                 header('Content-Type: application/json');
             }
-            echo json_encode(['status' => 'error', 'message' => 'API key validation failed: ' . $validation['message']]);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'API key validation failed: ' . $validation['message'],
+                'data' => ['provider_error' => $validation['provider_error'] ?? $validation['message']],
+            ]);
             exit;
         }
     }
@@ -483,9 +489,11 @@ if ($action === 'test') {
     }
 
     if ($provider === 'ollama') {
+        $validation = validateProviderConnection('ollama', '', $apiUrl);
         echo json_encode([
-            'status' => 'ok',
-            'data' => ['valid' => true, 'message' => 'Ollama does not require an API key'],
+            'status' => $validation['valid'] ? 'ok' : 'error',
+            'message' => $validation['message'],
+            'data' => $validation,
         ]);
         exit;
     }
@@ -495,7 +503,7 @@ if ($action === 'test') {
         exit;
     }
 
-    $validation = validateApiKeyForProvider($provider, $apiKey, $apiUrl);
+    $validation = validateProviderConnection($provider, $apiKey, $apiUrl);
     echo json_encode([
         'status' => $validation['valid'] ? 'ok' : 'error',
         'message' => $validation['message'],

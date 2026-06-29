@@ -10,12 +10,23 @@ require_once __DIR__ . '/storage.php';
  * Simple encryption/decryption for API keys
  * Uses a secret key stored in settings
  */
+
+/**
+ * Ensure settings/security.json contains encryption_key (fresh installs).
+ *
+ * @return bool True when a usable key is present after this call
+ */
+function ensureEncryptionKeyBootstrapped(): bool
+{
+    $key = getEncryptionKey();
+    return is_string($key) && $key !== '';
+}
+
 function getEncryptionKey() {
     $settingsStorage = new Storage('../settings');
     $security = $settingsStorage->read('security.json') ?? [];
     
-    if (!isset($security['encryption_key'])) {
-        // Generate a new key if it doesn't exist
+    if (!isset($security['encryption_key']) || $security['encryption_key'] === '') {
         $key = bin2hex(random_bytes(32));
         $security['encryption_key'] = $key;
         $settingsStorage->write('security.json', $security);
@@ -122,13 +133,91 @@ function birkly_scrub_user_for_ai(array $user): array
 }
 
 /**
+ * Resolve Ollama host base URL from chat endpoint URL.
+ */
+function resolveOllamaBaseUrl(string $apiUrl = ''): string
+{
+    $url = $apiUrl !== '' ? $apiUrl : 'http://localhost:11434/api/chat';
+    $parsed = parse_url($url);
+    $scheme = $parsed['scheme'] ?? 'http';
+    $host = $parsed['host'] ?? 'localhost';
+    $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
+
+    return $scheme . '://' . $host . $port;
+}
+
+/**
+ * Ping Ollama /api/tags to verify the server is reachable from Birkly.
+ *
+ * @return array{valid: bool, message: string, provider_error?: string}
+ */
+function validateOllamaEndpoint(string $apiUrl = ''): array
+{
+    if (!function_exists('curl_init')) {
+        return ['valid' => true, 'message' => 'Skipped Ollama check (curl unavailable)'];
+    }
+
+    $base = resolveOllamaBaseUrl($apiUrl);
+    $tagsUrl = rtrim($base, '/') . '/api/tags';
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $tagsUrl,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_HTTPGET => true,
+    ]);
+    curl_exec($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($curlError !== '') {
+        return [
+            'valid' => false,
+            'message' => 'Cannot reach Ollama at ' . $base,
+            'provider_error' => $curlError,
+        ];
+    }
+
+    if ($httpCode >= 200 && $httpCode < 300) {
+        return ['valid' => true, 'message' => 'Ollama reachable (HTTP ' . $httpCode . ')'];
+    }
+
+    return [
+        'valid' => false,
+        'message' => 'Ollama returned HTTP ' . $httpCode,
+        'provider_error' => 'GET ' . $tagsUrl . ' → HTTP ' . $httpCode,
+    ];
+}
+
+/**
+ * Validate outbound provider credentials / reachability before save.
+ *
+ * @return array{valid: bool, message: string, provider_error?: string}
+ */
+function validateProviderConnection(string $provider, string $apiKey, string $apiUrl = ''): array
+{
+    if ($provider === 'mcp') {
+        return ['valid' => true, 'message' => 'MCP endpoints are managed separately'];
+    }
+
+    if ($provider === 'ollama') {
+        return validateOllamaEndpoint($apiUrl);
+    }
+
+    return validateApiKeyForProvider($provider, $apiKey, $apiUrl);
+}
+
+/**
  * Validate provider API key with a lightweight request (best-effort).
  *
- * @return array{valid: bool, message: string}
+ * @return array{valid: bool, message: string, provider_error?: string}
  */
 function validateApiKeyForProvider(string $provider, string $apiKey, string $apiUrl = ''): array
 {
-    if ($provider === 'mcp' || $provider === 'ollama') {
+    if ($provider === 'mcp') {
         return ['valid' => true, 'message' => 'No key validation required'];
     }
 
@@ -194,18 +283,30 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
     curl_close($ch);
 
     if ($curlError !== '') {
-        return ['valid' => false, 'message' => 'Connection failed: ' . $curlError];
+        return [
+            'valid' => false,
+            'message' => 'Connection failed: ' . $curlError,
+            'provider_error' => $curlError,
+        ];
     }
 
     if ($httpCode === 401 || $httpCode === 403) {
-        return ['valid' => false, 'message' => 'Invalid API key (HTTP ' . $httpCode . ')'];
+        return [
+            'valid' => false,
+            'message' => 'Invalid API key (HTTP ' . $httpCode . ')',
+            'provider_error' => 'HTTP ' . $httpCode,
+        ];
     }
 
     if ($httpCode >= 200 && $httpCode < 500) {
         return ['valid' => true, 'message' => 'Key accepted (HTTP ' . $httpCode . ')'];
     }
 
-    return ['valid' => false, 'message' => 'Provider returned HTTP ' . $httpCode];
+    return [
+        'valid' => false,
+        'message' => 'Provider returned HTTP ' . $httpCode,
+        'provider_error' => 'HTTP ' . $httpCode,
+    ];
 }
 
 /**

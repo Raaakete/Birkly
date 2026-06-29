@@ -77,6 +77,16 @@
             clearTestStatus();
         });
 
+        document.getElementById('connection-api-key')?.addEventListener('input', function() {
+            connectionTestPassed = false;
+            clearTestStatus();
+        });
+
+        document.getElementById('connection-api-url')?.addEventListener('input', function() {
+            connectionTestPassed = false;
+            clearTestStatus();
+        });
+
         document.getElementById('connection-shared-type')?.addEventListener('change', updateSharedTypeFields);
         document.getElementById('toggle-queue-btn')?.addEventListener('click', toggleApprovalQueue);
     }
@@ -270,6 +280,10 @@
                 showWizardError('Please test the connection before continuing, or fix any errors shown.');
                 return;
             }
+            if (provider === 'ollama' && !connectionTestPassed) {
+                showWizardError('Please test that Birkly can reach your Ollama server before continuing.');
+                return;
+            }
 
             loadRoles();
             updateProviderModels();
@@ -320,10 +334,48 @@
         }
 
         if (provider === 'ollama') {
-            connectionTestPassed = true;
+            if (testBtn) testBtn.disabled = true;
             if (statusEl) {
-                statusEl.textContent = 'Ollama does not require a key — ensure the server can reach your local Ollama URL.';
-                statusEl.className = 'test-connection-status success';
+                statusEl.textContent = 'Testing…';
+                statusEl.className = 'test-connection-status pending';
+            }
+
+            try {
+                const response = await fetch('/api/ai_connections.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'test',
+                        provider: 'ollama',
+                        api_url: apiUrl,
+                        _csrf: csrfToken
+                    })
+                });
+                const result = await response.json();
+
+                if (result.status === 'ok' && result.data?.valid) {
+                    connectionTestPassed = true;
+                    if (statusEl) {
+                        statusEl.textContent = result.data.message || 'Ollama reachable';
+                        statusEl.className = 'test-connection-status success';
+                    }
+                } else {
+                    connectionTestPassed = false;
+                    const providerErr = result.data?.provider_error || result.message || 'Cannot reach Ollama';
+                    const msg = formatSaveError(providerErr);
+                    if (statusEl) {
+                        statusEl.textContent = msg;
+                        statusEl.className = 'test-connection-status error';
+                    }
+                }
+            } catch (error) {
+                connectionTestPassed = false;
+                if (statusEl) {
+                    statusEl.textContent = 'Network error — could not reach Birkly server.';
+                    statusEl.className = 'test-connection-status error';
+                }
+            } finally {
+                if (testBtn) testBtn.disabled = false;
             }
             return;
         }
@@ -361,7 +413,8 @@
                 }
             } else {
                 connectionTestPassed = false;
-                const msg = formatSaveError(result?.message || 'Connection test failed');
+                const providerErr = result.data?.provider_error || result.message || 'Connection test failed';
+                const msg = formatSaveError(providerErr);
                 if (statusEl) {
                     statusEl.textContent = msg;
                     statusEl.className = 'test-connection-status error';
@@ -680,14 +733,20 @@
             const result = await response.json();
 
             if (result && result.status === 'ok') {
+                const newId = result.data?.connection?.id || connectionId;
                 hideAddConnectionModal();
-                setTimeout(() => loadConnections(), 100);
+                await loadConnections();
                 showSuccess(connectionId ? 'AI connection updated successfully' : 'AI connection created successfully');
                 window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
-                    detail: { action: connectionId ? 'update' : 'create', id: result.data?.id || connectionId }
+                    detail: {
+                        action: connectionId ? 'update' : 'create',
+                        id: newId,
+                        connection: result.data?.connection || null
+                    }
                 }));
             } else {
-                showError(formatSaveError(result?.message || 'Unknown error'));
+                const providerErr = result?.data?.provider_error;
+                showError(formatSaveError(providerErr || result?.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error saving connection:', error);
@@ -714,6 +773,9 @@
         }
         if (m.includes('API URL is required')) {
             return 'API URL is required for custom providers.';
+        }
+        if (m.includes('Cannot reach Ollama') || m.includes('Ollama returned')) {
+            return 'Cannot reach Ollama. Ensure it is running and the URL is correct from the Birkly server (not just your browser).';
         }
         if (m.includes('validation failed')) {
             return m.replace('API key validation failed: ', 'Connection test failed: ');

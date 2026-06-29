@@ -1091,18 +1091,18 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4.1-M4 — Outbound BYOAI fixes
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Goal:** Admin chat works with valid provider keys
 - **Depends on:** P4.1-M1-T2
 
 **Tasks**
 
-- [ ] **P4.1-M4-T1** Fix issues from M1 repro
-- [ ] **P4.1-M4-T2** Encryption bootstrap on fresh installs
-- [ ] **P4.1-M4-T3** Wizard test-before-save + inline errors
-- [ ] **P4.1-M4-T4** Chat picker reliability after create
-- [ ] **P4.1-M4-T5** CI mock provider harness
+- [x] **P4.1-M4-T1** Fix issues from M1 repro
+- [x] **P4.1-M4-T2** Encryption bootstrap on fresh installs
+- [x] **P4.1-M4-T3** Wizard test-before-save + inline errors
+- [x] **P4.1-M4-T4** Chat picker reliability after create
+- [x] **P4.1-M4-T5** CI mock provider harness
 
 **Acceptance criteria:** Ollama + ≥1 cloud provider manual QA pass
 

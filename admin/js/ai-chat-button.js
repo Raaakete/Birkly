@@ -25,8 +25,34 @@
         });
         createFloatingButton();
 
-        window.addEventListener('birkly:ai-connection-changed', function() {
+        window.addEventListener('birkly:ai-connection-changed', function(event) {
+            const detail = event.detail || {};
             loadConnections().then(() => {
+                if (detail.action === 'delete') {
+                    validateCurrentConnection();
+                    renderConnectionDropdown();
+                    return;
+                }
+
+                if (detail.action === 'create' && detail.id) {
+                    const created = availableConnections.find(c => c.id === detail.id)
+                        || detail.connection;
+                    if (created && (!currentConnection || detail.id === created.id)) {
+                        currentConnection = created;
+                        conversationId = conversationId || ('conv_' + Date.now());
+                        saveChatState();
+                    }
+                    validateCurrentConnection();
+                    renderConnectionDropdown();
+                    updateConnectionDropdownValue();
+
+                    const chatWindow = document.getElementById('ai-chat-window');
+                    if (chatWindow && chatWindow.style.display !== 'none' && currentConnection) {
+                        selectConnection(currentConnection.id);
+                    }
+                    return;
+                }
+
                 validateCurrentConnection();
                 renderConnectionDropdown();
             });
@@ -40,14 +66,14 @@
             const result = await response.json();
             
             if (result && result.status === 'ok' && result.data) {
-                // Filter out MCP connections (they don't support chat)
                 availableConnections = (result.data.connections || []).filter(conn => conn.provider !== 'mcp');
-                
-                // Return promise for chaining
-                return Promise.resolve();
+            } else {
+                availableConnections = [];
             }
+            return Promise.resolve();
         } catch (error) {
             console.error('Error loading AI connections:', error);
+            availableConnections = [];
             return Promise.reject(error);
         }
     }
@@ -238,6 +264,7 @@
         if (availableConnections.length === 0) {
             select.innerHTML = '<option value="">No connections available</option>';
             select.disabled = true;
+            currentConnection = null;
             return;
         }
 
