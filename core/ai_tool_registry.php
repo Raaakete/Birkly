@@ -187,7 +187,8 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     }
 
     if ($requireApproval) {
-        $approvalStorage = new Storage('../data/ai_approvals');
+        $approvalRoot = dirname(__DIR__) . '/data/ai_approvals';
+        $approvalStorage = new Storage($approvalRoot);
         $approvalId = 'approval_' . bin2hex(random_bytes(8));
         $approvalStorage->write($approvalId . '.json', [
             'id' => $approvalId,
@@ -198,8 +199,14 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
             'status' => 'pending',
             'created_at' => date('c'),
             'source' => $source,
+            'authorized_by' => (string) ($aiUser['authorized_by'] ?? ''),
+            'agent_type' => (string) ($aiUser['agent_type'] ?? ''),
         ]);
-        return ['content' => [['type' => 'text', 'text' => 'Action requested. Approval ID: ' . $approvalId]]];
+        $message = 'Write action queued in Birkly (approval ID: ' . $approvalId . '). '
+            . 'Open your Birkly admin panel → floating AI button → Approvals tab to approve. '
+            . 'This is separate from Claude\'s "always allow" tool setting. '
+            . 'To auto-run writes from Claude, disable "Ask before changes" on the personal connector in Settings → AI.';
+        return ['content' => [['type' => 'text', 'text' => $message]]];
     }
 
     require_once __DIR__ . '/../api/ai_approvals.php';
