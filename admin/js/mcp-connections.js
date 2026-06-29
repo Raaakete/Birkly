@@ -56,7 +56,7 @@
     });
 
     function connectorPath() {
-        return (typeof Birkly !== 'undefined' && Birkly.url) ? Birkly.url('/api/mcp_server.php') : '/api/mcp_server.php';
+        return (typeof Birkly !== 'undefined' && Birkly.url) ? Birkly.url('/mcp') : '/mcp';
     }
 
     function resolveConnectorUrl(apiUrl) {
@@ -133,7 +133,11 @@
                 const revokeBtn = e.target.closest('[data-revoke-endpoint]');
                 if (revokeBtn) {
                     e.preventDefault();
-                    revokeEndpoint(revokeBtn.getAttribute('data-revoke-endpoint'));
+                    if (revokeBtn.hasAttribute('data-revoke-agent')) {
+                        revokeAgent(revokeBtn.getAttribute('data-revoke-endpoint'));
+                    } else {
+                        revokeEndpoint(revokeBtn.getAttribute('data-revoke-endpoint'));
+                    }
                 }
             });
         }
@@ -141,13 +145,27 @@
 
     async function loadEndpoints() {
         try {
-            const response = await fetch(Birkly.url('/api/mcp_endpoints.php?action=list'));
-            const result = await response.json();
+            const [agentsRes, mcpRes] = await Promise.all([
+                fetch(Birkly.url('/api/ai_agents.php?action=list')),
+                fetch(Birkly.url('/api/mcp_endpoints.php?action=list'))
+            ]);
+            const agentsResult = await agentsRes.json();
+            const mcpResult = await mcpRes.json();
 
-            if (result && result.status === 'ok' && result.data) {
-                serverUrl = resolveConnectorUrl(result.data.server_url || (window.location.origin + connectorPath()));
-                updateHttpsWarning();
-                renderEndpoints(result.data.endpoints || []);
+            const connectorUrl = mcpResult?.data?.server_url
+                || agentsResult?.data?.agents?.[0]?.connector_url
+                || (window.location.origin + connectorPath());
+            serverUrl = resolveConnectorUrl(connectorUrl);
+            updateHttpsWarning();
+
+            const agents = (agentsResult?.status === 'ok' && agentsResult.data?.agents) ? agentsResult.data.agents : [];
+            if (agents.length > 0) {
+                renderAgents(agents);
+                return;
+            }
+
+            if (mcpResult && mcpResult.status === 'ok' && mcpResult.data) {
+                renderEndpoints(mcpResult.data.endpoints || []);
             } else {
                 renderEndpoints([]);
             }
@@ -157,12 +175,72 @@
         }
     }
 
-    function getBaseUrl() {
-        return serverUrl.replace(/\/api\/mcp_server\.php$/, '') || window.location.origin;
+    function renderAgents(agents) {
+        const list = document.getElementById('mcp-endpoints-list');
+        if (!list) return;
+
+        list.innerHTML = agents.map(agent => {
+            const status = agent.status || 'active';
+            const statusClass = status === 'active' ? 'active' : 'inactive';
+            const approvalLabel = agent.require_approval ? 'Asks before changes' : 'Auto-run';
+            const url = resolveConnectorUrl(agent.connector_url || serverUrl);
+
+            return `
+            <div class="connection-item mcp-endpoint-item ai-agent-item" data-agent-id="${escapeHtml(agent.id)}">
+                <div class="connection-info">
+                    <div class="connection-name-row">
+                        <div class="connection-name">${escapeHtml(agent.name || agent.id)}</div>
+                        <span class="mcp-type-pill">AI agent</span>
+                    </div>
+                    ${agent.description ? `<p class="agent-description">${escapeHtml(agent.description)}</p>` : ''}
+                    <div class="connection-meta">
+                        <span class="connection-role">${escapeHtml(agent.role || 'viewer')}</span>
+                        <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
+                        <span>${escapeHtml(approvalLabel)}</span>
+                    </div>
+                    <div class="mcp-endpoint-actions">
+                        <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(agent.id)}" aria-expanded="false">
+                            Show Connector URL
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}" data-revoke-agent="1">Remove</button>
+                    </div>
+                    <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(agent.id)}" hidden>
+                        <h5>Connect your AI app</h5>
+                        ${renderSetupSteps(agent.id, url)}
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        bindSetupToggles(list);
     }
 
-    function renderSetupSteps(endpointId) {
-        const url = resolveConnectorUrl(serverUrl);
+    function bindSetupToggles(list) {
+        list.querySelectorAll('.mcp-toggle-setup').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.endpointId;
+                const panel = document.getElementById('mcp-setup-panel-' + id);
+                if (!panel) return;
+                const open = panel.hasAttribute('hidden');
+                if (open) {
+                    panel.removeAttribute('hidden');
+                    this.setAttribute('aria-expanded', 'true');
+                    this.textContent = 'Hide Connector URL';
+                } else {
+                    panel.setAttribute('hidden', '');
+                    this.setAttribute('aria-expanded', 'false');
+                    this.textContent = 'Show Connector URL';
+                }
+            });
+        });
+    }
+
+    function getBaseUrl() {
+        return serverUrl.replace(/\/mcp$/, '').replace(/\/api\/mcp_server\.php$/, '') || window.location.origin;
+    }
+
+    function renderSetupSteps(endpointId, connectorUrlOverride) {
+        const url = connectorUrlOverride || resolveConnectorUrl(serverUrl);
         const httpWarning = connectorUrlIsUsable(url) ? '' : `
         <p class="mcp-http-url-warning" role="alert">
             <strong>This URL uses HTTP.</strong> Claude will reject it — open Birkly with <code>https://</code> and copy the URL again.
@@ -171,7 +249,8 @@
         <ol class="endpoint-setup-steps">
             <li>Copy the <strong>Connector URL</strong> below (must start with <code>https://</code> for Claude).</li>
             <li>Open your AI app (Claude, ChatGPT, or Cursor) → connector or integration settings.</li>
-            <li>Paste the URL and sign in when prompted.</li>
+            <li>Paste the URL only — <strong>leave Client ID and Client Secret empty</strong>. Your app signs in automatically.</li>
+            <li>Sign in when your app asks. No files to edit.</li>
             <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
         </ol>
         ${httpWarning}
@@ -191,8 +270,8 @@
         if (endpoints.length === 0) {
             list.innerHTML = `
             <div class="empty-state empty-state-friendly">
-                <p><strong>No connections yet</strong></p>
-                <p>Click <em>Add connection</em> above, then copy the Connector URL into Claude, ChatGPT, or Cursor.</p>
+                <p><strong>No agents yet</strong></p>
+                <p>Click <em>Add agent</em> above, then copy the Connector URL into Claude, ChatGPT, or Cursor.</p>
             </div>`;
             return;
         }
@@ -228,23 +307,7 @@
             </div>`;
         }).join('');
 
-        list.querySelectorAll('.mcp-toggle-setup').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.dataset.endpointId;
-                const panel = document.getElementById('mcp-setup-panel-' + id);
-                if (!panel) return;
-                const open = panel.hasAttribute('hidden');
-                if (open) {
-                    panel.removeAttribute('hidden');
-                    this.setAttribute('aria-expanded', 'true');
-                    this.textContent = 'Hide Connector URL';
-                } else {
-                    panel.setAttribute('hidden', '');
-                    this.setAttribute('aria-expanded', 'false');
-                    this.textContent = 'Show Connector URL';
-                }
-            });
-        });
+        bindSetupToggles(list);
     }
 
     function showAddMcpModal() {
@@ -265,7 +328,7 @@
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) {
-            submitBtn.textContent = 'Create connection';
+            submitBtn.textContent = 'Create agent';
             submitBtn.disabled = false;
         }
 
@@ -327,8 +390,8 @@
             action: 'create',
             name: formData.get('name') || '',
             role: formData.get('role') || 'editor',
+            description: formData.get('description') || '',
             require_approval: document.getElementById('mcp-require-approval')?.checked ?? true,
-            auth_mode: 'oauth',
             _csrf: csrfToken
         };
 
@@ -336,7 +399,7 @@
         if (submitBtn) submitBtn.disabled = true;
 
         try {
-            const response = await fetch(Birkly.url('/api/mcp_endpoints.php'), {
+            const response = await fetch(Birkly.url('/api/ai_agents.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -344,7 +407,7 @@
             const result = await response.json();
 
             if (result && result.status === 'ok') {
-                const endpointId = result.data?.id || '';
+                const agentId = result.data?.agent?.id || '';
                 if (submitBtn) submitBtn.textContent = 'Done — close when ready';
                 await loadEndpoints();
                 const successPanel = document.getElementById('mcp-create-success');
@@ -353,10 +416,10 @@
                     urlInput.value = serverUrl;
                     successPanel.style.display = 'block';
                 }
-                if (endpointId) {
+                if (agentId) {
                     setTimeout(() => {
-                        const panel = document.getElementById('mcp-setup-panel-' + endpointId);
-                        const toggle = document.querySelector(`.mcp-toggle-setup[data-endpoint-id="${endpointId}"]`);
+                        const panel = document.getElementById('mcp-setup-panel-' + agentId);
+                        const toggle = document.querySelector(`.mcp-toggle-setup[data-endpoint-id="${agentId}"]`);
                         if (panel && toggle) {
                             panel.removeAttribute('hidden');
                             toggle.setAttribute('aria-expanded', 'true');
@@ -365,7 +428,7 @@
                         }
                     }, 300);
                 }
-                showToast('Connection created! Copy the Connector URL into your AI app.');
+                showToast('AI agent created! Copy the Connector URL into your AI app.');
             } else {
                 showToast(result?.message || 'Could not create connection', true);
                 if (submitBtn) submitBtn.disabled = false;
@@ -374,6 +437,37 @@
             console.error('Error creating connection:', error);
             showToast('Something went wrong. Please try again.', true);
             if (submitBtn) submitBtn.disabled = false;
+        }
+    }
+
+    async function revokeAgent(agentId) {
+        if (!agentId) return;
+        if (!confirm('Remove this AI agent? Your AI app will no longer access your site through it.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(Birkly.url('/api/ai_agents.php'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'revoke', id: agentId, _csrf: csrfToken })
+            });
+            let result;
+            try {
+                result = await response.json();
+            } catch (parseErr) {
+                showToast('Server returned an invalid response. Try again.', true);
+                return;
+            }
+
+            if (result.status === 'ok') {
+                showToast('AI agent removed.');
+                loadEndpoints();
+            } else {
+                showToast(result.message || 'Could not remove agent', true);
+            }
+        } catch (error) {
+            showToast('Something went wrong.', true);
         }
     }
 

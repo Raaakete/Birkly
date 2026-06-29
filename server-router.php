@@ -35,6 +35,7 @@ $oauthRoutes = [
     '/oauth/authorize' => '/api/oauth_authorize.php',
     '/oauth/token' => '/api/oauth_token.php',
     '/oauth/register' => '/api/oauth_register.php',
+    '/mcp' => '/api/mcp.php',
 ];
 
 foreach ($oauthRoutes as $prefix => $handler) {
