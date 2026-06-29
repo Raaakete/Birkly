@@ -596,8 +596,13 @@ function birkly_ai_user_can_manage_connection(array $connection, string $userId,
         return true;
     }
 
-    if ($currentUser !== null && checkPermission($currentUser, '*')) {
-        return true;
+    if ($currentUser !== null) {
+        if (checkPermission($currentUser, '*')) {
+            return true;
+        }
+        if (checkPermission($currentUser, 'manage_settings')) {
+            return true;
+        }
     }
 
     return false;
