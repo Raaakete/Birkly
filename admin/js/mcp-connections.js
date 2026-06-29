@@ -55,12 +55,36 @@
         window.addEventListener('birkly:ai-integrations-tab', maybeInitMcpConnections);
     });
 
+    function connectorPath() {
+        return (typeof Birkly !== 'undefined' && Birkly.url) ? Birkly.url('/api/mcp_server.php') : '/api/mcp_server.php';
+    }
+
+    function resolveConnectorUrl(apiUrl) {
+        const path = connectorPath();
+        if (window.location.protocol === 'https:') {
+            return window.location.origin + path;
+        }
+        if (apiUrl && apiUrl.startsWith('https:')) {
+            return apiUrl;
+        }
+        return apiUrl || (window.location.origin + path);
+    }
+
+    function connectorUrlIsUsable(url) {
+        if (!url) return false;
+        try {
+            const u = new URL(url);
+            if (u.protocol !== 'https:') return false;
+            const host = u.hostname;
+            if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')) return false;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     function isPublicHttps() {
-        const loc = window.location;
-        if (loc.protocol !== 'https:') return false;
-        const host = loc.hostname || '';
-        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')) return false;
-        return true;
+        return connectorUrlIsUsable(resolveConnectorUrl(serverUrl));
     }
 
     function updateHttpsWarning() {
@@ -101,6 +125,18 @@
         });
 
         document.getElementById('add-mcp-form')?.addEventListener('submit', handleMcpCreate);
+
+        const endpointsList = document.getElementById('mcp-endpoints-list');
+        if (endpointsList && !endpointsList.dataset.actionsBound) {
+            endpointsList.dataset.actionsBound = '1';
+            endpointsList.addEventListener('click', function(e) {
+                const revokeBtn = e.target.closest('[data-revoke-endpoint]');
+                if (revokeBtn) {
+                    e.preventDefault();
+                    revokeEndpoint(revokeBtn.getAttribute('data-revoke-endpoint'));
+                }
+            });
+        }
     }
 
     async function loadEndpoints() {
@@ -109,7 +145,8 @@
             const result = await response.json();
 
             if (result && result.status === 'ok' && result.data) {
-                serverUrl = result.data.server_url || (window.location.origin + Birkly.url('/api/mcp_server.php'));
+                serverUrl = resolveConnectorUrl(result.data.server_url || (window.location.origin + connectorPath()));
+                updateHttpsWarning();
                 renderEndpoints(result.data.endpoints || []);
             } else {
                 renderEndpoints([]);
@@ -125,17 +162,23 @@
     }
 
     function renderSetupSteps(endpointId) {
+        const url = resolveConnectorUrl(serverUrl);
+        const httpWarning = connectorUrlIsUsable(url) ? '' : `
+        <p class="mcp-http-url-warning" role="alert">
+            <strong>This URL uses HTTP.</strong> Claude will reject it — open Birkly with <code>https://</code> and copy the URL again.
+        </p>`;
         return `
         <ol class="endpoint-setup-steps">
-            <li>Copy the <strong>Connector URL</strong> below.</li>
+            <li>Copy the <strong>Connector URL</strong> below (must start with <code>https://</code> for Claude).</li>
             <li>Open your AI app (Claude, ChatGPT, or Cursor) → connector or integration settings.</li>
             <li>Paste the URL and sign in when prompted.</li>
             <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
         </ol>
+        ${httpWarning}
         <div class="mcp-snippet-block">
             <label for="mcp-connector-url-${escapeHtml(endpointId)}">Connector URL</label>
             <div class="copy-snippet-row">
-                <input type="text" readonly value="${escapeHtml(serverUrl)}" id="mcp-connector-url-${escapeHtml(endpointId)}">
+                <input type="text" readonly value="${escapeHtml(url)}" id="mcp-connector-url-${escapeHtml(endpointId)}" class="${connectorUrlIsUsable(url) ? '' : 'mcp-url-insecure'}">
                 <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-connector-url-${escapeHtml(endpointId)}', true)">Copy URL</button>
             </div>
         </div>`;
@@ -175,7 +218,7 @@
                         <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(ep.id)}" aria-expanded="false">
                             Show Connector URL
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="mcpConnections.revokeEndpoint('${escapeHtml(ep.id)}')">Remove</button>
+                        <button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(ep.id)}">Remove</button>
                     </div>
                     <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(ep.id)}" hidden>
                         <h5>Connect your AI app</h5>
@@ -335,6 +378,7 @@
     }
 
     async function revokeEndpoint(endpointId) {
+        if (!endpointId) return;
         if (!confirm('Remove this connection? Your AI app will no longer access your site through it.')) {
             return;
         }
@@ -345,7 +389,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'revoke', id: endpointId, _csrf: csrfToken })
             });
-            const result = await response.json();
+            let result;
+            try {
+                result = await response.json();
+            } catch (parseErr) {
+                showToast('Server returned an invalid response. Try again.', true);
+                return;
+            }
 
             if (result.status === 'ok') {
                 showToast('Connection removed.');
@@ -363,6 +413,11 @@
         if (!el) return;
 
         const text = el.value || el.textContent;
+        if (text.startsWith('http://')) {
+            showToast('Claude requires https:// — open Birkly with HTTPS and copy again.', true);
+            return;
+        }
+
         const done = () => {
             if (useToast) showToast('Copied to clipboard!');
         };
