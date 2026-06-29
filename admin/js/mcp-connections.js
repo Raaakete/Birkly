@@ -9,6 +9,16 @@
     let initialized = false;
     let serverUrl = '';
 
+    function isAiIntegrationsContext() {
+        const pane = document.getElementById('ai-integrations');
+        if (!pane) return false;
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'ai-integrations' || hash === 'ai-connections' || hash === 'mcp-connections') {
+            return true;
+        }
+        return pane.classList.contains('active');
+    }
+
     function initMcpConnections() {
         if (initialized) return;
         initialized = true;
@@ -18,24 +28,25 @@
         setupEventListeners();
     }
 
+    function maybeInitMcpConnections() {
+        if (isAiIntegrationsContext()) {
+            setTimeout(initMcpConnections, 100);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        const mcpTab = document.querySelector('[data-tab="mcp-connections"]');
-        const mcpPane = document.getElementById('mcp-connections');
+        const mcpTab = document.querySelector('[data-tab="ai-integrations"]');
+        const mcpPane = document.getElementById('ai-integrations');
 
         if (mcpTab && mcpPane) {
-            if (mcpTab.classList.contains('active') || mcpPane.classList.contains('active')) {
-                initMcpConnections();
-            }
+            maybeInitMcpConnections();
             mcpTab.addEventListener('click', function() {
                 setTimeout(initMcpConnections, 100);
             });
         }
 
-        window.addEventListener('hashchange', function() {
-            if (window.location.hash === '#mcp-connections') {
-                setTimeout(initMcpConnections, 100);
-            }
-        });
+        window.addEventListener('hashchange', maybeInitMcpConnections);
+        window.addEventListener('birkly:ai-integrations-tab', maybeInitMcpConnections);
     });
 
     function setupEventListeners() {
