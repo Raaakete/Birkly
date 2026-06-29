@@ -9,6 +9,7 @@
     let initialized = false;
     let serverUrl = '';
     let isAdmin = false;
+    let personalAgentUrl = '';
     const DOCS_HELP_URL = typeof Birkly !== 'undefined' && Birkly.adminUrl
         ? Birkly.adminUrl('help') + '#mcp-connections'
         : '/admin/index.php?page=help#mcp-connections';
@@ -140,6 +141,21 @@
 
         document.getElementById('add-mcp-form')?.addEventListener('submit', handleMcpCreate);
 
+        document.querySelectorAll('input[name="agent_type"]').forEach(radio => {
+            radio.addEventListener('change', updateAgentTypePanels);
+        });
+
+        document.getElementById('mcp-personal-done-btn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            hideAddMcpModal();
+            focusPersonalConnector();
+        });
+
+        document.getElementById('mcp-copy-personal-url-btn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            copySnippet('mcp-modal-personal-url', true);
+        });
+
         const serviceList = document.getElementById('ai-service-agents-list');
         if (serviceList && !serviceList.dataset.actionsBound) {
             serviceList.dataset.actionsBound = '1';
@@ -185,7 +201,11 @@
             const personal = data.personal_agent || null;
             const serviceAgents = Array.isArray(data.service_agents) ? data.service_agents : [];
 
-            const connectorUrl = personal?.connector_url
+            personalAgentUrl = personal?.connector_url
+                ? resolveConnectorUrl(personal.connector_url)
+                : '';
+
+            const connectorUrl = personalAgentUrl
                 || mcpResult?.data?.server_url
                 || (window.location.origin + connectorPath());
             serverUrl = resolveConnectorUrl(connectorUrl);
@@ -229,12 +249,14 @@
         if (!card) return;
 
         if (!agent) {
-            card.hidden = true;
-            card.innerHTML = '';
+            card.innerHTML = `
+            <div class="empty-state empty-state-friendly">
+                <p><strong>Personal connector unavailable</strong></p>
+                <p>Refresh the page. If this persists, contact your administrator.</p>
+            </div>`;
             return;
         }
 
-        card.hidden = false;
         const status = agent.status || 'active';
         const statusClass = status === 'active' ? 'active' : 'inactive';
         const url = resolveConnectorUrl(agent.connector_url || serverUrl);
@@ -404,6 +426,47 @@
         </div>`;
     }
 
+    function getSelectedAgentType() {
+        return document.querySelector('input[name="agent_type"]:checked')?.value || 'personal';
+    }
+
+    function updateAgentTypePanels() {
+        const type = getSelectedAgentType();
+        const personalPanel = document.getElementById('mcp-personal-agent-panel');
+        const servicePanel = document.getElementById('mcp-service-agent-panel');
+        const personalDoneBtn = document.getElementById('mcp-personal-done-btn');
+        const submitBtn = document.getElementById('mcp-submit-btn');
+        const nameInput = document.getElementById('mcp-endpoint-name');
+        const roleSelect = document.getElementById('mcp-endpoint-role');
+
+        const isPersonal = type === 'personal';
+        if (personalPanel) personalPanel.hidden = !isPersonal;
+        if (servicePanel) servicePanel.hidden = isPersonal;
+        if (personalDoneBtn) personalDoneBtn.hidden = !isPersonal;
+        if (submitBtn) submitBtn.hidden = isPersonal;
+
+        if (nameInput) nameInput.required = !isPersonal;
+        if (roleSelect) roleSelect.required = !isPersonal;
+
+        const modalUrl = document.getElementById('mcp-modal-personal-url');
+        if (modalUrl) {
+            modalUrl.value = personalAgentUrl || '';
+        }
+    }
+
+    function focusPersonalConnector() {
+        const card = document.getElementById('ai-personal-agent-card');
+        const agentId = 'ai_agent_personal';
+        const panel = document.getElementById('mcp-setup-panel-' + agentId);
+        const toggle = document.querySelector(`.mcp-toggle-setup[data-endpoint-id="${agentId}"]`);
+        if (panel && toggle) {
+            panel.removeAttribute('hidden');
+            toggle.setAttribute('aria-expanded', 'true');
+            toggle.textContent = 'Hide Connector URL';
+        }
+        card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     function showAddMcpModal() {
         if (!isAdmin) return;
 
@@ -412,6 +475,9 @@
 
         const form = document.getElementById('add-mcp-form');
         form?.reset();
+
+        const personalRadio = document.getElementById('mcp-agent-type-personal');
+        if (personalRadio) personalRadio.checked = true;
 
         const successPanel = document.getElementById('mcp-create-success');
         if (successPanel) successPanel.style.display = 'none';
@@ -424,6 +490,8 @@
             submitBtn.textContent = 'Create service agent';
             submitBtn.disabled = false;
         }
+
+        updateAgentTypePanels();
 
         modal.style.display = 'flex';
         loadRoles();
@@ -522,6 +590,12 @@
 
     async function handleMcpCreate(e) {
         e.preventDefault();
+
+        if (getSelectedAgentType() === 'personal') {
+            hideAddMcpModal();
+            focusPersonalConnector();
+            return;
+        }
 
         const formData = new FormData(e.target);
         const rolesContainer = document.getElementById('mcp-visible-roles');
