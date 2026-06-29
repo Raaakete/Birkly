@@ -669,36 +669,45 @@
               <h3>
                 Connect your AI app
                 <button type="button" class="help-tip" aria-label="About AI app connectors"
-                  data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. Each agent has its own Connector URL and CMS role. Create an agent, copy its URL, paste in your AI app.">?</button>
+                  data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. The personal connector uses your own permissions. Service agents are shared bots with a fixed role.">?</button>
               </h3>
-              <p class="settings-help">Each agent has its own Connector URL and role. Paste that agent's URL in Claude, ChatGPT, or Cursor — do not reuse URLs across agents.</p>
+              <p class="settings-help">Use the <strong>personal connector</strong> for your own Claude or ChatGPT account — you sign in with your Birkly user and get your role's permissions. Admins can also create <strong>service agents</strong> with a fixed role for shared automation.</p>
+            </div>
+
+            <div class="tip-box tip-box-info ai-migration-banner" id="ai-agents-migration-banner" style="display: none;" role="status">
+              <strong>Service agent visibility updated</strong>
+              <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
             </div>
 
             <div class="setup-guide-box" id="mcp-setup-guide">
-              <h4 class="setup-guide-title">Quick start</h4>
+              <h4 class="setup-guide-title">Quick start — personal connector</h4>
               <ol class="setup-guide-steps">
-                <li>Click <strong>Add agent</strong> and give your AI agent a name and role.</li>
-                <li>Copy that agent's unique <strong>Connector URL</strong> (not the site-wide <code>/mcp</code> path).</li>
+                <li>Copy the <strong>personal connector URL</strong> below — the same URL works for every team member.</li>
                 <li>In Claude, ChatGPT, or Cursor: paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
-                <li>When your AI app opens Birkly, sign in and approve the connection.</li>
+                <li>When your AI app opens Birkly, sign in with <strong>your</strong> account and approve the connection.</li>
                 <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
               </ol>
+            </div>
+
+            <div id="ai-personal-agent-card" class="ai-personal-agent-card" hidden>
+              <!-- Rendered by mcp-connections.js -->
             </div>
 
             <div class="connections-container mcp-connections-settings">
               <div class="connections-panel">
                 <div class="panel-header">
-                  <h4>Your AI agents</h4>
-                  <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button">
+                  <h4>Service agents</h4>
+                  <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    Add agent
+                    Add service agent
                   </button>
                 </div>
+                <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
 
-                <div class="connections-list" id="mcp-endpoints-list">
+                <div class="connections-list" id="ai-service-agents-list">
                   <div class="loading">Loading connections...</div>
                 </div>
               </div>
@@ -834,11 +843,11 @@
           </div>
         </div>
 
-        <!-- Add connector modal -->
+        <!-- Add service agent modal -->
         <div class="modal" id="add-mcp-modal" style="display: none;">
           <div class="modal-content">
             <div class="modal-header">
-              <h2 id="mcp-modal-title">Add AI agent</h2>
+              <h2 id="mcp-modal-title">Add service agent</h2>
               <button class="btn-icon modal-close" data-mcp-modal-close aria-label="Close">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -847,7 +856,7 @@
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">
-              <p class="modal-intro-text">Create an AI agent with a role. We'll give you a Connector URL to paste into Claude, ChatGPT, or Cursor — leave OAuth fields empty in your app.</p>
+              <p class="modal-intro-text">Create a shared service agent with a fixed CMS role. Choose who can see and connect to it. For your own AI app, use the personal connector instead.</p>
 
               <div class="form-group">
                 <label for="mcp-endpoint-name">Agent name</label>
@@ -862,14 +871,28 @@
 
               <div class="form-group">
                 <label for="mcp-endpoint-role">
-                  What can this connection do?
+                  Fixed CMS role
                   <button type="button" class="help-tip" aria-label="Role help"
-                    data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access.">?</button>
+                    data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
                 </label>
                 <select id="mcp-endpoint-role" name="role" required>
                   <option value="">Loading roles...</option>
                 </select>
-                <small>Most people choose <strong>Editor</strong> or <strong>Viewer</strong></small>
+              </div>
+
+              <div class="form-group">
+                <label>Who can use this agent</label>
+                <small class="form-hint-block">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
+                <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="Roles that can use this agent">
+                  <div class="loading-inline">Loading roles...</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Individual users <span class="text-muted">(optional)</span></label>
+                <div id="mcp-allowed-users" class="mcp-checkbox-group mcp-user-picker" role="group" aria-label="Users that can use this agent">
+                  <div class="loading-inline">Loading users...</div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -882,7 +905,7 @@
               <input type="hidden" id="mcp-auth-mode" name="auth_mode" value="oauth">
 
               <div id="mcp-create-success" class="mcp-success-panel" style="display: none;">
-                <p><strong>AI agent created!</strong> Copy your Connector URL and paste it in your AI app. Leave Client ID and Client Secret empty.</p>
+                <p><strong>Service agent created!</strong> Copy the Connector URL and paste it in your AI app. Leave Client ID and Client Secret empty.</p>
                 <div class="mcp-snippet-block">
                   <label for="mcp-new-connector-url">Connector URL</label>
                   <div class="copy-snippet-row">
@@ -894,7 +917,7 @@
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-mcp-modal-close>Cancel</button>
-                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create agent</button>
+                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create service agent</button>
               </div>
             </form>
           </div>

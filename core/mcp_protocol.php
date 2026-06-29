@@ -16,10 +16,20 @@ function birkly_mcp_connector_path(): string
     return '/mcp';
 }
 
+function birkly_mcp_valid_agent_id(string $agentId): bool
+{
+    $agentId = trim($agentId);
+    if ($agentId === '') {
+        return false;
+    }
+
+    return (bool) preg_match('/^ai_agent_(?:personal|[a-f0-9]{16})$/', $agentId);
+}
+
 function birkly_mcp_connector_path_for_agent(string $agentId): string
 {
     $agentId = trim($agentId);
-    if ($agentId === '' || !preg_match('/^ai_agent_[a-f0-9]+$/', $agentId)) {
+    if (!birkly_mcp_valid_agent_id($agentId)) {
         throw new InvalidArgumentException('Invalid AI agent id');
     }
 
@@ -48,7 +58,7 @@ function birkly_mcp_request_path(): string
 function birkly_mcp_agent_id_from_path(?string $path = null): ?string
 {
     $path = $path ?? birkly_mcp_request_path();
-    if (preg_match('#/mcp/agents/(ai_agent_[a-f0-9]+)#', $path, $matches)) {
+    if (preg_match('#/mcp/agents/(ai_agent_(?:personal|[a-f0-9]{16}))#', $path, $matches)) {
         return $matches[1];
     }
 

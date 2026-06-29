@@ -1,5 +1,5 @@
 /**
- * AI app connectors — copy Connector URL, paste in Claude/ChatGPT/Cursor, OAuth
+ * AI app connectors — personal + service agents (P5.1)
  */
 
 (function() {
@@ -8,6 +8,7 @@
     let csrfToken = '';
     let initialized = false;
     let serverUrl = '';
+    let isAdmin = false;
     const DOCS_HELP_URL = typeof Birkly !== 'undefined' && Birkly.adminUrl
         ? Birkly.adminUrl('help') + '#mcp-connections'
         : '/admin/index.php?page=help#mcp-connections';
@@ -139,18 +140,31 @@
 
         document.getElementById('add-mcp-form')?.addEventListener('submit', handleMcpCreate);
 
-        const endpointsList = document.getElementById('mcp-endpoints-list');
-        if (endpointsList && !endpointsList.dataset.actionsBound) {
-            endpointsList.dataset.actionsBound = '1';
-            endpointsList.addEventListener('click', function(e) {
+        const serviceList = document.getElementById('ai-service-agents-list');
+        if (serviceList && !serviceList.dataset.actionsBound) {
+            serviceList.dataset.actionsBound = '1';
+            serviceList.addEventListener('click', function(e) {
                 const revokeBtn = e.target.closest('[data-revoke-endpoint]');
                 if (revokeBtn) {
                     e.preventDefault();
-                    if (revokeBtn.hasAttribute('data-revoke-agent')) {
-                        revokeAgent(revokeBtn.getAttribute('data-revoke-endpoint'));
-                    } else {
-                        revokeEndpoint(revokeBtn.getAttribute('data-revoke-endpoint'));
-                    }
+                    revokeAgent(revokeBtn.getAttribute('data-revoke-endpoint'));
+                }
+                const toggleBtn = e.target.closest('[data-toggle-personal-status]');
+                if (toggleBtn) {
+                    e.preventDefault();
+                    togglePersonalStatus(toggleBtn.getAttribute('data-toggle-personal-status'));
+                }
+            });
+        }
+
+        const personalCard = document.getElementById('ai-personal-agent-card');
+        if (personalCard && !personalCard.dataset.actionsBound) {
+            personalCard.dataset.actionsBound = '1';
+            personalCard.addEventListener('click', function(e) {
+                const toggleBtn = e.target.closest('[data-toggle-personal-status]');
+                if (toggleBtn) {
+                    e.preventDefault();
+                    togglePersonalStatus(toggleBtn.getAttribute('data-toggle-personal-status'));
                 }
             });
         }
@@ -165,32 +179,113 @@
             const agentsResult = await agentsRes.json();
             const mcpResult = await mcpRes.json();
 
-            const connectorUrl = mcpResult?.data?.server_url
-                || agentsResult?.data?.agents?.[0]?.connector_url
+            const data = agentsResult?.data || {};
+            isAdmin = !!data.is_admin;
+
+            const personal = data.personal_agent || null;
+            const serviceAgents = Array.isArray(data.service_agents) ? data.service_agents : [];
+
+            const connectorUrl = personal?.connector_url
+                || mcpResult?.data?.server_url
                 || (window.location.origin + connectorPath());
             serverUrl = resolveConnectorUrl(connectorUrl);
             updateHttpsWarning();
 
-            const agents = (agentsResult?.status === 'ok' && agentsResult.data?.agents) ? agentsResult.data.agents : [];
-            if (agents.length > 0) {
-                renderAgents(agents);
-                return;
-            }
-
-            if (mcpResult && mcpResult.status === 'ok' && mcpResult.data) {
-                renderEndpoints(mcpResult.data.endpoints || []);
-            } else {
-                renderEndpoints([]);
-            }
+            renderPersonalAgent(personal);
+            renderServiceAgents(serviceAgents);
+            updateAdminUi(serviceAgents);
         } catch (error) {
             console.error('Error loading connections:', error);
-            renderEndpoints([]);
+            renderPersonalAgent(null);
+            renderServiceAgents([]);
         }
     }
 
-    function renderAgents(agents) {
-        const list = document.getElementById('mcp-endpoints-list');
+    function typeBadge(type) {
+        if (type === 'personal') {
+            return '<span class="mcp-type-pill mcp-type-personal">Personal</span>';
+        }
+        return '<span class="mcp-type-pill mcp-type-service">Service</span>';
+    }
+
+    function visibilitySummary(agent) {
+        const roles = agent.visible_to_roles || [];
+        const users = agent.allowed_users || [];
+        const parts = [];
+        if (roles.length) {
+            parts.push('Roles: ' + roles.join(', '));
+        }
+        if (users.length) {
+            parts.push(users.length + ' user(s)');
+        }
+        if (!parts.length) {
+            return 'Admin only';
+        }
+        return parts.join(' · ');
+    }
+
+    function renderPersonalAgent(agent) {
+        const card = document.getElementById('ai-personal-agent-card');
+        if (!card) return;
+
+        if (!agent) {
+            card.hidden = true;
+            card.innerHTML = '';
+            return;
+        }
+
+        card.hidden = false;
+        const status = agent.status || 'active';
+        const statusClass = status === 'active' ? 'active' : 'inactive';
+        const url = resolveConnectorUrl(agent.connector_url || serverUrl);
+        const agentId = agent.id || 'ai_agent_personal';
+        const disabledNote = status === 'disabled'
+            ? '<p class="agent-disabled-note" role="alert">Personal connector is disabled. Only admins can re-enable it.</p>'
+            : '';
+
+        card.innerHTML = `
+            <div class="connection-item mcp-endpoint-item ai-agent-item ai-personal-card" data-agent-id="${escapeHtml(agentId)}">
+                <div class="connection-info">
+                    <div class="connection-name-row">
+                        <div class="connection-name">${escapeHtml(agent.name || 'Your personal connector')}</div>
+                        ${typeBadge('personal')}
+                    </div>
+                    <p class="agent-description">${escapeHtml(agent.description || 'Connect Claude or ChatGPT with your own Birkly permissions. Every team member uses this same URL but signs in with their own account.')}</p>
+                    <div class="connection-meta">
+                        <span class="connection-role">Your role when you connect</span>
+                        <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Disabled'}</span>
+                    </div>
+                    ${disabledNote}
+                    <div class="mcp-endpoint-actions">
+                        <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(agentId)}" aria-expanded="false">
+                            Show Connector URL
+                        </button>
+                        ${isAdmin ? `<button type="button" class="btn btn-sm btn-secondary" data-toggle-personal-status="${status === 'active' ? 'disabled' : 'active'}">${status === 'active' ? 'Disable' : 'Enable'}</button>` : ''}
+                    </div>
+                    <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(agentId)}" hidden>
+                        <h5>Connect your AI app</h5>
+                        ${renderSetupSteps(agentId, url, true)}
+                    </div>
+                </div>
+            </div>`;
+
+        bindSetupToggles(card);
+    }
+
+    function renderServiceAgents(agents) {
+        const list = document.getElementById('ai-service-agents-list');
         if (!list) return;
+
+        if (agents.length === 0) {
+            list.innerHTML = `
+            <div class="empty-state empty-state-friendly">
+                <p><strong>${isAdmin ? 'No service agents yet' : 'No service agents assigned to you'}</strong></p>
+                <p>${isAdmin
+                    ? 'Click <em>Add service agent</em> to create a shared connection with a fixed role.'
+                    : 'Ask an admin to assign you a service agent, or use the personal connector above.'}</p>
+            </div>`;
+            return;
+        }
 
         list.innerHTML = agents.map(agent => {
             const status = agent.status || 'active';
@@ -203,23 +298,24 @@
                 <div class="connection-info">
                     <div class="connection-name-row">
                         <div class="connection-name">${escapeHtml(agent.name || agent.id)}</div>
-                        <span class="mcp-type-pill">AI agent</span>
+                        ${typeBadge('service')}
                     </div>
                     ${agent.description ? `<p class="agent-description">${escapeHtml(agent.description)}</p>` : ''}
                     <div class="connection-meta">
-                        <span class="connection-role">${escapeHtml(agent.role || 'viewer')}</span>
+                        <span class="connection-role">Fixed role: ${escapeHtml(agent.role || 'viewer')}</span>
                         <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
                         <span>${escapeHtml(approvalLabel)}</span>
+                        ${isAdmin ? `<span class="agent-visibility">${escapeHtml(visibilitySummary(agent))}</span>` : ''}
                     </div>
                     <div class="mcp-endpoint-actions">
                         <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(agent.id)}" aria-expanded="false">
                             Show Connector URL
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}" data-revoke-agent="1">Remove</button>
+                        ${isAdmin ? `<button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}">Remove</button>` : ''}
                     </div>
                     <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(agent.id)}" hidden>
                         <h5>Connect your AI app</h5>
-                        ${renderSetupSteps(agent.id, url)}
+                        ${renderSetupSteps(agent.id, url, false)}
                     </div>
                 </div>
             </div>`;
@@ -228,8 +324,34 @@
         bindSetupToggles(list);
     }
 
-    function bindSetupToggles(list) {
-        list.querySelectorAll('.mcp-toggle-setup').forEach(btn => {
+    function updateAdminUi(serviceAgents) {
+        const addBtn = document.getElementById('add-mcp-endpoint-btn');
+        const intro = document.getElementById('ai-service-intro');
+        const banner = document.getElementById('ai-agents-migration-banner');
+
+        if (addBtn) {
+            addBtn.style.display = isAdmin ? '' : 'none';
+        }
+        if (intro) {
+            intro.style.display = isAdmin ? '' : 'none';
+        }
+
+        if (banner && isAdmin) {
+            const hasAdminOnly = serviceAgents.some(agent => {
+                const roles = agent.visible_to_roles || [];
+                const users = agent.allowed_users || [];
+                return roles.length === 1 && roles[0] === 'admin' && users.length === 0;
+            });
+            banner.style.display = hasAdminOnly ? 'block' : 'none';
+        } else if (banner) {
+            banner.style.display = 'none';
+        }
+    }
+
+    function bindSetupToggles(container) {
+        container.querySelectorAll('.mcp-toggle-setup').forEach(btn => {
+            if (btn.dataset.toggleBound) return;
+            btn.dataset.toggleBound = '1';
             btn.addEventListener('click', function() {
                 const id = this.dataset.endpointId;
                 const panel = document.getElementById('mcp-setup-panel-' + id);
@@ -252,17 +374,22 @@
         return serverUrl.replace(/\/mcp$/, '').replace(/\/api\/mcp_server\.php$/, '') || window.location.origin;
     }
 
-    function renderSetupSteps(endpointId, connectorUrlOverride) {
+    function renderSetupSteps(endpointId, connectorUrlOverride, isPersonal) {
         const url = connectorUrlOverride || resolveConnectorUrl(serverUrl);
         const httpWarning = connectorUrlIsUsable(url) ? '' : `
         <p class="mcp-http-url-warning" role="alert">
             <strong>This URL uses HTTP.</strong> Claude will reject it — open Birkly with <code>https://</code> and copy the URL again.
         </p>`;
+        const personalNote = isPersonal
+            ? '<li>Sign in with <strong>your</strong> Birkly account — permissions follow your role.</li>'
+            : '<li>This service agent uses a <strong>fixed role</strong> set by your admin.</li>';
+
         return `
         <ol class="endpoint-setup-steps">
-            <li>Copy this agent's <strong>Connector URL</strong> below — each agent has its own URL and role.</li>
+            <li>Copy this <strong>Connector URL</strong> below.</li>
             <li>Open your AI app (Claude, ChatGPT, or Cursor) → connector or integration settings.</li>
             <li>Paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
+            ${personalNote}
             <li>When your AI app opens Birkly, sign in and approve the connection.</li>
             <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
             <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
@@ -277,54 +404,9 @@
         </div>`;
     }
 
-    function renderEndpoints(endpoints) {
-        const list = document.getElementById('mcp-endpoints-list');
-        if (!list) return;
-
-        if (endpoints.length === 0) {
-            list.innerHTML = `
-            <div class="empty-state empty-state-friendly">
-                <p><strong>No agents yet</strong></p>
-                <p>Click <em>Add agent</em> above, then copy the Connector URL into Claude, ChatGPT, or Cursor.</p>
-            </div>`;
-            return;
-        }
-
-        list.innerHTML = endpoints.map(ep => {
-            const status = ep.status || 'active';
-            const statusClass = status === 'active' ? 'active' : 'inactive';
-            const approvalLabel = ep.require_approval ? 'Asks before changes' : 'Auto-run';
-
-            return `
-            <div class="connection-item mcp-endpoint-item" data-endpoint-id="${escapeHtml(ep.id)}">
-                <div class="connection-info">
-                    <div class="connection-name-row">
-                        <div class="connection-name">${escapeHtml(ep.name || ep.id)}</div>
-                        <span class="mcp-type-pill">App connection</span>
-                    </div>
-                    <div class="connection-meta">
-                        <span class="connection-role">${escapeHtml(ep.role || 'viewer')}</span>
-                        <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
-                        <span>${escapeHtml(approvalLabel)}</span>
-                    </div>
-                    <div class="mcp-endpoint-actions">
-                        <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(ep.id)}" aria-expanded="false">
-                            Show Connector URL
-                        </button>
-                        <button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(ep.id)}">Remove</button>
-                    </div>
-                    <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(ep.id)}" hidden>
-                        <h5>Connect your AI app</h5>
-                        ${renderSetupSteps(ep.id)}
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-
-        bindSetupToggles(list);
-    }
-
     function showAddMcpModal() {
+        if (!isAdmin) return;
+
         const modal = document.getElementById('add-mcp-modal');
         if (!modal) return;
 
@@ -337,17 +419,15 @@
         const requireApproval = document.getElementById('mcp-require-approval');
         if (requireApproval) requireApproval.checked = true;
 
-        const authMode = document.getElementById('mcp-auth-mode');
-        if (authMode) authMode.value = 'oauth';
-
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) {
-            submitBtn.textContent = 'Create agent';
+            submitBtn.textContent = 'Create service agent';
             submitBtn.disabled = false;
         }
 
         modal.style.display = 'flex';
         loadRoles();
+        loadVisibilityPickers();
         initHelpTips();
     }
 
@@ -388,23 +468,72 @@
                 const editor = roles.find(r => (r.id || r.name) === 'editor');
                 select.value = editor ? 'editor' : (roles[0].id || roles[0].name || 'viewer');
             }
+
+            return roles;
         } catch (error) {
             select.innerHTML = legacyRoles.map(r =>
                 `<option value="${r.id}">${escapeHtml(r.name)}</option>`
             ).join('');
             select.value = 'editor';
+            return legacyRoles;
         }
+    }
+
+    async function loadVisibilityPickers() {
+        const rolesContainer = document.getElementById('mcp-visible-roles');
+        const usersContainer = document.getElementById('mcp-allowed-users');
+        if (!rolesContainer || !usersContainer) return;
+
+        rolesContainer.innerHTML = '<div class="loading-inline">Loading roles...</div>';
+        usersContainer.innerHTML = '<div class="loading-inline">Loading users...</div>';
+
+        const roles = await loadRoles();
+        rolesContainer.innerHTML = roles.map(role => {
+            const roleId = role.id || role.name || '';
+            const checked = roleId === 'admin' ? ' checked' : '';
+            return `<label class="mcp-checkbox-label"><input type="checkbox" name="visible_to_roles" value="${escapeHtml(roleId)}"${checked}> ${escapeHtml(role.name || roleId)}</label>`;
+        }).join('');
+
+        try {
+            const response = await fetch(Birkly.url('/api/ai_agents.php?action=users'));
+            const result = await response.json();
+            const users = (result.status === 'ok' && result.data?.users) ? result.data.users : [];
+
+            if (!users.length) {
+                usersContainer.innerHTML = '<p class="text-muted">No users available.</p>';
+                return;
+            }
+
+            usersContainer.innerHTML = users.map(user => {
+                const label = user.name || user.email || user.id;
+                return `<label class="mcp-checkbox-label"><input type="checkbox" name="allowed_users" value="${escapeHtml(user.id)}"> ${escapeHtml(label)} <span class="text-muted">(${escapeHtml(user.role || '')})</span></label>`;
+            }).join('');
+        } catch (error) {
+            usersContainer.innerHTML = '<p class="text-muted">Could not load users.</p>';
+        }
+    }
+
+    function collectCheckedValues(container, name) {
+        if (!container) return [];
+        return Array.from(container.querySelectorAll(`input[name="${name}"]:checked`))
+            .map(input => input.value)
+            .filter(Boolean);
     }
 
     async function handleMcpCreate(e) {
         e.preventDefault();
 
         const formData = new FormData(e.target);
+        const rolesContainer = document.getElementById('mcp-visible-roles');
+        const usersContainer = document.getElementById('mcp-allowed-users');
+
         const payload = {
             action: 'create',
             name: formData.get('name') || '',
             role: formData.get('role') || 'editor',
             description: formData.get('description') || '',
+            visible_to_roles: collectCheckedValues(rolesContainer, 'visible_to_roles'),
+            allowed_users: collectCheckedValues(usersContainer, 'allowed_users'),
             require_approval: document.getElementById('mcp-require-approval')?.checked ?? true,
             _csrf: csrfToken
         };
@@ -422,12 +551,13 @@
 
             if (result && result.status === 'ok') {
                 const agentId = result.data?.agent?.id || '';
+                const agentUrl = result.data?.agent?.connector_url || serverUrl;
                 if (submitBtn) submitBtn.textContent = 'Done — close when ready';
                 await loadEndpoints();
                 const successPanel = document.getElementById('mcp-create-success');
                 const urlInput = document.getElementById('mcp-new-connector-url');
                 if (successPanel && urlInput) {
-                    urlInput.value = serverUrl;
+                    urlInput.value = resolveConnectorUrl(agentUrl);
                     successPanel.style.display = 'block';
                 }
                 if (agentId) {
@@ -442,7 +572,7 @@
                         }
                     }, 300);
                 }
-                showToast('AI agent created! Copy the Connector URL into your AI app.');
+                showToast('Service agent created! Copy the Connector URL into your AI app.');
             } else {
                 showToast(result?.message || 'Could not create connection', true);
                 if (submitBtn) submitBtn.disabled = false;
@@ -454,14 +584,41 @@
         }
     }
 
+    async function togglePersonalStatus(newStatus) {
+        if (!isAdmin || !newStatus) return;
+
+        try {
+            await refreshCsrfToken();
+            const response = await fetch(Birkly.url('/api/ai_agents.php'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update',
+                    id: 'ai_agent_personal',
+                    status: newStatus,
+                    _csrf: csrfToken
+                })
+            });
+            const result = await response.json();
+            if (result.status === 'ok') {
+                showToast(newStatus === 'active' ? 'Personal connector enabled.' : 'Personal connector disabled.');
+                loadEndpoints();
+            } else {
+                showToast(result.message || 'Could not update personal connector', true);
+            }
+        } catch (error) {
+            showToast('Something went wrong.', true);
+        }
+    }
+
     async function refreshCsrfToken() {
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || csrfToken;
         return csrfToken;
     }
 
     async function revokeAgent(agentId) {
-        if (!agentId) return;
-        if (!confirm('Remove this AI agent? Your AI app will no longer access your site through it.')) {
+        if (!agentId || !isAdmin) return;
+        if (!confirm('Remove this service agent? Your AI app will no longer access your site through it.')) {
             return;
         }
 
@@ -481,42 +638,10 @@
             }
 
             if (result.status === 'ok') {
-                showToast('AI agent removed.');
+                showToast('Service agent removed.');
                 loadEndpoints();
             } else {
                 showToast(result.message || 'Could not remove agent', true);
-            }
-        } catch (error) {
-            showToast('Something went wrong.', true);
-        }
-    }
-
-    async function revokeEndpoint(endpointId) {
-        if (!endpointId) return;
-        if (!confirm('Remove this connection? Your AI app will no longer access your site through it.')) {
-            return;
-        }
-
-        try {
-            await refreshCsrfToken();
-            const response = await fetch(Birkly.url('/api/mcp_endpoints.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'revoke', id: endpointId, _csrf: csrfToken })
-            });
-            let result;
-            try {
-                result = await response.json();
-            } catch (parseErr) {
-                showToast('Server returned an invalid response. Try again.', true);
-                return;
-            }
-
-            if (result.status === 'ok') {
-                showToast('Connection removed.');
-                loadEndpoints();
-            } else {
-                showToast(result.message || 'Could not remove connection', true);
             }
         } catch (error) {
             showToast('Something went wrong.', true);
@@ -581,7 +706,6 @@
     }
 
     window.mcpConnections = {
-        revokeEndpoint,
         copySnippet
     };
 })();

@@ -108,7 +108,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 5 **complete** on `main`. MCP `/mcp`, OAuth+CIMD, AI agents, login+consent. **Phase 5.1 approved** — hybrid personal/service agents. |
+| **Birkly (CMS)** | Phase 5 **complete** on `main`. Phase 5.1 **complete** — hybrid personal/service agents. |
 | **Birkly-Website** | `Birkly-0.1/` synced post-P4; kekaba deploy deferred. |
 | **kekaba** | Embed needs sync after P5/P5.1 CMS merges; **deferred**. |
 | **Birkly-Docs** | P5 mcp-connections; P5.1 will extend personal vs service. |
@@ -1340,108 +1340,109 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Ordering:** P5.1-M0 → … → P5.1-M6. Cross-repo: Birkly → Birkly-Docs.
 
-**Status:** **approved** (2026-06-29). Ready for lead-engineer execution.
+**Status:** **complete** (2026-06-29). PR `cursor/p5.1-hybrid-agents-24b5`.
 
 **Spec:** `docs/reviews/P5.1-hybrid-agents-plan.md`  
-**Handoff:** `docs/reviews/P5.1-lead-engineer-handoff.md`
+**Handoff:** `docs/reviews/P5.1-lead-engineer-handoff.md`  
+**Closure:** `docs/reviews/p5.1-phase-closure-checklist.md`
 
 ---
 
 ### P5.1-M0 — Data model + personal agent backend
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 - **Depends on:** Phase 5 complete
 
 **Tasks**
 
-- [ ] **P5.1-M0-T1** Agent schema: `type`, `visible_to_roles`, `allowed_users` in `core/ai_agents.php`
-- [ ] **P5.1-M0-T2** `birkly_ai_agents_ensure_personal()` singleton + endpoint
-- [ ] **P5.1-M0-T3** `birkly_ai_agents_list_for_user()` visibility filter
-- [ ] **P5.1-M0-T4** Personal agent MCP actor from authorizer permissions (not fixed role)
-- [ ] **P5.1-M0-T5** Rewrite `birkly_ai_user_can_authorize_agent()` per hybrid plan
-- [ ] **P5.1-M0-T6** `tests/ai_agent_auth_test.php`, `tests/ai_agents_test.php`
+- [x] **P5.1-M0-T1** Agent schema: `type`, `visible_to_roles`, `allowed_users` in `core/ai_agents.php`
+- [x] **P5.1-M0-T2** `birkly_ai_agents_ensure_personal()` singleton + endpoint
+- [x] **P5.1-M0-T3** `birkly_ai_agents_list_for_user()` visibility filter
+- [x] **P5.1-M0-T4** Personal agent MCP actor from authorizer permissions (not fixed role)
+- [x] **P5.1-M0-T5** Rewrite `birkly_ai_user_can_authorize_agent()` per hybrid plan
+- [x] **P5.1-M0-T6** `tests/ai_agent_auth_test.php`, `tests/ai_agents_test.php`
 
 ---
 
 ### P5.1-M1 — Service visibility + OAuth enforcement
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 
 **Tasks**
 
-- [ ] **P5.1-M1-T1** `api/ai_agents.php` — assignment fields; filtered list
-- [ ] **P5.1-M1-T2** OAuth authorize: `can_see` + `can_authorize`; consent copy by type
-- [ ] **P5.1-M1-T3** Token: `agent_type`, `authorized_by`; personal permission resolve
-- [ ] **P5.1-M1-T4** `tests/mcp_oauth_test.php` — escalation + personal scenarios
+- [x] **P5.1-M1-T1** `api/ai_agents.php` — assignment fields; filtered list
+- [x] **P5.1-M1-T2** OAuth authorize: `can_see` + `can_authorize`; consent copy by type
+- [x] **P5.1-M1-T3** Token: `agent_type`, `authorized_by`; personal permission resolve
+- [x] **P5.1-M1-T4** `tests/mcp_oauth_test.php` — escalation + personal scenarios
 
 ---
 
 ### P5.1-M2 — Settings UI (personal + service)
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 - **Depends on:** P5.1-M0, P5.1-M1
 
 **Tasks**
 
-- [ ] **P5.1-M2-T1** Personal agent card (primary) — one URL, team copy
-- [ ] **P5.1-M2-T2** Service agent list filtered; type badges
-- [ ] **P5.1-M2-T3** Create/edit modal — role + who can use (roles + users)
-- [ ] **P5.1-M2-T4** design-reviewer sign-off
+- [x] **P5.1-M2-T1** Personal agent card (primary) — one URL, team copy
+- [x] **P5.1-M2-T2** Service agent list filtered; type badges
+- [x] **P5.1-M2-T3** Create/edit modal — role + who can use (roles + users)
+- [x] **P5.1-M2-T4** design-reviewer sign-off
 
 ---
 
 ### P5.1-M3 — Migration
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 
 **Tasks**
 
-- [ ] **P5.1-M3-T1** `scripts/migrate-ai-agents-hybrid.php` (--dry-run)
-- [ ] **P5.1-M3-T2** Existing agents → `service`, `visible_to_roles: ["admin"]`
-- [ ] **P5.1-M3-T3** Personal agent on fresh install + post-migrate
+- [x] **P5.1-M3-T1** `scripts/migrate-ai-agents-hybrid.php` (--dry-run)
+- [x] **P5.1-M3-T2** Existing agents → `service`, `visible_to_roles: ["admin"]`
+- [x] **P5.1-M3-T3** Personal agent on fresh install + post-migrate
 
 ---
 
 ### P5.1-M4 — Integration matrix
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 
 **Tasks**
 
-- [ ] **P5.1-M4-T1** `docs/reviews/p5.1-integration-test-matrix.md`
-- [ ] **P5.1-M4-T2** qa-verifier: personal, service, escalation, list filter
-- [ ] **P5.1-M4-T3** `./scripts/ci-check.sh` green
+- [x] **P5.1-M4-T1** `docs/reviews/p5.1-integration-test-matrix.md`
+- [x] **P5.1-M4-T2** qa-verifier: personal, service, escalation, list filter
+- [x] **P5.1-M4-T3** `./scripts/ci-check.sh` green
 
 ---
 
 ### P5.1-M5 — Documentation
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly-Docs, Birkly
 
 **Tasks**
 
-- [ ] **P5.1-M5-T1** Birkly-Docs: personal vs service, assignment, security
-- [ ] **P5.1-M5-T2** Admin help snapshot if needed
+- [x] **P5.1-M5-T1** Birkly-Docs: personal vs service, assignment, security
+- [x] **P5.1-M5-T2** Admin help snapshot if needed
 
 ---
 
 ### P5.1-M6 — Phase 5.1 closure
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P5.1-M4, P5.1-M5
 
 **Tasks**
 
-- [ ] **P5.1-M6-T1** `docs/reviews/p5.1-phase-closure-checklist.md`
-- [ ] **P5.1-M6-T2** Mark Phase 5.1 complete in roadmap
-- [ ] **P5.1-M6-T3** qa-verifier phase sign-off
-- [ ] **P5.1-M6-T4** **Notify human once**
+- [x] **P5.1-M6-T1** `docs/reviews/p5.1-phase-closure-checklist.md`
+- [x] **P5.1-M6-T2** Mark Phase 5.1 complete in roadmap
+- [x] **P5.1-M6-T3** qa-verifier phase sign-off
+- [x] **P5.1-M6-T4** **Notify human once**
 
 ---
 
