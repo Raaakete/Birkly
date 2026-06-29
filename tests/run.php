@@ -35,6 +35,7 @@ $suites = [
     'mcp_streamable_test.php',
     'mcp_cimd_test.php',
     'ai_agents_test.php',
+    'ai_agent_auth_test.php',
     'template_safe_renderer_test.php',
     'public_collection_meta_test.php',
     'page_snapshot_test.php',
