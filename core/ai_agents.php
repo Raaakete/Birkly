@@ -419,6 +419,9 @@ function birkly_ai_agents_mcp_actor_for_token(array $endpoint, ?array $agent, ar
             $actor['permissions'] = birkly_ai_agents_permissions_for_user($authorizer);
             $actor['name'] = 'Personal: ' . (string) ($authorizer['email'] ?? $authorizer['id'] ?? 'user');
         }
+        if ($agent !== null && array_key_exists('require_approval', $agent)) {
+            $actor['require_approval'] = (bool) $agent['require_approval'];
+        }
         return $actor;
     }
 
@@ -438,6 +441,10 @@ function birkly_ai_agents_mcp_actor_for_token(array $endpoint, ?array $agent, ar
     } else {
         $actor['role'] = $agentRole;
         $actor['permissions'] = getPermissionsForRole($agentRole);
+    }
+
+    if ($agent !== null && array_key_exists('require_approval', $agent)) {
+        $actor['require_approval'] = (bool) $agent['require_approval'];
     }
 
     return $actor;
@@ -599,6 +606,43 @@ function birkly_ai_agents_set_personal_status(string $status): ?array
         $updated = $agent;
         break;
     }
+
+    if ($updated === null) {
+        return null;
+    }
+
+    birkly_ai_agents_save_store($store);
+    return birkly_ai_agents_scrub($updated);
+}
+
+function birkly_ai_agents_update_personal_settings(array $input): ?array
+{
+    $store = birkly_ai_agents_load_store();
+    $updated = null;
+
+    foreach ($store['agents'] as &$agent) {
+        if (($agent['id'] ?? '') !== BIRKLY_AI_AGENT_PERSONAL_ID) {
+            continue;
+        }
+
+        $agent = birkly_ai_agents_normalize_agent($agent);
+
+        if (array_key_exists('require_approval', $input)) {
+            $agent['require_approval'] = (bool) $input['require_approval'];
+        }
+
+        $endpointId = (string) ($agent['mcp_endpoint_id'] ?? '');
+        if ($endpointId !== '' && array_key_exists('require_approval', $input)) {
+            birkly_mcp_update_endpoint($endpointId, [
+                'require_approval' => (bool) $input['require_approval'],
+            ]);
+        }
+
+        $agent['updated_at'] = date('c');
+        $updated = $agent;
+        break;
+    }
+    unset($agent);
 
     if ($updated === null) {
         return null;
