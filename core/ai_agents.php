@@ -69,6 +69,85 @@ function birkly_ai_agents_find(string $id): ?array
     return null;
 }
 
+function birkly_ai_agents_find_by_endpoint_id(string $endpointId): ?array
+{
+    foreach (birkly_ai_agents_load_store()['agents'] as $agent) {
+        if (($agent['mcp_endpoint_id'] ?? '') === $endpointId && ($agent['status'] ?? 'active') !== 'revoked') {
+            return $agent;
+        }
+    }
+    return null;
+}
+
+function birkly_ai_role_rank(string $role): int
+{
+    static $ranks = [
+        'viewer' => 1,
+        'author' => 2,
+        'editor' => 3,
+        'admin' => 4,
+    ];
+
+    return $ranks[$role] ?? 0;
+}
+
+/**
+ * Cap MCP tool access to the lower of agent role and authorizing human role.
+ */
+function birkly_ai_effective_role(string $agentRole, string $userRole): string
+{
+    if (birkly_ai_role_rank($userRole) < birkly_ai_role_rank($agentRole)) {
+        return $userRole;
+    }
+
+    return $agentRole;
+}
+
+/**
+ * Whether a logged-in CMS user may approve OAuth for this agent/endpoint.
+ * Prevents privilege escalation (e.g. editor connecting an admin agent URL).
+ */
+function birkly_ai_user_can_authorize_agent(?array $agent, array $endpoint, array $user): bool
+{
+    if (!function_exists('checkPermission')) {
+        require_once __DIR__ . '/../api/auth.php';
+    }
+
+    $agentRole = (string) ($agent['role'] ?? $endpoint['role'] ?? 'viewer');
+    $userRole = (string) ($user['role'] ?? 'viewer');
+
+    if (checkPermission($user, '*')) {
+        return true;
+    }
+
+    if (birkly_ai_role_rank($userRole) < birkly_ai_role_rank($agentRole)) {
+        return false;
+    }
+
+    if (checkPermission($user, 'manage_settings')) {
+        return true;
+    }
+
+    if ($agent !== null && ($agent['created_by'] ?? '') === ($user['id'] ?? '')) {
+        return true;
+    }
+
+    return in_array($userRole, ['admin', 'editor', 'author', 'viewer'], true);
+}
+
+function birkly_ai_user_authorize_agent_denial_reason(?array $agent, array $endpoint, array $user): string
+{
+    $agentRole = (string) ($agent['role'] ?? $endpoint['role'] ?? 'viewer');
+    $userRole = (string) ($user['role'] ?? 'viewer');
+    $agentName = (string) ($agent['name'] ?? $endpoint['name'] ?? 'AI agent');
+
+    if (birkly_ai_role_rank($userRole) < birkly_ai_role_rank($agentRole)) {
+        return 'Your account (' . $userRole . ') cannot authorize the "' . $agentName . '" agent (role: ' . $agentRole . ').';
+    }
+
+    return 'You do not have permission to authorize this AI agent connection.';
+}
+
 function birkly_ai_agents_valid_roles(): array
 {
     return ['admin', 'editor', 'author', 'viewer'];

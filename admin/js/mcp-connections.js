@@ -250,7 +250,8 @@
             <li>Copy this agent's <strong>Connector URL</strong> below — each agent has its own URL and role.</li>
             <li>Open your AI app (Claude, ChatGPT, or Cursor) → connector or integration settings.</li>
             <li>Paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
-            <li>Reconnect in your AI app if you changed agents or roles.</li>
+            <li>When your AI app opens Birkly, sign in and approve the connection.</li>
+            <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
             <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
         </ol>
         ${httpWarning}
