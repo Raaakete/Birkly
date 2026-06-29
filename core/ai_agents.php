@@ -428,11 +428,16 @@ function birkly_ai_agents_mcp_actor_for_token(array $endpoint, ?array $agent, ar
 
     if ($authorizer !== null && birkly_ai_agents_is_admin($authorizer)) {
         $actor['role'] = $agentRole;
+        $actor['permissions'] = birkly_ai_agents_permissions_for_user($authorizer);
     } elseif ($authorizedRole !== '') {
         $actor['role'] = birkly_ai_effective_role($agentRole, $authorizedRole);
         $actor['authorized_role'] = $authorizedRole;
+        if ($authorizer !== null) {
+            $actor['permissions'] = birkly_ai_agents_permissions_for_user($authorizer);
+        }
     } else {
         $actor['role'] = $agentRole;
+        $actor['permissions'] = getPermissionsForRole($agentRole);
     }
 
     return $actor;

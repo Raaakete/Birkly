@@ -10,7 +10,7 @@ function birkly_ai_tool_definitions(): array
 {
     return [
         'read_entry' => ['name' => 'read_entry', 'description' => 'Read a specific entry by collection slug and entry slug or ID', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection']]],
-        'list_entries' => ['name' => 'list_entries', 'description' => 'List entries in a collection', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'limit' => ['type' => 'number']], 'required' => ['collection']]],
+        'list_entries' => ['name' => 'list_entries', 'description' => 'List entries in a collection. Use the slug from list_collections (or the display name — both work). Returns id, slug, title, and status summaries.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug or name from list_collections'], 'limit' => ['type' => 'number']], 'required' => ['collection']]],
         'read_collection' => ['name' => 'read_collection', 'description' => 'Get details and schema of a collection', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
         'list_collections' => ['name' => 'list_collections', 'description' => 'List all content collections', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_collection' => ['name' => 'get_collection', 'description' => 'Get details of a specific collection (MCP alias)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
@@ -171,6 +171,9 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 
     if (birkly_ai_is_read_action($actionType)) {
         require_once __DIR__ . '/../api/ai_read_actions.php';
+        if ($source === 'mcp' && in_array($actionType, ['list_entries'], true)) {
+            $arguments['summary'] = true;
+        }
         $result = executeReadAction(['type' => $actionType, 'data' => $arguments], $aiUser);
         if (!($result['success'] ?? false)) {
             return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Action failed']]];
