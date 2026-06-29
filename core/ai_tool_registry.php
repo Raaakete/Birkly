@@ -185,8 +185,15 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 function birkly_ai_mcp_server_url(): string
 {
     require_once __DIR__ . '/birkly_paths.php';
-    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+    $scheme = 'http';
+    if (
+        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string) $_SERVER['HTTP_X_FORWARDED_SSL']) === 'on')
+        || (!empty($_SERVER['REQUEST_SCHEME']) && strtolower((string) $_SERVER['REQUEST_SCHEME']) === 'https')
+    ) {
+        $scheme = 'https';
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
         $proto = strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']);
         if ($proto === 'https' || $proto === 'http') {
             $scheme = $proto;
