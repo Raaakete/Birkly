@@ -30,6 +30,7 @@ if ($base !== '' && str_starts_with($uri, $base)) {
 }
 
 $oauthRoutes = [
+    '/favicon.ico' => '/admin/assets/birkly-icon.svg',
     '/.well-known/oauth-protected-resource' => '/api/oauth_protected_resource.php',
     '/.well-known/oauth-authorization-server' => '/api/oauth_authorization_server.php',
     '/oauth/authorize' => '/api/oauth_authorize.php',
@@ -41,6 +42,12 @@ $oauthRoutes = [
 foreach ($oauthRoutes as $prefix => $handler) {
     if ($uri === $prefix || str_starts_with($uri, $prefix . '/')) {
         $_SERVER['SCRIPT_NAME'] = birkly_url($handler);
+        if ($prefix === '/favicon.ico') {
+            header('Content-Type: image/svg+xml');
+            header('Cache-Control: public, max-age=86400');
+            readfile(__DIR__ . $handler);
+            return true;
+        }
         require __DIR__ . $handler;
         return true;
     }

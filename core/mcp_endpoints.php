@@ -120,7 +120,7 @@ function birkly_mcp_create_endpoint(array $input, string $createdBy): array
         'role' => $role,
         'require_approval' => array_key_exists('require_approval', $input)
             ? (bool) $input['require_approval']
-            : true,
+            : false,
         'auth_mode' => birkly_mcp_normalize_auth_mode($input['auth_mode'] ?? 'api_key'),
         'oauth_client_id' => trim((string) ($input['oauth_client_id'] ?? '')),
         'mcp_api_key' => $key,
