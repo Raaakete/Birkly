@@ -8,6 +8,7 @@
     let csrfToken = '';
     let initialized = false;
     let serverUrl = '';
+    const BRIDGE_PATH_PLACEHOLDER = '/absolute/path/to/your/Birkly/mcp-bridge.js';
 
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
@@ -57,6 +58,26 @@
         });
 
         document.getElementById('add-mcp-form')?.addEventListener('submit', handleMcpCreate);
+
+        const authModeSelect = document.getElementById('mcp-auth-mode');
+        authModeSelect?.addEventListener('change', updateOAuthClientIdVisibility);
+    }
+
+    function updateOAuthClientIdVisibility() {
+        const authMode = document.getElementById('mcp-auth-mode')?.value || 'api_key';
+        const group = document.getElementById('mcp-oauth-client-id-group');
+        if (group) {
+            group.style.display = (authMode === 'oauth' || authMode === 'both') ? 'block' : 'none';
+        }
+    }
+
+    function authModeLabel(mode) {
+        const labels = {
+            api_key: 'API key',
+            oauth: 'OAuth',
+            both: 'API key + OAuth'
+        };
+        return labels[mode] || mode || 'API key';
     }
 
     async function loadEndpoints() {
@@ -98,8 +119,12 @@
         list.innerHTML = endpoints.map(ep => {
             const status = ep.status || 'active';
             const bridgeCmd = buildBridgeCommand('YOUR_MCP_API_KEY');
+            const claudeConfig = buildClaudeDesktopConfig('YOUR_MCP_API_KEY', ep.name || ep.id);
             const statusClass = status === 'active' ? 'active' : 'inactive';
             const approvalLabel = ep.require_approval ? 'Approval required' : 'Auto-execute';
+            const authMode = ep.auth_mode || 'api_key';
+            const oauthClientId = ep.oauth_client_id || '';
+            const showOAuthFields = authMode === 'oauth' || authMode === 'both';
 
             return `
             <div class="connection-item mcp-endpoint-item" data-endpoint-id="${escapeHtml(ep.id)}">
@@ -109,14 +134,40 @@
                         <span class="connection-role">${escapeHtml(ep.role || 'viewer')}</span>
                         <span class="mcp-endpoint-status ${statusClass}">${escapeHtml(status)}</span>
                         <span>${escapeHtml(approvalLabel)}</span>
+                        <span class="mcp-auth-mode-label">${escapeHtml(authModeLabel(authMode))}</span>
+                    </div>
+                    <div class="mcp-snippet-block mcp-auth-edit-block">
+                        <label for="mcp-auth-mode-${escapeHtml(ep.id)}">Auth mode</label>
+                        <div class="copy-snippet-row">
+                            <select id="mcp-auth-mode-${escapeHtml(ep.id)}" class="mcp-auth-mode-select" data-endpoint-id="${escapeHtml(ep.id)}">
+                                <option value="api_key" ${authMode === 'api_key' ? 'selected' : ''}>API key</option>
+                                <option value="oauth" ${authMode === 'oauth' ? 'selected' : ''}>OAuth</option>
+                                <option value="both" ${authMode === 'both' ? 'selected' : ''}>Both</option>
+                            </select>
+                            <input type="text"
+                                id="mcp-oauth-client-${escapeHtml(ep.id)}"
+                                class="mcp-oauth-client-input"
+                                placeholder="OAuth client ID (optional)"
+                                value="${escapeHtml(oauthClientId)}"
+                                style="display: ${showOAuthFields ? 'block' : 'none'};">
+                            <button type="button" class="btn btn-sm" onclick="mcpConnections.saveAuthSettings('${escapeHtml(ep.id)}')">Save auth</button>
+                        </div>
+                        <small class="mcp-snippet-hint">OAuth or Both required for Claude remote connector.</small>
                     </div>
                     <div class="mcp-snippet-block">
-                        <label for="mcp-bridge-${escapeHtml(ep.id)}">Bridge command</label>
+                        <label for="mcp-claude-config-${escapeHtml(ep.id)}">Claude Desktop config (stdio bridge)</label>
+                        <div class="copy-snippet-row mcp-config-snippet-row">
+                            <textarea readonly id="mcp-claude-config-${escapeHtml(ep.id)}" class="mcp-config-snippet" rows="10">${escapeHtml(claudeConfig)}</textarea>
+                            <button type="button" class="btn btn-sm" aria-label="Copy Claude Desktop config" onclick="mcpConnections.copySnippet('mcp-claude-config-${escapeHtml(ep.id)}')">Copy</button>
+                        </div>
+                        <small class="mcp-snippet-hint">Replace the bridge path and API key after revealing the key below. Paste into claude_desktop_config.json.</small>
+                    </div>
+                    <div class="mcp-snippet-block">
+                        <label for="mcp-bridge-${escapeHtml(ep.id)}">Bridge command (shell)</label>
                         <div class="copy-snippet-row">
                             <input type="text" value="${escapeHtml(bridgeCmd)}" readonly id="mcp-bridge-${escapeHtml(ep.id)}">
                             <button type="button" class="btn btn-sm" aria-label="Copy bridge command" onclick="mcpConnections.copySnippet('mcp-bridge-${escapeHtml(ep.id)}')">Copy</button>
                         </div>
-                        <small class="mcp-snippet-hint">Replace YOUR_MCP_API_KEY after revealing the key below. Server URL is shown above.</small>
                     </div>
                     <div class="mcp-snippet-block">
                         <label for="mcp-key-${escapeHtml(ep.id)}">API Key</label>
@@ -130,11 +181,60 @@
                 </div>
             </div>`;
         }).join('');
+
+        list.querySelectorAll('.mcp-auth-mode-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const endpointId = this.dataset.endpointId;
+                const oauthInput = document.getElementById('mcp-oauth-client-' + endpointId);
+                if (oauthInput) {
+                    const show = this.value === 'oauth' || this.value === 'both';
+                    oauthInput.style.display = show ? 'block' : 'none';
+                }
+            });
+        });
+    }
+
+    function getBaseUrl() {
+        return serverUrl.replace(/\/api\/mcp_server\.php$/, '') || window.location.origin;
     }
 
     function buildBridgeCommand(apiKey) {
-        const baseUrl = serverUrl.replace(/\/api\/mcp_server\.php$/, '') || window.location.origin;
-        return `BIRKLY_URL=${baseUrl} BIRKLY_MCP_API_KEY=${apiKey} node mcp-bridge.js`;
+        return `BIRKLY_URL=${getBaseUrl()} BIRKLY_MCP_API_KEY=${apiKey} node mcp-bridge.js`;
+    }
+
+    function slugifyServerName(name) {
+        const slug = String(name || 'birkly')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        return slug || 'birkly';
+    }
+
+    function buildClaudeDesktopConfig(apiKey, endpointName) {
+        const config = {
+            mcpServers: {
+                [slugifyServerName(endpointName)]: {
+                    command: 'node',
+                    args: [BRIDGE_PATH_PLACEHOLDER],
+                    env: {
+                        BIRKLY_URL: getBaseUrl(),
+                        BIRKLY_MCP_API_KEY: apiKey
+                    }
+                }
+            }
+        };
+        return JSON.stringify(config, null, 2);
+    }
+
+    function updateEndpointSnippets(endpointId, apiKey, endpointName) {
+        const bridgeInput = document.getElementById('mcp-bridge-' + endpointId);
+        if (bridgeInput) {
+            bridgeInput.value = buildBridgeCommand(apiKey);
+        }
+        const configTextarea = document.getElementById('mcp-claude-config-' + endpointId);
+        if (configTextarea) {
+            configTextarea.value = buildClaudeDesktopConfig(apiKey, endpointName);
+        }
     }
 
     function showAddMcpModal() {
@@ -149,6 +249,14 @@
 
         const requireApproval = document.getElementById('mcp-require-approval');
         if (requireApproval) requireApproval.checked = true;
+
+        const authMode = document.getElementById('mcp-auth-mode');
+        if (authMode) authMode.value = 'api_key';
+
+        const oauthClientId = document.getElementById('mcp-oauth-client-id');
+        if (oauthClientId) oauthClientId.value = '';
+
+        updateOAuthClientIdVisibility();
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) {
@@ -209,13 +317,22 @@
         e.preventDefault();
 
         const formData = new FormData(e.target);
+        const authMode = formData.get('auth_mode') || 'api_key';
         const payload = {
             action: 'create',
             name: formData.get('name') || '',
             role: formData.get('role') || 'viewer',
             require_approval: document.getElementById('mcp-require-approval')?.checked ?? true,
+            auth_mode: authMode,
             _csrf: csrfToken
         };
+
+        if (authMode === 'oauth' || authMode === 'both') {
+            const clientId = (formData.get('oauth_client_id') || '').trim();
+            if (clientId) {
+                payload.oauth_client_id = clientId;
+            }
+        }
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) submitBtn.disabled = true;
@@ -250,6 +367,39 @@
         }
     }
 
+    async function saveAuthSettings(endpointId) {
+        const authModeSelect = document.getElementById('mcp-auth-mode-' + endpointId);
+        const oauthInput = document.getElementById('mcp-oauth-client-' + endpointId);
+        if (!authModeSelect) return;
+
+        const payload = {
+            action: 'update',
+            id: endpointId,
+            auth_mode: authModeSelect.value,
+            oauth_client_id: oauthInput ? oauthInput.value.trim() : '',
+            _csrf: csrfToken
+        };
+
+        try {
+            const response = await fetch('/api/mcp_endpoints.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                showSuccess('Auth settings updated');
+                loadEndpoints();
+            } else {
+                showError('Failed to update auth: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error updating MCP auth:', error);
+            showError('Error updating auth settings');
+        }
+    }
+
     async function revealKey(endpointId) {
         try {
             const response = await fetch(`/api/mcp_endpoints.php?action=get_key&id=${encodeURIComponent(endpointId)}`);
@@ -264,10 +414,9 @@
                 input.type = 'text';
                 input.value = key;
             }
-            const bridgeInput = document.getElementById('mcp-bridge-' + endpointId);
-            if (bridgeInput) {
-                bridgeInput.value = buildBridgeCommand(key);
-            }
+            const item = document.querySelector(`.mcp-endpoint-item[data-endpoint-id="${endpointId}"]`);
+            const endpointName = item?.querySelector('.connection-name')?.textContent || endpointId;
+            updateEndpointSnippets(endpointId, key, endpointName);
         } catch (error) {
             console.error('Error revealing MCP key:', error);
             showError('Failed to load API key');
@@ -298,9 +447,10 @@
                     input.type = 'text';
                     input.value = key;
                 }
-                const bridgeInput = document.getElementById('mcp-bridge-' + endpointId);
-                if (bridgeInput && key) {
-                    bridgeInput.value = buildBridgeCommand(key);
+                const item = document.querySelector(`.mcp-endpoint-item[data-endpoint-id="${endpointId}"]`);
+                const endpointName = item?.querySelector('.connection-name')?.textContent || endpointId;
+                if (key) {
+                    updateEndpointSnippets(endpointId, key, endpointName);
                 }
                 showSuccess('API key rotated. Update your bridge config with the new key.');
             } else {
@@ -341,35 +491,39 @@
         }
     }
 
-    function copySnippet(inputId) {
-        const input = document.getElementById(inputId);
-        if (!input) return;
+    function copySnippet(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
 
-        const text = input.value;
+        const text = el.value;
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => {
-                flashCopied(input);
-            }).catch(() => fallbackCopy(input));
+                flashCopied(el);
+            }).catch(() => fallbackCopy(el));
         } else {
-            fallbackCopy(input);
+            fallbackCopy(el);
         }
     }
 
-    function fallbackCopy(input) {
-        input.select();
-        input.setSelectionRange(0, 99999);
+    function fallbackCopy(el) {
+        if (el.select) {
+            el.select();
+            if (el.setSelectionRange) {
+                el.setSelectionRange(0, 99999);
+            }
+        }
         try {
             document.execCommand('copy');
-            flashCopied(input);
+            flashCopied(el);
         } catch (err) {
             console.error('Failed to copy:', err);
         }
     }
 
-    function flashCopied(input) {
-        const original = input.value;
-        input.value = 'Copied!';
-        setTimeout(() => { input.value = original; }, 1000);
+    function flashCopied(el) {
+        const original = el.value;
+        el.value = 'Copied!';
+        setTimeout(() => { el.value = original; }, 1000);
     }
 
     function escapeHtml(text) {
@@ -390,6 +544,7 @@
         revealKey,
         rotateKey,
         revokeEndpoint,
-        copySnippet
+        copySnippet,
+        saveAuthSettings
     };
 })();

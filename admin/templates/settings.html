@@ -712,8 +712,8 @@
               <div class="setup-card setup-card-warning">
                 <div class="setup-card-badge setup-card-badge-warning">Advanced</div>
                 <h4>Remote connector</h4>
-                <p><strong>Requires OAuth.</strong> Pasting the MCP server URL directly into Claude's remote connector settings will fail until OAuth is enabled (planned update).</p>
-                <p class="setup-card-detail">Use the stdio bridge above for reliable setup today. The server URL is shown for reference when OAuth ships.</p>
+                <p><strong>Requires OAuth.</strong> Paste the MCP server URL into Claude's remote connector settings. Set endpoint <strong>Auth mode</strong> to OAuth or Both when creating the endpoint.</p>
+                <p class="setup-card-detail">See <code>docs/mcp-setup-guide.md</code> Path B. Use the stdio bridge above if you prefer not to expose OAuth.</p>
               </div>
             </div>
 
@@ -919,6 +919,22 @@
                   Require approval for write actions
                 </label>
                 <small>When enabled, destructive or write operations need admin approval</small>
+              </div>
+
+              <div class="form-group">
+                <label for="mcp-auth-mode">Auth mode</label>
+                <select id="mcp-auth-mode" name="auth_mode">
+                  <option value="api_key" selected>API key — stdio bridge and curl (default)</option>
+                  <option value="oauth">OAuth — remote connector only</option>
+                  <option value="both">Both — bridge and remote connector</option>
+                </select>
+                <small>Remote connector (Claude.ai) requires OAuth or Both. Stdio bridge uses API key.</small>
+              </div>
+
+              <div class="form-group" id="mcp-oauth-client-id-group" style="display: none;">
+                <label for="mcp-oauth-client-id">OAuth client ID (optional)</label>
+                <input type="text" id="mcp-oauth-client-id" name="oauth_client_id" placeholder="Leave blank for dynamic registration">
+                <small>Pre-register a client ID to bind this endpoint to a specific OAuth client</small>
               </div>
 
               <div id="mcp-create-key-reveal" class="mcp-key-reveal" style="display: none;">

@@ -1082,7 +1082,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 - [ ] **P4.1-M3-T3** DCR or CIMD (research Claude broker compatibility)
 - [ ] **P4.1-M3-T4** `api/mcp_server.php` — `WWW-Authenticate` + resource metadata
 - [ ] **P4.1-M3-T5** Bearer token → endpoint profile + permissions
-- [ ] **P4.1-M3-T6** Admin auth_mode + optional OAuth client ID field
+- [x] **P4.1-M3-T6** Admin auth_mode + optional OAuth client ID field
 - [ ] **P4.1-M3-T7** CORS for `claude.ai`; subdirectory-safe well-known URLs
 
 **Acceptance criteria:** Remote connector OAuth E2E; `tests/mcp_oauth_test.php` in CI
@@ -1110,16 +1110,16 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4.1-M5 — Bridge & docs polish
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly, Birkly-Docs
 - **Depends on:** P4.1-M2-T3, P4.1-M3-T4
 
 **Tasks**
 
-- [ ] **P4.1-M5-T1** `mcp-bridge.js` — `notifications/initialized`, `ping`
-- [ ] **P4.1-M5-T2** Rewrite `docs/mcp-setup-guide.md` (bridge vs remote connector)
-- [ ] **P4.1-M5-T3** Admin Claude Desktop config snippet generator
-- [ ] **P4.1-M5-T4** Update `docs/reviews/p4-mcp-client-matrix.md`
+- [x] **P4.1-M5-T1** `mcp-bridge.js` — `notifications/initialized`, `ping`
+- [x] **P4.1-M5-T2** Rewrite `docs/mcp-setup-guide.md` (bridge vs remote connector)
+- [x] **P4.1-M5-T3** Admin Claude Desktop config snippet generator
+- [x] **P4.1-M5-T4** Update `docs/reviews/p4-mcp-client-matrix.md`
 
 **Acceptance criteria:** Docs match two connection paths; stdio bridge verified
 
