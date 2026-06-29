@@ -1026,7 +1026,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Ordering:** P4.1-M1 → … → P4.1-M6. Cross-repo: Birkly → Birkly-Docs.
 
-**Status:** **approved** (2026-06-16, Keven). Execute per `docs/reviews/P4.1-lead-engineer-handoff.md`. **Human reviews end result only at P4.1-M6** (after internal QA + integration tests + videos).
+**Status:** **complete** (2026-06-29). Human review ready at P4.1-M6-T5.
 
 **Trigger:** User reported Claude remote connector OAuth failure (`ofid_bca0068514e0b124`) and outbound AI not working on live install despite P4 CI green.
 
@@ -1034,15 +1034,15 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4.1-M1 — Reproduce & document failure modes
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Goal:** Evidence before code; confirm root causes
 
 **Tasks**
 
-- [ ] **P4.1-M1-T1** Live repro matrix: outbound connect+chat, MCP curl, MCP stdio, Claude remote connector
-- [ ] **P4.1-M1-T2** `docs/reviews/p4.1-integration-repro.md`
-- [ ] **P4.1-M1-T3** Install shape check (subdirectory, legacy MCP keys, migration dry-run)
+- [x] **P4.1-M1-T1** Live repro matrix: outbound connect+chat, MCP curl, MCP stdio, Claude remote connector
+- [x] **P4.1-M1-T2** `docs/reviews/p4.1-integration-repro.md`
+- [x] **P4.1-M1-T3** Install shape check (subdirectory, legacy MCP keys, migration dry-run)
 
 **Acceptance criteria:** Written repro doc with pass/fail per path; root causes confirmed
 
@@ -1050,7 +1050,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4.1-M2 — Unified Settings UI
 
-- **Status:** complete (Birkly); Birkly-Docs T6 pending
+- **Status:** complete
 - **Repos:** Birkly, Birkly-Docs
 - **Goal:** One **AI & Integrations** tab with Outbound + Inbound sections
 - **Depends on:** P4.1-M1-T2
@@ -1062,7 +1062,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 - [x] **P4.1-M2-T3** Inbound (MCP) section
 - [x] **P4.1-M2-T4** Shared approval queue panel
 - [x] **P4.1-M2-T5** Setup cards + remote-connector warning until OAuth ships
-- [ ] **P4.1-M2-T6** Birkly-Docs topic updates
+- [x] **P4.1-M2-T6** Birkly-Docs topic updates
 
 **Acceptance criteria:** design-reviewer pass; deep links work
 
@@ -1070,20 +1070,20 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4.1-M3 — MCP OAuth for remote connectors
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly
 - **Goal:** Claude remote connector completes OAuth; API key path unchanged
 - **Depends on:** P4.1-M1-T2
 
 **Tasks**
 
-- [ ] **P4.1-M3-T1** `docs/reviews/p4.1-mcp-oauth-threat-model.md`
-- [ ] **P4.1-M3-T2** `core/mcp_oauth.php` — metadata, PKCE, token endpoints
-- [ ] **P4.1-M3-T3** DCR or CIMD (research Claude broker compatibility)
-- [ ] **P4.1-M3-T4** `api/mcp_server.php` — `WWW-Authenticate` + resource metadata
-- [ ] **P4.1-M3-T5** Bearer token → endpoint profile + permissions
+- [x] **P4.1-M3-T1** `docs/reviews/p4.1-mcp-oauth-threat-model.md`
+- [x] **P4.1-M3-T2** `core/mcp_oauth.php` — metadata, PKCE, token endpoints
+- [x] **P4.1-M3-T3** DCR or CIMD (research Claude broker compatibility)
+- [x] **P4.1-M3-T4** `api/mcp_server.php` — `WWW-Authenticate` + resource metadata
+- [x] **P4.1-M3-T5** Bearer token → endpoint profile + permissions
 - [x] **P4.1-M3-T6** Admin auth_mode + optional OAuth client ID field
-- [ ] **P4.1-M3-T7** CORS for `claude.ai`; subdirectory-safe well-known URLs
+- [x] **P4.1-M3-T7** CORS for `claude.ai`; subdirectory-safe well-known URLs
 
 **Acceptance criteria:** Remote connector OAuth E2E; `tests/mcp_oauth_test.php` in CI
 
@@ -1127,17 +1127,17 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4.1-M6 — Integration tests & closure
 
-- **Status:** not started
+- **Status:** complete
 - **Repos:** Birkly (+ Birkly-Docs)
 - **Depends on:** P4.1-M2–P4.1-M5
 
 **Tasks**
 
-- [ ] **P4.1-M6-T1** `docs/reviews/p4.1-integration-test-matrix.md` — all rows green
-- [ ] **P4.1-M6-T2** CI: `tests/mcp_oauth_test.php` + extended suites
-- [ ] **P4.1-M6-T3** Videos V18 (unified settings), V19 (MCP OAuth), V20 (outbound chat)
-- [ ] **P4.1-M6-T4** `docs/reviews/p4.1-phase-closure-checklist.md` + roadmap update
-- [ ] **P4.1-M6-T5** **Notify human once** — only after qa-verifier + design-reviewer sign-off
+- [x] **P4.1-M6-T1** `docs/reviews/p4.1-integration-test-matrix.md` — all rows green
+- [x] **P4.1-M6-T2** CI: `tests/mcp_oauth_test.php` + extended suites
+- [x] **P4.1-M6-T3** Videos V18 (unified settings), V19 (MCP OAuth), V20 (outbound chat)
+- [x] **P4.1-M6-T4** `docs/reviews/p4.1-phase-closure-checklist.md` + roadmap update
+- [x] **P4.1-M6-T5** **Notify human once** — only after qa-verifier + design-reviewer sign-off
 
 **Acceptance criteria:** Integration matrix green; videos delivered; **single notification to human**
 
