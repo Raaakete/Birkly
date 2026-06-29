@@ -39,6 +39,21 @@ $mcpTools = birkly_ai_tools_mcp_format($viewer);
 test_assert('mcp format returns array', is_array($mcpTools) && count($mcpTools) > 0);
 test_assert('mcp tool has inputSchema', isset($mcpTools[0]['inputSchema']));
 
+$listCollections = null;
+foreach ($mcpTools as $tool) {
+    if (($tool['name'] ?? '') === 'list_collections') {
+        $listCollections = $tool;
+        break;
+    }
+}
+test_assert('list_collections tool present', $listCollections !== null);
+$encoded = json_encode($listCollections['inputSchema'] ?? []);
+test_assert(
+    'mcp inputSchema properties encodes as JSON object not array',
+    is_string($encoded) && strpos($encoded, '"properties":{}') !== false,
+    $encoded
+);
+
 $toolCalls = [[
     'function' => [
         'name' => 'list_collections',
