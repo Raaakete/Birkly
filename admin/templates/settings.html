@@ -649,42 +649,71 @@
         <div class="ai-integrations-settings">
           <div class="settings-section ai-integrations-intro">
             <h2>AI &amp; Integrations</h2>
-            <p class="settings-help">Manage outbound AI providers for admin chat and inbound MCP endpoints for external AI tools. Both channels share the same approval queue and permission model.</p>
+            <p class="settings-help ai-intro-lead">Use AI with Birkly in two simple ways — pick the one that fits how you work.</p>
+            <div class="ai-intro-cards">
+              <div class="ai-intro-card">
+                <span class="ai-intro-icon" aria-hidden="true">💬</span>
+                <strong>Chat inside Birkly</strong>
+                <p>Talk to AI while you edit content in the admin panel (like a built-in assistant).</p>
+              </div>
+              <div class="ai-intro-card">
+                <span class="ai-intro-icon" aria-hidden="true">🖥️</span>
+                <strong>Connect Claude Desktop</strong>
+                <p>Let Claude on your computer work with your Birkly site — no coding required.</p>
+              </div>
+            </div>
+            <p class="ai-intro-docs">
+              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections" class="ai-docs-link">Open step-by-step guide in Help</a>
+              ·
+              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer" class="ai-docs-link">Full documentation</a>
+            </p>
           </div>
 
           <!-- Shared Approval Queue -->
           <div class="approval-queue-panel ai-integrations-shared-queue" id="approval-queue-panel">
             <div class="panel-header">
-              <h3><?= __('admin.approval_queue') ?></h3>
+              <h3>
+                <?= __('admin.approval_queue') ?>
+                <button type="button" class="help-tip" aria-label="What is the approval queue?"
+                  data-tip="When AI wants to change or publish content, the action waits here until you approve or reject it. This keeps you in control.">?</button>
+              </h3>
               <button class="btn-icon" id="toggle-queue-btn" type="button" aria-expanded="true" aria-controls="approval-queue-content">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </button>
             </div>
-            <p class="settings-help ai-integrations-queue-help">Pending actions from outbound chat and inbound MCP tools appear here for admin approval.</p>
+            <p class="settings-help ai-integrations-queue-help">Nothing to approve right now? You're all caught up. New requests from chat or connected apps will show up here.</p>
             <div class="approval-queue-content" id="approval-queue-content">
               <div class="loading">Loading approvals...</div>
             </div>
           </div>
 
-          <!-- Section A: Outbound (BYOAI) -->
+          <!-- Section A: Chat inside Birkly -->
           <section class="ai-integrations-section" id="outbound-connections">
             <div class="ai-integrations-section-header">
-              <h3>Outbound (BYOAI)</h3>
-              <p class="settings-help">Connect your AI accounts to get AI assistance in creating and editing content. API keys from provider developer consoles — consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access.</p>
+              <h3>
+                Chat inside Birkly
+                <button type="button" class="help-tip" aria-label="About admin chat"
+                  data-tip="Connect an AI provider (OpenAI, Anthropic, Ollama, etc.) so the blue chat button in the admin panel can help you write and edit content. You need a developer API key — a ChatGPT Plus or Claude Pro subscription is not enough.">?</button>
+              </h3>
+              <p class="settings-help">Add an AI service once, then use the <strong>chat button</strong> (bottom-right in the admin) to get help with your content.</p>
+            </div>
+
+            <div class="tip-box tip-box-info">
+              <strong>Tip:</strong> Not sure where to get an API key? Each provider has a developer website — we'll show you links when you click <em>Add AI service</em>.
             </div>
 
             <div class="connections-container">
               <div class="connections-panel">
                 <div class="panel-header">
-                  <h4>Connected AI Services</h4>
+                  <h4>Your AI services</h4>
                   <button class="btn btn-primary" id="add-connection-btn" type="button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    Add Connection
+                    Add AI service
                   </button>
                 </div>
 
@@ -695,51 +724,57 @@
             </div>
           </section>
 
-          <!-- Section B: Inbound (MCP) -->
+          <!-- Section B: Connect external AI apps -->
           <section class="ai-integrations-section" id="inbound-mcp">
             <div class="ai-integrations-section-header">
-              <h3>Inbound (MCP)</h3>
-              <p class="settings-help">Let external AI tools (e.g. Claude Desktop) connect to your Birkly site via the Model Context Protocol. Each endpoint gets its own API key and role.</p>
+              <h3>
+                Connect Claude Desktop (or other AI apps)
+                <button type="button" class="help-tip" aria-label="About external AI apps"
+                  data-tip="This lets Claude Desktop (the app on your Mac or PC) read and work with your Birkly content. You create a connection here, then follow the short copy-and-paste steps — no programming needed.">?</button>
+              </h3>
+              <p class="settings-help">Best for <strong>Claude Desktop</strong> users. Create a connection below — we'll give you exact steps and a ready-to-paste setup.</p>
             </div>
 
-            <div class="connector-setup-cards">
-              <div class="setup-card setup-card-recommended">
-                <div class="setup-card-badge">Recommended</div>
-                <h4>Stdio bridge</h4>
-                <p>Use <code>mcp-bridge.js</code> with Claude Desktop or other MCP clients. Set <code>BIRKLY_URL</code> and <code>BIRKLY_MCP_API_KEY</code> — no OAuth required.</p>
-                <p class="setup-card-detail">Create an endpoint below, reveal the API key, and copy the bridge command into your client config.</p>
-              </div>
-              <div class="setup-card setup-card-warning">
-                <div class="setup-card-badge setup-card-badge-warning">Advanced</div>
-                <h4>Remote connector</h4>
-                <p><strong>Requires OAuth.</strong> Paste the MCP server URL into Claude's remote connector settings. Set endpoint <strong>Auth mode</strong> to OAuth or Both when creating the endpoint.</p>
-                <p class="setup-card-detail">See <code>docs/mcp-setup-guide.md</code> Path B. Use the stdio bridge above if you prefer not to expose OAuth.</p>
-              </div>
+            <div class="setup-guide-box" id="mcp-setup-guide">
+              <h4 class="setup-guide-title">Quick start (about 3 minutes)</h4>
+              <ol class="setup-guide-steps">
+                <li>Click <strong>Add connection for Claude Desktop</strong> below and give it a name.</li>
+                <li>Click <strong>Show my setup steps</strong> on your new connection.</li>
+                <li>Follow the on-screen steps: download one small helper file, copy one block of text, paste into Claude Desktop settings.</li>
+              </ol>
+              <p class="setup-guide-note">You never edit Birkly files — everything happens with buttons and copy-paste in this page and Claude Desktop.</p>
             </div>
+
+            <details class="advanced-setup-details">
+              <summary>Advanced: connect Claude on the web (claude.ai) instead of the desktop app</summary>
+              <div class="advanced-setup-body">
+                <p>Only use this if you use Claude in the browser, not Claude Desktop. It requires signing in with OAuth when Claude asks.</p>
+                <p>When creating a connection, choose <strong>Claude on the web</strong> as the connection type. Then paste the server URL into Claude's connector settings.</p>
+                <div class="mcp-server-url-block mcp-server-url-advanced" id="mcp-global-server-url" style="display: none;">
+                  <label for="mcp-server-url-input">Server URL for Claude web connector</label>
+                  <div class="copy-snippet-row">
+                    <input type="text" id="mcp-server-url-input" readonly>
+                    <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-server-url-input', true)">Copy URL</button>
+                  </div>
+                </div>
+              </div>
+            </details>
 
             <div class="connections-container mcp-connections-settings">
               <div class="connections-panel">
                 <div class="panel-header">
-                  <h4>MCP Endpoints</h4>
+                  <h4>Your connections</h4>
                   <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    Add Endpoint
+                    Add connection for Claude Desktop
                   </button>
                 </div>
 
-                <div class="mcp-server-url-block" id="mcp-global-server-url" style="display: none;">
-                  <label for="mcp-server-url-input">MCP Server URL <span class="setup-url-note">(for remote connector — OAuth required)</span></label>
-                  <div class="copy-snippet-row">
-                    <input type="text" id="mcp-server-url-input" readonly>
-                    <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-server-url-input')">Copy</button>
-                  </div>
-                </div>
-
                 <div class="connections-list" id="mcp-endpoints-list">
-                  <div class="loading">Loading endpoints...</div>
+                  <div class="loading">Loading connections...</div>
                 </div>
               </div>
             </div>
@@ -890,7 +925,7 @@
         <div class="modal" id="add-mcp-modal" style="display: none;">
           <div class="modal-content">
             <div class="modal-header">
-              <h2 id="mcp-modal-title">Add MCP Endpoint</h2>
+              <h2 id="mcp-modal-title">Connect Claude to Birkly</h2>
               <button class="btn-icon modal-close" data-mcp-modal-close>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -899,55 +934,77 @@
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">
+              <p class="modal-intro-text">We'll create a secure connection and show you simple copy-paste steps. No technical knowledge needed.</p>
+
               <div class="form-group">
-                <label for="mcp-endpoint-name">Endpoint name</label>
-                <input type="text" id="mcp-endpoint-name" name="name" required placeholder="e.g. Claude Desktop">
-                <small>A friendly name to identify this MCP client</small>
+                <label for="mcp-connection-type">
+                  How will you use Claude?
+                  <button type="button" class="help-tip" aria-label="Connection type help"
+                    data-tip="Claude Desktop is the app you install on your Mac or PC — this is what most people use. Claude on the web is only if you connect from claude.ai in your browser.">?</button>
+                </label>
+                <select id="mcp-connection-type" name="connection_type">
+                  <option value="desktop" selected>Claude Desktop (recommended — app on my computer)</option>
+                  <option value="web">Claude on the web (claude.ai — advanced)</option>
+                </select>
               </div>
 
               <div class="form-group">
-                <label for="mcp-endpoint-role">Role</label>
+                <label for="mcp-endpoint-name">Connection name</label>
+                <input type="text" id="mcp-endpoint-name" name="name" required placeholder="e.g. My MacBook Claude">
+                <small>A name you'll recognize later (anything you like)</small>
+              </div>
+
+              <div class="form-group">
+                <label for="mcp-endpoint-role">
+                  What can this connection do?
+                  <button type="button" class="help-tip" aria-label="Role help"
+                    data-tip="This sets how much Claude can do on your site. Viewer = read only. Editor = can suggest changes (often needs your approval). Admin = full access — use carefully.">?</button>
+                </label>
                 <select id="mcp-endpoint-role" name="role" required>
                   <option value="">Loading roles...</option>
                 </select>
-                <small>Permissions granted to tools called via this endpoint</small>
+                <small>Most people choose <strong>Editor</strong> or <strong>Viewer</strong></small>
               </div>
 
               <div class="form-group">
                 <label>
                   <input type="checkbox" id="mcp-require-approval" name="require_approval" value="1" checked>
-                  Require approval for write actions
+                  Ask me before Claude changes or publishes content
                 </label>
-                <small>When enabled, destructive or write operations need admin approval</small>
+                <small>Recommended — you stay in control of every important action</small>
               </div>
 
-              <div class="form-group">
-                <label for="mcp-auth-mode">Auth mode</label>
-                <select id="mcp-auth-mode" name="auth_mode">
-                  <option value="api_key" selected>API key — stdio bridge and curl (default)</option>
-                  <option value="oauth">OAuth — remote connector only</option>
-                  <option value="both">Both — bridge and remote connector</option>
-                </select>
-                <small>Remote connector (Claude.ai) requires OAuth or Both. Stdio bridge uses API key.</small>
-              </div>
+              <input type="hidden" id="mcp-auth-mode" name="auth_mode" value="api_key">
 
-              <div class="form-group" id="mcp-oauth-client-id-group" style="display: none;">
-                <label for="mcp-oauth-client-id">OAuth client ID (optional)</label>
-                <input type="text" id="mcp-oauth-client-id" name="oauth_client_id" placeholder="Leave blank for dynamic registration">
-                <small>Pre-register a client ID to bind this endpoint to a specific OAuth client</small>
-              </div>
+              <details class="advanced-setup-details modal-advanced">
+                <summary>Advanced settings (optional)</summary>
+                <div class="advanced-setup-body">
+                  <div class="form-group" id="mcp-auth-mode-visible-group" style="display: none;">
+                    <label for="mcp-auth-mode-select">Sign-in method for Claude web</label>
+                    <select id="mcp-auth-mode-select">
+                      <option value="oauth">Sign in with Claude (OAuth)</option>
+                      <option value="both">OAuth + backup key</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="mcp-oauth-client-id-group" style="display: none;">
+                    <label for="mcp-oauth-client-id">OAuth client ID (only if support gave you one)</label>
+                    <input type="text" id="mcp-oauth-client-id" name="oauth_client_id" placeholder="Leave blank in most cases">
+                  </div>
+                </div>
+              </details>
 
-              <div id="mcp-create-key-reveal" class="mcp-key-reveal" style="display: none;">
-                <p><strong>Save this API key now</strong> — it won't be shown again unless you reveal or rotate it.</p>
+              <div id="mcp-create-key-reveal" class="mcp-key-reveal mcp-success-panel" style="display: none;">
+                <p><strong>Connection created!</strong> Next: click <em>Show my setup steps</em> on your connection card and follow the guide.</p>
+                <p class="settings-help">Your secret key (save a copy if you like — you can always reveal it again later):</p>
                 <div class="copy-snippet-row">
                   <input type="text" id="mcp-new-key-display" readonly>
-                  <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-new-key-display')">Copy</button>
+                  <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-new-key-display', true)">Copy key</button>
                 </div>
               </div>
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-mcp-modal-close>Cancel</button>
-                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create Endpoint</button>
+                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create connection</button>
               </div>
             </form>
           </div>

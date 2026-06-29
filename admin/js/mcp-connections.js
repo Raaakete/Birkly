@@ -1,5 +1,5 @@
 /**
- * MCP Connections Management (inbound MCP endpoints)
+ * External AI connections (Claude Desktop, etc.) — plain-language UI
  */
 
 (function() {
@@ -8,7 +8,9 @@
     let csrfToken = '';
     let initialized = false;
     let serverUrl = '';
-    const BRIDGE_PATH_PLACEHOLDER = '/absolute/path/to/your/Birkly/mcp-bridge.js';
+    const DOCS_HELP_URL = typeof Birkly !== 'undefined' && Birkly.adminUrl
+        ? Birkly.adminUrl('help') + '#mcp-connections'
+        : '/admin/index.php?page=help#mcp-connections';
 
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
@@ -25,6 +27,7 @@
         initialized = true;
 
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        initHelpTips();
         loadEndpoints();
         setupEventListeners();
     }
@@ -50,6 +53,17 @@
         window.addEventListener('birkly:ai-integrations-tab', maybeInitMcpConnections);
     });
 
+    function initHelpTips() {
+        document.querySelectorAll('#ai-integrations .help-tip[data-tip]').forEach(btn => {
+            if (btn.dataset.tipBound) return;
+            btn.dataset.tipBound = '1';
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+    }
+
     function setupEventListeners() {
         document.getElementById('add-mcp-endpoint-btn')?.addEventListener('click', showAddMcpModal);
 
@@ -59,41 +73,61 @@
 
         document.getElementById('add-mcp-form')?.addEventListener('submit', handleMcpCreate);
 
-        const authModeSelect = document.getElementById('mcp-auth-mode');
-        authModeSelect?.addEventListener('change', updateOAuthClientIdVisibility);
+        document.getElementById('mcp-connection-type')?.addEventListener('change', syncConnectionTypeFields);
+        document.getElementById('mcp-auth-mode-select')?.addEventListener('change', syncAuthModeFromSelect);
     }
 
-    function updateOAuthClientIdVisibility() {
-        const authMode = document.getElementById('mcp-auth-mode')?.value || 'api_key';
-        const group = document.getElementById('mcp-oauth-client-id-group');
-        if (group) {
-            group.style.display = (authMode === 'oauth' || authMode === 'both') ? 'block' : 'none';
+    function syncConnectionTypeFields() {
+        const type = document.getElementById('mcp-connection-type')?.value || 'desktop';
+        const authHidden = document.getElementById('mcp-auth-mode');
+        const authVisibleGroup = document.getElementById('mcp-auth-mode-visible-group');
+        const oauthGroup = document.getElementById('mcp-oauth-client-id-group');
+        const authSelect = document.getElementById('mcp-auth-mode-select');
+
+        if (type === 'web') {
+            if (authHidden) authHidden.value = authSelect?.value || 'oauth';
+            if (authVisibleGroup) authVisibleGroup.style.display = 'block';
+            if (oauthGroup) oauthGroup.style.display = 'block';
+        } else {
+            if (authHidden) authHidden.value = 'api_key';
+            if (authVisibleGroup) authVisibleGroup.style.display = 'none';
+            if (oauthGroup) oauthGroup.style.display = 'none';
         }
     }
 
-    function authModeLabel(mode) {
-        const labels = {
-            api_key: 'API key',
-            oauth: 'OAuth',
-            both: 'API key + OAuth'
-        };
-        return labels[mode] || mode || 'API key';
+    function syncAuthModeFromSelect() {
+        const authSelect = document.getElementById('mcp-auth-mode-select');
+        const authHidden = document.getElementById('mcp-auth-mode');
+        if (authHidden && authSelect) {
+            authHidden.value = authSelect.value;
+        }
+        const oauthGroup = document.getElementById('mcp-oauth-client-id-group');
+        if (oauthGroup) {
+            const show = authSelect && (authSelect.value === 'oauth' || authSelect.value === 'both');
+            oauthGroup.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    function connectionTypeLabel(authMode) {
+        if (authMode === 'oauth') return 'Claude on the web';
+        if (authMode === 'both') return 'Desktop + web';
+        return 'Claude Desktop';
     }
 
     async function loadEndpoints() {
         try {
-            const response = await fetch('/api/mcp_endpoints.php?action=list');
+            const response = await fetch(Birkly.url('/api/mcp_endpoints.php?action=list'));
             const result = await response.json();
 
             if (result && result.status === 'ok' && result.data) {
-                serverUrl = result.data.server_url || (window.location.origin + '/api/mcp_server.php');
+                serverUrl = result.data.server_url || (window.location.origin + Birkly.url('/api/mcp_server.php'));
                 updateGlobalServerUrl();
                 renderEndpoints(result.data.endpoints || []);
             } else {
                 renderEndpoints([]);
             }
         } catch (error) {
-            console.error('Error loading MCP endpoints:', error);
+            console.error('Error loading connections:', error);
             renderEndpoints([]);
         }
     }
@@ -107,99 +141,27 @@
         }
     }
 
-    function renderEndpoints(endpoints) {
-        const list = document.getElementById('mcp-endpoints-list');
-        if (!list) return;
-
-        if (endpoints.length === 0) {
-            list.innerHTML = '<div class="empty-state"><p>No MCP endpoints yet. Click "Add Endpoint" to let external AI tools connect to Birkly.</p></div>';
-            return;
-        }
-
-        list.innerHTML = endpoints.map(ep => {
-            const status = ep.status || 'active';
-            const bridgeCmd = buildBridgeCommand('YOUR_MCP_API_KEY');
-            const claudeConfig = buildClaudeDesktopConfig('YOUR_MCP_API_KEY', ep.name || ep.id);
-            const statusClass = status === 'active' ? 'active' : 'inactive';
-            const approvalLabel = ep.require_approval ? 'Approval required' : 'Auto-execute';
-            const authMode = ep.auth_mode || 'api_key';
-            const oauthClientId = ep.oauth_client_id || '';
-            const showOAuthFields = authMode === 'oauth' || authMode === 'both';
-
-            return `
-            <div class="connection-item mcp-endpoint-item" data-endpoint-id="${escapeHtml(ep.id)}">
-                <div class="connection-info">
-                    <div class="connection-name">${escapeHtml(ep.name || ep.id)}</div>
-                    <div class="connection-meta">
-                        <span class="connection-role">${escapeHtml(ep.role || 'viewer')}</span>
-                        <span class="mcp-endpoint-status ${statusClass}">${escapeHtml(status)}</span>
-                        <span>${escapeHtml(approvalLabel)}</span>
-                        <span class="mcp-auth-mode-label">${escapeHtml(authModeLabel(authMode))}</span>
-                    </div>
-                    <div class="mcp-snippet-block mcp-auth-edit-block">
-                        <label for="mcp-auth-mode-${escapeHtml(ep.id)}">Auth mode</label>
-                        <div class="copy-snippet-row">
-                            <select id="mcp-auth-mode-${escapeHtml(ep.id)}" class="mcp-auth-mode-select" data-endpoint-id="${escapeHtml(ep.id)}">
-                                <option value="api_key" ${authMode === 'api_key' ? 'selected' : ''}>API key</option>
-                                <option value="oauth" ${authMode === 'oauth' ? 'selected' : ''}>OAuth</option>
-                                <option value="both" ${authMode === 'both' ? 'selected' : ''}>Both</option>
-                            </select>
-                            <input type="text"
-                                id="mcp-oauth-client-${escapeHtml(ep.id)}"
-                                class="mcp-oauth-client-input"
-                                placeholder="OAuth client ID (optional)"
-                                value="${escapeHtml(oauthClientId)}"
-                                style="display: ${showOAuthFields ? 'block' : 'none'};">
-                            <button type="button" class="btn btn-sm" onclick="mcpConnections.saveAuthSettings('${escapeHtml(ep.id)}')">Save auth</button>
-                        </div>
-                        <small class="mcp-snippet-hint">OAuth or Both required for Claude remote connector.</small>
-                    </div>
-                    <div class="mcp-snippet-block">
-                        <label for="mcp-claude-config-${escapeHtml(ep.id)}">Claude Desktop config (stdio bridge)</label>
-                        <div class="copy-snippet-row mcp-config-snippet-row">
-                            <textarea readonly id="mcp-claude-config-${escapeHtml(ep.id)}" class="mcp-config-snippet" rows="10">${escapeHtml(claudeConfig)}</textarea>
-                            <button type="button" class="btn btn-sm" aria-label="Copy Claude Desktop config" onclick="mcpConnections.copySnippet('mcp-claude-config-${escapeHtml(ep.id)}')">Copy</button>
-                        </div>
-                        <small class="mcp-snippet-hint">Replace the bridge path and API key after revealing the key below. Paste into claude_desktop_config.json.</small>
-                    </div>
-                    <div class="mcp-snippet-block">
-                        <label for="mcp-bridge-${escapeHtml(ep.id)}">Bridge command (shell)</label>
-                        <div class="copy-snippet-row">
-                            <input type="text" value="${escapeHtml(bridgeCmd)}" readonly id="mcp-bridge-${escapeHtml(ep.id)}">
-                            <button type="button" class="btn btn-sm" aria-label="Copy bridge command" onclick="mcpConnections.copySnippet('mcp-bridge-${escapeHtml(ep.id)}')">Copy</button>
-                        </div>
-                    </div>
-                    <div class="mcp-snippet-block">
-                        <label for="mcp-key-${escapeHtml(ep.id)}">API Key</label>
-                        <div class="copy-snippet-row">
-                            <input type="password" value="" placeholder="Click Reveal to show key" readonly id="mcp-key-${escapeHtml(ep.id)}" class="mcp-key-input">
-                            <button type="button" class="btn btn-sm" onclick="mcpConnections.revealKey('${escapeHtml(ep.id)}')">Reveal</button>
-                            <button type="button" class="btn btn-sm" onclick="mcpConnections.rotateKey('${escapeHtml(ep.id)}')">Rotate</button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="mcpConnections.revokeEndpoint('${escapeHtml(ep.id)}')">Revoke</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-
-        list.querySelectorAll('.mcp-auth-mode-select').forEach(select => {
-            select.addEventListener('change', function() {
-                const endpointId = this.dataset.endpointId;
-                const oauthInput = document.getElementById('mcp-oauth-client-' + endpointId);
-                if (oauthInput) {
-                    const show = this.value === 'oauth' || this.value === 'both';
-                    oauthInput.style.display = show ? 'block' : 'none';
-                }
-            });
-        });
-    }
-
     function getBaseUrl() {
         return serverUrl.replace(/\/api\/mcp_server\.php$/, '') || window.location.origin;
     }
 
-    function buildBridgeCommand(apiKey) {
-        return `BIRKLY_URL=${getBaseUrl()} BIRKLY_MCP_API_KEY=${apiKey} node mcp-bridge.js`;
+    function getBridgeDownloadUrl() {
+        const base = getBaseUrl().replace(/\/$/, '');
+        const path = (typeof Birkly !== 'undefined' && Birkly.url) ? Birkly.url('/mcp-bridge.js') : '/mcp-bridge.js';
+        if (path.startsWith('http')) return path;
+        try {
+            return new URL(path, base + '/').href;
+        } catch (e) {
+            return base + path;
+        }
+    }
+
+    function defaultBridgePath() {
+        const ua = navigator.userAgent || '';
+        if (/Win/i.test(ua)) {
+            return 'C:\\Users\\YOUR_NAME\\Documents\\Birkly\\mcp-bridge.js';
+        }
+        return '/Users/YOUR_NAME/Documents/Birkly/mcp-bridge.js';
     }
 
     function slugifyServerName(name) {
@@ -215,7 +177,7 @@
             mcpServers: {
                 [slugifyServerName(endpointName)]: {
                     command: 'node',
-                    args: [BRIDGE_PATH_PLACEHOLDER],
+                    args: [defaultBridgePath()],
                     env: {
                         BIRKLY_URL: getBaseUrl(),
                         BIRKLY_MCP_API_KEY: apiKey
@@ -226,15 +188,117 @@
         return JSON.stringify(config, null, 2);
     }
 
-    function updateEndpointSnippets(endpointId, apiKey, endpointName) {
-        const bridgeInput = document.getElementById('mcp-bridge-' + endpointId);
-        if (bridgeInput) {
-            bridgeInput.value = buildBridgeCommand(apiKey);
+    function renderSetupSteps(endpointId, authMode) {
+        if (authMode === 'oauth' || authMode === 'both') {
+            return `
+            <ol class="endpoint-setup-steps">
+                <li>Copy the <strong>server URL</strong> below.</li>
+                <li>Open <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">claude.ai</a> → Settings → Connectors → Add connector.</li>
+                <li>Paste the URL and sign in when Claude asks.</li>
+                <li>Need help? <a href="${escapeHtml(DOCS_HELP_URL)}">Open the guide</a></li>
+            </ol>
+            <div class="mcp-snippet-block">
+                <label>Server URL</label>
+                <div class="copy-snippet-row">
+                    <input type="text" readonly value="${escapeHtml(serverUrl)}" id="mcp-web-url-${escapeHtml(endpointId)}">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-web-url-${escapeHtml(endpointId)}', true)">Copy URL</button>
+                </div>
+            </div>`;
         }
-        const configTextarea = document.getElementById('mcp-claude-config-' + endpointId);
-        if (configTextarea) {
-            configTextarea.value = buildClaudeDesktopConfig(apiKey, endpointName);
+
+        return `
+        <ol class="endpoint-setup-steps">
+            <li>
+                <a href="${escapeHtml(getBridgeDownloadUrl())}" download="mcp-bridge.js" class="btn btn-sm btn-secondary">Download connection helper</a>
+                <span class="step-hint">Save it to a folder you'll keep, e.g. <em>Documents/Birkly</em></span>
+            </li>
+            <li>Click <strong>Prepare my Claude setup</strong> below — we'll fill in your secret key automatically.</li>
+            <li>Click <strong>Copy setup for Claude</strong> and paste into Claude Desktop:
+                <ul class="sub-steps">
+                    <li>Open Claude Desktop → <strong>Settings</strong> (gear icon)</li>
+                    <li>Go to <strong>Developer</strong> → <strong>Edit Config</strong></li>
+                    <li>Paste and save — then restart Claude Desktop</li>
+                </ul>
+            </li>
+            <li>Still stuck? <a href="${escapeHtml(DOCS_HELP_URL)}">Read the full guide with pictures</a></li>
+        </ol>
+        <div class="mcp-setup-actions">
+            <button type="button" class="btn btn-primary" onclick="mcpConnections.prepareDesktopSetup('${escapeHtml(endpointId)}')">Prepare my Claude setup</button>
+            <button type="button" class="btn btn-secondary" onclick="mcpConnections.copyClaudeConfig('${escapeHtml(endpointId)}')" id="mcp-copy-config-btn-${escapeHtml(endpointId)}" disabled>Copy setup for Claude</button>
+            <button type="button" class="btn btn-sm" onclick="mcpConnections.downloadClaudeConfig('${escapeHtml(endpointId)}')" id="mcp-download-config-btn-${escapeHtml(endpointId)}" disabled>Download setup file</button>
+        </div>
+        <textarea class="mcp-config-snippet mcp-config-hidden" readonly id="mcp-claude-config-${escapeHtml(endpointId)}" rows="8" aria-hidden="true"></textarea>
+        <p class="setup-path-note" id="mcp-path-note-${escapeHtml(endpointId)}">
+            <strong>Note:</strong> After downloading the helper, if you saved it somewhere other than <code>${escapeHtml(defaultBridgePath())}</code>, open the copied setup in a text editor and update the file path on the line with <code>mcp-bridge.js</code>.
+        </p>`;
+    }
+
+    function renderEndpoints(endpoints) {
+        const list = document.getElementById('mcp-endpoints-list');
+        if (!list) return;
+
+        if (endpoints.length === 0) {
+            list.innerHTML = `
+            <div class="empty-state empty-state-friendly">
+                <p><strong>No connections yet</strong></p>
+                <p>Click <em>Add connection for Claude Desktop</em> above. We'll walk you through the rest — no technical skills needed.</p>
+            </div>`;
+            return;
         }
+
+        list.innerHTML = endpoints.map(ep => {
+            const status = ep.status || 'active';
+            const authMode = ep.auth_mode || 'api_key';
+            const statusClass = status === 'active' ? 'active' : 'inactive';
+            const approvalLabel = ep.require_approval ? 'Asks before changes' : 'Auto-run (not recommended)';
+            const typeLabel = connectionTypeLabel(authMode);
+
+            return `
+            <div class="connection-item mcp-endpoint-item" data-endpoint-id="${escapeHtml(ep.id)}">
+                <div class="connection-info">
+                    <div class="connection-name-row">
+                        <div class="connection-name">${escapeHtml(ep.name || ep.id)}</div>
+                        <span class="mcp-type-pill">${escapeHtml(typeLabel)}</span>
+                    </div>
+                    <div class="connection-meta">
+                        <span class="connection-role">${escapeHtml(ep.role || 'viewer')}</span>
+                        <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
+                        <span>${escapeHtml(approvalLabel)}</span>
+                    </div>
+                    <div class="mcp-endpoint-actions">
+                        <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(ep.id)}" aria-expanded="false">
+                            Show my setup steps
+                        </button>
+                        <button type="button" class="btn btn-sm" onclick="mcpConnections.revealKey('${escapeHtml(ep.id)}')">Show secret key</button>
+                        <button type="button" class="btn btn-sm" onclick="mcpConnections.rotateKey('${escapeHtml(ep.id)}')">New secret key</button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="mcpConnections.revokeEndpoint('${escapeHtml(ep.id)}')">Remove connection</button>
+                    </div>
+                    <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(ep.id)}" hidden>
+                        <h5>Your setup steps</h5>
+                        ${renderSetupSteps(ep.id, authMode)}
+                    </div>
+                    <input type="password" value="" readonly id="mcp-key-${escapeHtml(ep.id)}" class="mcp-key-hidden" tabindex="-1" aria-hidden="true">
+                </div>
+            </div>`;
+        }).join('');
+
+        list.querySelectorAll('.mcp-toggle-setup').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.endpointId;
+                const panel = document.getElementById('mcp-setup-panel-' + id);
+                if (!panel) return;
+                const open = panel.hasAttribute('hidden');
+                if (open) {
+                    panel.removeAttribute('hidden');
+                    this.setAttribute('aria-expanded', 'true');
+                    this.textContent = 'Hide setup steps';
+                } else {
+                    panel.setAttribute('hidden', '');
+                    this.setAttribute('aria-expanded', 'false');
+                    this.textContent = 'Show my setup steps';
+                }
+            });
+        });
     }
 
     function showAddMcpModal() {
@@ -250,29 +314,25 @@
         const requireApproval = document.getElementById('mcp-require-approval');
         if (requireApproval) requireApproval.checked = true;
 
-        const authMode = document.getElementById('mcp-auth-mode');
-        if (authMode) authMode.value = 'api_key';
+        const connType = document.getElementById('mcp-connection-type');
+        if (connType) connType.value = 'desktop';
 
-        const oauthClientId = document.getElementById('mcp-oauth-client-id');
-        if (oauthClientId) oauthClientId.value = '';
-
-        updateOAuthClientIdVisibility();
+        syncConnectionTypeFields();
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) {
-            submitBtn.textContent = 'Create Endpoint';
+            submitBtn.textContent = 'Create connection';
             submitBtn.disabled = false;
         }
 
         modal.style.display = 'flex';
         loadRoles();
+        initHelpTips();
     }
 
     function hideAddMcpModal() {
         const modal = document.getElementById('add-mcp-modal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
+        if (modal) modal.style.display = 'none';
     }
 
     async function loadRoles(selectedRole = null) {
@@ -280,48 +340,51 @@
         if (!select) return;
 
         const legacyRoles = [
-            { id: 'viewer', name: 'Viewer' },
-            { id: 'author', name: 'Author' },
-            { id: 'editor', name: 'Editor' },
-            { id: 'admin', name: 'Admin' }
+            { id: 'viewer', name: 'Viewer — read only' },
+            { id: 'editor', name: 'Editor — suggest edits' },
+            { id: 'admin', name: 'Admin — full access' }
         ];
 
         try {
-            const response = await fetch('/api/roles.php?action=list_roles');
+            const response = await fetch(Birkly.url('/api/roles.php?action=list_roles'));
             const result = await response.json();
-            const roles = (result.status === 'ok' && Array.isArray(result.roles) && result.roles.length > 0)
+            let roles = (result.status === 'ok' && Array.isArray(result.roles) && result.roles.length > 0)
                 ? result.roles
                 : legacyRoles;
 
             select.innerHTML = roles.map(role => {
                 const roleId = role.id || role.name || '';
-                const label = role.name || roleId;
+                let label = role.name || roleId;
+                if (roleId === 'viewer') label = 'Viewer — read only';
+                if (roleId === 'editor') label = 'Editor — suggest edits';
+                if (roleId === 'admin') label = 'Admin — full access';
                 return `<option value="${escapeHtml(roleId)}">${escapeHtml(label)}</option>`;
             }).join('');
 
             if (selectedRole) {
                 select.value = selectedRole;
             } else {
-                const viewerRole = roles.find(r => (r.id || r.name) === 'viewer');
-                select.value = viewerRole ? 'viewer' : (roles[0].id || roles[0].name || '');
+                const editor = roles.find(r => (r.id || r.name) === 'editor');
+                select.value = editor ? 'editor' : (roles[0].id || roles[0].name || 'viewer');
             }
         } catch (error) {
-            console.error('Error loading roles:', error);
             select.innerHTML = legacyRoles.map(r =>
                 `<option value="${r.id}">${escapeHtml(r.name)}</option>`
             ).join('');
+            select.value = 'editor';
         }
     }
 
     async function handleMcpCreate(e) {
         e.preventDefault();
+        syncConnectionTypeFields();
 
         const formData = new FormData(e.target);
-        const authMode = formData.get('auth_mode') || 'api_key';
+        const authMode = document.getElementById('mcp-auth-mode')?.value || 'api_key';
         const payload = {
             action: 'create',
             name: formData.get('name') || '',
-            role: formData.get('role') || 'viewer',
+            role: formData.get('role') || 'editor',
             require_approval: document.getElementById('mcp-require-approval')?.checked ?? true,
             auth_mode: authMode,
             _csrf: csrfToken
@@ -329,16 +392,14 @@
 
         if (authMode === 'oauth' || authMode === 'both') {
             const clientId = (formData.get('oauth_client_id') || '').trim();
-            if (clientId) {
-                payload.oauth_client_id = clientId;
-            }
+            if (clientId) payload.oauth_client_id = clientId;
         }
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) submitBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/mcp_endpoints.php', {
+            const response = await fetch(Birkly.url('/api/mcp_endpoints.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -347,183 +408,180 @@
 
             if (result && result.status === 'ok') {
                 const key = result.data?.mcp_api_key || '';
+                const endpointId = result.data?.id || '';
                 const keyReveal = document.getElementById('mcp-create-key-reveal');
                 const keyDisplay = document.getElementById('mcp-new-key-display');
                 if (keyReveal && keyDisplay && key) {
                     keyDisplay.value = key;
                     keyReveal.style.display = 'block';
                 }
-                if (submitBtn) submitBtn.textContent = 'Created — close when done';
-                loadEndpoints();
-                showSuccess('MCP endpoint created. Copy the API key before closing.');
+                if (submitBtn) submitBtn.textContent = 'Done — close when ready';
+                await loadEndpoints();
+                if (endpointId) {
+                    setTimeout(() => {
+                        const panel = document.getElementById('mcp-setup-panel-' + endpointId);
+                        const toggle = document.querySelector(`.mcp-toggle-setup[data-endpoint-id="${endpointId}"]`);
+                        if (panel && toggle) {
+                            panel.removeAttribute('hidden');
+                            toggle.setAttribute('aria-expanded', 'true');
+                            toggle.textContent = 'Hide setup steps';
+                            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }, 300);
+                }
+                showToast('Connection created! Follow the setup steps on your new card.');
             } else {
-                showError(result?.message || 'Failed to create endpoint');
+                showToast(result?.message || 'Could not create connection', true);
                 if (submitBtn) submitBtn.disabled = false;
             }
         } catch (error) {
-            console.error('Error creating MCP endpoint:', error);
-            showError('Error creating MCP endpoint');
+            console.error('Error creating connection:', error);
+            showToast('Something went wrong. Please try again.', true);
             if (submitBtn) submitBtn.disabled = false;
         }
     }
 
-    async function saveAuthSettings(endpointId) {
-        const authModeSelect = document.getElementById('mcp-auth-mode-' + endpointId);
-        const oauthInput = document.getElementById('mcp-oauth-client-' + endpointId);
-        if (!authModeSelect) return;
-
-        const payload = {
-            action: 'update',
-            id: endpointId,
-            auth_mode: authModeSelect.value,
-            oauth_client_id: oauthInput ? oauthInput.value.trim() : '',
-            _csrf: csrfToken
-        };
-
+    async function prepareDesktopSetup(endpointId) {
         try {
-            const response = await fetch('/api/mcp_endpoints.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-
-            if (result.status === 'ok') {
-                showSuccess('Auth settings updated');
-                loadEndpoints();
-            } else {
-                showError('Failed to update auth: ' + (result.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error updating MCP auth:', error);
-            showError('Error updating auth settings');
-        }
-    }
-
-    async function revealKey(endpointId) {
-        try {
-            const response = await fetch(`/api/mcp_endpoints.php?action=get_key&id=${encodeURIComponent(endpointId)}`);
+            const response = await fetch(Birkly.url(`/api/mcp_endpoints.php?action=get_key&id=${encodeURIComponent(endpointId)}`));
             const result = await response.json();
             if (result.status !== 'ok' || !result.data?.mcp_api_key) {
-                showError('API key not available');
+                showToast('Could not load your secret key. Try again.', true);
                 return;
             }
             const key = result.data.mcp_api_key;
-            const input = document.getElementById('mcp-key-' + endpointId);
-            if (input) {
-                input.type = 'text';
-                input.value = key;
-            }
             const item = document.querySelector(`.mcp-endpoint-item[data-endpoint-id="${endpointId}"]`);
             const endpointName = item?.querySelector('.connection-name')?.textContent || endpointId;
-            updateEndpointSnippets(endpointId, key, endpointName);
+            const textarea = document.getElementById('mcp-claude-config-' + endpointId);
+            const keyInput = document.getElementById('mcp-key-' + endpointId);
+            if (textarea) textarea.value = buildClaudeDesktopConfig(key, endpointName);
+            if (keyInput) keyInput.value = key;
+            document.getElementById('mcp-copy-config-btn-' + endpointId)?.removeAttribute('disabled');
+            document.getElementById('mcp-download-config-btn-' + endpointId)?.removeAttribute('disabled');
+            showToast('Ready! Now click "Copy setup for Claude".');
         } catch (error) {
-            console.error('Error revealing MCP key:', error);
-            showError('Failed to load API key');
+            showToast('Could not prepare setup. Please try again.', true);
         }
     }
 
+    function copyClaudeConfig(endpointId) {
+        copySnippet('mcp-claude-config-' + endpointId, true);
+    }
+
+    function downloadClaudeConfig(endpointId) {
+        const textarea = document.getElementById('mcp-claude-config-' + endpointId);
+        if (!textarea || !textarea.value) {
+            showToast('Click "Prepare my Claude setup" first.', true);
+            return;
+        }
+        const blob = new Blob([textarea.value], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'claude_desktop_config.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast('Download started — paste this into Claude Desktop or merge with your existing config.');
+    }
+
+    async function revealKey(endpointId) {
+        await prepareDesktopSetup(endpointId);
+        showToast('Secret key loaded into your setup. Use "Copy setup for Claude" next.');
+    }
+
     async function rotateKey(endpointId) {
-        if (!confirm('Rotate API key? External tools using the old key will stop working until updated.')) {
+        if (!confirm('Create a new secret key? You will need to update Claude Desktop with the new setup.')) {
             return;
         }
 
         try {
-            const response = await fetch('/api/mcp_endpoints.php', {
+            const response = await fetch(Birkly.url('/api/mcp_endpoints.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'rotate',
-                    id: endpointId,
-                    _csrf: csrfToken
-                })
+                body: JSON.stringify({ action: 'rotate', id: endpointId, _csrf: csrfToken })
             });
             const result = await response.json();
 
             if (result.status === 'ok') {
-                const key = result.data?.mcp_api_key || '';
-                const input = document.getElementById('mcp-key-' + endpointId);
-                if (input && key) {
-                    input.type = 'text';
-                    input.value = key;
-                }
-                const item = document.querySelector(`.mcp-endpoint-item[data-endpoint-id="${endpointId}"]`);
-                const endpointName = item?.querySelector('.connection-name')?.textContent || endpointId;
-                if (key) {
-                    updateEndpointSnippets(endpointId, key, endpointName);
-                }
-                showSuccess('API key rotated. Update your bridge config with the new key.');
+                await prepareDesktopSetup(endpointId);
+                showToast('New secret key created. Copy the updated setup to Claude Desktop.');
             } else {
-                showError('Failed to rotate key: ' + (result.message || 'Unknown error'));
+                showToast(result.message || 'Could not create new key', true);
             }
         } catch (error) {
-            console.error('Error rotating MCP key:', error);
-            showError('Error rotating API key');
+            showToast('Something went wrong.', true);
         }
     }
 
     async function revokeEndpoint(endpointId) {
-        if (!confirm('Revoke this endpoint? External tools will no longer be able to connect.')) {
+        if (!confirm('Remove this connection? Claude will no longer access your site through it.')) {
             return;
         }
 
         try {
-            const response = await fetch('/api/mcp_endpoints.php', {
+            const response = await fetch(Birkly.url('/api/mcp_endpoints.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'revoke',
-                    id: endpointId,
-                    _csrf: csrfToken
-                })
+                body: JSON.stringify({ action: 'revoke', id: endpointId, _csrf: csrfToken })
             });
             const result = await response.json();
 
             if (result.status === 'ok') {
-                showSuccess('Endpoint revoked');
+                showToast('Connection removed.');
                 loadEndpoints();
             } else {
-                showError('Failed to revoke: ' + (result.message || 'Unknown error'));
+                showToast(result.message || 'Could not remove connection', true);
             }
         } catch (error) {
-            console.error('Error revoking endpoint:', error);
-            showError('Error revoking endpoint');
+            showToast('Something went wrong.', true);
         }
     }
 
-    function copySnippet(elementId) {
+    function copySnippet(elementId, useToast) {
         const el = document.getElementById(elementId);
         if (!el) return;
 
-        const text = el.value;
+        const text = el.value || el.textContent;
+        const done = () => {
+            if (useToast) showToast('Copied to clipboard!');
+        };
+
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => {
-                flashCopied(el);
-            }).catch(() => fallbackCopy(el));
+            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(el, done));
         } else {
-            fallbackCopy(el);
+            fallbackCopy(el, done);
         }
     }
 
-    function fallbackCopy(el) {
+    function fallbackCopy(el, done) {
         if (el.select) {
+            el.removeAttribute('aria-hidden');
+            el.classList.remove('mcp-config-hidden');
             el.select();
-            if (el.setSelectionRange) {
-                el.setSelectionRange(0, 99999);
-            }
+            if (el.setSelectionRange) el.setSelectionRange(0, 99999);
         }
         try {
             document.execCommand('copy');
-            flashCopied(el);
+            if (done) done();
         } catch (err) {
-            console.error('Failed to copy:', err);
+            showToast('Could not copy — please select the text manually.', true);
         }
     }
 
-    function flashCopied(el) {
-        const original = el.value;
-        el.value = 'Copied!';
-        setTimeout(() => { el.value = original; }, 1000);
+    function showToast(message, isError) {
+        let toast = document.getElementById('mcp-ui-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'mcp-ui-toast';
+            toast.className = 'mcp-ui-toast';
+            toast.setAttribute('role', 'status');
+            toast.setAttribute('aria-live', 'polite');
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.toggle('mcp-ui-toast-error', !!isError);
+        toast.classList.add('mcp-ui-toast-visible');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => toast.classList.remove('mcp-ui-toast-visible'), 4000);
     }
 
     function escapeHtml(text) {
@@ -532,19 +590,13 @@
         return div.innerHTML;
     }
 
-    function showError(message) {
-        alert('Error: ' + message);
-    }
-
-    function showSuccess(message) {
-        alert('Success: ' + message);
-    }
-
     window.mcpConnections = {
         revealKey,
         rotateKey,
         revokeEndpoint,
         copySnippet,
-        saveAuthSettings
+        prepareDesktopSetup,
+        copyClaudeConfig,
+        downloadClaudeConfig
     };
 })();
