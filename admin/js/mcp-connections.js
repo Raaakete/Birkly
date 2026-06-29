@@ -60,12 +60,25 @@
     }
 
     function resolveConnectorUrl(apiUrl) {
+        if (apiUrl) {
+            try {
+                const parsed = apiUrl.startsWith('http')
+                    ? new URL(apiUrl)
+                    : new URL(apiUrl, window.location.origin);
+                if (parsed.pathname.includes('/mcp/agents/')) {
+                    return parsed.origin + parsed.pathname;
+                }
+                if (parsed.protocol === 'https:') {
+                    return parsed.href;
+                }
+            } catch (e) {
+                // Fall through to legacy resolution.
+            }
+        }
+
         const path = connectorPath();
         if (window.location.protocol === 'https:') {
             return window.location.origin + path;
-        }
-        if (apiUrl && apiUrl.startsWith('https:')) {
-            return apiUrl;
         }
         return apiUrl || (window.location.origin + path);
     }
