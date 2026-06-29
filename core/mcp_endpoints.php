@@ -61,10 +61,17 @@ function birkly_mcp_normalize_auth_mode(string $mode): string
     return in_array($mode, ['api_key', 'oauth', 'both'], true) ? $mode : 'api_key';
 }
 
-function birkly_mcp_list_endpoints(): array
+function birkly_mcp_list_endpoints(bool $includeRevoked = false): array
 {
-    $store = birkly_mcp_load_store();
-    return array_values(array_map('birkly_mcp_scrub_endpoint', $store['endpoints']));
+    $endpoints = birkly_mcp_load_store()['endpoints'];
+    if (!$includeRevoked) {
+        $endpoints = array_values(array_filter(
+            $endpoints,
+            static fn(array $endpoint): bool => ($endpoint['status'] ?? 'active') !== 'revoked'
+        ));
+    }
+
+    return array_values(array_map('birkly_mcp_scrub_endpoint', $endpoints));
 }
 
 function birkly_mcp_find_endpoint(string $id): ?array

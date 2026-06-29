@@ -74,11 +74,32 @@ function birkly_ai_is_read_action(string $actionType): bool
     return isset($definitions[$actionType]) && ($definitions[$actionType]['category'] ?? '') === 'read';
 }
 
+function birkly_ai_normalize_tool_input_schema(array $schema): array
+{
+    if (isset($schema['properties']) && is_array($schema['properties']) && $schema['properties'] === []) {
+        $schema['properties'] = (object) [];
+    } elseif (isset($schema['properties']) && is_array($schema['properties'])) {
+        foreach ($schema['properties'] as $key => $prop) {
+            if (is_array($prop)) {
+                $schema['properties'][$key] = birkly_ai_normalize_tool_input_schema($prop);
+            }
+        }
+    }
+    return $schema;
+}
+
 function birkly_ai_tools_openai_format(array $aiUser): array
 {
     $tools = [];
     foreach (birkly_ai_tools_for_user($aiUser) as $def) {
-        $tools[] = ['type' => 'function', 'function' => ['name' => $def['name'], 'description' => $def['description'], 'parameters' => $def['inputSchema']]];
+        $tools[] = [
+            'type' => 'function',
+            'function' => [
+                'name' => $def['name'],
+                'description' => $def['description'],
+                'parameters' => birkly_ai_normalize_tool_input_schema($def['inputSchema']),
+            ],
+        ];
     }
     return $tools;
 }
@@ -87,7 +108,11 @@ function birkly_ai_tools_mcp_format(array $aiUser): array
 {
     $tools = [];
     foreach (birkly_ai_tools_for_user($aiUser) as $def) {
-        $tools[] = ['name' => $def['name'], 'description' => $def['description'], 'inputSchema' => $def['inputSchema']];
+        $tools[] = [
+            'name' => $def['name'],
+            'description' => $def['description'],
+            'inputSchema' => birkly_ai_normalize_tool_input_schema($def['inputSchema']),
+        ];
     }
     return $tools;
 }

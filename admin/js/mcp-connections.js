@@ -247,10 +247,11 @@
         </p>`;
         return `
         <ol class="endpoint-setup-steps">
-            <li>Copy the <strong>Connector URL</strong> below (must start with <code>https://</code> for Claude).</li>
+            <li>Copy this agent's <strong>Connector URL</strong> below — each agent has its own URL and role.</li>
             <li>Open your AI app (Claude, ChatGPT, or Cursor) → connector or integration settings.</li>
-            <li>Paste the URL only — <strong>leave Client ID and Client Secret empty</strong>. Your app signs in automatically.</li>
-            <li>Sign in when your app asks. No files to edit.</li>
+            <li>Paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
+            <li>When your AI app opens Birkly, sign in and approve the connection.</li>
+            <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
             <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
         </ol>
         ${httpWarning}
@@ -440,6 +441,11 @@
         }
     }
 
+    async function refreshCsrfToken() {
+        csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || csrfToken;
+        return csrfToken;
+    }
+
     async function revokeAgent(agentId) {
         if (!agentId) return;
         if (!confirm('Remove this AI agent? Your AI app will no longer access your site through it.')) {
@@ -447,6 +453,7 @@
         }
 
         try {
+            await refreshCsrfToken();
             const response = await fetch(Birkly.url('/api/ai_agents.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -478,6 +485,7 @@
         }
 
         try {
+            await refreshCsrfToken();
             const response = await fetch(Birkly.url('/api/mcp_endpoints.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

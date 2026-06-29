@@ -94,7 +94,7 @@ try {
     test_assert('endpoint oauth_client_id set', ($endpoint['oauth_client_id'] ?? '') === $clientId);
 
     $pkce = oauth_pkce_pair();
-    $authUrl = $base . '/oauth/authorize?' . http_build_query([
+    $authQuery = [
         'response_type' => 'code',
         'client_id' => $clientId,
         'redirect_uri' => $redirectUri,
@@ -102,10 +102,48 @@ try {
         'code_challenge' => $pkce['challenge'],
         'code_challenge_method' => 'S256',
         'scope' => 'mcp',
+    ];
+    $authUrl = $base . '/oauth/authorize?' . http_build_query($authQuery);
+
+    $usersDir = $root . '/users';
+    $cookieFile = sys_get_temp_dir() . '/birkly-oauth-cookies-' . getmypid() . '.txt';
+    $backupUsers = sys_get_temp_dir() . '/birkly-oauth-users-' . getmypid();
+    $testEmail = 'oauth-test-' . getmypid() . '@birkly.test';
+    $testPassword = 'SecurePass123!';
+    @unlink($cookieFile);
+    touch($cookieFile);
+    birkly_test_backup_directory($usersDir, $backupUsers);
+    birkly_test_clear_json_files($usersDir);
+
+    $createUser = birkly_test_http_request($base . '/api/onboarding.php?action=create_first_user', [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/json'],
+        'body' => json_encode([
+            'name' => 'OAuth Test Admin',
+            'email' => $testEmail,
+            'password' => $testPassword,
+        ]),
+        'cookie_file' => $cookieFile,
     ]);
-    $auth = birkly_test_http_request($authUrl);
-    test_assert('authorize redirects 302', $auth['code'] === 302);
-    preg_match('/code=([^&\s]+)/', $auth['headers'] ?? '', $codeMatch);
+    test_assert('oauth test user created', ($createUser['code'] ?? 0) === 200);
+
+    $consent = birkly_test_http_request($authUrl, ['cookie_file' => $cookieFile]);
+    test_assert('authorize shows consent page', ($consent['code'] ?? 0) === 200);
+    test_assert('consent page mentions agent role', str_contains($consent['body'] ?? '', 'admin'));
+    preg_match('/name="_csrf"\s+value="([^"]+)"/', $consent['body'] ?? '', $csrfMatch);
+    test_assert('consent page has csrf token', !empty($csrfMatch[1]));
+
+    $approve = birkly_test_http_request($base . '/oauth/authorize', [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
+        'body' => http_build_query(array_merge($authQuery, [
+            '_csrf' => $csrfMatch[1],
+            'oauth_consent' => 'approve',
+        ])),
+        'cookie_file' => $cookieFile,
+    ]);
+    test_assert('consent approve redirects 302', $approve['code'] === 302);
+    preg_match('/code=([^&\s]+)/', $approve['headers'] ?? '', $codeMatch);
     test_assert('authorize returns code in Location', !empty($codeMatch[1]));
     $code = urldecode($codeMatch[1]);
 
@@ -167,6 +205,11 @@ try {
     ));
 
     birkly_mcp_revoke_endpoint($endpoint['id']);
+
+    if (isset($backupUsers, $usersDir)) {
+        birkly_test_restore_directory($usersDir, $backupUsers);
+        birkly_test_remove_directory($backupUsers);
+    }
 } finally {
     if (is_file($backupSettings)) {
         copy($backupSettings, $settingsFile);

@@ -42,7 +42,10 @@ try {
     test_assert('agent has id', !empty($agent['id']));
     test_assert('agent has mcp_endpoint_id', !empty($agent['mcp_endpoint_id']));
     test_assert('agent role is editor', ($agent['role'] ?? '') === 'editor');
-    test_assert('connector URL uses /mcp', str_contains($agent['connector_url'] ?? '', '/mcp'));
+    test_assert('connector URL is per-agent', str_contains($agent['connector_url'] ?? '', '/mcp/agents/' . $agent['id']));
+
+    $listed = birkly_ai_agents_list();
+    test_assert('active agent appears in list', count($listed) === 1);
 
     $endpoint = birkly_mcp_find_endpoint($agent['mcp_endpoint_id']);
     test_assert('linked endpoint exists', is_array($endpoint));
@@ -62,6 +65,13 @@ try {
     test_assert('revoke succeeds', birkly_ai_agents_revoke($agent['id']));
     $revoked = birkly_ai_agents_find($agent['id']);
     test_assert('agent status revoked', ($revoked['status'] ?? '') === 'revoked');
+    test_assert('revoked agent hidden from list', birkly_ai_agents_list() === []);
+
+    require_once dirname(__DIR__) . '/core/mcp_protocol.php';
+    test_assert(
+        'agent id parsed from connector path',
+        birkly_mcp_agent_id_from_path('/mcp/agents/' . $agent['id']) === $agent['id']
+    );
 
 } finally {
     if (is_file($backupAgents)) {
