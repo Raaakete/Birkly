@@ -11,6 +11,8 @@
     let csrfToken = '';
     let availableConnections = [];
     let chatMessages = [];
+    let pendingApprovals = [];
+    let chatView = 'messages';
 
     // Storage keys
     const STORAGE_KEY_CONVERSATION = 'ai_chat_conversation_id';
@@ -24,6 +26,8 @@
             restoreChatState();
         });
         createFloatingButton();
+        loadApprovalQueue();
+        setInterval(loadApprovalQueue, 30000);
 
         window.addEventListener('birkly:ai-connection-changed', function(event) {
             const detail = event.detail || {};
@@ -92,7 +96,89 @@
         `;
         button.title = 'AI Assistant';
         button.addEventListener('click', toggleChatWindow);
+        const badge = document.createElement('span');
+        badge.id = 'ai-chat-approval-badge';
+        badge.className = 'ai-chat-approval-badge';
+        badge.style.display = 'none';
+        badge.setAttribute('aria-hidden', 'true');
+        button.appendChild(badge);
         document.body.appendChild(button);
+    }
+
+    function updateApprovalBadge() {
+        const badge = document.getElementById('ai-chat-approval-badge');
+        const count = pendingApprovals.length;
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count > 9 ? '9+' : String(count);
+            badge.style.display = 'flex';
+            badge.setAttribute('aria-hidden', 'false');
+        } else {
+            badge.textContent = '';
+            badge.style.display = 'none';
+            badge.setAttribute('aria-hidden', 'true');
+        }
+        const tabBadge = document.getElementById('ai-chat-approvals-tab-badge');
+        if (tabBadge) {
+            tabBadge.textContent = count > 0 ? String(count) : '';
+            tabBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+    }
+
+    async function loadApprovalQueue() {
+        try {
+            const response = await fetch('/api/ai_approvals.php?action=list&status=pending');
+            const result = await response.json();
+            pendingApprovals = (result && result.status === 'ok' && result.data)
+                ? (result.data.approvals || [])
+                : [];
+            updateApprovalBadge();
+            renderApprovalQueuePanel();
+        } catch (error) {
+            console.error('Error loading approval queue:', error);
+        }
+    }
+
+    function renderApprovalQueuePanel() {
+        const panel = document.getElementById('ai-chat-approvals-panel');
+        if (!panel) return;
+
+        if (pendingApprovals.length === 0) {
+            panel.innerHTML = '<div class="ai-chat-welcome"><p>No pending approvals. When AI wants to change content, requests will appear here.</p></div>';
+            return;
+        }
+
+        panel.innerHTML = pendingApprovals.map(approval => {
+            const actionType = (approval.action_type || 'unknown').replace(/_/g, ' ');
+            return `
+            <div class="ai-chat-approval-card ai-chat-queue-item" id="queue-approval-${escapeHtml(approval.id)}">
+                <div class="ai-chat-approval-header">
+                    <div class="ai-chat-approval-type">${escapeHtml(actionType)}</div>
+                    <span class="ai-chat-approval-time">${formatTime(approval.created_at)}</span>
+                </div>
+                <div class="ai-chat-approval-description">${escapeHtml(approval.description || 'No description')}</div>
+                <div class="ai-chat-approval-actions">
+                    <button class="btn btn-sm btn-success" onclick="aiChatButton.approveAction('${escapeHtml(approval.id)}')">Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="aiChatButton.rejectAction('${escapeHtml(approval.id)}')">Reject</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function switchChatView(view) {
+        chatView = view;
+        const messagesPanel = document.getElementById('ai-chat-messages-panel');
+        const approvalsPanel = document.getElementById('ai-chat-approvals-panel');
+        const inputContainer = document.querySelector('.ai-chat-input-container');
+        const tabMessages = document.getElementById('ai-chat-tab-messages');
+        const tabApprovals = document.getElementById('ai-chat-tab-approvals');
+
+        if (messagesPanel) messagesPanel.style.display = view === 'messages' ? 'flex' : 'none';
+        if (approvalsPanel) approvalsPanel.style.display = view === 'approvals' ? 'block' : 'none';
+        if (inputContainer) inputContainer.style.display = view === 'messages' ? 'block' : 'none';
+        if (tabMessages) tabMessages.classList.toggle('active', view === 'messages');
+        if (tabApprovals) tabApprovals.classList.toggle('active', view === 'approvals');
+        if (view === 'approvals') renderApprovalQueuePanel();
     }
 
     // Toggle chat window
@@ -148,10 +234,21 @@
                 </div>
             </div>
             <div class="ai-chat-body">
-                <div class="ai-chat-messages" id="ai-chat-messages">
-                    <div class="ai-chat-welcome">
-                        <p>Select an AI connection to start chatting. The AI can help you create and edit content.</p>
+                <div class="ai-chat-view-tabs" role="tablist">
+                    <button type="button" class="ai-chat-view-tab active" id="ai-chat-tab-messages" role="tab" aria-selected="true">Chat</button>
+                    <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-approvals" role="tab" aria-selected="false">
+                        Approvals <span class="ai-chat-tab-badge" id="ai-chat-approvals-tab-badge" style="display: none;"></span>
+                    </button>
+                </div>
+                <div class="ai-chat-messages-panel" id="ai-chat-messages-panel">
+                    <div class="ai-chat-messages" id="ai-chat-messages">
+                        <div class="ai-chat-welcome">
+                            <p>Select an AI connection to start chatting. The AI can help you create and edit content.</p>
+                        </div>
                     </div>
+                </div>
+                <div class="ai-chat-approvals-panel" id="ai-chat-approvals-panel" style="display: none;">
+                    <div class="loading">Loading approvals...</div>
                 </div>
                 <div class="ai-chat-input-container">
                     <div class="ai-chat-input-wrapper">
@@ -188,6 +285,9 @@
             }
         });
 
+        document.getElementById('ai-chat-tab-messages')?.addEventListener('click', () => switchChatView('messages'));
+        document.getElementById('ai-chat-tab-approvals')?.addEventListener('click', () => switchChatView('approvals'));
+
         document.getElementById('ai-chat-connection-select')?.addEventListener('change', function(e) {
             const connectionId = e.target.value;
             if (!connectionId) return;
@@ -204,6 +304,8 @@
         
         // Load connections into header dropdown
         renderConnectionDropdown();
+        loadApprovalQueue();
+        updateApprovalBadge();
         
         // Restore chat state if available
         if (currentConnection && chatMessages.length > 0) {
@@ -477,7 +579,7 @@
                 
                 if (result.data.requires_approval && result.data.actions_created > 0) {
                     addChatMessage('system',
-                        `${result.data.actions_created} action(s) pending approval. Review below or in Settings → AI Approvals.`);
+                        `${result.data.actions_created} action(s) pending approval. Open the Approvals tab to review.`);
                     if (result.data.approvals && result.data.approvals.length > 0) {
                         result.data.approvals.forEach(approval => {
                             addApprovalCard(approval);
@@ -748,8 +850,7 @@
             const result = await response.json();
             
             if (result.status === 'ok') {
-                // Update the approval card to show it was approved
-                const card = document.getElementById('approval-' + approvalId);
+                const card = document.getElementById('approval-' + approvalId) || document.getElementById('queue-approval-' + approvalId);
                 if (card) {
                     card.classList.add('ai-chat-approval-approved');
                     const actionsDiv = card.querySelector('.ai-chat-approval-actions');
@@ -758,6 +859,7 @@
                     }
                 }
                 addChatMessage('system', 'Action approved and executed successfully.');
+                loadApprovalQueue();
             } else {
                 addChatMessage('error', 'Failed to approve: ' + (result.message || 'Unknown error'));
             }
@@ -786,8 +888,7 @@
             const result = await response.json();
             
             if (result.status === 'ok') {
-                // Update the approval card to show it was rejected
-                const card = document.getElementById('approval-' + approvalId);
+                const card = document.getElementById('approval-' + approvalId) || document.getElementById('queue-approval-' + approvalId);
                 if (card) {
                     card.classList.add('ai-chat-approval-rejected');
                     const actionsDiv = card.querySelector('.ai-chat-approval-actions');
@@ -796,6 +897,7 @@
                     }
                 }
                 addChatMessage('system', 'Action rejected.');
+                loadApprovalQueue();
             } else {
                 addChatMessage('error', 'Failed to reject: ' + (result.message || 'Unknown error'));
             }
@@ -891,7 +993,9 @@
         selectConnection,
         toggleChatWindow,
         approveAction,
-        rejectAction
+        rejectAction,
+        switchChatView,
+        loadApprovalQueue
     };
 
 })();
