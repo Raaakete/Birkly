@@ -153,7 +153,18 @@ if ($action === 'update') {
             ]);
             exit;
         }
-        echo json_encode(['status' => 'error', 'message' => 'Personal connector can only be enabled or disabled']);
+        if (array_key_exists('require_approval', $input)) {
+            $updated = birkly_ai_agents_update_personal_settings([
+                'require_approval' => (bool) $input['require_approval'],
+            ]);
+            echo json_encode([
+                'status' => 'ok',
+                'message' => 'Personal connector updated',
+                'data' => ['agent' => $updated ? birkly_ai_agents_with_endpoint($updated) : null],
+            ]);
+            exit;
+        }
+        echo json_encode(['status' => 'error', 'message' => 'Personal connector can only be enabled, disabled, or have approval settings changed']);
         exit;
     }
 

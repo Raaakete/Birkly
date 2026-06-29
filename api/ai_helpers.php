@@ -609,6 +609,46 @@ function birkly_ai_user_can_manage_connection(array $connection, string $userId,
 }
 
 /**
+ * Whether a human user may view/approve/reject an MCP (inbound connector) approval.
+ */
+function birkly_ai_user_can_review_mcp_approval(array $approval, string $userId, ?array $currentUser = null): bool
+{
+    $aiUserId = (string) ($approval['ai_user_id'] ?? '');
+    if ($aiUserId === '' || !str_starts_with($aiUserId, 'mcp_ep_')) {
+        return false;
+    }
+
+    require_once __DIR__ . '/../core/mcp_endpoints.php';
+    require_once __DIR__ . '/../core/ai_agents.php';
+
+    $endpoint = birkly_mcp_find_endpoint($aiUserId);
+    if ($endpoint === null) {
+        return false;
+    }
+
+    $currentUser = is_array($currentUser) ? $currentUser : [];
+    if (birkly_ai_agents_is_admin($currentUser)) {
+        return true;
+    }
+    if (checkPermission($currentUser, 'manage_settings')) {
+        return true;
+    }
+
+    $agent = birkly_ai_agents_find_by_endpoint_id($aiUserId);
+    $authorizedBy = (string) ($approval['authorized_by'] ?? '');
+
+    if ($agent !== null && ($agent['type'] ?? '') === 'personal') {
+        return $authorizedBy !== '' && hash_equals($authorizedBy, $userId);
+    }
+
+    if ($agent !== null && birkly_ai_user_can_see_agent($agent, $currentUser)) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Whether a human user may view/approve/reject an approval for an AI connection.
  */
 function birkly_ai_user_can_review_approval(array $approval, string $userId, ?array $currentUser = null): bool
@@ -620,6 +660,10 @@ function birkly_ai_user_can_review_approval(array $approval, string $userId, ?ar
     $aiUserId = $approval['ai_user_id'] ?? '';
     if ($aiUserId === '') {
         return false;
+    }
+
+    if (str_starts_with((string) $aiUserId, 'mcp_ep_')) {
+        return birkly_ai_user_can_review_mcp_approval($approval, $userId, $currentUser);
     }
 
     $usersStorage = new Storage('../users');
