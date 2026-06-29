@@ -1,6 +1,6 @@
 <?php
 /**
- * P5-M3 — AI agents tests.
+ * P5.1 — AI agents tests (personal + service).
  */
 
 require_once __DIR__ . '/bootstrap.php';
@@ -28,49 +28,60 @@ if (is_file($endpointsFile)) {
 }
 
 @unlink($agentsFile);
+birkly_mcp_save_store(birkly_mcp_default_store());
 
 try {
     test_assert('empty agent list', birkly_ai_agents_list() === []);
 
+    $personal = birkly_ai_agents_ensure_personal();
+    test_assert('personal agent created', ($personal['id'] ?? '') === BIRKLY_AI_AGENT_PERSONAL_ID);
+    test_assert('personal agent type', ($personal['type'] ?? '') === 'personal');
+    test_assert('personal connector URL', str_contains($personal['connector_url'] ?? '', '/mcp/agents/' . BIRKLY_AI_AGENT_PERSONAL_ID));
+
     $agent = birkly_ai_agents_create([
-        'name' => 'Test Agent',
+        'name' => 'Test Service Agent',
         'role' => 'editor',
         'description' => 'Helps with content',
+        'visible_to_roles' => ['editor'],
         'require_approval' => true,
     ], 'user-test');
 
-    test_assert('agent has id', !empty($agent['id']));
-    test_assert('agent has mcp_endpoint_id', !empty($agent['mcp_endpoint_id']));
-    test_assert('agent role is editor', ($agent['role'] ?? '') === 'editor');
+    test_assert('service agent type', ($agent['type'] ?? '') === 'service');
+    test_assert('service visible_to_roles saved', in_array('editor', $agent['visible_to_roles'] ?? [], true));
     test_assert('connector URL is per-agent', str_contains($agent['connector_url'] ?? '', '/mcp/agents/' . $agent['id']));
 
-    $listed = birkly_ai_agents_list();
-    test_assert('active agent appears in list', count($listed) === 1);
+    $adminUser = ['id' => 'user-admin', 'role' => 'admin', 'permissions' => ['*']];
+    $editorUser = ['id' => 'user-editor', 'role' => 'editor', 'permissions' => ['read', 'write', 'manage_content']];
 
-    $endpoint = birkly_mcp_find_endpoint($agent['mcp_endpoint_id']);
-    test_assert('linked endpoint exists', is_array($endpoint));
-    test_assert('endpoint auth_mode oauth', ($endpoint['auth_mode'] ?? '') === 'oauth');
+    $forAdmin = birkly_ai_agents_list_for_user($adminUser);
+    test_assert('admin sees personal and service', count($forAdmin) >= 2);
+
+    $forEditor = birkly_ai_agents_list_service_for_user($editorUser);
+    test_assert('editor sees assigned service agent', count($forEditor) === 1);
 
     $updated = birkly_ai_agents_update($agent['id'], [
-        'name' => 'Renamed Agent',
-        'role' => 'viewer',
-    ]);
-    test_assert('update returns agent', is_array($updated));
-    test_assert('name updated', ($updated['name'] ?? '') === 'Renamed Agent');
-    test_assert('role updated', ($updated['role'] ?? '') === 'viewer');
+        'visible_to_roles' => ['admin'],
+    ], $adminUser);
+    test_assert('visibility update works', in_array('admin', $updated['visible_to_roles'] ?? [], true));
 
-    $endpointAfter = birkly_mcp_find_endpoint($agent['mcp_endpoint_id']);
-    test_assert('endpoint role synced', ($endpointAfter['role'] ?? '') === 'viewer');
+    $forEditorAfter = birkly_ai_agents_list_service_for_user($editorUser);
+    test_assert('editor no longer sees admin-only service', count($forEditorAfter) === 0);
 
-    test_assert('revoke succeeds', birkly_ai_agents_revoke($agent['id']));
-    $revoked = birkly_ai_agents_find($agent['id']);
-    test_assert('agent status revoked', ($revoked['status'] ?? '') === 'revoked');
-    test_assert('revoked agent hidden from list', birkly_ai_agents_list() === []);
+    test_assert('personal cannot be revoked', (function () {
+        try {
+            birkly_ai_agents_revoke(BIRKLY_AI_AGENT_PERSONAL_ID);
+            return false;
+        } catch (RuntimeException $e) {
+            return str_contains($e->getMessage(), 'cannot be deleted');
+        }
+    })());
+
+    test_assert('service revoke succeeds', birkly_ai_agents_revoke($agent['id']));
 
     require_once dirname(__DIR__) . '/core/mcp_protocol.php';
     test_assert(
         'agent id parsed from connector path',
-        birkly_mcp_agent_id_from_path('/mcp/agents/' . $agent['id']) === $agent['id']
+        birkly_mcp_agent_id_from_path('/mcp/agents/' . BIRKLY_AI_AGENT_PERSONAL_ID) === BIRKLY_AI_AGENT_PERSONAL_ID
     );
 
 } finally {

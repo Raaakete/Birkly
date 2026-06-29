@@ -614,6 +614,71 @@
     color: var(--primary-700, #1d4ed8);
 }
 
+.mcp-type-pill.mcp-type-personal {
+    background: var(--success-100, #dcfce7);
+    color: var(--success-800, #166534);
+}
+
+.mcp-type-pill.mcp-type-service {
+    background: var(--primary-100, #dbeafe);
+    color: var(--primary-700, #1d4ed8);
+}
+
+.ai-personal-agent-card {
+    margin-bottom: var(--space-4);
+}
+
+.ai-personal-card {
+    border: 2px solid var(--success-300, #86efac);
+    background: var(--success-50, #f0fdf4);
+}
+
+.ai-migration-banner {
+    margin-bottom: var(--space-4);
+}
+
+.mcp-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 10rem;
+    overflow-y: auto;
+    padding: var(--space-2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+}
+
+.mcp-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.agent-visibility {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.agent-disabled-note {
+    margin: var(--space-2) 0 0;
+    font-size: 0.875rem;
+    color: var(--warning-700, #b45309);
+}
+
+.form-hint-block {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--text-secondary);
+}
+
+.loading-inline {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
 .mcp-endpoint-actions {
     display: flex;
     flex-wrap: wrap;
