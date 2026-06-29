@@ -114,7 +114,7 @@
         const outbound = connections.filter(conn => conn.provider !== 'mcp');
 
         if (outbound.length === 0) {
-            list.innerHTML = '<div class="empty-state"><p>No AI connections yet. Click "Add Connection" to connect your API provider.</p></div>';
+            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>No AI services yet</strong></p><p>Click <em>Add AI service</em> to connect ChatGPT, Claude, Ollama, or another provider. We\'ll guide you step by step.</p></div>';
             return;
         }
 
@@ -998,8 +998,11 @@
 
     function toggleApprovalQueue() {
         const content = document.getElementById('approval-queue-content');
+        const btn = document.getElementById('toggle-queue-btn');
         if (content) {
-            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+            const hidden = content.style.display === 'none';
+            content.style.display = hidden ? 'block' : 'none';
+            if (btn) btn.setAttribute('aria-expanded', hidden ? 'true' : 'false');
         }
     }
 
