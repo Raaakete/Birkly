@@ -31,10 +31,7 @@
 
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         loadConnections();
-        loadApprovalQueue();
         setupEventListeners();
-
-        setInterval(loadApprovalQueue, 30000);
     }
 
     function maybeInitAiConnections() {
@@ -66,8 +63,6 @@
         });
 
         document.getElementById('add-connection-form')?.addEventListener('submit', handleConnectionSubmit);
-        document.getElementById('wizard-next-btn')?.addEventListener('click', wizardNext);
-        document.getElementById('wizard-back-btn')?.addEventListener('click', wizardBack);
         document.getElementById('test-connection-btn')?.addEventListener('click', testConnection);
 
         document.getElementById('connection-provider')?.addEventListener('change', function() {
@@ -86,9 +81,6 @@
             connectionTestPassed = false;
             clearTestStatus();
         });
-
-        document.getElementById('connection-shared-type')?.addEventListener('change', updateSharedTypeFields);
-        document.getElementById('toggle-queue-btn')?.addEventListener('click', toggleApprovalQueue);
     }
 
     async function loadConnections() {
@@ -114,7 +106,7 @@
         const outbound = connections.filter(conn => conn.provider !== 'mcp');
 
         if (outbound.length === 0) {
-            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>No AI services yet</strong></p><p>Click <em>Add AI service</em> to connect ChatGPT, Claude, Ollama, or another provider. We\'ll guide you step by step.</p></div>';
+            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>No assistant connected</strong></p><p>Click <em>Quick connect</em> to add your AI provider and API key for in-admin chat.</p></div>';
             return;
         }
 
@@ -154,20 +146,21 @@
 
         isEditMode = false;
         currentEditingConnection = null;
-        wizardStep = 1;
         connectionTestPassed = false;
         resetConnectionForm();
-        setWizardMode(true);
-        updateConnectionModalTitleAndButton();
+
+        const title = document.getElementById('connection-modal-title');
+        const intro = document.getElementById('assistant-modal-intro');
+        if (title) title.textContent = 'Quick connect assistant';
+        if (intro) intro.style.display = 'block';
 
         modal.style.display = 'flex';
         loadProviders().then(() => {
             updateProviderFields();
-            showWizardStep(1);
+            updateProviderModels();
         });
         loadRoles();
-        loadUsers();
-        updateSharedTypeFields();
+        updateConnectionModalTitleAndButton();
     }
 
     function hideAddConnectionModal() {
@@ -211,26 +204,8 @@
         updateConnectionModalTitleAndButton();
     }
 
-    function setWizardMode(enabled) {
-        const stepsEl = document.getElementById('connection-wizard-steps');
-        const backBtn = document.getElementById('wizard-back-btn');
-        const nextBtn = document.getElementById('wizard-next-btn');
-        const submitBtn = document.getElementById('connection-submit-btn');
-
-        if (stepsEl) stepsEl.style.display = enabled ? 'flex' : 'none';
-
-        if (enabled) {
-            if (backBtn) backBtn.style.display = wizardStep > 1 ? 'inline-block' : 'none';
-            if (nextBtn) nextBtn.style.display = wizardStep < WIZARD_MAX_STEP ? 'inline-block' : 'none';
-            if (submitBtn) submitBtn.style.display = wizardStep === WIZARD_MAX_STEP ? 'inline-block' : 'none';
-        } else {
-            if (backBtn) backBtn.style.display = 'none';
-            if (nextBtn) nextBtn.style.display = 'none';
-            if (submitBtn) submitBtn.style.display = 'inline-block';
-            document.querySelectorAll('.wizard-panel').forEach(panel => {
-                panel.style.display = 'block';
-            });
-        }
+    function setWizardMode() {
+        // One-screen form — wizard UI removed
     }
 
     function showWizardStep(step) {
@@ -437,10 +412,10 @@
         if (!title || !submitBtn) return;
 
         if (isEditMode) {
-            title.textContent = 'Edit AI Connection';
+            title.textContent = 'Edit assistant connection';
             submitBtn.textContent = 'Save Changes';
         } else {
-            title.textContent = 'Add AI Connection';
+            title.textContent = 'Quick connect assistant';
             submitBtn.textContent = 'Connect';
         }
     }
@@ -675,7 +650,30 @@
         const idInput = document.getElementById('connection-id');
         const connectionId = idInput ? (idInput.value || '') : '';
 
-        const allowedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+        if (!connectionId) {
+            const provider = formData.get('provider');
+            const apiKey = formData.get('api_key') || '';
+            const apiUrl = formData.get('api_url') || '';
+
+            if (!provider) {
+                showWizardError('Please select a provider.');
+                return;
+            }
+            if (provider === 'custom' && !apiUrl) {
+                showWizardError('API URL is required for custom providers.');
+                return;
+            }
+            if (provider !== 'ollama' && !apiKey) {
+                showWizardError('API key is required.');
+                return;
+            }
+            if (!connectionTestPassed) {
+                showWizardError('Please test the connection before saving.');
+                return;
+            }
+        }
+
+        const allowedUsers = [];
 
         let payload;
         if (connectionId) {
@@ -803,9 +801,13 @@
             resetConnectionForm();
             setWizardMode(false);
 
+            const title = document.getElementById('connection-modal-title');
+            const intro = document.getElementById('assistant-modal-intro');
+            if (title) title.textContent = 'Edit assistant connection';
+            if (intro) intro.style.display = 'none';
+
             await loadProviders();
             await loadRoles(conn.role);
-            await loadUsers();
 
             const idInput = document.getElementById('connection-id');
             const providerSelect = document.getElementById('connection-provider');
@@ -814,7 +816,6 @@
             const modelSelect = document.getElementById('connection-model');
             const modelCustom = document.getElementById('connection-model-custom');
             const roleSelect = document.getElementById('connection-role');
-            const sharedTypeSelect = document.getElementById('connection-shared-type');
             const requireApprovalCheckbox = document.getElementById('connection-require-approval');
 
             if (idInput) idInput.value = conn.id || '';
@@ -849,18 +850,6 @@
             }
 
             if (roleSelect && conn.role) roleSelect.value = conn.role;
-
-            if (sharedTypeSelect) {
-                const sharedType = conn.shared_type || (conn.shared ? 'all' : 'none');
-                sharedTypeSelect.value = sharedType;
-                updateSharedTypeFields();
-
-                if (sharedType === 'specific' && Array.isArray(conn.allowed_users)) {
-                    document.querySelectorAll('.user-checkbox').forEach(cb => {
-                        cb.checked = conn.allowed_users.includes(cb.value);
-                    });
-                }
-            }
 
             if (requireApprovalCheckbox) {
                 const requireApproval = conn.require_approval;
