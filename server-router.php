@@ -1,38 +1,54 @@
 <?php
 /**
  * Router script for PHP built-in server
- * 
+ *
  * CRITICAL: This router script MUST return false for existing files
  * to let PHP execute them. Returning false tells PHP's built-in server
  * to handle the file normally (execute PHP, serve static files).
- * 
+ *
  * DO NOT output anything, DO NOT echo, DO NOT call readfile().
  * Just return false for all files.
  */
 
-// Handle cases where REQUEST_URI might not be set
 if (!isset($_SERVER['REQUEST_URI'])) {
     return false;
 }
 
-// Get the URI path (ignore query string for file checking)
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if ($uri === false || $uri === null) {
     return false;
 }
 
-// No special demo routing:
-// - demo websites are plain static HTML + `birkly-client.js`
-// - keep the built-in router minimal and deterministic
+require_once __DIR__ . '/core/birkly_paths.php';
 
-// Get the actual file path
+$base = birkly_base_path();
+if ($base !== '' && str_starts_with($uri, $base)) {
+    $uri = substr($uri, strlen($base));
+    if ($uri === '') {
+        $uri = '/';
+    }
+}
+
+$oauthRoutes = [
+    '/.well-known/oauth-protected-resource' => '/api/oauth_protected_resource.php',
+    '/.well-known/oauth-authorization-server' => '/api/oauth_authorization_server.php',
+    '/oauth/authorize' => '/api/oauth_authorize.php',
+    '/oauth/token' => '/api/oauth_token.php',
+    '/oauth/register' => '/api/oauth_register.php',
+];
+
+foreach ($oauthRoutes as $prefix => $handler) {
+    if ($uri === $prefix || str_starts_with($uri, $prefix . '/')) {
+        $_SERVER['SCRIPT_NAME'] = birkly_url($handler);
+        require __DIR__ . $handler;
+        return true;
+    }
+}
+
 $file = __DIR__ . $uri;
 
-// For ALL existing files, return false to let PHP handle them
-// PHP will execute .php files and serve other files as static content
 if (file_exists($file) && is_file($file)) {
     return false;
 }
 
-// For non-existent files, also return false to let PHP return 404
 return false;
