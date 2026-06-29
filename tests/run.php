@@ -27,6 +27,7 @@ $suites = [
     'login_csrf_rewrite_test.php',
     'version_update_test.php',
     'ai_chat_connection_test.php',
+    'ai_provider_mock_test.php',
     'mcp_endpoints_test.php',
     'mcp_hardening_test.php',
     'mcp_http_test.php',
