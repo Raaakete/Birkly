@@ -16,6 +16,55 @@ function birkly_mcp_connector_path(): string
     return '/mcp';
 }
 
+function birkly_mcp_connector_path_for_agent(string $agentId): string
+{
+    $agentId = trim($agentId);
+    if ($agentId === '' || !preg_match('/^ai_agent_[a-f0-9]+$/', $agentId)) {
+        throw new InvalidArgumentException('Invalid AI agent id');
+    }
+
+    return birkly_mcp_connector_path() . '/agents/' . $agentId;
+}
+
+function birkly_mcp_request_path(): string
+{
+    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if (!is_string($uri) || $uri === '') {
+        return '/';
+    }
+
+    require_once __DIR__ . '/birkly_paths.php';
+    $base = birkly_base_path();
+    if ($base !== '' && str_starts_with($uri, $base)) {
+        $uri = substr($uri, strlen($base));
+        if ($uri === '') {
+            return '/';
+        }
+    }
+
+    return $uri;
+}
+
+function birkly_mcp_agent_id_from_path(?string $path = null): ?string
+{
+    $path = $path ?? birkly_mcp_request_path();
+    if (preg_match('#/mcp/agents/(ai_agent_[a-f0-9]+)#', $path, $matches)) {
+        return $matches[1];
+    }
+
+    return null;
+}
+
+function birkly_mcp_agent_id_from_resource_url(string $resourceUrl): ?string
+{
+    $path = parse_url($resourceUrl, PHP_URL_PATH);
+    if (!is_string($path) || $path === '') {
+        return null;
+    }
+
+    return birkly_mcp_agent_id_from_path($path);
+}
+
 function birkly_mcp_legacy_path(): string
 {
     return '/api/mcp_server.php';
