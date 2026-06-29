@@ -31,11 +31,16 @@ function cimd_pkce_pair(): array
 try {
     if (is_file($settingsFile)) {
         copy($settingsFile, $backupSettings);
+    } else {
+        @unlink($backupSettings);
     }
     if (is_file($oauthFile)) {
         copy($oauthFile, $backupOAuth);
+    } else {
+        @unlink($backupOAuth);
     }
     @unlink($oauthFile);
+    birkly_mcp_save_store(birkly_mcp_default_store());
 
     $as = birkly_test_http_request($base . '/.well-known/oauth-authorization-server');
     $asData = birkly_test_json_decode($as['body']);
@@ -111,6 +116,8 @@ try {
     if (is_file($backupSettings)) {
         copy($backupSettings, $settingsFile);
         unlink($backupSettings);
+    } elseif (is_file($settingsFile)) {
+        unlink($settingsFile);
     }
     if (is_file($backupOAuth)) {
         copy($backupOAuth, $oauthFile);
