@@ -78,17 +78,13 @@ if ($apiKey === '' && $bearerToken === '') {
 
 $aiUser = birkly_mcp_resolve_actor_with_auth($apiKey, $bearerToken);
 $endpointId = $aiUser['id'] ?? 'unknown';
+$authFailureMessage = 'Invalid credentials';
 
 if ($aiUser) {
     $pathAgentId = birkly_mcp_agent_id_from_path();
-    if ($pathAgentId !== null) {
-        $expectedEndpoint = birkly_mcp_oauth_endpoint_for_agent_id($pathAgentId);
-        if (
-            !$expectedEndpoint
-            || ($expectedEndpoint['id'] ?? '') !== ($aiUser['id'] ?? '')
-        ) {
-            $aiUser = null;
-        }
+    if ($pathAgentId !== null && !birkly_mcp_actor_matches_path_agent($aiUser, $pathAgentId)) {
+        $aiUser = null;
+        $authFailureMessage = 'Connector URL does not match this access token. In Claude, remove the Birkly connector and add it again using the Connector URL from Birkly Settings → AI.';
     }
 }
 
@@ -101,7 +97,7 @@ if (!$aiUser) {
     echo json_encode([
         'jsonrpc' => '2.0',
         'id' => $input['id'] ?? null,
-        'error' => ['code' => -32000, 'message' => 'Invalid credentials'],
+        'error' => ['code' => -32000, 'message' => $authFailureMessage],
     ]);
     exit;
 }

@@ -11,26 +11,30 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 ini_set('max_execution_time', 300);
 ini_set('memory_limit', '256M');
 
-require_once 'session.php';
-haru_secure_session_start();
+if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    require_once __DIR__ . '/session.php';
+    haru_secure_session_start();
+}
 
 if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     header('Content-Type: application/json');
 }
 
-require_once 'storage.php';
-require_once 'auth.php';
-require_once 'validate.php';
-require_once '../core/csrf.php';
-require_once 'log.php';
-require_once 'ai_helpers.php';
+require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/validate.php';
+require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/ai_helpers.php';
 
-$storage = new Storage('../data/ai_approvals');
-$input = sanitize_input(json_decode(file_get_contents('php://input'), true));
-$action = $input['action'] ?? $_GET['action'] ?? '';
+$storage = new Storage(__DIR__ . '/../data/ai_approvals');
 
-// All actions require authentication
-requireAuth();
+if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    $input = sanitize_input(json_decode(file_get_contents('php://input'), true));
+    $action = $input['action'] ?? $_GET['action'] ?? '';
+
+    // All actions require authentication
+    requireAuth();
 
 // Create approval request (called by AI system)
 if ($action === 'create') {
@@ -253,6 +257,7 @@ if ($action === 'reject') {
     ]);
     exit;
 }
+}
 
 // Execute AI action (internal function)
 function executeAiAction($approval) {
@@ -263,7 +268,10 @@ function executeAiAction($approval) {
     
     // Get AI user but DO NOT modify session - pass it as context instead
     $usersStorage = new Storage('../users');
-    $aiUser = $usersStorage->read($approval['ai_user_id'] . '.json');
+    $aiUser = $approval['ai_user'] ?? null;
+    if (!is_array($aiUser)) {
+        $aiUser = $usersStorage->read($approval['ai_user_id'] . '.json');
+    }
     if (!$aiUser) {
         return ['success' => false, 'message' => 'AI user not found'];
     }
@@ -1218,5 +1226,7 @@ function executeDeactivatePlugin($actionData, $aiUser = null, $originalUserId = 
     return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to deactivate plugin'];
 }
 
-echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
+if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
+}
 

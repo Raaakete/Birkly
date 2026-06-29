@@ -261,17 +261,9 @@
         const statusClass = status === 'active' ? 'active' : 'inactive';
         const url = resolveConnectorUrl(agent.connector_url || serverUrl);
         const agentId = agent.id || 'ai_agent_personal';
-        const approvalLabel = agent.require_approval !== false ? 'Asks before changes' : 'Auto-run';
         const disabledNote = status === 'disabled'
             ? '<p class="agent-disabled-note" role="alert">Personal connector is disabled. Only admins can re-enable it.</p>'
             : '';
-        const approvalControl = isAdmin
-            ? `<label class="mcp-checkbox-label personal-approval-toggle">
-                    <input type="checkbox" id="personal-require-approval" data-personal-approval-toggle ${agent.require_approval !== false ? 'checked' : ''}>
-                    Ask before AI changes content (recommended)
-                </label>
-                <p class="settings-help personal-approval-help">Separate from Claude&apos;s &quot;always allow&quot; — turn off to let Claude write without opening Birkly.</p>`
-            : `<span>${escapeHtml(approvalLabel)}</span>`;
 
         card.innerHTML = `
             <div class="connection-item mcp-endpoint-item ai-agent-item ai-personal-card" data-agent-id="${escapeHtml(agentId)}">
@@ -284,8 +276,8 @@
                     <div class="connection-meta">
                         <span class="connection-role">Your role when you connect</span>
                         <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Disabled'}</span>
-                        ${approvalControl}
                     </div>
+                    <p class="settings-help">Write approvals are handled in your AI app (e.g. Claude connector tool permissions), not in Birkly.</p>
                     ${disabledNote}
                     <div class="mcp-endpoint-actions">
                         <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(agentId)}" aria-expanded="false">
@@ -301,39 +293,6 @@
             </div>`;
 
         bindSetupToggles(card);
-        bindPersonalApprovalToggle(card);
-    }
-
-    async function bindPersonalApprovalToggle(card) {
-        const toggle = card.querySelector('[data-personal-approval-toggle]');
-        if (!toggle || toggle.dataset.bound) return;
-        toggle.dataset.bound = '1';
-        toggle.addEventListener('change', async function() {
-            const previous = !this.checked;
-            this.disabled = true;
-            try {
-                const response = await fetch(Birkly.url('/api/ai_agents.php'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'update',
-                        id: 'ai_agent_personal',
-                        require_approval: this.checked,
-                        _csrf: csrfToken,
-                    }),
-                });
-                const result = await response.json();
-                if (!result || result.status !== 'ok') {
-                    this.checked = previous;
-                    alert((result && result.message) || 'Could not update approval setting');
-                }
-            } catch (error) {
-                this.checked = previous;
-                alert('Could not update approval setting');
-            } finally {
-                this.disabled = false;
-            }
-        });
     }
 
     function renderServiceAgents(agents) {
@@ -354,7 +313,6 @@
         list.innerHTML = agents.map(agent => {
             const status = agent.status || 'active';
             const statusClass = status === 'active' ? 'active' : 'inactive';
-            const approvalLabel = agent.require_approval ? 'Asks before changes' : 'Auto-run';
             const url = resolveConnectorUrl(agent.connector_url || serverUrl);
 
             return `
@@ -368,7 +326,6 @@
                     <div class="connection-meta">
                         <span class="connection-role">Fixed role: ${escapeHtml(agent.role || 'viewer')}</span>
                         <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
-                        <span>${escapeHtml(approvalLabel)}</span>
                         ${isAdmin ? `<span class="agent-visibility">${escapeHtml(visibilitySummary(agent))}</span>` : ''}
                     </div>
                     <div class="mcp-endpoint-actions">
@@ -456,6 +413,7 @@
             ${personalNote}
             <li>When your AI app opens Birkly, sign in and approve the connection.</li>
             <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
+            <li>For write actions, set tool permissions in your AI app (Claude: connector settings → tool permissions).</li>
             <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
         </ol>
         ${httpWarning}
@@ -523,9 +481,6 @@
 
         const successPanel = document.getElementById('mcp-create-success');
         if (successPanel) successPanel.style.display = 'none';
-
-        const requireApproval = document.getElementById('mcp-require-approval');
-        if (requireApproval) requireApproval.checked = true;
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) {
@@ -650,7 +605,6 @@
             description: formData.get('description') || '',
             visible_to_roles: collectCheckedValues(rolesContainer, 'visible_to_roles'),
             allowed_users: collectCheckedValues(usersContainer, 'allowed_users'),
-            require_approval: document.getElementById('mcp-require-approval')?.checked ?? true,
             _csrf: csrfToken
         };
 

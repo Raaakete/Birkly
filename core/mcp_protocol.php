@@ -178,6 +178,34 @@ function birkly_mcp_dispatch_jsonrpc(array $input, array $aiUser): array
     return [$result, $error];
 }
 
+/**
+ * Ensure a bearer token issued for an MCP endpoint matches the agent in the URL path.
+ */
+function birkly_mcp_actor_matches_path_agent(array $aiUser, ?string $pathAgentId): bool
+{
+    if ($pathAgentId === null) {
+        return true;
+    }
+
+    require_once __DIR__ . '/mcp_oauth.php';
+    require_once __DIR__ . '/ai_agents.php';
+
+    birkly_ai_agents_ensure_personal();
+
+    $tokenEndpointId = (string) ($aiUser['id'] ?? '');
+    if ($tokenEndpointId === '') {
+        return false;
+    }
+
+    $expectedEndpoint = birkly_mcp_oauth_endpoint_for_agent_id($pathAgentId);
+    if ($expectedEndpoint && ($expectedEndpoint['id'] ?? '') === $tokenEndpointId) {
+        return true;
+    }
+
+    $agent = birkly_ai_agents_find_by_endpoint_id($tokenEndpointId);
+    return $agent !== null && ($agent['id'] ?? '') === $pathAgentId;
+}
+
 function birkly_mcp_is_notification(array $input): bool
 {
     return array_key_exists('method', $input) && !array_key_exists('id', $input);

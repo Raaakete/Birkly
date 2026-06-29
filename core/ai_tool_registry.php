@@ -181,9 +181,14 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         return ['content' => [['type' => 'text', 'text' => json_encode($result['data'] ?? $result, JSON_PRETTY_PRINT)]]];
     }
 
-    $requireApproval = $aiUser['require_approval'] ?? true;
-    if (is_string($requireApproval)) {
-        $requireApproval = in_array(strtolower($requireApproval), ['1', 'true', 'yes', 'on'], true);
+    // Inbound MCP: the client app (Claude, ChatGPT, Cursor) handles approval UX.
+    // Birkly only enforces role permissions. Outbound admin chat keeps require_approval.
+    $requireApproval = false;
+    if ($source !== 'mcp') {
+        $requireApproval = $aiUser['require_approval'] ?? true;
+        if (is_string($requireApproval)) {
+            $requireApproval = in_array(strtolower($requireApproval), ['1', 'true', 'yes', 'on'], true);
+        }
     }
 
     if ($requireApproval) {
@@ -209,8 +214,15 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         return ['content' => [['type' => 'text', 'text' => $message]]];
     }
 
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
     require_once __DIR__ . '/../api/ai_approvals.php';
-    $result = executeAiAction(['action_type' => $actionType, 'action_data' => $arguments, 'ai_user_id' => $aiUser['id']]);
+    $result = executeAiAction([
+        'action_type' => $actionType,
+        'action_data' => $arguments,
+        'ai_user_id' => $aiUser['id'],
+        'ai_user' => $aiUser,
+    ]);
+    unset($GLOBALS['__HARU_INTERNAL_CALL']);
     if (!($result['success'] ?? false)) {
         return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Execution failed']]];
     }
