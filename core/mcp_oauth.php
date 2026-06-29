@@ -471,32 +471,15 @@ function birkly_mcp_oauth_handle_authorize(): void
 {
     birkly_mcp_oauth_purge_expired();
 
-    $responseType = $_GET['response_type'] ?? '';
-    $clientId = trim((string) ($_GET['client_id'] ?? ''));
-    $redirectUri = (string) ($_GET['redirect_uri'] ?? '');
-    $state = (string) ($_GET['state'] ?? '');
-    $codeChallenge = (string) ($_GET['code_challenge'] ?? '');
-    $codeChallengeMethod = (string) ($_GET['code_challenge_method'] ?? 'S256');
-    $scope = (string) ($_GET['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE);
+    $params = birkly_mcp_oauth_collect_authorize_params();
+    birkly_mcp_oauth_validate_authorize_params($params);
 
-    if ($responseType !== 'code') {
-        birkly_mcp_oauth_error('unsupported_response_type', 'Only response_type=code is supported');
-    }
-    if ($clientId === '') {
-        birkly_mcp_oauth_error('invalid_request', 'client_id is required');
-    }
-    if ($redirectUri === '') {
-        birkly_mcp_oauth_error('invalid_request', 'redirect_uri is required');
-    }
-    if ($codeChallenge === '') {
-        birkly_mcp_oauth_error('invalid_request', 'code_challenge is required (PKCE)');
-    }
-
+    $clientId = $params['client_id'];
     $client = birkly_mcp_oauth_find_client($clientId);
     if (!$client && birkly_mcp_oauth_resolve_endpoint_for_client($clientId) === null) {
         birkly_mcp_oauth_error('invalid_client', 'Unknown client_id');
     }
-    if ($client && !birkly_mcp_oauth_redirect_uri_allowed($client, $redirectUri)) {
+    if ($client && !birkly_mcp_oauth_redirect_uri_allowed($client, $params['redirect_uri'])) {
         birkly_mcp_oauth_error('invalid_request', 'redirect_uri not registered for client');
     }
 
@@ -505,28 +488,187 @@ function birkly_mcp_oauth_handle_authorize(): void
         birkly_mcp_oauth_error('access_denied', 'No OAuth-enabled MCP endpoint mapped to this client');
     }
 
+    require_once __DIR__ . '/../api/session.php';
+    require_once __DIR__ . '/../api/auth.php';
+    require_once __DIR__ . '/../core/csrf.php';
+    require_once __DIR__ . '/ai_agents.php';
+    haru_secure_session_start();
+
+    $agent = birkly_ai_agents_find_by_endpoint_id((string) ($endpoint['id'] ?? ''));
+
+    if (!isset($_SESSION['user']) || !birkly_mcp_oauth_user_has_admin_access($_SESSION['user'])) {
+        $_SESSION['mcp_oauth_pending'] = $params;
+        $returnUrl = birkly_mcp_oauth_absolute_url('/oauth/authorize') . '?' . http_build_query($params);
+        header('Location: ' . birkly_url('/admin/login.php?redirect=' . rawurlencode($returnUrl)), true, 302);
+        exit;
+    }
+
+    $user = $_SESSION['user'];
+
+    if (!birkly_ai_user_can_authorize_agent($agent, $endpoint, $user)) {
+        birkly_mcp_oauth_render_authorize_denied_page($agent, $endpoint, $user);
+        exit;
+    }
+
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        $decision = (string) ($_POST['oauth_consent'] ?? '');
+        if (!validate_csrf_token((string) ($_POST['_csrf'] ?? ''))) {
+            birkly_mcp_oauth_render_authorize_error_page('Invalid security token. Go back and try again.');
+            exit;
+        }
+
+        if ($decision === 'deny') {
+            birkly_mcp_oauth_redirect_oauth_error(
+                $params['redirect_uri'],
+                $params['state'],
+                'access_denied',
+                'User denied the connection request'
+            );
+        }
+
+        if ($decision === 'approve') {
+            birkly_mcp_oauth_issue_authorization_redirect($params, $endpoint, $user);
+        }
+    }
+
+    birkly_mcp_oauth_render_consent_page($agent, $endpoint, $user, $params);
+}
+
+function birkly_mcp_oauth_collect_authorize_params(): array
+{
+    $source = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' ? $_POST : $_GET;
+
+    return [
+        'response_type' => (string) ($source['response_type'] ?? ''),
+        'client_id' => trim((string) ($source['client_id'] ?? '')),
+        'redirect_uri' => (string) ($source['redirect_uri'] ?? ''),
+        'state' => (string) ($source['state'] ?? ''),
+        'code_challenge' => (string) ($source['code_challenge'] ?? ''),
+        'code_challenge_method' => (string) ($source['code_challenge_method'] ?? 'S256'),
+        'scope' => (string) ($source['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE),
+        'resource' => trim((string) ($source['resource'] ?? '')),
+    ];
+}
+
+function birkly_mcp_oauth_validate_authorize_params(array $params): void
+{
+    if ($params['response_type'] !== 'code') {
+        birkly_mcp_oauth_error('unsupported_response_type', 'Only response_type=code is supported');
+    }
+    if ($params['client_id'] === '') {
+        birkly_mcp_oauth_error('invalid_request', 'client_id is required');
+    }
+    if ($params['redirect_uri'] === '') {
+        birkly_mcp_oauth_error('invalid_request', 'redirect_uri is required');
+    }
+    if ($params['code_challenge'] === '') {
+        birkly_mcp_oauth_error('invalid_request', 'code_challenge is required (PKCE)');
+    }
+}
+
+function birkly_mcp_oauth_user_has_admin_access(array $user): bool
+{
+    $role = (string) ($user['role'] ?? '');
+    return in_array($role, ['admin', 'editor', 'viewer', 'author'], true);
+}
+
+function birkly_mcp_oauth_issue_authorization_redirect(array $params, array $endpoint, array $user): void
+{
     $code = birkly_mcp_oauth_generate_id('mcp_code_');
     $store = birkly_mcp_oauth_load_store();
     $store['authorization_codes'][$code] = [
-        'client_id' => $clientId,
-        'redirect_uri' => $redirectUri,
+        'client_id' => $params['client_id'],
+        'redirect_uri' => $params['redirect_uri'],
         'endpoint_id' => $endpoint['id'],
-        'code_challenge' => $codeChallenge,
-        'code_challenge_method' => $codeChallengeMethod,
-        'scope' => $scope,
+        'code_challenge' => $params['code_challenge'],
+        'code_challenge_method' => $params['code_challenge_method'],
+        'scope' => $params['scope'],
+        'authorized_by' => (string) ($user['id'] ?? ''),
+        'authorized_role' => (string) ($user['role'] ?? 'viewer'),
         'expires_at' => time() + BIRKLY_MCP_OAUTH_CODE_TTL,
         'created_at' => date('c'),
     ];
     birkly_mcp_oauth_save_store($store);
 
+    $separator = str_contains($params['redirect_uri'], '?') ? '&' : '?';
+    $location = $params['redirect_uri'] . $separator . 'code=' . rawurlencode($code);
+    if ($params['state'] !== '') {
+        $location .= '&state=' . rawurlencode($params['state']);
+    }
+
+    header('Location: ' . $location, true, 302);
+    exit;
+}
+
+function birkly_mcp_oauth_redirect_oauth_error(
+    string $redirectUri,
+    string $state,
+    string $error,
+    string $description = ''
+): void {
     $separator = str_contains($redirectUri, '?') ? '&' : '?';
-    $location = $redirectUri . $separator . 'code=' . rawurlencode($code);
+    $location = $redirectUri . $separator . 'error=' . rawurlencode($error);
+    if ($description !== '') {
+        $location .= '&error_description=' . rawurlencode($description);
+    }
     if ($state !== '') {
         $location .= '&state=' . rawurlencode($state);
     }
 
-    birkly_mcp_oauth_apply_cors();
     header('Location: ' . $location, true, 302);
+    exit;
+}
+
+function birkly_mcp_oauth_render_consent_page(?array $agent, array $endpoint, array $user, array $params): void
+{
+    $csrf = generate_csrf_token();
+    $agentName = htmlspecialchars((string) ($agent['name'] ?? $endpoint['name'] ?? 'AI agent'), ENT_QUOTES, 'UTF-8');
+    $agentRole = htmlspecialchars((string) ($agent['role'] ?? $endpoint['role'] ?? 'viewer'), ENT_QUOTES, 'UTF-8');
+    $userLabel = htmlspecialchars((string) ($user['email'] ?? $user['id'] ?? 'you'), ENT_QUOTES, 'UTF-8');
+    $approval = !empty($agent['require_approval'] ?? $endpoint['require_approval'] ?? true)
+        ? 'Write actions will require approval in Birkly.'
+        : 'Write actions may run automatically.';
+
+    http_response_code(200);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Authorize AI connection</title>';
+    echo '<style>body{font-family:system-ui,sans-serif;max-width:560px;margin:48px auto;padding:0 16px;color:#1f2937}';
+    echo '.card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;background:#fff}';
+    echo 'button{font:inherit;padding:10px 16px;border-radius:8px;border:0;cursor:pointer}';
+    echo '.primary{background:#2563eb;color:#fff}.secondary{background:#f3f4f6;color:#111827;margin-right:8px}</style></head><body>';
+    echo '<div class="card"><h1>Authorize AI connection</h1>';
+    echo '<p>Signed in as <strong>' . $userLabel . '</strong>.</p>';
+    echo '<p>Allow an external AI app to access your Birkly site as <strong>' . $agentName . '</strong> (role: <strong>' . $agentRole . '</strong>)?</p>';
+    echo '<p>' . htmlspecialchars($approval, ENT_QUOTES, 'UTF-8') . '</p>';
+    echo '<form method="post" action="' . htmlspecialchars(birkly_url('/oauth/authorize'), ENT_QUOTES, 'UTF-8') . '">';
+    foreach ($params as $key => $value) {
+        if ($value === '') {
+            continue;
+        }
+        echo '<input type="hidden" name="' . htmlspecialchars($key, ENT_QUOTES, 'UTF-8') . '" value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '">';
+    }
+    echo '<input type="hidden" name="_csrf" value="' . htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') . '">';
+    echo '<p><button class="secondary" type="submit" name="oauth_consent" value="deny">Deny</button>';
+    echo '<button class="primary" type="submit" name="oauth_consent" value="approve">Allow connection</button></p>';
+    echo '</form></div></body></html>';
+    exit;
+}
+
+function birkly_mcp_oauth_render_authorize_denied_page(?array $agent, array $endpoint, array $user): void
+{
+    require_once __DIR__ . '/ai_agents.php';
+    $message = htmlspecialchars(birkly_ai_user_authorize_agent_denial_reason($agent, $endpoint, $user), ENT_QUOTES, 'UTF-8');
+    birkly_mcp_oauth_render_authorize_error_page($message);
+}
+
+function birkly_mcp_oauth_render_authorize_error_page(string $message): void
+{
+    http_response_code(403);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Connection denied</title></head><body>';
+    echo '<h1>Connection denied</h1><p>' . $message . '</p>';
+    echo '<p><a href="' . htmlspecialchars(birkly_url('/admin/index.php?page=settings#ai-integrations'), ENT_QUOTES, 'UTF-8') . '">Back to Birkly settings</a></p>';
+    echo '</body></html>';
     exit;
 }
 
@@ -540,8 +682,13 @@ function birkly_mcp_oauth_parse_token_request(): array
     return $_POST;
 }
 
-function birkly_mcp_oauth_issue_tokens(string $clientId, string $endpointId, string $scope): array
-{
+function birkly_mcp_oauth_issue_tokens(
+    string $clientId,
+    string $endpointId,
+    string $scope,
+    string $authorizedBy = '',
+    string $authorizedRole = ''
+): array {
     $accessToken = birkly_mcp_oauth_generate_id('mcp_at_');
     $refreshToken = birkly_mcp_oauth_generate_id('mcp_rt_');
     $now = time();
@@ -553,6 +700,8 @@ function birkly_mcp_oauth_issue_tokens(string $clientId, string $endpointId, str
         'client_id' => $clientId,
         'endpoint_id' => $endpointId,
         'scope' => $scope,
+        'authorized_by' => $authorizedBy,
+        'authorized_role' => $authorizedRole,
         'expires_at' => $now + BIRKLY_MCP_OAUTH_ACCESS_TTL,
         'refresh_expires_at' => $now + BIRKLY_MCP_OAUTH_REFRESH_TTL,
         'created_at' => date('c'),
@@ -613,7 +762,13 @@ function birkly_mcp_oauth_handle_token(): void
 
         $endpointId = (string) $codeEntry['endpoint_id'];
         $scope = (string) ($codeEntry['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE);
-        birkly_mcp_oauth_json_response(birkly_mcp_oauth_issue_tokens($clientId, $endpointId, $scope));
+        birkly_mcp_oauth_json_response(birkly_mcp_oauth_issue_tokens(
+            $clientId,
+            $endpointId,
+            $scope,
+            (string) ($codeEntry['authorized_by'] ?? ''),
+            (string) ($codeEntry['authorized_role'] ?? '')
+        ));
     }
 
     if ($grantType === 'refresh_token') {
@@ -651,7 +806,9 @@ function birkly_mcp_oauth_handle_token(): void
         birkly_mcp_oauth_json_response(birkly_mcp_oauth_issue_tokens(
             $clientId,
             (string) $matched['endpoint_id'],
-            (string) ($matched['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE)
+            (string) ($matched['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE),
+            (string) ($matched['authorized_by'] ?? ''),
+            (string) ($matched['authorized_role'] ?? '')
         ));
     }
 
@@ -766,7 +923,16 @@ function birkly_mcp_oauth_resolve_actor_by_token(string $accessToken): ?array
         return null;
     }
 
-    return birkly_mcp_endpoint_to_ai_user($endpoint);
+    $actor = birkly_mcp_endpoint_to_ai_user($endpoint);
+    $authorizedRole = trim((string) ($entry['authorized_role'] ?? ''));
+    if ($authorizedRole !== '') {
+        require_once __DIR__ . '/ai_agents.php';
+        $actor['role'] = birkly_ai_effective_role((string) ($actor['role'] ?? 'viewer'), $authorizedRole);
+        $actor['authorized_by'] = (string) ($entry['authorized_by'] ?? '');
+        $actor['authorized_role'] = $authorizedRole;
+    }
+
+    return $actor;
 }
 
 function birkly_mcp_endpoint_accepts_api_key(array $endpoint): bool

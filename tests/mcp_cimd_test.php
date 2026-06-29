@@ -99,17 +99,57 @@ try {
     test_assert('CIMD redirect URI allowed', birkly_mcp_oauth_redirect_uri_allowed($cached, $redirectUri));
 
     $pkce = cimd_pkce_pair();
-    $authUrl = $base . '/oauth/authorize?' . http_build_query([
+    $authQuery = [
         'response_type' => 'code',
         'client_id' => $cimdUrl,
         'redirect_uri' => $redirectUri,
         'code_challenge' => $pkce['challenge'],
         'code_challenge_method' => 'S256',
         'scope' => 'mcp',
+    ];
+    $authUrl = $base . '/oauth/authorize?' . http_build_query($authQuery);
+
+    $usersDir = $root . '/users';
+    $cookieFile = sys_get_temp_dir() . '/birkly-cimd-cookies-' . getmypid() . '.txt';
+    $backupUsers = sys_get_temp_dir() . '/birkly-cimd-users-' . getmypid();
+    $testEmail = 'cimd-test-' . getmypid() . '@birkly.test';
+    $testPassword = 'SecurePass123!';
+    @unlink($cookieFile);
+    touch($cookieFile);
+    birkly_test_backup_directory($usersDir, $backupUsers);
+    birkly_test_clear_json_files($usersDir);
+
+    $createUser = birkly_test_http_request($base . '/api/onboarding.php?action=create_first_user', [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/json'],
+        'body' => json_encode([
+            'name' => 'CIMD Test Admin',
+            'email' => $testEmail,
+            'password' => $testPassword,
+        ]),
+        'cookie_file' => $cookieFile,
     ]);
-    $auth = birkly_test_http_request($authUrl, ['method' => 'GET', 'follow' => false]);
-    test_assert('CIMD authorize redirects with code', $auth['code'] === 302);
-    test_assert('redirect contains code=', str_contains($auth['headers'] ?? '', 'code='));
+    test_assert('cimd test user created', ($createUser['code'] ?? 0) === 200);
+
+    $consent = birkly_test_http_request($authUrl, ['cookie_file' => $cookieFile, 'follow' => false]);
+    test_assert('CIMD authorize shows consent page', ($consent['code'] ?? 0) === 200);
+    preg_match('/name="_csrf"\s+value="([^"]+)"/', $consent['body'] ?? '', $csrfMatch);
+
+    $approve = birkly_test_http_request($base . '/oauth/authorize', [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/x-www-form-urlencoded'],
+        'body' => http_build_query(array_merge($authQuery, [
+            '_csrf' => $csrfMatch[1] ?? '',
+            'oauth_consent' => 'approve',
+        ])),
+        'cookie_file' => $cookieFile,
+        'follow' => false,
+    ]);
+    test_assert('CIMD consent approve redirects with code', $approve['code'] === 302);
+    test_assert('redirect contains code=', str_contains($approve['headers'] ?? '', 'code='));
+
+    birkly_test_restore_directory($usersDir, $backupUsers);
+    birkly_test_remove_directory($backupUsers);
 
 } finally {
     birkly_test_http_server_stop($serverPid);
