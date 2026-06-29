@@ -79,6 +79,19 @@ if ($apiKey === '' && $bearerToken === '') {
 $aiUser = birkly_mcp_resolve_actor_with_auth($apiKey, $bearerToken);
 $endpointId = $aiUser['id'] ?? 'unknown';
 
+if ($aiUser) {
+    $pathAgentId = birkly_mcp_agent_id_from_path();
+    if ($pathAgentId !== null) {
+        $expectedEndpoint = birkly_mcp_oauth_endpoint_for_agent_id($pathAgentId);
+        if (
+            !$expectedEndpoint
+            || ($expectedEndpoint['id'] ?? '') !== ($aiUser['id'] ?? '')
+        ) {
+            $aiUser = null;
+        }
+    }
+}
+
 if (!$aiUser) {
     if ($apiKey !== '') {
         birkly_mcp_record_failed_auth($apiKey);
