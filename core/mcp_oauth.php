@@ -505,6 +505,11 @@ function birkly_mcp_oauth_handle_authorize(): void
 
     $user = $_SESSION['user'];
 
+    if ($agent !== null && !birkly_ai_user_can_see_agent($agent, $user)) {
+        birkly_mcp_oauth_render_authorize_denied_page($agent, $endpoint, $user);
+        exit;
+    }
+
     if (!birkly_ai_user_can_authorize_agent($agent, $endpoint, $user)) {
         birkly_mcp_oauth_render_authorize_denied_page($agent, $endpoint, $user);
         exit;
@@ -574,6 +579,11 @@ function birkly_mcp_oauth_user_has_admin_access(array $user): bool
 
 function birkly_mcp_oauth_issue_authorization_redirect(array $params, array $endpoint, array $user): void
 {
+    require_once __DIR__ . '/ai_agents.php';
+
+    $agent = birkly_ai_agents_find_by_endpoint_id((string) ($endpoint['id'] ?? ''));
+    $agentType = (string) ($agent['type'] ?? 'service');
+
     $code = birkly_mcp_oauth_generate_id('mcp_code_');
     $store = birkly_mcp_oauth_load_store();
     $store['authorization_codes'][$code] = [
@@ -585,6 +595,7 @@ function birkly_mcp_oauth_issue_authorization_redirect(array $params, array $end
         'scope' => $params['scope'],
         'authorized_by' => (string) ($user['id'] ?? ''),
         'authorized_role' => (string) ($user['role'] ?? 'viewer'),
+        'agent_type' => $agentType,
         'expires_at' => time() + BIRKLY_MCP_OAUTH_CODE_TTL,
         'created_at' => date('c'),
     ];
@@ -621,24 +632,30 @@ function birkly_mcp_oauth_redirect_oauth_error(
 
 function birkly_mcp_oauth_render_consent_page(?array $agent, array $endpoint, array $user, array $params): void
 {
+    require_once __DIR__ . '/ai_agents.php';
+
     $csrf = generate_csrf_token();
+    $summary = birkly_ai_agents_consent_summary($agent, $endpoint, $user);
     $agentName = htmlspecialchars((string) ($agent['name'] ?? $endpoint['name'] ?? 'AI agent'), ENT_QUOTES, 'UTF-8');
-    $agentRole = htmlspecialchars((string) ($agent['role'] ?? $endpoint['role'] ?? 'viewer'), ENT_QUOTES, 'UTF-8');
     $userLabel = htmlspecialchars((string) ($user['email'] ?? $user['id'] ?? 'you'), ENT_QUOTES, 'UTF-8');
     $approval = !empty($agent['require_approval'] ?? $endpoint['require_approval'] ?? true)
         ? 'Write actions will require approval in Birkly.'
         : 'Write actions may run automatically.';
+    $typeLabel = $summary['type'] === 'personal' ? 'Personal connector' : 'Service agent';
 
     http_response_code(200);
     header('Content-Type: text/html; charset=utf-8');
     echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Authorize AI connection</title>';
     echo '<style>body{font-family:system-ui,sans-serif;max-width:560px;margin:48px auto;padding:0 16px;color:#1f2937}';
     echo '.card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;background:#fff}';
+    echo '.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;padding:4px 10px;border-radius:999px;font-size:12px;margin-bottom:12px}';
     echo 'button{font:inherit;padding:10px 16px;border-radius:8px;border:0;cursor:pointer}';
     echo '.primary{background:#2563eb;color:#fff}.secondary{background:#f3f4f6;color:#111827;margin-right:8px}</style></head><body>';
     echo '<div class="card"><h1>Authorize AI connection</h1>';
+    echo '<span class="badge">' . htmlspecialchars($typeLabel, ENT_QUOTES, 'UTF-8') . '</span>';
     echo '<p>Signed in as <strong>' . $userLabel . '</strong>.</p>';
-    echo '<p>Allow an external AI app to access your Birkly site as <strong>' . $agentName . '</strong> (role: <strong>' . $agentRole . '</strong>)?</p>';
+    echo '<p>Allow an external AI app to access <strong>' . $agentName . '</strong>?</p>';
+    echo '<p><strong>' . htmlspecialchars($summary['body'], ENT_QUOTES, 'UTF-8') . '</strong></p>';
     echo '<p>' . htmlspecialchars($approval, ENT_QUOTES, 'UTF-8') . '</p>';
     echo '<form method="post" action="' . htmlspecialchars(birkly_url('/oauth/authorize'), ENT_QUOTES, 'UTF-8') . '">';
     foreach ($params as $key => $value) {
@@ -687,7 +704,8 @@ function birkly_mcp_oauth_issue_tokens(
     string $endpointId,
     string $scope,
     string $authorizedBy = '',
-    string $authorizedRole = ''
+    string $authorizedRole = '',
+    string $agentType = 'service'
 ): array {
     $accessToken = birkly_mcp_oauth_generate_id('mcp_at_');
     $refreshToken = birkly_mcp_oauth_generate_id('mcp_rt_');
@@ -702,6 +720,7 @@ function birkly_mcp_oauth_issue_tokens(
         'scope' => $scope,
         'authorized_by' => $authorizedBy,
         'authorized_role' => $authorizedRole,
+        'agent_type' => $agentType,
         'expires_at' => $now + BIRKLY_MCP_OAUTH_ACCESS_TTL,
         'refresh_expires_at' => $now + BIRKLY_MCP_OAUTH_REFRESH_TTL,
         'created_at' => date('c'),
@@ -767,7 +786,8 @@ function birkly_mcp_oauth_handle_token(): void
             $endpointId,
             $scope,
             (string) ($codeEntry['authorized_by'] ?? ''),
-            (string) ($codeEntry['authorized_role'] ?? '')
+            (string) ($codeEntry['authorized_role'] ?? ''),
+            (string) ($codeEntry['agent_type'] ?? 'service')
         ));
     }
 
@@ -808,7 +828,8 @@ function birkly_mcp_oauth_handle_token(): void
             (string) $matched['endpoint_id'],
             (string) ($matched['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE),
             (string) ($matched['authorized_by'] ?? ''),
-            (string) ($matched['authorized_role'] ?? '')
+            (string) ($matched['authorized_role'] ?? ''),
+            (string) ($matched['agent_type'] ?? 'service')
         ));
     }
 
@@ -923,16 +944,10 @@ function birkly_mcp_oauth_resolve_actor_by_token(string $accessToken): ?array
         return null;
     }
 
-    $actor = birkly_mcp_endpoint_to_ai_user($endpoint);
-    $authorizedRole = trim((string) ($entry['authorized_role'] ?? ''));
-    if ($authorizedRole !== '') {
-        require_once __DIR__ . '/ai_agents.php';
-        $actor['role'] = birkly_ai_effective_role((string) ($actor['role'] ?? 'viewer'), $authorizedRole);
-        $actor['authorized_by'] = (string) ($entry['authorized_by'] ?? '');
-        $actor['authorized_role'] = $authorizedRole;
-    }
+    require_once __DIR__ . '/ai_agents.php';
+    $agent = birkly_ai_agents_find_by_endpoint_id((string) ($endpoint['id'] ?? ''));
 
-    return $actor;
+    return birkly_ai_agents_mcp_actor_for_token($endpoint, $agent, $entry);
 }
 
 function birkly_mcp_endpoint_accepts_api_key(array $endpoint): bool
