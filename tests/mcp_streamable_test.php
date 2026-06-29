@@ -82,6 +82,42 @@ try {
     $prData = birkly_test_json_decode($pr['body']);
     test_assert('protected resource points to /mcp', str_contains($prData['resource'] ?? '', '/mcp'));
 
+    require_once dirname(__DIR__) . '/core/ai_agents.php';
+    $agentsFile = $root . '/settings/ai_agents.json';
+    $backupAgents = $agentsFile . '.bak.' . getmypid();
+    if (is_file($agentsFile)) {
+        copy($agentsFile, $backupAgents);
+    }
+    @unlink($agentsFile);
+    birkly_ai_agents_ensure_personal();
+    $personalPath = '/mcp/agents/' . BIRKLY_AI_AGENT_PERSONAL_ID;
+
+    $agentUnauth = birkly_test_http_request($base . $personalPath, [
+        'method' => 'POST',
+        'headers' => [
+            'Content-Type: application/json',
+            'Accept: application/json, text/event-stream',
+        ],
+        'body' => json_encode(['jsonrpc' => '2.0', 'method' => 'tools/list', 'id' => 10]),
+    ]);
+    test_assert(
+        'per-agent MCP path routes to handler (401 not 404)',
+        $agentUnauth['code'] === 401,
+        'code ' . ($agentUnauth['code'] ?? 0)
+    );
+
+    $agentPr = birkly_test_http_request($base . '/.well-known/oauth-protected-resource' . $personalPath);
+    $agentPrData = birkly_test_json_decode($agentPr['body']);
+    test_assert('per-agent protected resource HTTP 200', $agentPr['code'] === 200);
+    test_assert('per-agent resource URL matches path', str_contains($agentPrData['resource'] ?? '', $personalPath));
+
+    if (is_file($backupAgents)) {
+        copy($backupAgents, $agentsFile);
+        unlink($backupAgents);
+    } else {
+        @unlink($agentsFile);
+    }
+
 } finally {
     birkly_test_http_server_stop($serverPid);
     if (is_file($backupSettings)) {
