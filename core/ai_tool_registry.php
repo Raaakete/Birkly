@@ -182,9 +182,8 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     return ['content' => [['type' => 'text', 'text' => json_encode($result, JSON_PRETTY_PRINT)]]];
 }
 
-function birkly_ai_mcp_server_url(): string
+function birkly_ai_mcp_scheme(): string
 {
-    require_once __DIR__ . '/birkly_paths.php';
     $scheme = 'http';
     if (
         (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -199,5 +198,19 @@ function birkly_ai_mcp_server_url(): string
             $scheme = $proto;
         }
     }
-    return $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . birkly_url('/api/mcp_server.php');
+    return $scheme;
+}
+
+function birkly_ai_mcp_server_url(): string
+{
+    require_once __DIR__ . '/birkly_paths.php';
+    require_once __DIR__ . '/mcp_protocol.php';
+    return birkly_ai_mcp_scheme() . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . birkly_url(birkly_mcp_connector_path());
+}
+
+function birkly_ai_mcp_legacy_server_url(): string
+{
+    require_once __DIR__ . '/birkly_paths.php';
+    require_once __DIR__ . '/mcp_protocol.php';
+    return birkly_ai_mcp_scheme() . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . birkly_url(birkly_mcp_legacy_path());
 }

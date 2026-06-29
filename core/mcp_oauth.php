@@ -27,6 +27,7 @@ function birkly_mcp_oauth_default_store(): array
         'clients' => [],
         'authorization_codes' => [],
         'tokens' => [],
+        'cimd_cache' => [],
     ];
 }
 
@@ -37,7 +38,7 @@ function birkly_mcp_oauth_load_store(): array
     if (!is_array($data)) {
         return birkly_mcp_oauth_default_store();
     }
-    foreach (['clients', 'authorization_codes', 'tokens'] as $key) {
+    foreach (['clients', 'authorization_codes', 'tokens', 'cimd_cache'] as $key) {
         if (!isset($data[$key]) || !is_array($data[$key])) {
             $data[$key] = [];
         }
@@ -73,7 +74,8 @@ function birkly_mcp_oauth_absolute_url(string $path): string
 
 function birkly_mcp_oauth_resource_url(): string
 {
-    return birkly_mcp_oauth_absolute_url('/api/mcp_server.php');
+    require_once __DIR__ . '/mcp_protocol.php';
+    return birkly_mcp_oauth_absolute_url(birkly_mcp_connector_path());
 }
 
 function birkly_mcp_oauth_protected_resource_metadata_url(): string
@@ -147,6 +149,7 @@ function birkly_mcp_oauth_authorization_server_metadata(): array
         'code_challenge_methods_supported' => ['S256'],
         'token_endpoint_auth_methods_supported' => ['none', 'client_secret_post'],
         'scopes_supported' => [BIRKLY_MCP_OAUTH_SCOPE],
+        'client_id_metadata_document_supported' => true,
     ];
 }
 
@@ -168,7 +171,132 @@ function birkly_mcp_oauth_generate_id(string $prefix = ''): string
 function birkly_mcp_oauth_find_client(string $clientId): ?array
 {
     $client = birkly_mcp_oauth_load_store()['clients'][$clientId] ?? null;
-    return is_array($client) ? $client : null;
+    if (is_array($client)) {
+        return $client;
+    }
+
+    if (birkly_mcp_oauth_is_cimd_client_id($clientId)) {
+        return birkly_mcp_oauth_resolve_cimd_client($clientId);
+    }
+
+    return null;
+}
+
+function birkly_mcp_oauth_is_cimd_client_id(string $clientId): bool
+{
+    return str_starts_with($clientId, 'https://');
+}
+
+function birkly_mcp_oauth_is_private_ip(string $ip): bool
+{
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+        return true;
+    }
+    return !filter_var(
+        $ip,
+        FILTER_VALIDATE_IP,
+        FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+    );
+}
+
+function birkly_mcp_oauth_fetch_cimd_metadata(string $url): ?array
+{
+    if (!birkly_mcp_oauth_is_cimd_client_id($url)) {
+        return null;
+    }
+
+    $parsed = parse_url($url);
+    if (!is_array($parsed) || ($parsed['scheme'] ?? '') !== 'https') {
+        return null;
+    }
+    if (empty($parsed['host']) || empty($parsed['path'])) {
+        return null;
+    }
+
+    $host = $parsed['host'];
+    $resolved = gethostbyname($host);
+    if ($resolved === $host && !filter_var($host, FILTER_VALIDATE_IP)) {
+        return null;
+    }
+    if (birkly_mcp_oauth_is_private_ip($resolved)) {
+        return null;
+    }
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 5,
+            'follow_location' => 0,
+            'ignore_errors' => true,
+            'header' => "Accept: application/json\r\n",
+        ],
+        'ssl' => [
+            'verify_peer' => true,
+            'verify_peer_name' => true,
+        ],
+    ]);
+
+    $body = @file_get_contents($url, false, $context);
+    if ($body === false || strlen($body) > 5120) {
+        return null;
+    }
+
+    $status = 0;
+    if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) {
+        $status = (int) $m[1];
+    }
+    if ($status !== 200) {
+        return null;
+    }
+
+    $data = json_decode($body, true);
+    if (!is_array($data)) {
+        return null;
+    }
+    if (($data['client_id'] ?? '') !== $url) {
+        return null;
+    }
+    if (empty($data['redirect_uris']) || !is_array($data['redirect_uris'])) {
+        return null;
+    }
+
+    return $data;
+}
+
+function birkly_mcp_oauth_resolve_cimd_client(string $clientId): ?array
+{
+    $store = birkly_mcp_oauth_load_store();
+    $cached = $store['cimd_cache'][$clientId] ?? null;
+    if (is_array($cached) && ($cached['expires_at'] ?? 0) > time()) {
+        return $cached['client'];
+    }
+
+    $metadata = birkly_mcp_oauth_fetch_cimd_metadata($clientId);
+    if ($metadata === null) {
+        return null;
+    }
+
+    $client = [
+        'client_id' => $clientId,
+        'client_name' => (string) ($metadata['client_name'] ?? 'MCP Client'),
+        'redirect_uris' => array_values(array_map('strval', $metadata['redirect_uris'])),
+        'grant_types' => $metadata['grant_types'] ?? ['authorization_code'],
+        'response_types' => $metadata['response_types'] ?? ['code'],
+        'token_endpoint_auth_method' => (string) ($metadata['token_endpoint_auth_method'] ?? 'none'),
+        'cimd' => true,
+        'fetched_at' => date('c'),
+    ];
+
+    if (!isset($store['cimd_cache']) || !is_array($store['cimd_cache'])) {
+        $store['cimd_cache'] = [];
+    }
+    $store['cimd_cache'][$clientId] = [
+        'client' => $client,
+        'expires_at' => time() + 86400,
+    ];
+    birkly_mcp_oauth_save_store($store);
+
+    return $client;
 }
 
 function birkly_mcp_oauth_redirect_uri_allowed(array $client, string $redirectUri): bool

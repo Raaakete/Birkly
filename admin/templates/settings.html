@@ -677,23 +677,23 @@
             <div class="setup-guide-box" id="mcp-setup-guide">
               <h4 class="setup-guide-title">Quick start</h4>
               <ol class="setup-guide-steps">
-                <li>Click <strong>Add connection</strong> and give it a name.</li>
-                <li>Copy the <strong>Connector URL</strong> from your new connection.</li>
-                <li>In your AI app, open connector or integration settings and paste the URL.</li>
-                <li>Sign in when your app asks — no files to edit.</li>
+                <li>Click <strong>Add agent</strong> and give your AI agent a name and role.</li>
+                <li>Copy the <strong>Connector URL</strong> from your new agent.</li>
+                <li>In Claude, ChatGPT, or Cursor: paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
+                <li>Sign in when your app asks. OAuth happens automatically.</li>
               </ol>
             </div>
 
             <div class="connections-container mcp-connections-settings">
               <div class="connections-panel">
                 <div class="panel-header">
-                  <h4>Your connections</h4>
+                  <h4>Your AI agents</h4>
                   <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    Add connection
+                    Add agent
                   </button>
                 </div>
 
@@ -837,8 +837,8 @@
         <div class="modal" id="add-mcp-modal" style="display: none;">
           <div class="modal-content">
             <div class="modal-header">
-              <h2 id="mcp-modal-title">Add AI app connection</h2>
-              <button class="btn-icon modal-close" data-mcp-modal-close>
+              <h2 id="mcp-modal-title">Add AI agent</h2>
+              <button class="btn-icon modal-close" data-mcp-modal-close aria-label="Close">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -846,12 +846,17 @@
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">
-              <p class="modal-intro-text">We'll create a Connector URL you can paste into Claude, ChatGPT, or Cursor. Sign in when your app asks — no files to edit.</p>
+              <p class="modal-intro-text">Create an AI agent with a role. We'll give you a Connector URL to paste into Claude, ChatGPT, or Cursor — leave OAuth fields empty in your app.</p>
 
               <div class="form-group">
-                <label for="mcp-endpoint-name">Connection name</label>
-                <input type="text" id="mcp-endpoint-name" name="name" required placeholder="e.g. My Claude">
+                <label for="mcp-endpoint-name">Agent name</label>
+                <input type="text" id="mcp-endpoint-name" name="name" required placeholder="e.g. Content assistant">
                 <small>A name you'll recognize later</small>
+              </div>
+
+              <div class="form-group">
+                <label for="mcp-agent-description">Description <span class="text-muted">(optional)</span></label>
+                <input type="text" id="mcp-agent-description" name="description" placeholder="e.g. Helps draft blog posts">
               </div>
 
               <div class="form-group">
@@ -876,9 +881,9 @@
               <input type="hidden" id="mcp-auth-mode" name="auth_mode" value="oauth">
 
               <div id="mcp-create-success" class="mcp-success-panel" style="display: none;">
-                <p><strong>Connection created!</strong> Copy your Connector URL below and paste it in your AI app.</p>
+                <p><strong>AI agent created!</strong> Copy your Connector URL and paste it in your AI app. Leave Client ID and Client Secret empty.</p>
                 <div class="mcp-snippet-block">
-                  <label>Connector URL</label>
+                  <label for="mcp-new-connector-url">Connector URL</label>
                   <div class="copy-snippet-row">
                     <input type="text" id="mcp-new-connector-url" readonly>
                     <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-new-connector-url', true)">Copy URL</button>
@@ -888,7 +893,7 @@
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-mcp-modal-close>Cancel</button>
-                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create connection</button>
+                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create agent</button>
               </div>
             </form>
           </div>
