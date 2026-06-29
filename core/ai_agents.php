@@ -46,9 +46,17 @@ function birkly_ai_agents_scrub(array $agent): array
     return $agent;
 }
 
-function birkly_ai_agents_list(): array
+function birkly_ai_agents_list(bool $includeRevoked = false): array
 {
-    return array_values(array_map('birkly_ai_agents_scrub', birkly_ai_agents_load_store()['agents']));
+    $agents = birkly_ai_agents_load_store()['agents'];
+    if (!$includeRevoked) {
+        $agents = array_values(array_filter(
+            $agents,
+            static fn(array $agent): bool => ($agent['status'] ?? 'active') !== 'revoked'
+        ));
+    }
+
+    return array_values(array_map('birkly_ai_agents_scrub', $agents));
 }
 
 function birkly_ai_agents_find(string $id): ?array
@@ -96,7 +104,7 @@ function birkly_ai_agents_create(array $input, string $createdBy): array
         'role' => $role,
         'require_approval' => $endpoint['require_approval'] ?? true,
         'mcp_endpoint_id' => $endpoint['id'],
-        'connector_url' => $endpoint['mcp_url'] ?? birkly_ai_mcp_server_url(),
+        'connector_url' => birkly_ai_agent_connector_url($id),
         'status' => 'active',
         'created_at' => date('c'),
         'created_by' => $createdBy,
@@ -188,15 +196,26 @@ function birkly_ai_agents_revoke(string $id): bool
     return birkly_ai_agents_save_store($store);
 }
 
+function birkly_ai_agent_connector_url(string $agentId): string
+{
+    require_once __DIR__ . '/mcp_protocol.php';
+    require_once __DIR__ . '/mcp_oauth.php';
+
+    return birkly_mcp_oauth_absolute_url(birkly_mcp_connector_path_for_agent($agentId));
+}
+
 function birkly_ai_agents_with_endpoint(array $agent): array
 {
     $endpointId = (string) ($agent['mcp_endpoint_id'] ?? '');
+    $agentId = (string) ($agent['id'] ?? '');
+    if ($agentId !== '' && ($agent['status'] ?? 'active') !== 'revoked') {
+        $agent['connector_url'] = birkly_ai_agent_connector_url($agentId);
+    }
     if ($endpointId === '') {
-        return $agent;
+        return birkly_ai_agents_scrub($agent);
     }
     $endpoint = birkly_mcp_find_endpoint($endpointId);
     if ($endpoint) {
-        $agent['connector_url'] = $endpoint['mcp_url'] ?? birkly_ai_mcp_server_url();
         $agent['auth_mode'] = $endpoint['auth_mode'] ?? 'oauth';
     }
     return birkly_ai_agents_scrub($agent);

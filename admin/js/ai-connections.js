@@ -899,6 +899,7 @@
         if (!confirm('Delete this assistant connection? This cannot be undone.')) return;
 
         try {
+            csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || csrfToken;
             const response = await fetch(birklyApiUrl('/api/ai_connections.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

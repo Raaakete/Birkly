@@ -72,15 +72,75 @@ function birkly_mcp_oauth_absolute_url(string $path): string
     return birkly_mcp_oauth_scheme() . '://' . birkly_mcp_oauth_host() . birkly_url($path);
 }
 
-function birkly_mcp_oauth_resource_url(): string
+function birkly_mcp_oauth_resource_url(?string $agentId = null): string
 {
     require_once __DIR__ . '/mcp_protocol.php';
+    if ($agentId === null) {
+        $agentId = birkly_mcp_oauth_resolve_agent_id_from_request();
+    }
+    if ($agentId !== null) {
+        return birkly_mcp_oauth_absolute_url(birkly_mcp_connector_path_for_agent($agentId));
+    }
+
     return birkly_mcp_oauth_absolute_url(birkly_mcp_connector_path());
 }
 
-function birkly_mcp_oauth_protected_resource_metadata_url(): string
+function birkly_mcp_oauth_protected_resource_metadata_url(?string $agentId = null): string
 {
+    if ($agentId === null) {
+        $agentId = birkly_mcp_oauth_resolve_agent_id_from_request();
+    }
+    if ($agentId !== null) {
+        return birkly_mcp_oauth_absolute_url(
+            '/.well-known/oauth-protected-resource' . birkly_mcp_connector_path_for_agent($agentId)
+        );
+    }
+
     return birkly_mcp_oauth_absolute_url('/.well-known/oauth-protected-resource');
+}
+
+function birkly_mcp_oauth_resolve_agent_id_from_request(): ?string
+{
+    require_once __DIR__ . '/mcp_protocol.php';
+
+    $fromPath = birkly_mcp_agent_id_from_path();
+    if ($fromPath !== null) {
+        return $fromPath;
+    }
+
+    $resource = trim((string) ($_GET['resource'] ?? $_POST['resource'] ?? ''));
+    if ($resource !== '') {
+        return birkly_mcp_agent_id_from_resource_url($resource);
+    }
+
+    return null;
+}
+
+function birkly_mcp_oauth_endpoint_for_agent_id(string $agentId): ?array
+{
+    require_once __DIR__ . '/ai_agents.php';
+
+    $agent = birkly_ai_agents_find($agentId);
+    if (!$agent || ($agent['status'] ?? 'active') !== 'active') {
+        return null;
+    }
+
+    $endpointId = (string) ($agent['mcp_endpoint_id'] ?? '');
+    if ($endpointId === '') {
+        return null;
+    }
+
+    $endpoint = birkly_mcp_find_endpoint($endpointId);
+    if (!$endpoint || ($endpoint['status'] ?? 'active') !== 'active') {
+        return null;
+    }
+
+    $mode = $endpoint['auth_mode'] ?? 'api_key';
+    if ($mode !== 'oauth' && $mode !== 'both') {
+        return null;
+    }
+
+    return $endpoint;
 }
 
 function birkly_mcp_oauth_authorization_server_metadata_url(): string
@@ -325,6 +385,11 @@ function birkly_mcp_oauth_oauth_enabled_endpoints(): array
 
 function birkly_mcp_oauth_resolve_endpoint_for_client(string $clientId): ?array
 {
+    $agentId = birkly_mcp_oauth_resolve_agent_id_from_request();
+    if ($agentId !== null) {
+        return birkly_mcp_oauth_endpoint_for_agent_id($agentId);
+    }
+
     foreach (birkly_mcp_load_store()['endpoints'] as $endpoint) {
         if (($endpoint['status'] ?? 'active') !== 'active') {
             continue;
@@ -355,9 +420,9 @@ function birkly_mcp_oauth_resolve_endpoint_for_client(string $clientId): ?array
         return $enabled[0];
     }
 
-    // CIMD clients (Claude/ChatGPT) use the site-wide /mcp URL — map to the newest OAuth endpoint.
-    if (birkly_mcp_oauth_is_cimd_client_id($clientId) && count($enabled) > 0) {
-        return $enabled[count($enabled) - 1];
+    // Legacy site-wide /mcp URL: refuse ambiguous mapping when multiple agents exist.
+    if (count($enabled) > 1) {
+        return null;
     }
 
     return null;
