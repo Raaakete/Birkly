@@ -15,6 +15,16 @@
     let providersCache = null;
     let connectionTestPassed = false;
 
+    function isAiIntegrationsContext() {
+        const pane = document.getElementById('ai-integrations');
+        if (!pane) return false;
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'ai-integrations' || hash === 'ai-connections' || hash === 'mcp-connections') {
+            return true;
+        }
+        return pane.classList.contains('active');
+    }
+
     function initAiConnections() {
         if (initialized) return;
         initialized = true;
@@ -27,24 +37,25 @@
         setInterval(loadApprovalQueue, 30000);
     }
 
+    function maybeInitAiConnections() {
+        if (isAiIntegrationsContext()) {
+            setTimeout(initAiConnections, 100);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        const aiTab = document.querySelector('[data-tab="ai-connections"]');
-        const aiPane = document.getElementById('ai-connections');
+        const aiTab = document.querySelector('[data-tab="ai-integrations"]');
+        const aiPane = document.getElementById('ai-integrations');
 
         if (aiTab && aiPane) {
-            if (aiTab.classList.contains('active') || aiPane.classList.contains('active')) {
-                initAiConnections();
-            }
+            maybeInitAiConnections();
             aiTab.addEventListener('click', function() {
                 setTimeout(initAiConnections, 100);
             });
         }
 
-        window.addEventListener('hashchange', function() {
-            if (window.location.hash === '#ai-connections') {
-                setTimeout(initAiConnections, 100);
-            }
-        });
+        window.addEventListener('hashchange', maybeInitAiConnections);
+        window.addEventListener('birkly:ai-integrations-tab', maybeInitAiConnections);
     });
 
     function setupEventListeners() {
@@ -97,9 +108,7 @@
             return;
         }
 
-        list.innerHTML = `
-            <p class="connection-mcp-note ai-tab-mcp-note">For Claude Desktop or other external MCP clients, use the <a href="#mcp-connections" class="mcp-tab-link">MCP Connections</a> tab.</p>
-        ` + outbound.map(conn => `
+        list.innerHTML = outbound.map(conn => `
             <div class="connection-item" data-connection-id="${conn.id}">
                 <div class="connection-info">
                     <div class="connection-name">${escapeHtml(conn.name || conn.provider)}</div>
@@ -127,14 +136,6 @@
                 </div>
             </div>
         `).join('');
-
-        list.querySelectorAll('.mcp-tab-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const mcpTab = document.querySelector('[data-tab="mcp-connections"]');
-                if (mcpTab) mcpTab.click();
-            });
-        });
     }
 
     function showAddConnectionModal() {
