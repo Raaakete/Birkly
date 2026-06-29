@@ -689,8 +689,8 @@
               </ol>
             </div>
 
-            <div id="ai-personal-agent-card" class="ai-personal-agent-card" hidden>
-              <!-- Rendered by mcp-connections.js -->
+            <div id="ai-personal-agent-card" class="ai-personal-agent-card">
+              <div class="loading">Loading personal connector...</div>
             </div>
 
             <div class="connections-container mcp-connections-settings">
@@ -702,7 +702,7 @@
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    Add service agent
+                    Add agent
                   </button>
                 </div>
                 <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
@@ -843,11 +843,11 @@
           </div>
         </div>
 
-        <!-- Add service agent modal -->
+        <!-- Add agent modal -->
         <div class="modal" id="add-mcp-modal" style="display: none;">
           <div class="modal-content">
             <div class="modal-header">
-              <h2 id="mcp-modal-title">Add service agent</h2>
+              <h2 id="mcp-modal-title">Add AI agent</h2>
               <button class="btn-icon modal-close" data-mcp-modal-close aria-label="Close">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -856,50 +856,83 @@
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">
-              <p class="modal-intro-text">Create a shared service agent with a fixed CMS role. Choose who can see and connect to it. For your own AI app, use the personal connector instead.</p>
+              <fieldset class="mcp-agent-type-fieldset">
+                <legend class="mcp-agent-type-legend">What type of agent do you need?</legend>
+                <div class="mcp-agent-type-picker" role="radiogroup" aria-label="Agent type">
+                  <label class="mcp-agent-type-option">
+                    <input type="radio" name="agent_type" value="personal" id="mcp-agent-type-personal" checked>
+                    <span class="mcp-agent-type-card">
+                      <span class="mcp-agent-type-name">Personal <span class="mcp-type-pill mcp-type-personal">Dynamic</span></span>
+                      <span class="mcp-agent-type-desc">Each user connects with <strong>their own</strong> Birkly role and permissions. One shared URL for the whole team.</span>
+                    </span>
+                  </label>
+                  <label class="mcp-agent-type-option">
+                    <input type="radio" name="agent_type" value="service" id="mcp-agent-type-service">
+                    <span class="mcp-agent-type-card">
+                      <span class="mcp-agent-type-name">Service <span class="mcp-type-pill mcp-type-service">Fixed role</span></span>
+                      <span class="mcp-agent-type-desc">A shared bot that <strong>always</strong> acts as a specific CMS role (e.g. always editor). You choose who can use it.</span>
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
 
-              <div class="form-group">
-                <label for="mcp-endpoint-name">Agent name</label>
-                <input type="text" id="mcp-endpoint-name" name="name" required placeholder="e.g. Content assistant">
-                <small>A name you'll recognize later</small>
-              </div>
-
-              <div class="form-group">
-                <label for="mcp-agent-description">Description <span class="text-muted">(optional)</span></label>
-                <input type="text" id="mcp-agent-description" name="description" placeholder="e.g. Helps draft blog posts">
-              </div>
-
-              <div class="form-group">
-                <label for="mcp-endpoint-role">
-                  Fixed CMS role
-                  <button type="button" class="help-tip" aria-label="Role help"
-                    data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
-                </label>
-                <select id="mcp-endpoint-role" name="role" required>
-                  <option value="">Loading roles...</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Who can use this agent</label>
-                <small class="form-hint-block">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
-                <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="Roles that can use this agent">
-                  <div class="loading-inline">Loading roles...</div>
+              <div id="mcp-personal-agent-panel" class="mcp-agent-type-panel">
+                <p class="modal-intro-text">The personal connector is already set up for your site. Copy its URL and paste it in Claude, ChatGPT, or Cursor — each team member signs in with their own account.</p>
+                <div class="mcp-snippet-block">
+                  <label for="mcp-modal-personal-url">Personal connector URL</label>
+                  <div class="copy-snippet-row">
+                    <input type="text" id="mcp-modal-personal-url" readonly placeholder="Loading...">
+                    <button type="button" class="btn btn-sm btn-primary" id="mcp-copy-personal-url-btn" type="button">Copy URL</button>
+                  </div>
                 </div>
               </div>
 
-              <div class="form-group">
-                <label>Individual users <span class="text-muted">(optional)</span></label>
-                <div id="mcp-allowed-users" class="mcp-checkbox-group mcp-user-picker" role="group" aria-label="Users that can use this agent">
-                  <div class="loading-inline">Loading users...</div>
-                </div>
-              </div>
+              <div id="mcp-service-agent-panel" class="mcp-agent-type-panel" hidden>
+                <p class="modal-intro-text">Create a shared service agent with a fixed CMS role. Choose who can see and connect to it.</p>
 
-              <div class="form-group">
-                <label>
-                  <input type="checkbox" id="mcp-require-approval" name="require_approval" value="1" checked>
-                  Ask me before AI changes or publishes content
-                </label>
+                <div class="form-group">
+                  <label for="mcp-endpoint-name">Agent name</label>
+                  <input type="text" id="mcp-endpoint-name" name="name" placeholder="e.g. Content assistant">
+                  <small>A name you'll recognize later</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="mcp-agent-description">Description <span class="text-muted">(optional)</span></label>
+                  <input type="text" id="mcp-agent-description" name="description" placeholder="e.g. Helps draft blog posts">
+                </div>
+
+                <div class="form-group">
+                  <label for="mcp-endpoint-role">
+                    Fixed CMS role
+                    <button type="button" class="help-tip" aria-label="Role help"
+                      data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
+                  </label>
+                  <select id="mcp-endpoint-role" name="role">
+                    <option value="">Loading roles...</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Who can use this agent</label>
+                  <small class="form-hint-block">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
+                  <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="Roles that can use this agent">
+                    <div class="loading-inline">Loading roles...</div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Individual users <span class="text-muted">(optional)</span></label>
+                  <div id="mcp-allowed-users" class="mcp-checkbox-group mcp-user-picker" role="group" aria-label="Users that can use this agent">
+                    <div class="loading-inline">Loading users...</div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox" id="mcp-require-approval" name="require_approval" value="1" checked>
+                    Ask me before AI changes or publishes content
+                  </label>
+                </div>
               </div>
 
               <input type="hidden" id="mcp-auth-mode" name="auth_mode" value="oauth">
@@ -917,7 +950,8 @@
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-mcp-modal-close>Cancel</button>
-                <button type="submit" class="btn btn-primary" id="mcp-submit-btn">Create service agent</button>
+                <button type="button" class="btn btn-primary" id="mcp-personal-done-btn">Use personal connector</button>
+                <button type="submit" class="btn btn-primary" id="mcp-submit-btn" hidden>Create service agent</button>
               </div>
             </form>
           </div>
