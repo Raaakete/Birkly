@@ -61,20 +61,14 @@
         </svg>
         <?= __('admin.activity_and_audit_log') ?>
       </button>
-      <button class="tab-btn" data-tab="ai-connections">
+      <button class="tab-btn" data-tab="ai-integrations" data-help-topic="mcp-connections">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
           <path d="M2 17l10 5 10-5"></path>
           <path d="M2 12l10 5 10-5"></path>
+          <circle cx="18" cy="6" r="2"></circle>
         </svg>
-        <?= __('admin.ai_connections') ?>
-      </button>
-      <button class="tab-btn" data-tab="mcp-connections" data-help-topic="mcp-connections">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"></path>
-        </svg>
-        MCP Connections
+        AI &amp; Integrations
       </button>
       <button class="tab-btn" data-tab="storage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -650,18 +644,42 @@
         </form>
       </div>
 
-      <!-- Updates Tab -->
-      <div class="tab-pane" id="ai-connections">
-        <div class="ai-connections-settings">
-          <div class="settings-section">
-            <h2><?= __('admin.ai_connections') ?></h2>
-            <p class="settings-help">Connect your AI accounts to get AI assistance in creating and editing content. You can configure whether AI actions require approval or execute immediately.</p>
-            
+      <!-- AI & Integrations Tab -->
+      <div class="tab-pane" id="ai-integrations">
+        <div class="ai-integrations-settings">
+          <div class="settings-section ai-integrations-intro">
+            <h2>AI &amp; Integrations</h2>
+            <p class="settings-help">Manage outbound AI providers for admin chat and inbound MCP endpoints for external AI tools. Both channels share the same approval queue and permission model.</p>
+          </div>
+
+          <!-- Shared Approval Queue -->
+          <div class="approval-queue-panel ai-integrations-shared-queue" id="approval-queue-panel">
+            <div class="panel-header">
+              <h3><?= __('admin.approval_queue') ?></h3>
+              <button class="btn-icon" id="toggle-queue-btn" type="button" aria-expanded="true" aria-controls="approval-queue-content">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+            </div>
+            <p class="settings-help ai-integrations-queue-help">Pending actions from outbound chat and inbound MCP tools appear here for admin approval.</p>
+            <div class="approval-queue-content" id="approval-queue-content">
+              <div class="loading">Loading approvals...</div>
+            </div>
+          </div>
+
+          <!-- Section A: Outbound (BYOAI) -->
+          <section class="ai-integrations-section" id="outbound-connections">
+            <div class="ai-integrations-section-header">
+              <h3>Outbound (BYOAI)</h3>
+              <p class="settings-help">Connect your AI accounts to get AI assistance in creating and editing content. API keys from provider developer consoles — consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access.</p>
+            </div>
+
             <div class="connections-container">
               <div class="connections-panel">
                 <div class="panel-header">
-                  <h3>Connected AI Services</h3>
-                  <button class="btn btn-primary" id="add-connection-btn">
+                  <h4>Connected AI Services</h4>
+                  <button class="btn btn-primary" id="add-connection-btn" type="button">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -669,28 +687,63 @@
                     Add Connection
                   </button>
                 </div>
-                
+
                 <div class="connections-list" id="connections-list">
                   <div class="loading">Loading connections...</div>
                 </div>
               </div>
             </div>
+          </section>
 
-            <!-- Approval Queue Panel -->
-            <div class="approval-queue-panel" id="approval-queue-panel" style="margin-top: 2rem;">
-              <div class="panel-header">
-                <h3><?= __('admin.approval_queue') ?></h3>
-                <button class="btn-icon" id="toggle-queue-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
+          <!-- Section B: Inbound (MCP) -->
+          <section class="ai-integrations-section" id="inbound-mcp">
+            <div class="ai-integrations-section-header">
+              <h3>Inbound (MCP)</h3>
+              <p class="settings-help">Let external AI tools (e.g. Claude Desktop) connect to your Birkly site via the Model Context Protocol. Each endpoint gets its own API key and role.</p>
+            </div>
+
+            <div class="connector-setup-cards">
+              <div class="setup-card setup-card-recommended">
+                <div class="setup-card-badge">Recommended</div>
+                <h4>Stdio bridge</h4>
+                <p>Use <code>mcp-bridge.js</code> with Claude Desktop or other MCP clients. Set <code>BIRKLY_URL</code> and <code>BIRKLY_MCP_API_KEY</code> — no OAuth required.</p>
+                <p class="setup-card-detail">Create an endpoint below, reveal the API key, and copy the bridge command into your client config.</p>
               </div>
-              <div class="approval-queue-content" id="approval-queue-content">
-                <div class="loading">Loading approvals...</div>
+              <div class="setup-card setup-card-warning">
+                <div class="setup-card-badge setup-card-badge-warning">Advanced</div>
+                <h4>Remote connector</h4>
+                <p><strong>Requires OAuth.</strong> Pasting the MCP server URL directly into Claude's remote connector settings will fail until OAuth is enabled (planned update).</p>
+                <p class="setup-card-detail">Use the stdio bridge above for reliable setup today. The server URL is shown for reference when OAuth ships.</p>
               </div>
             </div>
-          </div>
+
+            <div class="connections-container mcp-connections-settings">
+              <div class="connections-panel">
+                <div class="panel-header">
+                  <h4>MCP Endpoints</h4>
+                  <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Endpoint
+                  </button>
+                </div>
+
+                <div class="mcp-server-url-block" id="mcp-global-server-url" style="display: none;">
+                  <label for="mcp-server-url-input">MCP Server URL <span class="setup-url-note">(for remote connector — OAuth required)</span></label>
+                  <div class="copy-snippet-row">
+                    <input type="text" id="mcp-server-url-input" readonly>
+                    <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-server-url-input')">Copy</button>
+                  </div>
+                </div>
+
+                <div class="connections-list" id="mcp-endpoints-list">
+                  <div class="loading">Loading endpoints...</div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
         <!-- Add / Edit Connection Modal -->
@@ -830,43 +883,6 @@
                 <button type="submit" class="btn btn-primary" id="connection-submit-btn" style="display: none;"><?= __('admin.connect') ?></button>
               </div>
             </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- MCP Connections Tab -->
-      <div class="tab-pane" id="mcp-connections">
-        <div class="mcp-connections-settings">
-          <div class="settings-section">
-            <h2>MCP Connections</h2>
-            <p class="settings-help">Connect external AI tools (e.g. Claude Desktop) to your Birkly site via the Model Context Protocol. Each endpoint gets its own API key and role.</p>
-
-            <div class="connections-container">
-              <div class="connections-panel">
-                <div class="panel-header">
-                  <h3>MCP Endpoints</h3>
-                  <button class="btn btn-primary" id="add-mcp-endpoint-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Add Endpoint
-                  </button>
-                </div>
-
-                <div class="mcp-server-url-block" id="mcp-global-server-url" style="display: none;">
-                  <label>MCP Server URL</label>
-                  <div class="copy-snippet-row">
-                    <input type="text" id="mcp-server-url-input" readonly>
-                    <button type="button" class="btn btn-sm" onclick="mcpConnections.copySnippet('mcp-server-url-input')">Copy</button>
-                  </div>
-                </div>
-
-                <div class="connections-list" id="mcp-endpoints-list">
-                  <div class="loading">Loading endpoints...</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1602,6 +1618,67 @@ window.deleteRole = deleteRole;
 
 // Tab functionality - simplified and robust
 (function() {
+    var LEGACY_AI_HASH_MAP = {
+        'ai-connections': 'outbound-connections',
+        'mcp-connections': 'inbound-mcp'
+    };
+
+    function resolveSettingsHash(hash) {
+        if (!hash) return { tab: null, scrollTo: null, legacyHash: null };
+        if (hash === 'ai-integrations') {
+            return { tab: 'ai-integrations', scrollTo: null, legacyHash: null };
+        }
+        if (LEGACY_AI_HASH_MAP[hash]) {
+            return { tab: 'ai-integrations', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
+        }
+        return { tab: hash, scrollTo: null, legacyHash: null };
+    }
+
+    function scrollToAiSection(sectionId) {
+        if (!sectionId) return;
+        var section = document.getElementById(sectionId);
+        if (section) {
+            setTimeout(function() {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 150);
+        }
+    }
+
+    function activateTab(tabId, tabButtons, tabPanes, scrollTo, urlHash) {
+        if (!tabId) return;
+        var tabButton = document.querySelector('[data-tab="' + tabId + '"]');
+        var tabPane = document.getElementById(tabId);
+        if (!tabButton || !tabPane) return;
+
+        for (var j = 0; j < tabButtons.length; j++) {
+            tabButtons[j].classList.remove('active');
+        }
+        for (var k = 0; k < tabPanes.length; k++) {
+            tabPanes[k].classList.remove('active');
+        }
+
+        tabButton.classList.add('active');
+        tabPane.classList.add('active');
+
+        var hashForUrl = urlHash || tabId;
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '?page=settings#' + hashForUrl);
+        }
+
+        setTimeout(function() {
+            if (tabId === 'activity-log' && typeof window.initAuditLog === 'function') {
+                window.initAuditLog();
+            } else if (tabId === 'general' && typeof window.initUpdates === 'function') {
+                window.initUpdates();
+            } else if (tabId === 'domains' && typeof window.loadDomains === 'function') {
+                window.loadDomains();
+            } else if (tabId === 'ai-integrations') {
+                window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
+            }
+            scrollToAiSection(scrollTo);
+        }, 100);
+    }
+
     function initTabs() {
         var tabButtons = document.querySelectorAll('.tab-btn');
         var tabPanes = document.querySelectorAll('.tab-pane');
@@ -1625,62 +1702,15 @@ window.deleteRole = deleteRole;
                 var targetTab = this.getAttribute('data-tab');
                 if (!targetTab) return;
                 
-                // Remove active from all
-                for (var j = 0; j < tabButtons.length; j++) {
-                    tabButtons[j].classList.remove('active');
-                }
-                for (var k = 0; k < tabPanes.length; k++) {
-                    tabPanes[k].classList.remove('active');
-                }
-                
-                // Add active to clicked
-                this.classList.add('active');
-                var pane = document.getElementById(targetTab);
-                if (pane) {
-                    pane.classList.add('active');
-                }
-                
-                // Update URL
-                if (window.history && window.history.replaceState) {
-                    window.history.replaceState(null, '', '?page=settings#' + targetTab);
-                }
-                
-                // Initialize tab-specific functionality
-                setTimeout(function() {
-                    if (targetTab === 'activity-log' && typeof window.initAuditLog === 'function') {
-                        window.initAuditLog();
-                    } else if (targetTab === 'general' && typeof window.initUpdates === 'function') {
-                        // Initialize updates when general tab is shown
-                        window.initUpdates();
-                    } else if (targetTab === 'domains' && typeof window.loadDomains === 'function') {
-                        window.loadDomains();
-                    }
-                }, 100);
+                activateTab(targetTab, tabButtons, tabPanes, null, targetTab);
             });
         }
         
-        // Handle hash on load
-        var hash = window.location.hash.replace('#', '');
-        if (hash) {
-            var hashButton = document.querySelector('[data-tab="' + hash + '"]');
-            var hashPane = document.getElementById(hash);
-            if (hashButton && hashPane) {
-                for (var m = 0; m < tabButtons.length; m++) {
-                    tabButtons[m].classList.remove('active');
-                }
-                for (var n = 0; n < tabPanes.length; n++) {
-                    tabPanes[n].classList.remove('active');
-                }
-                hashButton.classList.add('active');
-                hashPane.classList.add('active');
-                
-                // Initialize tab-specific functionality for hash
-                if (hash === 'domains' && typeof window.loadDomains === 'function') {
-                    setTimeout(function() {
-                        window.loadDomains();
-                    }, 100);
-                }
-            }
+        // Handle hash on load (including legacy AI tab hashes)
+        var rawHash = window.location.hash.replace('#', '');
+        var resolved = resolveSettingsHash(rawHash);
+        if (resolved.tab) {
+            activateTab(resolved.tab, tabButtons, tabPanes, resolved.scrollTo, rawHash || resolved.tab);
         } else {
             // If no hash, check if domains tab is active by default
             var defaultTab = document.querySelector('.tab-btn.active');
@@ -1692,6 +1722,14 @@ window.deleteRole = deleteRole;
                 }, 100);
             }
         }
+
+        window.addEventListener('hashchange', function() {
+            var hash = window.location.hash.replace('#', '');
+            var next = resolveSettingsHash(hash);
+            if (next.tab) {
+                activateTab(next.tab, tabButtons, tabPanes, next.scrollTo, hash || next.tab);
+            }
+        });
     }
     
     // Initialize when DOM is ready

@@ -1050,18 +1050,18 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P4.1-M2 — Unified Settings UI
 
-- **Status:** not started
+- **Status:** complete (Birkly); Birkly-Docs T6 pending
 - **Repos:** Birkly, Birkly-Docs
 - **Goal:** One **AI & Integrations** tab with Outbound + Inbound sections
 - **Depends on:** P4.1-M1-T2
 
 **Tasks**
 
-- [ ] **P4.1-M2-T1** Tab `ai-integrations`; hash redirects from legacy tabs
-- [ ] **P4.1-M2-T2** Outbound (BYOAI) section
-- [ ] **P4.1-M2-T3** Inbound (MCP) section
-- [ ] **P4.1-M2-T4** Shared approval queue panel
-- [ ] **P4.1-M2-T5** Setup cards + remote-connector warning until OAuth ships
+- [x] **P4.1-M2-T1** Tab `ai-integrations`; hash redirects from legacy tabs
+- [x] **P4.1-M2-T2** Outbound (BYOAI) section
+- [x] **P4.1-M2-T3** Inbound (MCP) section
+- [x] **P4.1-M2-T4** Shared approval queue panel
+- [x] **P4.1-M2-T5** Setup cards + remote-connector warning until OAuth ships
 - [ ] **P4.1-M2-T6** Birkly-Docs topic updates
 
 **Acceptance criteria:** design-reviewer pass; deep links work
