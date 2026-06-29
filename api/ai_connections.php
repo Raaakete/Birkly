@@ -197,7 +197,7 @@ if ($action === 'create') {
         'provider' => $provider,
         'api_key_encrypted' => encryptApiKey($apiKey),
         'api_url' => $apiUrl ?: ($providers[$provider]['api_url'] ?? ''),
-        'model' => $model ?: ($providers[$provider]['models'][0] ?? ''),
+        'model' => $model ?: birkly_ai_default_model($provider),
         'shared' => $sharedType !== 'none',
         'shared_type' => $sharedType,
         'allowed_users' => $sharedType === 'specific' ? $allowedUsers : [],

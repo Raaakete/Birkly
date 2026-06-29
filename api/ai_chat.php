@@ -1668,24 +1668,29 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
         $openAiTools = birkly_ai_tools_openai_format($aiUser);
     }
     
+    $resolvedModel = birkly_ai_resolve_model($provider, $model);
+
     switch ($providerType) {
         case 'openai':
         case 'openrouter':
             $url = $apiUrl ?: ($providerInfo['api_url'] ?? 'https://api.openai.com/v1/chat/completions');
-            return callOpenAI($apiKey, $model ?: 'gpt-4', $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
         case 'anthropic':
-            return callAnthropic($apiKey, $model ?: 'claude-3-sonnet', $systemPrompt, $userMessage, $conversationHistory);
+            return callAnthropic($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
         case 'google':
-            return callGoogle($apiKey, $model ?: 'gemini-pro', $systemPrompt, $userMessage, $conversationHistory);
+            return callGoogle($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
         case 'ollama':
             $url = $apiUrl ?: ($providerInfo['api_url'] ?? 'http://localhost:11434/api/chat');
-            return callOllama($url, $model ?: 'llama3', $systemPrompt, $userMessage, $conversationHistory);
+            return callOllama($url, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
         case 'custom':
             $url = $apiUrl;
             if (empty($url)) {
                 return ['success' => false, 'message' => 'API URL required for custom provider'];
             }
-            return callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
+            if ($resolvedModel === '') {
+                return ['success' => false, 'message' => 'Model required for custom provider'];
+            }
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
         default:
             return ['success' => false, 'message' => 'Unsupported provider'];
     }
@@ -1783,7 +1788,15 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     }
     
     if ($httpCode !== 200) {
-        return ['success' => false, 'message' => 'OpenAI API error: ' . $httpCode];
+        $detail = birkly_ai_parse_provider_error(is_string($response) ? $response : '');
+        $message = 'OpenAI API error: ' . $httpCode;
+        if ($detail !== '') {
+            $message .= ' — ' . $detail;
+        }
+        if ($httpCode === 404) {
+            $message .= ' (model: ' . $model . ')';
+        }
+        return ['success' => false, 'message' => $message];
     }
     
     $result = json_decode($response, true);
