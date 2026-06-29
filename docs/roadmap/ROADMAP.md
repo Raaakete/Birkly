@@ -46,7 +46,7 @@ When in doubt, treat as major and ask the human.
 
 **2026-06-25 — Phase 4 approved** (Keven)
 
-**Priorities:** **MCP inbound first-class** (decoupled from outbound BYOAI) · alpha UX hardening · BYOAI wizard polish · OAuth spike (discovery only). **Kekaba deferred.**
+**Priorities:** **Phase 4.1** AI/MCP integration hardening (OAuth, unified settings, live testing). Kekaba deferred.
 
 **Human decisions (locked):**
 
@@ -1018,9 +1018,159 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 4.1 — AI & MCP integration hardening
+
+**Horizon:** theme-based; no calendar estimates for agents.
+
+**Priorities:** Fix real-world MCP + BYOAI failures · unified Settings UX · MCP OAuth for Claude remote connectors · integration test matrix. **CMS always first.** **Kekaba deferred.**
+
+**Ordering:** P4.1-M1 → … → P4.1-M6. Cross-repo: Birkly → Birkly-Docs.
+
+**Status:** **approved** (2026-06-16, Keven). Execute per `docs/reviews/P4.1-lead-engineer-handoff.md`. **Human reviews end result only at P4.1-M6** (after internal QA + integration tests + videos).
+
+**Trigger:** User reported Claude remote connector OAuth failure (`ofid_bca0068514e0b124`) and outbound AI not working on live install despite P4 CI green.
+
+---
+
+### P4.1-M1 — Reproduce & document failure modes
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** Evidence before code; confirm root causes
+
+**Tasks**
+
+- [ ] **P4.1-M1-T1** Live repro matrix: outbound connect+chat, MCP curl, MCP stdio, Claude remote connector
+- [ ] **P4.1-M1-T2** `docs/reviews/p4.1-integration-repro.md`
+- [ ] **P4.1-M1-T3** Install shape check (subdirectory, legacy MCP keys, migration dry-run)
+
+**Acceptance criteria:** Written repro doc with pass/fail per path; root causes confirmed
+
+---
+
+### P4.1-M2 — Unified Settings UI
+
+- **Status:** not started
+- **Repos:** Birkly, Birkly-Docs
+- **Goal:** One **AI & Integrations** tab with Outbound + Inbound sections
+- **Depends on:** P4.1-M1-T2
+
+**Tasks**
+
+- [ ] **P4.1-M2-T1** Tab `ai-integrations`; hash redirects from legacy tabs
+- [ ] **P4.1-M2-T2** Outbound (BYOAI) section
+- [ ] **P4.1-M2-T3** Inbound (MCP) section
+- [ ] **P4.1-M2-T4** Shared approval queue panel
+- [ ] **P4.1-M2-T5** Setup cards + remote-connector warning until OAuth ships
+- [ ] **P4.1-M2-T6** Birkly-Docs topic updates
+
+**Acceptance criteria:** design-reviewer pass; deep links work
+
+---
+
+### P4.1-M3 — MCP OAuth for remote connectors
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** Claude remote connector completes OAuth; API key path unchanged
+- **Depends on:** P4.1-M1-T2
+
+**Tasks**
+
+- [ ] **P4.1-M3-T1** `docs/reviews/p4.1-mcp-oauth-threat-model.md`
+- [ ] **P4.1-M3-T2** `core/mcp_oauth.php` — metadata, PKCE, token endpoints
+- [ ] **P4.1-M3-T3** DCR or CIMD (research Claude broker compatibility)
+- [ ] **P4.1-M3-T4** `api/mcp_server.php` — `WWW-Authenticate` + resource metadata
+- [ ] **P4.1-M3-T5** Bearer token → endpoint profile + permissions
+- [ ] **P4.1-M3-T6** Admin auth_mode + optional OAuth client ID field
+- [ ] **P4.1-M3-T7** CORS for `claude.ai`; subdirectory-safe well-known URLs
+
+**Acceptance criteria:** Remote connector OAuth E2E; `tests/mcp_oauth_test.php` in CI
+
+---
+
+### P4.1-M4 — Outbound BYOAI fixes
+
+- **Status:** not started
+- **Repos:** Birkly
+- **Goal:** Admin chat works with valid provider keys
+- **Depends on:** P4.1-M1-T2
+
+**Tasks**
+
+- [ ] **P4.1-M4-T1** Fix issues from M1 repro
+- [ ] **P4.1-M4-T2** Encryption bootstrap on fresh installs
+- [ ] **P4.1-M4-T3** Wizard test-before-save + inline errors
+- [ ] **P4.1-M4-T4** Chat picker reliability after create
+- [ ] **P4.1-M4-T5** CI mock provider harness
+
+**Acceptance criteria:** Ollama + ≥1 cloud provider manual QA pass
+
+---
+
+### P4.1-M5 — Bridge & docs polish
+
+- **Status:** not started
+- **Repos:** Birkly, Birkly-Docs
+- **Depends on:** P4.1-M2-T3, P4.1-M3-T4
+
+**Tasks**
+
+- [ ] **P4.1-M5-T1** `mcp-bridge.js` — `notifications/initialized`, `ping`
+- [ ] **P4.1-M5-T2** Rewrite `docs/mcp-setup-guide.md` (bridge vs remote connector)
+- [ ] **P4.1-M5-T3** Admin Claude Desktop config snippet generator
+- [ ] **P4.1-M5-T4** Update `docs/reviews/p4-mcp-client-matrix.md`
+
+**Acceptance criteria:** Docs match two connection paths; stdio bridge verified
+
+---
+
+### P4.1-M6 — Integration tests & closure
+
+- **Status:** not started
+- **Repos:** Birkly (+ Birkly-Docs)
+- **Depends on:** P4.1-M2–P4.1-M5
+
+**Tasks**
+
+- [ ] **P4.1-M6-T1** `docs/reviews/p4.1-integration-test-matrix.md` — all rows green
+- [ ] **P4.1-M6-T2** CI: `tests/mcp_oauth_test.php` + extended suites
+- [ ] **P4.1-M6-T3** Videos V18 (unified settings), V19 (MCP OAuth), V20 (outbound chat)
+- [ ] **P4.1-M6-T4** `docs/reviews/p4.1-phase-closure-checklist.md` + roadmap update
+- [ ] **P4.1-M6-T5** **Notify human once** — only after qa-verifier + design-reviewer sign-off
+
+**Acceptance criteria:** Integration matrix green; videos delivered; **single notification to human**
+
+---
+
+## Phase 4.1 deferrals
+
+| Defer | Reason |
+|-------|--------|
+| **Kekaba** | Human defer |
+| Outbound BYOAI OAuth | Providers lack CMS-friendly OAuth; API keys only |
+| SQL, dark mode, plugin marketplace | Unchanged |
+
+---
+
+## Phase 4.1 success criteria
+
+| Area | Target |
+|------|--------|
+| **MCP stdio** | Claude Desktop + bridge verified |
+| **MCP remote** | Claude connector OAuth E2E |
+| **MCP API key** | Unchanged backward compatibility |
+| **Outbound BYOAI** | Connect + chat E2E |
+| **Settings UX** | Single AI & Integrations tab |
+| **Security** | OAuth threat model; approval + roles unchanged |
+| **Tests** | Integration matrix + CI OAuth tests |
+| **Delivery** | Videos V18–V20; human notified once at P4.1-M6 |
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
