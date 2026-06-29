@@ -1168,6 +1168,155 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5 — MCP transport, CIMD OAuth & AI agents
+
+**Horizon:** theme-based; no calendar estimates for agents.
+
+**Priorities:** Fix delete · `/mcp` Streamable HTTP · CIMD OAuth · AI agents with roles · connector E2E (empty OAuth fields in client UI). **CMS always first.** **Kekaba deferred.**
+
+**Ordering:** P5-M0 → … → P5-M7. Cross-repo: Birkly → Birkly-Docs.
+
+**Status:** in progress (2026-06-18).
+
+**Handoff:** `docs/reviews/P5-lead-engineer-handoff.md`
+
+---
+
+### P5-M0 — Fix AI connection delete
+
+- **Status:** complete
+- **Repos:** Birkly
+
+**Tasks**
+
+- [x] **P5-M0-T1** `birkly_ai_user_can_manage_connection()` — owner + `manage_settings`
+- [x] **P5-M0-T2** `checkPermission()` honors explicit `permissions` array
+- [x] **P5-M0-T3** Admin JS: `birklyApiUrl()` / `Birkly.url()` + CSRF on delete
+- [x] **P5-M0-T4** `tests/ai_permissions_test.php`
+
+---
+
+### P5-M1 — OAuth CIMD
+
+- **Status:** complete
+- **Repos:** Birkly
+
+**Tasks**
+
+- [x] **P5-M1-T1** CIMD fetch/cache in `core/mcp_oauth.php` (SSRF-safe)
+- [x] **P5-M1-T2** `client_id_metadata_document_supported` in AS metadata
+- [x] **P5-M1-T3** `tests/mcp_cimd_test.php`
+
+---
+
+### P5-M2 — `/mcp` Streamable HTTP
+
+- **Status:** complete
+- **Repos:** Birkly
+
+**Tasks**
+
+- [x] **P5-M2-T1** `api/mcp.php` + `core/mcp_protocol.php`
+- [x] **P5-M2-T2** Router + `.htaccess` for `/mcp`
+- [x] **P5-M2-T3** OAuth resource URL → `/mcp`; legacy `/api/mcp_server.php` retained
+- [x] **P5-M2-T4** `tests/mcp_streamable_test.php`
+
+---
+
+### P5-M3 — AI agents with roles
+
+- **Status:** complete
+- **Repos:** Birkly
+
+**Tasks**
+
+- [x] **P5-M3-T1** `core/ai_agents.php` + `settings/ai_agents.json`
+- [x] **P5-M3-T2** `api/ai_agents.php` CRUD
+- [x] **P5-M3-T3** Agent create → OAuth MCP endpoint with role
+- [x] **P5-M3-T4** `tests/ai_agents_test.php`
+
+---
+
+### P5-M4 — Settings → AI tab (agents UI)
+
+- **Status:** complete
+- **Repos:** Birkly
+
+**Tasks**
+
+- [x] **P5-M4-T1** Agents list in AI tab (primary section)
+- [x] **P5-M4-T2** Create agent modal — name, role, description
+- [x] **P5-M4-T3** Connector URL → `/mcp`; copy UX
+- [x] **P5-M4-T4** Empty OAuth fields copy in setup steps
+
+---
+
+### P5-M5 — Connector E2E (Claude/ChatGPT)
+
+- **Status:** complete
+- **Repos:** Birkly
+
+**Tasks**
+
+- [x] **P5-M5-T1** DCR + CIMD + bearer on `/mcp` in CI
+- [x] **P5-M5-T2** Admin copy: paste URL only; leave Client ID/Secret empty
+- [x] **P5-M5-T3** HTTPS warning retained for Claude
+
+---
+
+### P5-M6 — Integration matrix & videos
+
+- **Status:** in progress
+- **Repos:** Birkly, Birkly-Docs
+
+**Tasks**
+
+- [x] **P5-M6-T1** `docs/reviews/p5-integration-test-matrix.md`
+- [ ] **P5-M6-T2** Videos V21–V23
+- [x] **P5-M6-T3** Birkly-Docs: mcp-connections.md
+
+---
+
+### P5-M7 — Phase 5 closure
+
+- **Status:** pending
+- **Repos:** Birkly (+ cross-repo)
+- **Depends on:** P5-M6
+
+**Tasks**
+
+- [ ] **P5-M7-T1** `docs/reviews/p5-phase-closure-checklist.md`
+- [ ] **P5-M7-T2** Mark Phase 5 complete in roadmap
+- [ ] **P5-M7-T3** qa-verifier + design-reviewer sign-off
+- [ ] **P5-M7-T4** Full integration matrix green
+- [ ] **P5-M7-T5** **Notify human once** — only after internal sign-off
+
+---
+
+## Phase 5 deferrals
+
+| Defer | Reason |
+|-------|--------|
+| **Kekaba** | Human defer |
+| Outbound BYOAI OAuth | API keys only |
+| SQL, dark mode, plugin marketplace | Unchanged |
+
+---
+
+## Phase 5 success criteria
+
+| Area | Target |
+|------|--------|
+| **Delete** | Owner + manage_settings; subdirectory-safe |
+| **MCP transport** | Canonical `POST /mcp` Streamable HTTP |
+| **OAuth** | DCR + CIMD |
+| **AI agents** | Named roles → OAuth endpoints |
+| **Settings UX** | AI tab; empty OAuth fields in client apps |
+| **Tests** | 38+ CI suites; integration matrix green |
+| **Delivery** | Videos V21–V23; human notified once at P5-M7 |
+
+---
+
 ## Task handoff format
 
 Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]`.
