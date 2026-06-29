@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../core/ai_permissions.php';
 require_once __DIR__ . '/ai_helpers.php';
+require_once __DIR__ . '/../core/content_resolve.php';
 
 function executeReadAction($actionData, $aiUser) {
     require_once __DIR__ . '/../core/ai_permissions.php';
@@ -18,8 +19,9 @@ function executeReadAction($actionData, $aiUser) {
     require_once __DIR__ . '/storage.php';
     
     $actionPayload = $actionData['data'] ?? [];
+    $birklyRoot = dirname(__DIR__);
     
-    $contentStorage = new Storage('../content');
+    $contentStorage = new Storage($birklyRoot . '/content');
     
     if ($actionType === 'read_entry') {
         $collection = $actionPayload['collection'] ?? '';
@@ -29,101 +31,76 @@ function executeReadAction($actionData, $aiUser) {
         if (empty($collection)) {
             return ['success' => false, 'message' => 'Collection is required'];
         }
-        
-        // Find collection directory
-        $collectionsDir = '../content/collections';
-        $collectionDir = null;
-        if (is_dir($collectionsDir)) {
-            $collections = array_filter(glob($collectionsDir . '/*'), 'is_dir');
-            foreach ($collections as $dir) {
-                $collectionSlug = basename($dir);
-                $collectionFile = $dir . '/collection.json';
-                if (file_exists($collectionFile)) {
-                    $collectionMeta = json_decode(file_get_contents($collectionFile), true);
-                    if ($collectionMeta && ($collectionMeta['slug'] ?? $collectionSlug) === $collection) {
-                        $collectionDir = $dir;
-                        break;
-                    }
-                }
-            }
-        }
-        
+
+        $collectionDir = birkly_content_resolve_collection_dir($contentStorage, $collection);
         if (!$collectionDir) {
             return ['success' => false, 'message' => 'Collection not found: ' . $collection];
         }
-        
+
         // Find entry by slug or ID
         $entry = null;
         if ($slug) {
-            $entries = $contentStorage->list("collections/" . basename($collectionDir) . "/entries");
+            $entries = $contentStorage->list('collections/' . $collectionDir . '/entries');
             foreach ($entries as $entryFile) {
-                $entryData = $contentStorage->read("collections/" . basename($collectionDir) . "/entries/" . $entryFile);
+                $entryData = $contentStorage->read('collections/' . $collectionDir . '/entries/' . $entryFile);
                 if ($entryData && isset($entryData['slug']) && $entryData['slug'] === $slug) {
                     $entry = $entryData;
                     break;
                 }
             }
         } elseif ($entryId) {
-            $entry = $contentStorage->read("collections/" . basename($collectionDir) . "/entries/" . $entryId . ".json");
+            $entry = $contentStorage->read('collections/' . $collectionDir . '/entries/' . $entryId . '.json');
         }
-        
+
         if (!$entry) {
             return ['success' => false, 'message' => 'Entry not found'];
         }
-        
+
         return ['success' => true, 'data' => ['entry' => $entry]];
-        
+
     } elseif ($actionType === 'list_entries') {
         $collection = $actionPayload['collection'] ?? '';
-        $limit = $actionPayload['limit'] ?? 100;
-        
+        $limit = (int) ($actionPayload['limit'] ?? 100);
+        $summaryOnly = !empty($actionPayload['summary']);
+
         if (empty($collection)) {
             return ['success' => false, 'message' => 'Collection is required'];
         }
-        
-        // Find collection directory
-        $collectionsDir = '../content/collections';
-        $collectionDir = null;
-        if (is_dir($collectionsDir)) {
-            $collections = array_filter(glob($collectionsDir . '/*'), 'is_dir');
-            foreach ($collections as $dir) {
-                $collectionSlug = basename($dir);
-                $collectionFile = $dir . '/collection.json';
-                if (file_exists($collectionFile)) {
-                    $collectionMeta = json_decode(file_get_contents($collectionFile), true);
-                    if ($collectionMeta && ($collectionMeta['slug'] ?? $collectionSlug) === $collection) {
-                        $collectionDir = $dir;
-                        break;
-                    }
-                }
-            }
-        }
-        
+
+        $collectionDir = birkly_content_resolve_collection_dir($contentStorage, $collection);
         if (!$collectionDir) {
             return ['success' => false, 'message' => 'Collection not found: ' . $collection];
         }
-        
-        // List entries
-        $entries = $contentStorage->list("collections/" . basename($collectionDir) . "/entries");
+
+        $meta = $contentStorage->read('collections/' . $collectionDir . '/collection.json');
+        $canonicalSlug = is_array($meta) ? (string) ($meta['slug'] ?? $collectionDir) : $collectionDir;
+
+        $entries = $contentStorage->list('collections/' . $collectionDir . '/entries');
         $entryData = [];
         $count = 0;
         foreach ($entries as $entryFile) {
-            if ($count >= $limit) break;
-            $data = $contentStorage->read("collections/" . basename($collectionDir) . "/entries/" . $entryFile);
+            if ($count >= $limit) {
+                break;
+            }
+            $data = $contentStorage->read('collections/' . $collectionDir . '/entries/' . $entryFile);
             if ($data) {
-                $entryData[] = $data;
+                $entryData[] = $summaryOnly ? birkly_content_entry_list_summary($data) : $data;
                 $count++;
             }
         }
-        
-        // Include collection slug in the result for easier matching
-        $result = ['success' => true, 'data' => ['entries' => $entryData, 'count' => count($entryData), 'collection' => $collection]];
-        error_log("executeReadAction list_entries: Returning result with collection '$collection', entry count: " . count($entryData));
-        return $result;
-        
+
+        return [
+            'success' => true,
+            'data' => [
+                'entries' => $entryData,
+                'count' => count($entryData),
+                'collection' => $canonicalSlug,
+            ],
+        ];
+
     } elseif ($actionType === 'list_collections') {
         // List all collections
-        $collectionsDir = '../content/collections';
+        $collectionsDir = $birklyRoot . '/content/collections';
         $collections = [];
         
         if (is_dir($collectionsDir)) {
@@ -174,7 +151,7 @@ function executeReadAction($actionData, $aiUser) {
     } elseif ($actionType === 'read_settings') {
         // Read system settings
         require_once __DIR__ . '/storage.php';
-        $settingsStorage = new Storage('../settings');
+        $settingsStorage = new Storage($birklyRoot . '/settings');
         $settings = [];
         
         $categories = ['site', 'admin', 'media', 'security'];
@@ -187,9 +164,9 @@ function executeReadAction($actionData, $aiUser) {
     } elseif ($actionType === 'list_users') {
         // List users (read-only, no passwords)
         require_once __DIR__ . '/storage.php';
-        $usersStorage = new Storage('../users');
+        $usersStorage = new Storage($birklyRoot . '/users');
         $users = [];
-        $userFiles = glob('../users/*.json');
+        $userFiles = glob($birklyRoot . '/users/*.json');
         
         foreach ($userFiles as $file) {
             $user = json_decode(file_get_contents($file), true);
@@ -203,7 +180,7 @@ function executeReadAction($actionData, $aiUser) {
     } elseif ($actionType === 'read_user') {
         // Read a specific user
         require_once __DIR__ . '/storage.php';
-        $usersStorage = new Storage('../users');
+        $usersStorage = new Storage($birklyRoot . '/users');
         $userId = $actionPayload['id'] ?? $actionPayload['email'] ?? '';
         
         if (empty($userId)) {
@@ -211,14 +188,13 @@ function executeReadAction($actionData, $aiUser) {
         }
         
         // Try to find user by ID or email
-        $userFiles = glob('../users/*.json');
+        $userFiles = glob($birklyRoot . '/users/*.json');
         $user = null;
         foreach ($userFiles as $file) {
             $userData = json_decode(file_get_contents($file), true);
             if ($userData && ($userData['id'] === $userId || $userData['email'] === $userId)) {
                 $user = birkly_scrub_user_for_ai($userData);
                 break;
-            }
             }
         }
         
@@ -229,31 +205,26 @@ function executeReadAction($actionData, $aiUser) {
         return ['success' => true, 'data' => ['user' => $user]];
         
     } elseif ($actionType === 'read_collection') {
-        // Read a specific collection
         $collectionSlug = $actionPayload['slug'] ?? '';
         if (empty($collectionSlug)) {
             return ['success' => false, 'message' => 'Collection slug is required'];
         }
-        
-        $collectionFile = '../content/collections/' . $collectionSlug . '/collection.json';
-        if (!file_exists($collectionFile)) {
+
+        $collectionDir = birkly_content_resolve_collection_dir($contentStorage, $collectionSlug);
+        if (!$collectionDir) {
             return ['success' => false, 'message' => 'Collection not found'];
         }
-        
-        $collection = json_decode(file_get_contents($collectionFile), true);
+
+        $collection = $contentStorage->read('collections/' . $collectionDir . '/collection.json');
         if (!$collection) {
             return ['success' => false, 'message' => 'Failed to read collection'];
         }
-        
-        // Also load schema if it exists
-        $schemaFile = '../content/collections/' . $collectionSlug . '/schema.json';
-        if (file_exists($schemaFile)) {
-            $schema = json_decode(file_get_contents($schemaFile), true);
-            if ($schema) {
-                $collection['fields'] = $schema['fields'] ?? [];
-            }
+
+        $schema = $contentStorage->read('collections/' . $collectionDir . '/schema.json');
+        if (is_array($schema)) {
+            $collection['fields'] = $schema['fields'] ?? $collection['fields'] ?? [];
         }
-        
+
         return ['success' => true, 'data' => ['collection' => $collection]];
         
     } elseif ($actionType === 'read_media') {
@@ -283,8 +254,8 @@ function executeReadAction($actionData, $aiUser) {
     } elseif ($actionType === 'list_pages') {
         // List pages
         require_once __DIR__ . '/storage.php';
-        $contentStorage = new Storage('../content');
-        $pagesDir = '../content/pages';
+        $contentStorage = new Storage($birklyRoot . '/content');
+        $pagesDir = $birklyRoot . '/content/pages';
         $pages = [];
         
         if (is_dir($pagesDir)) {
@@ -306,10 +277,10 @@ function executeReadAction($actionData, $aiUser) {
             return ['success' => false, 'message' => 'Page slug or ID is required'];
         }
         
-        $pageFile = '../content/pages/' . $pageSlug . '.json';
+        $pageFile = $birklyRoot . '/content/pages/' . $pageSlug . '.json';
         if (!file_exists($pageFile)) {
             // Try to find by slug in all pages
-            $pagesDir = '../content/pages';
+            $pagesDir = $birklyRoot . '/content/pages';
             if (is_dir($pagesDir)) {
                 $pageFiles = glob($pagesDir . '/*.json');
                 foreach ($pageFiles as $file) {
@@ -333,7 +304,7 @@ function executeReadAction($actionData, $aiUser) {
         // List activity logs
         require_once __DIR__ . '/activity.php';
         $limit = $actionPayload['limit'] ?? 50;
-        $activityFile = '../data/activity.json';
+        $activityFile = $birklyRoot . '/data/activity.json';
         
         $activities = [];
         if (file_exists($activityFile)) {
@@ -346,7 +317,7 @@ function executeReadAction($actionData, $aiUser) {
     } elseif ($actionType === 'list_roles') {
         // List roles
         require_once __DIR__ . '/storage.php';
-        $settingsStorage = new Storage('../settings');
+        $settingsStorage = new Storage($birklyRoot . '/settings');
         $roles = $settingsStorage->read('roles.json') ?: [];
         
         return ['success' => true, 'data' => ['roles' => $roles, 'count' => count($roles)]];
@@ -354,7 +325,7 @@ function executeReadAction($actionData, $aiUser) {
     } elseif ($actionType === 'read_role') {
         // Read a specific role
         require_once __DIR__ . '/storage.php';
-        $settingsStorage = new Storage('../settings');
+        $settingsStorage = new Storage($birklyRoot . '/settings');
         $roles = $settingsStorage->read('roles.json') ?: [];
         $roleId = $actionPayload['id'] ?? $actionPayload['name'] ?? '';
         
@@ -373,7 +344,7 @@ function executeReadAction($actionData, $aiUser) {
     } elseif ($actionType === 'list_plugins') {
         // List plugins
         require_once __DIR__ . '/../core/plugins.php';
-        $pluginsDir = '../plugins';
+        $pluginsDir = $birklyRoot . '/plugins';
         $plugins = [];
         
         if (is_dir($pluginsDir)) {
