@@ -48,6 +48,12 @@ function requireAuth($permission = null) {
 
 function checkPermission($user, $permission) {
     if (!isset($user['role'])) return false;
+
+    if (isset($user['permissions']) && is_array($user['permissions'])) {
+        if (in_array('*', $user['permissions'], true) || in_array($permission, $user['permissions'], true)) {
+            return true;
+        }
+    }
     
     // Use getPermissionsForRole from ai_helpers.php if available
     // Otherwise fall back to legacy hardcoded roles
