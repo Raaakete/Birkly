@@ -78,6 +78,57 @@ try {
     test_assert('tools/list HTTP 200', $tools['code'] === 200);
     test_assert('tools/list has tools array', isset($toolsData['result']['tools']));
 
+    $listCollections = birkly_test_http_request($base . '/mcp', [
+        'method' => 'POST',
+        'headers' => [
+            'Content-Type: application/json',
+            'Accept: application/json, text/event-stream',
+            'X-MCP-API-Key: ' . $apiKey,
+        ],
+        'body' => json_encode([
+            'jsonrpc' => '2.0',
+            'method' => 'tools/call',
+            'id' => 3,
+            'params' => ['name' => 'list_collections', 'arguments' => (object) []],
+        ]),
+    ]);
+    $listCollectionsData = birkly_test_json_decode($listCollections['body']);
+    test_assert('tools/call list_collections HTTP 200', $listCollections['code'] === 200, 'code ' . $listCollections['code']);
+    test_assert(
+        'tools/call list_collections returns collections',
+        !($listCollectionsData['result']['isError'] ?? false)
+            && str_contains($listCollectionsData['result']['content'][0]['text'] ?? '', 'collections'),
+        $listCollections['body']
+    );
+
+    $listEntries = birkly_test_http_request($base . '/mcp', [
+        'method' => 'POST',
+        'headers' => [
+            'Content-Type: application/json',
+            'Accept: application/json, text/event-stream',
+            'X-MCP-API-Key: ' . $apiKey,
+        ],
+        'body' => json_encode([
+            'jsonrpc' => '2.0',
+            'method' => 'tools/call',
+            'id' => 4,
+            'params' => ['name' => 'list_entries', 'arguments' => ['collection' => 'blog']],
+        ]),
+    ]);
+    $listEntriesData = birkly_test_json_decode($listEntries['body']);
+    test_assert('tools/call list_entries HTTP 200', $listEntries['code'] === 200, 'code ' . $listEntries['code']);
+    test_assert(
+        'tools/call list_entries returns entry summaries',
+        !($listEntriesData['result']['isError'] ?? false)
+            && str_contains($listEntriesData['result']['content'][0]['text'] ?? '', 'entries'),
+        $listEntries['body']
+    );
+    test_assert(
+        'tools/call list_entries omits large body fields',
+        !str_contains($listEntriesData['result']['content'][0]['text'] ?? '', '"body"'),
+        'response should use summary mode'
+    );
+
     $pr = birkly_test_http_request($base . '/.well-known/oauth-protected-resource');
     $prData = birkly_test_json_decode($pr['body']);
     test_assert('protected resource points to /mcp', str_contains($prData['resource'] ?? '', '/mcp'));
