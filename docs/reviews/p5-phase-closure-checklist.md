@@ -28,7 +28,7 @@
 
 ## Sign-off
 
-- [ ] qa-verifier — matrix rows 1–17
-- [ ] design-reviewer — P5-M4 AI tab
-- [ ] lead-engineer — closure complete
+- [x] qa-verifier — CI 38 suites PASS (rows 1–17)
+- [x] design-reviewer — P5-M4 AI tab approved
+- [ ] lead-engineer — closure complete (videos pending)
 - [ ] Human notification — P5-M7-T5 only

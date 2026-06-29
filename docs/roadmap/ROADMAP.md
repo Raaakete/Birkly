@@ -1271,9 +1271,9 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Tasks**
 
-- [ ] **P5-M6-T1** `docs/reviews/p5-integration-test-matrix.md`
+- [x] **P5-M6-T1** `docs/reviews/p5-integration-test-matrix.md`
 - [ ] **P5-M6-T2** Videos V21–V23
-- [ ] **P5-M6-T3** Birkly-Docs: mcp-connections.md + ai-connections.md
+- [x] **P5-M6-T3** Birkly-Docs: mcp-connections.md
 
 ---
 
