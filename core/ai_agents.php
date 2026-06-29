@@ -319,7 +319,7 @@ function birkly_ai_agents_ensure_personal(): array
     $endpoint = birkly_mcp_create_endpoint([
         'name' => 'Personal connector',
         'role' => 'viewer',
-        'require_approval' => true,
+        'require_approval' => false,
         'auth_mode' => 'oauth',
     ], 'system');
 
@@ -331,7 +331,7 @@ function birkly_ai_agents_ensure_personal(): array
         'role' => 'viewer',
         'visible_to_roles' => [],
         'allowed_users' => [],
-        'require_approval' => true,
+        'require_approval' => false,
         'mcp_endpoint_id' => $endpoint['id'],
         'connector_url' => birkly_ai_agent_connector_url(BIRKLY_AI_AGENT_PERSONAL_ID),
         'status' => 'active',
@@ -491,7 +491,7 @@ function birkly_ai_agents_create(array $input, string $createdBy): array
         'role' => $role,
         'require_approval' => array_key_exists('require_approval', $input)
             ? (bool) $input['require_approval']
-            : true,
+            : false,
         'auth_mode' => 'oauth',
     ], $createdBy);
 

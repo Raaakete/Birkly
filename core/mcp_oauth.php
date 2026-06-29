@@ -9,7 +9,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/birkly_paths.php';
 require_once __DIR__ . '/mcp_endpoints.php';
 
-define('BIRKLY_MCP_OAUTH_ACCESS_TTL', 3600);
+define('BIRKLY_MCP_OAUTH_ACCESS_TTL', 86400);
 define('BIRKLY_MCP_OAUTH_REFRESH_TTL', 86400 * 30);
 define('BIRKLY_MCP_OAUTH_CODE_TTL', 600);
 define('BIRKLY_MCP_OAUTH_SCOPE', 'mcp');
@@ -187,18 +187,32 @@ function birkly_mcp_oauth_error(string $error, string $description = '', int $co
     birkly_mcp_oauth_json_response($payload, $code);
 }
 
-function birkly_mcp_oauth_protected_resource_metadata(): array
+function birkly_mcp_oauth_branding_urls(): array
 {
     return [
+        'logo_uri' => birkly_mcp_oauth_absolute_url('/admin/assets/birkly-icon.svg'),
+        'favicon_uri' => birkly_mcp_oauth_absolute_url('/favicon.ico'),
+    ];
+}
+
+function birkly_mcp_oauth_protected_resource_metadata(): array
+{
+    $branding = birkly_mcp_oauth_branding_urls();
+
+    return [
         'resource' => birkly_mcp_oauth_resource_url(),
+        'resource_name' => 'Birkly',
         'authorization_servers' => [birkly_mcp_oauth_authorization_server_metadata_url()],
         'bearer_methods_supported' => ['header'],
         'scopes_supported' => [BIRKLY_MCP_OAUTH_SCOPE],
+        'logo_uri' => $branding['logo_uri'],
     ];
 }
 
 function birkly_mcp_oauth_authorization_server_metadata(): array
 {
+    $branding = birkly_mcp_oauth_branding_urls();
+
     return [
         'issuer' => birkly_mcp_oauth_absolute_url('/'),
         'authorization_endpoint' => birkly_mcp_oauth_absolute_url('/oauth/authorize'),
@@ -210,6 +224,7 @@ function birkly_mcp_oauth_authorization_server_metadata(): array
         'token_endpoint_auth_methods_supported' => ['none', 'client_secret_post'],
         'scopes_supported' => [BIRKLY_MCP_OAUTH_SCOPE],
         'client_id_metadata_document_supported' => true,
+        'logo_uri' => $branding['logo_uri'],
     ];
 }
 
@@ -638,14 +653,13 @@ function birkly_mcp_oauth_render_consent_page(?array $agent, array $endpoint, ar
     $summary = birkly_ai_agents_consent_summary($agent, $endpoint, $user);
     $agentName = htmlspecialchars((string) ($agent['name'] ?? $endpoint['name'] ?? 'AI agent'), ENT_QUOTES, 'UTF-8');
     $userLabel = htmlspecialchars((string) ($user['email'] ?? $user['id'] ?? 'you'), ENT_QUOTES, 'UTF-8');
-    $approval = !empty($agent['require_approval'] ?? $endpoint['require_approval'] ?? true)
-        ? 'Write actions will require approval in Birkly.'
-        : 'Write actions may run automatically.';
+    $approval = 'Write permissions are controlled in your AI app (e.g. Claude tool settings). Birkly executes actions your role allows.';
     $typeLabel = $summary['type'] === 'personal' ? 'Personal connector' : 'Service agent';
 
     http_response_code(200);
     header('Content-Type: text/html; charset=utf-8');
     echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Authorize AI connection</title>';
+    echo '<link rel="icon" href="' . htmlspecialchars(birkly_mcp_oauth_branding_urls()['favicon_uri'], ENT_QUOTES, 'UTF-8') . '">';
     echo '<style>body{font-family:system-ui,sans-serif;max-width:560px;margin:48px auto;padding:0 16px;color:#1f2937}';
     echo '.card{border:1px solid #e5e7eb;border-radius:12px;padding:24px;background:#fff}';
     echo '.badge{display:inline-block;background:#eff6ff;color:#1d4ed8;padding:4px 10px;border-radius:999px;font-size:12px;margin-bottom:12px}';
