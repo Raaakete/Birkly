@@ -68,4 +68,8 @@ test_assert('owner can manage connection', birkly_ai_user_can_manage_connection(
 test_assert('non-owner cannot manage connection', !birkly_ai_user_can_manage_connection($privateConn, $otherId));
 test_assert('admin can manage others connection', birkly_ai_user_can_manage_connection($privateConn, 'user-admin', $adminUser));
 
+$settingsManager = ['id' => 'user-settings', 'role' => 'editor', 'permissions' => ['manage_settings']];
+test_assert('manage_settings can manage others connection', birkly_ai_user_can_manage_connection($privateConn, 'user-settings', $settingsManager));
+test_assert('manage_settings without current user context denied', !birkly_ai_user_can_manage_connection($privateConn, 'user-settings'));
+
 exit(test_finish('ai_permissions_test'));
