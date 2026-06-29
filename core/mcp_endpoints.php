@@ -49,7 +49,16 @@ function birkly_mcp_save_store(array $store): bool
 function birkly_mcp_scrub_endpoint(array $endpoint): array
 {
     unset($endpoint['mcp_api_key'], $endpoint['previous_mcp_api_key']);
+    if (($endpoint['oauth_client_id'] ?? '') === '') {
+        unset($endpoint['oauth_client_id']);
+    }
     return $endpoint;
+}
+
+function birkly_mcp_normalize_auth_mode(string $mode): string
+{
+    $mode = strtolower(trim($mode));
+    return in_array($mode, ['api_key', 'oauth', 'both'], true) ? $mode : 'api_key';
 }
 
 function birkly_mcp_list_endpoints(): array
@@ -105,6 +114,8 @@ function birkly_mcp_create_endpoint(array $input, string $createdBy): array
         'require_approval' => array_key_exists('require_approval', $input)
             ? (bool) $input['require_approval']
             : true,
+        'auth_mode' => birkly_mcp_normalize_auth_mode($input['auth_mode'] ?? 'api_key'),
+        'oauth_client_id' => trim((string) ($input['oauth_client_id'] ?? '')),
         'mcp_api_key' => $key,
         'previous_mcp_api_key' => null,
         'previous_key_expires_at' => null,
@@ -144,6 +155,12 @@ function birkly_mcp_update_endpoint(string $id, array $input): ?array
         }
         if (array_key_exists('require_approval', $input)) {
             $endpoint['require_approval'] = (bool) $input['require_approval'];
+        }
+        if (isset($input['auth_mode'])) {
+            $endpoint['auth_mode'] = birkly_mcp_normalize_auth_mode($input['auth_mode']);
+        }
+        if (array_key_exists('oauth_client_id', $input)) {
+            $endpoint['oauth_client_id'] = trim((string) $input['oauth_client_id']);
         }
         $endpoint['updated_at'] = date('c');
         $updated = $endpoint;

@@ -184,6 +184,13 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 
 function birkly_ai_mcp_server_url(): string
 {
+    require_once __DIR__ . '/birkly_paths.php';
     $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-    return $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/api/mcp_server.php';
+    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+        $proto = strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']);
+        if ($proto === 'https' || $proto === 'http') {
+            $scheme = $proto;
+        }
+    }
+    return $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . birkly_url('/api/mcp_server.php');
 }
