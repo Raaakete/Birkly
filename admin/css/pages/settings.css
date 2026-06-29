@@ -416,6 +416,7 @@
     text-decoration: underline;
 }
 
+.tip-box-warning,
 .ai-https-warning {
     background: var(--warning-50, #fffbeb);
     border: 1px solid var(--warning-300, #fcd34d);
@@ -439,7 +440,9 @@
 }
 
 .ai-section-secondary {
-    opacity: 0.95;
+    background: var(--bg-muted, #f9fafb);
+    border-radius: var(--border-radius);
+    padding: var(--space-4);
 }
 
 .ai-dev-details {

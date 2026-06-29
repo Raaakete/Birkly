@@ -19,7 +19,8 @@
     transition: all var(--transition-slow, 300ms ease);
 }
 
-.ai-chat-approval-badge {
+.ai-chat-fab-badge,
+#ai-chat-approval-badge {
     position: absolute;
     top: -4px;
     right: -4px;
@@ -92,6 +93,16 @@
 
 .ai-chat-queue-item {
     margin-bottom: var(--space-3, 0.75rem);
+}
+
+.ai-chat-approval-status-pill {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: var(--bg-muted, #f3f4f6);
+    color: var(--text-secondary, #6b7280);
 }
 
 .ai-chat-floating-btn:hover {
