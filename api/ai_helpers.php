@@ -64,25 +64,29 @@ function getSupportedAiProviders() {
     return [
         'openai' => [
             'name' => 'OpenAI',
-            'models' => ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini'],
+            'models' => ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-4'],
+            'default_model' => 'gpt-4o-mini',
             'api_url' => 'https://api.openai.com/v1/chat/completions',
             'type' => 'openai'
         ],
         'anthropic' => [
             'name' => 'Anthropic (Claude)',
-            'models' => ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', 'claude-3-5-sonnet', 'claude-3-5-haiku'],
+            'models' => ['claude-3-5-haiku', 'claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
+            'default_model' => 'claude-3-5-haiku',
             'api_url' => 'https://api.anthropic.com/v1/messages',
             'type' => 'anthropic'
         ],
         'google' => [
             'name' => 'Google (Gemini)',
-            'models' => ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+            'models' => ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-pro-vision'],
+            'default_model' => 'gemini-1.5-flash',
             'api_url' => 'https://generativelanguage.googleapis.com/v1beta/models',
             'type' => 'google'
         ],
         'openrouter' => [
             'name' => 'OpenRouter',
-            'models' => ['openai/gpt-4', 'anthropic/claude-3-opus', 'google/gemini-pro', 'meta-llama/llama-3-70b-instruct', 'mistralai/mistral-large', 'perplexity/llama-3-sonar-large-32k-online'],
+            'models' => ['openai/gpt-4o-mini', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet', 'google/gemini-pro', 'meta-llama/llama-3-70b-instruct', 'mistralai/mistral-large'],
+            'default_model' => 'openai/gpt-4o-mini',
             'api_url' => 'https://openrouter.ai/api/v1/chat/completions',
             'type' => 'openai', // Uses OpenAI-compatible API
             'custom_models' => true
@@ -90,6 +94,7 @@ function getSupportedAiProviders() {
         'ollama' => [
             'name' => 'Ollama (Local)',
             'models' => ['llama3', 'mistral', 'codellama', 'phi', 'gemma'],
+            'default_model' => 'llama3',
             'api_url' => 'http://localhost:11434/api/chat',
             'type' => 'ollama',
             'custom_models' => true
@@ -103,6 +108,75 @@ function getSupportedAiProviders() {
             'requires_url' => true
         ]
     ];
+}
+
+/**
+ * Default chat model for a provider when none is configured.
+ */
+function birkly_ai_default_model(string $provider): string
+{
+    $providers = getSupportedAiProviders();
+    $info = $providers[$provider] ?? null;
+    if (!$info) {
+        return 'gpt-4o-mini';
+    }
+
+    if (!empty($info['default_model'])) {
+        return (string) $info['default_model'];
+    }
+
+    $models = $info['models'] ?? [];
+    return $models[0] ?? 'gpt-4o-mini';
+}
+
+/**
+ * Resolve the model to send to a provider, including legacy aliases.
+ */
+function birkly_ai_resolve_model(string $provider, ?string $model): string
+{
+    $resolved = trim((string) $model);
+    if ($resolved === '') {
+        if ($provider === 'custom') {
+            return '';
+        }
+        return birkly_ai_default_model($provider);
+    }
+
+    if ($provider === 'openai') {
+        $legacy = [
+            'gpt-4' => 'gpt-4o',
+        ];
+        return $legacy[$resolved] ?? $resolved;
+    }
+
+    return $resolved;
+}
+
+/**
+ * Extract a human-readable message from a provider error response body.
+ */
+function birkly_ai_parse_provider_error(?string $responseBody): string
+{
+    if ($responseBody === null || $responseBody === '') {
+        return '';
+    }
+
+    $data = json_decode($responseBody, true);
+    if (!is_array($data)) {
+        return '';
+    }
+
+    $message = $data['error']['message'] ?? $data['message'] ?? '';
+    if (!is_string($message)) {
+        return '';
+    }
+
+    $message = trim($message);
+    if (strlen($message) > 240) {
+        return substr($message, 0, 237) . '...';
+    }
+
+    return $message;
 }
 
 /**
@@ -266,7 +340,7 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
             ]),
             'google' => json_encode(['contents' => [['parts' => [['text' => 'ping']]]]]),
             default => json_encode([
-                'model' => 'gpt-3.5-turbo',
+                'model' => birkly_ai_default_model($provider),
                 'max_tokens' => 1,
                 'messages' => [['role' => 'user', 'content' => 'ping']],
             ]),
@@ -277,7 +351,7 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
         curl_setopt($ch, CURLOPT_URL, rtrim($url, '/') . '/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey));
     }
 
-    curl_exec($ch);
+    $responseBody = curl_exec($ch);
     $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
     curl_close($ch);
@@ -298,13 +372,22 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
         ];
     }
 
-    if ($httpCode >= 200 && $httpCode < 500) {
-        return ['valid' => true, 'message' => 'Key accepted (HTTP ' . $httpCode . ')'];
+    if ($httpCode === 200) {
+        return ['valid' => true, 'message' => 'Connection verified'];
+    }
+
+    $detail = birkly_ai_parse_provider_error(is_string($responseBody) ? $responseBody : '');
+    $message = 'Provider returned HTTP ' . $httpCode;
+    if ($detail !== '') {
+        $message .= ': ' . $detail;
+    }
+    if ($httpCode === 404) {
+        $message .= ' (check API URL and model name)';
     }
 
     return [
         'valid' => false,
-        'message' => 'Provider returned HTTP ' . $httpCode,
+        'message' => $message,
         'provider_error' => 'HTTP ' . $httpCode,
     ];
 }
