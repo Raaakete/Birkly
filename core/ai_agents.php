@@ -46,9 +46,17 @@ function birkly_ai_agents_scrub(array $agent): array
     return $agent;
 }
 
-function birkly_ai_agents_list(): array
+function birkly_ai_agents_list(bool $includeRevoked = false): array
 {
-    return array_values(array_map('birkly_ai_agents_scrub', birkly_ai_agents_load_store()['agents']));
+    $agents = birkly_ai_agents_load_store()['agents'];
+    if (!$includeRevoked) {
+        $agents = array_values(array_filter(
+            $agents,
+            static fn(array $agent): bool => ($agent['status'] ?? 'active') !== 'revoked'
+        ));
+    }
+
+    return array_values(array_map('birkly_ai_agents_scrub', $agents));
 }
 
 function birkly_ai_agents_find(string $id): ?array
@@ -59,6 +67,85 @@ function birkly_ai_agents_find(string $id): ?array
         }
     }
     return null;
+}
+
+function birkly_ai_agents_find_by_endpoint_id(string $endpointId): ?array
+{
+    foreach (birkly_ai_agents_load_store()['agents'] as $agent) {
+        if (($agent['mcp_endpoint_id'] ?? '') === $endpointId && ($agent['status'] ?? 'active') !== 'revoked') {
+            return $agent;
+        }
+    }
+    return null;
+}
+
+function birkly_ai_role_rank(string $role): int
+{
+    static $ranks = [
+        'viewer' => 1,
+        'author' => 2,
+        'editor' => 3,
+        'admin' => 4,
+    ];
+
+    return $ranks[$role] ?? 0;
+}
+
+/**
+ * Cap MCP tool access to the lower of agent role and authorizing human role.
+ */
+function birkly_ai_effective_role(string $agentRole, string $userRole): string
+{
+    if (birkly_ai_role_rank($userRole) < birkly_ai_role_rank($agentRole)) {
+        return $userRole;
+    }
+
+    return $agentRole;
+}
+
+/**
+ * Whether a logged-in CMS user may approve OAuth for this agent/endpoint.
+ * Prevents privilege escalation (e.g. editor connecting an admin agent URL).
+ */
+function birkly_ai_user_can_authorize_agent(?array $agent, array $endpoint, array $user): bool
+{
+    if (!function_exists('checkPermission')) {
+        require_once __DIR__ . '/../api/auth.php';
+    }
+
+    $agentRole = (string) ($agent['role'] ?? $endpoint['role'] ?? 'viewer');
+    $userRole = (string) ($user['role'] ?? 'viewer');
+
+    if (checkPermission($user, '*')) {
+        return true;
+    }
+
+    if (birkly_ai_role_rank($userRole) < birkly_ai_role_rank($agentRole)) {
+        return false;
+    }
+
+    if (checkPermission($user, 'manage_settings')) {
+        return true;
+    }
+
+    if ($agent !== null && ($agent['created_by'] ?? '') === ($user['id'] ?? '')) {
+        return true;
+    }
+
+    return in_array($userRole, ['admin', 'editor', 'author', 'viewer'], true);
+}
+
+function birkly_ai_user_authorize_agent_denial_reason(?array $agent, array $endpoint, array $user): string
+{
+    $agentRole = (string) ($agent['role'] ?? $endpoint['role'] ?? 'viewer');
+    $userRole = (string) ($user['role'] ?? 'viewer');
+    $agentName = (string) ($agent['name'] ?? $endpoint['name'] ?? 'AI agent');
+
+    if (birkly_ai_role_rank($userRole) < birkly_ai_role_rank($agentRole)) {
+        return 'Your account (' . $userRole . ') cannot authorize the "' . $agentName . '" agent (role: ' . $agentRole . ').';
+    }
+
+    return 'You do not have permission to authorize this AI agent connection.';
 }
 
 function birkly_ai_agents_valid_roles(): array
@@ -96,7 +183,7 @@ function birkly_ai_agents_create(array $input, string $createdBy): array
         'role' => $role,
         'require_approval' => $endpoint['require_approval'] ?? true,
         'mcp_endpoint_id' => $endpoint['id'],
-        'connector_url' => $endpoint['mcp_url'] ?? birkly_ai_mcp_server_url(),
+        'connector_url' => birkly_ai_agent_connector_url($id),
         'status' => 'active',
         'created_at' => date('c'),
         'created_by' => $createdBy,
@@ -188,15 +275,26 @@ function birkly_ai_agents_revoke(string $id): bool
     return birkly_ai_agents_save_store($store);
 }
 
+function birkly_ai_agent_connector_url(string $agentId): string
+{
+    require_once __DIR__ . '/mcp_protocol.php';
+    require_once __DIR__ . '/mcp_oauth.php';
+
+    return birkly_mcp_oauth_absolute_url(birkly_mcp_connector_path_for_agent($agentId));
+}
+
 function birkly_ai_agents_with_endpoint(array $agent): array
 {
     $endpointId = (string) ($agent['mcp_endpoint_id'] ?? '');
+    $agentId = (string) ($agent['id'] ?? '');
+    if ($agentId !== '' && ($agent['status'] ?? 'active') !== 'revoked') {
+        $agent['connector_url'] = birkly_ai_agent_connector_url($agentId);
+    }
     if ($endpointId === '') {
-        return $agent;
+        return birkly_ai_agents_scrub($agent);
     }
     $endpoint = birkly_mcp_find_endpoint($endpointId);
     if ($endpoint) {
-        $agent['connector_url'] = $endpoint['mcp_url'] ?? birkly_ai_mcp_server_url();
         $agent['auth_mode'] = $endpoint['auth_mode'] ?? 'oauth';
     }
     return birkly_ai_agents_scrub($agent);

@@ -669,18 +669,19 @@
               <h3>
                 Connect your AI app
                 <button type="button" class="help-tip" aria-label="About AI app connectors"
-                  data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. Create a connection, copy the Connector URL, paste it in your AI app's settings, then sign in when prompted.">?</button>
+                  data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. Each agent has its own Connector URL and CMS role. Create an agent, copy its URL, paste in your AI app.">?</button>
               </h3>
-              <p class="settings-help">Works with <strong>Claude</strong>, <strong>ChatGPT</strong>, and <strong>Cursor</strong>. Copy one URL, paste in your app, sign in — done.</p>
+              <p class="settings-help">Each agent has its own Connector URL and role. Paste that agent's URL in Claude, ChatGPT, or Cursor — do not reuse URLs across agents.</p>
             </div>
 
             <div class="setup-guide-box" id="mcp-setup-guide">
               <h4 class="setup-guide-title">Quick start</h4>
               <ol class="setup-guide-steps">
                 <li>Click <strong>Add agent</strong> and give your AI agent a name and role.</li>
-                <li>Copy the <strong>Connector URL</strong> from your new agent.</li>
+                <li>Copy that agent's unique <strong>Connector URL</strong> (not the site-wide <code>/mcp</code> path).</li>
                 <li>In Claude, ChatGPT, or Cursor: paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
-                <li>Sign in when your app asks. OAuth happens automatically.</li>
+                <li>When your AI app opens Birkly, sign in and approve the connection.</li>
+                <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
               </ol>
             </div>
 

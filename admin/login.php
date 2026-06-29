@@ -20,6 +20,28 @@ haru_secure_session_start();
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
 
+function birkly_login_redirect_is_safe(string $redirect): bool
+{
+    if ($redirect === '') {
+        return false;
+    }
+
+    if (preg_match('/^https?:\/\//i', $redirect)) {
+        $host = parse_url($redirect, PHP_URL_HOST);
+        $scheme = parse_url($redirect, PHP_URL_SCHEME);
+        $expectedHost = $_SERVER['HTTP_HOST'] ?? '';
+        $expectedScheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        if ($host !== $expectedHost || strtolower((string) $scheme) !== $expectedScheme) {
+            return false;
+        }
+        $path = parse_url($redirect, PHP_URL_PATH) ?: '';
+    } else {
+        $path = $redirect;
+    }
+
+    return str_contains($path, '/oauth/authorize');
+}
+
 // SECURITY FIX: Set comprehensive security headers
 require_once __DIR__ . '/../api/validate.php';
 if (!headers_sent()) {
@@ -39,6 +61,18 @@ if (isset($_SESSION['user'])) {
     $allowedAdminRoles = ['admin', 'editor', 'viewer'];
 
     if (in_array($currentRole, $allowedAdminRoles, true)) {
+        $redirect = trim((string) ($_GET['redirect'] ?? ''));
+        if ($redirect !== '' && birkly_login_redirect_is_safe($redirect)) {
+            if (ob_get_level() > 0) {
+                ob_clean();
+            }
+            if (!headers_sent()) {
+                http_response_code(302);
+                header('Location: ' . $redirect);
+            }
+            exit;
+        }
+
         // Clear output buffer if exists
         if (ob_get_level() > 0) {
             ob_clean();
@@ -127,6 +161,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Redirect to dashboard or original page
             // Use absolute path to ensure correct routing
             $redirect = $_GET['redirect'] ?? birkly_admin_url('dashboard');
+            if ($redirect !== '' && !birkly_login_redirect_is_safe($redirect)) {
+                $redirect = birkly_admin_url('dashboard');
+            }
             // If redirect is relative, make it absolute under the install base
             if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
                 $redirect = birkly_url('/admin/' . ltrim($redirect, '/'));
