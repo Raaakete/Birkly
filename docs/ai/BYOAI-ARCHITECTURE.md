@@ -36,7 +36,7 @@ Outbound BYOAI and inbound MCP are **independent channels**. They share permissi
          │  SHARED EXECUTION LAYER                  │
          │  core/ai_permissions.php                 │
          │  core/ai_tool_registry.php               │
-         │  data/ai_approvals/ (write queue)        │
+         │  data/ai_approvals/ (outbound writes)    │
          └──────────────────────────────────────────┘
 ```
 
@@ -55,7 +55,7 @@ Outbound BYOAI and inbound MCP are **independent channels**. They share permissi
 | MCP (inbound) | Standalone endpoint profiles — **not** tied to outbound AI connection rows |
 | Identity | Outbound: AI user per connection. Inbound: synthetic `mcp_endpoint` user per profile |
 | Enforcement | `checkPermission()` on every AI/MCP action at execution time (`core/ai_permissions.php`) |
-| Default approval | New connections and endpoints: `require_approval` **true** |
+| Default approval | New outbound connections: `require_approval` **true**. MCP writes use **client-app approval only** (no Birkly queue) |
 | Legacy MCP keys | 90-day dual-resolve after `scripts/migrate-mcp-endpoints.php` |
 | Context | Curated pack (`docs/ai/birkly-context-pack.md`) — not full docs dump |
 
@@ -93,7 +93,9 @@ data/mcp_audit/            Inbound tool call audit (no secrets)
 2. Backend stores JSON user record: `provider`, `model`, `role`, `shared_type`, `allowed_users`, `require_approval`, encrypted `api_key` (except Ollama).
 3. Chat selects connection via header picker → backend resolves role → builds system prompt from curated context + permission summary.
 4. **Read actions** execute immediately if role permits.
-5. **Write actions** enqueue to `data/ai_approvals/` when `require_approval` is true.
+5. **Write actions** enqueue to `data/ai_approvals/` when `require_approval` is true on the **outbound** connection.
+
+**Default model (OpenAI):** `gpt-4o-mini` when none is selected. Legacy stored model `gpt-4` is remapped to `gpt-4o` at call time (`birkly_ai_resolve_model()`). Key validation uses the same default and requires HTTP 200.
 
 **API key vs subscription:** ChatGPT Plus, Claude Pro, and similar consumer subscriptions are **not** API access. Outbound BYOAI requires a provider **API key** (or local Ollama with no key).
 
@@ -103,7 +105,7 @@ data/mcp_audit/            Inbound tool call audit (no secrets)
 2. Creates endpoint: name, role, `require_approval`. Backend writes to `settings/mcp_endpoints.json` and returns `mcp_api_key` once.
 3. External client calls `POST /api/mcp_server.php` with `X-MCP-API-Key` or `api_key` query param.
 4. `api/mcp_server.php` resolves endpoint profile → maps to synthetic user → same permission map as chat.
-5. Writes respect approval queue when enabled. Calls logged to `data/mcp_audit/`.
+5. **MCP writes do not use the Birkly approval queue** — external clients (Claude, ChatGPT, Cursor) handle write confirmation in the client app. Calls logged to `data/mcp_audit/`.
 
 **Migration:** Legacy per-AI-connection `mcp_api_key` values in `users/*.json` are migrated with:
 
@@ -131,7 +133,7 @@ MCP and admin chat share the same map — external MCP clients cannot exceed the
 
 | Provider | Chat in admin | API key | Notes |
 |----------|---------------|---------|-------|
-| openai | Yes | Required | OpenAI-compatible request format |
+| openai | Yes | Required | Default model `gpt-4o-mini`; OpenAI-compatible request format |
 | anthropic | Yes | Required | Messages API |
 | google | Yes | Required | Gemini |
 | openrouter | Yes | Required | OpenAI-compatible proxy |
