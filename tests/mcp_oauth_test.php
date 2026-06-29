@@ -16,8 +16,10 @@ $port = (int) (getenv('MCP_OAUTH_TEST_PORT') ?: 18086);
 $base = "http://127.0.0.1:$port";
 $settingsFile = $root . '/settings/mcp_endpoints.json';
 $oauthFile = $root . '/settings/mcp_oauth.json';
+$agentsFile = $root . '/settings/ai_agents.json';
 $backupSettings = $settingsFile . '.bak.' . getmypid();
 $backupOAuth = $oauthFile . '.bak.' . getmypid();
+$backupAgents = $agentsFile . '.bak.' . getmypid();
 
 $serverPid = birkly_test_http_server_start($root, $port);
 
@@ -39,7 +41,13 @@ try {
     } else {
         @unlink($backupOAuth);
     }
+    if (is_file($agentsFile)) {
+        copy($agentsFile, $backupAgents);
+    } else {
+        @unlink($backupAgents);
+    }
     @unlink($oauthFile);
+    @unlink($agentsFile);
 
     $unauth = birkly_test_http_request($base . '/api/mcp_server.php', [
         'method' => 'POST',
@@ -206,6 +214,72 @@ try {
 
     birkly_mcp_revoke_endpoint($endpoint['id']);
 
+    // P5.1 — hybrid agent visibility in OAuth
+    require_once dirname(__DIR__) . '/core/ai_agents.php';
+    birkly_ai_agents_ensure_personal();
+
+    $adminOnlyService = birkly_ai_agents_create([
+        'name' => 'Admin Only Service',
+        'role' => 'admin',
+        'visible_to_roles' => ['admin'],
+        'require_approval' => true,
+    ], 'test');
+
+    $editorEmail = 'oauth-editor-' . getmypid() . '@birkly.test';
+    $editorPassword = 'SecurePass123!';
+    $editorCookie = sys_get_temp_dir() . '/birkly-oauth-editor-' . getmypid() . '.txt';
+    @unlink($editorCookie);
+    touch($editorCookie);
+
+    $inviteEditor = birkly_test_http_request($base . '/api/users.php', [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/json'],
+        'body' => json_encode([
+            'action' => 'create_user',
+            'email' => $editorEmail,
+            'password' => $editorPassword,
+            'role' => 'editor',
+            'permissions' => ['manage_content', 'read', 'write'],
+            '_csrf' => $csrfMatch[1] ?? '',
+        ]),
+        'cookie_file' => $cookieFile,
+    ]);
+    $inviteData = birkly_test_json_decode($inviteEditor['body'] ?? '');
+    test_assert('editor user created for oauth visibility', ($inviteEditor['code'] ?? 0) === 200 && ($inviteData['status'] ?? '') === 'ok');
+
+    $editorLogin = birkly_test_http_request($base . '/api/users.php', [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/json'],
+        'body' => json_encode([
+            'action' => 'login',
+            'email' => $editorEmail,
+            'password' => $editorPassword,
+        ]),
+        'cookie_file' => $editorCookie,
+    ]);
+    $editorLoginData = birkly_test_json_decode($editorLogin['body'] ?? '');
+    test_assert('editor login for oauth visibility', ($editorLogin['code'] ?? 0) === 200 && ($editorLoginData['status'] ?? '') === 'ok');
+
+    $serviceEndpoint = birkly_mcp_find_endpoint($adminOnlyService['mcp_endpoint_id']);
+    $serviceAuthQuery = array_merge($authQuery, [
+        'resource' => birkly_ai_agent_connector_url($adminOnlyService['id']),
+    ]);
+    $serviceAuthUrl = $base . '/oauth/authorize?' . http_build_query($serviceAuthQuery);
+    $editorDenied = birkly_test_http_request($serviceAuthUrl, ['cookie_file' => $editorCookie]);
+    test_assert('editor denied admin-only service agent oauth', ($editorDenied['code'] ?? 0) === 403);
+    test_assert('denied page mentions not assigned', str_contains($editorDenied['body'] ?? '', 'not assigned'));
+
+    $personalAuthQuery = array_merge($authQuery, [
+        'resource' => birkly_ai_agent_connector_url(BIRKLY_AI_AGENT_PERSONAL_ID),
+    ]);
+    $personalAuthUrl = $base . '/oauth/authorize?' . http_build_query($personalAuthQuery);
+    $editorPersonal = birkly_test_http_request($personalAuthUrl, ['cookie_file' => $editorCookie]);
+    test_assert('editor sees personal agent consent', ($editorPersonal['code'] ?? 0) === 200);
+    test_assert('personal consent mentions user role', str_contains($editorPersonal['body'] ?? '', 'editor'));
+
+    birkly_ai_agents_revoke($adminOnlyService['id']);
+    @unlink($editorCookie);
+
     if (isset($backupUsers, $usersDir)) {
         birkly_test_restore_directory($usersDir, $backupUsers);
         birkly_test_remove_directory($backupUsers);
@@ -222,6 +296,12 @@ try {
         unlink($backupOAuth);
     } elseif (is_file($oauthFile)) {
         unlink($oauthFile);
+    }
+    if (is_file($backupAgents)) {
+        copy($backupAgents, $agentsFile);
+        unlink($backupAgents);
+    } elseif (is_file($agentsFile)) {
+        unlink($agentsFile);
     }
     birkly_test_http_server_stop($serverPid);
 }
