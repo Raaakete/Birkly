@@ -1,7 +1,15 @@
 # Birkly .htaccess
 
-# Serve existing files directly
 RewriteEngine On
+
+# MCP OAuth (P4.1-M3) — well-known + token endpoints
+RewriteRule ^\.well-known/oauth-protected-resource(/.*)?$ api/oauth_protected_resource.php [L,QSA]
+RewriteRule ^\.well-known/oauth-authorization-server(/.*)?$ api/oauth_authorization_server.php [L,QSA]
+RewriteRule ^oauth/authorize$ api/oauth_authorize.php [L,QSA]
+RewriteRule ^oauth/token$ api/oauth_token.php [L,QSA]
+RewriteRule ^oauth/register$ api/oauth_register.php [L,QSA]
+
+# Serve existing files directly
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
