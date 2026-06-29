@@ -15,6 +15,13 @@
     let providersCache = null;
     let connectionTestPassed = false;
 
+    function birklyApiUrl(path) {
+        if (typeof Birkly !== 'undefined' && typeof Birkly.url === 'function') {
+            return Birkly.url(path);
+        }
+        return path;
+    }
+
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
         if (!pane) return false;
@@ -81,11 +88,29 @@
             connectionTestPassed = false;
             clearTestStatus();
         });
+
+        const connectionsList = document.getElementById('connections-list');
+        if (connectionsList && !connectionsList.dataset.actionsBound) {
+            connectionsList.dataset.actionsBound = '1';
+            connectionsList.addEventListener('click', function(e) {
+                const deleteBtn = e.target.closest('[data-delete-connection]');
+                if (deleteBtn) {
+                    e.preventDefault();
+                    deleteConnection(deleteBtn.getAttribute('data-delete-connection'));
+                    return;
+                }
+                const editBtn = e.target.closest('[data-edit-connection]');
+                if (editBtn) {
+                    e.preventDefault();
+                    editConnection(editBtn.getAttribute('data-edit-connection'));
+                }
+            });
+        }
     }
 
     async function loadConnections() {
         try {
-            const response = await fetch('/api/ai_connections.php?action=list');
+            const response = await fetch(birklyApiUrl('/api/ai_connections.php?action=list'));
             const result = await response.json();
 
             if (result && result.status === 'ok' && result.data) {
@@ -123,13 +148,13 @@
                     ${conn.status === 'active' ? '●' : '○'}
                 </div>
                 <div class="connection-actions">
-                    <button class="btn-icon" onclick="aiConnections.editConnection('${conn.id}')" title="Edit connection settings">
+                    <button type="button" class="btn-icon" data-edit-connection="${escapeHtml(conn.id)}" title="Edit connection settings">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 20h9"></path>
                             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
                         </svg>
                     </button>
-                    <button class="btn-icon" onclick="aiConnections.deleteConnection('${conn.id}')" title="Delete">
+                    <button type="button" class="btn-icon" data-delete-connection="${escapeHtml(conn.id)}" title="Delete">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -316,7 +341,7 @@
             }
 
             try {
-                const response = await fetch('/api/ai_connections.php', {
+                const response = await fetch(birklyApiUrl('/api/ai_connections.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -367,7 +392,7 @@
         }
 
         try {
-            const response = await fetch('/api/ai_connections.php', {
+            const response = await fetch(birklyApiUrl('/api/ai_connections.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -422,7 +447,7 @@
 
     async function loadProviders() {
         try {
-            const response = await fetch('/api/ai_connections.php?action=providers');
+            const response = await fetch(birklyApiUrl('/api/ai_connections.php?action=providers'));
             const result = await response.json();
 
             if (result.status === 'ok') {
@@ -456,7 +481,7 @@
         ];
 
         try {
-            const response = await fetch('/api/roles.php?action=list_roles');
+            const response = await fetch(birklyApiUrl('/api/roles.php?action=list_roles'));
             const result = await response.json();
             const roles = (result.status === 'ok' && Array.isArray(result.roles) && result.roles.length > 0)
                 ? result.roles
@@ -499,7 +524,7 @@
 
         const providers = providersCache;
         if (!providers) {
-            fetch('/api/ai_connections.php?action=providers')
+            fetch(birklyApiUrl('/api/ai_connections.php?action=providers'))
                 .then(r => r.json())
                 .then(result => {
                     if (result.status === 'ok') {
@@ -547,7 +572,7 @@
 
     async function loadUsers() {
         try {
-            const response = await fetch('/api/ai_connections.php?action=get_users');
+            const response = await fetch(birklyApiUrl('/api/ai_connections.php?action=get_users'));
             const result = await response.json();
 
             if (result.status === 'ok') {
@@ -722,7 +747,7 @@
         }
 
         try {
-            const response = await fetch('/api/ai_connections.php', {
+            const response = await fetch(birklyApiUrl('/api/ai_connections.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -783,7 +808,7 @@
 
     async function editConnection(connectionId) {
         try {
-            const response = await fetch(`/api/ai_connections.php?action=get&id=${encodeURIComponent(connectionId)}`);
+            const response = await fetch(birklyApiUrl(`/api/ai_connections.php?action=get&id=${encodeURIComponent(connectionId)}`));
             const result = await response.json();
 
             if (result.status !== 'ok' || !result.data?.connection) {
@@ -870,15 +895,23 @@
     }
 
     async function deleteConnection(connectionId) {
-        if (!confirm('Delete this AI connection? This cannot be undone.')) return;
+        if (!connectionId) return;
+        if (!confirm('Delete this assistant connection? This cannot be undone.')) return;
 
         try {
-            const response = await fetch('/api/ai_connections.php', {
+            const response = await fetch(birklyApiUrl('/api/ai_connections.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'delete', id: connectionId, _csrf: csrfToken })
             });
-            const result = await response.json();
+
+            let result;
+            try {
+                result = await response.json();
+            } catch (parseErr) {
+                showError('Server returned an invalid response. Check that you are logged in and try again.');
+                return;
+            }
 
             if (result.status === 'ok') {
                 showSuccess('Connection deleted');
@@ -890,7 +923,8 @@
                 showError('Failed to delete: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
-            showError('Error deleting connection');
+            console.error('Error deleting connection:', error);
+            showError('Could not reach the server. Check your connection and try again.');
         }
     }
 

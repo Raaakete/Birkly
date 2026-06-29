@@ -451,8 +451,19 @@
     color: var(--text-secondary);
 }
 
-.ai-dev-body {
-    padding: var(--space-3) 0;
+.mcp-http-url-warning {
+    color: var(--danger-700, #b91c1c);
+    background: var(--danger-50, #fef2f2);
+    border: 1px solid var(--danger-200, #fecaca);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--border-radius-s, 6px);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-3);
+}
+
+.mcp-url-insecure {
+    border-color: var(--danger-400, #f87171) !important;
+    background: var(--danger-50, #fef2f2);
 }
 
 .help-tip {
