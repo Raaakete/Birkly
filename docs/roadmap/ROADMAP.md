@@ -1653,9 +1653,46 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.4 — Admin stability, platform feedback & AI knowledge
+
+**Status:** Proposed (2026-06-16) — hotfix M0 in progress  
+**Trigger:** Blank content page, automation false inactive, wrong feedback model, shallow AI context
+
+**Spec:** `docs/reviews/P5.4-platform-feedback-ai-plan.md` · **Handoff:** `docs/reviews/P5.4-lead-engineer-handoff.md`
+
+### P5.4-M0 — Admin render hotfix
+- [ ] Fix `getContentData()` / `getEntriesData()` nested function redeclare fatals
+- [ ] Fix duplicate `</main>` layout break
+- [ ] `content.html` JSON bootstrap via `{json content_bootstrap}`
+- [ ] `get_plugin_state()` settings.json fallback; `catch (Throwable)`
+- [ ] Content empty state + HTTP smoke
+
+### P5.4-M1 — Entries & automation verification
+- [ ] Subdirectory entry drill-down + sub-entry smoke
+- [ ] Unified plugin active check; remove false inactive UI
+
+### P5.4-M2 — Platform feedback model
+- [ ] Remove customer-side Alpha Feedback admin page
+- [ ] Floating submit + platform relay (owner triage only)
+- [ ] design-reviewer sign-off
+
+### P5.4-M3 — AI knowledge system
+- [ ] Expand context pack; MCP topic resources
+- [ ] Optional `read_birkly_docs` tool; Birkly-Docs sync
+- [ ] `ai_knowledge_coverage_test.php`
+
+### P5.4-M4 — Deploy & embed automation
+- [ ] kekaba + Birkly-Website embed sync on release
+- [ ] `p5.4-deploy-checklist.md`
+
+### P5.4-M5 — Closure
+- [ ] Integration matrix; **P5.4-M5-T4** notify human once
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
