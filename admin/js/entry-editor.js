@@ -1077,18 +1077,21 @@
                         const parentSubEntryId = formData.get('parent_sub_entry_id');
                         
                         // Build redirect URL - if nested sub-entry, include parent sub-entry info
-                        let redirectUrl = `/admin/index.php?page=entry-detail&collection=${encodeURIComponent(parentCollection)}&entry=${encodeURIComponent(parentEntryId)}`;
+                        const detailParams = {
+                            collection: parentCollection,
+                            entry: parentEntryId,
+                        };
                         if (parentSubCollection && parentSubEntryId) {
-                            // Nested sub-entry - redirect to parent sub-entry detail page
-                            redirectUrl += `&sub_collection=${encodeURIComponent(parentSubCollection)}&sub_entry=${encodeURIComponent(parentSubEntryId)}`;
+                            detailParams.sub_collection = parentSubCollection;
+                            detailParams.sub_entry = parentSubEntryId;
                         }
-                        // Add cache-busting parameter to force refresh
+                        let redirectUrl = Birkly.adminUrl('entry-detail', detailParams);
                         redirectUrl += `&_t=${Date.now()}`;
                         window.location.href = redirectUrl;
                     } else {
                         // For regular entries, redirect to entries list
                         const collectionSlug = formData.get('collection') || config.collectionSlug || '';
-                        window.location.href = Birkly.url('/admin/index.php?page=entries&collection=') + encodeURIComponent(collectionSlug);
+                        window.location.href = Birkly.adminUrl('entries', { collection: collectionSlug });
                     }
                 } else if (data && data.status === 'error') {
                     // Error in JSON body
@@ -1422,7 +1425,10 @@
                         })
                         .then(() => {
                             // Redirect to new translation
-                            window.location.href = Birkly.url(`/admin/index.php?page=entry-editor&collection=${collectionSlug}&entry=${data.data.id}`);
+                            window.location.href = Birkly.adminUrl('entry-editor', {
+                                collection: collectionSlug,
+                                entry: data.data.id,
+                            });
                         })
                         .catch(error => {
                             console.error('Error updating parent translations:', error);

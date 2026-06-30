@@ -3,7 +3,14 @@
 $onboardingData = $onboarding ?? [];
 $wizardDone = !empty($onboardingData['setup_wizard_completed']);
 $fullyComplete = !empty($onboardingData['completed']);
-$showOnboarding = $wizardDone && !$fullyComplete && !empty($onboardingData['checklist']);
+$hasIncompleteChecklist = false;
+foreach (($onboardingData['checklist'] ?? []) as $checklistItem) {
+    if (empty($checklistItem['completed'])) {
+        $hasIncompleteChecklist = true;
+        break;
+    }
+}
+$showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipped']) && $hasIncompleteChecklist;
 $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 ?><!-- Onboarding Completion Modal -->
 <div class="modal" id="onboarding-complete-modal" style="display: none;">
@@ -27,7 +34,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                             <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
                                 <?= __('admin.start_adding_content') ?>
                             </p>
-                            <a href="<?= admin_url('content') ?>\" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
+                            <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
                         </div>
                     </div>
                 </div>
@@ -40,7 +47,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                             <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
                                 <?= __('admin.learn_more_features') ?>
                             </p>
-                            <a href="<?= admin_url('help') ?>\" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
+                            <a href="<?= admin_url('help') ?>" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
                         </div>
                     </div>
                 </div>
@@ -62,13 +69,12 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 
 <?php if ($showOnboarding): ?>
     <!-- Welcome Dashboard for New Users -->
-    <div class="welcome-dashboard">
-        <div class="welcome-card">
-            <div class="welcome-header">
-                <h2><?= __('admin.welcome_to_birkly_exclamation') ?></h2>
-                <p><?= __('admin.complete_steps') ?></p>
-            </div>
-            
+    <details class="welcome-dashboard" open>
+        <summary class="welcome-dashboard-summary">
+            <span><?= __('admin.welcome_to_birkly_exclamation') ?></span>
+            <span class="welcome-dashboard-hint"><?= __('admin.complete_steps') ?></span>
+        </summary>
+    <div class="welcome-card">
             <div class="checklist-progress">
                 <div class="progress-bar-container">
                     <?php
@@ -108,8 +114,8 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                     </div>
                 <?php endforeach; ?>
             </div>
-        </div>
     </div>
+    </details>
 <?php endif; ?>
 
 <!-- Dashboard Stats -->

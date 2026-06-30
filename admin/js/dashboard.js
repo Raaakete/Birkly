@@ -291,11 +291,18 @@
             const collectionSlug = entry.collectionSlug || '';
             
             // Build entry URL
+            const adminEntryUrl = (page, params) => {
+                if (window.Birkly && typeof Birkly.adminUrl === 'function') {
+                    return Birkly.adminUrl(page, params);
+                }
+                const q = new URLSearchParams({ page, ...params });
+                return '/admin/index.php?' + q.toString();
+            };
             let entryUrl = '';
             if (isSubEntry && entry.parentEntryId) {
-                entryUrl = `/admin/index.php?page=entry-detail&collection=${encodeURIComponent(collectionSlug)}&entry=${encodeURIComponent(entry.parentEntryId)}`;
+                entryUrl = adminEntryUrl('entry-detail', { collection: collectionSlug, entry: entry.parentEntryId });
             } else {
-                entryUrl = `/admin/index.php?page=entry-editor&collection=${encodeURIComponent(collectionSlug)}&entry=${encodeURIComponent(entryId)}`;
+                entryUrl = adminEntryUrl('entry-editor', { collection: collectionSlug, entry: entryId });
             }
             
             return `
@@ -459,7 +466,7 @@
                                 <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
                                     No domains registered yet. Register a domain to enable analytics tracking.
                                 </p>
-                                <a href="/admin/index.php?page=settings#domains" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                <a href="${(window.Birkly && Birkly.adminUrl) ? Birkly.adminUrl('settings') + '#domains' : '/admin/index.php?page=settings#domains'}" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
                                     Register Domain & Enable Analytics
                                 </a>
                             </div>
@@ -474,7 +481,7 @@
                                 <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
                                     Analytics tracking is available. Enable it for your registered domains to start tracking visitor statistics.
                                 </p>
-                                <a href="/admin/index.php?page=settings#domains" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                                <a href="${(window.Birkly && Birkly.adminUrl) ? Birkly.adminUrl('settings') + '#domains' : '/admin/index.php?page=settings#domains'}" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
                                     Enable Analytics
                                 </a>
                             </div>
@@ -510,7 +517,8 @@
                         html += '</ul>';
                     }
                     
-                    html += `<div style="margin-top: 1rem;"><a href="/admin/index.php?page=settings#domains" style="font-size: 0.875rem; color: #3b82f6;">Manage domains & analytics →</a></div>`;
+                    const settingsDomainsUrl = (window.Birkly && Birkly.adminUrl) ? Birkly.adminUrl('settings') + '#domains' : '/admin/index.php?page=settings#domains';
+                    html += `<div style="margin-top: 1rem;"><a href="${settingsDomainsUrl}" style="font-size: 0.875rem; color: #3b82f6;">Manage domains & analytics →</a></div>`;
                     
                     container.innerHTML = html;
                 } else {

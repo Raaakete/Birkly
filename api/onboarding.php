@@ -367,6 +367,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         saveOnboardingProgress($userId, [
             'skipped' => true,
             'setup_wizard_completed' => true,
+            'completed' => true,
             'completed_at' => date('c')
         ]);
         
