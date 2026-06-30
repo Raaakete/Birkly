@@ -16,12 +16,7 @@ if (ob_get_level()) {
 
 header('Content-Type: application/json');
 
-// Ensure we're authenticated and have admin privileges
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Admin privileges required']);
-    exit;
-}
+requireAuth('manage_settings');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);

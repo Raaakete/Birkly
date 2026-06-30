@@ -75,9 +75,9 @@ function register_template_function($name, $callback, $options = []) {
                 }
             }
         } else {
-            global $haru_plugins;
-            if (isset($haru_plugins)) {
-                foreach ($haru_plugins as $pid => $plugin) {
+            global $birkly_plugins;
+            if (isset($birkly_plugins)) {
+                foreach ($birkly_plugins as $pid => $plugin) {
                     $plugin_path = $plugin['path'] ?? '';
                     if (!$plugin_path) {
                         $needle = DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR . $pid . DIRECTORY_SEPARATOR;
@@ -137,13 +137,13 @@ function get_template_function($name) {
     
     // Check if plugin is active (Door Policy)
     if ($plugin_id) {
-        // Support both admin context ($haru_plugins) and public context (get_all_plugins)
+        // Support both admin context ($birkly_plugins) and public context (get_all_plugins)
         $plugin_active = false;
         
         // Try admin context first
-        global $haru_plugins;
-        if (isset($haru_plugins) && isset($haru_plugins[$plugin_id])) {
-            $plugin_active = !empty($haru_plugins[$plugin_id]['active']);
+        global $birkly_plugins;
+        if (isset($birkly_plugins) && isset($birkly_plugins[$plugin_id])) {
+            $plugin_active = !empty($birkly_plugins[$plugin_id]['active']);
         } else {
             // Fall back to public bootstrap plugin system
             if (function_exists('get_all_plugins')) {
@@ -184,13 +184,13 @@ function get_all_template_functions() {
         $plugin_id = $func_data['plugin_id'];
         
         if ($plugin_id) {
-            // Check plugin state - support both admin context ($haru_plugins) and public context (get_all_plugins)
+            // Check plugin state - support both admin context ($birkly_plugins) and public context (get_all_plugins)
             $plugin_active = false;
             
             // Try admin context first
-            global $haru_plugins;
-            if (isset($haru_plugins) && isset($haru_plugins[$plugin_id])) {
-                $plugin_active = !empty($haru_plugins[$plugin_id]['active']);
+            global $birkly_plugins;
+            if (isset($birkly_plugins) && isset($birkly_plugins[$plugin_id])) {
+                $plugin_active = !empty($birkly_plugins[$plugin_id]['active']);
             } else {
                 // Fall back to public bootstrap plugin system
                 if (function_exists('get_all_plugins')) {

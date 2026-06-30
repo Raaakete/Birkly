@@ -49,8 +49,8 @@ try {
     switch ($action) {
         case 'get':
             // Get plugin settings
-            global $haru_plugins;
-            $plugin = $haru_plugins['user_management'] ?? [];
+            global $birkly_plugins;
+            $plugin = $birkly_plugins['user_management'] ?? [];
             $settings = $plugin['settings'] ?? [];
             
             // Merge with defaults

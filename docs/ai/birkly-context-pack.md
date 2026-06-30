@@ -59,6 +59,12 @@ Birkly uses a natural template language for static HTML sites:
 
 Entries live at `content/collections/{slug}/entries/{id}.json`. Schema fields are in `schema.json`. Use exact field names when creating entries.
 
+### Slug rules
+
+- Collection and entry slugs use **lowercase letters, digits, and hyphens only** (`[a-z0-9-]`)
+- Use hyphens, not underscores (`blog-posts`, not `blog_posts`)
+- Slugs are normalized at write time: underscores become hyphens; invalid characters are stripped
+
 ## MCP (external AI tools)
 
 Each AI connection can have an MCP API key scoped to that connection's role. External clients call `/api/mcp_server.php` with `X-MCP-API-Key` header.
