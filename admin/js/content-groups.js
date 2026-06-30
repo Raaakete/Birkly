@@ -213,6 +213,11 @@
         if (ungroupedCollections.length > 0 || groups.length > 0) {
             const ungroupedSection = createUngroupedSection(ungroupedCollections);
             container.appendChild(ungroupedSection);
+        } else if (collections.length === 0 && groups.filter(g => g.id !== 'ungrouped').length === 0) {
+            container.innerHTML = '<div class="empty-state card" style="padding: 2rem; text-align: center;">'
+                + '<p style="margin: 0 0 1rem; color: var(--text-secondary);">No collections yet.</p>'
+                + '<a class="btn btn-primary" href="' + (window.Birkly && Birkly.adminUrl ? Birkly.adminUrl('collection-editor') : '/admin/index.php?page=collection-editor') + '">Create your first collection</a>'
+                + '</div>';
         }
         
         // Update drag and drop after render
