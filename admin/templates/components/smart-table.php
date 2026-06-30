@@ -26,6 +26,15 @@
  *   - row_data_attrs: string (optional) - additional data attributes for rows
  */
 
+if (!function_exists('admin_url')) {
+    require_once __DIR__ . '/../../../core/birkly_paths.php';
+    if (!function_exists('admin_url')) {
+        function admin_url(string $page, array $params = []): string {
+            return birkly_admin_url($page, $params);
+        }
+    }
+}
+
 // Ensure variables exist (they should be available from extract() in template parser)
 $entries = $entries ?? [];
 $fields = $fields ?? [];
@@ -59,10 +68,9 @@ $getTitleUrl = function($entry) use ($collection, $titleUrlCallback) {
     
     // If entry has sub-entries or collection has sub-collections, link to detail page
     if ($subEntryCount > 0 || $hasSubCollections) {
-        return "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($entryId);
-    } else {
-        return "/admin/index.php?page=entry-editor&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($entryId);
+        return admin_url('entry-detail', ['collection' => $collectionSlug, 'entry' => $entryId]);
     }
+    return admin_url('entry-editor', ['collection' => $collectionSlug, 'entry' => $entryId]);
 };
 
 // Helper function to get edit URL (always goes to entry-editor)
@@ -74,7 +82,7 @@ $getEditUrl = function($entry) use ($collection, $editUrlCallback) {
     // Always use entry-editor for edit button
     $collectionSlug = $collection['slug'] ?? '';
     $entryId = $entry['id'] ?? '';
-    return "/admin/index.php?page=entry-editor&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($entryId);
+    return admin_url('entry-editor', ['collection' => $collectionSlug, 'entry' => $entryId]);
 };
 
 // Helper function to get entry title
@@ -272,6 +280,6 @@ if (!empty($entries)): ?>
     </div>
 <?php else: ?>
     <div class="empty-state">
-        <p><?= __('admin.no_entries_found_in_collection') ?> <a href="<?= "/admin/index.php?page=entry-editor&collection=" . urlencode($collection['slug'] ?? '') ?>"><?= __('admin.create_first_entry') ?></a>.</p>
+        <p><?= __('admin.no_entries_found_in_collection') ?> <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '']) ?>"><?= __('admin.create_first_entry') ?></a>.</p>
     </div>
 <?php endif; ?>
