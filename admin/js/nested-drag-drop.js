@@ -83,7 +83,7 @@
             
             // Remove old event listeners if they exist
             if (this.groupDragStartHandler) {
-                this.container.removeEventListener('dragstart', this.groupDragStartHandler, false);
+                this.container.removeEventListener('dragstart', this.groupDragStartHandler, true);
             }
             if (this.groupDragEndHandler) {
                 this.container.removeEventListener('dragend', this.groupDragEndHandler, false);
@@ -603,7 +603,7 @@
 
             // Remove event listeners
             if (this.groupDragStartHandler) {
-                this.container.removeEventListener('dragstart', this.groupDragStartHandler, false);
+                this.container.removeEventListener('dragstart', this.groupDragStartHandler, true);
                 this.groupDragStartHandler = null;
             }
             if (this.groupDragEndHandler) {

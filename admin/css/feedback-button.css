@@ -1,12 +1,10 @@
-/* Alpha feedback floating button (P3-M10) */
+/* Alpha feedback floating button (P3-M10) — standalone hidden when unified assist FAB is active */
+
+.feedback-floating-wrap {
+    /* positioning deprecated: unified assist FAB in ai-chat-button.css */
+}
 
 .feedback-floating-btn {
-    position: fixed;
-    bottom: 5.5rem;
-    right: 1.5rem;
-    z-index: 9990;
-    width: 48px;
-    height: 48px;
     border-radius: 50%;
     border: none;
     background: var(--primary-color, #6366f1);
@@ -156,11 +154,4 @@
     font-size: 0.8rem;
     color: var(--text-secondary);
     margin-top: 0.5rem;
-}
-
-@media (max-width: 768px) {
-    .feedback-floating-btn {
-        bottom: 5rem;
-        right: 1rem;
-    }
 }

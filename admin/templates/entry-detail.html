@@ -15,10 +15,10 @@
         <div class="breadcrumbs">
             <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
-            <a href="/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
+            <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
             <?php if (!empty($is_sub_entry_detail)): ?>
                 <span class="separator">›</span>
-                <a href="/admin/index.php?page=entry-detail&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['_parent_entry_id'] ?? '') ?>"><?= htmlspecialchars($entry['_parent_entry_title'] ?? 'Parent Entry') ?></a>
+                <a href="<?= admin_url('entry-detail', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['_parent_entry_id'] ?? '']) ?>"><?= htmlspecialchars($entry['_parent_entry_title'] ?? 'Parent Entry') ?></a>
                 <span class="separator">›</span>
                 <span class="current"><?= htmlspecialchars($sub_collection_slug ?? 'Sub-Entry') ?>: <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
             <?php else: ?>
@@ -58,7 +58,7 @@
                 <div class="table-body">
                     <div class="table-row" role="row" data-entry-id="<?= htmlspecialchars($entry['id'] ?? '') ?>">
                         <div class="cell cell-title" role="cell">
-                            <a href="/admin/index.php?page=entry-editor&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>&entry=<?= htmlspecialchars($entry['id'] ?? '') ?>" class="title-text">
+                            <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['id'] ?? '']) ?>" class="title-text">
                                 <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?>
                             </a>
                         </div>
@@ -96,8 +96,12 @@
                         </div>
                         <div class="cell cell-actions" role="cell">
                             <?php
-                            $currentMainEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($entry['id'] ?? '');
-                            $mainEntryEditLink = "/admin/index.php?page=entry-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($entry['id'] ?? '') . "&return_to=" . urlencode($currentMainEntryDetailUrl);
+                            $currentMainEntryDetailUrl = admin_url('entry-detail', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['id'] ?? '']);
+                            $mainEntryEditLink = admin_url('entry-editor', [
+                                'collection' => $collection['slug'] ?? '',
+                                'entry' => $entry['id'] ?? '',
+                                'return_to' => $currentMainEntryDetailUrl,
+                            ]);
                             ?>
                             <a class="btn mr-s" href="<?= $mainEntryEditLink ?>" aria-label="<?= __('admin.edit_entry') ?>">
                                 <?= __('admin.edit_entry') ?>
@@ -152,10 +156,16 @@
                         <?php
                         $isNestedContext = !empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested);
                         $mainEntryId = $isNestedContext ? ($entry['_parent_entry_id'] ?? '') : ($entry['id'] ?? '');
-                        $addSubEntryUrl = "/admin/index.php?page=entry-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($mainEntryId) . "&sub_collection=" . htmlspecialchars($subCollectionSlug);
+                        $addSubEntryParams = [
+                            'collection' => $collection['slug'] ?? '',
+                            'entry' => $mainEntryId,
+                            'sub_collection' => $subCollectionSlug,
+                        ];
                         if ($isNestedContext) {
-                            $addSubEntryUrl .= "&parent_sub_collection=" . htmlspecialchars($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . htmlspecialchars($parentSubEntryIdForNested);
+                            $addSubEntryParams['parent_sub_collection'] = $parentSubCollectionSlugForNested;
+                            $addSubEntryParams['parent_sub_entry'] = $parentSubEntryIdForNested;
                         }
+                        $addSubEntryUrl = admin_url('entry-editor', $addSubEntryParams);
                         ?>
                         <a href="<?= $addSubEntryUrl ?>" class="btn btn-primary">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
@@ -188,20 +198,31 @@
                             </button>
                             <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
                                 <?php
-                                $currentPageUrl = "/admin/index.php?page=entry-detail&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&entry=" . htmlspecialchars($mainEntryIdForLinks);
+                                $currentPageParams = [
+                                    'collection' => $collection['slug'] ?? '',
+                                    'entry' => $mainEntryIdForLinks,
+                                ];
                                 if (!empty($is_sub_entry_detail) && !empty($viewingSubCollectionSlug) && !empty($viewingSubEntryId)) {
-                                    $currentPageUrl .= "&sub_collection=" . htmlspecialchars($viewingSubCollectionSlug) . "&sub_entry=" . htmlspecialchars($viewingSubEntryId);
+                                    $currentPageParams['sub_collection'] = $viewingSubCollectionSlug;
+                                    $currentPageParams['sub_entry'] = $viewingSubEntryId;
                                     if (!empty($viewingParentSubCollectionSlug) && !empty($viewingParentSubEntryId)) {
-                                        $currentPageUrl .= "&parent_sub_collection=" . htmlspecialchars($viewingParentSubCollectionSlug) . "&parent_sub_entry=" . htmlspecialchars($viewingParentSubEntryId);
+                                        $currentPageParams['parent_sub_collection'] = $viewingParentSubCollectionSlug;
+                                        $currentPageParams['parent_sub_entry'] = $viewingParentSubEntryId;
                                     }
                                 }
-                                $returnToParam = "&return_to=" . urlencode($currentPageUrl);
+                                $currentPageUrl = admin_url('entry-detail', $currentPageParams);
                                 
                                 // Edit sub-collection URL - should open the sub-collection's schema editor
-                                $editSubCollectionUrl = "/admin/index.php?page=collection-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&sub_collection=" . htmlspecialchars($subCollectionSlug) . $returnToParam;
+                                $editSubCollectionUrl = admin_url('collection-editor', array_merge(
+                                    ['collection' => $collection['slug'] ?? '', 'sub_collection' => $subCollectionSlug],
+                                    ['return_to' => $currentPageUrl]
+                                ));
                                 
-                                // Add NEW nested sub-collection URL - parent_sub_collection indicates where to nest it  
-                                $addSubCollectionUrl = "/admin/index.php?page=collection-editor&collection=" . htmlspecialchars($collection['slug'] ?? '') . "&parent_sub_collection=" . htmlspecialchars($subCollectionSlug) . $returnToParam;
+                                // Add NEW nested sub-collection URL - parent_sub_collection indicates where to nest it
+                                $addSubCollectionUrl = admin_url('collection-editor', array_merge(
+                                    ['collection' => $collection['slug'] ?? '', 'parent_sub_collection' => $subCollectionSlug],
+                                    ['return_to' => $currentPageUrl]
+                                ));
                                 
                                 // Debug: Log what we're generating
                                 error_log("Edit sub-collection URL: " . $editSubCollectionUrl);
@@ -300,54 +321,74 @@
                             
                             // Build title URL - if entry has nested sub-collections, link to detail page with proper context
                             if ($hasNestedSubCollections || ($entry['__sub_entry_count'] ?? 0) > 0) {
-                                $titleUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . "&sub_collection=" . urlencode($subCollectionSlug) . "&sub_entry=" . urlencode($entryId);
-                                
-                                // If we're viewing a nested sub-entry detail page, include parent sub-entry info
+                                $titleParams = [
+                                    'collection' => $collectionSlug,
+                                    'entry' => $mainEntryIdForLinks,
+                                    'sub_collection' => $subCollectionSlug,
+                                    'sub_entry' => $entryId,
+                                ];
                                 if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)) {
-                                    $titleUrl .= "&parent_sub_collection=" . urlencode($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . urlencode($parentSubEntryIdForNested);
+                                    $titleParams['parent_sub_collection'] = $parentSubCollectionSlugForNested;
+                                    $titleParams['parent_sub_entry'] = $parentSubEntryIdForNested;
                                 }
-                                
-                                return $titleUrl;
-                            } else {
-                                // No nested sub-collections, link to editor
-                                $editorUrl = "/admin/index.php?page=entry-editor&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . "&sub_collection=" . urlencode($subCollectionSlug) . "&sub_entry=" . urlencode($entryId);
-                                
-                                // Include parent context if we're in a nested context
-                                if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)) {
-                                    $editorUrl .= "&parent_sub_collection=" . urlencode($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . urlencode($parentSubEntryIdForNested);
-                                }
-                                
-                                return $editorUrl;
+                                return admin_url('entry-detail', $titleParams);
                             }
+
+                            $editorParams = [
+                                'collection' => $collectionSlug,
+                                'entry' => $mainEntryIdForLinks,
+                                'sub_collection' => $subCollectionSlug,
+                                'sub_entry' => $entryId,
+                            ];
+                            if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)) {
+                                $editorParams['parent_sub_collection'] = $parentSubCollectionSlugForNested;
+                                $editorParams['parent_sub_entry'] = $parentSubEntryIdForNested;
+                            }
+                            return admin_url('entry-editor', $editorParams);
                         },
                         'edit_url_callback' => function($entry) use ($collection, $subCollectionSlug, $mainEntryIdForLinks, $hasNestedSubCollections, $is_sub_entry_detail, $parentSubCollectionSlugForNested, $parentSubEntryIdForNested, $viewingSubCollectionSlug, $viewingSubEntryId, $viewingParentSubCollectionSlug, $viewingParentSubEntryId) {
                             $collectionSlug = $collection['slug'] ?? '';
                             $entryId = $entry['id'] ?? '';
                             
                             // Build edit URL for sub-entry
-                            $subEntryEditLink = "/admin/index.php?page=entry-editor&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . "&sub_collection=" . urlencode($subCollectionSlug) . "&sub_entry=" . urlencode($entryId);
-                            
-                            // If we're viewing a nested sub-entry detail page, include parent sub-entry info
+                            $editParams = [
+                                'collection' => $collectionSlug,
+                                'entry' => $mainEntryIdForLinks,
+                                'sub_collection' => $subCollectionSlug,
+                                'sub_entry' => $entryId,
+                            ];
                             if (!empty($is_sub_entry_detail) && !empty($parentSubCollectionSlugForNested) && !empty($parentSubEntryIdForNested)) {
-                                $subEntryEditLink .= "&parent_sub_collection=" . urlencode($parentSubCollectionSlugForNested) . "&parent_sub_entry=" . urlencode($parentSubEntryIdForNested);
+                                $editParams['parent_sub_collection'] = $parentSubCollectionSlugForNested;
+                                $editParams['parent_sub_entry'] = $parentSubEntryIdForNested;
                             }
-                            
-                            // Include return_to parameter
+
                             if (!empty($is_sub_entry_detail)) {
                                 if (!empty($viewingParentSubCollectionSlug) && !empty($viewingParentSubEntryId)) {
-                                    $currentSubEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . 
-                                        "&sub_collection=" . urlencode($viewingSubCollectionSlug) . "&sub_entry=" . urlencode($viewingSubEntryId) .
-                                        "&parent_sub_collection=" . urlencode($viewingParentSubCollectionSlug) . "&parent_sub_entry=" . urlencode($viewingParentSubEntryId);
+                                    $returnParams = [
+                                        'collection' => $collectionSlug,
+                                        'entry' => $mainEntryIdForLinks,
+                                        'sub_collection' => $viewingSubCollectionSlug,
+                                        'sub_entry' => $viewingSubEntryId,
+                                        'parent_sub_collection' => $viewingParentSubCollectionSlug,
+                                        'parent_sub_entry' => $viewingParentSubEntryId,
+                                    ];
                                 } else {
-                                    $currentSubEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks) . 
-                                        "&sub_collection=" . urlencode($viewingSubCollectionSlug) . "&sub_entry=" . urlencode($viewingSubEntryId);
+                                    $returnParams = [
+                                        'collection' => $collectionSlug,
+                                        'entry' => $mainEntryIdForLinks,
+                                        'sub_collection' => $viewingSubCollectionSlug,
+                                        'sub_entry' => $viewingSubEntryId,
+                                    ];
                                 }
                             } else {
-                                $currentSubEntryDetailUrl = "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($mainEntryIdForLinks);
+                                $returnParams = [
+                                    'collection' => $collectionSlug,
+                                    'entry' => $mainEntryIdForLinks,
+                                ];
                             }
-                            $subEntryEditLink .= "&return_to=" . urlencode($currentSubEntryDetailUrl);
-                            
-                            return $subEntryEditLink;
+                            $editParams['return_to'] = admin_url('entry-detail', $returnParams);
+
+                            return admin_url('entry-editor', $editParams);
                         }
                     ];
                     
@@ -395,7 +436,7 @@ document.querySelector('.delete-main-entry-btn')?.addEventListener('click', func
     .then(r => r.json())
     .then(d => {
         if (d.status === 'ok') {
-            window.location.href = '/admin/index.php?page=entries&collection=<?= htmlspecialchars($collection['slug'] ?? '') ?>';
+            window.location.href = <?= json_encode(admin_url('entries', ['collection' => $collection['slug'] ?? ''])) ?>;
         } else {
             alert('Error: ' + d.message);
         }
