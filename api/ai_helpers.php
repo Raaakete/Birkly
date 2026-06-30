@@ -192,6 +192,53 @@ function loadBirklyContextPack(): string
 }
 
 /**
+ * Load a Birkly docs topic for AI depth (P5.4-M3).
+ *
+ * @return array{slug: string, title: string, text: string}|null
+ */
+function readBirklyDocsTopic(string $slug): ?array
+{
+    static $cache = [];
+    $slug = preg_replace('/[^a-z0-9\-_]/', '', strtolower(trim($slug)));
+    if ($slug === '') {
+        return null;
+    }
+    if (isset($cache[$slug])) {
+        return $cache[$slug];
+    }
+
+    $topics = [
+        'templating' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language'],
+        'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
+        'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
+        'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
+        'mcp' => ['file' => 'mcp-setup-guide.md', 'title' => 'MCP setup guide'],
+    ];
+
+    if (!isset($topics[$slug])) {
+        return null;
+    }
+
+    $root = dirname(__DIR__);
+    $path = $root . '/docs/' . $topics[$slug]['file'];
+    if (!is_file($path)) {
+        return null;
+    }
+
+    $text = trim((string) file_get_contents($path));
+    if (strlen($text) > 120000) {
+        $text = substr($text, 0, 120000) . "\n\n[truncated]";
+    }
+
+    $cache[$slug] = [
+        'slug' => $slug,
+        'title' => $topics[$slug]['title'],
+        'text' => $text,
+    ];
+    return $cache[$slug];
+}
+
+/**
  * Strip sensitive fields from user records returned to AI.
  */
 function birkly_scrub_user_for_ai(array $user): array

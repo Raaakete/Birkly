@@ -9,25 +9,29 @@ function is_nav_active(string $page_name): string {
 function get_active_plugin_navigation(): array {
     $navigation = [];
     
-    // Load plugin settings to check which plugins are active
+    if (!function_exists('birkly_is_plugin_active')) {
+        require_once __DIR__ . '/../../core/plugins.php';
+    }
+
     $pluginsSettingsFile = __DIR__ . '/../../settings/plugins.json';
     
     if (file_exists($pluginsSettingsFile)) {
         $pluginsSettings = json_decode(file_get_contents($pluginsSettingsFile), true);
         
         foreach ($pluginsSettings as $pluginId => $pluginConfig) {
-            if ($pluginConfig['active'] ?? false) {
-                $pluginJsonFile = __DIR__ . '/../../plugins/' . $pluginId . '/plugin.json';
-                if (file_exists($pluginJsonFile)) {
-                    $pluginData = json_decode(file_get_contents($pluginJsonFile), true);
-                    if (isset($pluginData['navigation'])) {
-                        $navigation[] = [
-                            'id' => $pluginId,
-                            'name' => $pluginData['navigation']['name'] ?? $pluginData['name'],
-                            'page' => $pluginData['navigation']['page'] ?? $pluginId,
-                            'icon' => $pluginData['navigation']['icon'] ?? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>'
-                        ];
-                    }
+            if (!birkly_is_plugin_active($pluginId)) {
+                continue;
+            }
+            $pluginJsonFile = __DIR__ . '/../../plugins/' . $pluginId . '/plugin.json';
+            if (file_exists($pluginJsonFile)) {
+                $pluginData = json_decode(file_get_contents($pluginJsonFile), true);
+                if (isset($pluginData['navigation'])) {
+                    $navigation[] = [
+                        'id' => $pluginId,
+                        'name' => $pluginData['navigation']['name'] ?? $pluginData['name'],
+                        'page' => $pluginData['navigation']['page'] ?? $pluginId,
+                        'icon' => $pluginData['navigation']['icon'] ?? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>'
+                    ];
                 }
             }
         }
@@ -155,7 +159,9 @@ if (empty($userAvatar)) {
                         </a>
                     </li>
                     <?php
-                    $canManageFeedback = isset($_SESSION['user']) && function_exists('checkPermission')
+                    require_once __DIR__ . '/../../core/platform.php';
+                    $canManageFeedback = birkly_is_platform_owner_install()
+                        && isset($_SESSION['user']) && function_exists('checkPermission')
                         && checkPermission($_SESSION['user'], 'manage_settings');
                     if ($canManageFeedback):
                     ?>

@@ -520,110 +520,11 @@ function getDashboardData() {
 }
 
 function getContentData() {
+    require_once __DIR__ . '/admin_content_helpers.php';
+
     // Get collections for content page
     $collectionsPath = __DIR__ . '/../content/collections';
     $collections = [];
-    
-    // Helper function to recursively count all sub-entries for a collection
-    require_once __DIR__ . '/../core/sub_entries.php';
-    require_once __DIR__ . '/../core/storage/StorageFactory.php';
-    
-    if (!function_exists('countAllSubEntriesForCollection')) {
-    function countAllSubEntriesForCollection($collectionSlug, $collectionData) {
-        $subCollections = $collectionData['sub_collections'] ?? [];
-        if (empty($subCollections)) {
-            return 0;
-        }
-        
-        $totalSubEntries = 0;
-        $entriesDir = __DIR__ . "/../content/collections/{$collectionSlug}/entries";
-        
-        if (!is_dir($entriesDir)) {
-            return 0;
-        }
-        
-        $entryFiles = glob($entriesDir . '/*.json');
-        if (!$entryFiles) {
-            return 0;
-        }
-        
-        // Use the same counting logic as entry-detail page for consistency
-        require_once __DIR__ . '/../core/sub_entries.php';
-        if (!function_exists('get_storage')) {
-            require_once __DIR__ . '/../core/storage/StorageFactory.php';
-        }
-        $storage = get_storage();
-        
-        // Helper to recursively count all sub-entries including nested ones
-        $countSubEntriesRecursive = function($collectionSlug, $entryId, $subCollection, $parentSubCollectionSlug = null, $parentSubEntryId = null) use (&$countSubEntriesRecursive, $storage) {
-            $subCollectionSlug = $subCollection['slug'] ?? '';
-            if (empty($subCollectionSlug)) {
-                return 0;
-            }
-            
-            $count = 0;
-            try {
-                if ($parentSubCollectionSlug && $parentSubEntryId) {
-                    // Nested sub-entry - count from nested path
-                    $nestedSubEntryPath = "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}";
-                    try {
-                        $files = $storage->list($nestedSubEntryPath);
-                        // Count all .json files (same as entry-detail page)
-                        $count = count(array_filter($files, function($file) {
-                            return pathinfo($file, PATHINFO_EXTENSION) === 'json';
-                        }));
-                    } catch (Exception $e) {
-                        $count = 0;
-                    }
-                } else {
-                    // Top-level sub-entry - use the existing countSubEntries function for accuracy
-                    $count = countSubEntries($collectionSlug, $entryId, $subCollectionSlug);
-                }
-                
-                // Count nested sub-entries recursively
-                $nestedSubCollections = $subCollection['sub_collections'] ?? [];
-                if (!empty($nestedSubCollections)) {
-                    // Get all sub-entries for this sub-collection to count their nested entries
-                    $subEntryPath = $parentSubCollectionSlug && $parentSubEntryId 
-                        ? "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$parentSubCollectionSlug}/{$parentSubEntryId}/sub_entries/{$subCollectionSlug}"
-                        : "collections/{$collectionSlug}/entries/{$entryId}/sub_entries/{$subCollectionSlug}";
-                    
-                    try {
-                        $files = $storage->list($subEntryPath);
-                        $subEntries = [];
-                        foreach ($files as $file) {
-                            if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
-                                $subEntryId = basename($file, '.json');
-                                $subEntries[] = $subEntryId;
-                            }
-                        }
-                        
-                        foreach ($subEntries as $subEntryId) {
-                            foreach ($nestedSubCollections as $nestedSubCollection) {
-                                $count += $countSubEntriesRecursive($collectionSlug, $entryId, $nestedSubCollection, $subCollectionSlug, $subEntryId);
-                            }
-                        }
-                    } catch (Exception $e) {
-                        // Path doesn't exist, continue
-                    }
-                }
-            } catch (Exception $e) {
-                error_log("Error counting sub-entries: " . $e->getMessage());
-            }
-            
-            return $count;
-        };
-        
-        foreach ($entryFiles as $entryFile) {
-            $entryId = basename($entryFile, '.json');
-            foreach ($subCollections as $subCollection) {
-                $totalSubEntries += $countSubEntriesRecursive($collectionSlug, $entryId, $subCollection);
-            }
-        }
-        
-        return $totalSubEntries;
-    }
-    }
     
     if (is_dir($collectionsPath)) {
         $collectionDirs = glob($collectionsPath . '/*', GLOB_ONLYDIR);

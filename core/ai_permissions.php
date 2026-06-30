@@ -77,6 +77,7 @@ function birkly_ai_action_permission_map(): array
         // MCP tool aliases
         'get_collection' => ['read'],
         'get_system_context' => ['read'],
+        'read_birkly_docs' => ['read'],
     ];
 }
 

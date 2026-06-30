@@ -413,7 +413,7 @@ $isOnboarding = ($page === 'onboarding');
                     echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
                     echo '</div>';
                 }
-            } elseif ($page === 'automation' && !get_plugin_state('automation')) {
+            } elseif ($page === 'automation' && !birkly_is_plugin_active('automation')) {
                 echo '<div class="coming-soon">';
                 echo '<h1>Automation Unavailable</h1>';
                 echo '<p>The Automation plugin is not active. Enable it from the Plugins page.</p>';
