@@ -41,7 +41,23 @@ $birkly_plugin_settings = []; // Plugin-specific settings
 // Plugin state management
 function get_plugin_state($plugin_id) {
     global $birkly_plugins;
-    return $birkly_plugins[$plugin_id]['active'] ?? false;
+    if (isset($birkly_plugins[$plugin_id])) {
+        return $birkly_plugins[$plugin_id]['active'] ?? false;
+    }
+
+    // API / early bootstrap may run before load_plugins() fills the registry.
+    static $persistedStates = null;
+    if ($persistedStates === null) {
+        $storage = new PluginStorage(__DIR__ . '/../settings');
+        $persistedStates = $storage->read('plugins.json') ?? [];
+    }
+    if (array_key_exists($plugin_id, $persistedStates)) {
+        return (bool) ($persistedStates[$plugin_id]['active'] ?? false);
+    }
+    if ($plugin_id === 'automation') {
+        return true;
+    }
+    return false;
 }
 
 function set_plugin_state($plugin_id, $active) {
