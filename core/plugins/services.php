@@ -31,9 +31,9 @@ function register_plugin_service($service_id, $service, $options = []) {
     $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
     if (isset($backtrace[1]['file'])) {
         $file = $backtrace[1]['file'];
-        global $haru_plugins;
-        if (isset($haru_plugins)) {
-            foreach ($haru_plugins as $pid => $plugin) {
+        global $birkly_plugins;
+        if (isset($birkly_plugins)) {
+            foreach ($birkly_plugins as $pid => $plugin) {
                 if (strpos($file, $plugin['path'] ?? '') !== false) {
                     $plugin_id = $pid;
                     break;
@@ -83,8 +83,8 @@ function get_plugin_service($service_id, $throw_exception = true, $requesting_pl
     
     // Check if provider plugin is active
     if ($provider_plugin_id) {
-        global $haru_plugins;
-        if (isset($haru_plugins[$provider_plugin_id]) && !($haru_plugins[$provider_plugin_id]['active'] ?? false)) {
+        global $birkly_plugins;
+        if (isset($birkly_plugins[$provider_plugin_id]) && !($birkly_plugins[$provider_plugin_id]['active'] ?? false)) {
             return null; // Provider plugin is inactive
         }
     }
@@ -117,8 +117,8 @@ function discover_plugin_services($requesting_plugin_id = null) {
         // Check if provider plugin is active
         $provider_plugin_id = $service_data['plugin_id'];
         if ($provider_plugin_id) {
-            global $haru_plugins;
-            if (isset($haru_plugins[$provider_plugin_id]) && !($haru_plugins[$provider_plugin_id]['active'] ?? false)) {
+            global $birkly_plugins;
+            if (isset($birkly_plugins[$provider_plugin_id]) && !($birkly_plugins[$provider_plugin_id]['active'] ?? false)) {
                 continue; // Skip services from inactive plugins
             }
         }

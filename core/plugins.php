@@ -35,6 +35,7 @@ $birkly_collections = [];
 $birkly_api_endpoints = [];
 $birkly_admin_pages = [];
 $birkly_plugins = []; // Plugin metadata and state
+$haru_plugins = &$birkly_plugins;
 $birkly_plugin_settings = []; // Plugin-specific settings
 
 // Plugin state management
