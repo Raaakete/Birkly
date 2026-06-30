@@ -82,27 +82,100 @@
         }
     }
 
-    // Create floating AI button
+    // Create unified assist FAB with speed-dial (AI chat + feedback)
     function createFloatingButton() {
+        document.body.classList.add('assist-fab-active');
+
+        const wrap = document.createElement('div');
+        wrap.id = 'assist-fab-wrap';
+        wrap.className = 'assist-fab-wrap';
+
+        const menu = document.createElement('div');
+        menu.className = 'assist-fab-menu';
+        menu.setAttribute('role', 'menu');
+        menu.innerHTML = `
+            <button type="button" class="assist-fab-action" id="assist-fab-ai" role="menuitem" title="AI Assistant" aria-label="AI Assistant">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+                <span>AI Chat</span>
+            </button>
+            <button type="button" class="assist-fab-action" id="assist-fab-feedback" role="menuitem" title="Send feedback" aria-label="Send feedback">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Feedback</span>
+            </button>
+        `;
+
         const button = document.createElement('button');
         button.id = 'ai-chat-floating-btn';
-        button.className = 'ai-chat-floating-btn';
+        button.className = 'ai-chat-floating-btn assist-fab-main';
+        button.type = 'button';
+        button.setAttribute('aria-label', 'Open assist menu');
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-haspopup', 'menu');
         button.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                <path d="M2 17l10 5 10-5"></path>
-                <path d="M2 12l10 5 10-5"></path>
+            <svg class="assist-fab-icon assist-fab-icon-menu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <svg class="assist-fab-icon assist-fab-icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
         `;
-        button.title = 'AI Assistant';
-        button.addEventListener('click', toggleChatWindow);
+
         const badge = document.createElement('span');
         badge.id = 'ai-chat-approval-badge';
         badge.className = 'ai-chat-fab-badge';
         badge.style.display = 'none';
         badge.setAttribute('aria-hidden', 'true');
         button.appendChild(badge);
-        document.body.appendChild(button);
+
+        wrap.appendChild(menu);
+        wrap.appendChild(button);
+        document.body.appendChild(wrap);
+
+        function setMenuOpen(open) {
+            wrap.classList.toggle('open', open);
+            button.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setMenuOpen(!wrap.classList.contains('open'));
+        });
+
+        document.getElementById('assist-fab-ai').addEventListener('click', function(e) {
+            e.stopPropagation();
+            setMenuOpen(false);
+            toggleChatWindow();
+        });
+
+        document.getElementById('assist-fab-feedback').addEventListener('click', function(e) {
+            e.stopPropagation();
+            setMenuOpen(false);
+            if (window.Birkly && typeof window.Birkly.openFeedbackModal === 'function') {
+                window.Birkly.openFeedbackModal();
+            } else {
+                document.getElementById('feedback-floating-btn')?.click();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!wrap.contains(e.target)) {
+                setMenuOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                setMenuOpen(false);
+            }
+        });
     }
 
     function updateApprovalBadge() {

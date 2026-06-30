@@ -175,7 +175,7 @@ function build_cancel_url($data) {
     }
     
     // Default to entries list
-    return '/admin/index.php?page=entries&collection=' . urlencode($collectionSlug);
+    return birkly_admin_url('entries', ['collection' => $collectionSlug]);
 }
 
 /**
