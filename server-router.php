@@ -56,6 +56,12 @@ foreach ($oauthRoutes as $prefix => $handler) {
 $file = __DIR__ . $uri;
 
 if (file_exists($file) && is_file($file)) {
+    $originalUri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if ($base !== '' && is_string($originalUri) && str_starts_with($originalUri, $base)) {
+        $_SERVER['SCRIPT_NAME'] = birkly_url($uri);
+        require $file;
+        return true;
+    }
     return false;
 }
 
