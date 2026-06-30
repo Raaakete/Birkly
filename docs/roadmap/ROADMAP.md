@@ -1655,21 +1655,18 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 5.4 — Admin stability, platform feedback & AI knowledge
 
-**Status:** Proposed (2026-06-16) — hotfix M0 in progress  
-**Trigger:** Blank content page, automation false inactive, wrong feedback model, shallow AI context
+**Status:** Approved (2026-06-16) — M0 partial (#62); live blockers open
 
-**Spec:** `docs/reviews/P5.4-platform-feedback-ai-plan.md` · **Handoff:** `docs/reviews/P5.4-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P5.4-platform-feedback-ai-plan.md` · **Handoff:** `docs/reviews/P5.4-lead-engineer-handoff.md` · **Live issues:** `docs/reviews/p5.4-live-issues-register.md`
 
 ### P5.4-M0 — Admin render hotfix
-- [ ] Fix `getContentData()` / `getEntriesData()` nested function redeclare fatals
-- [ ] Fix duplicate `</main>` layout break
-- [ ] `content.html` JSON bootstrap via `{json content_bootstrap}`
-- [ ] `get_plugin_state()` settings.json fallback; `catch (Throwable)`
-- [ ] Content empty state + HTTP smoke
+- [x] Partial #62: redeclare guards, layout, content bootstrap, get_plugin_state, Throwable catch
+- [ ] **LIVE:** Fix Content `syntax error, unexpected token \"`
+- [ ] Template `?>\"` audit; content HTTP smoke on subdirectory
 
 ### P5.4-M1 — Entries & automation verification
-- [ ] Subdirectory entry drill-down + sub-entry smoke
-- [ ] Unified plugin active check; remove false inactive UI
+- [ ] Entry drill-down + sub-entries on subdirectory (blocked by M0)
+- [ ] Automation full fix (#61/#62 insufficient on live)
 
 ### P5.4-M2 — Platform feedback model
 - [ ] Remove customer-side Alpha Feedback admin page
