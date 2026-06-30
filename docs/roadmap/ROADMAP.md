@@ -106,6 +106,12 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.2-platform-hardening-plan.md` · **Handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
 
+**2026-06-16 — Phase 5.3 proposed** (Keven live testing)
+
+**Priorities:** **Admin UX & core workflows** — entry drill-down, automation, dashboard onboarding, alpha feedback, DnD, unified FAB, layout pass. **Kekaba deploy deferred.**
+
+**Spec:** `docs/reviews/P5.3-admin-ux-plan.md` · **Handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md` · **Status:** Awaiting approval
+
 ---
 
 ## Vision
@@ -120,17 +126,19 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-06-29)
+## Current state (verified 2026-06-16)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 5 + P5.1 **complete** on `main`. **P5.2 approved** — platform hardening (roles, plugins, slugs, entry list, updates). |
-| **Birkly-Website** | `Birkly-0.1/` sync deferred until P5.2 CMS fixes land. |
-| **kekaba** | Live testing surfaced P5.2 bugs; embed sync **deferred**. |
-| **Birkly-Docs** | P5.1 mcp-connections; P5.2 will add roles/plugins/slug docs. |
+| **Birkly (CMS)** | Phase 5 + P5.1 + P5.2 **complete** on `main`. **P5.3 proposed** — admin UX & core workflows (entry drill-down, automation, dashboard, feedback, DnD, FAB). |
+| **Birkly-Website** | `Birkly-0.1/` sync deferred until P5.3 CMS fixes land. |
+| **kekaba** | Live testing on `birkly.kekaba.com` surfaced P5.3 issues; embed sync **deferred**. |
+| **Birkly-Docs** | P5.2 roles/plugins/slugs; P5.3 will add workflow notes if needed. |
 | **Agent ops** | Autonomous merge active. |
 
-**Phase 5.2 handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
+**Phase 5.3 handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md` (proposed)
+
+**Phase 5.2 handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md` (complete)
 
 **Phase 5.1 handoff:** `docs/reviews/P5.1-lead-engineer-handoff.md` (complete)
 
@@ -1610,9 +1618,118 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.3 — Admin UX & core workflows
+
+**Status:** Proposed — awaiting human approval  
+**Trigger:** Live kekaba testing — entry drill-down, automation, dashboard, feedback, DnD, FAB  
+**Ordering:** P5.3-M0 → … → P5.3-M7. Cross-repo: Birkly → Birkly-Docs. Kekaba embed sync deferred.
+
+**Spec:** `docs/reviews/P5.3-admin-ux-plan.md`  
+**Handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md`
+
+### P5.3-M0 — Entry drill-down & sub-entry URLs
+
+- **Owner:** cms-developer
+- **Depends on:** P5.2-M3 (entries list)
+- **Goal:** List → detail → edit works on subdirectory install; sub-collections/sub-entries navigable
+
+- [ ] **P5.3-M0-T1** `smart-table.php` — `birkly_admin_url()` for entry links
+- [ ] **P5.3-M0-T2** `entry-detail.html`, `entry-editor.html`, `collection-editor.html` URL sweep
+- [ ] **P5.3-M0-T3** `entry-editor.js`, `content-groups.js` — `Birkly.url()` redirects
+- [ ] **P5.3-M0-T4** Verify `getEntryDetailData()` sub-collection / sub-entry params
+- [ ] **P5.3-M0-T5** `admin_routing_http_test.php` — entry-detail smoke
+
+### P5.3-M1 — Automation plugin fix
+
+- **Owner:** cms-developer
+- **Depends on:** none
+- **Goal:** Automation page loads; create/edit works
+
+- [ ] **P5.3-M1-T1** Remove duplicate `let automations` in `automation.js`
+- [ ] **P5.3-M1-T2** Subdirectory-safe API paths via `Birkly.url()`
+- [ ] **P5.3-M1-T3** Smoke: list, create modal, save round-trip
+
+### P5.3-M2 — Dashboard onboarding logic
+
+- **Owner:** cms-developer
+- **Depends on:** none
+- **Goal:** Full dashboard after setup; checklist not blocking
+
+- [ ] **P5.3-M2-T1** `onboarding.php` skip sets `completed: true`
+- [ ] **P5.3-M2-T2** `dashboard.html` — fix `$showOnboarding` gate; href bugs
+- [ ] **P5.3-M2-T3** `getDashboardData()` — real checklist for media/settings/templates
+- [ ] **P5.3-M2-T4** Recent collections, activity, analytics visible post-setup
+
+### P5.3-M3 — Alpha feedback page
+
+- **Owner:** cms-developer
+- **Depends on:** none
+- **Goal:** Feedback admin page loads
+
+- [ ] **P5.3-M3-T1** `getPageData()` add `case 'feedback'`
+- [ ] **P5.3-M3-T2** `getFeedbackData()` helper
+- [ ] **P5.3-M3-T3** Smoke: page + list API
+
+### P5.3-M4 — Collection/group drag-and-drop
+
+- **Owner:** cms-developer
+- **Depends on:** none
+- **Goal:** Move collections between groups; reorder groups
+
+- [ ] **P5.3-M4-T1** `nested-drag-drop.js` — capture flag fix on removeEventListener
+- [ ] **P5.3-M4-T2** `content-groups.js` — destroy before re-init; `ungrouped` normalization
+- [ ] **P5.3-M4-T3** Manual smoke: inter-group move + group reorder
+
+### P5.3-M5 — Unified FAB (AI chat + feedback)
+
+- **Owner:** design-reviewer → cms-developer
+- **Depends on:** none
+- **Goal:** Single elegant bottom-right control for AI + feedback
+
+- [ ] **P5.3-M5-T1** design-reviewer: FAB pattern proposal
+- [ ] **P5.3-M5-T2** Implement unified assist FAB partial + CSS
+- [ ] **P5.3-M5-T3** Remove duplicate feedback FAB positioning; consistent icons/size
+
+### P5.3-M6 — Admin UX audit pass
+
+- **Owner:** design-reviewer + cms-developer
+- **Depends on:** P5.3-M0–M5
+- **Goal:** Top layout/UX issues fixed; issue register documented
+
+- [ ] **P5.3-M6-T1** `docs/reviews/p5.3-ux-issue-register.md`
+- [ ] **P5.3-M6-T2** Hardcoded admin URL scan + fix remaining offenders
+- [ ] **P5.3-M6-T3** design-reviewer sign-off on dashboard, content, entries, settings
+
+### P5.3-M7 — Integration matrix, docs, closure
+
+- **Owner:** lead-engineer + docs-writer + qa-verifier
+- **Depends on:** P5.3-M0–M6
+
+- [ ] **P5.3-M7-T1** `docs/reviews/p5.3-integration-test-matrix.md`
+- [ ] **P5.3-M7-T2** Birkly-Docs workflow notes if needed
+- [ ] **P5.3-M7-T3** `docs/reviews/p5.3-phase-closure-checklist.md`
+- [ ] **P5.3-M7-T4** **Notify human once**
+
+---
+
+## Phase 5.3 success criteria
+
+| Area | Target |
+|------|--------|
+| **Entries** | Drill-down + sub-entries on subdirectory install |
+| **Automation** | List + create work; no JS errors |
+| **Dashboard** | Full sections after setup |
+| **Feedback** | Admin page loads |
+| **DnD** | Collections/groups draggable |
+| **FAB** | Unified AI + feedback control |
+| **Tests** | Integration matrix green |
+| **Docs** | Issue register + closure checklist |
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
