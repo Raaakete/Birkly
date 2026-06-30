@@ -520,7 +520,13 @@ function getDashboardData() {
 }
 
 function getContentData() {
-    require_once __DIR__ . '/admin_content_helpers.php';
+    $helpersPath = __DIR__ . '/admin_content_helpers.php';
+    if (!is_file($helpersPath)) {
+        return [
+            'error' => 'Content page helpers are missing on this server. Redeploy api/admin_content_helpers.php (sync the full Birkly-0.1 embed).',
+        ];
+    }
+    require_once $helpersPath;
 
     // Get collections for content page
     $collectionsPath = __DIR__ . '/../content/collections';

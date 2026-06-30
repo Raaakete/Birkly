@@ -33,6 +33,22 @@ test_assert('owner_mode detected', birkly_is_platform_owner_install() === true);
 test_assert('alpha off when owner_mode and alpha_program false', birkly_alpha_program_enabled() === false);
 test_assert('install id from config', birkly_platform_install_id() === 'test-install');
 test_assert('relay url from config', birkly_feedback_relay_url() === 'https://example.com/feedback');
+test_assert('triage on owner install', birkly_feedback_triage_enabled() === true);
+
+file_put_contents($platformFile, json_encode([
+    'owner_mode' => false,
+    'alpha_program' => true,
+    'feedback_relay_url' => '',
+], JSON_PRETTY_PRINT));
+birkly_platform_config_reset();
+test_assert('triage when no relay configured', birkly_feedback_triage_enabled() === true);
+
+file_put_contents($platformFile, json_encode([
+    'owner_mode' => false,
+    'feedback_relay_url' => 'https://example.com/inbox',
+], JSON_PRETTY_PRINT));
+birkly_platform_config_reset();
+test_assert('triage off when relay configured', birkly_feedback_triage_enabled() === false);
 
 if ($hadFile) {
     copy($backup, $platformFile);

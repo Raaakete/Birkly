@@ -362,6 +362,7 @@ $isOnboarding = ($page === 'onboarding');
                                                        strpos($templateContent, '{admin_url') !== false ||
                                                        strpos($templateContent, '{for each') !== false ||
                                                        strpos($templateContent, '{if ') !== false ||
+                                                       strpos($templateContent, '{json') !== false ||
                                                        strpos($templateContent, '{include_script') !== false ||
                                                        strpos($templateContent, '{include_style') !== false);
                             
@@ -398,7 +399,8 @@ $isOnboarding = ($page === 'onboarding');
                     $pluginContent = file_get_contents($pluginPath);
                     $usesTemplateDirectives = (strpos($pluginContent, '{translate') !== false
                         || strpos($pluginContent, '{include_script') !== false
-                        || strpos($pluginContent, '{admin_url') !== false);
+                        || strpos($pluginContent, '{admin_url') !== false
+                        || strpos($pluginContent, '{birkly_url') !== false);
                     if ($usesTemplateDirectives && function_exists('render_template_file')) {
                         $data = fetch_admin_page_data($page, $_GET);
                         $output = render_template_file($pluginPath, $data ?? []);
