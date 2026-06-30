@@ -89,8 +89,8 @@ function process_plugin_scheduled_tasks() {
         }
         
         // Check if plugin is active
-        global $haru_plugins;
-        if (!isset($haru_plugins[$task['plugin_id']]) || !($haru_plugins[$task['plugin_id']]['active'] ?? false)) {
+        global $birkly_plugins;
+        if (!isset($birkly_plugins[$task['plugin_id']]) || !($birkly_plugins[$task['plugin_id']]['active'] ?? false)) {
             continue;
         }
         

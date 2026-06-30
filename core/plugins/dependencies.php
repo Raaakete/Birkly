@@ -14,9 +14,9 @@ require_once __DIR__ . '/services.php';
  * @return array Array of errors (empty if all dependencies met)
  */
 function check_plugin_dependencies($plugin_id) {
-    global $haru_plugins;
+    global $birkly_plugins;
     
-    $plugin = $haru_plugins[$plugin_id] ?? null;
+    $plugin = $birkly_plugins[$plugin_id] ?? null;
     if (!$plugin) {
         return ["Plugin '{$plugin_id}' not found"];
     }
@@ -31,7 +31,7 @@ function check_plugin_dependencies($plugin_id) {
         $required_version = is_array($dep) ? ($dep['version'] ?? '*') : '*';
         $required = is_array($dep) ? ($dep['required'] ?? true) : true;
         
-        $dep_plugin = $haru_plugins[$dep_id] ?? null;
+        $dep_plugin = $birkly_plugins[$dep_id] ?? null;
         
         if (!$dep_plugin) {
             if ($required) {
@@ -92,8 +92,8 @@ function check_plugin_dependencies($plugin_id) {
             // Check if provider plugin is active
             $provider_plugin_id = $service_info['plugin_id'] ?? null;
             if ($provider_plugin_id) {
-                global $haru_plugins;
-                if (isset($haru_plugins[$provider_plugin_id]) && !($haru_plugins[$provider_plugin_id]['active'] ?? false)) {
+                global $birkly_plugins;
+                if (isset($birkly_plugins[$provider_plugin_id]) && !($birkly_plugins[$provider_plugin_id]['active'] ?? false)) {
                     $errors[] = "Service '{$service_id}' provider plugin '{$provider_plugin_id}' is not active";
                 }
             }
@@ -131,11 +131,8 @@ function check_plugin_dependencies($plugin_id) {
  * @return string Version string
  */
 function get_birkly_version() {
-    if (file_exists(__DIR__ . '/../version.php')) {
-        require_once __DIR__ . '/../version.php';
-        return defined('HARUCMS_VERSION') ? HARUCMS_VERSION : '1.0.0';
-    }
-    return '1.0.0';
+    require_once __DIR__ . '/../version.php';
+    return BirklyVersion::getCurrentVersion();
 }
 
 /**

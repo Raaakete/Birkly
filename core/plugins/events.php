@@ -30,9 +30,9 @@ function subscribe_to_event($event_name, $callback, $options = []) {
     $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
     if (isset($backtrace[1]['file'])) {
         $file = $backtrace[1]['file'];
-        global $haru_plugins;
-        if (isset($haru_plugins)) {
-            foreach ($haru_plugins as $pid => $plugin) {
+        global $birkly_plugins;
+        if (isset($birkly_plugins)) {
+            foreach ($birkly_plugins as $pid => $plugin) {
                 if (strpos($file, $plugin['path'] ?? '') !== false) {
                     $plugin_id = $pid;
                     break;
@@ -100,8 +100,8 @@ function broadcast_event($event_name, $data = [], $broadcasting_plugin_id = null
         
         // Check if plugin is active
         if ($plugin_id) {
-            global $haru_plugins;
-            if (isset($haru_plugins[$plugin_id]) && !($haru_plugins[$plugin_id]['active'] ?? false)) {
+            global $birkly_plugins;
+            if (isset($birkly_plugins[$plugin_id]) && !($birkly_plugins[$plugin_id]['active'] ?? false)) {
                 continue; // Skip inactive plugins
             }
         }

@@ -10,6 +10,8 @@ $suites = [
     'auth_boundary_test.php',
     'select_options_test.php',
     'entry_slug_test.php',
+    'ai_slug_normalize_test.php',
+    'roles_test.php',
     'collection_schema_test.php',
     'collection_groups_test.php',
     '../fieldtypes/ContentEditor/tests/html_roundtrip_test.php',
@@ -47,6 +49,7 @@ $suites = [
     'ai_context_pack_test.php',
     'ai_tool_registry_test.php',
     'automation_plugin_test.php',
+    'plugin_dependencies_test.php',
     'user_plugin_permissions_test.php',
     'feedback_test.php',
 ];
