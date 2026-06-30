@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../api/storage.php';
 require_once __DIR__ . '/mcp_endpoints.php';
+require_once __DIR__ . '/roles.php';
 
 define('BIRKLY_AI_AGENT_PERSONAL_ID', 'ai_agent_personal');
 
@@ -271,7 +272,7 @@ function birkly_ai_agents_consent_summary(?array $agent, array $endpoint, array 
 
 function birkly_ai_agents_valid_roles(): array
 {
-    return ['admin', 'editor', 'author', 'viewer'];
+    return birkly_list_role_ids();
 }
 
 function birkly_ai_agents_normalize_string_list($value): array

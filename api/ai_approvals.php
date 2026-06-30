@@ -26,6 +26,7 @@ require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/ai_helpers.php';
+require_once __DIR__ . '/../core/entry_slug.php';
 
 $storage = new Storage(__DIR__ . '/../data/ai_approvals');
 
@@ -378,10 +379,11 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
     
     // Generate slug if not provided
     if (empty($slug)) {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
-        $slug = trim($slug, '-');
+        $slug = birkly_generate_slug($name);
     }
-    
+
+    $slug = birkly_normalize_slug($slug);
+
     // Validate slug format
     if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
         return ['success' => false, 'message' => 'Invalid slug format'];
@@ -495,10 +497,8 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
     error_log("executeCreateEntry: Extracted entryData keys: " . implode(', ', array_keys($entryData)));
     
     // Normalize collection slug (handle collection name vs slug)
-    $collection = strtolower(trim($collection));
-    $collection = preg_replace('/[^a-z0-9-]+/', '-', $collection);
-    $collection = trim($collection, '-');
-    
+    $collection = birkly_normalize_slug((string) $collection);
+
     if (empty($collection)) {
         error_log("executeCreateEntry: Collection slug is empty after normalization. Original: " . ($actionData['collection'] ?? 'N/A'));
         return ['success' => false, 'message' => 'Collection slug is required'];
@@ -536,6 +536,10 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
         // Auto-fill title with entry ID if not provided
         if (empty(trim($entryData['title'] ?? ''))) {
             $entryData['title'] = $entryId;
+        }
+
+        if (!empty($entryData['slug'])) {
+            $entryData['slug'] = birkly_normalize_slug((string) $entryData['slug']);
         }
         
         // Use AI user ID or original user ID for attribution
@@ -619,11 +623,14 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     }
     
     // Normalize collection slug
-    $collection = strtolower(trim($collection));
-    $collection = preg_replace('/[^a-z0-9-]/', '', $collection);
-    
+    $collection = birkly_normalize_slug((string) $collection);
+
     if (empty($collection)) {
         return ['success' => false, 'message' => 'Collection is required'];
+    }
+
+    if (!empty($entrySlug)) {
+        $entrySlug = birkly_normalize_slug($entrySlug);
     }
     
     if (empty($entryId) && empty($entrySlug)) {
@@ -666,7 +673,11 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     
     // Merge updates (only update fields that are provided)
     foreach ($updateData as $key => $value) {
-        $entry[$key] = $value;
+        if ($key === 'slug' && is_string($value)) {
+            $entry[$key] = birkly_normalize_slug($value);
+        } else {
+            $entry[$key] = $value;
+        }
     }
     
     // Auto-fill title with entry ID if not provided or empty
@@ -720,7 +731,7 @@ function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null)
 // Execute update collection
 function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
-    $slug = $actionData['slug'] ?? '';
+    $slug = birkly_normalize_slug((string) ($actionData['slug'] ?? ''));
     if (empty($slug)) {
         return ['success' => false, 'message' => 'Collection slug is required'];
     }
