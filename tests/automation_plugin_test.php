@@ -28,6 +28,20 @@ test_assert('registry uses birkly_plugins', strpos($registrySource, '$birkly_plu
 test_assert('registry does not use haru_automation_blocks', strpos($registrySource, '$haru_automation_blocks') === false);
 test_assert('registry does not use haru_plugins', strpos($registrySource, '$haru_plugins') === false);
 
+$pluginsJsonPath = $root . '/settings/plugins.json';
+$pluginsJsonBackup = sys_get_temp_dir() . '/birkly-automation-plugins-' . getmypid() . '.json';
+$hadPluginsJson = is_file($pluginsJsonPath);
+if ($hadPluginsJson) {
+    copy($pluginsJsonPath, $pluginsJsonBackup);
+}
+if (!is_dir(dirname($pluginsJsonPath))) {
+    mkdir(dirname($pluginsJsonPath), 0755, true);
+}
+file_put_contents($pluginsJsonPath, json_encode([
+    'automation' => ['active' => false, 'settings' => []],
+], JSON_PRETTY_PRINT));
+unset($GLOBALS['haru_plugins_loaded']);
+
 require_once $bootstrapPath;
 require_once $root . '/core/plugins.php';
 
@@ -61,5 +75,22 @@ test_assert('automation.html references external JS', strpos($adminHtml, 'automa
 test_assert('automation.html has no inline script block', strpos($adminHtml, '<script>') === false);
 
 test_assert('core automation dir only has bootstrap', is_file($root . '/core/automation/bootstrap.php') && !is_file($root . '/core/automation/init.php'));
+
+// Single load_plugins() must honor settings/plugins.json (API path only loads once)
+file_put_contents($pluginsJsonPath, json_encode([
+    'automation' => ['active' => true, 'settings' => []],
+], JSON_PRETTY_PRINT));
+unset($GLOBALS['haru_plugins_loaded'], $birkly_plugins);
+$birkly_plugins = [];
+load_plugins();
+test_assert('single load_plugins honors persisted automation active', ($birkly_plugins['automation']['active'] ?? false) === true);
+test_assert('automation_plugin_active true after single load', automation_plugin_active() === true);
+test_assert('automation_bootstrap true after single load', automation_bootstrap() === true);
+if ($hadPluginsJson) {
+    copy($pluginsJsonBackup, $pluginsJsonPath);
+} else {
+    @unlink($pluginsJsonPath);
+}
+@unlink($pluginsJsonBackup);
 
 exit(test_finish('automation_plugin_test'));
