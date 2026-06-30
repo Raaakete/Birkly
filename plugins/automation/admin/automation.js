@@ -2,7 +2,8 @@
  * Automation admin page — workflow builder UI
  */
 
-let automations = [];
+const apiUrl = (path) => (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+
 let automations = [];
 let availableBlocks = { triggers: [], conditions: [], actions: [] };
 let currentAutomation = null;
@@ -10,7 +11,7 @@ let currentAutomation = null;
 // Load automations
 async function loadAutomations() {
   try {
-    const response = await fetch('/api/automation.php?action=list');
+    const response = await fetch(apiUrl('/api/automation.php?action=list'));
     const result = await response.json();
     
     if (result.status === 'ok') {
@@ -28,7 +29,7 @@ async function loadAutomations() {
 // Load available blocks
 async function loadBlocks() {
   try {
-    const response = await fetch('/api/automation.php?action=get_blocks');
+    const response = await fetch(apiUrl('/api/automation.php?action=get_blocks'));
     const result = await response.json();
     
     if (result.status === 'ok') {
@@ -111,7 +112,7 @@ function closeAutomationModal() {
 
 async function editAutomation(automationId) {
   try {
-    const response = await fetch(`/api/automation.php?action=get&automation_id=${encodeURIComponent(automationId)}`);
+    const response = await fetch(apiUrl(`/api/automation.php?action=get&automation_id=${encodeURIComponent(automationId)}`));
     const result = await response.json();
     
     if (result.status === 'ok') {
@@ -487,7 +488,7 @@ async function saveAutomation() {
   try {
     const automationId = formData.get('automation_id');
     const action = automationId ? 'update' : 'create';
-    const url = '/api/automation.php?action=' + action;
+    const url = apiUrl('/api/automation.php?action=' + action);
     
     if (automationId) {
       automationData.automation_id = automationId;
@@ -524,7 +525,7 @@ async function toggleAutomation(automationId, currentState) {
   automation.enabled = !currentState;
   
   try {
-    const response = await fetch('/api/automation.php?action=update', {
+    const response = await fetch(apiUrl('/api/automation.php?action=update'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -552,7 +553,7 @@ async function deleteAutomation(automationId) {
   if (!confirm('Are you sure you want to delete this automation?')) return;
   
   try {
-    const response = await fetch('/api/automation.php?action=delete', {
+    const response = await fetch(apiUrl('/api/automation.php?action=delete'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -587,7 +588,7 @@ async function viewLogs(automationId) {
   content.innerHTML = '<div class="loading-state">Loading logs...</div>';
   
   try {
-    const response = await fetch(`/api/automation.php?action=get_logs&automation_id=${encodeURIComponent(automationId)}&limit=50`);
+    const response = await fetch(apiUrl(`/api/automation.php?action=get_logs&automation_id=${encodeURIComponent(automationId)}&limit=50`));
     const result = await response.json();
     
     if (result.status === 'ok') {

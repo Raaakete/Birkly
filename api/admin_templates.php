@@ -203,6 +203,8 @@ function getPageData($page) {
             return getActivityData();
         case 'audit-log':
             return getAuditLogData();
+        case 'feedback':
+            return getFeedbackData();
         default:
             return ['error' => 'Page not found'];
     }
@@ -433,7 +435,23 @@ function getDashboardData() {
     // Get recent collections (last 5)
     $recentCollections = array_slice($collections, 0, 5);
     
-    // Build onboarding checklist
+    // Build onboarding checklist — derive completion from real state
+    $mediaPath = __DIR__ . '/../media';
+    $hasMediaFiles = false;
+    if (is_dir($mediaPath)) {
+        $mediaFiles = glob($mediaPath . '/*');
+        $mediaFiles = array_filter($mediaFiles ?: [], function ($path) {
+            return is_file($path) && basename($path) !== '.metadata.json' && basename($path) !== '.gitkeep';
+        });
+        $hasMediaFiles = count($mediaFiles) > 0;
+    }
+
+    $templatesPath = __DIR__ . '/../templates';
+    $hasTemplates = is_dir($templatesPath) && count(glob($templatesPath . '/*.html')) > 0;
+
+    $settingsAdminFile = __DIR__ . '/../settings/admin.json';
+    $hasSettings = file_exists($settingsAdminFile);
+
     $checklist = [
         [
             'id' => 'setup_complete',
@@ -456,19 +474,19 @@ function getDashboardData() {
         [
             'id' => 'upload_media',
             'label' => 'Upload media files',
-            'completed' => false, // Could check media directory
+            'completed' => $hasMediaFiles,
             'link' => birkly_admin_url('media')
         ],
         [
             'id' => 'configure_settings',
             'label' => 'Configure site settings',
-            'completed' => false, // Could check if settings were customized
+            'completed' => $hasSettings,
             'link' => birkly_admin_url('settings')
         ],
         [
             'id' => 'create_template',
             'label' => 'Set up your first template (optional)',
-            'completed' => false,
+            'completed' => $hasTemplates,
             'link' => birkly_admin_url('templates')
         ]
     ];
@@ -3175,6 +3193,16 @@ function getAuditLogData() {
     
     return [
         'audit_logs' => $auditLogs
+    ];
+}
+
+function getFeedbackData() {
+    return [
+        'items' => [],
+        'filters' => [
+            'status' => $_GET['status'] ?? '',
+            'type' => $_GET['type'] ?? '',
+        ],
     ];
 }
 ?> 

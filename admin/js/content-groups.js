@@ -136,6 +136,7 @@
             },
             
             onCollectionMove: (collectionSlug, fromGroupId, toGroupId, toIndex) => {
+                const normalizedFrom = fromGroupId || 'ungrouped';
                 const normalizedTo = toGroupId || 'ungrouped';
 
                 groups.forEach(group => {
@@ -491,7 +492,7 @@
         
         const editItem = document.createElement('a');
         editItem.className = 'dropdown-item collection-menu-item';
-        editItem.href = '/admin/index.php?page=collection-editor&collection=' + encodeURIComponent(collection.slug);
+        editItem.href = Birkly.adminUrl('collection-editor', { collection: collection.slug });
         editItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg><span class="dropdown-item-label">Edit Collection</span>';
         editItem.onclick = (e) => {
             e.stopPropagation();
@@ -566,7 +567,7 @@
                 card.classList.remove('just-dragged');
                 return;
             }
-            window.location.href = Birkly.url('/admin/index.php?page=entries&collection=') + encodeURIComponent(collection.slug);
+            window.location.href = Birkly.adminUrl('entries', { collection: collection.slug });
         });
         
         // Prevent drag from menu
