@@ -924,7 +924,7 @@ if (!$cancelUrl) {
                             <div class="templating-content">
                                 <p class="templating-intro">
                                     For a detailed overview about templating, please visit 
-                                    <a href="/admin/index.php?page=help#templating" target="_blank">the documentation site</a>.
+                                    <a href="<?= admin_url('help') ?>#templating" target="_blank">the documentation site</a>.
                                 </p>
                                 
                                 <!-- Field Slugs Section -->
@@ -2636,7 +2636,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status === 'ok') {
                     // Redirect to content page
-                    window.location.href = '/admin/index.php?page=content';
+                    window.location.href = <?= json_encode(admin_url('content')) ?>;
                 } else {
                     console.error('API error:', data);
                     alert('Error: ' + (data.message || 'Unknown error'));

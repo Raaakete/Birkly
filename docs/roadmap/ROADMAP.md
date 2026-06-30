@@ -124,10 +124,12 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 5 + P5.1 **complete** on `main`. **P5.2 approved** — platform hardening (roles, plugins, slugs, entry list, updates). |
-| **Birkly-Website** | `Birkly-0.1/` sync deferred until P5.2 CMS fixes land. |
-| **kekaba** | Live testing surfaced P5.2 bugs; embed sync **deferred**. |
-| **Birkly-Docs** | P5.1 mcp-connections; P5.2 will add roles/plugins/slug docs. |
+| **Birkly (CMS)** | Phase 5 + P5.1 + P5.2 **complete** on `main`. **P5.3 complete** — admin UX & workflows. |
+| **Birkly-Website** | `Birkly-0.1/` sync deferred until CMS deploy verified. |
+| **kekaba** | P5.3 fixes ready; embed sync **deferred** (deploy checklist). |
+| **Birkly-Docs** | P5.2 roles/plugins; P5.3 workflow notes in deploy checklist. |
+
+**Phase 5.3 handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md`
 | **Agent ops** | Autonomous merge active. |
 
 **Phase 5.2 handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
@@ -1610,9 +1612,50 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.3 — Admin UX & core workflows
+
+**Status:** **complete** (2026-06-29). Live deploy verification pending.
+
+**Spec:** `docs/reviews/P5.3-admin-ux-plan.md` · **Handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md`
+
+### P5.3-M0 — Entry drill-down URLs
+- [x] smart-table, entry-detail, entry-editor, collection-editor URL sweep
+- [x] entry-editor.js, content-groups.js `Birkly.adminUrl()`
+- [x] admin_routing_http_test entry-detail smoke
+
+### P5.3-M1 — Automation plugin
+- [x] Remove duplicate `let automations`
+- [x] `Birkly.url()` for automation API
+
+### P5.3-M2 — Dashboard onboarding
+- [x] Skip sets `completed: true`
+- [x] Collapsible checklist; href fixes
+- [x] Real checklist state in getDashboardData()
+
+### P5.3-M3 — Alpha feedback page
+- [x] `getPageData('feedback')` + `getFeedbackData()`
+
+### P5.3-M4 — Content DnD
+- [x] nested-drag-drop capture flag fix
+- [x] ungrouped normalize in content-groups.js
+
+### P5.3-M5 — Unified FAB
+- [x] AI speed-dial + feedback in ai-chat-button.js
+- [x] Hide standalone feedback FAB
+
+### P5.3-M6 — UX audit
+- [x] p5.3-ux-issue-register.md
+- [x] dashboard.js, collection-editor URL fixes
+
+### P5.3-M7 — Closure
+- [x] Integration matrix + closure checklist + deploy checklist
+- [x] **P5.3-M7-T4** Notify human once
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
