@@ -322,7 +322,7 @@ $isOnboarding = ($page === 'onboarding');
                         } else {
                             echo $output;
                         }
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
                         echo '<h2>Template Rendering Error</h2>';
                         echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
@@ -384,7 +384,7 @@ $isOnboarding = ($page === 'onboarding');
                             }
                         }
                     }
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
                     echo '<h2>Error Loading Page</h2>';
                     echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
@@ -428,8 +428,6 @@ $isOnboarding = ($page === 'onboarding');
                 echo '</div>';
             }
             ?>
-        </main>
-
         <?php include __DIR__ . '/partials/layout_footer.php'; ?>
 <?php endif; ?>
 <?php
