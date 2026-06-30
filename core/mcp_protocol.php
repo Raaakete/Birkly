@@ -110,6 +110,10 @@ function birkly_mcp_handle_resources_list(): array
         'resources' => [
             ['uri' => 'birkly://collections', 'name' => 'All Collections', 'description' => 'List of all content collections', 'mimeType' => 'application/json'],
             ['uri' => 'birkly://documentation', 'name' => 'Documentation', 'description' => 'Curated Birkly context pack', 'mimeType' => 'text/markdown'],
+            ['uri' => 'birkly://docs/templating', 'name' => 'Templating', 'description' => 'Client-site template language spec', 'mimeType' => 'text/markdown'],
+            ['uri' => 'birkly://docs/admin', 'name' => 'Admin', 'description' => 'Admin templating and platform overview', 'mimeType' => 'text/markdown'],
+            ['uri' => 'birkly://docs/plugins', 'name' => 'Plugins', 'description' => 'Plugin architecture and client embed', 'mimeType' => 'text/markdown'],
+            ['uri' => 'birkly://docs/ai', 'name' => 'AI & MCP', 'description' => 'BYOAI and MCP architecture', 'mimeType' => 'text/markdown'],
         ],
     ];
 }
@@ -129,6 +133,24 @@ function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
             'uri' => $uri,
             'mimeType' => 'text/markdown',
             'text' => $context['context_pack'] ?? 'No context pack available.',
+        ]]];
+    }
+
+    $topicMap = [
+        'birkly://docs/templating' => 'templating',
+        'birkly://docs/admin' => 'admin',
+        'birkly://docs/plugins' => 'plugins',
+        'birkly://docs/ai' => 'ai',
+    ];
+    if (isset($topicMap[$uri])) {
+        $topic = readBirklyDocsTopic($topicMap[$uri]);
+        if ($topic === null) {
+            return ['contents' => [['uri' => $uri, 'mimeType' => 'text/plain', 'text' => 'Topic not found']]];
+        }
+        return ['contents' => [[
+            'uri' => $uri,
+            'mimeType' => 'text/markdown',
+            'text' => "# {$topic['title']}\n\n{$topic['text']}",
         ]]];
     }
     return ['contents' => [['uri' => $uri, 'mimeType' => 'text/plain', 'text' => 'Resource not found']]];
