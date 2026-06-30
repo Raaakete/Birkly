@@ -1486,7 +1486,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Ordering:** P5.2-M0 → … → P5.2-M6. Cross-repo: Birkly → Birkly-Docs.
 
-**Status:** **approved** (2026-06-29). Ready for lead-engineer execution.
+**Status:** **complete** (2026-06-29). Human deploy verification pending for live kekaba rows.
 
 **Spec:** `docs/reviews/P5.2-platform-hardening-plan.md`  
 **Handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
@@ -1497,102 +1497,102 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P5.2-M0 — Plugin system fix
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 - **Priority:** **first** — unblocks user_management
 
 **Tasks**
 
-- [ ] **P5.2-M0-T1** `$haru_plugins` → `$birkly_plugins` in `core/plugins/dependencies.php`
-- [ ] **P5.2-M0-T2** Audit plugin subsystem rename debt (`api/plugins.php`, capabilities, services)
-- [ ] **P5.2-M0-T3** Settings UI: show `errors[]` on activation failure
-- [ ] **P5.2-M0-T4** Verify `user_management` + `automation` activate; add/update test
+- [x] **P5.2-M0-T1** `$haru_plugins` → `$birkly_plugins` in `core/plugins/dependencies.php`
+- [x] **P5.2-M0-T2** Audit plugin subsystem rename debt (`api/plugins.php`, capabilities, services)
+- [x] **P5.2-M0-T3** Settings UI: show `errors[]` on activation failure
+- [x] **P5.2-M0-T4** Verify `user_management` + `automation` activate; add/update test
 
 ---
 
 ### P5.2-M1 — Roles & permissions foundation
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 - **Depends on:** none (parallel with M0 after M0 if preferred)
 
 **Tasks**
 
-- [ ] **P5.2-M1-T1** `ensureDefaultRoles()` seed admin/editor/author/viewer + permissions
-- [ ] **P5.2-M1-T2** Fix Settings Users & Roles data binding (`$settings['roles']`)
-- [ ] **P5.2-M1-T3** Permissions editor UI per role
-- [ ] **P5.2-M1-T4** CMS user modals: dynamic role picker from `list_roles`
-- [ ] **P5.2-M1-T5** AI agents + all pickers accept custom roles from roles.json
-- [ ] **P5.2-M1-T6** Role-user matching by `role['id']`; tests
+- [x] **P5.2-M1-T1** `ensureDefaultRoles()` seed admin/editor/author/viewer + permissions
+- [x] **P5.2-M1-T2** Fix Settings Users & Roles data binding (`$settings['roles']`)
+- [x] **P5.2-M1-T3** Permissions editor UI per role
+- [x] **P5.2-M1-T4** CMS user modals: dynamic role picker from `list_roles`
+- [x] **P5.2-M1-T5** AI agents + all pickers accept custom roles from roles.json
+- [x] **P5.2-M1-T6** Role-user matching by `role['id']`; tests
 
 ---
 
 ### P5.2-M2 — AI slug & collection hygiene
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 
 **Tasks**
 
-- [ ] **P5.2-M2-T1** Unify collection normalization in `api/ai_approvals.php` (create + update)
-- [ ] **P5.2-M2-T2** AI create uses `birkly_resolve_entry_slug()`; `_` → `-` policy
-- [ ] **P5.2-M2-T3** AI context pack + chat prompt slug rules
-- [ ] **P5.2-M2-T4** Tool schema hints; tests (`blog_posts`, underscores)
+- [x] **P5.2-M2-T1** Unify collection normalization in `api/ai_approvals.php` (create + update)
+- [x] **P5.2-M2-T2** AI create uses `birkly_resolve_entry_slug()`; `_` → `-` policy
+- [x] **P5.2-M2-T3** AI context pack + chat prompt slug rules
+- [x] **P5.2-M2-T4** Tool schema hints; tests (`blog_posts`, underscores)
 
 ---
 
 ### P5.2-M3 — Entry list & admin URL repair
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 
 **Tasks**
 
-- [ ] **P5.2-M3-T1** `getEntriesData()` collection meta normalization
-- [ ] **P5.2-M3-T2** `entries.html` — `{admin_url}` / `birkly_url()` not hardcoded paths
-- [ ] **P5.2-M3-T3** Scan/fix other admin templates with hardcoded admin URLs
-- [ ] **P5.2-M3-T4** `admin_routing_http_test.php` — entries page smoke
+- [x] **P5.2-M3-T1** `getEntriesData()` collection meta normalization
+- [x] **P5.2-M3-T2** `entries.html` — `{admin_url}` / `birkly_url()` not hardcoded paths
+- [x] **P5.2-M3-T3** Scan/fix other admin templates with hardcoded admin URLs
+- [x] **P5.2-M3-T4** `admin_routing_http_test.php` — entries page smoke
 
 ---
 
 ### P5.2-M4 — Update system
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 
 **Tasks**
 
-- [ ] **P5.2-M4-T1** `api/updates.php` → `requireAuth('manage_settings')`
-- [ ] **P5.2-M4-T2** Fix `get_birkly_version()` for plugin/update checks
-- [ ] **P5.2-M4-T3** Updates UI clearer error messages; `version_update_test.php`
+- [x] **P5.2-M4-T1** `api/updates.php` → `requireAuth('manage_settings')`
+- [x] **P5.2-M4-T2** Fix `get_birkly_version()` for plugin/update checks
+- [x] **P5.2-M4-T3** Updates UI clearer error messages; `version_update_test.php`
 
 ---
 
 ### P5.2-M5 — User plugin readiness
 
-- **Status:** pending
+- **Status:** complete
 - **Repos:** Birkly
 - **Depends on:** P5.2-M0
 
 **Tasks**
 
-- [ ] **P5.2-M5-T1** Smoke activate user_management; admin pages load
-- [ ] **P5.2-M5-T2** Help copy: CMS users vs site users (plugin)
-- [ ] **P5.2-M5-T3** Minimal permission enforcement gaps if blocking smoke
+- [x] **P5.2-M5-T1** Smoke activate user_management; admin pages load
+- [x] **P5.2-M5-T2** Help copy: CMS users vs site users (plugin)
+- [x] **P5.2-M5-T3** Minimal permission enforcement gaps if blocking smoke
 
 ---
 
 ### P5.2-M6 — Integration matrix, docs, closure
 
-- **Status:** pending
+- **Status:** complete
 - **Depends on:** P5.2-M1–M5
 
 **Tasks**
 
-- [ ] **P5.2-M6-T1** `docs/reviews/p5.2-integration-test-matrix.md`
-- [ ] **P5.2-M6-T2** Birkly-Docs: roles, plugins, AI slugs
-- [ ] **P5.2-M6-T3** `docs/reviews/p5.2-phase-closure-checklist.md`
-- [ ] **P5.2-M6-T4** **Notify human once**
+- [x] **P5.2-M6-T1** `docs/reviews/p5.2-integration-test-matrix.md`
+- [x] **P5.2-M6-T2** Birkly-Docs: roles, plugins, AI slugs
+- [x] **P5.2-M6-T3** `docs/reviews/p5.2-phase-closure-checklist.md`
+- [x] **P5.2-M6-T4** **Notify human once**
 
 ---
 
