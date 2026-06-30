@@ -1655,7 +1655,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 5.4 — Admin stability, platform feedback & AI knowledge
 
-**Status:** Complete in CMS — pending human live deploy confirmation
+**Status:** Merged to main (#64) — pending human live deploy on `birkly.kekaba.com`
 
 **Spec:** `docs/reviews/P5.4-platform-feedback-ai-plan.md` · **Handoff:** `docs/reviews/P5.4-lead-engineer-handoff.md` · **Live issues:** `docs/reviews/p5.4-live-issues-register.md`
 
@@ -1675,11 +1675,11 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ### P5.4-M3 — AI knowledge system
 - [x] Expand context pack; MCP topic resources (`birkly://docs/*`)
-- [x] `read_birkly_docs` tool; Birkly-Docs sync (pending PR)
+- [x] `read_birkly_docs` tool; Birkly-Docs sync (#9 merged)
 - [x] `ai_knowledge_coverage_test.php`
 
 ### P5.4-M4 — Deploy & embed automation
-- [x] kekaba embed sync on release (PR)
+- [x] kekaba + Birkly-Website embed sync (#64 + kekaba main)
 - [x] `p5.4-deploy-checklist.md`
 
 ### P5.4-M5 — Closure
