@@ -11,7 +11,7 @@
         <button class="btn btn-secondary" id="new-group-btn">{translate 'admin.new_group'}</button>
     </div>
     
-    <script type="application/json" id="content-data">{json content_bootstrap}</script>
+    <script type="application/json" id="content-data"><?php echo json_encode($content_bootstrap ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?></script>
     
     <div id="collections-container" class="collections-container mt-xl">
         <!-- Groups and collections will be rendered here by JavaScript -->
