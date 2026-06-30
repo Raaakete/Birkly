@@ -90,6 +90,22 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.1-hybrid-agents-plan.md` · **Handoff:** `docs/reviews/P5.1-lead-engineer-handoff.md`
 
+**2026-06-29 — Phase 5.2 approved** (Keven)
+
+**Priorities:** **Platform hardening** — plugin activation, roles/permissions UI, AI slug rules, entry list repair, updates API. **Kekaba deploy deferred.**
+
+**Human decisions (locked):**
+
+| Decision | Choice |
+|----------|--------|
+| Slugs | `[a-z0-9-]` only; AI normalizes `_` → `-` |
+| Default roles | Seed admin, editor, author, viewer + permissions |
+| Role pickers | Single `list_roles` source everywhere |
+| Plugin deps | Fix `$birkly_plugins`; show activation errors |
+| Updates API | `manage_settings` not hardcoded admin role |
+
+**Spec:** `docs/reviews/P5.2-platform-hardening-plan.md` · **Handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
+
 ---
 
 ## Vision
@@ -108,13 +124,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 5 **complete** on `main`. Phase 5.1 **complete** — hybrid personal/service agents. |
-| **Birkly-Website** | `Birkly-0.1/` synced post-P4; kekaba deploy deferred. |
-| **kekaba** | Embed needs sync after P5/P5.1 CMS merges; **deferred**. |
-| **Birkly-Docs** | P5 mcp-connections; P5.1 will extend personal vs service. |
+| **Birkly (CMS)** | Phase 5 + P5.1 **complete** on `main`. **P5.2 approved** — platform hardening (roles, plugins, slugs, entry list, updates). |
+| **Birkly-Website** | `Birkly-0.1/` sync deferred until P5.2 CMS fixes land. |
+| **kekaba** | Live testing surfaced P5.2 bugs; embed sync **deferred**. |
+| **Birkly-Docs** | P5.1 mcp-connections; P5.2 will add roles/plugins/slug docs. |
 | **Agent ops** | Autonomous merge active. |
 
-**Phase 5.1 handoff:** `docs/reviews/P5.1-lead-engineer-handoff.md`
+**Phase 5.2 handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
+
+**Phase 5.1 handoff:** `docs/reviews/P5.1-lead-engineer-handoff.md` (complete)
 
 **Phase 5 handoff:** `docs/reviews/P5-lead-engineer-handoff.md`
 
@@ -1460,9 +1478,141 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.2 — Platform hardening (roles, plugins, admin reliability)
+
+**Horizon:** theme-based; no calendar estimates for agents.
+
+**Priorities:** Plugin activation fix · roles seed + permissions UI · AI slug normalization · entry list repair · updates API · user plugin smoke. **CMS always first.** **Kekaba deferred.**
+
+**Ordering:** P5.2-M0 → … → P5.2-M6. Cross-repo: Birkly → Birkly-Docs.
+
+**Status:** **approved** (2026-06-29). Ready for lead-engineer execution.
+
+**Spec:** `docs/reviews/P5.2-platform-hardening-plan.md`  
+**Handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
+
+**Live repro:** `birkly.kekaba.com` — AI slugs, entry list, updates, empty roles, plugin activation.
+
+---
+
+### P5.2-M0 — Plugin system fix
+
+- **Status:** pending
+- **Repos:** Birkly
+- **Priority:** **first** — unblocks user_management
+
+**Tasks**
+
+- [ ] **P5.2-M0-T1** `$haru_plugins` → `$birkly_plugins` in `core/plugins/dependencies.php`
+- [ ] **P5.2-M0-T2** Audit plugin subsystem rename debt (`api/plugins.php`, capabilities, services)
+- [ ] **P5.2-M0-T3** Settings UI: show `errors[]` on activation failure
+- [ ] **P5.2-M0-T4** Verify `user_management` + `automation` activate; add/update test
+
+---
+
+### P5.2-M1 — Roles & permissions foundation
+
+- **Status:** pending
+- **Repos:** Birkly
+- **Depends on:** none (parallel with M0 after M0 if preferred)
+
+**Tasks**
+
+- [ ] **P5.2-M1-T1** `ensureDefaultRoles()` seed admin/editor/author/viewer + permissions
+- [ ] **P5.2-M1-T2** Fix Settings Users & Roles data binding (`$settings['roles']`)
+- [ ] **P5.2-M1-T3** Permissions editor UI per role
+- [ ] **P5.2-M1-T4** CMS user modals: dynamic role picker from `list_roles`
+- [ ] **P5.2-M1-T5** AI agents + all pickers accept custom roles from roles.json
+- [ ] **P5.2-M1-T6** Role-user matching by `role['id']`; tests
+
+---
+
+### P5.2-M2 — AI slug & collection hygiene
+
+- **Status:** pending
+- **Repos:** Birkly
+
+**Tasks**
+
+- [ ] **P5.2-M2-T1** Unify collection normalization in `api/ai_approvals.php` (create + update)
+- [ ] **P5.2-M2-T2** AI create uses `birkly_resolve_entry_slug()`; `_` → `-` policy
+- [ ] **P5.2-M2-T3** AI context pack + chat prompt slug rules
+- [ ] **P5.2-M2-T4** Tool schema hints; tests (`blog_posts`, underscores)
+
+---
+
+### P5.2-M3 — Entry list & admin URL repair
+
+- **Status:** pending
+- **Repos:** Birkly
+
+**Tasks**
+
+- [ ] **P5.2-M3-T1** `getEntriesData()` collection meta normalization
+- [ ] **P5.2-M3-T2** `entries.html` — `{admin_url}` / `birkly_url()` not hardcoded paths
+- [ ] **P5.2-M3-T3** Scan/fix other admin templates with hardcoded admin URLs
+- [ ] **P5.2-M3-T4** `admin_routing_http_test.php` — entries page smoke
+
+---
+
+### P5.2-M4 — Update system
+
+- **Status:** pending
+- **Repos:** Birkly
+
+**Tasks**
+
+- [ ] **P5.2-M4-T1** `api/updates.php` → `requireAuth('manage_settings')`
+- [ ] **P5.2-M4-T2** Fix `get_birkly_version()` for plugin/update checks
+- [ ] **P5.2-M4-T3** Updates UI clearer error messages; `version_update_test.php`
+
+---
+
+### P5.2-M5 — User plugin readiness
+
+- **Status:** pending
+- **Repos:** Birkly
+- **Depends on:** P5.2-M0
+
+**Tasks**
+
+- [ ] **P5.2-M5-T1** Smoke activate user_management; admin pages load
+- [ ] **P5.2-M5-T2** Help copy: CMS users vs site users (plugin)
+- [ ] **P5.2-M5-T3** Minimal permission enforcement gaps if blocking smoke
+
+---
+
+### P5.2-M6 — Integration matrix, docs, closure
+
+- **Status:** pending
+- **Depends on:** P5.2-M1–M5
+
+**Tasks**
+
+- [ ] **P5.2-M6-T1** `docs/reviews/p5.2-integration-test-matrix.md`
+- [ ] **P5.2-M6-T2** Birkly-Docs: roles, plugins, AI slugs
+- [ ] **P5.2-M6-T3** `docs/reviews/p5.2-phase-closure-checklist.md`
+- [ ] **P5.2-M6-T4** **Notify human once**
+
+---
+
+## Phase 5.2 success criteria
+
+| Area | Target |
+|------|--------|
+| **Plugins** | user_management activates; real errors shown |
+| **Roles** | Defaults visible; permissions editable; unified pickers |
+| **AI slugs** | Underscores normalized; create succeeds |
+| **Entry list** | Works on subdirectory install |
+| **Updates** | manage_settings users can use update API |
+| **Tests** | Integration matrix green |
+| **Docs** | Birkly-Docs updated |
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
