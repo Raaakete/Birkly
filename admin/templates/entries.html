@@ -13,7 +13,7 @@
     <div class="main-actions-bar">
         <div class="collection-actions-bar">
             <div class="collection-actions-bar-left">
-                <a class="btn btn-primary" href="/admin/index.php?page=entry-editor&collection={collection.slug}" aria-label="Create new entry in {collection.title}">
+                <a class="btn btn-primary" href="{admin_url 'entry-editor' collection='collection.slug'}" aria-label="Create new entry in {collection.title}">
                     {translate 'admin.new_entry'}
                 </a>
             </div>
@@ -46,7 +46,7 @@
                             </svg>
                             <span class="dropdown-item-label">Edit this collection</span>
                         </a>
-                        <a href="/admin/index.php?page=collection-editor&collection={collection.slug}" class="dropdown-item collection-actions-item" aria-label="Add sub-collection to {collection.title}">
+                        <a href="{admin_url 'collection-editor' collection='collection.slug'}" class="dropdown-item collection-actions-item" aria-label="Add sub-collection to {collection.title}">
                             <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -93,9 +93,9 @@
             $subEntryCount = $entry['__sub_entry_count'] ?? 0;
             
             if ($subEntryCount > 0) {
-                return "/admin/index.php?page=entry-detail&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($entryId);
+                return admin_url('entry-detail', ['collection' => $collectionSlug, 'entry' => $entryId]);
             } else {
-                return "/admin/index.php?page=entry-editor&collection=" . urlencode($collectionSlug) . "&entry=" . urlencode($entryId);
+                return admin_url('entry-editor', ['collection' => $collectionSlug, 'entry' => $entryId]);
             }
         }
     ];

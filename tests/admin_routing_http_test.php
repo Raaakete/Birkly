@@ -73,6 +73,38 @@ try {
         'content page is not identical to dashboard body',
         $contentBody !== $dashboardBody
     );
+
+    $collectionSlug = 'routing-entries-' . getmypid();
+    $collectionDir = $root . '/content/collections/' . $collectionSlug;
+    $backupCollection = sys_get_temp_dir() . '/birkly-routing-collection-' . getmypid();
+    if (is_dir($collectionDir)) {
+        birkly_test_backup_directory($collectionDir, $backupCollection);
+    }
+    mkdir($collectionDir, 0755, true);
+    mkdir($collectionDir . '/entries', 0755, true);
+    file_put_contents($collectionDir . '/collection.json', json_encode([
+        'name' => 'Routing Test',
+        'slug' => $collectionSlug,
+    ], JSON_PRETTY_PRINT));
+    file_put_contents($collectionDir . '/schema.json', json_encode(['fields' => []], JSON_PRETTY_PRINT));
+
+    $entriesResponse = birkly_test_http_request(
+        $base . '/admin/index.php?page=entries&collection=' . urlencode($collectionSlug),
+        ['cookie_file' => $cookieFile]
+    );
+    test_assert('entries page HTTP 200', $entriesResponse['code'] === 200, 'code ' . $entriesResponse['code']);
+    test_assert(
+        'entries page contains entries-page marker',
+        strpos($entriesResponse['body'], 'entries-page') !== false
+    );
+
+    if (is_dir($backupCollection)) {
+        birkly_test_remove_directory($collectionDir);
+        birkly_test_restore_directory($collectionDir, $backupCollection);
+        birkly_test_remove_directory($backupCollection);
+    } else {
+        birkly_test_remove_directory($collectionDir);
+    }
 } finally {
     birkly_test_restore_directory($usersDir, $backupUsers);
     birkly_test_remove_directory($backupUsers);
