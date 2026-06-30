@@ -115,6 +115,38 @@ try {
         strpos($entryDetailResponse['body'], 'entry-detail-page') !== false
     );
 
+    // Subdirectory install smoke (P5.4-M0) — router + login reachable; render covered by admin_subdir_content_test
+    $subdirAdminJson = $root . '/settings/admin.json';
+    $subdirAdminBackup = sys_get_temp_dir() . '/birkly-routing-admin-' . getmypid() . '.json';
+    $hadAdminJson = is_file($subdirAdminJson);
+    if ($hadAdminJson) {
+        copy($subdirAdminJson, $subdirAdminBackup);
+    }
+    if (!is_dir(dirname($subdirAdminJson))) {
+        mkdir(dirname($subdirAdminJson), 0755, true);
+    }
+    try {
+        file_put_contents($subdirAdminJson, json_encode(['base_path' => '/Birkly-0.1'], JSON_PRETTY_PRINT));
+        unset($GLOBALS['__birkly_base_path']);
+
+        $subdirBase = $base . '/Birkly-0.1';
+        $subdirLogin = birkly_test_http_request($subdirBase . '/admin/login.php');
+        test_assert('subdir login page HTTP 200', $subdirLogin['code'] === 200, 'code ' . $subdirLogin['code']);
+        test_assert(
+            'subdir login page has no syntax error',
+            stripos($subdirLogin['body'], 'syntax error') === false
+                && stripos($subdirLogin['body'], 'unexpected token') === false
+        );
+    } finally {
+        if ($hadAdminJson) {
+            copy($subdirAdminBackup, $subdirAdminJson);
+            @unlink($subdirAdminBackup);
+        } else {
+            @unlink($subdirAdminJson);
+        }
+        unset($GLOBALS['__birkly_base_path']);
+    }
+
     if (is_dir($backupCollection)) {
         birkly_test_remove_directory($collectionDir);
         birkly_test_restore_directory($collectionDir, $backupCollection);
