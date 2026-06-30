@@ -36,14 +36,12 @@ function birkly_is_platform_owner_install(): bool
 
 /**
  * Whether this install should show the local feedback triage inbox (sidebar + API).
- * Owner installs always triage locally; other installs triage locally when no relay URL is set.
+ * Only platform-owner installs triage locally; customer installs submit via the floating widget
+ * and relay to the platform inbox when feedback_relay_url is configured.
  */
 function birkly_feedback_triage_enabled(): bool
 {
-    if (birkly_is_platform_owner_install()) {
-        return true;
-    }
-    return birkly_feedback_relay_url() === '';
+    return birkly_is_platform_owner_install();
 }
 
 function birkly_alpha_program_enabled(): bool

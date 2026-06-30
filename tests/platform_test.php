@@ -20,6 +20,7 @@ if ($hadFile) {
 birkly_platform_config_reset();
 test_assert('alpha enabled by default without platform.json', birkly_alpha_program_enabled() === true);
 test_assert('not owner without platform.json', birkly_is_platform_owner_install() === false);
+test_assert('triage off without platform.json', birkly_feedback_triage_enabled() === false);
 
 file_put_contents($platformFile, json_encode([
     'owner_mode' => true,
@@ -41,7 +42,7 @@ file_put_contents($platformFile, json_encode([
     'feedback_relay_url' => '',
 ], JSON_PRETTY_PRINT));
 birkly_platform_config_reset();
-test_assert('triage when no relay configured', birkly_feedback_triage_enabled() === true);
+test_assert('triage off on customer install without relay', birkly_feedback_triage_enabled() === false);
 
 file_put_contents($platformFile, json_encode([
     'owner_mode' => false,
