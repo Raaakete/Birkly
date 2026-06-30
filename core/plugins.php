@@ -392,19 +392,25 @@ function load_plugins($plugins_dir = null) {
             $plugin_id = $file;
             $metadata = load_plugin_metadata($path);
             
-            // Initialize plugin in registry, preserving existing state
+            // Initialize plugin in registry, applying persisted state on first discovery
             $existing_state = $birkly_plugins[$plugin_id] ?? [];
-            $defaultActive = $existing_state['active'] ?? false;
-            // Automation was core before P3-M6 — default active on first discovery
-            if ($plugin_id === 'automation' && !array_key_exists('automation', $persistedPluginStates)) {
-                $defaultActive = true;
-                $automationDefaultActivated = true;
+            if (isset($persistedPluginStates[$plugin_id])) {
+                $defaultActive = (bool) ($persistedPluginStates[$plugin_id]['active'] ?? false);
+                $defaultSettings = $persistedPluginStates[$plugin_id]['settings'] ?? [];
+            } else {
+                $defaultActive = (bool) ($existing_state['active'] ?? false);
+                $defaultSettings = $existing_state['settings'] ?? [];
+                // Automation was core before P3-M6 — default active on first discovery
+                if ($plugin_id === 'automation') {
+                    $defaultActive = true;
+                    $automationDefaultActivated = true;
+                }
             }
             $birkly_plugins[$plugin_id] = array_merge($metadata, [
                 'id' => $plugin_id,
                 'path' => $path,
                 'active' => $defaultActive,
-                'settings' => $existing_state['settings'] ?? []
+                'settings' => $defaultSettings
             ]);
             
             // Only load plugin code if it's active
@@ -426,14 +432,20 @@ function load_plugins($plugins_dir = null) {
                 'settings_schema' => []
             ];
             
-            // Initialize plugin in registry, preserving existing state
+            // Initialize plugin in registry, applying persisted state on first discovery
             $existing_state = $birkly_plugins[$plugin_id] ?? [];
-            // New plugins default to inactive - user must activate them manually
+            if (isset($persistedPluginStates[$plugin_id])) {
+                $defaultActive = (bool) ($persistedPluginStates[$plugin_id]['active'] ?? false);
+                $defaultSettings = $persistedPluginStates[$plugin_id]['settings'] ?? [];
+            } else {
+                $defaultActive = (bool) ($existing_state['active'] ?? false);
+                $defaultSettings = $existing_state['settings'] ?? [];
+            }
             $birkly_plugins[$plugin_id] = array_merge($metadata, [
                 'id' => $plugin_id,
                 'path' => $path,
-                'active' => $existing_state['active'] ?? false, // Default to inactive for new plugins
-                'settings' => $existing_state['settings'] ?? []
+                'active' => $defaultActive,
+                'settings' => $defaultSettings
             ]);
             
             if ($birkly_plugins[$plugin_id]['active']) {
@@ -448,6 +460,9 @@ function load_plugins($plugins_dir = null) {
     if ($automationDefaultActivated) {
         save_plugin_states();
     }
+
+    // Re-apply persisted state after discovery (covers reload paths)
+    load_plugin_states();
 }
 
 // Plugin settings management
