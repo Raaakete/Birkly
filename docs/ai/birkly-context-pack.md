@@ -41,19 +41,81 @@ There is **no** `create_user` action — direct users to Settings → Users.
 
 ## Templating (client sites)
 
-Birkly uses a natural template language for static HTML sites:
+Birkly client sites use a **plain-English template language** in static HTML, loaded via:
 
 ```html
 <script src="/cms-template.v2.js"></script>
+```
+
+Full spec: `docs/TEMPLATE_LANGUAGE_SPEC.md` (platform); public docs on Birkly-Docs when synced.
+
+### Core rules
+
+- **Collections** are always in **single quotes**: `'blog'`, `'services'`
+- **System fields** are bare: `{title}`, `{created_at}`, `{status}`
+- **User-defined fields** use quoted names: `{'content'}`, `{'price'}`
+- Loops close with `{endfor}`
+
+### Collection loop
+
+```html
 {for each entry in 'blog'}
-  <h2>{ title }</h2>
-  <div>{ text }</div>
+  <h2>{title}</h2>
+  <div>{'content'}</div>
 {endfor}
 ```
 
-- Collection slug in quotes inside `{for each entry in 'slug'}`
-- Field names match schema: `{ title }`, `{ text }`, etc.
-- Loops close with `{endfor}`
+### Single entry (no loop)
+
+```html
+{entry 'blog'.'my-post-slug'}
+  <h1>{title}</h1>
+  <article>{'content'}</article>
+{endentry}
+```
+
+### Conditionals
+
+```html
+{if entry 'blog'.'featured-post' exists}
+  <section class="featured">...</section>
+{endif}
+
+{if {'price'} is not empty}
+  <span class="price">{{'price'}}</span>
+{endif}
+```
+
+### Nested / sub-collection loops
+
+```html
+{for each entry in 'blog'}
+  {title}
+  {for each entry in 'comments'}
+    {'author'}: {'content'}
+  {endfor}
+{endfor}
+```
+
+Sub-collection scoped to one parent entry:
+
+```html
+{for each entry in 'comments' of 'blog'.'hello-world'}
+```
+
+### Filters
+
+```html
+{created_at format "Y-m-d H:i"}
+{title truncate 80}
+{'content' strip_tags}
+```
+
+Common format codes: `Y` year, `m` month, `d` day, `H` hour, `i` minute, `F` full month name.
+
+### Admin templating (PHP templates)
+
+Admin UI templates use `{admin_url}`, `{translate}`, `{for each}`, `{if}` — different from client-site language. Do not mix syntaxes.
 
 ## Collections
 
@@ -78,3 +140,7 @@ When the Automation plugin is active, workflows trigger on entry events, schedul
 - Never expose passwords, encrypted API keys, or MCP keys in responses
 - AI users are stored as `type: ai` in `users/`
 - Approval queue: owner or shared users can approve/reject pending writes
+
+## Context pack maintenance
+
+This file is the **canonical AI briefing** for in-product chat and MCP `birkly://documentation`. When platform behavior changes, update this pack in the same PR as the code change. Run `tests/ai_context_pack_test.php`. Optional deeper reference: `docs/TEMPLATE_LANGUAGE_SPEC.md`, `docs/ai/BYOAI-ARCHITECTURE.md`.
