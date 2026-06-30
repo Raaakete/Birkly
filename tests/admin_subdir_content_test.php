@@ -31,7 +31,11 @@ $data2 = getContentData();
 test_assert('getContentData repeat calls succeed', is_array($data2['content_bootstrap'] ?? null));
 
 try {
-    $output = render_template_file(dirname(__DIR__) . '/admin/templates/content.html', $data);
+    $output = '';
+    ob_start();
+    extract($data);
+    include dirname(__DIR__) . '/admin/templates/content.html';
+    $output = ob_get_clean();
     test_assert('content template renders', $output !== '');
     test_assert('output contains collections-container', strpos($output, 'collections-container') !== false);
     test_assert('output contains content-page', strpos($output, 'content-page') !== false);
