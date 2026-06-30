@@ -1478,6 +1478,9 @@ function getEntriesData() {
     
     $collectionData = json_decode(file_get_contents($collectionFile), true);
     $collectionData['slug'] = $collectionSlug;
+
+    require_once __DIR__ . '/../core/collection_meta.php';
+    $collectionData = array_merge($collectionData, birkly_normalize_collection_meta($collectionData, $collectionSlug));
     
     // Get entries
     $entries = [];
@@ -2057,6 +2060,9 @@ function getMediaData() {
 }
 
 function getSettingsData() {
+    require_once __DIR__ . '/../core/roles.php';
+    birkly_ensure_default_roles();
+
     // Get settings data
     $settingsPath = __DIR__ . '/../settings';
     $settings = [
@@ -2101,10 +2107,11 @@ function getSettingsData() {
         ];
     }
     
+    $settings['roles'] = getRolesData()['roles'];
+
     return [
         'settings' => $settings,
         'users' => getUsersData()['users'],
-        'roles' => getRolesData()['roles']
     ];
 }
 
@@ -2601,12 +2608,8 @@ function getUsersData() {
 }
 
 function getRolesData() {
-    $roles = [];
-    $rolesFile = __DIR__ . '/../settings/roles.json';
-    
-    if (file_exists($rolesFile)) {
-        $roles = json_decode(file_get_contents($rolesFile), true) ?: [];
-    }
+    require_once __DIR__ . '/../core/roles.php';
+    $roles = birkly_ensure_default_roles();
     
     // Get users for role assignment
     $users = [];
