@@ -160,7 +160,7 @@
         languageSelect.addEventListener('change', function() {
             const language = this.value;
             
-            fetch('/api/users.php', {
+            fetch(Birkly.url('/api/users.php'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -353,7 +353,7 @@
                 resultsContainer.innerHTML = '<div class="search-loading"><p>Searching...</p></div>';
             }
             
-            fetch(`/api/search.php?q=${encodeURIComponent(query)}&limit=20`)
+            fetch(Birkly.url('/api/search.php?q=' + encodeURIComponent(query) + '&limit=20'))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -577,7 +577,7 @@
         
         // Load notifications
         function loadNotifications() {
-            fetch('/api/notifications.php?action=list_recent&limit=20')
+            fetch(Birkly.url('/api/notifications.php?action=list_recent&limit=20'))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('HTTP error! status: ' + response.status);
@@ -725,7 +725,7 @@
                 return Promise.reject('CSRF token not found');
             }
             
-            return fetch('/api/notifications.php', {
+            return fetch(Birkly.url('/api/notifications.php'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -773,7 +773,7 @@
                     return;
                 }
                 
-                fetch('/api/notifications.php', {
+                fetch(Birkly.url('/api/notifications.php'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -967,7 +967,7 @@
         
         // Load unread count on page load
         function loadUnreadCount() {
-            fetch('/api/notifications.php?action=unread_count')
+            fetch(Birkly.url('/api/notifications.php?action=unread_count'))
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'ok') {
