@@ -106,11 +106,11 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.2-platform-hardening-plan.md` · **Handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
 
-**2026-06-16 — Phase 5.3 proposed** (Keven live testing)
+**2026-06-16 — Phase 5.3 approved** (Keven)
 
 **Priorities:** **Admin UX & core workflows** — entry drill-down, automation, dashboard onboarding, alpha feedback, DnD, unified FAB, layout pass. **Kekaba deploy deferred.**
 
-**Spec:** `docs/reviews/P5.3-admin-ux-plan.md` · **Handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md` · **Status:** Awaiting approval
+**Spec:** `docs/reviews/P5.3-admin-ux-plan.md` · **Handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md`
 
 ---
 
@@ -130,13 +130,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 5 + P5.1 + P5.2 **complete** on `main`. **P5.3 proposed** — admin UX & core workflows (entry drill-down, automation, dashboard, feedback, DnD, FAB). |
+| **Birkly (CMS)** | Phase 5 + P5.1 + P5.2 **complete** on `main`. **P5.3 approved** — admin UX & core workflows (entry drill-down, automation, dashboard, feedback, DnD, FAB). |
 | **Birkly-Website** | `Birkly-0.1/` sync deferred until P5.3 CMS fixes land. |
 | **kekaba** | Live testing on `birkly.kekaba.com` surfaced P5.3 issues; embed sync **deferred**. |
 | **Birkly-Docs** | P5.2 roles/plugins/slugs; P5.3 will add workflow notes if needed. |
 | **Agent ops** | Autonomous merge active. |
 
-**Phase 5.3 handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md` (proposed)
+**Phase 5.3 handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md`
 
 **Phase 5.2 handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md` (complete)
 
@@ -1620,7 +1620,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 5.3 — Admin UX & core workflows
 
-**Status:** Proposed — awaiting human approval  
+**Status:** Approved (2026-06-16)  
 **Trigger:** Live kekaba testing — entry drill-down, automation, dashboard, feedback, DnD, FAB  
 **Ordering:** P5.3-M0 → … → P5.3-M7. Cross-repo: Birkly → Birkly-Docs. Kekaba embed sync deferred.
 
