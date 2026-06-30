@@ -179,8 +179,8 @@ if ($action === 'activate') {
     
     // Run migrations if needed
     if (function_exists('plugin_needs_migration') && function_exists('run_plugin_migrations')) {
-        global $haru_plugins;
-        $plugin = $haru_plugins[$plugin_id] ?? null;
+        global $birkly_plugins;
+        $plugin = $birkly_plugins[$plugin_id] ?? null;
         if ($plugin) {
             $current_version = $plugin['version'] ?? '1.0.0';
             $last_migrated = function_exists('get_plugin_last_migrated_version') 

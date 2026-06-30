@@ -643,9 +643,9 @@ if ($action === 'widgets') {
             $processedPlugins[$plugin_id] = true;
         } else {
             // Also check global plugin registry if not found in plugin array
-            global $haru_plugins;
-            if (isset($haru_plugins[$plugin_id]['dashboard_widgets_callback'])) {
-                $pluginWidgets = call_user_func($haru_plugins[$plugin_id]['dashboard_widgets_callback']);
+            global $birkly_plugins;
+            if (isset($birkly_plugins[$plugin_id]['dashboard_widgets_callback'])) {
+                $pluginWidgets = call_user_func($birkly_plugins[$plugin_id]['dashboard_widgets_callback']);
                 if (is_array($pluginWidgets)) {
                     foreach ($pluginWidgets as $widget) {
                         $widget['plugin_id'] = $plugin_id;

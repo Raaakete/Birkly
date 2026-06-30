@@ -87,13 +87,13 @@ function is_resource_protected($resource) {
  * @return array List of declared capabilities
  */
 function get_plugin_declared_capabilities($plugin_id) {
-    global $haru_plugins;
+    global $birkly_plugins;
     
-    if (!isset($haru_plugins[$plugin_id])) {
+    if (!isset($birkly_plugins[$plugin_id])) {
         return [];
     }
     
-    $plugin = $haru_plugins[$plugin_id];
+    $plugin = $birkly_plugins[$plugin_id];
     return $plugin['capabilities'] ?? [];
 }
 

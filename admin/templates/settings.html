@@ -2153,7 +2153,11 @@ async function togglePlugin(pluginId, activate) {
             showMessage(result.message || 'Plugin ' + action + 'd successfully', 'success');
             setTimeout(() => location.reload(), 1000);
         } else {
-            showMessage('Error: ' + (result.message || 'Failed to ' + action + ' plugin'), 'error');
+            var errorMsg = 'Error: ' + (result.message || 'Failed to ' + action + ' plugin');
+            if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+                errorMsg += ' — ' + result.errors.join('; ');
+            }
+            showMessage(errorMsg, 'error');
         }
     } catch (error) {
         showMessage('Error: ' + error.message, 'error');
