@@ -193,7 +193,7 @@ function fetch_admin_page_data(string $page, array $query = []): array {
             try {
                 $data = getPageData($page);
                 return $data;
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 error_log("Error in fetch_admin_page_data for page '$page': " . $e->getMessage());
                 return ['error' => $e->getMessage()];
             }
