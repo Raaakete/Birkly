@@ -205,8 +205,8 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
         case 'list':
             requireAuth('manage_settings');
-            if (!birkly_is_platform_owner_install()) {
-                feedback_json_error(403, 'Feedback triage is only available on platform owner installs');
+            if (!birkly_feedback_triage_enabled()) {
+                feedback_json_error(403, 'Feedback triage is disabled on installs that relay to a central inbox');
             }
             $statusFilter = strtolower(trim((string) ($_GET['status'] ?? '')));
             $typeFilter = strtolower(trim((string) ($_GET['type'] ?? '')));
@@ -222,8 +222,8 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
         case 'get':
             requireAuth('manage_settings');
-            if (!birkly_is_platform_owner_install()) {
-                feedback_json_error(403, 'Feedback triage is only available on platform owner installs');
+            if (!birkly_feedback_triage_enabled()) {
+                feedback_json_error(403, 'Feedback triage is disabled on installs that relay to a central inbox');
             }
             $id = feedback_sanitize_id((string) ($_GET['id'] ?? $input['id'] ?? ''));
             $item = feedback_read($id);
@@ -235,8 +235,8 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
         case 'update_status':
             requireAuth('manage_settings');
-            if (!birkly_is_platform_owner_install()) {
-                feedback_json_error(403, 'Feedback triage is only available on platform owner installs');
+            if (!birkly_feedback_triage_enabled()) {
+                feedback_json_error(403, 'Feedback triage is disabled on installs that relay to a central inbox');
             }
             $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
             if (!validate_csrf_token($csrf)) {

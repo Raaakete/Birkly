@@ -34,6 +34,18 @@ function birkly_is_platform_owner_install(): bool
     return !empty($config['owner_mode']);
 }
 
+/**
+ * Whether this install should show the local feedback triage inbox (sidebar + API).
+ * Owner installs always triage locally; other installs triage locally when no relay URL is set.
+ */
+function birkly_feedback_triage_enabled(): bool
+{
+    if (birkly_is_platform_owner_install()) {
+        return true;
+    }
+    return birkly_feedback_relay_url() === '';
+}
+
 function birkly_alpha_program_enabled(): bool
 {
     $config = birkly_platform_config();

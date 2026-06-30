@@ -160,7 +160,7 @@ if (empty($userAvatar)) {
                     </li>
                     <?php
                     require_once __DIR__ . '/../../core/platform.php';
-                    $canManageFeedback = birkly_is_platform_owner_install()
+                    $canManageFeedback = birkly_feedback_triage_enabled()
                         && isset($_SESSION['user']) && function_exists('checkPermission')
                         && checkPermission($_SESSION['user'], 'manage_settings');
                     if ($canManageFeedback):
