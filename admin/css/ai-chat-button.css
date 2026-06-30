@@ -1,22 +1,86 @@
 /* Floating AI Chat Button Styles - Uses system CSS variables */
 
-.ai-chat-floating-btn {
+.assist-fab-wrap {
     position: fixed;
     bottom: var(--space-6, 1.5rem);
     right: var(--space-6, 1.5rem);
-    width: 56px;
-    height: 56px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.assist-fab-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    pointer-events: none;
+}
+
+.assist-fab-wrap.open .assist-fab-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.assist-fab-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--bg-elevated, #fff);
+    color: var(--text-primary, #111827);
+    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.assist-fab-action:hover {
+    background: var(--bg-secondary, #f3f4f6);
+}
+
+.assist-fab-icon-close {
+    display: none;
+}
+
+.assist-fab-wrap.open .assist-fab-icon-menu {
+    display: none;
+}
+
+.assist-fab-wrap.open .assist-fab-icon-close {
+    display: block;
+}
+
+.assist-fab-active #feedback-floating-wrap {
+    display: none !important;
+}
+
+.ai-chat-floating-btn {
+    position: relative;
+    width: 48px;
+    height: 48px;
     border-radius: var(--radius-full, 50%);
     background: var(--warning-500, #f59e0b);
     border: none;
     color: var(--text-inverse, #ffffff);
     cursor: pointer;
     box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
-    z-index: 999;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-slow, 300ms ease);
+    flex-shrink: 0;
 }
 
 .ai-chat-fab-badge,
@@ -572,7 +636,7 @@
         bottom: 80px;
     }
     
-    .ai-chat-floating-btn {
+    .assist-fab-wrap {
         right: var(--space-4, 1rem);
         bottom: var(--space-4, 1rem);
     }

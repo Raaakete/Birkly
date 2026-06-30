@@ -69,6 +69,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        window.Birkly = window.Birkly || {};
+        window.Birkly.openFeedbackModal = openModal;
+
         document.getElementById('feedback-floating-btn')?.addEventListener('click', openModal);
         document.getElementById('feedback-submit-form')?.addEventListener('submit', submitFeedback);
         document.querySelectorAll('[data-close-feedback-submit]').forEach((el) => {

@@ -98,6 +98,23 @@ try {
         strpos($entriesResponse['body'], 'entries-page') !== false
     );
 
+    $entryId = 'routing-entry-' . getmypid();
+    file_put_contents($collectionDir . '/entries/' . $entryId . '.json', json_encode([
+        'id' => $entryId,
+        'title' => 'Routing Test Entry',
+        'status' => 'published',
+    ], JSON_PRETTY_PRINT));
+
+    $entryDetailResponse = birkly_test_http_request(
+        $base . '/admin/index.php?page=entry-detail&collection=' . urlencode($collectionSlug) . '&entry=' . urlencode($entryId),
+        ['cookie_file' => $cookieFile]
+    );
+    test_assert('entry-detail page HTTP 200', $entryDetailResponse['code'] === 200, 'code ' . $entryDetailResponse['code']);
+    test_assert(
+        'entry-detail page contains entry-detail-page marker',
+        strpos($entryDetailResponse['body'], 'entry-detail-page') !== false
+    );
+
     if (is_dir($backupCollection)) {
         birkly_test_remove_directory($collectionDir);
         birkly_test_restore_directory($collectionDir, $backupCollection);
