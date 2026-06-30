@@ -39,13 +39,13 @@ function register_plugin_fieldtype($type, $class, $plugin_id) {
     }
     
     // Check if plugin is active
-    global $haru_plugins;
-    if (!isset($haru_plugins[$plugin_id])) {
+    global $birkly_plugins;
+    if (!isset($birkly_plugins[$plugin_id])) {
         error_log("Cannot register fieldtype '$type': Plugin '$plugin_id' not found");
         return false;
     }
     
-    if (!($haru_plugins[$plugin_id]['active'] ?? false)) {
+    if (!($birkly_plugins[$plugin_id]['active'] ?? false)) {
         error_log("Cannot register fieldtype '$type': Plugin '$plugin_id' is not active");
         return false;
     }
@@ -118,14 +118,14 @@ function unregister_plugin_fieldtype($type, $plugin_id) {
  */
 function get_plugin_fieldtypes() {
     global $haru_plugin_fieldtypes;
-    global $haru_plugins;
+    global $birkly_plugins;
     
     // Filter by active plugins
     $active_fieldtypes = [];
     
     foreach ($haru_plugin_fieldtypes as $type => $data) {
         $plugin_id = $data['plugin_id'];
-        if (isset($haru_plugins[$plugin_id]) && ($haru_plugins[$plugin_id]['active'] ?? false)) {
+        if (isset($birkly_plugins[$plugin_id]) && ($birkly_plugins[$plugin_id]['active'] ?? false)) {
             $active_fieldtypes[$type] = $data;
         }
     }

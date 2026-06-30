@@ -47,6 +47,7 @@ $suites = [
     'ai_context_pack_test.php',
     'ai_tool_registry_test.php',
     'automation_plugin_test.php',
+    'plugin_dependencies_test.php',
     'user_plugin_permissions_test.php',
     'feedback_test.php',
 ];
