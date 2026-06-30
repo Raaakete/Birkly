@@ -38,8 +38,10 @@
             throw new Error('Invalid response from update server');
         }
 
-        if (!response.ok && result && result.message) {
-            throw new Error(result.message);
+        if (!response.ok && result) {
+            const detail = result.detail || result.error || '';
+            const msg = result.message || 'Request failed';
+            throw new Error(detail ? msg + ': ' + detail : msg);
         }
 
         return result;

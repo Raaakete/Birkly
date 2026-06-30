@@ -131,11 +131,8 @@ function check_plugin_dependencies($plugin_id) {
  * @return string Version string
  */
 function get_birkly_version() {
-    if (file_exists(__DIR__ . '/../version.php')) {
-        require_once __DIR__ . '/../version.php';
-        return defined('HARUCMS_VERSION') ? HARUCMS_VERSION : '1.0.0';
-    }
-    return '1.0.0';
+    require_once __DIR__ . '/../version.php';
+    return BirklyVersion::getCurrentVersion();
 }
 
 /**

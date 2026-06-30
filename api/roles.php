@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/admin.php';
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/roles.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
 
@@ -20,8 +21,8 @@ function requireAuthRole($perm) {
 }
 
 if ($action === 'list_roles') {
-    $roles = $storage->read($rolesFile);
-    echo json_encode(['status' => 'ok', 'roles' => $roles ?: []]);
+    $roles = birkly_ensure_default_roles();
+    echo json_encode(['status' => 'ok', 'roles' => $roles]);
     exit;
 }
 
