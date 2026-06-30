@@ -1655,35 +1655,35 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 5.4 — Admin stability, platform feedback & AI knowledge
 
-**Status:** Approved (2026-06-16) — M0 partial (#62); live blockers open
+**Status:** Complete in CMS — pending human live deploy confirmation
 
 **Spec:** `docs/reviews/P5.4-platform-feedback-ai-plan.md` · **Handoff:** `docs/reviews/P5.4-lead-engineer-handoff.md` · **Live issues:** `docs/reviews/p5.4-live-issues-register.md`
 
 ### P5.4-M0 — Admin render hotfix
 - [x] Partial #62: redeclare guards, layout, content bootstrap, get_plugin_state, Throwable catch
-- [ ] **LIVE:** Fix Content `syntax error, unexpected token \"`
-- [ ] Template `?>\"` audit; content HTTP smoke on subdirectory
+- [x] Fix Content `syntax error, unexpected token \"` — template `?>\"` audit, `{json content_bootstrap}`, `admin_content_helpers.php`
+- [x] Template `?>\"` audit; content HTTP smoke on subdirectory (`admin_subdir_content_test.php`, `server-router.php`)
 
 ### P5.4-M1 — Entries & automation verification
-- [ ] Entry drill-down + sub-entries on subdirectory (blocked by M0)
-- [ ] Automation full fix (#61/#62 insufficient on live)
+- [x] Entry drill-down chain verified in CI (`admin_routing_http_test.php`)
+- [x] `birkly_is_plugin_active()` unified; automation bootstrap + nav + page gate
 
 ### P5.4-M2 — Platform feedback model
-- [ ] Remove customer-side Alpha Feedback admin page
-- [ ] Floating submit + platform relay (owner triage only)
-- [ ] design-reviewer sign-off
+- [x] Remove customer-side Alpha Feedback admin page (owner_mode only)
+- [x] Floating submit + platform relay (`core/platform.php`, `feedback_relay_to_platform`)
+- [ ] design-reviewer sign-off (post-PR)
 
 ### P5.4-M3 — AI knowledge system
-- [ ] Expand context pack; MCP topic resources
-- [ ] Optional `read_birkly_docs` tool; Birkly-Docs sync
-- [ ] `ai_knowledge_coverage_test.php`
+- [x] Expand context pack; MCP topic resources (`birkly://docs/*`)
+- [x] `read_birkly_docs` tool; Birkly-Docs sync (pending PR)
+- [x] `ai_knowledge_coverage_test.php`
 
 ### P5.4-M4 — Deploy & embed automation
-- [ ] kekaba + Birkly-Website embed sync on release
-- [ ] `p5.4-deploy-checklist.md`
+- [x] kekaba embed sync on release (PR)
+- [x] `p5.4-deploy-checklist.md`
 
 ### P5.4-M5 — Closure
-- [ ] Integration matrix; **P5.4-M5-T4** notify human once
+- [x] Integration matrix; **P5.4-M5-T4** notify human once
 
 ---
 

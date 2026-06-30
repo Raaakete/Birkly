@@ -40,12 +40,19 @@ $birkly_plugin_settings = []; // Plugin-specific settings
 
 // Plugin state management
 function get_plugin_state($plugin_id) {
+    return birkly_is_plugin_active($plugin_id);
+}
+
+/**
+ * Single source of truth for plugin active state (nav, page gate, API).
+ */
+function birkly_is_plugin_active(string $plugin_id): bool
+{
     global $birkly_plugins;
     if (isset($birkly_plugins[$plugin_id])) {
-        return $birkly_plugins[$plugin_id]['active'] ?? false;
+        return (bool) ($birkly_plugins[$plugin_id]['active'] ?? false);
     }
 
-    // API / early bootstrap may run before load_plugins() fills the registry.
     static $persistedStates = null;
     if ($persistedStates === null) {
         $storage = new PluginStorage(__DIR__ . '/../settings');

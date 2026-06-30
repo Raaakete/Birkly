@@ -18,6 +18,7 @@ if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/platform.php';
 
 const FEEDBACK_DIR = __DIR__ . '/../data/feedback';
 const FEEDBACK_STATUSES = ['new', 'in_progress', 'resolved', 'closed'];
@@ -95,6 +96,51 @@ function feedback_json_error(int $code, string $message, array $extra = []): voi
     exit;
 }
 
+/**
+ * Relay feedback to platform inbox when feedback_relay_url is configured (P5.4-M2).
+ *
+ * @param array<string, mixed> $record
+ */
+function feedback_relay_to_platform(array $record): void
+{
+    $url = birkly_feedback_relay_url();
+    if ($url === '' || !function_exists('curl_init')) {
+        return;
+    }
+
+    $payload = [
+        'install_id' => birkly_platform_install_id(),
+        'feedback' => $record,
+        'submitted_at' => gmdate('c'),
+    ];
+    $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($body === false) {
+        return;
+    }
+
+    $headers = ['Content-Type: application/json', 'Accept: application/json'];
+    $secret = birkly_feedback_relay_secret();
+    if ($secret !== '') {
+        $headers[] = 'X-Birkly-Feedback-Signature: ' . hash_hmac('sha256', $body, $secret);
+    }
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $body,
+        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_CONNECTTIMEOUT => 4,
+    ]);
+    curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if ($code < 200 || $code >= 300) {
+        error_log('feedback relay failed HTTP ' . $code . ' for install ' . birkly_platform_install_id());
+    }
+    curl_close($ch);
+}
+
 // --- HTTP handlers (skip when included for tests) ---
 if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     requireAuth('read');
@@ -152,11 +198,16 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
                 feedback_json_error(500, 'Failed to save feedback');
             }
 
+            feedback_relay_to_platform($record);
+
             echo json_encode(['status' => 'ok', 'data' => ['id' => $record['id']]]);
             break;
 
         case 'list':
             requireAuth('manage_settings');
+            if (!birkly_is_platform_owner_install()) {
+                feedback_json_error(403, 'Feedback triage is only available on platform owner installs');
+            }
             $statusFilter = strtolower(trim((string) ($_GET['status'] ?? '')));
             $typeFilter = strtolower(trim((string) ($_GET['type'] ?? '')));
             $items = feedback_list_all();
@@ -171,6 +222,9 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
         case 'get':
             requireAuth('manage_settings');
+            if (!birkly_is_platform_owner_install()) {
+                feedback_json_error(403, 'Feedback triage is only available on platform owner installs');
+            }
             $id = feedback_sanitize_id((string) ($_GET['id'] ?? $input['id'] ?? ''));
             $item = feedback_read($id);
             if (!$item) {
@@ -181,6 +235,9 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
         case 'update_status':
             requireAuth('manage_settings');
+            if (!birkly_is_platform_owner_install()) {
+                feedback_json_error(403, 'Feedback triage is only available on platform owner installs');
+            }
             $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
             if (!validate_csrf_token($csrf)) {
                 feedback_json_error(403, 'Invalid CSRF token');

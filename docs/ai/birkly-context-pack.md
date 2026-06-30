@@ -115,7 +115,44 @@ Common format codes: `Y` year, `m` month, `d` day, `H` hour, `i` minute, `F` ful
 
 ### Admin templating (PHP templates)
 
-Admin UI templates use `{admin_url}`, `{translate}`, `{for each}`, `{if}` — different from client-site language. Do not mix syntaxes.
+Admin UI templates use `{admin_url}`, `{translate}`, `{for each}`, `{if}`, `{json var}`, `{include_script}` — different from client-site language. Do not mix syntaxes.
+
+| Directive | Example |
+|-----------|---------|
+| i18n | `{translate 'admin.content'}` |
+| Admin URL | `{admin_url 'entries' collection='collection.slug'}` |
+| JSON bootstrap | `{json content_bootstrap}` |
+| Loop | `{for each item in items} ... {endfor}` |
+| Conditional | `{if user.is_admin} ... {endif}` |
+| Assets | `{include_script 'content-groups.js'}` |
+
+Admin pages load data via `getPageData()` in `api/admin_templates.php`. Templates compile through `admin/template_parser.php` and `TemplateSafeRenderer` (no `eval()`).
+
+## Fieldtypes
+
+Built-in fieldtypes live in `fieldtypes/` (Text, Textarea, Number, Media, Select, etc.). Plugins register fieldtypes via `register_fieldtype()`. Schema fields in `content/collections/{slug}/schema.json` reference fieldtype by `type`.
+
+## Plugins
+
+- Registry: `core/plugins.php` — `load_plugins()`, `birkly_is_plugin_active()`, `register_admin_page()`, `register_api_endpoint()`
+- State persisted in `settings/plugins.json`
+- Automation plugin: workflows on entry events, schedules, webhooks (`plugins/automation/`)
+- User Management: site users, registration, collection permissions (`plugins/user_management/`)
+
+## API surface
+
+| Area | Endpoint |
+|------|----------|
+| Content | `/api/content.php` |
+| Media | `/api/media.php` |
+| Search | `/api/search.php` |
+| Public | `/api/public.php` |
+| Automation | `/api/automation.php` (when plugin active) |
+| AI chat | `/api/ai_chat.php` |
+| MCP | `/api/mcp_server.php`, `/mcp` (Streamable HTTP) |
+| Feedback | `/api/feedback.php` (submit); triage platform-owner only |
+
+All URLs must use `birkly_url()` / `Birkly.url()` on subdirectory installs (e.g. `/Birkly-0.1/`).
 
 ## Collections
 

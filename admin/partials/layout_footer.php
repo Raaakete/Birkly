@@ -992,7 +992,12 @@
     </script>
     
     <!-- No SPA router/scripts in MPA mode -->
-<?php include __DIR__ . '/feedback-widget.php'; ?>
+<?php
+require_once __DIR__ . '/../../core/platform.php';
+if (birkly_alpha_program_enabled()) {
+    include __DIR__ . '/feedback-widget.php';
+}
+?>
 </body>
 </html>
 
