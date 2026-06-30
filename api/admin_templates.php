@@ -528,6 +528,7 @@ function getContentData() {
     require_once __DIR__ . '/../core/sub_entries.php';
     require_once __DIR__ . '/../core/storage/StorageFactory.php';
     
+    if (!function_exists('countAllSubEntriesForCollection')) {
     function countAllSubEntriesForCollection($collectionSlug, $collectionData) {
         $subCollections = $collectionData['sub_collections'] ?? [];
         if (empty($subCollections)) {
@@ -622,6 +623,7 @@ function getContentData() {
         
         return $totalSubEntries;
     }
+    }
     
     if (is_dir($collectionsPath)) {
         $collectionDirs = glob($collectionsPath . '/*', GLOB_ONLYDIR);
@@ -668,7 +670,11 @@ function getContentData() {
     
     return [
         'collections' => $collections,
-        'groups' => $groups
+        'groups' => $groups,
+        'content_bootstrap' => [
+            'collections' => $collections,
+            'groups' => $groups,
+        ],
     ];
 }
 
@@ -1549,6 +1555,7 @@ function getEntriesData() {
         /**
          * Recursively count all sub-entries including nested ones
          */
+        if (!function_exists('countAllSubEntriesRecursive')) {
         function countAllSubEntriesRecursive($collectionSlug, $entryId, $subCollection, $parentSubCollectionSlug = null, $parentSubEntryId = null) {
             $subCollectionSlug = $subCollection['slug'] ?? '';
             if (empty($subCollectionSlug)) {
@@ -1623,6 +1630,7 @@ function getEntriesData() {
             }
             
             return $count;
+        }
         }
         
         // Calculate sub-entry counts for each entry (including nested)
