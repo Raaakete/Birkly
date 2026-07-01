@@ -5,6 +5,22 @@
 
 (function() {
     'use strict';
+
+    function adminUrl(page, params) {
+        if (window.Birkly && typeof Birkly.adminUrl === 'function') {
+            return Birkly.adminUrl(page, params || {});
+        }
+        const q = Object.assign({ page: page }, params || {});
+        const query = Object.keys(q)
+            .filter((k) => q[k] !== undefined && q[k] !== null && q[k] !== '')
+            .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(String(q[k])))
+            .join('&');
+        return '/admin/index.php' + (query ? '?' + query : '');
+    }
+
+    function apiUrl(path) {
+        return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+    }
     
     let groups = [];
     let collections = [];
@@ -216,7 +232,7 @@
         } else if (collections.length === 0 && groups.filter(g => g.id !== 'ungrouped').length === 0) {
             container.innerHTML = '<div class="empty-state card" style="padding: 2rem; text-align: center;">'
                 + '<p style="margin: 0 0 1rem; color: var(--text-secondary);">No collections yet.</p>'
-                + '<a class="btn btn-primary" href="' + (window.Birkly && Birkly.adminUrl ? Birkly.adminUrl('collection-editor') : '/admin/index.php?page=collection-editor') + '">Create your first collection</a>'
+                + '<a class="btn btn-primary" href="' + adminUrl('collection-editor') + '">Create your first collection</a>'
                 + '</div>';
         }
         
@@ -439,10 +455,13 @@
         dragHandle.draggable = false;
         dragHandle.style.cursor = 'grab';
         
-        const titleText = document.createTextNode(collection.name || 'Untitled');
+        const titleLink = document.createElement('a');
+        titleLink.href = adminUrl('entries', { collection: collection.slug });
+        titleLink.className = 'collection-title-link';
+        titleLink.textContent = collection.name || 'Untitled';
         
         title.appendChild(dragHandle);
-        title.appendChild(titleText);
+        title.appendChild(titleLink);
         
         const description = document.createElement('div');
         description.className = 'collection-description';
@@ -497,7 +516,7 @@
         
         const editItem = document.createElement('a');
         editItem.className = 'dropdown-item collection-menu-item';
-        editItem.href = Birkly.adminUrl('collection-editor', { collection: collection.slug });
+        editItem.href = adminUrl('collection-editor', { collection: collection.slug });
         editItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg><span class="dropdown-item-label">Edit Collection</span>';
         editItem.onclick = (e) => {
             e.stopPropagation();
@@ -572,7 +591,7 @@
                 card.classList.remove('just-dragged');
                 return;
             }
-            window.location.href = Birkly.adminUrl('entries', { collection: collection.slug });
+            window.location.href = adminUrl('entries', { collection: collection.slug });
         });
         
         // Prevent drag from menu
@@ -608,7 +627,7 @@
         
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         
-        fetch('/api/content.php', {
+        fetch(apiUrl('/api/content.php'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -734,7 +753,7 @@
         
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         
-        fetch('/api/content.php', {
+        fetch(apiUrl('/api/content.php'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -776,7 +795,7 @@
     function saveGroups() {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         
-        fetch('/api/content.php', {
+        fetch(apiUrl('/api/content.php'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

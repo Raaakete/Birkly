@@ -6,6 +6,10 @@
 (function() {
     'use strict';
     
+    function apiUrl(path) {
+        return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+    }
+
     // Get collection slug from URL
     const urlParams = new URLSearchParams(window.location.search);
     const collectionSlug = urlParams.get('collection') || '';
@@ -76,7 +80,7 @@
         }
         
         try {
-            const response = await fetch('/api/admin_entries.php?action=bulk', {
+            const response = await fetch(apiUrl('/api/admin_entries.php?action=bulk'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -311,7 +315,7 @@
         }
         
         try {
-            const response = await fetch('/api/content.php', {
+            const response = await fetch(apiUrl('/api/content.php'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -427,7 +431,7 @@
             
             console.log('[Reorder] Using collection identifier:', collectionIdentifier);
             
-            const response = await fetch('/api/content.php?action=set_entry_order', {
+            const response = await fetch(apiUrl('/api/content.php?action=set_entry_order'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

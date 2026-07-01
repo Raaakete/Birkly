@@ -108,3 +108,63 @@ function countAllSubEntriesRecursive(
 
     return $count;
 }
+
+/**
+ * Content page data (P5.4 — kept out of admin_templates.php so Content does not load the full API file).
+ *
+ * @return array<string, mixed>
+ */
+function birkly_get_content_page_data(): array
+{
+    $collectionsPath = __DIR__ . '/../content/collections';
+    $collections = [];
+
+    if (is_dir($collectionsPath)) {
+        $collectionDirs = glob($collectionsPath . '/*', GLOB_ONLYDIR);
+        foreach ($collectionDirs ?: [] as $dir) {
+            $collectionName = basename($dir);
+            $collectionFile = $dir . '/collection.json';
+
+            if (!file_exists($collectionFile)) {
+                continue;
+            }
+
+            $collectionData = json_decode(file_get_contents($collectionFile), true);
+            $entriesDir = $dir . '/entries';
+            $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json') ?: []) : 0;
+            $subEntriesCount = countAllSubEntriesForCollection($collectionName, is_array($collectionData) ? $collectionData : []);
+
+            $collectionId = $collectionData['id'] ?? null;
+            if (!$collectionId) {
+                $collectionId = 'col-' . $collectionName;
+            }
+
+            $collections[] = [
+                'id' => $collectionId,
+                'name' => $collectionData['name'] ?? $collectionData['title'] ?? $collectionName,
+                'slug' => $collectionName,
+                'description' => $collectionData['description'] ?? '',
+                'entries_count' => $entriesCount,
+                'sub_entries_count' => $subEntriesCount,
+            ];
+        }
+    }
+
+    $groups = [];
+    $groupsFile = $collectionsPath . '/groups.json';
+    if (file_exists($groupsFile)) {
+        $groupsData = json_decode(file_get_contents($groupsFile), true);
+        if (is_array($groupsData)) {
+            $groups = $groupsData;
+        }
+    }
+
+    return [
+        'collections' => $collections,
+        'groups' => $groups,
+        'content_bootstrap' => [
+            'collections' => $collections,
+            'groups' => $groups,
+        ],
+    ];
+}
