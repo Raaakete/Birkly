@@ -278,9 +278,41 @@ $isOnboarding = ($page === 'onboarding');
 
         <!-- Main Content -->
         <main class="main-content">
+            <?php include __DIR__ . '/partials/admin-topbar.php'; ?>
             <?php
-            // Render the page using template system
-            if ($page === 'dashboard' || $page === 'media' || $page === 'account') {
+            $renderAdminError = static function (string $title, string $message, ?Throwable $e = null): void {
+                echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                echo '<h2>' . htmlspecialchars($title) . '</h2>';
+                echo '<p>' . htmlspecialchars($message) . '</p>';
+                if ($e !== null) {
+                    echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto; font-size: 0.85rem;">'
+                        . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                }
+                require_once __DIR__ . '/../core/build_info.php';
+                $build = birkly_build_info();
+                echo '<p style="margin-top: 1rem; font-size: 0.9rem;"><strong>Deploy check:</strong> '
+                    . 'git <code>' . htmlspecialchars((string) ($build['git_commit'] ?? 'unknown')) . '</code>, '
+                    . 'content mode <code>' . htmlspecialchars((string) ($build['content_template_mode'] ?? '?')) . '</code>. '
+                    . '<a href="' . htmlspecialchars(birkly_url('/admin/deploy-check.php')) . '">Full diagnostics</a></p>';
+                echo '<p style="font-size: 0.85rem; opacity: 0.85;">Pull the full Birkly repo root on the server (folders <code>admin/</code>, <code>api/</code>, <code>core/</code> as siblings), not only <code>admin/</code>.</p>';
+                echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
+                echo '</div>';
+            };
+
+            // Content page: always direct PHP include (never template parser)
+            if ($page === 'content') {
+                try {
+                    $data = fetch_admin_page_data('content', $_GET);
+                    if (isset($data['error'])) {
+                        $renderAdminError('Error Loading Page', (string) $data['error']);
+                    } else {
+                        extract($data);
+                        include __DIR__ . '/templates/content.html';
+                    }
+                } catch (Throwable $e) {
+                    $renderAdminError('Error Loading Page', $e->getMessage(), $e);
+                }
+            } elseif ($page === 'dashboard' || $page === 'media' || $page === 'account') {
                 // Pass query params so entry-editor receives collection/entry ids
                 $data = fetch_admin_page_data($page, $_GET);
                 
@@ -332,10 +364,10 @@ $isOnboarding = ($page === 'onboarding');
                     }
                 }
             } elseif (in_array($page, [
-                'content', 'settings', 'entries', 'entry-editor', 'entry-detail', 'collection-editor',
+                'settings', 'entries', 'entry-editor', 'entry-detail', 'collection-editor',
                 'users', 'roles', 'plugins', 'webhooks', 'help', 'feedback', 'audit-log', 'activity', 'updates',
             ], true)) {
-                // Content, Settings, Account, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, Audit Log, Activity, and Webhooks pages
+                // Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, etc.
                 try {
                     $data = fetch_admin_page_data($page, $_GET);
                     if (isset($data['error'])) {
@@ -347,9 +379,11 @@ $isOnboarding = ($page === 'onboarding');
                     } else {
                         // Check if template uses PHP tags or template directives
                         $templateContent = file_get_contents($templatePath);
+                        if (str_starts_with($templateContent, "\xEF\xBB\xBF")) {
+                            $templateContent = substr($templateContent, 3);
+                        }
                         
                         // IMPROVED LOGIC: If template starts with <?php, it's a pure PHP template
-                        // This avoids false positives from directive-like strings in PHP code
                         $startsWithPhp = (strpos(ltrim($templateContent), '<?php') === 0);
                         
                         if ($startsWithPhp) {
