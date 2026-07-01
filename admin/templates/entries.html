@@ -1,10 +1,16 @@
+<?php
+/**
+ * Entries list — pure PHP template (bypasses directive parser).
+ */
+$collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection');
+?>
 <div class="entries-page">
     <div class="page-header pt-m pb-m">
         <div class="page-header-left">
         <div class="breadcrumbs">
-            <a href="<?= admin_url('content') ?>">{translate 'admin.content'}</a>
+            <a href="<?= htmlspecialchars(admin_url('content')) ?>"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
-            <span class="current">{collection.name}</span>
+            <span class="current"><?= $collectionTitle ?></span>
         </div>
         </div>
         <div class="page-header-actions"></div>
@@ -13,23 +19,21 @@
     <div class="main-actions-bar">
         <div class="collection-actions-bar">
             <div class="collection-actions-bar-left">
-                <a class="btn btn-primary" href="{admin_url 'entry-editor' collection='collection.slug'}" aria-label="Create new entry in {collection.title}">
-                    {translate 'admin.new_entry'}
+                <a class="btn btn-primary" href="<?= htmlspecialchars(admin_url('entry-editor', ['collection' => $collection['slug'] ?? ''])) ?>" aria-label="Create new entry in <?= $collectionTitle ?>">
+                    <?= __('admin.new_entry') ?>
                 </a>
             </div>
             
             <div class="collection-actions-bar-right">
-                <!-- Review Status Filter -->
-                <label for="status-filter" class="collection-filter-label">{translate 'admin.filter'}:</label>
+                <label for="status-filter" class="collection-filter-label"><?= __('admin.filter') ?>:</label>
                 <select id="status-filter" class="collection-filter-select" style="min-width: 150px;">
-                    <option value="">{translate 'admin.all_statuses'}</option>
-                    <option value="published">{translate 'admin.published'}</option>
+                    <option value=""><?= __('admin.all_statuses') ?></option>
+                    <option value="published"><?= __('admin.published') ?></option>
                     <option value="unpublished">Unpublished</option>
                     <option value="scheduled">Scheduled</option>
                     <option value="pending_review">Pending for Review</option>
                 </select>
                 
-                <!-- Collection Actions Dropdown -->
                 <div class="dropdown">
                     <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -39,19 +43,8 @@
                         </svg>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
-                        <a href="{admin_url 'collection-editor' collection='collection.slug'}" class="dropdown-item collection-actions-item" aria-label="Edit collection settings for {collection.title}">
-                            <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
+                        <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collection['slug'] ?? ''])) ?>" class="dropdown-item collection-actions-item">
                             <span class="dropdown-item-label">Edit this collection</span>
-                        </a>
-                        <a href="{admin_url 'collection-editor' collection='collection.slug'}" class="dropdown-item collection-actions-item" aria-label="Add sub-collection to {collection.title}">
-                            <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            <span class="dropdown-item-label">Add a new sub-collection</span>
                         </a>
                     </div>
                 </div>
@@ -59,26 +52,23 @@
         </div>
     </div>
     
-    <!-- Bulk Actions Toolbar (hidden by default) -->
     <div id="bulk-actions-toolbar" class="bulk-actions-toolbar" style="display: none;">
         <div class="bulk-actions-content">
             <span class="bulk-actions-count">
-                <span id="bulk-selected-count">0</span> {translate 'admin.selected'}
+                <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
             </span>
             <div class="bulk-actions-buttons">
-                <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries">{translate 'admin.publish'}</button>
-                <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries">{translate 'admin.unpublish'}</button>
-                <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Delete selected entries">{translate 'admin.delete'}</button>
-                <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection">{translate 'admin.cancel'}</button>
+                <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
+                <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
+                <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Delete selected entries"><?= __('admin.delete') ?></button>
+                <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
             </div>
         </div>
     </div>
     
     <?php
-    // Check if collection has sub-collections
     $hasSubCollections = !empty($collection['sub_collections']) && is_array($collection['sub_collections']) && count($collection['sub_collections']) > 0;
     
-    // Configure smart-table component options
     $options = [
         'show_checkbox' => true,
         'show_drag' => true,
@@ -87,44 +77,31 @@
         'checkbox_class' => 'entry-checkbox',
         'delete_callback' => 'delete-entry-btn',
         'delete_data_attr' => 'data-entry-id',
-        'edit_url_callback' => function($entry) use ($collection) {
+        'edit_url_callback' => function ($entry) use ($collection) {
             $collectionSlug = $collection['slug'] ?? '';
             $entryId = $entry['id'] ?? '';
             $subEntryCount = $entry['__sub_entry_count'] ?? 0;
             
             if ($subEntryCount > 0) {
                 return admin_url('entry-detail', ['collection' => $collectionSlug, 'entry' => $entryId]);
-            } else {
-                return admin_url('entry-editor', ['collection' => $collectionSlug, 'entry' => $entryId]);
             }
-        }
+            return admin_url('entry-editor', ['collection' => $collectionSlug, 'entry' => $entryId]);
+        },
     ];
     
-    // Include the smart-table component
-    // Variables ($entries, $fields, $collection, $options) are available via extract() in template parser
-    // Use __TEMPLATE_DIR__ if available (injected by template parser), otherwise use absolute path
-    if (defined('__TEMPLATE_DIR__')) {
-        $componentPath = __TEMPLATE_DIR__ . '/components/smart-table.php';
-    } else {
-        // Fallback: use absolute path from document root
-        $componentPath = $_SERVER['DOCUMENT_ROOT'] . '/admin/templates/components/smart-table.php';
-    }
-    
-    if (file_exists($componentPath)) {
+    $componentPath = __DIR__ . '/components/smart-table.php';
+    if (is_file($componentPath)) {
         include $componentPath;
     } else {
-        echo '<div class="error-message">Smart table component not found at: ' . htmlspecialchars($componentPath) . '</div>';
+        echo '<div class="error-message">Smart table component not found.</div>';
     }
     ?>
 </div>
 
 <script>
-// Expose collection data to JavaScript
 window.collectionData = <?= json_encode($collection ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.collectionSlug = <?= json_encode($collection['slug'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.collectionId = <?= json_encode($collection['id'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-
-// Dropdowns are now handled by unified dropdown.js
 </script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/mouse-drag-drop.js')) ?>"></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/entries.js')) ?>"></script>

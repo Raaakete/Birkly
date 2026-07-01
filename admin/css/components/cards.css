@@ -134,6 +134,15 @@ a.card:hover {
   color: var(--text-primary, #20221D);
 }
 
+.collection-header .title .collection-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.collection-header .title .collection-title-link:hover {
+  text-decoration: underline;
+}
+
 /* Collection Description (standalone) */
 .collection-description {
   color: var(--text-secondary, #72746F);

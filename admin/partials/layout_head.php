@@ -25,6 +25,8 @@
       window.Birkly.currentUser.role = <?= json_encode($currentRole) ?>;
       window.Birkly.currentUser.permissions = <?= json_encode(array_values(array_unique(array_filter($currentPermissions)))) ?>;
     </script>
+    <?php require_once __DIR__ . '/../../core/build_info.php'; ?>
+    <meta name="birkly-build" content="<?= htmlspecialchars((string) (birkly_build_info()['git_commit'] ?? 'unknown')) ?>">
     <title>Birkly Admin</title>
     <!-- Main Stylesheet - Imports all CSS modules -->
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">

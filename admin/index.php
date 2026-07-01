@@ -173,6 +173,21 @@ function admin_url(string $page, array $params = []): string {
 }
 
 function fetch_admin_page_data(string $page, array $query = []): array {
+    // Content page: avoid loading the full admin_templates.php stack
+    if ($page === 'content') {
+        $helpersPath = birkly_project_root() . '/api/admin_content_helpers.php';
+        if (!is_file($helpersPath)) {
+            return ['error' => 'Content page helpers are missing (api/admin_content_helpers.php).'];
+        }
+        require_once $helpersPath;
+        try {
+            return birkly_get_content_page_data();
+        } catch (Throwable $e) {
+            error_log('Error in fetch_admin_page_data(content): ' . $e->getMessage());
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     // Include the admin templates API directly to get the functions
     $apiPath = birkly_project_root() . '/api/admin_templates.php';
     if (file_exists($apiPath)) {
@@ -299,15 +314,39 @@ $isOnboarding = ($page === 'onboarding');
                 echo '</div>';
             };
 
-            // Content page: always direct PHP include (never template parser)
+            // Direct PHP templates — never use the directive parser (avoids syntax errors on live)
+            $directPhpPages = [
+                'entries' => 'entries.html',
+                'entry-detail' => 'entry-detail.html',
+                'entry-editor' => 'entry-editor.html',
+            ];
             if ($page === 'content') {
                 try {
                     $data = fetch_admin_page_data('content', $_GET);
                     if (isset($data['error'])) {
                         $renderAdminError('Error Loading Page', (string) $data['error']);
                     } else {
+                        if (!defined('__TEMPLATE_DIR__')) {
+                            define('__TEMPLATE_DIR__', __DIR__ . '/templates');
+                        }
                         extract($data);
                         include __DIR__ . '/templates/content.html';
+                    }
+                } catch (Throwable $e) {
+                    $renderAdminError('Error Loading Page', $e->getMessage(), $e);
+                }
+            } elseif (isset($directPhpPages[$page])) {
+                $templateFile = $directPhpPages[$page];
+                try {
+                    $data = fetch_admin_page_data($page, $_GET);
+                    if (isset($data['error'])) {
+                        $renderAdminError('Error Loading Page', (string) $data['error']);
+                    } else {
+                        if (!defined('__TEMPLATE_DIR__')) {
+                            define('__TEMPLATE_DIR__', __DIR__ . '/templates');
+                        }
+                        extract($data);
+                        include __DIR__ . '/templates/' . $templateFile;
                     }
                 } catch (Throwable $e) {
                     $renderAdminError('Error Loading Page', $e->getMessage(), $e);
@@ -364,7 +403,7 @@ $isOnboarding = ($page === 'onboarding');
                     }
                 }
             } elseif (in_array($page, [
-                'settings', 'entries', 'entry-editor', 'entry-detail', 'collection-editor',
+                'settings', 'collection-editor',
                 'users', 'roles', 'plugins', 'webhooks', 'help', 'feedback', 'audit-log', 'activity', 'updates',
             ], true)) {
                 // Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, etc.
