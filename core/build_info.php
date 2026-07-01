@@ -37,6 +37,46 @@ function birkly_build_info(): array
         ? substr(preg_replace('/\s+/', ' ', trim((string) file_get_contents($entriesTemplate, false, null, 0, 120))), 0, 80)
         : null;
 
+    $indexFile = $root . '/admin/index.php';
+    $indexContent = is_readable($indexFile) ? (string) file_get_contents($indexFile) : '';
+    $indexContentBypass = str_contains($indexContent, 'birkly_load_content_page_data_safe')
+        || str_contains($indexContent, 'never load admin_templates.php');
+
+    $contentSmoke = ['status' => 'unknown'];
+    if (is_file($helpersFile)) {
+        try {
+            require_once $helpersFile;
+            if (function_exists('birkly_load_content_page_data_safe')) {
+                $smoke = birkly_load_content_page_data_safe();
+                if (isset($smoke['error'])) {
+                    $contentSmoke = [
+                        'status' => 'error',
+                        'message' => $smoke['error'],
+                        'step' => $smoke['error_step'] ?? null,
+                        'file' => $smoke['error_file'] ?? null,
+                        'line' => $smoke['error_line'] ?? null,
+                    ];
+                } else {
+                    $contentSmoke = [
+                        'status' => 'ok',
+                        'collections' => count($smoke['collections'] ?? []),
+                        'loader' => $smoke['content_loader'] ?? null,
+                        'fallback' => !empty($smoke['content_loader_fallback']),
+                    ];
+                }
+            }
+        } catch (Throwable $e) {
+            $contentSmoke = [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ];
+        }
+    } else {
+        $contentSmoke = ['status' => 'error', 'message' => 'helpers file missing'];
+    }
+
     return [
         'cms_root' => $root,
         'version' => is_readable($root . '/VERSION') ? trim((string) file_get_contents($root . '/VERSION')) : null,
@@ -45,6 +85,8 @@ function birkly_build_info(): array
         'base_path' => birkly_base_path(),
         'content_template_mode' => is_string($contentHead) && str_contains($contentHead, 'pure PHP template') ? 'php_direct' : 'legacy_or_unknown',
         'entries_template_mode' => is_string($entriesHead) && str_contains($entriesHead, 'pure PHP template') ? 'php_direct' : 'legacy_or_unknown',
+        'index_content_bypass' => $indexContentBypass ? 'yes' : 'no',
+        'content_smoke' => $contentSmoke,
         'content_template_head' => $contentHead,
         'entries_template_head' => $entriesHead,
         'content_template_mtime' => is_file($contentTemplate) ? date('c', (int) filemtime($contentTemplate)) : null,
