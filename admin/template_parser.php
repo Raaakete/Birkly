@@ -569,6 +569,10 @@ function render_template_file($templatePath, $data = []) {
     }
     
     $template = file_get_contents($templatePath);
+    // Strip UTF-8 BOM so <?php-first detection in admin/index.php works on all editors
+    if (str_starts_with($template, "\xEF\xBB\xBF")) {
+        $template = substr($template, 3);
+    }
     return render_template($template, $data);
 }
 ?>

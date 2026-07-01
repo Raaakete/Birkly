@@ -77,15 +77,14 @@
         }
     });
     
-    // User menu dropdown - Run immediately if DOM is ready, otherwise wait
+    // User menu lives in admin-topbar.php — legacy move only when topbar is absent.
     (function() {
         function moveUserMenuToHeader() {
-            console.log('[UI Fix] Attempting to move user menu to header...');
+            if (document.getElementById('admin-topbar')) {
+                return;
+            }
             const userMenuWrapper = document.querySelector('.sidebar-footer .user-menu-wrapper');
             const pageHeaderActions = document.querySelector('.page-header-actions');
-            
-            console.log('[UI Fix] userMenuWrapper:', userMenuWrapper);
-            console.log('[UI Fix] pageHeaderActions:', pageHeaderActions);
 
             if (userMenuWrapper && pageHeaderActions) {
                 console.log('[UI Fix] Moving user menu to header...');
@@ -482,7 +481,8 @@
             const searchOverlay = document.getElementById('search-overlay');
             
             // Wire search icon button
-            const searchBtn = document.querySelector('.topbar-icon-btn[aria-label="Search"]');
+            const searchBtn = document.getElementById('topbar-search-btn')
+                || document.querySelector('.topbar-icon-btn[aria-label="Search"]');
             if (searchBtn) {
                 searchBtn.addEventListener('click', function(e) {
                     e.preventDefault();
