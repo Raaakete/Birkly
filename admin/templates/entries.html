@@ -120,11 +120,11 @@
 
 <script>
 // Expose collection data to JavaScript
-window.collectionData = {json collection};
-window.collectionSlug = {json collection.slug};
-window.collectionId = {json collection.id};
+window.collectionData = <?= json_encode($collection ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.collectionSlug = <?= json_encode($collection['slug'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.collectionId = <?= json_encode($collection['id'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
 // Dropdowns are now handled by unified dropdown.js
 </script>
-{include_script 'mouse-drag-drop.js'}
-{include_script 'entries.js'}
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/mouse-drag-drop.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/entries.js')) ?>"></script>
