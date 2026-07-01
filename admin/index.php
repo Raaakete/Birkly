@@ -173,18 +173,27 @@ function admin_url(string $page, array $params = []): string {
 }
 
 function fetch_admin_page_data(string $page, array $query = []): array {
-    // Content page: avoid loading the full admin_templates.php stack
+    // Content page: never load admin_templates.php (avoids parser/autoload side effects on live)
     if ($page === 'content') {
         $helpersPath = birkly_project_root() . '/api/admin_content_helpers.php';
         if (!is_file($helpersPath)) {
-            return ['error' => 'Content page helpers are missing (api/admin_content_helpers.php).'];
+            return ['error' => 'Content page helpers are missing (api/admin_content_helpers.php).', 'error_step' => 'helpers_missing'];
         }
         require_once $helpersPath;
+        if (function_exists('birkly_load_content_page_data_safe')) {
+            return birkly_load_content_page_data_safe();
+        }
         try {
             return birkly_get_content_page_data();
         } catch (Throwable $e) {
             error_log('Error in fetch_admin_page_data(content): ' . $e->getMessage());
-            return ['error' => $e->getMessage()];
+            return [
+                'error' => $e->getMessage(),
+                'error_step' => 'content_data',
+                'error_class' => get_class($e),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+            ];
         }
     }
 
@@ -295,10 +304,18 @@ $isOnboarding = ($page === 'onboarding');
         <main class="main-content">
             <?php include __DIR__ . '/partials/admin-topbar.php'; ?>
             <?php
-            $renderAdminError = static function (string $title, string $message, ?Throwable $e = null): void {
+            $renderAdminError = static function (string $title, string $message, ?Throwable $e = null, array $context = []): void {
                 echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
                 echo '<h2>' . htmlspecialchars($title) . '</h2>';
                 echo '<p>' . htmlspecialchars($message) . '</p>';
+                if (!empty($context['error_step'])) {
+                    echo '<p style="font-size: 0.9rem;"><strong>Step:</strong> <code>' . htmlspecialchars((string) $context['error_step']) . '</code></p>';
+                }
+                if (!empty($context['error_file'])) {
+                    echo '<p style="font-size: 0.85rem;"><strong>File:</strong> <code>' . htmlspecialchars((string) $context['error_file']) . '</code>'
+                        . (!empty($context['error_line']) ? ' <strong>line</strong> ' . (int) $context['error_line'] : '')
+                        . '</p>';
+                }
                 if ($e !== null) {
                     echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto; font-size: 0.85rem;">'
                         . htmlspecialchars($e->getTraceAsString()) . '</pre>';
@@ -307,7 +324,8 @@ $isOnboarding = ($page === 'onboarding');
                 $build = birkly_build_info();
                 echo '<p style="margin-top: 1rem; font-size: 0.9rem;"><strong>Deploy check:</strong> '
                     . 'git <code>' . htmlspecialchars((string) ($build['git_commit'] ?? 'unknown')) . '</code>, '
-                    . 'content mode <code>' . htmlspecialchars((string) ($build['content_template_mode'] ?? '?')) . '</code>. '
+                    . 'content mode <code>' . htmlspecialchars((string) ($build['content_template_mode'] ?? '?')) . '</code>, '
+                    . 'index bypass <code>' . htmlspecialchars((string) ($build['index_content_bypass'] ?? '?')) . '</code>. '
                     . '<a href="' . htmlspecialchars(birkly_url('/admin/deploy-check.php')) . '">Full diagnostics</a></p>';
                 echo '<p style="font-size: 0.85rem; opacity: 0.85;">Pull the full Birkly repo root on the server (folders <code>admin/</code>, <code>api/</code>, <code>core/</code> as siblings), not only <code>admin/</code>.</p>';
                 echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
@@ -324,7 +342,7 @@ $isOnboarding = ($page === 'onboarding');
                 try {
                     $data = fetch_admin_page_data('content', $_GET);
                     if (isset($data['error'])) {
-                        $renderAdminError('Error Loading Page', (string) $data['error']);
+                        $renderAdminError('Error Loading Page', (string) $data['error'], null, $data);
                     } else {
                         if (!defined('__TEMPLATE_DIR__')) {
                             define('__TEMPLATE_DIR__', __DIR__ . '/templates');
@@ -340,7 +358,7 @@ $isOnboarding = ($page === 'onboarding');
                 try {
                     $data = fetch_admin_page_data($page, $_GET);
                     if (isset($data['error'])) {
-                        $renderAdminError('Error Loading Page', (string) $data['error']);
+                        $renderAdminError('Error Loading Page', (string) $data['error'], null, $data);
                     } else {
                         if (!defined('__TEMPLATE_DIR__')) {
                             define('__TEMPLATE_DIR__', __DIR__ . '/templates');
