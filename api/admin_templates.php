@@ -528,61 +528,7 @@ function getContentData() {
     }
     require_once $helpersPath;
 
-    // Get collections for content page
-    $collectionsPath = __DIR__ . '/../content/collections';
-    $collections = [];
-    
-    if (is_dir($collectionsPath)) {
-        $collectionDirs = glob($collectionsPath . '/*', GLOB_ONLYDIR);
-        foreach ($collectionDirs as $dir) {
-            $collectionName = basename($dir);
-            $collectionFile = $dir . '/collection.json';
-            
-            if (file_exists($collectionFile)) {
-                $collectionData = json_decode(file_get_contents($collectionFile), true);
-                $entriesDir = $dir . '/entries';
-                $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json')) : 0;
-                
-                // Calculate sub-entries count
-                $subEntriesCount = countAllSubEntriesForCollection($collectionName, $collectionData);
-                
-                // Ensure we always have an ID - use id from collection.json, or generate one from slug
-                $collectionId = $collectionData['id'] ?? null;
-                if (!$collectionId) {
-                    // Try to generate a consistent ID from slug or use slug itself
-                    $collectionId = 'col-' . $collectionName;
-                }
-                
-                $collections[] = [
-                    'id' => $collectionId,
-                    'name' => $collectionData['name'] ?? $collectionData['title'] ?? $collectionName,
-                    'slug' => $collectionName,
-                    'description' => $collectionData['description'] ?? '',
-                    'entries_count' => $entriesCount,
-                    'sub_entries_count' => $subEntriesCount
-                ];
-            }
-        }
-    }
-    
-    // Load groups from groups.json
-    $groups = [];
-    $groupsFile = $collectionsPath . '/groups.json';
-    if (file_exists($groupsFile)) {
-        $groupsData = json_decode(file_get_contents($groupsFile), true);
-        if (is_array($groupsData)) {
-            $groups = $groupsData;
-        }
-    }
-    
-    return [
-        'collections' => $collections,
-        'groups' => $groups,
-        'content_bootstrap' => [
-            'collections' => $collections,
-            'groups' => $groups,
-        ],
-    ];
+    return birkly_get_content_page_data();
 }
 
 function getCollectionEditorData() {

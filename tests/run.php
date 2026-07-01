@@ -26,6 +26,7 @@ $suites = [
     'admin_routing_http_test.php',
     'admin_template_stray_quote_test.php',
     'admin_subdir_content_test.php',
+    'admin_entries_direct_test.php',
     'base_path_test.php',
     'birkly_users_test.php',
     'login_csrf_rewrite_test.php',

@@ -32,6 +32,10 @@ function birkly_build_info(): array
     $contentHead = is_readable($contentTemplate)
         ? substr(preg_replace('/\s+/', ' ', trim((string) file_get_contents($contentTemplate, false, null, 0, 120))), 0, 80)
         : null;
+    $entriesTemplate = $root . '/admin/templates/entries.html';
+    $entriesHead = is_readable($entriesTemplate)
+        ? substr(preg_replace('/\s+/', ' ', trim((string) file_get_contents($entriesTemplate, false, null, 0, 120))), 0, 80)
+        : null;
 
     return [
         'cms_root' => $root,
@@ -40,7 +44,9 @@ function birkly_build_info(): array
         'php_version' => PHP_VERSION,
         'base_path' => birkly_base_path(),
         'content_template_mode' => is_string($contentHead) && str_contains($contentHead, 'pure PHP template') ? 'php_direct' : 'legacy_or_unknown',
+        'entries_template_mode' => is_string($entriesHead) && str_contains($entriesHead, 'pure PHP template') ? 'php_direct' : 'legacy_or_unknown',
         'content_template_head' => $contentHead,
+        'entries_template_head' => $entriesHead,
         'content_template_mtime' => is_file($contentTemplate) ? date('c', (int) filemtime($contentTemplate)) : null,
         'admin_content_helpers' => is_file($helpersFile),
         'admin_topbar_partial' => is_file($root . '/admin/partials/admin-topbar.php'),
