@@ -63,8 +63,12 @@
             this.boundMouseMove = this.handleMouseMove.bind(this);
             this.boundMouseUp = this.handleMouseUp.bind(this);
             
-            // Use event delegation on container (capture for collection cards)
-            this.container.addEventListener('mousedown', this.boundMouseDown, this.useCapture);
+            // Prefer pointer events; fall back to mouse for older browsers
+            if (window.PointerEvent) {
+                this.container.addEventListener('pointerdown', this.boundMouseDown, this.useCapture);
+            } else {
+                this.container.addEventListener('mousedown', this.boundMouseDown, this.useCapture);
+            }
         }
 
         handleMouseDown(e) {
@@ -781,7 +785,11 @@
             
             // Remove mousedown listener
             if (this.boundMouseDown && this.container) {
-                this.container.removeEventListener('mousedown', this.boundMouseDown, this.useCapture);
+                if (window.PointerEvent) {
+                    this.container.removeEventListener('pointerdown', this.boundMouseDown, this.useCapture);
+                } else {
+                    this.container.removeEventListener('mousedown', this.boundMouseDown, this.useCapture);
+                }
             }
             
             // Remove global listeners

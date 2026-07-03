@@ -80,10 +80,17 @@ if (strpos($nested, 'handleSelector: null') !== false && strpos($nested, 'useCap
     $failures++;
 }
 
-if (strpos($groups, "card.addEventListener('click'") === false) {
-    echo "PASS: collection cards do not use whole-card click navigation\n";
+if (strpos($groups, "className = 'collection-title'") !== false) {
+    echo "PASS: collection title is plain text (draggable, not a link)\n";
 } else {
-    echo "FAIL: whole-card click handler conflicts with drag\n";
+    echo "FAIL: collection title should not be a navigation link\n";
+    $failures++;
+}
+
+if (strpos($groups, 'View Entries') !== false) {
+    echo "PASS: collection menu includes view entries action\n";
+} else {
+    echo "FAIL: collection menu missing view entries\n";
     $failures++;
 }
 

@@ -449,13 +449,12 @@
         
         const dragHandle = createDragHandle('Drag to reorder');
         
-        const titleLink = document.createElement('a');
-        titleLink.href = adminUrl('entries', { collection: collection.slug });
-        titleLink.className = 'collection-title-link';
-        titleLink.textContent = collection.name || 'Untitled';
+        const titleText = document.createElement('span');
+        titleText.className = 'collection-title';
+        titleText.textContent = collection.name || 'Untitled';
         
         title.appendChild(dragHandle);
-        title.appendChild(titleLink);
+        title.appendChild(titleText);
         
         const description = document.createElement('div');
         description.className = 'collection-description';
@@ -469,8 +468,10 @@
         const footer = document.createElement('div');
         footer.className = 'collection-footer';
         
-        const entryCount = document.createElement('div');
-        entryCount.className = 'entry-count';
+        const entryCount = document.createElement('a');
+        entryCount.className = 'entry-count entry-count-link';
+        entryCount.href = adminUrl('entries', { collection: collection.slug });
+        entryCount.title = 'View entries';
         const countBold = document.createElement('b');
         countBold.textContent = collection.entries_count || 0;
         entryCount.appendChild(countBold);
@@ -507,6 +508,11 @@
         
         const menuDropdown = document.createElement('div');
         menuDropdown.className = 'dropdown-menu dropdown-menu-right collection-menu-dropdown';
+        
+        const viewEntriesItem = document.createElement('a');
+        viewEntriesItem.className = 'dropdown-item collection-menu-item';
+        viewEntriesItem.href = adminUrl('entries', { collection: collection.slug });
+        viewEntriesItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span class="dropdown-item-label">View Entries</span>';
         
         const editItem = document.createElement('a');
         editItem.className = 'dropdown-item collection-menu-item';
@@ -561,6 +567,7 @@
             deleteCollection(collection);
         };
         
+        menuDropdown.appendChild(viewEntriesItem);
         menuDropdown.appendChild(editItem);
         menuDropdown.appendChild(duplicateItem);
         menuDropdown.appendChild(deleteItem);
