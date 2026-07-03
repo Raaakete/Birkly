@@ -14,6 +14,7 @@ $suites = [
     'roles_test.php',
     'collection_schema_test.php',
     'collection_groups_test.php',
+    'content_groups_dnd_test.php',
     '../fieldtypes/ContentEditor/tests/html_roundtrip_test.php',
     '../fieldtypes/ContentEditor/tests/html_source_view_test.php',
     '../fieldtypes/ContentEditor/tests/preview_css_test.php',
