@@ -112,6 +112,28 @@ window.ContentEditorSync = {
     }
   },
 
+  getHtmlTextarea(wrapperOrSource) {
+    if (!wrapperOrSource) return null;
+    if (wrapperOrSource.classList && wrapperOrSource.classList.contains('content-editor-html-source')) {
+      return wrapperOrSource;
+    }
+    if (wrapperOrSource.querySelector) {
+      return wrapperOrSource.querySelector('.content-editor-html-source');
+    }
+    return null;
+  },
+
+  getHtmlPanel(htmlSource) {
+    if (!htmlSource) return null;
+    return htmlSource.closest ? htmlSource.closest('.content-editor-html-panel') : null;
+  },
+
+  refreshHtmlSource(htmlSource) {
+    if (window.ContentEditorHtmlSource && htmlSource) {
+      window.ContentEditorHtmlSource.refresh(htmlSource);
+    }
+  },
+
   syncHtmlSourceFromHidden(htmlSource, hiddenInput, options = {}) {
     if (!htmlSource || !hiddenInput) return;
     let html = hiddenInput.value || '';
@@ -119,6 +141,7 @@ window.ContentEditorSync = {
       html = this.formatHtml(html);
     }
     htmlSource.value = html;
+    this.refreshHtmlSource(htmlSource);
   },
 
   /**
@@ -185,13 +208,23 @@ window.ContentEditorSync = {
     const heightPx = `${measured}px`;
 
     const body = wrapper ? wrapper.querySelector('.content-editor-body') : null;
+    const panel = this.getHtmlPanel(htmlSource);
+
     if (body) {
       body.style.minHeight = heightPx;
+    }
+
+    if (panel) {
+      panel.style.height = heightPx;
+      panel.style.minHeight = heightPx;
+      panel.style.maxHeight = heightPx;
     }
 
     htmlSource.style.height = heightPx;
     htmlSource.style.minHeight = heightPx;
     htmlSource.style.maxHeight = heightPx;
+
+    this.refreshHtmlSource(htmlSource);
   },
 
   syncHiddenFromHtmlSource(htmlSource, hiddenInput, immediate = false) {
@@ -233,8 +266,11 @@ window.ContentEditorSync = {
         this.matchPanelHeight(wrapper, editor, htmlSource);
         this.syncHtmlSourceFromHidden(htmlSource, hiddenInput, { format: true });
         editor.classList.add('is-mode-hidden');
-        htmlSource.hidden = false;
-        htmlSource.classList.remove('is-mode-hidden');
+        const htmlPanel = this.getHtmlPanel(htmlSource);
+        if (htmlPanel) {
+          htmlPanel.hidden = false;
+          htmlPanel.classList.remove('is-mode-hidden');
+        }
       }
       if (toolbar) {
         toolbar.classList.add('is-html-mode');
@@ -243,8 +279,11 @@ window.ContentEditorSync = {
       if (htmlSource) {
         this.syncHiddenFromHtmlSource(htmlSource, hiddenInput, true);
         this.toEditor(editor, hiddenInput);
-        htmlSource.hidden = true;
-        htmlSource.classList.add('is-mode-hidden');
+        const htmlPanel = this.getHtmlPanel(htmlSource);
+        if (htmlPanel) {
+          htmlPanel.hidden = true;
+          htmlPanel.classList.add('is-mode-hidden');
+        }
         editor.classList.remove('is-mode-hidden');
       } else {
         this.toEditor(editor, hiddenInput);
@@ -296,6 +335,7 @@ window.ContentEditorSync = {
       this.syncHtmlSourceFromHidden(htmlSource, hiddenInput);
       htmlSource.addEventListener('input', () => {
         this.syncHiddenFromHtmlSource(htmlSource, hiddenInput);
+        this.refreshHtmlSource(htmlSource);
       });
       htmlSource.addEventListener('blur', () => {
         this.syncHiddenFromHtmlSource(htmlSource, hiddenInput, true);

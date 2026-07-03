@@ -1,32 +1,34 @@
 <?php
 /**
- * HTML source view — height sync and pretty-print formatting.
+ * HTML source view — syntax highlighting, line numbers, and panel layout.
  */
 
 $failures = 0;
 
-$syncPath = __DIR__ . '/../core/sync-manager.js';
-$cssPath = __DIR__ . '/../editor.css';
-
-if (!is_file($syncPath)) {
-    echo "FAIL: sync-manager.js missing\n";
-    exit(1);
-}
-
-$sync = file_get_contents($syncPath);
-$checks = [
-    'formatHtml' => 'formatHtml helper',
-    'matchPanelHeight' => 'matchPanelHeight helper',
-    "options.format" => 'format option on syncHtmlSourceFromHidden',
-    'white-space: pre' => null,
+$files = [
+    'sync-manager.js' => __DIR__ . '/../core/sync-manager.js',
+    'html-source-editor.js' => __DIR__ . '/../core/html-source-editor.js',
+    'editor.css' => __DIR__ . '/../editor.css',
 ];
 
-foreach ([
-    'formatHtml' => 'formatHtml helper',
-    'matchPanelHeight' => 'matchPanelHeight helper',
-    'options.format' => 'format option on syncHtmlSourceFromHidden',
-] as $needle => $label) {
-    if (strpos($sync, $needle) === false) {
+foreach ($files as $label => $path) {
+    if (!is_file($path)) {
+        echo "FAIL: $label missing\n";
+        $failures++;
+    }
+}
+
+$htmlSourceJs = file_get_contents($files['html-source-editor.js']);
+$checks = [
+    'ContentEditorHtmlSource' => 'HtmlSource module',
+    'highlightHtml' => 'highlightHtml helper',
+    'updateGutter' => 'line number gutter',
+    'ce-html-tag' => 'tag token class',
+    'content-editor-html-line-num' => 'line number element',
+];
+
+foreach ($checks as $needle => $label) {
+    if (strpos($htmlSourceJs, $needle) === false) {
         echo "FAIL: $label\n";
         $failures++;
     } else {
@@ -34,19 +36,53 @@ foreach ([
     }
 }
 
-$css = file_get_contents($cssPath);
-if (strpos($css, 'white-space: pre') === false) {
-    echo "FAIL: HTML source uses preformatted whitespace\n";
-    $failures++;
-} else {
-    echo "PASS: HTML source uses preformatted whitespace\n";
+$css = file_get_contents($files['editor.css']);
+$cssChecks = [
+    '.content-editor-html-panel' => 'html panel layout',
+    '.content-editor-html-gutter' => 'line number gutter styles',
+    '.ce-html-tag' => 'tag syntax color',
+    '.ce-html-attr' => 'attribute syntax color',
+    '.ce-html-value' => 'value syntax color',
+    'color: transparent' => 'textarea overlay for highlighting',
+];
+
+foreach ($cssChecks as $needle => $label) {
+    if (strpos($css, $needle) === false) {
+        echo "FAIL: $label\n";
+        $failures++;
+    } else {
+        echo "PASS: $label\n";
+    }
 }
 
-if (strpos($css, '.content-editor-body') === false || strpos($css, 'min-height: 200px') === false) {
-    echo "FAIL: content-editor-body min-height\n";
+require_once __DIR__ . '/../../../fieldtypes/BaseField.php';
+require_once __DIR__ . '/../ContentEditor.php';
+
+use Birkly\FieldTypes\ContentEditor\ContentEditor;
+
+$editor = new ContentEditor(['name' => 'content', 'label' => 'Content']);
+$html = $editor->render();
+
+if (strpos($html, 'content-editor-html-panel') === false) {
+    echo "FAIL: html panel in render output\n";
     $failures++;
 } else {
-    echo "PASS: content-editor-body min-height\n";
+    echo "PASS: html panel in render output\n";
+}
+
+if (strpos($html, 'content-editor-html-gutter') === false) {
+    echo "FAIL: html gutter in render output\n";
+    $failures++;
+} else {
+    echo "PASS: html gutter in render output\n";
+}
+
+$bundled = $editor->getJavaScript();
+if (strpos($bundled, 'ContentEditorHtmlSource') === false) {
+    echo "FAIL: HtmlSource bundled in getJavaScript\n";
+    $failures++;
+} else {
+    echo "PASS: HtmlSource bundled in getJavaScript\n";
 }
 
 if ($failures > 0) {
