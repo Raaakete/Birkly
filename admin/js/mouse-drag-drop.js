@@ -54,6 +54,7 @@
             this.usingPointerEvents = typeof window.PointerEvent === 'function';
             this.activePointerId = null;
             this.dragIndexContainer = null;
+            this.activeDropContainer = null;
             
             this.init();
         }
@@ -302,6 +303,9 @@
                         this.currentTarget = result.item;
                         this.currentTargetContainer = result.container;
                         this.lastTargetItem = result.item;
+                        if (this.onCrossContainerMove) {
+                            this.setActiveDropContainer(result.container);
+                        }
                         
                         if (isGrid) {
                             this.insertPlaceholderGrid(result.item, coords.x, coords.y, result.container);
@@ -313,10 +317,12 @@
                     if (this.onCrossContainerMove) {
                         const targetContainer = this.findDropContainerAt(coords.x, coords.y);
                         if (targetContainer) {
+                            this.setActiveDropContainer(targetContainer);
                             this.insertPlaceholderInContainer(targetContainer, coords.x, coords.y);
                             this.currentTargetContainer = targetContainer;
                             this.lastTargetItem = null;
                         } else {
+                            this.setActiveDropContainer(null);
                             this.currentTarget = null;
                             this.currentTargetContainer = null;
                             this.lastTargetItem = null;
@@ -411,10 +417,11 @@
             
             // Check if this is a cross-container move (only for collections)
             const sourceGrid = this.dragIndexContainer || this.getItemGrid(this.draggedItem);
+            const finalGrid = this.getItemGrid(this.draggedItem);
             const isCrossContainer = this.onCrossContainerMove &&
                                      placeholderContainer &&
                                      sourceGrid &&
-                                     placeholderContainer !== sourceGrid;
+                                     (placeholderContainer !== sourceGrid || (finalGrid && finalGrid !== sourceGrid));
             
             // Debug logging (can be removed later)
             // console.log('Drop detected:', {
@@ -425,24 +432,21 @@
             // });
             
             if (isCrossContainer) {
-                // Cross-container move
-                const targetItems = Array.from(placeholderContainer.querySelectorAll(this.itemSelector));
-                // Exclude placeholder from count - get index by counting items before placeholder
+                const targetGrid = (finalGrid && finalGrid !== sourceGrid) ? finalGrid : placeholderContainer;
                 let placeholderIndex = 0;
-                let node = placeholderContainer.firstChild;
+                let node = targetGrid.firstChild;
                 while (node) {
                     if (node === this.placeholder) break;
-                    if (node.nodeType === 1 && node.matches && node.matches(this.itemSelector)) {
+                    if (node.nodeType === 1 && node.matches && node.matches(this.itemSelector) && node !== this.draggedItem) {
                         placeholderIndex++;
                     }
                     node = node.nextSibling;
                 }
                 
-                // console.log('Cross-container move:', placeholderIndex);
                 this.onCrossContainerMove(
                     this.draggedItem,
-                    this.container,
-                    placeholderContainer,
+                    sourceGrid,
+                    targetGrid,
                     placeholderIndex
                 );
             } else {
@@ -497,14 +501,40 @@
             this.isProcessingDrop = false;
         }
 
+        setActiveDropContainer(container) {
+            if (!this.onCrossContainerMove) return;
+            const next = container || null;
+            if (this.activeDropContainer === next) return;
+            if (this.activeDropContainer) {
+                this.activeDropContainer.classList.remove('drag-over');
+            }
+            this.activeDropContainer = next;
+            if (this.activeDropContainer) {
+                this.activeDropContainer.classList.add('drag-over');
+            }
+        }
+
+        expandCollectionGroupForDrop(section) {
+            if (!section || !section.classList.contains('collapsed')) {
+                return;
+            }
+            section.classList.remove('collapsed');
+            const grid = section.querySelector('.group-collections, .ungrouped-collections');
+            if (grid) {
+                grid.style.display = '';
+            }
+            const groupId = section.dataset?.groupId;
+            if (groupId) {
+                localStorage.setItem('group-collapsed-' + groupId, 'false');
+            }
+        }
+
         findTargetItem(x, y) {
-            // If cross-container is enabled, check all containers
             const containersToCheck = this.allContainers || [this.container];
             
             for (const container of containersToCheck) {
                 const items = Array.from(container.querySelectorAll(this.itemSelector));
                 
-                // Find item under mouse (excluding dragged and placeholder)
                 for (const item of items) {
                     if (item === this.draggedItem || item === this.placeholder) continue;
                     
@@ -515,7 +545,34 @@
                 }
             }
             
-            // If not found, find closest item across all containers
+            // Cross-group: only consider cards in the group grid under the pointer
+            if (this.onCrossContainerMove) {
+                const dropContainer = this.findDropContainerAt(x, y);
+                if (!dropContainer) {
+                    return null;
+                }
+
+                let closestItem = null;
+                let minDist = Infinity;
+                const items = Array.from(dropContainer.querySelectorAll(this.itemSelector));
+
+                for (const item of items) {
+                    if (item === this.draggedItem || item === this.placeholder) continue;
+
+                    const rect = item.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    const dist = Math.hypot(x - centerX, y - centerY);
+
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestItem = item;
+                    }
+                }
+
+                return closestItem ? { item: closestItem, container: dropContainer } : null;
+            }
+            
             let closestItem = null;
             let closestContainer = null;
             let minDist = Infinity;
@@ -529,7 +586,7 @@
                     const rect = item.getBoundingClientRect();
                     const centerX = rect.left + rect.width / 2;
                     const centerY = rect.top + rect.height / 2;
-                    const dist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+                    const dist = Math.hypot(x - centerX, y - centerY);
                     
                     if (dist < minDist) {
                         minDist = dist;
@@ -544,12 +601,28 @@
 
         findDropContainerAt(x, y) {
             const containersToCheck = this.allContainers || [this.container];
+
             for (const container of containersToCheck) {
                 const rect = container.getBoundingClientRect();
-                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                if (rect.width > 0 && rect.height > 0 &&
+                    x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    this.expandCollectionGroupForDrop(container.closest('.collection-group'));
                     return container;
                 }
             }
+
+            const groupSections = this.container.querySelectorAll('.collection-group');
+            for (const section of groupSections) {
+                const rect = section.getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    const grid = section.querySelector('.group-collections, .ungrouped-collections');
+                    if (grid) {
+                        this.expandCollectionGroupForDrop(section);
+                        return grid;
+                    }
+                }
+            }
+
             return null;
         }
 
@@ -883,6 +956,7 @@
             this.currentTargetContainer = null;
             this.lastTargetItem = null;
             this.dragIndexContainer = null;
+            this.setActiveDropContainer(null);
             this.originalParent = null;
             this.originalNextSibling = null;
         }
@@ -963,8 +1037,7 @@
             this.collectionSorters.clear();
 
             const containers = Array.from(this.container.querySelectorAll(this.collectionContainerSelector));
-            const hasCards = containers.some(container => container.querySelectorAll(this.collectionSelector).length > 0);
-            if (!hasCards) {
+            if (containers.length === 0) {
                 return;
             }
 

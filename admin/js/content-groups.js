@@ -108,6 +108,27 @@
         }
     }
     
+    function syncAllGroupsFromDom() {
+        document.querySelectorAll('.collection-group').forEach(section => {
+            const groupId = section.dataset.groupId || 'ungrouped';
+            const grid = section.querySelector('.group-collections, .ungrouped-collections');
+            if (!grid) return;
+
+            const slugs = Array.from(grid.querySelectorAll('.collection-card'))
+                .map(card => card.dataset.collectionSlug)
+                .filter(Boolean);
+
+            let group = groups.find(g => g.id === groupId);
+            if (!group && groupId === 'ungrouped') {
+                group = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
+                groups.push(group);
+            }
+            if (group) {
+                group.collections = slugs;
+            }
+        });
+    }
+
     function setupDragDrop() {
         const container = document.getElementById('collections-container');
         if (!container) return;
@@ -167,56 +188,7 @@
             },
             
             onCollectionMove: (collectionSlug, fromGroupId, toGroupId, toIndex) => {
-                const normalizedFrom = fromGroupId || 'ungrouped';
-                const normalizedTo = toGroupId || 'ungrouped';
-
-                groups.forEach(group => {
-                    if (!group.collections) return;
-                    group.collections = group.collections.filter(slug => slug !== collectionSlug);
-                });
-
-                const targetGrid = document.querySelector(
-                    '.collection-group[data-group-id="' + CSS.escape(normalizedTo) + '"] .group-collections, ' +
-                    '.collection-group[data-group-id="' + CSS.escape(normalizedTo) + '"] .ungrouped-collections'
-                ) || document.querySelector('.collection-group.ungrouped .ungrouped-collections');
-
-                if (targetGrid) {
-                    const slugs = Array.from(targetGrid.querySelectorAll('.collection-card'))
-                        .map(card => card.dataset.collectionSlug)
-                        .filter(Boolean);
-                    if (normalizedTo !== 'ungrouped') {
-                        const toGroup = groups.find(g => g.id === normalizedTo);
-                        if (toGroup) {
-                            toGroup.collections = slugs;
-                        }
-                    } else {
-                        let ungroupedGroup = groups.find(g => g.id === 'ungrouped');
-                        if (!ungroupedGroup) {
-                            ungroupedGroup = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
-                            groups.push(ungroupedGroup);
-                        }
-                        ungroupedGroup.collections = slugs;
-                    }
-                } else if (normalizedTo !== 'ungrouped') {
-                    const toGroup = groups.find(g => g.id === normalizedTo);
-                    if (toGroup) {
-                        if (!toGroup.collections) {
-                            toGroup.collections = [];
-                        }
-                        toGroup.collections.splice(toIndex, 0, collectionSlug);
-                    }
-                } else {
-                    let ungroupedGroup = groups.find(g => g.id === 'ungrouped');
-                    if (!ungroupedGroup) {
-                        ungroupedGroup = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
-                        groups.push(ungroupedGroup);
-                    }
-                    if (!ungroupedGroup.collections) {
-                        ungroupedGroup.collections = [];
-                    }
-                    ungroupedGroup.collections.splice(toIndex, 0, collectionSlug);
-                }
-
+                syncAllGroupsFromDom();
                 saveGroups();
             }
         });
