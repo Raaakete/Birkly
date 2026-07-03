@@ -346,6 +346,18 @@
         "what_is_cms": "What Is Cms",
         "who_can_use_connection": "Who Can Use Connection",
         "write_rate_limit_per_hour": "Write Rate Limit Per Hour",
-        "you_are_all_set": "You Are All Set"
+        "you_are_all_set": "You Are All Set",
+        "connect_ai": "Connect AI",
+        "connect_ai_assistant": "Connect AI Assistant",
+        "connect_ai_description": "Supercharge your workflow with an AI assistant. It can answer questions about your content, help write entries, and guide you through Birkly.",
+        "ai_benefit_1": "Ask questions about your content in plain language",
+        "ai_benefit_2": "Get help writing and editing entries",
+        "ai_benefit_3": "Learn Birkly features with guided assistance",
+        "skip_for_now": "Skip for now",
+        "ai_connect_later_hint": "You can connect an AI assistant at any time from",
+        "settings_ai": "Settings → AI",
+        "setup_progress": "Setup progress",
+        "click_to_upload_logo": "Click to upload logo",
+        "remove": "Remove"
     }
 }
