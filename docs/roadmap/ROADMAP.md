@@ -1750,21 +1750,19 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 5.6 — Admin polish, AI knowledge, onboarding & automation
 
-**Status:** Approved (2026-07-03) — autonomous execution in progress
+**Status:** Complete (2026-07-03) — merged to main; pending human live deploy on `birkly.kekaba.com`
 
-**Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md` · **Handoff:** `docs/reviews/P5.6-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md` · **Handoff:** `docs/reviews/P5.6-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/p5.6-integration-test-matrix.md`
 
-**Priorities:** Content groups DnD · borderless topbar + account bubble · AI sub-collection admin knowledge · onboarding refresh (optional AI in wizard) · automation plugin UX.
+**Priorities delivered:** Borderless topbar + avatar fix · content DnD within/between groups · AI sub-collection/sub-entry admin knowledge + MCP tools · onboarding redesign (optional AI wizard step, slim checklist) · automation CSS + builder UX + sub-entry triggers + pickers + dry-run.
 
-**Runs parallel to:** P5.5 ContentEditor (complete or finishing on `main`).
-
-| Milestone | Focus |
-|-----------|--------|
-| **P5.6-M0** | Borderless topbar + avatar fix; content DnD within/between groups |
-| **P5.6-M1** | AI context pack + MCP tools for sub-collections/sub-entries |
-| **P5.6-M2** | Onboarding redesign; optional AI wizard step; essential-only checklist |
-| **P5.6-M3** | Automation CSS, builder UX, sub-entry triggers, pickers |
-| **P5.6-M4** | Birkly-Docs, integration matrix, closure |
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P5.6-M0** | Borderless topbar + avatar fix; content DnD within/between groups | complete |
+| **P5.6-M1** | AI context pack + MCP tools for sub-collections/sub-entries | complete |
+| **P5.6-M2** | Onboarding redesign; optional AI wizard step; essential-only checklist | complete |
+| **P5.6-M3** | Automation CSS, builder UX, sub-entry triggers, pickers | complete |
+| **P5.6-M4** | Birkly-Docs, integration matrix, closure | complete |
 
 **Human decisions (locked):**
 
@@ -1774,6 +1772,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 | AI onboarding | Optional wizard step only; not on dashboard checklist |
 | Dashboard checklist | Essential only (remove media upload, remove templates) |
 | Execution | Autonomous M0→M4; notify once at P5.6-M4-T4 |
+| kekaba embed sync | Deferred post-closure (D6); human deploys via `git pull` |
 
 ---
 
