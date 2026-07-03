@@ -389,6 +389,13 @@ if ($action === 'dry_run') {
     }
 
     $sample_context = array_merge($input['context'] ?? [], ['_dry_run' => true, '_test_mode' => true]);
+    if (function_exists('generate_sample_automation_context')) {
+        require_once __DIR__ . '/../template_preview.php';
+        $sample_context = array_merge(
+            generate_sample_automation_context($automation['trigger']['type'] ?? null),
+            $sample_context
+        );
+    }
     $steps = [];
     $all_ok = true;
 
@@ -442,6 +449,65 @@ if ($action === 'dry_run') {
             'action_count' => count($actions)
         ]
     ]);
+    exit;
+}
+
+// Run automation live (manual trigger from admin — executes real actions)
+if ($action === 'run_live') {
+    requireAuth('manage_content');
+
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $automation_id = $input['automation_id'] ?? '';
+    if (empty($automation_id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Automation ID required']);
+        exit;
+    }
+
+    $automation = get_automation($automation_id);
+    if (!$automation) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Automation not found']);
+        exit;
+    }
+
+    require_once __DIR__ . '/../template_preview.php';
+
+    $run_context = $input['context'] ?? [];
+    if (empty($run_context)) {
+        $run_context = generate_sample_automation_context($automation['trigger']['type'] ?? null);
+    }
+    $run_context['_manual_run'] = true;
+    $run_context['_skip_conditions'] = !empty($input['skip_conditions']);
+
+    $start_time = microtime(true);
+    try {
+        $success = execute_automation($automation, $run_context);
+        $runtime = (microtime(true) - $start_time) * 1000;
+
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'success' => $success,
+                'runtime_ms' => $runtime,
+                'actions_executed' => count($automation['actions'] ?? []),
+                'manual_run' => true
+            ]
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'data' => [
+                'success' => false,
+                'error' => $e->getMessage()
+            ]
+        ]);
+    }
     exit;
 }
 
