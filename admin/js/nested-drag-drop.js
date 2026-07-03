@@ -201,7 +201,7 @@
             this.groupSorter = new SimpleDragDrop({
                 container: this.container,
                 itemSelector: this.groupSelector + ':not(.ungrouped)',
-                handleSelector: '.group-drag-handle',
+                handleSelector: '.group-drag-handle, .group-title',
                 dropIndicatorClass: 'group-drop-indicator',
                 onReorder: (fromIndex, toIndex) => {
                     this.onGroupReorder(fromIndex, toIndex);
@@ -264,7 +264,6 @@
                 const sorter = new SimpleDragDrop({
                     container: collectionContainer,
                     itemSelector: this.collectionSelector,
-                    handleSelector: '.drag-handle',
                     onReorder: (fromIndex, toIndex) => {
                         const collections = this.getCollectionsInGroup(groupElement);
                         if (fromIndex >= 0 && fromIndex < collections.length) {

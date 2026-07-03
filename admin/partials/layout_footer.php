@@ -86,18 +86,20 @@
                 return;
             }
 
-            const main = document.querySelector('.admin-content, .main-content, main');
-            const source = main
-                ? main.querySelector('.page-header-left .breadcrumbs, .content-header .breadcrumbs, .breadcrumbs')
-                : document.querySelector('.page-header-left .breadcrumbs, .breadcrumbs');
+            const source = document.querySelector(
+                '.content-page .page-header-left .breadcrumbs, ' +
+                '.page-header-left .breadcrumbs:not(#admin-topbar-breadcrumbs), ' +
+                '.content-header .breadcrumbs'
+            );
 
-            if (!source) {
+            if (!source || source === topbarSlot || source.closest('#admin-topbar')) {
                 return;
             }
 
             while (source.firstChild) {
                 topbarSlot.appendChild(source.firstChild);
             }
+            topbarSlot.classList.add('breadcrumbs');
             source.remove();
 
             const pageHeaderLeft = source.parentElement;
