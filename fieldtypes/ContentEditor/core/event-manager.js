@@ -34,6 +34,7 @@ window.ContentEditorEventManager = {
     // Use a flag to prevent multiple listeners
     if (!window._contentEditorToolbarClickHandlerAttached) {
       window._contentEditorToolbarClickHandlerAttached = true;
+      const manager = window.ContentEditorEventManager;
       document.addEventListener('click', (e) => {
         // Only handle clicks within toolbars
         const toolbar = e.target.closest('.content-editor-toolbar');
@@ -43,9 +44,14 @@ window.ContentEditorEventManager = {
         if (e.target.closest('.color-picker-btn') || e.target.closest('.color-picker-input') || e.target.closest('.color-hex-input')) {
           return;
         }
+
+        // Clear inline display:none set by admin dropdown.js on shared .dropdown-menu class
+        toolbar.querySelectorAll('.toolbar-dropdown.active .dropdown-menu').forEach((menu) => {
+          menu.style.removeProperty('display');
+        });
         
-        // Handle the click
-        this.handleToolbarClick(e);
+        // Handle the click (use prototype — not first editor instance)
+        manager.handleToolbarClick.call(manager, e);
       });
     }
 
@@ -307,6 +313,11 @@ window.ContentEditorEventManager = {
         }
         
         dropdown.classList.toggle('active');
+
+        const menu = dropdown.querySelector('.dropdown-menu');
+        if (menu) {
+          menu.style.removeProperty('display');
+        }
         
         // Initialize color picker if it's the textColor dropdown
         if (command === 'textColor' && dropdown.querySelector('.color-wheel')) {

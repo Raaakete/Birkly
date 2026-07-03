@@ -4,6 +4,25 @@
  */
 (function() {
     'use strict';
+
+    /** Admin global dropdown handler must not touch ContentEditor toolbar menus. */
+    function isContentEditorMenu(menu) {
+        return menu && menu.closest && menu.closest('.content-editor-toolbar');
+    }
+
+    function isContentEditorToolbarTarget(target) {
+        return target && target.closest && target.closest('.content-editor-toolbar');
+    }
+
+    function closeAdminDropdownMenus(exceptMenu) {
+        document.querySelectorAll('.dropdown-menu, .collection-actions-menu, .user-menu-dropdown, .notifications-dropdown').forEach(function(menu) {
+            if (menu === exceptMenu || isContentEditorMenu(menu)) {
+                return;
+            }
+            menu.classList.remove('show', 'active');
+            menu.style.display = 'none';
+        });
+    }
     
     // Initialize all dropdowns
     function initDropdowns() {
@@ -26,13 +45,8 @@
                 
                 const isOpen = menu.classList.contains('show') || menu.classList.contains('active') || menu.style.display === 'block' || menu.style.display === 'flex';
                 
-                // Close all other dropdowns
-                document.querySelectorAll('.dropdown-menu, .collection-actions-menu, .user-menu-dropdown, .notifications-dropdown').forEach(m => {
-                    if (m !== menu) {
-                        m.classList.remove('show', 'active');
-                        m.style.display = 'none';
-                    }
-                });
+                // Close all other admin dropdowns (never ContentEditor toolbar menus)
+                closeAdminDropdownMenus(menu);
                 document.querySelectorAll('.dropdown-trigger, [data-dropdown]').forEach(t => {
                     if (t !== trigger) {
                         t.setAttribute('aria-expanded', 'false');
@@ -58,13 +72,13 @@
             });
         });
         
-        // Close dropdowns when clicking outside
+        // Close dropdowns when clicking outside (ContentEditor toolbar manages its own menus)
         document.addEventListener('click', function(e) {
+            if (isContentEditorToolbarTarget(e.target)) {
+                return;
+            }
             if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown-menu, .collection-actions-menu, .user-menu-dropdown, .notifications-dropdown').forEach(menu => {
-                    menu.classList.remove('show', 'active');
-                    menu.style.display = 'none';
-                });
+                closeAdminDropdownMenus(null);
                 document.querySelectorAll('.dropdown-trigger, [data-dropdown]').forEach(trigger => {
                     trigger.setAttribute('aria-expanded', 'false');
                 });
@@ -74,10 +88,7 @@
         // Close dropdowns on escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                document.querySelectorAll('.dropdown-menu, .collection-actions-menu, .user-menu-dropdown, .notifications-dropdown').forEach(menu => {
-                    menu.classList.remove('show', 'active');
-                    menu.style.display = 'none';
-                });
+                closeAdminDropdownMenus(null);
                 document.querySelectorAll('.dropdown-trigger, [data-dropdown]').forEach(trigger => {
                     trigger.setAttribute('aria-expanded', 'false');
                 });
