@@ -520,7 +520,8 @@
 .collection-card .drag-handle {
   width: 16px;
   height: 16px;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: grab;
 }
 
 .cell-drag {
@@ -769,7 +770,7 @@
   align-items: center;
   touch-action: none;
   user-select: none;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .group-drag-handle svg,
