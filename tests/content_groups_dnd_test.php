@@ -6,8 +6,9 @@
 $failures = 0;
 
 $files = [
-    'nested-drag-drop.js' => __DIR__ . '/../admin/js/nested-drag-drop.js',
+    'mouse-drag-drop.js' => __DIR__ . '/../admin/js/mouse-drag-drop.js',
     'content-groups.js' => __DIR__ . '/../admin/js/content-groups.js',
+    'content.html' => __DIR__ . '/../admin/templates/content.html',
     'header.css' => __DIR__ . '/../admin/css/layout/header.css',
     'content.css' => __DIR__ . '/../admin/css/pages/content.css',
 ];
@@ -19,12 +20,11 @@ foreach ($files as $label => $path) {
     }
 }
 
-$nested = file_get_contents($files['nested-drag-drop.js']);
+$nested = file_get_contents($files['mouse-drag-drop.js']);
 $nestedChecks = [
-    'normalizeGroupId' => 'normalizeGroupId helper',
-    'findGroupElement' => 'findGroupElement helper',
-    'expandGroupIfCollapsed' => 'expand collapsed group on drag-over',
-    "return 'ungrouped'" => 'ungrouped canonical id',
+    'MouseDragDropManager' => 'MouseDragDropManager class',
+    'onCrossContainerMove' => 'cross-container collection moves',
+    ':not(.ungrouped)' => 'ungrouped excluded from group reorder',
 ];
 
 foreach ($nestedChecks as $needle => $label) {
@@ -66,16 +66,24 @@ if (strpos($header, '.topbar-user-menu .user-avatar-initials') === false) {
     echo "PASS: topbar avatar initials styling\n";
 }
 
-if (strpos($groups, 'createDragHandle') !== false) {
-    echo "PASS: inline drag handles (no blocking img)\n";
-} else {
-    echo "FAIL: inline drag handles\n";
+if (strpos($groups, 'MouseDragDropManager') === false) {
+    echo "FAIL: content-groups uses MouseDragDropManager\n";
     $failures++;
+} else {
+    echo "PASS: content-groups uses MouseDragDropManager\n";
+}
+
+$contentHtml = file_get_contents($files['content.html']);
+if (strpos($contentHtml, 'mouse-drag-drop.js') === false) {
+    echo "FAIL: content page loads mouse-drag-drop.js\n";
+    $failures++;
+} else {
+    echo "PASS: content page loads mouse-drag-drop.js\n";
 }
 
 $cardsCss = file_get_contents(__DIR__ . '/../admin/css/components/cards.css');
-if (strpos($cardsCss, '.collection-card .drag-handle') !== false && strpos($cardsCss, 'pointer-events: none') !== false) {
-    echo "PASS: collection drag handle pointer-events none\n";
+if (strpos($cardsCss, '.collection-card .drag-handle') !== false && strpos($cardsCss, 'pointer-events: auto') !== false) {
+    echo "PASS: collection drag handle pointer-events for mouse drag\n";
 } else {
     echo "FAIL: collection drag handle pointer-events\n";
     $failures++;
