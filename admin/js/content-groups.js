@@ -21,6 +21,10 @@
     function apiUrl(path) {
         return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
     }
+
+    function assetUrl(path) {
+        return apiUrl(path.startsWith('/') ? path : '/admin/assets/' + path);
+    }
     
     let groups = [];
     let collections = [];
@@ -254,8 +258,7 @@
         const section = document.createElement('div');
         section.className = 'collection-group';
         section.dataset.groupId = group.id;
-        // Make section draggable (SimpleDragDrop needs the item itself to be draggable)
-        // The handleSelector will ensure drag only starts from header
+        // Draggable on the group section; drag starts from .group-drag-handle only
         section.draggable = true;
         section.setAttribute('draggable', 'true');
         
@@ -268,18 +271,14 @@
         // Header contains the drag handle
         const header = document.createElement('div');
         header.className = 'group-header';
-        header.style.cursor = 'move'; // Show move cursor
-        // Make header draggable - when dragging from header, the browser will drag
-        // the header, but SimpleDragDrop will find the group section (item) via closest()
-        // and use that for all drag logic
-        header.draggable = true;
-        header.setAttribute('draggable', 'true');
+        header.style.cursor = 'default';
         
         // Add drag handle for group
         const dragHandleWrapper = document.createElement('div');
         dragHandleWrapper.className = 'group-drag-handle';
+        dragHandleWrapper.style.cursor = 'grab';
         const dragHandle = document.createElement('img');
-        dragHandle.src = '/admin/assets/DotsSixVertical.svg';
+        dragHandle.src = assetUrl('/admin/assets/DotsSixVertical.svg');
         dragHandle.alt = 'Drag to reorder group';
         dragHandle.draggable = false;
         dragHandleWrapper.appendChild(dragHandle);
@@ -458,7 +457,7 @@
         title.className = 'title';
         
         const dragHandle = document.createElement('img');
-        dragHandle.src = '/admin/assets/DotsSixVertical.svg';
+        dragHandle.src = assetUrl('/admin/assets/DotsSixVertical.svg');
         dragHandle.alt = 'Drag to reorder';
         dragHandle.className = 'drag-handle';
         dragHandle.draggable = false;

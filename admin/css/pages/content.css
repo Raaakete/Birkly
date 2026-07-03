@@ -512,6 +512,15 @@
   user-select: none;
   opacity: 0.6;
   transition: opacity 0.15s;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.collection-card .drag-handle {
+  width: 16px;
+  height: 16px;
+  pointer-events: auto;
 }
 
 .cell-drag {
@@ -758,11 +767,14 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  touch-action: none;
+  user-select: none;
 }
 
 .group-drag-handle img {
   width: 16px;
   height: 16px;
+  pointer-events: none;
 }
 
 .collection-group:hover .group-drag-handle {
@@ -887,7 +899,7 @@ body.dragging-group .group-drop-indicator {
 }
 
 .draggable > a {
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .draggable.dragging > a {

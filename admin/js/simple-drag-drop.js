@@ -769,11 +769,11 @@
         destroy() {
             if (!this.isInitialized) return;
 
-            this.container.removeEventListener('dragstart', this.handleDragStart);
-            this.container.removeEventListener('dragover', this.handleDragOver);
-            this.container.removeEventListener('dragleave', this.handleDragLeave);
-            this.container.removeEventListener('drop', this.handleDrop);
-            this.container.removeEventListener('dragend', this.handleDragEnd);
+            this.container.removeEventListener('dragstart', this.handleDragStart, true);
+            this.container.removeEventListener('dragover', this.handleDragOver, true);
+            this.container.removeEventListener('dragleave', this.handleDragLeave, true);
+            this.container.removeEventListener('drop', this.handleDrop, true);
+            this.container.removeEventListener('dragend', this.handleDragEnd, true);
 
             if (this.dropIndicator) {
                 this.dropIndicator.remove();
