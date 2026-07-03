@@ -112,9 +112,86 @@ window.ContentEditorSync = {
     }
   },
 
-  syncHtmlSourceFromHidden(htmlSource, hiddenInput) {
+  syncHtmlSourceFromHidden(htmlSource, hiddenInput, options = {}) {
     if (!htmlSource || !hiddenInput) return;
-    htmlSource.value = hiddenInput.value || '';
+    let html = hiddenInput.value || '';
+    if (options.format) {
+      html = this.formatHtml(html);
+    }
+    htmlSource.value = html;
+  },
+
+  /**
+   * Pretty-print HTML for the source editor (block-level indentation).
+   */
+  formatHtml(html) {
+    if (!html || !html.trim()) return html || '';
+
+    const voidTags = new Set([
+      'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link',
+      'meta', 'param', 'source', 'track', 'wbr',
+    ]);
+
+    const normalized = html
+      .replace(/\r\n/g, '\n')
+      .replace(/>\s+</g, '><')
+      .trim();
+
+    const tokens = normalized.split(/(<[^>]+>)/g).filter(Boolean);
+    let formatted = '';
+    let indent = 0;
+    const pad = () => '  '.repeat(indent);
+
+    tokens.forEach((token) => {
+      const trimmed = token.trim();
+      if (!trimmed) return;
+
+      if (trimmed.startsWith('</')) {
+        indent = Math.max(0, indent - 1);
+        formatted += `${pad()}${trimmed}\n`;
+        return;
+      }
+
+      if (trimmed.startsWith('<')) {
+        const tagMatch = trimmed.match(/^<([\w-]+)/);
+        const tagName = tagMatch ? tagMatch[1].toLowerCase() : '';
+        const isClosing = trimmed.startsWith('</');
+        const isSelfClosing = trimmed.endsWith('/>') || voidTags.has(tagName);
+        const isSpecial = trimmed.startsWith('<!') || trimmed.startsWith('<?');
+
+        formatted += `${pad()}${trimmed}\n`;
+
+        if (!isClosing && !isSelfClosing && !isSpecial && tagName) {
+          indent += 1;
+        }
+        return;
+      }
+
+      formatted += `${pad()}${trimmed}\n`;
+    });
+
+    return formatted.trimEnd();
+  },
+
+  /**
+   * Match HTML source panel height to the visual editor viewport.
+   */
+  matchPanelHeight(wrapper, editor, htmlSource) {
+    if (!editor || !htmlSource) return;
+
+    const minHeight = 200;
+    const maxHeight = 600;
+    const measured = Math.max(minHeight, Math.min(maxHeight, editor.offsetHeight || editor.scrollHeight || minHeight));
+    const heightPx = `${measured}px`;
+
+    const body = wrapper ? wrapper.querySelector('.content-editor-body') : null;
+    if (body) {
+      body.style.minHeight = heightPx;
+    }
+
+    htmlSource.style.height = heightPx;
+    htmlSource.style.minHeight = heightPx;
+    htmlSource.style.maxHeight = heightPx;
   },
 
   syncHiddenFromHtmlSource(htmlSource, hiddenInput, immediate = false) {
@@ -153,7 +230,8 @@ window.ContentEditorSync = {
     if (nextMode === 'html') {
       this.toHidden(editor, hiddenInput, true);
       if (htmlSource) {
-        this.syncHtmlSourceFromHidden(htmlSource, hiddenInput);
+        this.matchPanelHeight(wrapper, editor, htmlSource);
+        this.syncHtmlSourceFromHidden(htmlSource, hiddenInput, { format: true });
         editor.classList.add('is-mode-hidden');
         htmlSource.hidden = false;
         htmlSource.classList.remove('is-mode-hidden');

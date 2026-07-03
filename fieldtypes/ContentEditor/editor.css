@@ -45,6 +45,7 @@
 
 .content-editor-body {
   position: relative;
+  min-height: 200px;
 }
 
 .content-editor-area.is-mode-hidden {
@@ -57,14 +58,18 @@
   max-height: 600px;
   border: 0;
   padding: var(--space-3, 0.75rem);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 0.8125rem;
-  line-height: 1.5;
+  line-height: 1.6;
+  tab-size: 2;
   color: var(--text-primary, #20221D);
-  background: var(--bg-primary, #ffffff);
-  resize: vertical;
+  background: var(--bg-secondary, #fafafa);
+  resize: none;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: auto;
+  white-space: pre;
+  word-wrap: normal;
+  overflow-wrap: normal;
 }
 
 .content-editor-html-source:focus {
