@@ -34,6 +34,8 @@
             this.container = options.container;
             this.itemSelector = options.itemSelector;
             this.handleSelector = options.handleSelector || null;
+            this.excludeSelector = options.excludeSelector || null;
+            this.useCapture = options.useCapture === true;
             this.onReorder = options.onReorder || function() {};
             this.onCrossContainerMove = options.onCrossContainerMove || null;
             this.allContainers = options.allContainers || null; // For cross-container moves
@@ -61,20 +63,34 @@
             this.boundMouseMove = this.handleMouseMove.bind(this);
             this.boundMouseUp = this.handleMouseUp.bind(this);
             
-            // Use event delegation on container
-            this.container.addEventListener('mousedown', this.boundMouseDown);
+            // Use event delegation on container (capture for collection cards)
+            this.container.addEventListener('mousedown', this.boundMouseDown, this.useCapture);
         }
 
         handleMouseDown(e) {
             // Prevent multiple drags
             if (this.dragging) return;
+
+            // Group sorter must not intercept collection card interactions
+            if (this.itemSelector.includes('collection-group') && e.target.closest('.collection-card')) {
+                return;
+            }
             
             // Check if this is a handle or the item itself
             let item = e.target.closest(this.itemSelector);
             if (!item || !this.container.contains(item)) return;
             
             // Ignore menu controls on collection cards
-            if (e.target.closest('.collection-menu-wrapper, .collection-menu-btn')) {
+            if (e.target.closest('.collection-menu-wrapper, .collection-menu-btn, .dropdown-menu, .dropdown-trigger')) {
+                return;
+            }
+
+            const exclude = this.excludeSelector || (
+                this.itemSelector.includes('collection-card')
+                    ? 'a, button, input, select, textarea, .dropdown-trigger'
+                    : null
+            );
+            if (exclude && e.target.closest(exclude)) {
                 return;
             }
 
@@ -112,7 +128,7 @@
             
             // Calculate initial index, excluding ungrouped group for groups
             const allItems = this.getItems();
-            if (this.itemSelector === '.collection-group') {
+            if (this.itemSelector.includes('.collection-group')) {
                 // For groups, count only non-ungrouped groups
                 let index = 0;
                 for (let i = 0; i < allItems.length; i++) {
@@ -183,13 +199,15 @@
                 
                 if (result && result.item !== this.draggedItem && result.item !== this.placeholder) {
                     // Check if we're hovering above the first item (for top insertion)
-                    if (!this.onCrossContainerMove) {
+                    if (!this.onCrossContainerMove && this.itemSelector.includes('.collection-group')) {
                         // For groups, check if hovering above first reorderable item
-                        const items = this.getItems().filter(item => 
-                            item !== this.draggedItem && 
-                            item !== this.placeholder &&
-                            (this.itemSelector !== '.collection-group' || (item.dataset?.groupId && item.dataset.groupId !== 'ungrouped'))
-                        );
+                        const items = this.getItems().filter(item => {
+                            if (item === this.draggedItem || item === this.placeholder) {
+                                return false;
+                            }
+                            const groupId = item.dataset?.groupId;
+                            return groupId && groupId !== 'ungrouped';
+                        });
                         const firstItem = items[0];
                         
                         if (firstItem === result.item) {
@@ -362,7 +380,7 @@
                     }
                     if (node.nodeType === 1 && node.matches && node.matches(this.itemSelector) && node !== this.draggedItem) {
                         // For groups, exclude ungrouped group
-                        if (this.itemSelector === '.collection-group') {
+                        if (this.itemSelector.includes('.collection-group')) {
                             const groupId = node.dataset?.groupId;
                             if (groupId && groupId !== 'ungrouped') {
                                 placeholderIndex++;
@@ -381,7 +399,7 @@
                     while (checkNode) {
                         if (checkNode.nodeType === 1 && checkNode.matches && checkNode.matches(this.itemSelector) && checkNode !== this.draggedItem) {
                             // For groups, exclude ungrouped group
-                            if (this.itemSelector === '.collection-group') {
+                            if (this.itemSelector.includes('.collection-group')) {
                                 const groupId = checkNode.dataset?.groupId;
                                 if (groupId && groupId !== 'ungrouped') {
                                     // Found a reorderable item after placeholder - index should be 0 (before this item)
@@ -478,7 +496,7 @@
             );
             
             // For groups, exclude ungrouped group from first item detection
-            if (this.itemSelector === '.collection-group') {
+            if (this.itemSelector.includes('.collection-group')) {
                 items = items.filter(item => {
                     const groupId = item.dataset?.groupId;
                     return groupId && groupId !== 'ungrouped';
@@ -554,7 +572,7 @@
             while (node) {
                 if (node.nodeType === 1 && node.matches && node.matches(this.itemSelector)) {
                     // For groups, skip ungrouped group
-                    if (this.itemSelector === '.collection-group') {
+                    if (this.itemSelector.includes('.collection-group')) {
                         const groupId = node.dataset?.groupId;
                         if (groupId && groupId !== 'ungrouped' && node !== this.draggedItem) {
                             firstReorderableItem = node;
@@ -763,7 +781,7 @@
             
             // Remove mousedown listener
             if (this.boundMouseDown && this.container) {
-                this.container.removeEventListener('mousedown', this.boundMouseDown);
+                this.container.removeEventListener('mousedown', this.boundMouseDown, this.useCapture);
             }
             
             // Remove global listeners
@@ -836,7 +854,9 @@
                 const sorter = new MouseDragDrop({
                     container: container,
                     itemSelector: this.collectionSelector,
-                    handleSelector: '.collection-header',
+                    handleSelector: null,
+                    excludeSelector: 'a, button, input, select, textarea, .dropdown-trigger, .collection-menu-wrapper',
+                    useCapture: true,
                     allContainers: containers, // Enable cross-container moves
                     onReorder: (fromIndex, toIndex) => {
                         const groupId = container.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
