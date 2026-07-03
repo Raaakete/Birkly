@@ -73,6 +73,13 @@ if (strpos($groups, 'MouseDragDropManager') === false) {
     echo "PASS: content-groups uses MouseDragDropManager\n";
 }
 
+if (strpos($nested, "handleSelector: '.collection-header'") !== false) {
+    echo "PASS: collection drag uses collection-header handle\n";
+} else {
+    echo "FAIL: collection drag handle selector\n";
+    $failures++;
+}
+
 $contentHtml = file_get_contents($files['content.html']);
 if (strpos($contentHtml, 'mouse-drag-drop.js') === false) {
     echo "FAIL: content page loads mouse-drag-drop.js\n";
