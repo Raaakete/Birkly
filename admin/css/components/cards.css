@@ -94,10 +94,22 @@ a.card:hover {
   position: relative;
 }
 
+.collection-card .collection-header {
+  cursor: grab;
+  user-select: none;
+}
+
+.collection-card .collection-header .collection-menu-wrapper,
+.collection-card .collection-header .collection-title-link {
+  cursor: pointer;
+  user-select: auto;
+}
+
 .collection-card .drag-handle {
   pointer-events: auto;
   cursor: grab;
   z-index: 5;
+  flex-shrink: 0;
 }
 
 .collection-card .collection-menu-wrapper {
@@ -107,8 +119,11 @@ a.card:hover {
 
 /* Collection card dragging state */
 .collection-card.dragging {
-  opacity: 0.5 !important;
+  opacity: 0.6 !important;
   cursor: grabbing !important;
+  transform: none !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+  z-index: 10000 !important;
   pointer-events: none;
 }
 

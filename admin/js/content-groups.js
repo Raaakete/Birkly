@@ -437,7 +437,7 @@
     
     function createCollectionCard(collection, groupId) {
         const card = document.createElement('div');
-        card.className = 'card draggable collection-card';
+        card.className = 'card collection-card';
         card.dataset.collectionSlug = collection.slug;
         card.dataset.groupId = groupId || 'ungrouped';
         
