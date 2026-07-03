@@ -41,6 +41,15 @@ function birkly_ai_action_permission_map(): array
         // Plugins read
         'list_plugins' => ['manage_plugins', 'read'],
 
+        // Sub-entry reads
+        'list_sub_entries' => ['read'],
+        'read_sub_entry' => ['read'],
+
+        // Sub-entry writes
+        'create_sub_entry' => ['write', 'manage_content'],
+        'update_sub_entry' => ['write', 'manage_content'],
+        'delete_sub_entry' => ['delete', 'manage_content'],
+
         // Content writes
         'create_collection' => ['manage_content', 'write'],
         'update_collection' => ['manage_content', 'write'],

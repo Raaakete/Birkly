@@ -360,6 +360,15 @@ function executeAiAction($approval) {
             
         case 'deactivate_plugin':
             return executeDeactivatePlugin($actionData, $aiUser, $originalUserId);
+
+        case 'create_sub_entry':
+            return executeCreateSubEntry($actionData, $aiUser, $originalUserId);
+
+        case 'update_sub_entry':
+            return executeUpdateSubEntry($actionData, $aiUser, $originalUserId);
+
+        case 'delete_sub_entry':
+            return executeDeleteSubEntry($actionData, $aiUser, $originalUserId);
             
         default:
             return ['success' => false, 'message' => 'Unknown action type: ' . $actionType];
@@ -1235,6 +1244,75 @@ function executeDeactivatePlugin($actionData, $aiUser = null, $originalUserId = 
     
     $result = $settingsStorage->write('plugins.json', $plugins);
     return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to deactivate plugin'];
+}
+
+// Execute create sub-entry
+function executeCreateSubEntry($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/sub_entries.php';
+
+    $parentCollection = $actionData['collection'] ?? '';
+    $parentEntryId = $actionData['entry_id'] ?? '';
+    $subCollection = $actionData['sub_collection'] ?? '';
+    $data = $actionData['data'] ?? $actionData;
+
+    // Remove routing keys from data payload when merged at top level
+    foreach (['collection', 'entry_id', 'sub_collection'] as $k) {
+        unset($data[$k]);
+    }
+
+    if (empty($parentCollection) || empty($parentEntryId) || empty($subCollection)) {
+        return ['success' => false, 'message' => 'collection, entry_id, and sub_collection are required'];
+    }
+
+    $result = createSubEntry($parentCollection, $parentEntryId, $subCollection, $data);
+    if (!$result) {
+        return ['success' => false, 'message' => 'Failed to create sub-entry'];
+    }
+
+    return ['success' => true, 'data' => ['sub_entry' => $result]];
+}
+
+// Execute update sub-entry
+function executeUpdateSubEntry($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/sub_entries.php';
+
+    $parentCollection = $actionData['collection'] ?? '';
+    $parentEntryId = $actionData['entry_id'] ?? '';
+    $subCollection = $actionData['sub_collection'] ?? '';
+    $subEntryId = $actionData['sub_entry_id'] ?? '';
+    $data = $actionData['data'] ?? [];
+
+    if (empty($parentCollection) || empty($parentEntryId) || empty($subCollection) || empty($subEntryId)) {
+        return ['success' => false, 'message' => 'collection, entry_id, sub_collection, and sub_entry_id are required'];
+    }
+
+    $result = updateSubEntry($parentCollection, $parentEntryId, $subCollection, $subEntryId, $data);
+    if (!$result) {
+        return ['success' => false, 'message' => 'Failed to update sub-entry (not found or write error)'];
+    }
+
+    return ['success' => true, 'data' => ['sub_entry' => $result]];
+}
+
+// Execute delete sub-entry
+function executeDeleteSubEntry($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/sub_entries.php';
+
+    $parentCollection = $actionData['collection'] ?? '';
+    $parentEntryId = $actionData['entry_id'] ?? '';
+    $subCollection = $actionData['sub_collection'] ?? '';
+    $subEntryId = $actionData['sub_entry_id'] ?? '';
+
+    if (empty($parentCollection) || empty($parentEntryId) || empty($subCollection) || empty($subEntryId)) {
+        return ['success' => false, 'message' => 'collection, entry_id, sub_collection, and sub_entry_id are required'];
+    }
+
+    $result = deleteSubEntry($parentCollection, $parentEntryId, $subCollection, $subEntryId);
+    if (!$result) {
+        return ['success' => false, 'message' => 'Failed to delete sub-entry (not found or write error)'];
+    }
+
+    return ['success' => true, 'data' => []];
 }
 
 if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
