@@ -59,6 +59,10 @@
     
     // Load external CSS for preview if available
     loadEditorCSS(editor);
+
+    if (htmlSource && window.ContentEditorHtmlSource) {
+      window.ContentEditorHtmlSource.bind(htmlSource, wrapper);
+    }
     
     // Hidden input is the source of truth for stored HTML (avoids escaped markup in the DOM)
     if (hiddenInput && hiddenInput.value) {

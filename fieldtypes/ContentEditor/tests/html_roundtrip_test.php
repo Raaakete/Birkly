@@ -21,6 +21,8 @@ $html = $editor->render();
 $checks = [
     'content-editor-mode-tab' => 'mode tabs in render',
     'content-editor-html-source' => 'HTML source panel in render',
+    'content-editor-html-panel' => 'HTML source panel wrapper',
+    'content-editor-html-gutter' => 'HTML line number gutter',
     'content-editor-area' => 'visual editor area in render',
 ];
 
