@@ -1,46 +1,42 @@
 /**
  * Onboarding JavaScript
  * Handles the onboarding wizard flow
+ *
+ * Flow: (0: first-user?) → 1: welcome → 2: site-info → 3: demo-content → 4: connect-ai (optional) → complete
  */
 
 const onboarding = {
     currentStep: 0,
-    maxSteps: 3, // Reduced from 4 since completion is now a modal
+    maxSteps: 4, // steps 1-4 (AI step is visible but skippable)
     needsFirstUser: false,
     demoContentChoice: null, // 'keep' or 'delete'
     siteInfo: {},
-    demoWebsiteUrl: null, // Will be set when demo content is kept
+    demoWebsiteUrl: null,
     
     init() {
-        // Check if we're on the onboarding page
         if (!document.querySelector('.onboarding-page')) {
             return;
         }
         
-        // Check if we need to create first user
         this.checkFirstUser();
-        
-        // Setup form handlers
         this.setupForms();
     },
     
     async checkFirstUser() {
         try {
-            const response = await fetch('/api/onboarding.php?action=status');
+            const response = await fetch(Birkly.url('/api/onboarding.php?action=status'));
             const data = await response.json();
             
             if (data.status === 'ok' && data.data.needs_first_user) {
                 this.needsFirstUser = true;
-                this.maxSteps = 4; // Add one step for first user (0 + 3 normal steps)
                 this.currentStep = 0;
-                this.showStep(0); // Show first user step
+                this.showStep(0);
             } else {
                 this.currentStep = 1;
-                this.showStep(1); // Show welcome step
+                this.showStep(1);
             }
         } catch (error) {
             console.error('Error checking first user:', error);
-            // Default to step 1 if check fails
             this.currentStep = 1;
             this.showStep(1);
         }
@@ -55,12 +51,10 @@ const onboarding = {
                 this.createFirstUser();
             });
             
-            // Real-time validation for first user form
             this.setupValidation('first-user-name', 'form-group-name', (value) => value.length >= 2);
             this.setupValidation('first-user-email', 'form-group-email', (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
             this.setupValidation('first-user-password', 'form-group-password', (value) => value.length >= 8);
             
-            // Password confirmation validation
             const passwordInput = document.getElementById('first-user-password');
             const passwordConfirmInput = document.getElementById('first-user-password-confirm');
             if (passwordInput && passwordConfirmInput) {
@@ -94,24 +88,31 @@ const onboarding = {
                 this.saveSiteInfo();
             });
             
-            // Real-time validation for site info form
             this.setupValidation('project-name', 'form-group-project-name', (value) => value.length >= 2);
         }
         
-        // Logo preview
+        // Logo upload — click-through on the whole area
+        const logoArea = document.getElementById('logo-upload-area');
         const logoInput = document.getElementById('project-logo');
-        if (logoInput) {
+        if (logoArea && logoInput) {
+            logoArea.addEventListener('click', (e) => {
+                if (e.target !== logoInput) {
+                    logoInput.click();
+                }
+            });
+            
             logoInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
+                        const placeholder = document.getElementById('logo-upload-placeholder');
                         const preview = document.getElementById('logo-preview');
                         const previewImg = document.getElementById('logo-preview-img');
+                        if (placeholder) placeholder.style.display = 'none';
                         if (preview && previewImg) {
                             previewImg.src = event.target.result;
                             preview.style.display = 'block';
-                            preview.style.animation = 'fadeIn 0.3s ease-out';
                         }
                     };
                     reader.readAsDataURL(file);
@@ -120,13 +121,22 @@ const onboarding = {
         }
     },
     
+    removeLogo() {
+        const logoInput = document.getElementById('project-logo');
+        const placeholder = document.getElementById('logo-upload-placeholder');
+        const preview = document.getElementById('logo-preview');
+        if (logoInput) logoInput.value = '';
+        if (placeholder) placeholder.style.display = '';
+        if (preview) preview.style.display = 'none';
+    },
+    
     setupValidation(inputId, formGroupId, validator) {
         const input = document.getElementById(inputId);
         const formGroup = document.getElementById(formGroupId);
         
         if (!input || !formGroup) return;
         
-        input.addEventListener('blur', () => {
+        const validate = () => {
             const value = input.value.trim();
             if (value.length > 0) {
                 if (validator(value)) {
@@ -139,22 +149,10 @@ const onboarding = {
             } else {
                 formGroup.classList.remove('error', 'success');
             }
-        });
+        };
         
-        input.addEventListener('input', () => {
-            const value = input.value.trim();
-            if (value.length > 0) {
-                if (validator(value)) {
-                    formGroup.classList.remove('error');
-                    formGroup.classList.add('success');
-                } else {
-                    formGroup.classList.remove('success');
-                    formGroup.classList.add('error');
-                }
-            } else {
-                formGroup.classList.remove('error', 'success');
-            }
-        });
+        input.addEventListener('blur', validate);
+        input.addEventListener('input', validate);
     },
     
     async createFirstUser() {
@@ -167,53 +165,41 @@ const onboarding = {
         const password = document.getElementById('first-user-password').value;
         const passwordConfirm = document.getElementById('first-user-password-confirm').value;
         
-        // Clear previous errors
         errorDiv.style.display = 'none';
         errorDiv.textContent = '';
         
-        // Validate name
         if (!name || name.length < 2) {
             errorDiv.textContent = 'Name must be at least 2 characters';
             errorDiv.style.display = 'block';
             return;
         }
         
-        // Validate passwords match
         if (password !== passwordConfirm) {
             errorDiv.textContent = 'Passwords do not match';
             errorDiv.style.display = 'block';
             return;
         }
         
-        // Validate password length
         if (password.length < 8) {
             errorDiv.textContent = 'Password must be at least 8 characters';
             errorDiv.style.display = 'block';
             return;
         }
         
-        // Disable submit button and show loading state
         submitBtn.disabled = true;
         submitBtn.classList.add('loading');
         submitBtn.textContent = 'Creating Account...';
         
         try {
-            const response = await fetch('/api/onboarding.php?action=create_first_user', {
+            const response = await fetch(Birkly.url('/api/onboarding.php?action=create_first_user'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: name,
-                    email: email,
-                    password: password
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
             });
             
             const data = await response.json();
             
             if (data.status === 'ok') {
-                // User created and logged in - reload to continue onboarding
                 window.location.reload();
             } else {
                 errorDiv.textContent = data.message || 'Failed to create account';
@@ -235,52 +221,27 @@ const onboarding = {
     showStep(step) {
         this.currentStep = step;
         
-        // Get the step name for the current step
         const stepName = this.getStepName(step);
         const currentStepId = `step-${stepName}`;
         
-        // First, immediately hide all steps that are not the current one
-        // This prevents any race conditions with animations
         document.querySelectorAll('.onboarding-step').forEach(el => {
-            const stepId = el.id;
-            if (stepId !== currentStepId) {
-                // Immediately hide (no animation delay)
+            if (el.id !== currentStepId) {
                 el.style.display = 'none';
                 el.style.animation = '';
             }
         });
         
-        // Show current step with animation
         const currentStepEl = document.getElementById(currentStepId);
         if (currentStepEl) {
-            // Always show the step, even if it was already visible
             currentStepEl.style.display = 'block';
-            // Force reflow to ensure animation works
-            currentStepEl.offsetHeight;
-            // Reset animation and apply fadeIn
+            currentStepEl.offsetHeight; // force reflow
             currentStepEl.style.animation = '';
-            // Use requestAnimationFrame to ensure the display change is applied before animation
             requestAnimationFrame(() => {
-                currentStepEl.style.animation = 'fadeInUp 0.4s ease-out';
+                currentStepEl.style.animation = 'fadeInUp 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
             });
         }
         
-        // Update progress
         this.updateProgress();
-        
-        // Update progress steps
-        document.querySelectorAll('.progress-step').forEach((el, index) => {
-            const stepNumber = this.needsFirstUser ? index : index + 1;
-            if (stepNumber < step) {
-                el.classList.add('completed');
-                el.classList.remove('active');
-            } else if (stepNumber === step) {
-                el.classList.add('active');
-                el.classList.remove('completed');
-            } else {
-                el.classList.remove('active', 'completed');
-            }
-        });
     },
     
     getStepName(step) {
@@ -288,23 +249,37 @@ const onboarding = {
             0: 'first-user',
             1: 'welcome',
             2: 'site-info',
-            3: 'demo-content', // Keep or delete demo content
-            4: 'complete'
+            3: 'demo-content',
+            4: 'connect-ai',
         };
         return steps[step] || 'welcome';
     },
     
     updateProgress() {
-        const progress = (this.currentStep / this.maxSteps) * 100;
-        const progressFill = document.getElementById('progress-fill');
-        if (progressFill) {
-            progressFill.style.width = `${progress}%`;
+        // Progress bar only tracks steps 1-4
+        const visibleSteps = this.maxSteps; // 4
+        const currentVisible = Math.max(0, this.currentStep - (this.needsFirstUser ? 0 : 0));
+        // For step 0 (first-user), hide the progress bar entirely
+        const progressEl = document.getElementById('onboarding-progress');
+        if (progressEl) {
+            progressEl.style.display = (this.currentStep === 0) ? 'none' : '';
         }
+
+        const pct = visibleSteps > 0
+            ? Math.min(100, ((this.currentStep - 1) / (visibleSteps - 1)) * 100)
+            : 0;
+        const fill = document.getElementById('progress-fill');
+        if (fill) fill.style.width = `${Math.max(0, pct)}%`;
+        
+        document.querySelectorAll('.progress-step').forEach(el => {
+            const s = parseInt(el.dataset.step, 10);
+            el.classList.toggle('completed', s < this.currentStep);
+            el.classList.toggle('active', s === this.currentStep);
+        });
     },
     
     nextStep() {
         if (this.currentStep < this.maxSteps) {
-            // No special handling needed - demo content step handles its own logic
             this.showStep(this.currentStep + 1);
             this.updateProgressAPI();
         }
@@ -319,7 +294,7 @@ const onboarding = {
     
     async getCSRFToken() {
         try {
-            const response = await fetch('/api/csrf.php');
+            const response = await fetch(Birkly.url('/api/csrf.php'));
             const data = await response.json();
             if (data.status === 'ok' && data.data && data.data.csrf_token) {
                 return data.data.csrf_token;
@@ -348,7 +323,6 @@ const onboarding = {
         }
         const projectName = document.getElementById('project-name').value.trim();
         
-        // Validate project name
         if (!projectName || projectName.length < 2) {
             const formGroup = document.getElementById('form-group-project-name');
             if (formGroup) {
@@ -364,14 +338,12 @@ const onboarding = {
             project_description: formData.get('project_description')
         };
         
-        // Show loading state
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
             submitBtn.textContent = 'Saving...';
         }
         
-        // Get CSRF token
         const csrfToken = await this.getCSRFToken();
         if (!csrfToken) {
             alert('Failed to get security token. Please refresh the page and try again.');
@@ -379,18 +351,16 @@ const onboarding = {
             return;
         }
         
-        // Handle logo upload if provided
         const logoFile = formData.get('project_logo');
         let logoPath = '';
         
         if (logoFile && logoFile.size > 0) {
-            // Upload logo first
             const logoFormData = new FormData();
             logoFormData.append('file', logoFile);
             logoFormData.append('_csrf', csrfToken);
             
             try {
-                const uploadResponse = await fetch('/api/settings.php?action=upload_logo', {
+                const uploadResponse = await fetch(Birkly.url('/api/settings.php?action=upload_logo'), {
                     method: 'POST',
                     body: logoFormData
                 });
@@ -411,48 +381,31 @@ const onboarding = {
             }
         }
         
-        // Save project info via API
-        const settingsData = {
-            action: 'update',
-            category: 'admin',
-            settings: {
-                project_name: this.siteInfo.project_name,
-                project_description: this.siteInfo.project_description || ''
-            },
-            _csrf: csrfToken
-        };
-        
-        // If logo was uploaded, save it to branding settings
         if (logoPath) {
-            const brandingFormData = new FormData();
-            brandingFormData.append('action', 'update');
-            brandingFormData.append('category', 'branding');
-            brandingFormData.append('logoPath', logoPath);
-            brandingFormData.append('_csrf', csrfToken);
-            
-            // Save branding settings
-            await fetch('/api/settings.php?action=update', {
+            await fetch(Birkly.url('/api/settings.php?action=update'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'update',
                     category: 'branding',
-                    settings: {
-                        logoPath: logoPath
-                    },
+                    settings: { logoPath },
                     _csrf: csrfToken
                 })
             });
         }
         
-        fetch('/api/settings.php?action=update', {
+        fetch(Birkly.url('/api/settings.php?action=update'), {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(settingsData)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'update',
+                category: 'admin',
+                settings: {
+                    project_name: this.siteInfo.project_name,
+                    project_description: this.siteInfo.project_description || ''
+                },
+                _csrf: csrfToken
+            })
         }).then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
@@ -470,51 +423,28 @@ const onboarding = {
     },
     
     async keepDemoContent() {
-        // Remove selected class from all cards
-        document.querySelectorAll('.demo-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-        
-        // Add selected class to keep card
+        document.querySelectorAll('.demo-card').forEach(card => card.classList.remove('selected'));
         event.target.closest('.demo-card').classList.add('selected');
         
-        // Store choice
         this.demoContentChoice = 'keep';
-        
-        // Keeping demo content requires no API call - just update progress and continue
-        // Update progress (no API call needed for "keep")
         await this.updateProgressAPI('demo_content_kept', true);
         
-        // Show continue button and proceed
         const actions = document.getElementById('demo-content-actions');
-        if (actions) {
-            actions.style.display = 'flex';
-        }
+        if (actions) actions.style.display = 'flex';
         
-        // Store demo website URL for later use
         this.demoWebsiteUrl = this.getDemoWebsiteUrl();
         
-        // Auto-continue after a moment
-        setTimeout(() => {
-            this.complete(); // Complete onboarding instead of nextStep
-        }, 300);
+        setTimeout(() => this.nextStep(), 300);
     },
     
     async deleteDemoContent() {
-        // Remove selected class from all cards
-        document.querySelectorAll('.demo-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-        
-        // Add selected class to delete card
+        document.querySelectorAll('.demo-card').forEach(card => card.classList.remove('selected'));
         event.target.closest('.demo-card').classList.add('selected');
         
-        // Confirm deletion
         if (!confirm('Are you sure you want to delete all demo content? This cannot be undone.')) {
             return;
         }
         
-        // Show loading state
         const deleteBtn = event.target.closest('.delete-card')?.querySelector('button');
         if (deleteBtn) {
             deleteBtn.disabled = true;
@@ -522,35 +452,21 @@ const onboarding = {
         }
         
         try {
-            const response = await fetch('/api/demo.php?action=delete', {
+            const response = await fetch(Birkly.url('/api/demo.php?action=delete'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    delete_content: true,
-                    delete_website: true
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ delete_content: true, delete_website: true })
             });
             
             const data = await response.json();
             if (data.status === 'ok') {
-                // Store choice
                 this.demoContentChoice = 'delete';
-                
-                // Update progress
                 await this.updateProgressAPI('demo_content_deleted', true);
                 
-                // Show continue button and proceed
                 const actions = document.getElementById('demo-content-actions');
-                if (actions) {
-                    actions.style.display = 'flex';
-                }
+                if (actions) actions.style.display = 'flex';
                 
-                // Auto-continue after a moment
-                setTimeout(() => {
-                    this.complete(); // Complete onboarding instead of nextStep
-                }, 500);
+                setTimeout(() => this.nextStep(), 500);
             } else {
                 console.error('Failed to delete demo content:', data.message);
                 alert('Failed to delete demo content: ' + (data.message || 'Unknown error'));
@@ -572,16 +488,12 @@ const onboarding = {
     async updateProgressAPI(key, value) {
         try {
             const update = {};
-            if (key && value !== undefined) {
-                update[key] = value;
-            }
+            if (key && value !== undefined) update[key] = value;
             update.step = this.currentStep;
             
-            await fetch('/api/onboarding.php?action=update_progress', {
+            await fetch(Birkly.url('/api/onboarding.php?action=update_progress'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(update)
             });
         } catch (error) {
@@ -589,50 +501,60 @@ const onboarding = {
         }
     },
     
+    /**
+     * Skip the optional AI step and complete onboarding.
+     */
+    skipAI() {
+        this.complete();
+    },
+
+    /**
+     * User clicked "Connect AI" — complete onboarding then navigate to Settings → AI.
+     */
+    async goToAISettings(e) {
+        e.preventDefault();
+        const href = e.currentTarget.getAttribute('href');
+        try {
+            await this._doComplete();
+        } catch (_) {}
+        window.location.href = href || Birkly.url('/admin/index.php?page=settings#ai');
+    },
+    
     async complete() {
         try {
-            // Store demo website URL if demo content was kept
-            const demoWebsiteUrl = this.demoContentChoice === 'keep' ? this.getDemoWebsiteUrl() : null;
-            
-            const response = await fetch('/api/onboarding.php?action=complete', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    demo_website_url: demoWebsiteUrl,
-                    demo_content_choice: this.demoContentChoice
-                })
-            });
-            
-            const data = await response.json();
-            if (data.status === 'ok') {
-                // Redirect to dashboard - the modal will be shown there
-                const params = new URLSearchParams();
-                if (demoWebsiteUrl) {
-                    params.set('demo_website_url', demoWebsiteUrl);
-                }
-                if (this.demoContentChoice) {
-                    params.set('demo_choice', this.demoContentChoice);
-                }
-                const queryString = params.toString();
-                window.location.href = Birkly.url('/admin/index.php?page=dashboard') + (queryString ? '&' + queryString : '');
-            } else {
-                alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
-            }
+            await this._doComplete();
         } catch (error) {
             console.error('Error completing onboarding:', error);
-            // Redirect anyway
             window.location.href = Birkly.url('/admin/index.php?page=dashboard');
         }
     },
+
+    async _doComplete() {
+        const demoWebsiteUrl = this.demoContentChoice === 'keep' ? this.getDemoWebsiteUrl() : null;
+        
+        const response = await fetch(Birkly.url('/api/onboarding.php?action=complete'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                demo_website_url: demoWebsiteUrl,
+                demo_content_choice: this.demoContentChoice
+            })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'ok') {
+            const params = new URLSearchParams();
+            if (demoWebsiteUrl) params.set('demo_website_url', demoWebsiteUrl);
+            if (this.demoContentChoice) params.set('demo_choice', this.demoContentChoice);
+            const qs = params.toString();
+            window.location.href = Birkly.url('/admin/index.php?page=dashboard') + (qs ? '&' + qs : '');
+        } else {
+            alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
+        }
+    },
     
-    /**
-     * Generate demo website URL based on current location
-     */
     getDemoWebsiteUrl() {
         const currentUrl = window.location.origin + window.location.pathname;
-        // Remove /admin/index.php or /admin/ from the path
         const baseUrl = currentUrl.replace(/\/admin\/.*$/, '');
         return baseUrl + '/demo-website/';
     },
@@ -643,29 +565,25 @@ const onboarding = {
         }
         
         try {
-            const response = await fetch('/api/onboarding.php?action=skip', {
+            const response = await fetch(Birkly.url('/api/onboarding.php?action=skip'), {
                 method: 'POST'
             });
             
             const data = await response.json();
             if (data.status === 'ok') {
-                // Redirect to dashboard
                 window.location.href = Birkly.url('/admin/index.php?page=dashboard');
             } else {
                 alert('Failed to skip onboarding: ' + (data.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error skipping onboarding:', error);
-            // Redirect anyway
             window.location.href = Birkly.url('/admin/index.php?page=dashboard');
         }
     }
 };
 
-// Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => onboarding.init());
 } else {
     onboarding.init();
 }
-
