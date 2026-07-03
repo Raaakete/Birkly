@@ -11,6 +11,24 @@ insertTable() {
     if (!editor) return;
 
     window.ContentEditorSelection.save();
+    const selectionSnapshot = window.ContentEditorSelection.cloneSavedData
+      ? window.ContentEditorSelection.cloneSavedData()
+      : (window.ContentEditorSelection.savedSelectionData
+        ? JSON.parse(JSON.stringify(window.ContentEditorSelection.savedSelectionData))
+        : null);
+    const rangeSnapshot = window.ContentEditorSelection.cloneSavedRange
+      ? window.ContentEditorSelection.cloneSavedRange()
+      : (window.ContentEditorSelection.savedRange
+        ? window.ContentEditorSelection.savedRange.cloneRange()
+        : null);
+
+    const restoreInsertSelection = () => {
+      if (window.ContentEditorSelection.restoreFromSnapshot) {
+        window.ContentEditorSelection.restoreFromSnapshot(editor, selectionSnapshot, rangeSnapshot);
+      } else {
+        window.ContentEditorSelection.restore(editor);
+      }
+    };
 
     const showDialog = (onConfirm) => {
       const dialog = this.createTableDialog({
@@ -35,14 +53,14 @@ insertTable() {
 
     if (window.ContentEditorBlockManager) {
       showDialog(({ rows, cols }) => {
-        window.ContentEditorSelection.restore(editor);
+        restoreInsertSelection();
         window.ContentEditorBlockManager.insertTable(editor, rows, cols);
       });
       return;
     }
 
     showDialog(({ rows, cols }) => {
-      window.ContentEditorSelection.restore(editor);
+      restoreInsertSelection();
       this.createTableElement(rows, cols);
     });
   },
