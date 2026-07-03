@@ -106,6 +106,14 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.2-platform-hardening-plan.md` · **Handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
 
+**2026-07-03 — Phase 5.5 approved** (Keven)
+
+**Priorities:** **ContentEditor layout studio** — visual table/grid editing (resize, gap, cell styling, grid span/flow) · toolbar reliability · `commands.js` layout extraction.
+
+**Human decisions (locked):** Fluid inline grid tracks (no `@media` in entry HTML) · cell merge = M2 stretch · autonomous M0→M5 · notify once at P5.5-M5-T5.
+
+**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md` · **Handoff:** `docs/reviews/P5.5-lead-engineer-handoff.md`
+
 ---
 
 ## Vision
@@ -1687,32 +1695,32 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
-## Phase 5.5 — ContentEditor layout power features (proposed)
+## Phase 5.5 — ContentEditor layout power features
 
-**Status:** Proposed — **awaiting human approval** before M1+ execution (M0 hotfixes may ship independently)
+**Status:** Approved (2026-07-03) — autonomous execution in progress
 
-**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md`
+**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md` · **Handoff:** `docs/reviews/P5.5-lead-engineer-handoff.md`
 
-**Priorities:** Fix toolbar dropdown clash with admin `dropdown.js` · insert tables/grids at caret · visual in-editor layout studio for **tables** and **CSS grids** (resize, gap, cell styling, grid span/flow).
+**Priorities:** Visual in-editor layout studio for **tables** and **CSS grids** (resize, gap, cell styling, grid span/flow) · complete M0 qa · extract layout commands from `commands.js` monolith.
 
 **Scope (Birkly `fieldtypes/ContentEditor/` only):**
 
 | Milestone | Focus |
 |-----------|--------|
-| **P5.5-M0** | Dropdown + caret-insert hotfixes (toolbar reliability) |
+| **P5.5-M0** | Dropdown + caret-insert hotfixes (mostly done; qa smoke open) |
 | **P5.5-M1** | Shared layout-block architecture (inspector, resize controller) |
 | **P5.5-M2** | Table visual studio (column/row resize, cell styles) |
 | **P5.5-M3** | Grid visual studio (track resize, span, auto-flow, gap) |
 | **P5.5-M4** | `commands.js` layout module extraction (Phase 4 debt) |
 | **P5.5-M5** | Docs, AI knowledge, walkthrough, closure |
 
-**Human decisions needed:**
+**Human decisions (locked):**
 
-| Decision | Options |
-|----------|---------|
-| Grid responsive export | `@media` in stored HTML vs single-column inline fallback |
-| Cell merge (tables) | M2 stretch goal vs defer to Phase 6 |
-| Execution | Approve full P5.5 block for autonomous lead run |
+| Decision | Choice |
+|----------|--------|
+| Grid responsive export | Fluid inline tracks; no `@media` in entry HTML |
+| Cell merge (tables) | M2 stretch; defer to Phase 6 if slips |
+| Execution | Autonomous M0→M5; notify human once at P5.5-M5-T5 |
 
 ---
 
