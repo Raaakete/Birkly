@@ -128,4 +128,14 @@ test_assert('JS has moveAction (reorder)', strpos($jsSource, 'function moveActio
 test_assert('JS has applyTemplate (empty state)', strpos($jsSource, 'applyTemplate') !== false);
 test_assert('JS has checkQueueHealth (health hint)', strpos($jsSource, 'checkQueueHealth') !== false);
 
+require_once $root . '/plugins/automation/cache.php';
+
+$emptyKey = automation_list_cache_key([]);
+test_assert('automation list cache key uses filter hash', $emptyKey === AUTOMATION_LIST_CACHE_KEY . '_' . md5(json_encode([])));
+
+$cacheSource = file_get_contents($root . '/plugins/automation/cache.php');
+test_assert('invalidate clears hashed list cache key', strpos($cacheSource, 'automation_list_cache_key([])') !== false);
+test_assert('invalidate tracks list cache index', strpos($cacheSource, 'AUTOMATION_LIST_CACHE_INDEX_KEY') !== false);
+test_assert('cache_automation_list uses shared key helper', strpos($cacheSource, 'automation_list_cache_key($filters)') !== false);
+
 exit(test_finish('automation_plugin_test'));
