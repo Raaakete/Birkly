@@ -114,6 +114,7 @@ function birkly_mcp_handle_resources_list(): array
             ['uri' => 'birkly://docs/admin', 'name' => 'Admin', 'description' => 'Admin templating and platform overview', 'mimeType' => 'text/markdown'],
             ['uri' => 'birkly://docs/plugins', 'name' => 'Plugins', 'description' => 'Plugin architecture and client embed', 'mimeType' => 'text/markdown'],
             ['uri' => 'birkly://docs/ai', 'name' => 'AI & MCP', 'description' => 'BYOAI and MCP architecture', 'mimeType' => 'text/markdown'],
+            ['uri' => 'birkly://docs/sub-collections', 'name' => 'Sub-collections', 'description' => 'Sub-collections and sub-entries: schema, disk layout, admin URLs, MCP tools', 'mimeType' => 'text/markdown'],
         ],
     ];
 }
@@ -141,6 +142,7 @@ function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
         'birkly://docs/admin' => 'admin',
         'birkly://docs/plugins' => 'plugins',
         'birkly://docs/ai' => 'ai',
+        'birkly://docs/sub-collections' => 'sub-collections',
     ];
     if (isset($topicMap[$uri])) {
         $topic = readBirklyDocsTopic($topicMap[$uri]);

@@ -225,6 +225,18 @@ function executeReadAction($actionData, $aiUser) {
             $collection['fields'] = $schema['fields'] ?? $collection['fields'] ?? [];
         }
 
+        // Surface sub_collections summary (slug + name + entry_method only)
+        if (!empty($collection['sub_collections']) && is_array($collection['sub_collections'])) {
+            $collection['sub_collections'] = array_map(function (array $sc): array {
+                return [
+                    'slug' => $sc['slug'] ?? '',
+                    'name' => $sc['name'] ?? '',
+                    'entry_method' => $sc['entry_method'] ?? 'admin_only',
+                    'field_count' => count($sc['fields'] ?? []),
+                ];
+            }, $collection['sub_collections']);
+        }
+
         return ['success' => true, 'data' => ['collection' => $collection]];
         
     } elseif ($actionType === 'read_media') {
@@ -362,8 +374,51 @@ function executeReadAction($actionData, $aiUser) {
         }
         
         return ['success' => true, 'data' => ['plugins' => $plugins, 'count' => count($plugins)]];
+
+    } elseif ($actionType === 'list_sub_entries') {
+        $parentCollection = $actionPayload['collection'] ?? '';
+        $parentEntryId = $actionPayload['entry_id'] ?? '';
+        $subCollection = $actionPayload['sub_collection'] ?? '';
+        $limit = (int) ($actionPayload['limit'] ?? 100);
+
+        if (empty($parentCollection) || empty($parentEntryId) || empty($subCollection)) {
+            return ['success' => false, 'message' => 'collection, entry_id, and sub_collection are required'];
+        }
+
+        require_once $birklyRoot . '/core/sub_entries.php';
+        $entries = getSubEntries($parentCollection, $parentEntryId, $subCollection, [], ['limit' => $limit]);
+
+        return [
+            'success' => true,
+            'data' => [
+                'sub_entries' => $entries,
+                'count' => count($entries),
+                'collection' => $parentCollection,
+                'entry_id' => $parentEntryId,
+                'sub_collection' => $subCollection,
+            ],
+        ];
+
+    } elseif ($actionType === 'read_sub_entry') {
+        $parentCollection = $actionPayload['collection'] ?? '';
+        $parentEntryId = $actionPayload['entry_id'] ?? '';
+        $subCollection = $actionPayload['sub_collection'] ?? '';
+        $subEntryId = $actionPayload['sub_entry_id'] ?? '';
+
+        if (empty($parentCollection) || empty($parentEntryId) || empty($subCollection) || empty($subEntryId)) {
+            return ['success' => false, 'message' => 'collection, entry_id, sub_collection, and sub_entry_id are required'];
+        }
+
+        require_once $birklyRoot . '/core/sub_entries.php';
+        $subEntry = getSubEntry($parentCollection, $parentEntryId, $subCollection, $subEntryId);
+
+        if (!$subEntry) {
+            return ['success' => false, 'message' => 'Sub-entry not found'];
+        }
+
+        return ['success' => true, 'data' => ['sub_entry' => $subEntry]];
     }
-    
+
     return ['success' => false, 'message' => 'Unknown read action type: ' . $actionType];
 }
 
