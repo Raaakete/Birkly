@@ -81,6 +81,10 @@
   pointer-events: none;
 }
 
+.content-editor-preview-badge[hidden] {
+  display: none !important;
+}
+
 .content-editor-preview-badge {
   display: inline-flex;
   align-items: center;

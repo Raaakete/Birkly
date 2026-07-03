@@ -27,9 +27,96 @@ window.ContentEditorEventManager = {
   },
 
   /**
+   * Persist current editor selection on a dropdown for later restore.
+   */
+  saveSelectionToDropdown(dropdown, editor) {
+    if (!window.ContentEditorSelection) return;
+    window.ContentEditorSelection.save();
+    if (window.ContentEditorSelection.savedRange) {
+      dropdown._savedSelection = window.ContentEditorSelection.savedRange.cloneRange();
+    }
+    if (window.ContentEditorSelection.savedSelectionData) {
+      dropdown._savedSelectionData = window.ContentEditorSelection.cloneSavedData
+        ? window.ContentEditorSelection.cloneSavedData()
+        : JSON.parse(JSON.stringify(window.ContentEditorSelection.savedSelectionData));
+    }
+    if (editor) {
+      dropdown._savedEditor = editor;
+    }
+  },
+
+  /**
+   * Restore selection saved on a dropdown or from the global selection manager.
+   */
+  restoreSelectionForEditor(editor, dropdown = null) {
+    if (!window.ContentEditorSelection) return false;
+    const targetEditor = editor || dropdown?._savedEditor || this.editor;
+
+    if (dropdown && dropdown._savedSelectionData && targetEditor) {
+      window.ContentEditorSelection.savedSelectionData = dropdown._savedSelectionData;
+      window.ContentEditorSelection.savedEditorRoot = targetEditor;
+      if (window.ContentEditorSelection.restore(targetEditor)) {
+        return true;
+      }
+    }
+
+    if (dropdown && dropdown._savedSelection) {
+      try {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(dropdown._savedSelection.cloneRange());
+        return true;
+      } catch (e) {
+        // Fall through
+      }
+    }
+
+    return window.ContentEditorSelection.restore(targetEditor);
+  },
+
+  closeToolbarDropdowns(toolbar, exceptDropdown = null) {
+    if (!toolbar) return;
+    toolbar.querySelectorAll('.toolbar-dropdown.active').forEach((dropdown) => {
+      if (dropdown === exceptDropdown) return;
+      dropdown.classList.remove('active');
+      dropdown._isLivePreviewActive = false;
+      const menu = dropdown.querySelector('.dropdown-menu');
+      if (menu) {
+        menu.style.removeProperty('display');
+      }
+    });
+  },
+
+  /**
    * Attach toolbar event listeners
    */
   attachToolbarEvents() {
+    // Capture selection before toolbar buttons steal focus (mousedown fires before blur)
+    if (!window._contentEditorToolbarMousedownHandlerAttached) {
+      window._contentEditorToolbarMousedownHandlerAttached = true;
+      document.addEventListener('mousedown', (e) => {
+        const toolbar = e.target.closest('.content-editor-toolbar');
+        if (!toolbar) return;
+        if (e.target.closest('.color-picker-menu') ||
+            e.target.closest('.color-picker-content') ||
+            e.target.closest('.color-hex-input') ||
+            e.target.closest('.color-picker-btn') ||
+            e.target.closest('.color-wheel') ||
+            e.target.closest('.color-brightness')) {
+          return;
+        }
+
+        const editorInfo = window.ContentEditorEventManager.getEditorFromEvent(e);
+        if (editorInfo && editorInfo.editor && window.ContentEditorSelection) {
+          window.ContentEditorSelection.save();
+          const dropdown = e.target.closest('.toolbar-dropdown');
+          if (dropdown) {
+            window.ContentEditorEventManager.saveSelectionToDropdown(dropdown, editorInfo.editor);
+          }
+        }
+      }, true);
+    }
+
     // Use event delegation at document level to handle clicks from all toolbars (inline and fullscreen)
     // Use a flag to prevent multiple listeners
     if (!window._contentEditorToolbarClickHandlerAttached) {
@@ -216,13 +303,13 @@ window.ContentEditorEventManager = {
     if (dropdownItem) {
       e.preventDefault();
       e.stopPropagation();
-      
-      // Save selection before toolbar interaction
-      window.ContentEditorSelection.save();
-      
+
+      const dropdown = dropdownItem.closest('.toolbar-dropdown');
+      this.restoreSelectionForEditor(editor, dropdown);
+
       const command = dropdownItem.dataset.command;
       const value = dropdownItem.dataset.value;
-      
+
       if (command === 'formatBlock' && value) {
         // Format block command - ensure we have a valid value
         window.ContentEditorCommandRegistry.execute('formatBlock', value);
@@ -237,6 +324,7 @@ window.ContentEditorEventManager = {
         }, 10);
       } else if (command && command.startsWith('justify')) {
         // Alignment commands
+        this.restoreSelectionForEditor(editor, dropdown);
         window.ContentEditorCommandRegistry.execute(command, value);
         setTimeout(() => {
           if (window.ContentEditorToolbar) {
@@ -248,17 +336,16 @@ window.ContentEditorEventManager = {
         }, 10);
       } else if (command && (command === 'insertVideo' || command === 'insertAudio' || command === 'insertMaps' || command === 'insertLinkPreview' || command === 'insertIframe' || command === 'insertCustomEmbed')) {
         // Media embed commands
+        this.restoreSelectionForEditor(editor, dropdown);
         window.ContentEditorCommandRegistry.execute(command, value);
         // Close dropdown after command
-        const dropdown = dropdownItem.closest('.toolbar-dropdown');
         if (dropdown) {
           dropdown.classList.remove('active');
         }
         return;
       }
-      
+
       // Close dropdown
-      const dropdown = dropdownItem.closest('.toolbar-dropdown');
       if (dropdown) {
         dropdown.classList.remove('active');
         dropdown._isLivePreviewActive = false;
@@ -290,40 +377,33 @@ window.ContentEditorEventManager = {
       return;
     }
     
-    // Save selection before toolbar interaction
+    // Save selection before toolbar interaction (mousedown capture may have already saved)
     window.ContentEditorSelection.save();
-    
+
     if (command === 'heading' || command === 'align' || command === 'textColor' || command === 'insertMedia') {
       // Dropdown toggle buttons - just toggle the dropdown
       const dropdown = btn.closest('.toolbar-dropdown');
       if (dropdown) {
         const isOpening = !dropdown.classList.contains('active');
-        
-        // For color picker, always save selection before any interaction
-        if (command === 'textColor') {
-          // Force save selection immediately
-          window.ContentEditorSelection.save();
-          // Also store it on the dropdown for later use (both range and serialized data)
-          if (window.ContentEditorSelection.savedRange) {
-            dropdown._savedSelection = window.ContentEditorSelection.savedRange.cloneRange();
-          }
-          if (window.ContentEditorSelection.savedSelectionData) {
-            dropdown._savedSelectionData = JSON.parse(JSON.stringify(window.ContentEditorSelection.savedSelectionData));
-          }
+
+        this.saveSelectionToDropdown(dropdown, editor);
+
+        if (isOpening) {
+          this.closeToolbarDropdowns(toolbar, dropdown);
         }
-        
+
         dropdown.classList.toggle('active');
 
         const menu = dropdown.querySelector('.dropdown-menu');
         if (menu) {
           menu.style.removeProperty('display');
         }
-        
+
         // Initialize color picker if it's the textColor dropdown
         if (command === 'textColor' && dropdown.querySelector('.color-wheel')) {
           // Small delay to ensure dropdown is visible before drawing canvas
           setTimeout(() => {
-            this.initColorPicker(dropdown);
+            this.initColorPicker(dropdown, editor);
             // Update colors from current selection when opening
             if (isOpening) {
               this.updateColorPickerFromSelection(dropdown);
@@ -617,7 +697,7 @@ window.ContentEditorEventManager = {
   /**
    * Initialize color picker
    */
-  initColorPicker(dropdown) {
+  initColorPicker(dropdown, editorOverride = null) {
     // Check if already initialized to avoid duplicate listeners
     if (dropdown._colorPickerInitialized) {
       return;
@@ -649,7 +729,7 @@ window.ContentEditorEventManager = {
     dropdown._bgColorState = { hue: 200, saturation: 0.3, brightness: 0.5 };
     
     // Store reference to editor for live preview
-    const editor = this.editor;
+    const editor = editorOverride || dropdown._savedEditor || this.editor;
     let livePreviewTimeout = null;
     const isLivePreviewActive = () => dropdown._isLivePreviewActive || false;
     
@@ -667,7 +747,7 @@ window.ContentEditorEventManager = {
         clearTimeout(livePreviewTimeout);
         livePreviewTimeout = setTimeout(() => {
           if (window.ContentEditorCommands && window.ContentEditorSelection) {
-            window.ContentEditorSelection.restore();
+            window.ContentEditorSelection.restore(editor);
             window.ContentEditorCommands.applyTextColor(hex);
           }
         }, 50);
@@ -705,7 +785,7 @@ window.ContentEditorEventManager = {
         clearTimeout(livePreviewTimeout);
         livePreviewTimeout = setTimeout(() => {
           if (window.ContentEditorCommands && window.ContentEditorSelection) {
-            window.ContentEditorSelection.restore();
+            window.ContentEditorSelection.restore(editor);
             window.ContentEditorCommands.applyBgColor(hex);
           }
         }, 50);
@@ -1121,58 +1201,10 @@ window.ContentEditorEventManager = {
         // Disable live preview before applying (final apply)
         dropdown._isLivePreviewActive = false;
         
-        // Try to restore selection - use multiple fallback strategies
-        let selectionRestored = false;
-        
-        // Strategy 1: Try to restore from dropdown's serialized data
-        if (dropdown._savedSelectionData && this.editor) {
-          try {
-            const startNode = window.ContentEditorSelection.getNodeFromPath(this.editor, dropdown._savedSelectionData.startPath);
-            const endNode = window.ContentEditorSelection.getNodeFromPath(this.editor, dropdown._savedSelectionData.endPath);
-            
-            if (startNode && endNode) {
-              const range = document.createRange();
-              const startOffset = Math.min(dropdown._savedSelectionData.startOffset, startNode.textContent ? startNode.textContent.length : 0);
-              const endOffset = Math.min(dropdown._savedSelectionData.endOffset, endNode.textContent ? endNode.textContent.length : 0);
-              range.setStart(startNode, startOffset);
-              range.setEnd(endNode, endOffset);
-              
-              const selection = window.getSelection();
-              selection.removeAllRanges();
-              selection.addRange(range);
-              selectionRestored = true;
-            }
-          } catch (err) {
-            console.warn('Failed to restore from serialized data:', err);
-          }
-        }
-        
-        // Strategy 2: Try to restore from dropdown's saved range
-        if (!selectionRestored && dropdown._savedSelection) {
-          try {
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(dropdown._savedSelection.cloneRange());
-            selectionRestored = true;
-          } catch (err) {
-            console.warn('Failed to restore selection from dropdown range:', err);
-          }
-        }
-        
-        // Strategy 3: Try to restore from global saved selection
-        if (!selectionRestored) {
-          selectionRestored = window.ContentEditorSelection.restore(this.editor);
-        }
-        
-        // Strategy 4: Last resort - try to get current selection
-        if (!selectionRestored) {
-          const selection = window.getSelection();
-          if (selection.rangeCount === 0 || selection.isCollapsed) {
-            // No valid selection - try to find the last saved selection in the editor
-            console.warn('No selection available to apply color to');
-          }
-        }
-        
+        // Restore selection before applying colors
+        const applyEditor = dropdown._savedEditor || this.editor;
+        this.restoreSelectionForEditor(applyEditor, dropdown);
+
         // Get colors from state (more reliable than hex input)
         let textColor = '';
         let bgColor = '';
@@ -1232,7 +1264,7 @@ window.ContentEditorEventManager = {
         // Only apply if colors are valid and different from defaults
         let applied = false;
         
-        if (textColor && /^#[0-9A-Fa-f]{6}$/.test(textColor) && textColor !== '#000000') {
+        if (textColor && /^#[0-9A-Fa-f]{6}$/.test(textColor)) {
           try {
             window.ContentEditorCommands.applyTextColor(textColor);
             applied = true;

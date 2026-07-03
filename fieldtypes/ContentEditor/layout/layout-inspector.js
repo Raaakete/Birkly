@@ -15,6 +15,7 @@ window.ContentEditorLayoutInspector = {
     const panel = document.createElement('div');
     panel.className = 'content-editor-layout-inspector';
     panel.setAttribute('data-ce-inspector', 'true');
+    panel.hidden = true;
     panel.innerHTML = `
       <div class="content-editor-layout-inspector-header">
         <strong class="content-editor-layout-inspector-title">Layout</strong>

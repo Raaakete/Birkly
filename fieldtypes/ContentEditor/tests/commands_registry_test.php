@@ -54,7 +54,7 @@ if ($failures === 0) {
 }
 
 $registry = file_get_contents(__DIR__ . '/../commands/registry.js');
-if (strpos($registry, 'modularCommands') === false || strpos($registry, 'ContentEditorSelection.save') === false) {
+if (strpos($registry, 'modularCommands') === false || strpos($registry, 'ContentEditorSelection.restore') === false) {
     echo "FAIL: registry wraps selection/history\n";
     $failures++;
 } else {
