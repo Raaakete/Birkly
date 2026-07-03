@@ -108,6 +108,9 @@ window.ContentEditorResizeController = {
   },
 
   ensureColgroup(table) {
+    if (window.ContentEditorTableLayout && window.ContentEditorTableLayout.ensureColgroup) {
+      return window.ContentEditorTableLayout.ensureColgroup(table);
+    }
     let colgroup = table.querySelector('colgroup');
     const firstRow = table.querySelector('tr');
     const colCount = firstRow ? firstRow.cells.length : 0;
