@@ -73,6 +73,11 @@
             let item = e.target.closest(this.itemSelector);
             if (!item || !this.container.contains(item)) return;
             
+            // Ignore menu controls on collection cards
+            if (e.target.closest('.collection-menu-wrapper, .collection-menu-btn')) {
+                return;
+            }
+
             // If handleSelector is specified, only allow drag from handle
             if (this.handleSelector) {
                 const handle = e.target.closest(this.handleSelector);
@@ -831,7 +836,7 @@
                 const sorter = new MouseDragDrop({
                     container: container,
                     itemSelector: this.collectionSelector,
-                    handleSelector: '.drag-handle',
+                    handleSelector: '.collection-header',
                     allContainers: containers, // Enable cross-container moves
                     onReorder: (fromIndex, toIndex) => {
                         const groupId = container.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
