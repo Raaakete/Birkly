@@ -1,67 +1,10 @@
 <?php
 /**
- * Admin content page helpers (P5.4 — no admin_templates.php dependency).
+ * Admin content page helpers — sub-entry counts and full loader.
+ * Minimal/safe loading lives in core/content_page.php.
  */
 
-/**
- * Minimal content page data — no sub_entries.php, no storage factory.
- * Used as fallback when full loader fails on live installs.
- *
- * @return array<string, mixed>
- */
-function birkly_get_content_page_data_minimal(): array
-{
-    $collectionsPath = __DIR__ . '/../content/collections';
-    $collections = [];
-
-    if (is_dir($collectionsPath)) {
-        foreach (glob($collectionsPath . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
-            $collectionName = basename($dir);
-            $collectionFile = $dir . '/collection.json';
-            if (!is_file($collectionFile)) {
-                continue;
-            }
-
-            $collectionData = json_decode((string) file_get_contents($collectionFile), true);
-            if (!is_array($collectionData)) {
-                $collectionData = [];
-            }
-
-            $entriesDir = $dir . '/entries';
-            $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json') ?: []) : 0;
-
-            $collectionId = $collectionData['id'] ?? ('col-' . $collectionName);
-
-            $collections[] = [
-                'id' => $collectionId,
-                'name' => $collectionData['name'] ?? $collectionData['title'] ?? $collectionName,
-                'slug' => $collectionName,
-                'description' => $collectionData['description'] ?? '',
-                'entries_count' => $entriesCount,
-                'sub_entries_count' => 0,
-            ];
-        }
-    }
-
-    $groups = [];
-    $groupsFile = $collectionsPath . '/groups.json';
-    if (is_file($groupsFile)) {
-        $groupsData = json_decode((string) file_get_contents($groupsFile), true);
-        if (is_array($groupsData)) {
-            $groups = $groupsData;
-        }
-    }
-
-    return [
-        'collections' => $collections,
-        'groups' => $groups,
-        'content_bootstrap' => [
-            'collections' => $collections,
-            'groups' => $groups,
-        ],
-        'content_loader' => 'minimal',
-    ];
-}
+require_once __DIR__ . '/../core/content_page.php';
 
 /**
  * Count sub-entries when sub_collections exist (lazy-loads sub_entries.php).
@@ -185,14 +128,41 @@ function birkly_count_sub_entries_recursive(
 }
 
 /**
+ * Count sub-entries for a single entry (entries list badges).
+ */
+function birkly_count_sub_entries_for_entry(string $collectionSlug, string $entryId, array $subCollections): int
+{
+    if ($subCollections === []) {
+        return 0;
+    }
+
+    static $helpersLoaded = false;
+    if (!$helpersLoaded) {
+        require_once __DIR__ . '/../core/sub_entries.php';
+        require_once __DIR__ . '/../core/storage/StorageFactory.php';
+        $helpersLoaded = true;
+    }
+
+    $storage = get_storage();
+    $total = 0;
+    foreach ($subCollections as $subCollection) {
+        if (!is_array($subCollection)) {
+            continue;
+        }
+        $total += birkly_count_sub_entries_recursive($collectionSlug, $entryId, $subCollection, $storage);
+    }
+    return $total;
+}
+
+/**
  * Full content page data with sub-entry counts when possible.
  *
  * @return array<string, mixed>
  */
 function birkly_get_content_page_data(): array
 {
-    $data = birkly_get_content_page_data_minimal();
-    $collectionsPath = __DIR__ . '/../content/collections';
+    $data = birkly_content_page_data_minimal();
+    $collectionsPath = birkly_project_root() . '/content/collections';
 
     foreach ($data['collections'] as $i => $collection) {
         $slug = $collection['slug'] ?? '';
@@ -222,54 +192,4 @@ function birkly_get_content_page_data(): array
     $data['content_loader'] = 'full';
 
     return $data;
-}
-
-/**
- * Safe loader for admin router — never throws; returns error details for diagnostics.
- *
- * @return array<string, mixed>
- */
-function birkly_load_content_page_data_safe(): array
-{
-    $helpersPath = __DIR__ . '/admin_content_helpers.php';
-    if (!is_file($helpersPath)) {
-        return [
-            'error' => 'Content helpers missing (api/admin_content_helpers.php).',
-            'error_step' => 'helpers_missing',
-        ];
-    }
-
-    try {
-        require_once $helpersPath;
-    } catch (Throwable $e) {
-        return birkly_content_page_error_from_exception($e, 'require_helpers');
-    }
-
-    try {
-        return birkly_get_content_page_data();
-    } catch (Throwable $e) {
-        error_log('birkly_get_content_page_data failed, using minimal loader: ' . $e->getMessage());
-    }
-
-    try {
-        $minimal = birkly_get_content_page_data_minimal();
-        $minimal['content_loader_fallback'] = true;
-        return $minimal;
-    } catch (Throwable $e) {
-        return birkly_content_page_error_from_exception($e, 'minimal_loader');
-    }
-}
-
-/**
- * @return array<string, mixed>
- */
-function birkly_content_page_error_from_exception(Throwable $e, string $step): array
-{
-    return [
-        'error' => $e->getMessage(),
-        'error_step' => $step,
-        'error_class' => get_class($e),
-        'error_file' => $e->getFile(),
-        'error_line' => $e->getLine(),
-    ];
 }

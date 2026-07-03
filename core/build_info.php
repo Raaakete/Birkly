@@ -39,13 +39,15 @@ function birkly_build_info(): array
 
     $indexFile = $root . '/admin/index.php';
     $indexContent = is_readable($indexFile) ? (string) file_get_contents($indexFile) : '';
-    $indexContentBypass = str_contains($indexContent, 'birkly_load_content_page_data_safe')
+    $indexContentBypass = str_contains($indexContent, 'core/content_page.php')
+        || str_contains($indexContent, 'birkly_load_content_page_data_safe')
         || str_contains($indexContent, 'never load admin_templates.php');
 
     $contentSmoke = ['status' => 'unknown'];
-    if (is_file($helpersFile)) {
+    $coreContent = $root . '/core/content_page.php';
+    if (is_file($coreContent)) {
         try {
-            require_once $helpersFile;
+            require_once $coreContent;
             if (function_exists('birkly_load_content_page_data_safe')) {
                 $smoke = birkly_load_content_page_data_safe();
                 if (isset($smoke['error'])) {
@@ -74,7 +76,7 @@ function birkly_build_info(): array
             ];
         }
     } else {
-        $contentSmoke = ['status' => 'error', 'message' => 'helpers file missing'];
+        $contentSmoke = ['status' => 'error', 'message' => 'core/content_page.php missing'];
     }
 
     return [
