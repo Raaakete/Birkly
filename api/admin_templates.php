@@ -452,6 +452,7 @@ function getDashboardData() {
     $settingsAdminFile = __DIR__ . '/../settings/admin.json';
     $hasSettings = file_exists($settingsAdminFile);
 
+    // D3: essential items only — upload_media and create_template removed per P5.6 locked decision
     $checklist = [
         [
             'id' => 'setup_complete',
@@ -472,23 +473,11 @@ function getDashboardData() {
             'link' => count($collections) > 0 ? birkly_admin_url('entry-editor', ['collection' => $collections[0]['slug']]) : birkly_admin_url('content'),
         ],
         [
-            'id' => 'upload_media',
-            'label' => 'Upload media files',
-            'completed' => $hasMediaFiles,
-            'link' => birkly_admin_url('media')
-        ],
-        [
             'id' => 'configure_settings',
             'label' => 'Configure site settings',
             'completed' => $hasSettings,
             'link' => birkly_admin_url('settings')
         ],
-        [
-            'id' => 'create_template',
-            'label' => 'Set up your first template (optional)',
-            'completed' => $hasTemplates,
-            'link' => birkly_admin_url('templates')
-        ]
     ];
     
     $checklistCompleted = 0;
