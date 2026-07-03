@@ -11,6 +11,8 @@ $commandFiles = [
     __DIR__ . '/../commands/block-format.js',
     __DIR__ . '/../commands/registry.js',
     __DIR__ . '/../commands/bootstrap.js',
+    __DIR__ . '/../commands/layout/table.js',
+    __DIR__ . '/../commands/layout/grid.js',
 ];
 
 foreach ($commandFiles as $file) {
@@ -67,7 +69,7 @@ use Birkly\FieldTypes\ContentEditor\ContentEditor;
 $editor = new ContentEditor(['name' => 'content', 'label' => 'Content']);
 $js = $editor->getJavaScript();
 
-foreach (['ContentEditorInlineFormat', 'ContentEditorBlockFormat', 'ContentEditorBaseCommand', 'ContentEditorCommandRegistry'] as $symbol) {
+foreach (['ContentEditorInlineFormat', 'ContentEditorBlockFormat', 'ContentEditorBaseCommand', 'ContentEditorCommandRegistry', 'ContentEditorTableCommands', 'ContentEditorGridCommands'] as $symbol) {
     if (strpos($js, $symbol) === false) {
         echo "FAIL: bundled JS includes $symbol\n";
         $failures++;
