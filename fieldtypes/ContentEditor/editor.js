@@ -748,7 +748,7 @@
         window.ContentEditorSync.toHidden(editor, hiddenInput, true);
         const htmlSource = wrapper.querySelector('.content-editor-html-source');
         if (htmlSource && window.ContentEditorSync.getMode(wrapper) === 'html') {
-          window.ContentEditorSync.syncHtmlSourceFromHidden(htmlSource, hiddenInput);
+          window.ContentEditorSync.syncHtmlSourceFromHidden(htmlSource, hiddenInput, { format: true });
         }
       } else {
         syncToHidden(editor, hiddenInput);
