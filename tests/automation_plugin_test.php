@@ -138,4 +138,14 @@ test_assert('invalidate clears hashed list cache key', strpos($cacheSource, 'aut
 test_assert('invalidate tracks list cache index', strpos($cacheSource, 'AUTOMATION_LIST_CACHE_INDEX_KEY') !== false);
 test_assert('cache_automation_list uses shared key helper', strpos($cacheSource, 'automation_list_cache_key($filters)') !== false);
 
+$apiSource = file_get_contents($root . '/plugins/automation/api/automation.php');
+test_assert('API has run_live action', strpos($apiSource, "action === 'run_live'") !== false);
+test_assert('run_live uses sample context helper', strpos($apiSource, 'generate_sample_automation_context') !== false);
+
+$executorSource = file_get_contents($root . '/plugins/automation/executor.php');
+test_assert('executor supports skip_conditions for manual run', strpos($executorSource, '_skip_conditions') !== false);
+
+$layoutFooter = file_get_contents($root . '/admin/partials/layout_footer.php');
+test_assert('breadcrumb move excludes topbar slot', strpos($layoutFooter, 'closest(\'#admin-topbar\')') !== false);
+
 exit(test_finish('automation_plugin_test'));

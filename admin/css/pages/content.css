@@ -899,7 +899,7 @@ body.dragging-group .group-drop-indicator {
 }
 
 .draggable > a {
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .draggable.dragging > a {

@@ -5,7 +5,7 @@
 ?>
 <header class="admin-topbar" id="admin-topbar">
     <div class="admin-topbar-left">
-        <nav class="admin-topbar-breadcrumbs breadcrumbs" id="admin-topbar-breadcrumbs" aria-label="Breadcrumb"></nav>
+        <nav class="admin-topbar-breadcrumbs" id="admin-topbar-breadcrumbs" aria-label="Breadcrumb"></nav>
     </div>
     <div class="admin-topbar-spacer"></div>
     <div class="page-header-actions admin-topbar-actions">

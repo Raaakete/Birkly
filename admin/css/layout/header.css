@@ -31,8 +31,12 @@
   white-space: nowrap;
 }
 
-.admin-topbar-breadcrumbs:empty {
+.admin-topbar-breadcrumbs:not(.breadcrumbs) {
   display: none;
+}
+
+.admin-topbar-breadcrumbs.breadcrumbs {
+  display: flex;
 }
 
 .admin-topbar-spacer {
