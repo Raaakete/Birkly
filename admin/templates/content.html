@@ -2,6 +2,10 @@
 /**
  * Content page — pure PHP template (bypasses directive parser; avoids syntax errors on live).
  */
+if (!function_exists('birkly_build_info')) {
+    require_once __DIR__ . '/../../core/build_info.php';
+}
+$contentAssetVer = (string) (birkly_build_info()['git_commit'] ?? 'dev');
 ?>
 <div class="content-page">
     <div class="page-header pt-m pb-m">
@@ -46,5 +50,5 @@
     </div>
 </div>
 
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/mouse-drag-drop.js?v=20260703-1')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/content-groups.js?v=20260703-1')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/mouse-drag-drop.js?v=' . $contentAssetVer)) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/content-groups.js?v=' . $contentAssetVer)) ?>"></script>
