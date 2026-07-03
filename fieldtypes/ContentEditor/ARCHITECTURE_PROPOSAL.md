@@ -300,6 +300,8 @@ class BlockRegistry {
 2. Consolidate code
 3. Optimize
 
+**P5.5-M4 progress (2026-07-03):** Table/grid layout commands extracted from `commands.js` to `commands/layout/table.js` (`ContentEditorTableCommands`) and `commands/layout/grid.js` (`ContentEditorGridCommands`). Legacy `window.ContentEditorCommands` API preserved via thin delegates; toolbar `data-command="insertTable"` / `insertGrid` unchanged.
+
 ### Example: Adding a Table Feature
 
 **Old Way (Current):**

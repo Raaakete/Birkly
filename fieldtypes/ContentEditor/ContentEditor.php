@@ -413,6 +413,9 @@ class ContentEditor extends BaseField {
             __DIR__ . '/commands/base-command.js',
             __DIR__ . '/commands/registry.js',
             __DIR__ . '/commands/bootstrap.js',
+            // Layout commands (P5.5-M4) — before legacy commands.js
+            __DIR__ . '/commands/layout/table.js',
+            __DIR__ . '/commands/layout/grid.js',
             __DIR__ . '/commands.js', // Legacy commands (backward compatibility)
             // Main editor
             __DIR__ . '/editor.js',

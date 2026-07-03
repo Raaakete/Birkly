@@ -44,9 +44,9 @@ if (stripos($gridJs, '@media') !== false) {
     echo "PASS: grid-layout.js has no @media\n";
 }
 
-$commandsPath = __DIR__ . '/../commands.js';
-$commands = file_get_contents($commandsPath);
-if (!preg_match('/createGridElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/s', $commands)) {
+$gridCommandsPath = __DIR__ . '/../commands/layout/grid.js';
+$gridCommands = file_get_contents($gridCommandsPath);
+if (!preg_match('/createGridElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/s', $gridCommands)) {
     echo "FAIL: createGridElement uses insertNodesAtCaret\n";
     $failures++;
 } else {
