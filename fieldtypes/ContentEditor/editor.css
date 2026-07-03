@@ -99,12 +99,14 @@
   position: relative;
   min-width: 0;
   overflow: hidden;
+  background: var(--bg-primary, #ffffff);
 }
 
 .content-editor-html-highlight {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 0;
   margin: 0;
   padding: var(--space-3, 0.75rem);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -124,9 +126,11 @@
 .content-editor-html-highlight code {
   display: block;
   font: inherit;
+  color: inherit;
 }
 
-.content-editor-html-source {
+.content-editor-wrapper .content-editor-html-panel textarea.content-editor-html-source,
+.content-editor-html-panel .content-editor-html-source {
   position: relative;
   z-index: 1;
   display: block;
@@ -134,49 +138,66 @@
   height: 100%;
   min-height: 200px;
   max-height: 600px;
-  border: 0;
+  border: 0 !important;
   padding: var(--space-3, 0.75rem);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 0.8125rem;
   line-height: 1.6;
   tab-size: 2;
-  color: transparent;
+  color: transparent !important;
   caret-color: var(--text-primary, #20221D);
-  -webkit-text-fill-color: transparent;
-  background: transparent;
+  -webkit-text-fill-color: transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
   resize: none;
   box-sizing: border-box;
   overflow: auto;
   white-space: pre;
   word-wrap: normal;
   overflow-wrap: normal;
+  box-shadow: none !important;
 }
 
-.content-editor-html-source:focus {
+.content-editor-wrapper .content-editor-html-panel textarea.content-editor-html-source:focus,
+.content-editor-html-panel .content-editor-html-source:focus {
   outline: none;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
-/* HTML syntax token colors */
-.ce-html-tag {
+.content-editor-html-source::selection {
+  background: rgba(59, 130, 246, 0.35);
+  color: transparent;
+}
+
+/* HTML syntax token colors — scoped under highlight layer */
+.content-editor-html-highlight .ce-html-tag {
   color: #0550ae;
   font-weight: 600;
 }
 
-.ce-html-bracket {
+.content-editor-html-highlight .ce-html-bracket {
   color: #6e7781;
 }
 
-.ce-html-attr {
+.content-editor-html-highlight .ce-html-attr {
   color: #953800;
 }
 
-.ce-html-value {
+.content-editor-html-highlight .ce-html-value {
   color: #0a3069;
 }
 
-.ce-html-comment {
+.content-editor-html-highlight .ce-html-comment {
   color: #116329;
   font-style: italic;
+}
+
+/* Fallback when highlight layer is unavailable */
+.content-editor-html-panel:not(.has-syntax-layer) .content-editor-html-source {
+  color: var(--text-primary, #20221D) !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: var(--bg-primary, #ffffff) !important;
 }
 
 .content-editor-html-source.is-mode-hidden {

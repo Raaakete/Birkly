@@ -13,6 +13,10 @@ window.ContentEditorHtmlSource = {
     textarea._ceHtmlGutter = gutter;
     textarea._ceHtmlHighlight = code;
 
+    if (panel && code) {
+      panel.classList.add('has-syntax-layer');
+    }
+
     textarea.addEventListener('input', () => this.refresh(textarea));
     textarea.addEventListener('scroll', () => this.syncScroll(textarea));
 
