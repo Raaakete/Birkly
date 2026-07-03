@@ -138,6 +138,9 @@ function execute_automation($automation, $context = []) {
     
     // Evaluate conditions
     $conditions_met = true;
+    if (!empty($context['_skip_conditions'])) {
+        // Manual "run live" from admin — user explicitly wants to execute actions
+    } else {
     foreach ($conditions as $condition) {
         $condition_type = $condition['type'] ?? '';
         $condition_config = $condition['config'] ?? [];
@@ -167,6 +170,7 @@ function execute_automation($automation, $context = []) {
             $conditions_met = false;
             break;
         }
+    }
     }
     
     // If conditions not met, don't execute actions
