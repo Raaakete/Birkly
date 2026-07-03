@@ -37,17 +37,17 @@ foreach ($tableChecks as $needle => $label) {
     }
 }
 
-$commandsPath = __DIR__ . '/../commands.js';
-$commands = file_get_contents($commandsPath);
+$tableCommandsPath = __DIR__ . '/../commands/layout/table.js';
+$tableCommands = file_get_contents($tableCommandsPath);
 
-if (strpos($commands, "const colgroup = document.createElement('colgroup')") === false) {
+if (strpos($tableCommands, "const colgroup = document.createElement('colgroup')") === false) {
     echo "FAIL: createTableElement adds colgroup\n";
     $failures++;
 } else {
     echo "PASS: createTableElement adds colgroup\n";
 }
 
-if (!preg_match('/createTableElement\s*\([^)]*\)\s*\{[\s\S]*?colgroup[\s\S]*?insertNodesAtCaret/s', $commands)) {
+if (!preg_match('/createTableElement\s*\([^)]*\)\s*\{[\s\S]*?colgroup[\s\S]*?insertNodesAtCaret/s', $tableCommands)) {
     echo "FAIL: createTableElement colgroup + caret insert\n";
     $failures++;
 } else {

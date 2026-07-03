@@ -35,23 +35,24 @@ if (!is_file($commandsPath)) {
     exit(1);
 }
 
-$commands = file_get_contents($commandsPath);
+$tableCommands = file_get_contents(__DIR__ . '/../commands/layout/table.js');
+$gridCommands = file_get_contents(__DIR__ . '/../commands/layout/grid.js');
 
-if (!preg_match('/createTableElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/s', $commands)) {
+if (!preg_match('/createTableElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/s', $tableCommands)) {
     echo "FAIL: createTableElement uses insertNodesAtCaret\n";
     $failures++;
 } else {
     echo "PASS: createTableElement uses insertNodesAtCaret\n";
 }
 
-if (!preg_match('/createGridElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/s', $commands)) {
+if (!preg_match('/createGridElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/s', $gridCommands)) {
     echo "FAIL: createGridElement uses insertNodesAtCaret\n";
     $failures++;
 } else {
     echo "PASS: createGridElement uses insertNodesAtCaret\n";
 }
 
-if (strpos($commands, 'ContentEditorSelection.restore') === false) {
+if (strpos($tableCommands, 'ContentEditorSelection.restore') === false) {
     echo "FAIL: table insert restores selection before insert\n";
     $failures++;
 } else {
