@@ -73,10 +73,17 @@ if (strpos($groups, 'MouseDragDropManager') === false) {
     echo "PASS: content-groups uses MouseDragDropManager\n";
 }
 
-if (strpos($nested, 'handleSelector: null') !== false && strpos($nested, 'useCapture: true') !== false) {
-    echo "PASS: collection drag uses whole-card capture-phase mouse drag\n";
+if (strpos($nested, "this.collectionSorters.set('__root__', sorter)") !== false) {
+    echo "PASS: single root collection sorter on collections-container\n";
 } else {
-    echo "FAIL: collection drag whole-card capture setup\n";
+    echo "FAIL: collection sorter should attach to collections-container root\n";
+    $failures++;
+}
+
+if (strpos($nested, 'placeholderContainer !== sourceGrid') !== false) {
+    echo "PASS: cross-group detection compares source and target grids\n";
+} else {
+    echo "FAIL: cross-group grid comparison\n";
     $failures++;
 }
 
