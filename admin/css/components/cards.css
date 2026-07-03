@@ -101,8 +101,8 @@ a.card:hover {
   user-select: none;
 }
 
-.collection-card .collection-header .collection-menu-wrapper,
-.collection-card .collection-header .collection-title-link {
+.collection-card .collection-menu-wrapper,
+.collection-card .entry-count-link {
   cursor: pointer;
   user-select: auto;
 }
@@ -152,12 +152,17 @@ a.card:hover {
   color: var(--text-primary, #20221D);
 }
 
-.collection-header .title .collection-title-link {
+.collection-header .title .collection-title {
+  color: inherit;
+}
+
+.collection-footer .entry-count-link {
   color: inherit;
   text-decoration: none;
 }
 
-.collection-header .title .collection-title-link:hover {
+.collection-footer .entry-count-link:hover {
+  color: var(--primary-600, #2563eb);
   text-decoration: underline;
 }
 
