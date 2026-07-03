@@ -807,7 +807,7 @@
 
             this.groupSorter = new MouseDragDrop({
                 container: container,
-                itemSelector: this.groupSelector,
+                itemSelector: this.groupSelector + ':not(.ungrouped)',
                 handleSelector: this.groupHeaderSelector,
                 onReorder: (fromIndex, toIndex) => {
                     this.onGroupReorder(fromIndex, toIndex);
@@ -820,14 +820,18 @@
             this.collectionSorters.forEach(sorter => sorter.destroy());
             this.collectionSorters.clear();
 
-            // Find all collection containers
-            const containers = Array.from(document.querySelectorAll(this.collectionContainerSelector));
+            const containers = Array.from(this.container.querySelectorAll(this.collectionContainerSelector));
             
             containers.forEach(container => {
+                const cardCount = container.querySelectorAll(this.collectionSelector).length;
+                if (cardCount === 0) {
+                    return;
+                }
+
                 const sorter = new MouseDragDrop({
                     container: container,
                     itemSelector: this.collectionSelector,
-                    handleSelector: '.drag-handle', // Only allow dragging from the drag handle icon
+                    handleSelector: '.drag-handle',
                     allContainers: containers, // Enable cross-container moves
                     onReorder: (fromIndex, toIndex) => {
                         const groupId = container.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';

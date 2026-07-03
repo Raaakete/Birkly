@@ -117,8 +117,8 @@
             dragDropManager.destroy();
         }
         
-        // Create new manager (HTML5 drag; excludes ungrouped from group reorder)
-        dragDropManager = new NestedDragDropManager({
+        // Mouse-based drag (same engine as entries list — avoids flaky HTML5 DnD)
+        dragDropManager = new MouseDragDropManager({
             container: container,
             groupSelector: '.collection-group',
             groupHeaderSelector: '.group-header',
@@ -143,26 +143,20 @@
                 }
             },
             
-            onCollectionReorder: (collectionSlug, fromGroupId, toGroupId, toIndex) => {
-                const groupId = toGroupId || 'ungrouped';
-                let group = groups.find(g => g.id === groupId);
-                if (!group && groupId === 'ungrouped') {
+            onCollectionReorder: (groupId, fromIndex, toIndex) => {
+                const normalizedGroupId = groupId || 'ungrouped';
+                let group = groups.find(g => g.id === normalizedGroupId);
+                if (!group && normalizedGroupId === 'ungrouped') {
                     group = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
                     groups.push(group);
                 }
-                if (!group) return;
-                if (!group.collections) {
-                    group.collections = [];
-                }
+                if (!group || !group.collections) return;
 
-                const fromIndex = group.collections.indexOf(collectionSlug);
-                if (fromIndex === -1) {
-                    group.collections.splice(toIndex, 0, collectionSlug);
-                } else {
-                    group.collections.splice(fromIndex, 1);
-                    group.collections.splice(toIndex, 0, collectionSlug);
-                }
+                const slug = group.collections[fromIndex];
+                if (!slug) return;
 
+                group.collections.splice(fromIndex, 1);
+                group.collections.splice(toIndex, 0, slug);
                 saveGroups();
             },
             
@@ -198,7 +192,6 @@
                 saveGroups();
             }
         });
-        dragDropManager.init();
     }
     
     function renderGroupsAndCollections() {
@@ -269,9 +262,6 @@
         const section = document.createElement('div');
         section.className = 'collection-group';
         section.dataset.groupId = group.id;
-        // Draggable on the group section; drag starts from .group-drag-handle only
-        section.draggable = true;
-        section.setAttribute('draggable', 'true');
         
         // Check if group is collapsed (stored in localStorage)
         const isCollapsed = localStorage.getItem(`group-collapsed-${group.id}`) === 'true';
@@ -449,7 +439,6 @@
         const card = document.createElement('div');
         card.className = 'card draggable collection-card';
         card.dataset.collectionSlug = collection.slug;
-        card.draggable = true;
         card.dataset.groupId = groupId || 'ungrouped';
         
         // Make entire card clickable (will be handled by click event)
@@ -588,34 +577,12 @@
         card.appendChild(header);
         card.appendChild(footer);
         
-        // Make card clickable to navigate to entries
         card.addEventListener('click', function(e) {
             // Don't navigate if clicking on menu or drag handle
             if (e.target.closest('.collection-menu-wrapper') || e.target.closest('.drag-handle')) {
                 return;
             }
-            // Don't navigate if we just dragged
-            if (card.classList.contains('just-dragged')) {
-                card.classList.remove('just-dragged');
-                return;
-            }
             window.location.href = adminUrl('entries', { collection: collection.slug });
-        });
-        
-        // Prevent drag from menu
-        card.addEventListener('dragstart', function(e) {
-            if (e.target.closest('.collection-menu-wrapper')) {
-                e.preventDefault();
-                return false;
-            }
-        });
-        
-        // Mark as just-dragged after drag ends (to prevent click navigation)
-        card.addEventListener('dragend', function() {
-            this.classList.add('just-dragged');
-            setTimeout(() => {
-                this.classList.remove('just-dragged');
-            }, 100);
         });
         
         return card;
