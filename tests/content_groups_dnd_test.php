@@ -80,10 +80,17 @@ if (strpos($nested, "this.collectionSorters.set('__root__', sorter)") !== false)
     $failures++;
 }
 
-if (strpos($nested, 'placeholderContainer !== sourceGrid') !== false) {
-    echo "PASS: cross-group detection compares source and target grids\n";
+if (strpos($groups, 'syncAllGroupsFromDom') !== false) {
+    echo "PASS: cross-group move syncs all groups from DOM\n";
 } else {
-    echo "FAIL: cross-group grid comparison\n";
+    echo "FAIL: cross-group DOM sync helper\n";
+    $failures++;
+}
+
+if (strpos($nested, 'expandCollectionGroupForDrop') !== false) {
+    echo "PASS: cross-group drag expands collapsed target groups\n";
+} else {
+    echo "FAIL: collapsed group expansion on cross-group drag\n";
     $failures++;
 }
 
