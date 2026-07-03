@@ -774,13 +774,6 @@ window.ContentEditorCommands = {
       });
     });
     
-    // Debug: Log dialog creation
-      hasSaveBtn: !!saveBtn, 
-      hasUrlInput: !!dialog.querySelector('.link-url-input'),
-      hasTextInput: !!dialog.querySelector('.link-text-input'),
-      dialogData: dialog._dialogData
-    });
-    
     return dialog;
   },
 
@@ -1264,14 +1257,6 @@ window.ContentEditorCommands = {
         e.preventDefault();
         e.stopPropagation();
       }
-      
-        cols: colsInput.value,
-        rows: rowsInput.value,
-        gap: gapInput.value,
-        columnSize: columnSizeSelect.value,
-        bgColor: bgColorInput.value,
-        borderColor: borderColorInput.value
-      });
       
       // Read values with fallbacks
       const cols = parseInt(colsInput.value, 10) || 3;
@@ -4975,9 +4960,6 @@ window.ContentEditorCommands = {
         container = container.parentNode;
       }
       
-                  'parent:', currentBlock ? currentBlock.parentNode?.nodeName : 'none',
-                  'is in editor?', currentBlock ? editor.contains(currentBlock) : false);
-      
       // Always ensure we're inserting into the editor, never into document/HTML
       // Safety check: ensure editor is a valid element node
       if (!editor || editor.nodeType !== Node.ELEMENT_NODE) {
@@ -5027,9 +5009,6 @@ window.ContentEditorCommands = {
         embedElement.parentNode.removeChild(embedElement);
         editor.appendChild(embedElement);
       }
-      
-                  'is in editor?', editor.contains(embedElement),
-                  'editor children count:', editor.children.length);
       
       // Move cursor after embed
       const newRange = document.createRange();
@@ -7048,7 +7027,6 @@ window.ContentEditorCommands = {
     }
     
     // Sync and update toolbar
-    const editor = this.getActiveEditor();
     if (editor) {
       if (window.ContentEditorSync) {
         const hiddenInput = document.getElementById('field_' + editor.dataset.fieldName);
@@ -7126,7 +7104,6 @@ window.ContentEditorCommands = {
     }
     
     // Sync and update toolbar
-    const editor = this.getActiveEditor();
     if (editor) {
       if (window.ContentEditorSync) {
         const hiddenInput = document.getElementById('field_' + editor.dataset.fieldName);

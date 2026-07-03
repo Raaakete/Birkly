@@ -60,6 +60,15 @@
     // Load external CSS for preview if available
     loadEditorCSS(editor);
     
+    // Hidden input is the source of truth for stored HTML (avoids escaped markup in the DOM)
+    if (hiddenInput && hiddenInput.value) {
+      if (window.ContentEditorSync) {
+        window.ContentEditorSync.toEditor(editor, hiddenInput);
+      } else {
+        editor.innerHTML = hiddenInput.value;
+      }
+    }
+    
     // Ensure editor has proper block structure
     if (!editor.innerHTML.trim()) {
       // Start with empty content - user will create content when typing
