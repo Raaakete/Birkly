@@ -69,10 +69,29 @@ function execute_automations($trigger_type, $context = []) {
         }
         
         // Check collection filter if specified
-        if (isset($trigger['collection']) && !empty($trigger['collection'])) {
+        $trigger_config = $trigger['config'] ?? [];
+        if (!empty($trigger_config['collection'])) {
+            $collection = $context['collection'] ?? $context['entry']['collection'] ?? $context['parent_collection'] ?? '';
+            if ($collection !== $trigger_config['collection']) {
+                continue;
+            }
+        }
+
+        // Sub-entry triggers: also check sub_collection filter
+        if (in_array($trigger_type, ['sub_entry_created', 'sub_entry_updated', 'sub_entry_deleted'])) {
+            if (!empty($trigger_config['sub_collection'])) {
+                $sub_collection = $context['sub_collection'] ?? '';
+                if ($sub_collection !== $trigger_config['sub_collection']) {
+                    continue;
+                }
+            }
+        }
+
+        // Legacy: check collection stored directly on trigger root (backwards compat)
+        if (empty($trigger_config['collection']) && isset($trigger['collection']) && !empty($trigger['collection'])) {
             $collection = $context['collection'] ?? $context['entry']['collection'] ?? '';
             if ($collection !== $trigger['collection']) {
-                continue; // Skip if collection doesn't match
+                continue;
             }
         }
         

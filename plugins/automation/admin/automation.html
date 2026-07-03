@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="{birkly_url '/plugins/automation/admin/automation.css'}">
+
 <div class="page-header pt-m pb-m">
   <div class="page-header-left">
     <div class="breadcrumbs">
@@ -10,33 +12,59 @@
 </div>
 
 <div class="automation-page">
-  <div class="page-header-section">
-    <h1>{translate 'admin.automation'}</h1>
-    <p class="page-description">{translate 'admin.automation_description'}</p>
-  </div>
-  
-  <div class="main-actions-bar">
-    <button class="btn btn-primary" onclick="openCreateAutomationModal()">
+
+  <!-- M3-T6: Queue / cron health hint (hidden by default) -->
+  <div id="automation-health-hint" class="automation-health-hint" style="display:none" role="alert">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div>
+      <strong>Queue may not be processing</strong>
+      <p>
+        Automations are queued but the queue processor hasn't run yet.
+        Configure a cron job to call <code>api/automation.php?action=process_queue</code> every minute,
+        or check your server's task scheduler.
+        <a href="{admin_url 'settings'}">Open Settings</a>
+      </p>
+    </div>
+    <button class="automation-health-hint-close" onclick="dismissHealthHint()" aria-label="Dismiss">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
-      {translate 'admin.create_automation'}
     </button>
   </div>
-  
-  <div class="automation-list-container">
-    <div id="automation-list" class="automation-list">
-      <div class="loading-state">
-        <p>{translate 'admin.loading_automations'}</p>
-      </div>
+
+  <!-- Toolbar -->
+  <div class="automation-toolbar">
+    <div class="automation-toolbar-left">
+      <h1 style="margin:0;font-size:1.5rem;font-weight:700">{translate 'admin.automation'}</h1>
+      <p style="margin:0;color:var(--text-secondary);font-size:0.9375rem">{translate 'admin.automation_description'}</p>
+    </div>
+    <div class="automation-toolbar-right">
+      <button class="btn btn-primary" onclick="openCreateAutomationModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        {translate 'admin.create_automation'}
+      </button>
     </div>
   </div>
+
+  <!-- Automation list -->
+  <div id="automation-list" class="automation-list">
+    <div class="loading-state">
+      <p>{translate 'admin.loading_automations'}</p>
+    </div>
+  </div>
+
 </div>
 
-<!-- Create/Edit Automation Modal -->
+<!-- ============================================================
+     Create / Edit Automation Modal
+     ============================================================ -->
 <div id="automation-modal" class="modal-backdrop">
-  <div class="modal-content" style="max-width: 900px;">
+  <div class="modal-content" style="max-width:860px">
     <div class="modal-header">
       <h2 id="automation-modal-title">{translate 'admin.create_automation'}</h2>
       <button class="modal-close-btn" onclick="closeAutomationModal()">&times;</button>
@@ -44,78 +72,86 @@
     <div class="modal-body">
       <form id="automation-form">
         <input type="hidden" id="automation-id" name="automation_id">
-        
+
         <div class="form-group">
           <label for="automation-name">{translate 'admin.name'} <span class="required">*</span></label>
-          <input type="text" id="automation-name" name="name" class="input" required placeholder="{translate 'admin.automation_name_placeholder'}">
+          <input type="text" id="automation-name" name="name" class="input" required
+                 placeholder="{translate 'admin.automation_name_placeholder'}">
         </div>
-        
-        <div class="form-group">
+
+        <div class="form-group" style="display:flex;gap:2rem;flex-wrap:wrap">
           <label class="checkbox-label">
             <input type="checkbox" id="automation-enabled" name="enabled" checked>
             <span>{translate 'admin.enabled'}</span>
           </label>
-        </div>
-        
-        <!-- Trigger Section -->
-        <div class="automation-section">
-          <h3>{translate 'admin.trigger'}</h3>
-          <p class="form-help">{translate 'admin.trigger_help'}</p>
-          
-          <div class="form-group">
-            <label for="trigger-type">{translate 'admin.trigger_type'} <span class="required">*</span></label>
-            <select id="trigger-type" name="trigger[type]" class="input" required>
-              <option value="">{translate 'admin.select_trigger'}</option>
-            </select>
-          </div>
-          
-          <div id="trigger-config" class="trigger-config" style="display: none;">
-            <!-- Trigger-specific configuration will be loaded here -->
-          </div>
-        </div>
-        
-        <!-- Conditions Section -->
-        <div class="automation-section">
-          <h3>{translate 'admin.conditions_optional'}</h3>
-          <p class="form-help">{translate 'admin.conditions_help'}</p>
-          
-          <div id="conditions-list" class="conditions-list">
-            <!-- Conditions will be added here -->
-          </div>
-          
-          <button type="button" class="btn btn-secondary btn-sm" onclick="addCondition()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            {translate 'admin.add_condition'}
-          </button>
-        </div>
-        
-        <!-- Actions Section -->
-        <div class="automation-section">
-          <h3>{translate 'admin.actions'} <span class="required">*</span></h3>
-          <p class="form-help">{translate 'admin.actions_help'}</p>
-          
-          <div id="actions-list" class="actions-list">
-            <!-- Actions will be added here -->
-          </div>
-          
-          <button type="button" class="btn btn-secondary btn-sm" onclick="addAction()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            {translate 'admin.add_action'}
-          </button>
-        </div>
-        
-        <div class="form-group">
           <label class="checkbox-label">
             <input type="checkbox" id="stop-on-failure" name="stop_on_failure">
             <span>{translate 'admin.stop_on_first_failure'}</span>
           </label>
         </div>
+
+        <!-- Trigger -->
+        <div class="automation-builder-section">
+          <div class="automation-builder-section-header">
+            <h3>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>
+              </svg>
+              {translate 'admin.trigger'}
+            </h3>
+          </div>
+          <div class="automation-builder-section-body">
+            <p class="form-help">{translate 'admin.trigger_help'}</p>
+            <div class="form-group">
+              <label for="trigger-type">{translate 'admin.trigger_type'} <span class="required">*</span></label>
+              <select id="trigger-type" name="trigger[type]" class="input" required>
+                <option value="">{translate 'admin.select_trigger'}</option>
+              </select>
+            </div>
+            <div id="trigger-config" class="trigger-config-area" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Conditions -->
+        <div class="automation-builder-section">
+          <div class="automation-builder-section-header">
+            <h3>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22,4 12,14.01 9,11.01"/>
+              </svg>
+              {translate 'admin.conditions_optional'}
+            </h3>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="addCondition()">
+              + {translate 'admin.add_condition'}
+            </button>
+          </div>
+          <div class="automation-builder-section-body">
+            <p class="form-help">{translate 'admin.conditions_help'}</p>
+            <div id="conditions-list"></div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="automation-builder-section">
+          <div class="automation-builder-section-header">
+            <h3>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+              </svg>
+              {translate 'admin.actions'} <span class="required">*</span>
+            </h3>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="addAction()">
+              + {translate 'admin.add_action'}
+            </button>
+          </div>
+          <div class="automation-builder-section-body">
+            <p class="form-help">{translate 'admin.actions_help'}</p>
+            <div id="actions-list"></div>
+          </div>
+        </div>
+
       </form>
     </div>
     <div class="modal-footer">
@@ -125,9 +161,11 @@
   </div>
 </div>
 
-<!-- Automation Logs Modal -->
+<!-- ============================================================
+     Logs / Dry-run Modal
+     ============================================================ -->
 <div id="automation-logs-modal" class="modal-backdrop">
-  <div class="modal-content" style="max-width: 1000px;">
+  <div class="modal-content" style="max-width:700px">
     <div class="modal-header">
       <h2 id="automation-logs-title">{translate 'admin.execution_logs'}</h2>
       <button class="modal-close-btn" onclick="closeLogsModal()">&times;</button>
@@ -143,86 +181,4 @@
   </div>
 </div>
 
-<style>
-.automation-page {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.automation-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.automation-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.automation-card-header {
-  flex: 1;
-}
-
-.automation-card h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2rem;
-}
-
-.automation-card-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.automation-card-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.automation-section {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-sm);
-}
-
-.automation-section h3 {
-  margin-top: 0;
-  font-size: 1.1rem;
-}
-
-.condition-item, .action-item {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
-}
-
-.block-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.block-header h4 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.block-config {
-  margin-top: 0.75rem;
-}
-</style>
-
 <script src="{birkly_url '/plugins/automation/admin/automation.js'}"></script>
-
