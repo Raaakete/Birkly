@@ -213,6 +213,7 @@ function readBirklyDocsTopic(string $slug): ?array
         'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
         'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
         'mcp' => ['file' => 'mcp-setup-guide.md', 'title' => 'MCP setup guide'],
+        'sub-collections' => ['file' => 'ai/sub-collections.md', 'title' => 'Sub-collections & sub-entries'],
     ];
 
     if (!isset($topics[$slug])) {
