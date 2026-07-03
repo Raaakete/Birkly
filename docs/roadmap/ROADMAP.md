@@ -1740,9 +1740,31 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.6 — Admin polish, AI knowledge, onboarding & automation (proposed)
+
+**Status:** Proposed — **awaiting human approval**
+
+**Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md`
+
+**Priorities:** Content groups DnD fix · transparent topbar + account bubble · AI sub-collection/sub-entry admin knowledge · onboarding refresh (optional AI) · automation plugin UX + sub-entry triggers.
+
+**Runs parallel to:** P5.5 ContentEditor (no file overlap except admin CSS tokens).
+
+| Milestone | Focus |
+|-----------|--------|
+| **P5.6-M0** | Topbar transparent + avatar fix; content DnD within/between groups |
+| **P5.6-M1** | AI context pack + MCP tools for sub-collections/sub-entries admin |
+| **P5.6-M2** | Onboarding visual refresh; AI connect optional step + checklist |
+| **P5.6-M3** | Automation plugin CSS, builder UX, sub-entry triggers, pickers |
+| **P5.6-M4** | Birkly-Docs, integration matrix, closure |
+
+**Human decisions needed:** See plan § Human decisions (topbar border, AI step placement, automation dry-run, approve block).
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
