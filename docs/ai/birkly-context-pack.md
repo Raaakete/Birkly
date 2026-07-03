@@ -28,9 +28,16 @@ Write actions may require human approval when `require_approval` is enabled on t
 
 ## AI actions
 
-**Read (immediate):** `list_collections`, `read_collection`, `list_entries`, `read_entry`, `list_media`, `list_users`, `read_user`, `read_settings`, `list_pages`, `list_roles`, `list_plugins`
+**Read (immediate):** `list_collections`, `read_collection`, `list_entries`, `read_entry`, `list_sub_entries`, `read_sub_entry`, `list_media`, `list_users`, `read_user`, `read_settings`, `list_pages`, `list_roles`, `list_plugins`
 
-**Write (may need approval):** `create_entry`, `update_entry`, `delete_entry`, `create_collection`, `update_collection`, `delete_collection`, media/settings/page/user/role/plugin mutations
+**Write (may need approval):** `create_entry`, `update_entry`, `delete_entry`, `create_sub_entry`, `update_sub_entry`, `delete_sub_entry`, `create_collection`, `update_collection`, `delete_collection`, media/settings/page/user/role/plugin mutations
+
+**Sub-entry tool parameters:**
+- `list_sub_entries`: `collection` (parent slug), `entry_id` (parent entry ID), `sub_collection` (sub-collection slug), optional `limit`
+- `read_sub_entry`: `collection`, `entry_id`, `sub_collection`, `sub_entry_id`
+- `create_sub_entry`: `collection`, `entry_id`, `sub_collection`, `data` (object with field values)
+- `update_sub_entry`: `collection`, `entry_id`, `sub_collection`, `sub_entry_id`, `data`
+- `delete_sub_entry`: `collection`, `entry_id`, `sub_collection`, `sub_entry_id`
 
 **Format:**
 ```json
@@ -194,6 +201,84 @@ Entries live at `content/collections/{slug}/entries/{id}.json`. Schema fields ar
 - Collection and entry slugs use **lowercase letters, digits, and hyphens only** (`[a-z0-9-]`)
 - Use hyphens, not underscores (`blog-posts`, not `blog_posts`)
 - Slugs are normalized at write time: underscores become hyphens; invalid characters are stripped
+
+## Sub-collections & sub-entries
+
+A **sub-collection** is a named set of child entries owned by a parent entry (e.g. `comments` on `blog`). Sub-collections are configured on the parent collection; sub-entries are stored under the parent entry's directory.
+
+### Data model — `collection.json` `sub_collections` field
+
+```json
+{
+  "slug": "blog",
+  "name": "Blog",
+  "sub_collections": [
+    {
+      "slug": "comments",
+      "name": "Comments",
+      "entry_method": "public_submit",
+      "fields": [
+        {"name": "author", "type": "text", "label": "Author"},
+        {"name": "content", "type": "textarea", "label": "Content"}
+      ]
+    }
+  ]
+}
+```
+
+`entry_method` values: `admin_only` (default) | `public_submit` | `user_submit`
+
+### Disk layout
+
+```
+content/collections/
+  {parent-slug}/
+    collection.json          ← has sub_collections[]
+    schema.json
+    entries/
+      {entry-id}.json        ← parent entry
+      {entry-id}/
+        sub_entries/
+          {sub-slug}/
+            {sub-entry-id}.json   ← sub-entry file
+            .order.json           ← custom drag-drop order (optional)
+```
+
+Example for a `comments` sub-collection on `blog` entry `hello-world`:
+```
+content/collections/blog/entries/hello-world/sub_entries/comments/comment-abc123.json
+```
+
+### Admin URL params
+
+| Action | URL |
+|--------|-----|
+| List parent entries | `/admin/?page=entries&collection={parent-slug}` |
+| View entry + sub-entries | `/admin/?page=entry-detail&collection={parent-slug}&entry={entry-id}` |
+| Add new sub-entry | `/admin/?page=entry-editor&collection={parent-slug}&entry={entry-id}&sub_collection={sub-slug}` |
+| Edit sub-entry | `/admin/?page=entry-editor&collection={parent-slug}&entry={entry-id}&sub_collection={sub-slug}&sub_entry={sub-entry-id}` |
+| View sub-entry detail | `/admin/?page=entry-detail&collection={parent-slug}&entry={entry-id}&sub_collection={sub-slug}&sub_entry={sub-entry-id}` |
+| Edit sub-collection schema | `/admin/?page=collection-editor&collection={parent-slug}&sub_collection={sub-slug}` |
+| Add nested sub-collection | `/admin/?page=collection-editor&collection={parent-slug}&parent_sub_collection={existing-sub-slug}` |
+
+### Admin workflow matrix
+
+**Goal: Add a `comments` sub-collection to `blog`, then create a comment on "Hello World"**
+
+| Step | Action | URL / navigation |
+|------|--------|-----------------|
+| 1 | Open collection editor for `blog` | `/admin/?page=collection-editor&collection=blog` |
+| 2 | Click "Add sub-collection" → set slug `comments`, name "Comments", fields: author (text), content (textarea) | same page, form |
+| 3 | Save → sub-collection stored in `blog/collection.json` | POST saves config |
+| 4 | Go to Blog entry list | `/admin/?page=entries&collection=blog` |
+| 5 | Click into "Hello World" entry | `/admin/?page=entry-detail&collection=blog&entry={hello-world-id}` |
+| 6 | Scroll to Comments panel → click "Add comment" | `/admin/?page=entry-editor&collection=blog&entry={hello-world-id}&sub_collection=comments` |
+| 7 | Fill Author and Content → Save | POST to `/api/sub_entries.php` |
+| 8 | View comment list back on entry-detail | `/admin/?page=entry-detail&collection=blog&entry={hello-world-id}` |
+| 9 | Edit a comment | `/admin/?page=entry-editor&collection=blog&entry={hello-world-id}&sub_collection=comments&sub_entry={comment-id}` |
+| 10 | Delete a comment | delete button on entry-detail page |
+
+**Key rule:** Sub-entries are always scoped to `collection` + `entry` + `sub_collection`. You need all three to create, read, update, or delete a sub-entry.
 
 ## MCP (external AI tools)
 
