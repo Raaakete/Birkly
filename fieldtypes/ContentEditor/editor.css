@@ -2591,6 +2591,37 @@ details.content-editor-toggle summary::-webkit-details-marker {
   display: none !important;
 }
 
+.content-editor-grid-inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.content-editor-grid-inspector-section[hidden] {
+  display: none !important;
+}
+
+.ce-inspector-subheading {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #6b7280);
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light, #f3f4f6);
+}
+
+.ce-inspector-gap-split {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ce-inspector-gap-split[hidden] {
+  display: none !important;
+}
+
 .content-editor-layout-handles {
   position: absolute;
   inset: 0;
