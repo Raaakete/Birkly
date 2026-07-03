@@ -915,18 +915,18 @@ window.ContentEditorCommands = {
 
   // Insert table
   insertTable() {
-    if (window.ContentEditorBlockManager) {
-      const editor = this.getActiveEditor();
-      if (!editor) return;
+    const editor = this.getActiveEditor();
+    if (!editor) return;
 
+    window.ContentEditorSelection.save();
+
+    const showDialog = (onConfirm) => {
       const dialog = this.createTableDialog({
         title: 'Insert Table',
         primaryLabel: 'Insert',
         rows: 3,
         cols: 3,
-        onConfirm: ({ rows, cols }) => {
-          window.ContentEditorBlockManager.insertTable(editor, rows, cols);
-        },
+        onConfirm,
       });
 
       document.body.appendChild(dialog);
@@ -939,32 +939,20 @@ window.ContentEditorCommands = {
           rowsInput.select();
         }
       }, 10);
+    };
+
+    if (window.ContentEditorBlockManager) {
+      showDialog(({ rows, cols }) => {
+        window.ContentEditorSelection.restore(editor);
+        window.ContentEditorBlockManager.insertTable(editor, rows, cols);
+      });
       return;
     }
 
-    const editor = this.getActiveEditor();
-    if (!editor) return;
-    
-    const dialog = this.createTableDialog({
-      title: 'Insert Table',
-      primaryLabel: 'Insert',
-      rows: 3,
-      cols: 3,
-      onConfirm: ({ rows, cols }) => {
-        this.createTableElement(rows, cols);
-      }
+    showDialog(({ rows, cols }) => {
+      window.ContentEditorSelection.restore(editor);
+      this.createTableElement(rows, cols);
     });
-    
-    document.body.appendChild(dialog);
-    
-    setTimeout(() => {
-      dialog.classList.add('active');
-      const rowsInput = dialog.querySelector('.table-rows-input');
-      if (rowsInput) {
-        rowsInput.focus();
-        rowsInput.select();
-      }
-    }, 10);
   },
 
   // Create table dialog
@@ -1061,9 +1049,10 @@ window.ContentEditorCommands = {
   createTableElement(rows, cols) {
     const editor = this.getActiveEditor();
     if (!editor) return;
+
+    window.ContentEditorSelection.restore(editor);
     
     const selection = window.getSelection();
-    const block = this.getCurrentBlock();
     
     // Create table
     const table = document.createElement('table');
@@ -1092,25 +1081,19 @@ window.ContentEditorCommands = {
     const wrapperP = document.createElement('p');
     wrapperP.appendChild(table);
     
-    // Create new paragraph after table for cursor
-    const newP = document.createElement('p');
-    newP.innerHTML = '<br>';
-    
-    // Insert table
-    if (block) {
-      // Insert after current block
-      if (block.nextSibling) {
-        block.parentNode.insertBefore(wrapperP, block.nextSibling);
-        block.parentNode.insertBefore(newP, wrapperP.nextSibling);
-      } else {
-        block.parentNode.appendChild(wrapperP);
-        block.parentNode.appendChild(newP);
-      }
-    } else {
-      // No block, append to editor
-      editor.appendChild(wrapperP);
-      editor.appendChild(newP);
-    }
+    const dom = window.ContentEditorDOMUtils;
+    const insertResult = dom && dom.insertNodesAtCaret
+      ? dom.insertNodesAtCaret(editor, [wrapperP], { addTrailingParagraph: true })
+      : null;
+
+    const newP = insertResult && insertResult.trailing
+      ? insertResult.trailing
+      : (() => {
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          editor.appendChild(p);
+          return p;
+        })();
     
     // Move cursor to first cell
     const firstCell = table.querySelector('td');

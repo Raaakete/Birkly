@@ -1687,9 +1687,38 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.5 — ContentEditor layout power features (proposed)
+
+**Status:** Proposed — **awaiting human approval** before M1+ execution (M0 hotfixes may ship independently)
+
+**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md`
+
+**Priorities:** Fix toolbar dropdown clash with admin `dropdown.js` · insert tables/grids at caret · visual in-editor layout studio for **tables** and **CSS grids** (resize, gap, cell styling, grid span/flow).
+
+**Scope (Birkly `fieldtypes/ContentEditor/` only):**
+
+| Milestone | Focus |
+|-----------|--------|
+| **P5.5-M0** | Dropdown + caret-insert hotfixes (toolbar reliability) |
+| **P5.5-M1** | Shared layout-block architecture (inspector, resize controller) |
+| **P5.5-M2** | Table visual studio (column/row resize, cell styles) |
+| **P5.5-M3** | Grid visual studio (track resize, span, auto-flow, gap) |
+| **P5.5-M4** | `commands.js` layout module extraction (Phase 4 debt) |
+| **P5.5-M5** | Docs, AI knowledge, walkthrough, closure |
+
+**Human decisions needed:**
+
+| Decision | Options |
+|----------|---------|
+| Grid responsive export | `@media` in stored HTML vs single-column inline fallback |
+| Cell merge (tables) | M2 stretch goal vs defer to Phase 6 |
+| Execution | Approve full P5.5 block for autonomous lead run |
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]

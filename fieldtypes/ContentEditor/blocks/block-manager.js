@@ -110,12 +110,12 @@ window.ContentEditorBlockManager = {
     if (!created) return false;
 
     const nodes = Array.isArray(created) ? created : [created];
-    const block = this.getCurrentBlock();
-    const parent = block ? block.parentNode : targetEditor;
+    const dom = window.ContentEditorDOMUtils;
+    const result = dom && dom.insertNodesAtCaret
+      ? dom.insertNodesAtCaret(targetEditor, nodes, { addTrailingParagraph: true })
+      : null;
 
-    if (block && block.parentNode) {
-      this.insertAfterBlock(block.parentNode, block, nodes);
-    } else {
+    if (!result) {
       nodes.forEach((node) => targetEditor.appendChild(node));
     }
 
@@ -132,17 +132,20 @@ window.ContentEditorBlockManager = {
       }
     });
 
-    const followUp = emptyParagraph();
-    const lastNode = nodes[nodes.length - 1];
-    if (lastNode && lastNode.parentNode) {
-      lastNode.parentNode.insertBefore(followUp, lastNode.nextSibling);
-    } else {
-      targetEditor.appendChild(followUp);
+    let followUp = result && result.trailing ? result.trailing : null;
+    if (!followUp) {
+      followUp = emptyParagraph();
+      const lastNode = nodes[nodes.length - 1];
+      if (lastNode && lastNode.parentNode) {
+        lastNode.parentNode.insertBefore(followUp, lastNode.nextSibling);
+      } else {
+        targetEditor.appendChild(followUp);
+      }
     }
 
     if (type === 'table') {
-      const table = nodes[0] && nodes[0].querySelector ? nodes[0].querySelector('td') : null;
-      this.focusElement(table || followUp, true);
+      const tableCell = nodes[0] && nodes[0].querySelector ? nodes[0].querySelector('td') : null;
+      this.focusElement(tableCell || followUp, true);
     } else if (type === 'divider') {
       this.focusElement(followUp, true);
     } else {
