@@ -114,6 +114,14 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md` · **Handoff:** `docs/reviews/P5.5-lead-engineer-handoff.md` · **Closure:** `docs/reviews/p5.5-phase-closure-checklist.md`
 
+**2026-07-03 — Phase 5.6 approved** (Keven)
+
+**Priorities:** Borderless topbar · content DnD · AI sub-collection admin knowledge · onboarding (optional AI in wizard only) · automation UX.
+
+**Human decisions (locked):** Topbar fully borderless (no border) · AI optional in wizard only (never dashboard checklist) · dashboard checklist essential-only (remove media upload + template items) · notify once at P5.6-M4-T4.
+
+**Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md` · **Handoff:** `docs/reviews/P5.6-lead-engineer-handoff.md`
+
 ---
 
 ## Vision
@@ -1740,25 +1748,32 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
-## Phase 5.6 — Admin polish, AI knowledge, onboarding & automation (proposed)
+## Phase 5.6 — Admin polish, AI knowledge, onboarding & automation
 
-**Status:** Proposed — **awaiting human approval**
+**Status:** Approved (2026-07-03) — autonomous execution in progress
 
-**Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md`
+**Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md` · **Handoff:** `docs/reviews/P5.6-lead-engineer-handoff.md`
 
-**Priorities:** Content groups DnD fix · transparent topbar + account bubble · AI sub-collection/sub-entry admin knowledge · onboarding refresh (optional AI) · automation plugin UX + sub-entry triggers.
+**Priorities:** Content groups DnD · borderless topbar + account bubble · AI sub-collection admin knowledge · onboarding refresh (optional AI in wizard) · automation plugin UX.
 
-**Runs parallel to:** P5.5 ContentEditor (no file overlap except admin CSS tokens).
+**Runs parallel to:** P5.5 ContentEditor (complete or finishing on `main`).
 
 | Milestone | Focus |
 |-----------|--------|
-| **P5.6-M0** | Topbar transparent + avatar fix; content DnD within/between groups |
-| **P5.6-M1** | AI context pack + MCP tools for sub-collections/sub-entries admin |
-| **P5.6-M2** | Onboarding visual refresh; AI connect optional step + checklist |
-| **P5.6-M3** | Automation plugin CSS, builder UX, sub-entry triggers, pickers |
+| **P5.6-M0** | Borderless topbar + avatar fix; content DnD within/between groups |
+| **P5.6-M1** | AI context pack + MCP tools for sub-collections/sub-entries |
+| **P5.6-M2** | Onboarding redesign; optional AI wizard step; essential-only checklist |
+| **P5.6-M3** | Automation CSS, builder UX, sub-entry triggers, pickers |
 | **P5.6-M4** | Birkly-Docs, integration matrix, closure |
 
-**Human decisions needed:** See plan § Human decisions (topbar border, AI step placement, automation dry-run, approve block).
+**Human decisions (locked):**
+
+| Decision | Choice |
+|----------|--------|
+| Topbar | Fully borderless — no border-bottom |
+| AI onboarding | Optional wizard step only; not on dashboard checklist |
+| Dashboard checklist | Essential only (remove media upload, remove templates) |
+| Execution | Autonomous M0→M4; notify once at P5.6-M4-T4 |
 
 ---
 
