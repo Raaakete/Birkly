@@ -25,7 +25,8 @@ class ContentEditor extends BaseField {
 
     public function render(): string {
         $required = $this->required ? 'required' : '';
-        $value = htmlspecialchars($this->value ?? '', ENT_QUOTES, 'UTF-8');
+        $rawValue = $this->value ?? '';
+        $valueAttr = htmlspecialchars($rawValue, ENT_QUOTES, 'UTF-8');
         $fieldId = 'field_' . $this->name;
         $cssUrl = htmlspecialchars($this->config['css_url'] ?? '', ENT_QUOTES, 'UTF-8');
         $cssUrlAttr = $cssUrl ? ' data-css-url="' . $cssUrl . '"' : '';
@@ -364,10 +365,10 @@ class ContentEditor extends BaseField {
                  role="tabpanel"
                  aria-labelledby="{$tabVisualId}"
                  contenteditable="true"
-                 data-field-name="{$this->name}">{$value}</div>
+                 data-field-name="{$this->name}"></div>
             <textarea class="content-editor-html-source" id="{$panelHtmlId}" role="tabpanel" aria-labelledby="{$tabHtmlId}" spellcheck="false" aria-label="HTML source for {$this->label}" hidden></textarea>
             </div>
-            <input type="hidden" name="{$this->name}" id="{$fieldId}" value="{$value}" {$required}>
+            <input type="hidden" name="{$this->name}" id="{$fieldId}" value="{$valueAttr}" {$required}>
         </div>
         HTML;
     }
