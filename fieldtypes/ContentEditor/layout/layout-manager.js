@@ -11,8 +11,14 @@ window.ContentEditorLayout = {
     if (window.ContentEditorLayoutInspector && wrapper) {
       window.ContentEditorLayoutInspector.bind(wrapper, editor);
     }
+    if (window.ContentEditorGridLayout && wrapper) {
+      window.ContentEditorGridLayout.bind(wrapper, editor);
+    }
     if (window.ContentEditorResizeController) {
       window.ContentEditorResizeController.bindEditor(editor);
+    }
+    if (window.ContentEditorTableLayout) {
+      window.ContentEditorTableLayout.bindEditor(editor);
     }
   },
 
