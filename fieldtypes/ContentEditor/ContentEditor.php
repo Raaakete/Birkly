@@ -406,8 +406,10 @@ class ContentEditor extends BaseField {
             // Layout studio (P5.5-M1)
             __DIR__ . '/layout/layout-block.js',
             __DIR__ . '/layout/layout-inspector.js',
+            __DIR__ . '/layout/grid-layout.js',
             __DIR__ . '/layout/resize-controller.js',
             __DIR__ . '/layout/layout-manager.js',
+            __DIR__ . '/layout/table-layout.js',
             __DIR__ . '/commands/base-command.js',
             __DIR__ . '/commands/registry.js',
             __DIR__ . '/commands/bootstrap.js',

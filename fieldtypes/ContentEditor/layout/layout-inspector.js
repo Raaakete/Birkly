@@ -87,8 +87,17 @@ window.ContentEditorLayoutInspector = {
     panel.hidden = false;
     panel.dataset.layoutType = layout.type || 'table';
 
+    const tableSection = panel.querySelector('[data-ce-table-section="true"]');
+    if (tableSection) {
+      tableSection.hidden = layout.type !== 'table';
+    }
+
     const target = layout.cell || layout.root;
     this.syncFieldsFromTarget(target, layout.root, layout.type);
+
+    if (layout.type === 'table' && window.ContentEditorTableLayout) {
+      window.ContentEditorTableLayout.syncTableInspector(layout.root, layout.cell);
+    }
   },
 
   hide() {
@@ -169,7 +178,11 @@ window.ContentEditorLayoutInspector = {
     const borderColor = this.panel.querySelector('[data-ce-field="borderColor"]');
     const borderRadius = this.panel.querySelector('[data-ce-field="borderRadius"]');
 
-    if (layout.type === 'grid' && gap && !gap.disabled && layout.root) {
+    const gridLayoutHandlesGap = layout.type === 'grid'
+      && window.ContentEditorGridLayout
+      && window.ContentEditorGridLayout.section
+      && !window.ContentEditorGridLayout.section.hidden;
+    if (layout.type === 'grid' && gap && !gap.disabled && layout.root && !gridLayoutHandlesGap) {
       const gapPx = `${Math.max(0, parseInt(gap.value, 10) || 0)}px`;
       layout.root.style.gap = gapPx;
       layout.root.style.rowGap = gapPx;

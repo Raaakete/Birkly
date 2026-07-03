@@ -1058,6 +1058,17 @@ window.ContentEditorCommands = {
     const table = document.createElement('table');
     table.className = 'content-editor-table';
     table.setAttribute('data-editable-table', 'true');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    
+    const equalPct = `${Math.round((100 / cols) * 10) / 10}%`;
+    const colgroup = document.createElement('colgroup');
+    for (let j = 0; j < cols; j++) {
+      const col = document.createElement('col');
+      col.style.width = equalPct;
+      colgroup.appendChild(col);
+    }
+    table.appendChild(colgroup);
     
     // Create table body
     const tbody = document.createElement('tbody');
@@ -1073,6 +1084,10 @@ window.ContentEditorCommands = {
     }
     
     table.appendChild(tbody);
+
+    if (window.ContentEditorTableLayout && window.ContentEditorTableLayout.enhanceTable) {
+      window.ContentEditorTableLayout.enhanceTable(table);
+    }
     
     // Initialize table controls (row/column management)
     this.initTableControls(table);
@@ -1320,70 +1335,23 @@ window.ContentEditorCommands = {
 
   // Create grid element with inline CSS Grid styles
   createGridElement(cols, rows, gap, columnSize, styles = {}) {
-    
     const editor = this.getActiveEditor();
     if (!editor) {
       console.error('ContentEditor: No active editor found');
       return;
     }
-    
-    
-    // Get selection, but ensure it's within the editor, not the dialog
+
+    window.ContentEditorSelection.restore(editor);
+
     const selection = window.getSelection();
-    let range = null;
-    
-    // Check if current selection is within the editor
-    if (selection.rangeCount > 0) {
-      const currentRange = selection.getRangeAt(0);
-      const container = currentRange.commonAncestorContainer;
-      const isInEditor = editor.contains(container.nodeType === Node.TEXT_NODE ? container.parentNode : container);
-      
-      if (isInEditor) {
-        range = currentRange;
-      } else {
-        // Selection is in dialog or elsewhere, append to end of editor
-        const lastChild = editor.lastElementChild || editor.lastChild;
-        if (lastChild && lastChild.nodeType === Node.ELEMENT_NODE) {
-          // Insert after last block
-          range = document.createRange();
-          range.setStartAfter(lastChild);
-          range.collapse(true);
-        } else {
-          // Create new paragraph at end of editor
-          const newP = document.createElement('p');
-          newP.innerHTML = '<br>';
-          editor.appendChild(newP);
-          range = document.createRange();
-          range.selectNodeContents(newP);
-          range.collapse(false);
-        }
-      }
-    } else {
-      // No selection, append to end of editor
-      const lastChild = editor.lastElementChild || editor.lastChild;
-      if (lastChild && lastChild.nodeType === Node.ELEMENT_NODE) {
-        // Insert after last block
-        range = document.createRange();
-        range.setStartAfter(lastChild);
-        range.collapse(true);
-      } else {
-        // Create new paragraph at end of editor
-        const newP = document.createElement('p');
-        newP.innerHTML = '<br>';
-        editor.appendChild(newP);
-        range = document.createRange();
-        range.selectNodeContents(newP);
-        range.collapse(false);
-      }
-    }
-    
+
     // Create grid container with inline CSS Grid styles
     const gridContainer = document.createElement('div');
     gridContainer.className = 'content-editor-grid';
-    
+
     // Build grid-template-columns value
     const columnsValue = `repeat(${cols}, ${columnSize})`;
-    
+
     // Apply inline CSS Grid styles
     gridContainer.style.display = 'grid';
     gridContainer.style.gridTemplateColumns = columnsValue;
@@ -1392,14 +1360,11 @@ window.ContentEditorCommands = {
     gridContainer.style.gap = gapValue;
     gridContainer.style.rowGap = gapValue;
     gridContainer.style.columnGap = gapValue;
-    gridContainer.style.gridGap = gapValue;
-    gridContainer.style.gridRowGap = gapValue;
-    gridContainer.style.gridColumnGap = gapValue;
     gridContainer.style.width = '100%';
     gridContainer.style.margin = '16px 0';
-    
+
     const cellStyles = this.resolveGridCellStyles(styles);
-    
+
     // Create grid items
     const totalItems = cols * rows;
     for (let i = 0; i < totalItems; i++) {
@@ -1411,66 +1376,27 @@ window.ContentEditorCommands = {
       gridItem.innerHTML = '<p><br></p>';
       gridContainer.appendChild(gridItem);
     }
-    
-    // Insert grid - always insert as block-level element
-    
-    try {
-      if (!range) {
-        console.warn('ContentEditor: No range available, appending to editor');
-        editor.appendChild(gridContainer);
-      } else {
-        // Find the block element that contains the range
-        let block = range.commonAncestorContainer;
-        while (block && block !== editor) {
-          if (block.nodeType === Node.ELEMENT_NODE) {
-            const tagName = block.tagName.toLowerCase();
-            // Check if it's a block element
-            if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'ul', 'ol', 'li'].includes(tagName)) {
-              break;
-            }
-          }
-          block = block.parentNode;
-        }
-        
-        if (block && block !== editor && editor.contains(block)) {
-          // Insert after the block
-          if (block.nextSibling) {
-            block.parentNode.insertBefore(gridContainer, block.nextSibling);
-          } else {
-            block.parentNode.appendChild(gridContainer);
-          }
-        } else {
-          // No block found or block is editor, append to editor
-          editor.appendChild(gridContainer);
-        }
-      }
-      
-      
-      // Move cursor to first grid item
-      const firstItem = gridContainer.querySelector('.content-editor-grid-item');
-      if (firstItem) {
-        const newRange = document.createRange();
-        newRange.selectNodeContents(firstItem);
-        newRange.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-        firstItem.focus();
-      }
-      
-      // Create new paragraph after grid
-      const newP = document.createElement('p');
-      newP.innerHTML = '<br>';
-      if (gridContainer.nextSibling) {
-        gridContainer.parentNode.insertBefore(newP, gridContainer.nextSibling);
-      } else {
-        gridContainer.parentNode.appendChild(newP);
-      }
-      
-    } catch (e) {
-      console.error('Error inserting grid:', e);
+
+    const dom = window.ContentEditorDOMUtils;
+    const insertResult = dom && dom.insertNodesAtCaret
+      ? dom.insertNodesAtCaret(editor, [gridContainer], { addTrailingParagraph: true })
+      : null;
+
+    if (!insertResult) {
       editor.appendChild(gridContainer);
     }
-    
+
+    // Move cursor to first grid item
+    const firstItem = gridContainer.querySelector('.content-editor-grid-item');
+    if (firstItem) {
+      const newRange = document.createRange();
+      newRange.selectNodeContents(firstItem);
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+      firstItem.focus();
+    }
+
     // Sync and update toolbar
     if (window.ContentEditorSync) {
       const hiddenInput = document.getElementById('field_' + editor.dataset.fieldName);
@@ -1478,10 +1404,14 @@ window.ContentEditorCommands = {
         window.ContentEditorSync.toHidden(editor, hiddenInput);
       }
     }
-    
+
     // Add controls to grid
     this.addGridControls(gridContainer);
-    
+
+    if (window.ContentEditorLayout) {
+      window.ContentEditorLayout.initEditor(editor);
+    }
+
     // Save history
     if (window.ContentEditorHistory) {
       setTimeout(() => {
