@@ -93,4 +93,39 @@ if ($hadPluginsJson) {
 }
 @unlink($pluginsJsonBackup);
 
+// ---- P5.6-M3: sub-entry triggers ----
+$triggersSource = file_get_contents($root . '/plugins/automation/blocks/triggers.php');
+test_assert('sub_entry_created trigger registered', strpos($triggersSource, "'sub_entry_created'") !== false);
+test_assert('sub_entry_updated trigger registered', strpos($triggersSource, "'sub_entry_updated'") !== false);
+test_assert('sub_entry_deleted trigger registered', strpos($triggersSource, "'sub_entry_deleted'") !== false);
+test_assert('sub_entry triggers use collection_picker', strpos($triggersSource, "'collection_picker'") !== false);
+test_assert('sub_entry triggers use sub_collection_picker', strpos($triggersSource, "'sub_collection_picker'") !== false);
+
+// Automation CSS file exists
+test_assert('automation.css exists', is_file($root . '/plugins/automation/admin/automation.css'));
+
+// automation.html references CSS
+$adminHtml2 = file_get_contents($root . '/plugins/automation/admin/automation.html');
+test_assert('automation.html references automation.css', strpos($adminHtml2, 'automation.css') !== false);
+test_assert('automation.html has no inline script block', strpos($adminHtml2, '<script>') === false);
+
+// API has get_collections and dry_run actions
+$apiSource2 = file_get_contents($root . '/plugins/automation/api/automation.php');
+test_assert('API has get_collections action', strpos($apiSource2, "'get_collections'") !== false);
+test_assert('API has dry_run action', strpos($apiSource2, "'dry_run'") !== false);
+
+// Executor handles sub-entry trigger collection filter
+$executorSource = file_get_contents($root . '/plugins/automation/executor.php');
+test_assert('executor filters sub_entry triggers by sub_collection', strpos($executorSource, "sub_entry_created") !== false);
+
+// JS has collection picker builder
+$jsSource = file_get_contents($root . '/plugins/automation/admin/automation.js');
+test_assert('JS has buildCollectionPickerInput', strpos($jsSource, 'buildCollectionPickerInput') !== false);
+test_assert('JS has buildSubCollectionPickerInput', strpos($jsSource, 'buildSubCollectionPickerInput') !== false);
+test_assert('JS has dryRunAutomation', strpos($jsSource, 'dryRunAutomation') !== false);
+test_assert('JS has duplicateAutomation', strpos($jsSource, 'duplicateAutomation') !== false);
+test_assert('JS has moveAction (reorder)', strpos($jsSource, 'function moveAction') !== false);
+test_assert('JS has applyTemplate (empty state)', strpos($jsSource, 'applyTemplate') !== false);
+test_assert('JS has checkQueueHealth (health hint)', strpos($jsSource, 'checkQueueHealth') !== false);
+
 exit(test_finish('automation_plugin_test'));
