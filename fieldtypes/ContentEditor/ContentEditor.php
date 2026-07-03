@@ -366,7 +366,13 @@ class ContentEditor extends BaseField {
                  aria-labelledby="{$tabVisualId}"
                  contenteditable="true"
                  data-field-name="{$this->name}"></div>
-            <textarea class="content-editor-html-source" id="{$panelHtmlId}" role="tabpanel" aria-labelledby="{$tabHtmlId}" spellcheck="false" aria-label="HTML source for {$this->label}" hidden></textarea>
+            <div class="content-editor-html-panel is-mode-hidden" id="{$panelHtmlId}" role="tabpanel" aria-labelledby="{$tabHtmlId}" hidden>
+                <div class="content-editor-html-gutter" aria-hidden="true"></div>
+                <div class="content-editor-html-scroll">
+                    <pre class="content-editor-html-highlight" aria-hidden="true"><code></code></pre>
+                    <textarea class="content-editor-html-source" spellcheck="false" aria-label="HTML source for {$this->label}"></textarea>
+                </div>
+            </div>
             </div>
             <input type="hidden" name="{$this->name}" id="{$fieldId}" value="{$valueAttr}" {$required}>
         </div>
@@ -388,6 +394,7 @@ class ContentEditor extends BaseField {
             // Core utilities
             __DIR__ . '/core/dom-utils.js',
             __DIR__ . '/core/sync-manager.js',
+            __DIR__ . '/core/html-source-editor.js',
             __DIR__ . '/core/preview-css.js',
             __DIR__ . '/core/component-registry.js',
             __DIR__ . '/core/toolbar-manager.js',
