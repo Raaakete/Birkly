@@ -199,9 +199,56 @@ Entries live at `content/collections/{slug}/entries/{id}.json`. Schema fields ar
 
 Each AI connection can have an MCP API key scoped to that connection's role. External clients call `/api/mcp_server.php` with `X-MCP-API-Key` header.
 
-## Automation
+## Automation (P5.6-M3)
 
-When the Automation plugin is active, workflows trigger on entry events, schedules, and webhooks. Configure via Admin → Automation.
+When the Automation plugin is active, workflows trigger on entry/sub-entry events, schedules, and webhooks. Configure via Admin → Automation.
+
+### Automation admin admin URLs
+
+| Action | URL |
+|--------|-----|
+| List automations | `?page=automation` |
+| Create automation | `?page=automation` → "Create Automation" button |
+
+### Trigger types
+
+| Trigger | When it fires |
+|---------|---------------|
+| `entry_created` | New entry created |
+| `entry_updated` | Entry updated |
+| `entry_deleted` | Entry deleted |
+| `status_changed` | Entry status transitions |
+| `sub_entry_created` | New sub-entry (comment, review, etc.) created |
+| `sub_entry_updated` | Sub-entry updated |
+| `sub_entry_deleted` | Sub-entry deleted |
+| `scheduled` | Cron/scheduled time |
+| `webhook_inbound` | Inbound webhook POST |
+
+Sub-entry triggers accept optional `collection` (parent collection slug) and `sub_collection` (sub-collection slug) filters.
+
+### Context variables in action templates
+
+Entry triggers: `{{entry.id}}`, `{{entry.title}}`, `{{collection}}`, `{{status}}`, `{{now}}`
+
+Sub-entry triggers: `{{parent_collection}}`, `{{parent_entry_id}}`, `{{sub_collection}}`, `{{sub_entry.id}}`
+
+### Test run (D4)
+
+"Test" button performs a **dry-run** — returns a step-by-step log without executing actions. A "Confirm & Run Live" button is shown separately for explicit user confirmation before any real action fires.
+
+### API (when plugin active)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET ?action=list` | List workflows |
+| `GET ?action=get_blocks` | Registered triggers/conditions/actions |
+| `GET ?action=get_collections` | Collections list for trigger pickers |
+| `POST ?action=create` | Create workflow |
+| `POST ?action=update` | Update workflow |
+| `POST ?action=delete` | Delete workflow |
+| `POST ?action=dry_run` | Simulate (no live actions) |
+| `GET ?action=get_logs` | Execution logs |
+| `GET ?action=queue_status` | Queue statistics |
 
 ## Security
 

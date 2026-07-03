@@ -345,6 +345,106 @@ if ($action === 'process_scheduled') {
     exit;
 }
 
+// Get collections list for pickers
+if ($action === 'get_collections') {
+    $storage_core = StorageFactory::createStorage(__DIR__ . '/../../../settings');
+    $content_storage = StorageFactory::createStorage(__DIR__ . '/../../../');
+    $col_dirs = @scandir(__DIR__ . '/../../../content/collections') ?: [];
+    $collections = [];
+    foreach ($col_dirs as $dir) {
+        if ($dir === '.' || $dir === '..') continue;
+        $meta_file = __DIR__ . '/../../../content/collections/' . $dir . '/collection.json';
+        if (!is_file($meta_file)) continue;
+        $meta = json_decode(file_get_contents($meta_file), true);
+        if (!$meta) continue;
+        $collections[] = [
+            'slug'  => $meta['slug'] ?? $dir,
+            'title' => $meta['title'] ?? $dir,
+            'sub_collections' => array_map(function($sc) {
+                return [
+                    'slug'  => $sc['slug'] ?? '',
+                    'title' => $sc['title'] ?? $sc['slug'] ?? ''
+                ];
+            }, $meta['sub_collections'] ?? [])
+        ];
+    }
+    echo json_encode(['status' => 'ok', 'data' => ['collections' => $collections]]);
+    exit;
+}
+
+// Dry run — validate config, simulate actions, return structured log (D4)
+if ($action === 'dry_run') {
+    requireAuth('manage_content');
+
+    $automation_id = $input['automation_id'] ?? '';
+    if (empty($automation_id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Automation ID required']);
+        exit;
+    }
+    $automation = get_automation($automation_id);
+    if (!$automation) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Automation not found']);
+        exit;
+    }
+
+    $sample_context = array_merge($input['context'] ?? [], ['_dry_run' => true, '_test_mode' => true]);
+    $steps = [];
+    $all_ok = true;
+
+    // Step: trigger
+    $trigger_type = $automation['trigger']['type'] ?? '';
+    $steps[] = ['type' => 'trigger', 'label' => 'Trigger', 'detail' => $trigger_type ?: 'none', 'status' => $trigger_type ? 'pass' : 'warn'];
+
+    // Step: conditions
+    $conditions = $automation['conditions'] ?? [];
+    if (empty($conditions)) {
+        $steps[] = ['type' => 'conditions', 'label' => 'Conditions', 'detail' => 'No conditions — always runs', 'status' => 'info'];
+    } else {
+        foreach ($conditions as $i => $condition) {
+            $ctype = $condition['type'] ?? '';
+            $block = get_automation_block('condition', $ctype);
+            if (!$block) {
+                $steps[] = ['type' => 'condition', 'label' => "Condition " . ($i + 1), 'detail' => "Unknown type: $ctype", 'status' => 'warn'];
+                $all_ok = false;
+                continue;
+            }
+            try {
+                $handler = $block['handler'] ?? null;
+                $result = $handler ? call_user_func($handler, $condition['config'] ?? [], $sample_context) : true;
+                $steps[] = ['type' => 'condition', 'label' => "Condition " . ($i + 1) . ": " . ($block['name'] ?? $ctype), 'detail' => $result ? 'Would pass' : 'Would skip (condition not met)', 'status' => $result ? 'pass' : 'skip'];
+            } catch (Exception $e) {
+                $steps[] = ['type' => 'condition', 'label' => "Condition " . ($i + 1), 'detail' => $e->getMessage(), 'status' => 'warn'];
+                $all_ok = false;
+            }
+        }
+    }
+
+    // Step: actions (dry-run — describe but do not execute)
+    $actions = $automation['actions'] ?? [];
+    if (empty($actions)) {
+        $steps[] = ['type' => 'actions', 'label' => 'Actions', 'detail' => 'No actions configured', 'status' => 'warn'];
+        $all_ok = false;
+    } else {
+        foreach ($actions as $i => $action_def) {
+            $atype = $action_def['type'] ?? '';
+            $block = get_automation_block('action', $atype);
+            $label = "Action " . ($i + 1) . ": " . ($block['name'] ?? $atype ?: 'unknown');
+            $steps[] = ['type' => 'action', 'label' => $label, 'detail' => 'Would execute (dry run — skipped)', 'status' => 'info'];
+        }
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'data'   => [
+            'steps'       => $steps,
+            'all_ok'      => $all_ok,
+            'action_count' => count($actions)
+        ]
+    ]);
+    exit;
+}
+
 // Get queue status
 if ($action === 'queue_status') {
     $status = get_automation_queue_status();
