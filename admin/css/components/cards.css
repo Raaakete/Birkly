@@ -92,10 +92,12 @@ a.card:hover {
 /* Collection Card Container */
 .collection-card {
   position: relative;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
 }
 
 .collection-card .collection-header {
-  cursor: grab;
   user-select: none;
 }
 

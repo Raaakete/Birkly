@@ -441,9 +441,6 @@
         card.dataset.collectionSlug = collection.slug;
         card.dataset.groupId = groupId || 'ungrouped';
         
-        // Make entire card clickable (will be handled by click event)
-        card.style.cursor = 'pointer';
-        
         const header = document.createElement('div');
         header.className = 'collection-header';
         
@@ -576,14 +573,6 @@
         
         card.appendChild(header);
         card.appendChild(footer);
-        
-        card.addEventListener('click', function(e) {
-            // Don't navigate if clicking on menu or drag handle
-            if (e.target.closest('.collection-menu-wrapper') || e.target.closest('.drag-handle')) {
-                return;
-            }
-            window.location.href = adminUrl('entries', { collection: collection.slug });
-        });
         
         return card;
     }
