@@ -333,7 +333,7 @@
         header.appendChild(actions);
         
         const grid = document.createElement('div');
-        grid.className = 'grid group-collections';
+        grid.className = 'grid group-collections drop-zone';
         grid.dataset.groupId = group.id;
         
         // Render collections in this group - respect order from group.collections
@@ -419,12 +419,21 @@
         header.appendChild(actions);
         
         const grid = document.createElement('div');
-        grid.className = 'grid ungrouped-collections';
-        
-        collectionsList.forEach(col => {
-            const card = createCollectionCard(col, null);
-            grid.appendChild(card);
-        });
+        grid.className = 'grid ungrouped-collections drop-zone';
+        grid.dataset.groupId = 'ungrouped';
+
+        if (collectionsList.length === 0) {
+            grid.classList.add('empty-drop-zone');
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'empty-drop-message';
+            emptyMsg.textContent = 'Drop collections here';
+            grid.appendChild(emptyMsg);
+        } else {
+            collectionsList.forEach(col => {
+                const card = createCollectionCard(col, 'ungrouped');
+                grid.appendChild(card);
+            });
+        }
         
         section.appendChild(header);
         section.appendChild(grid);
@@ -437,7 +446,7 @@
         card.className = 'card draggable collection-card';
         card.dataset.collectionSlug = collection.slug;
         card.draggable = true;
-        card.dataset.groupId = groupId || '';
+        card.dataset.groupId = groupId || 'ungrouped';
         
         // Make entire card clickable (will be handled by click event)
         card.style.cursor = 'pointer';

@@ -52,6 +52,37 @@
             this.documentDragOverHandler = null;
         }
 
+        /**
+         * Normalize group id — empty/null → ungrouped
+         */
+        normalizeGroupId(groupId) {
+            if (groupId === null || groupId === undefined || groupId === '') {
+                return 'ungrouped';
+            }
+            return String(groupId);
+        }
+
+        findGroupElement(groupId) {
+            const normalized = this.normalizeGroupId(groupId);
+            return this.container.querySelector(`${this.groupSelector}[data-group-id="${normalized}"]`);
+        }
+
+        expandGroupIfCollapsed(groupElement) {
+            if (!groupElement || !groupElement.classList.contains('collapsed')) {
+                return;
+            }
+            groupElement.classList.remove('collapsed');
+            const groupId = groupElement.dataset.groupId;
+            if (groupId) {
+                localStorage.setItem(`group-collapsed-${groupId}`, 'false');
+            }
+            const collapseBtn = groupElement.querySelector('.group-collapse-btn');
+            if (collapseBtn) {
+                collapseBtn.title = 'Collapse Group';
+                collapseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
+            }
+        }
+
         init() {
             if (this.isInitialized) {
                 console.warn('NestedDragDropManager already initialized');
@@ -227,7 +258,7 @@
                 }
 
                 // Get group ID
-                const groupId = groupElement.dataset.groupId || null;
+                const groupId = this.normalizeGroupId(groupElement.dataset.groupId);
 
                 // Create sorter for collections in this group
                 const sorter = new SimpleDragDrop({
@@ -282,7 +313,7 @@
                     // Set collection drag type FIRST (before group handler can override)
                     this.currentDragType = 'collection';
                     this.draggedCollection = card;
-                    this.draggedCollectionGroupId = card.dataset.groupId || null;
+                    this.draggedCollectionGroupId = this.normalizeGroupId(card.dataset.groupId);
                 }
             }, true); // Capture phase - runs FIRST
 
@@ -321,6 +352,8 @@
          * Set up cross-group dropping (moving collections between groups)
          */
         setupCrossGroupDropping(groupElement, collectionContainer, groupId) {
+            const normalizedGroupId = this.normalizeGroupId(groupId);
+
             // Listen for drops from other groups - use BUBBLING phase so SimpleDragDrop (capture) handles same-group first
             collectionContainer.addEventListener('dragover', (e) => {
                 // Only handle if we're dragging a collection (not a group)
@@ -333,9 +366,11 @@
                     return;
                 }
 
+                this.expandGroupIfCollapsed(groupElement);
+
                 // Check if dragged collection is from a different group
-                const draggedGroupId = this.draggedCollectionGroupId;
-                if (draggedGroupId === groupId) {
+                const draggedGroupId = this.normalizeGroupId(this.draggedCollectionGroupId);
+                if (draggedGroupId === normalizedGroupId) {
                     // Same group - let the SimpleDragDrop handle it (don't prevent default, don't stop)
                     return;
                 }
@@ -346,7 +381,7 @@
                 e.dataTransfer.dropEffect = 'move';
 
                 // Hide any SimpleDragDrop indicators from both source and target groups
-                const sourceGroup = this.container.querySelector(`[data-group-id="${draggedGroupId}"]`);
+                const sourceGroup = this.findGroupElement(draggedGroupId);
                 if (sourceGroup) {
                     const sourceContainer = sourceGroup.querySelector(this.collectionContainerSelector);
                     if (sourceContainer) {
@@ -370,7 +405,7 @@
                 collectionContainer.classList.add('drag-over');
 
                 // Show drop indicator
-                this.showCrossGroupIndicator(e, collectionContainer, groupId);
+                this.showCrossGroupIndicator(e, collectionContainer, normalizedGroupId);
             }, false); // Use bubbling phase so SimpleDragDrop can handle same-group first
 
             collectionContainer.addEventListener('dragleave', (e) => {
@@ -392,10 +427,10 @@
                 }
 
                 const draggedSlug = this.draggedCollection.dataset.collectionSlug;
-                const draggedGroupId = this.draggedCollectionGroupId;
+                const draggedGroupId = this.normalizeGroupId(this.draggedCollectionGroupId);
 
                 // Check if moving to different group
-                if (draggedGroupId === groupId) {
+                if (draggedGroupId === normalizedGroupId) {
                     // Same group - let SimpleDragDrop handle it (don't prevent default, don't stop)
                     // SimpleDragDrop uses capture phase, so it will handle this first
                     return;
@@ -411,7 +446,7 @@
                 const targetIndex = this.getDropIndex(e, collectionContainer, collections);
 
                 // Call move callback
-                this.onCollectionMove(draggedSlug, draggedGroupId, groupId, targetIndex);
+                this.onCollectionMove(draggedSlug, draggedGroupId, normalizedGroupId, targetIndex);
             }, false); // Use bubbling phase so SimpleDragDrop can handle same-group first
         }
 
@@ -448,8 +483,11 @@
         showCrossGroupIndicator(e, container, groupId) {
             this.hideCrossGroupIndicator();
 
-            const collections = this.getCollectionsInGroup(container.closest(this.groupSelector));
+            const groupElement = container.closest(this.groupSelector);
+            const collections = this.getCollectionsInGroup(groupElement);
+
             if (collections.length === 0) {
+                container.classList.add('drag-over');
                 return;
             }
 

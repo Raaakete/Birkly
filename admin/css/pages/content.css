@@ -913,18 +913,22 @@ body.dragging-group .group-drop-indicator {
   position: relative;
 }
 
-.drop-zone.empty-drop-zone {
+.drop-zone.empty-drop-zone,
+.grid.empty-drop-zone {
   border: 2px dashed var(--border-medium, #e5e7eb);
   background: var(--bg-secondary, #fafafa);
 }
 
-.drop-zone.drag-over {
+.drop-zone.drag-over,
+.grid.group-collections.drag-over,
+.grid.ungrouped-collections.drag-over {
   background: var(--primary-50, #eff6ff);
   border: 2px dashed var(--primary-500, #3b82f6);
   box-shadow: inset 0 0 0 3px var(--primary-100, #dbeafe);
 }
 
-.drop-zone.drag-over .empty-drop-message {
+.drop-zone.drag-over .empty-drop-message,
+.grid.drag-over .empty-drop-message {
   display: block;
 }
 
