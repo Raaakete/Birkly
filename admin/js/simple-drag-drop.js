@@ -161,7 +161,7 @@
          */
         handleDragStart(e) {
             // Prevent duplicate processing - if we already have this item as draggedItem, ignore
-            const item = e.target.closest(this.itemSelector);
+            let item = e.target.closest(this.itemSelector);
             if (!item) {
                 return; // Not our item - let other handlers process it
             }
@@ -183,7 +183,9 @@
             if (this.handleSelector) {
                 const handle = e.target.closest(this.handleSelector);
                 if (!handle) {
-                    // Not dragging from handle - but don't prevent default, just ignore
+                    return;
+                }
+                if (handle.closest('.group-actions')) {
                     return;
                 }
                 

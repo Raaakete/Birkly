@@ -201,7 +201,7 @@
             this.groupSorter = new SimpleDragDrop({
                 container: this.container,
                 itemSelector: this.groupSelector + ':not(.ungrouped)',
-                handleSelector: '.group-drag-handle, .group-title',
+                handleSelector: '.group-header',
                 dropIndicatorClass: 'group-drop-indicator',
                 onReorder: (fromIndex, toIndex) => {
                     this.onGroupReorder(fromIndex, toIndex);

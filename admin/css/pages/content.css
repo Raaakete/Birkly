@@ -520,7 +520,7 @@
 .collection-card .drag-handle {
   width: 16px;
   height: 16px;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .cell-drag {
@@ -769,8 +769,10 @@
   align-items: center;
   touch-action: none;
   user-select: none;
+  pointer-events: none;
 }
 
+.group-drag-handle svg,
 .group-drag-handle img {
   width: 16px;
   height: 16px;
@@ -783,6 +785,15 @@
 
 .collection-group.dragging .group-drag-handle {
   cursor: grabbing;
+}
+
+.group-header {
+  cursor: grab;
+  user-select: none;
+}
+
+.group-header .group-actions {
+  cursor: default;
 }
 
 .group-title {

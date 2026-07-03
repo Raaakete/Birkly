@@ -66,6 +66,21 @@ if (strpos($header, '.topbar-user-menu .user-avatar-initials') === false) {
     echo "PASS: topbar avatar initials styling\n";
 }
 
+if (strpos($groups, 'createDragHandle') !== false) {
+    echo "PASS: inline drag handles (no blocking img)\n";
+} else {
+    echo "FAIL: inline drag handles\n";
+    $failures++;
+}
+
+$cardsCss = file_get_contents(__DIR__ . '/../admin/css/components/cards.css');
+if (strpos($cardsCss, '.collection-card .drag-handle') !== false && strpos($cardsCss, 'pointer-events: none') !== false) {
+    echo "PASS: collection drag handle pointer-events none\n";
+} else {
+    echo "FAIL: collection drag handle pointer-events\n";
+    $failures++;
+}
+
 $contentCss = file_get_contents($files['content.css']);
 if (strpos($contentCss, '.grid.empty-drop-zone') === false) {
     echo "FAIL: grid empty drop zone styles\n";
