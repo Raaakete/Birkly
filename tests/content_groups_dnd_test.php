@@ -73,10 +73,17 @@ if (strpos($groups, 'MouseDragDropManager') === false) {
     echo "PASS: content-groups uses MouseDragDropManager\n";
 }
 
-if (strpos($nested, "handleSelector: '.collection-header'") !== false) {
-    echo "PASS: collection drag uses collection-header handle\n";
+if (strpos($nested, 'handleSelector: null') !== false && strpos($nested, 'useCapture: true') !== false) {
+    echo "PASS: collection drag uses whole-card capture-phase mouse drag\n";
 } else {
-    echo "FAIL: collection drag handle selector\n";
+    echo "FAIL: collection drag whole-card capture setup\n";
+    $failures++;
+}
+
+if (strpos($groups, "card.addEventListener('click'") === false) {
+    echo "PASS: collection cards do not use whole-card click navigation\n";
+} else {
+    echo "FAIL: whole-card click handler conflicts with drag\n";
     $failures++;
 }
 
