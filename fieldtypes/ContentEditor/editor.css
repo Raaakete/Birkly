@@ -2493,3 +2493,99 @@ details.content-editor-toggle summary::-webkit-details-marker {
   color: var(--error-700, #b91c1c);
 }
 
+/* P5.5-M1 — Layout studio (inspector + resize handles) */
+.content-editor-layout-selected {
+  outline: 2px solid var(--primary-500, #3b82f6);
+  outline-offset: 2px;
+}
+
+.content-editor-layout-cell-selected {
+  outline: 2px dashed var(--primary-400, #60a5fa);
+  outline-offset: 1px;
+}
+
+.content-editor-layout-inspector {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  width: 220px;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  padding: 0;
+}
+
+.content-editor-layout-inspector[hidden] {
+  display: none !important;
+}
+
+.content-editor-layout-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.content-editor-layout-inspector-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary, #6b7280);
+}
+
+.content-editor-layout-inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.ce-inspector-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.ce-inspector-field input[type="number"],
+.ce-inspector-field input[type="color"] {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-sm, 4px);
+  padding: 4px 8px;
+  font: inherit;
+}
+
+.content-editor-layout-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.content-editor-layout-handle {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  margin-left: -4px;
+  pointer-events: auto;
+  cursor: col-resize;
+  background: transparent;
+}
+
+.content-editor-layout-handle:hover {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.content-editor-wrapper {
+  position: relative;
+}
+
