@@ -107,6 +107,30 @@ ContentEditor-specific suites:
 | `tests/preview_css_test.php` | CSS preview assets and markup |
 | `tests/component_registry_test.php` | Bundled components, PHP registry |
 | `tests/commands_registry_test.php` | Modular command modules and bundle order |
+| `tests/layout_roundtrip_test.php` | Layout studio modules and save sanitization |
+| `tests/grid_layout_test.php` | Grid span, flow, fluid tracks (no `@media` in saved HTML) |
+
+## CSS grid blocks (P5.5-M3)
+
+Insert via toolbar **Grid**. Stored HTML uses portable inline styles only — **no `@media` blocks** in entry content (decision D2).
+
+```html
+<div class="content-editor-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));grid-auto-flow:row;gap:16px">
+  <div class="content-editor-grid-item" style="grid-column:span 2;padding:12px">…</div>
+</div>
+```
+
+**Visual studio (grid selected):**
+
+| Control | Saved property |
+|---------|----------------|
+| Column tracks | `grid-template-columns` — fixed `repeat(N,1fr)` or fluid `repeat(auto-fit,minmax(…))` |
+| Auto flow | `grid-auto-flow` — `row`, `column`, `row dense`, `column dense` |
+| Gap | `gap` (uniform) or `row-gap` + `column-gap` |
+| Cell span | `grid-column: span N`, `grid-row: span N` |
+| Cell styling | padding, background, border, radius (shared layout inspector) |
+
+Track resize handles (M1) apply to fixed-column grids; fluid presets reflow without breakpoints.
 
 ## Values check
 

@@ -13,6 +13,7 @@ $failures = 0;
 $layoutFiles = [
     'layout-block.js' => __DIR__ . '/../layout/layout-block.js',
     'layout-inspector.js' => __DIR__ . '/../layout/layout-inspector.js',
+    'grid-layout.js' => __DIR__ . '/../layout/grid-layout.js',
     'resize-controller.js' => __DIR__ . '/../layout/resize-controller.js',
     'layout-manager.js' => __DIR__ . '/../layout/layout-manager.js',
 ];
@@ -61,6 +62,7 @@ $bundled = $editor->getJavaScript();
 $bundleChecks = [
     'ContentEditorLayoutBlock' => 'layout block bundled',
     'ContentEditorLayoutInspector' => 'layout inspector bundled',
+    'ContentEditorGridLayout' => 'grid layout bundled',
     'ContentEditorResizeController' => 'resize controller bundled',
     'ContentEditorLayout' => 'layout manager bundled',
 ];

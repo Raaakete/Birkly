@@ -44,6 +44,13 @@ if (!preg_match('/createTableElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/
     echo "PASS: createTableElement uses insertNodesAtCaret\n";
 }
 
+if (!preg_match('/createGridElement\s*\([^)]*\)\s*\{[\s\S]*?insertNodesAtCaret/s', $commands)) {
+    echo "FAIL: createGridElement uses insertNodesAtCaret\n";
+    $failures++;
+} else {
+    echo "PASS: createGridElement uses insertNodesAtCaret\n";
+}
+
 if (strpos($commands, 'ContentEditorSelection.restore') === false) {
     echo "FAIL: table insert restores selection before insert\n";
     $failures++;

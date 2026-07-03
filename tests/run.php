@@ -21,6 +21,7 @@ $suites = [
     '../fieldtypes/ContentEditor/tests/caret_insert_test.php',
     '../fieldtypes/ContentEditor/tests/layout_roundtrip_test.php',
     '../fieldtypes/ContentEditor/tests/table_layout_test.php',
+    '../fieldtypes/ContentEditor/tests/grid_layout_test.php',
     '../fieldtypes/ContentEditor/tests/readme_test.php',
     'onboarding_test.php',
     'onboarding_e2e_test.php',
