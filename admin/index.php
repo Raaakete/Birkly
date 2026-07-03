@@ -173,23 +173,53 @@ function admin_url(string $page, array $params = []): string {
 }
 
 function fetch_admin_page_data(string $page, array $query = []): array {
-    // Content page: never load admin_templates.php (avoids parser/autoload side effects on live)
+    // Content page: core loader only — never admin_templates.php
     if ($page === 'content') {
-        $helpersPath = birkly_project_root() . '/api/admin_content_helpers.php';
-        if (!is_file($helpersPath)) {
-            return ['error' => 'Content page helpers are missing (api/admin_content_helpers.php).', 'error_step' => 'helpers_missing'];
-        }
-        require_once $helpersPath;
-        if (function_exists('birkly_load_content_page_data_safe')) {
-            return birkly_load_content_page_data_safe();
+        $corePath = birkly_project_root() . '/core/content_page.php';
+        if (!is_file($corePath)) {
+            return [
+                'error' => 'Content page core module missing (core/content_page.php).',
+                'error_step' => 'core_missing',
+            ];
         }
         try {
-            return birkly_get_content_page_data();
+            require_once $corePath;
+            return birkly_load_content_page_data_safe();
         } catch (Throwable $e) {
             error_log('Error in fetch_admin_page_data(content): ' . $e->getMessage());
+            return birkly_content_page_error_from_exception($e, 'content_fetch');
+        }
+    }
+
+    // Entries pages: load admin_templates in isolation with full error context
+    if (in_array($page, ['entries', 'entry-detail', 'entry-editor'], true)) {
+        $apiPath = birkly_project_root() . '/api/admin_templates.php';
+        if (!is_file($apiPath)) {
+            return ['error' => 'Admin templates API missing.', 'error_step' => 'admin_templates_missing'];
+        }
+        $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+        try {
+            require_once $apiPath;
+        } catch (Throwable $e) {
+            error_log('Error including admin_templates.php for ' . $page . ': ' . $e->getMessage());
             return [
                 'error' => $e->getMessage(),
-                'error_step' => 'content_data',
+                'error_step' => 'require_admin_templates',
+                'error_class' => get_class($e),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+            ];
+        }
+        if (!function_exists('getPageData')) {
+            return ['error' => 'getPageData() unavailable.', 'error_step' => 'getPageData_missing'];
+        }
+        try {
+            return getPageData($page);
+        } catch (Throwable $e) {
+            error_log("Error in getPageData('$page'): " . $e->getMessage());
+            return [
+                'error' => $e->getMessage(),
+                'error_step' => 'getPageData',
                 'error_class' => get_class($e),
                 'error_file' => $e->getFile(),
                 'error_line' => $e->getLine(),
@@ -351,7 +381,11 @@ $isOnboarding = ($page === 'onboarding');
                         include __DIR__ . '/templates/content.html';
                     }
                 } catch (Throwable $e) {
-                    $renderAdminError('Error Loading Page', $e->getMessage(), $e);
+                    $renderAdminError('Error Loading Page', $e->getMessage(), $e, [
+                        'error_step' => 'include_content_template',
+                        'error_file' => $e->getFile(),
+                        'error_line' => $e->getLine(),
+                    ]);
                 }
             } elseif (isset($directPhpPages[$page])) {
                 $templateFile = $directPhpPages[$page];
@@ -367,7 +401,11 @@ $isOnboarding = ($page === 'onboarding');
                         include __DIR__ . '/templates/' . $templateFile;
                     }
                 } catch (Throwable $e) {
-                    $renderAdminError('Error Loading Page', $e->getMessage(), $e);
+                    $renderAdminError('Error Loading Page', $e->getMessage(), $e, [
+                        'error_step' => 'include_' . $page . '_template',
+                        'error_file' => $e->getFile(),
+                        'error_line' => $e->getLine(),
+                    ]);
                 }
             } elseif ($page === 'dashboard' || $page === 'media' || $page === 'account') {
                 // Pass query params so entry-editor receives collection/entry ids
