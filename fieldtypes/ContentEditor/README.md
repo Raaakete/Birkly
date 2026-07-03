@@ -68,6 +68,10 @@ Toolbar and keyboard shortcuts call `ContentEditorCommandRegistry.execute()`, wh
 
 **Legacy commands** remain in `commands.js` (links, tables, media embeds, components, colors, etc.). The registry falls back to `ContentEditorCommands.execute()` for unregistered commands.
 
+## Layout studio (P5.5 — tables & grids)
+
+Tables and CSS grids are first-class layout blocks with a shared **Layout panel** (`layout/` modules). Insert via toolbar at the caret; click a block to inspect and resize columns/tracks, adjust gap and cell styling, and set grid span/flow. Saved HTML uses `content-editor-table` / `content-editor-grid` classes with inline styles only — editor metadata (`data-ce-*`, handles) is stripped on save. See sections below and `docs/reviews/P5.5-contenteditor-layout-plan.md`.
+
 To add a modular command:
 
 1. Implement logic in `commands/inline-format.js` or `commands/block-format.js`, or a new module

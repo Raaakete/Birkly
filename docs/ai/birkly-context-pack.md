@@ -132,6 +132,37 @@ Admin pages load data via `getPageData()` in `api/admin_templates.php`. Template
 
 Built-in fieldtypes live in `fieldtypes/` (Text, Textarea, Number, Media, Select, etc.). Plugins register fieldtypes via `register_fieldtype()`. Schema fields in `content/collections/{slug}/schema.json` reference fieldtype by `type`.
 
+### ContentEditor (rich text / layout studio)
+
+The **Editor** fieldtype (`content-editor`, aliases `editor`, `media`) stores **portable HTML**. All editor code lives in `fieldtypes/ContentEditor/`.
+
+**Admin workflow (tables & grids):**
+
+1. Open an entry with an Editor field → **Visual** tab.
+2. Place caret → toolbar **Table** or **Grid** → insert at caret (not document end).
+3. Click the layout block → floating **Layout panel** (gap, padding, background, border, radius; table/grid-specific controls).
+4. Drag column/track resize handles; adjust grid span, flow, and fluid track presets.
+5. Save entry — `ContentEditorSync` + `processValue` strip `data-ce-*` and editor chrome; inline layout styles remain.
+
+**Table HTML pattern:**
+
+```html
+<table class="content-editor-table" style="width:100%;border-collapse:collapse">
+  <colgroup><col style="width:33%"></colgroup>
+  <tbody><tr><td style="padding:12px">…</td></tr></tbody>
+</table>
+```
+
+**Grid HTML pattern** (responsive via fluid tracks — no `@media` in entry HTML):
+
+```html
+<div class="content-editor-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+  <div style="grid-column:span 2">…</div>
+</div>
+```
+
+When creating/updating entries via AI, preserve these class names and inline styles; do not inject `<script>` or editor-only `data-ce-*` attributes.
+
 ## Plugins
 
 - Registry: `core/plugins.php` — `load_plugins()`, `birkly_is_plugin_active()`, `register_admin_page()`, `register_api_endpoint()`
