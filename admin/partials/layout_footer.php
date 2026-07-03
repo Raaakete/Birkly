@@ -79,6 +79,49 @@
     
     // User menu lives in admin-topbar.php — legacy move only when topbar is absent.
     (function() {
+        function moveBreadcrumbsToTopbar() {
+            const topbar = document.getElementById('admin-topbar');
+            const topbarSlot = document.getElementById('admin-topbar-breadcrumbs');
+            if (!topbar || !topbarSlot || topbarSlot.childElementCount > 0) {
+                return;
+            }
+
+            const source = document.querySelector(
+                '.content-page .page-header-left .breadcrumbs, ' +
+                '.page-header-left .breadcrumbs:not(#admin-topbar-breadcrumbs), ' +
+                '.content-header .breadcrumbs'
+            );
+
+            if (!source || source === topbarSlot || source.closest('#admin-topbar')) {
+                return;
+            }
+
+            while (source.firstChild) {
+                topbarSlot.appendChild(source.firstChild);
+            }
+            topbarSlot.classList.add('breadcrumbs');
+            source.remove();
+
+            const pageHeaderLeft = source.parentElement;
+            if (pageHeaderLeft && pageHeaderLeft.classList.contains('page-header-left') && pageHeaderLeft.childElementCount === 0) {
+                pageHeaderLeft.style.display = 'none';
+            }
+
+            const pageHeader = pageHeaderLeft ? pageHeaderLeft.closest('.page-header') : null;
+            if (pageHeader) {
+                const left = pageHeader.querySelector('.page-header-left');
+                const actions = pageHeader.querySelector('.page-header-actions');
+                const leftHidden = !left || left.style.display === 'none' || left.childElementCount === 0;
+                const actionsEmpty = !actions || actions.childElementCount === 0;
+                if (leftHidden && actionsEmpty) {
+                    pageHeader.style.display = 'none';
+                    pageHeader.style.marginBottom = '0';
+                    pageHeader.style.height = '0';
+                    pageHeader.style.minHeight = '0';
+                }
+            }
+        }
+
         function moveUserMenuToHeader() {
             if (document.getElementById('admin-topbar')) {
                 return;
@@ -146,9 +189,13 @@
         console.log('[UI Fix] Document readyState:', document.readyState);
         if (document.readyState === 'loading') {
             console.log('[UI Fix] Waiting for DOMContentLoaded...');
-            document.addEventListener('DOMContentLoaded', moveUserMenuToHeader);
+            document.addEventListener('DOMContentLoaded', function() {
+                moveBreadcrumbsToTopbar();
+                moveUserMenuToHeader();
+            });
         } else {
             console.log('[UI Fix] DOM already ready, running immediately...');
+            moveBreadcrumbsToTopbar();
             moveUserMenuToHeader();
         }
     })();

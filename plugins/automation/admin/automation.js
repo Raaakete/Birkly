@@ -921,23 +921,32 @@ async function confirmLiveRun(automationId) {
   const content = document.getElementById('automation-logs-content');
   content.innerHTML = '<div class="loading-state">Running live…</div>';
 
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
   try {
-    const response = await fetch(apiUrl('/api/automation.php?action=test'), {
+    const response = await fetch(apiUrl('/api/automation.php?action=run_live'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ automation_id: automationId, context: {} })
+      body: JSON.stringify({
+        automation_id: automationId,
+        skip_conditions: true,
+        context: {},
+        _csrf: csrf
+      })
     });
     const result = await response.json();
 
     if (result.status === 'ok') {
+      const ok = result.data.success !== false;
       content.innerHTML = `
         <div style="padding:var(--space-4)">
-          <p style="color:var(--success-600);font-weight:600;margin:0 0 var(--space-2) 0">
-            ✓ Live run completed
+          <p style="color:${ok ? 'var(--success-600)' : 'var(--warning-600)'};font-weight:600;margin:0 0 var(--space-2) 0">
+            ${ok ? '✓ Live run completed' : 'Live run finished with warnings'}
           </p>
           <p style="font-size:0.875rem;color:var(--text-secondary);margin:0">
             Runtime: ${result.data.runtime_ms ? result.data.runtime_ms.toFixed(1) + 'ms' : 'n/a'}<br>
-            Actions executed: ${result.data.actions_executed ?? 'n/a'}
+            Actions executed: ${result.data.actions_executed ?? 'n/a'}<br>
+            Note: email delivery depends on server mail configuration.
           </p>
         </div>
       `;

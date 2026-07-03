@@ -128,4 +128,24 @@ test_assert('JS has moveAction (reorder)', strpos($jsSource, 'function moveActio
 test_assert('JS has applyTemplate (empty state)', strpos($jsSource, 'applyTemplate') !== false);
 test_assert('JS has checkQueueHealth (health hint)', strpos($jsSource, 'checkQueueHealth') !== false);
 
+require_once $root . '/plugins/automation/cache.php';
+
+$emptyKey = automation_list_cache_key([]);
+test_assert('automation list cache key uses filter hash', $emptyKey === AUTOMATION_LIST_CACHE_KEY . '_' . md5(json_encode([])));
+
+$cacheSource = file_get_contents($root . '/plugins/automation/cache.php');
+test_assert('invalidate clears hashed list cache key', strpos($cacheSource, 'automation_list_cache_key([])') !== false);
+test_assert('invalidate tracks list cache index', strpos($cacheSource, 'AUTOMATION_LIST_CACHE_INDEX_KEY') !== false);
+test_assert('cache_automation_list uses shared key helper', strpos($cacheSource, 'automation_list_cache_key($filters)') !== false);
+
+$apiSource = file_get_contents($root . '/plugins/automation/api/automation.php');
+test_assert('API has run_live action', strpos($apiSource, "action === 'run_live'") !== false);
+test_assert('run_live uses sample context helper', strpos($apiSource, 'generate_sample_automation_context') !== false);
+
+$executorSource = file_get_contents($root . '/plugins/automation/executor.php');
+test_assert('executor supports skip_conditions for manual run', strpos($executorSource, '_skip_conditions') !== false);
+
+$layoutFooter = file_get_contents($root . '/admin/partials/layout_footer.php');
+test_assert('breadcrumb move excludes topbar slot', strpos($layoutFooter, 'closest(\'#admin-topbar\')') !== false);
+
 exit(test_finish('automation_plugin_test'));

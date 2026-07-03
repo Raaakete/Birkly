@@ -6,7 +6,8 @@
 .admin-topbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
   min-height: 64px;
   padding: 0 var(--space-6, 1.5rem);
   background: transparent;
@@ -15,8 +16,31 @@
   z-index: 40;
 }
 
+.admin-topbar-left {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+}
+
+.admin-topbar-breadcrumbs {
+  font-size: 1.25rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-topbar-breadcrumbs:not(.breadcrumbs) {
+  display: none;
+}
+
+.admin-topbar-breadcrumbs.breadcrumbs {
+  display: flex;
+}
+
 .admin-topbar-spacer {
-  flex: 1;
+  display: none;
 }
 
 .admin-topbar-actions {
@@ -25,14 +49,9 @@
   gap: var(--space-3, 0.75rem);
 }
 
-.admin-topbar .topbar-user-menu .user-menu-info {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .admin-topbar .topbar-user-menu .user-menu-info {
-    display: block;
-  }
+.admin-topbar .topbar-user-menu .user-menu-info,
+.admin-topbar .topbar-user-menu .user-menu-chevron {
+  display: none !important;
 }
 
 /* Page Header */
@@ -131,33 +150,33 @@
 .topbar-user-menu .dropdown-trigger.user-menu-trigger {
   padding: 0;
   border-radius: 999px;
-  border: 1px solid var(--border-light, #f3f4f6);
-  background: var(--bg-elevated, #ffffff);
-  width: 40px;
-  height: 40px;
+  border: none;
+  background: transparent;
+  width: 36px;
+  height: 36px;
   min-height: auto;
+  min-width: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0;
-}
-
-.topbar-user-menu .user-menu-info,
-.topbar-user-menu .user-menu-chevron {
-  display: none;
+  overflow: hidden;
+  line-height: 1;
 }
 
 .topbar-user-menu .user-avatar,
 .topbar-user-menu .user-avatar-initials {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   flex-shrink: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .topbar-user-menu .user-avatar {
   object-fit: cover;
-  border: 2px solid var(--border-light, #e2e8f0);
+  border: none;
 }
 
 .topbar-user-menu .user-avatar-initials {
@@ -168,7 +187,10 @@
   color: #ffffff;
   font-weight: 600;
   font-size: 0.8125rem;
-  border: 2px solid var(--border-light, #e2e8f0);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  border: none;
+  box-sizing: border-box;
 }
 
 /* User Menu Dropdown in Topbar - Uses Unified Dropdown System */
