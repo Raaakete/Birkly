@@ -148,6 +148,74 @@ try {
     $css = birkly_test_http_request($base . '/admin/css/onboarding.css');
     test_assert('onboarding.css served', $css['code'] === 200);
     test_assert('onboarding.css has container rules', strpos($css['body'], '.onboarding-container') !== false);
+
+    // M2-T4: optional AI wizard step is present in onboarding template
+    test_assert(
+        'onboarding has connect-ai step element',
+        strpos($onboardingPage['body'], 'step-connect-ai') !== false,
+        'connect-ai step not found in onboarding page'
+    );
+    test_assert(
+        'connect-ai step is optional (skippable)',
+        strpos($onboardingPage['body'], 'skip-for-now') !== false
+            || strpos($onboardingPage['body'], 'skipAI') !== false
+            || strpos($onboardingPage['body'], 'skip_for_now') !== false,
+        'skipAI or skip-for-now not found in onboarding page'
+    );
+
+    // M2-T5: Dashboard checklist has exactly 4 essential items (D3 — no upload_media, no create_template)
+    $dashboardPageChecklist = birkly_test_http_request($base . '/admin/index.php?page=dashboard', [
+        'cookie_file' => $cookieFile,
+    ]);
+    test_assert('dashboard checklist page HTTP 200', $dashboardPageChecklist['code'] === 200);
+
+    // Verify removed items are absent from the API response
+    $checklistApi = birkly_test_http_request($base . '/api/admin_templates.php?action=getDashboardData', [
+        'cookie_file' => $cookieFile,
+    ]);
+    // The checklist is embedded server-side; verify via the rendered dashboard that upload_media/create_template are gone
+    test_assert(
+        'dashboard checklist does not contain upload_media',
+        strpos($dashboardPageChecklist['body'], 'upload_media') === false,
+        'upload_media found in dashboard — must be removed per D3'
+    );
+    test_assert(
+        'dashboard checklist does not contain create_template',
+        strpos($dashboardPageChecklist['body'], 'create_template') === false,
+        'create_template found in dashboard — must be removed per D3'
+    );
+    test_assert(
+        'dashboard checklist does not contain AI item',
+        strpos($dashboardPageChecklist['body'], 'connect_ai') === false
+            && strpos($dashboardPageChecklist['body'], 'connect-ai') === false,
+        'AI checklist item found in dashboard — must never appear per D2/D3'
+    );
+
+    // M2-T3: Birkly.url() used in onboarding JS (no bare /api/ fetch paths)
+    $onboardingJs = birkly_test_http_request($base . '/admin/js/onboarding.js');
+    test_assert('onboarding.js served', $onboardingJs['code'] === 200);
+    test_assert(
+        'onboarding.js uses Birkly.url() for API calls',
+        strpos($onboardingJs['body'], "Birkly.url('/api/") !== false,
+        'Birkly.url() not found in onboarding.js'
+    );
+    // Ensure no bare fetch('/api/...') remain (all must go through Birkly.url)
+    preg_match_all("/fetch\s*\(\s*'\/api\//", $onboardingJs['body'], $bareMatches);
+    test_assert(
+        'onboarding.js has no bare /api/ fetch paths',
+        count($bareMatches[0]) === 0,
+        'Found bare /api/ fetch: ' . implode(', ', $bareMatches[0])
+    );
+
+    // M2-T2: visual redesign — progress track and step dots present
+    test_assert(
+        'onboarding.css has progress-track (redesigned progress bar)',
+        strpos($css['body'], '.progress-track') !== false
+    );
+    test_assert(
+        'onboarding.css has step-icon-badge (redesigned step header)',
+        strpos($css['body'], '.step-icon-badge') !== false
+    );
 } finally {
     birkly_test_restore_directory($usersDir, $backupUsers);
     birkly_test_restore_directory($settingsDir, $backupSettings);

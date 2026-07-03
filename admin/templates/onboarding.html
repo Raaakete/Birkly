@@ -29,20 +29,41 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?>" class="onboarding-logo">
             <h1 class="onboarding-header-title"><?= htmlspecialchars($projectName) ?></h1>
         </div>
+
+        <!-- Progress Indicator (top, before steps) -->
+        <div class="onboarding-progress" id="onboarding-progress" style="display: none;">
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <ol class="progress-steps" id="progress-steps" aria-label="<?= __('admin.setup_progress') ?>">
+                <li class="progress-step" data-step="1">
+                    <span class="progress-step-dot"></span>
+                    <span class="progress-step-label"><?= __('admin.welcome') ?></span>
+                </li>
+                <li class="progress-step" data-step="2">
+                    <span class="progress-step-dot"></span>
+                    <span class="progress-step-label"><?= __('admin.project_info') ?></span>
+                </li>
+                <li class="progress-step" data-step="3">
+                    <span class="progress-step-dot"></span>
+                    <span class="progress-step-label"><?= __('admin.demo_website') ?></span>
+                </li>
+                <li class="progress-step" data-step="4">
+                    <span class="progress-step-dot"></span>
+                    <span class="progress-step-label"><?= __('admin.connect_ai') ?></span>
+                </li>
+            </ol>
+        </div>
         
         <!-- Step 0: Create First User (if no users exist) -->
         <div class="onboarding-step" id="step-first-user" data-step="0" style="display: none;">
             <div class="onboarding-content">
                 <div class="step-header">
-                    <div class="step-indicator">
-                        <span class="step-number">1</span>
-                        <span class="step-label"><?= __('admin.create_admin_account') ?></span>
+                    <div class="step-icon-badge">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
-                </div>
-                
-                <div class="welcome-header">
-                    <h1><?= __('admin.welcome_to_birkly_exclamation') ?></h1>
-                    <p class="welcome-subtitle"><?= __('admin.create_admin_account_subtitle') ?></p>
+                    <h2 class="step-title"><?= __('admin.create_admin_account') ?></h2>
+                    <p class="step-subtitle"><?= __('admin.create_admin_account_subtitle') ?></p>
                 </div>
                 
                 <form id="first-user-form" class="onboarding-form">
@@ -131,33 +152,43 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         <div class="onboarding-step" id="step-welcome" data-step="1">
             <div class="onboarding-content">
                 <div class="welcome-header">
+                    <div class="welcome-icon">
+                        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="" aria-hidden="true" class="welcome-brand-icon">
+                    </div>
                     <h1><?= __('admin.welcome_to_birkly_exclamation') ?></h1>
                     <p class="welcome-subtitle"><?= __('admin.setup_in_few_steps') ?></p>
                 </div>
                 
                 <div class="welcome-features">
                     <div class="feature-card">
-                        <div class="feature-icon">📝</div>
+                        <div class="feature-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+                        </div>
                         <h3><?= __('admin.content_management') ?></h3>
                         <p><?= __('admin.create_manage_content') ?></p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">🎨</div>
+                        <div class="feature-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        </div>
                         <h3><?= __('admin.flexible_fieldtypes') ?></h3>
                         <p><?= __('admin.variety_content_types') ?></p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">🚀</div>
+                        <div class="feature-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
                         <h3><?= __('admin.fast_and_simple') ?></h3>
                         <p><?= __('admin.no_database_needed') ?></p>
                     </div>
                 </div>
                 
-                <div class="onboarding-actions">
+                <div class="onboarding-actions onboarding-actions--centered">
                     <button class="btn btn-primary btn-large" onclick="onboarding.nextStep()">
                         <?= __('admin.get_started') ?>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9,18 15,12 9,6"/></svg>
                     </button>
-                    <button class="btn btn-secondary btn-large" onclick="onboarding.skip()">
+                    <button class="btn btn-ghost" onclick="onboarding.skip()">
                         <?= __('admin.skip_setup') ?>
                     </button>
                 </div>
@@ -168,17 +199,17 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         <div class="onboarding-step" id="step-site-info" data-step="2" style="display: none;">
             <div class="onboarding-content">
                 <div class="step-header">
-                    <div class="step-indicator">
-                        <span class="step-number">2</span>
-                        <span class="step-label"><?= __('admin.project_information') ?></span>
+                    <div class="step-icon-badge">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     </div>
+                    <h2 class="step-title"><?= __('admin.project_information') ?></h2>
+                    <p class="step-subtitle"><?= __('admin.project_name_help') ?></p>
                 </div>
                 
                 <form id="site-info-form" class="onboarding-form" enctype="multipart/form-data">
                     <div class="form-group" id="form-group-project-name">
                         <label for="project-name"><?= __('admin.project_name') ?></label>
                         <input type="text" id="project-name" name="project_name" placeholder="<?= __('admin.my_project') ?>" required minlength="2">
-                        <small class="form-help"><?= __('admin.project_name_help') ?></small>
                         <div class="form-feedback error"><?= __('admin.project_name_min_length') ?></div>
                         <div class="form-feedback success">✓ <?= __('admin.project_name_looks_good') ?></div>
                         <div class="form-icon error">⚠</div>
@@ -186,26 +217,35 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     </div>
                     
                     <div class="form-group">
-                        <label for="project-logo"><?= __('admin.project_logo') ?> (<?= __('admin.optional') ?>)</label>
-                        <input type="file" id="project-logo" name="project_logo" accept="image/*">
-                        <small><?= __('admin.project_logo_help') ?></small>
-                        <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
-                            <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px;">
+                        <label for="project-logo"><?= __('admin.project_logo') ?> <span class="label-optional">(<?= __('admin.optional') ?>)</span></label>
+                        <div class="logo-upload-area" id="logo-upload-area">
+                            <div id="logo-upload-placeholder" class="logo-upload-placeholder">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                                <span><?= __('admin.click_to_upload_logo') ?></span>
+                            </div>
+                            <div id="logo-preview" class="logo-preview-wrap" style="display: none;">
+                                <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>">
+                                <button type="button" class="logo-preview-remove" onclick="onboarding.removeLogo()" aria-label="<?= __('admin.remove') ?>">×</button>
+                            </div>
+                            <input type="file" id="project-logo" name="project_logo" accept="image/*" class="logo-file-input">
                         </div>
+                        <small class="form-help"><?= __('admin.project_logo_help') ?></small>
                     </div>
                     
                     <div class="form-group">
-                        <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
+                        <label for="project-description"><?= __('admin.project_description') ?> <span class="label-optional">(<?= __('admin.optional') ?>)</span></label>
                         <textarea id="project-description" name="project_description" rows="3" placeholder="<?= __('admin.brief_description') ?>"></textarea>
-                        <small><?= __('admin.optional_description_help') ?></small>
+                        <small class="form-help"><?= __('admin.optional_description_help') ?></small>
                     </div>
                     
                     <div class="onboarding-actions">
                         <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
                             <?= __('admin.back') ?>
                         </button>
                         <button type="submit" class="btn btn-primary">
                             <?= __('admin.continue') ?>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9,18 15,12 9,6"/></svg>
                         </button>
                     </div>
                 </form>
@@ -216,64 +256,109 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         <div class="onboarding-step" id="step-demo-content" data-step="3" style="display: none;">
             <div class="onboarding-content">
                 <div class="step-header">
-                    <div class="step-indicator">
-                        <span class="step-number">3</span>
-                        <span class="step-label"><?= __('admin.demo_content') ?></span>
+                    <div class="step-icon-badge">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
                     </div>
-                    <p class="step-description"><?= __('admin.demo_content_description') ?></p>
+                    <h2 class="step-title"><?= __('admin.demo_content') ?></h2>
+                    <p class="step-subtitle"><?= __('admin.demo_content_description') ?></p>
                 </div>
                 
                 <div class="demo-options">
                     <div class="demo-card keep-card" onclick="onboarding.keepDemoContent()">
-                        <div class="demo-card-header">
-                            <h3><?= __('admin.keep_demo_content') ?></h3>
+                        <div class="demo-card-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
                         </div>
                         <div class="demo-card-body">
+                            <h3><?= __('admin.keep_demo_content') ?></h3>
                             <p><?= __('admin.keep_demo_content_help') ?></p>
+                            <?php if ($hasDemoWebsite): ?>
+                                <div class="demo-website-info">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10z"/></svg>
+                                    <code>/demo-website</code> <?= __('admin.demo_website_available') ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                        <?php if ($hasDemoWebsite): ?>
-                            <div class="demo-website-info">
-                                <p><strong><?= __('admin.demo_website') ?>:</strong> <?= __('admin.demo_website_available') ?> <code>/demo-website</code></p>
-                            </div>
-                        <?php endif; ?>
                         <div class="demo-card-footer">
-                            <button class="btn btn-primary btn-small"><?= __('admin.keep') ?></button>
+                            <span class="btn btn-primary btn-small"><?= __('admin.keep') ?></span>
                         </div>
                     </div>
                     
                     <div class="demo-card delete-card" onclick="onboarding.deleteDemoContent()">
-                        <div class="demo-card-header">
-                            <h3><?= __('admin.start_fresh') ?></h3>
+                        <div class="demo-card-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3,0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                         </div>
                         <div class="demo-card-body">
+                            <h3><?= __('admin.start_fresh') ?></h3>
                             <p><?= __('admin.start_fresh_help') ?></p>
                         </div>
                         <div class="demo-card-footer">
-                            <button class="btn btn-secondary btn-small"><?= __('admin.delete') ?></button>
+                            <span class="btn btn-secondary btn-small"><?= __('admin.delete') ?></span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="onboarding-actions" style="display: none;" id="demo-content-actions">
                     <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
                         <?= __('admin.back') ?>
                     </button>
                     <button type="button" class="btn btn-primary" onclick="onboarding.nextStep()" id="continue-from-demo">
                         <?= __('admin.continue') ?>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9,18 15,12 9,6"/></svg>
                     </button>
                 </div>
             </div>
         </div>
-        
-        <!-- Progress Indicator -->
-        <div class="onboarding-progress">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-            <div class="progress-steps">
-                <span class="progress-step active" data-step="1"><?= __('admin.welcome') ?></span>
-                <span class="progress-step" data-step="2"><?= __('admin.project_info') ?></span>
-                <span class="progress-step" data-step="3"><?= __('admin.demo_website') ?></span>
+
+        <!-- Step 4: Connect AI (optional, skippable) -->
+        <div class="onboarding-step" id="step-connect-ai" data-step="4" style="display: none;">
+            <div class="onboarding-content">
+                <div class="step-header step-header--optional">
+                    <div class="step-icon-badge step-icon-badge--ai">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+                    </div>
+                    <div class="step-optional-badge"><?= __('admin.optional') ?></div>
+                    <h2 class="step-title"><?= __('admin.connect_ai_assistant') ?></h2>
+                    <p class="step-subtitle"><?= __('admin.connect_ai_description') ?></p>
+                </div>
+
+                <div class="ai-connect-card">
+                    <div class="ai-connect-benefits">
+                        <div class="ai-benefit">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                            <span><?= __('admin.ai_benefit_1') ?></span>
+                        </div>
+                        <div class="ai-benefit">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                            <span><?= __('admin.ai_benefit_2') ?></span>
+                        </div>
+                        <div class="ai-benefit">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+                            <span><?= __('admin.ai_benefit_3') ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="onboarding-actions onboarding-actions--ai">
+                    <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+                        <?= __('admin.back') ?>
+                    </button>
+                    <div class="ai-action-group">
+                        <button type="button" class="btn btn-ghost ai-skip-btn" onclick="onboarding.skipAI()">
+                            <?= __('admin.skip_for_now') ?>
+                        </button>
+                        <a href="<?= admin_url('settings') ?>#ai" class="btn btn-primary" onclick="onboarding.goToAISettings(event)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+                            <?= __('admin.connect_ai') ?>
+                        </a>
+                    </div>
+                </div>
+
+                <p class="ai-later-hint">
+                    <?= __('admin.ai_connect_later_hint') ?>
+                    <a href="<?= admin_url('settings') ?>#ai"><?= __('admin.settings_ai') ?></a>.
+                </p>
             </div>
         </div>
     </div>
