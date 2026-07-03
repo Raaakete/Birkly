@@ -180,8 +180,13 @@ window.ContentEditorCommands = {
 
   // Apply formatting command
   execute(command, value = null) {
-    // Save selection before executing
-    window.ContentEditorSelection.save();
+    const editor = this.getActiveEditor ? this.getActiveEditor() : null;
+    if (window.ContentEditorSelection) {
+      window.ContentEditorSelection.restore(editor);
+      if (!window.ContentEditorSelection.getRange()) {
+        window.ContentEditorSelection.save();
+      }
+    }
     
     try {
       switch (command) {

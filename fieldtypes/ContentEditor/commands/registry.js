@@ -22,7 +22,7 @@ window.ContentEditorCommandRegistry = {
       }
 
       if (window.ContentEditorSelection) {
-        window.ContentEditorSelection.save();
+        window.ContentEditorSelection.restore(editor);
       }
 
       try {
