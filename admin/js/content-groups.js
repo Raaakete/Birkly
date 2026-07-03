@@ -25,6 +25,17 @@
     function assetUrl(path) {
         return apiUrl(path.startsWith('/') ? path : '/admin/assets/' + path);
     }
+
+    const DRAG_HANDLE_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="3" r="1.25"/><circle cx="11" cy="3" r="1.25"/><circle cx="5" cy="8" r="1.25"/><circle cx="11" cy="8" r="1.25"/><circle cx="5" cy="13" r="1.25"/><circle cx="11" cy="13" r="1.25"/></svg>';
+
+    function createDragHandle(label, className) {
+        const handle = document.createElement('span');
+        handle.className = className || 'drag-handle';
+        handle.setAttribute('role', 'img');
+        handle.setAttribute('aria-label', label);
+        handle.innerHTML = DRAG_HANDLE_SVG;
+        return handle;
+    }
     
     let groups = [];
     let collections = [];
@@ -271,17 +282,11 @@
         // Header contains the drag handle
         const header = document.createElement('div');
         header.className = 'group-header';
-        header.style.cursor = 'default';
+        header.style.cursor = 'grab';
         
-        // Add drag handle for group
         const dragHandleWrapper = document.createElement('div');
         dragHandleWrapper.className = 'group-drag-handle';
-        dragHandleWrapper.style.cursor = 'grab';
-        const dragHandle = document.createElement('img');
-        dragHandle.src = assetUrl('/admin/assets/DotsSixVertical.svg');
-        dragHandle.alt = 'Drag to reorder group';
-        dragHandle.draggable = false;
-        dragHandleWrapper.appendChild(dragHandle);
+        dragHandleWrapper.appendChild(createDragHandle('Drag to reorder group', 'drag-handle'));
         
         const title = document.createElement('h3');
         title.className = 'group-title';
@@ -456,12 +461,7 @@
         const title = document.createElement('h3');
         title.className = 'title';
         
-        const dragHandle = document.createElement('img');
-        dragHandle.src = assetUrl('/admin/assets/DotsSixVertical.svg');
-        dragHandle.alt = 'Drag to reorder';
-        dragHandle.className = 'drag-handle';
-        dragHandle.draggable = false;
-        dragHandle.style.cursor = 'grab';
+        const dragHandle = createDragHandle('Drag to reorder');
         
         const titleLink = document.createElement('a');
         titleLink.href = adminUrl('entries', { collection: collection.slug });

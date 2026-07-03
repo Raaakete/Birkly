@@ -95,7 +95,7 @@ a.card:hover {
 }
 
 .collection-card .drag-handle {
-  pointer-events: auto;
+  pointer-events: none;
   z-index: 5;
 }
 
