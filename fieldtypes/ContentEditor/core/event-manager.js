@@ -191,14 +191,18 @@ window.ContentEditorEventManager = {
     // Get the correct editor/toolbar from the event (works for both inline and fullscreen)
     const editorInfo = this.getEditorFromEvent(e);
     if (!editorInfo) {
-      // Fallback to stored references
-      editorInfo = {
+      // Fallback to stored references when click is outside a resolved wrapper
+      return this.handleToolbarClickForInstance(e, {
         toolbar: this.toolbar,
         editor: this.editor,
         hiddenInput: this.hiddenInput,
         wrapper: null
-      };
+      });
     }
+    this.handleToolbarClickForInstance(e, editorInfo);
+  },
+
+  handleToolbarClickForInstance(e, editorInfo) {
     const { toolbar, editor, hiddenInput } = editorInfo;
     
     // Handle dropdown items

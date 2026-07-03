@@ -33,6 +33,29 @@ foreach ($checks as $needle => $label) {
     }
 }
 
+// Visual area must start empty; stored HTML lives in the hidden input only
+if (!preg_match('/class="content-editor-area"[^>]*>\s*<\/div>/', $html)) {
+    echo "FAIL: content-editor-area should not contain inline HTML markup\n";
+    $failures++;
+} else {
+    echo "PASS: content-editor-area starts empty\n";
+}
+
+if (strpos($html, 'value="&lt;p&gt;Seed&lt;/p&gt;"') === false && strpos($html, 'value="<p>Seed</p>"') === false) {
+    echo "FAIL: hidden input should carry stored HTML value\n";
+    $failures++;
+} else {
+    echo "PASS: hidden input carries stored HTML value\n";
+}
+
+$commandsJs = file_get_contents(__DIR__ . '/../commands.js');
+if (@shell_exec('node --check ' . escapeshellarg(__DIR__ . '/../commands.js') . ' 2>&1')) {
+    echo "FAIL: commands.js has JavaScript syntax errors\n";
+    $failures++;
+} else {
+    echo "PASS: commands.js parses cleanly\n";
+}
+
 $input = '<p>Hello <strong>world</strong></p>';
 $processed = $editor->processValue($input);
 if (strpos($processed, 'Hello') === false || strpos($processed, 'world') === false) {
