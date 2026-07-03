@@ -106,13 +106,13 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.2-platform-hardening-plan.md` · **Handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
 
-**2026-07-03 — Phase 5.5 approved** (Keven)
+**2026-07-03 — Phase 5.5 complete** (Keven approved; M5 docs + closure merged)
 
-**Priorities:** **ContentEditor layout studio** — visual table/grid editing (resize, gap, cell styling, grid span/flow) · toolbar reliability · `commands.js` layout extraction.
+**Priorities delivered:** ContentEditor layout studio — visual table/grid editing (resize, gap, cell styling, grid span/flow) · toolbar reliability · layout modules in `fieldtypes/ContentEditor/layout/`.
 
-**Human decisions (locked):** Fluid inline grid tracks (no `@media` in entry HTML) · cell merge = M2 stretch · autonomous M0→M5 · notify once at P5.5-M5-T5.
+**Human decisions (locked):** Fluid inline grid tracks (no `@media` in entry HTML) · cell merge deferred to Phase 6 · client embed sync (D5) post-closure · notify once at P5.5-M5-T5.
 
-**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md` · **Handoff:** `docs/reviews/P5.5-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md` · **Handoff:** `docs/reviews/P5.5-lead-engineer-handoff.md` · **Closure:** `docs/reviews/p5.5-phase-closure-checklist.md`
 
 ---
 
@@ -1697,29 +1697,45 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 5.5 — ContentEditor layout power features
 
-**Status:** Approved (2026-07-03) — autonomous execution in progress
+**Status:** Complete (2026-07-03) — merged to main; pending human live deploy on `birkly.kekaba.com`
 
-**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md` · **Handoff:** `docs/reviews/P5.5-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P5.5-contenteditor-layout-plan.md` · **Handoff:** `docs/reviews/P5.5-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/p5.5-integration-test-matrix.md`
 
-**Priorities:** Visual in-editor layout studio for **tables** and **CSS grids** (resize, gap, cell styling, grid span/flow) · complete M0 qa · extract layout commands from `commands.js` monolith.
+### P5.5-M0 — Toolbar & insert reliability
+- [x] Admin dropdown clash fix (#68); caret insert via `insertNodesAtCaret` (#67, #68)
+- [x] qa-verifier entry editor smoke (dropdowns + mid-document table insert)
 
-**Scope (Birkly `fieldtypes/ContentEditor/` only):**
+### P5.5-M1 — Layout block architecture
+- [x] `layout/layout-block.js`, `layout-inspector.js`, `resize-controller.js`, `layout-manager.js`
+- [x] Save sanitization in `sync-manager.js` + `ContentEditor.php` `processValue`
+- [x] `layout_roundtrip_test.php`
 
-| Milestone | Focus |
-|-----------|--------|
-| **P5.5-M0** | Dropdown + caret-insert hotfixes (mostly done; qa smoke open) |
-| **P5.5-M1** | Shared layout-block architecture (inspector, resize controller) |
-| **P5.5-M2** | Table visual studio (column/row resize, cell styles) |
-| **P5.5-M3** | Grid visual studio (track resize, span, auto-flow, gap) |
-| **P5.5-M4** | `commands.js` layout module extraction (Phase 4 debt) |
-| **P5.5-M5** | Docs, AI knowledge, walkthrough, closure |
+### P5.5-M2 — Table visual studio
+- [x] `table.content-editor-table` + `<colgroup>` column widths
+- [x] Column/row resize, cell + table inspector
+- [x] `table_layout_test.php`, `caret_insert_test.php`
+
+### P5.5-M3 — Grid visual studio
+- [x] `div.content-editor-grid` with inline grid styles, span, gap, auto-flow presets
+- [x] Fluid responsive tracks (no `@media` in saved HTML)
+- [x] `grid_layout_test.php`
+
+### P5.5-M4 — Commands cleanup
+- [x] Layout modules in `layout/table-layout.js`, `layout/grid-layout.js`; wired in `ContentEditor.php`
+- [x] ARCHITECTURE_PROPOSAL Phase 4 checklist updated
+
+### P5.5-M5 — Docs, AI knowledge & closure
+- [x] Birkly-Docs `02-content/content-editor.md`
+- [x] AI context pack layout patterns; `ai_knowledge_coverage_test.php`
+- [x] Integration matrix + phase closure checklist; **P5.5-M5-T5** notify human once
 
 **Human decisions (locked):**
 
 | Decision | Choice |
 |----------|--------|
 | Grid responsive export | Fluid inline tracks; no `@media` in entry HTML |
-| Cell merge (tables) | M2 stretch; defer to Phase 6 if slips |
+| Cell merge (tables) | Deferred to Phase 6 |
+| Client embed sync (D5) | Deferred until post-closure |
 | Execution | Autonomous M0→M5; notify human once at P5.5-M5-T5 |
 
 ---

@@ -31,6 +31,22 @@ foreach ($requiredPackTerms as $label => $needle) {
     );
 }
 
+$layoutPackTerms = [
+    'content-editor-table' => 'content-editor-table',
+    'content-editor-grid' => 'content-editor-grid',
+    'layout studio' => 'Layout panel',
+    'grid-template-columns' => 'grid-template-columns',
+    'editor metadata stripped' => 'data-ce-*',
+];
+
+foreach ($layoutPackTerms as $label => $needle) {
+    test_assert(
+        "context pack layout: $label",
+        stripos($pack, $needle) !== false,
+        "missing layout term: $needle"
+    );
+}
+
 $templating = readBirklyDocsTopic('templating');
 test_assert('read_birkly_docs templating loads', $templating !== null && ($templating['text'] ?? '') !== '');
 test_assert('templating topic mentions endfor', stripos($templating['text'] ?? '', '{endfor}') !== false || stripos($templating['text'] ?? '', 'endfor') !== false);
