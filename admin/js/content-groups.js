@@ -143,20 +143,26 @@
                 }
             },
             
-            onCollectionReorder: (groupId, fromIndex, toIndex) => {
+            onCollectionReorder: (groupId, fromIndex, toIndex, placeholder, draggedItem) => {
                 const normalizedGroupId = groupId || 'ungrouped';
                 let group = groups.find(g => g.id === normalizedGroupId);
                 if (!group && normalizedGroupId === 'ungrouped') {
                     group = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
                     groups.push(group);
                 }
-                if (!group || !group.collections) return;
+                if (!group) return;
 
-                const slug = group.collections[fromIndex];
-                if (!slug) return;
-
-                group.collections.splice(fromIndex, 1);
-                group.collections.splice(toIndex, 0, slug);
+                const grid = draggedItem && draggedItem.closest('.group-collections, .ungrouped-collections');
+                if (grid) {
+                    group.collections = Array.from(grid.querySelectorAll('.collection-card'))
+                        .map(card => card.dataset.collectionSlug)
+                        .filter(Boolean);
+                } else if (group.collections && fromIndex !== toIndex) {
+                    const slug = group.collections[fromIndex];
+                    if (!slug) return;
+                    group.collections.splice(fromIndex, 1);
+                    group.collections.splice(toIndex, 0, slug);
+                }
                 saveGroups();
             },
             
@@ -169,7 +175,29 @@
                     group.collections = group.collections.filter(slug => slug !== collectionSlug);
                 });
 
-                if (normalizedTo !== 'ungrouped') {
+                const targetGrid = document.querySelector(
+                    '.collection-group[data-group-id="' + CSS.escape(normalizedTo) + '"] .group-collections, ' +
+                    '.collection-group[data-group-id="' + CSS.escape(normalizedTo) + '"] .ungrouped-collections'
+                ) || document.querySelector('.collection-group.ungrouped .ungrouped-collections');
+
+                if (targetGrid) {
+                    const slugs = Array.from(targetGrid.querySelectorAll('.collection-card'))
+                        .map(card => card.dataset.collectionSlug)
+                        .filter(Boolean);
+                    if (normalizedTo !== 'ungrouped') {
+                        const toGroup = groups.find(g => g.id === normalizedTo);
+                        if (toGroup) {
+                            toGroup.collections = slugs;
+                        }
+                    } else {
+                        let ungroupedGroup = groups.find(g => g.id === 'ungrouped');
+                        if (!ungroupedGroup) {
+                            ungroupedGroup = { id: 'ungrouped', name: 'Ungrouped', collections: [] };
+                            groups.push(ungroupedGroup);
+                        }
+                        ungroupedGroup.collections = slugs;
+                    }
+                } else if (normalizedTo !== 'ungrouped') {
                     const toGroup = groups.find(g => g.id === normalizedTo);
                     if (toGroup) {
                         if (!toGroup.collections) {

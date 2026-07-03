@@ -51,6 +51,9 @@
             this.lastPlaceholderUpdate = 0;
             this.placeholderUpdateThrottle = 16; // ~60fps
             this.lastTargetItem = null; // Track last target to prevent unnecessary updates
+            this.usingPointerEvents = typeof window.PointerEvent === 'function';
+            this.activePointerId = null;
+            this.dragIndexContainer = null;
             
             this.init();
         }
@@ -64,16 +67,71 @@
             this.boundMouseUp = this.handleMouseUp.bind(this);
             
             // Prefer pointer events; fall back to mouse for older browsers
-            if (window.PointerEvent) {
+            if (this.usingPointerEvents) {
                 this.container.addEventListener('pointerdown', this.boundMouseDown, this.useCapture);
             } else {
                 this.container.addEventListener('mousedown', this.boundMouseDown, this.useCapture);
             }
         }
 
+        getItemGrid(item) {
+            if (!item) return this.container;
+            return item.closest('.group-collections, .ungrouped-collections') || this.container;
+        }
+
+        getItemsInContainer(container) {
+            return Array.from((container || this.container).querySelectorAll(this.itemSelector));
+        }
+
+        getEventCoords(e) {
+            return {
+                x: typeof e.clientX === 'number' ? e.clientX : 0,
+                y: typeof e.clientY === 'number' ? e.clientY : 0
+            };
+        }
+
+        attachDocumentDragListeners(e) {
+            this.detachDocumentDragListeners();
+            if (this.usingPointerEvents && typeof e.pointerId === 'number') {
+                this.activePointerId = e.pointerId;
+                try {
+                    if (this.draggedItem && this.draggedItem.setPointerCapture) {
+                        this.draggedItem.setPointerCapture(e.pointerId);
+                    }
+                } catch (_) {}
+                document.addEventListener('pointermove', this.boundMouseMove);
+                document.addEventListener('pointerup', this.boundMouseUp);
+                document.addEventListener('pointercancel', this.boundMouseUp);
+            } else {
+                this.activePointerId = null;
+                document.addEventListener('mousemove', this.boundMouseMove);
+                document.addEventListener('mouseup', this.boundMouseUp);
+            }
+        }
+
+        detachDocumentDragListeners() {
+            document.removeEventListener('mousemove', this.boundMouseMove);
+            document.removeEventListener('mouseup', this.boundMouseUp);
+            document.removeEventListener('pointermove', this.boundMouseMove);
+            document.removeEventListener('pointerup', this.boundMouseUp);
+            document.removeEventListener('pointercancel', this.boundMouseUp);
+        }
+
+        releasePointerCapture() {
+            if (this.activePointerId !== null && this.draggedItem && this.draggedItem.releasePointerCapture) {
+                try {
+                    this.draggedItem.releasePointerCapture(this.activePointerId);
+                } catch (_) {}
+            }
+            this.activePointerId = null;
+        }
+
         handleMouseDown(e) {
             // Prevent multiple drags
             if (this.dragging) return;
+            if (typeof e.button === 'number' && e.button !== 0) return;
+            if (this.usingPointerEvents && e.type === 'mousedown') return;
+            if (!this.usingPointerEvents && e.type === 'pointerdown') return;
 
             // Group sorter must not intercept collection card interactions
             if (this.itemSelector.includes('collection-group') && e.target.closest('.collection-card')) {
@@ -130,21 +188,24 @@
             this.originalParent = item.parentNode;
             this.originalNextSibling = item.nextSibling;
             
-            // Calculate initial index, excluding ungrouped group for groups
-            const allItems = this.getItems();
+            // Calculate initial index within the card's grid (or container for groups)
+            const indexContainer = this.itemSelector.includes('collection-card')
+                ? this.getItemGrid(item)
+                : this.container;
+            this.dragIndexContainer = indexContainer;
+            const scopedItems = this.getItemsInContainer(indexContainer);
             if (this.itemSelector.includes('.collection-group')) {
-                // For groups, count only non-ungrouped groups
                 let index = 0;
-                for (let i = 0; i < allItems.length; i++) {
-                    if (allItems[i] === item) break;
-                    const groupId = allItems[i].dataset?.groupId;
+                for (let i = 0; i < scopedItems.length; i++) {
+                    if (scopedItems[i] === item) break;
+                    const groupId = scopedItems[i].dataset?.groupId;
                     if (groupId && groupId !== 'ungrouped') {
                         index++;
                     }
                 }
                 this.draggedIndex = index;
             } else {
-                this.draggedIndex = allItems.indexOf(item);
+                this.draggedIndex = scopedItems.indexOf(item);
             }
             
             // Calculate mouse offset from item
@@ -171,15 +232,19 @@
             // Set cursor
             document.body.style.cursor = 'grabbing';
             
-            // Add global listeners (using pre-bound handlers)
-            document.addEventListener('mousemove', this.boundMouseMove);
-            document.addEventListener('mouseup', this.boundMouseUp);
+            // Track movement globally (pointer + mouse for compatibility)
+            this.attachDocumentDragListeners(e);
         }
 
         handleMouseMove(e) {
             if (!this.dragging || !this.draggedItem) return;
+            if (this.activePointerId !== null && typeof e.pointerId === 'number' && e.pointerId !== this.activePointerId) {
+                return;
+            }
             
             e.preventDefault();
+            
+            const coords = this.getEventCoords(e);
             
             // Update dragged item position with smooth movement
             if (!this.draggedItem.style.position || this.draggedItem.style.position !== 'fixed') {
@@ -190,8 +255,8 @@
             }
             
             // Update position directly for immediate response (requestAnimationFrame would add lag)
-            this.draggedItem.style.left = (e.clientX - this.mouseOffset.x) + 'px';
-            this.draggedItem.style.top = (e.clientY - this.mouseOffset.y) + 'px';
+            this.draggedItem.style.left = (coords.x - this.mouseOffset.x) + 'px';
+            this.draggedItem.style.top = (coords.y - this.mouseOffset.y) + 'px';
             
             // Throttle placeholder updates for smoother performance (but not item movement)
             const now = performance.now();
@@ -199,7 +264,7 @@
                 this.lastPlaceholderUpdate = now;
                 
                 // Find target item (check all containers if cross-container is enabled)
-                const result = this.findTargetItem(e.clientX, e.clientY);
+                const result = this.findTargetItem(coords.x, coords.y);
                 
                 if (result && result.item !== this.draggedItem && result.item !== this.placeholder) {
                     // Check if we're hovering above the first item (for top insertion)
@@ -217,7 +282,7 @@
                         if (firstItem === result.item) {
                             const rect = result.item.getBoundingClientRect();
                             // If mouse is above the top edge of first item, insert at top
-                            if (e.clientY < rect.top) {
+                            if (coords.y < rect.top) {
                                 this.insertPlaceholderAtTop();
                                 this.currentTargetContainer = this.container;
                                 this.lastTargetItem = null;
@@ -226,32 +291,37 @@
                         }
                     }
                     
-                    // Only update if we're over a different item or container
+                    // Only update if we're over a different item or container (grid always re-evaluates position)
                     const targetChanged = this.lastTargetItem !== result.item || 
                                          this.currentTargetContainer !== result.container;
+                    const isGrid = result.container && 
+                                  (result.container.classList.contains('group-collections') || 
+                                   result.container.classList.contains('ungrouped-collections'));
                     
-                    if (targetChanged) {
+                    if (targetChanged || isGrid) {
                         this.currentTarget = result.item;
                         this.currentTargetContainer = result.container;
                         this.lastTargetItem = result.item;
                         
-                        // For grid layouts (cards), use both X and Y for positioning
-                        // For list layouts (groups), use only Y
-                        const isGrid = result.container && 
-                                      (result.container.classList.contains('group-collections') || 
-                                       result.container.classList.contains('ungrouped-collections'));
-                        
                         if (isGrid) {
-                            // Grid layout: check X position for column, Y for row
-                            this.insertPlaceholderGrid(result.item, e.clientX, e.clientY, result.container);
+                            this.insertPlaceholderGrid(result.item, coords.x, coords.y, result.container);
                         } else {
-                            // List layout: use Y position only
-                            this.insertPlaceholder(result.item, e.clientY, result.container);
+                            this.insertPlaceholder(result.item, coords.y, result.container);
                         }
                     }
                 } else if (!result) {
-                    // No target item found - check if we're above the container (for top insertion)
-                    if (!this.onCrossContainerMove) {
+                    if (this.onCrossContainerMove) {
+                        const targetContainer = this.findDropContainerAt(coords.x, coords.y);
+                        if (targetContainer) {
+                            this.insertPlaceholderInContainer(targetContainer, coords.x, coords.y);
+                            this.currentTargetContainer = targetContainer;
+                            this.lastTargetItem = null;
+                        } else {
+                            this.currentTarget = null;
+                            this.currentTargetContainer = null;
+                            this.lastTargetItem = null;
+                        }
+                    } else if (!this.onCrossContainerMove) {
                         // For groups (list layout), check if mouse is above the container or first item
                         const containerRect = this.container.getBoundingClientRect();
                         const items = this.getItems().filter(item => item !== this.draggedItem && item !== this.placeholder);
@@ -262,13 +332,13 @@
                         if (firstItem) {
                             const firstItemRect = firstItem.getBoundingClientRect();
                             // Check if mouse is above the first item's top edge
-                            if (e.clientY < firstItemRect.top && e.clientX >= firstItemRect.left && e.clientX <= firstItemRect.right) {
+                            if (coords.y < firstItemRect.top && coords.x >= firstItemRect.left && coords.x <= firstItemRect.right) {
                                 shouldInsertAtTop = true;
                             }
                         }
                         
                         // Also check if mouse is above the container itself
-                        if (!shouldInsertAtTop && e.clientY < containerRect.top && e.clientX >= containerRect.left && e.clientX <= containerRect.right) {
+                        if (!shouldInsertAtTop && coords.y < containerRect.top && coords.x >= containerRect.left && coords.x <= containerRect.right) {
                             shouldInsertAtTop = true;
                         }
                         
@@ -283,11 +353,6 @@
                             this.currentTargetContainer = null;
                             this.lastTargetItem = null;
                         }
-                    } else {
-                        // For collections, clear target if not found
-                        this.currentTarget = null;
-                        this.currentTargetContainer = null;
-                        this.lastTargetItem = null;
                     }
                 }
             }
@@ -295,16 +360,24 @@
 
         handleMouseUp(e) {
             if (!this.dragging || this.isProcessingDrop) return;
+            if (this.activePointerId !== null && typeof e.pointerId === 'number' && e.pointerId !== this.activePointerId) {
+                return;
+            }
             
             this.isProcessingDrop = true;
             this.dragging = false;
             
             // Remove global listeners immediately to prevent duplicate calls
-            document.removeEventListener('mousemove', this.boundMouseMove);
-            document.removeEventListener('mouseup', this.boundMouseUp);
+            this.detachDocumentDragListeners();
+            this.releasePointerCapture();
             
             // Reset cursor
             document.body.style.cursor = '';
+            
+            // Move dragged item to placeholder position in the DOM before callbacks/cleanup
+            if (this.placeholder && this.placeholder.parentNode && this.draggedItem) {
+                this.placeholder.parentNode.insertBefore(this.draggedItem, this.placeholder);
+            }
             
             // Find where placeholder actually is
             if (!this.placeholder || !this.placeholder.parentNode) {
@@ -337,9 +410,11 @@
             }
             
             // Check if this is a cross-container move (only for collections)
-            const isCrossContainer = this.onCrossContainerMove && 
-                                     placeholderContainer && 
-                                     placeholderContainer !== this.container;
+            const sourceGrid = this.dragIndexContainer || this.getItemGrid(this.draggedItem);
+            const isCrossContainer = this.onCrossContainerMove &&
+                                     placeholderContainer &&
+                                     sourceGrid &&
+                                     placeholderContainer !== sourceGrid;
             
             // Debug logging (can be removed later)
             // console.log('Drop detected:', {
@@ -371,19 +446,16 @@
                     placeholderIndex
                 );
             } else {
-                // Same container - reorder
-                // Calculate index by counting reorderable items before placeholder
-                // For groups, exclude ungrouped group from count
+                // Same container - reorder within the grid that holds the placeholder
+                const indexContainer = (this.placeholder && this.placeholder.parentNode) || this.dragIndexContainer || this.container;
                 let placeholderIndex = 0;
-                let node = this.container.firstChild;
+                let node = indexContainer.firstChild;
                 
                 while (node) {
                     if (node === this.placeholder) {
-                        // Found placeholder - index is the count of reorderable items before it
                         break;
                     }
                     if (node.nodeType === 1 && node.matches && node.matches(this.itemSelector) && node !== this.draggedItem) {
-                        // For groups, exclude ungrouped group
                         if (this.itemSelector.includes('.collection-group')) {
                             const groupId = node.dataset?.groupId;
                             if (groupId && groupId !== 'ungrouped') {
@@ -396,31 +468,24 @@
                     node = node.nextSibling;
                 }
                 
-                // Double-check: verify placeholder is actually before the first reorderable item
-                if (placeholderIndex === 0 && this.placeholder.parentNode === this.container) {
-                    // Find first reorderable item after placeholder
+                if (placeholderIndex === 0 && this.placeholder.parentNode === indexContainer) {
                     let checkNode = this.placeholder.nextSibling;
                     while (checkNode) {
                         if (checkNode.nodeType === 1 && checkNode.matches && checkNode.matches(this.itemSelector) && checkNode !== this.draggedItem) {
-                            // For groups, exclude ungrouped group
                             if (this.itemSelector.includes('.collection-group')) {
                                 const groupId = checkNode.dataset?.groupId;
                                 if (groupId && groupId !== 'ungrouped') {
-                                    // Found a reorderable item after placeholder - index should be 0 (before this item)
                                     break;
                                 }
                             } else {
-                                // Found an item after placeholder - index should be 0 (before this item)
                                 break;
                             }
                         }
                         checkNode = checkNode.nextSibling;
                     }
-                    // If we found a reorderable item after placeholder, index is correctly 0
                 }
                 
                 if (placeholderIndex !== this.draggedIndex) {
-                    // Call reorder callback with placeholder and draggedItem for convenience
                     if (this.onReorder) {
                         this.onReorder(this.draggedIndex, placeholderIndex, this.placeholder, this.draggedItem);
                     }
@@ -475,6 +540,53 @@
             }
             
             return closestItem ? { item: closestItem, container: closestContainer || this.container } : null;
+        }
+
+        findDropContainerAt(x, y) {
+            const containersToCheck = this.allContainers || [this.container];
+            for (const container of containersToCheck) {
+                const rect = container.getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    return container;
+                }
+            }
+            return null;
+        }
+
+        insertPlaceholderInContainer(container, mouseX, mouseY) {
+            if (!this.placeholder || !container) return;
+
+            const cards = Array.from(container.querySelectorAll(this.itemSelector))
+                .filter(item => item !== this.draggedItem && item !== this.placeholder);
+
+            if (cards.length === 0) {
+                if (this.placeholder.parentNode !== container) {
+                    this.placeholder.remove();
+                    container.appendChild(this.placeholder);
+                }
+                return;
+            }
+
+            let closestCard = cards[0];
+            let minDist = Infinity;
+            for (const card of cards) {
+                const rect = card.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const dist = Math.hypot(mouseX - centerX, mouseY - centerY);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestCard = card;
+                }
+            }
+
+            const isGrid = container.classList.contains('group-collections') ||
+                           container.classList.contains('ungrouped-collections');
+            if (isGrid) {
+                this.insertPlaceholderGrid(closestCard, mouseX, mouseY, container);
+            } else {
+                this.insertPlaceholder(closestCard, mouseY, container);
+            }
         }
 
         insertPlaceholder(targetItem, mouseY, targetContainer) {
@@ -719,6 +831,9 @@
         }
 
         cleanup() {
+            this.detachDocumentDragListeners();
+            this.releasePointerCapture();
+
             if (this.draggedItem) {
                 // CRITICAL: Immediately reset fixed positioning to prevent floating
                 // This must happen synchronously, not in a timeout
@@ -767,6 +882,7 @@
             this.currentTarget = null;
             this.currentTargetContainer = null;
             this.lastTargetItem = null;
+            this.dragIndexContainer = null;
             this.originalParent = null;
             this.originalNextSibling = null;
         }
@@ -785,20 +901,15 @@
             
             // Remove mousedown listener
             if (this.boundMouseDown && this.container) {
-                if (window.PointerEvent) {
+                if (this.usingPointerEvents) {
                     this.container.removeEventListener('pointerdown', this.boundMouseDown, this.useCapture);
                 } else {
                     this.container.removeEventListener('mousedown', this.boundMouseDown, this.useCapture);
                 }
             }
             
-            // Remove global listeners
-            if (this.boundMouseMove) {
-                document.removeEventListener('mousemove', this.boundMouseMove);
-            }
-            if (this.boundMouseUp) {
-                document.removeEventListener('mouseup', this.boundMouseUp);
-            }
+            this.detachDocumentDragListeners();
+            this.releasePointerCapture();
         }
     }
 
@@ -852,41 +963,42 @@
             this.collectionSorters.clear();
 
             const containers = Array.from(this.container.querySelectorAll(this.collectionContainerSelector));
-            
-            containers.forEach(container => {
-                const cardCount = container.querySelectorAll(this.collectionSelector).length;
-                if (cardCount === 0) {
-                    return;
-                }
+            const hasCards = containers.some(container => container.querySelectorAll(this.collectionSelector).length > 0);
+            if (!hasCards) {
+                return;
+            }
 
-                const sorter = new MouseDragDrop({
-                    container: container,
-                    itemSelector: this.collectionSelector,
-                    handleSelector: null,
-                    excludeSelector: 'a, button, input, select, textarea, .dropdown-trigger, .collection-menu-wrapper',
-                    useCapture: true,
-                    allContainers: containers, // Enable cross-container moves
-                    onReorder: (fromIndex, toIndex) => {
-                        const groupId = container.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
-                        this.onCollectionReorder(groupId, fromIndex, toIndex);
-                    },
-                    // Custom handler for cross-container detection
-                    onCrossContainerMove: (item, fromContainer, toContainer, toIndex) => {
-                        const collectionSlug = item.dataset.collectionSlug;
-                        if (!collectionSlug) {
-                            console.error('No collection slug found on item:', item);
-                            return;
-                        }
-                        const fromGroupId = fromContainer.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
-                        const toGroupId = toContainer.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
-                        
-                        // console.log('Cross-container move detected:', collectionSlug, fromGroupId, '->', toGroupId, 'at', toIndex);
-                        this.onCollectionMove(collectionSlug, fromGroupId, toGroupId, toIndex);
+            const sorter = new MouseDragDrop({
+                container: this.container,
+                itemSelector: this.collectionSelector,
+                handleSelector: null,
+                excludeSelector: 'a, button, input, select, textarea, .dropdown-trigger, .collection-menu-wrapper',
+                useCapture: true,
+                allContainers: containers,
+                onReorder: (fromIndex, toIndex, placeholder, draggedItem) => {
+                    const grid = draggedItem ? this.getItemGridForCollection(draggedItem) : null;
+                    const groupId = grid?.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
+                    this.onCollectionReorder(groupId, fromIndex, toIndex);
+                },
+                onCrossContainerMove: (item, fromContainer, toContainer, toIndex) => {
+                    const collectionSlug = item.dataset.collectionSlug;
+                    if (!collectionSlug) {
+                        console.error('No collection slug found on item:', item);
+                        return;
                     }
-                });
-                
-                this.collectionSorters.set(container, sorter);
+                    const fromGrid = item.closest(this.collectionContainerSelector) || fromContainer;
+                    const toGrid = toContainer;
+                    const fromGroupId = fromGrid?.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
+                    const toGroupId = toGrid?.closest(this.groupSelector)?.dataset.groupId || 'ungrouped';
+                    this.onCollectionMove(collectionSlug, fromGroupId, toGroupId, toIndex);
+                }
             });
+
+            this.collectionSorters.set('__root__', sorter);
+        }
+
+        getItemGridForCollection(item) {
+            return item.closest(this.collectionContainerSelector);
         }
 
         update() {
