@@ -54,6 +54,12 @@ window.ContentEditorSync = {
         // Strip editor-only block metadata before save
         html = html.replace(/\s*data-block-type="[^"]*"/gi, '');
 
+        if (window.ContentEditorLayout && window.ContentEditorLayout.stripEditorMetadata) {
+          html = window.ContentEditorLayout.stripEditorMetadata(html);
+        } else if (window.ContentEditorLayoutBlock && window.ContentEditorLayoutBlock.stripEditorMetadata) {
+          html = window.ContentEditorLayoutBlock.stripEditorMetadata(html);
+        }
+
         // Only update if content actually changed
         if (hiddenInput.value !== html) {
           hiddenInput.value = html;

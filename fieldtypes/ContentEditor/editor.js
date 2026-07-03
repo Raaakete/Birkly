@@ -208,6 +208,10 @@
             if (window.ContentEditorCommands && window.ContentEditorCommands.enhanceExistingGrids) {
               window.ContentEditorCommands.enhanceExistingGrids(editor);
             }
+
+            if (window.ContentEditorLayout) {
+              window.ContentEditorLayout.initEditor(editor);
+            }
             
             if (window.ContentEditorCommands && window.ContentEditorCommands.enhanceExistingToggles) {
               window.ContentEditorCommands.enhanceExistingToggles(editor);

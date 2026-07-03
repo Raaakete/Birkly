@@ -403,6 +403,11 @@ class ContentEditor extends BaseField {
             // Block system (P3-M12) — after block-format (manager delegates to it)
             __DIR__ . '/blocks/block-registry.js',
             __DIR__ . '/blocks/block-manager.js',
+            // Layout studio (P5.5-M1)
+            __DIR__ . '/layout/layout-block.js',
+            __DIR__ . '/layout/layout-inspector.js',
+            __DIR__ . '/layout/resize-controller.js',
+            __DIR__ . '/layout/layout-manager.js',
             __DIR__ . '/commands/base-command.js',
             __DIR__ . '/commands/registry.js',
             __DIR__ . '/commands/bootstrap.js',
@@ -451,8 +456,27 @@ class ContentEditor extends BaseField {
     }
 
     public function processValue($value) {
-        // Normalize HTML on save
-        return $this->normalizeHTML($value);
+        return $this->normalizeHTML($this->stripLayoutEditorMetadata($value));
+    }
+
+    /**
+     * Remove editor-only layout metadata from stored HTML (P5.5-M1 / D4).
+     */
+    private function stripLayoutEditorMetadata(string $html): string {
+        if ($html === '') {
+            return '';
+        }
+
+        $html = preg_replace('/<span[^>]*data-ce-insert-marker="true"[^>]*>\s*<\/span>/i', '', $html);
+        $html = preg_replace('/<div[^>]*class="[^"]*content-editor-layout-handles[^"]*"[^>]*>[\s\S]*?<\/div>/i', '', $html);
+        $html = preg_replace('/<div[^>]*class="[^"]*content-editor-grid-controls[^"]*"[^>]*>[\s\S]*?<\/div>/i', '', $html);
+        $html = preg_replace('/<div[^>]*class="[^"]*content-editor-table-controls[^"]*"[^>]*>[\s\S]*?<\/div>/i', '', $html);
+        $html = preg_replace('/\s*data-ce-[a-z0-9-]+="[^"]*"/i', '', $html);
+        $html = preg_replace('/\s*data-editable-table="[^"]*"/i', '', $html);
+        $html = preg_replace('/\s*data-block-type="[^"]*"/i', '', $html);
+        $html = preg_replace('/\s*contenteditable="(?:true|false)"/i', '', $html);
+
+        return $html;
     }
 
     public function processLoadedValue($value) {
