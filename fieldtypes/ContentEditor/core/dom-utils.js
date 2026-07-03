@@ -130,6 +130,91 @@ window.ContentEditorDOMUtils = {
   isBlockTag(tagName) {
     const blockTags = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'PRE'];
     return blockTags.includes((tagName || '').toUpperCase());
+  },
+
+  /**
+   * Restore saved selection when present, then resolve insert anchor in editor.
+   * @returns {{ editor: Element, block: Element|null, range: Range|null }}
+   */
+  resolveInsertAnchor(editor) {
+    const targetEditor = editor || this.findEditorArea();
+    if (!targetEditor) {
+      return { editor: null, block: null, range: null };
+    }
+
+    if (window.ContentEditorSelection) {
+      window.ContentEditorSelection.restore(targetEditor);
+    }
+
+    const selection = window.getSelection();
+    let range = null;
+    if (selection && selection.rangeCount > 0) {
+      const candidate = selection.getRangeAt(0);
+      const host = candidate.commonAncestorContainer.nodeType === Node.TEXT_NODE
+        ? candidate.commonAncestorContainer.parentNode
+        : candidate.commonAncestorContainer;
+      if (host && targetEditor.contains(host)) {
+        range = candidate;
+      }
+    }
+
+    let block = this.getCurrentBlock(range ? range.commonAncestorContainer : null);
+    return { editor: targetEditor, block, range };
+  },
+
+  /**
+   * Insert one or more nodes at the current caret / block in the editor.
+   * @returns {{ editor: Element, inserted: Element[], trailing: Element|null }|null}
+   */
+  insertNodesAtCaret(editor, nodes, options = {}) {
+    const nodeList = (Array.isArray(nodes) ? nodes : [nodes]).filter(Boolean);
+    if (!nodeList.length) return null;
+
+    const addTrailingParagraph = options.addTrailingParagraph !== false;
+    const { editor: targetEditor, block, range } = this.resolveInsertAnchor(editor);
+    if (!targetEditor) return null;
+
+    const doc = targetEditor.ownerDocument || document;
+    let referenceNode = null;
+
+    if (block && block.parentNode && targetEditor.contains(block)) {
+      referenceNode = block;
+    } else if (range) {
+      const marker = doc.createElement('span');
+      marker.setAttribute('data-ce-insert-marker', 'true');
+      marker.style.display = 'none';
+      try {
+        range.collapse(true);
+        range.insertNode(marker);
+        referenceNode = marker;
+      } catch (e) {
+        marker.remove();
+      }
+    }
+
+    const parent = referenceNode && referenceNode.parentNode ? referenceNode.parentNode : targetEditor;
+    let insertBefore = referenceNode ? referenceNode.nextSibling : null;
+
+    nodeList.forEach((node) => {
+      parent.insertBefore(node, insertBefore);
+      insertBefore = node.nextSibling;
+    });
+
+    if (referenceNode && referenceNode.getAttribute && referenceNode.getAttribute('data-ce-insert-marker') === 'true') {
+      referenceNode.remove();
+    }
+
+    let trailing = null;
+    if (addTrailingParagraph) {
+      trailing = doc.createElement('p');
+      trailing.innerHTML = '<br>';
+      const lastNode = nodeList[nodeList.length - 1];
+      if (lastNode.parentNode) {
+        lastNode.parentNode.insertBefore(trailing, lastNode.nextSibling);
+      }
+    }
+
+    return { editor: targetEditor, inserted: nodeList, trailing };
   }
 };
 
