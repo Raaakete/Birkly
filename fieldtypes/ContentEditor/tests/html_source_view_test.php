@@ -43,7 +43,8 @@ $cssChecks = [
     '.ce-html-tag' => 'tag syntax color',
     '.ce-html-attr' => 'attribute syntax color',
     '.ce-html-value' => 'value syntax color',
-    'color: transparent' => 'textarea overlay for highlighting',
+    'color: transparent !important' => 'textarea transparent text for overlay',
+    '.content-editor-html-highlight .ce-html-tag' => 'scoped syntax token colors',
 ];
 
 foreach ($cssChecks as $needle => $label) {
