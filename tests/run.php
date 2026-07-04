@@ -71,6 +71,7 @@ $suites = [
     'settings_security_test.php',
     'settings_storage_test.php',
     'settings_save_test.php',
+    'settings_page_test.php',
 ];
 
 $root = dirname(__DIR__);
