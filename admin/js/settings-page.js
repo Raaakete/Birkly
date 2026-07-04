@@ -964,7 +964,7 @@ async function deletePlugin(pluginId) {
             var readColsHtml = readCollections.length > 0 ? '<div class="detail-row"><strong>Read Collections:</strong> <span>' + readCollections.join(', ') + '</span></div>' : '';
             var writeColsHtml = writeCollections.length > 0 ? '<div class="detail-row"><strong>Write Collections:</strong> <span>' + writeCollections.join(', ') + '</span></div>' : '';
             
-            return '<div class="domain-card">' +
+            return '<div class="card domain-card">' +
                 '<div class="domain-header">' +
                 '<div class="domain-info">' +
                 '<h3>' + domainEscaped + '</h3>' +
