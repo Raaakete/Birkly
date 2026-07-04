@@ -1796,8 +1796,8 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 |-----------|--------|--------|
 | **P5.7-M0** | Verification matrix + global admin UI audit | complete |
 | **P5.7-M1** | Extract JS → `settings-page.js`; global Save; toast; `Birkly.url()` | complete |
-| **P5.7-M2** | General fixes; security enforcement; MySQL/PG storage + API | pending |
-| **P5.7-M3** | Settings UI redesign; AI tab UX (shared components) | pending |
+| **P5.7-M2** | General fixes; security enforcement; MySQL/PG storage + API | complete |
+| **P5.7-M3** | Settings UI redesign; AI tab UX (shared components) | in progress |
 | **P5.7-M4** | P1 tab polish; global spacing from audit (sidebar, forms, cards) | pending |
 | **P5.7-M5** | Tests, Birkly-Docs, matrix execution, closure notification | pending |
 
