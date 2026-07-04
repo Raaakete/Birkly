@@ -170,7 +170,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `sample-plugin`
 
-**Next active phase:** P6.1 Payments provider plugin (single sprint). Cart, Events, Marketplace → P6.2+.
+**Next active phase:** P6.2 Shopping Cart plugin (deferred until human approves). Payments shelf proven on `main`.
 
 ---
 
@@ -1921,9 +1921,9 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Phase 6.1 — Payments provider plugin (single sprint)
 
-**Status:** Approved (2026-07-04) — autonomous execution P6.1-M0→M5 in **one sprint**
+**Status:** Complete (2026-07-04) — M0→M5 merged to `main`
 
-**Spec:** `docs/reviews/P6.1-payments-provider-plugin-plan.md` · **Handoff:** `docs/reviews/P6.1-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P6.1-payments-provider-plugin-plan.md` · **Handoff:** `docs/reviews/P6.1-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P6.1-verification-matrix.md`
 
 **Goal:** Self-contained `plugins/payments/` — connect 8 providers, register `payment_shelf` for other plugins, unified activity log, auto/fixed provider selection, role-gated dashboard widget. **Does not sell anything alone.**
 
@@ -1931,12 +1931,12 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P6.1-M0** | Scaffold, `payment_shelf`, activity log, credential store, admin shell | pending |
-| **P6.1-M1** | Stripe + Mollie + webhooks + connections + activity UI | pending |
-| **P6.1-M2** | PayPal, Adyen, Square, Razorpay, Komoju, Payssion + capability matrix | pending |
-| **P6.1-M3** | Auto/fixed `ProviderResolver`, automation triggers, shelf tests | pending |
-| **P6.1-M4** | Dashboard widget + core role filter for plugin widgets (platform pattern) | pending |
-| **P6.1-M5** | Tests, Birkly-Docs, integration matrix, closure | pending |
+| **P6.1-M0** | Scaffold, `payment_shelf`, activity log, credential store, admin shell | complete |
+| **P6.1-M1** | Stripe + Mollie + webhooks + connections + activity UI | complete |
+| **P6.1-M2** | PayPal, Adyen, Square, Razorpay, Komoju, Payssion + capability matrix | complete |
+| **P6.1-M3** | Auto/fixed `ProviderResolver`, automation triggers, shelf tests | complete |
+| **P6.1-M4** | Dashboard widget + core role filter for plugin widgets (platform pattern) | complete |
+| **P6.1-M5** | Tests, Birkly-Docs, integration matrix, closure | complete |
 
 **Providers (all in sprint):** Stripe · Mollie · PayPal · Adyen · Square · Razorpay · Komoju (Japan) · Payssion (China/Asia)
 
