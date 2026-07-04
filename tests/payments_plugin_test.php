@@ -39,10 +39,12 @@ test_assert('dashboard_widget_roles schema', isset($settingsSchema['dashboard_wi
 test_assert('dashboard_widget_roles default admin', ($settingsSchema['dashboard_widget_roles']['default'] ?? []) === ['admin']);
 
 $pluginPhp = file_get_contents($pluginDir . '/plugin.php');
-test_assert('registers payment_shelf service', strpos($pluginPhp, "register_plugin_service('payment_shelf'") !== false);
-test_assert('registers payments API route', strpos($pluginPhp, "register_api_endpoint('payments'") !== false);
-test_assert('registers payments_webhook route', strpos($pluginPhp, "register_api_endpoint('payments_webhook'") !== false);
-test_assert('registers admin page', strpos($pluginPhp, "register_admin_page('payments'") !== false);
+$commercePhp = file_get_contents($root . '/plugins/commerce/plugin.php');
+test_assert('payments plugin is shim to commerce', strpos($pluginPhp, 'commerce/plugin.php') !== false);
+test_assert('registers payment_shelf service', strpos($commercePhp, "register_plugin_service('payment_shelf'") !== false);
+test_assert('registers payments API route', strpos($commercePhp, "register_api_endpoint('payments'") !== false);
+test_assert('registers payments_webhook route', strpos($commercePhp, "register_api_endpoint('payments_webhook'") !== false);
+test_assert('registers admin page', strpos($commercePhp, "register_admin_page('payments'") !== false);
 
 $providerFiles = [
     'StripeProvider.php', 'MollieProvider.php', 'PayPalProvider.php', 'AdyenProvider.php',

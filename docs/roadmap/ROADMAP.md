@@ -180,13 +180,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P6.1–P6.3 complete** — payments, shopping_cart, events on `main`. **P6.4 Commerce approved** — execute next. |
-| **Birkly-Docs** | P6.1–P6.3 guides merged; P6.4 Commerce docs pending. |
-| **Agent ops** | Autonomous merge active; **74** PHP test suites green. |
+| **Birkly (CMS)** | **P6.4 complete** — `plugins/commerce/` (providers + fieldtype + cart + discounts + import). Payments shim + Shop/Events coexist. |
+| **Birkly-Docs** | P6.1–P6.3 + **P6.4 Commerce** guides merged. |
+| **Agent ops** | **83** PHP test suites green. |
 
-**Active plugins on `main`:** `automation`, `user_management`, `payments`, `shopping_cart`, `events`, `sample-plugin`
+**Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.4 Commerce plugin** — migrate Payments → content-first commerce (approved).
+**Next active phase:** **P6.5+** Shop/Events consolidation wizards, Marketplace (deferred until approved).
 
 ---
 
@@ -2027,13 +2027,13 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P6.4-M0** | Migrate payments → commerce; shelf alias; Shop/Events compat | pending |
-| **P6.4-M1** | Commerce fieldtype + catalog indexer + admin | pending |
-| **P6.4-M2** | Cart, checkout, orders, templates | pending |
-| **P6.4-M3** | Discounts, coupons, affiliate `?ref=` | pending |
-| **P6.4-M4** | CSV import (Woo/Shopify presets) | pending |
-| **P6.4-M5** | Fulfillment adapters + purchase→tier mappings | pending |
-| **P6.4-M6** | Docs, matrix, closure | pending |
+| **P6.4-M0** | Migrate payments → commerce; shelf alias; Shop/Events compat | **complete** |
+| **P6.4-M1** | Commerce fieldtype + catalog indexer + admin | **complete** |
+| **P6.4-M2** | Cart, checkout, orders, templates | **complete** |
+| **P6.4-M3** | Discounts, coupons, affiliate `?ref=` | **complete** |
+| **P6.4-M4** | CSV import (Woo/Shopify presets) | **complete** |
+| **P6.4-M5** | Fulfillment adapters + purchase→tier mappings | **complete** |
+| **P6.4-M6** | Docs, matrix, closure | **complete** |
 
 ---
 
