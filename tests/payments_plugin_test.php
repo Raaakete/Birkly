@@ -59,6 +59,12 @@ test_assert('admin html has no inline script block', strpos($adminHtml, '<script
 test_assert('admin has connections tab', strpos($adminHtml, 'data-tab="connections"') !== false);
 test_assert('admin has activity tab', strpos($adminHtml, 'data-tab="activity"') !== false);
 test_assert('admin has settings tab', strpos($adminHtml, 'data-tab="settings"') !== false);
+test_assert('connection modal uses display none initially', strpos($adminHtml, 'payments-connection-modal') !== false
+    && strpos($adminHtml, 'style="display: none;"') !== false);
+
+$adminJs = file_get_contents($pluginDir . '/admin/payments.js');
+test_assert('connection modal show uses active class', strpos($adminJs, "modal.classList.add('active')") !== false);
+test_assert('connection modal show uses display flex', strpos($adminJs, "modal.style.display = 'flex'") !== false);
 
 // Plugin loads and registers service when active
 $pluginsJsonPath = $root . '/settings/plugins.json';
