@@ -1,7 +1,9 @@
 (function () {
   'use strict';
 
-  var API = '/api/index.php?route=payments';
+  var API = (typeof Birkly !== 'undefined' && typeof Birkly.url === 'function')
+    ? Birkly.url('/api/index.php?route=payments')
+    : '/api/index.php?route=payments';
   var providers = [];
   var connections = [];
 
@@ -205,11 +207,30 @@
     }
   }
 
+  function showConnectionModal() {
+    var modal = document.getElementById('payments-connection-modal');
+    if (!modal) return;
+    modal.hidden = false;
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+
+  function hideConnectionModal() {
+    var modal = document.getElementById('payments-connection-modal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+    modal.hidden = true;
+  }
+
   function openConnectionModal(id) {
     var modal = document.getElementById('payments-connection-modal');
     var title = document.getElementById('payments-modal-title');
+    if (!modal || !title) return;
+
     document.getElementById('payments-connection-form').reset();
-    document.getElementById('payments-test-result').hidden = true;
+    var testResult = document.getElementById('payments-test-result');
+    if (testResult) testResult.hidden = true;
 
     if (id) {
       title.textContent = 'Edit Connection';
@@ -224,16 +245,16 @@
     } else {
       title.textContent = 'Add Connection';
       document.getElementById('payments-conn-id').value = '';
-      var firstProvider = providers[0]?.id || 'stripe';
+      var firstProvider = (providers[0] && providers[0].id) ? providers[0].id : 'stripe';
       document.getElementById('payments-conn-provider').value = firstProvider;
       renderCredentialFields(firstProvider);
     }
 
-    modal.hidden = false;
+    showConnectionModal();
   }
 
   function closeConnectionModal() {
-    document.getElementById('payments-connection-modal').hidden = true;
+    hideConnectionModal();
   }
 
   function collectCredentials() {
