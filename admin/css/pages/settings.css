@@ -22,14 +22,23 @@
   font-size: 0.875rem;
 }
 
-.settings-page .form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4, 1rem);
+/* Vertical stack of setting cards (uses components/card + section-header) */
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
 }
 
-.settings-page .form-row .form-group .input[type="number"] {
-  max-width: 12rem;
+.settings-stack > .card {
+  min-height: auto;
+}
+
+.settings-stack > .card > .section-header {
+  margin-bottom: 0;
+}
+
+.settings-stack > .card > .section-description {
+  margin-top: var(--space-1, 0.25rem);
 }
 
 /* Settings Tabs — uses shared components/tabs.css (.tabs / .tab) */
@@ -67,25 +76,16 @@
   min-height: 300px;
 }
 
-/* Settings Sections */
+/* Legacy section wrapper — prefer .settings-stack + .card */
 .settings-section {
-  margin-bottom: var(--space-8, 2rem);
-  padding-bottom: var(--space-6, 1.5rem);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-}
-
-.settings-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
+  margin-bottom: var(--space-6, 1.5rem);
 }
 
 .settings-section h2 {
-  margin: 0 0 var(--space-6, 1.5rem) 0;
-  color: var(--text-primary, #20221D);
-  font-size: 1.25rem;
+  margin: 0 0 var(--space-4, 1rem) 0;
+  font-size: 1.125rem;
   font-weight: 600;
-  padding-bottom: var(--space-2, 0.5rem);
-  border-bottom: 2px solid var(--primary-500, #3b82f6);
+  color: var(--text-primary, #20221D);
 }
 
 .settings-section h3 {
@@ -97,13 +97,7 @@
 
 /* Settings Form */
 .settings-form {
-  overflow: hidden;
-}
-
-.settings-page .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
+  overflow: visible;
 }
 
 .settings-page .form-group input:disabled,
