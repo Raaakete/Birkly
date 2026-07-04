@@ -981,7 +981,7 @@ $exampleSubEntrySlug = 'example-sub-entry-slug';
 $entryExample = "{from '" . $collectionSlug . "' get entry '" . $exampleEntrySlug . "'}\n";
 $entryExample .= "  <h1>{ title }</h1>\n";
 $entryExample .= "  {for each sub_entry in '" . $subCollectionSlug . "'}\n";
-$entryExample .= "    <div class=\"sub-entry">\n";
+$entryExample .= "    <div class=\"sub-entry\">\n";
 $subFields = $subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? [];
 if (!empty($subFields)) {
     foreach ($subFields as $field) {
