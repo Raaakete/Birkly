@@ -474,6 +474,8 @@ window.deleteRole = deleteRole;
         setTimeout(function() {
             if (tabId === 'activity-log' && typeof window.initAuditLog === 'function') {
                 window.initAuditLog();
+            } else if (tabId === 'webhooks' && typeof window.initWebhooksManager === 'function') {
+                window.initWebhooksManager(window.webhooksData || {});
             } else if (tabId === 'general' && typeof window.initUpdates === 'function') {
                 window.initUpdates();
             } else if (tabId === 'domains' && typeof window.loadDomains === 'function') {
