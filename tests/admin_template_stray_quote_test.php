@@ -38,4 +38,16 @@ foreach ($iterator as $file) {
 
 test_assert('no stray ?>\" in admin templates', $violations === [], implode(', ', $violations));
 
+$collectionEditor = $templatesDir . '/collection-editor.html';
+$ceContent = is_file($collectionEditor) ? file_get_contents($collectionEditor) : '';
+test_assert(
+    'collection-editor no unescaped quote in sub-entry example',
+    strpos($ceContent, 'class=\"sub-entry">\n') === false,
+    'found class=\\"sub-entry"> — closing quote must be escaped'
+);
+test_assert(
+    'collection-editor sub-entry example properly escaped',
+    strpos($ceContent, 'class=\"sub-entry\">\n') !== false
+);
+
 exit(test_finish('admin_template_stray_quote_test'));
