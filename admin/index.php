@@ -478,40 +478,30 @@ $isOnboarding = ($page === 'onboarding');
                             $templateContent = substr($templateContent, 3);
                         }
                         
-                        // IMPROVED LOGIC: If template starts with <?php, it's a pure PHP template
+                        // PHP-first templates use direct include; directive-based templates use parser
                         $startsWithPhp = (strpos(ltrim($templateContent), '<?php') === 0);
-                        
-                        if ($startsWithPhp) {
-                            // Pure PHP template - use direct include
+                        $usesTemplateDirectives = (strpos($templateContent, '{translate') !== false
+                            || strpos($templateContent, '{admin_url') !== false
+                            || strpos($templateContent, '{for each') !== false
+                            || strpos($templateContent, '{if ') !== false
+                            || strpos($templateContent, '{json') !== false
+                            || strpos($templateContent, '{include_script') !== false
+                            || strpos($templateContent, '{include_style') !== false);
+
+                        if ($usesTemplateDirectives) {
+                            $output = render_template_file($templatePath, $data);
+                            if (empty($output)) {
+                                echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
+                                echo '<h2>Error Rendering Template</h2>';
+                                echo '<p>The template rendered empty output.</p>';
+                                echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
+                                echo '</div>';
+                            } else {
+                                echo $output;
+                            }
+                        } else {
                             extract($data);
                             include $templatePath;
-                        } else {
-                            // Check for template directives
-                            $usesTemplateDirectives = (strpos($templateContent, '{translate') !== false || 
-                                                       strpos($templateContent, '{admin_url') !== false ||
-                                                       strpos($templateContent, '{for each') !== false ||
-                                                       strpos($templateContent, '{if ') !== false ||
-                                                       strpos($templateContent, '{json') !== false ||
-                                                       strpos($templateContent, '{include_script') !== false ||
-                                                       strpos($templateContent, '{include_style') !== false);
-                            
-                            if ($usesTemplateDirectives) {
-                                // Template with directives - use parser
-                                $output = render_template_file($templatePath, $data);
-                                if (empty($output)) {
-                                    echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                                    echo '<h2>Error Rendering Template</h2>';
-                                    echo '<p>The template rendered empty output.</p>';
-                                    echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                                    echo '</div>';
-                                } else {
-                                    echo $output;
-                                }
-                            } else {
-                                // Fallback to direct include
-                                extract($data);
-                                include $templatePath;
-                            }
                         }
                     }
                 } catch (Throwable $e) {

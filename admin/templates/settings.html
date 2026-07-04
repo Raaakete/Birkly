@@ -101,15 +101,18 @@
       
       <!-- General Tab -->
       <div class="tab-pane active" id="general">
-<form id="general-form" class="settings-form" enctype="multipart/form-data">
-          <div class="settings-section">
-            <h2><?= __('admin.project_information') ?></h2>
-            <p class="settings-help"><?= __('admin.project_information_help') ?></p>
+        <form id="general-form" class="settings-form" enctype="multipart/form-data">
+          <div class="settings-stack">
+          <section class="card">
+            <div class="section-header">
+              <h2><?= __('admin.project_information') ?></h2>
+            </div>
+            <p class="section-description"><?= __('admin.project_information_help') ?></p>
             <div class="form-row">
               <div class="form-group">
                 <label for="project-name"><?= __('admin.project_name') ?></label>
                 <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
-                <small><?= __('admin.project_name_help') ?></small>
+                <small class="form-help"><?= __('admin.project_name_help') ?></small>
               </div>
               <div class="form-group">
                 <label for="site-timezone"><?= __('admin.timezone') ?></label>
@@ -125,12 +128,12 @@
             <div class="form-group">
               <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
               <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
-              <small><?= __('admin.optional_description_help') ?></small>
+              <small class="form-help"><?= __('admin.optional_description_help') ?></small>
             </div>
             <div class="form-group">
               <label for="project-logo"><?= __('admin.project_logo') ?></label>
-              <input type="file" id="project-logo" name="project_logo" accept="image/*">
-              <small><?= __('admin.project_logo_help') ?></small>
+              <input type="file" id="project-logo" name="project_logo" class="input" accept="image/*">
+              <small class="form-help"><?= __('admin.project_logo_help') ?></small>
               <?php if (!empty($settings['branding']['logoPath'])): ?>
                 <div class="logo-preview-block">
                   <p class="logo-preview-label"><?= __('admin.current_logo') ?>:</p>
@@ -138,15 +141,17 @@
                   <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger logo-remove-btn"><?= __('admin.remove_logo') ?></button>
                 </div>
               <?php endif; ?>
-              <div id="logo-preview" class="logo-preview-block">
+              <div id="logo-preview" class="logo-preview-block" style="display: none;">
                 <p class="logo-preview-label"><?= __('admin.preview') ?>:</p>
                 <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" class="logo-preview-img">
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="settings-section">
-            <h2><?= __('admin.media_settings') ?></h2>
+          <section class="card">
+            <div class="section-header">
+              <h2><?= __('admin.media_settings') ?></h2>
+            </div>
             <?php
               $mediaSettings = $settings['media'] ?? [];
               $maxUploadBytes = (int) ($mediaSettings['max_upload_size'] ?? $mediaSettings['maxUploadSize'] ?? 0);
@@ -197,10 +202,12 @@
                 <span><?= __('admin.create_thumbnails_automatically') ?></span>
               </label>
             </div>
-          </div>
+          </section>
 
-          <div class="settings-section">
-            <h2><?= __('admin.system_updates') ?></h2>
+          <section class="card">
+            <div class="section-header">
+              <h2><?= __('admin.system_updates') ?></h2>
+            </div>
             <div class="updates-content">
               <!-- Current Version Card -->
               <div class="card">
@@ -258,6 +265,7 @@
                 </div>
               </div>
             </div>
+          </section>
           </div>
         </form>
       </div>
@@ -1281,8 +1289,15 @@
   </div>
 </div>
 
-<script type="application/json" id="settings-users-data">{json users}</script>
-{include_script 'settings-page.js'}
+<?php
+if (!function_exists('birkly_build_info')) {
+    require_once __DIR__ . '/../../core/build_info.php';
+}
+$settingsPageJsVer = (string) (birkly_build_info()['git_commit'] ?? '');
+$settingsUsersJson = json_encode($users ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
+?>
+<script type="application/json" id="settings-users-data"><?= $settingsUsersJson ?></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/settings-page.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
 
 <script src="<?= birkly_url('/admin/js/updates.js') ?>"></script>
 
