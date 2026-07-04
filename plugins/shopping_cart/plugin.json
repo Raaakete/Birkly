@@ -1,0 +1,57 @@
+{
+  "name": "Shopping Cart",
+  "version": "1.0.0",
+  "description": "Product catalog, session cart, checkout via payment_shelf, and order management",
+  "author": "Birkly",
+  "requires": "1.0.0",
+  "dependencies": {
+    "plugins": [
+      { "id": "payments", "version": "1.0.0", "required": true }
+    ],
+    "services": [
+      { "id": "payment_shelf", "version": "1.0.0", "provided_by": "payments" }
+    ]
+  },
+  "hooks": [
+    "plugin_activated",
+    "automation_blocks_register"
+  ],
+  "permissions": [
+    "manage_shop",
+    "view_shop_orders",
+    "access_payment_shelf"
+  ],
+  "capabilities": {
+    "manage_shop": {
+      "description": "Manage shop products and orders",
+      "scope": "global"
+    },
+    "view_shop_orders": {
+      "description": "View shop orders (read-only)",
+      "scope": "global"
+    },
+    "access_payment_shelf": {
+      "description": "Access payment_shelf for checkout",
+      "scope": "global"
+    }
+  },
+  "navigation": {
+    "name": "Shop",
+    "page": "shopping_cart",
+    "icon": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"9\" cy=\"21\" r=\"1\"></circle><circle cx=\"20\" cy=\"21\" r=\"1\"></circle><path d=\"M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6\"></path></svg>"
+  },
+  "settings_schema": {
+    "checkout_success_path": {
+      "type": "string",
+      "default": "/shop/thank-you",
+      "label": "Checkout success path",
+      "description": "Relative URL after successful payment"
+    },
+    "checkout_cancel_path": {
+      "type": "string",
+      "default": "/shop/cart",
+      "label": "Checkout cancel path",
+      "description": "Relative URL when payment is cancelled"
+    }
+  }
+}
