@@ -122,6 +122,14 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md` · **Handoff:** `docs/reviews/P5.6-lead-engineer-handoff.md`
 
+**2026-07-04 — Phase 5.7 approved** (Keven)
+
+**Priorities:** Settings overhaul (all tabs) · global Save · security enforcement · storage DB backends (MySQL/PostgreSQL) · AI tab UX polish · global admin spacing/alignment audit.
+
+**Human decisions (locked):** AI tab improved like other tabs (not regression-only) · implement DB storage backends now · security toggles fully enforce · global Save (not per-tab) · global admin UI audit + fixes · notify once at P5.7-M5-T6.
+
+**Spec:** `docs/reviews/P5.7-settings-ui-ux-plan.md` · **Handoff:** `docs/reviews/P5.7-lead-engineer-handoff.md`
+
 ---
 
 ## Vision
@@ -1776,24 +1784,35 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
-## Phase 5.7 — Settings UI/UX & functionality audit (proposed)
+## Phase 5.7 — Settings UI/UX, enforcement & global admin polish
 
-**Status:** Proposed — **awaiting human approval**
+**Status:** Approved (2026-07-04) — autonomous execution P5.7-M0→M5
 
-**Spec:** `docs/reviews/P5.7-settings-ui-ux-plan.md`
+**Spec:** `docs/reviews/P5.7-settings-ui-ux-plan.md` · **Handoff:** `docs/reviews/P5.7-lead-engineer-handoff.md`
 
-**Priorities:** Settings page overhaul (all tabs) · fix or honestly disable broken controls · reuse existing admin CSS/components · structured AI/QA verification matrix for every setting.
+**Priorities:** Settings overhaul (all tabs) · **global Save** · **security enforcement** · **storage DB backends** (MySQL/PostgreSQL) · **AI tab UX polish** · **global admin spacing/alignment audit** · structured verification matrix for every setting.
 
-**Depends on:** P5.6 closure or CSS coordination (topbar).
+**Depends on:** P5.6 complete on `main` (coordinate topbar tokens).
 
-| Milestone | Focus |
-|-----------|--------|
-| **P5.7-M0** | Full settings audit + per-control verification matrix |
-| **P5.7-M1** | JS extraction, toast feedback, `Birkly.url()` everywhere |
-| **P5.7-M2** | Fix P0 tabs: General, Security, Storage (honest), API (honest) |
-| **P5.7-M3** | UI/UX redesign reusing `tabs/forms/cards/modals` — shrink `settings.css` |
-| **P5.7-M4** | Users, Plugins, Domains, Activity, AI regression, orphan cleanup |
-| **P5.7-M5** | Automated tests + AI matrix execution + docs + closure |
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P5.7-M0** | Settings audit + verification matrix + global admin UI audit | pending |
+| **P5.7-M1** | JS extraction, **global Save**, toast, `Birkly.url()` everywhere | pending |
+| **P5.7-M2** | P0: General fixes, **security enforcement**, **Storage DB backends**, API honesty | pending |
+| **P5.7-M3** | Settings UI redesign + **AI tab UX** (shared components) | pending |
+| **P5.7-M4** | P1 tabs + global spacing/alignment fixes (sidebar, forms, etc.) | pending |
+| **P5.7-M5** | Automated tests + matrix execution + docs + closure | pending |
+
+**Human decisions (locked):**
+
+| Decision | Choice |
+|----------|--------|
+| AI tab | Improve UX like other tabs — not regression-only |
+| Storage | Implement MySQL + PostgreSQL backends now via `StorageFactory` |
+| Security | All visible toggles enforce at runtime — no save-only controls |
+| Save UX | Global Save — single primary action + toast |
+| Global UI | Full admin audit (M0) + high-impact spacing fixes (M4) |
+| Execution | Autonomous M0→M5; notify once at P5.7-M5-T6 |
 
 **Design rule:** No new visual language — extend shared components only; new CSS only when necessary.
 
