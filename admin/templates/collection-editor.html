@@ -988,7 +988,7 @@ if (!empty($subFields)) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $entryExample .= "      <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
+            $entryExample .= "      <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
         } elseif ($field['type'] === 'boolean') {
             $entryExample .= "      {if " . $fieldName . " is on}\n";
             $entryExample .= "        <span>It is featured</span>\n";
@@ -1030,7 +1030,7 @@ if (!empty($fields)) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $entryExample .= "  <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
+            $entryExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
         } elseif ($field['type'] === 'boolean') {
             $entryExample .= "  {if " . $fieldName . " is on}\n";
             $entryExample .= "    <span>It is featured</span>\n";
@@ -1069,7 +1069,7 @@ if (!empty($fields)) {
         $fieldName = $field['name'] ?? '';
         $fieldLabel = $field['label'] ?? $fieldName;
         if ($field['type'] === 'media') {
-            $collectionExample .= "  <img src="{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "">\n";
+            $collectionExample .= "  <img src=\"{ " . $fieldName . " }\" alt=\"" . htmlspecialchars($fieldLabel) . "\">\n";
         } elseif ($field['type'] === 'boolean') {
             $collectionExample .= "  {if " . $fieldName . " is on}\n";
             $collectionExample .= "    <span>It is featured</span>\n";
