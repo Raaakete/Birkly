@@ -57,18 +57,22 @@ function verifyPassword($password, $hash) {
 // Login
 if ($action === 'login') {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    $rateLimiter = new RateLimiter('login_' . $ip, 10, 60); // 10 attempts per 60 seconds
+    $email = trim(strtolower($input['email'] ?? ''));
+    $password = $input['password'] ?? '';
+
+    $security = get_security_settings();
+    $maxAttempts = max(1, (int) ($security['max_login_attempts'] ?? 5));
+    $lockoutTime = max(60, (int) ($security['lockout_time'] ?? 900));
+    $lockoutKey = 'login_' . md5($email . '_' . $ip);
+    $rateLimiter = new RateLimiter($lockoutKey, $maxAttempts, $lockoutTime);
     if (!$rateLimiter->check()) {
-        log_security_event('rate_limited', ['action' => 'login', 'ip' => $ip]);
+        log_security_event('rate_limited', ['action' => 'login', 'ip' => $ip, 'email' => $email]);
         http_response_code(429);
         $retryAfter = $rateLimiter->getRetryAfter();
         header('Retry-After: ' . $retryAfter);
         echo json_encode(['status' => 'error', 'message' => 'Too many login attempts. Please try again later.', 'retry_after' => $retryAfter]);
         exit;
     }
-    
-    $email = trim(strtolower($input['email'] ?? ''));
-    $password = $input['password'] ?? '';
     $userFile = md5($email) . '.json';
     
     // SECURITY FIX: Removed password logging - passwords and hashes should never be logged

@@ -209,25 +209,48 @@ function sanitize_identifier($identifier) {
  * @return array ['valid' => bool, 'message' => string]
  */
 function validate_password_strength($password) {
-    // Minimum 12 characters
-    if (strlen($password) < 12) {
-        return ['valid' => false, 'message' => 'Password must be at least 12 characters long'];
+    $minLength = 8;
+    $requireStrong = true;
+
+    if (function_exists('get_security_settings')) {
+        $security = get_security_settings();
+        $minLength = (int) ($security['password_min_length'] ?? 8);
+        $requireStrong = (bool) ($security['require_strong_password'] ?? true);
+    } else {
+        $securityFile = __DIR__ . '/../settings/security.json';
+        if (file_exists($securityFile)) {
+            $security = json_decode(file_get_contents($securityFile), true);
+            if (is_array($security)) {
+                $minLength = (int) ($security['password_min_length'] ?? 8);
+                $requireStrong = (bool) ($security['require_strong_password'] ?? true);
+            }
+        }
     }
-    
-    // Check password complexity
+
+    if (strlen($password) < $minLength) {
+        return [
+            'valid' => false,
+            'message' => 'Password must be at least ' . $minLength . ' characters long',
+        ];
+    }
+
+    if (!$requireStrong) {
+        return ['valid' => true, 'message' => ''];
+    }
+
     $hasUpper = preg_match('/[A-Z]/', $password);
     $hasLower = preg_match('/[a-z]/', $password);
     $hasNumber = preg_match('/[0-9]/', $password);
     $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
-    
+
     $complexityScore = ($hasUpper ? 1 : 0) + ($hasLower ? 1 : 0) + ($hasNumber ? 1 : 0) + ($hasSpecial ? 1 : 0);
-    
+
     if ($complexityScore < 3) {
         return [
-            'valid' => false, 
-            'message' => 'Password must contain at least 3 of the following: uppercase letters, lowercase letters, numbers, special characters'
+            'valid' => false,
+            'message' => 'Password must contain at least 3 of the following: uppercase letters, lowercase letters, numbers, special characters',
         ];
     }
-    
+
     return ['valid' => true, 'message' => ''];
 } 

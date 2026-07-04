@@ -1682,7 +1682,7 @@ async function removeDenylistResource(resource) {
 document.getElementById('storage-backend')?.addEventListener('change', function() {
     const dbConfig = document.getElementById('database-config');
     if (dbConfig) {
-        dbConfig.style.display = ['sqlite', 'mysql', 'postgresql'].includes(this.value) ? 'block' : 'none';
+        dbConfig.style.display = ['mysql', 'postgresql'].includes(this.value) ? 'block' : 'none';
     }
 });
 
@@ -1788,12 +1788,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function handleGlobalSave() {
     const generalForm = document.getElementById('general-form');
     const securityForm = document.getElementById('security-form');
-    if (!generalForm && !securityForm) return;
+    const storageForm = document.getElementById('storage-form');
+    if (!generalForm && !securityForm && !storageForm) return;
 
-    collectAndSaveSettings(generalForm, securityForm);
+    collectAndSaveSettings(generalForm, securityForm, storageForm);
 }
 
-async function collectAndSaveSettings(generalForm, securityForm) {
+async function collectAndSaveSettings(generalForm, securityForm, storageForm) {
     const settings = {};
 
     function appendFormData(form) {
@@ -1804,10 +1805,14 @@ async function collectAndSaveSettings(generalForm, securityForm) {
                 settings[key] = value;
             }
         }
+        form.querySelectorAll('input[type="checkbox"]').forEach(function (checkbox) {
+            settings[checkbox.name] = checkbox.checked;
+        });
     }
 
     appendFormData(generalForm);
     appendFormData(securityForm);
+    appendFormData(storageForm);
 
     let logoPath = '';
     if (generalForm) {
@@ -1875,6 +1880,7 @@ function initGlobalSave() {
 
     const generalForm = document.getElementById('general-form');
     const securityForm = document.getElementById('security-form');
+    const storageForm = document.getElementById('storage-form');
 
     if (generalForm) {
         generalForm.addEventListener('submit', function (e) {
