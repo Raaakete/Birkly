@@ -1908,10 +1908,12 @@ function getSettingsData() {
     }
     
     $settings['roles'] = getRolesData()['roles'];
+    $webhooksData = getWebhooksData();
 
     return [
         'settings' => $settings,
         'users' => getUsersData()['users'],
+        'webhook_collections' => $webhooksData['collections'],
     ];
 }
 

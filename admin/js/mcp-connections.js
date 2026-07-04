@@ -266,33 +266,21 @@
             : '';
 
         card.innerHTML = `
-            <div class="connection-item mcp-endpoint-item ai-agent-item ai-personal-card" data-agent-id="${escapeHtml(agentId)}">
-                <div class="connection-info">
-                    <div class="connection-name-row">
-                        <div class="connection-name">${escapeHtml(agent.name || 'Your personal connector')}</div>
-                        ${typeBadge('personal')}
-                    </div>
-                    <p class="agent-description">${escapeHtml(agent.description || 'Connect Claude or ChatGPT with your own Birkly permissions. Every team member uses this same URL but signs in with their own account.')}</p>
-                    <div class="connection-meta">
-                        <span class="connection-role">Your role when you connect</span>
-                        <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Disabled'}</span>
-                    </div>
-                    <p class="settings-help">Write approvals are handled in your AI app (e.g. Claude connector tool permissions), not in Birkly.</p>
-                    ${disabledNote}
-                    <div class="mcp-endpoint-actions">
-                        <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(agentId)}" aria-expanded="false">
-                            Show Connector URL
-                        </button>
-                        ${isAdmin ? `<button type="button" class="btn btn-sm btn-secondary" data-toggle-personal-status="${status === 'active' ? 'disabled' : 'active'}">${status === 'active' ? 'Disable' : 'Enable'}</button>` : ''}
-                    </div>
-                    <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(agentId)}" hidden>
-                        <h5>Connect your AI app</h5>
-                        ${renderSetupSteps(agentId, url, true)}
-                    </div>
+            <div class="ai-connection-entry" data-agent-id="${escapeHtml(agentId)}">
+                <div class="ai-connection-entry-header">
+                    <strong>${escapeHtml(agent.name || 'Your personal connector')}</strong>
+                    <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Disabled'}</span>
                 </div>
+                <p class="settings-help">${escapeHtml(agent.description || 'Connect Claude or ChatGPT with your own Birkly permissions. Every team member uses this same URL but signs in with their own account.')}</p>
+                <div class="ai-connection-entry-meta">
+                    <span class="connection-role">Your role when you connect</span>
+                </div>
+                ${disabledNote}
+                <div class="ai-connection-entry-setup">
+                    ${renderSetupSteps(agentId, url, true)}
+                </div>
+                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-secondary" data-toggle-personal-status="${status === 'active' ? 'disabled' : 'active'}">${status === 'active' ? 'Disable' : 'Enable'}</button></div>` : ''}
             </div>`;
-
-        bindSetupToggles(card);
     }
 
     function renderServiceAgents(agents) {
@@ -304,8 +292,8 @@
             <div class="empty-state empty-state-friendly">
                 <p><strong>${isAdmin ? 'No service agents yet' : 'No service agents assigned to you'}</strong></p>
                 <p>${isAdmin
-                    ? 'Click <em>Add service agent</em> to create a shared connection with a fixed role.'
-                    : 'Ask an admin to assign you a service agent, or use the personal connector above.'}</p>
+                    ? 'Click <em>Add agent</em> to create a shared connection with a fixed role.'
+                    : 'Ask an admin to assign you a service agent, or use the personal connector.'}</p>
             </div>`;
             return;
         }
@@ -316,33 +304,22 @@
             const url = resolveConnectorUrl(agent.connector_url || serverUrl);
 
             return `
-            <div class="connection-item mcp-endpoint-item ai-agent-item" data-agent-id="${escapeHtml(agent.id)}">
-                <div class="connection-info">
-                    <div class="connection-name-row">
-                        <div class="connection-name">${escapeHtml(agent.name || agent.id)}</div>
-                        ${typeBadge('service')}
-                    </div>
-                    ${agent.description ? `<p class="agent-description">${escapeHtml(agent.description)}</p>` : ''}
-                    <div class="connection-meta">
-                        <span class="connection-role">Fixed role: ${escapeHtml(agent.role || 'viewer')}</span>
-                        <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
-                        ${isAdmin ? `<span class="agent-visibility">${escapeHtml(visibilitySummary(agent))}</span>` : ''}
-                    </div>
-                    <div class="mcp-endpoint-actions">
-                        <button type="button" class="btn btn-sm btn-primary mcp-toggle-setup" data-endpoint-id="${escapeHtml(agent.id)}" aria-expanded="false">
-                            Show Connector URL
-                        </button>
-                        ${isAdmin ? `<button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}">Remove</button>` : ''}
-                    </div>
-                    <div class="mcp-setup-panel" id="mcp-setup-panel-${escapeHtml(agent.id)}" hidden>
-                        <h5>Connect your AI app</h5>
-                        ${renderSetupSteps(agent.id, url, false)}
-                    </div>
+            <div class="ai-connection-entry" data-agent-id="${escapeHtml(agent.id)}">
+                <div class="ai-connection-entry-header">
+                    <strong>${escapeHtml(agent.name || agent.id)}</strong>
+                    <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
                 </div>
+                ${agent.description ? `<p class="settings-help">${escapeHtml(agent.description)}</p>` : ''}
+                <div class="ai-connection-entry-meta">
+                    <span class="connection-role">Fixed role: ${escapeHtml(agent.role || 'viewer')}</span>
+                    ${isAdmin ? `<span class="agent-visibility">${escapeHtml(visibilitySummary(agent))}</span>` : ''}
+                </div>
+                <div class="ai-connection-entry-setup">
+                    ${renderSetupSteps(agent.id, url, false)}
+                </div>
+                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}">Remove</button></div>` : ''}
             </div>`;
         }).join('');
-
-        bindSetupToggles(list);
     }
 
     function updateAdminUi(serviceAgents) {
