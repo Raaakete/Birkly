@@ -615,6 +615,43 @@
     transition: all var(--transition-normal, 200ms ease);
 }
 
+.payments-dash-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3, 0.75rem);
+    margin-top: var(--space-2, 0.5rem);
+}
+
+.payments-dash-stat {
+    text-align: center;
+    padding: var(--space-3, 0.75rem);
+    background: var(--bg-secondary, #fafafa);
+    border-radius: var(--radius-md, 0.5rem);
+}
+
+.payments-dash-stat strong {
+    display: block;
+    font-size: 1.25rem;
+    color: var(--text-primary, #20221D);
+}
+
+.payments-dash-stat span {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #72746F);
+}
+
+.payments-dash-link {
+    margin: var(--space-3, 0.75rem) 0 0;
+    font-size: 0.875rem;
+}
+
+.payments-dash-empty,
+.payments-dash-loading {
+    color: var(--text-secondary, #72746F);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
 .widget-card:hover {
     border-color: var(--border-medium, #e5e7eb);
     box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));

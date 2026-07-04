@@ -66,6 +66,7 @@ $suites = [
     'payments_plugin_test.php',
     'payments_shelf_test.php',
     'payments_webhook_test.php',
+    'dashboard_widgets_test.php',
     'platform_test.php',
     'plugin_dependencies_test.php',
     'user_plugin_permissions_test.php',
