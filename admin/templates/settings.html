@@ -13,28 +13,28 @@
 <div class="settings-page">
 
   <div class="settings-tabs">
-    <div class="tab-nav">
-      <button class="tab-btn active" data-tab="general">
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="general">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
         </svg>
         <?= __('admin.general') ?>
       </button>
-      <button class="tab-btn" data-tab="users-roles">
+      <button type="button" class="tab" data-tab="users-roles">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
         <?= __('admin.users_and_roles') ?>
       </button>
-      <button class="tab-btn" data-tab="plugins">
+      <button type="button" class="tab" data-tab="plugins">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
         </svg>
         <?= __('admin.plugins') ?>
       </button>
-      <button class="tab-btn" data-tab="security">
+      <button type="button" class="tab" data-tab="security">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <circle cx="12" cy="16" r="1"></circle>
@@ -42,14 +42,21 @@
         </svg>
         <?= __('admin.security') ?>
       </button>
-      <button class="tab-btn" data-tab="api">
+      <button type="button" class="tab" data-tab="api">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
         <?= __('admin.api') ?>
       </button>
-      <button class="tab-btn" data-tab="domains">
+      <button type="button" class="tab" data-tab="webhooks">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <?= __('admin.webhooks') ?>
+      </button>
+      <button type="button" class="tab" data-tab="domains">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
@@ -57,7 +64,7 @@
         </svg>
         <?= __('admin.domains') ?>
       </button>
-      <button class="tab-btn" data-tab="activity-log">
+      <button type="button" class="tab" data-tab="activity-log">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14,2 14,8 20,8"></polyline>
@@ -66,7 +73,7 @@
         </svg>
         <?= __('admin.activity_and_audit_log') ?>
       </button>
-      <button class="tab-btn" data-tab="ai-integrations" data-help-topic="mcp-connections">
+      <button type="button" class="tab" data-tab="ai-integrations" data-help-topic="mcp-connections">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
           <path d="M2 17l10 5 10-5"></path>
@@ -75,7 +82,7 @@
         </svg>
         AI
       </button>
-      <button class="tab-btn" data-tab="storage">
+      <button type="button" class="tab" data-tab="storage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
@@ -85,7 +92,7 @@
       </button>
     </div>
 
-    <div class="tab-content">
+    <div class="settings-tab-panels">
       <?php
       // UI Injection Point: settings_before_tabs
       if (function_exists('render_ui_injections')) {
@@ -102,12 +109,12 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="project-name"><?= __('admin.project_name') ?></label>
-                <input type="text" id="project-name" name="projectName" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
+                <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
                 <small><?= __('admin.project_name_help') ?></small>
               </div>
               <div class="form-group">
                 <label for="site-timezone"><?= __('admin.timezone') ?></label>
-                <select id="site-timezone" name="siteTimezone">
+                <select id="site-timezone" name="siteTimezone" class="input">
                   <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
                   <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>Eastern Time</option>
                   <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>>Central Time</option>
@@ -118,7 +125,7 @@
             </div>
             <div class="form-group">
               <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
-              <textarea id="project-description" name="projectDescription" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
+              <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
               <small><?= __('admin.optional_description_help') ?></small>
             </div>
             <div class="form-group">
@@ -126,15 +133,15 @@
               <input type="file" id="project-logo" name="project_logo" accept="image/*">
               <small><?= __('admin.project_logo_help') ?></small>
               <?php if (!empty($settings['branding']['logoPath'])): ?>
-                <div style="margin-top: 0.5rem;">
-                  <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;"><?= __('admin.current_logo') ?>:</p>
-                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                  <button type="button" id="remove-logo-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;"><?= __('admin.remove_logo') ?></button>
+                <div class="logo-preview-block">
+                  <p class="logo-preview-label"><?= __('admin.current_logo') ?>:</p>
+                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" class="logo-preview-img">
+                  <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger logo-remove-btn"><?= __('admin.remove_logo') ?></button>
                 </div>
               <?php endif; ?>
-              <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
-                <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;"><?= __('admin.preview') ?>:</p>
-                <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+              <div id="logo-preview" class="logo-preview-block">
+                <p class="logo-preview-label"><?= __('admin.preview') ?>:</p>
+                <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" class="logo-preview-img">
               </div>
             </div>
           </div>
@@ -158,21 +165,21 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
-                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
+                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" class="input" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
               </div>
               <div class="form-group">
                 <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
-                <input type="number" id="media-image-quality" name="mediaImageQuality" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
+                <input type="number" id="media-image-quality" name="mediaImageQuality" class="input" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
-                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
+                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" class="input" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
               </div>
               <div class="form-group">
                 <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
-                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
+                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" class="input" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
               </div>
             </div>
             <div class="form-group">
@@ -408,21 +415,21 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
-                <input type="number" id="security-session-timeout" name="securitySessionTimeout" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
+                <input type="number" id="security-session-timeout" name="securitySessionTimeout" class="input" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
               </div>
               <div class="form-group">
                 <label for="security-max-login-attempts"><?= __('admin.max_login_attempts') ?></label>
-                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
+                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" class="input" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="security-password-min-length"><?= __('admin.password_min_length') ?></label>
-                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
+                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" class="input" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
               </div>
               <div class="form-group">
                 <label for="security-lockout-time">Lockout Time (minutes)</label>
-                <input type="number" id="security-lockout-time" name="securityLockoutTime" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
+                <input type="number" id="security-lockout-time" name="securityLockoutTime" class="input" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
               </div>
             </div>
             <div class="form-group">
@@ -533,18 +540,13 @@
         </div>
       </div>
 
-      <!-- Webhooks Tab -->
+      <!-- Webhooks Tab (summary — full management on standalone page) -->
       <div class="tab-pane" id="webhooks">
         <div class="settings-section">
-          <div class="section-header">
-            <h2><?= __('admin.webhooks') ?></h2>
-            <button class="btn btn-primary" onclick="window.location.href='/admin/index.php?page=webhooks'">
-              Manage Webhooks
-            </button>
-          </div>
-          <div class="webhooks-info">
-            <p><?= __('admin.webhooks_description') ?></p>
-            <p><a href="<?= admin_url('webhooks') ?>" class="btn btn-secondary"><?= __('admin.go_to_webhooks_management') ?></a></p>
+          <h2><?= __('admin.webhooks') ?></h2>
+          <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
+          <div class="card card--compact webhooks-summary-card">
+            <p><a href="<?= admin_url('webhooks') ?>" class="btn btn-primary"><?= __('admin.go_to_webhooks_management') ?></a></p>
           </div>
         </div>
       </div>
@@ -553,36 +555,36 @@
       <div class="tab-pane" id="activity-log">
         <div class="activity-log-page">
           <div class="main-actions-bar">
-            <div class="filters" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-              <select id="event-filter" class="input" style="min-width: 200px;">
+            <div class="filters activity-log-filters">
+              <select id="event-filter" class="input activity-log-filter-event">
                 <option value="">All Events</option>
               </select>
-              <select id="category-filter" class="input" style="min-width: 150px;">
+              <select id="category-filter" class="input activity-log-filter-category">
                 <option value="all">All Categories</option>
                 <option value="content">Content</option>
                 <option value="users">Users</option>
                 <option value="system">System</option>
               </select>
-              <input type="date" id="date-filter" class="input" placeholder="Filter by date" style="min-width: 150px;">
+              <input type="date" id="date-filter" class="input activity-log-filter-date" placeholder="Filter by date">
               <button class="btn btn-secondary" id="refresh-logs">Refresh</button>
             </div>
           </div>
           
-          <div class="table-container" style="overflow-x: auto;">
-            <table class="table" id="activity-log-table" style="width: 100%; border-collapse: collapse;">
+          <div class="table-container activity-log-table-wrap">
+            <table class="table activity-log-table" id="activity-log-table">
               <thead>
-                <tr style="background: var(--bg-secondary); border-bottom: 2px solid var(--border-light);">
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Timestamp</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">User</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Event</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Category</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">IP Address</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Details</th>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Event</th>
+                  <th>Category</th>
+                  <th>IP Address</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody id="log-entries">
-                <tr>
-                  <td colspan="6" class="text-center" style="padding: 2rem;">
+                <tr class="activity-log-loading">
+                  <td colspan="6" class="text-center">
                     <div class="spinner">Loading...</div>
                   </td>
                 </tr>
@@ -590,7 +592,7 @@
             </table>
           </div>
           
-          <div class="pagination" style="margin-top: 1.5rem; text-align: center;">
+          <div class="pagination activity-log-pagination">
             <button class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
           </div>
         </div>
@@ -703,25 +705,22 @@
             <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
           </div>
 
-          <!-- Primary: Connect your AI app -->
-          <section class="ai-integrations-section ai-section-primary" id="inbound-mcp">
-            <div class="ai-integrations-section-header">
+          <div class="settings-section" id="inbound-mcp">
+            <h2>
+              Connect your AI app
               <span class="ai-section-badge">Recommended</span>
-              <h3>
-                Connect your AI app
-                <button type="button" class="help-tip" aria-label="About AI app connectors"
-                  data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. The personal connector uses your own permissions. Service agents are shared bots with a fixed role.">?</button>
-              </h3>
-              <p class="settings-help">Use the <strong>personal connector</strong> for your own Claude or ChatGPT account — you sign in with your Birkly user and get your role's permissions. Admins can also create <strong>service agents</strong> with a fixed role for shared automation.</p>
-            </div>
+              <button type="button" class="help-tip" aria-label="About AI app connectors"
+                data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. The personal connector uses your own permissions. Service agents are shared bots with a fixed role.">?</button>
+            </h2>
+            <p class="settings-help">Use the <strong>personal connector</strong> for your own Claude or ChatGPT account — you sign in with your Birkly user and get your role's permissions. Admins can also create <strong>service agents</strong> with a fixed role for shared automation.</p>
 
             <div class="tip-box tip-box-info ai-migration-banner" id="ai-agents-migration-banner" style="display: none;" role="status">
               <strong>Service agent visibility updated</strong>
               <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
             </div>
 
-            <div class="setup-guide-box" id="mcp-setup-guide">
-              <h4 class="setup-guide-title">Quick start — personal connector</h4>
+            <div class="card card--compact setup-guide-box" id="mcp-setup-guide">
+              <h3 class="setup-guide-title">Quick start — personal connector</h3>
               <ol class="setup-guide-steps">
                 <li>Copy the <strong>personal connector URL</strong> below — the same URL works for every team member.</li>
                 <li>In Claude, ChatGPT, or Cursor: paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
@@ -730,27 +729,25 @@
               </ol>
             </div>
 
-            <div id="ai-personal-agent-card" class="ai-personal-agent-card">
+            <div id="ai-personal-agent-card" class="card card--compact ai-personal-agent-card">
               <div class="loading">Loading personal connector...</div>
             </div>
 
-            <div class="connections-container mcp-connections-settings">
-              <div class="connections-panel">
-                <div class="panel-header">
-                  <h4>Service agents</h4>
-                  <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Add agent
-                  </button>
-                </div>
-                <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
+            <div class="card card--compact mcp-connections-settings">
+              <div class="section-header">
+                <h3>Service agents</h3>
+                <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add agent
+                </button>
+              </div>
+              <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
 
-                <div class="connections-list" id="ai-service-agents-list">
-                  <div class="loading">Loading connections...</div>
-                </div>
+              <div class="connections-list" id="ai-service-agents-list">
+                <div class="loading">Loading connections...</div>
               </div>
             </div>
 
@@ -761,38 +758,33 @@
                 <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> — local development helper for Claude Desktop (advanced only).</p>
               </div>
             </details>
-          </section>
+          </div>
 
-          <!-- Secondary: Built-in assistant -->
-          <section class="ai-integrations-section ai-section-secondary" id="outbound-connections">
-            <div class="ai-integrations-section-header">
-              <h3>
-                Built-in assistant
-                <button type="button" class="help-tip" aria-label="About built-in assistant"
-                  data-tip="Chat with AI inside Birkly using the button in the bottom-right corner. You need an API key from your AI provider's developer site — a ChatGPT Plus or Claude Pro subscription is not enough.">?</button>
-              </h3>
-              <p class="settings-help">Quick connect for in-admin chat. Add your provider and API key once, then use the chat button.</p>
-            </div>
+          <div class="settings-section" id="outbound-connections">
+            <h2>
+              Built-in assistant
+              <button type="button" class="help-tip" aria-label="About built-in assistant"
+                data-tip="Chat with AI inside Birkly using the button in the bottom-right corner. You need an API key from your AI provider's developer site — a ChatGPT Plus or Claude Pro subscription is not enough.">?</button>
+            </h2>
+            <p class="settings-help">Quick connect for in-admin chat. Add your provider and API key once, then use the chat button.</p>
 
-            <div class="connections-container">
-              <div class="connections-panel">
-                <div class="panel-header">
-                  <h4>Your assistant</h4>
-                  <button class="btn btn-secondary" id="add-connection-btn" type="button">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Quick connect
-                  </button>
-                </div>
+            <div class="card card--compact">
+              <div class="section-header">
+                <h3>Your assistant</h3>
+                <button class="btn btn-secondary" id="add-connection-btn" type="button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Quick connect
+                </button>
+              </div>
 
-                <div class="connections-list" id="connections-list">
-                  <div class="loading">Loading connections...</div>
-                </div>
+              <div class="connections-list" id="connections-list">
+                <div class="loading">Loading connections...</div>
               </div>
             </div>
-          </section>
+          </div>
         </div>
 
         <!-- Built-in assistant quick connect modal -->
@@ -816,26 +808,26 @@
 
               <div class="form-group">
                 <label for="connection-provider"><?= __('admin.ai_provider') ?></label>
-                <select id="connection-provider" name="provider" required>
+                <select id="connection-provider" name="provider" class="input" required>
                   <option value="">Select a provider...</option>
                 </select>
               </div>
 
               <div class="form-group">
                 <label for="connection-name"><?= __('admin.connection_name') ?></label>
-                <input type="text" id="connection-name" name="name" placeholder="<?= __('admin.my_ai_assistant_example') ?>">
+                <input type="text" id="connection-name" name="name" class="input" placeholder="<?= __('admin.my_ai_assistant_example') ?>">
                 <small><?= __('admin.connection_friendly_name_help') ?></small>
               </div>
 
               <div class="form-group" id="api-url-group" style="display: none;">
                 <label for="connection-api-url"><?= __('admin.api_url') ?></label>
-                <input type="url" id="connection-api-url" name="api_url" placeholder="https://api.example.com/v1/chat/completions">
+                <input type="url" id="connection-api-url" name="api_url" class="input" placeholder="https://api.example.com/v1/chat/completions">
                 <small id="api-url-hint">API endpoint URL (required for custom providers)</small>
               </div>
 
               <div class="form-group" id="api-key-group">
                 <label for="connection-api-key"><?= __('admin.api_key') ?></label>
-                <input type="password" id="connection-api-key" name="api_key" autocomplete="off">
+                <input type="password" id="connection-api-key" name="api_key" class="input" autocomplete="off">
                 <small><?= __('admin.api_key_help') ?></small>
               </div>
 
@@ -853,15 +845,15 @@
 
               <div class="form-group">
                 <label for="connection-model"><?= __('admin.model') ?></label>
-                <select id="connection-model" name="model">
+                <select id="connection-model" name="model" class="input">
                   <option value="">Default</option>
                 </select>
-                <input type="text" id="connection-model-custom" name="model_custom" placeholder="<?= __('admin.enter_model_name') ?>" style="display: none; margin-top: 0.5rem;">
+                <input type="text" id="connection-model-custom" name="model_custom" class="input connection-model-custom" placeholder="<?= __('admin.enter_model_name') ?>">
               </div>
 
               <div class="form-group">
                 <label for="connection-role"><?= __('admin.role') ?></label>
-                <select id="connection-role" name="role" required>
+                <select id="connection-role" name="role" class="input" required>
                   <option value="">Loading roles...</option>
                 </select>
               </div>
@@ -922,7 +914,7 @@
                 <div class="mcp-snippet-block">
                   <label for="mcp-modal-personal-url">Personal connector URL</label>
                   <div class="copy-snippet-row">
-                    <input type="text" id="mcp-modal-personal-url" readonly placeholder="Loading...">
+                    <input type="text" id="mcp-modal-personal-url" class="input" readonly placeholder="Loading...">
                     <button type="button" class="btn btn-sm btn-primary" id="mcp-copy-personal-url-btn" type="button">Copy URL</button>
                   </div>
                 </div>
@@ -933,13 +925,13 @@
 
                 <div class="form-group">
                   <label for="mcp-endpoint-name">Agent name</label>
-                  <input type="text" id="mcp-endpoint-name" name="name" placeholder="e.g. Content assistant">
+                  <input type="text" id="mcp-endpoint-name" name="name" class="input" placeholder="e.g. Content assistant">
                   <small>A name you'll recognize later</small>
                 </div>
 
                 <div class="form-group">
                   <label for="mcp-agent-description">Description <span class="text-muted">(optional)</span></label>
-                  <input type="text" id="mcp-agent-description" name="description" placeholder="e.g. Helps draft blog posts">
+                  <input type="text" id="mcp-agent-description" name="description" class="input" placeholder="e.g. Helps draft blog posts">
                 </div>
 
                 <div class="form-group">
@@ -948,7 +940,7 @@
                     <button type="button" class="help-tip" aria-label="Role help"
                       data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
                   </label>
-                  <select id="mcp-endpoint-role" name="role">
+                  <select id="mcp-endpoint-role" name="role" class="input">
                     <option value="">Loading roles...</option>
                   </select>
                 </div>
@@ -978,7 +970,7 @@
                 <div class="mcp-snippet-block">
                   <label for="mcp-new-connector-url">Connector URL</label>
                   <div class="copy-snippet-row">
-                    <input type="text" id="mcp-new-connector-url" readonly>
+                    <input type="text" id="mcp-new-connector-url" class="input" readonly>
                     <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-new-connector-url', true)">Copy URL</button>
                   </div>
                 </div>
@@ -1280,168 +1272,6 @@
   </div>
 </div>
 
-<style>
-/* Simple checkbox styling for permissions */
-.permissions-grid input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    min-height: 20px;
-    cursor: pointer;
-    margin: 0;
-    margin-right: 8px;
-    flex-shrink: 0;
-    accent-color: #3b82f6;
-}
-
-.permissions-grid input[type="checkbox"]:checked {
-    accent-color: #3b82f6;
-}
-
-.permissions-grid .checkbox-label {
-    display: flex;
-    align-items: center;
-    font-size: 0.875rem;
-    color: var(--text-primary, #1e293b);
-    cursor: pointer;
-    user-select: none;
-    padding: 0.5rem;
-    border-radius: 4px;
-    transition: background-color 0.15s ease;
-}
-
-.permissions-grid .checkbox-label:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-.permissions-grid .checkbox-label:has(input:checked) {
-    background-color: rgba(59, 130, 246, 0.1);
-    font-weight: 500;
-}
-</style>
-
-<style>
-/* Domain Management Styles */
-.domains-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: var(--space-6);
-    margin-top: var(--space-6);
-}
-
-.domain-card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-light);
-    border-radius: var(--border-radius-s);
-    padding: var(--space-6);
-    transition: box-shadow 0.2s, border-color 0.2s;
-}
-
-.domain-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border-color: var(--border-color);
-}
-
-.domain-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.domain-info h3 {
-    margin: 0 0 var(--space-2) 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.domain-badges {
-    display: flex;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-    margin-top: var(--space-2);
-}
-
-.domain-actions {
-    display: flex;
-    gap: var(--space-2);
-}
-
-.domain-details {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.detail-row {
-    display: flex;
-    gap: var(--space-2);
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-.detail-row strong {
-    min-width: 120px;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.loading-state, .empty-state, .error-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-secondary, #666);
-}
-
-.spinner {
-    border: 3px solid var(--border-color, #e0e0e0);
-    border-top: 3px solid var(--primary-color, #007bff);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 16px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.btn-small {
-    padding: 6px 12px;
-    font-size: 0.875em;
-}
-
-.section-description {
-    color: var(--text-secondary, #666);
-    margin-bottom: 16px;
-    font-size: 0.9em;
-}
-
-/* Activity Log, Updates styles when in tabs */
-#activity-log .activity-log-page,
-#updates .updates-page {
-    padding: 0;
-}
-
-#activity-log .page-header,
-#updates .page-header {
-    display: none;
-}
-
-#activity-log .main-actions-bar {
-    margin-bottom: 1.5rem;
-}
-
-#updates .updates-content {
-    display: grid;
-    gap: 1.5rem;
-}
-</style>
-
 <script type="application/json" id="settings-users-data">{json users}</script>
 {include_script 'settings-page.js'}
 
@@ -1449,69 +1279,4 @@
 
 <script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/mcp-connections.js') ?>"></script>
-
-<!-- Activity Feed Styles -->
-<style>
-.activity-timeline {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.activity-item {
-    display: flex;
-    gap: 16px;
-    padding: 16px;
-    margin-bottom: 16px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.activity-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-}
-
-.activity-content {
-    flex: 1;
-}
-
-.activity-message {
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
-}
-
-.activity-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 0.875em;
-    color: #666;
-}
-
-.denylist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-}
-
-.denylist-item code {
-    background: var(--bg-secondary);
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    font-family: 'Courier New', monospace;
-}
-</style>
 
