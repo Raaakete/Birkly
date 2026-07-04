@@ -33,6 +33,7 @@ $suites = [
     'admin_routing_test.php',
     'admin_routing_http_test.php',
     'admin_template_stray_quote_test.php',
+    'collection_editor_template_test.php',
     'admin_subdir_content_test.php',
     'admin_entries_direct_test.php',
     'entry_editor_template_test.php',
