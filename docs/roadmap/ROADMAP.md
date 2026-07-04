@@ -168,15 +168,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P6.1 complete** — `plugins/payments/` + `payment_shelf` (8 providers). **P6.2 + P6.3 approved** — execute next. |
+| **Birkly (CMS)** | **P6.2 + P6.3 complete** — `plugins/shopping_cart/` + `plugins/events/` shelf consumers. |
 | **Birkly-Website** | `Birkly-0.1/` embed sync deferred; update after human CMS deploy verification. |
 | **kekaba** | P5.7 embed synced locally; **git commit/push deferred** to human deploy. |
-| **Birkly-Docs** | P6.1 payments + shelf API merged; P6.2/P6.3 guides pending sprint. |
-| **Agent ops** | Autonomous merge active; **70** PHP test suites green. |
+| **Birkly-Docs** | P6.1 payments + shelf API; **P6.2/P6.3 cart + events guides** merged. |
+| **Agent ops** | Autonomous merge active; **74** PHP test suites green. |
 
-**Active plugins on `main`:** `automation`, `user_management`, `payments`, `sample-plugin`
+**Active plugins on `main`:** `automation`, `user_management`, `payments`, `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.2 + P6.3** Shopping Cart & Events — combined sprint (approved).
+**Next active phase:** **P6.4** User membership ↔ shelf wiring (deferred until approved).
 
 ---
 
@@ -1972,11 +1972,11 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P6.2-P6.3-M0** | Shared consumer payment patterns + scaffolds | pending |
-| **P6.2-M1–M3** | Shopping Cart: cart, checkout, orders, templates, automation | pending |
-| **P6.3-M1–M3** | Events: RSVP, paid tickets, capacity, templates, automation | pending |
-| **P6.2-P6.3-M4** | Integration tests, activity log cross-check, optional kekaba demo | pending |
-| **P6.2-P6.3-M5** | Birkly-Docs, verification matrix, closure | pending |
+| **P6.2-P6.3-M0** | Shared consumer payment patterns + scaffolds | **complete** |
+| **P6.2-M1–M3** | Shopping Cart: cart, checkout, orders, templates, automation | **complete** |
+| **P6.3-M1–M3** | Events: RSVP, paid tickets, capacity, templates, automation | **complete** |
+| **P6.2-P6.3-M4** | Integration tests, activity log cross-check, optional kekaba demo | **complete** (tests; kekaba demo deferred) |
+| **P6.2-P6.3-M5** | Birkly-Docs, verification matrix, closure | **complete** |
 
 **Human decisions (locked):**
 

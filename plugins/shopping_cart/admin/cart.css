@@ -1,0 +1,16 @@
+.shop-page { padding: 0 var(--space-m) var(--space-xl); }
+.shop-toolbar { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-m); margin-bottom: var(--space-l); flex-wrap: wrap; }
+.shop-tabs { display: flex; gap: var(--space-xs); border-bottom: 1px solid var(--border-color); margin-bottom: var(--space-l); }
+.shop-tab { background: none; border: none; padding: var(--space-s) var(--space-m); cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 500; }
+.shop-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-primary); }
+.shop-tab-panel { display: none; }
+.shop-tab-panel.active { display: block; }
+.shop-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.shop-table th, .shop-table td { padding: var(--space-s) var(--space-m); text-align: left; border-bottom: 1px solid var(--border-color); }
+.shop-table th { font-weight: 600; color: var(--text-secondary); }
+.status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-pill.paid { background: #d1fae5; color: #065f46; }
+.status-pill.failed, .status-pill.cancelled { background: #fee2e2; color: #991b1b; }
+.shop-empty { padding: var(--space-xl); text-align: center; color: var(--text-secondary); }
+.shop-settings-form { max-width: 480px; }

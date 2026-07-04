@@ -1,0 +1,12 @@
+.events-page { padding: 0 var(--space-m) var(--space-xl); }
+.events-toolbar { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-m); margin-bottom: var(--space-l); flex-wrap: wrap; }
+.events-toolbar-actions { display: flex; gap: var(--space-s); flex-wrap: wrap; }
+.events-filters { display: flex; gap: var(--space-s); margin-bottom: var(--space-l); flex-wrap: wrap; }
+.events-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.events-table th, .events-table td { padding: var(--space-s) var(--space-m); text-align: left; border-bottom: 1px solid var(--border-color); }
+.events-table th { font-weight: 600; color: var(--text-secondary); }
+.status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize; }
+.status-pill.confirmed, .status-pill.paid { background: #d1fae5; color: #065f46; }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-pill.failed { background: #fee2e2; color: #991b1b; }
+.events-empty { padding: var(--space-xl); text-align: center; color: var(--text-secondary); }
