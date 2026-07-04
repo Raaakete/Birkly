@@ -5,31 +5,36 @@
   </div>
   <div class="page-header-actions"></div>
 </div>
+
+<div class="settings-global-save-bar">
+  <div id="settings-message" class="message" style="display: none;" role="status"></div>
+  <button type="button" id="global-save-settings-btn" class="btn btn-primary"><?= __('admin.save_settings') ?></button>
+</div>
 <div class="settings-page">
 
   <div class="settings-tabs">
-    <div class="tab-nav">
-      <button class="tab-btn active" data-tab="general">
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="general">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
         </svg>
         <?= __('admin.general') ?>
       </button>
-      <button class="tab-btn" data-tab="users-roles">
+      <button type="button" class="tab" data-tab="users-roles">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
         <?= __('admin.users_and_roles') ?>
       </button>
-      <button class="tab-btn" data-tab="plugins">
+      <button type="button" class="tab" data-tab="plugins">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
         </svg>
         <?= __('admin.plugins') ?>
       </button>
-      <button class="tab-btn" data-tab="security">
+      <button type="button" class="tab" data-tab="security">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <circle cx="12" cy="16" r="1"></circle>
@@ -37,14 +42,21 @@
         </svg>
         <?= __('admin.security') ?>
       </button>
-      <button class="tab-btn" data-tab="api">
+      <button type="button" class="tab" data-tab="api">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
         <?= __('admin.api') ?>
       </button>
-      <button class="tab-btn" data-tab="domains">
+      <button type="button" class="tab" data-tab="webhooks">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <?= __('admin.webhooks') ?>
+      </button>
+      <button type="button" class="tab" data-tab="domains">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
@@ -52,7 +64,7 @@
         </svg>
         <?= __('admin.domains') ?>
       </button>
-      <button class="tab-btn" data-tab="activity-log">
+      <button type="button" class="tab" data-tab="activity-log">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14,2 14,8 20,8"></polyline>
@@ -61,7 +73,7 @@
         </svg>
         <?= __('admin.activity_and_audit_log') ?>
       </button>
-      <button class="tab-btn" data-tab="ai-integrations" data-help-topic="mcp-connections">
+      <button type="button" class="tab" data-tab="ai-integrations" data-help-topic="mcp-connections">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
           <path d="M2 17l10 5 10-5"></path>
@@ -70,7 +82,7 @@
         </svg>
         AI
       </button>
-      <button class="tab-btn" data-tab="storage">
+      <button type="button" class="tab" data-tab="storage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
@@ -80,7 +92,7 @@
       </button>
     </div>
 
-    <div class="tab-content">
+    <div class="settings-tab-panels">
       <?php
       // UI Injection Point: settings_before_tabs
       if (function_exists('render_ui_injections')) {
@@ -90,22 +102,19 @@
       
       <!-- General Tab -->
       <div class="tab-pane active" id="general">
-        <div class="main-actions-bar">
-          <button type="submit" form="general-form" class="btn btn-primary"><?= __('admin.save_settings') ?></button>
-        </div>
-        <form id="general-form" class="settings-form" enctype="multipart/form-data">
+<form id="general-form" class="settings-form" enctype="multipart/form-data">
           <div class="settings-section">
             <h2><?= __('admin.project_information') ?></h2>
             <p class="settings-help"><?= __('admin.project_information_help') ?></p>
             <div class="form-row">
               <div class="form-group">
                 <label for="project-name"><?= __('admin.project_name') ?></label>
-                <input type="text" id="project-name" name="projectName" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
+                <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
                 <small><?= __('admin.project_name_help') ?></small>
               </div>
               <div class="form-group">
                 <label for="site-timezone"><?= __('admin.timezone') ?></label>
-                <select id="site-timezone" name="siteTimezone">
+                <select id="site-timezone" name="siteTimezone" class="input">
                   <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
                   <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>Eastern Time</option>
                   <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>>Central Time</option>
@@ -116,7 +125,7 @@
             </div>
             <div class="form-group">
               <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
-              <textarea id="project-description" name="projectDescription" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
+              <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
               <small><?= __('admin.optional_description_help') ?></small>
             </div>
             <div class="form-group">
@@ -124,44 +133,58 @@
               <input type="file" id="project-logo" name="project_logo" accept="image/*">
               <small><?= __('admin.project_logo_help') ?></small>
               <?php if (!empty($settings['branding']['logoPath'])): ?>
-                <div style="margin-top: 0.5rem;">
-                  <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;"><?= __('admin.current_logo') ?>:</p>
-                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                  <button type="button" id="remove-logo-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;"><?= __('admin.remove_logo') ?></button>
+                <div class="logo-preview-block">
+                  <p class="logo-preview-label"><?= __('admin.current_logo') ?>:</p>
+                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" class="logo-preview-img">
+                  <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger logo-remove-btn"><?= __('admin.remove_logo') ?></button>
                 </div>
               <?php endif; ?>
-              <div id="logo-preview" style="margin-top: 0.5rem; display: none;">
-                <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;"><?= __('admin.preview') ?>:</p>
-                <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" style="max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid #e2e8f0;">
+              <div id="logo-preview" class="logo-preview-block">
+                <p class="logo-preview-label"><?= __('admin.preview') ?>:</p>
+                <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" class="logo-preview-img">
               </div>
             </div>
           </div>
 
           <div class="settings-section">
             <h2><?= __('admin.media_settings') ?></h2>
+            <?php
+              $mediaSettings = $settings['media'] ?? [];
+              $maxUploadMb = isset($mediaSettings['max_upload_size'])
+                  ? (int) round($mediaSettings['max_upload_size'] / 1024 / 1024)
+                  : (int) ($mediaSettings['maxUploadSize'] ?? 5);
+              $imageQuality = $mediaSettings['image_quality'] ?? $mediaSettings['imageQuality'] ?? 85;
+              $thumbnailSize = $mediaSettings['thumbnail_size'] ?? null;
+              $thumbWidth = is_array($thumbnailSize) ? ($thumbnailSize[0] ?? 150) : ($mediaSettings['thumbnailWidth'] ?? 150);
+              $thumbHeight = is_array($thumbnailSize) ? ($thumbnailSize[1] ?? 150) : ($mediaSettings['thumbnailHeight'] ?? 150);
+              $createThumbnails = $mediaSettings['create_thumbnails'] ?? $mediaSettings['createThumbnails'] ?? true;
+              if ($createThumbnails === 'on') {
+                  $createThumbnails = true;
+              }
+            ?>
             <div class="form-row">
               <div class="form-group">
                 <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
-                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" value="<?= htmlspecialchars($settings['media']['maxUploadSize'] ?? '') ?>" min="1" max="100">
+                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" class="input" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
               </div>
               <div class="form-group">
                 <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
-                <input type="number" id="media-image-quality" name="mediaImageQuality" value="<?= htmlspecialchars($settings['media']['imageQuality'] ?? '') ?>" min="10" max="100">
+                <input type="number" id="media-image-quality" name="mediaImageQuality" class="input" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
-                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" value="<?= htmlspecialchars($settings['media']['thumbnailWidth'] ?? '') ?>" min="50" max="1000">
+                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" class="input" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
               </div>
               <div class="form-group">
                 <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
-                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" value="<?= htmlspecialchars($settings['media']['thumbnailHeight'] ?? '') ?>" min="50" max="1000">
+                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" class="input" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
               </div>
             </div>
             <div class="form-group">
               <label class="checkbox-label">
-                <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= ($settings['media']['createThumbnails'] ?? '') === 'on' ? 'checked' : '' ?>>
+                <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= !empty($createThumbnails) ? 'checked' : '' ?>>
                 <span><?= __('admin.create_thumbnails_automatically') ?></span>
               </label>
             </div>
@@ -232,6 +255,30 @@
 
       <!-- Users & Roles Tab -->
       <div class="tab-pane" id="users-roles">
+        <?php
+          $userCount = count($users ?? []);
+          $roleCount = count($settings['roles'] ?? []);
+        ?>
+        <div class="settings-section">
+          <h2><?= __('admin.users_and_roles') ?></h2>
+          <p class="settings-help"><?= __('admin.users_roles_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <dl class="settings-summary-stats">
+              <div>
+                <dt><?= __('admin.users') ?></dt>
+                <dd><?= (int) $userCount ?></dd>
+              </div>
+              <div>
+                <dt><?= __('admin.roles') ?></dt>
+                <dd><?= (int) $roleCount ?></dd>
+              </div>
+            </dl>
+            <p class="settings-summary-actions">
+              <a href="<?= htmlspecialchars(admin_url('roles')) ?>" class="btn btn-secondary"><?= __('admin.role_management') ?></a>
+              <a href="<?= htmlspecialchars(admin_url('account')) ?>" class="btn btn-secondary"><?= __('admin.account_settings') ?></a>
+            </p>
+          </div>
+        </div>
         <div class="settings-section">
           <div class="section-header">
             <h2><?= __('admin.user_management') ?></h2>
@@ -252,10 +299,10 @@
               </button>
             </div>
           </div>
-          <p class="settings-help-note" style="margin: 0 0 1rem 0; font-size: 0.875rem; color: var(--text-secondary);">
+          <p class="settings-help-note">
             CMS users here manage the admin panel. Site visitors and members are managed separately in <strong>Site Users</strong> (User Management plugin).
           </p>
-          <div class="users-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+          <div class="users-grid">
             <?php if (empty($users)): ?>
               <div class="empty-state">
                 <p><?= __('admin.no_users_found') ?></p>
@@ -263,16 +310,16 @@
               </div>
             <?php else: ?>
               <?php foreach ($users as $user): ?>
-                <div class="user-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
-                  <div class="user-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                    <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem;">
+                <div class="card user-card">
+                  <div class="user-header">
+                    <div class="user-avatar">
                       <?= strtoupper(substr($user['email'], 0, 1)) ?>
                     </div>
-                    <div class="user-info" style="flex: 1; min-width: 0;">
-                      <h4 style="margin: 0 0 0.25rem 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?= htmlspecialchars($user['email']) ?></h4>
-                      <span class="role-badge <?= $user['role'] ?>" style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: var(--color-primary-light); color: var(--color-primary);"><?= $user['role'] ?></span>
+                    <div class="user-info">
+                      <h4><?= htmlspecialchars($user['email']) ?></h4>
+                      <span class="role-badge <?= $user['role'] ?>"><?= $user['role'] ?></span>
                     </div>
-                    <div class="user-actions" style="display: flex; gap: 0.5rem;">
+                    <div class="user-actions">
                       <button class="btn-icon" onclick="editUser('<?= $user['id'] ?>')" title="Edit User">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -287,9 +334,9 @@
                       </button>
                     </div>
                   </div>
-                  <div class="user-details" style="font-size: 0.875rem; color: var(--text-secondary);">
-                    <p style="margin: 0.25rem 0;"><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
-                    <p style="margin: 0.25rem 0;"><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
+                  <div class="user-details">
+                    <p><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
+                    <p><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
                   </div>
                 </div>
               <?php endforeach; ?>
@@ -310,7 +357,7 @@
           </div>
           <div class="roles-grid">
             <?php foreach ($settings['roles'] ?? [] as $role): ?>
-            <div class="role-card">
+            <div class="card role-card">
               <div class="role-header">
                 <h3><?= htmlspecialchars($role['name']) ?></h3>
                 <div class="role-actions">
@@ -343,73 +390,59 @@
         </div>
       </div>
 
-      <!-- Plugins Tab -->
+      <!-- Plugins Tab (summary — full management on standalone page) -->
       <div class="tab-pane" id="plugins">
+        <?php
+          $pluginsList = $settings['plugins'] ?? [];
+          $pluginsCount = count($pluginsList);
+          $pluginsActiveCount = count(array_filter($pluginsList, static function ($plugin) {
+              return !empty($plugin['active']);
+          }));
+        ?>
         <div class="settings-section">
           <h2><?= __('admin.installed_plugins') ?></h2>
-          <div class="plugins-grid">
-            <?php foreach ($settings['plugins'] ?? [] as $pluginId => $plugin): ?>
-            <div class="plugin-card">
-              <div class="plugin-header">
-                <h3><?= htmlspecialchars($pluginId) ?></h3>
-                <div class="plugin-status">
-                  <span class="status-badge <?= $plugin['active'] ? 'active' : 'inactive' ?>">
-                    <?= $plugin['active'] ? 'Active' : 'Inactive' ?>
-                  </span>
-                </div>
+          <p class="settings-help"><?= __('admin.plugins_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <dl class="settings-summary-stats">
+              <div>
+                <dt><?= __('admin.installed_plugins') ?></dt>
+                <dd><?= (int) $pluginsCount ?></dd>
               </div>
-              <div class="plugin-actions">
-                <button class="btn btn-sm <?= $plugin['active'] ? 'btn-secondary' : 'btn-primary' ?>" 
-                        onclick="togglePlugin('<?= htmlspecialchars($pluginId) ?>', <?= $plugin['active'] ? 'false' : 'true' ?>)">
-                  <?= $plugin['active'] ? 'Deactivate' : 'Activate' ?>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deletePlugin('<?= htmlspecialchars($pluginId) ?>')">
-                  Delete
-                </button>
+              <div>
+                <dt><?= __('admin.active') ?></dt>
+                <dd><?= (int) $pluginsActiveCount ?></dd>
               </div>
-              <?php if (!empty($plugin['settings'])): ?>
-              <div class="plugin-settings">
-                <h4>Settings</h4>
-                <?php foreach ($plugin['settings'] as $key => $value): ?>
-                <div class="setting-item">
-                  <span class="setting-key"><?= htmlspecialchars($key) ?>:</span>
-                  <span class="setting-value"><?= htmlspecialchars(is_bool($value) ? ($value ? 'true' : 'false') : $value) ?></span>
-                </div>
-                <?php endforeach; ?>
-              </div>
-              <?php endif; ?>
-            </div>
-            <?php endforeach; ?>
+            </dl>
+            <p class="settings-summary-actions">
+              <a href="<?= htmlspecialchars(admin_url('plugins')) ?>" class="btn btn-primary"><?= __('admin.manage_all_plugins') ?></a>
+            </p>
           </div>
         </div>
       </div>
 
       <!-- Security Tab -->
       <div class="tab-pane" id="security">
-        <div class="main-actions-bar">
-          <button type="submit" form="security-form" class="btn btn-primary"><?= __('admin.save_settings') ?></button>
-        </div>
-        <form id="security-form" class="settings-form">
+<form id="security-form" class="settings-form">
           <div class="settings-section">
             <h2><?= __('admin.session_security') ?></h2>
             <div class="form-row">
               <div class="form-group">
                 <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
-                <input type="number" id="security-session-timeout" name="securitySessionTimeout" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
+                <input type="number" id="security-session-timeout" name="securitySessionTimeout" class="input" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
               </div>
               <div class="form-group">
                 <label for="security-max-login-attempts"><?= __('admin.max_login_attempts') ?></label>
-                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
+                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" class="input" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="security-password-min-length"><?= __('admin.password_min_length') ?></label>
-                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
+                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" class="input" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
               </div>
               <div class="form-group">
                 <label for="security-lockout-time">Lockout Time (minutes)</label>
-                <input type="number" id="security-lockout-time" name="securityLockoutTime" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
+                <input type="number" id="security-lockout-time" name="securityLockoutTime" class="input" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
               </div>
             </div>
             <div class="form-group">
@@ -455,6 +488,17 @@
 
       <!-- API Tab -->
       <div class="tab-pane" id="api">
+        <?php
+          require_once __DIR__ . '/../../core/birkly_paths.php';
+          $apiEndpoint = birkly_url('/api/');
+          $domainsFile = __DIR__ . '/../../settings/domains.json';
+          $registeredDomains = [];
+          if (is_file($domainsFile)) {
+              $registeredDomains = json_decode(file_get_contents($domainsFile), true) ?: [];
+          }
+          $domainCount = is_array($registeredDomains) ? count($registeredDomains) : 0;
+          $domainsTabUrl = admin_url('settings') . '#domains';
+        ?>
         <div class="settings-section">
           <h2><?= __('admin.api_information') ?></h2>
           <p class="settings-help"><?= __('admin.api_info_help') ?></p>
@@ -462,15 +506,19 @@
           <div class="api-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
             <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
               <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">API Endpoint</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">The API is available at: <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">/api/</code></p>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">The API is available at: <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;"><?= htmlspecialchars($apiEndpoint) ?></code></p>
             </div>
             <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
               <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Authentication</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">API requests require proper authentication via session cookies or API keys. See the <a href="/admin/index.php?page=settings#domains" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab to register domains for API access.</p>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Manage domains</a></p>
             </div>
             <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
               <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Rate Limiting</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">API requests are rate-limited per domain to prevent abuse. Rate limits can be configured in the <a href="/admin/index.php?page=settings#domains" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab.</p>
+              <?php if ($domainCount > 0): ?>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab.</p>
+              <?php else: ?>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab to enable API access controls.</p>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -483,6 +531,26 @@
 
       <!-- Domains Tab -->
       <div class="tab-pane" id="domains">
+        <?php
+          $domainsSettingsFile = __DIR__ . '/../../settings/domains.json';
+          $registeredDomainsSummary = [];
+          if (is_file($domainsSettingsFile)) {
+              $registeredDomainsSummary = json_decode(file_get_contents($domainsSettingsFile), true) ?: [];
+          }
+          $domainsSummaryCount = is_array($registeredDomainsSummary) ? count($registeredDomainsSummary) : 0;
+        ?>
+        <div class="settings-section">
+          <h2><?= __('admin.domain_management_and_analytics') ?></h2>
+          <p class="settings-help"><?= __('admin.domains_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <dl class="settings-summary-stats">
+              <div>
+                <dt><?= __('admin.domains') ?></dt>
+                <dd><?= (int) $domainsSummaryCount ?></dd>
+              </div>
+            </dl>
+          </div>
+        </div>
         <div class="settings-section">
           <div class="section-header">
             <h2><?= __('admin.domain_management_and_analytics') ?></h2>
@@ -505,75 +573,47 @@
         </div>
       </div>
 
-      <!-- Webhooks Tab -->
+      <!-- Webhooks Tab (summary — full management on standalone page) -->
       <div class="tab-pane" id="webhooks">
         <div class="settings-section">
-          <div class="section-header">
-            <h2><?= __('admin.webhooks') ?></h2>
-            <button class="btn btn-primary" onclick="window.location.href='/admin/index.php?page=webhooks'">
-              Manage Webhooks
-            </button>
-          </div>
-          <div class="webhooks-info">
-            <p><?= __('admin.webhooks_description') ?></p>
-            <p><a href="<?= admin_url('webhooks') ?>" class="btn btn-secondary"><?= __('admin.go_to_webhooks_management') ?></a></p>
+          <h2><?= __('admin.webhooks') ?></h2>
+          <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
+          <div class="card card--compact webhooks-summary-card">
+            <p><a href="<?= admin_url('webhooks') ?>" class="btn btn-primary"><?= __('admin.go_to_webhooks_management') ?></a></p>
           </div>
         </div>
       </div>
 
-      <!-- Activity & Audit Log Tab -->
+      <!-- Activity & Audit Log Tab (summary — full pages on standalone routes) -->
       <div class="tab-pane" id="activity-log">
-        <div class="activity-log-page">
-          <div class="main-actions-bar">
-            <div class="filters" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-              <select id="event-filter" class="input" style="min-width: 200px;">
-                <option value="">All Events</option>
-              </select>
-              <select id="category-filter" class="input" style="min-width: 150px;">
-                <option value="all">All Categories</option>
-                <option value="content">Content</option>
-                <option value="users">Users</option>
-                <option value="system">System</option>
-              </select>
-              <input type="date" id="date-filter" class="input" placeholder="Filter by date" style="min-width: 150px;">
-              <button class="btn btn-secondary" id="refresh-logs">Refresh</button>
-            </div>
-          </div>
-          
-          <div class="table-container" style="overflow-x: auto;">
-            <table class="table" id="activity-log-table" style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background: var(--bg-secondary); border-bottom: 2px solid var(--border-light);">
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Timestamp</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">User</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Event</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Category</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">IP Address</th>
-                  <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: var(--text-primary);">Details</th>
-                </tr>
-              </thead>
-              <tbody id="log-entries">
-                <tr>
-                  <td colspan="6" class="text-center" style="padding: 2rem;">
-                    <div class="spinner">Loading...</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div class="pagination" style="margin-top: 1.5rem; text-align: center;">
-            <button class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
+        <div class="settings-section">
+          <h2><?= __('admin.activity_and_audit_log') ?></h2>
+          <p class="settings-help"><?= __('admin.activity_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <p class="settings-summary-actions">
+              <a href="<?= htmlspecialchars(admin_url('activity')) ?>" class="btn btn-primary"><?= __('admin.go_to_activity_feed') ?></a>
+              <a href="<?= htmlspecialchars(admin_url('audit-log')) ?>" class="btn btn-secondary"><?= __('admin.go_to_audit_log') ?></a>
+            </p>
           </div>
         </div>
       </div>
 
       <!-- Storage Tab -->
       <div class="tab-pane" id="storage">
-        <div class="main-actions-bar">
-          <button type="submit" form="storage-form" class="btn btn-primary"><?= __('admin.save_storage_settings') ?></button>
-        </div>
-        <form id="storage-form" class="settings-form">
+<?php
+  $storageSettings = $settings['storage'] ?? [];
+  $storageDriver = $storageSettings['driver'] ?? $storageSettings['backend'] ?? 'flatfile';
+  if ($storageDriver === 'postgres') {
+      $storageDriver = 'postgresql';
+  }
+  $dbHost = $storageSettings['host'] ?? $storageSettings['db_host'] ?? 'localhost';
+  $dbPort = $storageSettings['port'] ?? $storageSettings['db_port'] ?? ($storageDriver === 'postgresql' ? 5432 : 3306);
+  $dbName = $storageSettings['database'] ?? $storageSettings['db_name'] ?? '';
+  $dbUser = $storageSettings['username'] ?? $storageSettings['db_user'] ?? '';
+  $dbPassword = $storageSettings['password'] ?? $storageSettings['db_password'] ?? '';
+  $dbPrefix = $storageSettings['prefix'] ?? $storageSettings['db_prefix'] ?? 'birkly_';
+?>
+<form id="storage-form" class="settings-form">
           <div class="settings-section">
             <h2><?= __('admin.storage_backend') ?></h2>
             <p class="settings-help"><?= __('admin.storage_backend_help') ?></p>
@@ -582,46 +622,46 @@
               <div class="form-group">
                 <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
                 <select id="storage-backend" name="storage_backend" class="input">
-                  <option value="flatfile" <?= ($settings['storage']['backend'] ?? 'flatfile') === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
-                  <option value="sqlite" <?= ($settings['storage']['backend'] ?? '') === 'sqlite' ? 'selected' : '' ?>>SQLite Database</option>
-                  <option value="mysql" <?= ($settings['storage']['backend'] ?? '') === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
-                  <option value="postgresql" <?= ($settings['storage']['backend'] ?? '') === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
+                  <option value="flatfile" <?= $storageDriver === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
+                  <option value="mysql" <?= $storageDriver === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
+                  <option value="postgresql" <?= $storageDriver === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
+                  <option value="sqlite" disabled <?= $storageDriver === 'sqlite' ? 'selected' : '' ?>>SQLite (coming soon)</option>
                 </select>
                 <small><?= __('admin.changing_storage_backend_warning') ?></small>
               </div>
             </div>
             
-            <div id="database-config" style="display: <?= in_array($settings['storage']['backend'] ?? 'flatfile', ['sqlite', 'mysql', 'postgresql']) ? 'block' : 'none' ?>;">
+            <div id="database-config" style="display: <?= in_array($storageDriver, ['mysql', 'postgresql'], true) ? 'block' : 'none' ?>;">
               <div class="form-row">
                 <div class="form-group">
                   <label for="db-host"><?= __('admin.database_host') ?></label>
-                  <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars($settings['storage']['db_host'] ?? 'localhost') ?>" class="input" placeholder="localhost">
+                  <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars((string) $dbHost) ?>" class="input" placeholder="localhost">
                 </div>
                 <div class="form-group">
                   <label for="db-port"><?= __('admin.database_port') ?></label>
-                  <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars($settings['storage']['db_port'] ?? '3306') ?>" class="input" placeholder="3306">
+                  <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars((string) $dbPort) ?>" class="input" placeholder="<?= $storageDriver === 'postgresql' ? '5432' : '3306' ?>">
                 </div>
               </div>
               
               <div class="form-row">
                 <div class="form-group">
                   <label for="db-name"><?= __('admin.database_name') ?></label>
-                  <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars($settings['storage']['db_name'] ?? '') ?>" class="input" placeholder="birkly">
+                  <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars((string) $dbName) ?>" class="input" placeholder="birkly">
                 </div>
                 <div class="form-group">
                   <label for="db-user">Database User</label>
-                  <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars($settings['storage']['db_user'] ?? '') ?>" class="input" placeholder="username">
+                  <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars((string) $dbUser) ?>" class="input" placeholder="username">
                 </div>
               </div>
               
               <div class="form-row">
                 <div class="form-group">
                   <label for="db-password"><?= __('admin.database_password') ?></label>
-                  <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars($settings['storage']['db_password'] ?? '') ?>" class="input" placeholder="password">
+                  <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars((string) $dbPassword) ?>" class="input" placeholder="password">
                 </div>
                 <div class="form-group">
                   <label for="db-prefix">Table Prefix</label>
-                  <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars($settings['storage']['db_prefix'] ?? 'birkly_') ?>" class="input" placeholder="birkly_">
+                  <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars((string) $dbPrefix) ?>" class="input" placeholder="birkly_">
                 </div>
               </div>
               
@@ -665,25 +705,22 @@
             <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
           </div>
 
-          <!-- Primary: Connect your AI app -->
-          <section class="ai-integrations-section ai-section-primary" id="inbound-mcp">
-            <div class="ai-integrations-section-header">
+          <div class="settings-section" id="inbound-mcp">
+            <h2>
+              Connect your AI app
               <span class="ai-section-badge">Recommended</span>
-              <h3>
-                Connect your AI app
-                <button type="button" class="help-tip" aria-label="About AI app connectors"
-                  data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. The personal connector uses your own permissions. Service agents are shared bots with a fixed role.">?</button>
-              </h3>
-              <p class="settings-help">Use the <strong>personal connector</strong> for your own Claude or ChatGPT account — you sign in with your Birkly user and get your role's permissions. Admins can also create <strong>service agents</strong> with a fixed role for shared automation.</p>
-            </div>
+              <button type="button" class="help-tip" aria-label="About AI app connectors"
+                data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. The personal connector uses your own permissions. Service agents are shared bots with a fixed role.">?</button>
+            </h2>
+            <p class="settings-help">Use the <strong>personal connector</strong> for your own Claude or ChatGPT account — you sign in with your Birkly user and get your role's permissions. Admins can also create <strong>service agents</strong> with a fixed role for shared automation.</p>
 
             <div class="tip-box tip-box-info ai-migration-banner" id="ai-agents-migration-banner" style="display: none;" role="status">
               <strong>Service agent visibility updated</strong>
               <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
             </div>
 
-            <div class="setup-guide-box" id="mcp-setup-guide">
-              <h4 class="setup-guide-title">Quick start — personal connector</h4>
+            <div class="card card--compact setup-guide-box" id="mcp-setup-guide">
+              <h3 class="setup-guide-title">Quick start — personal connector</h3>
               <ol class="setup-guide-steps">
                 <li>Copy the <strong>personal connector URL</strong> below — the same URL works for every team member.</li>
                 <li>In Claude, ChatGPT, or Cursor: paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
@@ -692,27 +729,25 @@
               </ol>
             </div>
 
-            <div id="ai-personal-agent-card" class="ai-personal-agent-card">
+            <div id="ai-personal-agent-card" class="card card--compact ai-personal-agent-card">
               <div class="loading">Loading personal connector...</div>
             </div>
 
-            <div class="connections-container mcp-connections-settings">
-              <div class="connections-panel">
-                <div class="panel-header">
-                  <h4>Service agents</h4>
-                  <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Add agent
-                  </button>
-                </div>
-                <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
+            <div class="card card--compact mcp-connections-settings">
+              <div class="section-header">
+                <h3>Service agents</h3>
+                <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add agent
+                </button>
+              </div>
+              <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
 
-                <div class="connections-list" id="ai-service-agents-list">
-                  <div class="loading">Loading connections...</div>
-                </div>
+              <div class="connections-list" id="ai-service-agents-list">
+                <div class="loading">Loading connections...</div>
               </div>
             </div>
 
@@ -723,38 +758,33 @@
                 <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> — local development helper for Claude Desktop (advanced only).</p>
               </div>
             </details>
-          </section>
+          </div>
 
-          <!-- Secondary: Built-in assistant -->
-          <section class="ai-integrations-section ai-section-secondary" id="outbound-connections">
-            <div class="ai-integrations-section-header">
-              <h3>
-                Built-in assistant
-                <button type="button" class="help-tip" aria-label="About built-in assistant"
-                  data-tip="Chat with AI inside Birkly using the button in the bottom-right corner. You need an API key from your AI provider's developer site — a ChatGPT Plus or Claude Pro subscription is not enough.">?</button>
-              </h3>
-              <p class="settings-help">Quick connect for in-admin chat. Add your provider and API key once, then use the chat button.</p>
-            </div>
+          <div class="settings-section" id="outbound-connections">
+            <h2>
+              Built-in assistant
+              <button type="button" class="help-tip" aria-label="About built-in assistant"
+                data-tip="Chat with AI inside Birkly using the button in the bottom-right corner. You need an API key from your AI provider's developer site — a ChatGPT Plus or Claude Pro subscription is not enough.">?</button>
+            </h2>
+            <p class="settings-help">Quick connect for in-admin chat. Add your provider and API key once, then use the chat button.</p>
 
-            <div class="connections-container">
-              <div class="connections-panel">
-                <div class="panel-header">
-                  <h4>Your assistant</h4>
-                  <button class="btn btn-secondary" id="add-connection-btn" type="button">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Quick connect
-                  </button>
-                </div>
+            <div class="card card--compact">
+              <div class="section-header">
+                <h3>Your assistant</h3>
+                <button class="btn btn-secondary" id="add-connection-btn" type="button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Quick connect
+                </button>
+              </div>
 
-                <div class="connections-list" id="connections-list">
-                  <div class="loading">Loading connections...</div>
-                </div>
+              <div class="connections-list" id="connections-list">
+                <div class="loading">Loading connections...</div>
               </div>
             </div>
-          </section>
+          </div>
         </div>
 
         <!-- Built-in assistant quick connect modal -->
@@ -778,26 +808,26 @@
 
               <div class="form-group">
                 <label for="connection-provider"><?= __('admin.ai_provider') ?></label>
-                <select id="connection-provider" name="provider" required>
+                <select id="connection-provider" name="provider" class="input" required>
                   <option value="">Select a provider...</option>
                 </select>
               </div>
 
               <div class="form-group">
                 <label for="connection-name"><?= __('admin.connection_name') ?></label>
-                <input type="text" id="connection-name" name="name" placeholder="<?= __('admin.my_ai_assistant_example') ?>">
+                <input type="text" id="connection-name" name="name" class="input" placeholder="<?= __('admin.my_ai_assistant_example') ?>">
                 <small><?= __('admin.connection_friendly_name_help') ?></small>
               </div>
 
               <div class="form-group" id="api-url-group" style="display: none;">
                 <label for="connection-api-url"><?= __('admin.api_url') ?></label>
-                <input type="url" id="connection-api-url" name="api_url" placeholder="https://api.example.com/v1/chat/completions">
+                <input type="url" id="connection-api-url" name="api_url" class="input" placeholder="https://api.example.com/v1/chat/completions">
                 <small id="api-url-hint">API endpoint URL (required for custom providers)</small>
               </div>
 
               <div class="form-group" id="api-key-group">
                 <label for="connection-api-key"><?= __('admin.api_key') ?></label>
-                <input type="password" id="connection-api-key" name="api_key" autocomplete="off">
+                <input type="password" id="connection-api-key" name="api_key" class="input" autocomplete="off">
                 <small><?= __('admin.api_key_help') ?></small>
               </div>
 
@@ -815,15 +845,15 @@
 
               <div class="form-group">
                 <label for="connection-model"><?= __('admin.model') ?></label>
-                <select id="connection-model" name="model">
+                <select id="connection-model" name="model" class="input">
                   <option value="">Default</option>
                 </select>
-                <input type="text" id="connection-model-custom" name="model_custom" placeholder="<?= __('admin.enter_model_name') ?>" style="display: none; margin-top: 0.5rem;">
+                <input type="text" id="connection-model-custom" name="model_custom" class="input connection-model-custom" placeholder="<?= __('admin.enter_model_name') ?>">
               </div>
 
               <div class="form-group">
                 <label for="connection-role"><?= __('admin.role') ?></label>
-                <select id="connection-role" name="role" required>
+                <select id="connection-role" name="role" class="input" required>
                   <option value="">Loading roles...</option>
                 </select>
               </div>
@@ -884,7 +914,7 @@
                 <div class="mcp-snippet-block">
                   <label for="mcp-modal-personal-url">Personal connector URL</label>
                   <div class="copy-snippet-row">
-                    <input type="text" id="mcp-modal-personal-url" readonly placeholder="Loading...">
+                    <input type="text" id="mcp-modal-personal-url" class="input" readonly placeholder="Loading...">
                     <button type="button" class="btn btn-sm btn-primary" id="mcp-copy-personal-url-btn" type="button">Copy URL</button>
                   </div>
                 </div>
@@ -895,13 +925,13 @@
 
                 <div class="form-group">
                   <label for="mcp-endpoint-name">Agent name</label>
-                  <input type="text" id="mcp-endpoint-name" name="name" placeholder="e.g. Content assistant">
+                  <input type="text" id="mcp-endpoint-name" name="name" class="input" placeholder="e.g. Content assistant">
                   <small>A name you'll recognize later</small>
                 </div>
 
                 <div class="form-group">
                   <label for="mcp-agent-description">Description <span class="text-muted">(optional)</span></label>
-                  <input type="text" id="mcp-agent-description" name="description" placeholder="e.g. Helps draft blog posts">
+                  <input type="text" id="mcp-agent-description" name="description" class="input" placeholder="e.g. Helps draft blog posts">
                 </div>
 
                 <div class="form-group">
@@ -910,7 +940,7 @@
                     <button type="button" class="help-tip" aria-label="Role help"
                       data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
                   </label>
-                  <select id="mcp-endpoint-role" name="role">
+                  <select id="mcp-endpoint-role" name="role" class="input">
                     <option value="">Loading roles...</option>
                   </select>
                 </div>
@@ -940,7 +970,7 @@
                 <div class="mcp-snippet-block">
                   <label for="mcp-new-connector-url">Connector URL</label>
                   <div class="copy-snippet-row">
-                    <input type="text" id="mcp-new-connector-url" readonly>
+                    <input type="text" id="mcp-new-connector-url" class="input" readonly>
                     <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-new-connector-url', true)">Copy URL</button>
                   </div>
                 </div>
@@ -1240,2168 +1270,13 @@
       </div>
     </div>
   </div>
-
-  <div id="settings-message" class="settings-message" style="display: none;"></div>
 </div>
 
-<style>
-/* Simple checkbox styling for permissions */
-.permissions-grid input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    min-height: 20px;
-    cursor: pointer;
-    margin: 0;
-    margin-right: 8px;
-    flex-shrink: 0;
-    accent-color: #3b82f6;
-}
-
-.permissions-grid input[type="checkbox"]:checked {
-    accent-color: #3b82f6;
-}
-
-.permissions-grid .checkbox-label {
-    display: flex;
-    align-items: center;
-    font-size: 0.875rem;
-    color: var(--text-primary, #1e293b);
-    cursor: pointer;
-    user-select: none;
-    padding: 0.5rem;
-    border-radius: 4px;
-    transition: background-color 0.15s ease;
-}
-
-.permissions-grid .checkbox-label:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-.permissions-grid .checkbox-label:has(input:checked) {
-    background-color: rgba(59, 130, 246, 0.1);
-    font-weight: 500;
-}
-</style>
-
-<script>
-// Role management functions - MUST be defined first, before any IIFE
-let availableResources = ['collections', 'media', 'users', 'settings'];
-let availableActions = ['view', 'edit', 'create', 'delete'];
-
-function createPermissionsGrid(containerId, permissions = {}) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error('Container not found:', containerId);
-        return;
-    }
-    
-    // Verify container is inside a form
-    const form = container.closest('form');
-    if (!form) {
-        console.warn('Permissions grid container is not inside a form');
-    }
-    
-    container.innerHTML = '';
-    
-    availableResources.forEach(resource => {
-        const section = document.createElement('div');
-        section.className = 'permission-section';
-        section.style.cssText = 'background: var(--bg-secondary, #f8f9fa); border: 1px solid var(--border-color, #e2e8f0); border-radius: var(--radius-md, 8px); padding: 1rem;';
-        
-        availableActions.forEach(action => {
-            const label = document.createElement('label');
-            label.className = 'checkbox-label';
-            label.style.cssText = 'display: flex; align-items: center; font-size: 0.875rem; color: var(--text-primary, #1e293b); cursor: pointer; user-select: none; padding: 0.5rem; border-radius: 4px; transition: background-color 0.15s ease;';
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = `permissions[${resource}][]`;
-            checkbox.value = action;
-            checkbox.setAttribute('data-resource', resource);
-            checkbox.checked = hasPermission(permissions, resource, action);
-            // Simple, clear checkbox styling
-            checkbox.style.cssText = 'width: 20px; height: 20px; min-width: 20px; min-height: 20px; cursor: pointer; margin: 0; margin-right: 8px; flex-shrink: 0;';
-            
-            checkbox.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-            
-            const span = document.createElement('span');
-            span.textContent = action.charAt(0).toUpperCase() + action.slice(1);
-            span.style.cssText = 'cursor: pointer;';
-            
-            label.appendChild(checkbox);
-            label.appendChild(span);
-            
-            // Simple hover effect
-            label.addEventListener('mouseenter', function() {
-                this.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-            });
-            
-            label.addEventListener('mouseleave', function() {
-                this.style.backgroundColor = '';
-            });
-            
-            const checkboxesDiv = section.querySelector('.permission-checkboxes') || document.createElement('div');
-            if (!section.querySelector('.permission-checkboxes')) {
-                checkboxesDiv.className = 'permission-checkboxes';
-                checkboxesDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem;';
-                
-                const h4 = document.createElement('h4');
-                h4.textContent = resource;
-                h4.style.cssText = 'margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-primary, #1e293b); text-transform: capitalize; font-weight: 600;';
-                section.appendChild(h4);
-                section.appendChild(checkboxesDiv);
-            }
-            
-            checkboxesDiv.appendChild(label);
-        });
-        
-        container.appendChild(section);
-    });
-    
-    console.log('Permissions grid created in:', containerId, 'with', container.querySelectorAll('input[type="checkbox"]').length, 'checkboxes');
-}
-
-function hasPermission(permissions, resource, action) {
-    if (!permissions) return false;
-    if (permissions['*'] && permissions['*'].includes(action)) return true;
-    if (permissions[resource] && permissions[resource].includes(action)) return true;
-    return false;
-}
-
-async function populateRoleSelects() {
-    const selectIds = ['invite-role', 'user-role', 'edit-user-role'];
-    try {
-        const response = await fetch('/api/roles.php?action=list_roles');
-        const result = await response.json();
-        if (result.status !== 'ok' || !Array.isArray(result.roles)) {
-            return;
-        }
-        selectIds.forEach(function (selectId) {
-            const select = document.getElementById(selectId);
-            if (!select) return;
-            const currentValue = select.value;
-            select.innerHTML = '';
-            result.roles.forEach(function (role) {
-                const opt = document.createElement('option');
-                opt.value = role.id || role.name || '';
-                opt.textContent = role.name || role.id || '';
-                select.appendChild(opt);
-            });
-            if (currentValue) {
-                select.value = currentValue;
-            }
-        });
-    } catch (error) {
-        console.error('Failed to load roles for selects:', error);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', populateRoleSelects);
-
-function collectPermissions(form) {
-    const permissions = {};
-    if (!form) {
-        console.error('Form is null in collectPermissions');
-        return permissions;
-    }
-    
-    availableResources.forEach(resource => {
-        // Use attribute selector with escaped brackets
-        const selector = `input[name="permissions[${resource}][]"]:checked`;
-        const checkboxes = form.querySelectorAll(selector);
-        console.log(`Found ${checkboxes.length} checked boxes for ${resource}`, checkboxes);
-        
-        if (checkboxes.length > 0) {
-            permissions[resource] = Array.from(checkboxes).map(cb => cb.value);
-        }
-    });
-    
-    console.log('Collected permissions:', permissions);
-    return permissions;
-}
-
-function openAddRoleModal() {
-    const modal = document.getElementById('add-role-modal');
-    if (!modal) {
-        console.error('Add role modal not found');
-        alert('Role modal not found. Please refresh the page.');
-        return;
-    }
-    console.log('Opening add role modal');
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    const form = document.getElementById('add-role-form');
-    if (form) form.reset();
-    createPermissionsGrid('add-permissions-grid');
-    console.log('Modal opened, permissions grid created');
-}
-
-function closeAddRoleModal() {
-    const modal = document.getElementById('add-role-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 300);
-    }
-}
-
-async function editRole(roleId) {
-    console.log('editRole called for:', roleId);
-    const modal = document.getElementById('edit-role-modal');
-    if (!modal) {
-        console.error('Edit role modal not found');
-        alert('Edit role modal not found. Please refresh the page.');
-        return;
-    }
-    
-    // Show modal
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    
-    // Load role data
-    try {
-        const response = await fetch(`/api/roles.php?action=get_role&id=${encodeURIComponent(roleId)}`);
-        const result = await response.json();
-        
-        if (result.status === 'ok' && result.role) {
-            const role = result.role;
-            
-            // Fill form
-            document.getElementById('edit-role-id').value = role.id || roleId;
-            document.getElementById('edit-role-name').value = role.name || '';
-            document.getElementById('edit-role-description').value = role.description || '';
-            
-            // Create permissions grid with existing permissions
-            createPermissionsGrid('edit-permissions-grid', role.permissions || {});
-            
-            console.log('Role loaded:', role);
-        } else {
-            showMessage('Error loading role: ' + (result.message || 'Unknown error'), 'error');
-            closeEditRoleModal();
-        }
-    } catch (error) {
-        console.error('Error loading role:', error);
-        showMessage('Error loading role: ' + error.message, 'error');
-        closeEditRoleModal();
-    }
-}
-
-function closeEditRoleModal() {
-    const modal = document.getElementById('edit-role-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 300);
-    }
-}
-
-async function updateRole() {
-    console.log('updateRole called');
-    const form = document.getElementById('edit-role-form');
-    if (!form) {
-        console.error('Edit form not found');
-        showMessage('Error: Form not found', 'error');
-        return;
-    }
-    
-    const roleId = document.getElementById('edit-role-id').value;
-    const nameInput = form.querySelector('#edit-role-name');
-    const descriptionInput = form.querySelector('#edit-role-description');
-    
-    if (!nameInput || !nameInput.value.trim()) {
-        showMessage('Error: Role name is required', 'error');
-        nameInput?.focus();
-        return;
-    }
-    
-    const roleName = nameInput.value.trim();
-    const roleDescription = descriptionInput ? descriptionInput.value.trim() : '';
-    
-    // Collect permissions
-    const permissions = collectPermissions(form);
-    console.log('Updated role data:', { id: roleId, name: roleName, description: roleDescription, permissions });
-    
-    const roleData = {
-        role: {
-            id: roleId,
-            name: roleName,
-            description: roleDescription,
-            permissions: permissions
-        },
-        _csrf: getCsrfToken()
-    };
-    
-    console.log('Sending update role data:', roleData);
-    
-    try {
-        const response = await fetch('/api/roles.php?action=update_role', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(roleData)
-        });
-        
-        console.log('Response status:', response.status);
-        const result = await response.json();
-        console.log('Response data:', result);
-        
-        if (result.status === 'ok') {
-            showMessage('Role updated successfully!', 'success');
-            closeEditRoleModal();
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
-        }
-    } catch (error) {
-        console.error('Error updating role:', error);
-        showMessage('Error updating role: ' + error.message, 'error');
-    }
-}
-
-async function createRole() {
-    console.log('createRole called');
-    const form = document.getElementById('add-role-form');
-    if (!form) {
-        console.error('Form not found');
-        showMessage('Error: Form not found', 'error');
-        return;
-    }
-    
-    // Get form values
-    const nameInput = form.querySelector('#role-name');
-    const descriptionInput = form.querySelector('#role-description');
-    
-    if (!nameInput || !nameInput.value.trim()) {
-        showMessage('Error: Role name is required', 'error');
-        nameInput?.focus();
-        return;
-    }
-    
-    const roleName = nameInput.value.trim();
-    const roleDescription = descriptionInput ? descriptionInput.value.trim() : '';
-    
-    // Collect permissions
-    const permissions = collectPermissions(form);
-    console.log('Role data:', { name: roleName, description: roleDescription, permissions });
-    
-    const roleData = {
-        action: 'create_role',
-        role: {
-            id: roleName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-            name: roleName,
-            description: roleDescription,
-            permissions: permissions
-        },
-        _csrf: getCsrfToken()
-    };
-    
-    console.log('Sending role data:', roleData);
-    
-    try {
-        // API expects action in query string, not in body
-        const response = await fetch('/api/roles.php?action=create_role', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                role: roleData.role,
-                _csrf: roleData._csrf
-            })
-        });
-        
-        console.log('Response status:', response.status);
-        const result = await response.json();
-        console.log('Response data:', result);
-        
-        if (result.status === 'ok') {
-            showMessage('Role created successfully!', 'success');
-            closeAddRoleModal();
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
-        }
-    } catch (error) {
-        console.error('Error creating role:', error);
-        showMessage('Error creating role: ' + error.message, 'error');
-    }
-}
-
-function deleteRole(roleId) {
-    if (!confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
-        return;
-    }
-    
-    // API expects action in query string, not in body
-    fetch('/api/roles.php?action=delete_role', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            id: roleId,
-            _csrf: getCsrfToken()
-        })
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.status === 'ok') {
-            showMessage('Role deleted successfully!', 'success');
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    })
-    .catch(error => {
-        showMessage('Error deleting role: ' + error.message, 'error');
-    });
-}
-
-// Ensure functions are available on window for onclick handlers
-window.openAddRoleModal = openAddRoleModal;
-window.closeAddRoleModal = closeAddRoleModal;
-window.createRole = createRole;
-window.editRole = editRole;
-window.closeEditRoleModal = closeEditRoleModal;
-window.updateRole = updateRole;
-window.deleteRole = deleteRole;
-
-// Tab functionality - simplified and robust
-(function() {
-    var LEGACY_AI_HASH_MAP = {
-        'ai-connections': 'outbound-connections',
-        'mcp-connections': 'inbound-mcp'
-    };
-
-    function resolveSettingsHash(hash) {
-        if (!hash) return { tab: null, scrollTo: null, legacyHash: null };
-        if (hash === 'ai-integrations') {
-            return { tab: 'ai-integrations', scrollTo: null, legacyHash: null };
-        }
-        if (LEGACY_AI_HASH_MAP[hash]) {
-            return { tab: 'ai-integrations', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
-        }
-        return { tab: hash, scrollTo: null, legacyHash: null };
-    }
-
-    function scrollToAiSection(sectionId) {
-        if (!sectionId) return;
-        var section = document.getElementById(sectionId);
-        if (section) {
-            setTimeout(function() {
-                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 150);
-        }
-    }
-
-    function activateTab(tabId, tabButtons, tabPanes, scrollTo, urlHash) {
-        if (!tabId) return;
-        var tabButton = document.querySelector('[data-tab="' + tabId + '"]');
-        var tabPane = document.getElementById(tabId);
-        if (!tabButton || !tabPane) return;
-
-        for (var j = 0; j < tabButtons.length; j++) {
-            tabButtons[j].classList.remove('active');
-        }
-        for (var k = 0; k < tabPanes.length; k++) {
-            tabPanes[k].classList.remove('active');
-        }
-
-        tabButton.classList.add('active');
-        tabPane.classList.add('active');
-
-        var hashForUrl = urlHash || tabId;
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', '?page=settings#' + hashForUrl);
-        }
-
-        setTimeout(function() {
-            if (tabId === 'activity-log' && typeof window.initAuditLog === 'function') {
-                window.initAuditLog();
-            } else if (tabId === 'general' && typeof window.initUpdates === 'function') {
-                window.initUpdates();
-            } else if (tabId === 'domains' && typeof window.loadDomains === 'function') {
-                window.loadDomains();
-            } else if (tabId === 'ai-integrations') {
-                window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
-            }
-            scrollToAiSection(scrollTo);
-        }, 100);
-    }
-
-    function initTabs() {
-        var tabButtons = document.querySelectorAll('.tab-btn');
-        var tabPanes = document.querySelectorAll('.tab-pane');
-        
-        if (!tabButtons || tabButtons.length === 0) {
-            console.error('No tab buttons found');
-            return;
-        }
-        
-        if (!tabPanes || tabPanes.length === 0) {
-            console.error('No tab panes found');
-            return;
-        }
-        
-        // Attach click handlers
-        for (var i = 0; i < tabButtons.length; i++) {
-            tabButtons[i].addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                var targetTab = this.getAttribute('data-tab');
-                if (!targetTab) return;
-                
-                activateTab(targetTab, tabButtons, tabPanes, null, targetTab);
-            });
-        }
-        
-        // Handle hash on load (including legacy AI tab hashes)
-        var rawHash = window.location.hash.replace('#', '');
-        var resolved = resolveSettingsHash(rawHash);
-        if (resolved.tab) {
-            activateTab(resolved.tab, tabButtons, tabPanes, resolved.scrollTo, rawHash || resolved.tab);
-        } else {
-            // If no hash, check if domains tab is active by default
-            var defaultTab = document.querySelector('.tab-btn.active');
-            if (defaultTab && defaultTab.getAttribute('data-tab') === 'domains') {
-                setTimeout(function() {
-                    if (typeof window.loadDomains === 'function') {
-                        window.loadDomains();
-                    }
-                }, 100);
-            }
-        }
-
-        window.addEventListener('hashchange', function() {
-            var hash = window.location.hash.replace('#', '');
-            var next = resolveSettingsHash(hash);
-            if (next.tab) {
-                activateTab(next.tab, tabButtons, tabPanes, next.scrollTo, hash || next.tab);
-            }
-        });
-    }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTabs);
-    } else {
-        initTabs();
-    }
-    
-    // Initialize updates if general tab is active on page load
-    if (document.getElementById('general') && document.getElementById('general').classList.contains('active')) {
-        setTimeout(function() {
-            if (typeof window.initUpdates === 'function') {
-                window.initUpdates();
-            }
-        }, 200);
-    }
-})();
-
-    // Form submissions
-    const generalForm = document.getElementById('general-form');
-    const securityForm = document.getElementById('security-form');
-
-    if (generalForm) {
-        generalForm.addEventListener('submit', handleFormSubmit);
-        
-        // Logo preview
-        const logoInput = document.getElementById('project-logo');
-        if (logoInput) {
-            logoInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const preview = document.getElementById('logo-preview');
-                        const previewImg = document.getElementById('logo-preview-img');
-                        if (preview && previewImg) {
-                            previewImg.src = event.target.result;
-                            preview.style.display = 'block';
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-        
-        // Remove logo button
-        const removeLogoBtn = document.getElementById('remove-logo-btn');
-        if (removeLogoBtn) {
-            removeLogoBtn.addEventListener('click', async () => {
-                if (confirm('Are you sure you want to remove the logo? The default Birkly icon will be used.')) {
-                    try {
-                        const response = await fetch('/api/settings.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                action: 'update',
-                                category: 'branding',
-                                settings: {
-                                    logoPath: ''
-                                },
-                                _csrf: getCsrfToken()
-                            })
-                        });
-                        
-                        const result = await response.json();
-                        if (result.status === 'ok') {
-                            showMessage('Logo removed successfully!', 'success');
-                            setTimeout(() => location.reload(), 1000);
-                        } else {
-                            showMessage('Error: ' + result.message, 'error');
-                        }
-                    } catch (error) {
-                        showMessage('Error removing logo: ' + error.message, 'error');
-                    }
-                }
-            });
-        }
-    }
-    if (securityForm) {
-        securityForm.addEventListener('submit', handleFormSubmit);
-    }
-
-// Get CSRF token from meta tag or generate one
-function getCsrfToken() {
-    const metaToken = document.querySelector('meta[name="csrf-token"]');
-    if (metaToken) {
-        return metaToken.getAttribute('content');
-    }
-    // Fallback: try to get from a global variable or generate a placeholder
-    return window.csrfToken || 'placeholder-token';
-}
-
-async function handleFormSubmit(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const settings = {};
-    const logoFile = formData.get('project_logo');
-    
-    // Handle logo upload if provided
-    let logoPath = '';
-    if (logoFile && logoFile.size > 0) {
-        try {
-            const logoFormData = new FormData();
-            logoFormData.append('file', logoFile);
-            logoFormData.append('_csrf', getCsrfToken());
-            
-            const uploadResponse = await fetch('/api/settings.php?action=upload_logo', {
-                method: 'POST',
-                body: logoFormData
-            });
-            
-            const uploadResult = await uploadResponse.json();
-            if (uploadResult.status === 'ok') {
-                logoPath = uploadResult.data.logoPath;
-            } else {
-                showMessage('Error uploading logo: ' + (uploadResult.message || 'Unknown error'), 'error');
-                return;
-            }
-        } catch (error) {
-            showMessage('Error uploading logo: ' + error.message, 'error');
-            return;
-        }
-    }
-    
-    // Convert form data to settings object (skip logo file)
-    for (let [key, value] of formData.entries()) {
-        if (key !== 'project_logo') {
-            settings[key] = value;
-        }
-    }
-    
-    // If logo was uploaded, add it to branding settings
-    if (logoPath) {
-        settings.brandingLogoPath = logoPath;
-    }
-    
-    try {
-        const response = await fetch('/api/settings.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'save_all',
-                settings: settings,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('Settings saved successfully!', 'success');
-            // Reload page after a short delay to apply all changes (sidebar, favicon, etc.)
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error saving settings: ' + error.message, 'error');
-    }
-}
-
-function showMessage(message, type) {
-    const messageDiv = document.getElementById('settings-message');
-    messageDiv.textContent = message;
-    messageDiv.className = 'settings-message ' + type;
-    messageDiv.style.display = 'block';
-    
-    setTimeout(() => {
-        messageDiv.style.display = 'none';
-    }, 5000);
-}
-
-// Invitation functions
-function openInviteUserModal() {
-    document.getElementById('invite-user-modal').classList.add('active');
-    document.getElementById('invite-user-form').reset();
-}
-
-function closeInviteUserModal() {
-    document.getElementById('invite-user-modal').classList.remove('active');
-}
-
-async function sendInvitation() {
-    const form = document.getElementById('invite-user-form');
-    const formData = new FormData(form);
-    
-    const invitationData = {
-        action: 'create_invitation',
-        email: formData.get('email'),
-        role: formData.get('role'),
-        expires_days: parseInt(formData.get('expires_days')),
-        _csrf: getCsrfToken()
-    };
-    
-    try {
-        const response = await fetch('/api/invitations.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'same-origin', // Include cookies/session
-            body: JSON.stringify(invitationData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            let message = 'Invitation sent successfully!';
-            if (result.data && result.data.localhost_note) {
-                message = result.message + '\n\n' + result.data.localhost_note;
-            }
-            showMessage(message, 'success');
-            closeInviteUserModal();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error sending invitation: ' + error.message, 'error');
-    }
-}
-
-// User management functions
-function openAddUserModal() {
-    document.getElementById('add-user-modal').classList.add('active');
-    document.getElementById('add-user-form').reset();
-}
-
-function closeAddUserModal() {
-    document.getElementById('add-user-modal').classList.remove('active');
-}
-
-function openEditUserModal() {
-    document.getElementById('edit-user-modal').classList.add('active');
-}
-
-function closeEditUserModal() {
-    document.getElementById('edit-user-modal').classList.remove('active');
-}
-
-// Role functions are now defined at the top of the script tag
-
-function editUser(userId) {
-    // Find user data
-    var users = <?= json_encode($users ?? []) ?>;
-    var user = users.find(u => u.id === userId);
-    if (!user) return;
-    
-    // Populate edit form
-    document.getElementById('edit-user-id').value = user.id;
-    document.getElementById('edit-user-email').value = user.email;
-    document.getElementById('edit-user-password').value = '';
-    document.getElementById('edit-user-role').value = user.role;
-    
-    openEditUserModal();
-}
-
-async function createUser() {
-    const form = document.getElementById('add-user-form');
-    const formData = new FormData(form);
-    
-    const userData = {
-        action: 'create_user',
-        email: formData.get('email'),
-        password: formData.get('password'),
-        role: formData.get('role'),
-        _csrf: getCsrfToken()
-    };
-    
-    try {
-        const response = await fetch('/api/users.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('User created successfully!', 'success');
-            closeAddUserModal();
-            // Reload the page to show the new user
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error creating user: ' + error.message, 'error');
-    }
-}
-
-async function updateUser() {
-    const form = document.getElementById('edit-user-form');
-    const formData = new FormData(form);
-    
-    const updates = {
-        email: formData.get('email'),
-        role: formData.get('role')
-    };
-    
-    if (formData.get('password')) {
-        updates.password = formData.get('password');
-    }
-    
-    const userData = {
-        action: 'update_user',
-        id: formData.get('id'),
-        updates: updates,
-        _csrf: getCsrfToken()
-    };
-    
-    try {
-        const response = await fetch('/api/users.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('User updated successfully!', 'success');
-            closeEditUserModal();
-            // Reload the page to show the updated user
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error updating user: ' + error.message, 'error');
-    }
-}
-
-function confirmDeleteUser(userId, email) {
-    if (confirm('Are you sure you want to delete user "' + email + '"? This action cannot be undone.')) {
-        deleteUser(userId);
-    }
-}
-
-async function deleteUser(userId) {
-    const userData = {
-        action: 'delete_user',
-        id: userId,
-        _csrf: getCsrfToken()
-    };
-    
-    try {
-        const response = await fetch('/api/users.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('User deleted successfully!', 'success');
-            // Reload the page to show the updated user list
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error deleting user: ' + error.message, 'error');
-    }
-}
-
-function deleteUserFromModal() {
-    const userId = document.getElementById('edit-user-id').value;
-    const email = document.getElementById('edit-user-email').value;
-    closeEditUserModal();
-    confirmDeleteUser(userId, email);
-}
-
-// Plugin management functions
-async function togglePlugin(pluginId, activate) {
-    var action = activate ? 'activate' : 'deactivate';
-    
-    try {
-        const response = await fetch('/api/plugins.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: action,
-                plugin_id: pluginId,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage(result.message || 'Plugin ' + action + 'd successfully', 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            var errorMsg = 'Error: ' + (result.message || 'Failed to ' + action + ' plugin');
-            if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
-                errorMsg += ' — ' + result.errors.join('; ');
-            }
-            showMessage(errorMsg, 'error');
-        }
-    } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
-    }
-}
-
-async function deletePlugin(pluginId) {
-    if (!confirm('Are you sure you want to delete this plugin? This action cannot be undone.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/plugins.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'delete',
-                plugin_id: pluginId,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage(result.message || 'Plugin deleted successfully', 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showMessage('Error: ' + (result.message || 'Failed to delete plugin'), 'error');
-        }
-    } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
-    }
-}
-
-// 2FA is managed per-user in Account settings (admin/templates/account.html)
-
-// Domain Management Functions
-(function() {
-    'use strict';
-    
-    // Domains loading is handled in the main tab click handler
-    
-    async function loadDomains() {
-        console.log('loadDomains called');
-        var listContainer = document.getElementById('domains-list');
-        if (!listContainer) {
-            console.error('domains-list container not found');
-            return;
-        }
-        
-        listContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading domains...</p></div>';
-        
-        try {
-            console.log('Fetching domains from API...');
-            var response = await fetch('/api/domain_management.php?action=list_licenses', {
-                method: 'GET',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log('Response status:', response.status);
-            var data = await response.json();
-            console.log('Response data:', data);
-            
-            if (data.status === 'ok' && data.data && data.data.licenses) {
-                console.log('Rendering domains:', data.data.licenses.length);
-                renderDomains(data.data.licenses);
-            } else {
-                console.log('No domains found or invalid response');
-                listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet.</p></div>';
-            }
-        } catch (error) {
-            console.error('Error loading domains:', error);
-            listContainer.innerHTML = '<div class="error-state"><p>Error loading domains: ' + escapeHtml(error.message) + '</p></div>';
-        }
-    }
-    
-    function renderDomains(domains) {
-        console.log('renderDomains called with', domains);
-        var listContainer = document.getElementById('domains-list');
-        if (!listContainer) {
-            console.error('domains-list container not found in renderDomains');
-            return;
-        }
-        
-        // Build localhost script section (always visible)
-        // Use relative path - the client library auto-detects the CMS URL from the script src
-        var localhostScript = '<scr' + 'ipt src="/birkly-client.js" data-tracking-id="localhost"></scr' + 'ipt>';
-        var localhostCodeEscaped = escapeHtml(localhostScript);
-        var localhostCodeAttr = localhostScript.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        
-        var html = '<div class="analytics-section" style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">';
-        html += '<h3 style="margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">';
-        html += '<span>🏠</span><span>Localhost Script</span>';
-        html += '</h3>';
-        html += '<p style="margin: 0 0 1rem 0; color: #6b7280; font-size: 0.875rem;">Use this script for local development. Always available and ready to use. Analytics tracking is included automatically.</p>';
-        html += '<div style="position: relative; background: #ffffff; border-radius: 4px; padding: 0.75rem; font-family: monospace; font-size: 0.875rem; border: 1px solid #d1d5db;">';
-        html += '<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;"><code>' + localhostCodeEscaped + '</code></pre>';
-        html += '<button class="btn-icon copy-domain-code-btn" data-code="' + localhostCodeAttr + '" style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.375rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px;" title="Copy code">';
-        html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
-        html += '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>';
-        html += '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>';
-        html += '</svg>';
-        html += '</button>';
-        html += '</div>';
-        html += '<small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.5rem;">Add this code before &lt;/body&gt; tag</small>';
-        html += '</div>';
-        
-        if (domains.length === 0) {
-            html += '<div class="empty-state"><p>No domains registered yet. Click "Register Domain" to add one.</p></div>';
-            listContainer.innerHTML = html;
-            return;
-        }
-        
-        html += '<div style="margin-top: 2rem;"><h3 style="margin-bottom: 1rem;">Registered Domains</h3></div>';
-        
-        html += domains.map(function(domain) {
-            var permissions = domain.permissions || {};
-            var permissionLevel = permissions.permission_level || 'read_write';
-            var readCollections = permissions.read_collections || [];
-            var writeCollections = permissions.write_collections || [];
-            var rateLimits = permissions.rate_limits || {};
-            
-            // Build analytics HTML if enabled
-            var analyticsHtml = '';
-            console.log('Domain:', domain.domain, 'analytics_enabled:', domain.analytics_enabled);
-            if (domain.analytics_enabled) {
-                var domainName = String(domain.domain || '');
-                // Use relative path - the client library auto-detects the CMS URL from the script src
-                // The script will be hosted on the CMS server, so relative path works universally
-                var trackingCode = '<scr' + 'ipt src="/birkly-client.js" data-tracking-id="' + escapeHtml(domainName) + '"></scr' + 'ipt>';
-                var codeEscaped = escapeHtml(trackingCode);
-                var codeAttrEscaped = trackingCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                var analyticsSection = [];
-                analyticsSection.push('<div class="detail-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e0e0e0;">');
-                analyticsSection.push('<strong style="display: block; margin-bottom: 0.5rem;">📊 Analytics:</strong>');
-                analyticsSection.push('<span class="badge badge-success" style="margin-bottom: 0.5rem; display: inline-block;">Enabled</span>');
-                analyticsSection.push('<div style="margin-top: 0.75rem;">');
-                analyticsSection.push('<label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Integration Script:</label>');
-                analyticsSection.push('<div style="position: relative; background: #f3f4f6; border-radius: 4px; padding: 0.75rem; font-family: monospace; font-size: 0.875rem; border: 1px solid #d1d5db;">');
-                analyticsSection.push('<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;"><code>' + codeEscaped + '</code></pre>');
-                analyticsSection.push('<button class="btn-icon copy-domain-code-btn" data-code="' + codeAttrEscaped + '" style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.375rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px;" title="Copy code">');
-                analyticsSection.push('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">');
-                analyticsSection.push('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>');
-                analyticsSection.push('<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>');
-                analyticsSection.push('</svg>');
-                analyticsSection.push('</button>');
-                analyticsSection.push('</div>');
-                analyticsSection.push('<small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.5rem;">Add this code before &lt;/body&gt; tag. Analytics tracking is included automatically.</small>');
-                analyticsSection.push('</div>');
-                analyticsSection.push('</div>');
-                analyticsHtml = analyticsSection.join('');
-            }
-            
-            var domainEscaped = escapeHtml(domain.domain);
-            var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
-            var statusClass = domain.status === 'active' ? 'success' : 'secondary';
-            var statusText = domain.status || 'active';
-            var permClass = permissionLevel === 'read_write' ? 'primary' : 'info';
-            var permText = permissionLevel === 'read_write' ? 'Read & Write' : 'Read Only';
-            var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A';
-            var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
-            var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
-            var readColsHtml = readCollections.length > 0 ? '<div class="detail-row"><strong>Read Collections:</strong> <span>' + readCollections.join(', ') + '</span></div>' : '';
-            var writeColsHtml = writeCollections.length > 0 ? '<div class="detail-row"><strong>Write Collections:</strong> <span>' + writeCollections.join(', ') + '</span></div>' : '';
-            
-            return '<div class="domain-card">' +
-                '<div class="domain-header">' +
-                '<div class="domain-info">' +
-                '<h3>' + domainEscaped + '</h3>' +
-                '<div class="domain-badges">' +
-                '<span class="badge badge-' + statusClass + '">' + statusText + '</span>' +
-                '<span class="badge badge-' + permClass + '">' + permText + '</span>' +
-                '</div>' +
-                '</div>' +
-                '<div class="domain-actions">' +
-                '<button class="btn btn-small btn-secondary" data-domain="' + escapeHtml(domain.domain) + '" data-action="edit">Edit</button>' +
-                '<button class="btn btn-small btn-danger" data-domain="' + escapeHtml(domain.domain) + '" data-action="delete">Delete</button>' +
-                '</div>' +
-                '</div>' +
-                '<div class="domain-details">' +
-                '<div class="detail-row"><strong>Email:</strong> <span>' + emailEscaped + '</span></div>' +
-                '<div class="detail-row"><strong>Registered:</strong> <span>' + registeredDate + '</span></div>' +
-                '<div class="detail-row"><strong>Rate Limits:</strong> <span>Read: ' + readLimit + '/min, Write: ' + writeLimit + '/hour</span></div>' +
-                readColsHtml +
-                writeColsHtml +
-                analyticsHtml +
-                '</div>' +
-                '</div>';
-        }).join('');
-        
-        listContainer.innerHTML = html;
-        
-        // Attach copy button listeners
-        var copyButtons = document.querySelectorAll('.copy-domain-code-btn');
-        for (var i = 0; i < copyButtons.length; i++) {
-            (function(btn) {
-                btn.addEventListener('click', function() {
-                    var code = btn.getAttribute('data-code');
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(code).then(function() {
-                            var originalHTML = btn.innerHTML;
-                            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>';
-                            setTimeout(function() {
-                                btn.innerHTML = originalHTML;
-                            }, 2000);
-                        });
-                    }
-                });
-            })(copyButtons[i]);
-        }
-        
-        // Attach edit/delete button listeners using event delegation
-        var domainActions = listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"]');
-        for (var i = 0; i < domainActions.length; i++) {
-            (function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    var domain = btn.getAttribute('data-domain');
-                    var action = btn.getAttribute('data-action');
-                    if (action === 'edit' && window.editDomain) {
-                        window.editDomain(domain);
-                    } else if (action === 'delete' && window.deleteDomain) {
-                        window.deleteDomain(domain);
-                    }
-                });
-            })(domainActions[i]);
-        }
-    }
-    
-    function escapeHtml(text) {
-        if (!text) return '';
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    // Expose functions globally
-    window.loadDomains = loadDomains;
-    window.renderDomains = renderDomains;
-})();
-
-function openAddDomainModal() {
-    console.log('openAddDomainModal called');
-    var modal = document.getElementById('add-domain-modal');
-    var form = document.getElementById('add-domain-form');
-    if (!modal) {
-        console.error('Add domain modal not found');
-        return;
-    }
-    console.log('Opening modal');
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    if (form) {
-        form.reset();
-    }
-}
-
-function closeAddDomainModal() {
-    var modal = document.getElementById('add-domain-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(function() {
-            modal.style.display = 'none';
-        }, 300); // Wait for transition
-    }
-}
-
-// Attach event listener to register domain button
-(function() {
-    function initDomainButtons() {
-        var registerBtn = document.getElementById('register-domain-btn');
-        if (registerBtn) {
-            registerBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                openAddDomainModal();
-            });
-        }
-    }
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initDomainButtons);
-    } else {
-        initDomainButtons();
-    }
-})();
-
-async function registerDomain() {
-    const form = document.getElementById('add-domain-form');
-    if (!form) {
-        showMessage('Error: Form not found', 'error');
-        return;
-    }
-    
-    const formData = new FormData(form);
-    
-    // Get and validate required fields
-    const domain = (formData.get('domain') || '').trim();
-    const customerEmail = (formData.get('customer_email') || '').trim();
-    
-    if (!domain || !customerEmail) {
-        showMessage('Error: Domain and customer email are required', 'error');
-        return;
-    }
-    
-    const domainData = {
-        action: 'register_domain',
-        domain: domain,
-        customer_email: customerEmail,
-        permission_level: formData.get('permission_level') || 'read_write',
-        read_limit: parseInt(formData.get('read_limit')) || 100,
-        write_limit: parseInt(formData.get('write_limit')) || 10,
-        enable_analytics: formData.get('enable_analytics') === '1',
-        _csrf: getCsrfToken()
-    };
-    
-    try {
-        console.log('Sending domain registration request:', domainData);
-        const response = await fetch('/api/domain_management.php', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(domainData)
-        });
-        
-        console.log('Response status:', response.status);
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
-        
-        let result;
-        try {
-            result = JSON.parse(responseText);
-        } catch (parseError) {
-            console.error('Failed to parse JSON response:', parseError);
-            console.error('Response text:', responseText);
-            showMessage('Error: Invalid response from server. Check console for details.', 'error');
-            return;
-        }
-        
-        console.log('Response data:', result);
-        
-        if (result.status === 'ok') {
-            showMessage('Domain registered successfully!', 'success');
-            closeAddDomainModal();
-            loadDomains();
-        } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
-        }
-    } catch (error) {
-        console.error('Error registering domain:', error);
-        showMessage('Error registering domain: ' + error.message, 'error');
-    }
-}
-
-window.editDomain = async function(domainName) {
-    console.log('editDomain called with:', domainName);
-    try {
-        const response = await fetch('/api/domain_management.php?action=list_licenses', {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await response.json();
-        console.log('Edit domain - response data:', data);
-        
-        if (data.status === 'ok' && data.data.licenses) {
-            const domain = data.data.licenses.find(d => d.domain === domainName);
-            console.log('Found domain for editing:', domain);
-            if (domain) {
-                const permissions = domain.permissions || {};
-                const rateLimits = permissions.rate_limits || {};
-                
-                document.getElementById('edit-domain-original').value = domainName;
-                document.getElementById('edit-domain-permission-level').value = permissions.permission_level || 'read_write';
-                document.getElementById('edit-domain-status').value = domain.status || 'active';
-                document.getElementById('edit-domain-read-limit').value = rateLimits.read?.limit || 100;
-                document.getElementById('edit-domain-write-limit').value = rateLimits.write?.limit || 10;
-                document.getElementById('edit-domain-enable-analytics').checked = domain.analytics_enabled || false;
-                
-                var editModal = document.getElementById('edit-domain-modal');
-                if (editModal) {
-                    editModal.style.display = 'flex';
-                    editModal.classList.add('active');
-                } else {
-                    console.error('Edit domain modal not found');
-                }
-            } else {
-                console.error('Domain not found:', domainName);
-            }
-        }
-    } catch (error) {
-        console.error('Error loading domain details:', error);
-        showMessage('Error loading domain details: ' + error.message, 'error');
-    }
-};
-
-function closeEditDomainModal() {
-    var modal = document.getElementById('edit-domain-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(function() {
-            modal.style.display = 'none';
-        }, 300); // Wait for transition
-    }
-}
-
-async function updateDomain() {
-    const form = document.getElementById('edit-domain-form');
-    const formData = new FormData(form);
-    const originalDomain = formData.get('original_domain');
-    
-    const updateData = {
-        action: 'update_license',
-        domain: originalDomain,
-        permissions: {
-            permission_level: formData.get('permission_level'),
-            rate_limits: {
-                read: {
-                    limit: parseInt(formData.get('read_limit')) || 100,
-                    window: 60
-                },
-                write: {
-                    limit: parseInt(formData.get('write_limit')) || 10,
-                    window: 3600
-                }
-            }
-        },
-        status: formData.get('status'),
-        analytics_enabled: formData.get('enable_analytics') === '1',
-        _csrf: getCsrfToken()
-    };
-    
-    try {
-        console.log('Sending update request:', updateData);
-        const response = await fetch('/api/domain_management.php', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updateData)
-        });
-        
-        console.log('Response status:', response.status);
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
-        
-        let result;
-        try {
-            result = JSON.parse(responseText);
-        } catch (parseError) {
-            console.error('Failed to parse JSON response:', parseError);
-            console.error('Response text:', responseText);
-            showMessage('Error: Invalid response from server. Check console for details.', 'error');
-            return;
-        }
-        
-        console.log('Response data:', result);
-        
-        if (result.status === 'ok') {
-            showMessage('Domain updated successfully!', 'success');
-            closeEditDomainModal();
-            loadDomains();
-        } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
-        }
-    } catch (error) {
-        console.error('Error updating domain:', error);
-        showMessage('Error updating domain: ' + error.message, 'error');
-    }
-}
-
-window.deleteDomain = async function(domainName) {
-    console.log('deleteDomain called with:', domainName);
-    if (!confirm('Are you sure you want to delete domain "' + domainName + '"? This will revoke all access.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/domain_management.php', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'delete_license',
-                domain: domainName,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        console.log('Delete domain - response:', result);
-        
-        if (result.status === 'ok') {
-            showMessage('Domain deleted successfully!', 'success');
-            loadDomains();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting domain:', error);
-        showMessage('Error deleting domain: ' + error.message, 'error');
-    }
-};
-</script>
-
-<style>
-/* Domain Management Styles */
-.domains-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: var(--space-6);
-    margin-top: var(--space-6);
-}
-
-.domain-card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-light);
-    border-radius: var(--border-radius-s);
-    padding: var(--space-6);
-    transition: box-shadow 0.2s, border-color 0.2s;
-}
-
-.domain-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border-color: var(--border-color);
-}
-
-.domain-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.domain-info h3 {
-    margin: 0 0 var(--space-2) 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.domain-badges {
-    display: flex;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-    margin-top: var(--space-2);
-}
-
-.domain-actions {
-    display: flex;
-    gap: var(--space-2);
-}
-
-.domain-details {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.detail-row {
-    display: flex;
-    gap: var(--space-2);
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-.detail-row strong {
-    min-width: 120px;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.loading-state, .empty-state, .error-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-secondary, #666);
-}
-
-.spinner {
-    border: 3px solid var(--border-color, #e0e0e0);
-    border-top: 3px solid var(--primary-color, #007bff);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 16px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.btn-small {
-    padding: 6px 12px;
-    font-size: 0.875em;
-}
-
-.section-description {
-    color: var(--text-secondary, #666);
-    margin-bottom: 16px;
-    font-size: 0.9em;
-}
-
-/* Activity Log, Updates styles when in tabs */
-#activity-log .activity-log-page,
-#updates .updates-page {
-    padding: 0;
-}
-
-#activity-log .page-header,
-#updates .page-header {
-    display: none;
-}
-
-#activity-log .main-actions-bar {
-    margin-bottom: 1.5rem;
-}
-
-#updates .updates-content {
-    display: grid;
-    gap: 1.5rem;
-}
-</style>
-
-<!-- Combined Activity & Audit Log Script -->
-<script>
-(function() {
-    'use strict';
-    
-    let currentPage = 0;
-    const pageSize = 50;
-    let allLogs = [];
-    let filteredLogs = [];
-    const eventTypes = new Set();
-    
-    // Initialize when tab is shown
-    window.initAuditLog = function() {
-        loadLogs();
-        setupFilters();
-        
-        const refreshBtn = document.getElementById('refresh-logs');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
-                currentPage = 0;
-                loadLogs(true);
-            });
-        }
-        
-        const loadMoreBtn = document.getElementById('load-more');
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', function() {
-                currentPage++;
-                renderLogs();
-            });
-        }
-    };
-    
-    // Also initialize activity (for backward compatibility)
-    window.initActivity = window.initAuditLog;
-    
-    function setupFilters() {
-        const eventFilter = document.getElementById('event-filter');
-        const categoryFilter = document.getElementById('category-filter');
-        const dateFilter = document.getElementById('date-filter');
-        
-        if (eventFilter) {
-            eventFilter.addEventListener('change', function() {
-                filterLogs();
-            });
-        }
-        
-        if (categoryFilter) {
-            categoryFilter.addEventListener('change', function() {
-                filterLogs();
-            });
-        }
-        
-        if (dateFilter) {
-            dateFilter.addEventListener('change', function() {
-                filterLogs();
-            });
-        }
-    }
-    
-    function getEventCategory(event) {
-        const contentEvents = ['create_entry', 'update_entry', 'delete_entry', 'create_collection', 'update_collection', 'delete_collection', 'publish_entry', 'unpublish_entry', 'scheduled_publish', 'review_action', 'settings_update', 'settings_save_all'];
-        const userEvents = ['create_user', 'update_user', 'delete_user', 'invitation_created', 'invitation_accepted', 'login_success', 'login_failed', 'logout'];
-        const systemEvents = ['rate_limited', 'plugin_activated', 'plugin_deactivated', 'plugin_deleted'];
-        
-        if (contentEvents.includes(event)) return 'content';
-        if (userEvents.includes(event)) return 'users';
-        if (systemEvents.includes(event)) return 'system';
-        return 'other';
-    }
-    
-    function formatEventDetails(log) {
-        const details = log.details || {};
-        let formatted = [];
-        
-        // Format based on event type
-        if (log.event === 'settings_update' || log.event === 'settings_save_all') {
-            if (details.category) formatted.push('Category: ' + details.category);
-            if (details.settings) {
-                const settingsList = Object.keys(details.settings).map(key => {
-                    const value = details.settings[key];
-                    if (typeof value === 'object') {
-                        return key + ': ' + JSON.stringify(value);
-                    }
-                    return key + ': ' + value;
-                });
-                formatted.push('Settings: ' + settingsList.join(', '));
-            }
-        } else if (log.event === 'update_entry' || log.event === 'create_entry') {
-            if (details.collection) formatted.push('Collection: ' + details.collection);
-            if (details.title) formatted.push('Title: ' + details.title);
-            if (details.id) formatted.push('ID: ' + details.id);
-        } else if (log.event === 'create_user' || log.event === 'update_user') {
-            if (details.email) formatted.push('Email: ' + details.email);
-            if (details.role) formatted.push('Role: ' + details.role);
-        }
-        
-        // Add any remaining details
-        Object.keys(details).forEach(key => {
-            if (!['category', 'settings', 'collection', 'title', 'id', 'email', 'role'].includes(key)) {
-                const value = details[key];
-                formatted.push(key + ': ' + (typeof value === 'object' ? JSON.stringify(value) : value));
-            }
-        });
-        
-        return formatted.length > 0 ? formatted.join(' | ') : (JSON.stringify(details, null, 2));
-    }
-    
-    function filterLogs() {
-        const eventFilter = document.getElementById('event-filter')?.value || '';
-        const categoryFilter = document.getElementById('category-filter')?.value || '';
-        const dateFilter = document.getElementById('date-filter')?.value || '';
-        
-        filteredLogs = allLogs.filter(log => {
-            if (eventFilter && log.event !== eventFilter) {
-                return false;
-            }
-            
-            if (categoryFilter && categoryFilter !== 'all') {
-                const category = getEventCategory(log.event);
-                if (category !== categoryFilter) {
-                    return false;
-                }
-            }
-            
-            if (dateFilter) {
-                const logDate = new Date(log.timestamp).toISOString().split('T')[0];
-                if (logDate !== dateFilter) {
-                    return false;
-                }
-            }
-            
-            return true;
-        });
-        
-        currentPage = 0;
-        renderLogs();
-    }
-    
-    function loadLogs(refresh = false) {
-        const tbody = document.getElementById('log-entries');
-        if (!tbody) return;
-        
-        if (refresh) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;"><div class="spinner">Loading...</div></td></tr>';
-        }
-        
-        // Load both audit logs and activity
-        Promise.all([
-            fetch('/api/log.php?action=list').then(r => r.json()),
-            fetch('/api/activity.php?action=list&limit=1000').then(r => r.json())
-        ]).then(([logData, activityData]) => {
-            allLogs = [];
-            
-            // Merge audit logs
-            if (logData.status === 'ok' && logData.logs) {
-                logData.logs.forEach(log => {
-                    allLogs.push({
-                        ...log,
-                        category: getEventCategory(log.event),
-                        source: 'audit'
-                    });
-                    if (log.event) {
-                        eventTypes.add(log.event);
-                    }
-                });
-            }
-            
-            // Merge activity feed (avoid duplicates)
-            if (activityData.status === 'ok' && activityData.activity) {
-                activityData.activity.forEach(activity => {
-                    // Check if we already have this event from audit log
-                    const exists = allLogs.some(log => 
-                        log.event === activity.event && 
-                        log.timestamp === activity.timestamp &&
-                        log.user === activity.user
-                    );
-                    
-                    if (!exists) {
-                        allLogs.push({
-                            timestamp: activity.timestamp,
-                            user: activity.user,
-                            event: activity.event,
-                            ip: activity.details?.ip || 'Unknown',
-                            details: activity.details,
-                            category: activity.category || getEventCategory(activity.event),
-                            message: activity.message,
-                            source: 'activity'
-                        });
-                        if (activity.event) {
-                            eventTypes.add(activity.event);
-                        }
-                    }
-                });
-            }
-            
-            // Sort by timestamp (newest first)
-            allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            // Populate event filter
-            const eventFilter = document.getElementById('event-filter');
-            if (eventFilter) {
-                eventFilter.innerHTML = '<option value="">All Events</option>';
-                Array.from(eventTypes).sort().forEach(event => {
-                    const option = document.createElement('option');
-                    option.value = event;
-                    option.textContent = event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    eventFilter.appendChild(option);
-                });
-            }
-            
-            filteredLogs = allLogs;
-            currentPage = 0;
-            renderLogs();
-        }).catch(error => {
-            console.error('Error loading logs:', error);
-            const tbody = document.getElementById('log-entries');
-            if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">Error loading logs: ' + error.message + '</td></tr>';
-            }
-        });
-    }
-    
-    function renderLogs() {
-        const tbody = document.getElementById('log-entries');
-        if (!tbody) return;
-        
-        const startIndex = currentPage * pageSize;
-        const endIndex = startIndex + pageSize;
-        const logsToShow = filteredLogs.slice(0, endIndex);
-        
-        if (logsToShow.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">No log entries found</td></tr>';
-            const loadMoreBtn = document.getElementById('load-more');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
-            }
-            return;
-        }
-        
-        let html = '';
-        logsToShow.forEach(log => {
-            const timestamp = new Date(log.timestamp).toLocaleString();
-            const category = log.category || getEventCategory(log.event);
-            const categoryBadge = category === 'content' ? 'badge-info' : category === 'users' ? 'badge-success' : category === 'system' ? 'badge-warning' : 'badge-secondary';
-            const formattedDetails = formatEventDetails(log);
-            const fullDetails = log.details ? JSON.stringify(log.details, null, 2) : '';
-            
-            html += `
-                <tr style="border-bottom: 1px solid var(--border-light);">
-                    <td style="padding: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">${timestamp}</td>
-                    <td style="padding: 0.75rem; color: var(--text-primary);">${escapeHtml(log.user || 'Unknown')}</td>
-                    <td style="padding: 0.75rem;"><span class="badge ${categoryBadge}" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(log.event || 'Unknown')}</span></td>
-                    <td style="padding: 0.75rem;"><span class="badge badge-secondary" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(category)}</span></td>
-                    <td style="padding: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">${escapeHtml(log.ip || 'Unknown')}</td>
-                    <td style="padding: 0.75rem;">
-                        ${formattedDetails ? `<details><summary style="cursor: pointer; color: #3b82f6; text-decoration: underline;">View Details</summary><div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px; font-size: 0.875rem; max-width: 500px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap; word-break: break-word;">${escapeHtml(formattedDetails)}</pre></div></details>` : '-'}
-                    </td>
-                </tr>
-            `;
-        });
-        
-        tbody.innerHTML = html;
-        
-        const loadMoreBtn = document.getElementById('load-more');
-        if (loadMoreBtn) {
-            loadMoreBtn.style.display = (endIndex < filteredLogs.length) ? 'block' : 'none';
-        }
-    }
-    
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    // Auto-initialize if tab is active
-    if (document.getElementById('activity-log') && document.getElementById('activity-log').classList.contains('active')) {
-        setTimeout(initAuditLog, 100);
-    }
-})();
-</script>
+<script type="application/json" id="settings-users-data">{json users}</script>
+{include_script 'settings-page.js'}
 
 <script src="<?= birkly_url('/admin/js/updates.js') ?>"></script>
 
 <script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/mcp-connections.js') ?>"></script>
-
-<!-- Activity Feed Styles -->
-<style>
-.activity-timeline {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.activity-item {
-    display: flex;
-    gap: 16px;
-    padding: 16px;
-    margin-bottom: 16px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.activity-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-}
-
-.activity-content {
-    flex: 1;
-}
-
-.activity-message {
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
-}
-
-.activity-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 0.875em;
-    color: #666;
-}
-
-.denylist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-}
-
-.denylist-item code {
-    background: var(--bg-secondary);
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    font-family: 'Courier New', monospace;
-}
-</style>
-
-<script>
-// Denylist Management
-async function loadDenylist() {
-    const container = document.getElementById('denylist-management');
-    if (!container) return;
-    
-    try {
-        const response = await fetch('/api/plugins_permissions.php?action=get_denylist');
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            const resources = result.data.resources || [];
-            renderDenylist(resources);
-        } else {
-            container.innerHTML = `<p class="error">Error loading denylist: ${result.message}</p>`;
-        }
-    } catch (error) {
-        container.innerHTML = `<p class="error">Error: ${error.message}</p>`;
-    }
-}
-
-function renderDenylist(resources) {
-    const container = document.getElementById('denylist-management');
-    if (!container) return;
-    
-    if (resources.length === 0) {
-        container.innerHTML = '<p class="settings-help">No protected resources. All collections are accessible to plugins (subject to capability checks).</p>';
-        return;
-    }
-    
-    let html = '<div class="denylist-list">';
-    resources.forEach(resource => {
-        html += `
-            <div class="denylist-item">
-                <code>${escapeHtml(resource)}</code>
-                <button type="button" class="btn btn-sm btn-danger" onclick="removeDenylistResource('${escapeHtml(resource)}')">
-                    Remove
-                </button>
-            </div>
-        `;
-    });
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-async function addDenylistResource() {
-    const resource = prompt('Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):');
-    if (!resource || resource.trim() === '') return;
-    
-    try {
-        const response = await fetch('/api/plugins_permissions.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'add_to_denylist',
-                resource: resource.trim(),
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('Resource added to denylist', 'success');
-            loadDenylist();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
-    }
-}
-
-async function removeDenylistResource(resource) {
-    if (!confirm(`Remove "${resource}" from the denylist?`)) return;
-    
-    try {
-        const response = await fetch('/api/plugins_permissions.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'remove_from_denylist',
-                resource: resource,
-                _csrf: getCsrfToken()
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'ok') {
-            showMessage('Resource removed from denylist', 'success');
-            loadDenylist();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
-    }
-}
-
-function getCsrfToken() {
-    const metaToken = document.querySelector('meta[name="csrf-token"]');
-    return metaToken ? metaToken.getAttribute('content') : '';
-}
-
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-function showMessage(message, type) {
-    // Simple message display - you can enhance this
-    alert(message);
-}
-
-// Storage Settings
-document.getElementById('storage-backend')?.addEventListener('change', function() {
-    const dbConfig = document.getElementById('database-config');
-    if (dbConfig) {
-        dbConfig.style.display = ['sqlite', 'mysql', 'postgresql'].includes(this.value) ? 'block' : 'none';
-    }
-});
-
-function testDatabaseConnection() {
-    const backend = document.getElementById('storage-backend')?.value;
-    const host = document.getElementById('db-host')?.value;
-    const port = document.getElementById('db-port')?.value;
-    const name = document.getElementById('db-name')?.value;
-    const user = document.getElementById('db-user')?.value;
-    const password = document.getElementById('db-password')?.value;
-    const prefix = document.getElementById('db-prefix')?.value;
-    const resultEl = document.getElementById('db-test-result');
-    
-    if (!resultEl) return;
-    resultEl.textContent = 'Testing...';
-    resultEl.style.color = 'var(--text-secondary)';
-    
-    fetch('/api/settings.php?action=test_database', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            backend: backend,
-            host: host,
-            port: port,
-            name: name,
-            user: user,
-            password: password,
-            prefix: prefix,
-            _csrf: getCsrfToken()
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            resultEl.textContent = '✓ Connection successful';
-            resultEl.style.color = 'var(--success-600)';
-        } else {
-            resultEl.textContent = '✗ ' + (data.message || 'Connection failed');
-            resultEl.style.color = 'var(--error-600)';
-        }
-    })
-    .catch(error => {
-        resultEl.textContent = '✗ Error: ' + error.message;
-        resultEl.style.color = 'var(--error-600)';
-    });
-}
-
-function migrateStorage() {
-    if (!confirm('This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?')) {
-        return;
-    }
-    
-    const backend = document.getElementById('storage-backend')?.value;
-    if (!backend || backend === 'flatfile') {
-        alert('Please select a database backend first');
-        return;
-    }
-    
-    if (!confirm('Migration may take some time. Do not close this window. Continue?')) {
-        return;
-    }
-    
-    fetch('/api/settings.php?action=migrate_storage', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            backend: backend,
-            _csrf: getCsrfToken()
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            alert('Migration completed successfully!');
-        } else {
-            alert('Migration failed: ' + (data.message || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        alert('Error: ' + error.message);
-    });
-}
-
-// Load denylist when security tab is shown
-document.addEventListener('DOMContentLoaded', function() {
-    const securityTab = document.querySelector('[data-tab="security"]');
-    if (securityTab) {
-        securityTab.addEventListener('click', function() {
-            setTimeout(loadDenylist, 100); // Small delay to ensure tab is visible
-        });
-    }
-    
-    // Also load if we're already on security tab
-    if (window.location.hash === '#security' || document.querySelector('.tab-pane#security.active')) {
-        loadDenylist();
-    }
-});
-</script>
 

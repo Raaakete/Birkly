@@ -47,16 +47,34 @@
   border-radius: var(--border-radius-s, 4px);
   background: rgba(30, 31, 42, 1);
   color: rgba(30, 31, 42, 1);
-  padding: 12px;
+  padding: var(--space-3, 0.75rem);
   height: 64px;
   margin-bottom: var(--space-4, 1rem);
 }
 
-.sidebar-header .logo {
+.sidebar-header .logo,
+.sidebar-header .branding-logo {
   display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
   height: 44px;
   padding: 0;
   width: 100%;
+}
+
+.sidebar-header .logo .logo-img,
+.sidebar-header .branding-logo img {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.sidebar-header .logo .logo-name,
+.sidebar-header .branding-logo .logo-name {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .sidebar-header .h1,
@@ -119,11 +137,19 @@
 .nav-links a {
   display: flex;
   align-items: center;
+  gap: var(--space-3, 0.75rem);
   padding: var(--space-3, 0.75rem) var(--space-6, 1.5rem);
   color: var(--text-secondary, #72746F);
   text-decoration: none;
   transition: all var(--transition-fast, 150ms ease);
   position: relative;
+}
+
+.nav-links a .nav-icon,
+.nav-links a > svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .nav-links a:hover {
