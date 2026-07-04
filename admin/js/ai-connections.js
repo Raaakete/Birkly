@@ -136,30 +136,19 @@
         }
 
         list.innerHTML = outbound.map(conn => `
-            <div class="connection-item" data-connection-id="${conn.id}">
-                <div class="connection-info">
-                    <div class="connection-name">${escapeHtml(conn.name || conn.provider)}</div>
-                    <div class="connection-meta">
-                        <span class="connection-provider">${escapeHtml(conn.provider)}</span>
-                        <span class="connection-role">${escapeHtml(conn.role)}</span>
-                    </div>
+            <div class="ai-connection-entry" data-connection-id="${escapeHtml(conn.id)}">
+                <div class="ai-connection-entry-header">
+                    <strong>${escapeHtml(conn.name || conn.provider)}</strong>
+                    <span class="mcp-endpoint-status ${conn.status === 'active' ? 'active' : 'inactive'}">${conn.status === 'active' ? 'Active' : 'Inactive'}</span>
                 </div>
-                <div class="connection-status ${conn.status === 'active' ? 'active' : 'inactive'}">
-                    ${conn.status === 'active' ? '●' : '○'}
+                <div class="ai-connection-entry-meta">
+                    <span class="connection-provider">${escapeHtml(conn.provider)}</span>
+                    <span class="connection-role">${escapeHtml(conn.role || 'viewer')}</span>
+                    ${conn.model ? `<span class="connection-model">${escapeHtml(conn.model)}</span>` : ''}
                 </div>
-                <div class="connection-actions">
-                    <button type="button" class="btn-icon" data-edit-connection="${escapeHtml(conn.id)}" title="Edit connection settings">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-                        </svg>
-                    </button>
-                    <button type="button" class="btn-icon" data-delete-connection="${escapeHtml(conn.id)}" title="Delete">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                    </button>
+                <div class="ai-connection-entry-actions">
+                    <button type="button" class="btn btn-sm btn-secondary" data-edit-connection="${escapeHtml(conn.id)}">Edit</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-delete-connection="${escapeHtml(conn.id)}">Delete</button>
                 </div>
             </div>
         `).join('');

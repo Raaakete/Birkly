@@ -272,30 +272,6 @@
 
       <!-- Users & Roles Tab -->
       <div class="tab-pane" id="users-roles">
-        <?php
-          $userCount = count($users ?? []);
-          $roleCount = count($settings['roles'] ?? []);
-        ?>
-        <div class="settings-section">
-          <h2><?= __('admin.users_and_roles') ?></h2>
-          <p class="settings-help"><?= __('admin.users_roles_summary_help') ?></p>
-          <div class="card card--compact settings-summary-card">
-            <dl class="settings-summary-stats">
-              <div>
-                <dt><?= __('admin.users') ?></dt>
-                <dd><?= (int) $userCount ?></dd>
-              </div>
-              <div>
-                <dt><?= __('admin.roles') ?></dt>
-                <dd><?= (int) $roleCount ?></dd>
-              </div>
-            </dl>
-            <p class="settings-summary-actions">
-              <a href="<?= htmlspecialchars(admin_url('roles')) ?>" class="btn btn-secondary"><?= __('admin.role_management') ?></a>
-              <a href="<?= htmlspecialchars(admin_url('account')) ?>" class="btn btn-secondary"><?= __('admin.account_settings') ?></a>
-            </p>
-          </div>
-        </div>
         <div class="settings-section">
           <div class="section-header">
             <h2><?= __('admin.user_management') ?></h2>
@@ -326,24 +302,35 @@
                 <button class="btn btn-primary" onclick="openAddUserModal()"><?= __('admin.add_first_user') ?></button>
               </div>
             <?php else: ?>
-              <?php foreach ($users as $user): ?>
+              <?php foreach ($users as $user):
+                $userEmail = trim((string) ($user['email'] ?? ''));
+                $userName = trim((string) ($user['name'] ?? ''));
+                $userLabel = $userName !== '' ? $userName : ($userEmail !== '' ? $userEmail : (string) ($user['id'] ?? 'User'));
+                $userInitial = strtoupper(substr($userLabel, 0, 1));
+                $userSubtitle = ($userEmail !== '' && strcasecmp($userEmail, $userLabel) !== 0) ? $userEmail : '';
+                $userCreated = $user['created_at'] ?? $user['created'] ?? null;
+                $userLastLogin = $user['last_login'] ?? $user['lastLogin'] ?? null;
+              ?>
                 <div class="card user-card">
                   <div class="user-header">
                     <div class="user-avatar">
-                      <?= strtoupper(substr($user['email'], 0, 1)) ?>
+                      <?= htmlspecialchars($userInitial) ?>
                     </div>
                     <div class="user-info">
-                      <h4><?= htmlspecialchars($user['email']) ?></h4>
-                      <span class="role-badge <?= $user['role'] ?>"><?= $user['role'] ?></span>
+                      <h4><?= htmlspecialchars($userLabel) ?></h4>
+                      <?php if ($userSubtitle !== ''): ?>
+                        <p class="user-email"><?= htmlspecialchars($userSubtitle) ?></p>
+                      <?php endif; ?>
+                      <span class="role-badge <?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?>"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
                     </div>
                     <div class="user-actions">
-                      <button class="btn-icon" onclick="editUser('<?= $user['id'] ?>')" title="Edit User">
+                      <button class="btn-icon" onclick="editUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>')" title="Edit User">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                       </button>
-                      <button class="btn-icon danger" onclick="confirmDeleteUser('<?= $user['id'] ?>', '<?= htmlspecialchars($user['email']) ?>')" title="Delete User">
+                      <button class="btn-icon danger" onclick="confirmDeleteUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>')" title="Delete User">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <polyline points="3,6 5,6 21,6"></polyline>
                           <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
@@ -352,8 +339,8 @@
                     </div>
                   </div>
                   <div class="user-details">
-                    <p><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
-                    <p><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
+                    <p><strong>Created:</strong> <?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : 'Unknown' ?></p>
+                    <p><strong>Last Login:</strong> <?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : 'Never' ?></p>
                   </div>
                 </div>
               <?php endforeach; ?>
@@ -394,10 +381,17 @@
               </div>
               <p class="role-description"><?= htmlspecialchars($role['description']) ?></p>
               <div class="role-permissions">
-                <?php foreach ($role['permissions'] ?? [] as $resource => $actions): ?>
-                <div class="permission-item">
-                  <span class="resource"><?= htmlspecialchars($resource) ?></span>
-                  <span class="actions"><?= implode(', ', $actions) ?></span>
+                <?php foreach ($role['permissions'] ?? [] as $resource => $actions):
+                  $resourceLabel = $resource === '*' ? 'All resources' : ucfirst(str_replace('_', ' ', (string) $resource));
+                  $actionList = is_array($actions) ? $actions : [$actions];
+                ?>
+                <div class="permission-group">
+                  <div class="permission-group-label"><?= htmlspecialchars($resourceLabel) ?>:</div>
+                  <div class="permission-pills">
+                    <?php foreach ($actionList as $action): ?>
+                    <span class="permission-pill"><?= htmlspecialchars((string) $action) ?></span>
+                    <?php endforeach; ?>
+                  </div>
                 </div>
                 <?php endforeach; ?>
               </div>
@@ -407,32 +401,49 @@
         </div>
       </div>
 
-      <!-- Plugins Tab (summary — full management on standalone page) -->
+      <!-- Plugins Tab -->
       <div class="tab-pane" id="plugins">
-        <?php
-          $pluginsList = $settings['plugins'] ?? [];
-          $pluginsCount = count($pluginsList);
-          $pluginsActiveCount = count(array_filter($pluginsList, static function ($plugin) {
-              return !empty($plugin['active']);
-          }));
-        ?>
         <div class="settings-section">
-          <h2><?= __('admin.installed_plugins') ?></h2>
-          <p class="settings-help"><?= __('admin.plugins_summary_help') ?></p>
-          <div class="card card--compact settings-summary-card">
-            <dl class="settings-summary-stats">
-              <div>
-                <dt><?= __('admin.installed_plugins') ?></dt>
-                <dd><?= (int) $pluginsCount ?></dd>
+          <div class="section-header">
+            <h2><?= __('admin.installed_plugins') ?></h2>
+          </div>
+          <div class="plugins-grid">
+            <?php if (empty($settings['plugins'])): ?>
+              <div class="empty-state">
+                <p>No plugins installed yet.</p>
               </div>
-              <div>
-                <dt><?= __('admin.active') ?></dt>
-                <dd><?= (int) $pluginsActiveCount ?></dd>
+            <?php else: ?>
+              <?php foreach ($settings['plugins'] ?? [] as $pluginId => $plugin): ?>
+              <div class="card plugin-card">
+                <div class="plugin-header">
+                  <div>
+                    <h3><?= htmlspecialchars($plugin['name'] ?? $pluginId) ?></h3>
+                    <?php if (!empty($plugin['description'])): ?>
+                      <p class="settings-help"><?= htmlspecialchars($plugin['description']) ?></p>
+                    <?php endif; ?>
+                  </div>
+                  <span class="status-badge <?= !empty($plugin['active']) ? 'active' : 'inactive' ?>">
+                    <?= !empty($plugin['active']) ? 'Active' : 'Inactive' ?>
+                  </span>
+                </div>
+                <div class="plugin-meta">
+                  <span class="plugin-id"><?= htmlspecialchars($pluginId) ?></span>
+                  <?php if (!empty($plugin['version'])): ?>
+                    <span class="plugin-version">v<?= htmlspecialchars($plugin['version']) ?></span>
+                  <?php endif; ?>
+                </div>
+                <div class="plugin-actions">
+                  <button class="btn btn-sm <?= !empty($plugin['active']) ? 'btn-secondary' : 'btn-primary' ?>"
+                          onclick="togglePlugin('<?= htmlspecialchars($pluginId, ENT_QUOTES) ?>', <?= !empty($plugin['active']) ? 'false' : 'true' ?>)">
+                    <?= !empty($plugin['active']) ? 'Deactivate' : 'Activate' ?>
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deletePlugin('<?= htmlspecialchars($pluginId, ENT_QUOTES) ?>')">
+                    Delete
+                  </button>
+                </div>
               </div>
-            </dl>
-            <p class="settings-summary-actions">
-              <a href="<?= htmlspecialchars(admin_url('plugins')) ?>" class="btn btn-primary"><?= __('admin.manage_all_plugins') ?></a>
-            </p>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -548,26 +559,6 @@
 
       <!-- Domains Tab -->
       <div class="tab-pane" id="domains">
-        <?php
-          $domainsSettingsFile = __DIR__ . '/../../settings/domains.json';
-          $registeredDomainsSummary = [];
-          if (is_file($domainsSettingsFile)) {
-              $registeredDomainsSummary = json_decode(file_get_contents($domainsSettingsFile), true) ?: [];
-          }
-          $domainsSummaryCount = is_array($registeredDomainsSummary) ? count($registeredDomainsSummary) : 0;
-        ?>
-        <div class="settings-section">
-          <h2><?= __('admin.domain_management_and_analytics') ?></h2>
-          <p class="settings-help"><?= __('admin.domains_summary_help') ?></p>
-          <div class="card card--compact settings-summary-card">
-            <dl class="settings-summary-stats">
-              <div>
-                <dt><?= __('admin.domains') ?></dt>
-                <dd><?= (int) $domainsSummaryCount ?></dd>
-              </div>
-            </dl>
-          </div>
-        </div>
         <div class="settings-section">
           <div class="section-header">
             <h2><?= __('admin.domain_management_and_analytics') ?></h2>
@@ -590,27 +581,83 @@
         </div>
       </div>
 
-      <!-- Webhooks Tab (summary — full management on standalone page) -->
+      <!-- Webhooks Tab -->
       <div class="tab-pane" id="webhooks">
         <div class="settings-section">
-          <h2><?= __('admin.webhooks') ?></h2>
-          <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
-          <div class="card card--compact webhooks-summary-card">
-            <p><a href="<?= admin_url('webhooks') ?>" class="btn btn-primary"><?= __('admin.go_to_webhooks_management') ?></a></p>
+          <div class="section-header">
+            <div>
+              <h2><?= __('admin.webhooks') ?></h2>
+              <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
+            </div>
+            <button type="button" class="btn btn-primary" id="create-webhook"><?= __('admin.create_webhook') ?></button>
+          </div>
+          <div class="table-container">
+            <table class="table" id="webhooks-table">
+              <thead>
+                <tr>
+                  <th><?= __('admin.url') ?></th>
+                  <th><?= __('admin.events') ?></th>
+                  <th><?= __('admin.collections') ?></th>
+                  <th><?= __('admin.status') ?></th>
+                  <th><?= __('admin.last_triggered') ?></th>
+                  <th><?= __('admin.actions') ?></th>
+                </tr>
+              </thead>
+              <tbody id="webhooks-list">
+                <tr>
+                  <td colspan="6" class="text-center">
+                    <div class="spinner">Loading...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- Activity & Audit Log Tab (summary — full pages on standalone routes) -->
+      <!-- Activity & Audit Log Tab -->
       <div class="tab-pane" id="activity-log">
-        <div class="settings-section">
-          <h2><?= __('admin.activity_and_audit_log') ?></h2>
-          <p class="settings-help"><?= __('admin.activity_summary_help') ?></p>
-          <div class="card card--compact settings-summary-card">
-            <p class="settings-summary-actions">
-              <a href="<?= htmlspecialchars(admin_url('activity')) ?>" class="btn btn-primary"><?= __('admin.go_to_activity_feed') ?></a>
-              <a href="<?= htmlspecialchars(admin_url('audit-log')) ?>" class="btn btn-secondary"><?= __('admin.go_to_audit_log') ?></a>
-            </p>
+        <div class="activity-log-page">
+          <div class="main-actions-bar">
+            <div class="filters activity-log-filters">
+              <select id="event-filter" class="input activity-log-filter-event">
+                <option value="">All Events</option>
+              </select>
+              <select id="category-filter" class="input activity-log-filter-category">
+                <option value="all">All Categories</option>
+                <option value="content">Content</option>
+                <option value="users">Users</option>
+                <option value="system">System</option>
+              </select>
+              <input type="date" id="date-filter" class="input activity-log-filter-date" placeholder="Filter by date">
+              <button type="button" class="btn btn-secondary" id="refresh-logs">Refresh</button>
+            </div>
+          </div>
+
+          <div class="table-container activity-log-table-wrap">
+            <table class="table activity-log-table" id="activity-log-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Event</th>
+                  <th>Category</th>
+                  <th>IP Address</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="log-entries">
+                <tr class="activity-log-loading">
+                  <td colspan="6" class="text-center">
+                    <div class="spinner">Loading...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination activity-log-pagination">
+            <button type="button" class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
           </div>
         </div>
       </div>
@@ -709,7 +756,7 @@
         <div class="ai-integrations-settings">
           <div class="settings-section ai-integrations-intro">
             <h2>AI</h2>
-            <p class="settings-help ai-intro-lead">Connect AI to Birkly in two ways — use your favorite AI app, or chat right inside the admin.</p>
+            <p class="settings-help ai-intro-lead">Connect AI apps to Birkly or chat inside the admin.</p>
             <p class="ai-intro-docs">
               <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections" class="ai-docs-link">Step-by-step guide</a>
               ·
@@ -722,37 +769,28 @@
             <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
           </div>
 
-          <div class="settings-section" id="inbound-mcp">
-            <h2>
-              Connect your AI app
-              <span class="ai-section-badge">Recommended</span>
-              <button type="button" class="help-tip" aria-label="About AI app connectors"
-                data-tip="Use Claude, ChatGPT, or Cursor with your Birkly content. The personal connector uses your own permissions. Service agents are shared bots with a fixed role.">?</button>
-            </h2>
-            <p class="settings-help">Use the <strong>personal connector</strong> for your own Claude or ChatGPT account — you sign in with your Birkly user and get your role's permissions. Admins can also create <strong>service agents</strong> with a fixed role for shared automation.</p>
+          <div class="tip-box tip-box-info ai-migration-banner" id="ai-agents-migration-banner" style="display: none;" role="status">
+            <strong>Service agent visibility updated</strong>
+            <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
+          </div>
 
-            <div class="tip-box tip-box-info ai-migration-banner" id="ai-agents-migration-banner" style="display: none;" role="status">
-              <strong>Service agent visibility updated</strong>
-              <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
+          <div class="ai-connection-kinds-grid">
+            <div class="card ai-connection-kind-card" id="ai-kind-personal">
+              <div class="ai-kind-header">
+                <h3>Personal connector</h3>
+                <p class="settings-help">Connect Claude, ChatGPT, or Cursor with your own Birkly permissions. Every team member uses the same URL but signs in with their own account.</p>
+              </div>
+              <div id="ai-personal-agent-card" class="ai-kind-body">
+                <div class="loading">Loading personal connector...</div>
+              </div>
             </div>
 
-            <div class="card card--compact setup-guide-box" id="mcp-setup-guide">
-              <h3 class="setup-guide-title">Quick start — personal connector</h3>
-              <ol class="setup-guide-steps">
-                <li>Copy the <strong>personal connector URL</strong> below — the same URL works for every team member.</li>
-                <li>In Claude, ChatGPT, or Cursor: paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
-                <li>When your AI app opens Birkly, sign in with <strong>your</strong> account and approve the connection.</li>
-                <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
-              </ol>
-            </div>
-
-            <div id="ai-personal-agent-card" class="card card--compact ai-personal-agent-card">
-              <div class="loading">Loading personal connector...</div>
-            </div>
-
-            <div class="card card--compact mcp-connections-settings">
-              <div class="section-header">
-                <h3>Service agents</h3>
+            <div class="card ai-connection-kind-card" id="ai-kind-service">
+              <div class="ai-kind-header section-header">
+                <div>
+                  <h3>Service agents</h3>
+                  <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
+                </div>
                 <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -761,33 +799,17 @@
                   Add agent
                 </button>
               </div>
-              <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
-
-              <div class="connections-list" id="ai-service-agents-list">
+              <div class="connections-list ai-kind-body" id="ai-service-agents-list">
                 <div class="loading">Loading connections...</div>
               </div>
             </div>
 
-            <details class="ai-dev-details">
-              <summary>Developer / debug</summary>
-              <div class="ai-dev-body">
-                <p>For local development only. Not needed for normal setup.</p>
-                <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> — local development helper for Claude Desktop (advanced only).</p>
-              </div>
-            </details>
-          </div>
-
-          <div class="settings-section" id="outbound-connections">
-            <h2>
-              Built-in assistant
-              <button type="button" class="help-tip" aria-label="About built-in assistant"
-                data-tip="Chat with AI inside Birkly using the button in the bottom-right corner. You need an API key from your AI provider's developer site — a ChatGPT Plus or Claude Pro subscription is not enough.">?</button>
-            </h2>
-            <p class="settings-help">Quick connect for in-admin chat. Add your provider and API key once, then use the chat button.</p>
-
-            <div class="card card--compact">
-              <div class="section-header">
-                <h3>Your assistant</h3>
+            <div class="card ai-connection-kind-card" id="ai-kind-assistant">
+              <div class="ai-kind-header section-header">
+                <div>
+                  <h3>Built-in assistant</h3>
+                  <p class="settings-help">Chat with AI inside Birkly using your provider API key.</p>
+                </div>
                 <button class="btn btn-secondary" id="add-connection-btn" type="button">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -796,12 +818,19 @@
                   Quick connect
                 </button>
               </div>
-
-              <div class="connections-list" id="connections-list">
+              <div class="connections-list ai-kind-body" id="connections-list">
                 <div class="loading">Loading connections...</div>
               </div>
             </div>
           </div>
+
+          <details class="ai-dev-details">
+            <summary>Developer / debug</summary>
+            <div class="ai-dev-body">
+              <p>For local development only. Not needed for normal setup.</p>
+              <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> — local development helper for Claude Desktop (advanced only).</p>
+            </div>
+          </details>
         </div>
 
         <!-- Built-in assistant quick connect modal -->
@@ -1287,6 +1316,57 @@
       </div>
     </div>
   </div>
+
+  <!-- Webhook Modal -->
+  <div id="webhook-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 id="webhook-modal-title"><?= __('admin.create_webhook') ?></h2>
+        <button type="button" class="modal-close-btn" onclick="closeWebhookModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="webhook-form">
+          <input type="hidden" id="webhook-id" name="id" value="">
+          <div class="form-group">
+            <label for="webhook-url"><?= __('admin.webhook_url') ?> *</label>
+            <input type="url" id="webhook-url" name="url" class="input" required placeholder="https://example.com/webhook">
+          </div>
+          <div class="form-group">
+            <label><?= __('admin.events') ?> *</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="events[]" value="entry.created"> <?= __('admin.entry_created') ?></label>
+              <label><input type="checkbox" name="events[]" value="entry.updated"> <?= __('admin.entry_updated') ?></label>
+              <label><input type="checkbox" name="events[]" value="entry.deleted"> <?= __('admin.entry_deleted') ?></label>
+              <label><input type="checkbox" name="events[]" value="entry.published"> <?= __('admin.entry_published') ?></label>
+              <label><input type="checkbox" name="events[]" value="collection.created"> <?= __('admin.collection_created') ?></label>
+              <label><input type="checkbox" name="events[]" value="*"> <?= __('admin.all_events') ?></label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="webhook-collections"><?= __('admin.collections') ?></label>
+            <select id="webhook-collections" name="collections[]" class="input" multiple style="min-height: 100px;">
+              <option value="*"><?= __('admin.all_collections') ?></option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="webhook-secret"><?= __('admin.secret_key') ?></label>
+            <input type="text" id="webhook-secret" name="secret" class="input" placeholder="<?= __('admin.optional') ?>">
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="webhook-active" name="active" checked>
+              <?= __('admin.webhook_active') ?>
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeWebhookModal()"><?= __('admin.cancel') ?></button>
+        <button type="button" class="btn btn-primary" id="save-webhook"><?= __('admin.save') ?></button>
+        <button type="button" class="btn btn-sm btn-secondary" id="test-webhook"><?= __('admin.test_webhook') ?></button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <?php
@@ -1295,12 +1375,17 @@ if (!function_exists('birkly_build_info')) {
 }
 $settingsPageJsVer = (string) (birkly_build_info()['git_commit'] ?? '');
 $settingsUsersJson = json_encode($users ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
+$webhookCollectionsJson = json_encode($webhook_collections ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 ?>
 <script type="application/json" id="settings-users-data"><?= $settingsUsersJson ?></script>
+<script>
+window.webhooksData = window.webhooksData || { collections: <?= $webhookCollectionsJson ?> };
+</script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/settings-page.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
 
 <script src="<?= birkly_url('/admin/js/updates.js') ?>"></script>
 
+<script src="<?= birkly_url('/admin/js/webhooks.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/mcp-connections.js') ?>"></script>
 
