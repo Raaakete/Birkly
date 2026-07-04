@@ -77,9 +77,19 @@
       <div class="form-group">
         <label>
           <input type="checkbox" id="payments-enable-widget" name="enable_dashboard_widget">
-          Enable dashboard widget (requires M4)
+          Enable dashboard widget
         </label>
-        <p class="form-hint">Widget UI is implemented in M4. Schema is stored now.</p>
+        <p class="form-hint">Shows payment volume and success rate on the admin dashboard (off by default).</p>
+      </div>
+      <div class="form-group">
+        <label for="payments-widget-roles">Dashboard widget roles</label>
+        <select id="payments-widget-roles" class="input" multiple size="4">
+          <option value="admin">Admin</option>
+          <option value="editor">Editor</option>
+          <option value="author">Author</option>
+          <option value="viewer">Viewer</option>
+        </select>
+        <p class="form-hint">Only selected roles see the widget when it is enabled.</p>
       </div>
       <button type="submit" class="btn btn-primary">Save Settings</button>
     </form>

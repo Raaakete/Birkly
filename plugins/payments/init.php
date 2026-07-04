@@ -151,3 +151,40 @@ function payments_init_automation_triggers(): void
         },
     ]);
 }
+
+/**
+ * Dashboard widgets for the admin home (opt-in via plugin settings).
+ *
+ * @return list<array<string, mixed>>
+ */
+function payments_dashboard_widgets(): array
+{
+    if (!payments_plugin_active() || !payments_can_view_stats()) {
+        return [];
+    }
+
+    $enabled = function_exists('get_plugin_setting')
+        ? (bool) get_plugin_setting('payments', 'enable_dashboard_widget', false)
+        : false;
+    if (!$enabled) {
+        return [];
+    }
+
+    $roles = function_exists('get_plugin_setting')
+        ? get_plugin_setting('payments', 'dashboard_widget_roles', ['admin'])
+        : ['admin'];
+    if (!is_array($roles)) {
+        $roles = ['admin'];
+    }
+
+    $paymentsUrl = function_exists('admin_url') ? admin_url('payments') : '/admin/index.php?page=payments';
+
+    return [[
+        'id' => 'payments-stats',
+        'title' => 'Payments',
+        'roles' => $roles,
+        'html' => '<div class="payments-dash-widget" id="payments-dash-widget">'
+            . '<p class="payments-dash-loading">Loading payment stats…</p></div>'
+            . '<p class="payments-dash-link"><a href="' . htmlspecialchars($paymentsUrl) . '">Manage payments →</a></p>',
+    ]];
+}

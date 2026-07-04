@@ -29,7 +29,7 @@ $activityLog = $GLOBALS['payments_activity_log'] ?? new PaymentsActivityLog($sto
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
-$readActions = ['list_connections', 'get_connection', 'list_activity', 'stats', 'list_providers', 'get_webhook_url'];
+$readActions = ['list_connections', 'get_connection', 'list_activity', 'stats', 'list_providers', 'get_webhook_url', 'get_settings'];
 $manageActions = ['save_connection', 'delete_connection', 'test_connection', 'save_settings'];
 
 if (!in_array($action, $readActions, true) && !in_array($action, $manageActions, true)) {
@@ -153,6 +153,22 @@ switch ($action) {
             'status' => 'ok',
             'data' => ['webhook_url' => $shelf->getWebhookUrl($provider)],
         ]);
+        break;
+
+    case 'get_settings':
+        $settings = [];
+        foreach (['selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles'] as $key) {
+            $settings[$key] = function_exists('get_plugin_setting')
+                ? get_plugin_setting('payments', $key, null)
+                : null;
+        }
+        if ($settings['enable_dashboard_widget'] === null) {
+            $settings['enable_dashboard_widget'] = false;
+        }
+        if ($settings['dashboard_widget_roles'] === null) {
+            $settings['dashboard_widget_roles'] = ['admin'];
+        }
+        echo json_encode(['status' => 'ok', 'data' => ['settings' => $settings]]);
         break;
 
     case 'save_settings':

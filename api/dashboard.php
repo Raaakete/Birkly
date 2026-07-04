@@ -679,7 +679,10 @@ if ($action === 'widgets') {
     }
     
     // Don't add analytics widget here - it has its own dedicated section at the top
-    
+
+    require_once __DIR__ . '/../core/dashboard_widgets.php';
+    $widgets = birkly_filter_dashboard_widgets_for_user($widgets);
+
         ob_clean();
         echo json_encode([
             'status' => 'ok',
