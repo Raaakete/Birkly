@@ -49,5 +49,14 @@ test_assert(
     'collection-editor sub-entry example properly escaped',
     strpos($ceContent, 'class=\"sub-entry\">\n') !== false
 );
+test_assert(
+    'collection-editor no broken img src string quotes',
+    strpos($ceContent, 'src="{ ') === false,
+    'found src="{ " — img tag PHP strings must escape inner quotes'
+);
+test_assert(
+    'collection-editor img src examples properly escaped',
+    substr_count($ceContent, 'src=\"{ ') >= 3
+);
 
 exit(test_finish('admin_template_stray_quote_test'));
