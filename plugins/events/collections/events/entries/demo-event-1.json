@@ -1,0 +1,15 @@
+{
+  "id": "demo-event-1",
+  "title": "Community Meetup",
+  "slug": "community-meetup",
+  "start": "2026-08-15T18:00:00",
+  "end": "2026-08-15T20:00:00",
+  "venue": "Main Hall",
+  "capacity": 50,
+  "visibility": "public",
+  "description": "Free RSVP demo event.",
+  "ticket_types": "[{\"id\":\"free\",\"name\":\"Free RSVP\",\"price\":0,\"currency\":\"usd\",\"capacity\":0},{\"id\":\"vip\",\"name\":\"VIP Ticket\",\"price\":49.99,\"currency\":\"usd\",\"capacity\":10}]",
+  "status": "published",
+  "created_at": "2026-07-04 00:00:00",
+  "updated_at": "2026-07-04 00:00:00"
+}
