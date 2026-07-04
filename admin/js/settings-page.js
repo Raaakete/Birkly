@@ -485,43 +485,52 @@ window.deleteRole = deleteRole;
         }, 100);
     }
 
+    function getSettingsTabButtons() {
+        return document.querySelectorAll('.settings-tabs .tab[data-tab]');
+    }
+
+    function getSettingsTabPanes() {
+        return document.querySelectorAll('.settings-tab-panels > .tab-pane');
+    }
+
     function initTabs() {
-        var tabButtons = document.querySelectorAll('.settings-tabs .tab');
-        var tabPanes = document.querySelectorAll('.tab-pane');
-        
-        if (!tabButtons || tabButtons.length === 0) {
-            console.error('No tab buttons found');
+        var tabNav = document.querySelector('.settings-tabs .tabs');
+        var tabButtons = getSettingsTabButtons();
+        var tabPanes = getSettingsTabPanes();
+
+        if (!tabNav || !tabButtons.length) {
+            console.error('Settings tab navigation not found');
             return;
         }
-        
-        if (!tabPanes || tabPanes.length === 0) {
-            console.error('No tab panes found');
+
+        if (!tabPanes.length) {
+            console.error('Settings tab panes not found');
             return;
         }
-        
-        // Attach click handlers
-        for (var i = 0; i < tabButtons.length; i++) {
-            tabButtons[i].addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                var targetTab = this.getAttribute('data-tab');
-                if (!targetTab) return;
-                
-                activateTab(targetTab, tabButtons, tabPanes, null, targetTab);
-            });
-        }
+
+        // Event delegation — survives DOM updates and avoids duplicate handlers
+        tabNav.addEventListener('click', function (e) {
+            var btn = e.target.closest('.tab[data-tab]');
+            if (!btn || !tabNav.contains(btn)) {
+                return;
+            }
+            e.preventDefault();
+            var targetTab = btn.getAttribute('data-tab');
+            if (!targetTab) {
+                return;
+            }
+            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null, targetTab);
+        });
         
         // Handle hash on load (including legacy AI tab hashes)
         var rawHash = window.location.hash.replace('#', '');
         var resolved = resolveSettingsHash(rawHash);
         if (resolved.tab) {
-            activateTab(resolved.tab, tabButtons, tabPanes, resolved.scrollTo, rawHash || resolved.tab);
+            activateTab(resolved.tab, getSettingsTabButtons(), getSettingsTabPanes(), resolved.scrollTo, rawHash || resolved.tab);
         } else {
-            // If no hash, check if domains tab is active by default
             var defaultTab = document.querySelector('.settings-tabs .tab.active');
             if (defaultTab && defaultTab.getAttribute('data-tab') === 'domains') {
-                setTimeout(function() {
+                setTimeout(function () {
                     if (typeof window.loadDomains === 'function') {
                         window.loadDomains();
                     }
@@ -529,21 +538,18 @@ window.deleteRole = deleteRole;
             }
         }
 
-        window.addEventListener('hashchange', function() {
+        window.addEventListener('hashchange', function () {
             var hash = window.location.hash.replace('#', '');
             var next = resolveSettingsHash(hash);
             if (next.tab) {
-                activateTab(next.tab, tabButtons, tabPanes, next.scrollTo, hash || next.tab);
+                activateTab(next.tab, getSettingsTabButtons(), getSettingsTabPanes(), next.scrollTo, hash || next.tab);
             }
         });
     }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTabs);
-    } else {
-        initTabs();
-    }
+
+    window.initSettingsTabs = initTabs;
+
+    document.addEventListener('DOMContentLoaded', initTabs);
     
     // Initialize updates if general tab is active on page load
     if (document.getElementById('general') && document.getElementById('general').classList.contains('active')) {

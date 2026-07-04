@@ -1044,8 +1044,8 @@
             const sorter = new MouseDragDrop({
                 container: this.container,
                 itemSelector: this.collectionSelector,
-                handleSelector: null,
-                excludeSelector: 'a, button, input, select, textarea, .dropdown-trigger, .collection-menu-wrapper',
+                handleSelector: '.drag-handle',
+                excludeSelector: 'a, button, input, select, textarea, .dropdown-trigger, .collection-menu-wrapper, .entry-count-link',
                 useCapture: true,
                 allContainers: containers,
                 onReorder: (fromIndex, toIndex, placeholder, draggedItem) => {

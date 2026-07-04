@@ -118,9 +118,8 @@ a.card:hover {
 /* Collection Card Container */
 .collection-card {
   position: relative;
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
-  touch-action: none;
 }
 
 .collection-card .collection-header {

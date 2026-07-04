@@ -142,7 +142,14 @@ class TemplateParser {
                     $filename .= '.js';
                 }
                 $jsPath = '/admin/js/' . $filename;
-                return '<?= \'<script src="\' . htmlspecialchars(birkly_url(\'' . addslashes($jsPath) . '\')) . \'"></script>\' ?>';
+                return '<?php
+                    if (!function_exists(\'birkly_build_info\')) {
+                        require_once __DIR__ . \'/../core/build_info.php\';
+                    }
+                    $__jsVer = (string) (birkly_build_info()[\'git_commit\'] ?? \'\');
+                    $__jsUrl = birkly_url(\'' . addslashes($jsPath) . '\') . ($__jsVer !== \'\' ? \'?v=\' . rawurlencode($__jsVer) : \'\');
+                    echo \'<script src="\' . htmlspecialchars($__jsUrl) . \'"></script>\';
+                ?>';
             },
             $parsed
         );
@@ -184,7 +191,7 @@ class TemplateParser {
                 $parts = explode('.', $var);
                 $php = '$' . array_shift($parts);
                 foreach ($parts as $p) { $php .= "['" . $p . "']"; }
-                return '<?= json_encode(' . $php . ' ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>';
+                return '<?= json_encode(' . $php . ' ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?>';
             },
             $parsed
         );
