@@ -486,7 +486,7 @@ window.deleteRole = deleteRole;
     }
 
     function initTabs() {
-        var tabButtons = document.querySelectorAll('.tab-btn');
+        var tabButtons = document.querySelectorAll('.settings-tabs .tab');
         var tabPanes = document.querySelectorAll('.tab-pane');
         
         if (!tabButtons || tabButtons.length === 0) {
@@ -519,7 +519,7 @@ window.deleteRole = deleteRole;
             activateTab(resolved.tab, tabButtons, tabPanes, resolved.scrollTo, rawHash || resolved.tab);
         } else {
             // If no hash, check if domains tab is active by default
-            var defaultTab = document.querySelector('.tab-btn.active');
+            var defaultTab = document.querySelector('.settings-tabs .tab.active');
             if (defaultTab && defaultTab.getAttribute('data-tab') === 'domains') {
                 setTimeout(function() {
                     if (typeof window.loadDomains === 'function') {

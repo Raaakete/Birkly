@@ -76,6 +76,27 @@
   flex-shrink: 0;
 }
 
+/* Section header — title row with optional actions (settings, dashboard) */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.section-description {
+  color: var(--text-secondary, #72746F);
+  margin-bottom: var(--space-4, 1rem);
+  font-size: 0.9rem;
+  width: 100%;
+}
+
 /* Content Header */
 .content-header {
   margin-bottom: var(--space-6, 1.5rem);
