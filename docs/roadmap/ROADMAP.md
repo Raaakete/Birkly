@@ -122,6 +122,14 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.6-admin-ai-onboarding-automation-plan.md` · **Handoff:** `docs/reviews/P5.6-lead-engineer-handoff.md`
 
+**2026-07-04 — Phase 5.7 approved** (Keven)
+
+**Priorities:** Settings UI/UX overhaul · global Save + toast · security toggle enforcement · MySQL/PostgreSQL storage backends · global admin spacing audit.
+
+**Human decisions (locked):** AI tab gets full UX polish (D1) · DB backends implemented now (D2) · no save-only security toggles (D3) · single global Save (D4) · admin UI audit in M0, fixes in M4 (D5) · reuse shared CSS components (D6) · standalone plugin/activity/webhook pages stay (D7) · kekaba embed sync after M5 (D9).
+
+**Spec:** `docs/reviews/P5.7-settings-ui-ux-plan.md` · **Handoff:** `docs/reviews/P5.7-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P5.7-settings-verification-matrix.md` · **UI audit:** `docs/reviews/P5.7-admin-ui-audit.md`
+
 ---
 
 ## Vision
@@ -1776,9 +1784,135 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.7 — Settings UI/UX, enforcement, storage backends & admin polish
+
+**Status:** **IN PROGRESS** (2026-07-04) — M0 complete; M1→M5 executing autonomously
+
+**Spec:** `docs/reviews/P5.7-settings-ui-ux-plan.md` · **Handoff:** `docs/reviews/P5.7-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P5.7-settings-verification-matrix.md` · **UI audit:** `docs/reviews/P5.7-admin-ui-audit.md`
+
+**Problem:** Settings page is a ~3,400-line monolith (~2,000 lines inline JS, ~1,800 lines page CSS). Dead `admin/js/settings.js`. `showMessage` overridden to `alert()`. Hardcoded `/api/` paths break subdirectory installs. Storage tab shows DB backends that do not exist. Security toggles persist but many are save-only. Global admin needs spacing/alignment audit.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P5.7-M0** | Verification matrix + global admin UI audit | complete |
+| **P5.7-M1** | Extract JS → `settings-page.js`; global Save; toast; `Birkly.url()` | in progress |
+| **P5.7-M2** | General fixes; security enforcement; MySQL/PG storage + API | pending |
+| **P5.7-M3** | Settings UI redesign; AI tab UX (shared components) | pending |
+| **P5.7-M4** | P1 tab polish; global spacing from audit (sidebar, forms, cards) | pending |
+| **P5.7-M5** | Tests, Birkly-Docs, matrix execution, closure notification | pending |
+
+**Human decisions (locked):**
+
+| Decision | Choice |
+|----------|--------|
+| AI tab (D1) | Full UX polish — same standards as every other tab |
+| Storage (D2) | Implement MySQL + PostgreSQL now; flat-file default; test + migrate |
+| Security (D3) | Runtime enforcement — lockout, password rules, session timeout, CSRF flags |
+| Save UX (D4) | Single global Save; one `save_all`; toast via `messages.css` |
+| Admin UI (D5) | Audit in M0; fix high-impact spacing admin-wide in M4 |
+| Design (D6) | Reuse `admin/css/components/*`; shrink `settings.css` |
+| Standalone pages (D7) | `plugins.html`, `activity.html`, webhooks stay; settings = summary + link |
+| Branch naming (D8) | `cursor/p5.7-m[N]-<slug>-24b5` off `main` |
+| kekaba sync (D9) | Embed sync only after P5.7 admin assets stable (M5 or post-closure) |
+| Execution | Autonomous M0→M5; notify human **once** at P5.7-M5-T6 |
+
+### P5.7-M0 — Settings verification matrix + global admin UI audit
+
+- **Status:** complete
+- **Repos:** Birkly
+
+**Tasks**
+
+- [x] **P5.7-M0-T1** Settings verification matrix — `docs/reviews/P5.7-settings-verification-matrix.md`
+- [x] **P5.7-M0-T2** Global admin UI audit — `docs/reviews/P5.7-admin-ui-audit.md`
+- [x] **P5.7-M0-T3** Settings UI/UX plan + roadmap § Phase 5.7
+- [x] **P5.7-M0-T4** Human matrix scope sign-off (via full P5.7 approval)
+
+### P5.7-M1 — Extract settings JS + global Save + URL hygiene
+
+- **Status:** in progress
+- **Repos:** Birkly
+- **Depends on:** P5.7-M0-T4
+
+**Tasks**
+
+- [ ] **P5.7-M1-T1** Extract inline JS → `admin/js/settings-page.js`
+- [ ] **P5.7-M1-T2** Global Save bar; single `save_all`; remove per-tab saves
+- [ ] **P5.7-M1-T3** Toast via `messages.css`; remove `alert()` / duplicate `showMessage`
+- [ ] **P5.7-M1-T4** `Birkly.url()` for all settings fetches
+- [ ] **P5.7-M1-T5** Delete dead `admin/js/settings.js`
+
+### P5.7-M2 — P0 functionality (General, Security, Storage, API)
+
+- **Status:** pending
+- **Repos:** Birkly
+- **Depends on:** P5.7-M1
+
+**Tasks**
+
+- [ ] **P5.7-M2-T1** General media field key/display fixes
+- [ ] **P5.7-M2-T2** Security enforcement wired to login/password/CSRF paths
+- [ ] **P5.7-M2-T3** `MySqlStorage`, `PostgresStorage`, factory + config path unification
+- [ ] **P5.7-M2-T4** API: `test_database`, `migrate_storage`, storage save in `save_all`
+- [ ] **P5.7-M2-T5** API tab honest readout
+- [ ] **P5.7-M2-T6** `tests/settings_*_test.php` — security + storage smoke
+
+### P5.7-M3 — Settings UI redesign + AI tab UX
+
+- **Status:** pending
+- **Repos:** Birkly
+- **Depends on:** P5.7-M2
+
+**Tasks**
+
+- [ ] **P5.7-M3-T1** Tab/forms/cards use shared components; shrink inline `<style>`
+- [ ] **P5.7-M3-T2** AI tab reorganized (same patterns as other tabs)
+- [ ] **P5.7-M3-T3** Orphan `webhooks` pane → nav link or remove
+
+### P5.7-M4 — P1 tabs + global spacing pass
+
+- **Status:** pending
+- **Repos:** Birkly
+- **Depends on:** P5.7-M3
+
+**Tasks**
+
+- [ ] **P5.7-M4-T1** Users, plugins, domains, activity summaries + deep links
+- [ ] **P5.7-M4-T2** Sidebar nav icon gap (`gap` token, remove dead `mr-xs`)
+- [ ] **P5.7-M4-T3** Form density / card padding alignment from audit
+
+### P5.7-M5 — Tests, docs, closure
+
+- **Status:** pending
+- **Repos:** Birkly, Birkly-Docs
+- **Depends on:** P5.7-M4
+
+**Tasks**
+
+- [ ] **P5.7-M5-T1** Full matrix execution; `php tests/run.php` green
+- [ ] **P5.7-M5-T2** Birkly-Docs admin settings + storage backend guide
+- [ ] **P5.7-M5-T3** Matrix results appended to verification doc
+- [ ] **P5.7-M5-T4** Roadmap Phase 5.7 → complete
+- [ ] **P5.7-M5-T5** kekaba embed sync (if stable)
+- [ ] **P5.7-M5-T6** **Single human closure notification**
+
+---
+
+## Phase 5.7 success criteria
+
+- Settings page uses extracted `settings-page.js`; no `alert()` override; all API calls via `Birkly.url()`
+- Single global Save with toast feedback
+- Security toggles enforced at runtime (lockout, password rules, CSRF)
+- MySQL + PostgreSQL storage backends with test connection + migrate wizard
+- Settings UI uses shared components; AI tab UX parity; `settings.css` significantly reduced
+- Global admin spacing fixes from audit applied (sidebar gap, forms, cards, tabs)
+- Verification matrix green; Birkly-Docs updated; `php tests/run.php` passes
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]` · Phase 5.7 `P5.7-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
