@@ -1,0 +1,218 @@
+<link rel="stylesheet" href="{birkly_url '/plugins/commerce/admin/commerce.css'}">
+
+<div class="page-header pt-m pb-m">
+  <div class="page-header-left">
+    <div class="breadcrumbs">
+      <a href="{admin_url 'settings'}">{translate 'admin.settings'}</a>
+      <span class="separator">›</span>
+      <span class="current">Commerce</span>
+    </div>
+  </div>
+</div>
+
+<div class="payments-page commerce-page">
+  <div class="payments-toolbar">
+    <div>
+      <h1 style="margin:0;font-size:1.5rem;font-weight:700">Commerce</h1>
+      <p style="margin:0;color:var(--text-secondary);font-size:0.9375rem">Payments, catalog, cart, orders, discounts, and fulfillment</p>
+    </div>
+  </div>
+
+  <div class="payments-tabs commerce-tabs" role="tablist">
+    <button class="payments-tab active" data-tab="connections" role="tab" aria-selected="true">Connections</button>
+    <button class="payments-tab" data-tab="catalog" role="tab">Catalog</button>
+    <button class="payments-tab" data-tab="orders" role="tab">Orders</button>
+    <button class="payments-tab" data-tab="discounts" role="tab">Discounts</button>
+    <button class="payments-tab" data-tab="import" role="tab">Import</button>
+    <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
+    <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
+    <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
+    <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
+  </div>
+
+  <div id="payments-tab-connections" class="payments-tab-panel active" role="tabpanel">
+    <div class="payments-panel-header">
+      <h2>Provider Connections</h2>
+      <button class="btn btn-primary" id="payments-add-connection">Add Connection</button>
+    </div>
+    <div id="payments-providers-matrix" class="payments-providers-matrix"></div>
+    <div id="payments-connections-list" class="payments-connections-list">
+      <div class="loading-state"><p>Loading connections…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-catalog" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Catalog</h2>
+      <button class="btn btn-secondary" id="commerce-reindex">Reindex</button>
+    </div>
+    <div id="commerce-catalog-list" class="payments-connections-list">
+      <div class="loading-state"><p>Loading catalog…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-orders" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Orders</h2></div>
+    <div id="commerce-orders-list" class="payments-activity-list">
+      <div class="loading-state"><p>Loading orders…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-discounts" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Discount Rules</h2>
+      <button class="btn btn-primary" id="commerce-add-discount">Add Rule</button>
+    </div>
+    <div id="commerce-discounts-list" class="payments-connections-list"></div>
+  </div>
+
+  <div id="payments-tab-import" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>CSV Import</h2></div>
+    <form id="commerce-import-form" class="payments-settings-form">
+      <div class="form-group">
+        <label>Preset</label>
+        <select id="commerce-import-preset" class="input">
+          <option value="generic">Generic CSV</option>
+          <option value="woocommerce">WooCommerce</option>
+          <option value="shopify">Shopify</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Target collection slug</label>
+        <input type="text" id="commerce-import-collection" class="input" value="products">
+      </div>
+      <div class="form-group">
+        <label>CSV content</label>
+        <textarea id="commerce-import-csv" class="input" rows="8" placeholder="title,price,currency,sku,quantity"></textarea>
+      </div>
+      <button type="button" class="btn btn-secondary" id="commerce-import-dry-run">Dry run</button>
+      <button type="submit" class="btn btn-primary">Import</button>
+      <div id="commerce-import-result" class="payments-test-result" hidden></div>
+    </form>
+  </div>
+
+  <div id="payments-tab-mappings" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Purchase Mappings</h2></div>
+    <form id="commerce-mapping-form" class="payments-settings-form">
+      <div class="form-group">
+        <label>Mapping key (entry:collection:slug or collection:slug)</label>
+        <input type="text" id="commerce-mapping-key" class="input" placeholder="entry:products:premium-plan">
+      </div>
+      <div class="form-group">
+        <label>Grant tier ID</label>
+        <input type="text" id="commerce-mapping-tier" class="input" placeholder="premium">
+      </div>
+      <button type="submit" class="btn btn-primary">Save Mapping</button>
+    </form>
+    <div id="commerce-mappings-list" class="payments-connections-list"></div>
+  </div>
+
+  <div id="payments-tab-fulfillment" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Fulfillment</h2></div>
+    <form id="commerce-fulfillment-form" class="payments-settings-form">
+      <div class="form-group">
+        <label>Active adapter</label>
+        <select id="commerce-fulfillment-adapter" class="input">
+          <option value="manual">Manual / Export</option>
+          <option value="shipstation">ShipStation (stub)</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-secondary" id="commerce-test-fulfillment">Test Connection</button>
+      <button type="submit" class="btn btn-primary">Save</button>
+      <div id="commerce-fulfillment-result" class="payments-test-result" hidden></div>
+    </form>
+  </div>
+
+  <div id="payments-tab-activity" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Activity Log</h2>
+      <div class="payments-filters">
+        <select id="payments-filter-provider" class="input"><option value="">All providers</option></select>
+        <select id="payments-filter-status" class="input">
+          <option value="">All statuses</option>
+          <option value="succeeded">Succeeded</option>
+          <option value="failed">Failed</option>
+          <option value="pending">Pending</option>
+          <option value="refunded">Refunded</option>
+        </select>
+        <button class="btn btn-secondary" id="payments-refresh-activity">Refresh</button>
+      </div>
+    </div>
+    <div id="payments-activity-list" class="payments-activity-list">
+      <div class="loading-state"><p>Loading activity…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-settings" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Commerce Settings</h2></div>
+    <form id="payments-settings-form" class="payments-settings-form">
+      <div class="form-group">
+        <label for="payments-selection-mode">Provider Selection Mode</label>
+        <select id="payments-selection-mode" class="input" name="selection_mode">
+          <option value="auto">Auto (resolve by currency/country/method)</option>
+          <option value="fixed">Fixed (always use default provider)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="payments-default-provider">Default Provider</label>
+        <select id="payments-default-provider" class="input" name="default_provider"></select>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="payments-enable-widget" name="enable_dashboard_widget"> Enable dashboard widget</label>
+      </div>
+      <div class="form-group">
+        <label for="payments-widget-roles">Dashboard widget roles</label>
+        <select id="payments-widget-roles" class="input" multiple size="4">
+          <option value="admin">Admin</option>
+          <option value="editor">Editor</option>
+          <option value="author">Author</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Save Settings</button>
+    </form>
+  </div>
+</div>
+
+<div id="payments-connection-modal" class="modal-backdrop" style="display: none;">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-header">
+      <h2 id="payments-modal-title">Add Connection</h2>
+      <button class="modal-close-btn" id="payments-modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="payments-connection-form">
+        <input type="hidden" id="payments-conn-id" name="id">
+        <div class="form-group">
+          <label for="payments-conn-provider">Provider</label>
+          <select id="payments-conn-provider" class="input" required></select>
+        </div>
+        <div class="form-group">
+          <label for="payments-conn-label">Label</label>
+          <input type="text" id="payments-conn-label" class="input" placeholder="My Stripe Test" required>
+        </div>
+        <div class="form-group">
+          <label for="payments-conn-mode">Mode</label>
+          <select id="payments-conn-mode" class="input">
+            <option value="test">Test / Sandbox</option>
+            <option value="live">Live</option>
+          </select>
+        </div>
+        <div id="payments-credential-fields"></div>
+        <div class="form-group">
+          <label for="payments-webhook-secret">Webhook Secret (optional)</label>
+          <input type="password" id="payments-webhook-secret" class="input" autocomplete="off">
+        </div>
+        <div id="payments-webhook-url-display" class="payments-webhook-url" hidden></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="payments-test-conn">Test Connection</button>
+          <button type="submit" class="btn btn-primary">Save Connection</button>
+        </div>
+        <div id="payments-test-result" class="payments-test-result" hidden></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="{birkly_url '/plugins/commerce/admin/payments.js'}"></script>
+<script src="{birkly_url '/plugins/commerce/admin/commerce.js'}"></script>
