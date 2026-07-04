@@ -148,7 +148,19 @@ When in doubt, treat as major and ask the human.
 
 **Human decisions (locked):** Self-contained plugins · shelf only · parallel after shared M0 · Cart one-time checkout · Events RSVP + paid tickets · P6.4/P6.5 deferred · notify once at P6.2-P6.3-M5-T5.
 
-**Spec:** `docs/reviews/P6.2-P6.3-commerce-consumers-plan.md` · **Handoff:** `docs/reviews/P6.2-P6.3-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P6.2-P6.3-commerce-consumers-plan.md` · **Handoff:** `docs/reviews/P6.2-P6.3-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P6.2-P6.3-verification-matrix.md`
+
+**2026-07-04 — Phase 6.2 + 6.3 complete** (merged to `main`)
+
+**Delivered:** `plugins/shopping_cart/` + `plugins/events/` — shelf consumers, demo collections, cart/checkout/registrations.
+
+**2026-07-04 — Phase 6.4 approved** (Keven)
+
+**Priorities:** **Commerce plugin** — migrate `payments` → `commerce`; Commerce fieldtype; catalog index; cart/checkout/orders; discounts/affiliates; CSV import; fulfillment adapters. Content-first commerce (entries sellable via fieldtype). **Keep** Shop/Events plugins during transition.
+
+**Human decisions (locked):** One plugin Commerce (providers + checkout together) · billing `one_time`|`recurring` only · `quantity_available` · no tier_id on fieldtype · SKU optional · discounts/affiliates in rule engine · `payment_shelf` alias · Shop/Events not removed · notify once at P6.4-M6-T5.
+
+**Spec:** `docs/reviews/P6.4-commerce-plugin-plan.md` · **Handoff:** `docs/reviews/P6.4-lead-engineer-handoff.md`
 
 ---
 
@@ -168,15 +180,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P6.2 + P6.3 complete** — `plugins/shopping_cart/` + `plugins/events/` shelf consumers. |
-| **Birkly-Website** | `Birkly-0.1/` embed sync deferred; update after human CMS deploy verification. |
-| **kekaba** | P5.7 embed synced locally; **git commit/push deferred** to human deploy. |
-| **Birkly-Docs** | P6.1 payments + shelf API; **P6.2/P6.3 cart + events guides** merged. |
+| **Birkly (CMS)** | **P6.1–P6.3 complete** — payments, shopping_cart, events on `main`. **P6.4 Commerce approved** — execute next. |
+| **Birkly-Docs** | P6.1–P6.3 guides merged; P6.4 Commerce docs pending. |
 | **Agent ops** | Autonomous merge active; **74** PHP test suites green. |
 
 **Active plugins on `main`:** `automation`, `user_management`, `payments`, `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.4** User membership ↔ shelf wiring (deferred until approved).
+**Next active phase:** **P6.4 Commerce plugin** — migrate Payments → content-first commerce (approved).
 
 ---
 
@@ -1960,15 +1970,13 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
-## Phase 6.2 + 6.3 — Shopping Cart & Events (combined sprint)
+## Phase 6.2 + 6.3 — Shopping Cart & Events (complete)
 
-**Status:** Approved (2026-07-04) — autonomous execution in **one sprint**
+**Status:** Complete (2026-07-04) — merged to `main`
 
-**Spec:** `docs/reviews/P6.2-P6.3-commerce-consumers-plan.md` · **Handoff:** `docs/reviews/P6.2-P6.3-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P6.2-P6.3-commerce-consumers-plan.md` · **Matrix:** `docs/reviews/P6.2-P6.3-verification-matrix.md`
 
-**Goal:** Two shelf consumer plugins — Cart (products, checkout, orders) and Events (RSVP, paid tickets, capacity). Both use `payment_shelf` only.
-
-**Depends on:** P6.1 complete on `main`.
+**Note:** Superseded by **P6.4 Commerce** (content-first fieldtype). Shop/Events plugins **kept** on `main`.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
@@ -2009,14 +2017,35 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
-## Phase 6.4+ — Deferred
+## Phase 6.4 — Commerce plugin (evolve Payments)
+
+**Status:** Approved (2026-07-04) — autonomous execution P6.4-M0→M6
+
+**Spec:** `docs/reviews/P6.4-commerce-plugin-plan.md` · **Handoff:** `docs/reviews/P6.4-lead-engineer-handoff.md`
+
+**Goal:** Repurpose `plugins/payments/` → `plugins/commerce/` — providers, Commerce fieldtype, catalog index, cart/checkout, orders, discounts/affiliates, CSV import, fulfillment.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P6.4-M0** | Migrate payments → commerce; shelf alias; Shop/Events compat | pending |
+| **P6.4-M1** | Commerce fieldtype + catalog indexer + admin | pending |
+| **P6.4-M2** | Cart, checkout, orders, templates | pending |
+| **P6.4-M3** | Discounts, coupons, affiliate `?ref=` | pending |
+| **P6.4-M4** | CSV import (Woo/Shopify presets) | pending |
+| **P6.4-M5** | Fulfillment adapters + purchase→tier mappings | pending |
+| **P6.4-M6** | Docs, matrix, closure | pending |
+
+---
+
+## Phase 6.5+ — Deferred
 
 | Phase | Focus |
 |-------|--------|
-| **P6.4** | User plugin ↔ shelf membership wiring |
-| **P6.5** | Birkly Marketplace (external hub) |
+| **P6.5** | Shop/Events consolidation or migration wizards |
+| **P6.6** | Birkly Marketplace (external hub) |
+| **P6.7** | Live Shopify/Woo API import |
 
-**Design rule:** Consumer plugins call `payment_shelf` only; never provider APIs directly.
+**Design rule:** Commerce owns providers + checkout; entries with Commerce fieldtype are the catalog.
 
 ---
 
@@ -2038,7 +2067,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Task handoff format
 
-Task IDs: … · Phase 6.1 `P6.1-M[N]-T[N]` · Phase 6.2 `P6.2-M[N]-T[N]` · Phase 6.3 `P6.3-M[N]-T[N]` · Combined `P6.2-P6.3-M[N]-T[N]`.
+Task IDs: … · Phase 6.1 `P6.1-M[N]-T[N]` · Phase 6.2/6.3 `P6.2-P6.3-M[N]-T[N]` · Phase 6.4 `P6.4-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
