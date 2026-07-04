@@ -1,0 +1,13 @@
+{
+  "id": "demo-product-1",
+  "title": "Demo T-Shirt",
+  "slug": "demo-t-shirt",
+  "price": 29.99,
+  "currency": "usd",
+  "sku": "DEMO-TSHIRT",
+  "stock": 100,
+  "description": "Sample product for Shopping Cart checkout testing.",
+  "status": "published",
+  "created_at": "2026-07-04 00:00:00",
+  "updated_at": "2026-07-04 00:00:00"
+}
