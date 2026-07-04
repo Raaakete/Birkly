@@ -42,10 +42,10 @@ $filteredAdmin2 = birkly_filter_dashboard_widgets_for_user([
 ]);
 test_assert('admin sees widget when enabled and roles from settings default', count($filteredAdmin2) === 1);
 
-$paymentsInit = file_get_contents(dirname(__DIR__) . '/plugins/payments/init.php');
+$paymentsInit = file_get_contents(dirname(__DIR__) . '/plugins/commerce/init.php');
 test_assert('payments_dashboard_widgets function exists', strpos($paymentsInit, 'function payments_dashboard_widgets') !== false);
 
-$pluginPhp = file_get_contents(dirname(__DIR__) . '/plugins/payments/plugin.php');
+$pluginPhp = file_get_contents(dirname(__DIR__) . '/plugins/commerce/plugin.php');
 test_assert('dashboard callback registered', strpos($pluginPhp, 'dashboard_widgets_callback') !== false);
 
 exit(test_finish('dashboard_widgets_test'));
