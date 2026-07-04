@@ -130,6 +130,12 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P5.7-settings-ui-ux-plan.md` · **Handoff:** `docs/reviews/P5.7-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P5.7-settings-verification-matrix.md` · **UI audit:** `docs/reviews/P5.7-admin-ui-audit.md`
 
+**2026-07-04 — Phase 5.7 complete** (Keven approved; merged to `main`)
+
+**Delivered:** Settings JS extraction + global Save · security enforcement · MySQL/PostgreSQL storage · AI tab UX · admin spacing pass · settings test suite (65 suites green).
+
+**Pending human:** Live deploy smoke on `birkly.kekaba.com`; kekaba `Birkly-0.1/` embed commit.
+
 ---
 
 ## Vision
@@ -144,23 +150,19 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-06-29)
+## Current state (verified 2026-07-04)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | Phase 5 + P5.1 + P5.2 **complete** on `main`. **P5.3 complete** — admin UX & workflows. |
-| **Birkly-Website** | `Birkly-0.1/` sync deferred until CMS deploy verified. |
-| **kekaba** | P5.3 fixes ready; embed sync **deferred** (deploy checklist). |
-| **Birkly-Docs** | P5.2 roles/plugins; P5.3 workflow notes in deploy checklist. |
+| **Birkly (CMS)** | **Phases 5–5.7 complete** on `main` — AI/MCP, admin UX, ContentEditor layout, onboarding, settings, DB storage, security enforcement. |
+| **Birkly-Website** | `Birkly-0.1/` embed sync deferred; update after human CMS deploy verification. |
+| **kekaba** | P5.7 embed synced locally; **git commit/push deferred** to human deploy. |
+| **Birkly-Docs** | P5.7 settings guide merged; commerce docs pending Phase 6. |
+| **Agent ops** | Autonomous merge active; 65 PHP test suites green. |
 
-**Phase 5.3 handoff:** `docs/reviews/P5.3-lead-engineer-handoff.md`
-| **Agent ops** | Autonomous merge active. |
+**Active plugins on `main`:** `automation`, `user_management`, `sample-plugin`
 
-**Phase 5.2 handoff:** `docs/reviews/P5.2-lead-engineer-handoff.md`
-
-**Phase 5.1 handoff:** `docs/reviews/P5.1-lead-engineer-handoff.md` (complete)
-
-**Phase 5 handoff:** `docs/reviews/P5-lead-engineer-handoff.md`
+**Next proposed phase:** Phase 6 — Commerce plugins & Marketplace (`docs/reviews/P6-commerce-ecosystem-plan.md`)
 
 ---
 
@@ -185,7 +187,6 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 |-------|--------|
 | Kekaba new pages/collections | Adds CMS surface before platform stable |
 | CMS Help → Birkly-Docs wiring | Large UX change |
-| Database/SQL backend | Not on critical path |
 | Feedback widget, legal pack | Post-alpha |
 | Full responsive CSS / dark mode rework | UX polish |
 | Plugin scaffolding CLI | Convenience, not blocker |
@@ -1910,9 +1911,58 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 6 — Commerce plugins & Birkly Marketplace (proposed)
+
+**Status:** Proposed — **awaiting human approval**
+
+**Spec:** `docs/reviews/P6-commerce-ecosystem-plan.md`
+
+**Goal:** Build the commerce and ecosystem layer on top of the stable P5 platform — deactivatable plugins, service registry, automation hooks, user tier integration.
+
+**Depends on:** P5.7 complete; human live deploy smoke recommended before M1.
+
+| Milestone | Focus | Plugin / epic |
+|-----------|--------|----------------|
+| **P6-M0** | Commerce foundation — payment service contract, order storage, user tier hooks, P5 deploy closure | Platform |
+| **P6-M1** | **Plugin: Payments** — gateway abstraction, transactions, webhooks, admin config | `plugins/payments/` |
+| **P6-M2** | **Plugin: Shopping Cart** — products, cart session, checkout via Payments | `plugins/shopping_cart/` |
+| **P6-M3** | **Plugin: Events** — events, RSVP, capacity, optional paid tickets | `plugins/events/` |
+| **P6-M4** | **Birkly Marketplace** — plugin directory, install/update, preflight validation, trust metadata | Admin + registry |
+| **P6-M5** | Birkly-Docs, reference demo (kekaba or Birkly-Website), integration matrix, closure | Cross-repo |
+
+**Dependency order:**
+
+```
+M0 foundation → M1 Payments → M2 Shopping Cart
+                            ↘ M3 Events (RSVP early; paid tickets after M1)
+M4 Marketplace (after M1–M3 plugin.json patterns stable)
+→ M5 docs + closure
+```
+
+**Human decisions needed before approval:**
+
+| # | Question | Recommendation |
+|---|----------|----------------|
+| 1 | First payment gateway | Stripe or Mollie — pick one for M1 |
+| 2 | Marketplace v1 hosting | Static manifest on Birkly-Website |
+| 3 | kekaba demo | M5 reference only — no prod migration |
+| 4 | Execution model | Autonomous M0→M5; notify once at M5 |
+
+**Also tracked (not P6 core):**
+
+| Item | Suggested home |
+|------|----------------|
+| ContentEditor table cell merge | P6.1 or parallel small phase |
+| Remaining admin UI polish (P5.7 audit P2 items) | Opportunistic during P6 plugin admin UIs |
+| AI OAuth outbound | Separate phase |
+
+**Design rule:** All commerce code in `plugins/`; use `register_plugin_service()` + `broadcast_plugin_event()`; no CMS core forks.
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]` · Phase 5.7 `P5.7-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]` · Phase 5.7 `P5.7-M[N]-T[N]` · Phase 6 `P6-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
