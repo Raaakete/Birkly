@@ -1,15 +1,14 @@
 <?php ?>
-<div class="page-header pt-m pb-m">
+<div class="page-header pt-m pb-m settings-page-header">
   <div class="page-header-left">
     <div class="breadcrumbs" data-help-topic="settings"><span class="current"><?= __('admin.settings') ?></span></div>
   </div>
-  <div class="page-header-actions"></div>
+  <div class="page-header-actions settings-header-actions">
+    <div id="settings-message" class="message settings-toast" style="display: none;" role="status" aria-live="polite"></div>
+    <button type="button" id="global-save-settings-btn" class="btn btn-primary"><?= __('admin.save_settings') ?></button>
+  </div>
 </div>
 
-<div class="settings-global-save-bar">
-  <div id="settings-message" class="message" style="display: none;" role="status"></div>
-  <button type="button" id="global-save-settings-btn" class="btn btn-primary"><?= __('admin.save_settings') ?></button>
-</div>
 <div class="settings-page">
 
   <div class="settings-tabs">
@@ -150,13 +149,23 @@
             <h2><?= __('admin.media_settings') ?></h2>
             <?php
               $mediaSettings = $settings['media'] ?? [];
-              $maxUploadMb = isset($mediaSettings['max_upload_size'])
-                  ? (int) round($mediaSettings['max_upload_size'] / 1024 / 1024)
-                  : (int) ($mediaSettings['maxUploadSize'] ?? 5);
-              $imageQuality = $mediaSettings['image_quality'] ?? $mediaSettings['imageQuality'] ?? 85;
+              $maxUploadBytes = (int) ($mediaSettings['max_upload_size'] ?? $mediaSettings['maxUploadSize'] ?? 0);
+              $maxUploadMb = $maxUploadBytes > 0
+                  ? max(1, (int) round($maxUploadBytes / 1024 / 1024))
+                  : max(1, (int) ($mediaSettings['maxUploadSize'] ?? 10));
+              $imageQuality = (int) ($mediaSettings['image_quality'] ?? $mediaSettings['imageQuality'] ?? 85);
+              if ($imageQuality < 10) {
+                  $imageQuality = 85;
+              }
               $thumbnailSize = $mediaSettings['thumbnail_size'] ?? null;
-              $thumbWidth = is_array($thumbnailSize) ? ($thumbnailSize[0] ?? 150) : ($mediaSettings['thumbnailWidth'] ?? 150);
-              $thumbHeight = is_array($thumbnailSize) ? ($thumbnailSize[1] ?? 150) : ($mediaSettings['thumbnailHeight'] ?? 150);
+              $thumbWidth = (int) (is_array($thumbnailSize) ? ($thumbnailSize[0] ?? 150) : ($mediaSettings['thumbnailWidth'] ?? 150));
+              $thumbHeight = (int) (is_array($thumbnailSize) ? ($thumbnailSize[1] ?? 150) : ($mediaSettings['thumbnailHeight'] ?? 150));
+              if ($thumbWidth < 50) {
+                  $thumbWidth = 150;
+              }
+              if ($thumbHeight < 50) {
+                  $thumbHeight = 150;
+              }
               $createThumbnails = $mediaSettings['create_thumbnails'] ?? $mediaSettings['createThumbnails'] ?? true;
               if ($createThumbnails === 'on') {
                   $createThumbnails = true;

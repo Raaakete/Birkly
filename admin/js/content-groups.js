@@ -580,6 +580,16 @@
         
         card.appendChild(header);
         card.appendChild(footer);
+
+        card.addEventListener('click', function (e) {
+            if (e.defaultPrevented) {
+                return;
+            }
+            if (e.target.closest('a, button, .drag-handle, .dropdown-trigger, .collection-menu-wrapper, .entry-count-link')) {
+                return;
+            }
+            window.location.href = adminUrl('entries', { collection: collection.slug });
+        });
         
         return card;
     }
