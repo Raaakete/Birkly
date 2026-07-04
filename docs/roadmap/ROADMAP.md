@@ -1795,7 +1795,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 | Milestone | Focus | Status |
 |-----------|--------|--------|
 | **P5.7-M0** | Verification matrix + global admin UI audit | complete |
-| **P5.7-M1** | Extract JS → `settings-page.js`; global Save; toast; `Birkly.url()` | in progress |
+| **P5.7-M1** | Extract JS → `settings-page.js`; global Save; toast; `Birkly.url()` | complete |
 | **P5.7-M2** | General fixes; security enforcement; MySQL/PG storage + API | pending |
 | **P5.7-M3** | Settings UI redesign; AI tab UX (shared components) | pending |
 | **P5.7-M4** | P1 tab polish; global spacing from audit (sidebar, forms, cards) | pending |
@@ -1836,11 +1836,11 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 **Tasks**
 
-- [ ] **P5.7-M1-T1** Extract inline JS → `admin/js/settings-page.js`
-- [ ] **P5.7-M1-T2** Global Save bar; single `save_all`; remove per-tab saves
-- [ ] **P5.7-M1-T3** Toast via `messages.css`; remove `alert()` / duplicate `showMessage`
-- [ ] **P5.7-M1-T4** `Birkly.url()` for all settings fetches
-- [ ] **P5.7-M1-T5** Delete dead `admin/js/settings.js`
+- [x] **P5.7-M1-T1** Extract inline JS → `admin/js/settings-page.js`
+- [x] **P5.7-M1-T2** Global Save bar; single `save_all`; remove per-tab saves
+- [x] **P5.7-M1-T3** Toast via `messages.css`; remove `alert()` / duplicate `showMessage`
+- [x] **P5.7-M1-T4** `Birkly.url()` for all settings fetches
+- [x] **P5.7-M1-T5** Delete dead `admin/js/settings.js`
 
 ### P5.7-M2 — P0 functionality (General, Security, Storage, API)
 
