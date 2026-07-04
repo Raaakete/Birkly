@@ -1,6 +1,7 @@
 # Phase 6 — Commerce plugins & Birkly Marketplace
 
-**Status:** Proposed — awaiting human approval  
+**Status:** Split — **P6.1 Payments provider plugin** executes first (single sprint). Cart/Events/Marketplace → P6.2+.  
+**Active spec:** `docs/reviews/P6.1-payments-provider-plugin-plan.md`  
 **Repos:** Birkly (primary) · Birkly-Docs · kekaba / Birkly-Website (reference integrations, post-stable)  
 **Depends on:** Phase 5.7 complete on `main`  
 **Design principle:** Deactivatable plugins in `plugins/` — same packaging as automation and user_management. Commerce plugins communicate via `core/plugins/services.php` and `core/plugins/events.php`, not forked CMS logic.

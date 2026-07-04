@@ -136,6 +136,14 @@ When in doubt, treat as major and ask the human.
 
 **Pending human:** Live deploy smoke on `birkly.kekaba.com`; kekaba `Birkly-0.1/` embed commit.
 
+**2026-07-04 — Phase 6.1 approved** (Keven)
+
+**Priorities:** Payments provider plugin — single sprint — 8 adapters, `payment_shelf`, activity log, auto/fixed provider selection, role-gated dashboard widget.
+
+**Human decisions (locked):** Connection hub only (not shop/checkout) · all 8 providers in one sprint (Stripe, Mollie, PayPal, Adyen, Square, Razorpay, Komoju, Payssion) · self-contained `plugins/payments/` · Cart/Events/Marketplace deferred to P6.2+ · notify once at P6.1-M5-T6.
+
+**Spec:** `docs/reviews/P6.1-payments-provider-plugin-plan.md` · **Handoff:** `docs/reviews/P6.1-lead-engineer-handoff.md`
+
 ---
 
 ## Vision
@@ -162,7 +170,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `sample-plugin`
 
-**Next proposed phase:** Phase 6 — Commerce plugins & Marketplace (`docs/reviews/P6-commerce-ecosystem-plan.md`)
+**Next active phase:** P6.1 Payments provider plugin (single sprint). Cart, Events, Marketplace → P6.2+.
 
 ---
 
@@ -1911,58 +1919,69 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
-## Phase 6 — Commerce plugins & Birkly Marketplace (proposed)
+## Phase 6.1 — Payments provider plugin (single sprint)
 
-**Status:** Proposed — **awaiting human approval**
+**Status:** Approved (2026-07-04) — autonomous execution P6.1-M0→M5 in **one sprint**
 
-**Spec:** `docs/reviews/P6-commerce-ecosystem-plan.md`
+**Spec:** `docs/reviews/P6.1-payments-provider-plugin-plan.md` · **Handoff:** `docs/reviews/P6.1-lead-engineer-handoff.md`
 
-**Goal:** Build the commerce and ecosystem layer on top of the stable P5 platform — deactivatable plugins, service registry, automation hooks, user tier integration.
+**Goal:** Self-contained `plugins/payments/` — connect 8 providers, register `payment_shelf` for other plugins, unified activity log, auto/fixed provider selection, role-gated dashboard widget. **Does not sell anything alone.**
 
-**Depends on:** P5.7 complete; human live deploy smoke recommended before M1.
+**Depends on:** P5.7 complete on `main`.
 
-| Milestone | Focus | Plugin / epic |
-|-----------|--------|----------------|
-| **P6-M0** | Commerce foundation — payment service contract, order storage, user tier hooks, P5 deploy closure | Platform |
-| **P6-M1** | **Plugin: Payments** — gateway abstraction, transactions, webhooks, admin config | `plugins/payments/` |
-| **P6-M2** | **Plugin: Shopping Cart** — products, cart session, checkout via Payments | `plugins/shopping_cart/` |
-| **P6-M3** | **Plugin: Events** — events, RSVP, capacity, optional paid tickets | `plugins/events/` |
-| **P6-M4** | **Birkly Marketplace** — plugin directory, install/update, preflight validation, trust metadata | Admin + registry |
-| **P6-M5** | Birkly-Docs, reference demo (kekaba or Birkly-Website), integration matrix, closure | Cross-repo |
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P6.1-M0** | Scaffold, `payment_shelf`, activity log, credential store, admin shell | pending |
+| **P6.1-M1** | Stripe + Mollie + webhooks + connections + activity UI | pending |
+| **P6.1-M2** | PayPal, Adyen, Square, Razorpay, Komoju, Payssion + capability matrix | pending |
+| **P6.1-M3** | Auto/fixed `ProviderResolver`, automation triggers, shelf tests | pending |
+| **P6.1-M4** | Dashboard widget + core role filter for plugin widgets (platform pattern) | pending |
+| **P6.1-M5** | Tests, Birkly-Docs, integration matrix, closure | pending |
 
-**Dependency order:**
+**Providers (all in sprint):** Stripe · Mollie · PayPal · Adyen · Square · Razorpay · Komoju (Japan) · Payssion (China/Asia)
 
-```
-M0 foundation → M1 Payments → M2 Shopping Cart
-                            ↘ M3 Events (RSVP early; paid tickets after M1)
-M4 Marketplace (after M1–M3 plugin.json patterns stable)
-→ M5 docs + closure
-```
+**Human decisions (locked):**
 
-**Human decisions needed before approval:**
+| Decision | Choice |
+|----------|--------|
+| Scope | Connection hub + shelf only — no Cart/Events/checkout |
+| Providers | All 8 in one sprint |
+| Selection | Site `auto` or `fixed`; consumers can force `provider_id` |
+| Widget | Opt-in default off; role multiselect |
+| Security | `manage_payments`, `view_payment_activity`, `view_payment_stats`, `access_payment_shelf` |
+| Execution | Autonomous M0→M5 one sprint; notify once at P6.1-M5-T6 |
+| Deferred | Cart P6.2 · Events P6.3 · User membership wiring P6.4 · Marketplace P6.5 |
 
-| # | Question | Recommendation |
-|---|----------|----------------|
-| 1 | First payment gateway | Stripe or Mollie — pick one for M1 |
-| 2 | Marketplace v1 hosting | Static manifest on Birkly-Website |
-| 3 | kekaba demo | M5 reference only — no prod migration |
-| 4 | Execution model | Autonomous M0→M5; notify once at M5 |
+---
 
-**Also tracked (not P6 core):**
+## Phase 6.2+ — Commerce consumers & marketplace (deferred)
 
-| Item | Suggested home |
-|------|----------------|
-| ContentEditor table cell merge | P6.1 or parallel small phase |
-| Remaining admin UI polish (P5.7 audit P2 items) | Opportunistic during P6 plugin admin UIs |
-| AI OAuth outbound | Separate phase |
+**Status:** Deferred until P6.1 shelf proven
 
-**Design rule:** All commerce code in `plugins/`; use `register_plugin_service()` + `broadcast_plugin_event()`; no CMS core forks.
+**Reference:** `docs/reviews/P6-commerce-ecosystem-plan.md` (original broad P6 proposal — superseded for execution order)
+
+| Phase | Focus |
+|-------|--------|
+| **P6.2** | Plugin: Shopping Cart (shelf consumer) |
+| **P6.3** | Plugin: Events (shelf consumer) |
+| **P6.4** | User plugin ↔ shelf membership wiring |
+| **P6.5** | Birkly Marketplace (external hub — later) |
+
+**Design rule:** Consumer plugins call `payment_shelf` only; never provider APIs directly.
+
+---
+
+## Phase 6 — Commerce plugins & Birkly Marketplace (superseded by 6.1 split)
+
+**Status:** Split — Payments → **P6.1** (active); Cart/Events/Marketplace → **P6.2+** (deferred)
+
+**Original spec:** `docs/reviews/P6-commerce-ecosystem-plan.md`
 
 ---
 
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]` · Phase 5.7 `P5.7-M[N]-T[N]` · Phase 6 `P6-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · … · Phase 5.7 `P5.7-M[N]-T[N]` · Phase 6.1 `P6.1-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
