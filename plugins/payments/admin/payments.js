@@ -324,15 +324,41 @@
 
   function saveSettings(e) {
     e.preventDefault();
+    var roleSelect = document.getElementById('payments-widget-roles');
+    var selectedRoles = roleSelect
+      ? Array.from(roleSelect.selectedOptions).map(function (o) { return o.value; })
+      : ['admin'];
+    if (!selectedRoles.length) {
+      selectedRoles = ['admin'];
+    }
     var settings = {
       selection_mode: document.getElementById('payments-selection-mode').value,
       default_provider: document.getElementById('payments-default-provider').value,
       enable_dashboard_widget: document.getElementById('payments-enable-widget').checked,
-      dashboard_widget_roles: ['admin'],
+      dashboard_widget_roles: selectedRoles,
     };
     apiCall('save_settings', { settings: settings }).then(function (res) {
       if (res.status === 'ok') {
         alert('Settings saved');
+      }
+    });
+  }
+
+  function loadSettings() {
+    apiCall('get_settings', {}, 'GET').then(function (res) {
+      if (res.status !== 'ok' || !res.data || !res.data.settings) return;
+      var s = res.data.settings;
+      var modeEl = document.getElementById('payments-selection-mode');
+      if (modeEl && s.selection_mode) modeEl.value = s.selection_mode;
+      var defEl = document.getElementById('payments-default-provider');
+      if (defEl && s.default_provider) defEl.value = s.default_provider;
+      var widgetEl = document.getElementById('payments-enable-widget');
+      if (widgetEl) widgetEl.checked = !!s.enable_dashboard_widget;
+      var rolesEl = document.getElementById('payments-widget-roles');
+      if (rolesEl && Array.isArray(s.dashboard_widget_roles)) {
+        Array.from(rolesEl.options).forEach(function (opt) {
+          opt.selected = s.dashboard_widget_roles.indexOf(opt.value) !== -1;
+        });
       }
     });
   }
@@ -353,7 +379,10 @@
 
   function init() {
     initTabs();
-    loadProviders().then(loadConnections);
+    loadProviders().then(function () {
+      loadConnections();
+      loadSettings();
+    });
 
     document.getElementById('payments-add-connection')?.addEventListener('click', function () { openConnectionModal(null); });
     document.getElementById('payments-modal-close')?.addEventListener('click', closeConnectionModal);

@@ -575,6 +575,50 @@
                 }
             }
         });
+
+        initPluginWidgetLoaders(widgets);
+    }
+    
+    function initPluginWidgetLoaders(widgets) {
+        if (!widgets || !widgets.length) return;
+        widgets.forEach(function(widget) {
+            if (widget.id === 'payments-stats') {
+                loadPaymentsStatsWidget();
+            }
+        });
+    }
+
+    function loadPaymentsStatsWidget() {
+        var el = document.getElementById('payments-dash-widget');
+        if (!el) return;
+        var url = (window.Birkly && typeof Birkly.url === 'function')
+            ? Birkly.url('/api/index.php?route=payments&action=stats')
+            : '/api/index.php?route=payments&action=stats';
+        fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.status !== 'ok' || !data.data || !data.data.stats) {
+                    el.innerHTML = '<p class="payments-dash-empty">No payment activity yet.</p>';
+                    return;
+                }
+                var s = data.data.stats;
+                var rate = s.success_rate != null ? Math.round(s.success_rate * 100) : 0;
+                var vol7 = (s.volume && s.volume['7d']) ? s.volume['7d'] : 0;
+                el.innerHTML =
+                    '<div class="payments-dash-grid">' +
+                    '<div class="payments-dash-stat"><strong>' + (s.total || 0) + '</strong><span>Events</span></div>' +
+                    '<div class="payments-dash-stat"><strong>' + rate + '%</strong><span>Success rate</span></div>' +
+                    '<div class="payments-dash-stat"><strong>' + formatCents(vol7) + '</strong><span>Volume (7d)</span></div>' +
+                    '</div>';
+            })
+            .catch(function() {
+                el.innerHTML = '<p class="payments-dash-empty">Unable to load payment stats.</p>';
+            });
+    }
+
+    function formatCents(cents) {
+        var n = Number(cents) || 0;
+        return (n / 100).toLocaleString(undefined, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 });
     }
     
     // Activity filter handler

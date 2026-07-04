@@ -44,3 +44,8 @@ if (function_exists('automation_bootstrap') && automation_bootstrap()) {
 } elseif (function_exists('register_automation_block')) {
     payments_init_automation_triggers();
 }
+
+global $birkly_plugins;
+if (isset($birkly_plugins['payments'])) {
+    $birkly_plugins['payments']['dashboard_widgets_callback'] = 'payments_dashboard_widgets';
+}
