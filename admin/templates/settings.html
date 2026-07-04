@@ -255,6 +255,30 @@
 
       <!-- Users & Roles Tab -->
       <div class="tab-pane" id="users-roles">
+        <?php
+          $userCount = count($users ?? []);
+          $roleCount = count($settings['roles'] ?? []);
+        ?>
+        <div class="settings-section">
+          <h2><?= __('admin.users_and_roles') ?></h2>
+          <p class="settings-help"><?= __('admin.users_roles_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <dl class="settings-summary-stats">
+              <div>
+                <dt><?= __('admin.users') ?></dt>
+                <dd><?= (int) $userCount ?></dd>
+              </div>
+              <div>
+                <dt><?= __('admin.roles') ?></dt>
+                <dd><?= (int) $roleCount ?></dd>
+              </div>
+            </dl>
+            <p class="settings-summary-actions">
+              <a href="<?= htmlspecialchars(admin_url('roles')) ?>" class="btn btn-secondary"><?= __('admin.role_management') ?></a>
+              <a href="<?= htmlspecialchars(admin_url('account')) ?>" class="btn btn-secondary"><?= __('admin.account_settings') ?></a>
+            </p>
+          </div>
+        </div>
         <div class="settings-section">
           <div class="section-header">
             <h2><?= __('admin.user_management') ?></h2>
@@ -275,10 +299,10 @@
               </button>
             </div>
           </div>
-          <p class="settings-help-note" style="margin: 0 0 1rem 0; font-size: 0.875rem; color: var(--text-secondary);">
+          <p class="settings-help-note">
             CMS users here manage the admin panel. Site visitors and members are managed separately in <strong>Site Users</strong> (User Management plugin).
           </p>
-          <div class="users-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+          <div class="users-grid">
             <?php if (empty($users)): ?>
               <div class="empty-state">
                 <p><?= __('admin.no_users_found') ?></p>
@@ -286,16 +310,16 @@
               </div>
             <?php else: ?>
               <?php foreach ($users as $user): ?>
-                <div class="user-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
-                  <div class="user-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                    <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1.25rem;">
+                <div class="card user-card">
+                  <div class="user-header">
+                    <div class="user-avatar">
                       <?= strtoupper(substr($user['email'], 0, 1)) ?>
                     </div>
-                    <div class="user-info" style="flex: 1; min-width: 0;">
-                      <h4 style="margin: 0 0 0.25rem 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?= htmlspecialchars($user['email']) ?></h4>
-                      <span class="role-badge <?= $user['role'] ?>" style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: var(--color-primary-light); color: var(--color-primary);"><?= $user['role'] ?></span>
+                    <div class="user-info">
+                      <h4><?= htmlspecialchars($user['email']) ?></h4>
+                      <span class="role-badge <?= $user['role'] ?>"><?= $user['role'] ?></span>
                     </div>
-                    <div class="user-actions" style="display: flex; gap: 0.5rem;">
+                    <div class="user-actions">
                       <button class="btn-icon" onclick="editUser('<?= $user['id'] ?>')" title="Edit User">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -310,9 +334,9 @@
                       </button>
                     </div>
                   </div>
-                  <div class="user-details" style="font-size: 0.875rem; color: var(--text-secondary);">
-                    <p style="margin: 0.25rem 0;"><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
-                    <p style="margin: 0.25rem 0;"><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
+                  <div class="user-details">
+                    <p><strong>Created:</strong> <?= isset($user['created_at']) ? date('M j, Y', strtotime($user['created_at'])) : 'Unknown' ?></p>
+                    <p><strong>Last Login:</strong> <?= isset($user['last_login']) ? date('M j, Y', strtotime($user['last_login'])) : 'Never' ?></p>
                   </div>
                 </div>
               <?php endforeach; ?>
@@ -333,7 +357,7 @@
           </div>
           <div class="roles-grid">
             <?php foreach ($settings['roles'] ?? [] as $role): ?>
-            <div class="role-card">
+            <div class="card role-card">
               <div class="role-header">
                 <h3><?= htmlspecialchars($role['name']) ?></h3>
                 <div class="role-actions">
@@ -366,43 +390,32 @@
         </div>
       </div>
 
-      <!-- Plugins Tab -->
+      <!-- Plugins Tab (summary — full management on standalone page) -->
       <div class="tab-pane" id="plugins">
+        <?php
+          $pluginsList = $settings['plugins'] ?? [];
+          $pluginsCount = count($pluginsList);
+          $pluginsActiveCount = count(array_filter($pluginsList, static function ($plugin) {
+              return !empty($plugin['active']);
+          }));
+        ?>
         <div class="settings-section">
           <h2><?= __('admin.installed_plugins') ?></h2>
-          <div class="plugins-grid">
-            <?php foreach ($settings['plugins'] ?? [] as $pluginId => $plugin): ?>
-            <div class="plugin-card">
-              <div class="plugin-header">
-                <h3><?= htmlspecialchars($pluginId) ?></h3>
-                <div class="plugin-status">
-                  <span class="status-badge <?= $plugin['active'] ? 'active' : 'inactive' ?>">
-                    <?= $plugin['active'] ? 'Active' : 'Inactive' ?>
-                  </span>
-                </div>
+          <p class="settings-help"><?= __('admin.plugins_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <dl class="settings-summary-stats">
+              <div>
+                <dt><?= __('admin.installed_plugins') ?></dt>
+                <dd><?= (int) $pluginsCount ?></dd>
               </div>
-              <div class="plugin-actions">
-                <button class="btn btn-sm <?= $plugin['active'] ? 'btn-secondary' : 'btn-primary' ?>" 
-                        onclick="togglePlugin('<?= htmlspecialchars($pluginId) ?>', <?= $plugin['active'] ? 'false' : 'true' ?>)">
-                  <?= $plugin['active'] ? 'Deactivate' : 'Activate' ?>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deletePlugin('<?= htmlspecialchars($pluginId) ?>')">
-                  Delete
-                </button>
+              <div>
+                <dt><?= __('admin.active') ?></dt>
+                <dd><?= (int) $pluginsActiveCount ?></dd>
               </div>
-              <?php if (!empty($plugin['settings'])): ?>
-              <div class="plugin-settings">
-                <h4>Settings</h4>
-                <?php foreach ($plugin['settings'] as $key => $value): ?>
-                <div class="setting-item">
-                  <span class="setting-key"><?= htmlspecialchars($key) ?>:</span>
-                  <span class="setting-value"><?= htmlspecialchars(is_bool($value) ? ($value ? 'true' : 'false') : $value) ?></span>
-                </div>
-                <?php endforeach; ?>
-              </div>
-              <?php endif; ?>
-            </div>
-            <?php endforeach; ?>
+            </dl>
+            <p class="settings-summary-actions">
+              <a href="<?= htmlspecialchars(admin_url('plugins')) ?>" class="btn btn-primary"><?= __('admin.manage_all_plugins') ?></a>
+            </p>
           </div>
         </div>
       </div>
@@ -518,6 +531,26 @@
 
       <!-- Domains Tab -->
       <div class="tab-pane" id="domains">
+        <?php
+          $domainsSettingsFile = __DIR__ . '/../../settings/domains.json';
+          $registeredDomainsSummary = [];
+          if (is_file($domainsSettingsFile)) {
+              $registeredDomainsSummary = json_decode(file_get_contents($domainsSettingsFile), true) ?: [];
+          }
+          $domainsSummaryCount = is_array($registeredDomainsSummary) ? count($registeredDomainsSummary) : 0;
+        ?>
+        <div class="settings-section">
+          <h2><?= __('admin.domain_management_and_analytics') ?></h2>
+          <p class="settings-help"><?= __('admin.domains_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <dl class="settings-summary-stats">
+              <div>
+                <dt><?= __('admin.domains') ?></dt>
+                <dd><?= (int) $domainsSummaryCount ?></dd>
+              </div>
+            </dl>
+          </div>
+        </div>
         <div class="settings-section">
           <div class="section-header">
             <h2><?= __('admin.domain_management_and_analytics') ?></h2>
@@ -551,49 +584,16 @@
         </div>
       </div>
 
-      <!-- Activity & Audit Log Tab -->
+      <!-- Activity & Audit Log Tab (summary — full pages on standalone routes) -->
       <div class="tab-pane" id="activity-log">
-        <div class="activity-log-page">
-          <div class="main-actions-bar">
-            <div class="filters activity-log-filters">
-              <select id="event-filter" class="input activity-log-filter-event">
-                <option value="">All Events</option>
-              </select>
-              <select id="category-filter" class="input activity-log-filter-category">
-                <option value="all">All Categories</option>
-                <option value="content">Content</option>
-                <option value="users">Users</option>
-                <option value="system">System</option>
-              </select>
-              <input type="date" id="date-filter" class="input activity-log-filter-date" placeholder="Filter by date">
-              <button class="btn btn-secondary" id="refresh-logs">Refresh</button>
-            </div>
-          </div>
-          
-          <div class="table-container activity-log-table-wrap">
-            <table class="table activity-log-table" id="activity-log-table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>User</th>
-                  <th>Event</th>
-                  <th>Category</th>
-                  <th>IP Address</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody id="log-entries">
-                <tr class="activity-log-loading">
-                  <td colspan="6" class="text-center">
-                    <div class="spinner">Loading...</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div class="pagination activity-log-pagination">
-            <button class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
+        <div class="settings-section">
+          <h2><?= __('admin.activity_and_audit_log') ?></h2>
+          <p class="settings-help"><?= __('admin.activity_summary_help') ?></p>
+          <div class="card card--compact settings-summary-card">
+            <p class="settings-summary-actions">
+              <a href="<?= htmlspecialchars(admin_url('activity')) ?>" class="btn btn-primary"><?= __('admin.go_to_activity_feed') ?></a>
+              <a href="<?= htmlspecialchars(admin_url('audit-log')) ?>" class="btn btn-secondary"><?= __('admin.go_to_audit_log') ?></a>
+            </p>
           </div>
         </div>
       </div>

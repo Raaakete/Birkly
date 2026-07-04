@@ -80,9 +80,9 @@ if (empty($userAvatar)) {
 ?><aside class="sidebar">
         <div>
             <div class="sidebar-header">
-                <div id="brandingLogoSidebar" class="logo" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" style="width: 42px; height: 42px; flex-shrink: 0;">
-                    <span style="color: white; font-weight: 600; font-size: 1rem;"><?= htmlspecialchars($projectName) ?></span>
+                <div id="brandingLogoSidebar" class="logo branding-logo">
+                    <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="logo-img">
+                    <span class="logo-name"><?= htmlspecialchars($projectName) ?></span>
                 </div>
             </div>
             <nav class="sidebar-nav">
@@ -90,12 +90,12 @@ if (empty($userAvatar)) {
                 <ul class="nav-links" id="links-main">
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>">
-                            <img src="<?= htmlspecialchars(birkly_url('/admin/assets/Speedometer.svg')) ?>" alt="<?= __('admin.dashboard') ?>" class="nav-icon mr-xs"> <?= __('admin.dashboard') ?>
+                            <img src="<?= htmlspecialchars(birkly_url('/admin/assets/Speedometer.svg')) ?>" alt="<?= __('admin.dashboard') ?>" class="nav-icon"> <?= __('admin.dashboard') ?>
                         </a>
                     </li>
-                    <li class="nav-item <?= is_nav_active('content') || is_nav_active('entries') || is_nav_active('entry-editor') || is_nav_active('collection-editor') ? 'active' : '' ?>">
-                        <a href="<?= htmlspecialchars(admin_url('content')) ?>" class="nav-link">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
+                    <li class="nav-item">
+                        <a href="<?= htmlspecialchars(admin_url('content')) ?>" class="nav-link <?= is_nav_active('content') || is_nav_active('entries') || is_nav_active('entry-editor') || is_nav_active('collection-editor') ? 'active' : '' ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14,2 14,8 20,8"></polyline>
                                 <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -107,7 +107,7 @@ if (empty($userAvatar)) {
                     </li>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('media')) ?>" class="nav-link <?= is_nav_active('media') ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                                 <polyline points="21,15 16,10 5,21"></polyline>
@@ -149,9 +149,9 @@ if (empty($userAvatar)) {
 
                 <!-- Third Section: Settings, Help, Logout -->
                 <ul class="nav-links" id="links-settings">
-                    <li class="nav-item <?= is_nav_active('settings') || is_nav_active('roles') || is_nav_active('plugins') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>">
-                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
+                    <li class="nav-item">
+                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('roles') || is_nav_active('plugins') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                             </svg>
@@ -167,7 +167,7 @@ if (empty($userAvatar)) {
                     ?>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('feedback')) ?>" class="nav-link <?= is_nav_active('feedback') ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                             Alpha Feedback
@@ -176,7 +176,7 @@ if (empty($userAvatar)) {
                     <?php endif; ?>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-xs">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                                 <line x1="12" y1="17" x2="12.01" y2="17"></line>

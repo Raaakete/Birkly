@@ -26,6 +26,32 @@
   color: var(--text-primary, #20221D);
 }
 
+/* Split card layout (header + body) */
+.card:has(> .card-header) {
+  padding: 0;
+  min-height: auto;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-6, 1.5rem);
+  padding-bottom: var(--space-4, 1rem);
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.card-header h2,
+.card-header h3 {
+  margin: 0;
+}
+
+.card-body {
+  padding: var(--space-6, 1.5rem);
+  padding-top: var(--space-4, 1rem);
+}
+
 /* Make links inside cards behave like block and inherit color */
 .card > a {
   display: block;
