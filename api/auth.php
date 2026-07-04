@@ -12,11 +12,30 @@ if (file_exists(__DIR__ . '/ai_helpers.php')) {
     require_once __DIR__ . '/ai_helpers.php';
 }
 
+function get_security_settings() {
+    static $settings = null;
+    if ($settings !== null) {
+        return $settings;
+    }
+
+    $settingsStorage = new Storage(__DIR__ . '/../settings');
+    $file = $settingsStorage->read('security.json') ?? [];
+
+    $settings = array_merge([
+        'session_timeout' => 3600,
+        'password_min_length' => 8,
+        'require_strong_password' => true,
+        'max_login_attempts' => 5,
+        'lockout_time' => 900,
+        'enable_csrf' => true,
+    ], $file);
+
+    return $settings;
+}
+
 function getSessionTimeout() {
-    // Load session timeout from settings, fallback to 3600s
-    $settingsStorage = new Storage('../settings');
-    $security = $settingsStorage->read('security.json') ?? [];
-    return isset($security['session_timeout']) ? (int)$security['session_timeout'] : 3600;
+    $security = get_security_settings();
+    return (int) ($security['session_timeout'] ?? 3600);
 }
 
 function requireAuth($permission = null) {

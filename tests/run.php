@@ -67,6 +67,10 @@ $suites = [
     'plugin_dependencies_test.php',
     'user_plugin_permissions_test.php',
     'feedback_test.php',
+    'settings_general_test.php',
+    'settings_security_test.php',
+    'settings_storage_test.php',
+    'settings_save_test.php',
 ];
 
 $root = dirname(__DIR__);

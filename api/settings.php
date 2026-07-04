@@ -16,6 +16,8 @@ require_once 'users.php';
 require_once 'auth.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
+require_once '../core/storage/StorageFactory.php';
+require_once '../core/storage/StorageMigration.php';
 require_once 'log.php';
 
 $storage = new Storage('../settings');
@@ -215,7 +217,7 @@ if ($action === 'save_all') {
         $mediaSettings['thumbnail_size'][1] = intval($settings['mediaThumbnailHeight']);
     }
     if (isset($settings['mediaCreateThumbnails'])) {
-        $mediaSettings['create_thumbnails'] = ($settings['mediaCreateThumbnails'] === 'on' || $settings['mediaCreateThumbnails'] === true);
+        $mediaSettings['create_thumbnails'] = filter_var($settings['mediaCreateThumbnails'], FILTER_VALIDATE_BOOLEAN);
     }
     
     // Security settings
@@ -233,10 +235,34 @@ if ($action === 'save_all') {
         $securitySettings['lockout_time'] = intval($settings['securityLockoutTime']) * 60; // Convert minutes to seconds
     }
     if (isset($settings['securityRequireStrongPassword'])) {
-        $securitySettings['require_strong_password'] = ($settings['securityRequireStrongPassword'] === 'on' || $settings['securityRequireStrongPassword'] === true);
+        $securitySettings['require_strong_password'] = filter_var($settings['securityRequireStrongPassword'], FILTER_VALIDATE_BOOLEAN);
     }
     if (isset($settings['securityEnableCsrf'])) {
-        $securitySettings['enable_csrf'] = ($settings['securityEnableCsrf'] === 'on' || $settings['securityEnableCsrf'] === true);
+        $securitySettings['enable_csrf'] = filter_var($settings['securityEnableCsrf'], FILTER_VALIDATE_BOOLEAN);
+    }
+
+    // Storage settings
+    $storageInput = [];
+    $storageFieldMap = [
+        'storage_backend' => 'storage_backend',
+        'storageBackend' => 'storage_backend',
+        'db_host' => 'db_host',
+        'storageDbHost' => 'db_host',
+        'db_port' => 'db_port',
+        'storageDbPort' => 'db_port',
+        'db_name' => 'db_name',
+        'storageDbName' => 'db_name',
+        'db_user' => 'db_user',
+        'storageDbUser' => 'db_user',
+        'db_password' => 'db_password',
+        'storageDbPassword' => 'db_password',
+        'db_prefix' => 'db_prefix',
+        'storageDbPrefix' => 'db_prefix',
+    ];
+    foreach ($storageFieldMap as $inputKey => $canonicalKey) {
+        if (array_key_exists($inputKey, $settings)) {
+            $storageInput[$canonicalKey] = $settings[$inputKey];
+        }
     }
     
     // Branding settings
@@ -296,9 +322,97 @@ if ($action === 'save_all') {
         $updated['_updated_by'] = $_SESSION['user']['id'];
         $storage->write('branding.json', $updated);
     }
+
+    if (!empty($storageInput)) {
+        $storageConfig = StorageFactory::buildStorageConfigFromInput($storageInput);
+        $storageConfig['_updated_by'] = $_SESSION['user']['id'] ?? 'unknown';
+        if (!StorageFactory::saveStorageConfig($storageConfig)) {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to save storage settings']);
+            exit;
+        }
+    }
     
     log_security_event('settings_save_all', ['user' => $_SESSION['user']['email'] ?? 'unknown']);
     echo json_encode(['status' => 'ok', 'message' => 'Settings saved']);
+    exit;
+}
+
+if ($action === 'test_database') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'test_database', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $driver = StorageFactory::normalizeDriver($input['backend'] ?? $input['driver'] ?? '');
+    if (!in_array($driver, ['mysql', 'postgresql'], true)) {
+        echo json_encode(['status' => 'error', 'message' => 'Database connection test is only available for MySQL and PostgreSQL']);
+        exit;
+    }
+
+    $result = StorageFactory::testDatabaseConnection(array_merge($input, ['driver' => $driver]));
+    if ($result['ok']) {
+        echo json_encode(['status' => 'ok', 'message' => $result['message']]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => $result['message']]);
+    }
+    exit;
+}
+
+if ($action === 'migrate_storage') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'migrate_storage', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $driver = StorageFactory::normalizeDriver($input['backend'] ?? $input['driver'] ?? '');
+    if (!in_array($driver, ['mysql', 'postgresql'], true)) {
+        echo json_encode(['status' => 'error', 'message' => 'Migration requires MySQL or PostgreSQL backend']);
+        exit;
+    }
+
+    $config = StorageFactory::buildStorageConfigFromInput(array_merge(
+        StorageFactory::loadStorageConfig(true),
+        ['storage_backend' => $driver],
+        $input
+    ));
+    $config['driver'] = $driver;
+
+    $connectionTest = StorageFactory::testDatabaseConnection($config);
+    if (!$connectionTest['ok']) {
+        echo json_encode(['status' => 'error', 'message' => 'Database connection failed: ' . $connectionTest['message']]);
+        exit;
+    }
+
+    $sourcePath = $config['base_path'] ?? StorageFactory::loadStorageConfig(true)['base_path'];
+    $source = new FlatFileStorage($sourcePath);
+    $target = StorageFactory::createDriver($driver, $config);
+
+    $migration = StorageMigration::migrateFlatFileToStorage($source, $target);
+    if (!$migration['ok']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $migration['message'],
+            'data' => ['migrated' => $migration['migrated'] ?? 0],
+        ]);
+        exit;
+    }
+
+    StorageFactory::saveStorageConfig($config);
+    log_security_event('storage_migrated', [
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+        'driver' => $driver,
+        'migrated' => $migration['migrated'],
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => $migration['message'],
+        'data' => ['migrated' => $migration['migrated']],
+    ]);
     exit;
 }
 

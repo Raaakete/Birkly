@@ -141,29 +141,43 @@
 
           <div class="settings-section">
             <h2><?= __('admin.media_settings') ?></h2>
+            <?php
+              $mediaSettings = $settings['media'] ?? [];
+              $maxUploadMb = isset($mediaSettings['max_upload_size'])
+                  ? (int) round($mediaSettings['max_upload_size'] / 1024 / 1024)
+                  : (int) ($mediaSettings['maxUploadSize'] ?? 5);
+              $imageQuality = $mediaSettings['image_quality'] ?? $mediaSettings['imageQuality'] ?? 85;
+              $thumbnailSize = $mediaSettings['thumbnail_size'] ?? null;
+              $thumbWidth = is_array($thumbnailSize) ? ($thumbnailSize[0] ?? 150) : ($mediaSettings['thumbnailWidth'] ?? 150);
+              $thumbHeight = is_array($thumbnailSize) ? ($thumbnailSize[1] ?? 150) : ($mediaSettings['thumbnailHeight'] ?? 150);
+              $createThumbnails = $mediaSettings['create_thumbnails'] ?? $mediaSettings['createThumbnails'] ?? true;
+              if ($createThumbnails === 'on') {
+                  $createThumbnails = true;
+              }
+            ?>
             <div class="form-row">
               <div class="form-group">
                 <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
-                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" value="<?= htmlspecialchars($settings['media']['maxUploadSize'] ?? '') ?>" min="1" max="100">
+                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
               </div>
               <div class="form-group">
                 <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
-                <input type="number" id="media-image-quality" name="mediaImageQuality" value="<?= htmlspecialchars($settings['media']['imageQuality'] ?? '') ?>" min="10" max="100">
+                <input type="number" id="media-image-quality" name="mediaImageQuality" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
-                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" value="<?= htmlspecialchars($settings['media']['thumbnailWidth'] ?? '') ?>" min="50" max="1000">
+                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
               </div>
               <div class="form-group">
                 <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
-                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" value="<?= htmlspecialchars($settings['media']['thumbnailHeight'] ?? '') ?>" min="50" max="1000">
+                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
               </div>
             </div>
             <div class="form-group">
               <label class="checkbox-label">
-                <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= ($settings['media']['createThumbnails'] ?? '') === 'on' ? 'checked' : '' ?>>
+                <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= !empty($createThumbnails) ? 'checked' : '' ?>>
                 <span><?= __('admin.create_thumbnails_automatically') ?></span>
               </label>
             </div>
@@ -454,6 +468,17 @@
 
       <!-- API Tab -->
       <div class="tab-pane" id="api">
+        <?php
+          require_once __DIR__ . '/../../core/birkly_paths.php';
+          $apiEndpoint = birkly_url('/api/');
+          $domainsFile = __DIR__ . '/../../settings/domains.json';
+          $registeredDomains = [];
+          if (is_file($domainsFile)) {
+              $registeredDomains = json_decode(file_get_contents($domainsFile), true) ?: [];
+          }
+          $domainCount = is_array($registeredDomains) ? count($registeredDomains) : 0;
+          $domainsTabUrl = admin_url('settings') . '#domains';
+        ?>
         <div class="settings-section">
           <h2><?= __('admin.api_information') ?></h2>
           <p class="settings-help"><?= __('admin.api_info_help') ?></p>
@@ -461,15 +486,19 @@
           <div class="api-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
             <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
               <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">API Endpoint</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">The API is available at: <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">/api/</code></p>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">The API is available at: <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;"><?= htmlspecialchars($apiEndpoint) ?></code></p>
             </div>
             <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
               <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Authentication</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">API requests require proper authentication via session cookies or API keys. See the <a href="/admin/index.php?page=settings#domains" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab to register domains for API access.</p>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Manage domains</a></p>
             </div>
             <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
               <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Rate Limiting</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">API requests are rate-limited per domain to prevent abuse. Rate limits can be configured in the <a href="/admin/index.php?page=settings#domains" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab.</p>
+              <?php if ($domainCount > 0): ?>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab.</p>
+              <?php else: ?>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab to enable API access controls.</p>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -569,6 +598,19 @@
 
       <!-- Storage Tab -->
       <div class="tab-pane" id="storage">
+<?php
+  $storageSettings = $settings['storage'] ?? [];
+  $storageDriver = $storageSettings['driver'] ?? $storageSettings['backend'] ?? 'flatfile';
+  if ($storageDriver === 'postgres') {
+      $storageDriver = 'postgresql';
+  }
+  $dbHost = $storageSettings['host'] ?? $storageSettings['db_host'] ?? 'localhost';
+  $dbPort = $storageSettings['port'] ?? $storageSettings['db_port'] ?? ($storageDriver === 'postgresql' ? 5432 : 3306);
+  $dbName = $storageSettings['database'] ?? $storageSettings['db_name'] ?? '';
+  $dbUser = $storageSettings['username'] ?? $storageSettings['db_user'] ?? '';
+  $dbPassword = $storageSettings['password'] ?? $storageSettings['db_password'] ?? '';
+  $dbPrefix = $storageSettings['prefix'] ?? $storageSettings['db_prefix'] ?? 'birkly_';
+?>
 <form id="storage-form" class="settings-form">
           <div class="settings-section">
             <h2><?= __('admin.storage_backend') ?></h2>
@@ -578,46 +620,46 @@
               <div class="form-group">
                 <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
                 <select id="storage-backend" name="storage_backend" class="input">
-                  <option value="flatfile" <?= ($settings['storage']['backend'] ?? 'flatfile') === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
-                  <option value="sqlite" <?= ($settings['storage']['backend'] ?? '') === 'sqlite' ? 'selected' : '' ?>>SQLite Database</option>
-                  <option value="mysql" <?= ($settings['storage']['backend'] ?? '') === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
-                  <option value="postgresql" <?= ($settings['storage']['backend'] ?? '') === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
+                  <option value="flatfile" <?= $storageDriver === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
+                  <option value="mysql" <?= $storageDriver === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
+                  <option value="postgresql" <?= $storageDriver === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
+                  <option value="sqlite" disabled <?= $storageDriver === 'sqlite' ? 'selected' : '' ?>>SQLite (coming soon)</option>
                 </select>
                 <small><?= __('admin.changing_storage_backend_warning') ?></small>
               </div>
             </div>
             
-            <div id="database-config" style="display: <?= in_array($settings['storage']['backend'] ?? 'flatfile', ['sqlite', 'mysql', 'postgresql']) ? 'block' : 'none' ?>;">
+            <div id="database-config" style="display: <?= in_array($storageDriver, ['mysql', 'postgresql'], true) ? 'block' : 'none' ?>;">
               <div class="form-row">
                 <div class="form-group">
                   <label for="db-host"><?= __('admin.database_host') ?></label>
-                  <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars($settings['storage']['db_host'] ?? 'localhost') ?>" class="input" placeholder="localhost">
+                  <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars((string) $dbHost) ?>" class="input" placeholder="localhost">
                 </div>
                 <div class="form-group">
                   <label for="db-port"><?= __('admin.database_port') ?></label>
-                  <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars($settings['storage']['db_port'] ?? '3306') ?>" class="input" placeholder="3306">
+                  <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars((string) $dbPort) ?>" class="input" placeholder="<?= $storageDriver === 'postgresql' ? '5432' : '3306' ?>">
                 </div>
               </div>
               
               <div class="form-row">
                 <div class="form-group">
                   <label for="db-name"><?= __('admin.database_name') ?></label>
-                  <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars($settings['storage']['db_name'] ?? '') ?>" class="input" placeholder="birkly">
+                  <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars((string) $dbName) ?>" class="input" placeholder="birkly">
                 </div>
                 <div class="form-group">
                   <label for="db-user">Database User</label>
-                  <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars($settings['storage']['db_user'] ?? '') ?>" class="input" placeholder="username">
+                  <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars((string) $dbUser) ?>" class="input" placeholder="username">
                 </div>
               </div>
               
               <div class="form-row">
                 <div class="form-group">
                   <label for="db-password"><?= __('admin.database_password') ?></label>
-                  <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars($settings['storage']['db_password'] ?? '') ?>" class="input" placeholder="password">
+                  <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars((string) $dbPassword) ?>" class="input" placeholder="password">
                 </div>
                 <div class="form-group">
                   <label for="db-prefix">Table Prefix</label>
-                  <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars($settings['storage']['db_prefix'] ?? 'birkly_') ?>" class="input" placeholder="birkly_">
+                  <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars((string) $dbPrefix) ?>" class="input" placeholder="birkly_">
                 </div>
               </div>
               
