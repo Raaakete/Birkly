@@ -1776,9 +1776,32 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
+## Phase 5.7 — Settings UI/UX & functionality audit (proposed)
+
+**Status:** Proposed — **awaiting human approval**
+
+**Spec:** `docs/reviews/P5.7-settings-ui-ux-plan.md`
+
+**Priorities:** Settings page overhaul (all tabs) · fix or honestly disable broken controls · reuse existing admin CSS/components · structured AI/QA verification matrix for every setting.
+
+**Depends on:** P5.6 closure or CSS coordination (topbar).
+
+| Milestone | Focus |
+|-----------|--------|
+| **P5.7-M0** | Full settings audit + per-control verification matrix |
+| **P5.7-M1** | JS extraction, toast feedback, `Birkly.url()` everywhere |
+| **P5.7-M2** | Fix P0 tabs: General, Security, Storage (honest), API (honest) |
+| **P5.7-M3** | UI/UX redesign reusing `tabs/forms/cards/modals` — shrink `settings.css` |
+| **P5.7-M4** | Users, Plugins, Domains, Activity, AI regression, orphan cleanup |
+| **P5.7-M5** | Automated tests + AI matrix execution + docs + closure |
+
+**Design rule:** No new visual language — extend shared components only; new CSS only when necessary.
+
+---
+
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]`.
+Task IDs: Phase 1 `M[N]-T[N]` · Phase 2 `P2-M[N]-T[N]` · Phase 3 `P3-M[N]-T[N]` · Phase 4 `P4-M[N]-T[N]` · Phase 4.1 `P4.1-M[N]-T[N]` · Phase 5 `P5-M[N]-T[N]` · Phase 5.1 `P5.1-M[N]-T[N]` · Phase 5.2 `P5.2-M[N]-T[N]` · Phase 5.3 `P5.3-M[N]-T[N]` · Phase 5.4 `P5.4-M[N]-T[N]` · Phase 5.5 `P5.5-M[N]-T[N]` · Phase 5.6 `P5.6-M[N]-T[N]` · Phase 5.7 `P5.7-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
