@@ -136,13 +136,19 @@ When in doubt, treat as major and ask the human.
 
 **Pending human:** Live deploy smoke on `birkly.kekaba.com`; kekaba `Birkly-0.1/` embed commit.
 
-**2026-07-04 — Phase 6.1 approved** (Keven)
+**Spec:** `docs/reviews/P6.1-payments-provider-plugin-plan.md` · **Handoff:** `docs/reviews/P6.1-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P6.1-verification-matrix.md`
 
-**Priorities:** Payments provider plugin — single sprint — 8 adapters, `payment_shelf`, activity log, auto/fixed provider selection, role-gated dashboard widget.
+**2026-07-04 — Phase 6.1 complete** (merged to `main`)
 
-**Human decisions (locked):** Connection hub only (not shop/checkout) · all 8 providers in one sprint (Stripe, Mollie, PayPal, Adyen, Square, Razorpay, Komoju, Payssion) · self-contained `plugins/payments/` · Cart/Events/Marketplace deferred to P6.2+ · notify once at P6.1-M5-T6.
+**Delivered:** `plugins/payments/` · 8 provider adapters · `payment_shelf` · activity log · dashboard widget · 70 test suites green.
 
-**Spec:** `docs/reviews/P6.1-payments-provider-plugin-plan.md` · **Handoff:** `docs/reviews/P6.1-lead-engineer-handoff.md`
+**2026-07-04 — Phase 6.2 + 6.3 approved** (Keven)
+
+**Priorities:** Shopping Cart + Events in **one combined sprint** — both consume `payment_shelf`.
+
+**Human decisions (locked):** Self-contained plugins · shelf only · parallel after shared M0 · Cart one-time checkout · Events RSVP + paid tickets · P6.4/P6.5 deferred · notify once at P6.2-P6.3-M5-T5.
+
+**Spec:** `docs/reviews/P6.2-P6.3-commerce-consumers-plan.md` · **Handoff:** `docs/reviews/P6.2-P6.3-lead-engineer-handoff.md`
 
 ---
 
@@ -162,15 +168,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phases 5–5.7 complete** on `main` — AI/MCP, admin UX, ContentEditor layout, onboarding, settings, DB storage, security enforcement. |
+| **Birkly (CMS)** | **P6.1 complete** — `plugins/payments/` + `payment_shelf` (8 providers). **P6.2 + P6.3 approved** — execute next. |
 | **Birkly-Website** | `Birkly-0.1/` embed sync deferred; update after human CMS deploy verification. |
 | **kekaba** | P5.7 embed synced locally; **git commit/push deferred** to human deploy. |
-| **Birkly-Docs** | P5.7 settings guide merged; commerce docs pending Phase 6. |
-| **Agent ops** | Autonomous merge active; 65 PHP test suites green. |
+| **Birkly-Docs** | P6.1 payments + shelf API merged; P6.2/P6.3 guides pending sprint. |
+| **Agent ops** | Autonomous merge active; **70** PHP test suites green. |
 
-**Active plugins on `main`:** `automation`, `user_management`, `sample-plugin`
+**Active plugins on `main`:** `automation`, `user_management`, `payments`, `sample-plugin`
 
-**Next active phase:** P6.2 Shopping Cart plugin (deferred until human approves). Payments shelf proven on `main`.
+**Next active phase:** **P6.2 + P6.3** Shopping Cart & Events — combined sprint (approved).
 
 ---
 
@@ -1954,20 +1960,71 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ---
 
-## Phase 6.2+ — Commerce consumers & marketplace (deferred)
+## Phase 6.2 + 6.3 — Shopping Cart & Events (combined sprint)
 
-**Status:** Deferred until P6.1 shelf proven
+**Status:** Approved (2026-07-04) — autonomous execution in **one sprint**
 
-**Reference:** `docs/reviews/P6-commerce-ecosystem-plan.md` (original broad P6 proposal — superseded for execution order)
+**Spec:** `docs/reviews/P6.2-P6.3-commerce-consumers-plan.md` · **Handoff:** `docs/reviews/P6.2-P6.3-lead-engineer-handoff.md`
+
+**Goal:** Two shelf consumer plugins — Cart (products, checkout, orders) and Events (RSVP, paid tickets, capacity). Both use `payment_shelf` only.
+
+**Depends on:** P6.1 complete on `main`.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P6.2-P6.3-M0** | Shared consumer payment patterns + scaffolds | pending |
+| **P6.2-M1–M3** | Shopping Cart: cart, checkout, orders, templates, automation | pending |
+| **P6.3-M1–M3** | Events: RSVP, paid tickets, capacity, templates, automation | pending |
+| **P6.2-P6.3-M4** | Integration tests, activity log cross-check, optional kekaba demo | pending |
+| **P6.2-P6.3-M5** | Birkly-Docs, verification matrix, closure | pending |
+
+**Human decisions (locked):**
+
+| Decision | Choice |
+|----------|--------|
+| Execution | Both plugins in one sprint; parallel after M0 |
+| Payments | Shelf only; free RSVP works without Payments |
+| Cart v1 | One-time checkout; no shipping/tax/subscriptions |
+| Events v1 | RSVP + paid tickets; no waitlist/recurring |
+| Deferred | P6.4 User memberships · P6.5 Marketplace |
+| Notify | Once at P6.2-P6.3-M5-T5 |
+
+---
+
+## Phase 6.2 — Shopping Cart (detail)
+
+**Plugin:** `plugins/shopping_cart/`  
+**Requires:** Payments plugin active + `access_payment_shelf`
+
+Products (collection) · session cart · checkout via shelf · orders admin · template functions · automation `order_*` triggers.
+
+---
+
+## Phase 6.3 — Events (detail)
+
+**Plugin:** `plugins/events/`  
+**Requires:** Payments for paid tickets only (free RSVP standalone)
+
+Events (collection) · ticket types · RSVP · paid registration via shelf · capacity · template functions · automation `event_*` triggers.
+
+---
+
+## Phase 6.4+ — Deferred
 
 | Phase | Focus |
 |-------|--------|
-| **P6.2** | Plugin: Shopping Cart (shelf consumer) |
-| **P6.3** | Plugin: Events (shelf consumer) |
 | **P6.4** | User plugin ↔ shelf membership wiring |
-| **P6.5** | Birkly Marketplace (external hub — later) |
+| **P6.5** | Birkly Marketplace (external hub) |
 
 **Design rule:** Consumer plugins call `payment_shelf` only; never provider APIs directly.
+
+---
+
+## Phase 6.2+ — Commerce consumers & marketplace (superseded)
+
+**Status:** Replaced by § Phase 6.2 + 6.3 (active) and § Phase 6.4+ (deferred)
+
+**Reference:** `docs/reviews/P6-commerce-ecosystem-plan.md`
 
 ---
 
@@ -1981,7 +2038,7 @@ Milestones M1–M6 (2026-06-16 → 2026-06-18). See milestone sections above for
 
 ## Task handoff format
 
-Task IDs: Phase 1 `M[N]-T[N]` · … · Phase 5.7 `P5.7-M[N]-T[N]` · Phase 6.1 `P6.1-M[N]-T[N]`.
+Task IDs: … · Phase 6.1 `P6.1-M[N]-T[N]` · Phase 6.2 `P6.2-M[N]-T[N]` · Phase 6.3 `P6.3-M[N]-T[N]` · Combined `P6.2-P6.3-M[N]-T[N]`.
 
 ```markdown
 ### Task: M[N]-T[N] [title]
