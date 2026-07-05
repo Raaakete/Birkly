@@ -40,35 +40,41 @@ flowchart TB
 | Anti-pattern (Woo-style) | Birkly pattern |
 |--------------------------|----------------|
 | Separate `product`, `download`, `event` post types | **One** `commerce` fieldtype on **any** collection |
-| Different plugins per vertical | **`offer_type`** selects behavior profile |
-| Hard-coded checkout | Checkout **schema** derived from cart line offer types |
+| Billing mode tied to product kind | **`fulfillment`** (ship/deliver/register) **decoupled** from **`purchase_options[]`** (one_time + recurring on same entry) |
+| Variant SKUs as custom tables | **Sub-collection `variants`** on parent entry — each sub-entry has commerce field |
+| Hard-coded checkout | Checkout derived from cart lines: fulfillment + selected purchase_option + variant |
 
-Collections stay semantic (`products`, `downloads`, `workshops`) — behavior comes from `offer_type` + optional collection defaults.
+**Scenarios & content model:** `docs/reviews/P6-commerce-scenarios-and-model.md` (yoga, coffee, tutorials+community)
+
+Collections stay semantic (`products`, `classes`, `courses`) — behavior from **fulfillment + purchase_options + optional variant sub-entries**.
 
 ---
 
 ## Offer types (v1 registry)
 
-| `offer_type` | Entry fields (beyond price/billing) | Checkout extras | Post-purchase |
-|--------------|-------------------------------------|-----------------|---------------|
-| **`physical`** | `quantity_available`, weight/dimensions optional, SKU | Shipping address, optional shipping method | Fulfillment adapter push; `commerce_physical_fulfilled` |
-| **`digital`** | `delivery_mode`, asset ref or URL, license optional | Email (guest ok); account link if vault | Email + signed download URL; `commerce_digital_delivered` |
-| **`event`** | `quantity_available` (capacity), `starts_at` optional on entry | Attendee name(s), email | Registration record, calendar/token; `commerce_event_registered` |
-| **`session`** | Slot/capacity, duration (defer detailed booking UI) | Contact + slot confirmation | Booking record; `commerce_session_booked` |
-| **`membership`** | `billing: recurring`, interval | Account strongly recommended | Tier grant via mappings; `commerce_membership_started` |
-| **`bundle`** | Component refs (P6.8) | Union of component checkout needs | Expand + run per-component handlers |
+**Revised (lean):** use **`fulfillment`** enum + **`purchase_options[]`** — not a single `offer_type` that implies billing.
 
-**Default:** `physical` if unset (backward compatible with P6.4 entries — treat as physical with shipping optional until merchant configures).
+| `fulfillment` | Entry fields (typical) | Checkout extras | Post-purchase |
+|---------------|------------------------|-----------------|---------------|
+| **`ship`** | qty, SKU, weight optional | Shipping address | Fulfillment adapter; `commerce_physical_fulfilled` |
+| **`deliver`** | delivery asset/URL | Email | Download token; `commerce_digital_delivered` |
+| **`register`** | capacity, schedule on entry | Attendee | Registration; `commerce_event_registered` |
+| **`none`** | — | Account for access | Tier grant / automation only |
 
-### Extensibility
+**Purchase options (1..n per sellable unit):**
 
-Register offer types like fulfillment adapters:
-
-```php
-commerce_register_offer_type('physical', PhysicalOfferHandler::class);
+```json
+"purchase_options": [
+  { "id": "once", "billing": "one_time", "price_cents": 1499, "label": "Buy once" },
+  { "id": "sub", "billing": "recurring", "interval": "month", "price_cents": 1299, "label": "Subscribe" }
+]
 ```
 
-Third-party plugins could add `rental`, `donation`, `license_seat` without forking Commerce.
+Same entry can sell coffee **once or monthly** — buyer picks option at checkout, not at content modeling time.
+
+**Variants:** sellable unit = parent entry OR **variant sub-entry** (sub-collection). See scenarios doc.
+
+**Deferred:** separate `session` type (use `register`); `bundle` (Wave 3); membership as fulfillment (use `none` + recurring option + tier mapping).
 
 ---
 
