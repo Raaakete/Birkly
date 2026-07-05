@@ -168,9 +168,13 @@ When in doubt, treat as major and ask the human.
 
 **2026-07-05 — Phase 6.5 proposed** (Keven)
 
-**Priorities:** Commerce fieldtype collection controls · plugin AI docs shelf · templating/AI documentation polish.
+**Priorities:** Commerce fieldtype collection controls · unified plugin docs (AI + Help) · templating polish.
 
-**Spec:** `docs/reviews/P6.5-commerce-polish-ai-plan.md`
+**2026-07-05 — Commerce Phase 2 master plan proposed** (Keven)
+
+**Priorities:** `offer_type` (physical / digital / event / session / membership / bundle) · post-purchase orchestration · shipping · digital delivery · event registration · tax/refunds/subscriptions.
+
+**Spec:** `docs/reviews/P6-commerce-phase2-master-plan.md` · **Polish:** `docs/reviews/P6.5-commerce-polish-ai-plan.md`
 
 ---
 
@@ -196,7 +200,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.5 Commerce polish & plugin AI extensibility** (proposed — pending approval).
+**Next active phase:** **P6.5** polish, then **P6.6+** offer types & fulfillment verticals — see `docs/reviews/P6-commerce-phase2-master-plan.md`.
 
 ---
 
@@ -2063,15 +2067,37 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P6.5-M2** | Plugin AI docs shelf + Commerce `ai-context.md` | pending |
 | **P6.5-M3** | Template metadata, context pack, Birkly-Docs commerce guides | pending |
 
----
-
-## Phase 6.6+ — Deferred
+**Master plan (Phase 2):** `docs/reviews/P6-commerce-phase2-master-plan.md`
 
 | Phase | Focus |
 |-------|--------|
-| **P6.6** | Shop/Events consolidation or migration wizards |
-| **P6.7** | Birkly Marketplace (external hub) |
-| **P6.8** | Live Shopify/Woo API import |
+| **P6.6** | Offer types + post-purchase orchestrator |
+| **P6.7** | Physical + shipping zones |
+| **P6.8** | Digital delivery pipeline |
+| **P6.9** | Event/session registration |
+| **P6.10** | Bundle fieldtype |
+| **P6.11** | Tax, subscriptions, refunds, emails |
+| **P6.12** | Shop/Events migration, gift cards, analytics |
+
+---
+
+## Phase 6.6+ — Commerce Phase 2 (detail)
+
+**Status:** Proposed — see master plan
+
+**Spec:** `docs/reviews/P6-commerce-phase2-master-plan.md`
+
+**Goal:** `offer_type` on Commerce fieldtype drives conditional fields, checkout, and typed post-purchase handlers (physical fulfillment, digital delivery, event registration).
+
+---
+
+## Phase 6.12+ — Deferred platform
+
+| Phase | Focus |
+|-------|--------|
+| **P6.12** | Shop/Events migration wizards, gift cards, B2B quotes, analytics |
+| **P7.0** | Birkly Marketplace (external hub) |
+| **P7.1** | Live Shopify/Woo API import |
 
 **Design rule:** Commerce owns providers + checkout; entries with Commerce fieldtype are the catalog.
 
