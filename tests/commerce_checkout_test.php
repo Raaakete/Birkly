@@ -34,6 +34,10 @@ require_once $root . '/plugins/commerce/includes/FulfillmentAdapterInterface.php
 require_once $root . '/plugins/commerce/includes/ManualFulfillmentAdapter.php';
 require_once $root . '/plugins/commerce/includes/ShipStationStubAdapter.php';
 require_once $root . '/plugins/commerce/includes/CommerceCheckoutService.php';
+require_once $root . '/plugins/commerce/includes/CommerceSchema.php';
+require_once $root . '/plugins/commerce/includes/EventRegistrationStore.php';
+require_once $root . '/plugins/commerce/includes/DigitalDeliveryStore.php';
+require_once $root . '/plugins/commerce/includes/PostPurchaseRouter.php';
 
 class TestCheckoutCredentialStore extends PaymentsCredentialStore
 {
@@ -107,7 +111,9 @@ $catalog = new CommerceCatalog($indexer);
 $checkout = new CommerceCheckoutService($orderStore, $catalog, $cart, $indexer);
 
 $cart->addItem('products', 'prod-1', 2);
-$result = $checkout->checkout('buyer@example.com');
+$result = $checkout->checkout('buyer@example.com', '', '', [
+    'shipping_address' => ['line1' => '1 Test St', 'city' => 'Berlin', 'country' => 'DE'],
+]);
 test_assert('checkout ok', ($result['ok'] ?? false) === true, $result['error'] ?? json_encode($result));
 test_assert('order_id returned', !empty($result['order_id']));
 test_assert('payment_id returned', !empty($result['payment_id']));

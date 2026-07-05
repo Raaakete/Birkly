@@ -275,6 +275,46 @@ function commerce_init_automation_triggers(): void
             return true;
         },
     ]);
+
+    register_automation_block('trigger', 'commerce_physical_fulfilled', [
+        'name' => 'Physical Order Fulfilled',
+        'description' => 'Fires when a ship fulfillment line is pushed to the fulfillment adapter',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_digital_delivered', [
+        'name' => 'Digital Delivery Created',
+        'description' => 'Fires when a deliver fulfillment line receives a download token',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_event_registered', [
+        'name' => 'Event Registration',
+        'description' => 'Fires when a register fulfillment line creates an attendee record',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_membership_started', [
+        'name' => 'Membership Started',
+        'description' => 'Fires when a recurring none-fulfillment purchase begins',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
 }
 
 /**
@@ -326,6 +366,10 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/ManualFulfillmentAdapter.php';
     require_once $dir . '/includes/ShipStationStubAdapter.php';
     require_once $dir . '/includes/ImportService.php';
+    require_once $dir . '/includes/CommerceSchema.php';
+    require_once $dir . '/includes/EventRegistrationStore.php';
+    require_once $dir . '/includes/DigitalDeliveryStore.php';
+    require_once $dir . '/includes/PostPurchaseRouter.php';
     $loaded = true;
 }
 
@@ -358,7 +402,7 @@ function commerce_register_payment_handlers(): void
     $registered = true;
 }
 
-function commerce_buy_url(string $entryId = '', string $collectionSlug = '', int $qty = 1): string
+function commerce_buy_url(string $entryId = '', string $collectionSlug = '', int $qty = 1, string $purchaseOptionId = ''): string
 {
     $base = function_exists('birkly_url')
         ? birkly_url('/api/index.php?route=commerce&action=add')
@@ -372,6 +416,9 @@ function commerce_buy_url(string $entryId = '', string $collectionSlug = '', int
     }
     if ($qty > 1) {
         $params['quantity'] = $qty;
+    }
+    if ($purchaseOptionId !== '') {
+        $params['purchase_option_id'] = $purchaseOptionId;
     }
     if (empty($params)) {
         return $base;

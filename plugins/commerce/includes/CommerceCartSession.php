@@ -1,6 +1,6 @@
 <?php
 /**
- * Session-backed commerce cart.
+ * Session-backed commerce cart (v2 — purchase_option_id, parent_id).
  */
 
 class CommerceCartSession
@@ -19,12 +19,20 @@ class CommerceCartSession
         $_SESSION[self::SESSION_KEY] = array_values($items);
     }
 
-    public function addItem(string $collectionSlug, string $entryId, int $quantity = 1): array
-    {
+    public function addItem(
+        string $collectionSlug,
+        string $entryId,
+        int $quantity = 1,
+        ?string $purchaseOptionId = null,
+        ?string $parentId = null
+    ): array {
         $items = $this->getItems();
         $found = false;
         foreach ($items as &$item) {
-            if (($item['collection'] ?? '') === $collectionSlug && ($item['entry_id'] ?? '') === $entryId) {
+            if (($item['collection'] ?? '') === $collectionSlug
+                && ($item['entry_id'] ?? '') === $entryId
+                && ($item['purchase_option_id'] ?? null) === $purchaseOptionId
+            ) {
                 $item['quantity'] = max(1, (int) ($item['quantity'] ?? 1) + $quantity);
                 $found = true;
                 break;
@@ -32,24 +40,35 @@ class CommerceCartSession
         }
         unset($item);
         if (!$found) {
-            $items[] = [
+            $row = [
                 'collection' => $collectionSlug,
                 'entry_id' => $entryId,
                 'quantity' => max(1, $quantity),
             ];
+            if ($purchaseOptionId !== null && $purchaseOptionId !== '') {
+                $row['purchase_option_id'] = $purchaseOptionId;
+            }
+            if ($parentId !== null && $parentId !== '') {
+                $row['parent_id'] = $parentId;
+            }
+            $items[] = $row;
         }
         $this->setItems($items);
         return $items;
     }
 
-    public function updateItem(string $collectionSlug, string $entryId, int $quantity): array
+    public function updateItem(string $collectionSlug, string $entryId, int $quantity, ?string $purchaseOptionId = null): array
     {
         if ($quantity <= 0) {
-            return $this->removeItem($collectionSlug, $entryId);
+            return $this->removeItem($collectionSlug, $entryId, $purchaseOptionId);
         }
         $items = $this->getItems();
         foreach ($items as &$item) {
-            if (($item['collection'] ?? '') === $collectionSlug && ($item['entry_id'] ?? '') === $entryId) {
+            $match = ($item['collection'] ?? '') === $collectionSlug && ($item['entry_id'] ?? '') === $entryId;
+            if ($purchaseOptionId !== null) {
+                $match = $match && ($item['purchase_option_id'] ?? null) === $purchaseOptionId;
+            }
+            if ($match) {
                 $item['quantity'] = $quantity;
                 break;
             }
@@ -59,10 +78,16 @@ class CommerceCartSession
         return $items;
     }
 
-    public function removeItem(string $collectionSlug, string $entryId): array
+    public function removeItem(string $collectionSlug, string $entryId, ?string $purchaseOptionId = null): array
     {
-        $items = array_values(array_filter($this->getItems(), function ($item) use ($collectionSlug, $entryId) {
-            return ($item['collection'] ?? '') !== $collectionSlug || ($item['entry_id'] ?? '') !== $entryId;
+        $items = array_values(array_filter($this->getItems(), function ($item) use ($collectionSlug, $entryId, $purchaseOptionId) {
+            if (($item['collection'] ?? '') !== $collectionSlug || ($item['entry_id'] ?? '') !== $entryId) {
+                return true;
+            }
+            if ($purchaseOptionId !== null && ($item['purchase_option_id'] ?? null) !== $purchaseOptionId) {
+                return true;
+            }
+            return false;
         }));
         $this->setItems($items);
         return $items;
