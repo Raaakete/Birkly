@@ -106,22 +106,41 @@ function birkly_mcp_handle_tool_call(array $params, array $aiUser): array
 
 function birkly_mcp_handle_resources_list(): array
 {
-    return [
-        'resources' => [
-            ['uri' => 'birkly://collections', 'name' => 'All Collections', 'description' => 'List of all content collections', 'mimeType' => 'application/json'],
-            ['uri' => 'birkly://documentation', 'name' => 'Documentation', 'description' => 'Curated Birkly context pack', 'mimeType' => 'text/markdown'],
-            ['uri' => 'birkly://docs/templating', 'name' => 'Templating', 'description' => 'Client-site template language spec', 'mimeType' => 'text/markdown'],
-            ['uri' => 'birkly://docs/admin', 'name' => 'Admin', 'description' => 'Admin templating and platform overview', 'mimeType' => 'text/markdown'],
-            ['uri' => 'birkly://docs/plugins', 'name' => 'Plugins', 'description' => 'Plugin architecture and client embed', 'mimeType' => 'text/markdown'],
-            ['uri' => 'birkly://docs/ai', 'name' => 'AI & MCP', 'description' => 'BYOAI and MCP architecture', 'mimeType' => 'text/markdown'],
-            ['uri' => 'birkly://docs/sub-collections', 'name' => 'Sub-collections', 'description' => 'Sub-collections and sub-entries: schema, disk layout, admin URLs, MCP tools', 'mimeType' => 'text/markdown'],
-        ],
+    if (function_exists('birkly_bootstrap_plugins_for_docs')) {
+        birkly_bootstrap_plugins_for_docs();
+    }
+
+    $resources = [
+        ['uri' => 'birkly://collections', 'name' => 'All Collections', 'description' => 'List of all content collections', 'mimeType' => 'application/json'],
+        ['uri' => 'birkly://documentation', 'name' => 'Documentation', 'description' => 'Curated Birkly context pack', 'mimeType' => 'text/markdown'],
+        ['uri' => 'birkly://docs/templating', 'name' => 'Templating', 'description' => 'Client-site template language spec', 'mimeType' => 'text/markdown'],
+        ['uri' => 'birkly://docs/admin', 'name' => 'Admin', 'description' => 'Admin templating and platform overview', 'mimeType' => 'text/markdown'],
+        ['uri' => 'birkly://docs/plugins', 'name' => 'Plugins', 'description' => 'Plugin architecture and client embed', 'mimeType' => 'text/markdown'],
+        ['uri' => 'birkly://docs/ai', 'name' => 'AI & MCP', 'description' => 'BYOAI and MCP architecture', 'mimeType' => 'text/markdown'],
+        ['uri' => 'birkly://docs/sub-collections', 'name' => 'Sub-collections', 'description' => 'Sub-collections and sub-entries: schema, disk layout, admin URLs, MCP tools', 'mimeType' => 'text/markdown'],
     ];
+
+    if (function_exists('get_active_plugin_docs')) {
+        foreach (get_active_plugin_docs() as $plugin_id => $doc) {
+            $slug = (string) ($doc['mcp_topic_slug'] ?? $plugin_id);
+            $resources[] = [
+                'uri' => 'birkly://docs/plugin/' . $slug,
+                'name' => (string) ($doc['title'] ?? $plugin_id) . ' (plugin)',
+                'description' => 'Plugin extension docs: ' . (string) ($doc['summary'] ?? $plugin_id),
+                'mimeType' => 'text/markdown',
+            ];
+        }
+    }
+
+    return ['resources' => $resources];
 }
 
 function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
 {
     require_once __DIR__ . '/../api/ai_helpers.php';
+    if (function_exists('birkly_bootstrap_plugins_for_docs')) {
+        birkly_bootstrap_plugins_for_docs();
+    }
 
     $uri = $params['uri'] ?? '';
     if ($uri === 'birkly://collections') {
@@ -155,6 +174,19 @@ function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
             'text' => "# {$topic['title']}\n\n{$topic['text']}",
         ]]];
     }
+
+    if (preg_match('#^birkly://docs/plugin/([a-z0-9\-_]+)$#', $uri, $matches)) {
+        $topic = readBirklyDocsTopic($matches[1]);
+        if ($topic === null) {
+            return ['contents' => [['uri' => $uri, 'mimeType' => 'text/plain', 'text' => 'Plugin docs not found or plugin inactive']]];
+        }
+        return ['contents' => [[
+            'uri' => $uri,
+            'mimeType' => 'text/markdown',
+            'text' => "# {$topic['title']}\n\n{$topic['text']}",
+        ]]];
+    }
+
     return ['contents' => [['uri' => $uri, 'mimeType' => 'text/plain', 'text' => 'Resource not found']]];
 }
 

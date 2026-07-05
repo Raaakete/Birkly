@@ -80,6 +80,7 @@ $suites = [
     'commerce_fulfillment_test.php',
     'commerce_fulfillment_router_test.php',
     'commerce_mapping_test.php',
+    'plugin_docs_shelf_test.php',
     'shopping_cart_plugin_test.php',
     'shopping_cart_shelf_test.php',
     'events_plugin_test.php',
