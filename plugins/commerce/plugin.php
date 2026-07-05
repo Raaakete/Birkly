@@ -95,27 +95,73 @@ if (function_exists('register_template_function') && commerce_plugin_active()) {
         commerce_bootstrap_cart_services();
         $cart = new CommerceCartSession();
         return (string) $cart->count();
-    });
+    }, [
+        'description' => 'Returns the number of items in the commerce cart session',
+        'arguments' => [],
+    ]);
 
     register_template_function('commerce_cart_url', function () {
         return commerce_cart_url();
-    });
+    }, [
+        'description' => 'Returns the URL to view the commerce cart (JSON API)',
+        'arguments' => [],
+    ]);
 
-    register_template_function('commerce_buy_url', function ($entryId = '', $collectionSlug = '', $qty = 1) {
+    register_template_function('commerce_buy_url', function ($entryId = '', $collectionSlug = '', $qty = 1, $purchaseOptionId = '') {
         return commerce_buy_url(
             (string) $entryId,
             (string) $collectionSlug,
-            (int) $qty
+            (int) $qty,
+            (string) $purchaseOptionId
         );
-    });
+    }, [
+        'description' => 'Returns add-to-cart URL for a catalog entry and optional purchase option',
+        'arguments' => [
+            'entry_id' => ['type' => 'string', 'description' => 'Entry or variant sub-entry ID'],
+            'collection' => ['type' => 'string', 'description' => 'Collection slug'],
+            'quantity' => ['type' => 'integer', 'description' => 'Quantity (default 1)'],
+            'purchase_option_id' => ['type' => 'string', 'description' => 'Purchase option ID from commerce field'],
+        ],
+    ]);
 
-    register_template_function('commerce_add_to_cart', function ($entryId = '', $collectionSlug = '', $qty = 1) {
+    register_template_function('commerce_add_to_cart', function ($entryId = '', $collectionSlug = '', $qty = 1, $purchaseOptionId = '') {
         return commerce_buy_url(
             (string) $entryId,
             (string) $collectionSlug,
-            (int) $qty
+            (int) $qty,
+            (string) $purchaseOptionId
         );
-    });
+    }, [
+        'description' => 'Alias for commerce_buy_url',
+        'arguments' => [
+            'entry_id' => ['type' => 'string'],
+            'collection' => ['type' => 'string'],
+            'quantity' => ['type' => 'integer'],
+            'purchase_option_id' => ['type' => 'string'],
+        ],
+    ]);
+
+    register_template_function('commerce_price_from', function ($commerceValue = null) {
+        if (!class_exists('CommerceSchema')) {
+            require_once __DIR__ . '/includes/CommerceSchema.php';
+        }
+        if (is_string($commerceValue)) {
+            $decoded = json_decode($commerceValue, true);
+            if (is_array($decoded)) {
+                $commerceValue = $decoded;
+            }
+        }
+        if (!is_array($commerceValue)) {
+            return '0';
+        }
+        $cents = CommerceSchema::priceFrom($commerceValue);
+        return (string) number_format($cents / 100, 2, '.', '');
+    }, [
+        'description' => 'Lowest price from a commerce field value (for "from €X" display)',
+        'arguments' => [
+            'commerce' => ['type' => 'array', 'description' => 'Commerce field value'],
+        ],
+    ]);
 }
 
 global $birkly_plugins;
