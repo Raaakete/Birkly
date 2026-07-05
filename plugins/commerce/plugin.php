@@ -164,6 +164,35 @@ if (function_exists('register_template_function') && commerce_plugin_active()) {
     ]);
 }
 
+if (function_exists('register_plugin_docs') && commerce_plugin_active()) {
+    register_plugin_docs('commerce', [
+        'title' => 'Commerce',
+        'summary' => 'Content-first commerce: providers, cart, checkout, fulfillment (ship/deliver/register/none), purchase_options, variants via sub-entries, PostPurchaseRouter.',
+        'badge' => 'Extension',
+        'docs' => [
+            'ai' => __DIR__ . '/docs/ai-context.md',
+            'help' => __DIR__ . '/docs/help-overview.md',
+            'help_topics' => [
+                [
+                    'id' => 'commerce-fieldtype',
+                    'title' => 'Commerce fieldtype',
+                    'file' => __DIR__ . '/docs/help-fieldtype.md',
+                    'keywords' => ['fieldtype', 'fulfillment', 'purchase_options', 'variants', 'schema'],
+                ],
+                [
+                    'id' => 'commerce-templates',
+                    'title' => 'Template functions',
+                    'file' => __DIR__ . '/docs/help-templating.md',
+                    'keywords' => ['template', 'commerce_buy_url', 'cart', 'price_from'],
+                ],
+            ],
+            'public_path' => '06-extensibility/plugins/commerce.html',
+        ],
+        'mcp_topic_slug' => 'commerce',
+        'keywords' => ['commerce', 'cart', 'checkout', 'payments', 'stripe', 'fieldtype', 'fulfillment', 'variants'],
+    ]);
+}
+
 global $birkly_plugins;
 if (isset($birkly_plugins['commerce'])) {
     $birkly_plugins['commerce']['dashboard_widgets_callback'] = 'commerce_dashboard_widgets';
