@@ -37,6 +37,7 @@ test_assert('registers commerce_shelf service', strpos($pluginPhp, "register_plu
 test_assert('registers payment_shelf alias', strpos($pluginPhp, "register_plugin_service('payment_shelf'") !== false);
 test_assert('registers commerce API route', strpos($pluginPhp, "register_api_endpoint('commerce'") !== false);
 test_assert('registers commerce admin page', strpos($pluginPhp, "register_admin_page('commerce'") !== false);
+test_assert('registers plugin docs', strpos($pluginPhp, "register_plugin_docs('commerce'") !== false);
 test_assert('BIRKLY_COMMERCE_BOOTSTRAP guard', strpos($pluginPhp, 'BIRKLY_COMMERCE_BOOTSTRAP') !== false);
 
 $paymentsShim = file_get_contents($root . '/plugins/payments/plugin.php');
