@@ -58,13 +58,62 @@
         el.innerHTML = '<p>No orders yet.</p>';
         return;
       }
-      var html = '<table class="payments-table"><thead><tr><th>ID</th><th>Status</th><th>Total</th><th>Email</th><th>Created</th></tr></thead><tbody>';
+      var html = '';
       orders.forEach(function (o) {
-        html += '<tr><td>' + o.id + '</td><td>' + o.status + '</td><td>' + formatCents(o.total_cents, o.currency)
-          + '</td><td>' + (o.customer_email || '—') + '</td><td>' + (o.created_at || '') + '</td></tr>';
+        html += '<div class="commerce-order-card"><h3>' + o.id + ' — ' + o.status + ' — ' + formatCents(o.total_cents, o.currency) + '</h3>';
+        html += '<p>Email: ' + (o.customer_email || '—') + ' · Created: ' + (o.created_at || '') + '</p>';
+        if (o.shipping_address) {
+          html += '<p>Ship to: ' + (o.shipping_address.line1 || '') + ', ' + (o.shipping_address.city || '') + ' ' + (o.shipping_address.country || '') + '</p>';
+        }
+        if (o.attendee_name) {
+          html += '<p>Attendee: ' + o.attendee_name + '</p>';
+        }
+        html += '<table class="payments-table"><thead><tr><th>Line</th><th>Qty</th><th>Option</th><th>Fulfillment</th><th>State</th></tr></thead><tbody>';
+        (o.lines || []).forEach(function (line, idx) {
+          var fr = (o.fulfillment_results || []).find(function (r) { return r.line_id === line.line_id; }) || {};
+          var state = fr.skipped ? 'done' : (fr.ok === false ? 'error' : (fr.ok ? 'fulfilled' : 'pending'));
+          html += '<tr><td>' + (line.title || line.entry_id) + '</td><td>' + line.quantity + '</td><td>'
+            + (line.purchase_option_id || '—') + '</td><td>' + (line.fulfillment || '—') + '</td><td>' + state + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
       });
-      html += '</tbody></table>';
       el.innerHTML = html;
+    });
+  }
+
+  var shippingZonesCache = [];
+
+  function loadShippingZones() {
+    var el = document.getElementById('commerce-shipping-zones-list');
+    if (!el) return;
+    commercePost('list_shipping_zones').then(function (res) {
+      shippingZonesCache = (res.data && res.data.zones) || [];
+      renderShippingZones();
+    });
+  }
+
+  function renderShippingZones() {
+    var el = document.getElementById('commerce-shipping-zones-list');
+    if (!el) return;
+    if (!shippingZonesCache.length) {
+      el.innerHTML = '<p>No shipping zones configured.</p>';
+      return;
+    }
+    var html = '';
+    shippingZonesCache.forEach(function (zone, idx) {
+      html += '<div class="commerce-shipping-zone" data-idx="' + idx + '">';
+      html += '<div class="form-group"><label>Name</label><input type="text" class="input zone-name" value="' + (zone.name || '') + '"></div>';
+      html += '<div class="form-group"><label>Countries (comma-separated, * = all)</label><input type="text" class="input zone-countries" value="' + ((zone.countries || ['*']).join(', ')) + '"></div>';
+      html += '<div class="form-group"><label>Flat rate (cents)</label><input type="number" class="input zone-rate" value="' + (zone.flat_rate_cents || 0) + '"></div>';
+      html += '<button type="button" class="btn btn-secondary commerce-remove-zone" data-idx="' + idx + '">Remove</button></div>';
+    });
+    el.innerHTML = html;
+    el.querySelectorAll('.commerce-remove-zone').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(btn.getAttribute('data-idx'), 10);
+        shippingZonesCache.splice(i, 1);
+        renderShippingZones();
+      });
     });
   }
 
@@ -113,6 +162,7 @@
         if (name === 'orders') loadOrders();
         if (name === 'discounts') loadDiscounts();
         if (name === 'mappings') loadMappings();
+        if (name === 'shipping') loadShippingZones();
       });
     });
   }
@@ -193,6 +243,29 @@
         connections: { active_adapter: adapter, shipstation: { mock: true } },
       }).then(function () {
         alert('Fulfillment settings saved');
+      });
+    });
+
+    document.getElementById('commerce-add-shipping-zone')?.addEventListener('click', function () {
+      shippingZonesCache.push({ id: 'zone_' + Date.now(), name: 'New zone', countries: ['*'], flat_rate_cents: 500 });
+      renderShippingZones();
+    });
+
+    document.getElementById('commerce-save-shipping-zones')?.addEventListener('click', function () {
+      var el = document.getElementById('commerce-shipping-zones-list');
+      var zones = [];
+      el?.querySelectorAll('.commerce-shipping-zone').forEach(function (row, idx) {
+        var countriesRaw = row.querySelector('.zone-countries')?.value || '*';
+        zones.push({
+          id: shippingZonesCache[idx]?.id || ('zone_' + idx),
+          name: row.querySelector('.zone-name')?.value || 'Zone',
+          countries: countriesRaw.split(',').map(function (c) { return c.trim().toUpperCase(); }).filter(Boolean),
+          flat_rate_cents: parseInt(row.querySelector('.zone-rate')?.value || '0', 10),
+        });
+      });
+      commercePost('save_shipping_zones', { zones: zones }).then(function () {
+        alert('Shipping zones saved');
+        loadShippingZones();
       });
     });
   }

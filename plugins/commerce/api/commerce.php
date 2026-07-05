@@ -41,13 +41,14 @@ $adminActions = [
     'list_discounts', 'save_discount', 'delete_discount',
     'import_dry_run', 'import_csv', 'list_mappings', 'save_mapping', 'delete_mapping',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
+    'list_shipping_zones', 'save_shipping_zones',
 ];
 
 if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'save_mapping', 'delete_mapping', 'save_fulfillment'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -95,6 +96,8 @@ switch ($action) {
         $entryId = $input['entry_id'] ?? $_GET['entry_id'] ?? '';
         $collection = $input['collection'] ?? $_GET['collection'] ?? '';
         $qty = (int) ($input['quantity'] ?? $_GET['quantity'] ?? 1);
+        $purchaseOptionId = $input['purchase_option_id'] ?? $_GET['purchase_option_id'] ?? null;
+        $parentId = $input['parent_id'] ?? $_GET['parent_id'] ?? null;
         if ($entryId === '' || $collection === '') {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'entry_id and collection required']);
@@ -105,9 +108,9 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => 'Item not in catalog']);
             break;
         }
-        $cart->addItem($collection, $entryId, $qty);
+        $cart->addItem($collection, $entryId, $qty, $purchaseOptionId, $parentId);
         $built = $catalog->buildCartLines($cart->getItems(), $discounts, $cart->getCouponCode(), $cart->getAffiliateId());
-        echo json_encode(['status' => 'ok', 'data' => ['count' => $cart->count(), 'total_cents' => $built['total_cents']]]);
+        echo json_encode(['status' => 'ok', 'data' => ['count' => $cart->count(), 'total_cents' => $built['total_cents'] ?? 0]]);
         break;
 
     case 'update':
@@ -134,7 +137,11 @@ switch ($action) {
         $email = $input['email'] ?? $_GET['email'] ?? '';
         $returnUrl = $input['return_url'] ?? '';
         $cancelUrl = $input['cancel_url'] ?? '';
-        $result = $checkout->checkout($email, $returnUrl, $cancelUrl);
+        $checkoutData = [
+            'shipping_address' => $input['shipping_address'] ?? null,
+            'attendee_name' => $input['attendee_name'] ?? null,
+        ];
+        $result = $checkout->checkout($email, $returnUrl, $cancelUrl, $checkoutData);
         echo json_encode(['status' => ($result['ok'] ?? false) ? 'ok' : 'error', 'data' => $result]);
         break;
 
@@ -244,6 +251,16 @@ switch ($action) {
         $file = commerce_data_dir() . '/fulfillment_connections.json';
         $data = $input['connections'] ?? [];
         file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
+        echo json_encode(['status' => 'ok']);
+        break;
+
+    case 'list_shipping_zones':
+        echo json_encode(['status' => 'ok', 'data' => $catalog->loadShippingZones()]);
+        break;
+
+    case 'save_shipping_zones':
+        $zones = $input['zones'] ?? [];
+        $catalog->saveShippingZones(['zones' => $zones]);
         echo json_encode(['status' => 'ok']);
         break;
 
