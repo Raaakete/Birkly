@@ -26,6 +26,7 @@
     <button class="payments-tab" data-tab="import" role="tab">Import</button>
     <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
+    <button class="payments-tab" data-tab="shipping" role="tab">Shipping</button>
     <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
     <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
   </div>
@@ -121,6 +122,18 @@
       <button type="submit" class="btn btn-primary">Save</button>
       <div id="commerce-fulfillment-result" class="payments-test-result" hidden></div>
     </form>
+  </div>
+
+  <div id="payments-tab-shipping" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Shipping Zones</h2>
+      <button class="btn btn-primary" id="commerce-add-shipping-zone">Add Zone</button>
+    </div>
+    <p class="form-text">Flat rate per zone (v1). Use * in countries for default fallback.</p>
+    <div id="commerce-shipping-zones-list" class="payments-connections-list">
+      <div class="loading-state"><p>Loading shipping zones…</p></div>
+    </div>
+    <button type="button" class="btn btn-primary" id="commerce-save-shipping-zones">Save Zones</button>
   </div>
 
   <div id="payments-tab-activity" class="payments-tab-panel" role="tabpanel" hidden>
