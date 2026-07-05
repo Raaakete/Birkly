@@ -1,6 +1,6 @@
 <?php
 /**
- * Catalog index — purchasable entries with Commerce fieldtype values.
+ * Catalog index — purchasable entries with Commerce fieldtype values (v2).
  */
 
 class CatalogIndexer
@@ -40,28 +40,32 @@ class CatalogIndexer
 
     public function indexEntry(array $entry, string $collectionSlug): void
     {
-        $commerceData = $this->extractCommerceFromEntry($entry);
         $entryId = $entry['id'] ?? '';
         if ($entryId === '' || $collectionSlug === '') {
             return;
         }
 
         $index = $this->loadIndex();
-        $key = $collectionSlug . ':' . $entryId;
+        $parentKey = $collectionSlug . ':' . $entryId;
 
-        if ($commerceData === null) {
-            unset($index['entries'][$key]);
+        $variants = $this->loadVariantSubEntries($collectionSlug, $entryId);
+        if (!empty($variants)) {
+            unset($index['entries'][$parentKey]);
+            foreach ($variants as $variant) {
+                $this->indexSellableUnit($index, $variant, $collectionSlug, $entryId, $entry);
+            }
             $this->saveIndex($index);
             return;
         }
 
-        $index['entries'][$key] = array_merge($commerceData, [
-            'entry_id' => $entryId,
-            'collection_slug' => $collectionSlug,
-            'entry_slug' => $entry['slug'] ?? $entryId,
-            'entry_title' => $entry['title'] ?? '',
-            'updated_at' => date('c'),
-        ]);
+        $commerceData = $this->extractCommerceFromEntry($entry);
+        if ($commerceData === null) {
+            unset($index['entries'][$parentKey]);
+            $this->saveIndex($index);
+            return;
+        }
+
+        $index['entries'][$parentKey] = $this->buildIndexRow($commerceData, $entry, $collectionSlug);
         $this->saveIndex($index);
     }
 
@@ -73,6 +77,14 @@ class CatalogIndexer
         $index = $this->loadIndex();
         $key = $collectionSlug . ':' . $entryId;
         unset($index['entries'][$key]);
+
+        foreach (array_keys($index['entries']) as $existingKey) {
+            $row = $index['entries'][$existingKey];
+            if (($row['parent_id'] ?? '') === $entryId && ($row['collection_slug'] ?? '') === $collectionSlug) {
+                unset($index['entries'][$existingKey]);
+            }
+        }
+
         $this->saveIndex($index);
     }
 
@@ -81,6 +93,7 @@ class CatalogIndexer
         $root = $contentRoot ?? dirname(__DIR__, 3) . '/content';
         require_once dirname(__DIR__, 3) . '/core/storage/StorageFactory.php';
         require_once dirname(__DIR__, 3) . '/core/public_read.php';
+        require_once dirname(__DIR__, 3) . '/core/sub_entries.php';
 
         $storage = StorageFactory::createStorage($root);
         $collectionsDir = $root . '/collections';
@@ -101,19 +114,32 @@ class CatalogIndexer
                 continue;
             }
             foreach ($result['data']['entries'] ?? [] as $entry) {
+                $entryId = $entry['id'] ?? '';
+                if ($entryId === '') {
+                    continue;
+                }
+
+                $variants = getSubEntries($slug, $entryId, 'variants');
+                if (!empty($variants)) {
+                    foreach ($variants as $variant) {
+                        $commerceData = $this->extractCommerceFromEntry($variant);
+                        if ($commerceData === null) {
+                            continue;
+                        }
+                        $variantId = $variant['id'] ?? '';
+                        $key = $slug . ':' . $variantId;
+                        $index['entries'][$key] = $this->buildIndexRow($commerceData, $variant, $slug, $entryId, $entry);
+                        $count++;
+                    }
+                    continue;
+                }
+
                 $commerceData = $this->extractCommerceFromEntry($entry);
                 if ($commerceData === null) {
                     continue;
                 }
-                $entryId = $entry['id'] ?? '';
                 $key = $slug . ':' . $entryId;
-                $index['entries'][$key] = array_merge($commerceData, [
-                    'entry_id' => $entryId,
-                    'collection_slug' => $slug,
-                    'entry_slug' => $entry['slug'] ?? $entryId,
-                    'entry_title' => $entry['title'] ?? '',
-                    'updated_at' => date('c'),
-                ]);
+                $index['entries'][$key] = $this->buildIndexRow($commerceData, $entry, $slug);
                 $count++;
             }
         }
@@ -155,13 +181,85 @@ class CatalogIndexer
         return (int) $row['quantity_available'] >= $qty;
     }
 
+    public function normalizeCommerceRow(array $value): array
+    {
+        if (!class_exists('CommerceSchema')) {
+            require_once __DIR__ . '/CommerceSchema.php';
+        }
+        return commerce_normalize_value($value);
+    }
+
+    private function indexSellableUnit(array &$index, array $variant, string $collectionSlug, string $parentId, array $parentEntry): void
+    {
+        $commerceData = $this->extractCommerceFromEntry($variant);
+        $variantId = $variant['id'] ?? '';
+        if ($variantId === '' || $commerceData === null) {
+            return;
+        }
+        $key = $collectionSlug . ':' . $variantId;
+        $index['entries'][$key] = $this->buildIndexRow($commerceData, $variant, $collectionSlug, $parentId, $parentEntry);
+    }
+
+    private function buildIndexRow(array $commerceData, array $entry, string $collectionSlug, ?string $parentId = null, ?array $parentEntry = null): array
+    {
+        $entryId = $entry['id'] ?? '';
+        $variantAttrs = $this->extractVariantAttrs($entry);
+
+        $row = array_merge($commerceData, [
+            'entry_id' => $entryId,
+            'collection_slug' => $collectionSlug,
+            'entry_slug' => $entry['slug'] ?? $entryId,
+            'entry_title' => $entry['title'] ?? ($parentEntry['title'] ?? '') . ($variantAttrs ? ' — ' . implode(', ', $variantAttrs) : ''),
+            'commerce' => $commerceData,
+            'updated_at' => date('c'),
+        ]);
+
+        if ($parentId !== null) {
+            $row['parent_id'] = $parentId;
+            $row['parent_slug'] = $parentEntry['slug'] ?? $parentId;
+            $row['parent_title'] = $parentEntry['title'] ?? '';
+            $row['variant_attrs'] = $variantAttrs;
+        }
+
+        return $row;
+    }
+
+    private function extractVariantAttrs(array $entry): array
+    {
+        $skip = ['id', 'slug', 'title', 'status', 'collection', 'commerce', 'pricing', 'created_at', 'updated_at'];
+        $attrs = [];
+        foreach ($entry as $key => $val) {
+            if (in_array($key, $skip, true) || !is_scalar($val) || $val === '') {
+                continue;
+            }
+            if (is_array($val) && (isset($val['price_cents']) || isset($val['purchase_options']))) {
+                continue;
+            }
+            $attrs[$key] = (string) $val;
+        }
+        return $attrs;
+    }
+
+    private function loadVariantSubEntries(string $collectionSlug, string $entryId): array
+    {
+        $subFile = dirname(__DIR__, 3) . '/core/sub_entries.php';
+        if (!is_file($subFile)) {
+            return [];
+        }
+        require_once $subFile;
+        if (!function_exists('getSubEntries')) {
+            return [];
+        }
+        return getSubEntries($collectionSlug, $entryId, 'variants') ?: [];
+    }
+
     private function extractCommerceFromEntry(array $entry): ?array
     {
         foreach ($entry as $fieldKey => $fieldVal) {
             if (!is_array($fieldVal)) {
                 continue;
             }
-            if (isset($fieldVal['price_cents']) || isset($fieldVal['billing'])) {
+            if (isset($fieldVal['purchase_options']) || isset($fieldVal['price_cents']) || isset($fieldVal['billing']) || isset($fieldVal['fulfillment'])) {
                 return $this->normalizeCommerceRow($fieldVal);
             }
         }
@@ -169,25 +267,5 @@ class CatalogIndexer
             return $this->normalizeCommerceRow($entry['commerce']);
         }
         return null;
-    }
-
-    private function normalizeCommerceRow(array $value): array
-    {
-        $qty = $value['quantity_available'] ?? null;
-        if ($qty === '' || $qty === false) {
-            $qty = null;
-        } elseif ($qty !== null) {
-            $qty = (int) $qty;
-        }
-
-        return [
-            'price_cents' => max(0, (int) ($value['price_cents'] ?? 0)),
-            'currency' => strtolower((string) ($value['currency'] ?? 'eur')),
-            'billing' => in_array($value['billing'] ?? '', ['one_time', 'recurring'], true)
-                ? $value['billing'] : 'one_time',
-            'interval' => $value['interval'] ?? null,
-            'quantity_available' => $qty,
-            'sku' => isset($value['sku']) && $value['sku'] !== '' ? (string) $value['sku'] : null,
-        ];
     }
 }
