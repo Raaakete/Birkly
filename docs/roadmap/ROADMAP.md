@@ -166,15 +166,9 @@ When in doubt, treat as major and ask the human.
 
 **Delivered:** `plugins/commerce/` — providers, Commerce fieldtype, catalog, cart, discounts, import, fulfillment, purchase mappings. Payments shim + Shop/Events coexist. 83 test suites green.
 
-**2026-07-05 — Phase 6.5 proposed** (Keven)
+**2026-07-05 — Phase 6.5 approved** (Keven) — **one wave**: fieldtype v2, fulfillment + purchase_options, variants, ship/deliver/register, docs shelf, scenario acceptance.
 
-**Priorities:** Commerce fieldtype collection controls · unified plugin docs (AI + Help) · templating polish.
-
-**2026-07-05 — Commerce Phase 2 master plan proposed** (Keven)
-
-**Priorities:** `offer_type` (physical / digital / event / session / membership / bundle) · post-purchase orchestration · shipping · digital delivery · event registration · tax/refunds/subscriptions.
-
-**Spec:** `docs/reviews/P6-commerce-phase2-master-plan.md` · **Polish:** `docs/reviews/P6.5-commerce-polish-ai-plan.md`
+**Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md` · **Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`
 
 ---
 
@@ -200,7 +194,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.5** polish, then **P6.6+** offer types & fulfillment verticals — see `docs/reviews/P6-commerce-phase2-master-plan.md`.
+**Next active phase:** **P6.5 Commerce Wave** (approved, single sprint) — see `docs/reviews/P6.5-lead-engineer-handoff.md`.
 
 ---
 
@@ -2053,31 +2047,24 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
-## Phase 6.5 — Commerce polish & plugin AI extensibility
+## Phase 6.5 — Commerce Wave (single sprint)
 
-**Status:** Proposed (2026-07-05) — pending approval
+**Status:** Approved (2026-07-05) — one wave, autonomous execution
 
-**Spec:** `docs/reviews/P6.5-commerce-polish-ai-plan.md`
+**Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md`  
+**Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`  
+**Architecture:** `docs/reviews/P6-commerce-phase2-master-plan.md`
 
-**Goal:** Configurable Commerce fieldtype (collection editor controls); plugin AI documentation shelf so active plugins teach connected AI; template function metadata + Birkly-Docs.
+**Goal:** `fulfillment` + `purchase_options[]` (decoupled), variant sub-entries, PostPurchaseRouter (ship/deliver/register/none), shipping zones v1, digital delivery, event registration, plugin docs shelf, scenario acceptance (yoga / coffee / course / community).
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P6.5-M1** | Commerce fieldtype `getConfigUI` — enable/disable fields, intervals, custom fields | pending |
-| **P6.5-M2** | Plugin AI docs shelf + Commerce `ai-context.md` | pending |
-| **P6.5-M3** | Template metadata, context pack, Birkly-Docs commerce guides | pending |
-
-**Master plan (Phase 2):** `docs/reviews/P6-commerce-phase2-master-plan.md`
-
-| Phase | Focus |
-|-------|--------|
-| **P6.6** | Offer types + post-purchase orchestrator |
-| **P6.7** | Physical + shipping zones |
-| **P6.8** | Digital delivery pipeline |
-| **P6.9** | Event/session registration |
-| **P6.10** | Bundle fieldtype |
-| **P6.11** | Tax, subscriptions, refunds, emails |
-| **P6.12** | Shop/Events migration, gift cards, analytics |
+| **P6.5-M1** | Fieldtype v2 + getConfigUI + legacy migration | pending |
+| **P6.5-M2** | Variants, catalog, cart, checkout v2, shipping zones | pending |
+| **P6.5-M3** | PostPurchaseRouter + typed automation | pending |
+| **P6.5-M4** | Admin, templates, import | pending |
+| **P6.5-M5** | register_plugin_docs + Help + Birkly-Docs | pending |
+| **P6.5-M6** | Verification matrix, closure | pending |
 
 ---
 
