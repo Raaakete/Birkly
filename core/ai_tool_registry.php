@@ -15,7 +15,7 @@ function birkly_ai_tool_definitions(): array
         'list_collections' => ['name' => 'list_collections', 'description' => 'List all content collections', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_collection' => ['name' => 'get_collection', 'description' => 'Get details of a specific collection (MCP alias)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
         'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
-        'read_birkly_docs' => ['name' => 'read_birkly_docs', 'description' => 'Read a Birkly documentation topic (templating, admin, plugins, ai, mcp)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['topic' => ['type' => 'string', 'description' => 'Topic slug: templating, admin, plugins, ai, mcp']], 'required' => ['topic']]],
+        'read_birkly_docs' => ['name' => 'read_birkly_docs', 'description' => 'Read a Birkly documentation topic (templating, admin, plugins, ai, mcp, or active plugin slug e.g. commerce)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['topic' => ['type' => 'string', 'description' => 'Topic slug: templating, admin, plugins, ai, mcp, commerce, …']], 'required' => ['topic']]],
         'list_media' => ['name' => 'list_media', 'description' => 'List media library files', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'read_media' => ['name' => 'read_media', 'description' => 'Read metadata for a media file', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
         'list_users' => ['name' => 'list_users', 'description' => 'List human users', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
@@ -178,7 +178,7 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     if ($actionType === 'read_birkly_docs') {
         $topic = readBirklyDocsTopic((string) ($arguments['topic'] ?? ''));
         if ($topic === null) {
-            return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Unknown or missing docs topic. Use: templating, admin, plugins, ai, mcp']]];
+            return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Unknown or missing docs topic. Use: templating, admin, plugins, ai, mcp, or an active plugin slug (e.g. commerce)']]];
         }
         return ['content' => [['type' => 'text', 'text' => "# {$topic['title']}\n\n{$topic['text']}"]]];
     }
