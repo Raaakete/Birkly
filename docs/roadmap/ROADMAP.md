@@ -188,13 +188,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P6.4 complete** — `plugins/commerce/` on `main`. **P6.5 proposed** — fieldtype controls + plugin AI shelf. |
-| **Birkly-Docs** | P6.1–P6.3 guides; **Commerce docs still needed** (P6.5-M3). |
+| **Birkly (CMS)** | **P6.5 complete** — Commerce v2 fieldtype, variants, PostPurchaseRouter, plugin docs shelf. **89 test suites** green. |
+| **Birkly-Docs** | P6.1–P6.5 guides; Commerce v2 + template functions published. |
 | **Agent ops** | **83** PHP test suites (P6.4 closure). |
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.5 Commerce Wave** (approved, single sprint) — see `docs/reviews/P6.5-lead-engineer-handoff.md`.
+**Next active phase:** **P6.6+ Commerce Phase 2** (proposed) — see `docs/reviews/P6-commerce-phase2-master-plan.md`. P6.5 wave closed 2026-07-05.
 
 ---
 
@@ -2049,22 +2049,23 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 6.5 — Commerce Wave (single sprint)
 
-**Status:** Approved (2026-07-05) — one wave, autonomous execution
+**Status:** Complete (2026-07-05) — one wave delivered autonomously
 
 **Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md`  
 **Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`  
-**Architecture:** `docs/reviews/P6-commerce-phase2-master-plan.md`
+**Architecture:** `docs/reviews/P6-commerce-phase2-master-plan.md`  
+**Matrix:** `docs/reviews/P6.5-verification-matrix.md`
 
-**Goal:** `fulfillment` + `purchase_options[]` (decoupled), variant sub-entries, PostPurchaseRouter (ship/deliver/register/none), shipping zones v1, digital delivery, event registration, plugin docs shelf, scenario acceptance (yoga / coffee / course / community).
+**Delivered:** `fulfillment` + `purchase_options[]` (decoupled), variant sub-entries, PostPurchaseRouter (ship/deliver/register/none), shipping zones v1, digital delivery tokens, event registration store, plugin docs shelf, scenario acceptance (yoga / coffee / course / community). **89 test suites** green.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P6.5-M1** | Fieldtype v2 + getConfigUI + legacy migration | pending |
-| **P6.5-M2** | Variants, catalog, cart, checkout v2, shipping zones | pending |
-| **P6.5-M3** | PostPurchaseRouter + typed automation | pending |
-| **P6.5-M4** | Admin, templates, import | pending |
-| **P6.5-M5** | register_plugin_docs + Help + Birkly-Docs | pending |
-| **P6.5-M6** | Verification matrix, closure | pending |
+| **P6.5-M1** | Fieldtype v2 + getConfigUI + legacy migration | complete |
+| **P6.5-M2** | Variants, catalog, cart, checkout v2, shipping zones | complete |
+| **P6.5-M3** | PostPurchaseRouter + typed automation | complete |
+| **P6.5-M4** | Admin, templates, import | complete |
+| **P6.5-M5** | register_plugin_docs + Help + Birkly-Docs | complete |
+| **P6.5-M6** | Verification matrix, closure | complete |
 
 ---
 
