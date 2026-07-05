@@ -160,7 +160,17 @@ When in doubt, treat as major and ask the human.
 
 **Human decisions (locked):** One plugin Commerce (providers + checkout together) · billing `one_time`|`recurring` only · `quantity_available` · no tier_id on fieldtype · SKU optional · discounts/affiliates in rule engine · `payment_shelf` alias · Shop/Events not removed · notify once at P6.4-M6-T5.
 
-**Spec:** `docs/reviews/P6.4-commerce-plugin-plan.md` · **Handoff:** `docs/reviews/P6.4-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P6.4-commerce-plugin-plan.md` · **Handoff:** `docs/reviews/P6.4-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P6.4-verification-matrix.md`
+
+**2026-07-04 — Phase 6.4 complete** (merged to `main`)
+
+**Delivered:** `plugins/commerce/` — providers, Commerce fieldtype, catalog, cart, discounts, import, fulfillment, purchase mappings. Payments shim + Shop/Events coexist. 83 test suites green.
+
+**2026-07-05 — Phase 6.5 proposed** (Keven)
+
+**Priorities:** Commerce fieldtype collection controls · plugin AI docs shelf · templating/AI documentation polish.
+
+**Spec:** `docs/reviews/P6.5-commerce-polish-ai-plan.md`
 
 ---
 
@@ -176,17 +186,17 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-04)
+## Current state (verified 2026-07-05)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P6.4 complete** — `plugins/commerce/` (providers + fieldtype + cart + discounts + import). Payments shim + Shop/Events coexist. |
-| **Birkly-Docs** | P6.1–P6.3 + **P6.4 Commerce** guides merged. |
-| **Agent ops** | **83** PHP test suites green. |
+| **Birkly (CMS)** | **P6.4 complete** — `plugins/commerce/` on `main`. **P6.5 proposed** — fieldtype controls + plugin AI shelf. |
+| **Birkly-Docs** | P6.1–P6.3 guides; **Commerce docs still needed** (P6.5-M3). |
+| **Agent ops** | **83** PHP test suites (P6.4 closure). |
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.5+** Shop/Events consolidation wizards, Marketplace (deferred until approved).
+**Next active phase:** **P6.5 Commerce polish & plugin AI extensibility** (proposed — pending approval).
 
 ---
 
@@ -2019,9 +2029,9 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 6.4 — Commerce plugin (evolve Payments)
 
-**Status:** Approved (2026-07-04) — autonomous execution P6.4-M0→M6
+**Status:** **Complete** (2026-07-04)
 
-**Spec:** `docs/reviews/P6.4-commerce-plugin-plan.md` · **Handoff:** `docs/reviews/P6.4-lead-engineer-handoff.md`
+**Spec:** `docs/reviews/P6.4-commerce-plugin-plan.md` · **Handoff:** `docs/reviews/P6.4-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P6.4-verification-matrix.md`
 
 **Goal:** Repurpose `plugins/payments/` → `plugins/commerce/` — providers, Commerce fieldtype, catalog index, cart/checkout, orders, discounts/affiliates, CSV import, fulfillment.
 
@@ -2035,15 +2045,33 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P6.4-M5** | Fulfillment adapters + purchase→tier mappings | **complete** |
 | **P6.4-M6** | Docs, matrix, closure | **complete** |
 
+**Follow-up:** P6.5 — fieldtype controls, plugin AI shelf, templating docs.
+
 ---
 
-## Phase 6.5+ — Deferred
+## Phase 6.5 — Commerce polish & plugin AI extensibility
+
+**Status:** Proposed (2026-07-05) — pending approval
+
+**Spec:** `docs/reviews/P6.5-commerce-polish-ai-plan.md`
+
+**Goal:** Configurable Commerce fieldtype (collection editor controls); plugin AI documentation shelf so active plugins teach connected AI; template function metadata + Birkly-Docs.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P6.5-M1** | Commerce fieldtype `getConfigUI` — enable/disable fields, intervals, custom fields | pending |
+| **P6.5-M2** | Plugin AI docs shelf + Commerce `ai-context.md` | pending |
+| **P6.5-M3** | Template metadata, context pack, Birkly-Docs commerce guides | pending |
+
+---
+
+## Phase 6.6+ — Deferred
 
 | Phase | Focus |
 |-------|--------|
-| **P6.5** | Shop/Events consolidation or migration wizards |
-| **P6.6** | Birkly Marketplace (external hub) |
-| **P6.7** | Live Shopify/Woo API import |
+| **P6.6** | Shop/Events consolidation or migration wizards |
+| **P6.7** | Birkly Marketplace (external hub) |
+| **P6.8** | Live Shopify/Woo API import |
 
 **Design rule:** Commerce owns providers + checkout; entries with Commerce fieldtype are the catalog.
 
