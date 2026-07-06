@@ -188,14 +188,14 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 7 complete (P6.1–P6.7 + P7)** — Commerce v2, plugin admin shell, Events v2, Automation node editor. **92 test suites** green. |
-| **Birkly-Docs** | P6–P7 plugin + commerce guides; Events v2 + plugin admin UI docs. |
-| **kekaba** | **Embed stale** — `Birkly-0.1/` missing `commerce` + `events`; live deploy smoke pending. |
+| **Birkly (CMS)** | **Phase 8 complete (P6.1–P6.7 + P7 + P8)** — Commerce ops (tax, refunds, subscriptions), ContentEditor cell merge, Events v2, Automation node editor. **96 test suites** green. |
+| **Birkly-Docs** | P6–P8 plugin + commerce guides; storefront patterns + events template functions. |
+| **kekaba** | **Embed current** — `Birkly-0.1/` includes commerce + events; demo shop/events pages on `main`. Live deploy smoke pending (human). |
 | **Agent ops** | CI + autonomous execution policy on `main`. |
 
 **Active plugins on `main`:** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`
 
-**Next active phase:** **Phase 8** — reference site, commerce production, ContentEditor cell merge — see § Phase 8
+**Next active phase:** TBD — see deferred items (P7.0 Marketplace, P7.1 live import)
 
 **2026-07-06 — Phase 7 complete** (Keven)
 
@@ -208,6 +208,12 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 **Priorities:** kekaba embed sync + shop/events demo templates · commerce ops (tax, order emails, refunds, subscription cancel) · **ContentEditor cell merge/split** · notify once at P8-M6.
 
 **Handoff:** `docs/reviews/P8-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P8-reference-commerce-plan.md`
+
+**2026-07-06 — Phase 8 complete** (autonomous execution)
+
+**Delivered:** kekaba embed sync + demo shop/events · commerce tax/refunds/subscriptions · order email automation triggers · ContentEditor table cell merge/split.
+
+**Matrix:** `docs/reviews/P8-verification-matrix.md` · **Closure:** `docs/reviews/P8-phase-closure-checklist.md` · **Deploy:** `docs/reviews/P8-deploy-checklist.md`
 
 ---
 
@@ -2138,22 +2144,23 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 8 — Reference site, commerce production & cell merge
 
-**Status:** **Approved** (2026-07-06) — M0–M6 autonomous execution
+**Status:** **Complete** (2026-07-06)
 
 **Handoff:** `docs/reviews/P8-lead-engineer-handoff.md`  
-**Spec:** `docs/reviews/P8-reference-commerce-plan.md`
+**Spec:** `docs/reviews/P8-reference-commerce-plan.md`  
+**Matrix:** `docs/reviews/P8-verification-matrix.md`
 
 **Goal:** Sync kekaba embed; demo shop + events front-end; commerce tax/refunds/subscriptions/order emails; ContentEditor table cell merge/split.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
 | **P8-M0** | Roadmap + plan baseline | complete |
-| **P8-M1** | kekaba embed sync (`sync-client-embed.sh`) | in progress |
-| **P8-M2** | Client templates — shop, events calendar | pending |
-| **P8-M3** | Commerce ops v1 — tax, refunds, order email triggers | pending |
-| **P8-M4** | Subscription lifecycle v1 — cancel, status | pending |
-| **P8-M5** | ContentEditor cell merge / split | pending |
-| **P8-M6** | Verification matrix, docs, closure | pending |
+| **P8-M1** | kekaba embed sync (`sync-client-embed.sh`) | complete |
+| **P8-M2** | Client templates — shop, events calendar | complete |
+| **P8-M3** | Commerce ops v1 — tax, refunds, order email triggers | complete |
+| **P8-M4** | Subscription lifecycle v1 — cancel, status | complete |
+| **P8-M5** | ContentEditor cell merge / split | complete |
+| **P8-M6** | Verification matrix, docs, closure | complete |
 
 **Deferred post-P8:** Marketplace (P7.0), live Shopify/Woo API import (P7.1), gift cards, B2B quotes.
 

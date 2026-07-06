@@ -54,7 +54,35 @@ Order lines snapshot commerce value + `purchase_option_id` at checkout.
 
 ## Admin (Commerce page)
 
-Tabs: Connections, Catalog, Orders, Discounts, Import, Mappings, Fulfillment, Activity, Settings. Shipping zones v1 for flat-rate shipping.
+Tabs: Connections, Catalog, Orders, **Subscriptions**, Discounts, Import, Mappings, Fulfillment, **Tax**, Activity, Settings. Shipping zones v1 for flat-rate shipping.
+
+## Tax (P8)
+
+- **Settings → Tax:** default flat rate (%) + optional country→rate map
+- Checkout applies rate from buyer country; order stores `tax_cents`, `tax_rate`, `tax_country`
+
+## Refunds (P8)
+
+- Order detail → Refund (full or partial amount in cents)
+- Executes via active payment provider on `commerce_shelf`
+
+## Subscriptions (P8)
+
+- Created when checkout completes a `billing: recurring` purchase_option
+- Admin **Subscriptions** tab: list, detail, cancel
+- Provider webhooks update status (`active`, `past_due`, `canceled`)
+- Out of scope: plan upgrades, dunning automation
+
+## Order email automation (P8)
+
+On `order_paid`, Commerce enqueues:
+
+| Trigger | Typical use |
+|---------|-------------|
+| `commerce_order_receipt` | Customer receipt email |
+| `commerce_order_admin_notify` | Staff notification |
+
+Configure workflows in Admin → Automation using these trigger types.
 
 ## Shelf services
 

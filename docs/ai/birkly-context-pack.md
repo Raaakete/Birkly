@@ -149,16 +149,19 @@ The **Editor** fieldtype (`content-editor`, aliases `editor`, `media`) stores **
 2. Place caret → toolbar **Table** or **Grid** → insert at caret (not document end).
 3. Click the layout block → floating **Layout panel** (gap, padding, background, border, radius; table/grid-specific controls).
 4. Drag column/track resize handles; adjust grid span, flow, and fluid track presets.
-5. Save entry — `ContentEditorSync` + `processValue` strip `data-ce-*` and editor chrome; inline layout styles remain.
+5. **Table merge (P8):** drag-select multiple cells → Layout panel **Merge**; **Split** restores the grid. Saved HTML uses native `colspan` / `rowspan` (no `data-ce-*`).
+6. Save entry — `ContentEditorSync` + `processValue` strip `data-ce-*` and editor chrome; inline layout styles remain.
 
 **Table HTML pattern:**
 
 ```html
 <table class="content-editor-table" style="width:100%;border-collapse:collapse">
   <colgroup><col style="width:33%"></colgroup>
-  <tbody><tr><td style="padding:12px">…</td></tr></tbody>
+  <tbody><tr><td colspan="2" rowspan="1" style="padding:12px">…</td></tr></tbody>
 </table>
 ```
+
+Merged cells use standard `colspan` / `rowspan` attributes. Do not use nested tables or grid-in-grid.
 
 **Grid HTML pattern** (responsive via fluid tracks — no `@media` in entry HTML):
 
@@ -176,6 +179,17 @@ When creating/updating entries via AI, preserve these class names and inline sty
 - State persisted in `settings/plugins.json`
 - Automation plugin: workflows on entry events, schedules, webhooks (`plugins/automation/`)
 - User Management: site users, registration, collection permissions (`plugins/user_management/`)
+- **Commerce** (`plugins/commerce/`): providers, catalog, cart, checkout, orders, tax, refunds, subscriptions — content-first via Commerce fieldtype
+- **Events** (`plugins/events/`): Event fieldtype, recurring events, iCal/webcal, RSVP + paid tickets via commerce shelf
+
+### Commerce ops (P8)
+
+- **Tax v1:** flat default rate + optional country→rate map at checkout; `tax_cents`, `tax_rate`, `tax_country` on order
+- **Refunds v1:** full/partial via provider shelf; admin UI on order detail
+- **Subscriptions v1:** records for `billing: recurring` purchase_options; admin cancel; webhook updates `past_due` / `canceled` — no plan upgrades in P8
+- **Order emails:** Automation triggers `commerce_order_receipt` and `commerce_order_admin_notify` fire on `order_paid` (configure workflows in Admin → Automation)
+
+Reference client site: kekaba demo shop/events pages (`shop.html`, `events.html`) — see Birkly-Docs `03-templating/storefront-patterns.md`.
 
 ## API surface
 
@@ -308,6 +322,8 @@ When the Automation plugin is active, workflows trigger on entry/sub-entry event
 | `sub_entry_deleted` | Sub-entry deleted |
 | `scheduled` | Cron/scheduled time |
 | `webhook_inbound` | Inbound webhook POST |
+| `commerce_order_receipt` | Order paid — customer receipt email workflow |
+| `commerce_order_admin_notify` | Order paid — admin notification workflow |
 
 Sub-entry triggers accept optional `collection` (parent collection slug) and `sub_collection` (sub-collection slug) filters.
 
