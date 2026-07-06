@@ -49,3 +49,5 @@ if (function_exists('register_plugin_action')) {
         },
     ]);
 }
+
+require __DIR__ . '/docs/register_docs.php';

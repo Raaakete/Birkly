@@ -67,3 +67,5 @@ if (function_exists('register_template_function') && events_plugin_active()) {
         return $base;
     });
 }
+
+require __DIR__ . '/docs/register_docs.php';
