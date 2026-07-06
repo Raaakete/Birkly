@@ -1,6 +1,6 @@
 # Phase 7 — Plugin platform, UX unification & ecosystem
 
-**Status:** Proposed (2026-07-06) — pending human approval  
+**Status:** **Approved (2026-07-06, Keven)** — autonomous execution P7-M0→M6 · **Handoff:** `docs/reviews/P7-lead-engineer-handoff.md`  
 **Repo:** Birkly (primary) · Birkly-Docs  
 **Baseline:** P6.4–P6.7 complete on `main` (Commerce v2, bundles, import, 91 tests) · **docs_shelf shipped** — only Commerce registers docs today  
 **Trigger:** Live feedback — wrong plugin breadcrumbs, User plugin broken, AI still lacks Commerce in chat (deploy/topic gap), legacy plugins in sidebar
@@ -67,7 +67,7 @@ flowchart TB
 | ID | Decision |
 |----|----------|
 | P1 | Plugin breadcrumb root = **plugin name**, never Settings or Dashboard |
-| P2 | Sub-pages: `Commerce › Orders`, `Site Users › Tiers` — max depth 3 |
+| P2 | **Tabs do not change breadcrumb** — only **sub-pages** (separate routes) append a segment, e.g. `Site Users › Tiers`. Single-page plugins with tabs show plugin title only: `Commerce` |
 | P3 | **No duplicate `<h1>`** in plugin body — topbar breadcrumb is the title |
 | P4 | Remove horizontal padding mismatch — plugin pages use same content width as entries |
 | P5 | **Remove** `plugins/payments/` and `plugins/shopping_cart/` after migration + test pass |
@@ -86,7 +86,7 @@ flowchart TB
 |------|-------------|
 | M0-T1 | `admin/partials/plugin_page_shell.php` or documented HTML contract matching entries layout |
 | M0-T2 | `register_plugin_admin_meta($plugin_id, ['title', 'tabs', 'breadcrumb_root'])` in `core/plugins.php` |
-| M0-T3 | Breadcrumb hoisting: plugin root from meta; sub-tabs update breadcrumb segment via JS |
+| M0-T3 | Breadcrumb hoisting: plugin root from meta; **sub-pages only** update breadcrumb (not in-tab switches) |
 | M0-T4 | CSS: `.plugin-page` uses content-area padding; drop redundant `.page-header` side padding |
 | M0-T5 | `docs/PLUGIN_ADMIN_UI_GUIDE.md` — mandatory for plugin authors |
 | M0-T6 | `tests/plugin_admin_shell_test.php` |
@@ -95,11 +95,11 @@ flowchart TB
 
 | Page | Breadcrumb |
 |------|------------|
-| Commerce → Connections | `Commerce` |
-| Commerce → Orders tab | `Commerce › Orders` |
-| Site Users → Tiers | `Site Users › Tiers` |
+| Commerce (any tab: Connections, Orders, …) | `Commerce` |
+| Site Users (any tab on main page) | `Site Users` |
+| Site Users → Tiers sub-page (`?page=user_tiers`) | `Site Users › Tiers` |
 | Automation | `Automation` |
-| Events → Calendar | `Events › Calendar` |
+| Events (any tab on main page) | `Events` |
 
 ---
 
@@ -144,7 +144,7 @@ flowchart TB
 |------|-------------|
 | M3-T1 | **Root cause** — CSS not loaded / tab pane hidden / JS init on hoisted breadcrumb layout |
 | M3-T2 | Split `site_users.html` (2000+ lines) into partials or tab lazy-load |
-| M3-T3 | Migrate to plugin shell; breadcrumb `Site Users › {tab}` |
+| M3-T3 | Migrate to plugin shell; breadcrumb `Site Users` on main page; sub-pages only get segment |
 | M3-T4 | Remove inline styles; use `btn`, `main-actions-bar`, `smart-table` |
 | M3-T5 | Goals review doc: registration, tiers, collection permissions still match P3/P5 values |
 | M3-T6 | `tests/user_plugin_admin_test.php` — HTTP smoke tab content renders |
@@ -174,7 +174,7 @@ Register `event` fieldtype (Events plugin) on entries in **any** collection:
 
 | Field group | Purpose |
 |-------------|---------|
-| Schedule | `starts_at`, `ends_at`, timezone, recurrence optional (defer) |
+| Schedule | `starts_at`, `ends_at`, timezone, **recurrence** (series — required v1) |
 | Location | `venue`, `virtual_url`, hybrid flag |
 | Capacity | `quantity_available` or link to Commerce `fulfillment: register` |
 | Commerce link | Optional relation to commerce field on same entry OR paid via Commerce field on entry |
@@ -197,19 +197,38 @@ Register `event` fieldtype (Events plugin) on entries in **any** collection:
 |------|----------|
 | **Free RSVP** | Event fieldtype only; register without Commerce |
 | **Paid ticket** | Same entry has Commerce field `fulfillment: register` — Commerce owns money |
-| **Legacy** | Old `events` collection + Events plugin registrations — migration wizard (M6-T7) |
+| **Legacy** | Old `events` collection + Events plugin registrations — migration note (M5-T9) |
 
-### What else makes sense (included / deferred)
+### Recurrence (v1 — required)
+
+Support event **series** from launch:
+
+| Field | Purpose |
+|-------|---------|
+| `recurrence` | Structured rule: `frequency` (daily/weekly/monthly), `interval`, `until` or `count` |
+| Indexer | Expands occurrences for calendar month/week views |
+| Exceptions | Optional `skip_dates[]` for cancelled single occurrences |
+
+Use RRULE subset or Birkly-native JSON — document in fieldtype help.
+
+### Calendar export & sync (v1 — required)
+
+| Feature | Deliverable |
+|---------|-------------|
+| **Per-event iCal** | `api/events.php?action=ics&entry_id=` → `.ics` download |
+| **Calendar feed** | Subscribe URL (`webcal://` / `https://`) for all indexed events |
+| **External sync** | Feed works with Google Calendar, Apple Calendar subscribe |
+| **Admin export** | Export filtered range as `.ics` from Events admin |
+
+### What else (included / deferred)
 
 | Feature | Phase |
 |---------|--------|
-| Check-in QR / door list | P7-M6 v1 export |
-| Waitlist when full | P7-M6 v1 |
-| iCal feed per event | P7-M6 |
-| Recurring events series | Deferred |
+| Check-in QR / door list | P7-M5 v1 export |
+| Waitlist when full | P7-M5 v1 |
 | Seating maps | Deferred |
 | Event-specific email templates | Automation recipes |
-| Public calendar template functions | `upcoming_events` extend to index |
+| Public calendar template functions | `upcoming_events` extend to index + feed URL helper |
 
 | Task | Deliverable |
 |------|-------------|
@@ -217,9 +236,11 @@ Register `event` fieldtype (Events plugin) on entries in **any** collection:
 | M5-T2 | EventIndexer + admin Calendar/Overview |
 | M5-T3 | Attendees tab (Commerce + legacy merge view) |
 | M5-T4 | Attendee messages → Automation trigger `events_message_attendees` |
-| M5-T5 | Template functions update |
-| M5-T6 | Tests + plugin docs |
-| M5-T7 | Coexistence + migration note from legacy events collection |
+| M5-T5 | Recurrence on event fieldtype + EventIndexer occurrence expansion |
+| M5-T6 | iCal per-event + calendar webcal feed + admin export |
+| M5-T7 | Template functions + register_plugin_docs |
+| M5-T8 | Attendee messages → Automation trigger |
+| M5-T9 | Tests + plugin docs + legacy coexistence note |
 
 ---
 
@@ -273,7 +294,7 @@ P7-M6 Automation nodes
 3. Help → Plugin extensions lists Commerce, Automation, User Management, Events.
 4. payments + shopping_cart removed; tests green.
 5. Site Users tabs render and save.
-6. Events calendar + attendees from indexed fieldtype entries.
+6. Events calendar with **recurring** occurrences + **iCal/webcal** export/sync.
 7. Automation node editor saves workflows readable by existing engine.
 
 ---
@@ -291,5 +312,5 @@ P7-M6 Automation nodes
 
 ## Handoff
 
-When approved: `docs/reviews/P7-lead-engineer-handoff.md`  
+**Approved:** `docs/reviews/P7-lead-engineer-handoff.md`  
 Branches: `cursor/p7-m[N]-<slug>-24b5`

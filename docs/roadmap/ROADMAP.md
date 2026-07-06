@@ -194,9 +194,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P7 Plugin platform & UX** (proposed) — shell, docs for all plugins, remove legacy plugins, fix User plugin, Events v2, Automation nodes · see `docs/reviews/P7-plugin-platform-plan.md`
+**Next active phase:** **P7 Plugin platform & UX** (approved) — `docs/reviews/P7-lead-engineer-handoff.md`
 
-**Note:** P6.5 Commerce Wave **shipped on main** (fieldtype v2, fulfillment, variants, docs_shelf, Commerce registers docs). P7 focuses on platform UX gaps visible on live (breadcrumbs, User plugin broken, AI missing non-Commerce plugin docs, legacy plugins still in sidebar).
+**2026-07-06 — Phase 7 approved** (Keven)
+
+**Priorities:** Plugin admin shell (breadcrumbs: tabs ≠ segments, sub-pages only) · docs for all plugins · remove payments/shopping_cart · fix User Management · Events v2 with **recurring + iCal/sync** · Automation node editor.
+
+**Handoff:** `docs/reviews/P7-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P7-plugin-platform-plan.md`
 
 ---
 
@@ -2107,23 +2111,21 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 7 — Plugin platform, UX & ecosystem
 
-**Status:** Proposed (2026-07-06) — pending approval
+**Status:** Approved (2026-07-06, Keven) — autonomous execution P7-M0→M6
 
-**Spec:** `docs/reviews/P7-plugin-platform-plan.md`
+**Spec:** `docs/reviews/P7-plugin-platform-plan.md` · **Handoff:** `docs/reviews/P7-lead-engineer-handoff.md`
 
-**Goal:** Unified plugin admin shell (breadcrumbs, layout), `register_plugin_docs` for AI+Help, remove payments/shopping_cart, fix User Management, migrate plugin UIs, complete P6.5 Commerce Wave, Events v2 (fieldtype + calendar + attendees), Automation node editor.
+**Goal:** Plugin admin shell (breadcrumb = plugin title; sub-pages only for deeper routes; tabs do not change breadcrumb), all plugins register docs, remove payments/shopping_cart, fix User Management, Events v2 (recurring + iCal/sync), Automation node editor.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
 | **P7-M0** | Plugin admin shell (core) | pending |
-| **P7-M1** | Plugin docs shelf — AI + Help | pending |
+| **P7-M1** | Plugin docs — all plugins AI + Help | pending |
 | **P7-M2** | Remove payments + shopping_cart | pending |
 | **P7-M3** | User Management repair | pending |
 | **P7-M4** | Plugin UI migration (all plugins) | pending |
-| **P7-M5** | Events v2 — fieldtype, calendar, attendees, Commerce link | pending |
-| **P7-M6** | Automation node editor | pending |
-
-**Note:** P6.5 Commerce Wave **complete on main**. P7-M1 completes docs for remaining plugins; P7-M4 migrates Commerce admin to new shell only.
+| **P7-M5** | Events v2 — fieldtype, recurring, calendar, iCal/sync, attendees | pending |
+| **P7-M6** | Automation node editor + closure | pending |
 
 ---
 
