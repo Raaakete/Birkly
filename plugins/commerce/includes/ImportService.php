@@ -11,6 +11,48 @@ class ImportService
 {
     private CatalogIndexer $indexer;
 
+    /** @return list<array<string, mixed>> */
+    public static function getImportSources(): array
+    {
+        return [
+            [
+                'id' => 'woocommerce',
+                'name' => 'WooCommerce',
+                'description' => 'WordPress store export',
+                'export_steps' => 'Products → Export → CSV. Include columns: Name, SKU, Regular price, Stock.',
+                'columns' => ['Name', 'SKU', 'Regular price', 'Stock', 'Slug'],
+            ],
+            [
+                'id' => 'shopify',
+                'name' => 'Shopify',
+                'description' => 'Shopify Admin product export',
+                'export_steps' => 'Products → Export → Export products. Uses Variant SKU, Variant price, Variant inventory qty.',
+                'columns' => ['Title', 'Handle', 'Variant SKU', 'Variant price', 'Variant inventory qty'],
+            ],
+            [
+                'id' => 'etsy',
+                'name' => 'Etsy',
+                'description' => 'Etsy Shop Manager CSV',
+                'export_steps' => 'Shop Manager → Settings → Options → Download Data → CSV. Or use Etsy export tools for listings.',
+                'columns' => ['TITLE', 'SKU', 'PRICE', 'QUANTITY'],
+            ],
+            [
+                'id' => 'square',
+                'name' => 'Square',
+                'description' => 'Square Item Library export',
+                'export_steps' => 'Item library → Actions → Export library. Maps Item Name, SKU, Price, Current Quantity.',
+                'columns' => ['Item Name', 'SKU', 'Price', 'Current Quantity'],
+            ],
+            [
+                'id' => 'generic',
+                'name' => 'Generic CSV',
+                'description' => 'Any spreadsheet or custom export',
+                'export_steps' => 'Use headers: title, price, currency, sku, quantity, slug, fulfillment, parent_sku, variant_label.',
+                'columns' => ['title', 'price', 'currency', 'sku', 'quantity', 'slug'],
+            ],
+        ];
+    }
+
     public function __construct(?CatalogIndexer $indexer = null)
     {
         $this->indexer = $indexer ?? new CatalogIndexer();
@@ -146,16 +188,31 @@ class ImportService
                 'title' => 'name', 'sku' => 'sku', 'price' => 'regular price',
                 'currency' => null, 'quantity' => 'stock', 'slug' => 'slug',
                 'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
             ],
             'shopify' => [
                 'title' => 'title', 'sku' => 'variant sku', 'price' => 'variant price',
                 'currency' => null, 'quantity' => 'variant inventory qty', 'slug' => 'handle',
                 'fulfillment' => null, 'parent_sku' => 'handle', 'variant_label' => 'option1 value',
+                'body' => 'body (html)',
+            ],
+            'etsy' => [
+                'title' => 'title', 'sku' => 'sku', 'price' => 'price',
+                'currency' => null, 'quantity' => 'quantity', 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'square' => [
+                'title' => 'item name', 'sku' => 'sku', 'price' => 'price',
+                'currency' => null, 'quantity' => 'current quantity', 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => 'variation name',
+                'body' => 'description',
             ],
             'generic' => [
                 'title' => 'title', 'sku' => 'sku', 'price' => 'price',
                 'currency' => 'currency', 'quantity' => 'quantity', 'slug' => 'slug',
                 'fulfillment' => 'fulfillment', 'parent_sku' => 'parent_sku', 'variant_label' => 'variant_label',
+                'body' => 'body',
             ],
         ];
 
@@ -183,15 +240,21 @@ class ImportService
         $fulfillment = in_array($row['fulfillment'] ?? '', CommerceSchema::FULFILLMENTS, true)
             ? $row['fulfillment'] : 'ship';
 
+        $currencyProvided = array_key_exists('currency', $row) && trim((string) ($row['currency'] ?? '')) !== '';
+
+        $purchaseOption = [
+            'id' => 'import_default',
+            'label' => 'Default',
+            'billing' => 'one_time',
+            'price_cents' => $cents,
+        ];
+        if ($currencyProvided) {
+            $purchaseOption['currency'] = strtolower(trim((string) $row['currency']));
+        }
+
         $commerce = commerce_normalize_value([
             'fulfillment' => $fulfillment,
-            'purchase_options' => [[
-                'id' => 'import_default',
-                'label' => 'Default',
-                'billing' => 'one_time',
-                'price_cents' => $cents,
-                'currency' => strtolower($row['currency'] ?? 'eur'),
-            ]],
+            'purchase_options' => [$purchaseOption],
             'quantity_available' => $qtyAvailable,
             'sku' => $row['sku'] ?? null,
         ]);
@@ -203,8 +266,24 @@ class ImportService
             'body' => $row['body'] ?? '',
             'parent_sku' => $row['parent_sku'] ?? null,
             'variant_label' => $row['variant_label'] ?? null,
+            'currency_from_csv' => $currencyProvided,
             'commerce' => $commerce,
         ];
+    }
+
+    /** @param list<array<string, mixed>> $rows */
+    public function applyDefaultCurrency(array $rows, string $currency = 'eur'): array
+    {
+        $currency = strtolower($currency);
+        foreach ($rows as &$row) {
+            if (empty($row['currency_from_csv']) && !empty($row['commerce']['purchase_options'][0])) {
+                $row['commerce']['purchase_options'][0]['currency'] = $currency;
+                $row['commerce'] = commerce_normalize_value($row['commerce']);
+            }
+            unset($row['currency_from_csv']);
+        }
+        unset($row);
+        return $rows;
     }
 
     private function buildEntryFromRow(array $row, string $collectionSlug): array

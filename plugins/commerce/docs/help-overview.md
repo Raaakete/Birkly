@@ -41,9 +41,10 @@ Your product page lists variants; the buyer picks one, then a purchase option at
 | Catalog | Indexed sellable entries |
 | Orders | Paid orders and fulfillment state |
 | Discounts | Coupons and rules |
-| Import | CSV import (WooCommerce, Shopify presets) |
+| Import | Import products from WooCommerce, Shopify, Etsy, Square, or generic CSV |
 | Mappings | Grant user tier on purchase |
 | Fulfillment | Export to warehouse / ShipStation stub |
+| Fieldtypes | Saved Commerce fieldtype profiles for collections |
 | Settings | Provider mode, shipping zones |
 
 ## After payment
