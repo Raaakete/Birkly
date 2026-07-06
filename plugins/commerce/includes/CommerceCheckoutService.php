@@ -12,6 +12,7 @@ class CommerceCheckoutService
     private DiscountEngine $discounts;
     private PurchaseMappingService $mappings;
     private PostPurchaseRouter $router;
+    private ?CommerceSubscriptionService $subscriptionService = null;
 
     public function __construct(
         ?CommerceOrderStore $orders = null,
@@ -20,7 +21,8 @@ class CommerceCheckoutService
         ?CatalogIndexer $indexer = null,
         ?DiscountEngine $discounts = null,
         ?PurchaseMappingService $mappings = null,
-        ?PostPurchaseRouter $router = null
+        ?PostPurchaseRouter $router = null,
+        ?CommerceSubscriptionService $subscriptionService = null
     ) {
         $this->orders = $orders ?? new CommerceOrderStore();
         $this->indexer = $indexer ?? new CatalogIndexer();
@@ -29,6 +31,29 @@ class CommerceCheckoutService
         $this->discounts = $discounts ?? new DiscountEngine();
         $this->mappings = $mappings ?? new PurchaseMappingService();
         $this->router = $router ?? new PostPurchaseRouter();
+        $this->subscriptionService = $subscriptionService;
+    }
+
+    /**
+     * Lazily build the subscription service, colocating its store next to the
+     * order store so custom (test) data directories are respected.
+     */
+    private function subscriptions(): CommerceSubscriptionService
+    {
+        if ($this->subscriptionService === null) {
+            if (!class_exists('CommerceSubscriptionStore')) {
+                require_once __DIR__ . '/CommerceSubscriptionStore.php';
+            }
+            if (!class_exists('CommerceSubscriptionService')) {
+                require_once __DIR__ . '/CommerceSubscriptionService.php';
+            }
+            $subDir = dirname($this->orders->getDataDir()) . '/subscriptions';
+            $this->subscriptionService = new CommerceSubscriptionService(
+                new CommerceSubscriptionStore($subDir),
+                $this->getShelf()
+            );
+        }
+        return $this->subscriptionService;
     }
 
     public function getShelf(): ?PaymentShelf
@@ -214,6 +239,13 @@ class CommerceCheckoutService
 
         if (!empty($fulfillmentResults)) {
             $updated = $this->orders->update($order['id'], ['fulfillment_results' => $fulfillmentResults]);
+        }
+
+        if (($updated['billing_mode'] ?? 'one_time') === 'recurring') {
+            $subscription = $this->subscriptions()->createFromOrder($updated);
+            if ($subscription) {
+                $updated = $this->orders->update($order['id'], ['subscription_id' => $subscription['id']]);
+            }
         }
 
         return $updated;
