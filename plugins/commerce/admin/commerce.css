@@ -1059,3 +1059,19 @@ body.commerce-import-wizard-open { overflow: hidden; }
   .commerce-import-wizard-steps { grid-template-columns: repeat(2, 1fr); }
   .commerce-import-history-table { display: block; overflow-x: auto; }
 }
+
+/* P8-M4 subscription lifecycle */
+.commerce-sub-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: #eef1f5;
+  color: #444;
+}
+.commerce-sub-badge-active { background: #e3f6ea; color: #1c7a44; }
+.commerce-sub-badge-past_due { background: #fdf1dd; color: #96620a; }
+.commerce-sub-badge-canceled { background: #f6e3e3; color: #a12a2a; }
+.commerce-subscription-detail { margin-top: 16px; }
