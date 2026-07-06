@@ -8,6 +8,7 @@
     <button class="payments-tab active" data-tab="connections" role="tab" aria-selected="true">Connections</button>
     <button class="payments-tab" data-tab="catalog" role="tab">Catalog</button>
     <button class="payments-tab" data-tab="orders" role="tab">Orders</button>
+    <button class="payments-tab" data-tab="subscriptions" role="tab">Subscriptions</button>
     <button class="payments-tab" data-tab="discounts" role="tab">Discounts</button>
     <button class="payments-tab" data-tab="import" role="tab">Import</button>
     <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
@@ -50,6 +51,17 @@
     <div id="commerce-orders-list" class="payments-activity-list">
       <div class="loading-state"><p>Loading orders…</p></div>
     </div>
+  </div>
+
+  <div id="payments-tab-subscriptions" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="commerce-subscriptions-refresh">Refresh</button>
+    </div>
+    <div class="payments-panel-header"><h2>Subscriptions</h2></div>
+    <div id="commerce-subscriptions-list" class="payments-activity-list">
+      <div class="loading-state"><p>Loading subscriptions…</p></div>
+    </div>
+    <div id="commerce-subscription-detail" class="commerce-subscription-detail" hidden></div>
   </div>
 
   <div id="payments-tab-discounts" class="payments-tab-panel" role="tabpanel" hidden>
