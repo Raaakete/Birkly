@@ -12,6 +12,21 @@ if (function_exists('register_admin_page')) {
     register_admin_page('automation', $automation_plugin_dir . '/admin/automation.html');
 }
 
+if (function_exists('register_plugin_admin_meta')) {
+    register_plugin_admin_meta('automation', [
+        'title' => 'Automation',
+        'root_page' => 'automation',
+        'permission' => 'manage_content',
+        'page_slugs' => ['automation'],
+        'sidebar' => [
+            'show' => true,
+            'label' => 'Automation',
+            'order' => 25,
+            'icon' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+        ],
+    ]);
+}
+
 if (function_exists('register_hook')) {
     register_hook('plugin_activated', function ($plugin_id) {
         if ($plugin_id === 'automation' && function_exists('init_plugin_automation_blocks')) {
