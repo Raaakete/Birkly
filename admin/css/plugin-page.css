@@ -1,0 +1,33 @@
+/* P7-M0 — Plugin admin pages share entries.html layout contract */
+
+.plugin-page,
+.commerce-page.plugin-page,
+.automation-page.plugin-page,
+.events-page.plugin-page,
+.user-management-page.plugin-page {
+  padding: 0 0 2rem;
+}
+
+.plugin-page-header {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.plugin-page .payments-toolbar h1,
+.plugin-page .automation-toolbar h1,
+.plugin-page .events-toolbar h1,
+.plugin-page .user-management-toolbar h1 {
+  display: none;
+}
+
+.plugin-page .main-actions-bar,
+.plugin-page .payments-toolbar,
+.plugin-page .automation-toolbar {
+  margin-bottom: 1rem;
+}
+
+.plugin-page .payments-tabs,
+.plugin-page .commerce-tabs,
+.plugin-page .settings-tabs.plugin-tabs {
+  margin-bottom: 1.25rem;
+}
