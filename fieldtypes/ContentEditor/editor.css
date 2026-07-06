@@ -2636,6 +2636,55 @@ details.content-editor-toggle summary::-webkit-details-marker {
   outline-offset: 1px;
 }
 
+/* P8-M5 — multi-cell selection highlight for merge */
+.content-editor-table-cell-selected {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  outline: 1px solid var(--primary-400, #60a5fa);
+  outline-offset: -1px;
+}
+
+.content-editor-table-merge-controls {
+  padding: 0 12px 12px;
+}
+
+.content-editor-table-merge-controls[hidden] {
+  display: none !important;
+}
+
+.content-editor-merge-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.content-editor-merge-btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+}
+
+.content-editor-merge-btn:hover:not(:disabled) {
+  border-color: var(--primary-400, #60a5fa);
+  color: var(--primary-600, #2563eb);
+}
+
+.content-editor-merge-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.content-editor-merge-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+}
+
 .content-editor-layout-inspector {
   position: absolute;
   top: 12px;

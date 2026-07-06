@@ -2147,8 +2147,8 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P8-M0** | Roadmap + plan baseline | in progress |
-| **P8-M1** | kekaba embed sync (`sync-client-embed.sh`) | pending |
+| **P8-M0** | Roadmap + plan baseline | complete |
+| **P8-M1** | kekaba embed sync (`sync-client-embed.sh`) | in progress |
 | **P8-M2** | Client templates — shop, events calendar | pending |
 | **P8-M3** | Commerce ops v1 — tax, refunds, order email triggers | pending |
 | **P8-M4** | Subscription lifecycle v1 — cancel, status | pending |
