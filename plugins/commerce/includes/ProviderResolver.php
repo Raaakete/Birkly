@@ -95,14 +95,18 @@ class PaymentsProviderResolver
             return $explicit;
         }
 
-        $selectionMode = function_exists('get_plugin_setting')
-            ? get_plugin_setting('payments', 'selection_mode', 'auto')
-            : 'auto';
+        $selectionMode = function_exists('commerce_get_setting')
+            ? commerce_get_setting('selection_mode', 'auto')
+            : (function_exists('get_plugin_setting')
+                ? get_plugin_setting('commerce', 'selection_mode', 'auto')
+                : 'auto');
 
         if ($selectionMode === 'fixed') {
-            $default = function_exists('get_plugin_setting')
-                ? get_plugin_setting('payments', 'default_provider', 'stripe')
-                : 'stripe';
+            $default = function_exists('commerce_get_setting')
+                ? commerce_get_setting('default_provider', 'stripe')
+                : (function_exists('get_plugin_setting')
+                    ? get_plugin_setting('commerce', 'default_provider', 'stripe')
+                    : 'stripe');
             return in_array($default, $configured, true) ? $default : ($configured[0] ?? null);
         }
 
@@ -167,9 +171,11 @@ class PaymentsProviderResolver
         }
 
         // 6. Site default
-        $default = function_exists('get_plugin_setting')
-            ? get_plugin_setting('payments', 'default_provider', 'stripe')
-            : 'stripe';
+        $default = function_exists('commerce_get_setting')
+            ? commerce_get_setting('default_provider', 'stripe')
+            : (function_exists('get_plugin_setting')
+                ? get_plugin_setting('commerce', 'default_provider', 'stripe')
+                : 'stripe');
         if (in_array($default, $configured, true)) {
             return $default;
         }

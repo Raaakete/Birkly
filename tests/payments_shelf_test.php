@@ -9,7 +9,7 @@ test_reset_failures();
 echo "Payments shelf tests\n\n";
 
 $root = dirname(__DIR__);
-require_once $root . '/plugins/payments/init.php';
+require_once $root . '/plugins/commerce/init.php';
 
 $dataDir = sys_get_temp_dir() . '/birkly-payments-shelf-' . getmypid();
 if (is_dir($dataDir)) {
@@ -19,15 +19,15 @@ if (is_dir($dataDir)) {
 }
 
 // Override data dir via custom store
-require_once $root . '/plugins/payments/includes/ProviderInterface.php';
-require_once $root . '/plugins/payments/includes/AbstractProvider.php';
-require_once $root . '/plugins/payments/includes/CredentialStore.php';
-require_once $root . '/plugins/payments/includes/ActivityLog.php';
-require_once $root . '/plugins/payments/includes/ProviderResolver.php';
-require_once $root . '/plugins/payments/includes/WebhookRouter.php';
-require_once $root . '/plugins/payments/includes/PaymentShelf.php';
+require_once $root . '/plugins/commerce/includes/ProviderInterface.php';
+require_once $root . '/plugins/commerce/includes/AbstractProvider.php';
+require_once $root . '/plugins/commerce/includes/CredentialStore.php';
+require_once $root . '/plugins/commerce/includes/ActivityLog.php';
+require_once $root . '/plugins/commerce/includes/ProviderResolver.php';
+require_once $root . '/plugins/commerce/includes/WebhookRouter.php';
+require_once $root . '/plugins/commerce/includes/PaymentShelf.php';
 foreach (['StripeProvider', 'MollieProvider', 'PayPalProvider', 'AdyenProvider', 'SquareProvider', 'RazorpayProvider', 'KomojuProvider', 'PayssionProvider'] as $f) {
-    require_once $root . '/plugins/payments/includes/providers/' . $f . '.php';
+    require_once $root . '/plugins/commerce/includes/providers/' . $f . '.php';
 }
 
 // Build isolated shelf with temp data dir
