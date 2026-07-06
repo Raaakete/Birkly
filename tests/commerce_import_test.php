@@ -12,13 +12,16 @@ $root = dirname(__DIR__);
 require_once $root . '/plugins/commerce/init.php';
 require_once $root . '/plugins/commerce/includes/CatalogIndexer.php';
 require_once $root . '/plugins/commerce/includes/ImportService.php';
+require_once $root . '/plugins/commerce/includes/ImportCollectionHelper.php';
 
 $dataDir = sys_get_temp_dir() . '/birkly-commerce-import-' . getmypid();
-$entriesDir = $dataDir . '/entries';
-@mkdir($entriesDir, 0755, true);
+$contentRoot = sys_get_temp_dir() . '/birkly-commerce-import-content-' . getmypid();
+@mkdir($dataDir, 0755, true);
+@mkdir($contentRoot . '/collections', 0755, true);
 
 $indexer = new CatalogIndexer($dataDir);
-$import = new ImportService($indexer);
+$import = new ImportService($indexer, $contentRoot);
+$collectionHelper = new ImportCollectionHelper($contentRoot);
 
 $csv = "title,price,currency,sku,quantity\nRed Shirt,29.99,eur,RED-M,10\nBlue Shirt,24.50,usd,BLU-L,5\nGreen Hat,9.99,eur,HAT-1,\n";
 
@@ -74,6 +77,8 @@ $dry = $import->dryRun($parsed['rows'], 'products');
 test_assert('dry run ok', ($dry['ok'] ?? false) === true);
 test_assert('dry run count 3', ($dry['count'] ?? 0) === 3);
 
+$entriesDir = $dataDir . '/entries';
+@mkdir($entriesDir, 0755, true);
 foreach ($parsed['rows'] as $i => $row) {
     $entry = [
         'id' => 'imp_' . $i,
@@ -110,14 +115,37 @@ $importResult = $import->importRows($parsed['rows'], 'imported-products', false,
     'platform' => 'Generic CSV',
     'currency' => 'eur',
     'file_name' => 'test.csv',
+    'create_collection' => true,
+    'collection_title' => 'Imported Products',
 ]);
 test_assert('import rows records history', !empty($importResult['import_id']));
 test_assert('import status success', ($importResult['status'] ?? '') === 'success');
+test_assert('import creates collection', ($importResult['collection_created'] ?? false) === true);
+test_assert('import collection slug', ($importResult['collection'] ?? '') === 'imported-products');
+
+$entryFiles = glob($contentRoot . '/collections/imported-products/entries/*.json') ?: [];
+test_assert('import writes collection entries', count($entryFiles) === 3);
+$firstEntry = json_decode((string) file_get_contents($entryFiles[0]), true);
+test_assert('import entry uses commerce fieldtype key', isset($firstEntry['pricing']['purchase_options']));
+test_assert('import entry has timestamps', !empty($firstEntry['created_at']) && !empty($firstEntry['updated_at']));
+test_assert('import collection schema exists', is_file($contentRoot . '/collections/imported-products/schema.json'));
+
+$list = $import->listImportCollections();
+test_assert('list import collections includes imported', count(array_filter($list, fn ($c) => ($c['slug'] ?? '') === 'imported-products')) === 1);
+test_assert('commerce field type helper', ImportCollectionHelper::isCommerceFieldType('commerce_events') === true);
+test_assert('commerce bundle excluded', ImportCollectionHelper::isCommerceFieldType('commerce_bundle') === false);
 
 @unlink($historyDir . '/import_history.json');
 @rmdir($historyDir);
 
-array_map('unlink', glob($entriesDir . '/*.json') ?: []);
+array_map('unlink', glob($contentRoot . '/collections/imported-products/entries/*.json') ?: []);
+@unlink($contentRoot . '/collections/imported-products/schema.json');
+@unlink($contentRoot . '/collections/imported-products/collection.json');
+@rmdir($contentRoot . '/collections/imported-products/entries');
+@rmdir($contentRoot . '/collections/imported-products');
+@rmdir($contentRoot . '/collections');
+@rmdir($contentRoot);
+
 @unlink($dataDir . '/catalog_index.json');
 @rmdir($entriesDir);
 @rmdir($dataDir);

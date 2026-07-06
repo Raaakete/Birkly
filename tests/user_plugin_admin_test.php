@@ -30,6 +30,7 @@ test_assert('breadcrumb sub-page has two segments', count($subCrumbs) === 2 && $
 
 $html = file_get_contents($root . '/plugins/user_management/admin/site_users.html');
 test_assert('site_users uses settings-tab-panels', strpos($html, 'settings-tab-panels') !== false && strpos($html, '<div class="tab-content">') === false);
+test_assert('site_users general tab uses settings-stack cards', strpos($html, 'settings-stack') !== false && strpos($html, '<section class="card">') !== false);
 test_assert('site_users uses plugin_page_header', strpos($html, '{plugin_page_header}') !== false);
 test_assert('site_users uses unified tabs', strpos($html, 'settings-tabs plugin-tabs') !== false && strpos($html, 'class="tabs"') !== false);
 test_assert('site_users uses tab class not tab-btn', strpos($html, 'tab-btn') === false);
@@ -41,12 +42,13 @@ test_assert('site_users.js apiUrl helper', strpos($js, 'function apiUrl(path)') 
 test_assert('site_users.js no bare fetch /api/', !preg_match("/fetch\\(['`]\\/api\\//", $js));
 
 $tiers = file_get_contents($root . '/plugins/user_management/admin/tiers.html');
-test_assert('tiers breadcrumb Site Users › Tiers', strpos($tiers, "{admin_url 'site_users'}") !== false && strpos($tiers, '<span class="current">Tiers</span>') !== false);
+test_assert('tiers breadcrumb User › Tiers', strpos($tiers, "{admin_url 'site_users'}") !== false && strpos($tiers, '>User</a>') !== false && strpos($tiers, '<span class="current">Tiers</span>') !== false);
 
 global $birkly_plugin_admin_meta;
 $birkly_plugin_admin_meta = [];
 require_once $root . '/plugins/user_management/plugin.php';
-test_assert('user_management admin meta registered', ($birkly_plugin_admin_meta['user_management']['title'] ?? '') === 'Site Users');
+test_assert('user_management admin meta registered', ($birkly_plugin_admin_meta['user_management']['title'] ?? '') === 'User');
+test_assert('user_management sidebar label', ($birkly_plugin_admin_meta['user_management']['sidebar']['label'] ?? '') === 'User');
 test_assert('user_management sub_pages', isset($birkly_plugin_admin_meta['user_management']['sub_pages']['user_tiers']));
 $crumbs = build_plugin_admin_breadcrumbs('user_tiers');
 test_assert('tiers breadcrumb from meta', count($crumbs) === 2 && $crumbs[1]['label'] === 'Tiers');
