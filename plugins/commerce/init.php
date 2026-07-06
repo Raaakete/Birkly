@@ -355,6 +355,8 @@ function commerce_bootstrap_cart_services(): void
         return;
     }
     $dir = commerce_plugin_dir();
+    require_once $dir . '/includes/CommerceSchema.php';
+    require_once $dir . '/includes/CommerceFieldtypeProfileStore.php';
     require_once $dir . '/includes/CommerceCatalog.php';
     require_once $dir . '/includes/CommerceCartSession.php';
     require_once $dir . '/includes/CommerceOrderStore.php';
@@ -371,6 +373,54 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/DigitalDeliveryStore.php';
     require_once $dir . '/includes/PostPurchaseRouter.php';
     $loaded = true;
+}
+
+function commerce_profile_settings_for_type(string $typeKey): array
+{
+    commerce_bootstrap_cart_services();
+    $store = new CommerceFieldtypeProfileStore();
+    return $store->getSettingsForTypeKey($typeKey);
+}
+
+function commerce_register_fieldtype_profiles(): void
+{
+    if (!function_exists('register_plugin_fieldtype') || !commerce_plugin_active()) {
+        return;
+    }
+
+    if (!class_exists('Birkly\FieldTypes\BaseField')) {
+        require_once dirname(__DIR__, 2) . '/fieldtypes/BaseField.php';
+    }
+    require_once commerce_plugin_dir() . '/includes/CommerceSchema.php';
+    require_once commerce_plugin_dir() . '/includes/CommerceFieldtypeProfileStore.php';
+    require_once commerce_plugin_dir() . '/fieldtypes/Commerce/Commerce.php';
+
+    $pluginId = commerce_active_plugin_id();
+    $store = new CommerceFieldtypeProfileStore();
+
+    global $haru_plugin_fieldtypes;
+    if (isset($haru_plugin_fieldtypes) && function_exists('unregister_plugin_fieldtype')) {
+        foreach (array_keys($haru_plugin_fieldtypes) as $type) {
+            if (($type === 'commerce' || str_starts_with($type, 'commerce_'))
+                && (($haru_plugin_fieldtypes[$type]['plugin_id'] ?? '') === $pluginId)) {
+                unregister_plugin_fieldtype($type, $pluginId);
+            }
+        }
+    }
+
+    foreach ($store->listProfiles() as $profile) {
+        $typeKey = $profile['type_key'] ?? 'commerce';
+        register_plugin_fieldtype(
+            $typeKey,
+            'Birkly\\FieldTypes\\Commerce\\Commerce',
+            $pluginId,
+            [
+                'label' => $profile['name'] ?? ucwords(str_replace('_', ' ', $typeKey)),
+                'description' => 'Commerce field profile',
+                'profile_id' => $profile['id'] ?? null,
+            ]
+        );
+    }
 }
 
 function commerce_on_payment_succeeded(array $data): void

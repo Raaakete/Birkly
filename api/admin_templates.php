@@ -1231,7 +1231,8 @@ function getEntryEditorData($includeFieldHtml = false) {
                         'required' => $f['required'] ?? false,
                         'help' => $f['help_text'] ?? '',
                         'group' => $f['group'] ?? 'Content',
-                        'options' => $f['options'] ?? []
+                        'options' => $f['options'] ?? [],
+                        'field_type' => $type,
                     ];
                     
                     // Add all other field settings to config (format, css_url, etc.)

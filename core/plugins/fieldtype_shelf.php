@@ -19,7 +19,7 @@ $haru_plugin_fieldtypes = [];
  * @param string $plugin_id Plugin ID that owns this fieldtype
  * @return bool True on success
  */
-function register_plugin_fieldtype($type, $class, $plugin_id) {
+function register_plugin_fieldtype($type, $class, $plugin_id, array $options = []) {
     global $haru_plugin_fieldtypes;
     
     // Validate inputs
@@ -66,7 +66,10 @@ function register_plugin_fieldtype($type, $class, $plugin_id) {
     $haru_plugin_fieldtypes[$type] = [
         'class' => $class,
         'plugin_id' => $plugin_id,
-        'registered_at' => date('c')
+        'registered_at' => date('c'),
+        'label' => $options['label'] ?? null,
+        'description' => $options['description'] ?? '',
+        'profile_id' => $options['profile_id'] ?? null,
     ];
     
     // Also register in FieldRegistry so it works with existing system
