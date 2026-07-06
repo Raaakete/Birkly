@@ -207,7 +207,7 @@ class StripeProvider extends AbstractPaymentProvider
             $status = 'failed';
         }
 
-        return [
+        $result = [
             'event_type' => $type,
             'status' => $status,
             'payment_id' => $object['id'] ?? null,
@@ -216,5 +216,45 @@ class StripeProvider extends AbstractPaymentProvider
             'provider' => $this->getId(),
             'message' => 'Stripe webhook: ' . $type,
         ];
+
+        $subscription = $this->mapSubscriptionEvent($type, $object);
+        if ($subscription !== null) {
+            $result = array_merge($result, $subscription);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Normalize subscription lifecycle events to a common shape (P8-M4).
+     * @return array{subscription_id: ?string, subscription_status: string}|null
+     */
+    private function mapSubscriptionEvent(string $type, array $object): ?array
+    {
+        switch ($type) {
+            case 'customer.subscription.deleted':
+                return [
+                    'subscription_id' => $object['id'] ?? null,
+                    'subscription_status' => 'canceled',
+                ];
+            case 'customer.subscription.updated':
+                return [
+                    'subscription_id' => $object['id'] ?? null,
+                    'subscription_status' => $object['status'] ?? 'active',
+                ];
+            case 'invoice.payment_failed':
+                return [
+                    'subscription_id' => $object['subscription'] ?? null,
+                    'subscription_status' => 'past_due',
+                ];
+            case 'invoice.paid':
+            case 'invoice.payment_succeeded':
+                return [
+                    'subscription_id' => $object['subscription'] ?? null,
+                    'subscription_status' => 'active',
+                ];
+            default:
+                return null;
+        }
     }
 }
