@@ -10,9 +10,9 @@
    ============================================ */
 
 .automation-page {
-  padding: var(--space-6, 1.5rem);
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 0 0 2rem;
+  max-width: none;
+  margin: 0;
 }
 
 .automation-toolbar {

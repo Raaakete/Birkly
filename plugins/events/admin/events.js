@@ -37,6 +37,16 @@
     try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
   }
 
+  function syncEventsTabActions(tabId) {
+    document.querySelectorAll('#events-tab-actions [data-events-tab]').forEach(function (btn) {
+      btn.hidden = btn.getAttribute('data-events-tab') !== tabId;
+    });
+    var bar = document.getElementById('events-tab-actions');
+    if (bar) {
+      bar.style.display = bar.querySelector('[data-events-tab]:not([hidden])') ? '' : 'none';
+    }
+  }
+
   function switchTab(tabId) {
     document.querySelectorAll('.events-tab').forEach(function (btn) {
       var active = btn.getAttribute('data-tab') === tabId;
@@ -48,6 +58,7 @@
       panel.hidden = !show;
       panel.classList.toggle('active', show);
     });
+    syncEventsTabActions(tabId);
     if (tabId === 'overview') loadOverview();
     if (tabId === 'calendar') loadCalendar();
     if (tabId === 'events-list') loadIndexedEvents();
