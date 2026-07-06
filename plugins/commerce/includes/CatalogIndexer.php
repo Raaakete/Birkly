@@ -58,6 +58,13 @@ class CatalogIndexer
             return;
         }
 
+        $bundleData = $this->extractBundleFromEntry($entry);
+        if ($bundleData !== null) {
+            $index['entries'][$parentKey] = $this->buildBundleIndexRow($bundleData, $entry, $collectionSlug, $index['entries']);
+            $this->saveIndex($index);
+            return;
+        }
+
         $commerceData = $this->extractCommerceFromEntry($entry);
         if ($commerceData === null) {
             unset($index['entries'][$parentKey]);
@@ -97,7 +104,6 @@ class CatalogIndexer
 
         $storage = StorageFactory::createStorage($root);
         $collectionsDir = $root . '/collections';
-        $count = 0;
         $index = ['entries' => []];
 
         if (!is_dir($collectionsDir)) {
@@ -129,7 +135,6 @@ class CatalogIndexer
                         $variantId = $variant['id'] ?? '';
                         $key = $slug . ':' . $variantId;
                         $index['entries'][$key] = $this->buildIndexRow($commerceData, $variant, $slug, $entryId, $entry);
-                        $count++;
                     }
                     continue;
                 }
@@ -140,12 +145,36 @@ class CatalogIndexer
                 }
                 $key = $slug . ':' . $entryId;
                 $index['entries'][$key] = $this->buildIndexRow($commerceData, $entry, $slug);
-                $count++;
+            }
+        }
+
+        foreach (scandir($collectionsDir) ?: [] as $slug) {
+            if ($slug === '.' || $slug === '..') {
+                continue;
+            }
+            $result = birkly_public_list_entries($storage, $slug);
+            if (($result['status'] ?? '') !== 'ok') {
+                continue;
+            }
+            foreach ($result['data']['entries'] ?? [] as $entry) {
+                $entryId = $entry['id'] ?? '';
+                if ($entryId === '') {
+                    continue;
+                }
+                if (!empty(getSubEntries($slug, $entryId, 'variants'))) {
+                    continue;
+                }
+                $bundleData = $this->extractBundleFromEntry($entry);
+                if ($bundleData === null) {
+                    continue;
+                }
+                $key = $slug . ':' . $entryId;
+                $index['entries'][$key] = $this->buildBundleIndexRow($bundleData, $entry, $slug, $index['entries']);
             }
         }
 
         $this->saveIndex($index);
-        return $count;
+        return count($index['entries']);
     }
 
     public function decrementQuantity(string $collectionSlug, string $entryId, int $qty): bool
@@ -259,13 +288,87 @@ class CatalogIndexer
             if (!is_array($fieldVal)) {
                 continue;
             }
+            if ($this->isBundleFieldValue($fieldVal)) {
+                continue;
+            }
             if (isset($fieldVal['purchase_options']) || isset($fieldVal['price_cents']) || isset($fieldVal['billing']) || isset($fieldVal['fulfillment'])) {
                 return $this->normalizeCommerceRow($fieldVal);
             }
         }
-        if (isset($entry['commerce']) && is_array($entry['commerce'])) {
+        if (isset($entry['commerce']) && is_array($entry['commerce']) && !$this->isBundleFieldValue($entry['commerce'])) {
             return $this->normalizeCommerceRow($entry['commerce']);
         }
         return null;
+    }
+
+    private function extractBundleFromEntry(array $entry): ?array
+    {
+        foreach ($entry as $fieldVal) {
+            if (!is_array($fieldVal)) {
+                continue;
+            }
+            if ($this->isBundleFieldValue($fieldVal)) {
+                return $this->normalizeBundleRow($fieldVal);
+            }
+        }
+        if (isset($entry['commerce_bundle']) && is_array($entry['commerce_bundle'])) {
+            return $this->normalizeBundleRow($entry['commerce_bundle']);
+        }
+        return null;
+    }
+
+    private function isBundleFieldValue(array $value): bool
+    {
+        if (!class_exists('CommerceBundleSchema')) {
+            require_once __DIR__ . '/CommerceBundleSchema.php';
+        }
+        return CommerceBundleSchema::isBundleValue($value);
+    }
+
+    private function normalizeBundleRow(array $value): array
+    {
+        if (!class_exists('CommerceBundleSchema')) {
+            require_once __DIR__ . '/CommerceBundleSchema.php';
+        }
+        return commerce_bundle_normalize_value($value);
+    }
+
+    private function buildBundleIndexRow(array $bundleData, array $entry, string $collectionSlug, array $catalogEntries): array
+    {
+        if (!class_exists('CommerceBundleSchema')) {
+            require_once __DIR__ . '/CommerceBundleSchema.php';
+        }
+
+        $entryId = $entry['id'] ?? '';
+        $resolved = CommerceBundleSchema::resolveComponents($bundleData, $catalogEntries);
+        $priceCents = CommerceBundleSchema::computePriceCents($bundleData, $resolved['items']);
+        $quantityAvailable = CommerceBundleSchema::computeQuantityAvailable($bundleData, $resolved['items']);
+
+        return [
+            'is_bundle' => true,
+            'entry_id' => $entryId,
+            'collection_slug' => $collectionSlug,
+            'entry_slug' => $entry['slug'] ?? $entryId,
+            'entry_title' => $entry['title'] ?? $entryId,
+            'bundle' => $bundleData,
+            'components' => $resolved['items'],
+            'component_valid' => $resolved['valid'],
+            'component_issues' => $resolved['issues'],
+            'price_cents' => $priceCents,
+            'currency' => $bundleData['currency'] ?? 'eur',
+            'billing' => 'one_time',
+            'interval' => null,
+            'fulfillment' => $bundleData['fulfillment'] ?? 'ship',
+            'quantity_available' => $quantityAvailable,
+            'purchase_options' => [[
+                'id' => 'default',
+                'label' => 'Bundle',
+                'billing' => 'one_time',
+                'price_cents' => $priceCents,
+                'currency' => $bundleData['currency'] ?? 'eur',
+                'interval' => null,
+            ]],
+            'updated_at' => date('c'),
+        ];
     }
 }
