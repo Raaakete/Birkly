@@ -30,7 +30,9 @@ test_assert('breadcrumb sub-page has two segments', count($subCrumbs) === 2 && $
 
 $html = file_get_contents($root . '/plugins/user_management/admin/site_users.html');
 test_assert('site_users uses settings-tab-panels', strpos($html, 'settings-tab-panels') !== false && strpos($html, '<div class="tab-content">') === false);
-test_assert('site_users breadcrumb is Site Users only', preg_match('/<div class="breadcrumbs">\s*<span class="current">Site Users<\/span>/', $html) === 1);
+test_assert('site_users uses plugin_page_header', strpos($html, '{plugin_page_header}') !== false);
+test_assert('site_users uses unified tabs', strpos($html, 'settings-tabs plugin-tabs') !== false && strpos($html, 'class="tabs"') !== false);
+test_assert('site_users uses tab class not tab-btn', strpos($html, 'tab-btn') === false);
 test_assert('site_users scripts use birkly_url', strpos($html, "{birkly_url '/plugins/user_management/admin/site_users.js'}") !== false);
 test_assert('site_users inline apiUrl', strpos($html, 'function apiUrl(path)') !== false && strpos($html, "fetch(apiUrl('/api/") !== false);
 

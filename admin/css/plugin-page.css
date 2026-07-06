@@ -1,4 +1,4 @@
-/* P7-M0 — Plugin admin pages share entries.html layout contract */
+/* P7 — Plugin admin pages share entries.html layout contract */
 
 .plugin-page,
 .commerce-page.plugin-page,
@@ -6,6 +6,9 @@
 .events-page.plugin-page,
 .user-management-page.plugin-page {
   padding: 0 0 2rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .plugin-page-header {
@@ -20,14 +23,80 @@
   display: none;
 }
 
-.plugin-page .main-actions-bar,
-.plugin-page .payments-toolbar,
-.plugin-page .automation-toolbar {
-  margin-bottom: 1rem;
+/* Primary actions — top-right of content area */
+.plugin-page .main-actions-bar {
+  justify-content: flex-end;
+  margin-bottom: var(--space-4, 1rem);
 }
 
+.plugin-page .main-actions-bar .plugin-actions-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin-right: auto;
+}
+
+/* Unified tab strip (commerce reference) */
 .plugin-page .payments-tabs,
 .plugin-page .commerce-tabs,
-.plugin-page .settings-tabs.plugin-tabs {
-  margin-bottom: 1.25rem;
+.plugin-page .events-tabs,
+.plugin-page .settings-tabs.plugin-tabs .tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  margin-bottom: var(--space-6, 1.5rem);
+  flex-wrap: wrap;
+  overflow-x: auto;
+  background: transparent;
+  border-radius: 0;
+}
+
+.plugin-page .payments-tab,
+.plugin-page .events-tab,
+.plugin-page .settings-tabs.plugin-tabs .tab {
+  background: none;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--text-secondary, #6b7280);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-weight: 500;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+
+.plugin-page .payments-tab.active,
+.plugin-page .events-tab.active,
+.plugin-page .settings-tabs.plugin-tabs .tab.active {
+  color: var(--text-primary, #111827);
+  border-bottom-color: var(--primary, #2563eb);
+  font-weight: 600;
+  background: transparent;
+}
+
+.plugin-page .payments-tab-panel[hidden],
+.plugin-page .events-tab-panel[hidden] {
+  display: none !important;
+}
+
+.plugin-page .payments-panel-header {
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.plugin-page .payments-panel-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+/* Site Users — readable form width on wide screens */
+.user-management-page.plugin-page .settings-form {
+  max-width: 720px;
+}
+
+.user-management-page.plugin-page .settings-tab-panels .card {
+  max-width: 100%;
 }
