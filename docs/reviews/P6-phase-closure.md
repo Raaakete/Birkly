@@ -27,4 +27,4 @@
 
 ## Key PRs (this wave)
 
-- Fieldtype profiles UI overhaul + P6.7 bundles + P6.6 migration
+- Fieldtype profiles UI overhaul + P6.7 bundles + external product import

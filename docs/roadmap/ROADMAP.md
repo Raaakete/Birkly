@@ -188,7 +188,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 6 complete (P6.1–P6.7)** — Commerce, bundles, fieldtype profiles, migration wizard. **92 test suites** green. |
+| **Birkly (CMS)** | **Phase 6 complete (P6.1–P6.7)** — Commerce, bundles, fieldtype profiles, external product import. **91 test suites** green. |
 | **Birkly-Docs** | P6.1–P6.5 guides; Commerce v2 + template functions published. |
 | **Agent ops** | **83** PHP test suites (P6.4 closure). |
 
@@ -2069,15 +2069,15 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
-## Phase 6.6 — Migration wizard
+## Phase 6.6 — External product import
 
 **Status:** Complete (2026-07-06)
 
-**Delivered:** `MigrationWizardService` — scan collections for Shopping Cart / Events migration paths; Commerce admin **Migration** tab with guides and site scan.
+**Delivered:** Product import from WooCommerce, Shopify, Etsy, Square, and generic CSV — platform cards, file upload, preview table. Replaces internal plugin migration wizard (not needed pre-alpha).
 
 | Milestone | Status |
 |-----------|--------|
-| P6.6-M1 | Migration scan + admin UI | complete |
+| P6.6-M1 | External shop CSV import UI + presets | complete |
 
 ---
 

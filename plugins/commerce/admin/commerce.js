@@ -466,55 +466,116 @@
     });
   }
 
-  function loadMigrationTab() {
-    var guidesEl = document.getElementById('commerce-migration-guides');
-    if (guidesEl && !guidesEl.dataset.loaded) {
-      commercePost('migration_guides').then(function (res) {
-        var guides = (res.data && res.data.guides) || [];
-        guidesEl.innerHTML = guides.map(function (g) {
-          return '<article class="commerce-migration-guide"><h3>' + escapeHtml(g.title) + '</h3><p>' + escapeHtml(g.steps) + '</p></article>';
-        }).join('');
-        guidesEl.dataset.loaded = '1';
+  var importSourcesCache = [];
+  var importCsvContent = '';
+  var selectedImportSource = 'generic';
+
+  function loadImportTab() {
+    if (importSourcesCache.length) {
+      renderImportSources();
+      return;
+    }
+    commercePost('import_sources').then(function (res) {
+      importSourcesCache = (res.data && res.data.sources) || [];
+      renderImportSources();
+      selectImportSource(selectedImportSource);
+    });
+  }
+
+  function renderImportSources() {
+    var el = document.getElementById('commerce-import-sources');
+    if (!el) return;
+    el.innerHTML = importSourcesCache.map(function (src) {
+      return '<button type="button" class="commerce-import-source-card' + (src.id === selectedImportSource ? ' is-active' : '') + '" data-source="' + escapeHtml(src.id) + '">'
+        + '<span class="commerce-import-source-name">' + escapeHtml(src.name) + '</span>'
+        + '<span class="commerce-import-source-desc">' + escapeHtml(src.description) + '</span>'
+        + '</button>';
+    }).join('');
+    el.querySelectorAll('.commerce-import-source-card').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectImportSource(btn.getAttribute('data-source'));
       });
+    });
+  }
+
+  function selectImportSource(sourceId) {
+    selectedImportSource = sourceId || 'generic';
+    document.getElementById('commerce-import-preset').value = selectedImportSource;
+    var src = importSourcesCache.find(function (s) { return s.id === selectedImportSource; }) || {};
+    document.getElementById('commerce-import-source-title').textContent = src.name ? 'Import from ' + src.name : 'Import products';
+    document.getElementById('commerce-import-source-steps').textContent = src.export_steps || '';
+    document.querySelectorAll('.commerce-import-source-card').forEach(function (card) {
+      card.classList.toggle('is-active', card.getAttribute('data-source') === selectedImportSource);
+    });
+  }
+
+  function setImportCsvContent(text) {
+    importCsvContent = text || '';
+    var textarea = document.getElementById('commerce-import-csv');
+    if (textarea && text) textarea.value = text;
+    var submitBtn = document.getElementById('commerce-import-submit');
+    if (submitBtn) submitBtn.disabled = !importCsvContent.trim();
+    var nameEl = document.getElementById('commerce-import-file-name');
+    if (nameEl && !nameEl.dataset.filename) {
+      nameEl.textContent = importCsvContent ? 'CSV loaded (' + importCsvContent.split('\n').length + ' lines)' : 'No file selected';
     }
   }
 
-  function runMigrationScan() {
-    var el = document.getElementById('commerce-migration-results');
-    if (!el) return;
-    el.innerHTML = '<div class="loading-state"><p>Scanning collections…</p></div>';
-    commercePost('migration_scan').then(function (res) {
-      var data = res.data || {};
-      var html = '';
-      if ((data.commerce_ready || []).length) {
-        html += '<h3>Commerce ready</h3><ul>';
-        data.commerce_ready.forEach(function (c) {
-          html += '<li><strong>' + escapeHtml(c.name) + '</strong> (' + escapeHtml(c.collection) + ') — ' + escapeHtml((c.fieldtypes || []).join(', ')) + '</li>';
-        });
-        html += '</ul>';
+  function readImportFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var nameEl = document.getElementById('commerce-import-file-name');
+      if (nameEl) {
+        nameEl.textContent = file.name;
+        nameEl.dataset.filename = file.name;
       }
-      if ((data.legacy_shopping_cart || []).length) {
-        html += '<h3>Suggested for Commerce (products)</h3><ul>';
-        data.legacy_shopping_cart.forEach(function (c) {
-          html += '<li><strong>' + escapeHtml(c.name) + '</strong> — ' + escapeHtml(c.suggestion) + '</li>';
-        });
-        html += '</ul>';
+      setImportCsvContent(ev.target.result || '');
+    };
+    reader.readAsText(file);
+  }
+
+  function renderImportPreview(preview) {
+    var wrap = document.getElementById('commerce-import-preview');
+    var tableEl = document.getElementById('commerce-import-preview-table');
+    if (!wrap || !tableEl) return;
+    if (!preview || !preview.length) {
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    var html = '<table class="payments-table"><thead><tr><th>Title</th><th>SKU</th><th>Price</th><th>Type</th></tr></thead><tbody>';
+    preview.slice(0, 50).forEach(function (row) {
+      html += '<tr><td>' + escapeHtml(row.title) + '</td><td>' + escapeHtml(row.sku || '—') + '</td><td>'
+        + ((row.price_cents || 0) / 100).toFixed(2) + '</td><td>' + (row.is_variant ? 'Variant' : 'Product') + '</td></tr>';
+    });
+    if (preview.length > 50) {
+      html += '<tr><td colspan="4">… and ' + (preview.length - 50) + ' more</td></tr>';
+    }
+    html += '</tbody></table>';
+    tableEl.innerHTML = html;
+  }
+
+  function runImportDryRun() {
+    var csv = importCsvContent || document.getElementById('commerce-import-csv')?.value || '';
+    if (!csv.trim()) return;
+    commercePost('import_dry_run', {
+      csv: csv,
+      preset: selectedImportSource,
+      collection: document.getElementById('commerce-import-collection')?.value || 'products',
+      default_currency: document.getElementById('commerce-import-currency')?.value || 'eur',
+    }).then(function (res) {
+      var el = document.getElementById('commerce-import-result');
+      if (res.status !== 'ok') {
+        if (el) { el.hidden = false; el.className = 'payments-test-result error'; el.textContent = res.message || 'Preview failed'; }
+        return;
       }
-      if ((data.legacy_events || []).length) {
-        html += '<h3>Suggested for Commerce (events)</h3><ul>';
-        data.legacy_events.forEach(function (c) {
-          html += '<li><strong>' + escapeHtml(c.name) + '</strong> — ' + escapeHtml(c.suggestion) + '</li>';
-        });
-        html += '</ul>';
+      renderImportPreview((res.data && res.data.preview) || []);
+      if (el) {
+        el.hidden = false;
+        el.className = 'payments-test-result success';
+        el.textContent = 'Ready to import ' + ((res.data && res.data.count) || 0) + ' products.';
       }
-      if ((data.recommendations || []).length) {
-        html += '<h3>Recommendations</h3><ul>';
-        data.recommendations.forEach(function (r) {
-          html += '<li>' + escapeHtml(r) + '</li>';
-        });
-        html += '</ul>';
-      }
-      el.innerHTML = html || '<p>No collections found to scan.</p>';
     });
   }
 
@@ -528,7 +589,7 @@
         if (name === 'mappings') loadMappings();
         if (name === 'shipping') loadShippingZones();
         if (name === 'fieldtypes') loadFieldtypeProfiles();
-        if (name === 'migration') loadMigrationTab();
+        if (name === 'import') loadImportTab();
       });
     });
   }
@@ -555,32 +616,65 @@
       commercePost('save_discount', { rule: rule }).then(loadDiscounts);
     });
 
-    document.getElementById('commerce-import-dry-run')?.addEventListener('click', function () {
-      var csv = document.getElementById('commerce-import-csv')?.value || '';
-      var preset = document.getElementById('commerce-import-preset')?.value || 'generic';
-      var collection = document.getElementById('commerce-import-collection')?.value || 'products';
-      commercePost('import_dry_run', { csv: csv, preset: preset, collection: collection }).then(function (res) {
-        var el = document.getElementById('commerce-import-result');
-        if (!el) return;
-        el.hidden = false;
-        el.textContent = res.status === 'ok'
-          ? 'Dry run: ' + ((res.data && res.data.count) || 0) + ' entries'
-          : (res.message || 'Failed');
-      });
+    document.getElementById('commerce-import-browse')?.addEventListener('click', function () {
+      document.getElementById('commerce-import-file')?.click();
     });
+
+    document.getElementById('commerce-import-file')?.addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (file) readImportFile(file);
+    });
+
+    var dropzone = document.getElementById('commerce-import-dropzone');
+    if (dropzone) {
+      dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropzone.classList.add('is-dragover');
+      });
+      dropzone.addEventListener('dragleave', function () {
+        dropzone.classList.remove('is-dragover');
+      });
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('is-dragover');
+        var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) readImportFile(file);
+      });
+    }
+
+    document.getElementById('commerce-import-csv')?.addEventListener('input', function (e) {
+      var nameEl = document.getElementById('commerce-import-file-name');
+      if (nameEl) {
+        delete nameEl.dataset.filename;
+        nameEl.textContent = e.target.value.trim()
+          ? 'CSV pasted (' + e.target.value.split('\n').length + ' lines)'
+          : 'No file selected';
+      }
+      setImportCsvContent(e.target.value);
+    });
+
+    document.getElementById('commerce-import-dry-run')?.addEventListener('click', runImportDryRun);
 
     document.getElementById('commerce-import-form')?.addEventListener('submit', function (e) {
       e.preventDefault();
-      var csv = document.getElementById('commerce-import-csv')?.value || '';
-      var preset = document.getElementById('commerce-import-preset')?.value || 'generic';
-      var collection = document.getElementById('commerce-import-collection')?.value || 'products';
-      commercePost('import_csv', { csv: csv, preset: preset, collection: collection }).then(function (res) {
+      var csv = importCsvContent || document.getElementById('commerce-import-csv')?.value || '';
+      if (!csv.trim()) return;
+      var submitBtn = document.getElementById('commerce-import-submit');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Importing…'; }
+      commercePost('import_csv', {
+        csv: csv,
+        preset: selectedImportSource,
+        collection: document.getElementById('commerce-import-collection')?.value || 'products',
+        default_currency: document.getElementById('commerce-import-currency')?.value || 'eur',
+      }).then(function (res) {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Import products'; }
         var el = document.getElementById('commerce-import-result');
         if (!el) return;
         el.hidden = false;
+        el.className = 'payments-test-result ' + (res.status === 'ok' ? 'success' : 'error');
         el.textContent = res.status === 'ok'
-          ? 'Imported ' + ((res.data && res.data.count) || 0) + ' entries'
-          : (res.message || 'Failed');
+          ? 'Imported ' + ((res.data && res.data.count) || 0) + ' products.'
+          : (res.message || 'Import failed');
       });
     });
 
@@ -636,7 +730,6 @@
     });
 
     document.getElementById('commerce-add-fieldtype-profile')?.addEventListener('click', newFieldtypeProfile);
-    document.getElementById('commerce-migration-scan')?.addEventListener('click', runMigrationScan);
     document.getElementById('commerce-ft-save')?.addEventListener('click', saveFieldtypeProfile);
     document.getElementById('commerce-ft-cancel')?.addEventListener('click', closeFieldtypeModal);
     document.getElementById('commerce-ft-modal-close')?.addEventListener('click', closeFieldtypeModal);
