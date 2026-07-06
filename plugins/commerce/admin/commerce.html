@@ -28,6 +28,7 @@
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
     <button class="payments-tab" data-tab="shipping" role="tab">Shipping</button>
     <button class="payments-tab" data-tab="fieldtypes" role="tab">Fieldtypes</button>
+    <button class="payments-tab" data-tab="migration" role="tab">Migration</button>
     <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
     <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
   </div>
@@ -139,63 +140,29 @@
 
   <div id="payments-tab-fieldtypes" class="payments-tab-panel" role="tabpanel" hidden>
     <div class="payments-panel-header">
-      <h2>Commerce Fieldtypes</h2>
-      <button class="btn btn-primary" id="commerce-add-fieldtype-profile">New profile</button>
+      <div>
+        <h2>Commerce Fieldtypes</h2>
+        <p class="commerce-ft-intro">Saved profiles become selectable field types when you build collections. Configure fulfillment, billing intervals, and custom fields once — reuse everywhere.</p>
+      </div>
+      <button class="btn btn-primary" id="commerce-add-fieldtype-profile">New fieldtype</button>
     </div>
-    <p class="form-text">Define commerce field profiles here (intervals, fulfillment presets, custom fields). Saved profiles appear as separate field types when creating collections — e.g. Events, Digital products.</p>
-    <p class="form-text"><strong>Bundles</strong> are planned for a future release (P6.7) — not available yet.</p>
-    <div id="commerce-fieldtype-profiles-list" class="payments-connections-list">
+
+    <div id="commerce-fieldtype-profiles-list" class="commerce-ft-grid">
       <div class="loading-state"><p>Loading fieldtype profiles…</p></div>
     </div>
-    <div id="commerce-fieldtype-editor" class="payments-settings-form" hidden>
-      <h3 id="commerce-fieldtype-editor-title">Edit profile</h3>
-      <input type="hidden" id="commerce-ft-profile-id">
-      <div class="form-group">
-        <label>Profile name</label>
-        <input type="text" id="commerce-ft-name" class="input" placeholder="Events &amp; Classes">
+  </div>
+
+  <div id="payments-tab-migration" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <div>
+        <h2>Migration</h2>
+        <p class="commerce-ft-intro">Move from legacy Shopping Cart or Events plugins to Commerce fieldtypes. Bundles use the separate <code>commerce_bundle</code> fieldtype.</p>
       </div>
-      <div class="form-group">
-        <label>Slug (optional)</label>
-        <input type="text" id="commerce-ft-slug" class="input" placeholder="events">
-        <small class="form-text">Used for field type key: commerce_<em>slug</em></small>
-      </div>
-      <div class="form-group">
-        <label>Default fulfillment</label>
-        <select id="commerce-ft-default-fulfillment" class="input">
-          <option value="ship">Ship</option>
-          <option value="deliver">Deliver</option>
-          <option value="register">Register</option>
-          <option value="none">None</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Enabled fulfillments</label>
-        <div id="commerce-ft-fulfillments" class="commerce-ft-checks"></div>
-      </div>
-      <div class="form-group">
-        <label>Sub-fields shown in entry editor</label>
-        <div id="commerce-ft-toggles" class="commerce-ft-checks"></div>
-      </div>
-      <div class="form-group">
-        <label>Billing intervals</label>
-        <div id="commerce-ft-intervals-list"></div>
-        <div class="commerce-ft-interval-add">
-          <input type="text" id="commerce-ft-interval-value" class="input" placeholder="Value e.g. 3_days">
-          <input type="text" id="commerce-ft-interval-label" class="input" placeholder="Label e.g. Every 3 days">
-          <button type="button" class="btn btn-secondary" id="commerce-ft-add-interval">Add interval</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Custom merchant fields</label>
-        <div id="commerce-ft-custom-fields-list"></div>
-        <div class="commerce-ft-interval-add">
-          <input type="text" id="commerce-ft-cf-key" class="input" placeholder="field_key">
-          <input type="text" id="commerce-ft-cf-label" class="input" placeholder="Label">
-          <button type="button" class="btn btn-secondary" id="commerce-ft-add-custom-field">Add field</button>
-        </div>
-      </div>
-      <button type="button" class="btn btn-primary" id="commerce-ft-save">Save profile</button>
-      <button type="button" class="btn btn-secondary" id="commerce-ft-cancel">Cancel</button>
+      <button class="btn btn-secondary" id="commerce-migration-scan">Scan site</button>
+    </div>
+    <div id="commerce-migration-guides" class="commerce-migration-guides"></div>
+    <div id="commerce-migration-results" class="commerce-migration-results">
+      <p class="form-text">Click <strong>Scan site</strong> to detect collections that may need Commerce fieldtypes.</p>
     </div>
   </div>
 
@@ -247,6 +214,91 @@
       </div>
       <button type="submit" class="btn btn-primary">Save Settings</button>
     </form>
+  </div>
+</div>
+
+<div id="commerce-fieldtype-modal" class="commerce-ft-modal" hidden aria-hidden="true">
+  <div class="commerce-ft-modal-overlay" id="commerce-ft-modal-overlay"></div>
+  <div class="commerce-ft-modal-dialog" role="dialog" aria-labelledby="commerce-fieldtype-editor-title">
+    <div class="commerce-ft-modal-header">
+      <div>
+        <h2 id="commerce-fieldtype-editor-title">Edit fieldtype</h2>
+        <p class="commerce-ft-modal-subtitle" id="commerce-ft-modal-subtitle">Configure how this commerce field appears in entry editors.</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="commerce-ft-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="commerce-ft-modal-body">
+      <input type="hidden" id="commerce-ft-profile-id">
+
+      <div class="commerce-ft-presets" id="commerce-ft-presets-wrap">
+        <span class="commerce-ft-presets-label">Quick start</span>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="events">Events</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="digital">Digital</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="physical">Physical</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="membership">Membership</button>
+      </div>
+
+      <div class="commerce-ft-form-grid">
+        <section class="commerce-ft-section">
+          <h3>Identity</h3>
+          <div class="form-group">
+            <label for="commerce-ft-name">Display name</label>
+            <input type="text" id="commerce-ft-name" class="input" placeholder="Events &amp; Classes">
+          </div>
+          <div class="form-group">
+            <label for="commerce-ft-slug">Slug</label>
+            <input type="text" id="commerce-ft-slug" class="input" placeholder="events">
+            <p class="form-hint">Field type key: <code id="commerce-ft-type-preview">commerce_events</code></p>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Fulfillment</h3>
+          <div class="form-group">
+            <label for="commerce-ft-default-fulfillment">Default</label>
+            <select id="commerce-ft-default-fulfillment" class="input">
+              <option value="ship">Ship — physical products</option>
+              <option value="deliver">Deliver — digital downloads</option>
+              <option value="register">Register — events &amp; tickets</option>
+              <option value="none">None — memberships</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Allowed types</label>
+            <div id="commerce-ft-fulfillments" class="commerce-ft-chip-group"></div>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section commerce-ft-section-wide">
+          <h3>Entry editor panels</h3>
+          <div id="commerce-ft-toggles" class="commerce-ft-toggle-grid"></div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Billing intervals</h3>
+          <div id="commerce-ft-intervals-list" class="commerce-ft-item-list"></div>
+          <div class="commerce-ft-inline-add">
+            <input type="text" id="commerce-ft-interval-value" class="input" placeholder="3_days">
+            <input type="text" id="commerce-ft-interval-label" class="input" placeholder="Every 3 days">
+            <button type="button" class="btn btn-secondary" id="commerce-ft-add-interval">Add</button>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Custom fields</h3>
+          <div id="commerce-ft-custom-fields-list" class="commerce-ft-item-list"></div>
+          <div class="commerce-ft-inline-add">
+            <input type="text" id="commerce-ft-cf-key" class="input" placeholder="field_key">
+            <input type="text" id="commerce-ft-cf-label" class="input" placeholder="Label">
+            <button type="button" class="btn btn-secondary" id="commerce-ft-add-custom-field">Add</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="commerce-ft-modal-footer">
+      <button type="button" class="btn btn-secondary" id="commerce-ft-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="commerce-ft-save">Save fieldtype</button>
+    </div>
   </div>
 </div>
 
