@@ -10,6 +10,7 @@ if (!class_exists('CommerceSchema')) {
 class ImportService
 {
     private CatalogIndexer $indexer;
+    private string $contentRoot;
 
     /** @return list<array<string, mixed>> */
     public static function getImportSources(): array
@@ -213,9 +214,10 @@ class ImportService
         ];
     }
 
-    public function __construct(?CatalogIndexer $indexer = null)
+    public function __construct(?CatalogIndexer $indexer = null, ?string $contentRoot = null)
     {
         $this->indexer = $indexer ?? new CatalogIndexer();
+        $this->contentRoot = $contentRoot ?? dirname(__DIR__, 3) . '/content';
     }
 
     public function parseCsv(string $csvContent, string $preset = 'generic'): array
@@ -353,8 +355,27 @@ class ImportService
             return $this->dryRun($rows, $collectionSlug);
         }
 
-        $contentRoot = dirname(__DIR__, 3) . '/content';
-        $entriesDir = $contentRoot . '/collections/' . $collectionSlug . '/entries';
+        require_once __DIR__ . '/ImportCollectionHelper.php';
+        $collectionHelper = new ImportCollectionHelper($this->contentRoot);
+        $resolved = $collectionHelper->resolveForImport($collectionSlug, [
+            'create' => !empty($meta['create_collection']),
+            'title' => $meta['collection_title'] ?? null,
+        ]);
+        if (!($resolved['ok'] ?? false)) {
+            return ['ok' => false, 'error' => $resolved['message'] ?? 'Invalid collection'];
+        }
+
+        $collectionSlug = (string) $resolved['slug'];
+        $commerceField = (string) ($resolved['commerce_field'] ?? ImportCollectionHelper::COMMERCE_FIELD_NAME);
+        $variantsSub = (string) ($resolved['variants_sub'] ?? ImportCollectionHelper::VARIANTS_SUB_SLUG);
+        $hasVariants = count(array_filter($rows, fn ($r) => !empty($r['parent_sku']))) > 0;
+        if ($hasVariants) {
+            $collectionHelper->ensureVariantsSubCollection($collectionSlug, $commerceField);
+        }
+
+        require_once dirname(__DIR__, 3) . '/core/storage/StorageFactory.php';
+        $storage = StorageFactory::createStorage($this->contentRoot);
+        $entriesDir = $this->contentRoot . '/collections/' . $collectionSlug . '/entries';
         if (!is_dir($entriesDir)) {
             mkdir($entriesDir, 0755, true);
         }
@@ -364,6 +385,7 @@ class ImportService
         $skipped = [];
         $variantCount = 0;
         $parentMap = [];
+        $collectionCreated = !empty($resolved['created']);
 
         foreach ($rows as $rowIndex => $row) {
             if (!empty($row['parent_sku'])) {
@@ -381,25 +403,29 @@ class ImportService
                 continue;
             }
 
-            $entry = $this->buildEntryFromRow($row, $collectionSlug);
-            $existing = $this->findBySku($entriesDir, $entry['commerce']['sku'] ?? null);
+            $entry = $this->buildEntryFromRow($row, $commerceField);
+            $existing = $this->findBySku($storage, $collectionSlug, $commerceField, $entry[$commerceField]['sku'] ?? null);
             $isUpdate = $existing !== null;
+            $now = date('c');
             if ($existing) {
                 $entry['id'] = $existing['id'];
-                $file = $entriesDir . '/' . $existing['id'] . '.json';
+                $entry['created_at'] = $existing['created_at'] ?? $now;
             } else {
-                $entry['id'] = 'imp_' . bin2hex(random_bytes(6));
-                $file = $entriesDir . '/' . $entry['id'] . '.json';
+                $entry['id'] = uniqid();
+                $entry['created_at'] = $now;
             }
-            file_put_contents($file, json_encode($entry, JSON_PRETTY_PRINT));
-            $this->indexer->indexEntry($entry, $collectionSlug);
+            $entry['updated_at'] = $now;
+            $entryPath = "collections/{$collectionSlug}/entries/{$entry['id']}.json";
+            $storage->write($entryPath, $entry);
+            $this->fireAfterEntrySave($entry, $collectionSlug, $isUpdate ? $existing : null);
             if ($isUpdate) {
                 $updatedIds[] = $entry['id'];
             } else {
                 $createdIds[] = $entry['id'];
             }
-            if (!empty($entry['commerce']['sku'])) {
-                $parentMap[$entry['commerce']['sku']] = $entry['id'];
+            $entrySku = $entry[$commerceField]['sku'] ?? null;
+            if (!empty($entrySku)) {
+                $parentMap[$entrySku] = $entry['id'];
             }
             if (!empty($entry['slug'])) {
                 $parentMap[$entry['slug']] = $entry['id'];
@@ -420,14 +446,18 @@ class ImportService
                 ];
                 continue;
             }
-            $variant = $this->buildVariantSubEntry($row, $parentId);
-            $variantDir = $entriesDir . '/' . $parentId . '/sub_entries/variants';
-            if (!is_dir($variantDir)) {
-                mkdir($variantDir, 0755, true);
+            $variant = $this->buildVariantSubEntry($row, $commerceField);
+            $saved = $this->saveVariantSubEntry($storage, $collectionSlug, $parentId, $variantsSub, $variant);
+            if ($saved === null) {
+                $skipped[] = [
+                    'row' => $rowIndex + 2,
+                    'title' => $row['title'] ?? '',
+                    'sku' => $row['sku'] ?? null,
+                    'reason' => 'Failed to create variant sub-entry',
+                ];
+                continue;
             }
-            $variantFile = $variantDir . '/' . $variant['id'] . '.json';
-            file_put_contents($variantFile, json_encode($variant, JSON_PRETTY_PRINT));
-            $parentEntry = json_decode((string) file_get_contents($entriesDir . '/' . $parentId . '.json'), true);
+            $parentEntry = $storage->read("collections/{$collectionSlug}/entries/{$parentId}.json");
             if (is_array($parentEntry)) {
                 $this->indexer->indexEntry($parentEntry, $collectionSlug);
             }
@@ -477,7 +507,16 @@ class ImportService
             'skipped_count' => count($skipped),
             'variant_count' => $variantCount,
             'collection' => $collectionSlug,
+            'collection_created' => $collectionCreated,
         ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function listImportCollections(): array
+    {
+        require_once __DIR__ . '/ImportCollectionHelper.php';
+
+        return (new ImportCollectionHelper($this->contentRoot))->listProductCollections();
     }
 
     public static function platformName(string $presetId): string
@@ -728,49 +767,82 @@ class ImportService
         return $rows;
     }
 
-    private function buildEntryFromRow(array $row, string $collectionSlug): array
+    private function buildEntryFromRow(array $row, string $commerceField): array
     {
         $commerce = $row['commerce'] ?? commerce_normalize_value([]);
         return [
-            'id' => $row['id'] ?? ('imp_' . bin2hex(random_bytes(6))),
             'title' => $row['title'] ?? 'Untitled',
             'slug' => $row['slug'] ?? $this->slugify($row['title'] ?? ''),
             'status' => 'published',
-            'collection' => $collectionSlug,
             'body' => $row['body'] ?? '',
-            'commerce' => $commerce,
+            $commerceField => $commerce,
         ];
     }
 
-    private function buildVariantSubEntry(array $row, string $parentId): array
+    private function buildVariantSubEntry(array $row, string $commerceField): array
     {
         $label = $row['variant_label'] ?? $row['title'] ?? 'Variant';
         return [
-            'id' => 'var_' . bin2hex(random_bytes(4)),
             'title' => $label,
             'slug' => $this->slugify($label),
-            'status' => 'published',
             'variant_label' => $label,
-            'commerce' => $row['commerce'] ?? commerce_normalize_value([]),
+            $commerceField => $row['commerce'] ?? commerce_normalize_value([]),
         ];
     }
 
-    private function findBySku(string $entriesDir, ?string $sku): ?array
+    private function findBySku($storage, string $collectionSlug, string $commerceField, ?string $sku): ?array
     {
         if ($sku === null || $sku === '') {
             return null;
         }
-        foreach (glob($entriesDir . '/*.json') ?: [] as $file) {
-            $entry = json_decode((string) file_get_contents($file), true);
+        $entriesPath = "collections/{$collectionSlug}/entries";
+        foreach ($storage->list($entriesPath) ?: [] as $file) {
+            if (!str_ends_with($file, '.json')) {
+                continue;
+            }
+            $entry = $storage->read("{$entriesPath}/{$file}");
             if (!is_array($entry)) {
                 continue;
             }
-            $entrySku = $entry['commerce']['sku'] ?? $entry['sku'] ?? null;
+            $entrySku = $entry[$commerceField]['sku'] ?? $entry['commerce']['sku'] ?? $entry['sku'] ?? null;
             if ($entrySku === $sku) {
                 return $entry;
             }
         }
+
         return null;
+    }
+
+    private function saveVariantSubEntry($storage, string $collectionSlug, string $parentId, string $variantsSub, array $variant): ?array
+    {
+        $variantId = uniqid('var_');
+        $now = date('c');
+        $variant['id'] = $variantId;
+        $variant['status'] = 'published';
+        $variant['created_at'] = $now;
+        $variant['updated_at'] = $now;
+        $variant['parent_collection'] = $collectionSlug;
+        $variant['parent_entry_id'] = $parentId;
+        $variant['sub_collection'] = $variantsSub;
+        $variant['ancestry'] = [
+            ['collection' => $collectionSlug, 'entry_id' => $parentId],
+            ['collection' => $variantsSub, 'entry_id' => $variantId],
+        ];
+
+        $path = "collections/{$collectionSlug}/entries/{$parentId}/sub_entries/{$variantsSub}/{$variantId}.json";
+        if (!$storage->write($path, $variant)) {
+            return null;
+        }
+
+        return $variant;
+    }
+
+    private function fireAfterEntrySave(array $entry, string $collectionSlug, ?array $oldEntry = null): void
+    {
+        $this->indexer->indexEntry($entry, $collectionSlug);
+        if (function_exists('do_action')) {
+            do_action('after_entry_save', $entry, $collectionSlug, $oldEntry);
+        }
     }
 
     private function slugify(string $text): string

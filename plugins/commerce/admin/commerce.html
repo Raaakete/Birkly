@@ -240,10 +240,28 @@
         <div class="commerce-import-selected-platform" id="commerce-import-selected-platform"></div>
         <div class="commerce-import-export-steps" id="commerce-import-export-steps"></div>
         <div class="commerce-import-form-row">
-          <div class="form-group">
-            <label for="commerce-import-collection">Target collection</label>
-            <input type="text" id="commerce-import-collection" class="input" value="products" placeholder="products">
-            <p class="form-hint">Collection slug — created automatically if missing.</p>
+          <div class="form-group commerce-import-collection-group">
+            <label>Target collection</label>
+            <div class="commerce-import-collection-mode" role="radiogroup" aria-label="Collection target mode">
+              <label class="commerce-import-collection-mode-option">
+                <input type="radio" name="commerce-import-collection-mode" value="existing" checked>
+                Use existing collection
+              </label>
+              <label class="commerce-import-collection-mode-option">
+                <input type="radio" name="commerce-import-collection-mode" value="new">
+                Create new collection
+              </label>
+            </div>
+            <div id="commerce-import-collection-existing">
+              <select id="commerce-import-collection-select" class="input">
+                <option value="">Loading collections…</option>
+              </select>
+              <p class="form-hint">Only collections with a Commerce fieldtype are listed.</p>
+            </div>
+            <div id="commerce-import-collection-new" hidden>
+              <input type="text" id="commerce-import-collection-title" class="input" placeholder="Product catalog">
+              <p class="form-hint">A new collection with Commerce pricing and variant support will be created.</p>
+            </div>
           </div>
           <div class="form-group">
             <label for="commerce-import-currency">Default currency</label>

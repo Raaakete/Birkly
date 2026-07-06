@@ -41,7 +41,7 @@ $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 's
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order',
     'list_discounts', 'save_discount', 'delete_discount',
-    'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail',
+    'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections',
     'list_mappings', 'save_mapping', 'delete_mapping',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
     'list_shipping_zones', 'save_shipping_zones',
@@ -194,6 +194,10 @@ switch ($action) {
         echo json_encode(['status' => 'ok', 'data' => ['sources' => ImportService::getImportSources()]]);
         break;
 
+    case 'import_collections':
+        echo json_encode(['status' => 'ok', 'data' => ['collections' => $import->listImportCollections()]]);
+        break;
+
     case 'import_history':
         require_once __DIR__ . '/../includes/ImportHistoryStore.php';
         $history = new ImportHistoryStore();
@@ -224,6 +228,12 @@ switch ($action) {
         $preset = $input['preset'] ?? 'generic';
         $collection = $input['collection'] ?? 'products';
         $defaultCurrency = $input['default_currency'] ?? 'eur';
+        $createCollection = !empty($input['create_collection']);
+        $collectionTitle = trim((string) ($input['collection_title'] ?? ''));
+        if ($createCollection && $collectionTitle !== '') {
+            require_once __DIR__ . '/../includes/ImportCollectionHelper.php';
+            $collection = (new ImportCollectionHelper())->previewSlugForTitle($collectionTitle);
+        }
         $parsed = $import->parseCsv($csv, $preset);
         if (!($parsed['ok'] ?? false)) {
             echo json_encode(['status' => 'error', 'message' => $parsed['error'] ?? 'Parse failed']);
@@ -240,6 +250,12 @@ switch ($action) {
         $collection = $input['collection'] ?? 'products';
         $defaultCurrency = $input['default_currency'] ?? 'eur';
         $dryRun = !empty($input['dry_run']);
+        $createCollection = !empty($input['create_collection']);
+        $collectionTitle = trim((string) ($input['collection_title'] ?? ''));
+        if ($createCollection && $collectionTitle !== '') {
+            require_once __DIR__ . '/../includes/ImportCollectionHelper.php';
+            $collection = (new ImportCollectionHelper())->previewSlugForTitle($collectionTitle);
+        }
         $parsed = $import->parseCsv($csv, $preset);
         if (!($parsed['ok'] ?? false)) {
             echo json_encode(['status' => 'error', 'message' => $parsed['error'] ?? 'Parse failed']);
@@ -251,7 +267,13 @@ switch ($action) {
             'platform' => ImportService::platformName($preset),
             'currency' => $defaultCurrency,
             'file_name' => trim((string) ($input['file_name'] ?? '')) ?: null,
+            'create_collection' => $createCollection,
+            'collection_title' => $collectionTitle !== '' ? $collectionTitle : null,
         ]);
+        if (!($result['ok'] ?? false)) {
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Import failed']);
+            break;
+        }
         echo json_encode(['status' => 'ok', 'data' => $result]);
         break;
 
