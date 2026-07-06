@@ -65,13 +65,13 @@ test_assert('second RSVP ok', ($free2['ok'] ?? false) === true);
 $full = $service->registerFree('ev-1', 'Charlie', 'charlie@example.com');
 test_assert('capacity blocks third RSVP', ($full['ok'] ?? false) === false);
 
-require_once $root . '/plugins/payments/includes/ProviderInterface.php';
-require_once $root . '/plugins/payments/includes/AbstractProvider.php';
-require_once $root . '/plugins/payments/includes/CredentialStore.php';
-require_once $root . '/plugins/payments/includes/ActivityLog.php';
-require_once $root . '/plugins/payments/includes/ProviderResolver.php';
-require_once $root . '/plugins/payments/includes/PaymentShelf.php';
-require_once $root . '/plugins/payments/includes/providers/StripeProvider.php';
+require_once $root . '/plugins/commerce/includes/ProviderInterface.php';
+require_once $root . '/plugins/commerce/includes/AbstractProvider.php';
+require_once $root . '/plugins/commerce/includes/CredentialStore.php';
+require_once $root . '/plugins/commerce/includes/ActivityLog.php';
+require_once $root . '/plugins/commerce/includes/ProviderResolver.php';
+require_once $root . '/plugins/commerce/includes/PaymentShelf.php';
+require_once $root . '/plugins/commerce/includes/providers/StripeProvider.php';
 
 $payDir = $dataDir . '/payments';
 foreach (['/connections', '/activity', '/webhooks'] as $sub) {
