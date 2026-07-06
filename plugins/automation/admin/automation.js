@@ -9,7 +9,7 @@ let automations = [];
 let availableBlocks = { triggers: [], conditions: [], actions: [] };
 let availableCollections = [];
 let currentAutomation = null;
-let automationEditorMode = 'form';
+let automationEditorMode = 'canvas';
 let nodeEditor = null;
 
 // ============================================================
@@ -155,6 +155,7 @@ function importCanvasJson() {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function () {
+  initAutomationViewTabs();
   loadBlocks();
   loadAutomations();
   loadCollections();
@@ -465,8 +466,15 @@ function openCreateAutomationModal() {
   document.getElementById('conditions-list').innerHTML = '';
   document.getElementById('actions-list').innerHTML = '';
   document.getElementById('trigger-config').style.display = 'none';
-  setAutomationEditorMode('form');
-  // Clear dry-run panel
+  setAutomationEditorMode('canvas');
+  initNodeEditor();
+  if (nodeEditor) {
+    nodeEditor.loadFromWorkflow({
+      trigger: { type: 'entry_created', config: {} },
+      conditions: [],
+      actions: [{ type: 'log_message', config: { message: 'Automation ran' } }],
+    });
+  }
   const drPanel = document.getElementById('dry-run-panel');
   if (drPanel) drPanel.style.display = 'none';
   document.getElementById('automation-modal').classList.add('active');
@@ -489,6 +497,7 @@ async function editAutomation(automationId) {
       document.getElementById('automation-modal-title').textContent = 'Edit Automation';
       const drPanel = document.getElementById('dry-run-panel');
       if (drPanel) drPanel.style.display = 'none';
+      setAutomationEditorMode('canvas');
       document.getElementById('automation-modal').classList.add('active');
       setTimeout(() => populateAutomationForm(currentAutomation), 50);
     } else {
@@ -527,6 +536,24 @@ function populateAutomationForm(automation) {
     initNodeEditor();
     if (nodeEditor) nodeEditor.loadFromWorkflow(automation);
   }
+}
+
+function initAutomationViewTabs() {
+  document.querySelectorAll('.automation-view-tabs .payments-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const view = btn.getAttribute('data-automation-view') || 'list';
+      document.querySelectorAll('.automation-view-tabs .payments-tab').forEach((b) => {
+        b.classList.toggle('active', b === btn);
+      });
+      const listPanel = document.getElementById('automation-view-list');
+      const docsPanel = document.getElementById('automation-view-documentation');
+      if (listPanel) listPanel.hidden = view !== 'list';
+      if (docsPanel) docsPanel.hidden = view !== 'documentation';
+      if (view === 'documentation' && window.BirklyPluginDocs) {
+        window.BirklyPluginDocs.activate('automation', 'automation-view-documentation');
+      }
+    });
+  });
 }
 
 // ============================================================
