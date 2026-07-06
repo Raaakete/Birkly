@@ -2,6 +2,10 @@
  * Tiers Management JavaScript
  */
 
+
+function apiUrl(path) {
+    return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+}
 // Expose functions immediately to avoid timing issues
 let currentTiers = [];
 let isEditing = false;
@@ -14,7 +18,7 @@ function initTiersManagement() {
 }
 
 function loadTiers() {
-    fetch('/api/index.php?route=user_tiers&action=list')
+    fetch(apiUrl('/api/index.php?route=user_tiers&action=list'))
         .then(async res => {
             const text = await res.text();
             let data;
@@ -178,7 +182,7 @@ function saveTier() {
         return;
     }
     
-    const url = '/api/index.php?route=user_tiers';
+    const url = apiUrl('/api/index.php?route=user_tiers');
     
     fetch(url, {
         method: 'POST',
@@ -219,7 +223,7 @@ function deleteTier(tierId) {
         return;
     }
     
-    const url = '/api/index.php?route=user_tiers';
+    const url = apiUrl('/api/index.php?route=user_tiers');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
     
     fetch(url, {
@@ -323,7 +327,7 @@ function removeTierFeature(featureName) {
 // Limit management functions
 function loadCollectionsForLimits() {
     // Load collections from API
-    fetch('/api/index.php?route=user_settings&action=get_collections')
+    fetch(apiUrl('/api/index.php?route=user_settings&action=get_collections'))
         .then(res => res.json())
         .then(data => {
             const select = document.getElementById('tier-limit-collection');

@@ -2,9 +2,7 @@
 <div class="page-header pt-m pb-m">
     <div class="page-header-left">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=dashboard">Dashboard</a>
-            <span class="separator">›</span>
-            <span class="current">User Management</span>
+            <span class="current">Site Users</span>
         </div>
     </div>
     <div class="page-header-actions"></div>
@@ -67,7 +65,7 @@
             </button>
         </div>
 
-        <div class="tab-content">
+        <div class="settings-tab-panels">
             <!-- General Tab -->
             <div class="tab-pane active" id="general">
                 <div class="main-actions-bar">
@@ -1277,10 +1275,14 @@
 }
 </style>
 
-<script src="/plugins/user_management/admin/site_users.js"></script>
-<script src="/plugins/user_management/admin/groups.js"></script>
-<script src="/plugins/user_management/admin/tiers.js"></script>
+<script src="{birkly_url '/plugins/user_management/admin/site_users.js'}"></script>
+<script src="{birkly_url '/plugins/user_management/admin/groups.js'}"></script>
+<script src="{birkly_url '/plugins/user_management/admin/tiers.js'}"></script>
 <script>
+function apiUrl(path) {
+    return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+}
+
 // Tab functionality
 (function() {
     function initTabs() {
@@ -1396,7 +1398,7 @@ function escapeHtml(text) {
 // Load default tier options (must be global)
 function loadDefaultTierOptions(selectedTier) {
     // Load tiers and populate default tier dropdown
-    fetch('/api/index.php?route=user_tiers&action=list')
+    fetch(apiUrl('/api/index.php?route=user_tiers&action=list'))
         .then(res => res.json())
         .then(data => {
             const select = document.getElementById('default-tier');
@@ -1427,7 +1429,7 @@ function loadDefaultTierOptions(selectedTier) {
 
 // General settings functions
 function loadGeneralSettings() {
-    fetch('/api/index.php?route=user_settings&action=get')
+    fetch(apiUrl('/api/index.php?route=user_settings&action=get'))
         .then(async res => {
             const text = await res.text();
             let data;
@@ -1498,7 +1500,7 @@ function toggleProfileCollectionSettings() {
 }
 
 function loadCollectionsForProfile() {
-    fetch('/api/index.php?route=user_settings&action=get_collections')
+    fetch(apiUrl('/api/index.php?route=user_settings&action=get_collections'))
         .then(res => res.json())
         .then(data => {
             if (data.success && data.collections) {
@@ -1537,7 +1539,7 @@ function migrateExistingProfiles() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
                       document.querySelector('input[name="_csrf"]')?.value || '';
     
-    fetch('/api/index.php?route=user_settings&action=migrate_profiles', {
+    fetch(apiUrl('/api/index.php?route=user_settings&action=migrate_profiles'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1590,7 +1592,7 @@ function saveGeneralSettings() {
         auto_create_profiles: formData.get('auto_create_profiles') === '1'
     };
     
-    fetch('/api/index.php?route=user_settings', {
+    fetch(apiUrl('/api/index.php?route=user_settings'), {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(settings)
@@ -1626,7 +1628,7 @@ function saveGeneralSettings() {
 let profileFields = [];
 
 function loadProfileSchema() {
-    fetch('/api/index.php?route=user_settings&action=get_profile_schema')
+    fetch(apiUrl('/api/index.php?route=user_settings&action=get_profile_schema'))
         .then(async res => {
             const text = await res.text();
             let data;
@@ -1815,7 +1817,7 @@ function saveProfileSchema() {
         fields: profileFields
     };
     
-    fetch('/api/index.php?route=user_settings', {
+    fetch(apiUrl('/api/index.php?route=user_settings'), {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(schema)
@@ -1856,8 +1858,8 @@ let availableTiers = [];
 function loadCollectionPermissions() {
     // Load collections and tiers in parallel
     Promise.all([
-        fetch('/api/index.php?route=collection_permissions&action=get').then(r => r.json()),
-        fetch('/api/index.php?route=user_tiers&action=list').then(r => r.json())
+        fetch(apiUrl('/api/index.php?route=collection_permissions&action=get')).then(r => r.json()),
+        fetch(apiUrl('/api/index.php?route=user_tiers&action=list')).then(r => r.json())
     ])
         .then(([permsData, tiersData]) => {
             if (permsData.success) {
@@ -2104,7 +2106,7 @@ function saveCollectionPermissions() {
         permissions: collectionPermissions
     };
     
-    fetch('/api/index.php?route=collection_permissions', {
+    fetch(apiUrl('/api/index.php?route=collection_permissions'), {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)

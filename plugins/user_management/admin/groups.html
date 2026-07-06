@@ -2,9 +2,7 @@
 <div class="page-header pt-m pb-m">
     <div class="page-header-left">
         <div class="breadcrumbs">
-            <a href="/admin/index.php?page=dashboard">Dashboard</a>
-            <span class="separator">›</span>
-            <a href="/admin/index.php?page=site_users">Site Users</a>
+            <a href="{admin_url 'site_users'}">Site Users</a>
             <span class="separator">›</span>
             <span class="current">Groups</span>
         </div>
@@ -118,7 +116,7 @@
     </div>
 </div>
 
-<script src="/plugins/user_management/admin/groups.js"></script>
+<script src=\"{birkly_url '/plugins/user_management/admin/groups.js'}\"></script>
 <script>
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {

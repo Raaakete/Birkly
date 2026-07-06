@@ -446,6 +446,17 @@ if (function_exists('register_admin_page')) {
     register_admin_page('user_groups', __DIR__ . '/admin/groups.html');
 }
 
+if (function_exists('register_plugin_admin_meta')) {
+    register_plugin_admin_meta('user_management', [
+        'title' => 'Site Users',
+        'page' => 'site_users',
+        'sub_pages' => [
+            'user_tiers' => 'Tiers',
+            'user_groups' => 'Groups',
+        ],
+    ]);
+}
+
 // Hook into collection system for permissions (Phase 4)
 if (function_exists('register_hook')) {
     require_once __DIR__ . '/includes/UserAuth.php';

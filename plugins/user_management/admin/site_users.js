@@ -1,5 +1,9 @@
 // User Management Admin JavaScript
 
+function apiUrl(path) {
+    return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+}
+
 let currentPage = 1;
 let currentFilters = {};
 let searchTimeout = null;
@@ -58,7 +62,7 @@ function loadUsers(page = 1, filters = {}) {
         ...filters
     });
     
-    fetch(`/api/index.php?route=user_admin&${params}`)
+    fetch(apiUrl(`/api/index.php?route=user_admin&${params}`))
         .then(async res => {
             const text = await res.text();
             let data;
@@ -244,7 +248,7 @@ function renderUsersTable(users, total) {
         
         // Use POST instead of GET to ensure action is passed correctly
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-        fetch('/api/index.php?route=user_admin', {
+        fetch(apiUrl('/api/index.php?route=user_admin'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -387,7 +391,7 @@ function toggleSelectAllUsers(checked) {
 
 function selectAllMatchingUsers() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    fetch('/api/index.php?route=user_admin', {
+    fetch(apiUrl('/api/index.php?route=user_admin'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -494,7 +498,7 @@ function applyBulkUserAction() {
             csrf_token: csrfToken
         };
 
-    fetch('/api/index.php?route=user_admin', {
+    fetch(apiUrl('/api/index.php?route=user_admin'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -559,7 +563,7 @@ function loadStats() {
     const container = document.getElementById('users-stats');
     if (!container) return;
 
-    fetch('/api/index.php?route=user_admin&action=stats')
+    fetch(apiUrl('/api/index.php?route=user_admin&action=stats'))
         .then(res => res.json())
         .then(data => {
             if (!data || (!data.success && !data.stats)) {
@@ -621,7 +625,7 @@ function resetUserForm() {
 
 function editUser(userId) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    fetch('/api/index.php?route=user_admin', {
+    fetch(apiUrl('/api/index.php?route=user_admin'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -691,7 +695,7 @@ function editUser(userId) {
 
 function loadUserVerificationStatus(userId) {
     // Get user data which includes email_verified status
-    fetch(`/api/index.php?route=user_admin&action=get&id=${userId}`)
+    fetch(apiUrl(`/api/index.php?route=user_admin&action=get&id=${userId}`))
         .then(res => res.json())
         .then(data => {
             const statusDiv = document.getElementById('email-verification-status');
@@ -715,7 +719,7 @@ function loadUserVerificationStatus(userId) {
 
 function loadUser2FAStatus(userId) {
     // Get user status (verification and 2FA) via admin API
-    fetch(`/api/index.php?route=user_admin&action=get_user_status&user_id=${userId}`)
+    fetch(apiUrl(`/api/index.php?route=user_admin&action=get_user_status&user_id=${userId}`))
         .then(res => res.json())
         .then(data => {
             const statusDiv = document.getElementById('2fa-status');
@@ -754,7 +758,7 @@ function resendVerificationEmail(userId) {
     btn.disabled = true;
     btn.textContent = 'Sending...';
     
-    fetch('/api/index.php?route=user_verification&action=resend', {
+    fetch(apiUrl('/api/index.php?route=user_verification&action=resend'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -799,14 +803,14 @@ function resetUserPassword(userId) {
     btn.textContent = 'Sending...';
     
     // Get user email first
-    fetch(`/api/index.php?route=user_admin&action=get&id=${targetUserId}`)
+    fetch(apiUrl(`/api/index.php?route=user_admin&action=get&id=${targetUserId}`))
         .then(res => res.json())
         .then(data => {
             if (!data.user || !data.user.email) {
                 throw new Error('User email not found');
             }
             
-            return fetch('/api/index.php?route=password_reset&action=request', {
+            return fetch(apiUrl('/api/index.php?route=password_reset&action=request'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -876,7 +880,7 @@ function saveUser() {
     }
     
     const action = isEditing ? 'update' : 'create';
-    const url = '/api/index.php?route=user_admin';
+    const url = apiUrl('/api/index.php?route=user_admin');
     
     // Get CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -934,7 +938,7 @@ function deleteUser(userId) {
     
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
     
-    fetch('/api/index.php?route=user_admin', {
+    fetch(apiUrl('/api/index.php?route=user_admin'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -994,7 +998,7 @@ function purgeDeletedUsers() {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-    fetch('/api/index.php?route=user_admin', {
+    fetch(apiUrl('/api/index.php?route=user_admin'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1039,7 +1043,7 @@ function restoreUser(userId) {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-    fetch('/api/index.php?route=user_admin', {
+    fetch(apiUrl('/api/index.php?route=user_admin'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1067,7 +1071,7 @@ function purgeUser(userId) {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-    fetch('/api/index.php?route=user_admin', {
+    fetch(apiUrl('/api/index.php?route=user_admin'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1149,7 +1153,7 @@ function exportUsers() {
         ...currentFilters
     });
     
-    window.open(`/api/index.php?route=user_admin&${params}&format=csv`, '_blank');
+    window.open(apiUrl(`/api/index.php?route=user_admin&${params}&format=csv`), '_blank');
 }
 
 function getStatusBadge(status) {
@@ -1234,7 +1238,7 @@ function loadUserTierOptions(callback) {
         return;
     }
     
-    fetch('/api/index.php?route=user_tiers&action=list')
+    fetch(apiUrl('/api/index.php?route=user_tiers&action=list'))
         .then(res => res.json())
         .then(data => {
             // Clear existing options except "All"
@@ -1274,7 +1278,7 @@ function loadUserTierOptions(callback) {
 
 // Load default tier from settings for new user
 function loadDefaultTierForNewUser() {
-    fetch('/api/index.php?route=user_settings&action=get')
+    fetch(apiUrl('/api/index.php?route=user_settings&action=get'))
         .then(res => res.json())
         .then(data => {
             if (data.success && data.settings) {
