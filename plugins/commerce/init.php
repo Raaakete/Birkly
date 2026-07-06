@@ -369,6 +369,7 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/ShipStationStubAdapter.php';
     require_once $dir . '/includes/ImportService.php';
     require_once $dir . '/includes/CommerceSchema.php';
+    require_once $dir . '/includes/CommerceBundleSchema.php';
     require_once $dir . '/includes/EventRegistrationStore.php';
     require_once $dir . '/includes/DigitalDeliveryStore.php';
     require_once $dir . '/includes/PostPurchaseRouter.php';
@@ -400,8 +401,9 @@ function commerce_register_fieldtype_profiles(): void
 
     global $haru_plugin_fieldtypes;
     if (isset($haru_plugin_fieldtypes) && function_exists('unregister_plugin_fieldtype')) {
+        $profileTypeKeys = array_map(fn ($p) => $p['type_key'] ?? 'commerce', $store->listProfiles());
         foreach (array_keys($haru_plugin_fieldtypes) as $type) {
-            if (($type === 'commerce' || str_starts_with($type, 'commerce_'))
+            if (($type === 'commerce' || in_array($type, $profileTypeKeys, true))
                 && (($haru_plugin_fieldtypes[$type]['plugin_id'] ?? '') === $pluginId)) {
                 unregister_plugin_fieldtype($type, $pluginId);
             }
@@ -421,6 +423,17 @@ function commerce_register_fieldtype_profiles(): void
             ]
         );
     }
+
+    require_once commerce_plugin_dir() . '/fieldtypes/CommerceBundle/CommerceBundle.php';
+    register_plugin_fieldtype(
+        'commerce_bundle',
+        'Birkly\\FieldTypes\\CommerceBundle\\CommerceBundle',
+        $pluginId,
+        [
+            'label' => 'Commerce Bundle',
+            'description' => 'Bundle of catalog entries with bundle pricing rules',
+        ]
+    );
 }
 
 function commerce_on_payment_succeeded(array $data): void

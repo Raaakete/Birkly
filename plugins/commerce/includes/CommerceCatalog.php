@@ -49,6 +49,9 @@ class CommerceCatalog
         if (!class_exists('CommerceSchema')) {
             require_once __DIR__ . '/CommerceSchema.php';
         }
+        if (!class_exists('CommerceBundleSchema')) {
+            require_once __DIR__ . '/CommerceBundleSchema.php';
+        }
 
         $lines = [];
         $totalCents = 0;
@@ -56,6 +59,7 @@ class CommerceCatalog
         $currency = 'eur';
         $discountEngine = $discounts ?? new DiscountEngine();
         $billingModes = [];
+        $errors = [];
 
         foreach ($cartItems as $item) {
             $collectionSlug = $item['collection'] ?? '';
@@ -65,6 +69,21 @@ class CommerceCatalog
 
             $catalogItem = $this->getItem($collectionSlug, $entryId);
             if (!$catalogItem) {
+                $errors[] = 'Item not in catalog: ' . $collectionSlug . ':' . $entryId;
+                continue;
+            }
+
+            if (!empty($catalogItem['is_bundle'])) {
+                $bundleLine = $this->buildBundleCartLine($catalogItem, $collectionSlug, $entryId, $qty, $discountEngine, $coupon, $affiliateId);
+                if ($bundleLine === null) {
+                    $errors[] = 'Bundle unavailable: ' . ($catalogItem['entry_title'] ?? $entryId);
+                    continue;
+                }
+                $billingModes[$bundleLine['billing'] ?? 'one_time'] = true;
+                $currency = $bundleLine['currency'] ?: $currency;
+                $lines[] = $bundleLine;
+                $totalCents += (int) $bundleLine['line_total_cents'];
+                $totalDiscount += (int) ($bundleLine['discount_amount_cents'] ?? 0);
                 continue;
             }
 
@@ -134,6 +153,17 @@ class CommerceCatalog
             ];
         }
 
+        if (!empty($errors) && empty($lines)) {
+            return [
+                'ok' => false,
+                'error' => $errors[0],
+                'lines' => [],
+                'total_cents' => 0,
+                'discount_cents' => 0,
+                'currency' => $currency,
+            ];
+        }
+
         $shippingCents = $this->calculateShipping($lines);
         $totalCents += $shippingCents;
 
@@ -154,6 +184,14 @@ class CommerceCatalog
             if (($line['fulfillment'] ?? '') === 'ship') {
                 $hasShip = true;
                 break;
+            }
+            if (!empty($line['is_bundle'])) {
+                foreach ($line['components'] ?? [] as $comp) {
+                    if (($comp['fulfillment'] ?? '') === 'ship') {
+                        $hasShip = true;
+                        break 2;
+                    }
+                }
             }
         }
         if (!$hasShip) {
@@ -206,5 +244,89 @@ class CommerceCatalog
             mkdir($dir, 0755, true);
         }
         file_put_contents($dir . '/shipping_zones.json', json_encode($data, JSON_PRETTY_PRINT));
+    }
+
+    private function buildBundleCartLine(
+        array $catalogItem,
+        string $collectionSlug,
+        string $entryId,
+        int $qty,
+        DiscountEngine $discountEngine,
+        ?string $coupon,
+        ?string $affiliateId
+    ): ?array {
+        $bundle = commerce_bundle_normalize_value($catalogItem['bundle'] ?? []);
+        if ($bundle['billing'] !== 'one_time') {
+            return null;
+        }
+
+        $index = $this->indexer->loadIndex();
+        $resolved = CommerceBundleSchema::resolveComponents($bundle, $index['entries'] ?? []);
+        if (!$resolved['valid'] || empty($resolved['items'])) {
+            return null;
+        }
+
+        $components = $resolved['items'];
+        $baseUnit = CommerceBundleSchema::computePriceCents($bundle, $components);
+        $quantityAvailable = CommerceBundleSchema::computeQuantityAvailable($bundle, $components);
+
+        if ($quantityAvailable !== null && (int) $quantityAvailable < $qty) {
+            return null;
+        }
+        $pricedItem = array_merge($catalogItem, [
+            'price_cents' => $baseUnit,
+            'currency' => $catalogItem['currency'] ?? 'eur',
+            'billing' => 'one_time',
+            'interval' => null,
+        ]);
+
+        $pricing = $discountEngine->applyToLine($pricedItem, $qty, $coupon, $affiliateId);
+        $effectiveUnit = (int) $pricing['effective_unit_cents'];
+        $lineDiscount = (int) $pricing['discount_cents'];
+        $lineTotal = $effectiveUnit * $qty;
+
+        $expandedComponents = [];
+        foreach ($components as $comp) {
+            if (!($comp['valid'] ?? false)) {
+                return null;
+            }
+            $compQty = max(1, (int) ($comp['quantity'] ?? 1)) * $qty;
+            $expandedComponents[] = [
+                'collection' => $comp['collection'],
+                'entry_id' => $comp['entry_id'],
+                'quantity' => $compQty,
+                'title' => $comp['title'] ?? $comp['entry_id'],
+                'fulfillment' => $comp['fulfillment'] ?? 'ship',
+                'commerce' => $comp['commerce'] ?? null,
+                'purchase_option_id' => $comp['purchase_option_id'] ?? 'default',
+            ];
+        }
+
+        return [
+            'line_id' => $collectionSlug . ':' . $entryId . ':bundle',
+            'entry_id' => $entryId,
+            'collection_slug' => $collectionSlug,
+            'entry_slug' => $catalogItem['entry_slug'] ?? $entryId,
+            'title' => $catalogItem['entry_title'] ?? $entryId,
+            'sku' => $catalogItem['sku'] ?? '',
+            'quantity' => $qty,
+            'purchase_option_id' => 'default',
+            'purchase_option_label' => 'Bundle',
+            'fulfillment' => $bundle['fulfillment'] ?? ($catalogItem['fulfillment'] ?? 'ship'),
+            'commerce' => $bundle,
+            'is_bundle' => true,
+            'bundle' => $bundle,
+            'components' => $expandedComponents,
+            'base_unit_cents' => $baseUnit,
+            'effective_unit_cents' => $effectiveUnit,
+            'base_amount_cents' => $baseUnit * $qty,
+            'discount_amount_cents' => $lineDiscount,
+            'effective_amount_cents' => $lineTotal,
+            'line_total_cents' => $lineTotal,
+            'unit_price_cents' => $effectiveUnit,
+            'currency' => $catalogItem['currency'] ?? 'eur',
+            'billing' => 'one_time',
+            'interval' => null,
+        ];
     }
 }
