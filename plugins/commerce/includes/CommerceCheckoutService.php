@@ -99,6 +99,12 @@ class CommerceCheckoutService
             $built['total_cents'] = $built['total_cents'] - $oldShipping + $newShipping;
         }
 
+        $tax = $this->catalog->calculateTax($built['lines'], is_array($shippingAddress) ? $shippingAddress : null);
+        $built['tax_cents'] = $tax['tax_cents'];
+        $built['tax_rate'] = $tax['rate'];
+        $built['tax_country'] = $tax['country'];
+        $built['total_cents'] += $tax['tax_cents'];
+
         foreach ($built['lines'] as $line) {
             if (!$this->reserveLineStock($line)) {
                 return ['ok' => false, 'error' => 'Insufficient stock for ' . ($line['title'] ?? 'item')];
@@ -110,6 +116,9 @@ class CommerceCheckoutService
             'lines' => $built['lines'],
             'total_cents' => $built['total_cents'],
             'shipping_cents' => $built['shipping_cents'] ?? 0,
+            'tax_cents' => $built['tax_cents'] ?? 0,
+            'tax_rate' => $built['tax_rate'] ?? 0.0,
+            'tax_country' => $built['tax_country'] ?? '',
             'discount_cents' => $built['discount_cents'] ?? 0,
             'currency' => $built['currency'],
             'customer_email' => $customerEmail,
@@ -219,6 +228,99 @@ class CommerceCheckoutService
         return $updated;
     }
 
+    /**
+     * Refund an order (full or partial) via the commerce shelf.
+     *
+     * @param int|null $amountCents Null = refund the full remaining balance.
+     * @return array{ok: bool, error?: string, order?: array, refund?: array}
+     */
+    public function refundOrder(string $orderId, ?int $amountCents = null, string $reason = ''): array
+    {
+        $order = $this->orders->get($orderId);
+        if (!$order) {
+            return ['ok' => false, 'error' => 'Order not found'];
+        }
+
+        $status = $order['status'] ?? '';
+        if (!in_array($status, ['paid', 'partially_refunded'], true)) {
+            return ['ok' => false, 'error' => 'Order is not refundable (status: ' . ($status ?: 'unknown') . ')'];
+        }
+
+        $paymentId = (string) ($order['payment_id'] ?? '');
+        $provider = (string) ($order['provider'] ?? '');
+        if ($paymentId === '' || $provider === '') {
+            return ['ok' => false, 'error' => 'Order has no captured payment to refund'];
+        }
+
+        $total = (int) ($order['total_cents'] ?? 0);
+        $alreadyRefunded = (int) ($order['refunded_cents'] ?? 0);
+        $remaining = max(0, $total - $alreadyRefunded);
+        if ($remaining <= 0) {
+            return ['ok' => false, 'error' => 'Order is already fully refunded'];
+        }
+
+        $refundAmount = $amountCents === null ? $remaining : (int) $amountCents;
+        if ($refundAmount <= 0) {
+            return ['ok' => false, 'error' => 'Refund amount must be greater than zero'];
+        }
+        if ($refundAmount > $remaining) {
+            return ['ok' => false, 'error' => 'Refund amount exceeds remaining balance'];
+        }
+
+        $shelf = $this->getShelf();
+        if (!$shelf) {
+            return ['ok' => false, 'error' => 'Payments not configured'];
+        }
+
+        $isFull = $refundAmount >= $remaining;
+        $result = $shelf->refundPayment($provider, $paymentId, $isFull ? null : $refundAmount, [
+            'source_plugin' => 'commerce',
+            'source_ref' => $orderId,
+        ]);
+
+        if (!($result['ok'] ?? false)) {
+            return ['ok' => false, 'error' => $result['error'] ?? 'Refund failed'];
+        }
+
+        $refundRecord = [
+            'amount_cents' => $refundAmount,
+            'reason' => trim($reason),
+            'provider' => $provider,
+            'refund_id' => $result['refund_id'] ?? ($result['payment_id'] ?? null),
+            'created_at' => date('c'),
+        ];
+
+        $refunds = $order['refunds'] ?? [];
+        $refunds[] = $refundRecord;
+        $newRefunded = $alreadyRefunded + $refundAmount;
+        $newStatus = $newRefunded >= $total ? 'refunded' : 'partially_refunded';
+
+        $updated = $this->orders->update($orderId, [
+            'refunds' => $refunds,
+            'refunded_cents' => $newRefunded,
+            'status' => $newStatus,
+        ]);
+
+        $this->fireOrderRefunded($updated ?? $order, $refundRecord);
+
+        return ['ok' => true, 'order' => $updated, 'refund' => $refundRecord];
+    }
+
+    private function fireOrderRefunded(array $order, array $refund): void
+    {
+        $ctx = array_merge($this->buildOrderPayload($order), [
+            'refund_amount_cents' => $refund['amount_cents'] ?? 0,
+            'refund_reason' => $refund['reason'] ?? '',
+            'refunded_cents' => (int) ($order['refunded_cents'] ?? 0),
+        ]);
+        if (function_exists('broadcast_event')) {
+            broadcast_event('commerce_order_refunded', $ctx, 'commerce');
+        }
+        if (function_exists('enqueue_automation')) {
+            enqueue_automation('commerce_order_refunded', $ctx);
+        }
+    }
+
     public function markFailedByPaymentId(string $paymentId): ?array
     {
         $order = $this->orders->findByPaymentId($paymentId);
@@ -241,17 +343,53 @@ class CommerceCheckoutService
 
     private function fireOrderPaid(array $order): void
     {
-        $ctx = [
-            'order_id' => $order['id'],
-            'payment_id' => $order['payment_id'] ?? null,
-            'total_cents' => $order['total_cents'],
-        ];
+        $payload = $this->buildOrderPayload($order);
+
         if (function_exists('broadcast_event')) {
-            broadcast_event('commerce_order_paid', $ctx, 'commerce');
+            broadcast_event('commerce_order_paid', $payload, 'commerce');
         }
         if (function_exists('enqueue_automation')) {
-            enqueue_automation('commerce_order_paid', $ctx);
+            // Core paid trigger plus dedicated order-email triggers (P8-D5).
+            enqueue_automation('commerce_order_paid', $payload);
+            enqueue_automation('commerce_order_receipt', $payload);
+            enqueue_automation('commerce_order_admin_notify', $payload);
         }
+    }
+
+    /**
+     * Build the automation/event payload for an order — includes line items,
+     * totals, tax, and customer email so email triggers can render receipts.
+     */
+    private function buildOrderPayload(array $order): array
+    {
+        $lines = [];
+        foreach ($order['lines'] ?? [] as $line) {
+            $lines[] = [
+                'title' => $line['title'] ?? ($line['entry_id'] ?? ''),
+                'quantity' => (int) ($line['quantity'] ?? 1),
+                'unit_price_cents' => (int) ($line['unit_price_cents'] ?? $line['effective_unit_cents'] ?? 0),
+                'line_total_cents' => (int) ($line['line_total_cents'] ?? 0),
+                'fulfillment' => $line['fulfillment'] ?? '',
+            ];
+        }
+
+        return [
+            'order_id' => $order['id'] ?? '',
+            'payment_id' => $order['payment_id'] ?? null,
+            'provider' => $order['provider'] ?? null,
+            'status' => $order['status'] ?? 'paid',
+            'customer_email' => $order['customer_email'] ?? '',
+            'currency' => $order['currency'] ?? 'eur',
+            'subtotal_cents' => max(0, (int) ($order['total_cents'] ?? 0)
+                - (int) ($order['tax_cents'] ?? 0) - (int) ($order['shipping_cents'] ?? 0)),
+            'shipping_cents' => (int) ($order['shipping_cents'] ?? 0),
+            'tax_cents' => (int) ($order['tax_cents'] ?? 0),
+            'tax_rate' => (float) ($order['tax_rate'] ?? 0.0),
+            'discount_cents' => (int) ($order['discount_cents'] ?? 0),
+            'total_cents' => (int) ($order['total_cents'] ?? 0),
+            'shipping_address' => $order['shipping_address'] ?? null,
+            'lines' => $lines,
+        ];
     }
 
     private function reserveLineStock(array $line): bool
