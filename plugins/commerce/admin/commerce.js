@@ -92,6 +92,93 @@
     });
   }
 
+  function subStatusBadge(status) {
+    var cls = 'commerce-sub-badge commerce-sub-badge-' + (status || 'unknown');
+    return '<span class="' + cls + '">' + (status || 'unknown') + '</span>';
+  }
+
+  function loadSubscriptions() {
+    var el = document.getElementById('commerce-subscriptions-list');
+    if (!el) return;
+    var detail = document.getElementById('commerce-subscription-detail');
+    if (detail) { detail.hidden = true; detail.innerHTML = ''; }
+    el.innerHTML = '<div class="loading-state"><p>Loading subscriptions…</p></div>';
+    commercePost('list_subscriptions').then(function (res) {
+      var subs = (res.data && res.data.subscriptions) || [];
+      if (!subs.length) {
+        el.innerHTML = '<p>No subscriptions yet. Recurring purchases create a subscription when the order is paid.</p>';
+        return;
+      }
+      var html = '<table class="payments-table"><thead><tr><th>ID</th><th>Status</th><th>Customer</th><th>Amount</th><th>Interval</th><th>Next billing</th><th></th></tr></thead><tbody>';
+      subs.forEach(function (s) {
+        html += '<tr>'
+          + '<td>' + s.id + '</td>'
+          + '<td>' + subStatusBadge(s.status) + '</td>'
+          + '<td>' + (s.customer_email || '—') + '</td>'
+          + '<td>' + formatCents(s.amount_cents, s.currency) + '</td>'
+          + '<td>' + (s.interval || '—') + '</td>'
+          + '<td>' + (s.next_billing_at ? s.next_billing_at.slice(0, 10) : '—') + '</td>'
+          + '<td><button class="btn btn-secondary commerce-sub-view" data-id="' + s.id + '">View</button></td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+      el.innerHTML = html;
+      el.querySelectorAll('.commerce-sub-view').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          viewSubscription(btn.getAttribute('data-id'));
+        });
+      });
+    });
+  }
+
+  function viewSubscription(id) {
+    var detail = document.getElementById('commerce-subscription-detail');
+    if (!detail) return;
+    detail.hidden = false;
+    detail.innerHTML = '<div class="loading-state"><p>Loading subscription…</p></div>';
+    commercePost('get_subscription', { id: id }).then(function (res) {
+      var s = res.data && res.data.subscription;
+      if (!s) {
+        detail.innerHTML = '<p class="error">Subscription not found</p>';
+        return;
+      }
+      var canCancel = s.status !== 'canceled';
+      var html = '<div class="commerce-order-card">';
+      html += '<h3>' + s.id + ' ' + subStatusBadge(s.status) + '</h3>';
+      html += '<p>Customer: ' + (s.customer_email || '—') + '</p>';
+      html += '<p>Order: ' + (s.order_id || '—') + ' · Provider: ' + (s.provider || '—') + '</p>';
+      html += '<p>Amount: ' + formatCents(s.amount_cents, s.currency) + ' · Interval: ' + (s.interval || '—') + '</p>';
+      html += '<p>Started: ' + (s.created_at || '—') + '</p>';
+      html += '<p>Next billing: ' + (s.next_billing_at || '—') + '</p>';
+      if (s.canceled_at) html += '<p>Canceled: ' + s.canceled_at + '</p>';
+      if (s.past_due_at) html += '<p>Past due since: ' + s.past_due_at + '</p>';
+      html += '<table class="payments-table"><thead><tr><th>Line</th><th>Qty</th><th>Option</th></tr></thead><tbody>';
+      (s.lines || []).forEach(function (line) {
+        html += '<tr><td>' + (line.title || line.entry_id) + '</td><td>' + (line.quantity || 1) + '</td><td>' + (line.purchase_option_id || '—') + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      if (canCancel) {
+        html += '<button class="btn btn-danger" id="commerce-sub-cancel" data-id="' + s.id + '">Cancel subscription</button>';
+      }
+      html += '</div>';
+      detail.innerHTML = html;
+      var cancelBtn = document.getElementById('commerce-sub-cancel');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', function () {
+          if (!confirm('Cancel this subscription? This cannot be undone.')) return;
+          commercePost('cancel_subscription', { id: cancelBtn.getAttribute('data-id') }).then(function (r) {
+            if (r.status === 'ok') {
+              loadSubscriptions();
+              viewSubscription(id);
+            } else {
+              alert((r.message) || 'Failed to cancel subscription');
+            }
+          });
+        });
+      }
+    });
+  }
+
   var shippingZonesCache = [];
 
   function loadShippingZones() {
@@ -1112,6 +1199,7 @@
         var name = tab.getAttribute('data-tab');
         if (name === 'catalog') loadCatalog();
         if (name === 'orders') loadOrders();
+        if (name === 'subscriptions') loadSubscriptions();
         if (name === 'discounts') loadDiscounts();
         if (name === 'mappings') loadMappings();
         if (name === 'shipping') loadShippingZones();
@@ -1125,6 +1213,8 @@
     document.getElementById('commerce-reindex')?.addEventListener('click', function () {
       commercePost('reindex_catalog').then(function () { loadCatalog(); });
     });
+
+    document.getElementById('commerce-subscriptions-refresh')?.addEventListener('click', loadSubscriptions);
 
     document.getElementById('commerce-add-discount')?.addEventListener('click', function () {
       var type = prompt('Rule type (percent_off, fixed_off, coupon, affiliate):', 'percent_off');
