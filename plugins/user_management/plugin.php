@@ -903,3 +903,40 @@ if (function_exists('register_hook')) {
 }
 
 require __DIR__ . '/docs/register_docs.php';
+
+if (function_exists('register_automation_block')) {
+    user_management_register_automation_triggers();
+}
+
+/**
+ * Register User-category automation triggers for the node editor palette.
+ */
+function user_management_register_automation_triggers(): void
+{
+    $blocks = [
+        'user_created' => [
+            'name' => 'User Created',
+            'description' => 'Fires when a new site user is registered',
+        ],
+        'user_login' => [
+            'name' => 'User Login',
+            'description' => 'Fires when a user logs in',
+        ],
+        'user_tier_changed' => [
+            'name' => 'User Tier Changed',
+            'description' => 'Fires when a user tier is updated',
+        ],
+    ];
+
+    foreach ($blocks as $id => $meta) {
+        register_automation_block('trigger', $id, [
+            'name' => $meta['name'],
+            'description' => $meta['description'],
+            'category' => 'User',
+            'schema' => [],
+            'handler' => function () {
+                return true;
+            },
+        ]);
+    }
+}
