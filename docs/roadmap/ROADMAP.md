@@ -194,7 +194,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.5 Commerce Wave** (approved, single sprint) — see `docs/reviews/P6.5-lead-engineer-handoff.md`.
+**Next active phase:** **P7 Plugin platform & UX** (proposed) — shell, docs, remove legacy plugins, fix User plugin, Events v2, Automation nodes · **includes P6.5 Commerce Wave** · see `docs/reviews/P7-plugin-platform-plan.md`
 
 ---
 
@@ -2068,7 +2068,28 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
-## Phase 6.6+ — Commerce Phase 2 (detail)
+## Phase 7 — Plugin platform, UX & ecosystem
+
+**Status:** Proposed (2026-07-06) — pending approval
+
+**Spec:** `docs/reviews/P7-plugin-platform-plan.md`
+
+**Goal:** Unified plugin admin shell (breadcrumbs, layout), `register_plugin_docs` for AI+Help, remove payments/shopping_cart, fix User Management, migrate plugin UIs, complete P6.5 Commerce Wave, Events v2 (fieldtype + calendar + attendees), Automation node editor.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P7-M0** | Plugin admin shell (core) | pending |
+| **P7-M1** | Plugin docs shelf — AI + Help | pending |
+| **P7-M2** | Remove payments + shopping_cart | pending |
+| **P7-M3** | User Management repair | pending |
+| **P7-M4** | Plugin UI migration (Commerce, Automation, Events) | pending |
+| **P7-M5** | P6.5 Commerce Wave (on new shell) | pending |
+| **P7-M6** | Events v2 — fieldtype, calendar, attendees, Commerce link | pending |
+| **P7-M7** | Automation node editor | pending |
+
+**Note:** P6.5 remains approved; executed as **P7-M5** after platform shell (M0–M1).
+
+---
 
 **Status:** Proposed — see master plan
 
