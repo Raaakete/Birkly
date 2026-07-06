@@ -478,6 +478,7 @@
   }
 
   var importSourcesCache = [];
+  var importCollectionsCache = [];
   var importHistoryCache = [];
   var importWizard = {
     step: 1,
@@ -490,6 +491,82 @@
   };
 
   var IMPORT_STEP_LABELS = ['Choose your platform', 'Upload your export', 'Review products', 'Import complete'];
+
+  function getImportCollectionMode() {
+    var checked = document.querySelector('input[name="commerce-import-collection-mode"]:checked');
+    return checked ? checked.value : 'existing';
+  }
+
+  function updateImportCollectionModeUI() {
+    var mode = getImportCollectionMode();
+    var existing = document.getElementById('commerce-import-collection-existing');
+    var createNew = document.getElementById('commerce-import-collection-new');
+    if (existing) existing.hidden = mode !== 'existing';
+    if (createNew) createNew.hidden = mode !== 'new';
+  }
+
+  function renderImportCollectionSelect() {
+    var select = document.getElementById('commerce-import-collection-select');
+    if (!select) return;
+    if (!importCollectionsCache.length) {
+      select.innerHTML = '<option value="">No product collections yet — create a new one below</option>';
+      return;
+    }
+    select.innerHTML = importCollectionsCache.map(function (col) {
+      return '<option value="' + escapeHtml(col.slug) + '">' + escapeHtml(col.title || col.slug) + '</option>';
+    }).join('');
+  }
+
+  function loadImportCollections() {
+    return commercePost('import_collections').then(function (res) {
+      importCollectionsCache = (res.data && res.data.collections) || [];
+      renderImportCollectionSelect();
+      return importCollectionsCache;
+    });
+  }
+
+  function getImportCollectionPayload() {
+    var mode = getImportCollectionMode();
+    if (mode === 'new') {
+      var title = document.getElementById('commerce-import-collection-title')?.value.trim() || '';
+      return {
+        create_collection: true,
+        collection_title: title,
+        collection: '',
+      };
+    }
+    return {
+      create_collection: false,
+      collection_title: '',
+      collection: document.getElementById('commerce-import-collection-select')?.value || '',
+    };
+  }
+
+  function getImportCollectionLabel() {
+    var payload = getImportCollectionPayload();
+    if (payload.create_collection) {
+      return payload.collection_title || 'New collection';
+    }
+    var slug = payload.collection;
+    var match = importCollectionsCache.find(function (col) { return col.slug === slug; });
+    return match ? (match.title || slug) : slug;
+  }
+
+  function validateImportCollectionStep() {
+    var payload = getImportCollectionPayload();
+    if (payload.create_collection) {
+      if (!payload.collection_title) {
+        alert('Please enter a name for the new collection.');
+        return false;
+      }
+      return true;
+    }
+    if (!payload.collection) {
+      alert('Please select a collection or choose to create a new one.');
+      return false;
+    }
+    return true;
+  }
 
   function loadImportTab() {
     loadImportHistory();
@@ -705,13 +782,23 @@
     var fileInput = document.getElementById('commerce-import-file');
     if (fileInput) fileInput.value = '';
 
-    var ensureSources = importSourcesCache.length
-      ? Promise.resolve()
-      : commercePost('import_sources').then(function (res) {
-        importSourcesCache = (res.data && res.data.sources) || [];
-      });
+    var ensureSources = Promise.all([
+      importSourcesCache.length
+        ? Promise.resolve()
+        : commercePost('import_sources').then(function (res) {
+          importSourcesCache = (res.data && res.data.sources) || [];
+        }),
+      loadImportCollections(),
+    ]);
 
     ensureSources.then(function () {
+      var modeNew = document.querySelector('input[name="commerce-import-collection-mode"][value="new"]');
+      if (!importCollectionsCache.length && modeNew) {
+        modeNew.checked = true;
+        var modeExisting = document.querySelector('input[name="commerce-import-collection-mode"][value="existing"]');
+        if (modeExisting) modeExisting.checked = false;
+      }
+      updateImportCollectionModeUI();
       renderWizardSources();
       updateWizardStepUI();
       var modal = document.getElementById('commerce-import-wizard');
@@ -778,12 +865,11 @@
     var csv = getImportCsvPayload();
     var errEl = document.getElementById('commerce-import-review-error');
     if (errEl) errEl.hidden = true;
-    return commercePost('import_dry_run', {
+    return commercePost('import_dry_run', Object.assign({
       csv: csv,
       preset: importWizard.source,
-      collection: document.getElementById('commerce-import-collection')?.value || 'products',
       default_currency: document.getElementById('commerce-import-currency')?.value || 'eur',
-    }).then(function (res) {
+    }, getImportCollectionPayload())).then(function (res) {
       if (res.status !== 'ok') {
         if (errEl) { errEl.hidden = false; errEl.textContent = res.message || 'Preview failed'; }
         return null;
@@ -802,7 +888,7 @@
           { label: 'Products', value: productCount },
           { label: 'Variants', value: variants },
           { label: 'Rows', value: res.data.count || preview.length },
-          { label: 'Collection', value: document.getElementById('commerce-import-collection')?.value || 'products' },
+          { label: 'Collection', value: getImportCollectionLabel() },
           { label: 'Currency', value: (document.getElementById('commerce-import-currency')?.value || 'eur').toUpperCase() },
         ].map(function (s) {
           return '<div class="commerce-import-review-stat"><span class="form-hint">' + escapeHtml(s.label) + '</span><strong>' + escapeHtml(String(s.value)) + '</strong></div>';
@@ -817,13 +903,12 @@
     var csv = getImportCsvPayload();
     var importBtn = document.getElementById('commerce-import-wizard-import');
     if (importBtn) { importBtn.disabled = true; importBtn.textContent = 'Importing…'; }
-    return commercePost('import_csv', {
+    return commercePost('import_csv', Object.assign({
       csv: csv,
       preset: importWizard.source,
-      collection: document.getElementById('commerce-import-collection')?.value || 'products',
       default_currency: document.getElementById('commerce-import-currency')?.value || 'eur',
       file_name: importWizard.fileName || null,
-    }).then(function (res) {
+    }, getImportCollectionPayload())).then(function (res) {
       if (importBtn) { importBtn.disabled = false; importBtn.textContent = 'Import products'; }
       if (res.status !== 'ok') {
         var errEl = document.getElementById('commerce-import-review-error');
@@ -848,11 +933,12 @@
     if (!card) return;
     var status = data.status || 'success';
     var src = getSelectedSource();
-    var collection = data.collection || document.getElementById('commerce-import-collection')?.value || 'products';
+    var collection = data.collection || getImportCollectionLabel();
+    var collectionNote = data.collection_created ? ' (new collection created)' : '';
     card.className = 'commerce-import-result-card is-' + status;
     var title = status === 'success' ? 'Import complete' : (status === 'partial' ? 'Import completed with issues' : 'Import failed');
     card.innerHTML = '<h3>' + escapeHtml(title) + '</h3>'
-      + '<p><strong>' + (data.imported_count || 0) + '</strong> products imported into <code>' + escapeHtml(collection) + '</code> from ' + escapeHtml(src.name) + '.</p>'
+      + '<p><strong>' + (data.imported_count || 0) + '</strong> products imported into <code>' + escapeHtml(collection) + '</code>' + escapeHtml(collectionNote) + ' from ' + escapeHtml(src.name) + '.</p>'
       + '<p>Created: ' + (data.created_count || 0) + ' · Updated: ' + (data.updated_count || 0) + ' · Skipped: ' + (data.skipped_count || 0) + ' · Variants: ' + (data.variant_count || 0) + '</p>';
     var skipped = data.skipped || [];
     if (errorsWrap) {
@@ -878,6 +964,9 @@
       return;
     }
     if (importWizard.step === 2) {
+      if (!validateImportCollectionStep()) {
+        return;
+      }
       if (!getImportCsvPayload().trim()) {
         alert('Please upload or paste a CSV file first.');
         return;
@@ -906,6 +995,10 @@
     document.getElementById('commerce-import-wizard-next')?.addEventListener('click', wizardNextStep);
     document.getElementById('commerce-import-wizard-import')?.addEventListener('click', runWizardImport);
     document.getElementById('commerce-import-wizard-done')?.addEventListener('click', closeImportWizard);
+
+    document.querySelectorAll('input[name="commerce-import-collection-mode"]').forEach(function (radio) {
+      radio.addEventListener('change', updateImportCollectionModeUI);
+    });
 
     document.getElementById('commerce-import-search')?.addEventListener('input', function (e) {
       importWizard.search = e.target.value.trim();

@@ -65,8 +65,12 @@
                     <button type="submit" form="general-settings-form" class="btn btn-primary">Save Settings</button>
                 </div>
                 <form id="general-settings-form" class="settings-form" onsubmit="event.preventDefault(); saveGeneralSettings();">
-                    <div class="settings-section">
-                        <h2>Registration Settings</h2>
+                    <div class="settings-stack">
+                    <section class="card">
+                        <div class="section-header">
+                            <h2>Registration Settings</h2>
+                        </div>
+                        <p class="section-description">Control how new site users can sign up and get approved.</p>
                         <div class="form-group">
                             <label>
                                 <input type="checkbox" id="allow-public-registration" name="allow_public_registration" value="1">
@@ -95,73 +99,87 @@
                             </label>
                             <small class="text-muted">Automatically approve users after email verification</small>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="settings-section">
-                        <h2>Default Settings</h2>
-                        <div class="form-group">
-                            <label for="default-role">Default User Role</label>
-                            <select id="default-role" name="default_role" class="form-control">
-                                <option value="member">Member</option>
-                                <option value="subscriber">Subscriber</option>
-                                <option value="premium">Premium</option>
-                                <option value="vip">VIP</option>
-                            </select>
-                            <small class="text-muted">Role assigned to new users by default</small>
+                    <section class="card">
+                        <div class="section-header">
+                            <h2>Default Settings</h2>
                         </div>
-                        <div class="form-group">
-                            <label for="default-tier">Default Tier</label>
-                            <select id="default-tier" name="default_tier" class="form-control">
-                                <option value="all">All</option>
-                                <!-- Options will be loaded dynamically from tiers -->
-                            </select>
-                            <small class="text-muted">Tier assigned to new users by default. Configure tiers in the Tiers tab.</small>
+                        <p class="section-description">Defaults applied when a new user account is created.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="default-role">Default User Role</label>
+                                <select id="default-role" name="default_role" class="form-control">
+                                    <option value="member">Member</option>
+                                    <option value="subscriber">Subscriber</option>
+                                    <option value="premium">Premium</option>
+                                    <option value="vip">VIP</option>
+                                </select>
+                                <small class="text-muted">Role assigned to new users by default</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="default-tier">Default Tier</label>
+                                <select id="default-tier" name="default_tier" class="form-control">
+                                    <option value="all">All</option>
+                                    <!-- Options will be loaded dynamically from tiers -->
+                                </select>
+                                <small class="text-muted">Tier assigned to new users by default</small>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="max-users">Maximum Users</label>
-                            <input type="number" id="max-users" name="max_users" class="form-control" min="0" value="0">
-                            <small class="text-muted">0 for unlimited</small>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="max-users">Maximum Users</label>
+                                <input type="number" id="max-users" name="max_users" class="form-control" min="0" value="0">
+                                <small class="text-muted">0 for unlimited</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="session-timeout">Session Timeout (seconds)</label>
+                                <input type="number" id="session-timeout" name="session_timeout" class="form-control" min="300" value="3600">
+                                <small class="text-muted">How long before users are automatically logged out</small>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="session-timeout">Session Timeout (seconds)</label>
-                            <input type="number" id="session-timeout" name="session_timeout" class="form-control" min="300" value="3600">
-                            <small class="text-muted">How long before users are automatically logged out</small>
-                        </div>
-                    </div>
+                    </section>
 
-                    <div class="settings-section">
-                        <h2>Security Settings</h2>
-                        <div class="form-group">
-                            <label for="max-login-attempts">Max Login Attempts</label>
-                            <input type="number" id="max-login-attempts" name="max_login_attempts" class="form-control" min="3" value="5">
-                            <small class="text-muted">Number of failed login attempts before account lockout</small>
+                    <section class="card">
+                        <div class="section-header">
+                            <h2>Security Settings</h2>
                         </div>
-                        <div class="form-group">
-                            <label for="lockout-duration">Lockout Duration (minutes)</label>
-                            <input type="number" id="lockout-duration" name="lockout_duration" class="form-control" min="5" value="30">
-                            <small class="text-muted">How long accounts are locked after max attempts</small>
+                        <p class="section-description">Brute-force protection for site user logins.</p>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="max-login-attempts">Max Login Attempts</label>
+                                <input type="number" id="max-login-attempts" name="max_login_attempts" class="form-control" min="3" value="5">
+                                <small class="text-muted">Failed attempts before account lockout</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="lockout-duration">Lockout Duration (minutes)</label>
+                                <input type="number" id="lockout-duration" name="lockout_duration" class="form-control" min="5" value="30">
+                                <small class="text-muted">How long accounts stay locked</small>
+                            </div>
                         </div>
-                    </div>
+                    </section>
                     
-                    <div class="settings-section">
-                        <h2>Profile Collection Settings</h2>
-                        <p class="text-muted">Connect user accounts to collection entries for extended profiles. Basic user info (username, email, password) always remains in the plugin.</p>
+                    <section class="card">
+                        <div class="section-header">
+                            <h2>Profile Collection Settings</h2>
+                        </div>
+                        <p class="section-description">Connect user accounts to collection entries for extended profiles. Basic user info (username, email, password) always remains in the plugin.</p>
                         
                         <div class="form-group">
                             <label>
                                 <input type="checkbox" id="profile-collection-enabled" name="profile_collection_enabled" value="1" onchange="toggleProfileCollectionSettings()">
                                 Enable Collection Profiles
                             </label>
-                            <small class="text-muted" style="display: block; margin-top: 0.5rem;">When enabled, new users will automatically get profile entries created in the selected collection.</small>
+                            <small class="text-muted">When enabled, new users will automatically get profile entries created in the selected collection.</small>
                         </div>
                         
-                        <div id="profile-collection-settings" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--color-bg-secondary, #f5f5f5); border-radius: 4px;">
+                        <div id="profile-collection-settings" style="display: none;">
                             <div class="form-group">
                                 <label for="profile-collection-slug">Profile Collection</label>
                                 <select id="profile-collection-slug" name="profile_collection_slug" class="form-control">
                                     <option value="">Loading collections...</option>
                                 </select>
-                                <small class="text-muted" style="display: block; margin-top: 0.5rem;">Select the collection to use for user profiles. Create a "profiles" collection first if needed.</small>
+                                <small class="text-muted">Select the collection to use for user profiles. Create a profiles collection first if needed.</small>
                             </div>
                             
                             <div class="form-group">
@@ -169,14 +187,15 @@
                                     <input type="checkbox" id="auto-create-profiles" name="auto_create_profiles" value="1" checked>
                                     Auto-create profiles for new users
                                 </label>
-                                <small class="text-muted" style="display: block; margin-top: 0.5rem;">Automatically create profile entries when new users register.</small>
+                                <small class="text-muted">Automatically create profile entries when new users register.</small>
                             </div>
                             
                             <div class="form-group" id="migrate-profiles-section" style="display: none;">
                                 <button type="button" class="btn btn-secondary" onclick="migrateExistingProfiles()">Migrate Existing Users</button>
-                                <small class="text-muted" style="display: block; margin-top: 0.5rem;">Create profile entries for all existing users who don't have one yet.</small>
+                                <small class="text-muted">Create profile entries for existing users who don't have one yet.</small>
                             </div>
                         </div>
+                    </section>
                     </div>
                 </form>
             </div>

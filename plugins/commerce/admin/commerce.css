@@ -893,6 +893,26 @@ body.commerce-import-wizard-open { overflow: hidden; }
   margin-bottom: 1rem;
 }
 
+.commerce-import-collection-group {
+  grid-column: 1 / -1;
+}
+
+.commerce-import-collection-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.commerce-import-collection-mode-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .commerce-import-dropzone {
   border: 2px dashed var(--border-color, #d1d5db);
   border-radius: 12px;
