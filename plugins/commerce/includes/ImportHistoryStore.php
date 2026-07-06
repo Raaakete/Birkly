@@ -34,6 +34,28 @@ class ImportHistoryStore
         return null;
     }
 
+    /** @param array<string, mixed> $patch */
+    public function update(string $id, array $patch): ?array
+    {
+        $items = $this->readAll();
+        $updated = null;
+        foreach ($items as $index => $item) {
+            if (($item['id'] ?? '') !== $id) {
+                continue;
+            }
+            $items[$index] = array_merge($item, $patch);
+            $updated = $items[$index];
+            break;
+        }
+        if ($updated === null) {
+            return null;
+        }
+
+        file_put_contents($this->file, json_encode(array_values($items), JSON_PRETTY_PRINT));
+
+        return $updated;
+    }
+
     /** @param array<string, mixed> $record */
     public function add(array $record): array
     {
