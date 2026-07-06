@@ -43,13 +43,14 @@ $subscriptions = new CommerceSubscriptionService($subscriptionStore, commerce_bo
 
 $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate'];
 $adminActions = [
-    'list_catalog', 'reindex_catalog', 'list_orders', 'get_order',
+    'list_catalog', 'reindex_catalog', 'list_orders', 'get_order', 'refund_order',
     'list_subscriptions', 'get_subscription', 'cancel_subscription',
     'list_discounts', 'save_discount', 'delete_discount',
     'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections', 'import_rollback',
     'list_mappings', 'save_mapping', 'delete_mapping',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
     'list_shipping_zones', 'save_shipping_zones',
+    'list_tax_rules', 'save_tax_rules',
     'list_fieldtype_profiles', 'save_fieldtype_profile', 'delete_fieldtype_profile',
 ];
 
@@ -57,7 +58,7 @@ if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -371,6 +372,25 @@ switch ($action) {
         echo json_encode(['status' => 'ok']);
         break;
 
+    case 'refund_order':
+        $id = $input['id'] ?? '';
+        if ($id === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $amountRaw = $input['amount_cents'] ?? null;
+        $amountCents = ($amountRaw === null || $amountRaw === '') ? null : (int) $amountRaw;
+        $reason = (string) ($input['reason'] ?? '');
+        $result = $checkout->refundOrder($id, $amountCents, $reason);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Refund failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
+        break;
+
     case 'list_shipping_zones':
         echo json_encode(['status' => 'ok', 'data' => $catalog->loadShippingZones()]);
         break;
@@ -379,6 +399,19 @@ switch ($action) {
         $zones = $input['zones'] ?? [];
         $catalog->saveShippingZones(['zones' => $zones]);
         echo json_encode(['status' => 'ok']);
+        break;
+
+    case 'list_tax_rules':
+        echo json_encode(['status' => 'ok', 'data' => $catalog->loadTaxRules()]);
+        break;
+
+    case 'save_tax_rules':
+        $catalog->saveTaxRules([
+            'enabled' => !empty($input['enabled']),
+            'default_rate' => (float) ($input['default_rate'] ?? 0),
+            'country_rates' => $input['country_rates'] ?? [],
+        ]);
+        echo json_encode(['status' => 'ok', 'data' => $catalog->loadTaxRules()]);
         break;
 
     case 'list_fieldtype_profiles':

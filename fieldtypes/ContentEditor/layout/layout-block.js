@@ -134,6 +134,10 @@ window.ContentEditorLayoutBlock = {
       return cleaned === 'class=""' ? '' : cleaned;
     });
 
+    // P8-M5 — multi-cell selection highlight (native colspan/rowspan is preserved).
+    out = out.replace(/content-editor-table-cell-selected\s*/gi, '');
+    out = out.replace(/\s*class="\s*"/gi, '');
+
     return out;
   },
 };

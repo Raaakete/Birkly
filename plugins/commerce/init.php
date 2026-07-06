@@ -268,6 +268,36 @@ function commerce_init_automation_triggers(): void
         },
     ]);
 
+    register_automation_block('trigger', 'commerce_order_receipt', [
+        'name' => 'Order Receipt (Customer)',
+        'description' => 'Fires when an order is paid — build a customer receipt email. Payload includes lines, totals, tax, and customer_email.',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_order_admin_notify', [
+        'name' => 'Order Notification (Admin)',
+        'description' => 'Fires when an order is paid — notify the site admin of a new order. Same order payload as the receipt trigger.',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_order_refunded', [
+        'name' => 'Order Refunded',
+        'description' => 'Fires when an order receives a full or partial refund',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
     register_automation_block('trigger', 'commerce_physical_fulfilled', [
         'name' => 'Physical Order Fulfilled',
         'description' => 'Fires when a ship fulfillment line is pushed to the fulfillment adapter',
