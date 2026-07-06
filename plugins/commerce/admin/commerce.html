@@ -13,6 +13,7 @@
     <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
     <button class="payments-tab" data-tab="shipping" role="tab">Shipping</button>
+    <button class="payments-tab" data-tab="tax" role="tab">Tax</button>
     <button class="payments-tab" data-tab="fieldtypes" role="tab">Fieldtypes</button>
     <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
     <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
@@ -129,6 +130,30 @@
       <div class="loading-state"><p>Loading shipping zones…</p></div>
     </div>
     <button type="button" class="btn btn-primary" id="commerce-save-shipping-zones">Save Zones</button>
+  </div>
+
+  <div id="payments-tab-tax" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Tax Rules</h2>
+    </div>
+    <p class="form-text">Tax v1 — a flat default rate applied at checkout, with an optional per-country override table. Rates are percentages (e.g. <code>19</code> for 19%). Tax is applied to the goods subtotal and persisted on each order.</p>
+    <form id="commerce-tax-form" class="payments-settings-form">
+      <div class="form-group">
+        <label><input type="checkbox" id="commerce-tax-enabled"> Enable tax at checkout</label>
+      </div>
+      <div class="form-group">
+        <label>Default rate (%)</label>
+        <input type="number" step="0.01" min="0" id="commerce-tax-default-rate" class="input" value="0">
+      </div>
+      <div class="payments-panel-header">
+        <h3>Country overrides</h3>
+        <button type="button" class="btn btn-secondary" id="commerce-add-tax-country">Add Country</button>
+      </div>
+      <div id="commerce-tax-country-list" class="payments-connections-list">
+        <div class="loading-state"><p>Loading tax rules…</p></div>
+      </div>
+      <button type="button" class="btn btn-primary" id="commerce-save-tax-rules">Save Tax Rules</button>
+    </form>
   </div>
 
   <div id="payments-tab-fieldtypes" class="payments-tab-panel" role="tabpanel" hidden>
