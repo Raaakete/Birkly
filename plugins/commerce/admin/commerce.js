@@ -485,12 +485,27 @@
   function renderImportSources() {
     var el = document.getElementById('commerce-import-sources');
     if (!el) return;
-    el.innerHTML = importSourcesCache.map(function (src) {
-      return '<button type="button" class="commerce-import-source-card' + (src.id === selectedImportSource ? ' is-active' : '') + '" data-source="' + escapeHtml(src.id) + '">'
-        + '<span class="commerce-import-source-name">' + escapeHtml(src.name) + '</span>'
-        + '<span class="commerce-import-source-desc">' + escapeHtml(src.description) + '</span>'
-        + '</button>';
-    }).join('');
+    var categories = [
+      { id: 'store', label: 'Online stores' },
+      { id: 'inventory', label: 'Inventory & stock' },
+      { id: 'other', label: 'Other' },
+    ];
+    var html = '';
+    categories.forEach(function (cat) {
+      var items = importSourcesCache.filter(function (s) { return (s.category || 'other') === cat.id; });
+      if (!items.length) return;
+      html += '<div class="commerce-import-source-group">';
+      html += '<h4 class="commerce-import-source-group-title">' + escapeHtml(cat.label) + '</h4>';
+      html += '<div class="commerce-import-source-grid">';
+      html += items.map(function (src) {
+        return '<button type="button" class="commerce-import-source-card' + (src.id === selectedImportSource ? ' is-active' : '') + '" data-source="' + escapeHtml(src.id) + '">'
+          + '<span class="commerce-import-source-name">' + escapeHtml(src.name) + '</span>'
+          + '<span class="commerce-import-source-desc">' + escapeHtml(src.description) + '</span>'
+          + '</button>';
+      }).join('');
+      html += '</div></div>';
+    });
+    el.innerHTML = html;
     el.querySelectorAll('.commerce-import-source-card').forEach(function (btn) {
       btn.addEventListener('click', function () {
         selectImportSource(btn.getAttribute('data-source'));
