@@ -47,7 +47,29 @@ window.ContentEditorLayoutInspector = {
           <input type="number" data-ce-field="borderRadius" min="0" max="64" step="1">
         </label>
       </div>
+      <div class="content-editor-table-merge-controls" data-ce-merge-controls hidden>
+        <div class="content-editor-layout-inspector-subheader">Cells</div>
+        <div class="content-editor-merge-actions">
+          <button type="button" class="content-editor-merge-btn" data-ce-table-action="merge" disabled title="Merge selected cells">Merge cells</button>
+          <button type="button" class="content-editor-merge-btn" data-ce-table-action="split" disabled title="Split cell into grid">Split cell</button>
+        </div>
+        <p class="content-editor-merge-hint">Drag across cells to select, then merge.</p>
+      </div>
     `;
+
+    panel.querySelectorAll('[data-ce-table-action]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        const table = window.ContentEditorTableLayout;
+        if (!table) return;
+        const editor = window.ContentEditorLayoutBlock ? window.ContentEditorLayoutBlock.activeEditor : null;
+        if (btn.dataset.ceTableAction === 'merge') {
+          table.mergeSelectedCells(editor);
+        } else if (btn.dataset.ceTableAction === 'split') {
+          table.splitSelectedCell(editor);
+        }
+      });
+    });
 
     panel.querySelector('.content-editor-layout-inspector-close').addEventListener('click', () => {
       if (window.ContentEditorLayoutBlock) {
@@ -93,11 +115,17 @@ window.ContentEditorLayoutInspector = {
       tableSection.hidden = layout.type !== 'table';
     }
 
+    const mergeControls = panel.querySelector('[data-ce-merge-controls]');
+    if (mergeControls) {
+      mergeControls.hidden = layout.type !== 'table';
+    }
+
     const target = layout.cell || layout.root;
     this.syncFieldsFromTarget(target, layout.root, layout.type);
 
     if (layout.type === 'table' && window.ContentEditorTableLayout) {
       window.ContentEditorTableLayout.syncTableInspector(layout.root, layout.cell);
+      window.ContentEditorTableLayout.refreshMergeControls();
     }
   },
 
