@@ -229,6 +229,16 @@ switch ($action) {
             $collectionSlug !== '' ? $collectionSlug : null,
             $entryId !== '' ? $entryId : null
         );
+
+        $recipientEmails = $input['recipient_emails'] ?? null;
+        if (is_array($recipientEmails) && count($recipientEmails) > 0) {
+            $allow = array_map(static fn ($e) => strtolower(trim((string) $e)), $recipientEmails);
+            $recipientList = array_values(array_filter(
+                $recipientList,
+                static fn ($r) => in_array(strtolower(trim((string) ($r['email'] ?? ''))), $allow, true)
+            ));
+        }
+
         $emails = array_values(array_unique(array_filter(array_map(fn ($r) => $r['email'] ?? '', $recipientList))));
 
         if (function_exists('do_action')) {

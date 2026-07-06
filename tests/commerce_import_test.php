@@ -27,6 +27,20 @@ test_assert('parse ok', ($parsed['ok'] ?? false) === true);
 test_assert('three rows parsed', count($parsed['rows'] ?? []) === 3);
 test_assert('first row price cents', ($parsed['rows'][0]['commerce']['price_cents'] ?? 0) === 2999);
 
+$shopifyCsv = "Handle,Title,Variant SKU,Variant Price,Option1 Value\n"
+    . "gutschein,Gutschein,,10.00,\"€10,00\"\n"
+    . "gutschein,,,25.00,\"€25,00\"\n"
+    . "gutschein,,,50.00,\"€50,00\"\n"
+    . "karotte-brot,Karotte-Brot,KB-1,6.50,Default\n";
+$shopify = $import->parseCsv($shopifyCsv, 'shopify');
+test_assert('shopify preset ok', ($shopify['ok'] ?? false) === true);
+test_assert('shopify groups products and variants', count($shopify['rows'] ?? []) === 4);
+test_assert('shopify first row is product', empty($shopify['rows'][0]['parent_sku'] ?? null));
+test_assert('shopify second row is variant', !empty($shopify['rows'][1]['parent_sku'] ?? null));
+$shopifyDry = $import->dryRun($shopify['rows'], 'products');
+test_assert('shopify dry run product count', ($shopifyDry['product_count'] ?? 0) === 2);
+test_assert('shopify dry run variant count', ($shopifyDry['variant_count'] ?? 0) === 2);
+
 $wooCsv = "Name,SKU,Regular price,Stock\nWoo Product,WOO-1,19.99,3\n";
 $woo = $import->parseCsv($wooCsv, 'woocommerce');
 test_assert('woocommerce preset ok', ($woo['ok'] ?? false) === true);

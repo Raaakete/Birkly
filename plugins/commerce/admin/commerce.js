@@ -8,15 +8,26 @@
   function commercePost(action, body) {
     body = body || {};
     body.action = action;
-    if (typeof Birkly !== 'undefined' && Birkly.csrfToken) {
-      body._csrf = Birkly.csrfToken;
+    var csrf = (typeof Birkly !== 'undefined' && Birkly.csrfToken)
+      ? Birkly.csrfToken
+      : (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+    if (csrf) {
+      body._csrf = csrf;
     }
     return fetch(COMMERCE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
       body: JSON.stringify(body),
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) {
+      return r.json().then(function (data) {
+        if (r.status === 403 && data && data.message) {
+          data.status = data.status || 'error';
+          data.permission_denied = true;
+        }
+        return data;
+      });
+    });
   }
 
   function formatCents(cents, currency) {
@@ -663,7 +674,7 @@
     var cancelBtn = document.getElementById('commerce-import-wizard-cancel');
 
     if (backBtn) backBtn.hidden = step <= 1 || step === 4;
-    if (nextBtn) nextBtn.hidden = step >= 3;
+    if (nextBtn) nextBtn.hidden = step !== 1 && step !== 2;
     if (importBtn) importBtn.hidden = step !== 3;
     if (doneBtn) doneBtn.hidden = step !== 4;
     if (cancelBtn) cancelBtn.hidden = step === 4;
@@ -780,11 +791,17 @@
       importWizard.preview = res.data || {};
       var summary = document.getElementById('commerce-import-review-summary');
       if (summary) {
-        var count = res.data.count || 0;
-        var variants = (res.data.preview || []).filter(function (r) { return r.is_variant; }).length;
+        var preview = (res.data.preview || []);
+        var productCount = res.data.product_count != null
+          ? res.data.product_count
+          : preview.filter(function (r) { return !r.is_variant; }).length;
+        var variants = res.data.variant_count != null
+          ? res.data.variant_count
+          : preview.filter(function (r) { return r.is_variant; }).length;
         summary.innerHTML = [
-          { label: 'Products', value: count },
+          { label: 'Products', value: productCount },
           { label: 'Variants', value: variants },
+          { label: 'Rows', value: res.data.count || preview.length },
           { label: 'Collection', value: document.getElementById('commerce-import-collection')?.value || 'products' },
           { label: 'Currency', value: (document.getElementById('commerce-import-currency')?.value || 'eur').toUpperCase() },
         ].map(function (s) {
@@ -809,7 +826,13 @@
     }).then(function (res) {
       if (importBtn) { importBtn.disabled = false; importBtn.textContent = 'Import products'; }
       if (res.status !== 'ok') {
-        alert(res.message || 'Import failed');
+        var errEl = document.getElementById('commerce-import-review-error');
+        if (errEl) {
+          errEl.hidden = false;
+          errEl.textContent = res.message || (res.permission_denied
+            ? 'Permission denied. Your account needs Commerce admin access.'
+            : 'Import failed');
+        }
         return;
       }
       importWizard.step = 4;

@@ -13,7 +13,7 @@
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1300;
   padding: var(--space-4, 1rem);
 }
 
