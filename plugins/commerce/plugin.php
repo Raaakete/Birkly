@@ -152,6 +152,22 @@ if (function_exists('register_template_function') && commerce_plugin_active()) {
         ],
     ]);
 
+    register_template_function('commerce_subscription_status', function ($subscriptionId = '') {
+        $subscriptionId = trim((string) $subscriptionId);
+        if ($subscriptionId === '') {
+            return '';
+        }
+        commerce_bootstrap_cart_services();
+        $store = new CommerceSubscriptionStore();
+        $sub = $store->get($subscriptionId);
+        return $sub ? (string) ($sub['status'] ?? '') : '';
+    }, [
+        'description' => 'Returns the lifecycle status (active, past_due, canceled) for a subscription id, or empty string if not found',
+        'arguments' => [
+            'subscription_id' => ['type' => 'string', 'description' => 'Commerce subscription id (csub_…)'],
+        ],
+    ]);
+
     register_template_function('commerce_price_from', function ($commerceValue = null) {
         if (!class_exists('CommerceSchema')) {
             require_once __DIR__ . '/includes/CommerceSchema.php';
