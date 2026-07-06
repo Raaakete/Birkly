@@ -194,7 +194,9 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **Phase 7** — Marketplace (P7.0) and live Shopify/Woo import (P7.1). Phase 6 core commerce complete through P6.7.
+**Next active phase:** **P7 Plugin platform & UX** (proposed) — shell, docs for all plugins, remove legacy plugins, fix User plugin, Events v2, Automation nodes · see `docs/reviews/P7-plugin-platform-plan.md`
+
+**Note:** P6.5 Commerce Wave **shipped on main** (fieldtype v2, fulfillment, variants, docs_shelf, Commerce registers docs). P7 focuses on platform UX gaps visible on live (breadcrumbs, User plugin broken, AI missing non-Commerce plugin docs, legacy plugins still in sidebar).
 
 ---
 
@@ -2103,7 +2105,27 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
-## Phase 6.6+ — Commerce Phase 2 (detail)
+## Phase 7 — Plugin platform, UX & ecosystem
+
+**Status:** Proposed (2026-07-06) — pending approval
+
+**Spec:** `docs/reviews/P7-plugin-platform-plan.md`
+
+**Goal:** Unified plugin admin shell (breadcrumbs, layout), `register_plugin_docs` for AI+Help, remove payments/shopping_cart, fix User Management, migrate plugin UIs, complete P6.5 Commerce Wave, Events v2 (fieldtype + calendar + attendees), Automation node editor.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P7-M0** | Plugin admin shell (core) | pending |
+| **P7-M1** | Plugin docs shelf — AI + Help | pending |
+| **P7-M2** | Remove payments + shopping_cart | pending |
+| **P7-M3** | User Management repair | pending |
+| **P7-M4** | Plugin UI migration (all plugins) | pending |
+| **P7-M5** | Events v2 — fieldtype, calendar, attendees, Commerce link | pending |
+| **P7-M6** | Automation node editor | pending |
+
+**Note:** P6.5 Commerce Wave **complete on main**. P7-M1 completes docs for remaining plugins; P7-M4 migrates Commerce admin to new shell only.
+
+---
 
 **Status:** Proposed — see master plan
 
