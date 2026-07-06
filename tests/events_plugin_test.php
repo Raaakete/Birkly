@@ -14,6 +14,8 @@ $pluginDir = $root . '/plugins/events';
 test_assert('plugin.json exists', is_file($pluginDir . '/plugin.json'));
 test_assert('plugin.php exists', is_file($pluginDir . '/plugin.php'));
 test_assert('RegistrationService.php exists', is_file($pluginDir . '/includes/RegistrationService.php'));
+test_assert('EventIndexer.php exists', is_file($pluginDir . '/includes/EventIndexer.php'));
+test_assert('Event fieldtype exists', is_file($pluginDir . '/fieldtypes/Event/Event.php'));
 test_assert('events admin html exists', is_file($pluginDir . '/admin/events.html'));
 test_assert('events api exists', is_file($pluginDir . '/api/events.php'));
 test_assert('events seed exists', is_file($pluginDir . '/collections/events/collection.json'));
@@ -25,6 +27,7 @@ test_assert('payments dependency optional', ($metadata['dependencies']['plugins'
 
 $pluginPhp = file_get_contents($pluginDir . '/plugin.php');
 test_assert('registers events API route', strpos($pluginPhp, "register_api_endpoint('events'") !== false);
+test_assert('registers event fieldtype', strpos($pluginPhp, 'events_register_fieldtype') !== false);
 test_assert('upcoming_events template function', strpos($pluginPhp, "register_template_function('upcoming_events'") !== false);
 
 $initPhp = file_get_contents($pluginDir . '/init.php');

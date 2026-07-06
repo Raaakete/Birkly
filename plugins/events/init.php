@@ -8,6 +8,12 @@ function events_plugin_dir(): string
     return __DIR__;
 }
 
+function events_data_dir(): string
+{
+    $root = dirname(__DIR__, 2);
+    return $root . '/data/plugins/events';
+}
+
 function events_plugin_active(): bool
 {
     if (!function_exists('birkly_is_plugin_active')) {
@@ -91,6 +97,7 @@ function events_init_automation_triggers(): void
         'event_rsvp' => ['name' => 'Event RSVP', 'description' => 'Fires when someone RSVPs (free)'],
         'event_registration_paid' => ['name' => 'Event Registration Paid', 'description' => 'Fires when a paid registration is confirmed'],
         'event_full' => ['name' => 'Event Full', 'description' => 'Fires when event capacity is reached'],
+        'events_message_attendees' => ['name' => 'Message Attendees', 'description' => 'Fires when bulk messaging attendees from Events admin'],
     ];
     foreach ($blocks as $id => $meta) {
         register_automation_block('trigger', $id, [
@@ -120,6 +127,11 @@ function events_register_payment_handlers(): void
 
 function events_bootstrap(): void
 {
+    require_once __DIR__ . '/includes/EventSchema.php';
+    require_once __DIR__ . '/includes/EventRecurrence.php';
+    require_once __DIR__ . '/includes/EventIndexer.php';
+    require_once __DIR__ . '/includes/IcsGenerator.php';
+    require_once __DIR__ . '/includes/AttendeeService.php';
     require_once __DIR__ . '/includes/ConsumerPaymentHelper.php';
     require_once __DIR__ . '/includes/RegistrationStore.php';
     require_once __DIR__ . '/includes/EventCatalog.php';
@@ -128,8 +140,86 @@ function events_bootstrap(): void
     events_register_payment_handlers();
 }
 
+function events_register_fieldtype(): void
+{
+    if (!function_exists('register_plugin_fieldtype') || !events_plugin_active()) {
+        return;
+    }
+
+    if (!class_exists('Birkly\FieldTypes\BaseField')) {
+        require_once dirname(__DIR__, 2) . '/fieldtypes/BaseField.php';
+    }
+    require_once __DIR__ . '/fieldtypes/Event/Event.php';
+
+    register_plugin_fieldtype(
+        'event',
+        'Birkly\\FieldTypes\\Event\\Event',
+        'events',
+        [
+            'label' => 'Event',
+            'description' => 'Schedule, recurrence, location, and registration capacity',
+        ]
+    );
+}
+
+function events_calendar_feed_url(): string
+{
+    $base = function_exists('birkly_url')
+        ? birkly_url('/api/index.php?route=events&action=webcal')
+        : '/api/index.php?route=events&action=webcal';
+    return $base;
+}
+
+function events_ics_url(string $collectionSlug, string $entryId, ?int $occurrenceIndex = null): string
+{
+    $base = function_exists('birkly_url')
+        ? birkly_url('/api/index.php?route=events&action=ics')
+        : '/api/index.php?route=events&action=ics';
+    $url = $base . '&collection=' . urlencode($collectionSlug) . '&entry_id=' . urlencode($entryId);
+    if ($occurrenceIndex !== null) {
+        $url .= '&occurrence=' . (int) $occurrenceIndex;
+    }
+    return $url;
+}
+
 function events_upcoming(int $limit = 10): array
 {
+    events_bootstrap();
+    $indexer = new EventIndexer();
+    $index = $indexer->loadIndex();
+
+    if (!empty($index['entries'])) {
+        $now = new DateTimeImmutable('now');
+        $events = [];
+        foreach ($indexer->listOccurrences() as $occ) {
+            try {
+                $end = new DateTimeImmutable($occ['ends_at']);
+            } catch (Exception $e) {
+                continue;
+            }
+            if ($end < $now) {
+                continue;
+            }
+            $events[] = [
+                'id' => $occ['entry_id'] ?? '',
+                'collection' => $occ['collection_slug'] ?? '',
+                'title' => $occ['entry_title'] ?? '',
+                'slug' => $occ['entry_slug'] ?? '',
+                'start' => $occ['starts_at'] ?? '',
+                'end' => $occ['ends_at'] ?? '',
+                'venue' => $occ['venue'] ?? '',
+                'virtual_url' => $occ['virtual_url'] ?? '',
+                'occurrence_id' => $occ['occurrence_id'] ?? '',
+                'ics_url' => events_ics_url(
+                    (string) ($occ['collection_slug'] ?? ''),
+                    (string) ($occ['entry_id'] ?? ''),
+                    (int) ($occ['series_index'] ?? 0)
+                ),
+            ];
+        }
+        return array_slice($events, 0, max(1, $limit));
+    }
+
     $catalog = new EventsCatalog();
     $events = [];
     foreach ($catalog->listPublished() as $entry) {
