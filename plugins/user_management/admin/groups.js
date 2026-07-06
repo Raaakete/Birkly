@@ -2,6 +2,10 @@
  * Groups Management JavaScript
  */
 
+
+function apiUrl(path) {
+    return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+}
 // Use IIFE to avoid variable conflicts
 (function() {
 'use strict';
@@ -27,7 +31,7 @@ function loadGroups(filters = {}) {
         ...filters
     });
     
-    fetch(`/api/index.php?route=user_groups&${params}`)
+    fetch(apiUrl(`/api/index.php?route=user_groups&${params}`))
         .then(async res => {
             const text = await res.text();
             let data;
@@ -57,7 +61,7 @@ function loadGroups(filters = {}) {
 }
 
 function loadUsers() {
-    fetch('/api/index.php?route=user_admin&action=list&limit=1000')
+    fetch(apiUrl('/api/index.php?route=user_admin&action=list&limit=1000'))
         .then(async res => {
             const text = await res.text();
             let data;
@@ -214,7 +218,7 @@ function saveGroup() {
         return;
     }
     
-    const url = '/api/index.php?route=user_groups';
+    const url = apiUrl('/api/index.php?route=user_groups');
     
     fetch(url, {
         method: 'POST',
@@ -255,7 +259,7 @@ function deleteGroup(groupId) {
         return;
     }
     
-    const url = '/api/index.php?route=user_groups';
+    const url = apiUrl('/api/index.php?route=user_groups');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
     
     fetch(url, {
