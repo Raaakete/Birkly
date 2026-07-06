@@ -488,6 +488,10 @@ class ContentEditor extends BaseField {
         $html = preg_replace('/\s*data-block-type="[^"]*"/i', '', $html);
         $html = preg_replace('/\s*contenteditable="(?:true|false)"/i', '', $html);
 
+        // P8-M5 — drop multi-cell selection highlight class; keep native colspan/rowspan.
+        $html = preg_replace('/content-editor-table-cell-selected\s*/i', '', $html);
+        $html = preg_replace('/\s*class="\s*"/i', '', $html);
+
         return $html;
     }
 

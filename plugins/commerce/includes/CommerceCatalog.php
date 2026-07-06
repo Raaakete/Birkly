@@ -246,6 +246,104 @@ class CommerceCatalog
         file_put_contents($dir . '/shipping_zones.json', json_encode($data, JSON_PRETTY_PRINT));
     }
 
+    /**
+     * Tax rules v1 — flat default rate + optional country → rate map.
+     *
+     * @return array{enabled: bool, default_rate: float, country_rates: array<int, array{country: string, rate: float}>}
+     */
+    public function loadTaxRules(): array
+    {
+        $file = dirname($this->indexer->getIndexPath()) . '/tax_rules.json';
+        if (!is_file($file)) {
+            $file = commerce_data_dir() . '/tax_rules.json';
+        }
+        if (!is_file($file)) {
+            return ['enabled' => false, 'default_rate' => 0.0, 'country_rates' => []];
+        }
+        $data = json_decode((string) file_get_contents($file), true);
+        if (!is_array($data)) {
+            return ['enabled' => false, 'default_rate' => 0.0, 'country_rates' => []];
+        }
+        return [
+            'enabled' => (bool) ($data['enabled'] ?? false),
+            'default_rate' => (float) ($data['default_rate'] ?? 0.0),
+            'country_rates' => array_values(array_filter(array_map(function ($r) {
+                $country = strtoupper(trim((string) ($r['country'] ?? '')));
+                if ($country === '') {
+                    return null;
+                }
+                return ['country' => $country, 'rate' => (float) ($r['rate'] ?? 0.0)];
+            }, is_array($data['country_rates'] ?? null) ? $data['country_rates'] : []))),
+        ];
+    }
+
+    public function saveTaxRules(array $data): void
+    {
+        $dir = dirname($this->indexer->getIndexPath());
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        $normalized = [
+            'enabled' => (bool) ($data['enabled'] ?? false),
+            'default_rate' => (float) ($data['default_rate'] ?? 0.0),
+            'country_rates' => array_values(array_filter(array_map(function ($r) {
+                $country = strtoupper(trim((string) ($r['country'] ?? '')));
+                if ($country === '') {
+                    return null;
+                }
+                return ['country' => $country, 'rate' => (float) ($r['rate'] ?? 0.0)];
+            }, is_array($data['country_rates'] ?? null) ? $data['country_rates'] : []))),
+        ];
+        file_put_contents($dir . '/tax_rules.json', json_encode($normalized, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Resolve the applicable tax rate (percent) for a destination country.
+     */
+    public function resolveTaxRate(?string $country, ?array $rules = null): float
+    {
+        $rules = $rules ?? $this->loadTaxRules();
+        if (empty($rules['enabled'])) {
+            return 0.0;
+        }
+        $country = strtoupper(trim((string) $country));
+        if ($country !== '') {
+            foreach ($rules['country_rates'] ?? [] as $entry) {
+                if (($entry['country'] ?? '') === $country) {
+                    return max(0.0, (float) ($entry['rate'] ?? 0.0));
+                }
+            }
+        }
+        return max(0.0, (float) ($rules['default_rate'] ?? 0.0));
+    }
+
+    /**
+     * Compute tax for a set of cart lines. Tax base is the sum of effective line
+     * totals (post-discount goods subtotal); shipping is excluded in v1.
+     *
+     * @return array{tax_cents: int, rate: float, country: string, taxable_cents: int}
+     */
+    public function calculateTax(array $lines, ?array $shippingAddress = null): array
+    {
+        $rules = $this->loadTaxRules();
+        $country = strtoupper(trim((string) ($shippingAddress['country'] ?? '')));
+        $rate = $this->resolveTaxRate($country, $rules);
+
+        $taxable = 0;
+        foreach ($lines as $line) {
+            $taxable += (int) ($line['line_total_cents'] ?? $line['effective_amount_cents'] ?? 0);
+        }
+
+        $taxCents = $rate > 0 ? (int) round($taxable * ($rate / 100)) : 0;
+
+        return [
+            'tax_cents' => $taxCents,
+            'rate' => $rate,
+            'country' => $country,
+            'taxable_cents' => $taxable,
+        ];
+    }
+
     private function buildBundleCartLine(
         array $catalogItem,
         string $collectionSlug,

@@ -79,6 +79,18 @@
         if (o.attendee_name) {
           html += '<p>Attendee: ' + o.attendee_name + '</p>';
         }
+        if (Number(o.tax_cents) > 0) {
+          html += '<p>Tax (' + (Number(o.tax_rate) || 0) + '%): ' + formatCents(o.tax_cents, o.currency) + '</p>';
+        }
+        if (Number(o.refunded_cents) > 0) {
+          html += '<p>Refunded: ' + formatCents(o.refunded_cents, o.currency) + '</p>';
+        }
+        var refundable = (o.status === 'paid' || o.status === 'partially_refunded');
+        var remaining = (Number(o.total_cents) || 0) - (Number(o.refunded_cents) || 0);
+        if (refundable && remaining > 0) {
+          html += '<div class="tab-panel-actions"><button type="button" class="btn btn-secondary commerce-refund-order" data-order-id="'
+            + o.id + '" data-remaining="' + remaining + '" data-currency="' + (o.currency || 'eur') + '">Refund…</button></div>';
+        }
         html += '<table class="payments-table"><thead><tr><th>Line</th><th>Qty</th><th>Option</th><th>Fulfillment</th><th>State</th></tr></thead><tbody>';
         (o.lines || []).forEach(function (line, idx) {
           var fr = (o.fulfillment_results || []).find(function (r) { return r.line_id === line.line_id; }) || {};
@@ -211,6 +223,50 @@
         var i = parseInt(btn.getAttribute('data-idx'), 10);
         shippingZonesCache.splice(i, 1);
         renderShippingZones();
+      });
+    });
+  }
+
+  var taxRulesCache = { enabled: false, default_rate: 0, country_rates: [] };
+
+  function loadTaxRules() {
+    var el = document.getElementById('commerce-tax-country-list');
+    if (!el) return;
+    commercePost('list_tax_rules').then(function (res) {
+      var data = res.data || {};
+      taxRulesCache = {
+        enabled: !!data.enabled,
+        default_rate: Number(data.default_rate) || 0,
+        country_rates: Array.isArray(data.country_rates) ? data.country_rates : [],
+      };
+      var enabledEl = document.getElementById('commerce-tax-enabled');
+      var rateEl = document.getElementById('commerce-tax-default-rate');
+      if (enabledEl) enabledEl.checked = taxRulesCache.enabled;
+      if (rateEl) rateEl.value = taxRulesCache.default_rate;
+      renderTaxCountries();
+    });
+  }
+
+  function renderTaxCountries() {
+    var el = document.getElementById('commerce-tax-country-list');
+    if (!el) return;
+    if (!taxRulesCache.country_rates.length) {
+      el.innerHTML = '<p>No country overrides. The default rate applies to all destinations.</p>';
+      return;
+    }
+    var html = '';
+    taxRulesCache.country_rates.forEach(function (entry, idx) {
+      html += '<div class="commerce-tax-country" data-idx="' + idx + '">';
+      html += '<div class="form-group"><label>Country code (ISO, e.g. DE)</label><input type="text" class="input tax-country" maxlength="2" value="' + (entry.country || '') + '"></div>';
+      html += '<div class="form-group"><label>Rate (%)</label><input type="number" step="0.01" min="0" class="input tax-rate" value="' + (Number(entry.rate) || 0) + '"></div>';
+      html += '<button type="button" class="btn btn-secondary commerce-remove-tax-country" data-idx="' + idx + '">Remove</button></div>';
+    });
+    el.innerHTML = html;
+    el.querySelectorAll('.commerce-remove-tax-country').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(btn.getAttribute('data-idx'), 10);
+        taxRulesCache.country_rates.splice(i, 1);
+        renderTaxCountries();
       });
     });
   }
@@ -1203,6 +1259,7 @@
         if (name === 'discounts') loadDiscounts();
         if (name === 'mappings') loadMappings();
         if (name === 'shipping') loadShippingZones();
+        if (name === 'tax') loadTaxRules();
         if (name === 'fieldtypes') loadFieldtypeProfiles();
         if (name === 'import') loadImportTab();
       });
@@ -1283,6 +1340,62 @@
       commercePost('save_shipping_zones', { zones: zones }).then(function () {
         alert('Shipping zones saved');
         loadShippingZones();
+      });
+    });
+
+    document.getElementById('commerce-add-tax-country')?.addEventListener('click', function () {
+      taxRulesCache.country_rates.push({ country: '', rate: 0 });
+      renderTaxCountries();
+    });
+
+    document.getElementById('commerce-save-tax-rules')?.addEventListener('click', function () {
+      var el = document.getElementById('commerce-tax-country-list');
+      var countryRates = [];
+      el?.querySelectorAll('.commerce-tax-country').forEach(function (row) {
+        var country = (row.querySelector('.tax-country')?.value || '').trim().toUpperCase();
+        if (!country) return;
+        countryRates.push({ country: country, rate: parseFloat(row.querySelector('.tax-rate')?.value || '0') || 0 });
+      });
+      commercePost('save_tax_rules', {
+        enabled: !!document.getElementById('commerce-tax-enabled')?.checked,
+        default_rate: parseFloat(document.getElementById('commerce-tax-default-rate')?.value || '0') || 0,
+        country_rates: countryRates,
+      }).then(function () {
+        alert('Tax rules saved');
+        loadTaxRules();
+      });
+    });
+
+    document.getElementById('commerce-orders-list')?.addEventListener('click', function (e) {
+      var btn = e.target.closest('.commerce-refund-order');
+      if (!btn) return;
+      var orderId = btn.getAttribute('data-order-id');
+      var remaining = parseInt(btn.getAttribute('data-remaining'), 10) || 0;
+      var currency = btn.getAttribute('data-currency') || 'EUR';
+      var input = prompt(
+        'Refund amount in ' + currency.toUpperCase() + ' (leave blank for full remaining ' + (remaining / 100).toFixed(2) + '):',
+        ''
+      );
+      if (input === null) return;
+      var body = { id: orderId };
+      var trimmed = input.trim();
+      if (trimmed !== '') {
+        var amount = parseFloat(trimmed);
+        if (isNaN(amount) || amount <= 0) {
+          alert('Invalid refund amount');
+          return;
+        }
+        body.amount_cents = Math.round(amount * 100);
+      }
+      var reason = prompt('Reason (optional):', '') || '';
+      body.reason = reason;
+      commercePost('refund_order', body).then(function (res) {
+        if (res.status !== 'ok') {
+          alert('Refund failed: ' + (res.message || 'Unknown error'));
+          return;
+        }
+        alert('Refund processed');
+        loadOrders();
       });
     });
 
