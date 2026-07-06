@@ -106,6 +106,19 @@ class TemplateParser {
             $parsed
         );
         
+        // Handle {plugin_page_header} — P7 plugin admin shell breadcrumb
+        $parsed = preg_replace(
+            '/\{plugin_page_header\}/',
+            '<?php
+                $__pluginAdmin = $plugin_admin ?? null;
+                $__pageSlug = $page ?? \'\';
+                if (is_array($__pluginAdmin) && function_exists(\'birkly_render_plugin_page_breadcrumbs\')) {
+                    echo birkly_render_plugin_page_breadcrumbs($__pluginAdmin, $__pageSlug);
+                }
+            ?>',
+            $parsed
+        );
+
         // Handle {birkly_url '/path'}
         $parsed = preg_replace_callback(
             '/\{birkly_url\s+[\'"]([^\'"]+)[\'"]\}/',

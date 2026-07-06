@@ -66,6 +66,11 @@ if (array_key_exists($requestedPage, $pageViewPermissions)) {
     if (is_string($needed) && $needed !== '') {
         requireAdminPermission($needed);
     }
+} elseif (function_exists('birkly_plugin_admin_page_permission')) {
+    $pluginPerm = birkly_plugin_admin_page_permission($requestedPage);
+    if (is_string($pluginPerm) && $pluginPerm !== '') {
+        requireAdminPermission($pluginPerm);
+    }
 }
 
 // Include CSRF helper
@@ -173,6 +178,16 @@ function admin_url(string $page, array $params = []): string {
 }
 
 function fetch_admin_page_data(string $page, array $query = []): array {
+    if (function_exists('get_plugin_admin_meta_for_page')) {
+        $pluginMeta = get_plugin_admin_meta_for_page($page);
+        if ($pluginMeta !== null) {
+            return [
+                'page' => $page,
+                'plugin_admin' => $pluginMeta,
+            ];
+        }
+    }
+
     // Content page: core loader only — never admin_templates.php
     if ($page === 'content') {
         $corePath = birkly_project_root() . '/core/content_page.php';
