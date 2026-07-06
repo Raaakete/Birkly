@@ -630,6 +630,15 @@
       + '</tr></thead><tbody>';
     importHistoryCache.forEach(function (item) {
       var status = item.status || 'success';
+      var rolledBack = status === 'rolled_back' || !!item.rolled_back_at;
+      var actions = rolledBack
+        ? '<span class="form-hint">Removed</span>'
+        : '<button type="button" class="btn btn-secondary commerce-import-view-detail" data-id="' + escapeHtml(item.id) + '">Details</button>'
+          + ' <button type="button" class="btn btn-danger commerce-import-delete" data-id="' + escapeHtml(item.id) + '"'
+          + ' data-collection="' + escapeHtml(item.collection || '') + '"'
+          + ' data-count="' + (item.imported_count || 0) + '"'
+          + (item.collection_created ? ' data-collection-created="1"' : '')
+          + '>Remove</button>';
       html += '<tr>'
         + '<td>' + escapeHtml(formatImportDate(item.at)) + '</td>'
         + '<td>' + escapeHtml(item.platform || item.preset || '—') + '</td>'
@@ -638,7 +647,7 @@
         + '<td>' + (item.imported_count || 0) + '</td>'
         + '<td>' + (item.skipped_count || 0) + '</td>'
         + '<td>' + escapeHtml(item.file_name || '—') + '</td>'
-        + '<td><button type="button" class="btn btn-secondary commerce-import-view-detail" data-id="' + escapeHtml(item.id) + '">Details</button></td>'
+        + '<td class="commerce-import-history-actions">' + actions + '</td>'
         + '</tr>';
     });
     html += '</tbody></table>';
@@ -647,6 +656,48 @@
       btn.addEventListener('click', function () {
         showImportDetail(btn.getAttribute('data-id'));
       });
+    });
+    el.querySelectorAll('.commerce-import-delete').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        rollbackImport(btn);
+      });
+    });
+  }
+
+  function rollbackImport(btn) {
+    var importId = btn.getAttribute('data-id');
+    var collection = btn.getAttribute('data-collection') || 'collection';
+    var count = btn.getAttribute('data-count') || '0';
+    var createdCollection = btn.hasAttribute('data-collection-created');
+    var message = 'Remove ' + count + ' imported product(s) from "' + collection + '"?';
+    if (createdCollection) {
+      message += '\n\nThis import created the collection — the collection will be deleted as well.';
+    }
+    message += '\n\nThis cannot be undone.';
+    if (!confirm(message)) {
+      return;
+    }
+    btn.disabled = true;
+    commercePost('import_rollback', { id: importId, delete_collection: true }).then(function (res) {
+      btn.disabled = false;
+      if (res.status !== 'ok') {
+        alert(res.message || 'Could not remove import');
+        return;
+      }
+      var data = res.data || {};
+      var summary = 'Removed ' + (data.deleted || 0) + ' product(s)';
+      if (data.variants_deleted) {
+        summary += ' and ' + data.variants_deleted + ' variant(s)';
+      }
+      if (data.collection_deleted) {
+        summary += '. Collection deleted.';
+      }
+      alert(summary);
+      loadImportHistory();
+      loadImportCollections();
+      if (document.querySelector('.commerce-tabs .payments-tab.active')?.getAttribute('data-tab') === 'catalog') {
+        loadCatalog();
+      }
     });
   }
 
