@@ -5,7 +5,12 @@
 
 <div class="automation-page plugin-page">
 
-  <!-- M3-T6: Queue / cron health hint (hidden by default) -->
+  <div class="payments-tabs automation-view-tabs" role="tablist">
+    <button type="button" class="payments-tab active" data-automation-view="list">Automations</button>
+    <button type="button" class="payments-tab" data-automation-view="documentation">Documentation</button>
+  </div>
+
+  <div id="automation-view-list" class="automation-view-panel">
   <div id="automation-health-hint" class="automation-health-hint" style="display:none" role="alert">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -27,7 +32,7 @@
     </button>
   </div>
 
-  <div class="main-actions-bar">
+  <div class="tab-panel-actions">
     <button type="button" class="btn btn-primary" onclick="openCreateAutomationModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -43,39 +48,30 @@
     </div>
   </div>
 
+  </div>
+
+  <div id="automation-view-documentation" class="automation-view-panel" hidden>
+    <div class="plugin-docs-panel" data-plugin-id="automation"></div>
+  </div>
+
 </div>
 
 <!-- ============================================================
      Create / Edit Automation Modal
      ============================================================ -->
 <div id="automation-modal" class="modal-backdrop">
-  <div class="modal-content" style="max-width:860px">
+  <div class="modal-content automation-modal-wide" style="max-width:min(96vw, 1200px);width:100%">
     <div class="modal-header">
       <h2 id="automation-modal-title">{translate 'admin.create_automation'}</h2>
       <button class="modal-close-btn" onclick="closeAutomationModal()">&times;</button>
     </div>
     <div class="modal-body automation-modal-body">
-      <div class="automation-editor-toolbar">
-        <div class="automation-editor-mode-toggle" role="tablist" aria-label="Editor mode">
-          <button type="button" class="btn btn-sm editor-mode-btn active" data-mode="form" role="tab" aria-selected="true" onclick="setAutomationEditorMode('form')">Form editor</button>
-          <button type="button" class="btn btn-sm editor-mode-btn" data-mode="canvas" role="tab" aria-selected="false" onclick="setAutomationEditorMode('canvas')">Node canvas</button>
-        </div>
-        <div class="automation-editor-canvas-actions" id="canvas-toolbar-actions" style="display:none">
-          <button type="button" class="btn btn-sm btn-ghost" onclick="exportCanvasJson()" title="Export canvas JSON">Export</button>
-          <button type="button" class="btn btn-sm btn-ghost" onclick="importCanvasJson()" title="Import canvas JSON">Import</button>
-        </div>
-      </div>
-
-      <div id="automation-form-editor" class="automation-editor-panel">
-      <form id="automation-form">
-        <input type="hidden" id="automation-id" name="automation_id">
-
+      <div class="automation-form-meta">
         <div class="form-group">
           <label for="automation-name">{translate 'admin.name'} <span class="required">*</span></label>
           <input type="text" id="automation-name" name="name" class="input" required
                  placeholder="{translate 'admin.automation_name_placeholder'}">
         </div>
-
         <div class="form-group" style="display:flex;gap:2rem;flex-wrap:wrap">
           <label class="checkbox-label">
             <input type="checkbox" id="automation-enabled" name="enabled" checked>
@@ -86,6 +82,33 @@
             <span>{translate 'admin.stop_on_first_failure'}</span>
           </label>
         </div>
+      </div>
+
+      <div class="automation-editor-toolbar">
+        <div class="automation-editor-mode-toggle" role="tablist" aria-label="Editor mode">
+          <button type="button" class="btn btn-sm editor-mode-btn" data-mode="canvas" role="tab" aria-selected="true" onclick="setAutomationEditorMode('canvas')">Node canvas</button>
+          <button type="button" class="btn btn-sm editor-mode-btn" data-mode="form" role="tab" aria-selected="false" onclick="setAutomationEditorMode('form')">Form editor</button>
+        </div>
+        <div class="automation-editor-canvas-actions" id="canvas-toolbar-actions">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="exportCanvasJson()" title="Export canvas JSON">Export</button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="importCanvasJson()" title="Import canvas JSON">Import</button>
+        </div>
+      </div>
+
+      <div id="automation-canvas-editor" class="automation-editor-panel">
+        <div class="node-editor-layout">
+          <aside id="node-palette" class="node-palette" aria-label="Block palette"></aside>
+          <div class="node-canvas-column">
+            <div id="node-canvas" class="node-canvas" aria-label="Workflow canvas"></div>
+            <div id="node-inspector" class="node-inspector-panel" aria-label="Node configuration"></div>
+          </div>
+        </div>
+        <div id="canvas-validation-errors" class="canvas-validation-errors" style="display:none" role="alert"></div>
+      </div>
+
+      <div id="automation-form-editor" class="automation-editor-panel" style="display:none">
+      <form id="automation-form">
+        <input type="hidden" id="automation-id" name="automation_id">
 
         <!-- Trigger -->
         <div class="automation-builder-section">
@@ -151,17 +174,6 @@
 
       </form>
       </div>
-
-      <div id="automation-canvas-editor" class="automation-editor-panel" style="display:none">
-        <div class="node-editor-layout">
-          <aside id="node-palette" class="node-palette" aria-label="Block palette"></aside>
-          <div class="node-canvas-column">
-            <div id="node-canvas" class="node-canvas" aria-label="Workflow canvas"></div>
-            <div id="node-inspector" class="node-inspector-panel" aria-label="Node configuration"></div>
-          </div>
-        </div>
-        <div id="canvas-validation-errors" class="canvas-validation-errors" style="display:none" role="alert"></div>
-      </div>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" onclick="closeAutomationModal()">{translate 'admin.cancel'}</button>
@@ -190,6 +202,7 @@
   </div>
 </div>
 
+<script src="{birkly_url '/admin/js/plugin-docs-tab.js'}"></script>
 <script src="{birkly_url '/plugins/automation/admin/automation_node_serializer.js'}"></script>
 <script src="{birkly_url '/plugins/automation/admin/automation_node_editor.js'}"></script>
 <script src="{birkly_url '/plugins/automation/admin/automation.js'}"></script>

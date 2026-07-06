@@ -37,16 +37,6 @@
     try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
   }
 
-  function syncEventsTabActions(tabId) {
-    document.querySelectorAll('#events-tab-actions [data-events-tab]').forEach(function (btn) {
-      btn.hidden = btn.getAttribute('data-events-tab') !== tabId;
-    });
-    var bar = document.getElementById('events-tab-actions');
-    if (bar) {
-      bar.style.display = bar.querySelector('[data-events-tab]:not([hidden])') ? '' : 'none';
-    }
-  }
-
   function switchTab(tabId) {
     document.querySelectorAll('.events-tab').forEach(function (btn) {
       var active = btn.getAttribute('data-tab') === tabId;
@@ -58,11 +48,108 @@
       panel.hidden = !show;
       panel.classList.toggle('active', show);
     });
-    syncEventsTabActions(tabId);
     if (tabId === 'overview') loadOverview();
     if (tabId === 'calendar') loadCalendar();
     if (tabId === 'events-list') loadIndexedEvents();
     if (tabId === 'attendees') { loadEventsFilter(); loadRegistrations(); }
+    if (tabId === 'messages') loadMessageEvents();
+    if (tabId === 'documentation' && window.BirklyPluginDocs) {
+      window.BirklyPluginDocs.activate('events', 'events-tab-documentation');
+    }
+  }
+
+  function loadMessageEvents() {
+    var sel = document.getElementById('events-msg-event');
+    if (!sel) return;
+    Promise.all([
+      apiCall('list_indexed_events'),
+      apiCall('list_events'),
+    ]).then(function (results) {
+      var indexed = (results[0].status === 'ok' ? results[0].data.events : []) || [];
+      var legacy = (results[1].status === 'ok' ? results[1].data.events : []) || [];
+      var current = sel.value;
+      var html = '<option value="">Select an event…</option>';
+      indexed.forEach(function (e) {
+        html += '<option value="entry:' + escapeHtml(e.entry_id) + '" data-entry-id="' + escapeHtml(e.entry_id) + '" data-collection="' + escapeHtml(e.collection_slug || '') + '">' +
+          escapeHtml(e.entry_title) + ' (indexed)</option>';
+      });
+      legacy.forEach(function (e) {
+        html += '<option value="legacy:' + escapeHtml(e.id) + '" data-event-id="' + escapeHtml(e.id) + '">' +
+          escapeHtml(e.title) + ' (legacy)</option>';
+      });
+      sel.innerHTML = html;
+      if (current) sel.value = current;
+      if (sel.value) loadMessageAttendees();
+    });
+  }
+
+  function renderMessageAttendees(items) {
+    var list = document.getElementById('events-msg-attendees-list');
+    var selectAll = document.getElementById('events-msg-select-all');
+    if (!list) return;
+    if (!items.length) {
+      list.innerHTML = '<p class="form-text">No attendees for this event.</p>';
+      if (selectAll) selectAll.checked = false;
+      return;
+    }
+    list.innerHTML = items.map(function (r, index) {
+      var email = r.email || '';
+      return '<label class="events-msg-attendee-row">' +
+        '<input type="checkbox" class="events-msg-attendee-cb" value="' + escapeHtml(email) + '" checked data-index="' + index + '">' +
+        '<span class="events-msg-attendee-meta"><strong>' + escapeHtml(r.name || 'Attendee') + '</strong>' +
+        '<span>' + escapeHtml(email) + '</span></span></label>';
+    }).join('');
+    if (selectAll) {
+      selectAll.checked = true;
+      selectAll.onchange = function () {
+        list.querySelectorAll('.events-msg-attendee-cb').forEach(function (cb) {
+          cb.checked = selectAll.checked;
+        });
+      };
+    }
+    list.querySelectorAll('.events-msg-attendee-cb').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        if (!selectAll) return;
+        var boxes = list.querySelectorAll('.events-msg-attendee-cb');
+        selectAll.checked = Array.prototype.every.call(boxes, function (box) { return box.checked; });
+      });
+    });
+  }
+
+  function loadMessageAttendees() {
+    var sel = document.getElementById('events-msg-event');
+    var list = document.getElementById('events-msg-attendees-list');
+    if (!sel || !list) return;
+    var value = sel.value || '';
+    if (!value) {
+      list.innerHTML = '<p class="form-text">Select an event to load attendees.</p>';
+      return;
+    }
+    list.innerHTML = '<p class="form-text">Loading attendees…</p>';
+    var params = {};
+    if (value.indexOf('entry:') === 0) {
+      params.entry_id = value.slice(6);
+      var opt = sel.options[sel.selectedIndex];
+      if (opt && opt.getAttribute('data-collection')) {
+        params.collection = opt.getAttribute('data-collection');
+      }
+    } else if (value.indexOf('legacy:') === 0) {
+      params.event_id = value.slice(7);
+    }
+    apiCall('list_attendees', params).then(function (res) {
+      if (res.status === 'ok') {
+        renderMessageAttendees(res.data.attendees || res.data.registrations || []);
+      } else {
+        list.innerHTML = '<p class="form-text">Failed to load attendees.</p>';
+      }
+    });
+  }
+
+  function getSelectedMessageEmails() {
+    return Array.prototype.map.call(
+      document.querySelectorAll('.events-msg-attendee-cb:checked'),
+      function (cb) { return cb.value; }
+    ).filter(Boolean);
   }
 
   function loadOverview() {
@@ -234,20 +321,38 @@
     document.getElementById('events-cal-today')?.addEventListener('click', function () {
       calMonth = new Date(); loadCalendar();
     });
+    document.getElementById('events-msg-event')?.addEventListener('change', loadMessageAttendees);
     document.getElementById('events-msg-send')?.addEventListener('click', function () {
       var statusEl = document.getElementById('events-msg-status');
-      apiCall('message_attendees', null, {
-        method: 'POST',
-        body: {
-          subject: document.getElementById('events-msg-subject')?.value || '',
-          body: document.getElementById('events-msg-body')?.value || '',
-          entry_id: document.getElementById('events-msg-entry')?.value || '',
-        },
-      }).then(function (res) {
+      var sel = document.getElementById('events-msg-event');
+      var value = sel?.value || '';
+      var body = {
+        subject: document.getElementById('events-msg-subject')?.value || '',
+        body: document.getElementById('events-msg-body')?.value || '',
+        recipient_emails: getSelectedMessageEmails(),
+      };
+      if (value.indexOf('entry:') === 0) {
+        body.entry_id = value.slice(6);
+        var opt = sel.options[sel.selectedIndex];
+        if (opt && opt.getAttribute('data-collection')) {
+          body.collection = opt.getAttribute('data-collection');
+        }
+      } else if (value.indexOf('legacy:') === 0) {
+        body.event_id = value.slice(7);
+      }
+      if (!value) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = 'Select an event first.';
+          statusEl.className = 'events-msg-status error';
+        }
+        return;
+      }
+      apiCall('message_attendees', null, { method: 'POST', body: body }).then(function (res) {
         if (!statusEl) return;
         statusEl.hidden = false;
         if (res.status === 'ok') {
-          statusEl.textContent = 'Queued for ' + (res.data.recipient_count || 0) + ' recipients. Use Automation to deliver.';
+          statusEl.textContent = 'Queued for ' + (res.data.recipient_count || 0) + ' recipient(s). Use Automation to deliver.';
           statusEl.className = 'events-msg-status ok';
         } else {
           statusEl.textContent = res.message || 'Failed';
