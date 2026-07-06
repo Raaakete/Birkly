@@ -6,7 +6,9 @@ Add to any collection schema:
 { "name": "pricing", "type": "commerce", "label": "Pricing" }
 ```
 
-Optional collection config: `commerce_settings` — control which fulfillment types and billing intervals appear in the editor.
+Collection field config: choose a **saved profile** as the field type (e.g. `commerce`, `commerce_events`, `commerce_digital`). Profiles are managed in **Commerce → Fieldtypes** — not in the collection editor.
+
+Each profile controls: enabled fulfillment types, billing intervals (including custom values like `3_days`, `2_weeks`), optional custom merchant fields, and which sub-panels appear in the entry editor.
 
 ## Two axes (v2)
 

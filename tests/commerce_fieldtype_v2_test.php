@@ -55,6 +55,6 @@ test_assert('processValue migrates legacy billing', ($legacyOut['billing'] ?? ''
 test_assert('processValue migrates legacy price_cents', ($legacyOut['price_cents'] ?? 0) === 1999);
 
 $configField = new Commerce(['name' => 'c']);
-test_assert('getConfigUI returns commerce settings', strpos($configField->getConfigUI(0, []), 'commerce_settings') !== false);
+test_assert('getConfigUI points to Commerce admin', strpos($configField->getConfigUI(0, []), 'Fieldtypes') !== false);
 
 exit(test_finish('Commerce fieldtype v2 tests'));
