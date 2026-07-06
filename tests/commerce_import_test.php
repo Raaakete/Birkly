@@ -32,6 +32,18 @@ $woo = $import->parseCsv($wooCsv, 'woocommerce');
 test_assert('woocommerce preset ok', ($woo['ok'] ?? false) === true);
 test_assert('woocommerce row title', ($woo['rows'][0]['title'] ?? '') === 'Woo Product');
 
+$sources = ImportService::getImportSources();
+test_assert('import sources include shopify', count(array_filter($sources, fn ($s) => $s['id'] === 'shopify')) === 1);
+test_assert('import sources include etsy', count(array_filter($sources, fn ($s) => $s['id'] === 'etsy')) === 1);
+
+$etsyCsv = "TITLE,SKU,PRICE,QUANTITY\nHandmade Mug,MUG-1,24.00,5\n";
+$etsy = $import->parseCsv($etsyCsv, 'etsy');
+test_assert('etsy preset ok', ($etsy['ok'] ?? false) === true);
+test_assert('etsy row title', ($etsy['rows'][0]['title'] ?? '') === 'Handmade Mug');
+
+$withCurrency = $import->applyDefaultCurrency($woo['rows'], 'usd');
+test_assert('default currency applied', ($withCurrency[0]['commerce']['purchase_options'][0]['currency'] ?? '') === 'usd');
+
 $dry = $import->dryRun($parsed['rows'], 'products');
 test_assert('dry run ok', ($dry['ok'] ?? false) === true);
 test_assert('dry run count 3', ($dry['count'] ?? 0) === 3);
