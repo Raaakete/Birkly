@@ -135,14 +135,16 @@ test_assert('list import collections includes imported', count(array_filter($lis
 test_assert('commerce field type helper', ImportCollectionHelper::isCommerceFieldType('commerce_events') === true);
 test_assert('commerce bundle excluded', ImportCollectionHelper::isCommerceFieldType('commerce_bundle') === false);
 
+$rollbackResult = $import->rollbackImport((string) $importResult['import_id'], true);
+test_assert('rollback deletes entries', ($rollbackResult['deleted'] ?? 0) === 3);
+test_assert('rollback deletes collection', ($rollbackResult['collection_deleted'] ?? false) === true);
+test_assert('rollback collection removed', !is_dir($contentRoot . '/collections/imported-products'));
+$secondRollback = $import->rollbackImport((string) $importResult['import_id'], true);
+test_assert('rollback cannot run twice', ($secondRollback['ok'] ?? true) === false);
+
 @unlink($historyDir . '/import_history.json');
 @rmdir($historyDir);
 
-array_map('unlink', glob($contentRoot . '/collections/imported-products/entries/*.json') ?: []);
-@unlink($contentRoot . '/collections/imported-products/schema.json');
-@unlink($contentRoot . '/collections/imported-products/collection.json');
-@rmdir($contentRoot . '/collections/imported-products/entries');
-@rmdir($contentRoot . '/collections/imported-products');
 @rmdir($contentRoot . '/collections');
 @rmdir($contentRoot);
 

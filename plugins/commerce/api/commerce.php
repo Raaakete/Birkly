@@ -41,7 +41,7 @@ $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 's
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order',
     'list_discounts', 'save_discount', 'delete_discount',
-    'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections',
+    'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections', 'import_rollback',
     'list_mappings', 'save_mapping', 'delete_mapping',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
     'list_shipping_zones', 'save_shipping_zones',
@@ -52,7 +52,7 @@ if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_fieldtype_profile', 'delete_fieldtype_profile'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_fieldtype_profile', 'delete_fieldtype_profile'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -221,6 +221,23 @@ switch ($action) {
             break;
         }
         echo json_encode(['status' => 'ok', 'data' => ['import' => $record]]);
+        break;
+
+    case 'import_rollback':
+        $importId = trim((string) ($input['id'] ?? ''));
+        if ($importId === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $deleteCollection = !array_key_exists('delete_collection', $input) || !empty($input['delete_collection']);
+        $result = $import->rollbackImport($importId, $deleteCollection);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Rollback failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
         break;
 
     case 'import_dry_run':

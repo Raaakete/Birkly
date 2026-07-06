@@ -673,6 +673,15 @@ body.commerce-ft-modal-open {
 .commerce-import-status.success { background: #ecfdf5; color: #047857; }
 .commerce-import-status.partial { background: #fffbeb; color: #b45309; }
 .commerce-import-status.failed { background: #fef2f2; color: #b91c1c; }
+.commerce-import-status.rolled_back { background: #f3f4f6; color: #4b5563; }
+
+.commerce-import-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
 
 body.commerce-import-wizard-open { overflow: hidden; }
 

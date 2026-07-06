@@ -487,7 +487,10 @@ class ImportService
             'variant_count' => $variantCount,
             'total_rows' => count($rows),
             'errors' => array_slice($skipped, 0, 100),
-            'entry_ids' => array_slice(array_merge($createdIds, $updatedIds), 0, 50),
+            'created_entry_ids' => $createdIds,
+            'updated_entry_ids' => $updatedIds,
+            'entry_ids' => array_merge($createdIds, $updatedIds),
+            'collection_created' => $collectionCreated,
         ];
 
         require_once __DIR__ . '/ImportHistoryStore.php';
@@ -517,6 +520,148 @@ class ImportService
         require_once __DIR__ . '/ImportCollectionHelper.php';
 
         return (new ImportCollectionHelper($this->contentRoot))->listProductCollections();
+    }
+
+    /**
+     * @return array{ok: bool, deleted?: int, variants_deleted?: int, collection_deleted?: bool, message?: string, error?: string}
+     */
+    public function rollbackImport(string $importId, bool $deleteCollection = true): array
+    {
+        require_once __DIR__ . '/ImportCollectionHelper.php';
+        require_once __DIR__ . '/ImportHistoryStore.php';
+        $history = new ImportHistoryStore();
+        $record = $history->get($importId);
+        if ($record === null) {
+            return ['ok' => false, 'error' => 'Import not found'];
+        }
+        if (!empty($record['rolled_back_at'])) {
+            return ['ok' => false, 'error' => 'This import was already removed'];
+        }
+
+        $collectionSlug = (string) ($record['collection'] ?? '');
+        if ($collectionSlug === '') {
+            return ['ok' => false, 'error' => 'Import has no collection'];
+        }
+
+        $entryIds = array_values(array_unique(array_merge(
+            $record['created_entry_ids'] ?? [],
+            $record['updated_entry_ids'] ?? [],
+            $record['entry_ids'] ?? []
+        )));
+        if ($entryIds === []) {
+            return ['ok' => false, 'error' => 'No entries recorded for this import'];
+        }
+
+        require_once dirname(__DIR__, 3) . '/core/storage/StorageFactory.php';
+        $storage = StorageFactory::createStorage($this->contentRoot);
+        $variantsSub = ImportCollectionHelper::VARIANTS_SUB_SLUG;
+        $deleted = 0;
+        $variantsDeleted = 0;
+
+        foreach ($entryIds as $entryId) {
+            $result = $this->deleteImportedEntry($storage, $collectionSlug, (string) $entryId, $variantsSub);
+            $deleted += $result['entries'];
+            $variantsDeleted += $result['variants'];
+        }
+
+        $collectionDeleted = false;
+        if ($deleteCollection && !empty($record['collection_created'])) {
+            $collectionDeleted = $this->deleteCollection($collectionSlug);
+        }
+
+        $history->update($importId, [
+            'status' => 'rolled_back',
+            'rolled_back_at' => date('c'),
+            'deleted_entry_count' => $deleted,
+            'deleted_variant_count' => $variantsDeleted,
+            'collection_deleted' => $collectionDeleted,
+        ]);
+
+        return [
+            'ok' => true,
+            'deleted' => $deleted,
+            'variants_deleted' => $variantsDeleted,
+            'collection_deleted' => $collectionDeleted,
+            'collection' => $collectionSlug,
+        ];
+    }
+
+    /** @return array{entries: int, variants: int} */
+    private function deleteImportedEntry($storage, string $collectionSlug, string $entryId, string $variantsSub): array
+    {
+        $entryPath = "collections/{$collectionSlug}/entries/{$entryId}.json";
+        $entry = $storage->read($entryPath);
+        if (!is_array($entry)) {
+            return ['entries' => 0, 'variants' => 0];
+        }
+
+        $variantsDeleted = $this->deleteVariantSubEntries($storage, $collectionSlug, $entryId, $variantsSub);
+        $this->indexer->removeEntry($entryId, $collectionSlug);
+        $storage->delete($entryPath);
+        $this->deleteFilesystemPath($this->contentRoot . '/collections/' . $collectionSlug . '/entries/' . $entryId);
+
+        if (function_exists('do_action')) {
+            do_action('after_entry_delete', $entry, $collectionSlug);
+        }
+
+        return ['entries' => 1, 'variants' => $variantsDeleted];
+    }
+
+    private function deleteVariantSubEntries($storage, string $collectionSlug, string $entryId, string $variantsSub): int
+    {
+        $variantDir = $this->contentRoot . '/collections/' . $collectionSlug . '/entries/' . $entryId . '/sub_entries/' . $variantsSub;
+        if (!is_dir($variantDir)) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach (glob($variantDir . '/*.json') ?: [] as $file) {
+            $variant = json_decode((string) file_get_contents($file), true);
+            $variantId = is_array($variant) ? (string) ($variant['id'] ?? basename($file, '.json')) : basename($file, '.json');
+            if ($variantId !== '') {
+                $this->indexer->removeEntry($variantId, $collectionSlug);
+            }
+            @unlink($file);
+            $count++;
+        }
+
+        $this->deleteFilesystemPath($variantDir);
+        $subEntriesRoot = dirname($variantDir);
+        if (is_dir($subEntriesRoot) && count(scandir($subEntriesRoot) ?: []) === 2) {
+            @rmdir($subEntriesRoot);
+        }
+
+        return $count;
+    }
+
+    private function deleteCollection(string $collectionSlug): bool
+    {
+        $collectionDir = $this->contentRoot . '/collections/' . $collectionSlug;
+        if (!is_dir($collectionDir)) {
+            return false;
+        }
+
+        $this->deleteFilesystemPath($collectionDir);
+
+        return !is_dir($collectionDir);
+    }
+
+    private function deleteFilesystemPath(string $path): void
+    {
+        if (!file_exists($path)) {
+            return;
+        }
+        if (is_file($path) || is_link($path)) {
+            @unlink($path);
+            return;
+        }
+        foreach (scandir($path) ?: [] as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $this->deleteFilesystemPath($path . '/' . $item);
+        }
+        @rmdir($path);
     }
 
     public static function platformName(string $presetId): string
