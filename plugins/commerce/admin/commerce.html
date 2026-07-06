@@ -28,7 +28,6 @@
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
     <button class="payments-tab" data-tab="shipping" role="tab">Shipping</button>
     <button class="payments-tab" data-tab="fieldtypes" role="tab">Fieldtypes</button>
-    <button class="payments-tab" data-tab="migration" role="tab">Migration</button>
     <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
     <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
   </div>
@@ -70,28 +69,64 @@
   </div>
 
   <div id="payments-tab-import" class="payments-tab-panel" role="tabpanel" hidden>
-    <div class="payments-panel-header"><h2>CSV Import</h2></div>
-    <form id="commerce-import-form" class="payments-settings-form">
-      <div class="form-group">
-        <label>Preset</label>
-        <select id="commerce-import-preset" class="input">
-          <option value="generic">Generic CSV</option>
-          <option value="woocommerce">WooCommerce</option>
-          <option value="shopify">Shopify</option>
-        </select>
+    <div class="payments-panel-header">
+      <div>
+        <h2>Import products</h2>
+        <p class="commerce-ft-intro">Bring your catalog from online stores (WooCommerce, Shopify, Magento, …) or inventory systems (inFlow, Zoho, Unleashed, …). Upload a CSV export — products become Birkly entries with Commerce pricing.</p>
       </div>
-      <div class="form-group">
-        <label>Target collection slug</label>
-        <input type="text" id="commerce-import-collection" class="input" value="products">
+    </div>
+
+    <div id="commerce-import-sources" class="commerce-import-sources"></div>
+
+    <div class="commerce-import-panel">
+      <div class="commerce-import-panel-header">
+        <h3 id="commerce-import-source-title">Select a platform</h3>
+        <p id="commerce-import-source-steps" class="form-text"></p>
       </div>
-      <div class="form-group">
-        <label>CSV content</label>
-        <textarea id="commerce-import-csv" class="input" rows="8" placeholder="title,price,currency,sku,quantity"></textarea>
+
+      <form id="commerce-import-form" class="commerce-import-form">
+        <input type="hidden" id="commerce-import-preset" value="generic">
+        <div class="commerce-import-form-row">
+          <div class="form-group">
+            <label for="commerce-import-collection">Target collection</label>
+            <input type="text" id="commerce-import-collection" class="input" value="products" placeholder="products">
+            <p class="form-hint">Collection slug — created if it does not exist.</p>
+          </div>
+          <div class="form-group">
+            <label for="commerce-import-currency">Default currency</label>
+            <select id="commerce-import-currency" class="input">
+              <option value="eur">EUR</option>
+              <option value="usd">USD</option>
+              <option value="gbp">GBP</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Product CSV file</label>
+          <div class="commerce-import-dropzone" id="commerce-import-dropzone">
+            <input type="file" id="commerce-import-file" accept=".csv,text/csv" hidden>
+            <p class="commerce-import-dropzone-text"><strong>Drop CSV here</strong> or <button type="button" class="btn btn-secondary" id="commerce-import-browse">Browse</button></p>
+            <p class="form-hint" id="commerce-import-file-name">No file selected</p>
+          </div>
+          <details class="commerce-import-paste">
+            <summary>Paste CSV instead</summary>
+            <textarea id="commerce-import-csv" class="input" rows="6" placeholder="title,price,currency,sku,quantity"></textarea>
+          </details>
+        </div>
+
+        <div class="commerce-import-actions">
+          <button type="button" class="btn btn-secondary" id="commerce-import-dry-run">Preview import</button>
+          <button type="submit" class="btn btn-primary" id="commerce-import-submit" disabled>Import products</button>
+        </div>
+      </form>
+
+      <div id="commerce-import-preview" class="commerce-import-preview" hidden>
+        <h4>Preview</h4>
+        <div id="commerce-import-preview-table"></div>
       </div>
-      <button type="button" class="btn btn-secondary" id="commerce-import-dry-run">Dry run</button>
-      <button type="submit" class="btn btn-primary">Import</button>
       <div id="commerce-import-result" class="payments-test-result" hidden></div>
-    </form>
+    </div>
   </div>
 
   <div id="payments-tab-mappings" class="payments-tab-panel" role="tabpanel" hidden>
@@ -149,20 +184,6 @@
 
     <div id="commerce-fieldtype-profiles-list" class="commerce-ft-grid">
       <div class="loading-state"><p>Loading fieldtype profiles…</p></div>
-    </div>
-  </div>
-
-  <div id="payments-tab-migration" class="payments-tab-panel" role="tabpanel" hidden>
-    <div class="payments-panel-header">
-      <div>
-        <h2>Migration</h2>
-        <p class="commerce-ft-intro">Move from legacy Shopping Cart or Events plugins to Commerce fieldtypes. Bundles use the separate <code>commerce_bundle</code> fieldtype.</p>
-      </div>
-      <button class="btn btn-secondary" id="commerce-migration-scan">Scan site</button>
-    </div>
-    <div id="commerce-migration-guides" class="commerce-migration-guides"></div>
-    <div id="commerce-migration-results" class="commerce-migration-results">
-      <p class="form-text">Click <strong>Scan site</strong> to detect collections that may need Commerce fieldtypes.</p>
     </div>
   </div>
 
