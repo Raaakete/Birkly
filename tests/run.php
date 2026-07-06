@@ -88,6 +88,7 @@ $suites = [
     'platform_test.php',
     'plugin_dependencies_test.php',
     'user_plugin_permissions_test.php',
+    'user_plugin_admin_test.php',
     'feedback_test.php',
     'settings_general_test.php',
     'settings_security_test.php',
