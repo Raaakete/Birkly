@@ -37,7 +37,7 @@ Conditional panels by fulfillment:
 - **register** — uses `quantity_available` as capacity; attendee name at checkout
 - **none** — purchase mappings / automation only (e.g. recurring membership)
 
-Collection field config: `commerce_settings` — enable/disable sub-panels, interval options, fulfillment presets.
+Collection field config: choose a saved **fieldtype profile** (`commerce`, `commerce_events`, …). Manage profiles in **Commerce admin → Fieldtypes** (intervals, custom fields, fulfillment presets) — not in the collection editor.
 
 ## PostPurchaseRouter
 

@@ -207,3 +207,28 @@
   background: #fef3c7;
   color: #92400e;
 }
+
+.commerce-ft-checks label {
+  display: inline-block;
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.commerce-ft-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.commerce-ft-interval-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.commerce-ft-interval-add .input {
+  flex: 1;
+  min-width: 140px;
+}
