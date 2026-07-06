@@ -73,6 +73,16 @@ class CommerceCheckoutService
             if (($line['fulfillment'] ?? '') === 'register') {
                 $needsAttendee = true;
             }
+            if (!empty($line['is_bundle'])) {
+                foreach ($line['components'] ?? [] as $comp) {
+                    if (($comp['fulfillment'] ?? '') === 'ship') {
+                        $needsShipping = true;
+                    }
+                    if (($comp['fulfillment'] ?? '') === 'register') {
+                        $needsAttendee = true;
+                    }
+                }
+            }
         }
 
         if ($needsShipping && empty($shippingAddress)) {
@@ -90,11 +100,7 @@ class CommerceCheckoutService
         }
 
         foreach ($built['lines'] as $line) {
-            if (!$this->indexer->reserveQuantity(
-                $line['collection_slug'],
-                $line['entry_id'],
-                (int) $line['quantity']
-            )) {
+            if (!$this->reserveLineStock($line)) {
                 return ['ok' => false, 'error' => 'Insufficient stock for ' . ($line['title'] ?? 'item')];
             }
         }
@@ -196,11 +202,7 @@ class CommerceCheckoutService
         }
 
         foreach ($order['lines'] ?? [] as $line) {
-            $this->indexer->decrementQuantity(
-                $line['collection_slug'] ?? '',
-                $line['entry_id'] ?? '',
-                (int) ($line['quantity'] ?? 1)
-            );
+            $this->decrementLineStock($line);
         }
 
         $updated = $this->orders->update($order['id'], ['status' => 'paid']);
@@ -249,6 +251,50 @@ class CommerceCheckoutService
         }
         if (function_exists('enqueue_automation')) {
             enqueue_automation('commerce_order_paid', $ctx);
+        }
+    }
+
+    private function reserveLineStock(array $line): bool
+    {
+        if (!$this->indexer->reserveQuantity(
+            $line['collection_slug'] ?? '',
+            $line['entry_id'] ?? '',
+            (int) ($line['quantity'] ?? 1)
+        )) {
+            return false;
+        }
+
+        if (!empty($line['is_bundle'])) {
+            foreach ($line['components'] ?? [] as $comp) {
+                if (!$this->indexer->reserveQuantity(
+                    $comp['collection'] ?? '',
+                    $comp['entry_id'] ?? '',
+                    (int) ($comp['quantity'] ?? 1)
+                )) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function decrementLineStock(array $line): void
+    {
+        $this->indexer->decrementQuantity(
+            $line['collection_slug'] ?? '',
+            $line['entry_id'] ?? '',
+            (int) ($line['quantity'] ?? 1)
+        );
+
+        if (!empty($line['is_bundle'])) {
+            foreach ($line['components'] ?? [] as $comp) {
+                $this->indexer->decrementQuantity(
+                    $comp['collection'] ?? '',
+                    $comp['entry_id'] ?? '',
+                    (int) ($comp['quantity'] ?? 1)
+                );
+            }
         }
     }
 }

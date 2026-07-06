@@ -42,6 +42,13 @@ class PostPurchaseRouter
                 continue;
             }
 
+            if (!empty($line['is_bundle']) && !empty($line['components'])) {
+                $expanded = $this->routeBundleLine($order, $line, $lineId);
+                $this->markProcessed($key, 'bundle', ['ok' => true, 'expanded' => $expanded]);
+                $results[] = ['line_id' => $lineId, 'fulfillment' => 'bundle', 'ok' => true, 'components' => $expanded];
+                continue;
+            }
+
             $fulfillment = $line['fulfillment'] ?? 'ship';
             $result = ['line_id' => $lineId, 'fulfillment' => $fulfillment];
 
@@ -139,6 +146,54 @@ class PostPurchaseRouter
         }
 
         return ['ok' => true, 'membership' => ($line['billing'] ?? '') === 'recurring'];
+    }
+
+    private function routeBundleLine(array $order, array $line, string $bundleLineId): array
+    {
+        $expanded = [];
+        foreach ($line['components'] as $compIdx => $comp) {
+            $compLineId = $bundleLineId . ':comp:' . $compIdx;
+            $compLine = [
+                'line_id' => $compLineId,
+                'entry_id' => $comp['entry_id'] ?? '',
+                'collection_slug' => $comp['collection'] ?? '',
+                'quantity' => (int) ($comp['quantity'] ?? 1),
+                'fulfillment' => $comp['fulfillment'] ?? 'ship',
+                'commerce' => $comp['commerce'] ?? [],
+                'purchase_option_id' => $comp['purchase_option_id'] ?? 'default',
+                'billing' => 'one_time',
+                'title' => $comp['title'] ?? '',
+            ];
+
+            $compKey = ($order['id'] ?? '') . ':' . $compLineId;
+            if ($this->isProcessed($compKey)) {
+                $expanded[] = ['line_id' => $compLineId, 'skipped' => true];
+                continue;
+            }
+
+            $fulfillment = $compLine['fulfillment'];
+            switch ($fulfillment) {
+                case 'ship':
+                    $result = array_merge(['line_id' => $compLineId, 'fulfillment' => $fulfillment], $this->handleShip($order, $compLine));
+                    break;
+                case 'deliver':
+                    $result = array_merge(['line_id' => $compLineId, 'fulfillment' => $fulfillment], $this->handleDeliver($order, $compLine, $compIdx));
+                    break;
+                case 'register':
+                    $result = array_merge(['line_id' => $compLineId, 'fulfillment' => $fulfillment], $this->handleRegister($order, $compLine, $compIdx));
+                    break;
+                case 'none':
+                    $result = array_merge(['line_id' => $compLineId, 'fulfillment' => $fulfillment], $this->handleNone($order, $compLine));
+                    break;
+                default:
+                    $result = ['line_id' => $compLineId, 'fulfillment' => $fulfillment, 'ok' => false, 'error' => 'Unknown fulfillment: ' . $fulfillment];
+            }
+
+            $this->markProcessed($compKey, $fulfillment, $result);
+            $expanded[] = $result;
+        }
+
+        return $expanded;
     }
 
     private function resolvePhysicalAdapter(): ?FulfillmentAdapterInterface
