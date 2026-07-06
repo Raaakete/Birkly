@@ -74,6 +74,35 @@ foreach ($parsed['rows'] as $i => $row) {
 $index = $indexer->loadIndex();
 test_assert('catalog has 3 purchasable entries', count($index['entries'] ?? []) === 3);
 
+$historyDir = sys_get_temp_dir() . '/birkly-commerce-history-' . getmypid();
+@mkdir($historyDir, 0755, true);
+require_once $root . '/plugins/commerce/includes/ImportHistoryStore.php';
+$historyStore = new ImportHistoryStore($historyDir);
+$record = $historyStore->add([
+    'status' => 'success',
+    'preset' => 'woocommerce',
+    'platform' => 'WooCommerce',
+    'collection' => 'products',
+    'imported_count' => 1,
+    'created_count' => 1,
+    'skipped_count' => 0,
+]);
+test_assert('history record saved', !empty($record['id']));
+test_assert('history list returns record', count($historyStore->list()) === 1);
+test_assert('history get by id', ($historyStore->get($record['id'])['platform'] ?? '') === 'WooCommerce');
+
+$importResult = $import->importRows($parsed['rows'], 'imported-products', false, [
+    'preset' => 'generic',
+    'platform' => 'Generic CSV',
+    'currency' => 'eur',
+    'file_name' => 'test.csv',
+]);
+test_assert('import rows records history', !empty($importResult['import_id']));
+test_assert('import status success', ($importResult['status'] ?? '') === 'success');
+
+@unlink($historyDir . '/import_history.json');
+@rmdir($historyDir);
+
 array_map('unlink', glob($entriesDir . '/*.json') ?: []);
 @unlink($dataDir . '/catalog_index.json');
 @rmdir($entriesDir);
