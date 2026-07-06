@@ -4,6 +4,16 @@
 {plugin_page_header}
 
 <div class="events-page plugin-page">
+  <div class="main-actions-bar" id="events-tab-actions">
+    <button class="btn btn-secondary" id="events-reindex" data-events-tab="overview">Reindex</button>
+    <a class="btn btn-secondary" id="events-feed-link" href="#" target="_blank" rel="noopener" data-events-tab="overview">Calendar feed</a>
+    <button class="btn btn-secondary" id="events-export-ics" data-events-tab="overview">Export ICS</button>
+    <a class="btn btn-secondary" id="events-manage-content" href="{admin_url 'content'}" data-events-tab="events-list" hidden>Manage content</a>
+    <button class="btn btn-secondary" id="events-refresh-list" data-events-tab="events-list" hidden>Refresh</button>
+    <button class="btn btn-secondary" id="events-export-csv" data-events-tab="attendees" hidden>Export CSV</button>
+    <button class="btn btn-secondary" id="events-refresh" data-events-tab="attendees" hidden>Refresh</button>
+  </div>
+
   <div class="events-tabs" role="tablist">
     <button class="events-tab active" data-tab="overview" role="tab" aria-selected="true">Overview</button>
     <button class="events-tab" data-tab="calendar" role="tab">Calendar</button>
@@ -13,11 +23,6 @@
   </div>
 
   <div id="events-tab-overview" class="events-tab-panel active" role="tabpanel">
-    <div class="main-actions-bar">
-      <button class="btn btn-secondary" id="events-reindex">Reindex</button>
-      <a class="btn btn-secondary" id="events-feed-link" href="#" target="_blank" rel="noopener">Calendar feed</a>
-      <button class="btn btn-secondary" id="events-export-ics">Export ICS</button>
-    </div>
     <div class="events-stats-grid" id="events-overview-stats">
       <div class="loading-state"><p>Loading overview…</p></div>
     </div>
@@ -35,22 +40,16 @@
   </div>
 
   <div id="events-tab-events-list" class="events-tab-panel" role="tabpanel" hidden>
-    <div class="main-actions-bar">
-      <a class="btn btn-secondary" href="{admin_url 'content'}">Manage content</a>
-      <button class="btn btn-secondary" id="events-refresh-list">Refresh</button>
-    </div>
     <div id="events-indexed-list" class="events-registrations-list">
       <div class="loading-state"><p>Loading indexed events…</p></div>
     </div>
   </div>
 
   <div id="events-tab-attendees" class="events-tab-panel" role="tabpanel" hidden>
-    <div class="events-filters main-actions-bar">
+    <div class="events-filters">
       <select id="events-filter-event" class="input">
         <option value="">All events (legacy)</option>
       </select>
-      <button class="btn btn-secondary" id="events-refresh">Refresh</button>
-      <button class="btn btn-secondary" id="events-export-csv">Export CSV</button>
     </div>
     <div id="events-registrations-list" class="events-registrations-list">
       <div class="loading-state"><p>Loading attendees…</p></div>
