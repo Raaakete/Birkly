@@ -1011,6 +1011,8 @@ body.commerce-import-wizard-open { overflow: hidden; }
   text-align: left;
 }
 
+.commerce-import-wizard-footer [hidden] { display: none !important; }
+
 .commerce-import-wizard-footer {
   display: flex;
   align-items: center;

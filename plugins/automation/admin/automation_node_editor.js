@@ -135,13 +135,14 @@
         }
       }
 
-      const y = 80 + this.canvas.nodes.length * 140;
+      const y = 120;
+      const x = 40 + this.canvas.nodes.length * 240;
       const node = {
         id: nextNodeId(kind),
         kind,
         type,
         config: {},
-        x: 120,
+        x,
         y
       };
       this.canvas.nodes.push(node);
@@ -239,13 +240,13 @@
         const fr = fromEl.getBoundingClientRect();
         const tr = toEl.getBoundingClientRect();
 
-        const x1 = fr.left - cr.left + fr.width / 2;
-        const y1 = fr.bottom - cr.top;
-        const x2 = tr.left - cr.left + tr.width / 2;
-        const y2 = tr.top - cr.top;
-        const midY = (y1 + y2) / 2;
+        const x1 = fr.right - cr.left;
+        const y1 = fr.top - cr.top + fr.height / 2;
+        const x2 = tr.left - cr.left;
+        const y2 = tr.top - cr.top + tr.height / 2;
+        const midX = (x1 + x2) / 2;
 
-        return `<path class="canvas-edge" d="M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}" />`;
+        return `<path class="canvas-edge" d="M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}" />`;
       }).join('');
 
       svg.innerHTML = paths;

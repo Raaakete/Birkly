@@ -4,25 +4,21 @@
 {plugin_page_header}
 
 <div class="events-page plugin-page">
-  <div class="main-actions-bar" id="events-tab-actions">
-    <button class="btn btn-secondary" id="events-reindex" data-events-tab="overview">Reindex</button>
-    <a class="btn btn-secondary" id="events-feed-link" href="#" target="_blank" rel="noopener" data-events-tab="overview">Calendar feed</a>
-    <button class="btn btn-secondary" id="events-export-ics" data-events-tab="overview">Export ICS</button>
-    <a class="btn btn-secondary" id="events-manage-content" href="{admin_url 'content'}" data-events-tab="events-list" hidden>Manage content</a>
-    <button class="btn btn-secondary" id="events-refresh-list" data-events-tab="events-list" hidden>Refresh</button>
-    <button class="btn btn-secondary" id="events-export-csv" data-events-tab="attendees" hidden>Export CSV</button>
-    <button class="btn btn-secondary" id="events-refresh" data-events-tab="attendees" hidden>Refresh</button>
-  </div>
-
   <div class="events-tabs" role="tablist">
     <button class="events-tab active" data-tab="overview" role="tab" aria-selected="true">Overview</button>
     <button class="events-tab" data-tab="calendar" role="tab">Calendar</button>
     <button class="events-tab" data-tab="events-list" role="tab">Events list</button>
     <button class="events-tab" data-tab="attendees" role="tab">Attendees</button>
     <button class="events-tab" data-tab="messages" role="tab">Messages</button>
+    <button class="events-tab" data-tab="documentation" role="tab">Documentation</button>
   </div>
 
   <div id="events-tab-overview" class="events-tab-panel active" role="tabpanel">
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="events-reindex">Reindex</button>
+      <a class="btn btn-secondary" id="events-feed-link" href="#" target="_blank" rel="noopener">Calendar feed</a>
+      <button class="btn btn-secondary" id="events-export-ics">Export ICS</button>
+    </div>
     <div class="events-stats-grid" id="events-overview-stats">
       <div class="loading-state"><p>Loading overview…</p></div>
     </div>
@@ -40,12 +36,20 @@
   </div>
 
   <div id="events-tab-events-list" class="events-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <a class="btn btn-secondary" id="events-manage-content" href="{admin_url 'content'}">Manage content</a>
+      <button class="btn btn-secondary" id="events-refresh-list">Refresh</button>
+    </div>
     <div id="events-indexed-list" class="events-registrations-list">
       <div class="loading-state"><p>Loading indexed events…</p></div>
     </div>
   </div>
 
   <div id="events-tab-attendees" class="events-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="events-refresh">Refresh</button>
+      <button class="btn btn-secondary" id="events-export-csv">Export CSV</button>
+    </div>
     <div class="events-filters">
       <select id="events-filter-event" class="input">
         <option value="">All events (legacy)</option>
@@ -57,24 +61,47 @@
   </div>
 
   <div id="events-tab-messages" class="events-tab-panel" role="tabpanel" hidden>
-    <div class="events-messages-form">
-      <p class="form-text">Compose a message to export or trigger Automation <code>events_message_attendees</code>. Delivery is handled by your automation workflows.</p>
-      <div class="form-group">
-        <label for="events-msg-subject">Subject</label>
-        <input type="text" id="events-msg-subject" class="input" placeholder="Event update">
-      </div>
-      <div class="form-group">
-        <label for="events-msg-body">Message</label>
-        <textarea id="events-msg-body" class="input" rows="6" placeholder="Your message to attendees…"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="events-msg-entry">Filter by entry ID (optional)</label>
-        <input type="text" id="events-msg-entry" class="input" placeholder="entry-id">
-      </div>
+    <div class="tab-panel-actions">
       <button class="btn btn-primary" id="events-msg-send">Queue message</button>
-      <p id="events-msg-status" class="events-msg-status" hidden></p>
     </div>
+    <div class="events-messages-layout">
+      <div class="events-messages-form">
+        <p class="form-text">Choose an event, select attendees (all selected by default), then compose your message. Delivery is handled by Automation <code>events_message_attendees</code>.</p>
+        <div class="form-group">
+          <label for="events-msg-event">Event</label>
+          <select id="events-msg-event" class="input">
+            <option value="">Select an event…</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="events-msg-subject">Subject</label>
+          <input type="text" id="events-msg-subject" class="input" placeholder="Event update">
+        </div>
+        <div class="form-group">
+          <label for="events-msg-body">Message</label>
+          <textarea id="events-msg-body" class="input" rows="6" placeholder="Your message to attendees…"></textarea>
+        </div>
+        <p id="events-msg-status" class="events-msg-status" hidden></p>
+      </div>
+      <div class="events-msg-attendees-panel">
+        <div class="events-msg-attendees-header">
+          <h3>Recipients</h3>
+          <label class="events-msg-select-all">
+            <input type="checkbox" id="events-msg-select-all" checked>
+            Select all
+          </label>
+        </div>
+        <div id="events-msg-attendees-list" class="events-msg-attendees-list">
+          <p class="form-text">Select an event to load attendees.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="events-tab-documentation" class="events-tab-panel" role="tabpanel" hidden>
+    <div class="plugin-docs-panel" data-plugin-id="events"></div>
   </div>
 </div>
 
+<script src="{birkly_url '/admin/js/plugin-docs-tab.js'}"></script>
 <script src="{birkly_url '/plugins/events/admin/events.js'}"></script>

@@ -23,9 +23,18 @@
   display: none;
 }
 
-/* Primary actions — top-right of content area */
+/* Primary actions — top-left inside active tab content */
+.plugin-page .tab-panel-actions {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4, 1rem);
+}
+
 .plugin-page .main-actions-bar {
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-bottom: var(--space-4, 1rem);
 }
 
@@ -99,4 +108,71 @@
 
 .user-management-page.plugin-page .settings-tab-panels .card {
   max-width: 100%;
+}
+
+/* In-plugin documentation panel */
+.plugin-docs-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: var(--space-6, 1.5rem);
+  align-items: start;
+}
+
+.plugin-docs-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-right: 1px solid var(--border-color, #e5e7eb);
+  padding-right: var(--space-4, 1rem);
+}
+
+.plugin-docs-nav-item {
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.plugin-docs-nav-item:hover,
+.plugin-docs-nav-item.is-active {
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--text-primary, #111827);
+  font-weight: 600;
+}
+
+.plugin-docs-content {
+  min-width: 0;
+  max-width: 900px;
+}
+
+.plugin-docs-content .markdown-content h1,
+.plugin-docs-content .markdown-content h2,
+.plugin-docs-content .markdown-content h3 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.plugin-docs-content pre {
+  overflow-x: auto;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .plugin-docs-layout {
+    grid-template-columns: 1fr;
+  }
+  .plugin-docs-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    padding-right: 0;
+    padding-bottom: var(--space-3, 0.75rem);
+  }
 }

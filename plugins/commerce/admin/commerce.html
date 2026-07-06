@@ -4,15 +4,6 @@
 {plugin_page_header}
 
 <div class="payments-page commerce-page plugin-page">
-  <div class="main-actions-bar" id="commerce-tab-actions">
-    <button class="btn btn-primary" id="payments-add-connection" data-commerce-tab="connections">Add Connection</button>
-    <button class="btn btn-secondary" id="commerce-reindex" data-commerce-tab="catalog" hidden>Reindex</button>
-    <button class="btn btn-primary" id="commerce-add-discount" data-commerce-tab="discounts" hidden>Add Rule</button>
-    <button type="button" class="btn btn-primary" id="commerce-import-start" data-commerce-tab="import" hidden>Import products</button>
-    <button class="btn btn-primary" id="commerce-add-shipping-zone" data-commerce-tab="shipping" hidden>Add Zone</button>
-    <button class="btn btn-primary" id="commerce-add-fieldtype-profile" data-commerce-tab="fieldtypes" hidden>New fieldtype</button>
-  </div>
-
   <div class="payments-tabs commerce-tabs" role="tablist">
     <button class="payments-tab active" data-tab="connections" role="tab" aria-selected="true">Connections</button>
     <button class="payments-tab" data-tab="catalog" role="tab">Catalog</button>
@@ -25,9 +16,13 @@
     <button class="payments-tab" data-tab="fieldtypes" role="tab">Fieldtypes</button>
     <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
     <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
+    <button class="payments-tab" data-tab="documentation" role="tab">Documentation</button>
   </div>
 
   <div id="payments-tab-connections" class="payments-tab-panel active" role="tabpanel">
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="payments-add-connection">Add Connection</button>
+    </div>
     <div class="payments-panel-header">
       <h2>Provider Connections</h2>
     </div>
@@ -38,6 +33,9 @@
   </div>
 
   <div id="payments-tab-catalog" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="commerce-reindex">Reindex</button>
+    </div>
     <div class="payments-panel-header">
       <h2>Catalog</h2>
     </div>
@@ -54,6 +52,9 @@
   </div>
 
   <div id="payments-tab-discounts" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="commerce-add-discount">Add Rule</button>
+    </div>
     <div class="payments-panel-header">
       <h2>Discount Rules</h2>
     </div>
@@ -61,6 +62,9 @@
   </div>
 
   <div id="payments-tab-import" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button type="button" class="btn btn-primary" id="commerce-import-start">Import products</button>
+    </div>
     <div class="commerce-import-hero">
       <div class="commerce-import-hero-copy">
         <h2>Product imports</h2>
@@ -114,6 +118,9 @@
   </div>
 
   <div id="payments-tab-shipping" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="commerce-add-shipping-zone">Add Zone</button>
+    </div>
     <div class="payments-panel-header">
       <h2>Shipping Zones</h2>
     </div>
@@ -125,6 +132,9 @@
   </div>
 
   <div id="payments-tab-fieldtypes" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="commerce-add-fieldtype-profile">New fieldtype</button>
+    </div>
     <div class="payments-panel-header">
       <div>
         <h2>Commerce Fieldtypes</h2>
@@ -158,6 +168,9 @@
   </div>
 
   <div id="payments-tab-settings" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button type="submit" form="payments-settings-form" class="btn btn-primary">Save Settings</button>
+    </div>
     <div class="payments-panel-header"><h2>Commerce Settings</h2></div>
     <form id="payments-settings-form" class="payments-settings-form">
       <div class="form-group">
@@ -183,8 +196,12 @@
           <option value="viewer">Viewer</option>
         </select>
       </div>
-      <button type="submit" class="btn btn-primary">Save Settings</button>
+      <button type="submit" class="btn btn-primary" hidden aria-hidden="true" tabindex="-1">Save Settings</button>
     </form>
+  </div>
+
+  <div id="payments-tab-documentation" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="plugin-docs-panel" data-plugin-id="commerce"></div>
   </div>
 </div>
 
@@ -403,5 +420,6 @@
   </div>
 </div>
 
+<script src="{birkly_url '/admin/js/plugin-docs-tab.js'}"></script>
 <script src="{birkly_url '/plugins/commerce/admin/payments.js'}"></script>
 <script src="{birkly_url '/plugins/commerce/admin/commerce.js'}"></script>
