@@ -35,7 +35,9 @@ $discounts = new DiscountEngine();
 $import = new ImportService($indexer);
 $mappings = new PurchaseMappingService();
 require_once __DIR__ . '/../includes/CommerceFieldtypeProfileStore.php';
+require_once __DIR__ . '/../includes/MigrationWizardService.php';
 $fieldtypeProfiles = new CommerceFieldtypeProfileStore();
+$migrationWizard = new MigrationWizardService();
 
 $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate'];
 $adminActions = [
@@ -45,6 +47,7 @@ $adminActions = [
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
     'list_shipping_zones', 'save_shipping_zones',
     'list_fieldtype_profiles', 'save_fieldtype_profile', 'delete_fieldtype_profile',
+    'migration_scan', 'migration_guides',
 ];
 
 if (in_array($action, $adminActions, true)) {
@@ -295,6 +298,14 @@ switch ($action) {
             commerce_register_fieldtype_profiles();
         }
         echo json_encode(['status' => $ok ? 'ok' : 'error']);
+        break;
+
+    case 'migration_scan':
+        echo json_encode(['status' => 'ok', 'data' => $migrationWizard->scan()]);
+        break;
+
+    case 'migration_guides':
+        echo json_encode(['status' => 'ok', 'data' => ['guides' => $migrationWizard->getGuides()]]);
         break;
 
     default:

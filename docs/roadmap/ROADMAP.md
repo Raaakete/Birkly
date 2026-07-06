@@ -188,13 +188,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P6.5 complete** — Commerce v2 fieldtype, variants, PostPurchaseRouter, plugin docs shelf. **89 test suites** green. |
+| **Birkly (CMS)** | **Phase 6 complete (P6.1–P6.7)** — Commerce, bundles, fieldtype profiles, migration wizard. **92 test suites** green. |
 | **Birkly-Docs** | P6.1–P6.5 guides; Commerce v2 + template functions published. |
 | **Agent ops** | **83** PHP test suites (P6.4 closure). |
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P6.6+ Commerce Phase 2** (proposed) — see `docs/reviews/P6-commerce-phase2-master-plan.md`. P6.5 wave closed 2026-07-05.
+**Next active phase:** **Phase 7** — Marketplace (P7.0) and live Shopify/Woo import (P7.1). Phase 6 core commerce complete through P6.7.
 
 ---
 
@@ -2066,6 +2066,40 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P6.5-M4** | Admin, templates, import | complete |
 | **P6.5-M5** | register_plugin_docs + Help + Birkly-Docs | complete |
 | **P6.5-M6** | Verification matrix, closure | complete |
+
+---
+
+## Phase 6.6 — Migration wizard
+
+**Status:** Complete (2026-07-06)
+
+**Delivered:** `MigrationWizardService` — scan collections for Shopping Cart / Events migration paths; Commerce admin **Migration** tab with guides and site scan.
+
+| Milestone | Status |
+|-----------|--------|
+| P6.6-M1 | Migration scan + admin UI | complete |
+
+---
+
+## Phase 6.7 — Commerce bundle fieldtype
+
+**Status:** Complete (2026-07-06)
+
+**Delivered:** `commerce_bundle` fieldtype — component picker from catalog, pricing modes (sum / sum_with_discount / fixed), checkout expansion, PostPurchaseRouter per component.
+
+| Milestone | Status |
+|-----------|--------|
+| P6.7-M1 | commerce_bundle fieldtype + catalog/checkout | complete |
+
+---
+
+## Phase 6.8+ — Moved to Phase 7
+
+| Former ID | Focus | New home |
+|-----------|--------|----------|
+| P6.8 | Birkly Marketplace | **P7.0** |
+| P6.9 | Live Shopify/Woo API import | **P7.1** |
+| P6.10–12 | Tax, subscriptions, refunds, gift cards | **P7.2+** backlog |
 
 ---
 

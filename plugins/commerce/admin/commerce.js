@@ -155,124 +155,15 @@
   }
 
   var fieldtypeProfileDraft = null;
+  var fieldtypeProfilesCache = [];
 
-  function loadFieldtypeProfiles() {
-    var el = document.getElementById('commerce-fieldtype-profiles-list');
-    if (!el) return;
-    el.innerHTML = '<div class="loading-state"><p>Loading fieldtype profiles…</p></div>';
-    commercePost('list_fieldtype_profiles').then(function (res) {
-      var profiles = (res.data && res.data.profiles) || [];
-      if (!profiles.length) {
-        el.innerHTML = '<p>No profiles configured.</p>';
-        return;
-      }
-      var html = '<table class="payments-table"><thead><tr><th>Name</th><th>Type key</th><th>Default fulfillment</th><th></th></tr></thead><tbody>';
-      profiles.forEach(function (p) {
-        html += '<tr><td>' + (p.name || p.id) + (p.is_default ? ' (default)' : '') + '</td><td><code>' + (p.type_key || '') + '</code></td><td>'
-          + ((p.settings && p.settings.default_fulfillment) || '—') + '</td><td>'
-          + '<button type="button" class="btn btn-secondary commerce-edit-profile" data-id="' + p.id + '">Edit</button> '
-          + (p.is_default ? '' : '<button type="button" class="btn btn-secondary commerce-delete-profile" data-id="' + p.id + '">Delete</button>')
-          + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      el.innerHTML = html;
-      el.querySelectorAll('.commerce-edit-profile').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var id = btn.getAttribute('data-id');
-          var profile = profiles.find(function (p) { return p.id === id; });
-          if (profile) openFieldtypeEditor(profile);
-        });
-      });
-      el.querySelectorAll('.commerce-delete-profile').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var id = btn.getAttribute('data-id');
-          if (!confirm('Delete this fieldtype profile? Collections using it will need updating.')) return;
-          commercePost('delete_fieldtype_profile', { id: id }).then(function () { loadFieldtypeProfiles(); });
-        });
-      });
-    });
-  }
+  var FULFILLMENT_LABELS = { ship: 'Ship', deliver: 'Deliver', register: 'Register', none: 'None' };
+  var FULFILLMENT_COLORS = { ship: 'blue', deliver: 'purple', register: 'green', none: 'gray' };
 
-  function renderIntervalRows(intervals) {
-    var list = document.getElementById('commerce-ft-intervals-list');
-    if (!list) return;
-    list.innerHTML = '';
-    (intervals || []).forEach(function (iv, idx) {
-      var row = document.createElement('div');
-      row.className = 'commerce-ft-row';
-      row.innerHTML = '<code>' + iv.value + '</code> — ' + iv.label
-        + ' <button type="button" class="btn btn-secondary commerce-ft-remove-interval" data-idx="' + idx + '">Remove</button>';
-      list.appendChild(row);
-    });
-    list.querySelectorAll('.commerce-ft-remove-interval').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var i = parseInt(btn.getAttribute('data-idx'), 10);
-        fieldtypeProfileDraft.settings.interval_options.splice(i, 1);
-        renderIntervalRows(fieldtypeProfileDraft.settings.interval_options);
-      });
-    });
-  }
-
-  function renderCustomFieldRows(fields) {
-    var list = document.getElementById('commerce-ft-custom-fields-list');
-    if (!list) return;
-    list.innerHTML = '';
-    (fields || []).forEach(function (cf, idx) {
-      var row = document.createElement('div');
-      row.className = 'commerce-ft-row';
-      row.innerHTML = '<code>' + cf.key + '</code> — ' + cf.label
-        + ' <button type="button" class="btn btn-secondary commerce-ft-remove-cf" data-idx="' + idx + '">Remove</button>';
-      list.appendChild(row);
-    });
-    list.querySelectorAll('.commerce-ft-remove-cf').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var i = parseInt(btn.getAttribute('data-idx'), 10);
-        fieldtypeProfileDraft.settings.custom_fields.splice(i, 1);
-        renderCustomFieldRows(fieldtypeProfileDraft.settings.custom_fields);
-      });
-    });
-  }
-
-  function openFieldtypeEditor(profile) {
-    fieldtypeProfileDraft = JSON.parse(JSON.stringify(profile));
-    if (!fieldtypeProfileDraft.settings) fieldtypeProfileDraft.settings = {};
-    document.getElementById('commerce-fieldtype-editor').hidden = false;
-    document.getElementById('commerce-fieldtype-editor-title').textContent = profile.is_default ? 'Edit default profile' : 'Edit profile';
-    document.getElementById('commerce-ft-profile-id').value = profile.id || '';
-    document.getElementById('commerce-ft-name').value = profile.name || '';
-    document.getElementById('commerce-ft-slug').value = profile.slug || '';
-    document.getElementById('commerce-ft-slug').disabled = !!profile.is_default;
-    document.getElementById('commerce-ft-default-fulfillment').value = profile.settings.default_fulfillment || 'ship';
-
-    var fulfillments = ['ship', 'deliver', 'register', 'none'];
-    var ftEl = document.getElementById('commerce-ft-fulfillments');
-    ftEl.innerHTML = fulfillments.map(function (f) {
-      var checked = (profile.settings.enabled_fulfillments || fulfillments).indexOf(f) >= 0 ? ' checked' : '';
-      return '<label><input type="checkbox" class="commerce-ft-fulfillment-cb" value="' + f + '"' + checked + '> ' + f + '</label>';
-    }).join(' ');
-
-    var toggles = [
-      ['enable_fulfillment', 'Fulfillment selector'],
-      ['enable_purchase_options', 'Purchase options'],
-      ['enable_quantity', 'Quantity / capacity'],
-      ['enable_sku', 'SKU'],
-      ['enable_weight', 'Weight (ship)'],
-      ['enable_delivery', 'Delivery panel'],
-    ];
-    document.getElementById('commerce-ft-toggles').innerHTML = toggles.map(function (t) {
-      var checked = profile.settings[t[0]] !== false ? ' checked' : '';
-      return '<label><input type="checkbox" class="commerce-ft-toggle-cb" data-key="' + t[0] + '"' + checked + '> ' + t[1] + '</label>';
-    }).join(' ');
-
-    renderIntervalRows(profile.settings.interval_options || []);
-    renderCustomFieldRows(profile.settings.custom_fields || []);
-  }
-
-  function newFieldtypeProfile() {
-    openFieldtypeEditor({
-      id: '',
-      name: '',
-      slug: '',
+  var FT_PRESETS = {
+    events: {
+      name: 'Events & Classes',
+      slug: 'events',
       settings: {
         default_fulfillment: 'register',
         enabled_fulfillments: ['register'],
@@ -285,7 +176,260 @@
         interval_options: [{ value: 'month', label: 'Monthly' }],
         custom_fields: [],
       },
+    },
+    digital: {
+      name: 'Digital Products',
+      slug: 'digital',
+      settings: {
+        default_fulfillment: 'deliver',
+        enabled_fulfillments: ['deliver'],
+        enable_fulfillment: true,
+        enable_purchase_options: true,
+        enable_quantity: false,
+        enable_sku: true,
+        enable_weight: false,
+        enable_delivery: true,
+        interval_options: [{ value: 'month', label: 'Monthly' }],
+        custom_fields: [],
+      },
+    },
+    physical: {
+      name: 'Physical Products',
+      slug: 'physical',
+      settings: {
+        default_fulfillment: 'ship',
+        enabled_fulfillments: ['ship'],
+        enable_fulfillment: true,
+        enable_purchase_options: true,
+        enable_quantity: true,
+        enable_sku: true,
+        enable_weight: true,
+        enable_delivery: false,
+        interval_options: [
+          { value: 'month', label: 'Monthly' },
+          { value: '2_weeks', label: 'Every 2 weeks' },
+        ],
+        custom_fields: [],
+      },
+    },
+    membership: {
+      name: 'Membership',
+      slug: 'membership',
+      settings: {
+        default_fulfillment: 'none',
+        enabled_fulfillments: ['none'],
+        enable_fulfillment: true,
+        enable_purchase_options: true,
+        enable_quantity: false,
+        enable_sku: false,
+        enable_weight: false,
+        enable_delivery: false,
+        interval_options: [
+          { value: 'month', label: 'Monthly' },
+          { value: 'year', label: 'Yearly' },
+        ],
+        custom_fields: [],
+      },
+    },
+  };
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function updateTypePreview() {
+    var slugEl = document.getElementById('commerce-ft-slug');
+    var preview = document.getElementById('commerce-ft-type-preview');
+    if (!preview || !slugEl) return;
+    var slug = slugEl.value.trim();
+    var id = document.getElementById('commerce-ft-profile-id')?.value || '';
+    if (id === 'default' || !slug || slug === 'default') {
+      preview.textContent = 'commerce';
+      return;
+    }
+    preview.textContent = 'commerce_' + slug.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+  }
+
+  function showFieldtypeModal() {
+    var modal = document.getElementById('commerce-fieldtype-modal');
+    if (!modal) return;
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('commerce-ft-modal-open');
+  }
+
+  function closeFieldtypeModal() {
+    var modal = document.getElementById('commerce-fieldtype-modal');
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('commerce-ft-modal-open');
+    fieldtypeProfileDraft = null;
+  }
+
+  function loadFieldtypeProfiles() {
+    var el = document.getElementById('commerce-fieldtype-profiles-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state"><p>Loading fieldtype profiles…</p></div>';
+    commercePost('list_fieldtype_profiles').then(function (res) {
+      fieldtypeProfilesCache = (res.data && res.data.profiles) || [];
+      if (!fieldtypeProfilesCache.length) {
+        el.innerHTML = '<div class="commerce-ft-empty"><p>No fieldtypes yet.</p><button type="button" class="btn btn-primary" id="commerce-ft-empty-create">Create your first fieldtype</button></div>';
+        document.getElementById('commerce-ft-empty-create')?.addEventListener('click', newFieldtypeProfile);
+        return;
+      }
+      var html = '';
+      fieldtypeProfilesCache.forEach(function (p) {
+        var settings = p.settings || {};
+        var fulfillment = settings.default_fulfillment || 'ship';
+        var color = FULFILLMENT_COLORS[fulfillment] || 'gray';
+        var intervalCount = (settings.interval_options || []).length;
+        var cfCount = (settings.custom_fields || []).length;
+        html += '<article class="commerce-ft-card' + (p.is_default ? ' is-default' : '') + '">'
+          + '<div class="commerce-ft-card-top">'
+          + '<div class="commerce-ft-card-icon commerce-ft-icon-' + color + '">' + (p.is_default ? '★' : '◆') + '</div>'
+          + '<div class="commerce-ft-card-meta">'
+          + '<h3>' + escapeHtml(p.name || p.id) + '</h3>'
+          + (p.is_default ? '<span class="commerce-ft-badge">Default</span>' : '')
+          + '</div></div>'
+          + '<p class="commerce-ft-card-key"><code>' + escapeHtml(p.type_key || 'commerce') + '</code></p>'
+          + '<div class="commerce-ft-card-stats">'
+          + '<span class="status-pill commerce-ft-pill-' + color + '">' + escapeHtml(FULFILLMENT_LABELS[fulfillment] || fulfillment) + '</span>'
+          + '<span class="commerce-ft-stat">' + intervalCount + ' interval' + (intervalCount === 1 ? '' : 's') + '</span>'
+          + (cfCount ? '<span class="commerce-ft-stat">' + cfCount + ' custom field' + (cfCount === 1 ? '' : 's') + '</span>' : '')
+          + '</div>'
+          + '<div class="commerce-ft-card-actions">'
+          + '<button type="button" class="btn btn-secondary commerce-edit-profile" data-id="' + escapeHtml(p.id) + '">Edit</button>'
+          + (p.is_default ? '' : '<button type="button" class="btn btn-secondary commerce-delete-profile" data-id="' + escapeHtml(p.id) + '">Delete</button>')
+          + '</div></article>';
+      });
+      el.innerHTML = html;
+      el.querySelectorAll('.commerce-edit-profile').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var profile = fieldtypeProfilesCache.find(function (p) { return p.id === id; });
+          if (profile) openFieldtypeEditor(profile);
+        });
+      });
+      el.querySelectorAll('.commerce-delete-profile').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          if (!confirm('Delete this fieldtype? Collections using it will need updating.')) return;
+          commercePost('delete_fieldtype_profile', { id: id }).then(function () { loadFieldtypeProfiles(); });
+        });
+      });
     });
+  }
+
+  function renderIntervalRows(intervals) {
+    var list = document.getElementById('commerce-ft-intervals-list');
+    if (!list) return;
+    if (!intervals || !intervals.length) {
+      list.innerHTML = '<p class="commerce-ft-list-empty">No custom intervals — add one below.</p>';
+      return;
+    }
+    list.innerHTML = intervals.map(function (iv, idx) {
+      return '<div class="commerce-ft-list-item">'
+        + '<div><strong>' + escapeHtml(iv.label) + '</strong><br><code>' + escapeHtml(iv.value) + '</code></div>'
+        + '<button type="button" class="btn-icon commerce-ft-remove-interval" data-idx="' + idx + '" title="Remove">×</button>'
+        + '</div>';
+    }).join('');
+    list.querySelectorAll('.commerce-ft-remove-interval').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fieldtypeProfileDraft.settings.interval_options.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+        renderIntervalRows(fieldtypeProfileDraft.settings.interval_options);
+      });
+    });
+  }
+
+  function renderCustomFieldRows(fields) {
+    var list = document.getElementById('commerce-ft-custom-fields-list');
+    if (!list) return;
+    if (!fields || !fields.length) {
+      list.innerHTML = '<p class="commerce-ft-list-empty">No custom fields — optional merchant metadata.</p>';
+      return;
+    }
+    list.innerHTML = fields.map(function (cf, idx) {
+      return '<div class="commerce-ft-list-item">'
+        + '<div><strong>' + escapeHtml(cf.label) + '</strong><br><code>' + escapeHtml(cf.key) + '</code></div>'
+        + '<button type="button" class="btn-icon commerce-ft-remove-cf" data-idx="' + idx + '" title="Remove">×</button>'
+        + '</div>';
+    }).join('');
+    list.querySelectorAll('.commerce-ft-remove-cf').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fieldtypeProfileDraft.settings.custom_fields.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+        renderCustomFieldRows(fieldtypeProfileDraft.settings.custom_fields);
+      });
+    });
+  }
+
+  function renderFulfillmentChips(settings) {
+    var ftEl = document.getElementById('commerce-ft-fulfillments');
+    if (!ftEl) return;
+    var enabled = settings.enabled_fulfillments || ['ship', 'deliver', 'register', 'none'];
+    ftEl.innerHTML = ['ship', 'deliver', 'register', 'none'].map(function (f) {
+      var checked = enabled.indexOf(f) >= 0 ? ' checked' : '';
+      return '<label class="commerce-ft-chip"><input type="checkbox" class="commerce-ft-fulfillment-cb" value="' + f + '"' + checked + '><span>' + FULFILLMENT_LABELS[f] + '</span></label>';
+    }).join('');
+  }
+
+  function renderToggleGrid(settings) {
+    var toggles = [
+      ['enable_fulfillment', 'Fulfillment selector', 'Let merchants pick ship / deliver / register / none'],
+      ['enable_purchase_options', 'Purchase options', 'One-time and recurring prices on same entry'],
+      ['enable_quantity', 'Quantity / capacity', 'Stock limits or event spots'],
+      ['enable_sku', 'SKU', 'Warehouse or inventory identifier'],
+      ['enable_weight', 'Weight (grams)', 'For shipping calculations'],
+      ['enable_delivery', 'Delivery panel', 'Digital asset path and external URL'],
+    ];
+    var el = document.getElementById('commerce-ft-toggles');
+    if (!el) return;
+    el.innerHTML = toggles.map(function (t) {
+      var checked = settings[t[0]] !== false ? ' checked' : '';
+      return '<label class="commerce-ft-toggle-card">'
+        + '<input type="checkbox" class="commerce-ft-toggle-cb" data-key="' + t[0] + '"' + checked + '>'
+        + '<span class="commerce-ft-toggle-title">' + t[1] + '</span>'
+        + '<span class="commerce-ft-toggle-desc">' + t[2] + '</span></label>';
+    }).join('');
+  }
+
+  function openFieldtypeEditor(profile) {
+    fieldtypeProfileDraft = JSON.parse(JSON.stringify(profile));
+    if (!fieldtypeProfileDraft.settings) fieldtypeProfileDraft.settings = {};
+
+    var isDefault = !!profile.is_default;
+    var isNew = !profile.id;
+    document.getElementById('commerce-fieldtype-editor-title').textContent = isNew ? 'New fieldtype' : (isDefault ? 'Edit default fieldtype' : 'Edit fieldtype');
+    document.getElementById('commerce-ft-modal-subtitle').textContent = isNew
+      ? 'Choose a quick start preset or configure manually.'
+      : 'Changes apply to all collections using this field type.';
+    document.getElementById('commerce-ft-presets-wrap').hidden = !isNew;
+
+    document.getElementById('commerce-ft-profile-id').value = profile.id || '';
+    document.getElementById('commerce-ft-name').value = profile.name || '';
+    document.getElementById('commerce-ft-slug').value = profile.slug || '';
+    document.getElementById('commerce-ft-slug').disabled = isDefault;
+    document.getElementById('commerce-ft-default-fulfillment').value = profile.settings.default_fulfillment || 'ship';
+
+    renderFulfillmentChips(profile.settings);
+    renderToggleGrid(profile.settings);
+    renderIntervalRows(profile.settings.interval_options || []);
+    renderCustomFieldRows(profile.settings.custom_fields || []);
+    updateTypePreview();
+    showFieldtypeModal();
+  }
+
+  function newFieldtypeProfile() {
+    openFieldtypeEditor({ id: '', name: '', slug: '', settings: JSON.parse(JSON.stringify(FT_PRESETS.physical.settings)) });
+  }
+
+  function applyPreset(presetKey) {
+    var preset = FT_PRESETS[presetKey];
+    if (!preset || !fieldtypeProfileDraft) return;
+    fieldtypeProfileDraft.name = preset.name;
+    fieldtypeProfileDraft.slug = preset.slug;
+    fieldtypeProfileDraft.settings = JSON.parse(JSON.stringify(preset.settings));
+    openFieldtypeEditor(fieldtypeProfileDraft);
   }
 
   function saveFieldtypeProfile() {
@@ -306,17 +450,71 @@
       settings: settings,
     };
     if (!profile.name) {
-      alert('Profile name is required');
+      document.getElementById('commerce-ft-name').focus();
       return;
     }
+    var saveBtn = document.getElementById('commerce-ft-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
     commercePost('save_fieldtype_profile', { profile: profile }).then(function (res) {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save fieldtype'; }
       if (res.status !== 'ok') {
         alert(res.message || 'Save failed');
         return;
       }
-      document.getElementById('commerce-fieldtype-editor').hidden = true;
-      fieldtypeProfileDraft = null;
+      closeFieldtypeModal();
       loadFieldtypeProfiles();
+    });
+  }
+
+  function loadMigrationTab() {
+    var guidesEl = document.getElementById('commerce-migration-guides');
+    if (guidesEl && !guidesEl.dataset.loaded) {
+      commercePost('migration_guides').then(function (res) {
+        var guides = (res.data && res.data.guides) || [];
+        guidesEl.innerHTML = guides.map(function (g) {
+          return '<article class="commerce-migration-guide"><h3>' + escapeHtml(g.title) + '</h3><p>' + escapeHtml(g.steps) + '</p></article>';
+        }).join('');
+        guidesEl.dataset.loaded = '1';
+      });
+    }
+  }
+
+  function runMigrationScan() {
+    var el = document.getElementById('commerce-migration-results');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state"><p>Scanning collections…</p></div>';
+    commercePost('migration_scan').then(function (res) {
+      var data = res.data || {};
+      var html = '';
+      if ((data.commerce_ready || []).length) {
+        html += '<h3>Commerce ready</h3><ul>';
+        data.commerce_ready.forEach(function (c) {
+          html += '<li><strong>' + escapeHtml(c.name) + '</strong> (' + escapeHtml(c.collection) + ') — ' + escapeHtml((c.fieldtypes || []).join(', ')) + '</li>';
+        });
+        html += '</ul>';
+      }
+      if ((data.legacy_shopping_cart || []).length) {
+        html += '<h3>Suggested for Commerce (products)</h3><ul>';
+        data.legacy_shopping_cart.forEach(function (c) {
+          html += '<li><strong>' + escapeHtml(c.name) + '</strong> — ' + escapeHtml(c.suggestion) + '</li>';
+        });
+        html += '</ul>';
+      }
+      if ((data.legacy_events || []).length) {
+        html += '<h3>Suggested for Commerce (events)</h3><ul>';
+        data.legacy_events.forEach(function (c) {
+          html += '<li><strong>' + escapeHtml(c.name) + '</strong> — ' + escapeHtml(c.suggestion) + '</li>';
+        });
+        html += '</ul>';
+      }
+      if ((data.recommendations || []).length) {
+        html += '<h3>Recommendations</h3><ul>';
+        data.recommendations.forEach(function (r) {
+          html += '<li>' + escapeHtml(r) + '</li>';
+        });
+        html += '</ul>';
+      }
+      el.innerHTML = html || '<p>No collections found to scan.</p>';
     });
   }
 
@@ -330,6 +528,7 @@
         if (name === 'mappings') loadMappings();
         if (name === 'shipping') loadShippingZones();
         if (name === 'fieldtypes') loadFieldtypeProfiles();
+        if (name === 'migration') loadMigrationTab();
       });
     });
   }
@@ -437,10 +636,21 @@
     });
 
     document.getElementById('commerce-add-fieldtype-profile')?.addEventListener('click', newFieldtypeProfile);
+    document.getElementById('commerce-migration-scan')?.addEventListener('click', runMigrationScan);
     document.getElementById('commerce-ft-save')?.addEventListener('click', saveFieldtypeProfile);
-    document.getElementById('commerce-ft-cancel')?.addEventListener('click', function () {
-      document.getElementById('commerce-fieldtype-editor').hidden = true;
-      fieldtypeProfileDraft = null;
+    document.getElementById('commerce-ft-cancel')?.addEventListener('click', closeFieldtypeModal);
+    document.getElementById('commerce-ft-modal-close')?.addEventListener('click', closeFieldtypeModal);
+    document.getElementById('commerce-ft-modal-overlay')?.addEventListener('click', closeFieldtypeModal);
+    document.getElementById('commerce-ft-slug')?.addEventListener('input', updateTypePreview);
+    document.querySelectorAll('.commerce-ft-preset').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyPreset(btn.getAttribute('data-preset'));
+      });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !document.getElementById('commerce-fieldtype-modal')?.hidden) {
+        closeFieldtypeModal();
+      }
     });
     document.getElementById('commerce-ft-add-interval')?.addEventListener('click', function () {
       if (!fieldtypeProfileDraft) return;
