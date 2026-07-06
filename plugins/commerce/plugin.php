@@ -39,6 +39,21 @@ if (function_exists('register_admin_page')) {
     register_admin_page('payments', __DIR__ . '/admin/commerce.html');
 }
 
+if (function_exists('register_plugin_admin_meta')) {
+    register_plugin_admin_meta('commerce', [
+        'title' => 'Commerce',
+        'root_page' => 'commerce',
+        'permission' => 'manage_commerce',
+        'page_slugs' => ['commerce', 'payments'],
+        'sidebar' => [
+            'show' => true,
+            'label' => 'Commerce',
+            'order' => 20,
+            'icon' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>',
+        ],
+    ]);
+}
+
 if (function_exists('register_plugin_fieldtype') && commerce_plugin_active()) {
     commerce_register_fieldtype_profiles();
 }

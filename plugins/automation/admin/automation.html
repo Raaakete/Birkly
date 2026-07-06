@@ -1,17 +1,9 @@
+<link rel="stylesheet" href="{birkly_url '/admin/css/plugin-page.css'}">
 <link rel="stylesheet" href="{birkly_url '/plugins/automation/admin/automation.css'}">
 
-<div class="page-header pt-m pb-m">
-  <div class="page-header-left">
-    <div class="breadcrumbs">
-      <a href="{admin_url 'settings'}">{translate 'admin.settings'}</a>
-      <span class="separator">›</span>
-      <span class="current">{translate 'admin.automation'}</span>
-    </div>
-  </div>
-  <div class="page-header-actions"></div>
-</div>
+{plugin_page_header}
 
-<div class="automation-page">
+<div class="automation-page plugin-page">
 
   <!-- M3-T6: Queue / cron health hint (hidden by default) -->
   <div id="automation-health-hint" class="automation-health-hint" style="display:none" role="alert">
@@ -35,12 +27,7 @@
     </button>
   </div>
 
-  <!-- Toolbar -->
-  <div class="automation-toolbar">
-    <div class="automation-toolbar-left">
-      <h1 style="margin:0;font-size:1.5rem;font-weight:700">{translate 'admin.automation'}</h1>
-      <p style="margin:0;color:var(--text-secondary);font-size:0.9375rem">{translate 'admin.automation_description'}</p>
-    </div>
+  <div class="main-actions-bar">
     <div class="automation-toolbar-right">
       <button class="btn btn-primary" onclick="openCreateAutomationModal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px">
