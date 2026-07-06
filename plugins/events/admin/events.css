@@ -1,6 +1,14 @@
 .events-page { padding: 0 var(--space-m) var(--space-xl); }
-.events-toolbar { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-m); margin-bottom: var(--space-l); flex-wrap: wrap; }
-.events-toolbar-actions { display: flex; gap: var(--space-s); flex-wrap: wrap; }
+.events-tabs { display: flex; gap: var(--space-xs); border-bottom: 1px solid var(--border-color); margin-bottom: var(--space-l); flex-wrap: wrap; }
+.events-tab { background: none; border: none; padding: var(--space-s) var(--space-m); cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.events-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-color, #2563eb); }
+.events-tab-panel[hidden] { display: none !important; }
+.main-actions-bar { display: flex; gap: var(--space-s); margin-bottom: var(--space-l); flex-wrap: wrap; align-items: center; }
+.events-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-m); margin-bottom: var(--space-l); }
+.events-stat-card { border: 1px solid var(--border-color); border-radius: 8px; padding: var(--space-m); text-align: center; }
+.events-stat-value { display: block; font-size: 1.75rem; font-weight: 700; }
+.events-stat-label { font-size: 0.8125rem; color: var(--text-secondary); }
+.events-legacy-note { font-size: 0.875rem; color: var(--text-secondary); margin-top: var(--space-l); }
 .events-filters { display: flex; gap: var(--space-s); margin-bottom: var(--space-l); flex-wrap: wrap; }
 .events-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .events-table th, .events-table td { padding: var(--space-s) var(--space-m); text-align: left; border-bottom: 1px solid var(--border-color); }
@@ -10,3 +18,19 @@
 .status-pill.pending { background: #fef3c7; color: #92400e; }
 .status-pill.failed { background: #fee2e2; color: #991b1b; }
 .events-empty { padding: var(--space-xl); text-align: center; color: var(--text-secondary); }
+.events-calendar-toolbar { display: flex; align-items: center; gap: var(--space-s); margin-bottom: var(--space-m); }
+.events-cal-title { flex: 1; margin: 0; font-size: 1.125rem; text-align: center; }
+.events-cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.events-cal-weekdays span { text-align: center; padding: 4px; }
+.events-cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.events-cal-day { min-height: 80px; border: 1px solid var(--border-color); padding: 4px; font-size: 0.75rem; }
+.events-cal-day.empty { background: var(--bg-secondary, #f9fafb); }
+.events-cal-day-num { font-weight: 600; display: block; margin-bottom: 4px; }
+.events-cal-event { background: var(--accent-color, #dbeafe); color: #1e40af; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.events-cal-more { color: var(--text-secondary); font-size: 0.6875rem; }
+.events-messages-form { max-width: 560px; }
+.events-messages-form .form-group { margin-bottom: var(--space-m); }
+.events-messages-form label { display: block; font-weight: 600; margin-bottom: var(--space-xs); }
+.events-msg-status { margin-top: var(--space-m); font-size: 0.875rem; }
+.events-msg-status.ok { color: #065f46; }
+.events-msg-status.error { color: #991b1b; }
