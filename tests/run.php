@@ -75,6 +75,8 @@ $suites = [
     'commerce_index_test.php',
     'commerce_checkout_test.php',
     'commerce_checkout_v2_test.php',
+    'commerce_tax_test.php',
+    'commerce_refund_test.php',
     'commerce_variants_test.php',
     'commerce_discount_test.php',
     'commerce_import_test.php',
