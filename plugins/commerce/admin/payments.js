@@ -58,16 +58,6 @@
     return fetch(url, opts).then(function (r) { return r.json(); });
   }
 
-  function syncCommerceTabActions(tabName) {
-    document.querySelectorAll('#commerce-tab-actions [data-commerce-tab]').forEach(function (btn) {
-      btn.hidden = btn.getAttribute('data-commerce-tab') !== tabName;
-    });
-    var bar = document.getElementById('commerce-tab-actions');
-    if (bar) {
-      bar.style.display = bar.querySelector('[data-commerce-tab]:not([hidden])') ? '' : 'none';
-    }
-  }
-
   function initTabs() {
     document.querySelectorAll('.payments-tab').forEach(function (tab) {
       tab.addEventListener('click', function () {
@@ -81,12 +71,12 @@
           panel.classList.toggle('active', isActive);
           panel.hidden = !isActive;
         });
-        syncCommerceTabActions(name);
         if (name === 'activity') loadActivity();
+        if (name === 'documentation' && window.BirklyPluginDocs) {
+          window.BirklyPluginDocs.activate('commerce', 'payments-tab-documentation');
+        }
       });
     });
-    var activeTab = document.querySelector('.payments-tab.active');
-    syncCommerceTabActions(activeTab ? activeTab.getAttribute('data-tab') : 'connections');
   }
 
   function renderProviderMatrix() {
