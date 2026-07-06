@@ -82,6 +82,7 @@ $suites = [
     'commerce_mapping_test.php',
     'commerce_bundle_test.php',
     'plugin_docs_shelf_test.php',
+    'plugin_admin_shell_test.php',
     'events_plugin_test.php',
     'events_shelf_test.php',
     'dashboard_widgets_test.php',
