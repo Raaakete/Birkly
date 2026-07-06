@@ -2111,7 +2111,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 7 — Plugin platform, UX & ecosystem
 
-**Status:** **M6 complete** (2026-07-06) — Automation node editor shipped · M5 events v2 pending · **Matrix:** `docs/reviews/P7-verification-matrix.md`
+**Status:** **Complete** (2026-07-06) — M0–M6 shipped · **Matrix:** `docs/reviews/P7-verification-matrix.md`
 
 **Spec:** `docs/reviews/P7-plugin-platform-plan.md` · **Handoff:** `docs/reviews/P7-lead-engineer-handoff.md`
 
@@ -2124,7 +2124,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P7-M2** | Remove payments + shopping_cart | complete |
 | **P7-M3** | User Management repair | complete |
 | **P7-M4** | Plugin UI migration (all plugins) | complete |
-| **P7-M5** | Events v2 — fieldtype, recurring, calendar, iCal/sync, attendees | pending (WIP on disk; not in this merge) |
+| **P7-M5** | Events v2 — fieldtype, recurring, calendar, iCal/sync, attendees | complete |
 | **P7-M6** | Automation node editor + closure | complete |
 
 ---
