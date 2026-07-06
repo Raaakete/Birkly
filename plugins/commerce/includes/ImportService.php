@@ -15,8 +15,10 @@ class ImportService
     public static function getImportSources(): array
     {
         return [
+            // Online stores
             [
                 'id' => 'woocommerce',
+                'category' => 'store',
                 'name' => 'WooCommerce',
                 'description' => 'WordPress store export',
                 'export_steps' => 'Products → Export → CSV. Include columns: Name, SKU, Regular price, Stock.',
@@ -24,13 +26,55 @@ class ImportService
             ],
             [
                 'id' => 'shopify',
+                'category' => 'store',
                 'name' => 'Shopify',
                 'description' => 'Shopify Admin product export',
                 'export_steps' => 'Products → Export → Export products. Uses Variant SKU, Variant price, Variant inventory qty.',
                 'columns' => ['Title', 'Handle', 'Variant SKU', 'Variant price', 'Variant inventory qty'],
             ],
             [
+                'id' => 'magento',
+                'category' => 'store',
+                'name' => 'Magento',
+                'description' => 'Adobe Commerce / Magento Open Source',
+                'export_steps' => 'System → Data Transfer → Export → Products CSV. Maps sku, name, price, qty.',
+                'columns' => ['sku', 'name', 'price', 'qty'],
+            ],
+            [
+                'id' => 'bigcommerce',
+                'category' => 'store',
+                'name' => 'BigCommerce',
+                'description' => 'BigCommerce product export',
+                'export_steps' => 'Products → Export → Default export. Maps Name, SKU, Price, Current Stock.',
+                'columns' => ['Name', 'SKU', 'Price', 'Current Stock'],
+            ],
+            [
+                'id' => 'prestashop',
+                'category' => 'store',
+                'name' => 'PrestaShop',
+                'description' => 'PrestaShop catalog export',
+                'export_steps' => 'Advanced Parameters → Import/Export → Export products. Maps Name, Reference, Price, Quantity.',
+                'columns' => ['Name', 'Reference', 'Price', 'Quantity'],
+            ],
+            [
+                'id' => 'wix',
+                'category' => 'store',
+                'name' => 'Wix Stores',
+                'description' => 'Wix eCommerce product CSV',
+                'export_steps' => 'Store Products → ⋯ → Export Products. Maps name, sku, price, inventory.',
+                'columns' => ['name', 'sku', 'price', 'inventory'],
+            ],
+            [
+                'id' => 'opencart',
+                'category' => 'store',
+                'name' => 'OpenCart',
+                'description' => 'OpenCart product export',
+                'export_steps' => 'Export tool or extension CSV. Maps product name, model (SKU), price, quantity.',
+                'columns' => ['product name', 'model', 'price', 'quantity'],
+            ],
+            [
                 'id' => 'etsy',
+                'category' => 'store',
                 'name' => 'Etsy',
                 'description' => 'Etsy Shop Manager CSV',
                 'export_steps' => 'Shop Manager → Settings → Options → Download Data → CSV. Or use Etsy export tools for listings.',
@@ -38,13 +82,129 @@ class ImportService
             ],
             [
                 'id' => 'square',
+                'category' => 'store',
                 'name' => 'Square',
                 'description' => 'Square Item Library export',
                 'export_steps' => 'Item library → Actions → Export library. Maps Item Name, SKU, Price, Current Quantity.',
                 'columns' => ['Item Name', 'SKU', 'Price', 'Current Quantity'],
             ],
             [
+                'id' => 'amazon',
+                'category' => 'store',
+                'name' => 'Amazon Seller',
+                'description' => 'Amazon inventory flat file',
+                'export_steps' => 'Inventory → Download report (Active Listings) or flat-file upload template. Maps item-name, seller-sku, price, quantity.',
+                'columns' => ['item-name', 'seller-sku', 'price', 'quantity'],
+            ],
+            [
+                'id' => 'ebay',
+                'category' => 'store',
+                'name' => 'eBay',
+                'description' => 'eBay active listings export',
+                'export_steps' => 'Seller Hub → Listings → Export. Maps Title, Custom label (SKU), Start price, Available quantity.',
+                'columns' => ['Title', 'Custom label', 'Start price', 'Available quantity'],
+            ],
+            [
+                'id' => 'ecwid',
+                'category' => 'store',
+                'name' => 'Ecwid',
+                'description' => 'Ecwid by Lightspeed store export',
+                'export_steps' => 'Catalog → Products → Export. Maps product_name, product_sku, product_price, product_quantity.',
+                'columns' => ['product_name', 'product_sku', 'product_price', 'product_quantity'],
+            ],
+            // Inventory & stock systems
+            [
+                'id' => 'inflow',
+                'category' => 'inventory',
+                'name' => 'inFlow Inventory',
+                'description' => 'inFlow product catalog export',
+                'export_steps' => 'Main → Products → Export. Maps Product Name, SKU, Unit Price, Quantity On Hand.',
+                'columns' => ['Product Name', 'SKU', 'Unit Price', 'Quantity On Hand'],
+            ],
+            [
+                'id' => 'zoho_inventory',
+                'category' => 'inventory',
+                'name' => 'Zoho Inventory',
+                'description' => 'Zoho Inventory item export',
+                'export_steps' => 'Items → Export Items. Maps Item Name, SKU, Rate, Available Stock.',
+                'columns' => ['Item Name', 'SKU', 'Rate', 'Available Stock'],
+            ],
+            [
+                'id' => 'unleashed',
+                'category' => 'inventory',
+                'name' => 'Unleashed',
+                'description' => 'Unleashed inventory product export',
+                'export_steps' => 'Products → Export. Maps Product Description, Product Code, Default Sell Price, Available.',
+                'columns' => ['Product Description', 'Product Code', 'Default Sell Price', 'Available'],
+            ],
+            [
+                'id' => 'cin7',
+                'category' => 'inventory',
+                'name' => 'Cin7 Core',
+                'description' => 'Cin7 / Dear Inventory product export',
+                'export_steps' => 'Inventory → Products → Export. Maps ProductName, ProductCode, RetailPrice, Available.',
+                'columns' => ['ProductName', 'ProductCode', 'RetailPrice', 'Available'],
+            ],
+            [
+                'id' => 'fishbowl',
+                'category' => 'inventory',
+                'name' => 'Fishbowl',
+                'description' => 'Fishbowl Inventory part export',
+                'export_steps' => 'Reports → Export parts list. Maps Description, Num (part #), Price, Qty On Hand.',
+                'columns' => ['Description', 'Num', 'Price', 'Qty On Hand'],
+            ],
+            [
+                'id' => 'lightspeed',
+                'category' => 'inventory',
+                'name' => 'Lightspeed Retail',
+                'description' => 'Lightspeed Retail item export',
+                'export_steps' => 'Inventory → Items → Export. Maps Description, customSku, Price, Qty.',
+                'columns' => ['Description', 'customSku', 'Price', 'Qty'],
+            ],
+            [
+                'id' => 'katana',
+                'category' => 'inventory',
+                'name' => 'Katana MRP',
+                'description' => 'Katana inventory export',
+                'export_steps' => 'Items → Export CSV. Maps Product, SKU, Sales price, In stock.',
+                'columns' => ['Product', 'SKU', 'Sales price', 'In stock'],
+            ],
+            [
+                'id' => 'finale',
+                'category' => 'inventory',
+                'name' => 'Finale Inventory',
+                'description' => 'Finale product export',
+                'export_steps' => 'Reports → Product export. Maps Description, Product ID, Price, Quantity.',
+                'columns' => ['Description', 'Product ID', 'Price', 'Quantity'],
+            ],
+            [
+                'id' => 'sortly',
+                'category' => 'inventory',
+                'name' => 'Sortly',
+                'description' => 'Sortly item export',
+                'export_steps' => 'Items → Export → CSV. Maps Name, SKU, Price, Quantity.',
+                'columns' => ['Name', 'SKU', 'Price', 'Quantity'],
+            ],
+            [
+                'id' => 'ordoro',
+                'category' => 'inventory',
+                'name' => 'Ordoro',
+                'description' => 'Ordoro product catalog export',
+                'export_steps' => 'Products → Export. Maps Name, SKU, Price, Quantity on hand.',
+                'columns' => ['Name', 'SKU', 'Price', 'Quantity on hand'],
+            ],
+            [
+                'id' => 'tradegecko',
+                'category' => 'inventory',
+                'name' => 'QuickBooks Commerce',
+                'description' => 'TradeGecko / QuickBooks Commerce export',
+                'export_steps' => 'Products → Export CSV. Maps name, sku, retail_price, available.',
+                'columns' => ['name', 'sku', 'retail_price', 'available'],
+            ],
+            // Other
+            [
                 'id' => 'generic',
+                'category' => 'other',
                 'name' => 'Generic CSV',
                 'description' => 'Any spreadsheet or custom export',
                 'export_steps' => 'Use headers: title, price, currency, sku, quantity, slug, fulfillment, parent_sku, variant_label.',
@@ -196,6 +356,36 @@ class ImportService
                 'fulfillment' => null, 'parent_sku' => 'handle', 'variant_label' => 'option1 value',
                 'body' => 'body (html)',
             ],
+            'magento' => [
+                'title' => ['name', 'product name'], 'sku' => 'sku', 'price' => ['price', 'special price'],
+                'currency' => null, 'quantity' => ['qty', 'quantity'], 'slug' => 'url key',
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'bigcommerce' => [
+                'title' => ['name', 'item name'], 'sku' => 'sku', 'price' => 'price',
+                'currency' => null, 'quantity' => ['current stock', 'quantity'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'prestashop' => [
+                'title' => 'name', 'sku' => ['reference', 'sku'], 'price' => ['price', 'price tax excluded'],
+                'currency' => null, 'quantity' => 'quantity', 'slug' => 'link rewrite',
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'wix' => [
+                'title' => ['name', 'product name'], 'sku' => 'sku', 'price' => 'price',
+                'currency' => null, 'quantity' => ['inventory', 'quantity'], 'slug' => 'slug',
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'opencart' => [
+                'title' => ['product name', 'name'], 'sku' => ['model', 'sku'], 'price' => 'price',
+                'currency' => null, 'quantity' => 'quantity', 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
             'etsy' => [
                 'title' => 'title', 'sku' => 'sku', 'price' => 'price',
                 'currency' => null, 'quantity' => 'quantity', 'slug' => null,
@@ -206,6 +396,93 @@ class ImportService
                 'title' => 'item name', 'sku' => 'sku', 'price' => 'price',
                 'currency' => null, 'quantity' => 'current quantity', 'slug' => null,
                 'fulfillment' => null, 'parent_sku' => null, 'variant_label' => 'variation name',
+                'body' => 'description',
+            ],
+            'amazon' => [
+                'title' => ['item-name', 'product-name', 'title'], 'sku' => ['seller-sku', 'sku'],
+                'price' => ['price', 'standard-price'], 'currency' => null,
+                'quantity' => ['quantity', 'quantity available'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'item-description',
+            ],
+            'ebay' => [
+                'title' => 'title', 'sku' => ['custom label', 'sku'], 'price' => ['start price', 'price'],
+                'currency' => null, 'quantity' => ['available quantity', 'quantity'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'ecwid' => [
+                'title' => 'product_name', 'sku' => 'product_sku', 'price' => 'product_price',
+                'currency' => null, 'quantity' => 'product_quantity', 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'product_description',
+            ],
+            'inflow' => [
+                'title' => 'product name', 'sku' => 'sku', 'price' => ['unit price', 'price'],
+                'currency' => null, 'quantity' => ['quantity on hand', 'qty on hand'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'zoho_inventory' => [
+                'title' => 'item name', 'sku' => 'sku', 'price' => ['rate', 'selling price'],
+                'currency' => null, 'quantity' => ['available stock', 'stock on hand'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'unleashed' => [
+                'title' => ['product description', 'product name'], 'sku' => ['product code', 'sku'],
+                'price' => ['default sell price', 'sell price'], 'currency' => null,
+                'quantity' => ['available', 'available qty'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'notes',
+            ],
+            'cin7' => [
+                'title' => ['productname', 'product name'], 'sku' => ['productcode', 'sku'],
+                'price' => ['retailprice', 'sell price'], 'currency' => null,
+                'quantity' => ['available', 'on hand'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'fishbowl' => [
+                'title' => 'description', 'sku' => ['num', 'part number'], 'price' => 'price',
+                'currency' => null, 'quantity' => ['qty on hand', 'quantity on hand'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'details',
+            ],
+            'lightspeed' => [
+                'title' => 'description', 'sku' => ['customsku', 'sku'], 'price' => 'price',
+                'currency' => null, 'quantity' => ['qty', 'quantity'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'note',
+            ],
+            'katana' => [
+                'title' => ['product', 'variant'], 'sku' => 'sku', 'price' => ['sales price', 'price'],
+                'currency' => null, 'quantity' => ['in stock', 'quantity'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => 'variant',
+                'body' => null,
+            ],
+            'finale' => [
+                'title' => 'description', 'sku' => ['product id', 'sku'], 'price' => 'price',
+                'currency' => null, 'quantity' => 'quantity', 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => null,
+            ],
+            'sortly' => [
+                'title' => 'name', 'sku' => 'sku', 'price' => 'price',
+                'currency' => null, 'quantity' => 'quantity', 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'notes',
+            ],
+            'ordoro' => [
+                'title' => 'name', 'sku' => 'sku', 'price' => 'price',
+                'currency' => null, 'quantity' => ['quantity on hand', 'qty on hand'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
+                'body' => 'description',
+            ],
+            'tradegecko' => [
+                'title' => 'name', 'sku' => 'sku', 'price' => ['retail_price', 'price'],
+                'currency' => null, 'quantity' => ['available', 'stock'], 'slug' => null,
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => null,
                 'body' => 'description',
             ],
             'generic' => [
@@ -219,13 +496,24 @@ class ImportService
         $presetCols = $presets[$preset] ?? $presets['generic'];
         $mapping = [];
         foreach ($presetCols as $target => $headerName) {
-            if ($headerName === null) {
-                $mapping[$target] = null;
-                continue;
-            }
-            $mapping[$target] = $headerMap[strtolower($headerName)] ?? null;
+            $mapping[$target] = $this->resolveHeaderIndex($headerMap, $headerName);
         }
         return $mapping;
+    }
+
+    /** @param string|list<string>|null $headerNames */
+    private function resolveHeaderIndex(array $headerMap, string|array|null $headerNames): ?int
+    {
+        if ($headerNames === null) {
+            return null;
+        }
+        foreach ((array) $headerNames as $name) {
+            $key = strtolower(trim($name));
+            if (isset($headerMap[$key])) {
+                return $headerMap[$key];
+            }
+        }
+        return null;
     }
 
     private function normalizeImportRow(array $row): array

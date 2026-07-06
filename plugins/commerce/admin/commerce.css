@@ -566,10 +566,25 @@ body.commerce-ft-modal-open {
 }
 
 .commerce-import-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.commerce-import-source-group-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #6b7280);
+}
+
+.commerce-import-source-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
 }
 
 .commerce-import-source-card {
