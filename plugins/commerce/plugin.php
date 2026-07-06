@@ -40,11 +40,7 @@ if (function_exists('register_admin_page')) {
 }
 
 if (function_exists('register_plugin_fieldtype') && commerce_plugin_active()) {
-    if (!class_exists('Birkly\FieldTypes\BaseField')) {
-        require_once dirname(__DIR__, 2) . '/fieldtypes/BaseField.php';
-    }
-    require_once __DIR__ . '/fieldtypes/Commerce/Commerce.php';
-    register_plugin_fieldtype('commerce', 'Birkly\\FieldTypes\\Commerce\\Commerce', commerce_active_plugin_id());
+    commerce_register_fieldtype_profiles();
 }
 
 if (function_exists('register_hook')) {

@@ -11,6 +11,9 @@ if (!class_exists('Birkly\FieldTypes\BaseField')) {
 if (!class_exists('CommerceSchema')) {
     require_once __DIR__ . '/../../includes/CommerceSchema.php';
 }
+if (!class_exists('CommerceFieldtypeProfileStore')) {
+    require_once __DIR__ . '/../../includes/CommerceFieldtypeProfileStore.php';
+}
 
 use Birkly\FieldTypes\BaseField;
 
@@ -162,8 +165,15 @@ class Commerce extends BaseField
         $html .= '<div class="commerce-fieldtype-row commerce-interval-row"' . ($billing !== 'recurring' ? ' style="display:none"' : '') . '>';
         $html .= '<label>Interval</label><select name="' . $name . '[purchase_options][' . $idx . '][interval]" class="form-control">';
         foreach ($intervals as $iv) {
-            $sel = ($opt['interval'] ?? 'month') === $iv ? ' selected' : '';
-            $html .= '<option value="' . htmlspecialchars($iv) . '"' . $sel . '>' . ucfirst($iv) . 'ly</option>';
+            $ivVal = is_array($iv) ? ($iv['value'] ?? '') : (string) $iv;
+            if ($ivVal === '') {
+                continue;
+            }
+            $ivLabel = is_array($iv)
+                ? ($iv['label'] ?? \CommerceFieldtypeProfileStore::intervalLabelFromValue($ivVal))
+                : \CommerceFieldtypeProfileStore::intervalLabelFromValue($ivVal);
+            $sel = ($opt['interval'] ?? 'month') === $ivVal ? ' selected' : '';
+            $html .= '<option value="' . htmlspecialchars($ivVal) . '"' . $sel . '>' . htmlspecialchars($ivLabel) . '</option>';
         }
         $html .= '</select></div>';
         $html .= '<button type="button" class="btn btn-secondary commerce-remove-option">Remove</button>';
@@ -285,68 +295,31 @@ JS;
 
     public function getConfigUI($fieldIndex, $existingData = []): string
     {
-        $settings = $existingData['commerce_settings'] ?? [];
-        $enabledFulfillments = $settings['enabled_fulfillments'] ?? ['ship', 'deliver', 'register', 'none'];
-        $intervalOptions = $settings['interval_options'] ?? ['week', 'month', 'year'];
-        $currencyOptions = $settings['currency_options'] ?? ['eur', 'usd', 'gbp', 'jpy'];
-
-        $checks = function (string $key, bool $default = true) use ($settings): string {
-            $on = ($settings[$key] ?? $default) ? ' checked' : '';
-            return $on;
-        };
-
-        $fulfillmentChecks = '';
-        foreach (\CommerceSchema::FULFILLMENTS as $f) {
-            $checked = in_array($f, $enabledFulfillments, true) ? ' checked' : '';
-            $fulfillmentChecks .= '<label><input type="checkbox" name="fields[' . $fieldIndex . '][commerce_settings][enabled_fulfillments][]" value="' . $f . '"' . $checked . '> ' . ucfirst($f) . '</label> ';
-        }
-
-        $intervalChecks = '';
-        foreach (['week', 'month', 'year'] as $iv) {
-            $checked = in_array($iv, $intervalOptions, true) ? ' checked' : '';
-            $intervalChecks .= '<label><input type="checkbox" name="fields[' . $fieldIndex . '][commerce_settings][interval_options][]" value="' . $iv . '"' . $checked . '> ' . ucfirst($iv) . '</label> ';
-        }
-
-        return <<<HTML
+        return <<<'HTML'
             <div class="field-config-section commerce-field-config">
-                <label>Commerce field options</label>
-                <div class="commerce-config-toggles">
-                    <label><input type="checkbox" name="fields[{$fieldIndex}][commerce_settings][enable_fulfillment]" value="1"{$checks('enable_fulfillment')}> Fulfillment selector</label>
-                    <label><input type="checkbox" name="fields[{$fieldIndex}][commerce_settings][enable_purchase_options]" value="1"{$checks('enable_purchase_options')}> Purchase options editor</label>
-                    <label><input type="checkbox" name="fields[{$fieldIndex}][commerce_settings][enable_quantity]" value="1"{$checks('enable_quantity')}> Quantity / capacity</label>
-                    <label><input type="checkbox" name="fields[{$fieldIndex}][commerce_settings][enable_sku]" value="1"{$checks('enable_sku')}> SKU</label>
-                    <label><input type="checkbox" name="fields[{$fieldIndex}][commerce_settings][enable_weight]" value="1"{$checks('enable_weight')}> Weight (ship)</label>
-                </div>
-                <div class="field-config-section">
-                    <label>Enabled fulfillment presets</label>
-                    <div>{$fulfillmentChecks}</div>
-                </div>
-                <div class="field-config-section">
-                    <label>Interval options</label>
-                    <div>{$intervalChecks}</div>
-                </div>
-                <small class="form-text">Configure which commerce sub-fields appear on entries in this collection.</small>
+                <p class="form-text">Commerce field profiles are managed in <strong>Commerce → Fieldtypes</strong>. Choose a saved profile as the field type when adding this field.</p>
             </div>
         HTML;
     }
 
     private function resolveCommerceSettings(array $config): array
     {
-        $defaults = [
-            'enable_fulfillment' => true,
-            'enable_purchase_options' => true,
-            'enable_quantity' => true,
-            'enable_sku' => true,
-            'enable_weight' => true,
-            'enabled_fulfillments' => \CommerceSchema::FULFILLMENTS,
-            'interval_options' => ['week', 'month', 'year'],
-            'currency_options' => ['eur', 'usd', 'gbp', 'jpy'],
-            'custom_fields' => [],
-        ];
+        $typeKey = $config['field_type'] ?? 'commerce';
+        if (function_exists('commerce_profile_settings_for_type')) {
+            $fromProfile = commerce_profile_settings_for_type($typeKey);
+            if (!empty($config['commerce_settings']) && is_array($config['commerce_settings'])) {
+                return \CommerceFieldtypeProfileStore::normalizeSettings(
+                    array_merge($fromProfile, $config['commerce_settings'])
+                );
+            }
+            return $fromProfile;
+        }
+
+        $defaults = \CommerceFieldtypeProfileStore::defaultSettings();
         $fromConfig = $config['commerce_settings'] ?? [];
         if (!is_array($fromConfig)) {
             return $defaults;
         }
-        return array_merge($defaults, $fromConfig);
+        return \CommerceFieldtypeProfileStore::normalizeSettings(array_merge($defaults, $fromConfig));
     }
 }

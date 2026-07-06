@@ -36,7 +36,7 @@ class CommerceSchema
         $billing = in_array($value['billing'] ?? '', self::BILLING_MODES, true)
             ? $value['billing'] : 'one_time';
         $interval = $value['interval'] ?? null;
-        if ($billing === 'recurring' && !in_array($interval, self::INTERVALS, true)) {
+        if ($billing === 'recurring' && !self::isValidInterval($interval)) {
             $interval = 'month';
         }
         if ($billing !== 'recurring') {
@@ -93,7 +93,7 @@ class CommerceSchema
             $billing = in_array($opt['billing'] ?? '', self::BILLING_MODES, true)
                 ? $opt['billing'] : 'one_time';
             $interval = $opt['interval'] ?? null;
-            if ($billing === 'recurring' && !in_array($interval, self::INTERVALS, true)) {
+            if ($billing === 'recurring' && !self::isValidInterval($interval)) {
                 $interval = 'month';
             }
             if ($billing !== 'recurring') {
@@ -233,6 +233,17 @@ class CommerceSchema
         }
 
         return $errors;
+    }
+
+    public static function isValidInterval(?string $interval): bool
+    {
+        if ($interval === null || $interval === '') {
+            return false;
+        }
+        if (in_array($interval, self::INTERVALS, true)) {
+            return true;
+        }
+        return (bool) preg_match('/^[a-z0-9_]+$/', $interval);
     }
 }
 

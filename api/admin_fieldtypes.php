@@ -232,10 +232,13 @@ function getAvailableFieldtypes() {
                     $config = $fieldtype->getAdminConfig();
                     $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
                     
+                    $displayLabel = !empty($data['label'])
+                        ? $data['label']
+                        : ucwords(str_replace(['_', '-'], ' ', $type));
                     $fieldtypes[] = [
                         'name' => $type,
                         'type' => $type,
-                        'label' => ucwords(str_replace(['_', '-'], ' ', $type)),
+                        'label' => $displayLabel,
                         'category' => $category,
                         'config' => $config
                     ];

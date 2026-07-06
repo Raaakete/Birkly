@@ -71,6 +71,7 @@ $suites = [
     'commerce_shelf_test.php',
     'commerce_fieldtype_test.php',
     'commerce_fieldtype_v2_test.php',
+    'commerce_fieldtype_profiles_test.php',
     'commerce_index_test.php',
     'commerce_checkout_test.php',
     'commerce_checkout_v2_test.php',
