@@ -41,7 +41,7 @@ $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 's
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order',
     'list_discounts', 'save_discount', 'delete_discount',
-    'import_dry_run', 'import_csv', 'import_sources',
+    'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail',
     'list_mappings', 'save_mapping', 'delete_mapping',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
     'list_shipping_zones', 'save_shipping_zones',
@@ -194,6 +194,31 @@ switch ($action) {
         echo json_encode(['status' => 'ok', 'data' => ['sources' => ImportService::getImportSources()]]);
         break;
 
+    case 'import_history':
+        require_once __DIR__ . '/../includes/ImportHistoryStore.php';
+        $history = new ImportHistoryStore();
+        $limit = max(1, min(100, (int) ($input['limit'] ?? 50)));
+        echo json_encode(['status' => 'ok', 'data' => ['imports' => $history->list($limit)]]);
+        break;
+
+    case 'import_detail':
+        require_once __DIR__ . '/../includes/ImportHistoryStore.php';
+        $importId = $input['id'] ?? '';
+        if ($importId === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $history = new ImportHistoryStore();
+        $record = $history->get($importId);
+        if ($record === null) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Import not found']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => ['import' => $record]]);
+        break;
+
     case 'import_dry_run':
         $csv = $input['csv'] ?? '';
         $preset = $input['preset'] ?? 'generic';
@@ -221,7 +246,12 @@ switch ($action) {
             break;
         }
         $rows = $import->applyDefaultCurrency($parsed['rows'], $defaultCurrency);
-        $result = $import->importRows($rows, $collection, $dryRun);
+        $result = $import->importRows($rows, $collection, $dryRun, [
+            'preset' => $preset,
+            'platform' => ImportService::platformName($preset),
+            'currency' => $defaultCurrency,
+            'file_name' => trim((string) ($input['file_name'] ?? '')) ?: null,
+        ]);
         echo json_encode(['status' => 'ok', 'data' => $result]);
         break;
 
