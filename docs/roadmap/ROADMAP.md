@@ -184,23 +184,30 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-05)
+## Current state (verified 2026-07-06)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 6 complete (P6.1–P6.7)** — Commerce, bundles, fieldtype profiles, external product import. **91 test suites** green. |
-| **Birkly-Docs** | P6.1–P6.5 guides; Commerce v2 + template functions published. |
-| **Agent ops** | **83** PHP test suites (P6.4 closure). |
+| **Birkly (CMS)** | **Phase 7 complete (P6.1–P6.7 + P7)** — Commerce v2, plugin admin shell, Events v2, Automation node editor. **92 test suites** green. |
+| **Birkly-Docs** | P6–P7 plugin + commerce guides; Events v2 + plugin admin UI docs. |
+| **kekaba** | **Embed stale** — `Birkly-0.1/` missing `commerce` + `events`; live deploy smoke pending. |
+| **Agent ops** | CI + autonomous execution policy on `main`. |
 
-**Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
+**Active plugins on `main`:** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`
 
-**Next active phase:** Post-P7 backlog (Marketplace P7.0, import P7.1) — see § Phase 7 closure
+**Next active phase:** **Phase 8** — reference site, commerce production, ContentEditor cell merge — see § Phase 8
 
-**2026-07-06 — Phase 7 approved** (Keven)
+**2026-07-06 — Phase 7 complete** (Keven)
 
-**Priorities:** Plugin admin shell (breadcrumbs: tabs ≠ segments, sub-pages only) · docs for all plugins · remove payments/shopping_cart · fix User Management · Events v2 with **recurring + iCal/sync** · Automation node editor.
+**Delivered:** Plugin admin shell · docs for all plugins · removed payments/shopping_cart · User Management · Events v2 (recurring + iCal/sync) · Automation node editor.
 
-**Handoff:** `docs/reviews/P7-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P7-plugin-platform-plan.md`
+**Handoff:** `docs/reviews/P7-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P7-verification-matrix.md`
+
+**2026-07-06 — Phase 8 approved** (Keven)
+
+**Priorities:** kekaba embed sync + shop/events demo templates · commerce ops (tax, order emails, refunds, subscription cancel) · **ContentEditor cell merge/split** · notify once at P8-M6.
+
+**Handoff:** `docs/reviews/P8-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P8-reference-commerce-plan.md`
 
 ---
 
@@ -2126,6 +2133,29 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P7-M4** | Plugin UI migration (all plugins) | complete |
 | **P7-M5** | Events v2 — fieldtype, recurring, calendar, iCal/sync, attendees | complete |
 | **P7-M6** | Automation node editor + closure | complete |
+
+---
+
+## Phase 8 — Reference site, commerce production & cell merge
+
+**Status:** **Approved** (2026-07-06) — M0–M6 autonomous execution
+
+**Handoff:** `docs/reviews/P8-lead-engineer-handoff.md`  
+**Spec:** `docs/reviews/P8-reference-commerce-plan.md`
+
+**Goal:** Sync kekaba embed; demo shop + events front-end; commerce tax/refunds/subscriptions/order emails; ContentEditor table cell merge/split.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P8-M0** | Roadmap + plan baseline | in progress |
+| **P8-M1** | kekaba embed sync (`sync-client-embed.sh`) | pending |
+| **P8-M2** | Client templates — shop, events calendar | pending |
+| **P8-M3** | Commerce ops v1 — tax, refunds, order email triggers | pending |
+| **P8-M4** | Subscription lifecycle v1 — cancel, status | pending |
+| **P8-M5** | ContentEditor cell merge / split | pending |
+| **P8-M6** | Verification matrix, docs, closure | pending |
+
+**Deferred post-P8:** Marketplace (P7.0), live Shopify/Woo API import (P7.1), gift cards, B2B quotes.
 
 ---
 
