@@ -2,13 +2,6 @@
 {plugin_page_header}
 
 <div class="settings-page user-management-page plugin-page">
-    <div class="main-actions-bar" id="site-users-tab-actions">
-        <button type="submit" form="general-settings-form" class="btn btn-primary" data-users-tab="general">Save Settings</button>
-        <button type="button" class="btn btn-primary" onclick="openAddUserModal()" data-users-tab="user-list" hidden>Add User</button>
-        <button type="button" class="btn btn-primary" onclick="addCollectionToPermissions()" data-users-tab="permissions" hidden>Add Collection</button>
-        <button type="button" onclick="saveCollectionPermissions()" class="btn btn-primary" data-users-tab="permissions" hidden>Save Permissions</button>
-    </div>
-
     <div class="settings-tabs plugin-tabs">
         <div class="tabs">
             <button type="button" class="tab active" data-tab="general">
@@ -68,6 +61,9 @@
         <div class="settings-tab-panels">
             <!-- General Tab -->
             <div class="tab-pane active" id="general">
+                <div class="tab-panel-actions">
+                    <button type="submit" form="general-settings-form" class="btn btn-primary">Save Settings</button>
+                </div>
                 <form id="general-settings-form" class="settings-form" onsubmit="event.preventDefault(); saveGeneralSettings();">
                     <div class="settings-section">
                         <h2>Registration Settings</h2>
@@ -411,6 +407,10 @@
 
             <!-- Permissions Tab -->
             <div class="tab-pane" id="permissions">
+                <div class="tab-panel-actions">
+                    <button type="button" class="btn btn-primary" onclick="addCollectionToPermissions()">Add Collection</button>
+                    <button type="button" onclick="saveCollectionPermissions()" class="btn btn-primary">Save Permissions</button>
+                </div>
                 <div class="card">
                     <div class="card-header">
                         <h3 class="h4 m-0">Collection Permissions</h3>
@@ -1271,16 +1271,6 @@ function apiUrl(path) {
 
 // Tab functionality
 (function() {
-    function syncSiteUsersTabActions(tabId) {
-        document.querySelectorAll('#site-users-tab-actions [data-users-tab]').forEach(function (btn) {
-            btn.hidden = btn.getAttribute('data-users-tab') !== tabId;
-        });
-        var bar = document.getElementById('site-users-tab-actions');
-        if (bar) {
-            bar.style.display = bar.querySelector('[data-users-tab]:not([hidden])') ? '' : 'none';
-        }
-    }
-
     function initTabs() {
         const tabButtons = document.querySelectorAll('.settings-tabs.plugin-tabs .tab');
         const tabPanes = document.querySelectorAll('.tab-pane');
@@ -1300,8 +1290,6 @@ function apiUrl(path) {
                 if (pane) {
                     pane.classList.add('active');
                 }
-
-                syncSiteUsersTabActions(targetTab);
                 
                 // Initialize tab-specific functionality
                 if (targetTab === 'user-list' && typeof window.initUserManagement === 'function') {
@@ -1345,9 +1333,6 @@ function apiUrl(path) {
             });
         });
 
-        const activeTabBtn = document.querySelector('.settings-tabs.plugin-tabs .tab.active');
-        syncSiteUsersTabActions(activeTabBtn ? activeTabBtn.getAttribute('data-tab') : 'general');
-        
         // Handle hash on load
         const hash = window.location.hash.replace('#', '');
         if (hash) {

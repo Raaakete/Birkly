@@ -220,32 +220,109 @@ class ImportService
 
     public function parseCsv(string $csvContent, string $preset = 'generic'): array
     {
-        $lines = preg_split('/\r\n|\r|\n/', trim($csvContent));
-        if (count($lines) < 2) {
+        $records = $this->parseCsvRecords($csvContent);
+        if (count($records) < 2) {
             return ['ok' => false, 'error' => 'CSV must have header and at least one row'];
         }
 
-        $headers = str_getcsv(array_shift($lines));
+        $headers = array_shift($records);
         $mapping = $this->getPresetMapping($preset, $headers);
         $rows = [];
 
-        foreach ($lines as $line) {
-            if (trim($line) === '') {
-                continue;
-            }
-            $cols = str_getcsv($line);
+        foreach ($records as $cols) {
             $row = [];
             foreach ($mapping as $target => $sourceIdx) {
                 if ($sourceIdx !== null && isset($cols[$sourceIdx])) {
-                    $row[$target] = trim($cols[$sourceIdx]);
+                    $row[$target] = trim((string) $cols[$sourceIdx]);
                 }
             }
-            if (!empty($row['title']) || !empty($row['sku'])) {
+            if ($this->rowHasImportableData($row, $preset)) {
                 $rows[] = $this->normalizeImportRow($row);
             }
         }
 
+        if ($preset === 'shopify') {
+            $rows = $this->normalizeShopifyRows($rows);
+        }
+
         return ['ok' => true, 'rows' => $rows, 'mapping' => $mapping];
+    }
+
+    /** @return list<list<string|null>> */
+    private function parseCsvRecords(string $csvContent): array
+    {
+        $records = [];
+        $handle = fopen('php://memory', 'r+');
+        if ($handle === false) {
+            return [];
+        }
+        fwrite($handle, $csvContent);
+        rewind($handle);
+        while (($row = fgetcsv($handle)) !== false) {
+            if ($row === [null] || (count($row) === 1 && trim((string) ($row[0] ?? '')) === '')) {
+                continue;
+            }
+            $records[] = $row;
+        }
+        fclose($handle);
+
+        return $records;
+    }
+
+    private function rowHasImportableData(array $row, string $preset): bool
+    {
+        if (!empty($row['title']) || !empty($row['sku'])) {
+            return true;
+        }
+        if ($preset === 'shopify') {
+            return !empty($row['slug'])
+                || !empty($row['price'])
+                || !empty($row['variant_label']);
+        }
+
+        return false;
+    }
+
+    /** @param list<array<string, mixed>> $rows */
+    private function normalizeShopifyRows(array $rows): array
+    {
+        $out = [];
+        $currentHandle = null;
+        $currentTitle = null;
+
+        foreach ($rows as $row) {
+            $handle = trim((string) ($row['slug'] ?? ''));
+            $title = trim((string) ($row['title'] ?? ''));
+
+            if ($handle === '' && $currentHandle !== null) {
+                $handle = $currentHandle;
+            }
+
+            if ($title !== '') {
+                $currentHandle = $handle !== '' ? $handle : $currentHandle;
+                $currentTitle = $title;
+                $row['parent_sku'] = null;
+                $row['slug'] = $currentHandle;
+                $out[] = $row;
+                continue;
+            }
+
+            if ($handle === '' && $currentHandle === null) {
+                continue;
+            }
+
+            $parentHandle = $handle !== '' ? $handle : $currentHandle;
+            $label = trim((string) ($row['variant_label'] ?? '')) ?: 'Variant';
+            $row['parent_sku'] = $parentHandle;
+            $row['variant_label'] = $label;
+            $row['title'] = $currentTitle !== null && $currentTitle !== ''
+                ? $currentTitle . ' — ' . $label
+                : $label;
+            $row['slug'] = $parentHandle . '-' . $this->slugify($label);
+            $out[] = $row;
+        }
+
+        return $out;
     }
 
     public function dryRun(array $rows, string $collectionSlug): array
@@ -264,7 +341,10 @@ class ImportService
                 'action' => 'create',
             ];
         }
-        return ['ok' => true, 'preview' => $preview, 'count' => count($preview)];
+        return ['ok' => true, 'preview' => $preview, 'count' => count($preview),
+            'product_count' => count(array_filter($preview, fn ($p) => empty($p['is_variant']))),
+            'variant_count' => count(array_filter($preview, fn ($p) => !empty($p['is_variant']))),
+        ];
     }
 
     public function importRows(array $rows, string $collectionSlug, bool $dryRun = false, array $meta = []): array
@@ -320,6 +400,9 @@ class ImportService
             }
             if (!empty($entry['commerce']['sku'])) {
                 $parentMap[$entry['commerce']['sku']] = $entry['id'];
+            }
+            if (!empty($entry['slug'])) {
+                $parentMap[$entry['slug']] = $entry['id'];
             }
         }
 
@@ -424,7 +507,7 @@ class ImportService
             'shopify' => [
                 'title' => 'title', 'sku' => 'variant sku', 'price' => 'variant price',
                 'currency' => null, 'quantity' => 'variant inventory qty', 'slug' => 'handle',
-                'fulfillment' => null, 'parent_sku' => 'handle', 'variant_label' => 'option1 value',
+                'fulfillment' => null, 'parent_sku' => null, 'variant_label' => 'option1 value',
                 'body' => 'body (html)',
             ],
             'magento' => [
