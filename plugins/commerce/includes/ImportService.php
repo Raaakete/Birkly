@@ -267,7 +267,7 @@ class ImportService
         return ['ok' => true, 'preview' => $preview, 'count' => count($preview)];
     }
 
-    public function importRows(array $rows, string $collectionSlug, bool $dryRun = false): array
+    public function importRows(array $rows, string $collectionSlug, bool $dryRun = false, array $meta = []): array
     {
         if ($dryRun) {
             return $this->dryRun($rows, $collectionSlug);
@@ -279,15 +279,31 @@ class ImportService
             mkdir($entriesDir, 0755, true);
         }
 
-        $created = [];
+        $createdIds = [];
+        $updatedIds = [];
+        $skipped = [];
+        $variantCount = 0;
         $parentMap = [];
 
-        foreach ($rows as $row) {
+        foreach ($rows as $rowIndex => $row) {
             if (!empty($row['parent_sku'])) {
                 continue;
             }
+            $title = trim((string) ($row['title'] ?? ''));
+            $sku = trim((string) ($row['sku'] ?? ''));
+            if ($title === '' && $sku === '') {
+                $skipped[] = [
+                    'row' => $rowIndex + 2,
+                    'title' => $title,
+                    'sku' => $sku ?: null,
+                    'reason' => 'Missing product title and SKU',
+                ];
+                continue;
+            }
+
             $entry = $this->buildEntryFromRow($row, $collectionSlug);
             $existing = $this->findBySku($entriesDir, $entry['commerce']['sku'] ?? null);
+            $isUpdate = $existing !== null;
             if ($existing) {
                 $entry['id'] = $existing['id'];
                 $file = $entriesDir . '/' . $existing['id'] . '.json';
@@ -297,18 +313,28 @@ class ImportService
             }
             file_put_contents($file, json_encode($entry, JSON_PRETTY_PRINT));
             $this->indexer->indexEntry($entry, $collectionSlug);
-            $created[] = $entry['id'];
+            if ($isUpdate) {
+                $updatedIds[] = $entry['id'];
+            } else {
+                $createdIds[] = $entry['id'];
+            }
             if (!empty($entry['commerce']['sku'])) {
                 $parentMap[$entry['commerce']['sku']] = $entry['id'];
             }
         }
 
-        foreach ($rows as $row) {
+        foreach ($rows as $rowIndex => $row) {
             if (empty($row['parent_sku'])) {
                 continue;
             }
             $parentId = $parentMap[$row['parent_sku']] ?? null;
             if (!$parentId) {
+                $skipped[] = [
+                    'row' => $rowIndex + 2,
+                    'title' => $row['title'] ?? '',
+                    'sku' => $row['sku'] ?? null,
+                    'reason' => 'Parent SKU not found: ' . $row['parent_sku'],
+                ];
                 continue;
             }
             $variant = $this->buildVariantSubEntry($row, $parentId);
@@ -322,18 +348,63 @@ class ImportService
             if (is_array($parentEntry)) {
                 $this->indexer->indexEntry($parentEntry, $collectionSlug);
             }
-            $created[] = $parentId . '/variants/' . $variant['id'];
+            $variantCount++;
         }
 
-        $logFile = commerce_data_dir() . '/import_log.json';
-        $log = is_file($logFile) ? json_decode((string) file_get_contents($logFile), true) : [];
-        if (!is_array($log)) {
-            $log = [];
+        $importedCount = count($createdIds) + count($updatedIds);
+        $status = 'success';
+        if ($importedCount === 0 && count($skipped) > 0) {
+            $status = 'failed';
+        } elseif (count($skipped) > 0) {
+            $status = 'partial';
         }
-        $log[] = ['at' => date('c'), 'collection' => $collectionSlug, 'count' => count($created), 'ids' => $created];
-        file_put_contents($logFile, json_encode($log, JSON_PRETTY_PRINT));
 
-        return ['ok' => true, 'created' => $created, 'count' => count($created)];
+        $preset = $meta['preset'] ?? 'generic';
+        $historyRecord = [
+            'status' => $status,
+            'preset' => $preset,
+            'platform' => $meta['platform'] ?? self::platformName($preset),
+            'collection' => $collectionSlug,
+            'currency' => strtolower((string) ($meta['currency'] ?? 'eur')),
+            'file_name' => $meta['file_name'] ?? null,
+            'imported_count' => $importedCount,
+            'created_count' => count($createdIds),
+            'updated_count' => count($updatedIds),
+            'skipped_count' => count($skipped),
+            'variant_count' => $variantCount,
+            'total_rows' => count($rows),
+            'errors' => array_slice($skipped, 0, 100),
+            'entry_ids' => array_slice(array_merge($createdIds, $updatedIds), 0, 50),
+        ];
+
+        require_once __DIR__ . '/ImportHistoryStore.php';
+        $history = new ImportHistoryStore();
+        $saved = $history->add($historyRecord);
+
+        return [
+            'ok' => true,
+            'import_id' => $saved['id'],
+            'status' => $status,
+            'created' => $createdIds,
+            'updated' => $updatedIds,
+            'skipped' => $skipped,
+            'count' => $importedCount,
+            'created_count' => count($createdIds),
+            'updated_count' => count($updatedIds),
+            'skipped_count' => count($skipped),
+            'variant_count' => $variantCount,
+            'collection' => $collectionSlug,
+        ];
+    }
+
+    public static function platformName(string $presetId): string
+    {
+        foreach (self::getImportSources() as $source) {
+            if (($source['id'] ?? '') === $presetId) {
+                return (string) ($source['name'] ?? $presetId);
+            }
+        }
+        return ucfirst(str_replace('_', ' ', $presetId));
     }
 
     private function getPresetMapping(string $preset, array $headers): array
