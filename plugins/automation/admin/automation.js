@@ -9,6 +9,146 @@ let automations = [];
 let availableBlocks = { triggers: [], conditions: [], actions: [] };
 let availableCollections = [];
 let currentAutomation = null;
+let automationEditorMode = 'form';
+let nodeEditor = null;
+
+// ============================================================
+// Node canvas editor (P7-M6)
+// ============================================================
+
+function initNodeEditor() {
+  if (nodeEditor || typeof AutomationNodeEditor === 'undefined') return;
+  const canvas = document.getElementById('node-canvas');
+  const palette = document.getElementById('node-palette');
+  if (!canvas || !palette) return;
+
+  nodeEditor = new AutomationNodeEditor({
+    container: canvas,
+    palette,
+    inspector: document.getElementById('node-inspector'),
+    blocks: availableBlocks,
+    onChange: syncCanvasValidation
+  });
+}
+
+function setAutomationEditorMode(mode) {
+  automationEditorMode = mode === 'canvas' ? 'canvas' : 'form';
+  initNodeEditor();
+
+  const formPanel = document.getElementById('automation-form-editor');
+  const canvasPanel = document.getElementById('automation-canvas-editor');
+  const canvasActions = document.getElementById('canvas-toolbar-actions');
+
+  document.querySelectorAll('.editor-mode-btn').forEach((btn) => {
+    const active = btn.dataset.mode === automationEditorMode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+
+  if (formPanel) formPanel.style.display = automationEditorMode === 'form' ? '' : 'none';
+  if (canvasPanel) canvasPanel.style.display = automationEditorMode === 'canvas' ? '' : 'none';
+  if (canvasActions) canvasActions.style.display = automationEditorMode === 'canvas' ? '' : 'none';
+
+  if (automationEditorMode === 'canvas') {
+    if (nodeEditor) {
+      nodeEditor.setBlocks(availableBlocks);
+      nodeEditor.loadFromWorkflow(collectWorkflowFromForm());
+    }
+    syncCanvasValidation();
+  }
+}
+
+function collectWorkflowFromForm() {
+  const form = document.getElementById('automation-form');
+  if (!form) return { trigger: { type: '', config: {} }, conditions: [], actions: [] };
+
+  const formData = new FormData(form);
+  const workflow = {
+    trigger: { type: formData.get('trigger[type]') || '', config: {} },
+    conditions: [],
+    actions: []
+  };
+
+  formData.forEach((value, key) => {
+    const m = key.match(/^trigger\[config\]\[([^\]]+)\]$/);
+    if (m) workflow.trigger.config[m[1]] = value;
+  });
+
+  document.querySelectorAll('.condition-item').forEach((item, index) => {
+    const typeSelect = item.querySelector('.condition-type-select');
+    if (typeSelect && typeSelect.value) {
+      const condition = { type: typeSelect.value, config: {} };
+      formData.forEach((value, key) => {
+        const cm = key.match(new RegExp(`^conditions\\[${index}\\]\\[config\\]\\[([^\\]]+)\\]$`));
+        if (cm) condition.config[cm[1]] = value;
+      });
+      workflow.conditions.push(condition);
+    }
+  });
+
+  document.querySelectorAll('.action-item').forEach((item, index) => {
+    const typeSelect = item.querySelector('.action-type-select');
+    if (typeSelect && typeSelect.value) {
+      const action = { type: typeSelect.value, config: {} };
+      formData.forEach((value, key) => {
+        const am = key.match(new RegExp(`^actions\\[${index}\\]\\[config\\]\\[([^\\]]+)\\]$`));
+        if (am) action.config[am[1]] = value;
+      });
+      workflow.actions.push(action);
+    }
+  });
+
+  return workflow;
+}
+
+function applyWorkflowToForm(workflow) {
+  const automation = {
+    id: document.getElementById('automation-id')?.value || '',
+    name: document.getElementById('automation-name')?.value || '',
+    enabled: document.getElementById('automation-enabled')?.checked !== false,
+    stop_on_failure: document.getElementById('stop-on-failure')?.checked || false,
+    trigger: workflow.trigger || { type: '', config: {} },
+    conditions: workflow.conditions || [],
+    actions: workflow.actions || []
+  };
+  populateAutomationForm(automation);
+}
+
+function syncCanvasValidation() {
+  const box = document.getElementById('canvas-validation-errors');
+  if (!box || !nodeEditor) return;
+  const errors = nodeEditor.validate();
+  if (!errors.length) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+  box.style.display = 'block';
+  box.innerHTML = '<strong>Canvas validation:</strong><ul>' +
+    errors.map((e) => '<li>' + escapeHtml(e) + '</li>').join('') + '</ul>';
+}
+
+function exportCanvasJson() {
+  if (!nodeEditor) return;
+  const json = nodeEditor.exportJson();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(() => showMessage('Canvas JSON copied to clipboard.', 'success'));
+  } else {
+    prompt('Canvas JSON:', json);
+  }
+}
+
+function importCanvasJson() {
+  const raw = prompt('Paste canvas JSON:');
+  if (!raw) return;
+  try {
+    initNodeEditor();
+    nodeEditor.importJson(raw);
+    showMessage('Canvas imported.', 'success');
+  } catch (e) {
+    showMessage('Invalid canvas JSON: ' + e.message, 'error');
+  }
+}
 
 // ============================================================
 // Init
@@ -47,6 +187,7 @@ async function loadBlocks() {
     if (result.status === 'ok') {
       availableBlocks = result.data.blocks || { triggers: [], conditions: [], actions: [] };
       populateTriggerSelect();
+      if (nodeEditor) nodeEditor.setBlocks(availableBlocks);
     }
   } catch (error) {
     console.error('Error loading blocks:', error);
@@ -324,6 +465,7 @@ function openCreateAutomationModal() {
   document.getElementById('conditions-list').innerHTML = '';
   document.getElementById('actions-list').innerHTML = '';
   document.getElementById('trigger-config').style.display = 'none';
+  setAutomationEditorMode('form');
   // Clear dry-run panel
   const drPanel = document.getElementById('dry-run-panel');
   if (drPanel) drPanel.style.display = 'none';
@@ -380,6 +522,11 @@ function populateAutomationForm(automation) {
   (automation.actions || []).forEach((action, index) => {
     addActionToForm(action, index);
   });
+
+  if (automationEditorMode === 'canvas') {
+    initNodeEditor();
+    if (nodeEditor) nodeEditor.loadFromWorkflow(automation);
+  }
 }
 
 // ============================================================
@@ -963,6 +1110,21 @@ async function confirmLiveRun(automationId) {
 // ============================================================
 
 async function saveAutomation() {
+  if (automationEditorMode === 'canvas') {
+    initNodeEditor();
+    if (!nodeEditor) {
+      showMessage('Node editor not available.', 'error');
+      return;
+    }
+    const errors = nodeEditor.validate();
+    if (errors.length) {
+      showMessage(errors[0], 'error');
+      syncCanvasValidation();
+      return;
+    }
+    applyWorkflowToForm(nodeEditor.toWorkflow());
+  }
+
   const form = document.getElementById('automation-form');
   const formData = new FormData(form);
 

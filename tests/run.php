@@ -64,6 +64,7 @@ $suites = [
     'ai_knowledge_coverage_test.php',
     'ai_tool_registry_test.php',
     'automation_plugin_test.php',
+    'automation_node_editor_test.php',
     'payments_shelf_test.php',
     'payments_webhook_test.php',
     'commerce_plugin_test.php',
