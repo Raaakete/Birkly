@@ -307,6 +307,36 @@ function commerce_init_automation_triggers(): void
             return true;
         },
     ]);
+
+    register_automation_block('trigger', 'commerce_subscription_past_due', [
+        'name' => 'Subscription Past Due',
+        'description' => 'Fires when a subscription is marked past_due from a provider event',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_subscription_canceled', [
+        'name' => 'Subscription Canceled',
+        'description' => 'Fires when a subscription is canceled (admin action or provider event)',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_subscription_renewed', [
+        'name' => 'Subscription Renewed',
+        'description' => 'Fires when a subscription renewal payment succeeds',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
 }
 
 /**
@@ -352,6 +382,8 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/CommerceCatalog.php';
     require_once $dir . '/includes/CommerceCartSession.php';
     require_once $dir . '/includes/CommerceOrderStore.php';
+    require_once $dir . '/includes/CommerceSubscriptionStore.php';
+    require_once $dir . '/includes/CommerceSubscriptionService.php';
     require_once $dir . '/includes/DiscountEngine.php';
     require_once $dir . '/includes/CommerceCheckoutService.php';
     require_once $dir . '/includes/CatalogIndexer.php';
