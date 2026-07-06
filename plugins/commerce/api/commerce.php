@@ -36,10 +36,15 @@ $import = new ImportService($indexer);
 $mappings = new PurchaseMappingService();
 require_once __DIR__ . '/../includes/CommerceFieldtypeProfileStore.php';
 $fieldtypeProfiles = new CommerceFieldtypeProfileStore();
+require_once __DIR__ . '/../includes/CommerceSubscriptionStore.php';
+require_once __DIR__ . '/../includes/CommerceSubscriptionService.php';
+$subscriptionStore = new CommerceSubscriptionStore();
+$subscriptions = new CommerceSubscriptionService($subscriptionStore, commerce_bootstrap());
 
 $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate'];
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order',
+    'list_subscriptions', 'get_subscription', 'cancel_subscription',
     'list_discounts', 'save_discount', 'delete_discount',
     'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections', 'import_rollback',
     'list_mappings', 'save_mapping', 'delete_mapping',
@@ -52,7 +57,7 @@ if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_fieldtype_profile', 'delete_fieldtype_profile'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -172,6 +177,37 @@ switch ($action) {
             break;
         }
         echo json_encode(['status' => 'ok', 'data' => ['order' => $order]]);
+        break;
+
+    case 'list_subscriptions':
+        echo json_encode(['status' => 'ok', 'data' => ['subscriptions' => $subscriptionStore->listAll()]]);
+        break;
+
+    case 'get_subscription':
+        $id = $input['id'] ?? $_GET['id'] ?? '';
+        $subscription = $subscriptionStore->get($id);
+        if (!$subscription) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Subscription not found']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => ['subscription' => $subscription]]);
+        break;
+
+    case 'cancel_subscription':
+        $id = $input['id'] ?? '';
+        if ($id === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $canceled = $subscriptions->cancel($id);
+        if (!$canceled) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Subscription not found']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => ['subscription' => $canceled]]);
         break;
 
     case 'list_discounts':

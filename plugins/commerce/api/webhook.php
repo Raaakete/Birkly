@@ -48,6 +48,16 @@ if (empty($headers)) {
 
 $result = $router->handle($provider, $payload, $headers);
 
+// P8-M4: move subscription records to past_due / canceled / active on provider events.
+$processed = $result['result'] ?? [];
+if (is_array($processed) && !empty($processed['subscription_status'])) {
+    commerce_bootstrap_cart_services();
+    require_once __DIR__ . '/../includes/CommerceSubscriptionStore.php';
+    require_once __DIR__ . '/../includes/CommerceSubscriptionService.php';
+    $subscriptionService = new CommerceSubscriptionService(new CommerceSubscriptionStore(), commerce_bootstrap());
+    $subscriptionService->applyProviderEvent($processed);
+}
+
 http_response_code($result['status'] ?? 200);
 header('Content-Type: application/json');
 echo json_encode([
