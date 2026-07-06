@@ -4,22 +4,77 @@
 {plugin_page_header}
 
 <div class="events-page plugin-page">
-  <div class="main-actions-bar">
-    <div class="events-toolbar-actions">
-      <a class="btn btn-secondary" href="{admin_url 'content'}?collection=events">Manage Events</a>
-      <button class="btn btn-secondary" id="events-export-csv">Export CSV</button>
+  <div class="events-tabs" role="tablist">
+    <button class="events-tab active" data-tab="overview" role="tab" aria-selected="true">Overview</button>
+    <button class="events-tab" data-tab="calendar" role="tab">Calendar</button>
+    <button class="events-tab" data-tab="events-list" role="tab">Events list</button>
+    <button class="events-tab" data-tab="attendees" role="tab">Attendees</button>
+    <button class="events-tab" data-tab="messages" role="tab">Messages</button>
+  </div>
+
+  <div id="events-tab-overview" class="events-tab-panel active" role="tabpanel">
+    <div class="main-actions-bar">
+      <button class="btn btn-secondary" id="events-reindex">Reindex</button>
+      <a class="btn btn-secondary" id="events-feed-link" href="#" target="_blank" rel="noopener">Calendar feed</a>
+      <button class="btn btn-secondary" id="events-export-ics">Export ICS</button>
+    </div>
+    <div class="events-stats-grid" id="events-overview-stats">
+      <div class="loading-state"><p>Loading overview…</p></div>
+    </div>
+    <p class="events-legacy-note">Legacy <code>events</code> collection entries coexist with the new <strong>event</strong> fieldtype on any collection. Paid registration uses Commerce <code>fulfillment: register</code> on the same entry.</p>
+  </div>
+
+  <div id="events-tab-calendar" class="events-tab-panel" role="tabpanel" hidden>
+    <div class="events-calendar-toolbar">
+      <button class="btn btn-secondary" id="events-cal-prev">‹</button>
+      <h2 id="events-cal-title" class="events-cal-title"></h2>
+      <button class="btn btn-secondary" id="events-cal-next">›</button>
+      <button class="btn btn-secondary" id="events-cal-today">Today</button>
+    </div>
+    <div id="events-calendar-grid" class="events-calendar-grid"></div>
+  </div>
+
+  <div id="events-tab-events-list" class="events-tab-panel" role="tabpanel" hidden>
+    <div class="main-actions-bar">
+      <a class="btn btn-secondary" href="{admin_url 'content'}">Manage content</a>
+      <button class="btn btn-secondary" id="events-refresh-list">Refresh</button>
+    </div>
+    <div id="events-indexed-list" class="events-registrations-list">
+      <div class="loading-state"><p>Loading indexed events…</p></div>
     </div>
   </div>
 
-  <div class="events-filters">
-    <select id="events-filter-event" class="input">
-      <option value="">All events</option>
-    </select>
-    <button class="btn btn-secondary" id="events-refresh">Refresh</button>
+  <div id="events-tab-attendees" class="events-tab-panel" role="tabpanel" hidden>
+    <div class="events-filters main-actions-bar">
+      <select id="events-filter-event" class="input">
+        <option value="">All events (legacy)</option>
+      </select>
+      <button class="btn btn-secondary" id="events-refresh">Refresh</button>
+      <button class="btn btn-secondary" id="events-export-csv">Export CSV</button>
+    </div>
+    <div id="events-registrations-list" class="events-registrations-list">
+      <div class="loading-state"><p>Loading attendees…</p></div>
+    </div>
   </div>
 
-  <div id="events-registrations-list" class="events-registrations-list">
-    <div class="loading-state"><p>Loading registrations…</p></div>
+  <div id="events-tab-messages" class="events-tab-panel" role="tabpanel" hidden>
+    <div class="events-messages-form">
+      <p class="form-text">Compose a message to export or trigger Automation <code>events_message_attendees</code>. Delivery is handled by your automation workflows.</p>
+      <div class="form-group">
+        <label for="events-msg-subject">Subject</label>
+        <input type="text" id="events-msg-subject" class="input" placeholder="Event update">
+      </div>
+      <div class="form-group">
+        <label for="events-msg-body">Message</label>
+        <textarea id="events-msg-body" class="input" rows="6" placeholder="Your message to attendees…"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="events-msg-entry">Filter by entry ID (optional)</label>
+        <input type="text" id="events-msg-entry" class="input" placeholder="entry-id">
+      </div>
+      <button class="btn btn-primary" id="events-msg-send">Queue message</button>
+      <p id="events-msg-status" class="events-msg-status" hidden></p>
+    </div>
   </div>
 </div>
 

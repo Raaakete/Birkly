@@ -86,6 +86,7 @@ $suites = [
     'plugin_admin_shell_test.php',
     'events_plugin_test.php',
     'events_shelf_test.php',
+    'events_v2_test.php',
     'dashboard_widgets_test.php',
     'platform_test.php',
     'plugin_dependencies_test.php',
