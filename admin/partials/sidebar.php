@@ -7,6 +7,13 @@ function is_nav_active(string $page_name): string {
 
 // Helper function to get active plugin navigation
 function get_active_plugin_navigation(): array {
+    if (function_exists('birkly_plugin_admin_sidebar_navigation')) {
+        $shelfNav = birkly_plugin_admin_sidebar_navigation();
+        if ($shelfNav !== []) {
+            return $shelfNav;
+        }
+    }
+
     $navigation = [];
     
     if (!function_exists('birkly_is_plugin_active')) {
