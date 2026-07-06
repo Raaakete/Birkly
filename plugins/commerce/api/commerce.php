@@ -34,20 +34,25 @@ $indexer = new CatalogIndexer();
 $discounts = new DiscountEngine();
 $import = new ImportService($indexer);
 $mappings = new PurchaseMappingService();
+require_once __DIR__ . '/../includes/CommerceFieldtypeProfileStore.php';
+$fieldtypeProfiles = new CommerceFieldtypeProfileStore();
 
 $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate'];
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order',
     'list_discounts', 'save_discount', 'delete_discount',
-    'import_dry_run', 'import_csv', 'list_mappings', 'save_mapping', 'delete_mapping',
+    'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail',
+    'list_mappings', 'save_mapping', 'delete_mapping',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
+    'list_shipping_zones', 'save_shipping_zones',
+    'list_fieldtype_profiles', 'save_fieldtype_profile', 'delete_fieldtype_profile',
 ];
 
 if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'save_mapping', 'delete_mapping', 'save_fulfillment'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_fieldtype_profile', 'delete_fieldtype_profile'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -95,6 +100,8 @@ switch ($action) {
         $entryId = $input['entry_id'] ?? $_GET['entry_id'] ?? '';
         $collection = $input['collection'] ?? $_GET['collection'] ?? '';
         $qty = (int) ($input['quantity'] ?? $_GET['quantity'] ?? 1);
+        $purchaseOptionId = $input['purchase_option_id'] ?? $_GET['purchase_option_id'] ?? null;
+        $parentId = $input['parent_id'] ?? $_GET['parent_id'] ?? null;
         if ($entryId === '' || $collection === '') {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'entry_id and collection required']);
@@ -105,9 +112,9 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => 'Item not in catalog']);
             break;
         }
-        $cart->addItem($collection, $entryId, $qty);
+        $cart->addItem($collection, $entryId, $qty, $purchaseOptionId, $parentId);
         $built = $catalog->buildCartLines($cart->getItems(), $discounts, $cart->getCouponCode(), $cart->getAffiliateId());
-        echo json_encode(['status' => 'ok', 'data' => ['count' => $cart->count(), 'total_cents' => $built['total_cents']]]);
+        echo json_encode(['status' => 'ok', 'data' => ['count' => $cart->count(), 'total_cents' => $built['total_cents'] ?? 0]]);
         break;
 
     case 'update':
@@ -134,7 +141,11 @@ switch ($action) {
         $email = $input['email'] ?? $_GET['email'] ?? '';
         $returnUrl = $input['return_url'] ?? '';
         $cancelUrl = $input['cancel_url'] ?? '';
-        $result = $checkout->checkout($email, $returnUrl, $cancelUrl);
+        $checkoutData = [
+            'shipping_address' => $input['shipping_address'] ?? null,
+            'attendee_name' => $input['attendee_name'] ?? null,
+        ];
+        $result = $checkout->checkout($email, $returnUrl, $cancelUrl, $checkoutData);
         echo json_encode(['status' => ($result['ok'] ?? false) ? 'ok' : 'error', 'data' => $result]);
         break;
 
@@ -179,16 +190,47 @@ switch ($action) {
         echo json_encode(['status' => $ok ? 'ok' : 'error']);
         break;
 
+    case 'import_sources':
+        echo json_encode(['status' => 'ok', 'data' => ['sources' => ImportService::getImportSources()]]);
+        break;
+
+    case 'import_history':
+        require_once __DIR__ . '/../includes/ImportHistoryStore.php';
+        $history = new ImportHistoryStore();
+        $limit = max(1, min(100, (int) ($input['limit'] ?? 50)));
+        echo json_encode(['status' => 'ok', 'data' => ['imports' => $history->list($limit)]]);
+        break;
+
+    case 'import_detail':
+        require_once __DIR__ . '/../includes/ImportHistoryStore.php';
+        $importId = $input['id'] ?? '';
+        if ($importId === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $history = new ImportHistoryStore();
+        $record = $history->get($importId);
+        if ($record === null) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Import not found']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => ['import' => $record]]);
+        break;
+
     case 'import_dry_run':
         $csv = $input['csv'] ?? '';
         $preset = $input['preset'] ?? 'generic';
         $collection = $input['collection'] ?? 'products';
+        $defaultCurrency = $input['default_currency'] ?? 'eur';
         $parsed = $import->parseCsv($csv, $preset);
         if (!($parsed['ok'] ?? false)) {
             echo json_encode(['status' => 'error', 'message' => $parsed['error'] ?? 'Parse failed']);
             break;
         }
-        $dry = $import->dryRun($parsed['rows'], $collection);
+        $rows = $import->applyDefaultCurrency($parsed['rows'], $defaultCurrency);
+        $dry = $import->dryRun($rows, $collection);
         echo json_encode(['status' => 'ok', 'data' => $dry]);
         break;
 
@@ -196,13 +238,20 @@ switch ($action) {
         $csv = $input['csv'] ?? '';
         $preset = $input['preset'] ?? 'generic';
         $collection = $input['collection'] ?? 'products';
+        $defaultCurrency = $input['default_currency'] ?? 'eur';
         $dryRun = !empty($input['dry_run']);
         $parsed = $import->parseCsv($csv, $preset);
         if (!($parsed['ok'] ?? false)) {
             echo json_encode(['status' => 'error', 'message' => $parsed['error'] ?? 'Parse failed']);
             break;
         }
-        $result = $import->importRows($parsed['rows'], $collection, $dryRun);
+        $rows = $import->applyDefaultCurrency($parsed['rows'], $defaultCurrency);
+        $result = $import->importRows($rows, $collection, $dryRun, [
+            'preset' => $preset,
+            'platform' => ImportService::platformName($preset),
+            'currency' => $defaultCurrency,
+            'file_name' => trim((string) ($input['file_name'] ?? '')) ?: null,
+        ]);
         echo json_encode(['status' => 'ok', 'data' => $result]);
         break;
 
@@ -245,6 +294,46 @@ switch ($action) {
         $data = $input['connections'] ?? [];
         file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT));
         echo json_encode(['status' => 'ok']);
+        break;
+
+    case 'list_shipping_zones':
+        echo json_encode(['status' => 'ok', 'data' => $catalog->loadShippingZones()]);
+        break;
+
+    case 'save_shipping_zones':
+        $zones = $input['zones'] ?? [];
+        $catalog->saveShippingZones(['zones' => $zones]);
+        echo json_encode(['status' => 'ok']);
+        break;
+
+    case 'list_fieldtype_profiles':
+        echo json_encode(['status' => 'ok', 'data' => ['profiles' => $fieldtypeProfiles->listProfiles()]]);
+        break;
+
+    case 'save_fieldtype_profile':
+        $profile = $input['profile'] ?? [];
+        if (empty($profile['name'])) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Profile name required']);
+            break;
+        }
+        $saved = $fieldtypeProfiles->saveProfile($profile);
+        commerce_register_fieldtype_profiles();
+        echo json_encode(['status' => 'ok', 'data' => ['profile' => $saved]]);
+        break;
+
+    case 'delete_fieldtype_profile':
+        $id = $input['id'] ?? '';
+        if ($id === '' || $id === 'default') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Cannot delete default profile']);
+            break;
+        }
+        $ok = $fieldtypeProfiles->deleteProfile($id);
+        if ($ok) {
+            commerce_register_fieldtype_profiles();
+        }
+        echo json_encode(['status' => $ok ? 'ok' : 'error']);
         break;
 
     default:

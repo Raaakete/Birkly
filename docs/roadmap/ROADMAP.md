@@ -188,13 +188,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P6.4 complete** — `plugins/commerce/` on `main`. **P6.5 proposed** — fieldtype controls + plugin AI shelf. |
-| **Birkly-Docs** | P6.1–P6.3 guides; **Commerce docs still needed** (P6.5-M3). |
+| **Birkly (CMS)** | **Phase 6 complete (P6.1–P6.7)** — Commerce, bundles, fieldtype profiles, external product import. **91 test suites** green. |
+| **Birkly-Docs** | P6.1–P6.5 guides; Commerce v2 + template functions published. |
 | **Agent ops** | **83** PHP test suites (P6.4 closure). |
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P7 Plugin platform & UX** (proposed) — shell, docs, remove legacy plugins, fix User plugin, Events v2, Automation nodes · **includes P6.5 Commerce Wave** · see `docs/reviews/P7-plugin-platform-plan.md`
+**Next active phase:** **P7 Plugin platform & UX** (proposed) — shell, docs for all plugins, remove legacy plugins, fix User plugin, Events v2, Automation nodes · see `docs/reviews/P7-plugin-platform-plan.md`
+
+**Note:** P6.5 Commerce Wave **shipped on main** (fieldtype v2, fulfillment, variants, docs_shelf, Commerce registers docs). P7 focuses on platform UX gaps visible on live (breadcrumbs, User plugin broken, AI missing non-Commerce plugin docs, legacy plugins still in sidebar).
 
 ---
 
@@ -2049,22 +2051,57 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 6.5 — Commerce Wave (single sprint)
 
-**Status:** Approved (2026-07-05) — one wave, autonomous execution
+**Status:** Complete (2026-07-05) — one wave delivered autonomously
 
 **Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md`  
 **Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`  
-**Architecture:** `docs/reviews/P6-commerce-phase2-master-plan.md`
+**Architecture:** `docs/reviews/P6-commerce-phase2-master-plan.md`  
+**Matrix:** `docs/reviews/P6.5-verification-matrix.md`
 
-**Goal:** `fulfillment` + `purchase_options[]` (decoupled), variant sub-entries, PostPurchaseRouter (ship/deliver/register/none), shipping zones v1, digital delivery, event registration, plugin docs shelf, scenario acceptance (yoga / coffee / course / community).
+**Delivered:** `fulfillment` + `purchase_options[]` (decoupled), variant sub-entries, PostPurchaseRouter (ship/deliver/register/none), shipping zones v1, digital delivery tokens, event registration store, plugin docs shelf, scenario acceptance (yoga / coffee / course / community). **89 test suites** green.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P6.5-M1** | Fieldtype v2 + getConfigUI + legacy migration | pending |
-| **P6.5-M2** | Variants, catalog, cart, checkout v2, shipping zones | pending |
-| **P6.5-M3** | PostPurchaseRouter + typed automation | pending |
-| **P6.5-M4** | Admin, templates, import | pending |
-| **P6.5-M5** | register_plugin_docs + Help + Birkly-Docs | pending |
-| **P6.5-M6** | Verification matrix, closure | pending |
+| **P6.5-M1** | Fieldtype v2 + getConfigUI + legacy migration | complete |
+| **P6.5-M2** | Variants, catalog, cart, checkout v2, shipping zones | complete |
+| **P6.5-M3** | PostPurchaseRouter + typed automation | complete |
+| **P6.5-M4** | Admin, templates, import | complete |
+| **P6.5-M5** | register_plugin_docs + Help + Birkly-Docs | complete |
+| **P6.5-M6** | Verification matrix, closure | complete |
+
+---
+
+## Phase 6.6 — External product import
+
+**Status:** Complete (2026-07-06)
+
+**Delivered:** Product import from WooCommerce, Shopify, Etsy, Square, and generic CSV — platform cards, file upload, preview table. Replaces internal plugin migration wizard (not needed pre-alpha).
+
+| Milestone | Status |
+|-----------|--------|
+| P6.6-M1 | External shop CSV import UI + presets | complete |
+
+---
+
+## Phase 6.7 — Commerce bundle fieldtype
+
+**Status:** Complete (2026-07-06)
+
+**Delivered:** `commerce_bundle` fieldtype — component picker from catalog, pricing modes (sum / sum_with_discount / fixed), checkout expansion, PostPurchaseRouter per component.
+
+| Milestone | Status |
+|-----------|--------|
+| P6.7-M1 | commerce_bundle fieldtype + catalog/checkout | complete |
+
+---
+
+## Phase 6.8+ — Moved to Phase 7
+
+| Former ID | Focus | New home |
+|-----------|--------|----------|
+| P6.8 | Birkly Marketplace | **P7.0** |
+| P6.9 | Live Shopify/Woo API import | **P7.1** |
+| P6.10–12 | Tax, subscriptions, refunds, gift cards | **P7.2+** backlog |
 
 ---
 
@@ -2082,12 +2119,11 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P7-M1** | Plugin docs shelf — AI + Help | pending |
 | **P7-M2** | Remove payments + shopping_cart | pending |
 | **P7-M3** | User Management repair | pending |
-| **P7-M4** | Plugin UI migration (Commerce, Automation, Events) | pending |
-| **P7-M5** | P6.5 Commerce Wave (on new shell) | pending |
-| **P7-M6** | Events v2 — fieldtype, calendar, attendees, Commerce link | pending |
-| **P7-M7** | Automation node editor | pending |
+| **P7-M4** | Plugin UI migration (all plugins) | pending |
+| **P7-M5** | Events v2 — fieldtype, calendar, attendees, Commerce link | pending |
+| **P7-M6** | Automation node editor | pending |
 
-**Note:** P6.5 remains approved; executed as **P7-M5** after platform shell (M0–M1).
+**Note:** P6.5 Commerce Wave **complete on main**. P7-M1 completes docs for remaining plugins; P7-M4 migrates Commerce admin to new shell only.
 
 ---
 

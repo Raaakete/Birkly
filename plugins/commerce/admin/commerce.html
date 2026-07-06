@@ -26,6 +26,8 @@
     <button class="payments-tab" data-tab="import" role="tab">Import</button>
     <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
+    <button class="payments-tab" data-tab="shipping" role="tab">Shipping</button>
+    <button class="payments-tab" data-tab="fieldtypes" role="tab">Fieldtypes</button>
     <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
     <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
   </div>
@@ -67,28 +69,25 @@
   </div>
 
   <div id="payments-tab-import" class="payments-tab-panel" role="tabpanel" hidden>
-    <div class="payments-panel-header"><h2>CSV Import</h2></div>
-    <form id="commerce-import-form" class="payments-settings-form">
-      <div class="form-group">
-        <label>Preset</label>
-        <select id="commerce-import-preset" class="input">
-          <option value="generic">Generic CSV</option>
-          <option value="woocommerce">WooCommerce</option>
-          <option value="shopify">Shopify</option>
-        </select>
+    <div class="commerce-import-hero">
+      <div class="commerce-import-hero-copy">
+        <h2>Product imports</h2>
+        <p>Move your catalog from online stores or inventory systems into Birkly. Each import creates or updates entries in a collection with Commerce pricing and stock.</p>
       </div>
-      <div class="form-group">
-        <label>Target collection slug</label>
-        <input type="text" id="commerce-import-collection" class="input" value="products">
+      <button type="button" class="btn btn-primary" id="commerce-import-start">Import products</button>
+    </div>
+
+    <div class="commerce-import-stats" id="commerce-import-stats" hidden></div>
+
+    <div class="commerce-import-history-section">
+      <div class="payments-panel-header">
+        <h3>Import history</h3>
+        <button type="button" class="btn btn-secondary" id="commerce-import-history-refresh">Refresh</button>
       </div>
-      <div class="form-group">
-        <label>CSV content</label>
-        <textarea id="commerce-import-csv" class="input" rows="8" placeholder="title,price,currency,sku,quantity"></textarea>
+      <div id="commerce-import-history-list" class="commerce-import-history-list">
+        <div class="loading-state"><p>Loading import history…</p></div>
       </div>
-      <button type="button" class="btn btn-secondary" id="commerce-import-dry-run">Dry run</button>
-      <button type="submit" class="btn btn-primary">Import</button>
-      <div id="commerce-import-result" class="payments-test-result" hidden></div>
-    </form>
+    </div>
   </div>
 
   <div id="payments-tab-mappings" class="payments-tab-panel" role="tabpanel" hidden>
@@ -121,6 +120,32 @@
       <button type="submit" class="btn btn-primary">Save</button>
       <div id="commerce-fulfillment-result" class="payments-test-result" hidden></div>
     </form>
+  </div>
+
+  <div id="payments-tab-shipping" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Shipping Zones</h2>
+      <button class="btn btn-primary" id="commerce-add-shipping-zone">Add Zone</button>
+    </div>
+    <p class="form-text">Flat rate per zone (v1). Use * in countries for default fallback.</p>
+    <div id="commerce-shipping-zones-list" class="payments-connections-list">
+      <div class="loading-state"><p>Loading shipping zones…</p></div>
+    </div>
+    <button type="button" class="btn btn-primary" id="commerce-save-shipping-zones">Save Zones</button>
+  </div>
+
+  <div id="payments-tab-fieldtypes" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <div>
+        <h2>Commerce Fieldtypes</h2>
+        <p class="commerce-ft-intro">Saved profiles become selectable field types when you build collections. Configure fulfillment, billing intervals, and custom fields once — reuse everywhere.</p>
+      </div>
+      <button class="btn btn-primary" id="commerce-add-fieldtype-profile">New fieldtype</button>
+    </div>
+
+    <div id="commerce-fieldtype-profiles-list" class="commerce-ft-grid">
+      <div class="loading-state"><p>Loading fieldtype profiles…</p></div>
+    </div>
   </div>
 
   <div id="payments-tab-activity" class="payments-tab-panel" role="tabpanel" hidden>
@@ -171,6 +196,181 @@
       </div>
       <button type="submit" class="btn btn-primary">Save Settings</button>
     </form>
+  </div>
+</div>
+
+<div id="commerce-import-wizard" class="commerce-import-wizard" hidden aria-hidden="true">
+  <div class="commerce-import-wizard-overlay" id="commerce-import-wizard-overlay"></div>
+  <div class="commerce-import-wizard-dialog" role="dialog" aria-labelledby="commerce-import-wizard-title">
+    <div class="commerce-import-wizard-header">
+      <div>
+        <h2 id="commerce-import-wizard-title">Import products</h2>
+        <p class="commerce-import-wizard-subtitle" id="commerce-import-wizard-subtitle">Step 1 of 4 — Choose your platform</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="commerce-import-wizard-close" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="commerce-import-wizard-steps" id="commerce-import-wizard-steps">
+      <div class="commerce-import-wizard-step-indicator is-active" data-step="1"><span>1</span> Platform</div>
+      <div class="commerce-import-wizard-step-indicator" data-step="2"><span>2</span> Upload</div>
+      <div class="commerce-import-wizard-step-indicator" data-step="3"><span>3</span> Review</div>
+      <div class="commerce-import-wizard-step-indicator" data-step="4"><span>4</span> Done</div>
+    </div>
+
+    <div class="commerce-import-wizard-body">
+      <div class="commerce-import-wizard-pane is-active" data-step="1">
+        <div class="commerce-import-wizard-toolbar">
+          <input type="search" id="commerce-import-search" class="input" placeholder="Search platforms…" autocomplete="off">
+          <div class="commerce-import-wizard-filters" id="commerce-import-filters">
+            <button type="button" class="btn btn-secondary is-active" data-filter="all">All</button>
+            <button type="button" class="btn btn-secondary" data-filter="store">Stores</button>
+            <button type="button" class="btn btn-secondary" data-filter="inventory">Inventory</button>
+          </div>
+        </div>
+        <div id="commerce-import-wizard-sources" class="commerce-import-wizard-sources"></div>
+      </div>
+
+      <div class="commerce-import-wizard-pane" data-step="2" hidden>
+        <div class="commerce-import-selected-platform" id="commerce-import-selected-platform"></div>
+        <div class="commerce-import-export-steps" id="commerce-import-export-steps"></div>
+        <div class="commerce-import-form-row">
+          <div class="form-group">
+            <label for="commerce-import-collection">Target collection</label>
+            <input type="text" id="commerce-import-collection" class="input" value="products" placeholder="products">
+            <p class="form-hint">Collection slug — created automatically if missing.</p>
+          </div>
+          <div class="form-group">
+            <label for="commerce-import-currency">Default currency</label>
+            <select id="commerce-import-currency" class="input">
+              <option value="eur">EUR</option>
+              <option value="usd">USD</option>
+              <option value="gbp">GBP</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Product CSV file</label>
+          <div class="commerce-import-dropzone" id="commerce-import-dropzone">
+            <input type="file" id="commerce-import-file" accept=".csv,text/csv" hidden>
+            <div class="commerce-import-dropzone-icon" aria-hidden="true">CSV</div>
+            <p class="commerce-import-dropzone-text"><strong>Drop your export here</strong> or <button type="button" class="btn btn-secondary" id="commerce-import-browse">Browse files</button></p>
+            <p class="form-hint" id="commerce-import-file-name">No file selected</p>
+          </div>
+          <details class="commerce-import-paste">
+            <summary>Paste CSV instead</summary>
+            <textarea id="commerce-import-csv" class="input" rows="6" placeholder="title,price,currency,sku,quantity"></textarea>
+          </details>
+        </div>
+      </div>
+
+      <div class="commerce-import-wizard-pane" data-step="3" hidden>
+        <div class="commerce-import-review-summary" id="commerce-import-review-summary"></div>
+        <div class="commerce-import-preview-wrap">
+          <h4>Preview</h4>
+          <div id="commerce-import-preview-table" class="commerce-import-preview-table"></div>
+        </div>
+        <div id="commerce-import-review-error" class="payments-test-result error" hidden></div>
+      </div>
+
+      <div class="commerce-import-wizard-pane" data-step="4" hidden>
+        <div class="commerce-import-result-card" id="commerce-import-result-card"></div>
+        <div id="commerce-import-result-errors" class="commerce-import-result-errors" hidden></div>
+      </div>
+    </div>
+
+    <div class="commerce-import-wizard-footer">
+      <button type="button" class="btn btn-secondary" id="commerce-import-wizard-back" hidden>Back</button>
+      <div class="commerce-import-wizard-footer-spacer"></div>
+      <button type="button" class="btn btn-secondary" id="commerce-import-wizard-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="commerce-import-wizard-next">Continue</button>
+      <button type="button" class="btn btn-primary" id="commerce-import-wizard-import" hidden>Import products</button>
+      <button type="button" class="btn btn-primary" id="commerce-import-wizard-done" hidden>Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="commerce-fieldtype-modal" class="commerce-ft-modal" hidden aria-hidden="true">
+  <div class="commerce-ft-modal-overlay" id="commerce-ft-modal-overlay"></div>
+  <div class="commerce-ft-modal-dialog" role="dialog" aria-labelledby="commerce-fieldtype-editor-title">
+    <div class="commerce-ft-modal-header">
+      <div>
+        <h2 id="commerce-fieldtype-editor-title">Edit fieldtype</h2>
+        <p class="commerce-ft-modal-subtitle" id="commerce-ft-modal-subtitle">Configure how this commerce field appears in entry editors.</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="commerce-ft-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="commerce-ft-modal-body">
+      <input type="hidden" id="commerce-ft-profile-id">
+
+      <div class="commerce-ft-presets" id="commerce-ft-presets-wrap">
+        <span class="commerce-ft-presets-label">Quick start</span>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="events">Events</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="digital">Digital</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="physical">Physical</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="membership">Membership</button>
+      </div>
+
+      <div class="commerce-ft-form-grid">
+        <section class="commerce-ft-section">
+          <h3>Identity</h3>
+          <div class="form-group">
+            <label for="commerce-ft-name">Display name</label>
+            <input type="text" id="commerce-ft-name" class="input" placeholder="Events &amp; Classes">
+          </div>
+          <div class="form-group">
+            <label for="commerce-ft-slug">Slug</label>
+            <input type="text" id="commerce-ft-slug" class="input" placeholder="events">
+            <p class="form-hint">Field type key: <code id="commerce-ft-type-preview">commerce_events</code></p>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Fulfillment</h3>
+          <div class="form-group">
+            <label for="commerce-ft-default-fulfillment">Default</label>
+            <select id="commerce-ft-default-fulfillment" class="input">
+              <option value="ship">Ship — physical products</option>
+              <option value="deliver">Deliver — digital downloads</option>
+              <option value="register">Register — events &amp; tickets</option>
+              <option value="none">None — memberships</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Allowed types</label>
+            <div id="commerce-ft-fulfillments" class="commerce-ft-chip-group"></div>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section commerce-ft-section-wide">
+          <h3>Entry editor panels</h3>
+          <div id="commerce-ft-toggles" class="commerce-ft-toggle-grid"></div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Billing intervals</h3>
+          <div id="commerce-ft-intervals-list" class="commerce-ft-item-list"></div>
+          <div class="commerce-ft-inline-add">
+            <input type="text" id="commerce-ft-interval-value" class="input" placeholder="3_days">
+            <input type="text" id="commerce-ft-interval-label" class="input" placeholder="Every 3 days">
+            <button type="button" class="btn btn-secondary" id="commerce-ft-add-interval">Add</button>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Custom fields</h3>
+          <div id="commerce-ft-custom-fields-list" class="commerce-ft-item-list"></div>
+          <div class="commerce-ft-inline-add">
+            <input type="text" id="commerce-ft-cf-key" class="input" placeholder="field_key">
+            <input type="text" id="commerce-ft-cf-label" class="input" placeholder="Label">
+            <button type="button" class="btn btn-secondary" id="commerce-ft-add-custom-field">Add</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="commerce-ft-modal-footer">
+      <button type="button" class="btn btn-secondary" id="commerce-ft-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="commerce-ft-save">Save fieldtype</button>
+    </div>
   </div>
 </div>
 

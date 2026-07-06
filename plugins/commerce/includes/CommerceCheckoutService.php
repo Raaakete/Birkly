@@ -1,6 +1,6 @@
 <?php
 /**
- * Checkout flow — creates pending order and charges via commerce_shelf.
+ * Checkout flow — creates pending order and charges via commerce_shelf (v2).
  */
 
 class CommerceCheckoutService
@@ -11,6 +11,7 @@ class CommerceCheckoutService
     private CatalogIndexer $indexer;
     private DiscountEngine $discounts;
     private PurchaseMappingService $mappings;
+    private PostPurchaseRouter $router;
 
     public function __construct(
         ?CommerceOrderStore $orders = null,
@@ -18,7 +19,8 @@ class CommerceCheckoutService
         ?CommerceCartSession $cart = null,
         ?CatalogIndexer $indexer = null,
         ?DiscountEngine $discounts = null,
-        ?PurchaseMappingService $mappings = null
+        ?PurchaseMappingService $mappings = null,
+        ?PostPurchaseRouter $router = null
     ) {
         $this->orders = $orders ?? new CommerceOrderStore();
         $this->indexer = $indexer ?? new CatalogIndexer();
@@ -26,6 +28,7 @@ class CommerceCheckoutService
         $this->cart = $cart ?? new CommerceCartSession();
         $this->discounts = $discounts ?? new DiscountEngine();
         $this->mappings = $mappings ?? new PurchaseMappingService();
+        $this->router = $router ?? new PostPurchaseRouter();
     }
 
     public function getShelf(): ?PaymentShelf
@@ -46,48 +49,99 @@ class CommerceCheckoutService
         return null;
     }
 
-    public function createPendingOrder(string $customerEmail = ''): array
+    public function createPendingOrder(string $customerEmail = '', array $checkoutData = []): array
     {
         $coupon = $this->cart->getCouponCode();
         $affiliate = $this->cart->getAffiliateId();
+        $shippingAddress = $checkoutData['shipping_address'] ?? null;
+        $attendeeName = $checkoutData['attendee_name'] ?? null;
+
         $built = $this->catalog->buildCartLines($this->cart->getItems(), $this->discounts, $coupon, $affiliate);
+        if (($built['ok'] ?? true) === false) {
+            return ['ok' => false, 'error' => $built['error'] ?? 'Cart error'];
+        }
         if (empty($built['lines'])) {
             return ['ok' => false, 'error' => 'Cart is empty'];
         }
 
+        $needsShipping = false;
+        $needsAttendee = false;
         foreach ($built['lines'] as $line) {
-            if (!$this->indexer->reserveQuantity(
-                $line['collection_slug'],
-                $line['entry_id'],
-                (int) $line['quantity']
-            )) {
+            if (($line['fulfillment'] ?? '') === 'ship') {
+                $needsShipping = true;
+            }
+            if (($line['fulfillment'] ?? '') === 'register') {
+                $needsAttendee = true;
+            }
+            if (!empty($line['is_bundle'])) {
+                foreach ($line['components'] ?? [] as $comp) {
+                    if (($comp['fulfillment'] ?? '') === 'ship') {
+                        $needsShipping = true;
+                    }
+                    if (($comp['fulfillment'] ?? '') === 'register') {
+                        $needsAttendee = true;
+                    }
+                }
+            }
+        }
+
+        if ($needsShipping && empty($shippingAddress)) {
+            return ['ok' => false, 'error' => 'Shipping address required'];
+        }
+        if ($needsAttendee && ($attendeeName === null || trim((string) $attendeeName) === '')) {
+            return ['ok' => false, 'error' => 'Attendee name required'];
+        }
+
+        if ($needsShipping && is_array($shippingAddress)) {
+            $oldShipping = $built['shipping_cents'] ?? 0;
+            $newShipping = $this->catalog->calculateShipping($built['lines'], $shippingAddress);
+            $built['shipping_cents'] = $newShipping;
+            $built['total_cents'] = $built['total_cents'] - $oldShipping + $newShipping;
+        }
+
+        foreach ($built['lines'] as $line) {
+            if (!$this->reserveLineStock($line)) {
                 return ['ok' => false, 'error' => 'Insufficient stock for ' . ($line['title'] ?? 'item')];
             }
         }
 
-        $order = $this->orders->create([
+        $orderPayload = [
             'status' => 'pending',
             'lines' => $built['lines'],
             'total_cents' => $built['total_cents'],
+            'shipping_cents' => $built['shipping_cents'] ?? 0,
             'discount_cents' => $built['discount_cents'] ?? 0,
             'currency' => $built['currency'],
             'customer_email' => $customerEmail,
             'coupon_code' => $coupon,
             'affiliate_id' => $affiliate,
-        ]);
+        ];
+        if (is_array($shippingAddress)) {
+            $orderPayload['shipping_address'] = $shippingAddress;
+        }
+        if ($attendeeName !== null && trim((string) $attendeeName) !== '') {
+            $orderPayload['attendee_name'] = trim((string) $attendeeName);
+        }
 
+        $billingMode = $built['lines'][0]['billing'] ?? 'one_time';
+        $orderPayload['billing_mode'] = $billingMode;
+        if ($billingMode === 'recurring') {
+            $orderPayload['billing_interval'] = $built['lines'][0]['interval'] ?? 'month';
+        }
+
+        $order = $this->orders->create($orderPayload);
         $this->fireOrderCreated($order);
         return ['ok' => true, 'order' => $order];
     }
 
-    public function checkout(string $customerEmail = '', string $returnUrl = '', string $cancelUrl = ''): array
+    public function checkout(string $customerEmail = '', string $returnUrl = '', string $cancelUrl = '', array $checkoutData = []): array
     {
         $shelf = $this->getShelf();
         if (!$shelf || !$shelf->isConfigured()) {
             return ['ok' => false, 'error' => 'Payments not configured'];
         }
 
-        $pending = $this->createPendingOrder($customerEmail);
+        $pending = $this->createPendingOrder($customerEmail, $checkoutData);
         if (!($pending['ok'] ?? false)) {
             return $pending;
         }
@@ -100,8 +154,13 @@ class CommerceCheckoutService
             'metadata' => [
                 'order_id' => $order['id'],
                 'line_count' => count($order['lines']),
+                'billing_mode' => $order['billing_mode'] ?? 'one_time',
             ],
         ];
+        if (($order['billing_mode'] ?? '') === 'recurring') {
+            $params['billing'] = 'recurring';
+            $params['interval'] = $order['billing_interval'] ?? 'month';
+        }
         if ($returnUrl !== '') {
             $params['return_url'] = $returnUrl;
         }
@@ -143,19 +202,19 @@ class CommerceCheckoutService
         }
 
         foreach ($order['lines'] ?? [] as $line) {
-            $this->indexer->decrementQuantity(
-                $line['collection_slug'] ?? '',
-                $line['entry_id'] ?? '',
-                (int) ($line['quantity'] ?? 1)
-            );
+            $this->decrementLineStock($line);
         }
 
         $updated = $this->orders->update($order['id'], ['status' => 'paid']);
         $this->cart->clear();
 
         $this->fireOrderPaid($updated);
+        $fulfillmentResults = $this->router->route($updated);
         $this->mappings->applyPurchaseMappings($updated);
-        $this->pushFulfillment($updated);
+
+        if (!empty($fulfillmentResults)) {
+            $updated = $this->orders->update($order['id'], ['fulfillment_results' => $fulfillmentResults]);
+        }
 
         return $updated;
     }
@@ -195,21 +254,47 @@ class CommerceCheckoutService
         }
     }
 
-    private function pushFulfillment(array $order): void
+    private function reserveLineStock(array $line): bool
     {
-        $connectionsFile = commerce_data_dir() . '/fulfillment_connections.json';
-        if (!is_file($connectionsFile)) {
-            return;
+        if (!$this->indexer->reserveQuantity(
+            $line['collection_slug'] ?? '',
+            $line['entry_id'] ?? '',
+            (int) ($line['quantity'] ?? 1)
+        )) {
+            return false;
         }
-        $connections = json_decode((string) file_get_contents($connectionsFile), true);
-        $adapterId = $connections['active_adapter'] ?? 'manual';
-        if ($adapterId === 'shipstation') {
-            $adapter = new ShipStationStubAdapter();
-        } else {
-            $adapter = new ManualFulfillmentAdapter();
+
+        if (!empty($line['is_bundle'])) {
+            foreach ($line['components'] ?? [] as $comp) {
+                if (!$this->indexer->reserveQuantity(
+                    $comp['collection'] ?? '',
+                    $comp['entry_id'] ?? '',
+                    (int) ($comp['quantity'] ?? 1)
+                )) {
+                    return false;
+                }
+            }
         }
-        if ($adapter->isConfigured()) {
-            $adapter->pushOrder($order);
+
+        return true;
+    }
+
+    private function decrementLineStock(array $line): void
+    {
+        $this->indexer->decrementQuantity(
+            $line['collection_slug'] ?? '',
+            $line['entry_id'] ?? '',
+            (int) ($line['quantity'] ?? 1)
+        );
+
+        if (!empty($line['is_bundle'])) {
+            foreach ($line['components'] ?? [] as $comp) {
+                $this->indexer->decrementQuantity(
+                    $comp['collection'] ?? '',
+                    $comp['entry_id'] ?? '',
+                    (int) ($comp['quantity'] ?? 1)
+                );
+            }
         }
     }
 }

@@ -192,6 +192,22 @@ function loadBirklyContextPack(): string
 }
 
 /**
+ * Core context pack plus active plugin doc summaries (P6.5-M5).
+ */
+function birkly_ai_context_pack_with_plugins(): string
+{
+    $pack = loadBirklyContextPack();
+    if (!function_exists('birkly_plugin_docs_ai_summaries')) {
+        return $pack;
+    }
+    $pluginBlock = birkly_plugin_docs_ai_summaries();
+    if ($pluginBlock === '') {
+        return $pack;
+    }
+    return trim($pack . "\n\n" . $pluginBlock);
+}
+
+/**
  * Load a Birkly docs topic for AI depth (P5.4-M3).
  *
  * @return array{slug: string, title: string, text: string}|null
@@ -205,6 +221,30 @@ function readBirklyDocsTopic(string $slug): ?array
     }
     if (isset($cache[$slug])) {
         return $cache[$slug];
+    }
+
+    // Active plugin docs (P6.5-M5)
+    if (function_exists('get_plugin_docs_by_topic_slug')) {
+        if (function_exists('birkly_bootstrap_plugins_for_docs')) {
+            birkly_bootstrap_plugins_for_docs();
+        }
+        $pluginDoc = get_plugin_docs_by_topic_slug($slug);
+        if ($pluginDoc !== null) {
+            $text = read_plugin_doc_markdown((string) $pluginDoc['plugin_id'], 'ai');
+            if ($text === null) {
+                $text = trim((string) ($pluginDoc['summary'] ?? ''));
+            }
+            if ($text !== '') {
+                $cache[$slug] = [
+                    'slug' => $slug,
+                    'title' => (string) ($pluginDoc['title'] ?? $slug),
+                    'text' => $text,
+                    'source' => 'plugin',
+                    'plugin_id' => (string) ($pluginDoc['plugin_id'] ?? ''),
+                ];
+                return $cache[$slug];
+            }
+        }
     }
 
     $topics = [
@@ -453,7 +493,7 @@ function generateSystemContext($aiUser) {
             'user_permissions' => getPermissionsForRole($aiUser['role'] ?? 'viewer')
         ],
         'collections' => [],
-        'context_pack' => loadBirklyContextPack()
+        'context_pack' => birkly_ai_context_pack_with_plugins()
     ];
     
     // Load collections

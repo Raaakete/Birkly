@@ -58,13 +58,62 @@
         el.innerHTML = '<p>No orders yet.</p>';
         return;
       }
-      var html = '<table class="payments-table"><thead><tr><th>ID</th><th>Status</th><th>Total</th><th>Email</th><th>Created</th></tr></thead><tbody>';
+      var html = '';
       orders.forEach(function (o) {
-        html += '<tr><td>' + o.id + '</td><td>' + o.status + '</td><td>' + formatCents(o.total_cents, o.currency)
-          + '</td><td>' + (o.customer_email || '—') + '</td><td>' + (o.created_at || '') + '</td></tr>';
+        html += '<div class="commerce-order-card"><h3>' + o.id + ' — ' + o.status + ' — ' + formatCents(o.total_cents, o.currency) + '</h3>';
+        html += '<p>Email: ' + (o.customer_email || '—') + ' · Created: ' + (o.created_at || '') + '</p>';
+        if (o.shipping_address) {
+          html += '<p>Ship to: ' + (o.shipping_address.line1 || '') + ', ' + (o.shipping_address.city || '') + ' ' + (o.shipping_address.country || '') + '</p>';
+        }
+        if (o.attendee_name) {
+          html += '<p>Attendee: ' + o.attendee_name + '</p>';
+        }
+        html += '<table class="payments-table"><thead><tr><th>Line</th><th>Qty</th><th>Option</th><th>Fulfillment</th><th>State</th></tr></thead><tbody>';
+        (o.lines || []).forEach(function (line, idx) {
+          var fr = (o.fulfillment_results || []).find(function (r) { return r.line_id === line.line_id; }) || {};
+          var state = fr.skipped ? 'done' : (fr.ok === false ? 'error' : (fr.ok ? 'fulfilled' : 'pending'));
+          html += '<tr><td>' + (line.title || line.entry_id) + '</td><td>' + line.quantity + '</td><td>'
+            + (line.purchase_option_id || '—') + '</td><td>' + (line.fulfillment || '—') + '</td><td>' + state + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
       });
-      html += '</tbody></table>';
       el.innerHTML = html;
+    });
+  }
+
+  var shippingZonesCache = [];
+
+  function loadShippingZones() {
+    var el = document.getElementById('commerce-shipping-zones-list');
+    if (!el) return;
+    commercePost('list_shipping_zones').then(function (res) {
+      shippingZonesCache = (res.data && res.data.zones) || [];
+      renderShippingZones();
+    });
+  }
+
+  function renderShippingZones() {
+    var el = document.getElementById('commerce-shipping-zones-list');
+    if (!el) return;
+    if (!shippingZonesCache.length) {
+      el.innerHTML = '<p>No shipping zones configured.</p>';
+      return;
+    }
+    var html = '';
+    shippingZonesCache.forEach(function (zone, idx) {
+      html += '<div class="commerce-shipping-zone" data-idx="' + idx + '">';
+      html += '<div class="form-group"><label>Name</label><input type="text" class="input zone-name" value="' + (zone.name || '') + '"></div>';
+      html += '<div class="form-group"><label>Countries (comma-separated, * = all)</label><input type="text" class="input zone-countries" value="' + ((zone.countries || ['*']).join(', ')) + '"></div>';
+      html += '<div class="form-group"><label>Flat rate (cents)</label><input type="number" class="input zone-rate" value="' + (zone.flat_rate_cents || 0) + '"></div>';
+      html += '<button type="button" class="btn btn-secondary commerce-remove-zone" data-idx="' + idx + '">Remove</button></div>';
+    });
+    el.innerHTML = html;
+    el.querySelectorAll('.commerce-remove-zone').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(btn.getAttribute('data-idx'), 10);
+        shippingZonesCache.splice(i, 1);
+        renderShippingZones();
+      });
     });
   }
 
@@ -105,6 +154,791 @@
     });
   }
 
+  var fieldtypeProfileDraft = null;
+  var fieldtypeProfilesCache = [];
+
+  var FULFILLMENT_LABELS = { ship: 'Ship', deliver: 'Deliver', register: 'Register', none: 'None' };
+  var FULFILLMENT_COLORS = { ship: 'blue', deliver: 'purple', register: 'green', none: 'gray' };
+
+  var FT_PRESETS = {
+    events: {
+      name: 'Events & Classes',
+      slug: 'events',
+      settings: {
+        default_fulfillment: 'register',
+        enabled_fulfillments: ['register'],
+        enable_fulfillment: true,
+        enable_purchase_options: true,
+        enable_quantity: true,
+        enable_sku: false,
+        enable_weight: false,
+        enable_delivery: false,
+        interval_options: [{ value: 'month', label: 'Monthly' }],
+        custom_fields: [],
+      },
+    },
+    digital: {
+      name: 'Digital Products',
+      slug: 'digital',
+      settings: {
+        default_fulfillment: 'deliver',
+        enabled_fulfillments: ['deliver'],
+        enable_fulfillment: true,
+        enable_purchase_options: true,
+        enable_quantity: false,
+        enable_sku: true,
+        enable_weight: false,
+        enable_delivery: true,
+        interval_options: [{ value: 'month', label: 'Monthly' }],
+        custom_fields: [],
+      },
+    },
+    physical: {
+      name: 'Physical Products',
+      slug: 'physical',
+      settings: {
+        default_fulfillment: 'ship',
+        enabled_fulfillments: ['ship'],
+        enable_fulfillment: true,
+        enable_purchase_options: true,
+        enable_quantity: true,
+        enable_sku: true,
+        enable_weight: true,
+        enable_delivery: false,
+        interval_options: [
+          { value: 'month', label: 'Monthly' },
+          { value: '2_weeks', label: 'Every 2 weeks' },
+        ],
+        custom_fields: [],
+      },
+    },
+    membership: {
+      name: 'Membership',
+      slug: 'membership',
+      settings: {
+        default_fulfillment: 'none',
+        enabled_fulfillments: ['none'],
+        enable_fulfillment: true,
+        enable_purchase_options: true,
+        enable_quantity: false,
+        enable_sku: false,
+        enable_weight: false,
+        enable_delivery: false,
+        interval_options: [
+          { value: 'month', label: 'Monthly' },
+          { value: 'year', label: 'Yearly' },
+        ],
+        custom_fields: [],
+      },
+    },
+  };
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function updateTypePreview() {
+    var slugEl = document.getElementById('commerce-ft-slug');
+    var preview = document.getElementById('commerce-ft-type-preview');
+    if (!preview || !slugEl) return;
+    var slug = slugEl.value.trim();
+    var id = document.getElementById('commerce-ft-profile-id')?.value || '';
+    if (id === 'default' || !slug || slug === 'default') {
+      preview.textContent = 'commerce';
+      return;
+    }
+    preview.textContent = 'commerce_' + slug.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+  }
+
+  function showFieldtypeModal() {
+    var modal = document.getElementById('commerce-fieldtype-modal');
+    if (!modal) return;
+    modal.hidden = false;
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('commerce-ft-modal-open');
+  }
+
+  function closeFieldtypeModal() {
+    var modal = document.getElementById('commerce-fieldtype-modal');
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('commerce-ft-modal-open');
+    fieldtypeProfileDraft = null;
+  }
+
+  function loadFieldtypeProfiles() {
+    var el = document.getElementById('commerce-fieldtype-profiles-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state"><p>Loading fieldtype profiles…</p></div>';
+    commercePost('list_fieldtype_profiles').then(function (res) {
+      fieldtypeProfilesCache = (res.data && res.data.profiles) || [];
+      if (!fieldtypeProfilesCache.length) {
+        el.innerHTML = '<div class="commerce-ft-empty"><p>No fieldtypes yet.</p><button type="button" class="btn btn-primary" id="commerce-ft-empty-create">Create your first fieldtype</button></div>';
+        document.getElementById('commerce-ft-empty-create')?.addEventListener('click', newFieldtypeProfile);
+        return;
+      }
+      var html = '';
+      fieldtypeProfilesCache.forEach(function (p) {
+        var settings = p.settings || {};
+        var fulfillment = settings.default_fulfillment || 'ship';
+        var color = FULFILLMENT_COLORS[fulfillment] || 'gray';
+        var intervalCount = (settings.interval_options || []).length;
+        var cfCount = (settings.custom_fields || []).length;
+        html += '<article class="commerce-ft-card' + (p.is_default ? ' is-default' : '') + '">'
+          + '<div class="commerce-ft-card-top">'
+          + '<div class="commerce-ft-card-icon commerce-ft-icon-' + color + '">' + (p.is_default ? '★' : '◆') + '</div>'
+          + '<div class="commerce-ft-card-meta">'
+          + '<h3>' + escapeHtml(p.name || p.id) + '</h3>'
+          + (p.is_default ? '<span class="commerce-ft-badge">Default</span>' : '')
+          + '</div></div>'
+          + '<p class="commerce-ft-card-key"><code>' + escapeHtml(p.type_key || 'commerce') + '</code></p>'
+          + '<div class="commerce-ft-card-stats">'
+          + '<span class="status-pill commerce-ft-pill-' + color + '">' + escapeHtml(FULFILLMENT_LABELS[fulfillment] || fulfillment) + '</span>'
+          + '<span class="commerce-ft-stat">' + intervalCount + ' interval' + (intervalCount === 1 ? '' : 's') + '</span>'
+          + (cfCount ? '<span class="commerce-ft-stat">' + cfCount + ' custom field' + (cfCount === 1 ? '' : 's') + '</span>' : '')
+          + '</div>'
+          + '<div class="commerce-ft-card-actions">'
+          + '<button type="button" class="btn btn-secondary commerce-edit-profile" data-id="' + escapeHtml(p.id) + '">Edit</button>'
+          + (p.is_default ? '' : '<button type="button" class="btn btn-secondary commerce-delete-profile" data-id="' + escapeHtml(p.id) + '">Delete</button>')
+          + '</div></article>';
+      });
+      el.innerHTML = html;
+      el.querySelectorAll('.commerce-edit-profile').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var profile = fieldtypeProfilesCache.find(function (p) { return p.id === id; });
+          if (profile) openFieldtypeEditor(profile);
+        });
+      });
+      el.querySelectorAll('.commerce-delete-profile').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          if (!confirm('Delete this fieldtype? Collections using it will need updating.')) return;
+          commercePost('delete_fieldtype_profile', { id: id }).then(function () { loadFieldtypeProfiles(); });
+        });
+      });
+    });
+  }
+
+  function renderIntervalRows(intervals) {
+    var list = document.getElementById('commerce-ft-intervals-list');
+    if (!list) return;
+    if (!intervals || !intervals.length) {
+      list.innerHTML = '<p class="commerce-ft-list-empty">No custom intervals — add one below.</p>';
+      return;
+    }
+    list.innerHTML = intervals.map(function (iv, idx) {
+      return '<div class="commerce-ft-list-item">'
+        + '<div><strong>' + escapeHtml(iv.label) + '</strong><br><code>' + escapeHtml(iv.value) + '</code></div>'
+        + '<button type="button" class="btn-icon commerce-ft-remove-interval" data-idx="' + idx + '" title="Remove">×</button>'
+        + '</div>';
+    }).join('');
+    list.querySelectorAll('.commerce-ft-remove-interval').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fieldtypeProfileDraft.settings.interval_options.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+        renderIntervalRows(fieldtypeProfileDraft.settings.interval_options);
+      });
+    });
+  }
+
+  function renderCustomFieldRows(fields) {
+    var list = document.getElementById('commerce-ft-custom-fields-list');
+    if (!list) return;
+    if (!fields || !fields.length) {
+      list.innerHTML = '<p class="commerce-ft-list-empty">No custom fields — optional merchant metadata.</p>';
+      return;
+    }
+    list.innerHTML = fields.map(function (cf, idx) {
+      return '<div class="commerce-ft-list-item">'
+        + '<div><strong>' + escapeHtml(cf.label) + '</strong><br><code>' + escapeHtml(cf.key) + '</code></div>'
+        + '<button type="button" class="btn-icon commerce-ft-remove-cf" data-idx="' + idx + '" title="Remove">×</button>'
+        + '</div>';
+    }).join('');
+    list.querySelectorAll('.commerce-ft-remove-cf').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        fieldtypeProfileDraft.settings.custom_fields.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+        renderCustomFieldRows(fieldtypeProfileDraft.settings.custom_fields);
+      });
+    });
+  }
+
+  function renderFulfillmentChips(settings) {
+    var ftEl = document.getElementById('commerce-ft-fulfillments');
+    if (!ftEl) return;
+    var enabled = settings.enabled_fulfillments || ['ship', 'deliver', 'register', 'none'];
+    ftEl.innerHTML = ['ship', 'deliver', 'register', 'none'].map(function (f) {
+      var checked = enabled.indexOf(f) >= 0 ? ' checked' : '';
+      return '<label class="commerce-ft-chip"><input type="checkbox" class="commerce-ft-fulfillment-cb" value="' + f + '"' + checked + '><span>' + FULFILLMENT_LABELS[f] + '</span></label>';
+    }).join('');
+  }
+
+  function renderToggleGrid(settings) {
+    var toggles = [
+      ['enable_fulfillment', 'Fulfillment selector', 'Let merchants pick ship / deliver / register / none'],
+      ['enable_purchase_options', 'Purchase options', 'One-time and recurring prices on same entry'],
+      ['enable_quantity', 'Quantity / capacity', 'Stock limits or event spots'],
+      ['enable_sku', 'SKU', 'Warehouse or inventory identifier'],
+      ['enable_weight', 'Weight (grams)', 'For shipping calculations'],
+      ['enable_delivery', 'Delivery panel', 'Digital asset path and external URL'],
+    ];
+    var el = document.getElementById('commerce-ft-toggles');
+    if (!el) return;
+    el.innerHTML = toggles.map(function (t) {
+      var checked = settings[t[0]] !== false ? ' checked' : '';
+      return '<label class="commerce-ft-toggle-card">'
+        + '<input type="checkbox" class="commerce-ft-toggle-cb" data-key="' + t[0] + '"' + checked + '>'
+        + '<span class="commerce-ft-toggle-title">' + t[1] + '</span>'
+        + '<span class="commerce-ft-toggle-desc">' + t[2] + '</span></label>';
+    }).join('');
+  }
+
+  function openFieldtypeEditor(profile) {
+    fieldtypeProfileDraft = JSON.parse(JSON.stringify(profile));
+    if (!fieldtypeProfileDraft.settings) fieldtypeProfileDraft.settings = {};
+
+    var isDefault = !!profile.is_default;
+    var isNew = !profile.id;
+    document.getElementById('commerce-fieldtype-editor-title').textContent = isNew ? 'New fieldtype' : (isDefault ? 'Edit default fieldtype' : 'Edit fieldtype');
+    document.getElementById('commerce-ft-modal-subtitle').textContent = isNew
+      ? 'Choose a quick start preset or configure manually.'
+      : 'Changes apply to all collections using this field type.';
+    document.getElementById('commerce-ft-presets-wrap').hidden = !isNew;
+
+    document.getElementById('commerce-ft-profile-id').value = profile.id || '';
+    document.getElementById('commerce-ft-name').value = profile.name || '';
+    document.getElementById('commerce-ft-slug').value = profile.slug || '';
+    document.getElementById('commerce-ft-slug').disabled = isDefault;
+    document.getElementById('commerce-ft-default-fulfillment').value = profile.settings.default_fulfillment || 'ship';
+
+    renderFulfillmentChips(profile.settings);
+    renderToggleGrid(profile.settings);
+    renderIntervalRows(profile.settings.interval_options || []);
+    renderCustomFieldRows(profile.settings.custom_fields || []);
+    updateTypePreview();
+    showFieldtypeModal();
+  }
+
+  function newFieldtypeProfile() {
+    openFieldtypeEditor({ id: '', name: '', slug: '', settings: JSON.parse(JSON.stringify(FT_PRESETS.physical.settings)) });
+  }
+
+  function applyPreset(presetKey) {
+    var preset = FT_PRESETS[presetKey];
+    if (!preset || !fieldtypeProfileDraft) return;
+    fieldtypeProfileDraft.name = preset.name;
+    fieldtypeProfileDraft.slug = preset.slug;
+    fieldtypeProfileDraft.settings = JSON.parse(JSON.stringify(preset.settings));
+    openFieldtypeEditor(fieldtypeProfileDraft);
+  }
+
+  function saveFieldtypeProfile() {
+    if (!fieldtypeProfileDraft) return;
+    var settings = fieldtypeProfileDraft.settings || {};
+    settings.default_fulfillment = document.getElementById('commerce-ft-default-fulfillment').value;
+    settings.enabled_fulfillments = [];
+    document.querySelectorAll('.commerce-ft-fulfillment-cb:checked').forEach(function (cb) {
+      settings.enabled_fulfillments.push(cb.value);
+    });
+    document.querySelectorAll('.commerce-ft-toggle-cb').forEach(function (cb) {
+      settings[cb.getAttribute('data-key')] = cb.checked;
+    });
+    var profile = {
+      id: document.getElementById('commerce-ft-profile-id').value || undefined,
+      name: document.getElementById('commerce-ft-name').value.trim(),
+      slug: document.getElementById('commerce-ft-slug').value.trim(),
+      settings: settings,
+    };
+    if (!profile.name) {
+      document.getElementById('commerce-ft-name').focus();
+      return;
+    }
+    var saveBtn = document.getElementById('commerce-ft-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+    commercePost('save_fieldtype_profile', { profile: profile }).then(function (res) {
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save fieldtype'; }
+      if (res.status !== 'ok') {
+        alert(res.message || 'Save failed');
+        return;
+      }
+      closeFieldtypeModal();
+      loadFieldtypeProfiles();
+    });
+  }
+
+  var importSourcesCache = [];
+  var importHistoryCache = [];
+  var importWizard = {
+    step: 1,
+    source: 'generic',
+    csv: '',
+    fileName: '',
+    preview: null,
+    filter: 'all',
+    search: '',
+  };
+
+  var IMPORT_STEP_LABELS = ['Choose your platform', 'Upload your export', 'Review products', 'Import complete'];
+
+  function loadImportTab() {
+    loadImportHistory();
+    if (!importSourcesCache.length) {
+      commercePost('import_sources').then(function (res) {
+        importSourcesCache = (res.data && res.data.sources) || [];
+      });
+    }
+  }
+
+  function loadImportHistory() {
+    var el = document.getElementById('commerce-import-history-list');
+    if (!el) return;
+    commercePost('import_history', { limit: 50 }).then(function (res) {
+      importHistoryCache = (res.data && res.data.imports) || [];
+      renderImportHistory();
+      renderImportStats();
+    });
+  }
+
+  function renderImportStats() {
+    var wrap = document.getElementById('commerce-import-stats');
+    if (!wrap) return;
+    if (!importHistoryCache.length) {
+      wrap.hidden = true;
+      return;
+    }
+    var success = importHistoryCache.filter(function (i) { return i.status === 'success'; }).length;
+    var partial = importHistoryCache.filter(function (i) { return i.status === 'partial'; }).length;
+    var failed = importHistoryCache.filter(function (i) { return i.status === 'failed'; }).length;
+    var totalProducts = importHistoryCache.reduce(function (sum, i) { return sum + (i.imported_count || 0); }, 0);
+    wrap.hidden = false;
+    wrap.innerHTML = [
+      { value: importHistoryCache.length, label: 'Total imports' },
+      { value: totalProducts, label: 'Products imported' },
+      { value: success, label: 'Successful' },
+      { value: partial + failed, label: 'With issues' },
+    ].map(function (s) {
+      return '<div class="commerce-import-stat-card"><div class="commerce-import-stat-value">' + s.value + '</div><div class="commerce-import-stat-label">' + escapeHtml(s.label) + '</div></div>';
+    }).join('');
+  }
+
+  function formatImportDate(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function renderImportHistory() {
+    var el = document.getElementById('commerce-import-history-list');
+    if (!el) return;
+    if (!importHistoryCache.length) {
+      el.innerHTML = '<div class="commerce-import-history-empty"><p>No imports yet.</p><p>Click <strong>Import products</strong> to bring your catalog from another system.</p></div>';
+      return;
+    }
+    var html = '<table class="commerce-import-history-table"><thead><tr>'
+      + '<th>Date</th><th>Platform</th><th>Collection</th><th>Status</th><th>Imported</th><th>Skipped</th><th>File</th><th></th>'
+      + '</tr></thead><tbody>';
+    importHistoryCache.forEach(function (item) {
+      var status = item.status || 'success';
+      html += '<tr>'
+        + '<td>' + escapeHtml(formatImportDate(item.at)) + '</td>'
+        + '<td>' + escapeHtml(item.platform || item.preset || '—') + '</td>'
+        + '<td><code>' + escapeHtml(item.collection || 'products') + '</code></td>'
+        + '<td><span class="commerce-import-status ' + escapeHtml(status) + '">' + escapeHtml(status) + '</span></td>'
+        + '<td>' + (item.imported_count || 0) + '</td>'
+        + '<td>' + (item.skipped_count || 0) + '</td>'
+        + '<td>' + escapeHtml(item.file_name || '—') + '</td>'
+        + '<td><button type="button" class="btn btn-secondary commerce-import-view-detail" data-id="' + escapeHtml(item.id) + '">Details</button></td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+    el.querySelectorAll('.commerce-import-view-detail').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        showImportDetail(btn.getAttribute('data-id'));
+      });
+    });
+  }
+
+  function showImportDetail(importId) {
+    commercePost('import_detail', { id: importId }).then(function (res) {
+      if (res.status !== 'ok') {
+        alert(res.message || 'Could not load import details');
+        return;
+      }
+      var item = res.data.import || {};
+      var errors = item.errors || [];
+      var msg = 'Platform: ' + (item.platform || '—') + '\n'
+        + 'Collection: ' + (item.collection || '—') + '\n'
+        + 'Status: ' + (item.status || '—') + '\n'
+        + 'Imported: ' + (item.imported_count || 0) + ' (created ' + (item.created_count || 0) + ', updated ' + (item.updated_count || 0) + ')\n'
+        + 'Skipped: ' + (item.skipped_count || 0) + '\n'
+        + 'Variants: ' + (item.variant_count || 0);
+      if (errors.length) {
+        msg += '\n\nIssues:\n' + errors.slice(0, 10).map(function (e) {
+          return 'Row ' + e.row + ': ' + (e.reason || 'Unknown') + (e.title ? ' (' + e.title + ')' : '');
+        }).join('\n');
+      }
+      alert(msg);
+    });
+  }
+
+  function platformBadge(name) {
+    var text = (name || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase();
+    return text || '?';
+  }
+
+  function filteredImportSources() {
+    return importSourcesCache.filter(function (src) {
+      if (importWizard.filter !== 'all' && (src.category || 'other') !== importWizard.filter) return false;
+      if (!importWizard.search) return true;
+      var q = importWizard.search.toLowerCase();
+      return (src.name || '').toLowerCase().indexOf(q) !== -1
+        || (src.description || '').toLowerCase().indexOf(q) !== -1
+        || (src.id || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function renderWizardSources() {
+    var el = document.getElementById('commerce-import-wizard-sources');
+    if (!el) return;
+    var categories = [
+      { id: 'store', label: 'Online stores' },
+      { id: 'inventory', label: 'Inventory & stock' },
+      { id: 'other', label: 'Other' },
+    ];
+    var sources = filteredImportSources();
+    if (!sources.length) {
+      el.innerHTML = '<p class="form-text">No platforms match your search.</p>';
+      return;
+    }
+    var html = '';
+    categories.forEach(function (cat) {
+      var items = sources.filter(function (s) { return (s.category || 'other') === cat.id; });
+      if (!items.length) return;
+      html += '<div class="commerce-import-source-group"><h4 class="commerce-import-source-group-title">' + escapeHtml(cat.label) + '</h4><div class="commerce-import-source-grid">';
+      html += items.map(function (src) {
+        return '<button type="button" class="commerce-import-source-card' + (src.id === importWizard.source ? ' is-active' : '') + '" data-source="' + escapeHtml(src.id) + '">'
+          + '<span class="commerce-import-source-badge">' + escapeHtml(platformBadge(src.name)) + '</span>'
+          + '<span class="commerce-import-source-name">' + escapeHtml(src.name) + '</span>'
+          + '<span class="commerce-import-source-desc">' + escapeHtml(src.description) + '</span>'
+          + '</button>';
+      }).join('');
+      html += '</div></div>';
+    });
+    el.innerHTML = html;
+    el.querySelectorAll('.commerce-import-source-card').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        importWizard.source = btn.getAttribute('data-source') || 'generic';
+        renderWizardSources();
+      });
+    });
+  }
+
+  function getSelectedSource() {
+    return importSourcesCache.find(function (s) { return s.id === importWizard.source; }) || { id: 'generic', name: 'Generic CSV' };
+  }
+
+  function updateWizardStepUI() {
+    var step = importWizard.step;
+    document.querySelectorAll('.commerce-import-wizard-pane').forEach(function (pane) {
+      var paneStep = parseInt(pane.getAttribute('data-step'), 10);
+      pane.hidden = paneStep !== step;
+      pane.classList.toggle('is-active', paneStep === step);
+    });
+    document.querySelectorAll('.commerce-import-wizard-step-indicator').forEach(function (ind) {
+      var indStep = parseInt(ind.getAttribute('data-step'), 10);
+      ind.classList.toggle('is-active', indStep === step);
+      ind.classList.toggle('is-done', indStep < step);
+    });
+    var subtitle = document.getElementById('commerce-import-wizard-subtitle');
+    if (subtitle) subtitle.textContent = 'Step ' + step + ' of 4 — ' + (IMPORT_STEP_LABELS[step - 1] || '');
+
+    var backBtn = document.getElementById('commerce-import-wizard-back');
+    var nextBtn = document.getElementById('commerce-import-wizard-next');
+    var importBtn = document.getElementById('commerce-import-wizard-import');
+    var doneBtn = document.getElementById('commerce-import-wizard-done');
+    var cancelBtn = document.getElementById('commerce-import-wizard-cancel');
+
+    if (backBtn) backBtn.hidden = step <= 1 || step === 4;
+    if (nextBtn) nextBtn.hidden = step >= 3;
+    if (importBtn) importBtn.hidden = step !== 3;
+    if (doneBtn) doneBtn.hidden = step !== 4;
+    if (cancelBtn) cancelBtn.hidden = step === 4;
+
+    if (step === 2) {
+      var src = getSelectedSource();
+      var platformEl = document.getElementById('commerce-import-selected-platform');
+      var stepsEl = document.getElementById('commerce-import-export-steps');
+      if (platformEl) {
+        platformEl.innerHTML = '<span class="commerce-import-source-badge">' + escapeHtml(platformBadge(src.name)) + '</span>'
+          + '<div><strong>' + escapeHtml(src.name) + '</strong><div class="form-hint">' + escapeHtml(src.description || '') + '</div></div>';
+      }
+      if (stepsEl) stepsEl.textContent = src.export_steps || '';
+    }
+  }
+
+  function openImportWizard() {
+    importWizard = { step: 1, source: 'generic', csv: '', fileName: '', preview: null, filter: 'all', search: '' };
+    var search = document.getElementById('commerce-import-search');
+    if (search) search.value = '';
+    document.querySelectorAll('#commerce-import-filters .btn').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-filter') === 'all');
+    });
+    var csvArea = document.getElementById('commerce-import-csv');
+    if (csvArea) csvArea.value = '';
+    var fileName = document.getElementById('commerce-import-file-name');
+    if (fileName) { fileName.textContent = 'No file selected'; delete fileName.dataset.filename; }
+    var fileInput = document.getElementById('commerce-import-file');
+    if (fileInput) fileInput.value = '';
+
+    var ensureSources = importSourcesCache.length
+      ? Promise.resolve()
+      : commercePost('import_sources').then(function (res) {
+        importSourcesCache = (res.data && res.data.sources) || [];
+      });
+
+    ensureSources.then(function () {
+      renderWizardSources();
+      updateWizardStepUI();
+      var modal = document.getElementById('commerce-import-wizard');
+      if (modal) {
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('commerce-import-wizard-open');
+      }
+    });
+  }
+
+  function closeImportWizard() {
+    var modal = document.getElementById('commerce-import-wizard');
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('commerce-import-wizard-open');
+  }
+
+  function setImportCsvContent(text) {
+    importWizard.csv = text || '';
+    var textarea = document.getElementById('commerce-import-csv');
+    if (textarea && text) textarea.value = text;
+  }
+
+  function readImportFile(file) {
+    if (!file) return;
+    importWizard.fileName = file.name;
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var nameEl = document.getElementById('commerce-import-file-name');
+      if (nameEl) {
+        nameEl.textContent = file.name;
+        nameEl.dataset.filename = file.name;
+      }
+      setImportCsvContent(ev.target.result || '');
+    };
+    reader.readAsText(file);
+  }
+
+  function getImportCsvPayload() {
+    return importWizard.csv || document.getElementById('commerce-import-csv')?.value || '';
+  }
+
+  function renderImportPreviewTable(preview) {
+    var tableEl = document.getElementById('commerce-import-preview-table');
+    if (!tableEl) return;
+    if (!preview || !preview.length) {
+      tableEl.innerHTML = '<p class="form-text">No products to preview.</p>';
+      return;
+    }
+    var html = '<table><thead><tr><th>Title</th><th>SKU</th><th>Price</th><th>Type</th></tr></thead><tbody>';
+    preview.slice(0, 50).forEach(function (row) {
+      html += '<tr><td>' + escapeHtml(row.title) + '</td><td>' + escapeHtml(row.sku || '—') + '</td><td>'
+        + ((row.price_cents || 0) / 100).toFixed(2) + '</td><td>' + (row.is_variant ? 'Variant' : 'Product') + '</td></tr>';
+    });
+    if (preview.length > 50) html += '<tr><td colspan="4">… and ' + (preview.length - 50) + ' more</td></tr>';
+    html += '</tbody></table>';
+    tableEl.innerHTML = html;
+  }
+
+  function runWizardDryRun() {
+    var csv = getImportCsvPayload();
+    var errEl = document.getElementById('commerce-import-review-error');
+    if (errEl) errEl.hidden = true;
+    return commercePost('import_dry_run', {
+      csv: csv,
+      preset: importWizard.source,
+      collection: document.getElementById('commerce-import-collection')?.value || 'products',
+      default_currency: document.getElementById('commerce-import-currency')?.value || 'eur',
+    }).then(function (res) {
+      if (res.status !== 'ok') {
+        if (errEl) { errEl.hidden = false; errEl.textContent = res.message || 'Preview failed'; }
+        return null;
+      }
+      importWizard.preview = res.data || {};
+      var summary = document.getElementById('commerce-import-review-summary');
+      if (summary) {
+        var count = res.data.count || 0;
+        var variants = (res.data.preview || []).filter(function (r) { return r.is_variant; }).length;
+        summary.innerHTML = [
+          { label: 'Products', value: count },
+          { label: 'Variants', value: variants },
+          { label: 'Collection', value: document.getElementById('commerce-import-collection')?.value || 'products' },
+          { label: 'Currency', value: (document.getElementById('commerce-import-currency')?.value || 'eur').toUpperCase() },
+        ].map(function (s) {
+          return '<div class="commerce-import-review-stat"><span class="form-hint">' + escapeHtml(s.label) + '</span><strong>' + escapeHtml(String(s.value)) + '</strong></div>';
+        }).join('');
+      }
+      renderImportPreviewTable((res.data && res.data.preview) || []);
+      return res.data;
+    });
+  }
+
+  function runWizardImport() {
+    var csv = getImportCsvPayload();
+    var importBtn = document.getElementById('commerce-import-wizard-import');
+    if (importBtn) { importBtn.disabled = true; importBtn.textContent = 'Importing…'; }
+    return commercePost('import_csv', {
+      csv: csv,
+      preset: importWizard.source,
+      collection: document.getElementById('commerce-import-collection')?.value || 'products',
+      default_currency: document.getElementById('commerce-import-currency')?.value || 'eur',
+      file_name: importWizard.fileName || null,
+    }).then(function (res) {
+      if (importBtn) { importBtn.disabled = false; importBtn.textContent = 'Import products'; }
+      if (res.status !== 'ok') {
+        alert(res.message || 'Import failed');
+        return;
+      }
+      importWizard.step = 4;
+      renderImportResult(res.data || {});
+      updateWizardStepUI();
+      loadImportHistory();
+    });
+  }
+
+  function renderImportResult(data) {
+    var card = document.getElementById('commerce-import-result-card');
+    var errorsWrap = document.getElementById('commerce-import-result-errors');
+    if (!card) return;
+    var status = data.status || 'success';
+    var src = getSelectedSource();
+    var collection = data.collection || document.getElementById('commerce-import-collection')?.value || 'products';
+    card.className = 'commerce-import-result-card is-' + status;
+    var title = status === 'success' ? 'Import complete' : (status === 'partial' ? 'Import completed with issues' : 'Import failed');
+    card.innerHTML = '<h3>' + escapeHtml(title) + '</h3>'
+      + '<p><strong>' + (data.imported_count || 0) + '</strong> products imported into <code>' + escapeHtml(collection) + '</code> from ' + escapeHtml(src.name) + '.</p>'
+      + '<p>Created: ' + (data.created_count || 0) + ' · Updated: ' + (data.updated_count || 0) + ' · Skipped: ' + (data.skipped_count || 0) + ' · Variants: ' + (data.variant_count || 0) + '</p>';
+    var skipped = data.skipped || [];
+    if (errorsWrap) {
+      if (!skipped.length) {
+        errorsWrap.hidden = true;
+        errorsWrap.innerHTML = '';
+      } else {
+        errorsWrap.hidden = false;
+        var html = '<table><thead><tr><th>Row</th><th>Product</th><th>Issue</th></tr></thead><tbody>';
+        skipped.forEach(function (row) {
+          html += '<tr><td>' + (row.row || '—') + '</td><td>' + escapeHtml(row.title || row.sku || '—') + '</td><td>' + escapeHtml(row.reason || '—') + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        errorsWrap.innerHTML = html;
+      }
+    }
+  }
+
+  function wizardNextStep() {
+    if (importWizard.step === 1) {
+      importWizard.step = 2;
+      updateWizardStepUI();
+      return;
+    }
+    if (importWizard.step === 2) {
+      if (!getImportCsvPayload().trim()) {
+        alert('Please upload or paste a CSV file first.');
+        return;
+      }
+      importWizard.step = 3;
+      updateWizardStepUI();
+      runWizardDryRun();
+      return;
+    }
+  }
+
+  function wizardBackStep() {
+    if (importWizard.step > 1 && importWizard.step < 4) {
+      importWizard.step--;
+      updateWizardStepUI();
+    }
+  }
+
+  function initImportWizard() {
+    document.getElementById('commerce-import-start')?.addEventListener('click', openImportWizard);
+    document.getElementById('commerce-import-history-refresh')?.addEventListener('click', loadImportHistory);
+    document.getElementById('commerce-import-wizard-close')?.addEventListener('click', closeImportWizard);
+    document.getElementById('commerce-import-wizard-overlay')?.addEventListener('click', closeImportWizard);
+    document.getElementById('commerce-import-wizard-cancel')?.addEventListener('click', closeImportWizard);
+    document.getElementById('commerce-import-wizard-back')?.addEventListener('click', wizardBackStep);
+    document.getElementById('commerce-import-wizard-next')?.addEventListener('click', wizardNextStep);
+    document.getElementById('commerce-import-wizard-import')?.addEventListener('click', runWizardImport);
+    document.getElementById('commerce-import-wizard-done')?.addEventListener('click', closeImportWizard);
+
+    document.getElementById('commerce-import-search')?.addEventListener('input', function (e) {
+      importWizard.search = e.target.value.trim();
+      renderWizardSources();
+    });
+
+    document.querySelectorAll('#commerce-import-filters .btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        importWizard.filter = btn.getAttribute('data-filter') || 'all';
+        document.querySelectorAll('#commerce-import-filters .btn').forEach(function (b) {
+          b.classList.toggle('is-active', b === btn);
+        });
+        renderWizardSources();
+      });
+    });
+
+    document.getElementById('commerce-import-browse')?.addEventListener('click', function () {
+      document.getElementById('commerce-import-file')?.click();
+    });
+
+    document.getElementById('commerce-import-file')?.addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (file) readImportFile(file);
+    });
+
+    var dropzone = document.getElementById('commerce-import-dropzone');
+    if (dropzone) {
+      dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('is-dragover'); });
+      dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('is-dragover'); });
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('is-dragover');
+        var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) readImportFile(file);
+      });
+    }
+
+    document.getElementById('commerce-import-csv')?.addEventListener('input', function (e) {
+      importWizard.fileName = '';
+      var nameEl = document.getElementById('commerce-import-file-name');
+      if (nameEl) {
+        delete nameEl.dataset.filename;
+        nameEl.textContent = e.target.value.trim()
+          ? 'CSV pasted (' + e.target.value.split('\n').length + ' lines)'
+          : 'No file selected';
+      }
+      setImportCsvContent(e.target.value);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !document.getElementById('commerce-import-wizard')?.hidden) {
+        closeImportWizard();
+      }
+    });
+  }
+
   function initCommerceTabs() {
     document.querySelectorAll('.commerce-tabs .payments-tab').forEach(function (tab) {
       tab.addEventListener('click', function () {
@@ -113,6 +947,9 @@
         if (name === 'orders') loadOrders();
         if (name === 'discounts') loadDiscounts();
         if (name === 'mappings') loadMappings();
+        if (name === 'shipping') loadShippingZones();
+        if (name === 'fieldtypes') loadFieldtypeProfiles();
+        if (name === 'import') loadImportTab();
       });
     });
   }
@@ -139,34 +976,7 @@
       commercePost('save_discount', { rule: rule }).then(loadDiscounts);
     });
 
-    document.getElementById('commerce-import-dry-run')?.addEventListener('click', function () {
-      var csv = document.getElementById('commerce-import-csv')?.value || '';
-      var preset = document.getElementById('commerce-import-preset')?.value || 'generic';
-      var collection = document.getElementById('commerce-import-collection')?.value || 'products';
-      commercePost('import_dry_run', { csv: csv, preset: preset, collection: collection }).then(function (res) {
-        var el = document.getElementById('commerce-import-result');
-        if (!el) return;
-        el.hidden = false;
-        el.textContent = res.status === 'ok'
-          ? 'Dry run: ' + ((res.data && res.data.count) || 0) + ' entries'
-          : (res.message || 'Failed');
-      });
-    });
-
-    document.getElementById('commerce-import-form')?.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var csv = document.getElementById('commerce-import-csv')?.value || '';
-      var preset = document.getElementById('commerce-import-preset')?.value || 'generic';
-      var collection = document.getElementById('commerce-import-collection')?.value || 'products';
-      commercePost('import_csv', { csv: csv, preset: preset, collection: collection }).then(function (res) {
-        var el = document.getElementById('commerce-import-result');
-        if (!el) return;
-        el.hidden = false;
-        el.textContent = res.status === 'ok'
-          ? 'Imported ' + ((res.data && res.data.count) || 0) + ' entries'
-          : (res.message || 'Failed');
-      });
-    });
+    initImportWizard();
 
     document.getElementById('commerce-mapping-form')?.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -194,6 +1004,70 @@
       }).then(function () {
         alert('Fulfillment settings saved');
       });
+    });
+
+    document.getElementById('commerce-add-shipping-zone')?.addEventListener('click', function () {
+      shippingZonesCache.push({ id: 'zone_' + Date.now(), name: 'New zone', countries: ['*'], flat_rate_cents: 500 });
+      renderShippingZones();
+    });
+
+    document.getElementById('commerce-save-shipping-zones')?.addEventListener('click', function () {
+      var el = document.getElementById('commerce-shipping-zones-list');
+      var zones = [];
+      el?.querySelectorAll('.commerce-shipping-zone').forEach(function (row, idx) {
+        var countriesRaw = row.querySelector('.zone-countries')?.value || '*';
+        zones.push({
+          id: shippingZonesCache[idx]?.id || ('zone_' + idx),
+          name: row.querySelector('.zone-name')?.value || 'Zone',
+          countries: countriesRaw.split(',').map(function (c) { return c.trim().toUpperCase(); }).filter(Boolean),
+          flat_rate_cents: parseInt(row.querySelector('.zone-rate')?.value || '0', 10),
+        });
+      });
+      commercePost('save_shipping_zones', { zones: zones }).then(function () {
+        alert('Shipping zones saved');
+        loadShippingZones();
+      });
+    });
+
+    document.getElementById('commerce-add-fieldtype-profile')?.addEventListener('click', newFieldtypeProfile);
+    document.getElementById('commerce-ft-save')?.addEventListener('click', saveFieldtypeProfile);
+    document.getElementById('commerce-ft-cancel')?.addEventListener('click', closeFieldtypeModal);
+    document.getElementById('commerce-ft-modal-close')?.addEventListener('click', closeFieldtypeModal);
+    document.getElementById('commerce-ft-modal-overlay')?.addEventListener('click', closeFieldtypeModal);
+    document.getElementById('commerce-ft-slug')?.addEventListener('input', updateTypePreview);
+    document.querySelectorAll('.commerce-ft-preset').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyPreset(btn.getAttribute('data-preset'));
+      });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !document.getElementById('commerce-fieldtype-modal')?.hidden) {
+        closeFieldtypeModal();
+      }
+    });
+    document.getElementById('commerce-ft-add-interval')?.addEventListener('click', function () {
+      if (!fieldtypeProfileDraft) return;
+      var value = document.getElementById('commerce-ft-interval-value').value.trim();
+      var label = document.getElementById('commerce-ft-interval-label').value.trim();
+      if (!value) return;
+      if (!label) label = value.replace(/_/g, ' ');
+      if (!fieldtypeProfileDraft.settings.interval_options) fieldtypeProfileDraft.settings.interval_options = [];
+      fieldtypeProfileDraft.settings.interval_options.push({ value: value, label: label });
+      document.getElementById('commerce-ft-interval-value').value = '';
+      document.getElementById('commerce-ft-interval-label').value = '';
+      renderIntervalRows(fieldtypeProfileDraft.settings.interval_options);
+    });
+    document.getElementById('commerce-ft-add-custom-field')?.addEventListener('click', function () {
+      if (!fieldtypeProfileDraft) return;
+      var key = document.getElementById('commerce-ft-cf-key').value.trim().replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+      var label = document.getElementById('commerce-ft-cf-label').value.trim();
+      if (!key) return;
+      if (!label) label = key;
+      if (!fieldtypeProfileDraft.settings.custom_fields) fieldtypeProfileDraft.settings.custom_fields = [];
+      fieldtypeProfileDraft.settings.custom_fields.push({ key: key, label: label, type: 'text' });
+      document.getElementById('commerce-ft-cf-key').value = '';
+      document.getElementById('commerce-ft-cf-label').value = '';
+      renderCustomFieldRows(fieldtypeProfileDraft.settings.custom_fields);
     });
   }
 

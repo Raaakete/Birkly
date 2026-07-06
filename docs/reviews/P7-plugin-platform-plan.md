@@ -2,8 +2,8 @@
 
 **Status:** Proposed (2026-07-06) — pending human approval  
 **Repo:** Birkly (primary) · Birkly-Docs  
-**Baseline:** P6.4 complete · **P6.5 approved but not executed** (handoff only on `main`)  
-**Trigger:** Live feedback — wrong plugin breadcrumbs, inconsistent layouts, AI lacks Commerce docs, User plugin broken, legacy plugins still present
+**Baseline:** P6.4–P6.7 complete on `main` (Commerce v2, bundles, import, 91 tests) · **docs_shelf shipped** — only Commerce registers docs today  
+**Trigger:** Live feedback — wrong plugin breadcrumbs, User plugin broken, AI still lacks Commerce in chat (deploy/topic gap), legacy plugins in sidebar
 
 ---
 
@@ -11,24 +11,23 @@
 
 | Item | State |
 |------|--------|
-| **P6.4 Commerce** | Shipped — `plugins/commerce/` functional (screenshot: Connections, Catalog, etc.) |
-| **P6.5 Commerce Wave** | **Approved, not coded** — fieldtype v2, fulfillment, variants still pending |
-| **payments plugin** | Shim still in repo + sidebar |
-| **shopping_cart plugin** | Still active — superseded by Commerce |
-| **Plugin breadcrumbs** | Wrong — `Settings › Commerce`, `Settings › Automation`, `Dashboard › User Management` |
-| **Plugin titles** | Duplicate — breadcrumb in topbar + `<h1>` in page body |
-| **Header padding** | Extra `page-header` padding; breadcrumbs hoisted to topbar but page headers remain |
-| **register_plugin_docs()** | **Not implemented** — AI reads old context pack only (Automation + User Management mentions) |
-| **User Management** | **Broken on live** — tabs visible, content empty (layout/CSS/JS regression) |
-| **Events** | Basic registration list — no fieldtype, no calendar, no Commerce-native event model |
-| **Automation** | Form-based editor — no node canvas |
-| **Tests** | 84 suites green |
+| **P6.5–P6.7 Commerce** | **Shipped** — fieldtype v2 (`fulfillment` + `purchase_options[]`), variants, PostPurchaseRouter, bundles, import profiles |
+| **docs_shelf + register_plugin_docs** | **Core shipped** — Commerce registers; Automation, User, Events **do not** |
+| **Help plugin section** | **Partial** — help.js supports sections; only Commerce topics appear |
+| **payments + shopping_cart** | Still in repo + sidebar — remove in P7 |
+| **Plugin breadcrumbs** | Still wrong — `Settings › Commerce` (see screenshot) |
+| **User Management** | **Broken on live** — tabs, no content |
+| **Events** | Legacy list UI — no event fieldtype / calendar |
+| **Automation** | Form editor — no node canvas |
+| **Tests** | 91 suites green |
 
 ---
 
 ## Phase goal
 
-One **plugin platform layer** in core + unified admin experience across all plugins, remove legacy commerce plugins, fix User Management, evolve Events & Automation — while **completing P6.5 Commerce Wave** on the new shell.
+One **plugin platform layer** in core + unified admin experience across all plugins, remove legacy commerce plugins, fix User Management, evolve Events & Automation.
+
+**P6.5 Commerce Wave is complete** — P7 does not re-implement commerce fieldtype/checkout.
 
 **Design reference:** `admin/templates/entries.html`, `entry-editor.html`, `content.html` — breadcrumbs only, `main-actions-bar`, smart-table patterns, no duplicate titles.
 
@@ -75,7 +74,7 @@ flowchart TB
 | P6 | `register_plugin_docs()` — **all active plugins** ship Help + AI docs before phase closure |
 | P7 | Events: **event fieldtype** + indexer (parallel to Commerce catalog pattern) |
 | P8 | Automation node editor — **new UI**; keep form editor as fallback export/import |
-| P9 | P6.5 Commerce Wave **still required** — execute on new plugin shell (not cancelled) |
+| P9 | P6.5 **complete** — P7 migrates Commerce **admin UI only** (shell), no commerce logic redo |
 
 ---
 
@@ -117,7 +116,7 @@ flowchart TB
 | M1-T5 | `generateSystemContext()` + MCP dynamic topics |
 | M1-T6 | `tests/plugin_docs_shelf_test.php` |
 
-**Plugins required to register in M1:** commerce, automation, user_management, events
+**Plugins required to register in M1:** automation, user_management, events (commerce **done**); verify AI topic `commerce` resolves on live
 
 ---
 
@@ -152,27 +151,20 @@ flowchart TB
 
 ---
 
-## P7-M4 — Plugin UI migration (Commerce, Automation, Events)
+## P7-M4 — Plugin UI migration (Commerce, Automation, Events, User)
 
 | Task | Deliverable |
 |------|-------------|
 | M4-T1 | Commerce admin → plugin shell; remove Settings breadcrumb + duplicate h1 |
 | M4-T2 | Automation admin → plugin shell |
 | M4-T3 | Events admin → plugin shell |
-| M4-T4 | Shared tab component (match settings/content tab styling) |
-| M4-T5 | design-reviewer pass on all four plugin pages |
+| M4-T4 | User Management → plugin shell (coordinate with M3) |
+| M4-T5 | Shared tab component (match entries/content tab styling) |
+| M4-T6 | design-reviewer pass on all plugin pages |
 
 ---
 
-## P7-M5 — P6.5 Commerce Wave (on new shell)
-
-**Execute** `docs/reviews/P6.5-lead-engineer-handoff.md` M1–M6 on the P7-M0 shell.
-
-Commerce admin tabs gain: Fieldtypes, Shipping (from handoff). Do not duplicate M4 Commerce shell work.
-
----
-
-## P7-M6 — Events plugin v2
+## P7-M5 — Events plugin v2
 
 **Goal:** Content-first events with fieldtype + plugin dashboard (not separate events collection only).
 
@@ -221,32 +213,32 @@ Register `event` fieldtype (Events plugin) on entries in **any** collection:
 
 | Task | Deliverable |
 |------|-------------|
-| M6-T1 | Event fieldtype + shelf registration |
-| M6-T2 | EventIndexer + admin Calendar/Overview |
-| M6-T3 | Attendees tab (Commerce + legacy merge view) |
-| M6-T4 | Attendee messages → Automation trigger `events_message_attendees` |
-| M6-T5 | Template functions update |
-| M6-T6 | Tests + plugin docs |
-| M6-T7 | Coexistence + migration note from legacy events collection |
+| M5-T1 | Event fieldtype + shelf registration |
+| M5-T2 | EventIndexer + admin Calendar/Overview |
+| M5-T3 | Attendees tab (Commerce + legacy merge view) |
+| M5-T4 | Attendee messages → Automation trigger `events_message_attendees` |
+| M5-T5 | Template functions update |
+| M5-T6 | Tests + plugin docs |
+| M5-T7 | Coexistence + migration note from legacy events collection |
 
 ---
 
-## P7-M7 — Automation node editor
+## P7-M6 — Automation node editor
 
 **Goal:** Visual node-based workflow editor (comprehensive, not replacement of runtime engine).
 
 | Task | Deliverable |
 |------|-------------|
-| M7-T1 | Canvas UI (SVG or DOM nodes) — triggers, conditions, actions as nodes |
-| M7-T2 | Edge connections; validate acyclic flow |
-| M7-T3 | Serialize to existing automation JSON schema (backward compatible) |
-| M7-T4 | Import/export; form view toggle for power users |
-| M7-T5 | Node palette: Commerce triggers, Events triggers, User triggers, webhooks |
-| M7-T6 | Tests + docs |
+| M6-T1 | Canvas UI (SVG or DOM nodes) — triggers, conditions, actions as nodes |
+| M6-T2 | Edge connections; validate acyclic flow |
+| M6-T3 | Serialize to existing automation JSON schema (backward compatible) |
+| M6-T4 | Import/export; form view toggle for power users |
+| M6-T5 | Node palette: Commerce triggers, Events triggers, User triggers, webhooks |
+| M6-T6 | Tests + docs |
 
 **Lean guardrail:** Runtime engine unchanged — editor is a new view over same JSON.
 
-**Scope note:** M7 is the largest milestone — may split to P7.5 if needed; minimum viable: linear node chain before branching.
+**Scope note:** M6 is the largest milestone — may split to P7.5 if needed; minimum viable: linear node chain before branching.
 
 ---
 
@@ -256,13 +248,12 @@ Register `event` fieldtype (Events plugin) on entries in **any** collection:
 P7-M0 Shell ──┬── P7-M1 Docs shelf
               ├── P7-M3 User fix (parallel)
               └── P7-M4 UI migration
-P7-M2 Remove legacy (after Commerce tests pass)
-P7-M5 P6.5 Commerce Wave
-P7-M6 Events v2
-P7-M7 Automation nodes
+P7-M2 Remove legacy (after Commerce regression pass)
+P7-M5 Events v2
+P7-M6 Automation nodes
 ```
 
-**Human notify:** once at P7 closure (after M7 or agreed subset).
+**Human notify:** once at P7 closure (after M6 or agreed subset).
 
 ---
 
@@ -282,9 +273,8 @@ P7-M7 Automation nodes
 3. Help → Plugin extensions lists Commerce, Automation, User Management, Events.
 4. payments + shopping_cart removed; tests green.
 5. Site Users tabs render and save.
-6. P6.5 scenario matrix passes (yoga, coffee, course, community).
-7. Events calendar + attendees from indexed fieldtype entries.
-8. Automation node editor saves workflows readable by existing engine.
+6. Events calendar + attendees from indexed fieldtype entries.
+7. Automation node editor saves workflows readable by existing engine.
 
 ---
 
@@ -292,9 +282,9 @@ P7-M7 Automation nodes
 
 | Doc | Role |
 |-----|------|
-| `P6.5-lead-engineer-handoff.md` | Commerce Wave — **P7-M5** |
-| `P6-commerce-scenarios-and-model.md` | Commerce content model — unchanged |
-| `P6.5-commerce-polish-ai-plan.md` | Docs shelf spec — **P7-M1** |
+| `P6.5-lead-engineer-handoff.md` | Commerce Wave — **complete on main** |
+| `P6-commerce-scenarios-and-model.md` | Commerce content model |
+| `P6.5-commerce-polish-ai-plan.md` | Docs shelf spec — **partial (Commerce only)** |
 | `PLUGIN_CSS_GUIDE.md` | Superseded in part by **PLUGIN_ADMIN_UI_GUIDE** |
 
 ---
