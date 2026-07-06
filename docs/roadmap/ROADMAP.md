@@ -194,7 +194,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `user_management`, `commerce`, `payments` (shim), `shopping_cart`, `events`, `sample-plugin`
 
-**Next active phase:** **P7 Plugin platform & UX** (approved) — `docs/reviews/P7-lead-engineer-handoff.md`
+**Next active phase:** Post-P7 backlog (Marketplace P7.0, import P7.1) — see § Phase 7 closure
 
 **2026-07-06 — Phase 7 approved** (Keven)
 
@@ -2111,7 +2111,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 7 — Plugin platform, UX & ecosystem
 
-**Status:** Approved (2026-07-06, Keven) — autonomous execution P7-M0→M6
+**Status:** **M6 complete** (2026-07-06) — Automation node editor shipped · M5 events v2 pending · **Matrix:** `docs/reviews/P7-verification-matrix.md`
 
 **Spec:** `docs/reviews/P7-plugin-platform-plan.md` · **Handoff:** `docs/reviews/P7-lead-engineer-handoff.md`
 
@@ -2119,13 +2119,13 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P7-M0** | Plugin admin shell (core) | pending |
-| **P7-M1** | Plugin docs — all plugins AI + Help | pending |
-| **P7-M2** | Remove payments + shopping_cart | pending |
-| **P7-M3** | User Management repair | pending |
-| **P7-M4** | Plugin UI migration (all plugins) | pending |
-| **P7-M5** | Events v2 — fieldtype, recurring, calendar, iCal/sync, attendees | pending |
-| **P7-M6** | Automation node editor + closure | pending |
+| **P7-M0** | Plugin admin shell (core) | complete |
+| **P7-M1** | Plugin docs — all plugins AI + Help | complete |
+| **P7-M2** | Remove payments + shopping_cart | complete |
+| **P7-M3** | User Management repair | complete |
+| **P7-M4** | Plugin UI migration (all plugins) | complete |
+| **P7-M5** | Events v2 — fieldtype, recurring, calendar, iCal/sync, attendees | pending (WIP on disk; not in this merge) |
+| **P7-M6** | Automation node editor + closure | complete |
 
 ---
 

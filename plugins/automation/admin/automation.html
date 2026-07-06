@@ -56,7 +56,19 @@
       <h2 id="automation-modal-title">{translate 'admin.create_automation'}</h2>
       <button class="modal-close-btn" onclick="closeAutomationModal()">&times;</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body automation-modal-body">
+      <div class="automation-editor-toolbar">
+        <div class="automation-editor-mode-toggle" role="tablist" aria-label="Editor mode">
+          <button type="button" class="btn btn-sm editor-mode-btn active" data-mode="form" role="tab" aria-selected="true" onclick="setAutomationEditorMode('form')">Form editor</button>
+          <button type="button" class="btn btn-sm editor-mode-btn" data-mode="canvas" role="tab" aria-selected="false" onclick="setAutomationEditorMode('canvas')">Node canvas</button>
+        </div>
+        <div class="automation-editor-canvas-actions" id="canvas-toolbar-actions" style="display:none">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="exportCanvasJson()" title="Export canvas JSON">Export</button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="importCanvasJson()" title="Import canvas JSON">Import</button>
+        </div>
+      </div>
+
+      <div id="automation-form-editor" class="automation-editor-panel">
       <form id="automation-form">
         <input type="hidden" id="automation-id" name="automation_id">
 
@@ -140,6 +152,18 @@
         </div>
 
       </form>
+      </div>
+
+      <div id="automation-canvas-editor" class="automation-editor-panel" style="display:none">
+        <div class="node-editor-layout">
+          <aside id="node-palette" class="node-palette" aria-label="Block palette"></aside>
+          <div class="node-canvas-column">
+            <div id="node-canvas" class="node-canvas" aria-label="Workflow canvas"></div>
+            <div id="node-inspector" class="node-inspector-panel" aria-label="Node configuration"></div>
+          </div>
+        </div>
+        <div id="canvas-validation-errors" class="canvas-validation-errors" style="display:none" role="alert"></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" onclick="closeAutomationModal()">{translate 'admin.cancel'}</button>
@@ -168,4 +192,6 @@
   </div>
 </div>
 
+<script src="{birkly_url '/plugins/automation/admin/automation_node_serializer.js'}"></script>
+<script src="{birkly_url '/plugins/automation/admin/automation_node_editor.js'}"></script>
 <script src="{birkly_url '/plugins/automation/admin/automation.js'}"></script>
