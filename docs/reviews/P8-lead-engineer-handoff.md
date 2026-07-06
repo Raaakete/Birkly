@@ -1,7 +1,7 @@
 # Phase 8 — Reference site, commerce production & cell merge — lead-engineer handoff
 
-**Status:** Approved (2026-07-06, Keven) — autonomous execution P8-M0→M6  
-**Baseline:** P6.1–P6.7 + P7 complete on `main` (**92 test suites**)  
+**Status:** Complete (2026-07-06) — autonomous execution P8-M0→M6 delivered  
+**Baseline:** P6.1–P6.7 + P7 + P8 complete on `main` (**96 test suites**)  
 **Human rule:** Execute **P8-M0 → P8-M6** autonomously. Notify human **once** at **P8-M6 closure**.
 
 **Product spec:** `docs/reviews/P8-reference-commerce-plan.md`  
