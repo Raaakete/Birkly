@@ -4,8 +4,13 @@
 {plugin_page_header}
 
 <div class="payments-page commerce-page plugin-page">
-  <div class="payments-toolbar">
-    <p style="margin:0;color:var(--text-secondary);font-size:0.9375rem">Payments, catalog, cart, orders, discounts, and fulfillment</p>
+  <div class="main-actions-bar" id="commerce-tab-actions">
+    <button class="btn btn-primary" id="payments-add-connection" data-commerce-tab="connections">Add Connection</button>
+    <button class="btn btn-secondary" id="commerce-reindex" data-commerce-tab="catalog" hidden>Reindex</button>
+    <button class="btn btn-primary" id="commerce-add-discount" data-commerce-tab="discounts" hidden>Add Rule</button>
+    <button type="button" class="btn btn-primary" id="commerce-import-start" data-commerce-tab="import" hidden>Import products</button>
+    <button class="btn btn-primary" id="commerce-add-shipping-zone" data-commerce-tab="shipping" hidden>Add Zone</button>
+    <button class="btn btn-primary" id="commerce-add-fieldtype-profile" data-commerce-tab="fieldtypes" hidden>New fieldtype</button>
   </div>
 
   <div class="payments-tabs commerce-tabs" role="tablist">
@@ -25,7 +30,6 @@
   <div id="payments-tab-connections" class="payments-tab-panel active" role="tabpanel">
     <div class="payments-panel-header">
       <h2>Provider Connections</h2>
-      <button class="btn btn-primary" id="payments-add-connection">Add Connection</button>
     </div>
     <div id="payments-providers-matrix" class="payments-providers-matrix"></div>
     <div id="payments-connections-list" class="payments-connections-list">
@@ -36,7 +40,6 @@
   <div id="payments-tab-catalog" class="payments-tab-panel" role="tabpanel" hidden>
     <div class="payments-panel-header">
       <h2>Catalog</h2>
-      <button class="btn btn-secondary" id="commerce-reindex">Reindex</button>
     </div>
     <div id="commerce-catalog-list" class="payments-connections-list">
       <div class="loading-state"><p>Loading catalog…</p></div>
@@ -53,7 +56,6 @@
   <div id="payments-tab-discounts" class="payments-tab-panel" role="tabpanel" hidden>
     <div class="payments-panel-header">
       <h2>Discount Rules</h2>
-      <button class="btn btn-primary" id="commerce-add-discount">Add Rule</button>
     </div>
     <div id="commerce-discounts-list" class="payments-connections-list"></div>
   </div>
@@ -64,7 +66,6 @@
         <h2>Product imports</h2>
         <p>Move your catalog from online stores or inventory systems into Birkly. Each import creates or updates entries in a collection with Commerce pricing and stock.</p>
       </div>
-      <button type="button" class="btn btn-primary" id="commerce-import-start">Import products</button>
     </div>
 
     <div class="commerce-import-stats" id="commerce-import-stats" hidden></div>
@@ -115,7 +116,6 @@
   <div id="payments-tab-shipping" class="payments-tab-panel" role="tabpanel" hidden>
     <div class="payments-panel-header">
       <h2>Shipping Zones</h2>
-      <button class="btn btn-primary" id="commerce-add-shipping-zone">Add Zone</button>
     </div>
     <p class="form-text">Flat rate per zone (v1). Use * in countries for default fallback.</p>
     <div id="commerce-shipping-zones-list" class="payments-connections-list">
@@ -130,7 +130,6 @@
         <h2>Commerce Fieldtypes</h2>
         <p class="commerce-ft-intro">Saved profiles become selectable field types when you build collections. Configure fulfillment, billing intervals, and custom fields once — reuse everywhere.</p>
       </div>
-      <button class="btn btn-primary" id="commerce-add-fieldtype-profile">New fieldtype</button>
     </div>
 
     <div id="commerce-fieldtype-profiles-list" class="commerce-ft-grid">
