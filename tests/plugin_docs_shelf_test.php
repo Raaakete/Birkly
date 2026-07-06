@@ -122,6 +122,47 @@ if ($commerceDocs !== null) {
     test_assert('commerce docs skipped (plugin inactive or missing)', true);
 }
 
+
+// --- P7-M1: automation, user_management, events plugin docs ---
+
+$pluginDocSlugs = [
+    'automation' => ['plugin' => 'automation', 'needle' => 'workflow'],
+    'user_management' => ['plugin' => 'user_management', 'needle' => 'registration'],
+    'events' => ['plugin' => 'events', 'needle' => 'rsvp'],
+];
+
+foreach ($pluginDocSlugs as $slug => $meta) {
+    $pluginId = $meta['plugin'];
+    $pluginPath = dirname(__DIR__) . '/plugins/' . $pluginId . '/plugin.php';
+    if (!is_file($pluginPath)) {
+        test_assert("$pluginId plugin.php exists for docs", false);
+        continue;
+    }
+
+    $birkly_plugins[$pluginId]['active'] = true;
+    $registerDocs = dirname(__DIR__) . '/plugins/' . $pluginId . '/docs/register_docs.php';
+    if (is_file($registerDocs)) {
+        require $registerDocs;
+    } elseif (is_file($pluginPath)) {
+        include_once $pluginPath;
+    }
+
+    $docs = get_plugin_docs($pluginId);
+    test_assert("$pluginId registers plugin docs", $docs !== null && ($docs['mcp_topic_slug'] ?? '') === $slug);
+    test_assert("$pluginId ai doc file exists", is_file($docs['docs']['ai'] ?? ''));
+    test_assert("$pluginId help overview exists", is_file($docs['docs']['help'] ?? ''));
+
+    $bySlug = get_plugin_docs_by_topic_slug($slug);
+    test_assert("get_plugin_docs_by_topic_slug($slug) resolves", $bySlug !== null && ($bySlug['plugin_id'] ?? '') === $pluginId);
+
+    require_once dirname(__DIR__) . '/api/ai_helpers.php';
+    $topic = readBirklyDocsTopic($slug);
+    test_assert("readBirklyDocsTopic($slug) loads", $topic !== null && stripos($topic['text'] ?? '', $meta['needle']) !== false);
+
+    test_assert("$pluginId help_topics registered", count($docs['docs']['help_topics'] ?? []) >= 2);
+}
+
+
 // --- API files exist ---
 
 test_assert('api/help_manifest.php exists', is_file(dirname(__DIR__) . '/api/help_manifest.php'));
