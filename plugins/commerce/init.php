@@ -25,15 +25,12 @@ function commerce_plugin_active(): bool
     if (!function_exists('birkly_is_plugin_active')) {
         require_once dirname(__DIR__, 2) . '/core/plugins.php';
     }
-    return birkly_is_plugin_active('commerce') || birkly_is_plugin_active('payments');
+    return birkly_is_plugin_active('commerce');
 }
 
 function commerce_active_plugin_id(): string
 {
-    if (function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('commerce')) {
-        return 'commerce';
-    }
-    return 'payments';
+    return 'commerce';
 }
 
 function commerce_migrate_legacy_data(): void
@@ -198,16 +195,11 @@ function commerce_can_view_orders(): bool
 
 function commerce_get_setting(string $key, $default = null)
 {
-    $pluginId = commerce_active_plugin_id();
     if (function_exists('get_plugin_setting')) {
-        $val = get_plugin_setting($pluginId, $key, null);
+        $val = get_plugin_setting('commerce', $key, null);
         if ($val !== null) {
             return $val;
         }
-        if ($pluginId === 'commerce') {
-            return get_plugin_setting('payments', $key, $default);
-        }
-        return get_plugin_setting('commerce', $key, $default);
     }
     return $default;
 }

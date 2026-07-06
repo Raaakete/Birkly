@@ -45,7 +45,7 @@ if (function_exists('register_plugin_fieldtype') && commerce_plugin_active()) {
 
 if (function_exists('register_hook')) {
     register_hook('plugin_activated', function ($plugin_id) {
-        if ($plugin_id === 'commerce' || $plugin_id === 'payments') {
+        if ($plugin_id === 'commerce') {
             commerce_migrate_legacy_data();
             commerce_bootstrap();
         }
@@ -192,7 +192,4 @@ if (function_exists('register_plugin_docs') && commerce_plugin_active()) {
 global $birkly_plugins;
 if (isset($birkly_plugins['commerce'])) {
     $birkly_plugins['commerce']['dashboard_widgets_callback'] = 'commerce_dashboard_widgets';
-}
-if (isset($birkly_plugins['payments'])) {
-    $birkly_plugins['payments']['dashboard_widgets_callback'] = 'payments_dashboard_widgets';
 }

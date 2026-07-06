@@ -104,6 +104,10 @@ function load_plugin_states() {
     global $birkly_plugins;
     $storage = new PluginStorage(__DIR__ . '/../settings');
     $states = $storage->read('plugins.json') ?? [];
+
+    if (birkly_migrate_removed_plugin_states($states)) {
+        $storage->write('plugins.json', $states);
+    }
     
     foreach ($states as $id => $state) {
         if (isset($birkly_plugins[$id])) {
@@ -111,6 +115,47 @@ function load_plugin_states() {
             $birkly_plugins[$id]['settings'] = $state['settings'] ?? [];
         }
     }
+}
+
+/**
+ * Migrate legacy plugin ids removed in P7-M2 (payments, shopping_cart → commerce).
+ */
+function birkly_migrate_removed_plugin_states(array &$states): bool
+{
+    $changed = false;
+
+    if (isset($states['payments'])) {
+        $paymentsActive = !empty($states['payments']['active']);
+        $paymentsSettings = $states['payments']['settings'] ?? [];
+        unset($states['payments']);
+        $changed = true;
+
+        if ($paymentsActive) {
+            $states['commerce'] = $states['commerce'] ?? ['active' => false, 'settings' => []];
+            if (empty($states['commerce']['active'])) {
+                $states['commerce']['active'] = true;
+            }
+            $states['commerce']['settings'] = array_merge(
+                $paymentsSettings,
+                $states['commerce']['settings'] ?? []
+            );
+        }
+    }
+
+    if (isset($states['shopping_cart'])) {
+        $cartActive = !empty($states['shopping_cart']['active']);
+        unset($states['shopping_cart']);
+        $changed = true;
+
+        if ($cartActive) {
+            $states['commerce'] = $states['commerce'] ?? ['active' => false, 'settings' => []];
+            if (empty($states['commerce']['active'])) {
+                $states['commerce']['active'] = true;
+            }
+        }
+    }
+
+    return $changed;
 }
 
 // Plugin metadata management
@@ -375,6 +420,9 @@ function load_plugins($plugins_dir = null) {
     load_plugin_states();
     $settingsStorage = new PluginStorage(__DIR__ . '/../settings');
     $persistedPluginStates = $settingsStorage->read('plugins.json') ?? [];
+    if (birkly_migrate_removed_plugin_states($persistedPluginStates)) {
+        $settingsStorage->write('plugins.json', $persistedPluginStates);
+    }
     $automationDefaultActivated = false;
     
     // Check if plugins directory exists
@@ -456,6 +504,8 @@ function load_plugins($plugins_dir = null) {
 
     // Cleanup: remove empty legacy plugin folders (e.g. after renames)
     birkly_cleanup_empty_plugin_dir($plugins_dir . '/social_demo');
+    birkly_cleanup_empty_plugin_dir($plugins_dir . '/payments');
+    birkly_cleanup_empty_plugin_dir($plugins_dir . '/shopping_cart');
 
     if ($automationDefaultActivated) {
         save_plugin_states();

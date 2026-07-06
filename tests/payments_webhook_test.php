@@ -9,14 +9,14 @@ test_reset_failures();
 echo "Payments webhook tests\n\n";
 
 $root = dirname(__DIR__);
-require_once $root . '/plugins/payments/includes/ProviderInterface.php';
-require_once $root . '/plugins/payments/includes/AbstractProvider.php';
-require_once $root . '/plugins/payments/includes/CredentialStore.php';
-require_once $root . '/plugins/payments/includes/ActivityLog.php';
-require_once $root . '/plugins/payments/includes/ProviderResolver.php';
-require_once $root . '/plugins/payments/includes/WebhookRouter.php';
-require_once $root . '/plugins/payments/includes/providers/StripeProvider.php';
-require_once $root . '/plugins/payments/includes/providers/MollieProvider.php';
+require_once $root . '/plugins/commerce/includes/ProviderInterface.php';
+require_once $root . '/plugins/commerce/includes/AbstractProvider.php';
+require_once $root . '/plugins/commerce/includes/CredentialStore.php';
+require_once $root . '/plugins/commerce/includes/ActivityLog.php';
+require_once $root . '/plugins/commerce/includes/ProviderResolver.php';
+require_once $root . '/plugins/commerce/includes/WebhookRouter.php';
+require_once $root . '/plugins/commerce/includes/providers/StripeProvider.php';
+require_once $root . '/plugins/commerce/includes/providers/MollieProvider.php';
 
 $dataDir = sys_get_temp_dir() . '/birkly-payments-webhook-' . getmypid();
 if (!is_dir($dataDir)) {
