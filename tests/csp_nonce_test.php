@@ -49,7 +49,8 @@ try {
     preg_match('/name="_csrf"\s+value="([^"]+)"/', $loginGet['body'], $csrfMatch);
     $loginCsrf = $csrfMatch[1] ?? '';
 
-    $loginHeaders = $loginGet['headers'] ?? '';
+    $loginPage = birkly_test_http_request($base . '/admin/login.php');
+    $loginHeaders = $loginPage['headers'] ?? '';
     test_assert(
         'login CSP header uses nonce',
         is_string($loginHeaders)
@@ -62,7 +63,7 @@ try {
     );
     test_assert(
         'login inline script has nonce attribute',
-        preg_match('/<script\s+nonce="[^"]+"/', $loginGet['body'] ?? '') === 1
+        preg_match('/<script[^>]*\snonce="[^"]+"/', $loginPage['body'] ?? '') === 1
     );
 
     $loginPost = birkly_test_http_request($base . '/admin/login.php', [
