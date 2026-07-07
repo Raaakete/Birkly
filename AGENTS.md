@@ -7,6 +7,7 @@ Flat-file PHP CMS and its client sites. This repo (`Birkly`) is the **platform c
 | Repo | Purpose |
 |------|---------|
 | `Raaakete/Birkly` | Core CMS — admin, API, fieldtypes, plugins, templating (this repo) |
+| `Raaakete/Birkly-Marketplace` | Plugin/theme marketplace — catalog, providers, payments, registry API |
 | `Raaakete/Birkly-Website` | Birkly marketing / beta site |
 | `Raaakete/kekaba` | Kekaba client site |
 | `Raaakete/Birkly-Docs` | Product and API documentation |
@@ -43,7 +44,7 @@ Run existing tests or manual smoke checks before opening PRs. Verify admin login
 ## Cursor Cloud specific instructions
 
 - Cloud VMs run Ubuntu. PHP is installed via `.cursor/environment.json` `install` script.
-- **Multi-repo layout:** In a multi-repo environment, repos clone as siblings (e.g. `/workspace` = Birkly, siblings nearby). If only `/workspace` exists with one repo, the multi-repo environment is not attached — report FAIL and ask the human to fix the cloud environment in the dashboard.
+- **Multi-repo layout:** In a multi-repo environment, repos clone as siblings (e.g. `/agent/repos/Birkly`, `/agent/repos/Birkly-Marketplace`). If an expected repo is missing, see `docs/agent-ops/CLOUD_ENV_REPOS.md` and ask the human to add it in the Cursor Cloud dashboard.
 - CMS dev server (Birkly repo root): `php -S localhost:8080 -t . server-router.php`
 - Client sites are static HTML; serve with `python3 -m http.server 8000` when needed.
 - Do not commit runtime data (see Architecture rules above).
