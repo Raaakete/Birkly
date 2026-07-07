@@ -33,6 +33,21 @@
       "download_count": 312
     },
     {
+      "slug": "birkly-analytics-pro",
+      "title": "Birkly Analytics Pro",
+      "summary": "Official analytics plugin — monthly subscription for traffic insights.",
+      "description": "Track page views, referrers, and conversion funnels. Subscription includes ongoing updates.",
+      "offer_type": "plugin",
+      "category": "marketing",
+      "tags": ["analytics", "official", "subscription"],
+      "pricing": { "currency": "USD", "model": "subscription", "amount_cents": 999, "subscription_interval": "month" },
+      "compatibility": { "requires_birkly": ">=0.1.0", "requires_php": ">=8.1" },
+      "latest_version": "1.0.0",
+      "provider_id": "prov_official_birkly",
+      "rating_summary": { "average": 4.5, "count": 12 },
+      "download_count": 210
+    },
+    {
       "slug": "birkly-commerce",
       "title": "Birkly Commerce",
       "summary": "Official commerce plugin — payment providers, catalog, cart, checkout, orders, and fulfillment.",
