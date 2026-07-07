@@ -37,6 +37,19 @@
                     <option value="question">Question</option>
                 </select>
             </div>
+            <div class="form-group" style="margin: 0;">
+                <label for="feedback-filter-category">Category</label>
+                <select id="feedback-filter-category" class="form-control">
+                    <option value="">All categories</option>
+                    <option value="admin">Admin &amp; settings</option>
+                    <option value="content">Content &amp; editor</option>
+                    <option value="commerce">Commerce</option>
+                    <option value="marketplace">Marketplace &amp; plugins</option>
+                    <option value="plugins">Installed plugins</option>
+                    <option value="ai">AI &amp; MCP</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
             <button type="button" class="btn btn-secondary" id="feedback-refresh-btn">Refresh</button>
         </div>
     </div>
@@ -51,6 +64,7 @@
                 <tr>
                     <th>Date</th>
                     <th>Type</th>
+                    <th>Category</th>
                     <th>Title</th>
                     <th>From</th>
                     <th>Status</th>
