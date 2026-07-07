@@ -2,11 +2,17 @@
 # Sync platform Birkly into a client site Birkly-0.1 embed (P2-M7-T1).
 #
 # Usage:
-#   ./scripts/sync-client-embed.sh /path/to/kekaba
+#   ./scripts/sync-client-embed.sh /path/to/kekaba scripts/fixtures/kekaba-embed-excludes.txt
 #   ./scripts/sync-client-embed.sh /path/to/Birkly-Website
 #   BIRKLY_SRC=/custom/birkly ./scripts/sync-client-embed.sh /path/to/site
 #
 # Optional second arg: path to extra rsync --exclude-from file (one pattern per line).
+#
+# Plugins: official plugin packages are NOT copied into client embeds. The platform
+# ships plugins/README.md (+ .gitkeep) only; install extensions after sync via the
+# marketplace (Admin → Plugins) or ./scripts/install-kekaba-demo-plugins.sh for kekaba
+# commerce/events demos. See docs/client-sites/cms-vendoring.md and
+# scripts/cms-release-manifest.json (embed_sync_excludes).
 
 set -euo pipefail
 
@@ -61,6 +67,21 @@ fi
 
 echo "[sync-client-embed] $BIRKLY_SRC -> $DEST"
 rsync "${RSYNC_ARGS[@]}" "$BIRKLY_SRC/" "$DEST/"
+
+# Rsync excludes do not remove destination-only paths under excluded trees (--delete skips them).
+if [[ -n "$EXTRA_EXCLUDES" && -f "$EXTRA_EXCLUDES" ]] && grep -qE '^plugins(/|\*\*)' "$EXTRA_EXCLUDES"; then
+  mkdir -p "$DEST/plugins"
+  if [[ -d "$DEST/plugins" ]]; then
+    find "$DEST/plugins" -mindepth 1 -maxdepth 1 \
+      ! -name 'README.md' ! -name '.gitkeep' -exec rm -rf {} +
+  fi
+  for f in README.md .gitkeep; do
+    if [[ -f "$BIRKLY_SRC/plugins/$f" ]]; then
+      cp -a "$BIRKLY_SRC/plugins/$f" "$DEST/plugins/$f"
+    fi
+  done
+  echo "[sync-client-embed] pruned plugin packages from embed (kept README.md / .gitkeep)"
+fi
 
 # Verify critical client-stack files
 for f in birkly-client.js birkly-hydrate.js api/page_bundle.php api/page_snapshot.php; do
