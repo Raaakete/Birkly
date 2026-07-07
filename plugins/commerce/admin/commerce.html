@@ -109,6 +109,105 @@
       </div>
     </div>
 
+    <div class="commerce-live-import-section" id="commerce-live-import-section">
+      <div class="payments-panel-header">
+        <h3>Live store sync</h3>
+        <p class="form-hint">Connect Shopify or WooCommerce for scheduled or on-demand API sync. Credentials are encrypted at rest.</p>
+      </div>
+      <div class="commerce-live-import-grid">
+        <div class="commerce-live-import-card" data-platform="shopify">
+          <div class="commerce-live-import-card-header">
+            <h4>Shopify</h4>
+            <span class="commerce-live-import-status" id="commerce-live-shopify-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-shopify-form">
+            <div class="form-group">
+              <label for="commerce-live-shopify-domain">Shop domain</label>
+              <input type="text" id="commerce-live-shopify-domain" class="input" placeholder="my-store.myshopify.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-shopify-token">Admin API access token</label>
+              <input type="password" id="commerce-live-shopify-token" class="input" placeholder="shpat_…" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-shopify-collection">Target collection</label>
+              <select id="commerce-live-shopify-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-shopify-currency">Default currency</label>
+              <select id="commerce-live-shopify-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-shopify-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-shopify-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-shopify-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-shopify-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-shopify-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-shopify-meta"></p>
+          </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="woocommerce">
+          <div class="commerce-live-import-card-header">
+            <h4>WooCommerce</h4>
+            <span class="commerce-live-import-status" id="commerce-live-woo-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-woo-form">
+            <div class="form-group">
+              <label for="commerce-live-woo-url">Site URL</label>
+              <input type="url" id="commerce-live-woo-url" class="input" placeholder="https://example.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-key">Consumer key</label>
+              <input type="text" id="commerce-live-woo-key" class="input" placeholder="ck_…" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-secret">Consumer secret</label>
+              <input type="password" id="commerce-live-woo-secret" class="input" placeholder="cs_…" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-collection">Target collection</label>
+              <select id="commerce-live-woo-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-currency">Default currency</label>
+              <select id="commerce-live-woo-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-woo-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-woo-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-woo-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-woo-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-woo-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-woo-meta"></p>
+          </form>
+        </div>
+      </div>
+      <details class="commerce-live-import-cron">
+        <summary>Scheduled sync (cron)</summary>
+        <p class="form-hint">Run all platforms with <strong>Include in scheduled cron sync</strong> enabled:</p>
+        <pre class="commerce-live-import-cron-command" id="commerce-live-import-cron-command"></pre>
+      </details>
+    </div>
+
     <div class="commerce-import-stats" id="commerce-import-stats" hidden></div>
 
     <div class="commerce-import-history-section">

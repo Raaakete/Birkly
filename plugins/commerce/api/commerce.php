@@ -35,6 +35,8 @@ $discounts = new DiscountEngine();
 $import = new ImportService($indexer);
 require_once __DIR__ . '/../includes/LegacyMigrationService.php';
 $migration = new LegacyMigrationService($indexer);
+require_once __DIR__ . '/../includes/CommerceLiveImportService.php';
+$liveImport = new CommerceLiveImportService(null, $import);
 $mappings = new PurchaseMappingService();
 require_once __DIR__ . '/../includes/CommerceFieldtypeProfileStore.php';
 $fieldtypeProfiles = new CommerceFieldtypeProfileStore();
@@ -55,6 +57,7 @@ $adminActions = [
     'list_subscription_upgrade_options', 'retry_subscription_payment',
     'list_discounts', 'save_discount', 'delete_discount',
     'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections', 'import_rollback',
+    'import_live_config', 'import_live_save', 'import_live_test', 'import_live_preview', 'import_live_sync',
     'list_mappings', 'save_mapping', 'delete_mapping',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
     'list_shipping_zones', 'save_shipping_zones',
@@ -72,7 +75,7 @@ if (in_array($action, $statsActions, true)) {
     commerce_require_stats_capability();
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'migration_import', 'migration_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'import_live_save', 'import_live_sync', 'migration_import', 'migration_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -399,6 +402,61 @@ switch ($action) {
         ]);
         if (!($result['ok'] ?? false)) {
             echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Import failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
+        break;
+
+    case 'import_live_config':
+        echo json_encode(['status' => 'ok', 'data' => $liveImport->getPublicConfig()]);
+        break;
+
+    case 'import_live_save':
+        $platform = trim((string) ($input['platform'] ?? ''));
+        $patch = is_array($input['config'] ?? null) ? $input['config'] : $input;
+        unset($patch['action'], $patch['_csrf'], $patch['platform']);
+        $result = $liveImport->savePlatformConfig($platform, $patch);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Save failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
+        break;
+
+    case 'import_live_test':
+        $platform = trim((string) ($input['platform'] ?? ''));
+        $result = $liveImport->testConnection($platform);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Connection failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
+        break;
+
+    case 'import_live_preview':
+        $platform = trim((string) ($input['platform'] ?? ''));
+        $result = $liveImport->preview($platform);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Preview failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
+        break;
+
+    case 'import_live_sync':
+        $platform = trim((string) ($input['platform'] ?? ''));
+        if ($platform === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'platform required']);
+            break;
+        }
+        $result = $liveImport->syncPlatform($platform);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Sync failed', 'data' => $result]);
             break;
         }
         echo json_encode(['status' => 'ok', 'data' => $result]);
