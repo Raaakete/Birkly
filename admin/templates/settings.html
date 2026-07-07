@@ -443,19 +443,29 @@
           <div class="settings-section">
             <h2><?= __('admin.plugin_security_denylist') ?></h2>
             <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
-            <div id="denylist-management">
-              <div class="text-center">
-                <div class="spinner">Loading denylist...</div>
+            <div class="denylist-add-toolbar" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
+              <div class="form-group" style="margin: 0; min-width: 220px;">
+                <label for="denylist-collection-select">Protect collection</label>
+                <select id="denylist-collection-select" class="input">
+                  <option value="">Loading collections…</option>
+                </select>
               </div>
-            </div>
-            <div style="margin-top: 1rem;">
+              <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
+                Add collection
+              </button>
               <button type="button" class="btn btn-secondary" onclick="addDenylistResource()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                Add Protected Resource
+                Add custom pattern
               </button>
+            </div>
+            <p class="settings-help" style="margin-top: 0;">Spaces denylist is reserved for a future release (stub).</p>
+            <div id="denylist-management">
+              <div class="text-center">
+                <div class="spinner">Loading denylist...</div>
+              </div>
             </div>
           </div>
         </form>

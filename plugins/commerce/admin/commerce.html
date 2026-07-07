@@ -273,17 +273,49 @@
 
   <div id="payments-tab-mappings" class="payments-tab-panel" role="tabpanel" hidden>
     <div class="payments-panel-header"><h2>Purchase Mappings</h2></div>
-    <form id="commerce-mapping-form" class="payments-settings-form">
-      <div class="form-group">
-        <label>Mapping key (entry:collection:slug or collection:slug)</label>
-        <input type="text" id="commerce-mapping-key" class="input" placeholder="entry:products:premium-plan">
+    <p class="form-help">Link commerce products to user_management tiers. Mappings apply on paid orders via PostPurchaseRouter (register/none fulfillment) and checkout.</p>
+    <div id="commerce-mapping-wizard" class="commerce-mapping-wizard">
+      <div class="commerce-wizard-steps" role="tablist">
+        <span class="commerce-wizard-step active" data-step="1">1. Product</span>
+        <span class="commerce-wizard-step" data-step="2">2. Purchase option</span>
+        <span class="commerce-wizard-step" data-step="3">3. Tier</span>
       </div>
-      <div class="form-group">
-        <label>Grant tier ID</label>
-        <input type="text" id="commerce-mapping-tier" class="input" placeholder="premium">
+      <div class="commerce-wizard-panel" id="commerce-wizard-step-1">
+        <div class="form-group">
+          <label for="commerce-wizard-catalog">Catalog item</label>
+          <select id="commerce-wizard-catalog" class="input">
+            <option value="">Loading catalog…</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="commerce-wizard-sku">Or match by SKU (optional)</label>
+          <input type="text" id="commerce-wizard-sku" class="input" placeholder="MEMBERSHIP-PRO">
+        </div>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-next-1">Next</button>
       </div>
-      <button type="submit" class="btn btn-primary">Save Mapping</button>
-    </form>
+      <div class="commerce-wizard-panel" id="commerce-wizard-step-2" hidden>
+        <div class="form-group">
+          <label for="commerce-wizard-option">Purchase option</label>
+          <select id="commerce-wizard-option" class="input">
+            <option value="">Any / default</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-back-2">Back</button>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-next-2">Next</button>
+      </div>
+      <div class="commerce-wizard-panel" id="commerce-wizard-step-3" hidden>
+        <div class="form-group">
+          <label for="commerce-wizard-tier">Grant tier</label>
+          <select id="commerce-wizard-tier" class="input">
+            <option value="">Loading tiers…</option>
+          </select>
+          <p class="form-help" id="commerce-wizard-tier-hint" hidden>Activate the user_management plugin to grant tiers.</p>
+        </div>
+        <p class="form-help" id="commerce-wizard-summary"></p>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-back-3">Back</button>
+        <button type="button" class="btn btn-primary" id="commerce-wizard-save">Save mapping</button>
+      </div>
+    </div>
     <div id="commerce-mappings-list" class="payments-connections-list"></div>
   </div>
 
