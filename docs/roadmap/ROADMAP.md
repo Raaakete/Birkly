@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Post-alpha** — human production deploy + live Stripe/legal (no P16 plan yet)
+**Next active phase:** **Phase 16–19** — single-wave execution (beta go-live → commerce pro → ecosystem scale → onboarding excellence)
+
+**2026-07-07 — Phase 16, 17, 18 & 19 approved** (Keven)
+
+**Priorities:** P16 — production playbooks, Stripe live docs, smoke cron, CSP, open-beta copy · P17 — multi-warehouse, display currency, Amazon/eBay import, bundle/shipping polish · P18 — self-serve providers, review votes, plugin health, theme install, spaces stub · P19 — START_HERE first-run, install path router, onboarding wizard v2, **optional AI mini-wizard**.
+
+**Spec:** `docs/reviews/P16-P19-complete-plan.md` · **Handoff (single wave):** `docs/reviews/P16-P19-lead-engineer-handoff.md` · **Matrices:** `P16-verification-matrix.md` · `P17-verification-matrix.md` · `P18-verification-matrix.md` · `P19-verification-matrix.md`
 
 **2026-07-07 — Phase 13, 14 & 15 complete** (single-wave autonomous execution)
 
@@ -277,10 +283,12 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 | Plugin scaffolding CLI | Convenience, not blocker | **P15-M5** |
 | Birkly-Website production deploy | Pin CMS first | **P15-M6** |
 | Full docs corpus refresh | On-change at release only | **P15-M7** |
-| NPM package for docs | No consumer depends on it | deferred post-P15 |
-| CMS cloud SSO | Marketplace scope | **P13-M1** |
-| Paid official plugin tiers | Pricing TBD | **P13-M2** |
-| Multi-currency, warehouse, import webhooks | Commerce backlog | **P14** |
+| NPM package for docs | No consumer depends on it | **P18-M7** go/no-go |
+| CMS cloud SSO prod URL | Human infra | **P16-M3** |
+| Multi-warehouse, FX display, Amazon/eBay | Commerce backlog | **P17** |
+| Self-serve marketplace, plugin health | Ecosystem backlog | **P18** |
+| First-run START_HERE, onboarding v2, AI in wizard | UX backlog | **P19** |
+| START_HERE not in release zip | Gap found P19-M0 | **P19-M1** |
 
 ---
 
@@ -2389,6 +2397,111 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 **Depends on:** P14 complete.
 
 **Human decisions (locked):** See `docs/reviews/P13-P15-complete-plan.md` § P15-D1–D7.
+
+---
+
+## Phase 16 — Beta go-live & production operations
+
+**Status:** **Approved** (2026-07-07) — single-wave with P17–P19
+
+**Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 16  
+**Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P16-verification-matrix.md`
+
+**Goal:** Production deploy playbooks, Stripe live config, cloud SSO prod docs, scheduled smoke, CSP hardening, open-beta copy.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P16-M0** | Gap register, prod secrets threat model | approved |
+| **P16-M1** | Per-repo deploy playbooks | approved |
+| **P16-M2** | Stripe live config guide | approved |
+| **P16-M3** | Cloud SSO production docs | approved |
+| **P16-M4** | Scheduled smoke scripts | approved |
+| **P16-M5** | CSP nonce pass (admin) | approved |
+| **P16-M6** | kekaba live deploy assist | approved |
+| **P16-M7** | Open-beta copy | approved |
+| **P16-M8** | Docs (no separate notification) | approved |
+
+**Depends on:** P15 complete.
+
+**Human decisions (locked):** See `docs/reviews/P16-P19-complete-plan.md` § P16-D1–D5.
+
+---
+
+## Phase 17 — Commerce pro & fulfillment depth
+
+**Status:** **Approved** (2026-07-07) — single-wave with P16+P18+P19
+
+**Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 17  
+**Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P17-verification-matrix.md`
+
+**Goal:** Multi-warehouse, display currency, Amazon/eBay import, bundle/shipping polish, post-purchase idempotency audit.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P17-M0** | Commerce pro gap register | approved |
+| **P17-M1** | Multi-warehouse routing v1 | approved |
+| **P17-M2** | Display currency + manual FX | approved |
+| **P17-M3** | Amazon + eBay import | approved |
+| **P17-M4** | Bundle + shipping zones v2 | approved |
+| **P17-M5** | Post-purchase orchestration audit | approved |
+| **P17-M6** | Docs | approved |
+| **P17-M7** | Matrix green | approved |
+
+**Depends on:** P16-M2 (Stripe live docs).
+
+---
+
+## Phase 18 — Ecosystem scale & developer experience
+
+**Status:** **Approved** (2026-07-07) — single-wave with P16–P17+P19
+
+**Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 18  
+**Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P18-verification-matrix.md`
+
+**Goal:** Self-serve providers (QC), review votes, plugin health, theme install, activity stream, spaces stub, i18n foundation.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P18-M0** | Ecosystem gap register | approved |
+| **P18-M1** | Self-serve provider onboarding | approved |
+| **P18-M2** | Review helpful votes | approved |
+| **P18-M3** | Plugin health checks | approved |
+| **P18-M4** | Theme/template_pack install | approved |
+| **P18-M5** | Sub-entry activity stream | approved |
+| **P18-M6** | Spaces v1 stub | approved |
+| **P18-M7** | i18n foundation + NPM go/no-go | approved |
+| **P18-M8** | Docs + matrix | approved |
+
+---
+
+## Phase 19 — First-run & onboarding excellence
+
+**Status:** **Approved** (2026-07-07) — single-wave with P16–P18; notify human once at P19-M8
+
+**Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 19  
+**Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P19-verification-matrix.md`
+
+**Goal:** Download → START_HERE → local/cloud install → advanced admin onboarding with optional BYOAI mini-wizard.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P19-M0** | Onboarding gap register + UX audit | approved |
+| **P19-M1** | START_HERE in release zip | approved |
+| **P19-M2** | START_HERE v2 (folder/unzip guidance) | approved |
+| **P19-M3** | Install path router | approved |
+| **P19-M4** | Onboarding wizard v2 | approved |
+| **P19-M5** | Optional AI mini-wizard in onboarding | approved |
+| **P19-M6** | Dashboard checklist v2 | approved |
+| **P19-M7** | E2E tests + getting-started docs | approved |
+| **P19-M8** | Combined closure + human notification | approved |
+
+**Depends on:** P16-M1 (install copy matches playbooks).
+
+**Human decisions (locked):** See `docs/reviews/P16-P19-complete-plan.md` § P19-D1–D6. **AI optional in onboarding only** — not dashboard required checklist (P5.6-D).
 
 ---
 
