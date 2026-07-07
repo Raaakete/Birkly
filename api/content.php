@@ -493,12 +493,12 @@ if ($action === 'list_entries') {
         }
     }
     
-    // Apply permission filtering if user management plugin is active
-    if (function_exists('get_plugin_state') && get_plugin_state('user_management')) {
-        require_once __DIR__ . '/../plugins/user_management/includes/EntryPermissions.php';
+    // Apply permission filtering if user management plugin is installed and active
+    if (birkly_plugin_is_installed_and_active('user_management')
+        && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
         $entryPermissions = new EntryPermissions();
         $currentUserId = $entryPermissions->getCurrentUserId();
-        
+
         // Filter entries by view permission
         $cachedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $cachedEntries);
     }

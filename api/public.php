@@ -13,6 +13,7 @@ set_security_headers('api');
 require_once __DIR__ . '/../core/storage/StorageFactory.php';
 require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/rate_limit.php';
+require_once __DIR__ . '/../core/plugin_availability.php';
 
 function birkly_public_rate_limit($bucket, $limit = 120, $window = 60) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -286,9 +287,9 @@ if ($action === 'list_entries') {
         return ($entry['status'] ?? 'draft') === 'published';
     });
     
-        // Apply permission filtering if user management plugin is active
-        if (function_exists('get_plugin_state') && get_plugin_state('user_management')) {
-            require_once __DIR__ . '/../plugins/user_management/includes/EntryPermissions.php';
+        // Apply permission filtering if user management plugin is installed and active
+        if (function_exists('get_plugin_state') && get_plugin_state('user_management')
+            && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
             $entryPermissions = new EntryPermissions();
             $currentUserId = $entryPermissions->getCurrentUserId();
             
@@ -355,21 +356,21 @@ if ($action === 'list_entries') {
             unset($entry); // Break reference
         }
         
-        // Apply permission filtering if user management plugin is active
-        if (function_exists('get_plugin_state') && get_plugin_state('user_management')) {
-            require_once __DIR__ . '/../plugins/user_management/includes/EntryPermissions.php';
+        // Apply permission filtering if user management plugin is installed and active
+        if (function_exists('get_plugin_state') && get_plugin_state('user_management')
+            && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
             $entryPermissions = new EntryPermissions();
             $currentUserId = $entryPermissions->getCurrentUserId();
-            
+
             // Filter entries by view permission
             $transformedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $transformedEntries);
         }
         
         respond(['status'=>'ok','data'=>['entries'=>array_values($transformedEntries)]]);
     } else {
-        // Apply permission filtering if user management plugin is active
-        if (function_exists('get_plugin_state') && get_plugin_state('user_management')) {
-            require_once __DIR__ . '/../plugins/user_management/includes/EntryPermissions.php';
+        // Apply permission filtering if user management plugin is installed and active
+        if (function_exists('get_plugin_state') && get_plugin_state('user_management')
+            && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
             $entryPermissions = new EntryPermissions();
             $currentUserId = $entryPermissions->getCurrentUserId();
             
@@ -583,10 +584,9 @@ if ($action === 'delete_entry') {
     require_once __DIR__ . '/../core/public_bootstrap.php';
     birkly_public_load_active_plugins();
     
-    // Use EntryPermissions to get current user ID
+  // Use EntryPermissions to get current user ID
     $currentUserId = '';
-    if (file_exists(__DIR__ . '/../plugins/user_management/includes/EntryPermissions.php')) {
-        require_once __DIR__ . '/../plugins/user_management/includes/EntryPermissions.php';
+    if (birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
         $entryPermissions = new EntryPermissions();
         $currentUserId = $entryPermissions->getCurrentUserId();
     }
