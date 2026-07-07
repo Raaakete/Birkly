@@ -2249,7 +2249,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P11-M0** | Gap register, verification matrix | pending |
+| **P11-M0** | Gap register, verification matrix | complete |
 | **P11-M1** | Subscription upgrades | pending |
 | **P11-M2** | Dunning automation | pending |
 | **P11-M3** | Gift cards / store credit | pending |
@@ -2275,7 +2275,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P12-M0** | Gap register, import threat model | pending |
+| **P12-M0** | Gap register, import threat model | complete |
 | **P12-M1** | Third-party GitHub App → QC | pending |
 | **P12-M2** | Provider growth (webhooks, payouts, fees) | pending |
 | **P12-M3** | Live Shopify + WooCommerce API import | pending |
