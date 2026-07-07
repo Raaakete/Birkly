@@ -104,9 +104,19 @@
     });
   }
 
-  function subStatusBadge(status) {
+  function subStatusBadge(status, sub) {
     var cls = 'commerce-sub-badge commerce-sub-badge-' + (status || 'unknown');
-    return '<span class="' + cls + '">' + (status || 'unknown') + '</span>';
+    var label = status || 'unknown';
+    if (status === 'past_due' && sub && sub.dunning && sub.dunning.attempt_count) {
+      label = 'past due (' + sub.dunning.attempt_count + ')';
+    }
+    return '<span class="' + cls + '">' + label + '</span>';
+  }
+
+  function dunningBadge(sub) {
+    if ((sub.status || '') !== 'past_due') return '';
+    var count = (sub.dunning && sub.dunning.attempt_count) || 1;
+    return '<span class="commerce-dunning-badge" title="Payment failed">Dunning · attempt ' + count + '</span>';
   }
 
   function loadSubscriptions() {
@@ -125,7 +135,7 @@
       subs.forEach(function (s) {
         html += '<tr>'
           + '<td>' + s.id + '</td>'
-          + '<td>' + subStatusBadge(s.status) + '</td>'
+          + '<td>' + subStatusBadge(s.status, s) + ' ' + dunningBadge(s) + '</td>'
           + '<td>' + (s.customer_email || '—') + '</td>'
           + '<td>' + formatCents(s.amount_cents, s.currency) + '</td>'
           + '<td>' + (s.interval || '—') + '</td>'
@@ -155,8 +165,9 @@
         return;
       }
       var canCancel = s.status !== 'canceled';
+      var canRetry = s.status === 'past_due';
       var html = '<div class="commerce-order-card">';
-      html += '<h3>' + s.id + ' ' + subStatusBadge(s.status) + '</h3>';
+      html += '<h3>' + s.id + ' ' + subStatusBadge(s.status, s) + ' ' + dunningBadge(s) + '</h3>';
       html += '<p>Customer: ' + (s.customer_email || '—') + '</p>';
       html += '<p>Order: ' + (s.order_id || '—') + ' · Provider: ' + (s.provider || '—') + '</p>';
       html += '<p>Amount: ' + formatCents(s.amount_cents, s.currency) + ' · Interval: ' + (s.interval || '—') + '</p>';
@@ -164,16 +175,65 @@
       html += '<p>Next billing: ' + (s.next_billing_at || '—') + '</p>';
       if (s.canceled_at) html += '<p>Canceled: ' + s.canceled_at + '</p>';
       if (s.past_due_at) html += '<p>Past due since: ' + s.past_due_at + '</p>';
+      if (s.dunning && s.dunning.attempt_count) {
+        html += '<p class="commerce-dunning-meta">Dunning: attempt ' + s.dunning.attempt_count;
+        if (s.dunning.last_failed_at) html += ' · last failed ' + s.dunning.last_failed_at;
+        html += '</p>';
+      }
+      if (s.upgraded_at) html += '<p>Last upgraded: ' + s.upgraded_at + '</p>';
+      if (s.last_proration_cents) html += '<p>Last proration: ' + formatCents(s.last_proration_cents, s.currency) + '</p>';
       html += '<table class="payments-table"><thead><tr><th>Line</th><th>Qty</th><th>Option</th></tr></thead><tbody>';
       (s.lines || []).forEach(function (line) {
         html += '<tr><td>' + (line.title || line.entry_id) + '</td><td>' + (line.quantity || 1) + '</td><td>' + (line.purchase_option_id || '—') + '</td></tr>';
       });
       html += '</tbody></table>';
+      if (canRetry) {
+        html += '<button class="btn btn-primary" id="commerce-sub-retry" data-id="' + s.id + '">Retry payment</button> ';
+      }
+      if (s.status === 'active' || s.status === 'past_due') {
+        html += '<div class="commerce-sub-upgrade" id="commerce-sub-upgrade-wrap"><p><strong>Change plan</strong></p>';
+        html += '<select id="commerce-sub-upgrade-select" class="input"><option value="">Loading options…</option></select> ';
+        html += '<button class="btn btn-secondary" id="commerce-sub-upgrade-btn" data-id="' + s.id + '" disabled>Upgrade</button></div>';
+      }
       if (canCancel) {
         html += '<button class="btn btn-danger" id="commerce-sub-cancel" data-id="' + s.id + '">Cancel subscription</button>';
       }
       html += '</div>';
       detail.innerHTML = html;
+
+      var retryBtn = document.getElementById('commerce-sub-retry');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function () {
+          if (!confirm('Retry payment for this subscription?')) return;
+          commercePost('retry_subscription_payment', { id: retryBtn.getAttribute('data-id') }).then(function (r) {
+            if (r.status === 'ok') { loadSubscriptions(); viewSubscription(id); }
+            else { alert((r.message) || 'Payment retry failed'); }
+          });
+        });
+      }
+      var upgradeSelect = document.getElementById('commerce-sub-upgrade-select');
+      var upgradeBtn = document.getElementById('commerce-sub-upgrade-btn');
+      if (upgradeSelect && upgradeBtn) {
+        commercePost('list_subscription_upgrade_options', { id: id }).then(function (optRes) {
+          var options = (optRes.data && optRes.data.options) || [];
+          if (!options.length) { upgradeSelect.innerHTML = '<option value="">No other plans available</option>'; return; }
+          upgradeSelect.innerHTML = '<option value="">Select plan…</option>';
+          options.forEach(function (opt) {
+            var label = (opt.label || opt.id) + ' — ' + formatCents(opt.price_cents, opt.currency) + ' / ' + (opt.interval || 'month');
+            upgradeSelect.innerHTML += '<option value="' + opt.id + '">' + label + '</option>';
+          });
+          upgradeBtn.disabled = false;
+        });
+        upgradeBtn.addEventListener('click', function () {
+          var optionId = upgradeSelect.value;
+          if (!optionId) { alert('Select a plan to upgrade to'); return; }
+          if (!confirm('Change subscription to the selected plan? Proration may apply.')) return;
+          commercePost('upgrade_subscription', { id: upgradeBtn.getAttribute('data-id'), purchase_option_id: optionId }).then(function (r) {
+            if (r.status === 'ok') { loadSubscriptions(); viewSubscription(id); }
+            else { alert((r.message) || 'Upgrade failed'); }
+          });
+        });
+      }
       var cancelBtn = document.getElementById('commerce-sub-cancel');
       if (cancelBtn) {
         cancelBtn.addEventListener('click', function () {

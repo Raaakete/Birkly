@@ -360,6 +360,9 @@
       default_provider: document.getElementById('payments-default-provider').value,
       enable_dashboard_widget: document.getElementById('payments-enable-widget').checked,
       dashboard_widget_roles: selectedRoles,
+      dunning_email_enabled: document.getElementById('payments-dunning-email-enabled')?.checked || false,
+      dunning_email_subject: document.getElementById('payments-dunning-email-subject')?.value || '',
+      dunning_email_body: document.getElementById('payments-dunning-email-body')?.value || '',
     };
     apiCall('save_settings', { settings: settings }).then(function (res) {
       if (res.status === 'ok') {
@@ -384,6 +387,12 @@
           opt.selected = s.dashboard_widget_roles.indexOf(opt.value) !== -1;
         });
       }
+      var dunningEnabled = document.getElementById('payments-dunning-email-enabled');
+      if (dunningEnabled) dunningEnabled.checked = !!s.dunning_email_enabled;
+      var dunningSubject = document.getElementById('payments-dunning-email-subject');
+      if (dunningSubject && s.dunning_email_subject) dunningSubject.value = s.dunning_email_subject;
+      var dunningBody = document.getElementById('payments-dunning-email-body');
+      if (dunningBody && s.dunning_email_body) dunningBody.value = s.dunning_email_body;
     });
   }
 

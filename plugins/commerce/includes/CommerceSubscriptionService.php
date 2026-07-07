@@ -1,18 +1,18 @@
 <?php
 /**
- * Subscription lifecycle service (P8-M4).
+ * Subscription lifecycle service (P8-M4, P11-M2 dunning).
  *
  * - Creates a subscription record when a recurring order is paid.
  * - Cancels a subscription (admin action), optionally through the provider.
  * - Applies provider webhook events to move status to past_due / canceled / active.
- *
- * NO plan upgrades in P8 (locked decision P8-D4).
+ * - Dunning metadata and recovery triggers (P11-M2).
  */
 
 class CommerceSubscriptionService
 {
     private CommerceSubscriptionStore $store;
     private ?PaymentShelf $shelf;
+    private ?CommerceDunningNotifier $dunningNotifier;
 
     /** @var array<string, int> interval => seconds */
     private const INTERVAL_SECONDS = [
@@ -28,10 +28,14 @@ class CommerceSubscriptionService
         'annual' => 31536000,
     ];
 
-    public function __construct(?CommerceSubscriptionStore $store = null, ?PaymentShelf $shelf = null)
-    {
+    public function __construct(
+        ?CommerceSubscriptionStore $store = null,
+        ?PaymentShelf $shelf = null,
+        ?CommerceDunningNotifier $dunningNotifier = null
+    ) {
         $this->store = $store ?? new CommerceSubscriptionStore();
         $this->shelf = $shelf;
+        $this->dunningNotifier = $dunningNotifier;
     }
 
     public function getStore(): CommerceSubscriptionStore
@@ -59,6 +63,7 @@ class CommerceSubscriptionService
         }
 
         $interval = $order['billing_interval'] ?? ($order['lines'][0]['interval'] ?? 'month');
+        $primaryLine = $order['lines'][0] ?? [];
         $now = time();
 
         return $this->store->create([
@@ -67,6 +72,7 @@ class CommerceSubscriptionService
             'provider' => $order['provider'] ?? null,
             'provider_subscription_id' => $order['provider_subscription_id'] ?? null,
             'customer_email' => $order['customer_email'] ?? '',
+            'purchase_option_id' => $primaryLine['purchase_option_id'] ?? null,
             'interval' => $interval,
             'amount_cents' => (int) ($order['total_cents'] ?? 0),
             'currency' => $order['currency'] ?? 'eur',
@@ -105,9 +111,58 @@ class CommerceSubscriptionService
             'status' => 'canceled',
             'canceled_at' => date('c'),
             'next_billing_at' => null,
+            'dunning' => null,
         ]);
         $this->broadcast('commerce_subscription_canceled', $updated);
         return $updated;
+    }
+
+    /**
+     * Retry payment for a past_due subscription via the provider.
+     */
+    public function retryPayment(string $subscriptionId): array
+    {
+        $sub = $this->store->get($subscriptionId);
+        if (!$sub) {
+            return ['ok' => false, 'error' => 'Subscription not found'];
+        }
+        if (($sub['status'] ?? '') !== 'past_due') {
+            return ['ok' => false, 'error' => 'Only past_due subscriptions can be retried'];
+        }
+
+        $provider = $sub['provider'] ?? '';
+        $providerSubId = $sub['provider_subscription_id'] ?? '';
+        if ($provider === '' || $providerSubId === '' || !$this->shelf) {
+            return ['ok' => false, 'error' => 'No provider subscription linked'];
+        }
+
+        $params = [];
+        $invoiceId = $sub['dunning']['last_invoice_id'] ?? null;
+        if ($invoiceId) {
+            $params['invoice_id'] = $invoiceId;
+        }
+
+        $result = $this->shelf->retrySubscriptionPayment($provider, $providerSubId, $params, [
+            'source_plugin' => 'commerce',
+            'source_ref' => $subscriptionId,
+        ]);
+
+        if (!($result['ok'] ?? false)) {
+            return ['ok' => false, 'error' => $result['error'] ?? 'Payment retry failed'];
+        }
+
+        $now = time();
+        $updated = $this->store->update($subscriptionId, [
+            'status' => 'active',
+            'past_due_at' => null,
+            'dunning' => null,
+            'current_period_start' => date('c', $now),
+            'next_billing_at' => date('c', $this->advance($now, $sub['interval'] ?? 'month')),
+        ]);
+        $this->broadcast('commerce_subscription_recovered', $updated);
+        $this->broadcast('commerce_subscription_renewed', $updated);
+
+        return ['ok' => true, 'subscription' => $updated, 'provider' => $result];
     }
 
     /**
@@ -128,31 +183,58 @@ class CommerceSubscriptionService
         }
 
         $id = $sub['id'];
+        $wasPastDue = ($sub['status'] ?? '') === 'past_due' || !empty($sub['past_due_at']);
+
         if ($status === 'past_due') {
-            $updated = $this->store->update($id, [
+            $patch = [
                 'status' => 'past_due',
-                'past_due_at' => date('c'),
-            ]);
+                'past_due_at' => $sub['past_due_at'] ?? date('c'),
+            ];
+
+            $attemptCount = (int) ($result['attempt_count'] ?? 0);
+            $dunning = is_array($sub['dunning'] ?? null) ? $sub['dunning'] : [];
+            if ($attemptCount > 0) {
+                $dunning['attempt_count'] = $attemptCount;
+            } else {
+                $dunning['attempt_count'] = (int) ($dunning['attempt_count'] ?? 0) + 1;
+            }
+            $dunning['last_failed_at'] = date('c');
+            if (!empty($result['invoice_id'])) {
+                $dunning['last_invoice_id'] = $result['invoice_id'];
+            }
+            $patch['dunning'] = $dunning;
+
+            $updated = $this->store->update($id, $patch);
             $this->broadcast('commerce_subscription_past_due', $updated);
+            $this->broadcast('commerce_subscription_payment_failed', $updated);
+            $this->notifyDunning($updated);
             return $updated;
         }
+
         if ($status === 'canceled') {
             $updated = $this->store->update($id, [
                 'status' => 'canceled',
                 'canceled_at' => date('c'),
                 'next_billing_at' => null,
+                'dunning' => null,
             ]);
             $this->broadcast('commerce_subscription_canceled', $updated);
             return $updated;
         }
+
         // active — renewal succeeded; advance the billing period.
         $now = time();
-        $updated = $this->store->update($id, [
+        $patch = [
             'status' => 'active',
             'past_due_at' => null,
+            'dunning' => null,
             'current_period_start' => date('c', $now),
             'next_billing_at' => date('c', $this->advance($now, $sub['interval'] ?? 'month')),
-        ]);
+        ];
+        $updated = $this->store->update($id, $patch);
+        if ($wasPastDue) {
+            $this->broadcast('commerce_subscription_recovered', $updated);
+        }
         $this->broadcast('commerce_subscription_renewed', $updated);
         return $updated;
     }
@@ -206,6 +288,20 @@ class CommerceSubscriptionService
         return $from + $seconds;
     }
 
+    private function notifyDunning(?array $subscription): void
+    {
+        if (!$subscription) {
+            return;
+        }
+        if ($this->dunningNotifier === null) {
+            if (!class_exists('CommerceDunningNotifier')) {
+                require_once __DIR__ . '/CommerceDunningNotifier.php';
+            }
+            $this->dunningNotifier = new CommerceDunningNotifier();
+        }
+        $this->dunningNotifier->sendPaymentFailedEmail($subscription);
+    }
+
     private function broadcast(string $event, ?array $subscription): void
     {
         if (!$subscription) {
@@ -216,6 +312,8 @@ class CommerceSubscriptionService
             'order_id' => $subscription['order_id'] ?? null,
             'status' => $subscription['status'] ?? null,
             'customer_email' => $subscription['customer_email'] ?? null,
+            'dunning' => $subscription['dunning'] ?? null,
+            'attempt_count' => $subscription['dunning']['attempt_count'] ?? null,
         ];
         if (function_exists('broadcast_event')) {
             broadcast_event($event, $ctx, 'commerce');
