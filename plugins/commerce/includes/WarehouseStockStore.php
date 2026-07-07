@@ -229,7 +229,16 @@ class WarehouseStockStore
 
     public function hasSufficient(string $sku, int $qty): bool
     {
+        if (!$this->tracksSku($sku)) {
+            return true;
+        }
+
         return $this->allocateWarehouse($sku, $qty) !== null;
+    }
+
+    public function tracksSku(string $sku): bool
+    {
+        return !empty($this->getSkuRows($this->normalizeSku($sku)));
     }
 
     public function allocateWarehouse(string $sku, int $qty): ?string

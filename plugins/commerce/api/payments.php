@@ -160,6 +160,7 @@ switch ($action) {
         foreach ([
             'selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles',
             'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body', 'commerce_default_currency',
+            'commerce_display_currency', 'commerce_fx_rates',
         ] as $key) {
             $settings[$key] = commerce_get_setting($key, null);
         }
@@ -181,6 +182,15 @@ switch ($action) {
         if ($settings['commerce_default_currency'] === null) {
             $settings['commerce_default_currency'] = commerce_get_default_currency();
         }
+        if ($settings['commerce_display_currency'] === null) {
+            $settings['commerce_display_currency'] = commerce_get_display_currency() ?? '';
+        }
+        if ($settings['commerce_fx_rates'] === null) {
+            $rates = commerce_get_fx_rates();
+            $settings['commerce_fx_rates'] = !empty($rates) ? json_encode($rates) : '';
+        } elseif (is_array($settings['commerce_fx_rates'])) {
+            $settings['commerce_fx_rates'] = json_encode($settings['commerce_fx_rates']);
+        }
         echo json_encode(['status' => 'ok', 'data' => ['settings' => $settings]]);
         break;
 
@@ -189,6 +199,7 @@ switch ($action) {
         $allowed = [
             'selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles',
             'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body', 'commerce_default_currency',
+            'commerce_display_currency', 'commerce_fx_rates',
         ];
         $pluginId = commerce_active_plugin_id();
         foreach ($allowed as $key) {
