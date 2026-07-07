@@ -23,6 +23,7 @@ require_once __DIR__ . '/../core/platform.php';
 const FEEDBACK_DIR = __DIR__ . '/../data/feedback';
 const FEEDBACK_STATUSES = ['new', 'in_progress', 'resolved', 'closed'];
 const FEEDBACK_TYPES = ['bug', 'feature', 'feedback', 'question'];
+const FEEDBACK_CATEGORIES = ['admin', 'content', 'commerce', 'marketplace', 'plugins', 'ai', 'other'];
 
 function feedback_ensure_dir(): void
 {
@@ -167,6 +168,11 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
                 feedback_json_error(400, 'Invalid feedback type');
             }
 
+            $category = strtolower(trim((string) ($input['category'] ?? 'other')));
+            if (!in_array($category, FEEDBACK_CATEGORIES, true)) {
+                feedback_json_error(400, 'Invalid feedback category');
+            }
+
             $title = trim((string) ($input['title'] ?? ''));
             $description = trim((string) ($input['description'] ?? ''));
             if ($title === '' || $description === '') {
@@ -181,6 +187,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             $record = [
                 'id' => feedback_generate_id(),
                 'type' => $type,
+                'category' => $category,
                 'title' => $title,
                 'description' => $description,
                 'status' => 'new',
@@ -210,12 +217,16 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             }
             $statusFilter = strtolower(trim((string) ($_GET['status'] ?? '')));
             $typeFilter = strtolower(trim((string) ($_GET['type'] ?? '')));
+            $categoryFilter = strtolower(trim((string) ($_GET['category'] ?? '')));
             $items = feedback_list_all();
             if ($statusFilter !== '' && in_array($statusFilter, FEEDBACK_STATUSES, true)) {
                 $items = array_values(array_filter($items, static fn($i) => ($i['status'] ?? '') === $statusFilter));
             }
             if ($typeFilter !== '' && in_array($typeFilter, FEEDBACK_TYPES, true)) {
                 $items = array_values(array_filter($items, static fn($i) => ($i['type'] ?? '') === $typeFilter));
+            }
+            if ($categoryFilter !== '' && in_array($categoryFilter, FEEDBACK_CATEGORIES, true)) {
+                $items = array_values(array_filter($items, static fn($i) => ($i['category'] ?? 'other') === $categoryFilter));
             }
             echo json_encode(['status' => 'ok', 'data' => ['items' => $items, 'total' => count($items)]]);
             break;

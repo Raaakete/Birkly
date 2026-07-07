@@ -28,6 +28,7 @@
         const ok = document.getElementById('feedback-submit-success');
 
         const type = document.getElementById('feedback-type')?.value || 'feedback';
+        const category = document.getElementById('feedback-category')?.value || 'other';
         const title = document.getElementById('feedback-title')?.value?.trim() || '';
         const description = document.getElementById('feedback-description')?.value?.trim() || '';
 
@@ -44,6 +45,7 @@
                 body: JSON.stringify({
                     action: 'submit',
                     type,
+                    category,
                     title,
                     description,
                     page_context: window.location.pathname + window.location.search,

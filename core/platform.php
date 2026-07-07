@@ -81,3 +81,17 @@ function birkly_feedback_relay_secret(): string
     $config = birkly_platform_config();
     return trim((string) ($config['feedback_relay_secret'] ?? ''));
 }
+
+function birkly_legal_terms_url(): string
+{
+    $config = birkly_platform_config();
+    $url = trim((string) ($config['legal_terms_url'] ?? ''));
+    return $url !== '' ? $url : 'https://birkly.com/terms.html';
+}
+
+function birkly_legal_privacy_url(): string
+{
+    $config = birkly_platform_config();
+    $url = trim((string) ($config['legal_privacy_url'] ?? ''));
+    return $url !== '' ? $url : 'https://birkly.com/privacy.html';
+}

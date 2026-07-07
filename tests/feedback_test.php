@@ -53,12 +53,14 @@ function test_feedback_list(string $dir): array
 
 $validStatuses = ['new', 'in_progress', 'resolved', 'closed'];
 $validTypes = ['bug', 'feature', 'feedback', 'question'];
+$validCategories = ['admin', 'content', 'commerce', 'marketplace', 'plugins', 'ai', 'other'];
 
 test_assert('sanitize_id strips invalid chars', test_feedback_sanitize_id('ABC-123_xxx') === 'abc-123');
 
 $record = [
     'id' => '20260101120000-aabbccdd',
     'type' => 'bug',
+    'category' => 'commerce',
     'title' => 'Test bug',
     'description' => 'Something broke',
     'status' => 'new',
@@ -85,6 +87,13 @@ test_assert('admin notes persisted', ($updated['admin_notes'] ?? '') === 'Lookin
 // Validation constants
 test_assert('valid statuses defined', count($validStatuses) === 4 && in_array('resolved', $validStatuses, true));
 test_assert('valid types defined', in_array('question', $validTypes, true));
+test_assert('valid categories defined', in_array('marketplace', $validCategories, true));
+
+// Legal URL helpers
+require_once __DIR__ . '/../core/platform.php';
+test_assert('legal terms URL default', birkly_legal_terms_url() === 'https://birkly.com/terms.html');
+test_assert('legal privacy URL default', birkly_legal_privacy_url() === 'https://birkly.com/privacy.html');
+test_assert('admin legal footer partial exists', is_file(dirname(__DIR__) . '/admin/partials/admin-legal-footer.php'));
 
 // Rate limiter smoke
 $limiter = new RateLimiter('feedback_test_' . getmypid(), 3, 60);
