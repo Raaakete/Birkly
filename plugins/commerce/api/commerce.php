@@ -38,13 +38,16 @@ require_once __DIR__ . '/../includes/CommerceFieldtypeProfileStore.php';
 $fieldtypeProfiles = new CommerceFieldtypeProfileStore();
 require_once __DIR__ . '/../includes/CommerceSubscriptionStore.php';
 require_once __DIR__ . '/../includes/CommerceSubscriptionService.php';
+require_once __DIR__ . '/../includes/SubscriptionUpgradeService.php';
 $subscriptionStore = new CommerceSubscriptionStore();
 $subscriptions = new CommerceSubscriptionService($subscriptionStore, commerce_bootstrap());
+$subscriptionUpgrades = new SubscriptionUpgradeService($subscriptionStore, commerce_bootstrap(), $catalog);
 
 $publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate'];
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order', 'refund_order',
-    'list_subscriptions', 'get_subscription', 'cancel_subscription',
+    'list_subscriptions', 'get_subscription', 'cancel_subscription', 'upgrade_subscription',
+    'list_subscription_upgrade_options', 'retry_subscription_payment',
     'list_discounts', 'save_discount', 'delete_discount',
     'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections', 'import_rollback',
     'list_mappings', 'save_mapping', 'delete_mapping',
@@ -58,7 +61,7 @@ if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -209,6 +212,58 @@ switch ($action) {
             break;
         }
         echo json_encode(['status' => 'ok', 'data' => ['subscription' => $canceled]]);
+        break;
+
+    case 'list_subscription_upgrade_options':
+        $id = $input['id'] ?? $_GET['id'] ?? '';
+        if ($id === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $sub = $subscriptionStore->get($id);
+        if (!$sub) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Subscription not found']);
+            break;
+        }
+        echo json_encode([
+            'status' => 'ok',
+            'data' => ['options' => $subscriptionUpgrades->listUpgradeOptions($id)],
+        ]);
+        break;
+
+    case 'upgrade_subscription':
+        $id = $input['id'] ?? '';
+        $purchaseOptionId = $input['purchase_option_id'] ?? '';
+        if ($id === '' || $purchaseOptionId === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id and purchase_option_id required']);
+            break;
+        }
+        $result = $subscriptionUpgrades->upgrade($id, $purchaseOptionId);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Upgrade failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
+        break;
+
+    case 'retry_subscription_payment':
+        $id = $input['id'] ?? '';
+        if ($id === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $result = $subscriptions->retryPayment($id);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Retry failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
         break;
 
     case 'list_discounts':

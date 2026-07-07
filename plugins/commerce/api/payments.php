@@ -157,7 +157,10 @@ switch ($action) {
 
     case 'get_settings':
         $settings = [];
-        foreach (['selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles'] as $key) {
+        foreach ([
+            'selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles',
+            'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body',
+        ] as $key) {
             $settings[$key] = commerce_get_setting($key, null);
         }
         if ($settings['enable_dashboard_widget'] === null) {
@@ -166,12 +169,24 @@ switch ($action) {
         if ($settings['dashboard_widget_roles'] === null) {
             $settings['dashboard_widget_roles'] = ['admin'];
         }
+        if ($settings['dunning_email_enabled'] === null) {
+            $settings['dunning_email_enabled'] = false;
+        }
+        if ($settings['dunning_email_subject'] === null) {
+            $settings['dunning_email_subject'] = 'Action required: subscription payment failed';
+        }
+        if ($settings['dunning_email_body'] === null) {
+            $settings['dunning_email_body'] = "Hello,\n\nWe were unable to process your subscription payment. Please update your payment method to avoid interruption.\n\nSubscription: {subscription_id}\nAmount: {amount}\n\nThank you.";
+        }
         echo json_encode(['status' => 'ok', 'data' => ['settings' => $settings]]);
         break;
 
     case 'save_settings':
         $settings = $input['settings'] ?? [];
-        $allowed = ['selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles'];
+        $allowed = [
+            'selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles',
+            'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body',
+        ];
         $pluginId = commerce_active_plugin_id();
         foreach ($allowed as $key) {
             if (array_key_exists($key, $settings) && function_exists('set_plugin_setting')) {
