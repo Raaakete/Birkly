@@ -1,4 +1,3 @@
-console.log('theme.js loaded');
 /**
  * Birkly Admin Theme
  * Theme management for the admin interface

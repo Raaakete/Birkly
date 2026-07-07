@@ -130,7 +130,6 @@
             const pageHeaderActions = document.querySelector('.page-header-actions');
 
             if (userMenuWrapper && pageHeaderActions) {
-                console.log('[UI Fix] Moving user menu to header...');
                 // Move the existing user menu into the header
                 pageHeaderActions.appendChild(userMenuWrapper);
                 userMenuWrapper.classList.add('topbar-user-menu');
@@ -167,7 +166,6 @@
                 if (window.setupNotifications) {
                     setTimeout(window.setupNotifications, 100);
                 }
-                console.log('[UI Fix] User menu moved successfully!');
             } else {
                 console.warn('[UI Fix] Could not find userMenuWrapper or pageHeaderActions');
             }
@@ -186,15 +184,12 @@
         }
         
         // Run immediately if DOM is ready, otherwise wait for DOMContentLoaded
-        console.log('[UI Fix] Document readyState:', document.readyState);
         if (document.readyState === 'loading') {
-            console.log('[UI Fix] Waiting for DOMContentLoaded...');
             document.addEventListener('DOMContentLoaded', function() {
                 moveBreadcrumbsToTopbar();
                 moveUserMenuToHeader();
             });
         } else {
-            console.log('[UI Fix] DOM already ready, running immediately...');
             moveBreadcrumbsToTopbar();
             moveUserMenuToHeader();
         }
@@ -407,7 +402,6 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Search API response:', data);
                     if (data.status === 'ok') {
                         currentResults = data.results || [];
                         selectedIndex = -1;
@@ -632,11 +626,9 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Notifications loaded:', data);
                     if (data.status === 'ok') {
                         notifications = data.notifications || [];
                         unreadCount = data.unread_count || 0;
-                        console.log('Found', notifications.length, 'notifications,', unreadCount, 'unread');
                         updateBadge();
                         renderNotifications();
                     } else {
@@ -883,7 +875,6 @@
                 // Only move if not already a child
                 if (notificationsDropdown.parentNode !== notificationsWrapper) {
                     notificationsWrapper.appendChild(notificationsDropdown);
-                    console.log('Notifications dropdown moved to wrapper');
                 }
             } else {
                 console.warn('Notifications wrapper or dropdown not found', {
@@ -976,7 +967,6 @@
                 setTimeout(checkIfOpen, 5);
             }, { once: false });
             
-            console.log('Notifications system initialized');
         }
         
         // Expose setupNotifications globally so it can be called from button creation code

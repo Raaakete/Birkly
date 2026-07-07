@@ -1,4 +1,3 @@
-console.log('utils.js loaded');
 /**
  * Birkly Admin Utils
  * Basic utility functions for the admin interface

@@ -15,7 +15,6 @@ function exampleSimpleList() {
         container: listContainer,
         itemSelector: '.list-item',
         onReorder: (fromIndex, toIndex, insertBefore, context) => {
-            console.log(`Moved item from ${fromIndex} to ${toIndex}`);
             
             // Update your data array
             const item = myDataArray[fromIndex];
@@ -106,12 +105,10 @@ function exampleCustomConstraints() {
             
             // Callback when drag starts
             onDragStart: (item, index, event) => {
-                console.log('Drag started for item:', item);
             },
             
             // Callback when drag ends
             onDragEnd: (event) => {
-                console.log('Drag ended');
             }
         }
     });
