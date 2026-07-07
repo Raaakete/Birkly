@@ -359,6 +359,10 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     <?= __('admin.ai_connect_later_hint') ?>
                     <a href="<?= admin_url('settings') ?>#ai"><?= __('admin.settings_ai') ?></a>.
                 </p>
+                <p class="ai-later-hint marketplace-onboarding-hint">
+                    <?= __('admin.no_plugins_marketplace_hint') ?>
+                    <a href="<?= admin_url('plugins', ['tab' => 'marketplace']) ?>"><?= __('admin.browse_marketplace') ?></a>.
+                </p>
             </div>
         </div>
     </div>

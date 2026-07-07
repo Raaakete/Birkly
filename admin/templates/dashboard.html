@@ -41,6 +41,19 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                 
                 <div class="card" style="padding: var(--space-4, 1rem);">
                     <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
+                        <div style="font-size: 2rem; flex-shrink: 0;">🧩</div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;"><?= __('admin.install_marketplace_plugins') ?></h3>
+                            <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
+                                <?= __('admin.install_marketplace_plugins_hint') ?>
+                            </p>
+                            <a href="<?= admin_url('plugins', ['tab' => 'marketplace']) ?>" class="btn btn-secondary btn-small"><?= __('admin.browse_marketplace') ?></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: var(--space-4, 1rem);">
+                    <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
                         <div style="font-size: 2rem; flex-shrink: 0;">📚</div>
                         <div style="flex: 1;">
                             <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;"><?= __('admin.read_documentation') ?></h3>
