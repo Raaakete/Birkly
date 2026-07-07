@@ -106,6 +106,8 @@ $suites = [
     'plugin_availability_test.php',
     'marketplace_client_test.php',
     'marketplace_free_install_test.php',
+    'marketplace_paid_official_test.php',
+    'marketplace_subscription_license_test.php',
     'health_test.php',
     'health_alert_test.php',
     'user_plugin_permissions_test.php',
