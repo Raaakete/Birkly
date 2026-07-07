@@ -323,13 +323,16 @@ function birkly_marketplace_installed_plugin_updates(): array
             continue;
         }
         $current = (string) ($plugin['version'] ?? $plugin['marketplace_version'] ?? '0.0.0');
-        $check = birkly_marketplace_check_plugin_update($slug, $current);
+        $licenseRef = trim((string) ($plugin['license_ref'] ?? ''));
+        $check = birkly_marketplace_check_plugin_update($slug, $current, $licenseRef !== '' ? $licenseRef : null);
         $updates[$id] = [
             'plugin_id' => $id,
             'marketplace_slug' => $slug,
             'current_version' => $current,
             'latest_version' => $check['latest_version'] ?? $current,
             'update_available' => !empty($check['update_available']),
+            'license_lapsed' => !empty($check['license_lapsed']),
+            'license_warning' => $check['license_warning'] ?? null,
             'check_ok' => !empty($check['ok']),
             'error' => $check['error'] ?? null,
         ];
