@@ -108,6 +108,18 @@
       "default": "eur",
       "label": "Default Currency",
       "description": "Site default charge currency for new purchase options (no FX conversion)"
+    },
+    "commerce_display_currency": {
+      "type": "string",
+      "default": "",
+      "label": "Display Currency",
+      "description": "Optional catalog display currency (manual FX rates; checkout charge unchanged)"
+    },
+    "commerce_fx_rates": {
+      "type": "string",
+      "default": "",
+      "label": "Manual FX Rates",
+      "description": "JSON rate table relative to display currency, e.g. {\"EUR\":1,\"USD\":1.08}"
     }
   }
 }

@@ -252,6 +252,16 @@
   }
 
   var shippingZonesCache = [];
+  var shippingRegionOptions = [
+    { label: 'All countries', codes: ['*'] },
+    { label: 'European Union (sample)', codes: ['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PL', 'SE'] },
+    { label: 'North America', codes: ['US', 'CA', 'MX'] },
+    { label: 'United Kingdom', codes: ['GB'] },
+    { label: 'Germany', codes: ['DE'] },
+    { label: 'France', codes: ['FR'] },
+    { label: 'United States', codes: ['US'] },
+  ];
+  var warehouseCache = [];
 
   function loadShippingZones() {
     var el = document.getElementById('commerce-shipping-zones-list');
@@ -271,17 +281,70 @@
     }
     var html = '';
     shippingZonesCache.forEach(function (zone, idx) {
+      var rateType = zone.rate_type || 'flat';
+      var tiers = Array.isArray(zone.weight_tiers) ? zone.weight_tiers : [];
       html += '<div class="commerce-shipping-zone" data-idx="' + idx + '">';
-      html += '<div class="form-group"><label>Name</label><input type="text" class="input zone-name" value="' + (zone.name || '') + '"></div>';
-      html += '<div class="form-group"><label>Countries (comma-separated, * = all)</label><input type="text" class="input zone-countries" value="' + ((zone.countries || ['*']).join(', ')) + '"></div>';
-      html += '<div class="form-group"><label>Flat rate (cents)</label><input type="number" class="input zone-rate" value="' + (zone.flat_rate_cents || 0) + '"></div>';
+      html += '<div class="form-group"><label>Name</label><input type="text" class="input zone-name" value="' + escapeHtml(zone.name || '') + '"></div>';
+      html += '<div class="form-group"><label>Region preset</label><select class="input zone-region-preset" data-idx="' + idx + '">';
+      shippingRegionOptions.forEach(function (opt) {
+        html += '<option value="' + escapeHtml(opt.codes.join(',')) + '">' + escapeHtml(opt.label) + '</option>';
+      });
+      html += '</select></div>';
+      html += '<div class="form-group"><label>Countries (comma-separated, * = all)</label><input type="text" class="input zone-countries" value="' + escapeHtml((zone.countries || ['*']).join(', ')) + '"></div>';
+      html += '<div class="form-group"><label>Rate type</label><select class="input zone-rate-type" data-idx="' + idx + '">';
+      html += '<option value="flat"' + (rateType === 'flat' ? ' selected' : '') + '>Flat rate</option>';
+      html += '<option value="weight_tiers"' + (rateType === 'weight_tiers' ? ' selected' : '') + '>Weight tiers</option>';
+      html += '</select></div>';
+      html += '<div class="form-group zone-flat-row" data-idx="' + idx + '"' + (rateType === 'weight_tiers' ? ' hidden' : '') + '><label>Flat rate (cents)</label><input type="number" class="input zone-rate" value="' + (zone.flat_rate_cents || 0) + '"></div>';
+      html += '<div class="zone-weight-tiers" data-idx="' + idx + '"' + (rateType !== 'weight_tiers' ? ' hidden' : '') + '>';
+      html += '<label>Weight tiers (max grams → rate cents)</label>';
+      if (!tiers.length) tiers = [{ max_grams: 500, rate_cents: 500 }, { max_grams: null, rate_cents: 900 }];
+      tiers.forEach(function (tier, tIdx) {
+        html += '<div class="commerce-weight-tier-row"><input type="number" class="input zone-tier-max" placeholder="max g (blank=∞)" value="' + (tier.max_grams == null ? '' : tier.max_grams) + '">';
+        html += '<input type="number" class="input zone-tier-rate" placeholder="rate cents" value="' + (tier.rate_cents || 0) + '">';
+        html += '<button type="button" class="btn btn-secondary commerce-remove-tier" data-zone="' + idx + '" data-tier="' + tIdx + '">×</button></div>';
+      });
+      html += '<button type="button" class="btn btn-secondary commerce-add-tier" data-idx="' + idx + '">Add tier</button></div>';
       html += '<button type="button" class="btn btn-secondary commerce-remove-zone" data-idx="' + idx + '">Remove</button></div>';
     });
     el.innerHTML = html;
+    el.querySelectorAll('.zone-region-preset').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var row = sel.closest('.commerce-shipping-zone');
+        var countries = row?.querySelector('.zone-countries');
+        if (countries) countries.value = sel.value.split(',').join(', ');
+      });
+    });
+    el.querySelectorAll('.zone-rate-type').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var idx = sel.getAttribute('data-idx');
+        var flat = el.querySelector('.zone-flat-row[data-idx="' + idx + '"]');
+        var tiers = el.querySelector('.zone-weight-tiers[data-idx="' + idx + '"]');
+        var isWeight = sel.value === 'weight_tiers';
+        if (flat) flat.hidden = isWeight;
+        if (tiers) tiers.hidden = !isWeight;
+      });
+    });
     el.querySelectorAll('.commerce-remove-zone').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var i = parseInt(btn.getAttribute('data-idx'), 10);
         shippingZonesCache.splice(i, 1);
+        renderShippingZones();
+      });
+    });
+    el.querySelectorAll('.commerce-add-tier').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(btn.getAttribute('data-idx'), 10);
+        if (!shippingZonesCache[i].weight_tiers) shippingZonesCache[i].weight_tiers = [];
+        shippingZonesCache[i].weight_tiers.push({ max_grams: null, rate_cents: 0 });
+        renderShippingZones();
+      });
+    });
+    el.querySelectorAll('.commerce-remove-tier').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var zi = parseInt(btn.getAttribute('data-zone'), 10);
+        var ti = parseInt(btn.getAttribute('data-tier'), 10);
+        shippingZonesCache[zi].weight_tiers.splice(ti, 1);
         renderShippingZones();
       });
     });
@@ -1020,7 +1083,7 @@
 
   function applyLiveImportConfig(config) {
     if (!config) return;
-    ['shopify', 'woocommerce', 'etsy', 'square'].forEach(function (platform) {
+    ['shopify', 'woocommerce', 'etsy', 'square', 'amazon', 'ebay'].forEach(function (platform) {
       var p = config[platform] || {};
       var prefix = livePlatformPrefix(platform);
       var status = document.getElementById('commerce-live-' + prefix + '-status');
@@ -1052,6 +1115,16 @@
         var loc = document.getElementById('commerce-live-square-location');
         if (loc && p.location_id) loc.value = p.location_id;
       }
+      if (platform === 'amazon') {
+        var seller = document.getElementById('commerce-live-amazon-seller-id');
+        if (seller && p.seller_id) seller.value = p.seller_id;
+        var amzMkt = document.getElementById('commerce-live-amazon-marketplace');
+        if (amzMkt && p.marketplace_id) amzMkt.value = p.marketplace_id;
+      }
+      if (platform === 'ebay') {
+        var ebayMkt = document.getElementById('commerce-live-ebay-marketplace');
+        if (ebayMkt && p.marketplace_id) ebayMkt.value = p.marketplace_id;
+      }
       var meta = document.getElementById('commerce-live-' + prefix + '-meta');
       if (meta && p.last_sync_at) {
         meta.textContent = 'Last sync: ' + formatImportDate(p.last_sync_at) + (p.last_sync_status ? ' (' + p.last_sync_status + ')' : '');
@@ -1067,6 +1140,7 @@
     var collectionSelects = [
       'commerce-live-shopify-collection', 'commerce-live-woo-collection',
       'commerce-live-etsy-collection', 'commerce-live-square-collection',
+      'commerce-live-amazon-collection', 'commerce-live-ebay-collection',
     ];
     populateLiveImportCollections(collectionSelects).then(function () {
       return commercePost('import_live_config');
@@ -1116,6 +1190,17 @@
       patch.location_id = document.getElementById('commerce-live-square-location')?.value || '';
       var sqToken = document.getElementById('commerce-live-square-token')?.value;
       if (sqToken) patch.access_token = sqToken;
+    }
+    if (platform === 'amazon') {
+      patch.seller_id = document.getElementById('commerce-live-amazon-seller-id')?.value || '';
+      patch.marketplace_id = document.getElementById('commerce-live-amazon-marketplace')?.value || '';
+      var amzToken = document.getElementById('commerce-live-amazon-token')?.value;
+      if (amzToken) patch.refresh_token = amzToken;
+    }
+    if (platform === 'ebay') {
+      patch.marketplace_id = document.getElementById('commerce-live-ebay-marketplace')?.value || 'EBAY_US';
+      var ebayToken = document.getElementById('commerce-live-ebay-token')?.value;
+      if (ebayToken) patch.access_token = ebayToken;
     }
     return patch;
   }
@@ -1175,7 +1260,7 @@
   }
 
   function initLiveImport() {
-    ['shopify', 'woocommerce', 'etsy', 'square'].forEach(initLiveImportPlatform);
+    ['shopify', 'woocommerce', 'etsy', 'square', 'amazon', 'ebay'].forEach(initLiveImportPlatform);
     initLiveImportWebhooks();
   }
 
@@ -1861,16 +1946,32 @@
         el.innerHTML = '<p class="error">Failed to load stock</p>';
         return;
       }
+      warehouseCache = (res.data && res.data.warehouses) || [];
+      populateWarehouseSelects(warehouseCache);
       var rows = (res.data && res.data.stock) || [];
       if (!rows.length) {
         el.innerHTML = '<p class="form-hint">No warehouse SKUs yet.</p>';
         return;
       }
-      var html = '<table class="payments-table"><thead><tr><th>SKU</th><th>On hand</th><th>Low threshold</th></tr></thead><tbody>';
+      var whMap = {};
+      warehouseCache.forEach(function (w) { whMap[w.id] = w.name || w.id; });
+      var html = '<table class="payments-table"><thead><tr><th>Warehouse</th><th>SKU</th><th>On hand</th><th>Low threshold</th></tr></thead><tbody>';
       rows.forEach(function (row) {
-        html += '<tr><td>' + escapeHtml(row.sku || '') + '</td><td>' + (row.quantity_on_hand ?? 0) + '</td><td>' + (row.low_stock_threshold ?? 0) + '</td></tr>';
+        html += '<tr><td>' + escapeHtml(whMap[row.warehouse_id] || row.warehouse_id || '') + '</td><td>' + escapeHtml(row.sku || '') + '</td><td>' + (row.quantity_on_hand ?? 0) + '</td><td>' + (row.low_stock_threshold ?? 0) + '</td></tr>';
       });
       el.innerHTML = html + '</tbody></table>';
+    });
+  }
+
+  function populateWarehouseSelects(warehouses) {
+    ['commerce-warehouse-select', 'commerce-transfer-from', 'commerce-transfer-to'].forEach(function (id) {
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      var current = sel.value;
+      sel.innerHTML = warehouses.map(function (w) {
+        return '<option value="' + escapeHtml(w.id) + '">' + escapeHtml(w.name || w.id) + '</option>';
+      }).join('');
+      if (current) sel.value = current;
     });
   }
 
@@ -1905,10 +2006,42 @@
     });
     document.getElementById('commerce-stock-save')?.addEventListener('click', function () {
       commercePost('save_warehouse_stock', {
+        warehouse_id: document.getElementById('commerce-warehouse-select')?.value || '',
         sku: document.getElementById('commerce-stock-sku')?.value || '',
         quantity_on_hand: parseInt(document.getElementById('commerce-stock-qty')?.value || '0', 10),
         low_stock_threshold: parseInt(document.getElementById('commerce-stock-threshold')?.value || '0', 10),
       }).then(function () { loadStock(); });
+    });
+    document.getElementById('commerce-warehouse-add')?.addEventListener('click', function () {
+      var name = prompt('Warehouse name:', 'East');
+      if (!name) return;
+      commercePost('save_warehouse', { name: name }).then(function () { loadStock(); });
+    });
+    document.getElementById('commerce-warehouse-rename')?.addEventListener('click', function () {
+      var id = document.getElementById('commerce-warehouse-select')?.value;
+      if (!id) return;
+      var name = prompt('New warehouse name:');
+      if (!name) return;
+      commercePost('save_warehouse', { id: id, name: name }).then(function () { loadStock(); });
+    });
+    document.getElementById('commerce-warehouse-delete')?.addEventListener('click', function () {
+      var id = document.getElementById('commerce-warehouse-select')?.value;
+      if (!id || !confirm('Delete this warehouse? It must have zero stock.')) return;
+      commercePost('delete_warehouse', { id: id }).then(function (res) {
+        if (res.status !== 'ok') alert(res.message || 'Delete failed');
+        loadStock();
+      });
+    });
+    document.getElementById('commerce-transfer-stock')?.addEventListener('click', function () {
+      commercePost('transfer_warehouse_stock', {
+        sku: document.getElementById('commerce-transfer-sku')?.value || '',
+        quantity: parseInt(document.getElementById('commerce-transfer-qty')?.value || '1', 10),
+        from_warehouse_id: document.getElementById('commerce-transfer-from')?.value || '',
+        to_warehouse_id: document.getElementById('commerce-transfer-to')?.value || '',
+      }).then(function (res) {
+        if (res.status !== 'ok') alert(res.message || 'Transfer failed');
+        else loadStock();
+      });
     });
 
     document.getElementById('commerce-subscriptions-refresh')?.addEventListener('click', loadSubscriptions);
@@ -2088,7 +2221,7 @@
     });
 
     document.getElementById('commerce-add-shipping-zone')?.addEventListener('click', function () {
-      shippingZonesCache.push({ id: 'zone_' + Date.now(), name: 'New zone', countries: ['*'], flat_rate_cents: 500 });
+      shippingZonesCache.push({ id: 'zone_' + Date.now(), name: 'New zone', countries: ['*'], rate_type: 'flat', flat_rate_cents: 500, weight_tiers: [] });
       renderShippingZones();
     });
 
@@ -2097,12 +2230,25 @@
       var zones = [];
       el?.querySelectorAll('.commerce-shipping-zone').forEach(function (row, idx) {
         var countriesRaw = row.querySelector('.zone-countries')?.value || '*';
-        zones.push({
+        var rateType = row.querySelector('.zone-rate-type')?.value || 'flat';
+        var zone = {
           id: shippingZonesCache[idx]?.id || ('zone_' + idx),
           name: row.querySelector('.zone-name')?.value || 'Zone',
           countries: countriesRaw.split(',').map(function (c) { return c.trim().toUpperCase(); }).filter(Boolean),
+          rate_type: rateType,
           flat_rate_cents: parseInt(row.querySelector('.zone-rate')?.value || '0', 10),
-        });
+        };
+        if (rateType === 'weight_tiers') {
+          zone.weight_tiers = [];
+          row.querySelectorAll('.commerce-weight-tier-row').forEach(function (tierRow) {
+            var maxRaw = tierRow.querySelector('.zone-tier-max')?.value.trim();
+            zone.weight_tiers.push({
+              max_grams: maxRaw === '' ? null : parseInt(maxRaw, 10),
+              rate_cents: parseInt(tierRow.querySelector('.zone-tier-rate')?.value || '0', 10),
+            });
+          });
+        }
+        zones.push(zone);
       });
       commercePost('save_shipping_zones', { zones: zones }).then(function () {
         alert('Shipping zones saved');

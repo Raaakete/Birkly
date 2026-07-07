@@ -497,7 +497,7 @@ class CommerceCheckoutService
     private function reserveLineStock(array &$line): bool
     {
         $sku = trim((string) ($line['sku'] ?? ''));
-        if ($sku !== '') {
+        if ($sku !== '' && $this->warehouseStore()->tracksSku($sku)) {
             $warehouseId = $this->warehouseStore()->allocateWarehouse($sku, (int) ($line['quantity'] ?? 1));
             if ($warehouseId === null) {
                 return false;
@@ -531,9 +531,10 @@ class CommerceCheckoutService
     private function restoreLineStock(array $line): void
     {
         $sku = trim((string) ($line['sku'] ?? ''));
-        if ($sku !== '') {
-            $warehouseId = $line['warehouse_id'] ?? null;
-            $this->warehouseStore()->increment($sku, (int) ($line['quantity'] ?? 1), $warehouseId);
+        if ($sku !== '' && ($line['warehouse_id'] ?? null)) {
+            $this->warehouseStore()->increment($sku, (int) ($line['quantity'] ?? 1), $line['warehouse_id']);
+        } elseif ($sku !== '' && $this->warehouseStore()->tracksSku($sku)) {
+            $this->warehouseStore()->increment($sku, (int) ($line['quantity'] ?? 1));
         }
 
         $this->indexer->incrementQuantity(
@@ -556,8 +557,10 @@ class CommerceCheckoutService
     private function decrementLineStock(array $line): void
     {
         $sku = trim((string) ($line['sku'] ?? ''));
-        if ($sku !== '') {
-            $warehouseId = $line['warehouse_id'] ?? $this->warehouseStore()->allocateWarehouse($sku, (int) ($line['quantity'] ?? 1));
+        if ($sku !== '' && ($line['warehouse_id'] ?? null)) {
+            $this->warehouseStore()->decrement($sku, (int) ($line['quantity'] ?? 1), $line['warehouse_id']);
+        } elseif ($sku !== '' && $this->warehouseStore()->tracksSku($sku)) {
+            $warehouseId = $this->warehouseStore()->allocateWarehouse($sku, (int) ($line['quantity'] ?? 1));
             $this->warehouseStore()->decrement($sku, (int) ($line['quantity'] ?? 1), $warehouseId);
         }
 

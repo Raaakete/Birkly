@@ -44,7 +44,10 @@ class CommerceBundle extends BaseField
         $html .= '<div class="commerce-bundle-section">';
         $html .= '<label>Bundle components</label>';
         $html .= '<div class="commerce-bundle-items" id="commerce_bundle_items_' . $name . '"></div>';
+        $html .= '<div class="commerce-bundle-validation" id="commerce_bundle_validation_' . $name . '" hidden></div>';
+        $html .= '<div class="commerce-bundle-price-preview" id="commerce_bundle_preview_' . $name . '"></div>';
         $html .= '<button type="button" class="btn btn-secondary commerce-bundle-add-btn" data-field="' . $name . '">Add from catalog</button>';
+        $html .= '<button type="button" class="btn btn-secondary commerce-bundle-validate-btn" data-field="' . $name . '">Validate &amp; preview price</button>';
         $html .= '</div>';
 
         $html .= '<div class="commerce-fieldtype-row">';
@@ -146,6 +149,55 @@ class CommerceBundle extends BaseField
     var input = document.getElementById('commerce_bundle_json_' + fieldName);
     if (input) input.value = JSON.stringify(state);
     renderItems(fieldName, state);
+    refreshBundlePreview(fieldName, state);
+  }
+
+  function refreshBundlePreview(fieldName, state) {
+    if (!state) state = getFieldState(fieldName);
+    var body = { action: 'bundle_preview_price', bundle: state };
+    if (typeof Birkly !== 'undefined' && Birkly.csrfToken) body._csrf = Birkly.csrfToken;
+    fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body),
+    }).then(function(r) { return r.json(); }).then(function(res) {
+      var el = document.getElementById('commerce_bundle_preview_' + fieldName);
+      if (!el || res.status !== 'ok' || !res.data) return;
+      var cents = res.data.price_cents || 0;
+      var cur = (res.data.currency || 'eur').toUpperCase();
+      el.innerHTML = '<p class="commerce-bundle-preview-line"><strong>Preview:</strong> ' + cur + ' ' + (cents / 100).toFixed(2) + '</p>';
+    });
+  }
+
+  function runBundleValidation(fieldName) {
+    syncFromControls(fieldName);
+    var state = getFieldState(fieldName);
+    var body = { action: 'bundle_validate', bundle: state };
+    if (typeof Birkly !== 'undefined' && Birkly.csrfToken) body._csrf = Birkly.csrfToken;
+    return fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body),
+    }).then(function(r) { return r.json(); }).then(function(res) {
+      var el = document.getElementById('commerce_bundle_validation_' + fieldName);
+      if (!el) return;
+      el.hidden = false;
+      if (res.status !== 'ok' || !res.data) {
+        el.innerHTML = '<p class="text-danger">Validation request failed</p>';
+        return;
+      }
+      var issues = res.data.issues || [];
+      if (!issues.length && res.data.valid) {
+        el.innerHTML = '<p class="text-success">All components valid</p>';
+      } else {
+        el.innerHTML = '<ul class="commerce-bundle-issues">' + issues.map(function(i) {
+          return '<li>' + i + '</li>';
+        }).join('') + '</ul>';
+      }
+      refreshBundlePreview(fieldName, state);
+    });
   }
 
   function renderItems(fieldName, state) {
@@ -220,6 +272,9 @@ class CommerceBundle extends BaseField
   document.addEventListener('click', function(e) {
     if (e.target.classList.contains('commerce-bundle-add-btn')) {
       openPicker(e.target.getAttribute('data-field'));
+    }
+    if (e.target.classList.contains('commerce-bundle-validate-btn')) {
+      runBundleValidation(e.target.getAttribute('data-field'));
     }
     if (e.target.classList.contains('commerce-bundle-picker-close') || e.target.classList.contains('commerce-bundle-picker-backdrop')) {
       var modal = e.target.closest('.commerce-bundle-picker-modal');
@@ -304,6 +359,9 @@ JS;
         .commerce-bundle-picker-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
         .commerce-bundle-picker-dialog { position: relative; background: var(--surface-color, #fff); padding: 1rem; border-radius: 6px; max-width: 520px; width: 90%; max-height: 80vh; overflow: auto; z-index: 1; }
         .commerce-bundle-picker-list { max-height: 320px; overflow: auto; margin: 0.75rem 0; display: flex; flex-direction: column; gap: 0.25rem; }
+        .commerce-bundle-validation { margin: 0.5rem 0; }
+        .commerce-bundle-issues { color: var(--danger-color, #b00020); margin: 0; padding-left: 1.25rem; }
+        .commerce-bundle-price-preview { margin: 0.5rem 0; font-size: 0.95rem; }
         ';
     }
 
