@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 16–19** — single-wave execution (beta go-live → commerce pro → ecosystem scale → onboarding excellence)
+**Next active phase:** TBD — propose Phase 20+ with human approval
+
+**2026-07-07 — Phase 16, 17, 18 & 19 complete** (single-wave autonomous execution)
+
+**Delivered:** Production deploy playbooks · Stripe live config docs · scheduled smoke · CSP nonces · open-beta copy · multi-warehouse + display currency · Amazon/eBay import · bundle/shipping v2 · self-serve providers + review votes · plugin health · theme install · spaces stub · **START_HERE first-run** · install path router · onboarding wizard v2 · optional BYOAI mini-wizard · dashboard checklist v2.
+
+**Matrices:** `docs/reviews/P16-verification-matrix.md` · `P17-verification-matrix.md` · `P18-verification-matrix.md` · `P19-verification-matrix.md` · **Closure:** `docs/reviews/P16-P19-phase-closure-checklist.md`
 
 **2026-07-07 — Phase 16, 17, 18 & 19 approved** (Keven)
 
@@ -2402,7 +2408,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 16 — Beta go-live & production operations
 
-**Status:** **Approved** (2026-07-07) — single-wave with P17–P19
+**Status:** **Complete** (2026-07-07) — single-wave with P17–P19
 
 **Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 16  
 **Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
@@ -2412,15 +2418,15 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P16-M0** | Gap register, prod secrets threat model | approved |
-| **P16-M1** | Per-repo deploy playbooks | approved |
-| **P16-M2** | Stripe live config guide | approved |
-| **P16-M3** | Cloud SSO production docs | approved |
-| **P16-M4** | Scheduled smoke scripts | approved |
-| **P16-M5** | CSP nonce pass (admin) | approved |
-| **P16-M6** | kekaba live deploy assist | approved |
-| **P16-M7** | Open-beta copy | approved |
-| **P16-M8** | Docs (no separate notification) | approved |
+| **P16-M0** | Gap register, prod secrets threat model | complete |
+| **P16-M1** | Per-repo deploy playbooks | complete |
+| **P16-M2** | Stripe live config guide | complete |
+| **P16-M3** | Cloud SSO production docs | complete |
+| **P16-M4** | Scheduled smoke scripts | complete |
+| **P16-M5** | CSP nonce pass (admin) | complete |
+| **P16-M6** | kekaba live deploy assist | complete |
+| **P16-M7** | Open-beta copy | complete |
+| **P16-M8** | Docs (no separate notification) | complete |
 
 **Depends on:** P15 complete.
 
@@ -2430,7 +2436,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 17 — Commerce pro & fulfillment depth
 
-**Status:** **Approved** (2026-07-07) — single-wave with P16+P18+P19
+**Status:** **Complete** (2026-07-07) — single-wave with P16+P18+P19
 
 **Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 17  
 **Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
@@ -2440,14 +2446,14 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P17-M0** | Commerce pro gap register | approved |
-| **P17-M1** | Multi-warehouse routing v1 | approved |
-| **P17-M2** | Display currency + manual FX | approved |
-| **P17-M3** | Amazon + eBay import | approved |
-| **P17-M4** | Bundle + shipping zones v2 | approved |
-| **P17-M5** | Post-purchase orchestration audit | approved |
-| **P17-M6** | Docs | approved |
-| **P17-M7** | Matrix green | approved |
+| **P17-M0** | Commerce pro gap register | complete |
+| **P17-M1** | Multi-warehouse routing v1 | complete |
+| **P17-M2** | Display currency + manual FX | complete |
+| **P17-M3** | Amazon + eBay import | complete |
+| **P17-M4** | Bundle + shipping zones v2 | complete |
+| **P17-M5** | Post-purchase orchestration audit | complete |
+| **P17-M6** | Docs | complete |
+| **P17-M7** | Matrix green | complete |
 
 **Depends on:** P16-M2 (Stripe live docs).
 
@@ -2455,7 +2461,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 18 — Ecosystem scale & developer experience
 
-**Status:** **Approved** (2026-07-07) — single-wave with P16–P17+P19
+**Status:** **Complete** (2026-07-07) — single-wave with P16–P17+P19
 
 **Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 18  
 **Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
@@ -2465,21 +2471,21 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P18-M0** | Ecosystem gap register | approved |
-| **P18-M1** | Self-serve provider onboarding | approved |
-| **P18-M2** | Review helpful votes | approved |
-| **P18-M3** | Plugin health checks | approved |
-| **P18-M4** | Theme/template_pack install | approved |
-| **P18-M5** | Sub-entry activity stream | approved |
-| **P18-M6** | Spaces v1 stub | approved |
-| **P18-M7** | i18n foundation + NPM go/no-go | approved |
-| **P18-M8** | Docs + matrix | approved |
+| **P18-M0** | Ecosystem gap register | complete |
+| **P18-M1** | Self-serve provider onboarding | complete |
+| **P18-M2** | Review helpful votes | complete |
+| **P18-M3** | Plugin health checks | complete |
+| **P18-M4** | Theme/template_pack install | complete |
+| **P18-M5** | Sub-entry activity stream | complete |
+| **P18-M6** | Spaces v1 stub | complete |
+| **P18-M7** | i18n foundation + NPM go/no-go | complete |
+| **P18-M8** | Docs + matrix | complete |
 
 ---
 
 ## Phase 19 — First-run & onboarding excellence
 
-**Status:** **Approved** (2026-07-07) — single-wave with P16–P18; notify human once at P19-M8
+**Status:** **Complete** (2026-07-07) — single-wave with P16–P18; human notified at P19-M8
 
 **Spec:** `docs/reviews/P16-P19-complete-plan.md` § Phase 19  
 **Handoff:** `docs/reviews/P16-P19-lead-engineer-handoff.md`  
@@ -2489,15 +2495,15 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P19-M0** | Onboarding gap register + UX audit | approved |
-| **P19-M1** | START_HERE in release zip | approved |
-| **P19-M2** | START_HERE v2 (folder/unzip guidance) | approved |
-| **P19-M3** | Install path router | approved |
-| **P19-M4** | Onboarding wizard v2 | approved |
-| **P19-M5** | Optional AI mini-wizard in onboarding | approved |
-| **P19-M6** | Dashboard checklist v2 | approved |
-| **P19-M7** | E2E tests + getting-started docs | approved |
-| **P19-M8** | Combined closure + human notification | approved |
+| **P19-M0** | Onboarding gap register + UX audit | complete |
+| **P19-M1** | START_HERE in release zip | complete |
+| **P19-M2** | START_HERE v2 (folder/unzip guidance) | complete |
+| **P19-M3** | Install path router | complete |
+| **P19-M4** | Onboarding wizard v2 | complete |
+| **P19-M5** | Optional AI mini-wizard in onboarding | complete |
+| **P19-M6** | Dashboard checklist v2 | complete |
+| **P19-M7** | E2E tests + getting-started docs | complete |
+| **P19-M8** | Combined closure + human notification | complete |
 
 **Depends on:** P16-M1 (install copy matches playbooks).
 
