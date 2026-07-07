@@ -83,6 +83,12 @@
         </svg>
         <?= __('admin.storage') ?>
       </button>
+      <button type="button" class="tab" data-tab="monitoring">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+        </svg>
+        <?= __('admin.monitoring') ?>
+      </button>
     </div>
 
     <div class="settings-tab-panels">
@@ -702,6 +708,33 @@
                   <button type="button" class="btn btn-secondary" onclick="migrateStorage()"><?= __('admin.start_migration') ?></button>
                   <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small>
                 </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Monitoring Tab (P13-M4) -->
+      <div class="tab-pane" id="monitoring">
+<?php
+  $monitoringSettings = $settings['monitoring'] ?? [];
+  $monitoringAlertEmail = (string) ($monitoringSettings['alert_email'] ?? '');
+  $monitoringAlertWebhookUrl = (string) ($monitoringSettings['alert_webhook_url'] ?? '');
+?>
+        <form id="monitoring-form" class="settings-form">
+          <div class="settings-section">
+            <h2><?= __('admin.monitoring_alerts') ?></h2>
+            <p class="settings-help"><?= __('admin.monitoring_alerts_help') ?></p>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="monitoring-alert-email"><?= __('admin.alert_email') ?></label>
+                <input type="email" id="monitoring-alert-email" name="monitoringAlertEmail" class="input" value="<?= htmlspecialchars($monitoringAlertEmail) ?>" placeholder="ops@example.com">
+                <small class="form-help"><?= __('admin.alert_email_help') ?></small>
+              </div>
+              <div class="form-group">
+                <label for="monitoring-alert-webhook"><?= __('admin.alert_webhook_url') ?></label>
+                <input type="url" id="monitoring-alert-webhook" name="monitoringAlertWebhookUrl" class="input" value="<?= htmlspecialchars($monitoringAlertWebhookUrl) ?>" placeholder="https://hooks.example.com/health">
+                <small class="form-help"><?= __('admin.alert_webhook_url_help') ?></small>
               </div>
             </div>
           </div>

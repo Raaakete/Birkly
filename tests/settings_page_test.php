@@ -20,5 +20,7 @@ test_assert('webhooks tab has inline table', strpos($template, 'webhooks-list') 
 test_assert('users tab has no redundant summary links', strpos($template, 'users_roles_summary_help') === false);
 test_assert('ai tab uses unified connection grid', strpos($template, 'ai-connection-kinds-grid') !== false);
 test_assert('references webhooks.js', strpos($template, 'webhooks.js') !== false);
+test_assert('monitoring tab present', strpos($template, 'data-tab="monitoring"') !== false && strpos($template, 'id="monitoring"') !== false);
+test_assert('monitoring form has alert fields', strpos($template, 'monitoringAlertEmail') !== false && strpos($template, 'monitoringAlertWebhookUrl') !== false);
 
 exit(test_finish('settings_page_test'));
