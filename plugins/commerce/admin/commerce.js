@@ -1249,6 +1249,150 @@
     });
   }
 
+  var migrationPreviewCache = [];
+
+  function migrationOptions() {
+    var sources = [];
+    if (document.getElementById('commerce-migration-source-cart')?.checked) sources.push('shopping_cart');
+    if (document.getElementById('commerce-migration-source-events')?.checked) sources.push('events');
+    return {
+      sources: sources,
+      products_collection: document.getElementById('commerce-migration-products-collection')?.value || 'products',
+      events_collection: document.getElementById('commerce-migration-events-collection')?.value || 'events-commerce',
+      create_collections: !!document.getElementById('commerce-migration-create-collections')?.checked,
+    };
+  }
+
+  function renderMigrationScan(data) {
+    var el = document.getElementById('commerce-migration-scan');
+    if (!el) return;
+    var cart = data.shopping_cart || {};
+    var events = data.events || {};
+    var html = '<div class="commerce-migration-scan-grid">';
+    html += '<div class="commerce-migration-scan-card"><h4>Shopping Cart</h4><p>'
+      + (cart.detected ? 'Detected — ' + (cart.entry_count || 0) + ' legacy product entries' : 'No legacy product collections found')
+      + '</p></div>';
+    html += '<div class="commerce-migration-scan-card"><h4>Events</h4><p>'
+      + (events.detected ? 'Detected — ' + (events.entry_count || 0) + ' legacy event entries' : 'No legacy events collections found')
+      + '</p></div></div>';
+    html += '<p class="form-hint">Imported source keys on record: ' + (data.imported_source_keys || 0) + '</p>';
+    el.innerHTML = html;
+  }
+
+  function loadMigrationScan() {
+    var el = document.getElementById('commerce-migration-scan');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state"><p>Scanning for legacy data…</p></div>';
+    commercePost('migration_scan').then(function (res) {
+      if (res.status !== 'ok') {
+        el.innerHTML = '<p class="error">Scan failed</p>';
+        return;
+      }
+      renderMigrationScan(res.data || {});
+    });
+  }
+
+  function renderMigrationPreview(rows) {
+    var wrap = document.getElementById('commerce-migration-preview-wrap');
+    var table = document.getElementById('commerce-migration-preview-table');
+    if (!wrap || !table) return;
+    if (!rows.length) {
+      wrap.hidden = false;
+      table.innerHTML = '<p>No rows to preview for the selected sources.</p>';
+      return;
+    }
+    var html = '<table class="payments-table"><thead><tr><th>Source</th><th>Title</th><th>Target</th><th>Fulfillment</th><th>Action</th></tr></thead><tbody>';
+    rows.forEach(function (row) {
+      html += '<tr><td>' + (row.source || '') + '</td><td>' + (row.title || '') + '</td><td>'
+        + (row.target_collection || '') + '</td><td>' + (row.fulfillment || '—') + '</td><td>'
+        + (row.action || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    table.innerHTML = html;
+    wrap.hidden = false;
+  }
+
+  function runMigrationPreview() {
+    commercePost('migration_preview', migrationOptions()).then(function (res) {
+      if (res.status !== 'ok') {
+        alert('Preview failed: ' + (res.message || 'Unknown error'));
+        return;
+      }
+      migrationPreviewCache = (res.data && res.data.preview) || [];
+      renderMigrationPreview(migrationPreviewCache);
+    });
+  }
+
+  function runMigrationImport() {
+    if (!confirm('Import legacy entries into Commerce collections? Legacy plugins and source entries are not removed.')) {
+      return;
+    }
+    commercePost('migration_import', migrationOptions()).then(function (res) {
+      if (res.status !== 'ok') {
+        alert('Import failed: ' + (res.message || 'Unknown error'));
+        return;
+      }
+      var data = res.data || {};
+      alert('Imported ' + (data.imported_count || 0) + ' entries (' + (data.skipped_count || 0) + ' skipped).');
+      loadMigrationScan();
+      loadMigrationHistory();
+      runMigrationPreview();
+    });
+  }
+
+  function loadMigrationHistory() {
+    var el = document.getElementById('commerce-migration-history-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state"><p>Loading migration history…</p></div>';
+    commercePost('migration_history').then(function (res) {
+      var items = (res.data && res.data.migrations) || [];
+      if (!items.length) {
+        el.innerHTML = '<p>No migration runs yet.</p>';
+        return;
+      }
+      var html = '';
+      items.forEach(function (run) {
+        html += '<div class="commerce-migration-history-card">';
+        html += '<div class="commerce-migration-history-head"><strong>' + run.id + '</strong> — ' + (run.status || '') + ' · ' + (run.at || '') + '</div>';
+        html += '<p>Imported: ' + (run.imported_count || 0) + ' · Skipped: ' + (run.skipped_count || 0);
+        if (run.rolled_back_at) html += ' · Rolled back ' + run.rolled_back_at;
+        html += '</p>';
+        if (!run.rolled_back_at && (run.imported_count || 0) > 0) {
+          html += '<button type="button" class="btn btn-secondary commerce-migration-rollback" data-id="' + run.id + '">Rollback</button>';
+        }
+        html += '</div>';
+      });
+      el.innerHTML = html;
+      el.querySelectorAll('.commerce-migration-rollback').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          if (!id || !confirm('Delete Commerce entries created by this migration run?')) return;
+          commercePost('migration_rollback', { id: id }).then(function (rb) {
+            if (rb.status !== 'ok') {
+              alert('Rollback failed: ' + (rb.message || 'Unknown error'));
+              return;
+            }
+            loadMigrationHistory();
+            loadMigrationScan();
+            runMigrationPreview();
+          });
+        });
+      });
+    });
+  }
+
+  function loadMigrationTab() {
+    loadMigrationScan();
+    loadMigrationHistory();
+  }
+
+  function initMigrationTab() {
+    document.getElementById('commerce-migration-refresh')?.addEventListener('click', loadMigrationScan);
+    document.getElementById('commerce-migration-preview')?.addEventListener('click', runMigrationPreview);
+    document.getElementById('commerce-migration-import')?.addEventListener('click', runMigrationImport);
+    document.getElementById('commerce-migration-history-refresh')?.addEventListener('click', loadMigrationHistory);
+  }
+
   function initCommerceTabs() {
     document.querySelectorAll('.commerce-tabs .payments-tab').forEach(function (tab) {
       tab.addEventListener('click', function () {
@@ -1262,6 +1406,7 @@
         if (name === 'tax') loadTaxRules();
         if (name === 'fieldtypes') loadFieldtypeProfiles();
         if (name === 'import') loadImportTab();
+        if (name === 'migration') loadMigrationTab();
       });
     });
   }
@@ -1291,6 +1436,7 @@
     });
 
     initImportWizard();
+    initMigrationTab();
 
     document.getElementById('commerce-mapping-form')?.addEventListener('submit', function (e) {
       e.preventDefault();

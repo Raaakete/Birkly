@@ -11,6 +11,7 @@
     <button class="payments-tab" data-tab="subscriptions" role="tab">Subscriptions</button>
     <button class="payments-tab" data-tab="discounts" role="tab">Discounts</button>
     <button class="payments-tab" data-tab="import" role="tab">Import</button>
+    <button class="payments-tab" data-tab="migration" role="tab">Migration</button>
     <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
     <button class="payments-tab" data-tab="shipping" role="tab">Shipping</button>
@@ -94,6 +95,56 @@
       </div>
       <div id="commerce-import-history-list" class="commerce-import-history-list">
         <div class="loading-state"><p>Loading import history…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="payments-tab-migration" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button type="button" class="btn btn-secondary" id="commerce-migration-refresh">Refresh scan</button>
+      <button type="button" class="btn btn-secondary" id="commerce-migration-preview">Preview mapping</button>
+      <button type="button" class="btn btn-primary" id="commerce-migration-import">Import to Commerce</button>
+    </div>
+    <div class="commerce-migration-hero">
+      <h2>Shop &amp; Events migration</h2>
+      <p>Detect legacy Shopping Cart product collections and Events ticket entries, preview the Commerce fieldtype mapping, and import without removing the legacy plugins.</p>
+    </div>
+
+    <div id="commerce-migration-scan" class="commerce-migration-scan">
+      <div class="loading-state"><p>Scanning for legacy data…</p></div>
+    </div>
+
+    <div class="commerce-migration-options">
+      <div class="form-group">
+        <label>Sources</label>
+        <label class="commerce-migration-source"><input type="checkbox" id="commerce-migration-source-cart" value="shopping_cart" checked> Shopping Cart products</label>
+        <label class="commerce-migration-source"><input type="checkbox" id="commerce-migration-source-events" value="events" checked> Events tickets</label>
+      </div>
+      <div class="form-group">
+        <label for="commerce-migration-products-collection">Products target collection</label>
+        <input type="text" id="commerce-migration-products-collection" class="input" value="products">
+      </div>
+      <div class="form-group">
+        <label for="commerce-migration-events-collection">Events target collection</label>
+        <input type="text" id="commerce-migration-events-collection" class="input" value="events-commerce">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="commerce-migration-create-collections" checked> Create target collections if missing</label>
+      </div>
+    </div>
+
+    <div id="commerce-migration-preview-wrap" class="commerce-migration-preview-wrap" hidden>
+      <div class="payments-panel-header"><h3>Preview</h3></div>
+      <div id="commerce-migration-preview-table" class="commerce-migration-preview-table"></div>
+    </div>
+
+    <div class="commerce-migration-history-section">
+      <div class="payments-panel-header">
+        <h3>Migration history</h3>
+        <button type="button" class="btn btn-secondary" id="commerce-migration-history-refresh">Refresh</button>
+      </div>
+      <div id="commerce-migration-history-list" class="commerce-migration-history-list">
+        <div class="loading-state"><p>Loading migration history…</p></div>
       </div>
     </div>
   </div>
