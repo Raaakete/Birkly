@@ -160,6 +160,110 @@ class StripeProvider extends AbstractPaymentProvider
             : ['ok' => false, 'error' => $resp['error'] ?? 'Cancel failed'];
     }
 
+    public function updateSubscription(array $credentials, string $subscriptionId, array $params): array
+    {
+        if ($this->isMockMode($credentials)) {
+            $interval = strtolower((string) ($params['interval'] ?? 'month'));
+            $seconds = $this->intervalSeconds($interval);
+            $amount = (int) ($params['amount_cents'] ?? 0);
+            return [
+                'ok' => true,
+                'subscription_id' => $subscriptionId,
+                'status' => 'active',
+                'next_billing_at' => date('c', time() + $seconds),
+                'proration_cents' => max(0, (int) round($amount * 0.1)),
+            ];
+        }
+
+        $priceId = $params['price_id'] ?? '';
+        if ($priceId === '') {
+            return ['ok' => false, 'error' => 'price_id required for Stripe subscription update'];
+        }
+
+        $fetch = $this->httpRequest('GET', $this->apiBase($credentials) . '/subscriptions/' . $subscriptionId, [
+            'auth' => ['user' => $this->secret($credentials), 'pass' => ''],
+        ]);
+        if (!$fetch['ok']) {
+            return ['ok' => false, 'error' => $fetch['error'] ?? 'Failed to load subscription'];
+        }
+
+        $itemId = $fetch['data']['items']['data'][0]['id'] ?? '';
+        if ($itemId === '') {
+            return ['ok' => false, 'error' => 'Subscription has no line items'];
+        }
+
+        $fields = [
+            'items[0][id]' => $itemId,
+            'items[0][price]' => $priceId,
+            'proration_behavior' => $params['proration_behavior'] ?? 'create_prorations',
+        ];
+
+        $resp = $this->formRequest('POST', $this->apiBase($credentials) . '/subscriptions/' . $subscriptionId, $fields, [
+            'auth' => ['user' => $this->secret($credentials), 'pass' => ''],
+        ]);
+
+        if (!$resp['ok']) {
+            return ['ok' => false, 'error' => $resp['error'] ?? 'Subscription update failed'];
+        }
+
+        $data = $resp['data'];
+        $periodEnd = $data['current_period_end'] ?? null;
+
+        return [
+            'ok' => true,
+            'subscription_id' => $data['id'] ?? $subscriptionId,
+            'status' => $data['status'] ?? 'active',
+            'next_billing_at' => $periodEnd ? date('c', (int) $periodEnd) : null,
+            'raw' => $data,
+        ];
+    }
+
+    public function retrySubscriptionPayment(array $credentials, string $subscriptionId, array $params = []): array
+    {
+        if ($this->isMockMode($credentials)) {
+            return ['ok' => true, 'status' => 'paid', 'subscription_id' => $subscriptionId];
+        }
+
+        $invoiceId = $params['invoice_id'] ?? '';
+        if ($invoiceId === '') {
+            $list = $this->httpRequest(
+                'GET',
+                $this->apiBase($credentials) . '/invoices?subscription=' . urlencode($subscriptionId) . '&status=open&limit=1',
+                ['auth' => ['user' => $this->secret($credentials), 'pass' => '']]
+            );
+            if (!$list['ok']) {
+                return ['ok' => false, 'error' => $list['error'] ?? 'Failed to list invoices'];
+            }
+            $invoiceId = $list['data']['data'][0]['id'] ?? '';
+        }
+
+        if ($invoiceId === '') {
+            return ['ok' => false, 'error' => 'No open invoice found for subscription'];
+        }
+
+        $resp = $this->formRequest('POST', $this->apiBase($credentials) . '/invoices/' . $invoiceId . '/pay', [], [
+            'auth' => ['user' => $this->secret($credentials), 'pass' => ''],
+        ]);
+
+        return $resp['ok']
+            ? ['ok' => true, 'status' => 'paid', 'invoice_id' => $invoiceId, 'raw' => $resp['data']]
+            : ['ok' => false, 'error' => $resp['error'] ?? 'Invoice payment retry failed'];
+    }
+
+    private function intervalSeconds(string $interval): int
+    {
+        $map = [
+            'day' => 86400,
+            'week' => 604800,
+            'month' => 2592000,
+            'monthly' => 2592000,
+            'year' => 31536000,
+            'yearly' => 31536000,
+            'annual' => 31536000,
+        ];
+        return $map[$interval] ?? 2592000;
+    }
+
     public function verifyWebhookSignature(array $credentials, string $payload, array $headers): bool
     {
         if ($this->isMockMode($credentials)) {
@@ -246,6 +350,9 @@ class StripeProvider extends AbstractPaymentProvider
                 return [
                     'subscription_id' => $object['subscription'] ?? null,
                     'subscription_status' => 'past_due',
+                    'payment_failed' => true,
+                    'attempt_count' => (int) ($object['attempt_count'] ?? 0),
+                    'invoice_id' => $object['id'] ?? null,
                 ];
             case 'invoice.paid':
             case 'invoice.payment_succeeded':

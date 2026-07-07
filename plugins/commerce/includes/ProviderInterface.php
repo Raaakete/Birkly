@@ -26,6 +26,10 @@ interface PaymentProviderInterface
 
     public function cancelSubscription(array $credentials, string $subscriptionId): array;
 
+    public function updateSubscription(array $credentials, string $subscriptionId, array $params): array;
+
+    public function retrySubscriptionPayment(array $credentials, string $subscriptionId, array $params = []): array;
+
     public function verifyWebhookSignature(array $credentials, string $payload, array $headers): bool;
 
     public function processWebhook(array $credentials, array $payload, array $headers): array;
