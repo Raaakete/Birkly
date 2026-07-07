@@ -35,6 +35,22 @@
         alert(message);
     }
 
+    /** Sidebar nav is server-rendered; reload after plugin state changes (matches legacy Settings → Plugins). */
+    function reloadAfterPluginChange(message, tab) {
+        if (message) {
+            showMessage(message, 'success');
+        }
+        setTimeout(function () {
+            if (tab) {
+                var pageUrl = new URL(window.location.href);
+                pageUrl.searchParams.set('tab', tab);
+                window.location.href = pageUrl.toString();
+                return;
+            }
+            window.location.reload();
+        }, 1000);
+    }
+
     async function marketplaceApi(action, extra) {
         var response = await fetch(url('/api/marketplace.php'), {
             method: 'POST',
@@ -208,10 +224,8 @@
     async function togglePlugin(pluginId, activate) {
         var action = activate ? 'activate' : 'deactivate';
         try {
-            await pluginsApi(action, { plugin_id: pluginId });
-            showMessage('Plugin ' + action + 'd successfully', 'success');
-            await loadInstalled();
-            await refreshUpdateBadge(true);
+            var result = await pluginsApi(action, { plugin_id: pluginId });
+            reloadAfterPluginChange(result.message || 'Plugin ' + action + 'd successfully');
         } catch (err) {
             showMessage(err.message, 'error');
         }
@@ -222,10 +236,8 @@
             return;
         }
         try {
-            await pluginsApi('delete', { plugin_id: pluginId });
-            showMessage('Plugin deleted successfully', 'success');
-            await loadInstalled();
-            await refreshUpdateBadge(true);
+            var result = await pluginsApi('delete', { plugin_id: pluginId });
+            reloadAfterPluginChange(result.message || 'Plugin deleted successfully');
         } catch (err) {
             showMessage(err.message, 'error');
         }
@@ -262,10 +274,8 @@
             return;
         }
         try {
-            await pluginsApi('update', { plugin_id: pluginId });
-            showMessage('Plugin upgraded successfully', 'success');
-            await loadInstalled();
-            await checkAllUpdates();
+            var result = await pluginsApi('update', { plugin_id: pluginId });
+            reloadAfterPluginChange(result.message || 'Plugin upgraded successfully');
         } catch (err) {
             showMessage(err.message, 'error');
         }
@@ -515,10 +525,7 @@
             }
             await marketplaceApi('install', payload);
             closeMarketplaceInstallModal();
-            showMessage(t('install_success', 'Plugin installed successfully'), 'success');
-            switchTab('installed');
-            await loadInstalled();
-            await checkAllUpdates();
+            reloadAfterPluginChange(t('install_success', 'Plugin installed successfully'), 'installed');
         } catch (err) {
             showMessage(err.message, 'error');
         } finally {
