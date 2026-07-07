@@ -195,7 +195,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`
 
-**Next active phase:** TBD — see deferred items (P7.0 Marketplace, P7.1 live import)
+**Next active phase:** **Phase 9** — Birkly Marketplace — see § Phase 9
+
+**2026-07-07 — Phase 9 approved** (Keven)
+
+**Priorities:** Standalone **Birkly-Marketplace** repo · provider accounts + Stripe Connect · buyer email checkout · licenses per `installation_id` · QC + reviews · CMS thin client (no local account changes).
+
+**Handoff:** `docs/reviews/P9-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P9-marketplace-plan.md`
 
 **2026-07-06 — Phase 7 complete** (Keven)
 
@@ -2162,7 +2168,31 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P8-M5** | ContentEditor cell merge / split | complete |
 | **P8-M6** | Verification matrix, docs, closure | complete |
 
-**Deferred post-P8:** Marketplace (P7.0), live Shopify/Woo API import (P7.1), gift cards, B2B quotes.
+**Deferred post-P8:** Live Shopify/Woo API import (P7.1), gift cards, B2B quotes.
+
+---
+
+## Phase 9 — Birkly Marketplace
+
+**Status:** **Approved** (2026-07-07) — M0–M7 autonomous execution
+
+**Handoff:** `docs/reviews/P9-lead-engineer-handoff.md`  
+**Spec:** `docs/reviews/P9-marketplace-plan.md`
+
+**Goal:** Standalone marketplace app (providers, buyer checkout, Stripe Connect, QC, reviews, registry API) + thin CMS client. **CMS local accounts unchanged.**
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P9-M0** | Marketplace repo scaffold + manifest schema | pending |
+| **P9-M1** | Provider signup + Stripe Connect | pending |
+| **P9-M2** | Offer CRUD + registry API + artifacts | pending |
+| **P9-M3** | Public catalog UI | pending |
+| **P9-M4** | Buyer checkout + licenses | pending |
+| **P9-M5** | Reviews + QC pipeline | pending |
+| **P9-M6** | CMS marketplace client | pending |
+| **P9-M7** | Seed catalog, docs, closure | pending |
+
+**Cloud setup:** Attach `Raaakete/Birkly-Marketplace` to Cursor environment — `docs/agent-ops/CLOUD_ENV_REPOS.md`
 
 ---
 
