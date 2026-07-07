@@ -188,8 +188,8 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 10 complete** (2026-07-07) — plugins unbundled from release zip; marketplace free install; **100 test suites** green. Official plugins in dev `plugins/`; install via marketplace in production. |
-| **Birkly-Marketplace** | **Phase 10 complete** — platform admin UI, refunds, official catalog, legal pages. **10 test suites** green. |
+| **Birkly (CMS)** | **Phase 12 complete** (2026-07-07) — commerce production + ecosystem closure; **110 test suites** green. |
+| **Birkly-Marketplace** | **Phase 12 complete** — GitHub App QC, provider growth, listing reports. **12 test suites** green. |
 | **Birkly-Docs** | P10 go-live docs + updated marketplace buyer/plugins guides. |
 | **kekaba** | Embed excludes plugins; demo install via `install-kekaba-demo-plugins.sh`. |
 | **Birkly-Website** | Marketplace CTA on homepage. |
@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 11 + 12** — single-wave execution (commerce then ecosystem closure)
+**Next active phase:** **Phase 13** — deferred items (cloud SSO, paid official tiers)
+
+**2026-07-07 — Phase 11 & 12 complete** (single-wave autonomous execution)
+
+**Delivered:** Commerce production (subscriptions, dunning, gift cards, quotes, analytics, migration wizard, official CI publish) · Marketplace GitHub App QC · provider growth · live Shopify/Woo import · plugin denylist · membership wiring · deploy smoke + health checks · docs + website refresh.
+
+**Matrices:** `docs/reviews/P11-verification-matrix.md` · `docs/reviews/P12-verification-matrix.md` · **Closure:** `docs/reviews/P11-P12-phase-closure-checklist.md`
 
 **2026-07-07 — Phase 11 & 12 approved** (Keven)
 
@@ -2239,10 +2245,10 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 11 — Commerce production wave
 
-**Status:** **Approved** (2026-07-07, Keven) — single-wave with P12; notify once at P12-M8
+**Status:** **Complete** (2026-07-07, single-wave with P12)
 
 **Spec:** `docs/reviews/P11-P12-complete-plan.md` § Phase 11  
-**Handoff:** `docs/reviews/P11-lead-engineer-handoff.md`  
+**Handoff:** `docs/reviews/P11-P12-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P11-verification-matrix.md`
 
 **Goal:** Subscription upgrades, dunning, gift cards, B2B quotes, commerce analytics, Shop/Events migration wizard, official plugin CI publish.
@@ -2250,14 +2256,14 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | Milestone | Focus | Status |
 |-----------|--------|--------|
 | **P11-M0** | Gap register, verification matrix | complete |
-| **P11-M1** | Subscription upgrades | pending |
-| **P11-M2** | Dunning automation | pending |
-| **P11-M3** | Gift cards / store credit | pending |
-| **P11-M4** | B2B quotes | pending |
-| **P11-M5** | Commerce analytics | pending |
-| **P11-M6** | Shop/Events migration wizard | pending |
-| **P11-M6b** | Official plugin CI publish on tag | pending |
-| **P11-M7** | Docs, matrix, closure | pending |
+| **P11-M1** | Subscription upgrades | complete |
+| **P11-M2** | Dunning automation | complete |
+| **P11-M3** | Gift cards / store credit | complete |
+| **P11-M4** | B2B quotes | complete |
+| **P11-M5** | Commerce analytics | complete |
+| **P11-M6** | Shop/Events migration wizard | complete |
+| **P11-M6b** | Official plugin CI publish on tag | complete |
+| **P11-M7** | Docs, matrix, closure | complete |
 
 **Depends on:** P10 complete. **Blocks:** P12.
 
@@ -2265,10 +2271,10 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 12 — Ecosystem growth, live import & production closure
 
-**Status:** **Approved** (2026-07-07, Keven) — single-wave with P11; notify once at P12-M8
+**Status:** **Complete** (2026-07-07, single-wave with P11)
 
 **Spec:** `docs/reviews/P11-P12-complete-plan.md` § Phase 12  
-**Handoff:** `docs/reviews/P12-lead-engineer-handoff.md`  
+**Handoff:** `docs/reviews/P11-P12-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P12-verification-matrix.md`
 
 **Goal:** Third-party GitHub App, marketplace provider growth, live Shopify/Woo import, plugin denylist, membership commerce, production deploy closure.
@@ -2276,14 +2282,14 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | Milestone | Focus | Status |
 |-----------|--------|--------|
 | **P12-M0** | Gap register, import threat model | complete |
-| **P12-M1** | Third-party GitHub App → QC | pending |
-| **P12-M2** | Provider growth (webhooks, payouts, fees) | pending |
-| **P12-M3** | Live Shopify + WooCommerce API import | pending |
-| **P12-M4** | Plugin denylist + membership wiring | pending |
-| **P12-M5** | Production deploy closure + monitoring | pending |
-| **P12-M6** | Birkly-Website production | pending |
-| **P12-M7** | Birkly-Docs sync | pending |
-| **P12-M8** | Verification matrix, closure | pending |
+| **P12-M1** | Third-party GitHub App → QC | complete |
+| **P12-M2** | Provider growth (webhooks, payouts, fees) | complete |
+| **P12-M3** | Live Shopify + WooCommerce API import | complete |
+| **P12-M4** | Plugin denylist + membership wiring | complete |
+| **P12-M5** | Production deploy closure + monitoring | complete |
+| **P12-M6** | Birkly-Website production | complete |
+| **P12-M7** | Birkly-Docs sync | complete |
+| **P12-M8** | Verification matrix, closure | complete |
 
 **Depends on:** P11 complete.
 
