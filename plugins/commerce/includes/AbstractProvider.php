@@ -151,4 +151,14 @@ abstract class AbstractPaymentProvider implements PaymentProviderInterface
         }
         return null;
     }
+
+    public function updateSubscription(array $credentials, string $subscriptionId, array $params): array
+    {
+        return ['ok' => false, 'error' => 'Provider does not support subscription plan changes'];
+    }
+
+    public function retrySubscriptionPayment(array $credentials, string $subscriptionId, array $params = []): array
+    {
+        return ['ok' => false, 'error' => 'Provider does not support subscription payment retry'];
+    }
 }

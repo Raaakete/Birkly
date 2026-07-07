@@ -161,12 +161,38 @@ function commerce_require_admin_capability(string $capability): void
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
         exit;
     }
-    $role = $_SESSION['user']['role'] ?? '';
-    if ($role !== 'admin' && $role !== 'superadmin') {
+    if (!commerce_user_has_capability($capability)) {
         http_response_code(403);
         echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
         exit;
     }
+}
+
+function commerce_user_has_capability(string $capability): bool
+{
+    if (!isset($_SESSION['user'])) {
+        return false;
+    }
+
+    $role = $_SESSION['user']['role'] ?? '';
+    if (in_array($role, ['admin', 'superadmin'], true)) {
+        return true;
+    }
+
+    $caps = $_SESSION['user']['capabilities'] ?? $_SESSION['user']['plugin_capabilities']['commerce'] ?? [];
+    if (is_array($caps) && in_array($capability, $caps, true)) {
+        return true;
+    }
+
+    if ($capability === 'view_commerce_stats' || $capability === 'view_payment_stats') {
+        return in_array('view_commerce_stats', $caps, true) || in_array('view_payment_stats', $caps, true);
+    }
+
+    if ($capability === 'manage_commerce' || $capability === 'manage_payments') {
+        return in_array('manage_commerce', $caps, true) || in_array('manage_payments', $caps, true);
+    }
+
+    return false;
 }
 
 function commerce_can_view_activity(): bool
@@ -185,12 +211,24 @@ function commerce_can_manage(): bool
 
 function commerce_can_view_stats(): bool
 {
-    return commerce_can_view_activity();
+    return commerce_user_has_capability('view_commerce_stats')
+        || commerce_user_has_capability('view_payment_stats')
+        || commerce_user_has_capability('manage_commerce');
+}
+
+function commerce_require_stats_capability(): void
+{
+    if (!commerce_can_view_stats()) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
+        exit;
+    }
 }
 
 function commerce_can_view_orders(): bool
 {
-    return commerce_can_view_activity();
+    return commerce_user_has_capability('view_commerce_orders')
+        || commerce_user_has_capability('manage_commerce');
 }
 
 function commerce_get_setting(string $key, $default = null)
@@ -367,6 +405,36 @@ function commerce_init_automation_triggers(): void
             return true;
         },
     ]);
+
+    register_automation_block('trigger', 'commerce_subscription_payment_failed', [
+        'name' => 'Subscription Payment Failed',
+        'description' => 'Fires when a subscription payment fails (dunning)',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_subscription_recovered', [
+        'name' => 'Subscription Recovered',
+        'description' => 'Fires when a past_due subscription payment succeeds',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_subscription_upgraded', [
+        'name' => 'Subscription Upgraded',
+        'description' => 'Fires when a subscription plan is changed to another purchase option',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
 }
 
 /**
@@ -414,7 +482,12 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/CommerceOrderStore.php';
     require_once $dir . '/includes/CommerceSubscriptionStore.php';
     require_once $dir . '/includes/CommerceSubscriptionService.php';
+    require_once $dir . '/includes/SubscriptionUpgradeService.php';
+    require_once $dir . '/includes/CommerceDunningNotifier.php';
     require_once $dir . '/includes/DiscountEngine.php';
+    require_once $dir . '/includes/GiftCardStore.php';
+    require_once $dir . '/includes/CommerceQuoteStore.php';
+    require_once $dir . '/includes/CommerceAnalyticsService.php';
     require_once $dir . '/includes/CommerceCheckoutService.php';
     require_once $dir . '/includes/CatalogIndexer.php';
     require_once $dir . '/includes/PurchaseMappingService.php';
@@ -488,6 +561,14 @@ function commerce_register_fieldtype_profiles(): void
             'description' => 'Bundle of catalog entries with bundle pricing rules',
         ]
     );
+}
+
+function commerce_quote_accept_url(string $token): string
+{
+    if (function_exists('birkly_url')) {
+        return birkly_url('/api/index.php?route=commerce&action=get_quote&token=' . urlencode($token));
+    }
+    return '/api/index.php?route=commerce&action=get_quote&token=' . urlencode($token);
 }
 
 function commerce_on_payment_succeeded(array $data): void
