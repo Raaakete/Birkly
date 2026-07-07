@@ -131,11 +131,15 @@ class PostPurchaseRouter
             'customer_email' => $order['customer_email'] ?? '',
         ]);
 
-        return ['ok' => true, 'registration' => $record];
+        $tierGranted = $this->mappings->applyLineMappings($order, $line);
+
+        return ['ok' => true, 'registration' => $record, 'tier_granted' => $tierGranted];
     }
 
     private function handleNone(array $order, array $line): array
     {
+        $tierGranted = $this->mappings->applyLineMappings($order, $line);
+
         if (($line['billing'] ?? '') === 'recurring') {
             $this->fireAutomation('commerce_membership_started', [
                 'order_id' => $order['id'] ?? '',
@@ -145,7 +149,7 @@ class PostPurchaseRouter
             ]);
         }
 
-        return ['ok' => true, 'membership' => ($line['billing'] ?? '') === 'recurring'];
+        return ['ok' => true, 'membership' => ($line['billing'] ?? '') === 'recurring', 'tier_granted' => $tierGranted];
     }
 
     private function routeBundleLine(array $order, array $line, string $bundleLineId): array
