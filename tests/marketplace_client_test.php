@@ -84,7 +84,19 @@ $browseFallback = birkly_marketplace_browse('', '', 'plugin');
 test_assert('browse uses fallback when registry fails', !empty($browseFallback['ok']) && !empty($browseFallback['fallback']) && count($browseFallback['offers']) >= 2);
 $firstOffer = $browseFallback['offers'][0] ?? [];
 test_assert('browse offers include install_state', isset($firstOffer['install_state']) && is_array($firstOffer['install_state']));
-test_assert('install_state defaults to not installed', ($firstOffer['install_state']['installed'] ?? true) === false);
+$unknownState = birkly_marketplace_offer_install_state('definitely-not-installed-offer-slug');
+test_assert('unknown offer slug not installed', ($unknownState['installed'] ?? true) === false);
+
+test_assert('official slug map includes commerce', (birkly_official_marketplace_slugs()['commerce'] ?? '') === 'birkly-commerce');
+test_assert(
+    'plugin offer slug resolves from official map',
+    birkly_marketplace_plugin_offer_slug('events', ['version' => '1.0.0']) === 'birkly-events'
+);
+test_assert(
+    'plugin offer slug prefers stored marketplace_slug',
+    birkly_marketplace_plugin_offer_slug('events', ['marketplace_slug' => 'custom-slug']) === 'custom-slug'
+);
+
 unset($GLOBALS['birkly_marketplace_mock_handler']);
 
 // Mock HTTP handler
