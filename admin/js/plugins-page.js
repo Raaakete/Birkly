@@ -6,6 +6,7 @@
 
     var installedPlugins = [];
     var updateMap = {};
+    var marketplaceFilterOptions = { categories: [], offer_types: [] };
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function'
@@ -77,6 +78,56 @@
         return (offer.pricing.amount_cents || 0) === 0;
     }
 
+    function offerTypeLabel(offerType) {
+        if (offerType === 'theme') {
+            return t('marketplace_type_theme', 'Theme');
+        }
+        if (offerType === 'template_pack') {
+            return t('marketplace_type_template', 'Template pack');
+        }
+        return t('marketplace_type_plugin', 'Plugin');
+    }
+
+    function formatPrice(offer) {
+        if (isFreeOffer(offer)) {
+            return t('price_free', 'Free');
+        }
+        var pricing = offer.pricing || {};
+        return ((pricing.amount_cents || 0) / 100).toFixed(2) + ' ' + (pricing.currency || 'USD');
+    }
+
+    function formatRating(summary) {
+        if (!summary || !summary.count) {
+            return t('marketplace_no_reviews', 'No reviews yet');
+        }
+        var avg = Number(summary.average || 0).toFixed(1);
+        return '\u2605 ' + avg + ' (' + summary.count + ')';
+    }
+
+    function formatDownloads(count) {
+        var n = Number(count || 0);
+        if (n >= 1000000) {
+            return (n / 1000000).toFixed(1) + 'M ' + t('marketplace_downloads', 'downloads');
+        }
+        if (n >= 1000) {
+            return (n / 1000).toFixed(1) + 'k ' + t('marketplace_downloads', 'downloads');
+        }
+        return n + ' ' + t('marketplace_downloads', 'downloads');
+    }
+
+    function offerImageHtml(offer) {
+        var imgUrl = offer.icon_url || '';
+        if (!imgUrl && Array.isArray(offer.screenshots) && offer.screenshots.length) {
+            imgUrl = offer.screenshots[0];
+        }
+        if (imgUrl) {
+            return '<img class="marketplace-offer-image" src="' + escapeHtml(imgUrl) + '" alt="" loading="lazy">';
+        }
+        var initial = (offer.title || offer.slug || '?').charAt(0).toUpperCase();
+        var typeClass = 'placeholder-' + escapeHtml((offer.offer_type || 'plugin').replace(/[^a-z_]/g, ''));
+        return '<div class="marketplace-offer-placeholder ' + typeClass + '" aria-hidden="true">' + escapeHtml(initial) + '</div>';
+    }
+
     function setUpdateBadge(count) {
         var badge = document.getElementById('plugins-update-badge');
         if (!badge) return;
@@ -129,10 +180,10 @@
                 (hasUpdate
                     ? '<button type="button" class="btn btn-sm btn-primary" onclick="PluginsPage.upgradePlugin(\'' + escapeHtml(plugin.id) + '\')">Upgrade</button>'
                     : '') +
-                '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" onclick="togglePlugin(\'' + escapeHtml(plugin.id) + '\', ' + (!active) + ')">' +
+                '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" onclick="PluginsPage.togglePlugin(\'' + escapeHtml(plugin.id) + '\', ' + (!active) + ')">' +
                 (active ? 'Deactivate' : 'Activate') +
                 '</button>' +
-                '<button type="button" class="btn btn-sm btn-danger" onclick="deletePlugin(\'' + escapeHtml(plugin.id) + '\')">Delete</button>' +
+                '<button type="button" class="btn btn-sm btn-danger" onclick="PluginsPage.deletePlugin(\'' + escapeHtml(plugin.id) + '\')">Delete</button>' +
                 '</div>' +
                 '</div>'
             );
@@ -152,6 +203,32 @@
         }
         installedPlugins = (result.data && result.data.plugins) || [];
         renderInstalledPlugins();
+    }
+
+    async function togglePlugin(pluginId, activate) {
+        var action = activate ? 'activate' : 'deactivate';
+        try {
+            await pluginsApi(action, { plugin_id: pluginId });
+            showMessage('Plugin ' + action + 'd successfully', 'success');
+            await loadInstalled();
+            await refreshUpdateBadge(true);
+        } catch (err) {
+            showMessage(err.message, 'error');
+        }
+    }
+
+    async function deletePlugin(pluginId) {
+        if (!confirm('Are you sure you want to delete this plugin? This action cannot be undone.')) {
+            return;
+        }
+        try {
+            await pluginsApi('delete', { plugin_id: pluginId });
+            showMessage('Plugin deleted successfully', 'success');
+            await loadInstalled();
+            await refreshUpdateBadge(true);
+        } catch (err) {
+            showMessage(err.message, 'error');
+        }
     }
 
     async function refreshUpdateBadge(silent) {
@@ -196,7 +273,17 @@
 
     function renderMarketplaceOffers(offers) {
         var grid = document.getElementById('marketplace-grid');
+        var countEl = document.getElementById('marketplace-result-count');
         if (!grid) return;
+
+        if (countEl) {
+            if (offers.length) {
+                countEl.textContent = t('marketplace_offers_count', '{count} offers').replace('{count}', String(offers.length));
+                countEl.hidden = false;
+            } else {
+                countEl.hidden = true;
+            }
+        }
 
         if (!offers.length) {
             grid.innerHTML = '<div class="empty-state"><p>No offers found.</p></div>';
@@ -204,49 +291,81 @@
         }
 
         grid.innerHTML = offers.map(function (offer) {
-            var price = t('price_free', 'Free');
-            if (offer.pricing && offer.pricing.model !== 'free' && offer.pricing.amount_cents > 0) {
-                price = ((offer.pricing.amount_cents || 0) / 100).toFixed(2) + ' ' + (offer.pricing.currency || 'USD');
-            }
             var free = isFreeOffer(offer);
-            var installLabel = free
-                ? t('install', 'Install')
-                : t('install_with_license', 'Install with license');
+            var installLabel = free ? t('install', 'Install') : t('install_with_license', 'Install with license');
             var installHandler = free
                 ? 'PluginsPage.installFreePlugin(\'' + escapeHtml(offer.slug) + '\', \'' + escapeHtml(offer.latest_version || '') + '\')'
                 : 'PluginsPage.openMarketplaceInstall(\'' +
                 escapeHtml(offer.slug) + '\', \'' + escapeHtml(offer.title || offer.slug) + '\', \'' +
                 escapeHtml(offer.latest_version || '') + '\', false)';
+
             return (
-                '<div class="card marketplace-offer-card">' +
-                '<div class="plugin-header">' +
-                '<h3 class="plugin-name">' + escapeHtml(offer.title || offer.slug) + '</h3>' +
+                '<article class="marketplace-offer-card">' +
+                '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
+                '<div class="marketplace-offer-body">' +
+                '<div class="marketplace-offer-top">' +
+                '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
                 '<span class="trust-badge">' + escapeHtml(offer.trust_level || 'untrusted') + '</span>' +
                 '</div>' +
-                '<p class="plugin-description">' + escapeHtml(offer.summary || '') + '</p>' +
-                '<div class="plugin-meta">' +
-                '<span class="plugin-version">' + escapeHtml(offer.category || '') + '</span>' +
-                (offer.latest_version ? '<span class="plugin-version">v' + escapeHtml(offer.latest_version) + '</span>' : '') +
-                '<span class="marketplace-price">' + escapeHtml(price) + '</span>' +
+                '<h3 class="marketplace-offer-title">' + escapeHtml(offer.title || offer.slug) + '</h3>' +
+                '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
+                '<div class="marketplace-offer-meta">' +
+                '<span class="marketplace-price">' + escapeHtml(formatPrice(offer)) + '</span>' +
+                (offer.latest_version ? '<span class="marketplace-version">v' + escapeHtml(offer.latest_version) + '</span>' : '') +
+                '<span class="marketplace-rating">' + escapeHtml(formatRating(offer.rating_summary)) + '</span>' +
+                '<span class="marketplace-downloads">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
                 '</div>' +
-                '<div class="plugin-actions">' +
+                '<div class="marketplace-offer-actions">' +
                 '<button type="button" class="btn btn-sm btn-primary" onclick="' + installHandler + '">' +
                 escapeHtml(installLabel) +
                 '</button>' +
                 '</div>' +
-                '</div>'
+                '</div>' +
+                '</article>'
             );
         }).join('');
     }
 
-    async function loadMarketplace(query) {
+    function updateCategoryFilterOptions(categories) {
+        var select = document.getElementById('marketplace-filter-category');
+        if (!select) return;
+        var current = select.value;
+        var html = '<option value="">' + escapeHtml(t('marketplace_filter_all_categories', 'All categories')) + '</option>';
+        (categories || []).forEach(function (cat) {
+            html += '<option value="' + escapeHtml(cat) + '"' + (current === cat ? ' selected' : '') + '>' + escapeHtml(cat) + '</option>';
+        });
+        select.innerHTML = html;
+    }
+
+    function getMarketplaceBrowseParams() {
+        var qEl = document.getElementById('marketplace-search');
+        var typeEl = document.getElementById('marketplace-filter-type');
+        var catEl = document.getElementById('marketplace-filter-category');
+        var sortEl = document.getElementById('marketplace-sort');
+        return {
+            q: qEl ? qEl.value : '',
+            offer_type: typeEl ? typeEl.value : '',
+            category: catEl ? catEl.value : '',
+            sort: sortEl ? sortEl.value : 'name',
+        };
+    }
+
+    async function loadMarketplace() {
         var grid = document.getElementById('marketplace-grid');
         if (grid) {
-            grid.innerHTML = '<div class="loading-state"><p>Loading marketplace...</p></div>';
+            grid.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('loading_marketplace', 'Loading marketplace...')) + '</p></div>';
         }
 
+        var params = getMarketplaceBrowseParams();
+        var query = new URLSearchParams();
+        query.set('action', 'browse');
+        if (params.q) query.set('q', params.q);
+        if (params.category) query.set('category', params.category);
+        if (params.offer_type) query.set('offer_type', params.offer_type);
+        if (params.sort) query.set('sort', params.sort);
+
         try {
-            var browse = await fetch(url('/api/marketplace.php?action=browse&q=' + encodeURIComponent(query || '') + '&offer_type=plugin'), {
+            var browse = await fetch(url('/api/marketplace.php?' + query.toString()), {
                 credentials: 'same-origin',
             });
             var result = await browse.json();
@@ -263,6 +382,8 @@
                 hint.textContent = hintText;
             }
 
+            marketplaceFilterOptions = (result.data && result.data.filter_options) || marketplaceFilterOptions;
+            updateCategoryFilterOptions(marketplaceFilterOptions.categories || []);
             renderMarketplaceOffers((result.data && result.data.offers) || []);
         } catch (err) {
             if (grid) {
@@ -272,8 +393,7 @@
     }
 
     function searchMarketplace() {
-        var q = document.getElementById('marketplace-search');
-        loadMarketplace(q ? q.value : '');
+        loadMarketplace();
     }
 
     function updatePageTitle(tab) {
@@ -315,20 +435,20 @@
             panel.hidden = !show;
         });
         if (tab === 'marketplace') {
-            loadMarketplace('');
+            loadMarketplace();
         } else if (tab === 'installed') {
             loadInstalled()
                 .then(function () { return refreshUpdateBadge(true); })
                 .catch(function (err) { showMessage(err.message, 'error'); });
         }
         if (window.history && typeof window.history.replaceState === 'function') {
-            var url = new URL(window.location.href);
+            var pageUrl = new URL(window.location.href);
             if (tab === 'installed') {
-                url.searchParams.delete('tab');
+                pageUrl.searchParams.delete('tab');
             } else {
-                url.searchParams.set('tab', tab);
+                pageUrl.searchParams.set('tab', tab);
             }
-            window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+            window.history.replaceState({}, '', pageUrl.pathname + pageUrl.search + pageUrl.hash);
         }
     }
 
@@ -414,11 +534,14 @@
         showMessage(t('manual_install_unavailable', 'Manual zip install is not available yet. Use the Marketplace tab with your license key.'), 'info');
     }
 
-    function initTabs() {
-        document.querySelectorAll('.plugins-tab').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                switchTab(btn.getAttribute('data-tab'));
-            });
+    function initMarketplaceFilters() {
+        ['marketplace-filter-type', 'marketplace-filter-category', 'marketplace-sort'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', function () {
+                    loadMarketplace();
+                });
+            }
         });
         var search = document.getElementById('marketplace-search');
         if (search) {
@@ -429,6 +552,15 @@
                 }
             });
         }
+    }
+
+    function initTabs() {
+        document.querySelectorAll('.plugins-tab').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                switchTab(btn.getAttribute('data-tab'));
+            });
+        });
+        initMarketplaceFilters();
     }
 
     async function init() {
@@ -448,6 +580,8 @@
     window.PluginsPage = {
         checkAllUpdates: checkAllUpdates,
         upgradePlugin: upgradePlugin,
+        togglePlugin: togglePlugin,
+        deletePlugin: deletePlugin,
         openInstallModal: openInstallModal,
         closeInstallModal: closeInstallModal,
         openMarketplaceInstall: openMarketplaceInstall,
@@ -461,6 +595,8 @@
         switchTab: switchTab,
     };
 
+    window.togglePlugin = togglePlugin;
+    window.deletePlugin = deletePlugin;
     window.openInstallPluginModal = openInstallModal;
     window.closeInstallPluginModal = closeInstallModal;
     window.installPlugin = installFromFile;
