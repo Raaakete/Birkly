@@ -9,6 +9,19 @@ Client sites (Birkly-Website, kekaba, etc.) embed the platform as **`Birkly-0.1/
 3. **Copy, don’t fork** — replace the embed folder from a release/tag; avoid editing `api/`, `core/`, or `admin/` in the site repo except during intentional upgrade PRs.
 4. **Site-specific code stays outside** — loaders (`components/birkly-loader.js`), publish scripts, and `.htaccess` rewrites live in the site repo.
 5. **Runtime data never in git** — `content/`, `users/`, `media/`, `cache/`, `logs/`, `settings/`, `.env`.
+6. **Plugins not in embed** — official plugin packages (`commerce`, `events`, `automation`, `user_management`) are distributed via the [Birkly Marketplace](https://marketplace.birkly.com), not vendored into `Birkly-0.1/plugins/`. Client embed sync copies `plugins/README.md` and `plugins/.gitkeep` only.
+
+## Plugins after embed sync
+
+Fresh embeds ship with an empty `plugins/` directory. Install extensions per environment:
+
+| Context | How to install |
+|---------|----------------|
+| Production / staging | Admin → Plugins → Marketplace |
+| kekaba local demos (commerce + events) | From Birkly repo: `./scripts/install-kekaba-demo-plugins.sh /path/to/kekaba` |
+| Platform dev / CI | `./scripts/install-dev-plugins.sh` (all official plugins from marketplace zips or local tree) |
+
+Re-run the demo install script after each platform sync if you need live Commerce/Events API routes on kekaba (`shop.html`, `cart.html`, `events.html`).
 
 ## Upgrade workflow
 
@@ -18,6 +31,7 @@ Client sites (Birkly-Website, kekaba, etc.) embed the platform as **`Birkly-0.1/
    # From Birkly repo root
    ./scripts/sync-client-embed.sh /path/to/kekaba scripts/fixtures/kekaba-embed-excludes.txt
    ./scripts/patch-kekaba-plugins.php.sh /path/to/kekaba/Birkly-0.1/core/plugins.php
+   ./scripts/install-kekaba-demo-plugins.sh /path/to/kekaba   # optional: local commerce/events demos
    ./scripts/sync-client-embed.sh /path/to/Birkly-Website
    ```
    Or rsync manually, preserving site-only paths:

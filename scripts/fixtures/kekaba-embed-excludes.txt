@@ -7,3 +7,7 @@ core/birkly_template_render.php
 api/media_thumb.php
 templates/template_engine.php
 templates/template_engine.js
+# Official plugins ship via marketplace, not client embed sync (P10-M6).
+plugins/**
+!plugins/README.md
+!plugins/.gitkeep
