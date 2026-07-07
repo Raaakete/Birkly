@@ -1581,17 +1581,49 @@ window.deleteDomain = async function(domainName) {
 })();
 
 // Denylist Management
+let denylistCollectionsLoaded = false;
+
+async function loadDenylistCollections() {
+    const select = document.getElementById('denylist-collection-select');
+    const addBtn = document.getElementById('denylist-add-collection-btn');
+    if (!select) return;
+
+    try {
+        const response = await fetch(apiUrl('/api/content.php?action=list_collections'));
+        const result = await response.json();
+        const collections = (result.data && result.data.collections) || result.collections || [];
+        select.innerHTML = '<option value="">Select a collection…</option>';
+        collections.forEach(col => {
+            const slug = col.slug || col.id || '';
+            if (!slug) return;
+            const opt = document.createElement('option');
+            opt.value = slug;
+            opt.textContent = (col.name || slug) + ' (' + slug + ')';
+            select.appendChild(opt);
+        });
+        if (addBtn) addBtn.disabled = collections.length === 0;
+        denylistCollectionsLoaded = true;
+    } catch (error) {
+        select.innerHTML = '<option value="">Failed to load collections</option>';
+        if (addBtn) addBtn.disabled = true;
+    }
+}
+
 async function loadDenylist() {
     const container = document.getElementById('denylist-management');
     if (!container) return;
-    
+
+    if (!denylistCollectionsLoaded) {
+        loadDenylistCollections();
+    }
+
     try {
         const response = await fetch(apiUrl('/api/plugins_permissions.php?action=get_denylist'));
         const result = await response.json();
-        
+
         if (result.status === 'ok') {
-            const resources = result.data.resources || [];
-            renderDenylist(resources);
+            const data = result.data || {};
+            renderDenylist(data.resources || [], data.deny_collections || [], data.deny_spaces || []);
         } else {
             container.innerHTML = `<p class="error">Error loading denylist: ${result.message}</p>`;
         }
@@ -1600,28 +1632,93 @@ async function loadDenylist() {
     }
 }
 
-function renderDenylist(resources) {
+function renderDenylistItem(resource, type) {
+    const label = type === 'collection' ? 'collection' : (type === 'space' ? 'space' : 'pattern');
+    return `
+        <div class="denylist-item">
+            <code>${escapeHtml(resource)}</code>
+            <span class="denylist-type-badge">${label}</span>
+            <button type="button" class="btn btn-sm btn-danger" data-denylist-resource="${escapeHtml(resource)}" onclick="removeDenylistResource(this.dataset.denylistResource)">
+                Remove
+            </button>
+        </div>
+    `;
+}
+
+function renderDenylist(resources, denyCollections, denySpaces) {
     const container = document.getElementById('denylist-management');
     if (!container) return;
-    
-    if (resources.length === 0) {
+
+    const collectionSet = new Set(denyCollections || []);
+    const customResources = (resources || []).filter(r => !collectionSet.has(r));
+
+    let html = '';
+
+    if ((denyCollections || []).length > 0) {
+        html += '<h3 class="settings-subheading">Protected collections</h3><div class="denylist-list">';
+        denyCollections.forEach(resource => {
+            html += renderDenylistItem(resource, 'collection');
+        });
+        html += '</div>';
+    }
+
+    if (customResources.length > 0) {
+        html += '<h3 class="settings-subheading" style="margin-top: 1rem;">Custom patterns</h3><div class="denylist-list">';
+        customResources.forEach(resource => {
+            html += renderDenylistItem(resource, 'pattern');
+        });
+        html += '</div>';
+    }
+
+    if ((denySpaces || []).length > 0) {
+        html += '<h3 class="settings-subheading" style="margin-top: 1rem;">Protected spaces</h3><div class="denylist-list">';
+        denySpaces.forEach(resource => {
+            html += renderDenylistItem(resource, 'space');
+        });
+        html += '</div>';
+    }
+
+    if (!html) {
         container.innerHTML = '<p class="settings-help">No protected resources. All collections are accessible to plugins (subject to capability checks).</p>';
         return;
     }
-    
-    let html = '<div class="denylist-list">';
-    resources.forEach(resource => {
-        html += `
-            <div class="denylist-item">
-                <code>${escapeHtml(resource)}</code>
-                <button type="button" class="btn btn-sm btn-danger" onclick="removeDenylistResource('${escapeHtml(resource)}')">
-                    Remove
-                </button>
-            </div>
-        `;
-    });
-    html += '</div>';
+
     container.innerHTML = html;
+}
+
+async function addDenylistCollection() {
+    const select = document.getElementById('denylist-collection-select');
+    const slug = select?.value || '';
+    if (!slug) {
+        showMessage('Select a collection first', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(apiUrl('/api/plugins_permissions.php'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'add_to_denylist',
+                resource: slug,
+                as_collection: true,
+                _csrf: getCsrfToken()
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'ok') {
+            showMessage('Collection added to denylist', 'success');
+            loadDenylist();
+        } else {
+            showMessage('Error: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+    }
 }
 
 async function addDenylistResource() {
@@ -1780,6 +1877,8 @@ function migrateStorage() {
 
 // Load denylist when security tab is shown
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('denylist-add-collection-btn')?.addEventListener('click', addDenylistCollection);
+
     const securityTab = document.querySelector('[data-tab="security"]');
     if (securityTab) {
         securityTab.addEventListener('click', function() {

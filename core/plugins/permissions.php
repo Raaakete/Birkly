@@ -14,14 +14,13 @@ require_once __DIR__ . '/../../core/storage/StorageFactory.php';
  * @return array Permissions structure: ['global' => [...], 'collection_slug' => [...]]
  */
 function get_plugin_permissions($plugin_id) {
-    static $permissionsCache = null;
-    
-    if ($permissionsCache === null) {
+    if (!array_key_exists('_plugin_permissions_cache', $GLOBALS)) {
         $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
         $permissionsData = $storage->read('plugin_permissions.json') ?? [];
-        $permissionsCache = $permissionsData;
+        $GLOBALS['_plugin_permissions_cache'] = $permissionsData;
     }
-    
+
+    $permissionsCache = $GLOBALS['_plugin_permissions_cache'];
     return $permissionsCache[$plugin_id] ?? ['global' => []];
 }
 
@@ -39,8 +38,7 @@ function set_plugin_permissions($plugin_id, $permissions) {
     
     $result = $storage->write('plugin_permissions.json', $permissionsData);
     
-    // Clear cache
-    $GLOBALS['_plugin_permissions_cache'] = null;
+    unset($GLOBALS['_plugin_permissions_cache']);
     
     // Log permission change
     log_permission_change($plugin_id, $permissions);
@@ -104,35 +102,64 @@ function revoke_plugin_capability($plugin_id, $capability, $scope = 'global') {
  * @return array List of protected resource identifiers
  */
 function get_plugin_denylist() {
-    static $denylistCache = null;
-    
-    if ($denylistCache === null) {
+    if (!array_key_exists('_plugin_denylist_cache', $GLOBALS)) {
         $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
         $denylistData = $storage->read('plugin_denylist.json') ?? [];
-        $denylistCache = $denylistData['resources'] ?? [];
+        $GLOBALS['_plugin_denylist_cache'] = $denylistData['resources'] ?? [];
     }
-    
-    return $denylistCache;
+
+    return $GLOBALS['_plugin_denylist_cache'];
+}
+
+/**
+ * Structured denylist metadata (collections + spaces stubs for admin UI).
+ *
+ * @return array{collections: array, spaces: array, resources: array}
+ */
+function get_plugin_denylist_meta() {
+    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+    $denylistData = $storage->read('plugin_denylist.json') ?? [];
+    $resources = $denylistData['resources'] ?? [];
+    $collections = $denylistData['deny_collections'] ?? [];
+    $spaces = $denylistData['deny_spaces'] ?? [];
+
+    if (empty($collections) && !empty($resources)) {
+        foreach ($resources as $resource) {
+            if (is_string($resource) && strpos($resource, '*') === false && strpos($resource, '/') === false && strpos($resource, ':') === false) {
+                $collections[] = $resource;
+            }
+        }
+        $collections = array_values(array_unique($collections));
+    }
+
+    return [
+        'resources' => $resources,
+        'deny_collections' => $collections,
+        'deny_spaces' => $spaces,
+    ];
 }
 
 /**
  * Set plugin denylist
  * 
  * @param array $resources List of protected resource identifiers
+ * @param array $options Optional deny_collections / deny_spaces metadata
  * @return bool True on success
  */
-function set_plugin_denylist($resources) {
+function set_plugin_denylist($resources, array $options = []) {
     $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+    $existing = $storage->read('plugin_denylist.json') ?? [];
     $denylistData = [
-        'resources' => $resources,
-        'updated_at' => date('c')
+        'resources' => array_values(array_unique($resources)),
+        'deny_collections' => $options['deny_collections'] ?? ($existing['deny_collections'] ?? []),
+        'deny_spaces' => $options['deny_spaces'] ?? ($existing['deny_spaces'] ?? []),
+        'updated_at' => date('c'),
     ];
-    
+
     $result = $storage->write('plugin_denylist.json', $denylistData);
-    
-    // Clear cache
-    $GLOBALS['_plugin_denylist_cache'] = null;
-    
+
+    unset($GLOBALS['_plugin_denylist_cache']);
+
     return $result;
 }
 
@@ -142,14 +169,22 @@ function set_plugin_denylist($resources) {
  * @param string $resource Resource identifier
  * @return bool True on success
  */
-function add_to_denylist($resource) {
+function add_to_denylist($resource, array $options = []) {
     $denylist = get_plugin_denylist();
-    
+
     if (!in_array($resource, $denylist)) {
         $denylist[] = $resource;
-        return set_plugin_denylist($denylist);
+        $meta = get_plugin_denylist_meta();
+        if (!empty($options['as_collection'])) {
+            $collections = $meta['deny_collections'];
+            if (!in_array($resource, $collections, true)) {
+                $collections[] = $resource;
+            }
+            $options['deny_collections'] = $collections;
+        }
+        return set_plugin_denylist($denylist, $options);
     }
-    
+
     return true; // Already in denylist
 }
 
@@ -161,12 +196,17 @@ function add_to_denylist($resource) {
  */
 function remove_from_denylist($resource) {
     $denylist = get_plugin_denylist();
-    
+
     $denylist = array_values(array_filter($denylist, function($r) use ($resource) {
         return $r !== $resource;
     }));
-    
-    return set_plugin_denylist($denylist);
+
+    $meta = get_plugin_denylist_meta();
+    $collections = array_values(array_filter($meta['deny_collections'], function($c) use ($resource) {
+        return $c !== $resource;
+    }));
+
+    return set_plugin_denylist($denylist, ['deny_collections' => $collections, 'deny_spaces' => $meta['deny_spaces']]);
 }
 
 /**
