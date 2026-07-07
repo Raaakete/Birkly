@@ -650,6 +650,8 @@ if (file_exists(__DIR__ . '/plugins/scheduled_tasks.php')) {
     require_once __DIR__ . '/plugins/scheduled_tasks.php';
 }
 
+require_once __DIR__ . '/plugin_availability.php';
+
 // Load plugins at startup (only once)
 if (!isset($GLOBALS['haru_plugins_loaded'])) {
     load_plugins();
