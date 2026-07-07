@@ -1,362 +1,107 @@
-# Testing the Onboarding System
+# Testing the Onboarding System (P19)
 
-This guide explains how to test the onboarding system in Birkly.
+This guide covers first-run flow: **START_HERE.html** → install path → admin wizard v2 → optional AI → dashboard checklist.
 
-## Quick Test Methods
-
-### Method 1: Simulate First-Time Setup (Recommended)
-
-The easiest way to test is to temporarily clear your content to simulate a fresh installation:
-
-1. **Backup your existing content** (if you want to keep it):
-   ```bash
-   cp -r content/collections content/collections.backup
-   ```
-
-2. **Clear collections** (or just entries):
-   ```bash
-   # Option A: Remove all entries but keep collections
-   find content/collections -name "*.json" -path "*/entries/*" -delete
-   
-   # Option B: Remove specific collection entries
-   rm -rf content/collections/blog/entries/*.json
-   ```
-
-3. **Clear onboarding progress**:
-   ```bash
-   # Remove user onboarding file to reset progress
-   rm -f users/*_onboarding.json
-   ```
-
-4. **Log in to admin panel**:
-   - Visit `http://localhost:8001/admin/index.php` (or your server URL)
-   - You should be redirected to the onboarding wizard automatically
-
-### Method 2: Use the Reset Script
-
-A helper script is available to quickly reset onboarding state:
-
-```bash
-php scripts/reset-onboarding.php
-```
-
-This script will:
-- Clear all entry files (keeps collections)
-- Remove onboarding progress
-- Keep your demo content packs intact
-
-### Method 3: Fresh Installation Test (recommended for CI / agents)
-
-Use the project bootstrap scripts on a clean `content/` tree (no committed runtime data):
+## Quick start (agents / CI)
 
 ```bash
 # From Birkly repo root
-php scripts/create-default-user.php    # admin@localhost / admin123 (dev only)
-php scripts/create-demo-content.php    # optional: pre-install demo collections + entries
-
-# Reset only onboarding progress (keeps demo content — tests wizard after bootstrap)
+php scripts/create-default-user.php    # optional dev user
 php scripts/reset-onboarding.php --keep-entries
 
-# Start CMS
-php -S localhost:8080 -t . server-router.php
+# Automated suites
+php tests/onboarding_install_path_test.php
+php tests/onboarding_ai_step_test.php
+php tests/onboarding_checklist_test.php
+php tests/onboarding_e2e_test.php
+php tests/release_manifest_test.php
+
+# Full harness
+php tests/run.php
+
+# Release zip must include START_HERE
+./scripts/build-cms-release.sh && unzip -l /tmp/birkly-release.zip | grep START_HERE
 ```
 
-1. Open `http://localhost:8080/admin/login.php`
-2. Log in with the dev admin user
-3. You should be redirected to `/admin/index.php?page=onboarding` **even when demo entries exist**
-4. Complete or skip the wizard; dashboard should show the welcome checklist when skipped, or the completion modal when finished
+## First-run (START_HERE)
 
-To simulate a completely empty site (no entries):
+1. Extract the release zip so `START_HERE.html` sits next to `admin/`, `api/`, and `core/`.
+2. Open **START_HERE.html** in a browser (not from inside the zip).
+3. Confirm the folder checker shows **right folder**.
+4. Pick **local** or **cloud** path.
+5. Click **Start setup** — URL should include `?page=onboarding&install=local` or `install=cloud`.
+6. Local: run `./start-server.sh` and use `http://localhost:8080/START_HERE.html` for PHP probe checks.
+
+### Wrong-folder cases to verify manually
+
+| Case | Expected message |
+|------|------------------|
+| Opened only `admin/` folder | Move up one folder |
+| `Birkly/Birkly/` double nest | Open inner folder |
+| Random wrong directory | Re-extract zip |
+
+## Wizard v2 step order
+
+| Step | ID | Notes |
+|------|-----|-------|
+| 0 | first-user | Only when no users exist |
+| 1 | welcome | Skip entire wizard available |
+| 2 | install-context | Shows local vs cloud summary from `install` param |
+| 3 | site-info | Project name / description |
+| 4 | use-case + demo | blog, business, shop, docs, developer; keep/delete demo |
+| 5 | marketplace | Hint + link to Plugins → Marketplace |
+| 6 | connect-ai | **Optional** BYOAI mini-wizard; skip always visible |
+
+Resume: partial progress saved via `api/onboarding.php?action=update_progress` (`last_step`).
+
+## Optional AI step (P19-D4 / P5.6-D)
+
+- [ ] Provider → API key → test → role → require approval (default on)
+- [ ] **Skip for now** and **Set up later** both complete onboarding without AI
+- [ ] Ollama path shows local hint
+- [ ] **AI must NOT appear on dashboard checklist** unless user skipped step 6 (`ai_skipped` in progress)
+
+## Dashboard checklist v2 (essential only)
+
+| Item | When shown |
+|------|------------|
+| Create first collection | Always (until done) |
+| Add first entry | Always (until done) |
+| Install marketplace plugin | Only when no marketplace plugin installed |
+| Connect AI | **Only if** user skipped wizard AI step and has no AI connection |
+
+Removed (P5.6): upload media, create template, configure settings, setup complete.
+
+- [ ] Dismiss (×) per item persists
+- [ ] **Hide checklist** removes panel for user
+- [ ] Local install path shows localhost hint on collection item
+
+## API smoke tests
 
 ```bash
-php scripts/reset-onboarding.php       # clears entries + onboarding files
+# Install path (persists to settings/onboarding.json)
+curl -s "http://localhost:8080/api/onboarding.php?action=status&install=local"
+
+# Progress / AI skip flag
+curl -X POST "http://localhost:8080/api/onboarding.php?action=update_progress" \
+  -H "Content-Type: application/json" -H "Cookie: PHPSESSID=..." \
+  -d '{"step":6,"ai_skipped":true}'
+
+# Setup probe (read-only, no auth)
+curl -s "http://localhost:8080/api/setup_probe.php"
 ```
 
-### Method 4: Legacy full-directory copy
-
-If you have a development environment, test with a completely fresh installation:
-
-1. Copy Birkly to a new directory
-2. Set up a new PHP server
-3. Visit the admin panel
-4. You should see the onboarding wizard
-
-## Testing Checklist
-
-### Step 1: Welcome Screen
-- [ ] Onboarding wizard appears automatically
-- [ ] Welcome message displays correctly
-- [ ] "Get Started" button works
-- [ ] "Skip Setup" button works (should skip to dashboard)
-
-### Step 2: Site Information
-- [ ] Form displays correctly
-- [ ] Site title field works
-- [ ] Site description field works
-- [ ] "Back" button returns to welcome
-- [ ] "Continue" button saves data and proceeds
-
-### Step 3: Demo Content Selection
-- [ ] Demo content packs are listed
-- [ ] "Blog Demo" pack shows correct info
-- [ ] "Portfolio Demo" pack shows correct info
-- [ ] "Start Fresh" option works
-- [ ] Selecting a pack highlights it
-- [ ] "Continue" button works (installs or skips)
-
-### Step 4: Demo Template Selection
-- [ ] Demo templates are listed
-- [ ] "Minimal Blog" template shows correctly
-- [ ] "Corporate" template shows correctly
-- [ ] "Skip for Now" option works
-- [ ] Selecting template highlights it
-- [ ] "Continue" button works
-
-### Step 5: Completion Screen
-- [ ] Success animation displays
-- [ ] Next steps cards are visible
-- [ ] Links to Content, Settings, Docs work
-- [ ] "Go to Dashboard" button works
-
-### Dashboard Testing
-- [ ] Welcome dashboard shows for new users
-- [ ] Checklist displays all items
-- [ ] Progress bar updates correctly
-- [ ] Completed items show checkmarks
-- [ ] Quick action buttons work
-- [ ] Creating a collection updates checklist
-- [ ] Adding an entry updates checklist
-- [ ] Normal dashboard shows after onboarding complete
-
-## Manual Testing Steps
-
-### Test 1: Full Onboarding Flow
-
-1. **Reset onboarding state**:
-   ```bash
-   rm -f users/*_onboarding.json
-   find content/collections -name "*.json" -path "*/entries/*" -delete
-   ```
-
-2. **Log in to admin**:
-   - Should redirect to `/admin/index.php?page=onboarding`
-
-3. **Complete Welcome Step**:
-   - Click "Get Started"
-
-4. **Complete Site Info**:
-   - Enter site title: "Test Site"
-   - Enter description: "Testing Birkly"
-   - Click "Continue"
-
-5. **Select Demo Content**:
-   - Click on "Blog Demo"
-   - Click "Continue"
-   - Verify content is installed
-
-6. **Select Demo Template**:
-   - Click on "Minimal Blog"
-   - Click "Continue"
-   - Verify template is installed
-
-7. **Complete Onboarding**:
-   - Click "Go to Dashboard"
-   - Should see welcome dashboard
-
-### Test 2: Skip Demo Content
-
-1. Reset onboarding state
-2. Complete Welcome and Site Info steps
-3. On Demo Content step, click "Start Fresh"
-4. On Demo Template step, click "Skip for Now"
-5. Complete onboarding
-6. Verify no demo content/templates were installed
-
-### Test 3: Skip Entire Onboarding
-
-1. Reset onboarding state
-2. Log in to admin
-3. On Welcome screen, click "Skip Setup"
-4. Should redirect to dashboard immediately
-5. Welcome dashboard should still show (onboarding marked as skipped)
-
-### Test 4: Welcome Dashboard Checklist
-
-1. After completing onboarding, verify welcome dashboard shows
-2. Check that checklist items update:
-   - Create a collection → "Create your first collection" should check
-   - Add an entry → "Add your first entry" should check
-   - Upload media → "Upload media files" should check
-3. Progress bar should update as items complete
-4. After all items complete, dashboard should switch to normal view
-
-## API Testing
-
-You can also test the APIs directly:
-
-### Get Onboarding Status
-```bash
-curl -X GET "http://localhost:8001/api/onboarding.php?action=status" \
-  -H "Cookie: PHPSESSID=your_session_id"
-```
-
-### List Demo Content Packs
-```bash
-curl -X GET "http://localhost:8001/api/demo.php?action=list_content" \
-  -H "Cookie: PHPSESSID=your_session_id"
-```
-
-### Install Demo Content
-```bash
-curl -X POST "http://localhost:8001/api/demo.php?action=install_content" \
-  -H "Content-Type: application/json" \
-  -H "Cookie: PHPSESSID=your_session_id" \
-  -d '{"pack_id": "blog"}'
-```
-
-### Update Progress
-```bash
-curl -X POST "http://localhost:8001/api/onboarding.php?action=update_progress" \
-  -H "Content-Type: application/json" \
-  -H "Cookie: PHPSESSID=your_session_id" \
-  -d '{"step": 2, "setup_wizard_completed": true}'
-```
-
-## Debugging
-
-### Check Onboarding Status
-```php
-// Add to admin/index.php temporarily
-$onboardingStatus = getOnboardingStatus($_SESSION['user']['email']);
-var_dump($onboardingStatus);
-```
-
-### Check if First-Time Setup
-```php
-// Check detection logic
-var_dump(isFirstTimeSetup());
-```
-
-### View User Onboarding File
-```bash
-# Find your user's onboarding file
-ls -la users/*_onboarding.json
-
-# View its contents
-cat users/YOUR_USER_ID_onboarding.json
-```
-
-### Check Browser Console
-Open browser DevTools (F12) and check:
-- Console for JavaScript errors
-- Network tab for API call responses
-- Application tab for session/cookies
-
-## Expected Behavior
-
-### First Visit (No Content)
-- ✅ Automatically redirects to onboarding
-- ✅ Shows welcome screen
-- ✅ `is_first_time` = true
-- ✅ `completed` = false
-
-### During Onboarding
-- ✅ Progress tracked per step
-- ✅ Can navigate back/forward
-- ✅ Can skip at any time
-- ✅ Demo content/templates install correctly
-
-### After Completion
-- ✅ Redirects to dashboard
-- ✅ Shows welcome dashboard (if first-time)
-- ✅ Checklist visible
-- ✅ Can manually complete onboarding from settings (if needed)
-
-### After All Checklist Items Complete
-- ✅ Dashboard switches to normal view
-- ✅ No more welcome dashboard
-- ✅ Can access all features normally
-
-## Common Issues
-
-### Issue: Onboarding doesn't appear after demo bootstrap
-**Solution**: 
-- Onboarding redirect uses `setup_wizard_completed`, not “no entries on disk”
-- Run `php scripts/reset-onboarding.php --keep-entries` then log in again
-- Check onboarding file: `cat users/*_onboarding.json` — `setup_wizard_completed` should be false until you finish or skip
-
-### Issue: Onboarding doesn't appear (empty site)
-**Solution**: 
-- Check if content exists: `ls content/collections/*/entries/*.json`
-- Check onboarding file: `cat users/*_onboarding.json`
-- Verify `isFirstTimeSetup()` returns true
-
-### Issue: Demo content not installing
-**Solution**:
-- Check demo-content directory exists: `ls demo-content/`
-- Verify manifest.json files: `cat demo-content/blog/manifest.json`
-- Check file permissions: `ls -la demo-content/`
-- Check API response in browser DevTools Network tab
-
-### Issue: Welcome checklist missing on dashboard
-**Solution**:
-- Dashboard merges API checklist data with session status (fixed in P2-M5)
-- Ensure `setup_wizard_completed` is true and `completed` is false after skip
-- Refresh the dashboard page
-
-### Issue: Checklist not updating
-**Solution**:
-- Refresh dashboard page
-- Check if collection/entry was actually created
-- Verify onboarding data structure matches expected format
-- Check browser console for JavaScript errors
-
-### Issue: Stuck on onboarding step
-**Solution**:
-- Check JavaScript errors in console
-- Verify onboarding.js is loaded: `ls admin/js/onboarding.js`
-- Clear browser cache
-- Try completing step manually via API
-
-## Reset Onboarding (Development)
-
-To reset onboarding for testing:
+## Reset for retesting
 
 ```bash
-# Remove all user onboarding files
-rm -f users/*_onboarding.json
-
-# Remove all entries (keeps collections)
-find content/collections -name "*.json" -path "*/entries/*" -delete
-
-# Optionally remove all collections too
-rm -rf content/collections/*
+php scripts/reset-onboarding.php --keep-entries
+rm -f settings/onboarding.json   # clears install_path
 ```
 
-## Next Steps After Testing
+## Common issues
 
-Once you've tested the onboarding flow:
+**Onboarding doesn't appear after demo bootstrap** — Run `php scripts/reset-onboarding.php --keep-entries`; check `users/*_onboarding.json` for `setup_wizard_completed: false`.
 
-1. **Test edge cases**:
-   - User closes browser mid-onboarding
-   - Network errors during installation
-   - Invalid demo pack IDs
-   - Missing demo content directories
+**START_HERE not in zip** — Run `./scripts/build-cms-release.sh`; confirm `scripts/cms-release-manifest.json` lists `START_HERE.html`.
 
-2. **Test user experience**:
-   - Is the flow intuitive?
-   - Are instructions clear?
-   - Is progress visible?
-   - Are errors handled gracefully?
-
-3. **Performance testing**:
-   - Does onboarding load quickly?
-   - Does demo content install efficiently?
-   - Are there any memory issues with large packs?
-
-4. **Accessibility testing**:
-   - Keyboard navigation works
-   - Screen reader compatibility
-   - Color contrast meets standards
-   - Focus indicators visible
-
+**AI on dashboard when it shouldn't** — Checklist `connect_ai` only when `progress.ai_skipped` is true; completing AI in wizard sets `ai_connected`.
