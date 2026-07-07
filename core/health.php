@@ -19,10 +19,62 @@ function birkly_health_required_writable_dirs(): array
 }
 
 /**
+ * Top-level JSON keys production smoke must validate.
+ *
+ * @return list<string>
+ */
+function birkly_health_required_response_keys(): array
+{
+    return ['status', 'service', 'version', 'php', 'time', 'writable', 'disk', 'marketplace', 'checks'];
+}
+
+/**
+ * Structured checks catalog for monitoring and smoke validation.
+ *
+ * @return array<string, array{status:string}>
+ */
+function birkly_health_checks_catalog(array $writable, array $disk, array $marketplace): array
+{
+    $writableStatus = 'ok';
+    foreach (['settings', 'content', 'cache', 'logs'] as $required) {
+        if (empty($writable[$required]['writable'])) {
+            $writableStatus = 'error';
+            break;
+        }
+    }
+    if ($writableStatus === 'ok') {
+        foreach (['media', 'temp'] as $optional) {
+            if (empty($writable[$optional]['writable'])) {
+                $writableStatus = 'degraded';
+                break;
+            }
+        }
+    }
+
+    $diskStatus = !empty($disk['low_space']) ? 'degraded' : 'ok';
+
+    $marketplaceStatus = match ((string) ($marketplace['status'] ?? '')) {
+        'ok', 'skipped' => 'ok',
+        'unreachable' => 'degraded',
+        default => 'degraded',
+    };
+
+    return [
+        'writable_dirs' => ['status' => $writableStatus],
+        'disk' => ['status' => $diskStatus],
+        'marketplace' => ['status' => $marketplaceStatus],
+    ];
+}
+
+/**
  * @return array<string, array{path:string,exists:bool,writable:bool}>
  */
 function birkly_health_writable_dirs(): array
 {
+    if (isset($GLOBALS['birkly_health_writable_override']) && is_array($GLOBALS['birkly_health_writable_override'])) {
+        return $GLOBALS['birkly_health_writable_override'];
+    }
+
     $root = birkly_project_root();
     $out = [];
 
@@ -134,6 +186,7 @@ function birkly_health_report(): array
     }
 
     $status = $criticalFail ? 'error' : ($degraded ? 'degraded' : 'ok');
+    $checks = birkly_health_checks_catalog($writable, $disk, $marketplace);
 
     return [
         'status' => $status,
@@ -144,5 +197,6 @@ function birkly_health_report(): array
         'writable' => $writable,
         'disk' => $disk,
         'marketplace' => $marketplace,
+        'checks' => $checks,
     ];
 }

@@ -93,6 +93,15 @@ if ($action === 'get') {
         echo json_encode(['status' => 'ok', 'data' => ['settings' => $settings]]);
         exit;
     }
+
+    if ($category === 'monitoring') {
+        $monitoring = $storage->read('monitoring.json') ?? [
+            'alert_email' => '',
+            'alert_webhook_url' => '',
+        ];
+        echo json_encode(['status' => 'ok', 'data' => ['settings' => $monitoring]]);
+        exit;
+    }
 }
 
 // All other actions require authentication and manage_settings permission
@@ -241,6 +250,15 @@ if ($action === 'save_all') {
         $securitySettings['enable_csrf'] = filter_var($settings['securityEnableCsrf'], FILTER_VALIDATE_BOOLEAN);
     }
 
+    // Monitoring settings (P13-M4)
+    $monitoringSettings = [];
+    if (array_key_exists('monitoringAlertEmail', $settings)) {
+        $monitoringSettings['alert_email'] = trim((string) $settings['monitoringAlertEmail']);
+    }
+    if (array_key_exists('monitoringAlertWebhookUrl', $settings)) {
+        $monitoringSettings['alert_webhook_url'] = trim((string) $settings['monitoringAlertWebhookUrl']);
+    }
+
     // Storage settings
     $storageInput = [];
     $storageFieldMap = [
@@ -313,6 +331,14 @@ if ($action === 'save_all') {
         $updated['_updated_at'] = date('c');
         $updated['_updated_by'] = $_SESSION['user']['id'];
         $storage->write('security.json', $updated);
+    }
+
+    if ($monitoringSettings !== [] || array_key_exists('monitoringAlertEmail', $settings) || array_key_exists('monitoringAlertWebhookUrl', $settings)) {
+        $existing = $storage->read('monitoring.json') ?? [];
+        $updated = array_merge($existing, $monitoringSettings);
+        $updated['_updated_at'] = date('c');
+        $updated['_updated_by'] = $_SESSION['user']['id'] ?? 'unknown';
+        $storage->write('monitoring.json', $updated);
     }
     
     if (!empty($branding)) {
