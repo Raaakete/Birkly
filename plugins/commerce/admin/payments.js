@@ -363,6 +363,7 @@
       dunning_email_enabled: document.getElementById('payments-dunning-email-enabled')?.checked || false,
       dunning_email_subject: document.getElementById('payments-dunning-email-subject')?.value || '',
       dunning_email_body: document.getElementById('payments-dunning-email-body')?.value || '',
+      commerce_default_currency: document.getElementById('payments-default-currency')?.value || 'eur',
     };
     apiCall('save_settings', { settings: settings }).then(function (res) {
       if (res.status === 'ok') {
@@ -393,6 +394,8 @@
       if (dunningSubject && s.dunning_email_subject) dunningSubject.value = s.dunning_email_subject;
       var dunningBody = document.getElementById('payments-dunning-email-body');
       if (dunningBody && s.dunning_email_body) dunningBody.value = s.dunning_email_body;
+      var defaultCurrency = document.getElementById('payments-default-currency');
+      if (defaultCurrency && s.commerce_default_currency) defaultCurrency.value = s.commerce_default_currency;
     });
   }
 
