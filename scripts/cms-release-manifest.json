@@ -1,0 +1,76 @@
+{
+  "manifest_version": 1,
+  "cms_version": "1.0.0",
+  "phase": "P10",
+  "description": "Defines what ships in the public CMS release zip. Official plugins are built separately and distributed via Birkly-Marketplace.",
+  "release_zip_name_pattern": "Birkly-{version}.zip",
+  "includes": [
+    "admin/**",
+    "api/**",
+    "core/**",
+    "fieldtypes/**",
+    "scripts/ci-check.sh",
+    "scripts/agent-smoke-test.sh",
+    "scripts/send-agent-digest.php",
+    "scripts/cms-release-manifest.json",
+    "server-router.php",
+    "start-server.sh",
+    "index.php",
+    "birkly-client.js",
+    "birkly-client-modules/**",
+    "VERSION",
+    "AGENTS.md",
+    "README.md",
+    ".htaccess"
+  ],
+  "excludes": [
+    "plugins/*",
+    "!plugins/README.md",
+    "!plugins/.gitkeep",
+    "users/**",
+    "cache/**",
+    "logs/**",
+    "temp/**",
+    "media/**",
+    "settings/**",
+    "content/**",
+    "data/**",
+    ".env",
+    "config.php",
+    "tests/**",
+    "docs/**",
+    ".git/**",
+    ".github/**",
+    ".cursor/**"
+  ],
+  "empty_plugins_dir": true,
+  "plugins_dir_shipped_files": [
+    "plugins/README.md",
+    "plugins/.gitkeep"
+  ],
+  "official_plugin_ids": [
+    "commerce",
+    "events",
+    "automation",
+    "user_management"
+  ],
+  "official_marketplace_slugs": {
+    "commerce": "birkly-commerce",
+    "events": "birkly-events",
+    "automation": "birkly-automation",
+    "user_management": "birkly-user-management"
+  },
+  "dev_only_plugin_ids": [
+    "sample-plugin"
+  ],
+  "embed_sync_excludes": [
+    "plugins/**",
+    "!plugins/README.md",
+    "!plugins/.gitkeep"
+  ],
+  "fresh_install": {
+    "active_plugins": [],
+    "onboarding_marketplace_hint": true
+  },
+  "grandfather_policy": "P10-D5 — existing installs retain local plugins/; updates only via marketplace"
+}
