@@ -188,21 +188,18 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 10 in progress** — marketplace client complete; plugin unbundling + platform admin pending. **97 test suites** green. Official plugins still bundled in dev `plugins/` (excluded from release zip in P10-M1). |
-| **Birkly-Marketplace** | **Phase 10 in progress** — P9 backend complete; admin UI stubs; go-live ops pending. **8 test suites** green. |
-| **Birkly-Docs** | P6–P9 plugin + marketplace guides. |
-| **kekaba** | Embed current; demo shop/events. Live deploy smoke pending (human). |
+| **Birkly (CMS)** | **Phase 10 complete** (2026-07-07) — plugins unbundled from release zip; marketplace free install; **100 test suites** green. Official plugins in dev `plugins/`; install via marketplace in production. |
+| **Birkly-Marketplace** | **Phase 10 complete** — platform admin UI, refunds, official catalog, legal pages. **10 test suites** green. |
+| **Birkly-Docs** | P10 go-live docs + updated marketplace buyer/plugins guides. |
+| **kekaba** | Embed excludes plugins; demo install via `install-kekaba-demo-plugins.sh`. |
+| **Birkly-Website** | Marketplace CTA on homepage. |
 | **Agent ops** | CI + autonomous execution policy on `main`. |
 
-**Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **P10 unbundles from CMS release zip**
+**Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 10** — marketplace go-live, plugin unbundling, platform admin
+**Next active phase:** **Phase 10+** (deferred) — see § Phase 6.12+
 
-**2026-07-07 — Phase 10 in progress** (Keven)
-
-**Priorities:** Unbundle official plugins to marketplace · production go-live · platform admin UI · refunds · official zip pipeline.
-
-**Handoff:** `docs/reviews/P10-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P10-marketplace-go-live-plan.md` · **Coupling:** `docs/reviews/P10-plugin-coupling-register.md` · **Matrix:** `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md`
+**2026-07-07 — Phase 10 complete** (autonomous M0–M7)
 
 **2026-07-07 — Phase 9 complete** (autonomous M0–M7)
 
@@ -2206,7 +2203,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 10 — Marketplace go-live, plugin unbundling & platform admin
 
-**Status:** **in progress** (2026-07-07, Keven) — autonomous execution P10-M0→M7
+**Status:** **Complete** (2026-07-07) — M0–M7 delivered
 
 **Handoff:** `docs/reviews/P10-lead-engineer-handoff.md`  
 **Spec:** `docs/reviews/P10-marketplace-go-live-plan.md`  
@@ -2218,15 +2215,15 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P10-M0** | Coupling register, CMS release manifest, verification matrix shell | **partial** |
-| **P10-M1** | Core unbundling — exclude plugins from CMS zip | pending |
-| **P10-M2** | Official plugin zip pipeline + marketplace listings | pending |
-| **P10-M3** | CMS marketplace UX — free install, updates | pending |
-| **P10-M4** | Go-live ops — refunds, reviews UI, provider contact | pending |
-| **P10-M4b** | Platform admin UI — QC, offers, providers, reviews, orders | pending |
-| **P10-M5** | Docs, legal, Birkly-Website | pending |
-| **P10-M6** | kekaba embed excludes plugins | pending |
-| **P10-M7** | Verification matrix, closure | pending |
+| **P10-M0** | Coupling register, CMS release manifest, verification matrix shell | complete |
+| **P10-M1** | Core unbundling — exclude plugins from CMS zip | complete |
+| **P10-M2** | Official plugin zip pipeline + marketplace listings | complete |
+| **P10-M3** | CMS marketplace UX — free install, updates | complete |
+| **P10-M4** | Go-live ops — refunds, reviews UI, provider contact | complete |
+| **P10-M4b** | Platform admin UI — QC, offers, providers, reviews, orders | complete |
+| **P10-M5** | Docs, legal, Birkly-Website | complete |
+| **P10-M6** | kekaba embed excludes plugins | complete |
+| **P10-M7** | Verification matrix, closure | complete |
 
 **Branches:** `cursor/p10-m[N]-<slug>-030a`
 
