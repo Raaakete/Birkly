@@ -79,6 +79,8 @@ $suites = [
     'commerce_tax_test.php',
     'commerce_refund_test.php',
     'commerce_subscription_test.php',
+    'commerce_subscription_upgrade_test.php',
+    'commerce_dunning_test.php',
     'commerce_variants_test.php',
     'commerce_discount_test.php',
     'commerce_import_test.php',

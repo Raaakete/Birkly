@@ -366,6 +366,36 @@ function commerce_init_automation_triggers(): void
             return true;
         },
     ]);
+
+    register_automation_block('trigger', 'commerce_subscription_payment_failed', [
+        'name' => 'Subscription Payment Failed',
+        'description' => 'Fires when a subscription payment fails (dunning)',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_subscription_recovered', [
+        'name' => 'Subscription Recovered',
+        'description' => 'Fires when a past_due subscription payment succeeds',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
+
+    register_automation_block('trigger', 'commerce_subscription_upgraded', [
+        'name' => 'Subscription Upgraded',
+        'description' => 'Fires when a subscription plan is changed to another purchase option',
+        'category' => 'Commerce',
+        'schema' => [],
+        'handler' => function ($config, $context) {
+            return true;
+        },
+    ]);
 }
 
 /**
@@ -413,6 +443,8 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/CommerceOrderStore.php';
     require_once $dir . '/includes/CommerceSubscriptionStore.php';
     require_once $dir . '/includes/CommerceSubscriptionService.php';
+    require_once $dir . '/includes/SubscriptionUpgradeService.php';
+    require_once $dir . '/includes/CommerceDunningNotifier.php';
     require_once $dir . '/includes/DiscountEngine.php';
     require_once $dir . '/includes/GiftCardStore.php';
     require_once $dir . '/includes/CommerceQuoteStore.php';
