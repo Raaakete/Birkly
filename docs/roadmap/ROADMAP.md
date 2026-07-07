@@ -195,9 +195,9 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main`:** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`
 
-**Next active phase:** **Phase 9** — Birkly Marketplace — see § Phase 9
+**Next active phase:** **Phase 10+** (deferred) — see § Phase 6.12+ and post-P9 backlog
 
-**2026-07-07 — Phase 9 approved** (Keven)
+**2026-07-07 — Phase 9 complete** (autonomous M0–M7)
 
 **Priorities:** Standalone **Birkly-Marketplace** repo · provider accounts + Stripe Connect · buyer email checkout · licenses per `installation_id` · QC + reviews · CMS thin client (no local account changes).
 
@@ -2174,23 +2174,24 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 9 — Birkly Marketplace
 
-**Status:** **Approved** (2026-07-07) — M0–M7 autonomous execution
+**Status:** **Complete** (2026-07-07) — M0–M7 delivered
 
 **Handoff:** `docs/reviews/P9-lead-engineer-handoff.md`  
-**Spec:** `docs/reviews/P9-marketplace-plan.md`
+**Spec:** `docs/reviews/P9-marketplace-plan.md`  
+**Verification:** `Birkly-Marketplace/docs/P9-VERIFICATION-MATRIX.md`
 
 **Goal:** Standalone marketplace app (providers, buyer checkout, Stripe Connect, QC, reviews, registry API) + thin CMS client. **CMS local accounts unchanged.**
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P9-M0** | Marketplace repo scaffold + manifest schema | pending |
-| **P9-M1** | Provider signup + Stripe Connect | pending |
-| **P9-M2** | Offer CRUD + registry API + artifacts | pending |
-| **P9-M3** | Public catalog UI | pending |
-| **P9-M4** | Buyer checkout + licenses | pending |
-| **P9-M5** | Reviews + QC pipeline | pending |
-| **P9-M6** | CMS marketplace client | pending |
-| **P9-M7** | Seed catalog, docs, closure | pending |
+| **P9-M0** | Marketplace repo scaffold + manifest schema | complete |
+| **P9-M1** | Provider signup + Stripe Connect | complete |
+| **P9-M2** | Offer CRUD + registry API + artifacts | complete |
+| **P9-M3** | Public catalog UI | complete |
+| **P9-M4** | Buyer checkout + licenses | complete |
+| **P9-M5** | Reviews + QC pipeline | complete |
+| **P9-M6** | CMS marketplace client | complete |
+| **P9-M7** | Seed catalog, docs, closure | complete |
 
 **Cloud setup:** Attach `Raaakete/Birkly-Marketplace` to Cursor environment — `docs/agent-ops/CLOUD_ENV_REPOS.md`
 
