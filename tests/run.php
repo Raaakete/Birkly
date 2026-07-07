@@ -94,6 +94,7 @@ $suites = [
     'dashboard_widgets_test.php',
     'platform_test.php',
     'plugin_dependencies_test.php',
+    'marketplace_client_test.php',
     'user_plugin_permissions_test.php',
     'user_plugin_admin_test.php',
     'feedback_test.php',

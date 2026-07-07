@@ -90,10 +90,20 @@ function save_plugin_states() {
     global $birkly_plugins;
     $states = [];
     foreach ($birkly_plugins as $id => $plugin) {
-        $states[$id] = [
+        $state = [
             'active' => $plugin['active'] ?? false,
-            'settings' => $plugin['settings'] ?? []
+            'settings' => $plugin['settings'] ?? [],
         ];
+        if (!empty($plugin['marketplace_slug'])) {
+            $state['marketplace_slug'] = $plugin['marketplace_slug'];
+        }
+        if (!empty($plugin['marketplace_version'])) {
+            $state['marketplace_version'] = $plugin['marketplace_version'];
+        }
+        if (!empty($plugin['license_ref'])) {
+            $state['license_ref'] = $plugin['license_ref'];
+        }
+        $states[$id] = $state;
     }
     
     $storage = new PluginStorage(__DIR__ . '/../settings');
@@ -113,6 +123,15 @@ function load_plugin_states() {
         if (isset($birkly_plugins[$id])) {
             $birkly_plugins[$id]['active'] = $state['active'] ?? false;
             $birkly_plugins[$id]['settings'] = $state['settings'] ?? [];
+            if (!empty($state['marketplace_slug'])) {
+                $birkly_plugins[$id]['marketplace_slug'] = $state['marketplace_slug'];
+            }
+            if (!empty($state['marketplace_version'])) {
+                $birkly_plugins[$id]['marketplace_version'] = $state['marketplace_version'];
+            }
+            if (!empty($state['license_ref'])) {
+                $birkly_plugins[$id]['license_ref'] = $state['license_ref'];
+            }
         }
     }
 }
