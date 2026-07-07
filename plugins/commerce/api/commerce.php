@@ -33,6 +33,8 @@ $checkout = new CommerceCheckoutService($orders, $catalog, $cart);
 $indexer = new CatalogIndexer();
 $discounts = new DiscountEngine();
 $import = new ImportService($indexer);
+require_once __DIR__ . '/../includes/LegacyMigrationService.php';
+$migration = new LegacyMigrationService($indexer);
 $mappings = new PurchaseMappingService();
 require_once __DIR__ . '/../includes/CommerceFieldtypeProfileStore.php';
 $fieldtypeProfiles = new CommerceFieldtypeProfileStore();
@@ -52,13 +54,14 @@ $adminActions = [
     'list_shipping_zones', 'save_shipping_zones',
     'list_tax_rules', 'save_tax_rules',
     'list_fieldtype_profiles', 'save_fieldtype_profile', 'delete_fieldtype_profile',
+    'migration_scan', 'migration_preview', 'migration_import', 'migration_history', 'migration_rollback',
 ];
 
 if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'migration_import', 'migration_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -442,6 +445,45 @@ switch ($action) {
             commerce_register_fieldtype_profiles();
         }
         echo json_encode(['status' => $ok ? 'ok' : 'error']);
+        break;
+
+    case 'migration_scan':
+        echo json_encode(['status' => 'ok', 'data' => $migration->scan()]);
+        break;
+
+    case 'migration_preview':
+        echo json_encode(['status' => 'ok', 'data' => $migration->preview($input)]);
+        break;
+
+    case 'migration_import':
+        $result = $migration->import($input);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Import failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
+        break;
+
+    case 'migration_history':
+        $limit = max(1, min(100, (int) ($input['limit'] ?? 50)));
+        echo json_encode(['status' => 'ok', 'data' => ['migrations' => $migration->listHistory($limit)]]);
+        break;
+
+    case 'migration_rollback':
+        $importId = trim((string) ($input['id'] ?? ''));
+        if ($importId === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'id required']);
+            break;
+        }
+        $result = $migration->rollback($importId);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Rollback failed']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
         break;
 
     default:

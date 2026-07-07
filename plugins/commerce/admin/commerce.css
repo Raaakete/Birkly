@@ -1075,3 +1075,38 @@ body.commerce-import-wizard-open { overflow: hidden; }
 .commerce-sub-badge-past_due { background: #fdf1dd; color: #96620a; }
 .commerce-sub-badge-canceled { background: #f6e3e3; color: #a12a2a; }
 .commerce-subscription-detail { margin-top: 16px; }
+
+/* P11-M6 legacy migration wizard */
+.commerce-migration-hero { margin-bottom: 1.25rem; }
+.commerce-migration-hero h2 { margin: 0 0 0.35rem; }
+.commerce-migration-scan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.commerce-migration-scan-card {
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 0.875rem;
+  background: var(--surface, #fff);
+}
+.commerce-migration-scan-card h4 { margin: 0 0 0.35rem; }
+.commerce-migration-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.commerce-migration-source { display: block; margin-top: 0.35rem; }
+.commerce-migration-preview-wrap { margin-bottom: 1.5rem; }
+.commerce-migration-preview-table { overflow-x: auto; }
+.commerce-migration-history-section { margin-top: 1.5rem; }
+.commerce-migration-history-card {
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--surface, #fff);
+}
+.commerce-migration-history-head { margin-bottom: 0.25rem; }
