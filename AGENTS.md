@@ -43,7 +43,9 @@ Run existing tests or manual smoke checks before opening PRs. Verify admin login
 
 ## Cursor Cloud specific instructions
 
-- Cloud VMs run Ubuntu. PHP is installed via `.cursor/environment.json` `install` script.
+- Cloud VMs run Ubuntu. PHP + required extensions are installed via `.cursor/environment.json` `install` script (`php-cli php-common php-zip php-curl php-mbstring php-xml php-gd curl`). The extensions matter: without them ~13 suites in `php tests/run.php` fail (e.g. `version_update_test.php` needs `ZipArchive` from `php-zip`).
+- Fresh checkout has no admin user or content. To get a usable dev instance, run `php scripts/create-default-user.php` (creates `admin@localhost` / `password`) and optionally `php scripts/create-demo-content.php` (seeds Blog/Services/Contact/About + page snapshots). These write to gitignored runtime dirs.
+- `php tests/run.php` prints harmless `mkdir(): Permission denied` warnings for `../cache` (relative path resolves to the root-owned repos parent dir); tests still pass — ignore them.
 - **Multi-repo layout:** In a multi-repo environment, repos clone as siblings (e.g. `/agent/repos/Birkly`, `/agent/repos/Birkly-Marketplace`). If an expected repo is missing, see `docs/agent-ops/CLOUD_ENV_REPOS.md` and ask the human to add it in the Cursor Cloud dashboard.
 - CMS dev server (Birkly repo root): `php -S localhost:8080 -t . server-router.php`
 - Client sites are static HTML; serve with `python3 -m http.server 8000` when needed.
