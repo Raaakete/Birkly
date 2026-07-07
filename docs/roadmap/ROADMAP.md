@@ -2183,7 +2183,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P9-M0** | Marketplace repo scaffold + manifest schema | pending |
+| **P9-M0** | Marketplace repo scaffold + manifest schema | **in progress** (bootstrap in `bootstrap/Birkly-Marketplace/` — awaiting GitHub repo + cloud attach) |
 | **P9-M1** | Provider signup + Stripe Connect | pending |
 | **P9-M2** | Offer CRUD + registry API + artifacts | pending |
 | **P9-M3** | Public catalog UI | pending |

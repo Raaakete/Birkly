@@ -1,0 +1,10 @@
+# Runtime data — never commit
+data/
+cache/
+logs/
+temp/
+artifacts/
+
+# Local configuration
+config.php
+.env
