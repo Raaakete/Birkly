@@ -1896,12 +1896,13 @@ function handleGlobalSave() {
     const generalForm = document.getElementById('general-form');
     const securityForm = document.getElementById('security-form');
     const storageForm = document.getElementById('storage-form');
-    if (!generalForm && !securityForm && !storageForm) return;
+    const monitoringForm = document.getElementById('monitoring-form');
+    if (!generalForm && !securityForm && !storageForm && !monitoringForm) return;
 
-    collectAndSaveSettings(generalForm, securityForm, storageForm);
+    collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm);
 }
 
-async function collectAndSaveSettings(generalForm, securityForm, storageForm) {
+async function collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm) {
     const settings = {};
 
     function appendFormData(form) {
@@ -1920,6 +1921,7 @@ async function collectAndSaveSettings(generalForm, securityForm, storageForm) {
     appendFormData(generalForm);
     appendFormData(securityForm);
     appendFormData(storageForm);
+    appendFormData(monitoringForm);
 
     let logoPath = '';
     if (generalForm) {
@@ -1988,6 +1990,7 @@ function initGlobalSave() {
     const generalForm = document.getElementById('general-form');
     const securityForm = document.getElementById('security-form');
     const storageForm = document.getElementById('storage-form');
+    const monitoringForm = document.getElementById('monitoring-form');
 
     if (generalForm) {
         generalForm.addEventListener('submit', function (e) {
