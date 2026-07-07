@@ -169,7 +169,7 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
             $offers = birkly_marketplace_sort_offers($offers, $sort);
             return [
                 'ok' => true,
-                'offers' => $offers,
+                'offers' => birkly_marketplace_enrich_offers_install_state($offers),
                 'fallback' => true,
                 'filter_options' => birkly_marketplace_catalog_filter_options($fallback['offers'] ?? []),
             ];
@@ -186,7 +186,7 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
         ? $response['data']['filter_options']
         : birkly_marketplace_catalog_filter_options(is_array($response['data']['offers'] ?? null) ? $response['data']['offers'] : []);
 
-    return ['ok' => true, 'offers' => $offers, 'filter_options' => $filterOptions];
+    return ['ok' => true, 'offers' => birkly_marketplace_enrich_offers_install_state($offers), 'filter_options' => $filterOptions];
 }
 
 /**
@@ -319,6 +319,83 @@ function birkly_marketplace_offer_is_free(array $offer): bool
 }
 
 /**
+ * Map marketplace offer slug → installed plugin state.
+ *
+ * @return array<string, array{installed:bool,plugin_id:?string,installed_version:?string,latest_version:string,update_available:bool}>
+ */
+function birkly_marketplace_installed_by_slug(): array
+{
+    static $cache = null;
+    if (is_array($cache)) {
+        return $cache;
+    }
+
+    $cache = [];
+    foreach (birkly_marketplace_installed_plugin_updates() as $id => $row) {
+        $slug = (string) ($row['marketplace_slug'] ?? '');
+        if ($slug === '') {
+            continue;
+        }
+        $cache[$slug] = [
+            'installed' => true,
+            'plugin_id' => (string) ($row['plugin_id'] ?? $id),
+            'installed_version' => (string) ($row['current_version'] ?? ''),
+            'latest_version' => (string) ($row['latest_version'] ?? ''),
+            'update_available' => !empty($row['update_available']),
+        ];
+    }
+
+    return $cache;
+}
+
+/**
+ * @return array{installed:bool,plugin_id:?string,installed_version:?string,latest_version:string,update_available:bool}
+ */
+function birkly_marketplace_offer_install_state(string $slug, ?string $catalogLatestVersion = null): array
+{
+    $bySlug = birkly_marketplace_installed_by_slug();
+    if ($slug !== '' && isset($bySlug[$slug])) {
+        return $bySlug[$slug];
+    }
+
+    return [
+        'installed' => false,
+        'plugin_id' => null,
+        'installed_version' => null,
+        'latest_version' => (string) ($catalogLatestVersion ?? ''),
+        'update_available' => false,
+    ];
+}
+
+function birkly_marketplace_enrich_offer_install_state(array $offer): array
+{
+    $slug = (string) ($offer['slug'] ?? '');
+    $offer['install_state'] = birkly_marketplace_offer_install_state(
+        $slug,
+        (string) ($offer['latest_version'] ?? '')
+    );
+
+    return $offer;
+}
+
+/**
+ * @param array<int, array<string, mixed>> $offers
+ * @return array<int, array<string, mixed>>
+ */
+function birkly_marketplace_enrich_offers_install_state(array $offers): array
+{
+    $enriched = [];
+    foreach ($offers as $offer) {
+        if (!is_array($offer)) {
+            continue;
+        }
+        $enriched[] = birkly_marketplace_enrich_offer_install_state($offer);
+    }
+
+    return $enriched;
+}
+
+/**
  * @return array<string, mixed>|null
  */
 function birkly_marketplace_find_fallback_offer(string $slug): ?array
@@ -340,9 +417,10 @@ function birkly_marketplace_offer_detail(string $slug): array
 {
     $response = birkly_marketplace_request('GET', '/api/v1/offers/' . rawurlencode($slug));
     if ($response['ok'] && is_array($response['data'])) {
+        $offer = is_array($response['data']['offer'] ?? null) ? $response['data']['offer'] : [];
         return [
             'ok' => true,
-            'offer' => is_array($response['data']['offer'] ?? null) ? $response['data']['offer'] : [],
+            'offer' => birkly_marketplace_enrich_offer_install_state($offer),
             'releases' => is_array($response['data']['releases'] ?? null) ? $response['data']['releases'] : [],
             'fallback' => false,
         ];
@@ -358,7 +436,7 @@ function birkly_marketplace_offer_detail(string $slug): array
 
         return [
             'ok' => true,
-            'offer' => $offer,
+            'offer' => birkly_marketplace_enrich_offer_install_state($offer),
             'releases' => $releases,
             'fallback' => true,
         ];
