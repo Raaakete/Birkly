@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 13** — deferred items (cloud SSO, paid official tiers)
+**Next active phase:** **Phase 13–15** — single-wave execution (platform monetization → commerce scale → alpha closure)
+
+**2026-07-07 — Phase 13, 14 & 15 approved** (Keven)
+
+**Priorities:** P13 — cloud SSO link, paid official tiers, subscription marketplace licenses, production ops v2 · P14 — multi-currency, inventory webhooks, warehouse stock, Etsy/Square import, denylist spaces · P15 — admin UX, kekaba content, Help wiring, legal pack, plugin CLI, website production, combined closure.
+
+**Spec:** `docs/reviews/P13-P15-complete-plan.md` · **Handoff (single wave):** `docs/reviews/P13-P15-lead-engineer-handoff.md` · **Matrices:** `docs/reviews/P13-verification-matrix.md` · `P14-verification-matrix.md` · `P15-verification-matrix.md`
 
 **2026-07-07 — Phase 11 & 12 complete** (single-wave autonomous execution)
 
@@ -256,16 +262,19 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 
 ## Explicit deferrals (4–8 weeks)
 
-| Defer | Reason |
-|-------|--------|
-| Kekaba new pages/collections | Adds CMS surface before platform stable |
-| CMS Help → Birkly-Docs wiring | Large UX change |
-| Feedback widget, legal pack | Post-alpha |
-| Full responsive CSS / dark mode rework | UX polish |
-| Plugin scaffolding CLI | Convenience, not blocker |
-| Birkly-Website production deploy | Pin CMS first |
-| Full docs corpus refresh | On-change at release only |
-| NPM package for docs | No consumer depends on it |
+| Defer | Reason | New home |
+|-------|--------|----------|
+| Kekaba new pages/collections | Adds CMS surface before platform stable | **P15-M2** |
+| CMS Help → Birkly-Docs wiring | Large UX change | **P15-M3** |
+| Feedback widget, legal pack | Post-alpha | **P15-M4** |
+| Full responsive CSS / dark mode rework | UX polish | **P15-M1** |
+| Plugin scaffolding CLI | Convenience, not blocker | **P15-M5** |
+| Birkly-Website production deploy | Pin CMS first | **P15-M6** |
+| Full docs corpus refresh | On-change at release only | **P15-M7** |
+| NPM package for docs | No consumer depends on it | deferred post-P15 |
+| CMS cloud SSO | Marketplace scope | **P13-M1** |
+| Paid official plugin tiers | Pricing TBD | **P13-M2** |
+| Multi-currency, warehouse, import webhooks | Commerce backlog | **P14** |
 
 ---
 
@@ -2292,6 +2301,88 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P12-M8** | Verification matrix, closure | complete |
 
 **Depends on:** P11 complete.
+
+---
+
+## Phase 13 — Platform accounts, monetization & production hardening
+
+**Status:** **Approved** (2026-07-07) — single-wave with P14+P15
+
+**Spec:** `docs/reviews/P13-P15-complete-plan.md` § Phase 13  
+**Handoff:** `docs/reviews/P13-P15-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P13-verification-matrix.md`
+
+**Goal:** Optional cloud account link, paid official plugins, subscription marketplace licenses, production ops v2, kekaba staging readiness.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P13-M0** | Gap register, SSO threat model | approved |
+| **P13-M1** | CMS cloud SSO optional link | approved |
+| **P13-M2** | Paid official marketplace tiers | approved |
+| **P13-M3** | Subscription marketplace licenses | approved |
+| **P13-M4** | Health alerts + smoke v2 | approved |
+| **P13-M5** | Critical code hygiene | approved |
+| **P13-M6** | kekaba staging assist | approved |
+| **P13-M7** | Docs (no separate notification) | approved |
+
+**Depends on:** P11+P12 complete. **Blocks:** P14-M2 (webhooks need ops baseline).
+
+**Human decisions (locked):** See `docs/reviews/P13-P15-complete-plan.md` § P13-D1–D7.
+
+---
+
+## Phase 14 — Commerce scale & import depth
+
+**Status:** **Approved** (2026-07-07) — single-wave with P13+P15
+
+**Spec:** `docs/reviews/P13-P15-complete-plan.md` § Phase 14  
+**Handoff:** `docs/reviews/P13-P15-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P14-verification-matrix.md`
+
+**Goal:** Multi-currency checkout, Shopify/Woo inventory webhooks, warehouse stock, Etsy/Square live import, denylist spaces enforcement.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P14-M0** | Gap register, webhook threat model | approved |
+| **P14-M1** | Multi-currency checkout | approved |
+| **P14-M2** | Inventory webhooks | approved |
+| **P14-M3** | Warehouse/stock v1 | approved |
+| **P14-M4** | Etsy + Square API import | approved |
+| **P14-M5** | Plugin denylist `deny_spaces` | approved |
+| **P14-M6** | Docs | approved |
+| **P14-M7** | Matrix green (no notification) | approved |
+
+**Depends on:** P13-M4 (ops baseline for webhooks).
+
+**Human decisions (locked):** See `docs/reviews/P13-P15-complete-plan.md` § P14-D1–D6.
+
+---
+
+## Phase 15 — Alpha closure & UX
+
+**Status:** **Approved** (2026-07-07) — single-wave with P13+P14; notify human once at P15-M8
+
+**Spec:** `docs/reviews/P13-P15-complete-plan.md` § Phase 15  
+**Handoff:** `docs/reviews/P13-P15-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P15-verification-matrix.md`
+
+**Goal:** Admin dark mode + responsive pass, kekaba content, Help → Birkly-Docs, legal pack, plugin scaffold CLI, website production surface, combined closure.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P15-M0** | Gap register, UX audit | approved |
+| **P15-M1** | Admin dark mode + responsive | approved |
+| **P15-M2** | kekaba content expansion | approved |
+| **P15-M3** | CMS Help → live Birkly-Docs | approved |
+| **P15-M4** | Closed-alpha legal + feedback | approved |
+| **P15-M5** | Plugin scaffolding CLI | approved |
+| **P15-M6** | Birkly-Website production | approved |
+| **P15-M7** | Full P13–P15 docs sync | approved |
+| **P15-M8** | Combined closure + human notification | approved |
+
+**Depends on:** P14 complete.
+
+**Human decisions (locked):** See `docs/reviews/P13-P15-complete-plan.md` § P15-D1–D7.
 
 ---
 
