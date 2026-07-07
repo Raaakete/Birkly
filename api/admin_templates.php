@@ -2914,6 +2914,14 @@ function getPluginsData() {
             'confirm_free_install' => __('admin.confirm_free_install'),
             'install_success' => __('admin.install_plugin_success'),
             'manual_install_unavailable' => __('admin.manual_install_unavailable'),
+            'loading_marketplace' => __('admin.loading_marketplace'),
+            'marketplace_type_plugin' => __('admin.marketplace_type_plugin'),
+            'marketplace_type_theme' => __('admin.marketplace_type_theme'),
+            'marketplace_type_template' => __('admin.marketplace_type_template'),
+            'marketplace_filter_all_categories' => __('admin.marketplace_filter_all_categories'),
+            'marketplace_no_reviews' => __('admin.marketplace_no_reviews'),
+            'marketplace_downloads' => __('admin.marketplace_downloads'),
+            'marketplace_offers_count' => __('admin.marketplace_offers_count'),
         ],
     ];
 }
