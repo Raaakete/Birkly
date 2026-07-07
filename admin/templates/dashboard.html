@@ -10,7 +10,7 @@ foreach (($onboardingData['checklist'] ?? []) as $checklistItem) {
         break;
     }
 }
-$showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipped']) && $hasIncompleteChecklist;
+$showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipped']) && $hasIncompleteChecklist && empty($onboardingData['checklist_hidden']);
 $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 ?><!-- Onboarding Completion Modal -->
 <div class="modal" id="onboarding-complete-modal" style="display: none;">
@@ -82,12 +82,15 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 
 <?php if ($showOnboarding): ?>
     <!-- Welcome Dashboard for New Users -->
-    <details class="welcome-dashboard" open>
+    <details class="welcome-dashboard" open id="onboarding-checklist-panel">
         <summary class="welcome-dashboard-summary">
             <span><?= __('admin.welcome_to_birkly_exclamation') ?></span>
             <span class="welcome-dashboard-hint"><?= __('admin.complete_steps') ?></span>
         </summary>
     <div class="welcome-card">
+            <div class="checklist-toolbar" style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
+                <button type="button" class="btn btn-ghost btn-small" id="hide-checklist-btn">Hide checklist</button>
+            </div>
             <div class="checklist-progress">
                 <div class="progress-bar-container">
                     <?php
@@ -109,7 +112,7 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
             
             <div class="checklist">
                 <?php foreach (($onboardingData['checklist'] ?? []) as $item): ?>
-                    <div class="checklist-item <?= !empty($item['completed']) ? 'completed' : '' ?>">
+                    <div class="checklist-item <?= !empty($item['completed']) ? 'completed' : '' ?>" data-checklist-id="<?= htmlspecialchars($item['id'] ?? '') ?>">
                         <div class="checklist-checkbox">
                             <?php if (!empty($item['completed'])): ?>
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
@@ -123,7 +126,13 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                         </div>
                         <div class="checklist-label">
                             <a href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
+                            <?php if (!empty($item['hint'])): ?>
+                                <small class="checklist-hint"><?= htmlspecialchars($item['hint']) ?></small>
+                            <?php endif; ?>
                         </div>
+                        <?php if (empty($item['completed'])): ?>
+                        <button type="button" class="btn btn-ghost btn-small checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" title="Dismiss">×</button>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -371,6 +380,31 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
     if (urlParams.get('onboarding_complete') === 'true' && onboardingModal) {
         onboardingModal.style.display = 'flex';
     }
+
+    async function postOnboardingAction(action, body) {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const res = await fetch((window.Birkly && Birkly.url) ? Birkly.url('/api/onboarding.php?action=' + action) : '/api/onboarding.php?action=' + action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...body, _csrf: csrf })
+        });
+        return res.json();
+    }
+
+    document.getElementById('hide-checklist-btn')?.addEventListener('click', async () => {
+        await postOnboardingAction('hide_checklist', {});
+        document.getElementById('onboarding-checklist-panel')?.remove();
+    });
+
+    document.querySelectorAll('.checklist-dismiss').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const id = btn.getAttribute('data-dismiss-id');
+            if (!id) return;
+            await postOnboardingAction('dismiss_checklist_item', { item_id: id });
+            btn.closest('.checklist-item')?.remove();
+        });
+    });
     
     // Load dashboard data on page load
     loadStats();

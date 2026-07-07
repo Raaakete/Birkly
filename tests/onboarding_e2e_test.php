@@ -132,6 +132,19 @@ try {
     test_assert('onboarding.css linked', strpos($onboardingPage['body'], '/admin/css/onboarding.css') !== false);
     test_assert('onboarding page wrapper present', strpos($onboardingPage['body'], 'onboarding-page') !== false);
 
+    // P19-M4: wizard v2 steps
+    test_assert('onboarding has install-context step', strpos($onboardingPage['body'], 'step-install-context') !== false);
+    test_assert('onboarding has use-case step', strpos($onboardingPage['body'], 'step-use-case') !== false);
+    test_assert('onboarding has marketplace step', strpos($onboardingPage['body'], 'step-marketplace') !== false);
+    test_assert('onboarding has use-case blog option', strpos($onboardingPage['body'], 'data-use-case="blog"') !== false);
+
+    // P19-M3: install path query param
+    $onboardingLocal = birkly_test_http_request($base . '/admin/index.php?page=onboarding&install=local', [
+        'cookie_file' => $cookieFile,
+    ]);
+    test_assert('onboarding accepts install=local param', $onboardingLocal['code'] === 200);
+    test_assert('onboarding page has install path data attr or handler', strpos($onboardingLocal['body'], 'install') !== false);
+
     $contentPage = birkly_test_http_request($base . '/admin/index.php?page=content', [
         'cookie_file' => $cookieFile,
     ]);
@@ -149,31 +162,29 @@ try {
     test_assert('onboarding.css served', $css['code'] === 200);
     test_assert('onboarding.css has container rules', strpos($css['body'], '.onboarding-container') !== false);
 
-    // M2-T4: optional AI wizard step is present in onboarding template
+    // P19-M5: optional AI wizard step with BYOAI inline
     test_assert(
         'onboarding has connect-ai step element',
         strpos($onboardingPage['body'], 'step-connect-ai') !== false,
         'connect-ai step not found in onboarding page'
     );
     test_assert(
+        'onboarding has BYOAI provider field',
+        strpos($onboardingPage['body'], 'onboarding-ai-provider') !== false
+    );
+    test_assert(
         'connect-ai step is optional (skippable)',
-        strpos($onboardingPage['body'], 'skip-for-now') !== false
-            || strpos($onboardingPage['body'], 'skipAI') !== false
+        strpos($onboardingPage['body'], 'skipAI') !== false
             || strpos($onboardingPage['body'], 'skip_for_now') !== false,
         'skipAI or skip-for-now not found in onboarding page'
     );
 
-    // M2-T5: Dashboard checklist has exactly 4 essential items (D3 — no upload_media, no create_template)
+    // P19-M6: Dashboard checklist essential only; AI only if skipped
     $dashboardPageChecklist = birkly_test_http_request($base . '/admin/index.php?page=dashboard', [
         'cookie_file' => $cookieFile,
     ]);
     test_assert('dashboard checklist page HTTP 200', $dashboardPageChecklist['code'] === 200);
 
-    // Verify removed items are absent from the API response
-    $checklistApi = birkly_test_http_request($base . '/api/admin_templates.php?action=getDashboardData', [
-        'cookie_file' => $cookieFile,
-    ]);
-    // The checklist is embedded server-side; verify via the rendered dashboard that upload_media/create_template are gone
     test_assert(
         'dashboard checklist does not contain upload_media',
         strpos($dashboardPageChecklist['body'], 'upload_media') === false,
@@ -185,10 +196,18 @@ try {
         'create_template found in dashboard — must be removed per D3'
     );
     test_assert(
-        'dashboard checklist does not contain AI item',
+        'dashboard checklist does not contain configure_settings',
+        strpos($dashboardPageChecklist['body'], 'configure_settings') === false
+    );
+    test_assert(
+        'dashboard checklist does not contain AI item after skip wizard (no ai_skipped yet)',
         strpos($dashboardPageChecklist['body'], 'connect_ai') === false
             && strpos($dashboardPageChecklist['body'], 'connect-ai') === false,
-        'AI checklist item found in dashboard — must never appear per D2/D3'
+        'AI checklist item must not appear unless user skipped wizard AI step'
+    );
+    test_assert(
+        'dashboard has hide checklist control',
+        strpos($dashboardPageChecklist['body'], 'hide-checklist-btn') !== false
     );
 
     // M2-T3: Birkly.url() used in onboarding JS (no bare /api/ fetch paths)
