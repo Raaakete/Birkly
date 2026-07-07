@@ -349,6 +349,113 @@
     });
   }
 
+  function loadGiftCards() {
+    var el = document.getElementById('commerce-gift-cards-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state"><p>Loading gift cards…</p></div>';
+    commercePost('list_gift_cards').then(function (res) {
+      if (res.status !== 'ok') {
+        el.innerHTML = '<p class="error">Failed to load gift cards</p>';
+        return;
+      }
+      var cards = (res.data && res.data.gift_cards) || [];
+      if (!cards.length) {
+        el.innerHTML = '<p>No gift cards issued yet.</p>';
+        return;
+      }
+      var html = '<table class="commerce-table"><thead><tr><th>Code</th><th>Balance</th><th>Status</th><th>Expires</th><th></th></tr></thead><tbody>';
+      cards.forEach(function (c) {
+        html += '<tr><td><code>' + (c.code || '') + '</code></td>';
+        html += '<td>' + formatCents(c.balance_cents, c.currency) + '</td>';
+        html += '<td>' + (c.status || '') + '</td>';
+        html += '<td>' + (c.expires_at || '—') + '</td>';
+        html += '<td><button type="button" class="btn btn-secondary btn-sm commerce-void-gift-card" data-code="' + (c.code || '') + '">Void</button></td></tr>';
+      });
+      html += '</tbody></table>';
+      el.innerHTML = html;
+    });
+  }
+
+  function loadQuotes() {
+    var el = document.getElementById('commerce-quotes-list');
+    if (!el) return;
+    el.innerHTML = '<div class="loading-state"><p>Loading quotes…</p></div>';
+    commercePost('list_quotes').then(function (res) {
+      if (res.status !== 'ok') {
+        el.innerHTML = '<p class="error">Failed to load quotes</p>';
+        return;
+      }
+      var quotes = (res.data && res.data.quotes) || [];
+      if (!quotes.length) {
+        el.innerHTML = '<p>No quotes yet.</p>';
+        return;
+      }
+      var html = '<table class="commerce-table"><thead><tr><th>ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Accept link</th><th></th></tr></thead><tbody>';
+      quotes.forEach(function (q) {
+        var acceptUrl = (window.Birkly && typeof Birkly.url === 'function')
+          ? Birkly.url('/api/index.php?route=commerce&action=get_quote&token=' + encodeURIComponent(q.token || ''))
+          : '/api/index.php?route=commerce&action=get_quote&token=' + encodeURIComponent(q.token || '');
+        html += '<tr><td><code>' + (q.id || '') + '</code></td>';
+        html += '<td>' + (q.customer_email || '—') + '</td>';
+        html += '<td>' + formatCents(q.total_cents, q.currency) + '</td>';
+        html += '<td>' + (q.status || '') + '</td>';
+        html += '<td><input type="text" class="form-input commerce-quote-link" readonly value="' + acceptUrl + '"></td>';
+        html += '<td><button type="button" class="btn btn-secondary btn-sm commerce-cancel-quote" data-id="' + (q.id || '') + '">Cancel</button></td></tr>';
+      });
+      html += '</tbody></table>';
+      el.innerHTML = html;
+    });
+  }
+
+  function loadAnalytics() {
+    var summaryEl = document.getElementById('commerce-analytics-summary');
+    var productsEl = document.getElementById('commerce-analytics-products');
+    var affiliatesEl = document.getElementById('commerce-analytics-affiliates');
+    if (!summaryEl) return;
+    summaryEl.innerHTML = '<div class="loading-state"><p>Loading analytics…</p></div>';
+    if (productsEl) productsEl.innerHTML = '';
+    if (affiliatesEl) affiliatesEl.innerHTML = '';
+    commercePost('analytics_summary').then(function (res) {
+      if (res.status !== 'ok' || !res.data || !res.data.summary) {
+        summaryEl.innerHTML = '<p class="error">Failed to load analytics</p>';
+        return;
+      }
+      var s = res.data.summary;
+      summaryEl.innerHTML =
+        '<div class="payments-dash-grid">' +
+        '<div class="payments-dash-stat"><strong>' + formatCents(s.revenue_cents, 'eur') + '</strong><span>Revenue</span></div>' +
+        '<div class="payments-dash-stat"><strong>' + (s.order_count || 0) + '</strong><span>Orders</span></div>' +
+        '<div class="payments-dash-stat"><strong>' + formatCents(s.aov_cents, 'eur') + '</strong><span>AOV</span></div>' +
+        '</div>';
+      if (productsEl) {
+        var products = s.top_products || [];
+        if (!products.length) {
+          productsEl.innerHTML = '<p>No product sales in period.</p>';
+        } else {
+          var phtml = '<h3>Top products</h3><ul class="payments-conn-list">';
+          products.forEach(function (p) {
+            phtml += '<li><strong>' + (p.title || p.key || '') + '</strong> — ' + (p.quantity || 0) + ' sold, ' + formatCents(p.revenue_cents, 'eur') + '</li>';
+          });
+          phtml += '</ul>';
+          productsEl.innerHTML = phtml;
+        }
+      }
+      if (affiliatesEl) {
+        var aff = s.affiliates || [];
+        if (!aff.length) {
+          affiliatesEl.innerHTML = '';
+        } else {
+          var ahtml = '<h3>Affiliates</h3><ul class="payments-conn-list">';
+          aff.forEach(function (a) {
+            ahtml += '<li><strong>' + (a.affiliate_id || '') + '</strong> — ' + (a.orders || 0) + ' orders, ' + formatCents(a.revenue_cents, 'eur') + '</li>';
+          });
+          ahtml += '</ul>';
+          affiliatesEl.innerHTML = ahtml;
+        }
+      }
+    });
+  }
+
   function loadMappings() {
     var el = document.getElementById('commerce-mappings-list');
     if (!el) return;
@@ -1322,6 +1429,9 @@
         if (name === 'tax') loadTaxRules();
         if (name === 'fieldtypes') loadFieldtypeProfiles();
         if (name === 'import') loadImportTab();
+        if (name === 'gift-cards') loadGiftCards();
+        if (name === 'quotes') loadQuotes();
+        if (name === 'analytics') loadAnalytics();
       });
     });
   }
@@ -1332,6 +1442,76 @@
     });
 
     document.getElementById('commerce-subscriptions-refresh')?.addEventListener('click', loadSubscriptions);
+
+    document.getElementById('commerce-issue-gift-card')?.addEventListener('click', function () {
+      var amount = prompt('Initial balance (major units, e.g. 25.00):', '25.00');
+      if (amount === null) return;
+      var cents = Math.round(parseFloat(amount) * 100);
+      if (isNaN(cents) || cents <= 0) {
+        alert('Invalid amount');
+        return;
+      }
+      var code = prompt('Gift card code (leave blank to auto-generate):', '') || null;
+      commercePost('issue_gift_card', { balance_cents: cents, code: code }).then(function (res) {
+        if (res.status !== 'ok') {
+          alert('Issue failed: ' + (res.message || 'Unknown error'));
+          return;
+        }
+        alert('Issued: ' + ((res.data && res.data.gift_card && res.data.gift_card.code) || ''));
+        loadGiftCards();
+      });
+    });
+
+    document.getElementById('commerce-gift-cards-list')?.addEventListener('click', function (e) {
+      var btn = e.target.closest('.commerce-void-gift-card');
+      if (!btn) return;
+      var code = btn.getAttribute('data-code');
+      if (!code || !confirm('Void gift card ' + code + '?')) return;
+      commercePost('void_gift_card', { code: code }).then(function (res) {
+        if (res.status !== 'ok') {
+          alert('Void failed');
+          return;
+        }
+        loadGiftCards();
+      });
+    });
+
+    document.getElementById('commerce-create-quote')?.addEventListener('click', function () {
+      var email = prompt('Customer email:', '') || '';
+      commercePost('create_quote', { customer_email: email }).then(function (res) {
+        if (res.status !== 'ok') {
+          alert('Create quote failed: ' + (res.message || 'Is the cart empty?'));
+          return;
+        }
+        var url = (res.data && res.data.accept_url) || '';
+        if (url) {
+          prompt('Quote accept URL (copy to send to customer):', url);
+        }
+        loadQuotes();
+      });
+    });
+
+    document.getElementById('commerce-quotes-list')?.addEventListener('click', function (e) {
+      var btn = e.target.closest('.commerce-cancel-quote');
+      if (!btn) return;
+      var id = btn.getAttribute('data-id');
+      if (!id || !confirm('Cancel quote ' + id + '?')) return;
+      commercePost('cancel_quote', { id: id }).then(function (res) {
+        if (res.status !== 'ok') {
+          alert('Cancel failed');
+          return;
+        }
+        loadQuotes();
+      });
+    });
+
+    document.getElementById('commerce-analytics-refresh')?.addEventListener('click', loadAnalytics);
+    document.getElementById('commerce-analytics-export-orders')?.addEventListener('click', function () {
+      var url = (window.Birkly && typeof Birkly.url === 'function')
+        ? Birkly.url('/api/index.php?route=commerce&action=analytics_export_csv')
+        : '/api/index.php?route=commerce&action=analytics_export_csv';
+      window.open(url, '_blank');
+    });
 
     document.getElementById('commerce-add-discount')?.addEventListener('click', function () {
       var type = prompt('Rule type (percent_off, fixed_off, coupon, affiliate):', 'percent_off');

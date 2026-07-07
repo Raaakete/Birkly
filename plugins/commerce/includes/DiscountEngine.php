@@ -128,4 +128,15 @@ class DiscountEngine
         }
         return 0;
     }
+
+    public function applyGiftCardTender(int $amountDueCents, ?string $giftCardCode, ?GiftCardStore $giftCards = null): array {
+        $amountDueCents = max(0, $amountDueCents);
+        if ($giftCardCode === null || trim($giftCardCode) === '') return ['ok'=>true,'applied_cents'=>0,'remaining_due_cents'=>$amountDueCents];
+        if (!class_exists('GiftCardStore')) require_once __DIR__ . '/GiftCardStore.php';
+        $store = $giftCards ?? new GiftCardStore();
+        $v = $store->validateForRedeem($giftCardCode);
+        if (!($v['ok']??false)) return ['ok'=>false,'error'=>$v['error']??'Invalid gift card'];
+        $card = $v['card']; $applied = min((int)($card['balance_cents']??0), $amountDueCents);
+        return ['ok'=>true,'applied_cents'=>$applied,'remaining_due_cents'=>$amountDueCents-$applied,'gift_card_code'=>$card['code']??$giftCardCode,'gift_card_id'=>$card['id']??null];
+    }
 }
