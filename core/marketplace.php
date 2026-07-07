@@ -319,6 +319,47 @@ function birkly_marketplace_offer_is_free(array $offer): bool
 }
 
 /**
+ * Official plugin id → marketplace offer slug (from cms-release-manifest.json).
+ *
+ * @return array<string, string>
+ */
+function birkly_official_marketplace_slugs(): array
+{
+    static $map = null;
+    if (is_array($map)) {
+        return $map;
+    }
+
+    $map = [];
+    $path = __DIR__ . '/../scripts/cms-release-manifest.json';
+    if (is_file($path)) {
+        $decoded = json_decode((string) file_get_contents($path), true);
+        if (is_array($decoded['official_marketplace_slugs'] ?? null)) {
+            foreach ($decoded['official_marketplace_slugs'] as $pluginId => $slug) {
+                if (is_string($pluginId) && is_string($slug) && $slug !== '') {
+                    $map[$pluginId] = $slug;
+                }
+            }
+        }
+    }
+
+    return $map;
+}
+
+/**
+ * Resolve marketplace offer slug for an installed plugin (stored slug or official map).
+ */
+function birkly_marketplace_plugin_offer_slug(string $pluginId, array $plugin): string
+{
+    $slug = trim((string) ($plugin['marketplace_slug'] ?? ''));
+    if ($slug !== '') {
+        return $slug;
+    }
+
+    return (string) (birkly_official_marketplace_slugs()[$pluginId] ?? '');
+}
+
+/**
  * Map marketplace offer slug → installed plugin state.
  *
  * @return array<string, array{installed:bool,plugin_id:?string,installed_version:?string,latest_version:string,update_available:bool}>
