@@ -5,6 +5,15 @@ function is_nav_active(string $page_name): string {
     return ($page === $page_name) ? 'active' : '';
 }
 
+function is_plugins_tab_active(string $tab): bool {
+    global $page;
+    if ($page !== 'plugins') {
+        return false;
+    }
+    $current = isset($_GET['tab']) ? (string) $_GET['tab'] : 'installed';
+    return $current === $tab;
+}
+
 // Helper function to get active plugin navigation
 function get_active_plugin_navigation(): array {
     if (function_exists('birkly_plugin_admin_sidebar_navigation')) {
@@ -131,10 +140,19 @@ if (empty($userAvatar)) {
                 }
                 ?>
                 
-                <!-- Second Section: Plugins (only show if plugins exist) -->
-                <?php if (!empty($activePluginNavigation)): ?>
+                <!-- Second Section: Plugins — Marketplace + installed plugin pages -->
                 <div class="nav-section" id="nav-plugins-section">
                     <ul class="nav-links" id="links-plugins">
+                        <li class="nav-item">
+                            <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'marketplace'])) ?>" class="nav-link <?= is_plugins_tab_active('marketplace') ? 'active' : '' ?>">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                </svg>
+                                <?= __('admin.marketplace') ?>
+                            </a>
+                        </li>
                         <?php foreach ($activePluginNavigation as $plugin): ?>
                         <li class="nav-item">
                             <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>">
@@ -145,7 +163,6 @@ if (empty($userAvatar)) {
                         <?php endforeach; ?>
                     </ul>
                 </div>
-                <?php endif; ?>
                 
                 <!-- UI Injection Point: admin_navigation_after_plugins -->
                 <?php
