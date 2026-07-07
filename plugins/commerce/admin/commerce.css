@@ -1074,4 +1074,32 @@ body.commerce-import-wizard-open { overflow: hidden; }
 .commerce-sub-badge-active { background: #e3f6ea; color: #1c7a44; }
 .commerce-sub-badge-past_due { background: #fdf1dd; color: #96620a; }
 .commerce-sub-badge-canceled { background: #f6e3e3; color: #a12a2a; }
+
+.commerce-dunning-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  background: #fde8e8;
+  color: #9b1c1c;
+}
+
+.commerce-dunning-meta {
+  color: #9b1c1c;
+  font-weight: 500;
+}
+
+.commerce-sub-upgrade {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.commerce-sub-upgrade select {
+  min-width: 220px;
+  margin-right: 0.5rem;
+}
 .commerce-subscription-detail { margin-top: 16px; }
