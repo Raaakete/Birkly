@@ -9,14 +9,12 @@
       "offer_type": "plugin",
       "category": "utilities",
       "tags": ["starter", "official", "free"],
-      "pricing": {
-        "currency": "USD",
-        "model": "free",
-        "amount_cents": 0
-      },
+      "pricing": { "currency": "USD", "model": "free", "amount_cents": 0 },
       "trust_level": "trusted",
       "latest_version": "1.0.0",
-      "provider_id": "prov_official_birkly"
+      "provider_id": "prov_official_birkly",
+      "rating_summary": { "average": 4.9, "count": 42 },
+      "download_count": 890
     },
     {
       "slug": "birkly-seo-basics",
@@ -25,14 +23,12 @@
       "offer_type": "plugin",
       "category": "marketing",
       "tags": ["seo", "official", "meta"],
-      "pricing": {
-        "currency": "USD",
-        "model": "one_time",
-        "amount_cents": 1499
-      },
+      "pricing": { "currency": "USD", "model": "one_time", "amount_cents": 1499 },
       "trust_level": "trusted",
       "latest_version": "1.0.0",
-      "provider_id": "prov_official_birkly"
+      "provider_id": "prov_official_birkly",
+      "rating_summary": { "average": 4.6, "count": 18 },
+      "download_count": 312
     },
     {
       "slug": "birkly-commerce",
@@ -41,14 +37,12 @@
       "offer_type": "plugin",
       "category": "commerce",
       "tags": ["commerce", "official", "free", "payments"],
-      "pricing": {
-        "currency": "USD",
-        "model": "free",
-        "amount_cents": 0
-      },
+      "pricing": { "currency": "USD", "model": "free", "amount_cents": 0 },
       "trust_level": "trusted",
       "latest_version": "1.0.0",
-      "provider_id": "prov_official_birkly"
+      "provider_id": "prov_official_birkly",
+      "rating_summary": { "average": 4.8, "count": 124 },
+      "download_count": 1840
     },
     {
       "slug": "birkly-events",
@@ -57,14 +51,12 @@
       "offer_type": "plugin",
       "category": "events",
       "tags": ["events", "official", "free", "commerce"],
-      "pricing": {
-        "currency": "USD",
-        "model": "free",
-        "amount_cents": 0
-      },
+      "pricing": { "currency": "USD", "model": "free", "amount_cents": 0 },
       "trust_level": "trusted",
       "latest_version": "1.0.0",
-      "provider_id": "prov_official_birkly"
+      "provider_id": "prov_official_birkly",
+      "rating_summary": { "average": 4.7, "count": 56 },
+      "download_count": 720
     },
     {
       "slug": "birkly-automation",
@@ -73,14 +65,12 @@
       "offer_type": "plugin",
       "category": "utilities",
       "tags": ["automation", "official", "free", "workflows"],
-      "pricing": {
-        "currency": "USD",
-        "model": "free",
-        "amount_cents": 0
-      },
+      "pricing": { "currency": "USD", "model": "free", "amount_cents": 0 },
       "trust_level": "trusted",
       "latest_version": "1.0.0",
-      "provider_id": "prov_official_birkly"
+      "provider_id": "prov_official_birkly",
+      "rating_summary": { "average": 4.5, "count": 33 },
+      "download_count": 510
     },
     {
       "slug": "birkly-user-management",
@@ -89,14 +79,12 @@
       "offer_type": "plugin",
       "category": "users",
       "tags": ["users", "official", "free", "auth"],
-      "pricing": {
-        "currency": "USD",
-        "model": "free",
-        "amount_cents": 0
-      },
+      "pricing": { "currency": "USD", "model": "free", "amount_cents": 0 },
       "trust_level": "trusted",
       "latest_version": "1.0.0",
-      "provider_id": "prov_official_birkly"
+      "provider_id": "prov_official_birkly",
+      "rating_summary": { "average": 4.6, "count": 41 },
+      "download_count": 640
     }
   ]
 }

@@ -21,7 +21,35 @@
                 <input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
                 <button type="button" class="btn btn-primary" onclick="PluginsPage.searchMarketplace()">{translate 'admin.search'}</button>
             </div>
+            <div class="marketplace-filters">
+                <label class="marketplace-filter">
+                    <span class="marketplace-filter-label">{translate 'admin.marketplace_filter_type'}</span>
+                    <select id="marketplace-filter-type" class="input">
+                        <option value="">{translate 'admin.marketplace_filter_all_types'}</option>
+                        <option value="plugin">{translate 'admin.marketplace_type_plugin'}</option>
+                        <option value="theme">{translate 'admin.marketplace_type_theme'}</option>
+                        <option value="template_pack">{translate 'admin.marketplace_type_template'}</option>
+                    </select>
+                </label>
+                <label class="marketplace-filter">
+                    <span class="marketplace-filter-label">{translate 'admin.marketplace_filter_category'}</span>
+                    <select id="marketplace-filter-category" class="input">
+                        <option value="">{translate 'admin.marketplace_filter_all_categories'}</option>
+                    </select>
+                </label>
+                <label class="marketplace-filter">
+                    <span class="marketplace-filter-label">{translate 'admin.marketplace_sort'}</span>
+                    <select id="marketplace-sort" class="input">
+                        <option value="name">{translate 'admin.marketplace_sort_name'}</option>
+                        <option value="rating">{translate 'admin.marketplace_sort_rating'}</option>
+                        <option value="downloads">{translate 'admin.marketplace_sort_downloads'}</option>
+                        <option value="price_asc">{translate 'admin.marketplace_sort_price_low'}</option>
+                        <option value="price_desc">{translate 'admin.marketplace_sort_price_high'}</option>
+                    </select>
+                </label>
+            </div>
             <p class="form-help marketplace-hint" id="marketplace-url-hint"></p>
+            <p class="form-help marketplace-result-count" id="marketplace-result-count" hidden></p>
         </div>
         <div class="marketplace-grid" id="marketplace-grid">
             <div class="loading-state">
