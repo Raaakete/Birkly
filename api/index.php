@@ -30,13 +30,15 @@ if (!empty($GLOBALS['haru_api_endpoints']) && is_array($GLOBALS['haru_api_endpoi
     }
 }
 
-// Fallback: ensure key user_management routes exist if plugin registered but file path was relative
-$userAuthHandler = __DIR__ . '/../plugins/user_management/api/user_auth.php';
-if (file_exists($userAuthHandler) && empty($GLOBALS['birkly_api_endpoints']['user_auth'])) {
+// Fallback: ensure key user_management routes exist when plugin package is installed
+if (birkly_plugin_file_exists('user_management', 'api/user_auth.php')
+    && empty($GLOBALS['birkly_api_endpoints']['user_auth'])) {
+    $userAuthHandler = birkly_plugin_dir('user_management') . '/api/user_auth.php';
     $GLOBALS['birkly_api_endpoints']['user_auth'] = realpath($userAuthHandler) ?: $userAuthHandler;
 }
-$userRegHandler = __DIR__ . '/../plugins/user_management/api/user_registration.php';
-if (file_exists($userRegHandler) && empty($GLOBALS['birkly_api_endpoints']['user_registration'])) {
+if (birkly_plugin_file_exists('user_management', 'api/user_registration.php')
+    && empty($GLOBALS['birkly_api_endpoints']['user_registration'])) {
+    $userRegHandler = birkly_plugin_dir('user_management') . '/api/user_registration.php';
     $GLOBALS['birkly_api_endpoints']['user_registration'] = realpath($userRegHandler) ?: $userRegHandler;
 }
 
