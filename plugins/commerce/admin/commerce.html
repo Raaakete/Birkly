@@ -7,6 +7,7 @@
   <div class="payments-tabs commerce-tabs" role="tablist">
     <button class="payments-tab active" data-tab="connections" role="tab" aria-selected="true">Connections</button>
     <button class="payments-tab" data-tab="catalog" role="tab">Catalog</button>
+    <button class="payments-tab" data-tab="stock" role="tab">Stock</button>
     <button class="payments-tab" data-tab="orders" role="tab">Orders</button>
     <button class="payments-tab" data-tab="subscriptions" role="tab">Subscriptions</button>
     <button class="payments-tab" data-tab="discounts" role="tab">Discounts</button>
@@ -47,6 +48,29 @@
     </div>
     <div id="commerce-catalog-list" class="payments-connections-list">
       <div class="loading-state"><p>Loading catalog…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-stock" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Warehouse stock</h2></div>
+    <p class="form-hint">Single-warehouse SKU quantities. Checkout blocks when on-hand stock is below cart quantity.</p>
+    <div class="form-group">
+      <label for="commerce-stock-sku">SKU</label>
+      <input type="text" id="commerce-stock-sku" class="input" placeholder="SKU-A" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="commerce-stock-qty">Quantity on hand</label>
+      <input type="number" id="commerce-stock-qty" class="input" min="0" value="0">
+    </div>
+    <div class="form-group">
+      <label for="commerce-stock-threshold">Low stock threshold</label>
+      <input type="number" id="commerce-stock-threshold" class="input" min="0" value="0">
+    </div>
+    <div class="tab-panel-actions">
+      <button type="button" class="btn btn-primary" id="commerce-stock-save">Save SKU</button>
+    </div>
+    <div id="commerce-stock-list" class="payments-connections-list" style="margin-top:1.5rem">
+      <div class="loading-state"><p>Loading stock…</p></div>
     </div>
   </div>
 
@@ -112,7 +136,7 @@
     <div class="commerce-live-import-section" id="commerce-live-import-section">
       <div class="payments-panel-header">
         <h3>Live store sync</h3>
-        <p class="form-hint">Connect Shopify or WooCommerce for scheduled or on-demand API sync. Credentials are encrypted at rest.</p>
+        <p class="form-hint">Connect Shopify, WooCommerce, Etsy, or Square for scheduled or on-demand API sync. Credentials are encrypted at rest.</p>
       </div>
       <div class="commerce-live-import-grid">
         <div class="commerce-live-import-card" data-platform="shopify">
@@ -199,6 +223,116 @@
             </div>
             <p class="form-hint commerce-live-import-meta" id="commerce-live-woo-meta"></p>
           </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="etsy">
+          <div class="commerce-live-import-card-header">
+            <h4>Etsy</h4>
+            <span class="commerce-live-import-status" id="commerce-live-etsy-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-etsy-form">
+            <div class="form-group">
+              <label for="commerce-live-etsy-shop-id">Shop ID</label>
+              <input type="text" id="commerce-live-etsy-shop-id" class="input" placeholder="12345" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-api-key">API key</label>
+              <input type="password" id="commerce-live-etsy-api-key" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-token">Access token</label>
+              <input type="password" id="commerce-live-etsy-token" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-collection">Target collection</label>
+              <select id="commerce-live-etsy-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-currency">Default currency</label>
+              <select id="commerce-live-etsy-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-etsy-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-etsy-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-etsy-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-etsy-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-etsy-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-etsy-meta"></p>
+          </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="square">
+          <div class="commerce-live-import-card-header">
+            <h4>Square</h4>
+            <span class="commerce-live-import-status" id="commerce-live-square-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-square-form">
+            <div class="form-group">
+              <label for="commerce-live-square-token">Access token</label>
+              <input type="password" id="commerce-live-square-token" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-square-location">Location ID (optional)</label>
+              <input type="text" id="commerce-live-square-location" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-square-collection">Target collection</label>
+              <select id="commerce-live-square-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-square-currency">Default currency</label>
+              <select id="commerce-live-square-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-square-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-square-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-square-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-square-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-square-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-square-meta"></p>
+          </form>
+        </div>
+      </div>
+      <div class="commerce-live-import-webhooks" id="commerce-live-import-webhooks">
+        <div class="payments-panel-header">
+          <h3>Inventory webhooks</h3>
+          <p class="form-hint">Real-time stock sync for Shopify and WooCommerce. Configure the webhook URL and secret in your store admin.</p>
+        </div>
+        <div class="commerce-live-import-webhook-grid">
+          <div class="commerce-live-import-webhook-card" data-webhook-platform="shopify">
+            <h4>Shopify</h4>
+            <p class="form-hint">Topic: <code>inventory_levels/update</code></p>
+            <label class="form-hint">Webhook URL</label>
+            <input type="text" class="input commerce-webhook-url" id="commerce-webhook-url-shopify" readonly>
+            <button type="button" class="btn btn-secondary commerce-webhook-rotate" data-platform="shopify">Rotate secret</button>
+            <p class="form-hint commerce-webhook-secret" id="commerce-webhook-secret-shopify" hidden></p>
+          </div>
+          <div class="commerce-live-import-webhook-card" data-webhook-platform="woocommerce">
+            <h4>WooCommerce</h4>
+            <p class="form-hint">Topic: <code>product.updated</code></p>
+            <label class="form-hint">Webhook URL</label>
+            <input type="text" class="input commerce-webhook-url" id="commerce-webhook-url-woocommerce" readonly>
+            <button type="button" class="btn btn-secondary commerce-webhook-rotate" data-platform="woocommerce">Rotate secret</button>
+            <p class="form-hint commerce-webhook-secret" id="commerce-webhook-secret-woocommerce" hidden></p>
+          </div>
         </div>
       </div>
       <details class="commerce-live-import-cron">
@@ -425,6 +559,17 @@
       <div class="form-group">
         <label for="payments-default-provider">Default Provider</label>
         <select id="payments-default-provider" class="input" name="default_provider"></select>
+      </div>
+      <div class="form-group">
+        <label for="payments-default-currency">Default currency</label>
+        <select id="payments-default-currency" class="input" name="commerce_default_currency">
+          <option value="eur">EUR</option>
+          <option value="usd">USD</option>
+          <option value="gbp">GBP</option>
+          <option value="chf">CHF</option>
+          <option value="jpy">JPY</option>
+        </select>
+        <p class="form-hint">Charge currency for new purchase options. No FX conversion at checkout.</p>
       </div>
       <div class="form-group">
         <label><input type="checkbox" id="payments-enable-widget" name="enable_dashboard_widget"> Enable dashboard widget</label>

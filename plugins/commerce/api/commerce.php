@@ -65,6 +65,8 @@ $adminActions = [
     'list_fieldtype_profiles', 'save_fieldtype_profile', 'delete_fieldtype_profile',
     'migration_scan', 'migration_preview', 'migration_import', 'migration_history', 'migration_rollback',
     'list_gift_cards', 'issue_gift_card', 'void_gift_card', 'create_quote', 'list_quotes', 'cancel_quote',
+    'list_warehouse_stock', 'save_warehouse_stock',
+    'get_inventory_webhook_config', 'rotate_inventory_webhook_secret',
 ];
 $statsActions=['analytics_summary','analytics_export_csv'];
 
@@ -75,7 +77,7 @@ if (in_array($action, $statsActions, true)) {
     commerce_require_stats_capability();
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'import_live_save', 'import_live_sync', 'migration_import', 'migration_rollback', 'save_mapping', 'delete_mapping', 'create_membership_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'import_live_save', 'import_live_sync', 'migration_import', 'migration_rollback', 'save_mapping', 'delete_mapping', 'create_membership_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote', 'save_warehouse_stock', 'rotate_inventory_webhook_secret'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -734,6 +736,56 @@ switch ($action) {
         header('Content-Type: text/csv');
         echo $analytics->exportOrdersCsv($input['from'] ?? null, $input['to'] ?? null);
         exit;
+
+    case 'list_warehouse_stock':
+        require_once __DIR__ . '/../includes/WarehouseStockStore.php';
+        $warehouse = new WarehouseStockStore();
+        echo json_encode(['status' => 'ok', 'data' => ['stock' => $warehouse->listAll()]]);
+        break;
+
+    case 'save_warehouse_stock':
+        require_once __DIR__ . '/../includes/WarehouseStockStore.php';
+        $warehouse = new WarehouseStockStore();
+        $sku = trim((string) ($input['sku'] ?? ''));
+        if ($sku === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'sku required']);
+            break;
+        }
+        $row = $warehouse->set($sku, (int) ($input['quantity_on_hand'] ?? 0), isset($input['low_stock_threshold']) ? (int) $input['low_stock_threshold'] : null);
+        echo json_encode(['status' => 'ok', 'data' => ['row' => $row]]);
+        break;
+
+    case 'get_inventory_webhook_config':
+        require_once __DIR__ . '/../includes/CommerceInventoryWebhookService.php';
+        $webhooks = new CommerceInventoryWebhookService();
+        $public = $liveImport->getPublicConfig();
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'shopify' => [
+                    'webhook_url' => $webhooks->webhookUrl('shopify'),
+                    'webhook_configured' => !empty($public['shopify']['webhook_configured']),
+                ],
+                'woocommerce' => [
+                    'webhook_url' => $webhooks->webhookUrl('woocommerce'),
+                    'webhook_configured' => !empty($public['woocommerce']['webhook_configured']),
+                ],
+            ],
+        ]);
+        break;
+
+    case 'rotate_inventory_webhook_secret':
+        $platform = strtolower(trim((string) ($input['platform'] ?? '')));
+        if (!in_array($platform, ['shopify', 'woocommerce'], true)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'platform must be shopify or woocommerce']);
+            break;
+        }
+        $secret = bin2hex(random_bytes(16));
+        $liveImport->savePlatformConfig($platform, ['webhook_secret' => $secret]);
+        echo json_encode(['status' => 'ok', 'data' => ['platform' => $platform, 'webhook_secret' => $secret]]);
+        break;
 
     default:
         http_response_code(400);
