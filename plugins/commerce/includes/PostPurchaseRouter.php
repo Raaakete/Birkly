@@ -1,6 +1,12 @@
 <?php
 /**
- * Post-purchase router — idempotent fulfillment by type.
+ * Post-purchase router — idempotent fulfillment by type (P6.5, P17-M5 audit).
+ *
+ * Automation triggers fired at most once per order line (key = order_id:line_id):
+ * - commerce_physical_fulfilled — ship lines pushed to fulfillment adapter
+ * - commerce_digital_delivered — deliver lines receive download token
+ * - commerce_event_registered — register lines create attendee record
+ * - commerce_membership_started — recurring none-fulfillment purchases
  */
 
 class PostPurchaseRouter
@@ -38,6 +44,11 @@ class PostPurchaseRouter
             $key = $orderId . ':' . $lineId;
 
             if ($this->isProcessed($key)) {
+                $results[] = ['line_id' => $lineId, 'skipped' => true];
+                continue;
+            }
+
+            if (!$this->claimProcessing($key)) {
                 $results[] = ['line_id' => $lineId, 'skipped' => true];
                 continue;
             }
@@ -80,11 +91,40 @@ class PostPurchaseRouter
     public function isProcessed(string $key): bool
     {
         $data = $this->loadState();
-        return isset($data['processed'][$key]);
+        $entry = $data['processed'][$key] ?? null;
+
+        return is_array($entry) && (($entry['status'] ?? 'done') === 'done');
+    }
+
+    private function claimProcessing(string $key): bool
+    {
+        $data = $this->loadState();
+        $entry = $data['processed'][$key] ?? null;
+        if (is_array($entry) && in_array($entry['status'] ?? 'done', ['done', 'processing'], true)) {
+            return ($entry['status'] ?? '') === 'processing' ? false : false;
+        }
+        if (is_array($entry) && ($entry['status'] ?? '') === 'done') {
+            return false;
+        }
+        $data['processed'][$key] = [
+            'status' => 'processing',
+            'fulfillment' => 'pending',
+            'at' => date('c'),
+        ];
+        $this->writeState($data);
+
+        return true;
     }
 
     private function handleShip(array $order, array $line): array
     {
+        $orderId = $order['id'] ?? '';
+        $lineId = $line['line_id'] ?? '';
+        $existing = $this->getLineFulfillmentState($orderId, $lineId);
+        if (is_array($existing) && ($existing['status'] ?? '') === 'done') {
+            return ['ok' => true, 'skipped' => true, 'adapter' => $existing['result']['adapter'] ?? null];
+        }
+
         $adapter = $this->resolvePhysicalAdapter();
         if (!$adapter || !$adapter->isConfigured()) {
             return ['ok' => false, 'error' => 'Physical fulfillment adapter not configured'];
@@ -98,8 +138,8 @@ class PostPurchaseRouter
 
         $push = $adapter->pushOrder($shipOrder);
         $this->fireAutomation('commerce_physical_fulfilled', [
-            'order_id' => $order['id'] ?? '',
-            'line_id' => $line['line_id'] ?? '',
+            'order_id' => $orderId,
+            'line_id' => $lineId,
             'entry_id' => $line['entry_id'] ?? '',
         ]);
 
@@ -109,27 +149,32 @@ class PostPurchaseRouter
     private function handleDeliver(array $order, array $line, int $idx): array
     {
         $token = $this->digital->createToken($order, $line, $idx);
-        $this->fireAutomation('commerce_digital_delivered', [
-            'order_id' => $order['id'] ?? '',
-            'line_id' => $line['line_id'] ?? '',
-            'token' => $token['token'] ?? '',
-            'customer_email' => $order['customer_email'] ?? '',
-        ]);
+        if (empty($token['created_at']) || ($token['download_count'] ?? 0) === 0) {
+            $this->fireAutomation('commerce_digital_delivered', [
+                'order_id' => $order['id'] ?? '',
+                'line_id' => $line['line_id'] ?? '',
+                'token' => $token['token'] ?? '',
+                'customer_email' => $order['customer_email'] ?? '',
+            ]);
+        }
 
         return ['ok' => true, 'token' => $token['token'] ?? '', 'expires_at' => $token['expires_at'] ?? ''];
     }
 
     private function handleRegister(array $order, array $line, int $idx): array
     {
+        $existing = $this->registrations->getByOrderLine($order['id'] ?? '', $line['line_id'] ?? '');
         $attendee = $order['attendee_name'] ?? null;
         $record = $this->registrations->register($order, $line, $idx, $attendee);
-        $this->fireAutomation('commerce_event_registered', [
-            'order_id' => $order['id'] ?? '',
-            'line_id' => $line['line_id'] ?? '',
-            'entry_id' => $line['entry_id'] ?? '',
-            'attendee_name' => $record['attendee_name'] ?? '',
-            'customer_email' => $order['customer_email'] ?? '',
-        ]);
+        if ($existing === null) {
+            $this->fireAutomation('commerce_event_registered', [
+                'order_id' => $order['id'] ?? '',
+                'line_id' => $line['line_id'] ?? '',
+                'entry_id' => $line['entry_id'] ?? '',
+                'attendee_name' => $record['attendee_name'] ?? '',
+                'customer_email' => $order['customer_email'] ?? '',
+            ]);
+        }
 
         $tierGranted = $this->mappings->applyLineMappings($order, $line);
 
@@ -141,12 +186,22 @@ class PostPurchaseRouter
         $tierGranted = $this->mappings->applyLineMappings($order, $line);
 
         if (($line['billing'] ?? '') === 'recurring') {
-            $this->fireAutomation('commerce_membership_started', [
-                'order_id' => $order['id'] ?? '',
-                'line_id' => $line['line_id'] ?? '',
-                'purchase_option_id' => $line['purchase_option_id'] ?? '',
-                'interval' => $line['interval'] ?? 'month',
-            ]);
+            $key = ($order['id'] ?? '') . ':' . ($line['line_id'] ?? '');
+            if (!$this->isProcessed($key . ':membership_automation')) {
+                $this->fireAutomation('commerce_membership_started', [
+                    'order_id' => $order['id'] ?? '',
+                    'line_id' => $line['line_id'] ?? '',
+                    'purchase_option_id' => $line['purchase_option_id'] ?? '',
+                    'interval' => $line['interval'] ?? 'month',
+                ]);
+                $data = $this->loadState();
+                $data['processed'][$key . ':membership_automation'] = [
+                    'status' => 'done',
+                    'fulfillment' => 'membership_automation',
+                    'at' => date('c'),
+                ];
+                $this->writeState($data);
+            }
         }
 
         return ['ok' => true, 'membership' => ($line['billing'] ?? '') === 'recurring', 'tier_granted' => $tierGranted];
@@ -171,6 +226,10 @@ class PostPurchaseRouter
 
             $compKey = ($order['id'] ?? '') . ':' . $compLineId;
             if ($this->isProcessed($compKey)) {
+                $expanded[] = ['line_id' => $compLineId, 'skipped' => true];
+                continue;
+            }
+            if (!$this->claimProcessing($compKey)) {
                 $expanded[] = ['line_id' => $compLineId, 'skipped' => true];
                 continue;
             }
@@ -230,15 +289,21 @@ class PostPurchaseRouter
         return is_array($data) ? $data : ['processed' => []];
     }
 
+    private function writeState(array $data): void
+    {
+        file_put_contents($this->stateFile, json_encode($data, JSON_PRETTY_PRINT));
+    }
+
     private function markProcessed(string $key, string $fulfillment, array $result): void
     {
         $data = $this->loadState();
         $data['processed'][$key] = [
+            'status' => 'done',
             'fulfillment' => $fulfillment,
             'at' => date('c'),
             'result' => $result,
         ];
-        file_put_contents($this->stateFile, json_encode($data, JSON_PRETTY_PRINT));
+        $this->writeState($data);
     }
 
     public function getLineFulfillmentState(string $orderId, string $lineId): ?array

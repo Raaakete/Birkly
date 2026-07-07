@@ -54,6 +54,8 @@ class CommerceImportCredentialStore
             'woocommerce' => $this->defaultPlatformConfig('woocommerce'),
             'etsy' => $this->defaultPlatformConfig('etsy'),
             'square' => $this->defaultPlatformConfig('square'),
+            'amazon' => $this->defaultPlatformConfig('amazon'),
+            'ebay' => $this->defaultPlatformConfig('ebay'),
             'cron_token' => '',
             'updated_at' => null,
         ];
@@ -91,6 +93,15 @@ class CommerceImportCredentialStore
                 break;
             case 'square':
                 $base['location_id'] = '';
+                $base['access_token_enc'] = '';
+                break;
+            case 'amazon':
+                $base['seller_id'] = '';
+                $base['marketplace_id'] = '';
+                $base['refresh_token_enc'] = '';
+                break;
+            case 'ebay':
+                $base['marketplace_id'] = 'EBAY_US';
                 $base['access_token_enc'] = '';
                 break;
         }
@@ -140,7 +151,7 @@ class CommerceImportCredentialStore
         $config = $this->load();
         $current = is_array($config[$platform] ?? null) ? $config[$platform] : $this->defaultPlatformConfig($platform);
 
-        foreach (['enabled', 'collection', 'default_currency', 'schedule_enabled', 'shop_domain', 'site_url', 'shop_id', 'location_id'] as $key) {
+        foreach (['enabled', 'collection', 'default_currency', 'schedule_enabled', 'shop_domain', 'site_url', 'shop_id', 'location_id', 'seller_id', 'marketplace_id'] as $key) {
             if (array_key_exists($key, $patch)) {
                 $current[$key] = $patch[$key];
             }
@@ -166,6 +177,12 @@ class CommerceImportCredentialStore
             }
         }
         if ($platform === 'square' && isset($patch['access_token']) && is_string($patch['access_token']) && $patch['access_token'] !== '') {
+            $current['access_token_enc'] = $this->crypto->encrypt($patch['access_token']);
+        }
+        if ($platform === 'amazon' && isset($patch['refresh_token']) && is_string($patch['refresh_token']) && $patch['refresh_token'] !== '') {
+            $current['refresh_token_enc'] = $this->crypto->encrypt($patch['refresh_token']);
+        }
+        if ($platform === 'ebay' && isset($patch['access_token']) && is_string($patch['access_token']) && $patch['access_token'] !== '') {
             $current['access_token_enc'] = $this->crypto->encrypt($patch['access_token']);
         }
         if (isset($patch['webhook_secret']) && is_string($patch['webhook_secret']) && $patch['webhook_secret'] !== '') {
@@ -208,6 +225,8 @@ class CommerceImportCredentialStore
             'woocommerce' => $this->publicPlatformConfig('woocommerce', is_array($config['woocommerce'] ?? null) ? $config['woocommerce'] : []),
             'etsy' => $this->publicPlatformConfig('etsy', is_array($config['etsy'] ?? null) ? $config['etsy'] : []),
             'square' => $this->publicPlatformConfig('square', is_array($config['square'] ?? null) ? $config['square'] : []),
+            'amazon' => $this->publicPlatformConfig('amazon', is_array($config['amazon'] ?? null) ? $config['amazon'] : []),
+            'ebay' => $this->publicPlatformConfig('ebay', is_array($config['ebay'] ?? null) ? $config['ebay'] : []),
             'cron_token' => $this->getCronToken(),
             'updated_at' => $config['updated_at'] ?? null,
         ];
@@ -237,6 +256,11 @@ class CommerceImportCredentialStore
             $out['shop_id'] = (string) ($platformConfig['shop_id'] ?? '');
         } elseif ($platform === 'square') {
             $out['location_id'] = (string) ($platformConfig['location_id'] ?? '');
+        } elseif ($platform === 'amazon') {
+            $out['seller_id'] = (string) ($platformConfig['seller_id'] ?? '');
+            $out['marketplace_id'] = (string) ($platformConfig['marketplace_id'] ?? '');
+        } elseif ($platform === 'ebay') {
+            $out['marketplace_id'] = (string) ($platformConfig['marketplace_id'] ?? 'EBAY_US');
         }
 
         return $out;
@@ -259,6 +283,14 @@ class CommerceImportCredentialStore
                 && trim((string) ($platformConfig['shop_id'] ?? '')) !== '';
         }
         if ($platform === 'square') {
+            return !empty($platformConfig['access_token_enc']);
+        }
+        if ($platform === 'amazon') {
+            return !empty($platformConfig['refresh_token_enc'])
+                && trim((string) ($platformConfig['seller_id'] ?? '')) !== ''
+                && trim((string) ($platformConfig['marketplace_id'] ?? '')) !== '';
+        }
+        if ($platform === 'ebay') {
             return !empty($platformConfig['access_token_enc']);
         }
 
@@ -291,10 +323,16 @@ class CommerceImportCredentialStore
         if ($platform === 'square' && !empty($platformConfig['access_token_enc'])) {
             $out['access_token'] = $this->crypto->decrypt((string) $platformConfig['access_token_enc']);
         }
+        if ($platform === 'amazon' && !empty($platformConfig['refresh_token_enc'])) {
+            $out['refresh_token'] = $this->crypto->decrypt((string) $platformConfig['refresh_token_enc']);
+        }
+        if ($platform === 'ebay' && !empty($platformConfig['access_token_enc'])) {
+            $out['access_token'] = $this->crypto->decrypt((string) $platformConfig['access_token_enc']);
+        }
         if (!empty($platformConfig['webhook_secret_enc'])) {
             $out['webhook_secret'] = $this->crypto->decrypt((string) $platformConfig['webhook_secret_enc']);
         }
-        unset($out['access_token_enc'], $out['consumer_key_enc'], $out['consumer_secret_enc'], $out['api_key_enc'], $out['webhook_secret_enc']);
+        unset($out['access_token_enc'], $out['consumer_key_enc'], $out['consumer_secret_enc'], $out['api_key_enc'], $out['webhook_secret_enc'], $out['refresh_token_enc']);
 
         return $out;
     }

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birkly — Getting Started</title>
+    <style>
+        :root {
+            --background-global: #f8f9f7;
+            --bg-elevated: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --text-primary: #1a202c;
+            --text-secondary: #64748b;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --success-700: #15803d;
+            --warning-700: #b45309;
+            --error-700: #b91c1c;
+            --border-light: #e2e8f0;
+            --border-radius-s: 4px;
+            --border-radius-m: 8px;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background-global);
+            min-height: 100vh;
+            padding: var(--space-8);
+        }
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            background: var(--bg-elevated);
+            border-radius: var(--border-radius-m);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            padding: var(--space-8);
+            text-align: center;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+        .header-logo img { width: 48px; height: 48px; }
+        .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: var(--space-2); }
+        .header p { color: var(--text-secondary); font-size: 1.125rem; }
+        .content { padding: var(--space-8); }
+        .folder-check {
+            border-radius: var(--border-radius-m);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            border: 2px solid var(--border-light);
+        }
+        .folder-check.ok { background: #dcfce7; border-color: var(--success-700); }
+        .folder-check.warn { background: #fef3c7; border-color: var(--warning-700); }
+        .folder-check.error { background: #fee2e2; border-color: var(--error-700); }
+        .folder-check h2 { font-size: 1.125rem; margin-bottom: var(--space-2); }
+        .folder-check p { color: var(--text-secondary); font-size: 0.9375rem; }
+        .folder-check ul { margin: var(--space-3) 0 0 var(--space-6); font-size: 0.875rem; color: var(--text-secondary); }
+        .intro {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--primary-500);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            border-radius: var(--border-radius-s);
+        }
+        .intro h2 { color: var(--primary-600); font-size: 1.25rem; margin-bottom: var(--space-2); }
+        .path-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: var(--space-6);
+            margin: var(--space-6) 0;
+        }
+        .path-card {
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius-m);
+            padding: var(--space-6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .path-card:hover, .path-card.selected {
+            border-color: var(--primary-500);
+            box-shadow: 0 4px 6px -1px rgba(59,130,246,0.15);
+        }
+        .path-card.selected { background: rgba(59,130,246,0.05); }
+        .path-card h3 { color: var(--primary-600); margin-bottom: var(--space-2); }
+        .path-card p { color: var(--text-secondary); font-size: 0.875rem; }
+        .steps-container { display: none; margin-top: var(--space-6); }
+        .steps-container.active { display: block; }
+        .step {
+            margin: var(--space-6) 0;
+            padding: var(--space-6);
+            border-left: 4px solid var(--primary-500);
+            background: var(--bg-elevated);
+            border-radius: var(--border-radius-m);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .step-header { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+        .step-number {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--primary-500); color: white;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 600; flex-shrink: 0;
+        }
+        .step-title { font-size: 1.25rem; font-weight: 600; }
+        .step-content { color: var(--text-secondary); font-size: 0.9375rem; }
+        .step-content pre {
+            background: #1a202c; color: #f7fafc;
+            padding: var(--space-4); border-radius: var(--border-radius-s);
+            overflow-x: auto; margin: var(--space-3) 0; font-size: 0.875rem;
+        }
+        .step-content code {
+            background: var(--bg-secondary); padding: 0.125rem 0.375rem;
+            border-radius: var(--border-radius-s); font-size: 0.875rem;
+            color: var(--primary-600);
+        }
+        .probe-status {
+            margin: var(--space-4) 0;
+            padding: var(--space-4);
+            border-radius: var(--border-radius-s);
+            background: var(--bg-secondary);
+            font-size: 0.875rem;
+        }
+        .probe-status.loading { color: var(--text-secondary); }
+        .probe-status.ok { background: #dcfce7; color: var(--success-700); }
+        .probe-status.error { background: #fee2e2; color: var(--error-700); }
+        .accordion { margin-top: var(--space-4); }
+        .accordion-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: var(--space-3) var(--space-4);
+            background: var(--bg-secondary); border-radius: var(--border-radius-s);
+            cursor: pointer; user-select: none;
+        }
+        .accordion-header.active { background: var(--primary-500); color: white; }
+        .accordion-header.active .accordion-title { color: white; }
+        .accordion-title { font-weight: 600; font-size: 0.875rem; }
+        .accordion-icon { transition: transform 0.2s; }
+        .accordion-header.active .accordion-icon { transform: rotate(180deg); }
+        .accordion-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+            padding: 0 var(--space-4);
+        }
+        .accordion-content.active { max-height: 1200px; padding: var(--space-4); }
+        .accordion-content p, .accordion-content li { font-size: 0.875rem; color: var(--text-secondary); margin: var(--space-2) 0; }
+        .accordion-content ul { margin-left: var(--space-6); }
+        .btn {
+            display: inline-flex; align-items: center; gap: var(--space-2);
+            background: var(--primary-500); color: white;
+            padding: var(--space-3) var(--space-6); border-radius: var(--border-radius-s);
+            text-decoration: none; font-weight: 600; border: none; cursor: pointer;
+            font-size: 0.9375rem; margin-top: var(--space-4);
+        }
+        .btn:hover { background: var(--primary-600); }
+        .btn-large { padding: var(--space-4) var(--space-8); font-size: 1rem; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .text-center { text-align: center; }
+        @media (max-width: 768px) {
+            body { padding: var(--space-4); }
+            .header h1 { font-size: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-logo">
+                <img src="admin/assets/birkly-icon.svg" alt="Birkly" onerror="this.style.display='none'">
+                <h1>Welcome to Birkly</h1>
+            </div>
+            <p>Your flat-file CMS — no database required.</p>
+        </div>
+
+        <div class="content">
+            <div id="folder-check" class="folder-check" role="status" aria-live="polite">
+                <h2>Checking your folder…</h2>
+                <p>Verifying you extracted Birkly to the correct location.</p>
+            </div>
+
+            <div class="intro">
+                <h2>Let's get started</h2>
+                <p>Choose how you want to run Birkly. We'll guide you through setup and then open the admin wizard.</p>
+            </div>
+
+            <div class="accordion" id="unzip-accordion">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <span class="accordion-title">How to unzip Birkly (Windows, Mac, Linux)</span>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Windows:</strong> Right-click the zip → <em>Extract All…</em> → choose a folder like <code>Documents\Birkly</code>. Open the extracted folder — you should see <code>admin</code>, <code>api</code>, and <code>START_HERE.html</code> together.</p>
+                    <p><strong>Mac:</strong> Double-click the zip. If you get <code>Birkly/Birkly/</code> (double-nested), move the inner folder up one level.</p>
+                    <p><strong>Linux:</strong> <code>unzip Birkly-*.zip -d ~/Birkly</code></p>
+                    <p>More help: <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/00-overview/getting-started.md" target="_blank" rel="noopener">Birkly getting-started docs</a></p>
+                </div>
+            </div>
+
+            <div class="path-selector" id="path-selector">
+                <div class="path-card" data-path="local" onclick="showSteps('local', this)">
+                    <h3>💻 On your computer</h3>
+                    <p>Test locally with the built-in PHP server. Best for learning and development.</p>
+                </div>
+                <div class="path-card" data-path="cloud" onclick="showSteps('cloud', this)">
+                    <h3>🌐 On a web server</h3>
+                    <p>Upload via FTP or your host's file manager for a live site on your domain.</p>
+                </div>
+            </div>
+
+            <!-- Local path -->
+            <div class="steps-container" id="local-steps">
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <h3 class="step-title">Check PHP</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Birkly needs PHP 8.0+. We'll check automatically when you're viewing this page through a server.</p>
+                        <div id="php-probe" class="probe-status loading">Checking environment…</div>
+                        <p>Or run in a terminal: <code>php -v</code></p>
+                    </div>
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">PHP not installed — how to install</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <p><strong>Mac:</strong> <code>brew install php</code></p>
+                            <p><strong>Windows:</strong> Download from <a href="https://www.php.net/downloads.php" target="_blank">php.net</a> or use XAMPP.</p>
+                            <p><strong>Linux:</strong> <code>sudo apt install php</code></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <h3 class="step-title">Start the server</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>In the Birkly folder, run:</p>
+                        <pre>chmod +x ./start-server.sh
+./start-server.sh</pre>
+                        <p>Keep the terminal open. Default URL: <code>http://localhost:8080</code></p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <h3 class="step-title">Continue to admin setup</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>When the server is running, open the setup wizard:</p>
+                        <div class="text-center">
+                            <a href="#" id="local-onboarding-link" class="btn btn-large">Start setup →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cloud path -->
+            <div class="steps-container" id="cloud-steps">
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <h3 class="step-title">Upload all files</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Upload <strong>everything</strong> in this folder to your web root via FTP or your host's file manager. Keep the folder structure intact.</p>
+                    </div>
+                    <div class="accordion">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span class="accordion-title">FTP upload tips</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-content">
+                            <ul>
+                                <li>Use FileZilla, Cyberduck, or your host's file manager</li>
+                                <li>Upload <code>admin/</code>, <code>api/</code>, <code>core/</code>, and all root files</li>
+                                <li>Do not upload only the <code>admin</code> folder — the CMS needs sibling folders</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <h3 class="step-title">Permissions &amp; PHP</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Ensure these folders are writable: <code>content/</code>, <code>media/</code>, <code>users/</code>, <code>settings/</code>, <code>logs/</code></p>
+                        <p>PHP 8.0+ required. Apache: included <code>.htaccess</code> handles routing.</p>
+                        <div id="cloud-probe" class="probe-status loading">Checking server environment…</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <h3 class="step-title">Continue to admin setup</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Visit your domain's admin URL to complete setup:</p>
+                        <p class="text-center"><code id="cloud-onboarding-url">https://yourdomain.com/admin/index.php?page=onboarding&amp;install=cloud</code></p>
+                        <div class="text-center">
+                            <a href="#" id="cloud-onboarding-link" class="btn btn-large">Start setup →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MARKERS = {
+            admin: 'admin/index.php',
+            startServer: 'start-server.sh',
+            serverRouter: 'server-router.php',
+            startHere: 'START_HERE.html'
+        };
+
+        function getBasePath() {
+            const path = window.location.pathname;
+            const idx = path.lastIndexOf('/');
+            return idx >= 0 ? path.substring(0, idx + 1) : '/';
+        }
+
+        function resolveUrl(relative) {
+            return new URL(relative, window.location.href).href;
+        }
+
+        async function fileExists(relative) {
+            try {
+                const res = await fetch(resolveUrl(relative), { method: 'HEAD', cache: 'no-store' });
+                return res.ok;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        async function detectFolder() {
+            const box = document.getElementById('folder-check');
+            const hasAdmin = await fileExists(MARKERS.admin);
+            const hasRouter = await fileExists(MARKERS.serverRouter);
+            const hasStart = await fileExists(MARKERS.startServer);
+            const hasStartHere = await fileExists(MARKERS.startHere);
+
+            const parentHasAdmin = await fileExists('../' + MARKERS.admin);
+            const childHasAdmin = await fileExists('Birkly/' + MARKERS.admin);
+
+            if (hasAdmin && hasRouter && (hasStart || hasStartHere)) {
+                box.className = 'folder-check ok';
+                box.innerHTML = '<h2>✓ You are in the right folder</h2><p>Found <code>admin/</code>, <code>server-router.php</code>, and setup files. Choose a path below.</p>';
+                return 'ok';
+            }
+            if (!hasAdmin && parentHasAdmin) {
+                box.className = 'folder-check warn';
+                box.innerHTML = '<h2>↑ Move up one folder</h2><p>You appear to be <em>inside</em> the project (e.g. only opened <code>admin/</code>). Open <code>START_HERE.html</code> from the parent folder that contains <code>admin/</code> and <code>api/</code>.</p>';
+                return 'parent';
+            }
+            if (hasAdmin && childHasAdmin) {
+                box.className = 'folder-check warn';
+                box.innerHTML = '<h2>↓ Open the inner Birkly folder</h2><p>Double-nested unzip detected (<code>Birkly/Birkly/</code>). Open <code>START_HERE.html</code> inside the inner folder that has <code>admin/</code> next to <code>api/</code>.</p>';
+                return 'nested';
+            }
+            if (!hasAdmin) {
+                box.className = 'folder-check error';
+                box.innerHTML = '<h2>✗ Wrong folder</h2><p>Could not find <code>admin/index.php</code>. Extract the full zip and open <code>START_HERE.html</code> from the folder that contains <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p><ul><li>Do not open files from inside the zip without extracting</li><li>Do not upload only the <code>admin</code> subfolder</li></ul>';
+                return 'wrong';
+            }
+            box.className = 'folder-check warn';
+            box.innerHTML = '<h2>⚠ Almost there</h2><p>Found <code>admin/</code> but missing some expected files. If setup fails, re-extract the zip.</p>';
+            return 'partial';
+        }
+
+        function buildOnboardingUrl(install) {
+            const origin = window.location.origin;
+            const base = getBasePath();
+            return origin + base + 'admin/index.php?page=onboarding&install=' + install;
+        }
+
+        function updateOnboardingLinks() {
+            const localLink = document.getElementById('local-onboarding-link');
+            const cloudLink = document.getElementById('cloud-onboarding-link');
+            const cloudUrl = document.getElementById('cloud-onboarding-url');
+            const localUrl = buildOnboardingUrl('local');
+            const cloudOnboarding = buildOnboardingUrl('cloud');
+
+            if (localLink) {
+                localLink.href = localUrl;
+            }
+            if (cloudLink) {
+                cloudLink.href = cloudOnboarding;
+                cloudLink.onclick = null;
+            }
+            if (cloudUrl) {
+                const host = window.location.hostname;
+                if (host && host !== 'localhost' && host !== '127.0.0.1' && host !== '') {
+                    cloudUrl.textContent = cloudOnboarding;
+                }
+            }
+        }
+
+        async function runSetupProbe(targetId) {
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            try {
+                const res = await fetch(resolveUrl('api/setup_probe.php'), { cache: 'no-store' });
+                const data = await res.json();
+                if (data.status !== 'ok' || !data.data) {
+                    el.className = 'probe-status error';
+                    el.textContent = 'Could not read server environment. Start the PHP server first, then refresh.';
+                    return;
+                }
+                const d = data.data;
+                const extOk = d.extensions && d.extensions.json && d.extensions.mbstring;
+                const writableOk = Object.values(d.writable_dirs || {}).every(v => !v.exists || v.writable);
+                if (d.php_ok && extOk) {
+                    el.className = 'probe-status ok';
+                    el.innerHTML = '✓ PHP ' + d.php_version + (writableOk ? ' — writable folders OK' : ' — check folder permissions');
+                } else {
+                    el.className = 'probe-status error';
+                    el.textContent = 'PHP ' + d.php_version + (d.php_ok ? '' : ' (8.0+ required)') + '. Install missing extensions or fix permissions.';
+                }
+            } catch (_) {
+                el.className = 'probe-status';
+                el.textContent = 'Open this page via http://localhost:8080/START_HERE.html (after ./start-server.sh) for automatic checks. Or run php -v manually.';
+            }
+        }
+
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const isActive = header.classList.contains('active');
+            const step = header.closest('.step') || header.parentElement;
+            step.querySelectorAll('.accordion-header').forEach(h => h.classList.remove('active'));
+            step.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('active'));
+            if (!isActive) {
+                header.classList.add('active');
+                content.classList.add('active');
+            }
+        }
+
+        function showSteps(path, card) {
+            document.querySelectorAll('.steps-container').forEach(c => c.classList.remove('active'));
+            const steps = document.getElementById(path + '-steps');
+            if (steps) steps.classList.add('active');
+            document.querySelectorAll('.path-card').forEach(c => c.classList.remove('selected'));
+            if (card) card.classList.add('selected');
+            if (steps) steps.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateOnboardingLinks();
+        }
+
+        window.addEventListener('load', async () => {
+            await detectFolder();
+            updateOnboardingLinks();
+            runSetupProbe('php-probe');
+            runSetupProbe('cloud-probe');
+            if (window.location.protocol.startsWith('http')) {
+                const host = window.location.hostname;
+                const path = host === 'localhost' || host === '127.0.0.1' ? 'local' : 'cloud';
+                const card = document.querySelector('.path-card[data-path="' + path + '"]');
+                if (card) showSteps(path, card);
+            }
+        });
+    </script>
+</body>
+</html>

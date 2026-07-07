@@ -256,6 +256,10 @@
             var update = updateMap[plugin.id] || {};
             var hasUpdate = !!update.update_available;
             var active = !!plugin.active;
+            var health = plugin.health || {};
+            var healthStatus = health.status || 'unknown';
+            var healthTitle = [].concat(health.errors || [], health.warnings || []).join('; ');
+            var healthClass = 'health-' + healthStatus;
             return (
                 '<div class="card plugin-card' + (hasUpdate ? ' has-update' : '') + '">' +
                 '<div class="plugin-header">' +
@@ -263,9 +267,14 @@
                 '<h3 class="plugin-name">' + escapeHtml(plugin.name) + '</h3>' +
                 (hasUpdate ? '<span class="update-pill">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
                 '</div>' +
+                '<div class="plugin-header-badges">' +
+                '<span class="health-badge ' + healthClass + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
+                escapeHtml(healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1)) +
+                '</span>' +
                 '<span class="status-badge ' + (active ? 'status-active' : 'status-inactive') + '">' +
                 (active ? 'Active' : 'Inactive') +
                 '</span>' +
+                '</div>' +
                 '</div>' +
                 (plugin.description ? '<p class="plugin-description">' + escapeHtml(plugin.description) + '</p>' : '') +
                 '<div class="plugin-meta">' +

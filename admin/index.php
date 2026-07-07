@@ -80,12 +80,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/i18n.php';
 I18n::init();
 
-// Security headers (basic)
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: SAMEORIGIN');
-header('Referrer-Policy: no-referrer');
-
-// Include template parser
+// Security headers set in layout_head (CSP nonce)
 require_once __DIR__ . '/template_parser.php';
 
 // Load plugin registry (admin pages registered via register_admin_page)
@@ -276,6 +271,11 @@ function fetch_admin_page_data(string $page, array $query = []): array {
 $isOnboarding = ($page === 'onboarding');
 ?>
 <?php if ($isOnboarding): ?>
+<?php
+require_once __DIR__ . '/../core/csp.php';
+birkly_set_admin_csp_headers();
+$__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -283,7 +283,7 @@ $isOnboarding = ($page === 'onboarding');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token()); ?>">
     <title>Setup - Birkly</title>
-    <script>
+    <script<?= $__birklyOnboardingNonceAttr ?>>
       window.Birkly = window.Birkly || {};
       window.Birkly.basePath = <?= birkly_base_path_json() ?>;
     </script>
@@ -336,9 +336,9 @@ $isOnboarding = ($page === 'onboarding');
         }
         ?>
     </div>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/onboarding.js')) ?>"></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/onboarding.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
 </body>
 </html>
 <?php else: ?>

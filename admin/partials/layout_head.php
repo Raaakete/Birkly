@@ -1,3 +1,8 @@
+<?php
+require_once __DIR__ . '/../../core/csp.php';
+birkly_set_admin_csp_headers();
+$__birklyScriptNonceAttr = birkly_csp_nonce_attr();
+?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars(getCurrentLanguage()) ?>">
 <head>
@@ -18,7 +23,7 @@
         $currentPermissions = [];
     }
     ?>
-    <script>
+    <script<?= $__birklyScriptNonceAttr ?>>
       window.Birkly = window.Birkly || {};
       window.Birkly.basePath = <?= birkly_base_path_json() ?>;
       window.Birkly.currentUser = window.Birkly.currentUser || {};
@@ -40,8 +45,8 @@
 ?><link rel="shortcut icon" href="<?= htmlspecialchars($faviconUrl) ?>">
     
     <!-- Plugin UI System -->
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/plugin-ui.js')) ?>" defer></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/plugin-ui.js')) ?>" defer<?= $__birklyScriptNonceAttr ?>></script>
     
     <!-- Page uses no per-page JS here; global JS loaded in footer -->
 </head>
