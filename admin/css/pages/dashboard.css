@@ -906,3 +906,33 @@
     justify-content: center;
   }
 }
+
+[data-theme="dark"] .activity-filter-btn.active {
+  color: var(--text-primary, #f8fafc);
+}
+
+[data-theme="dark"] .entry-status-published {
+  background: rgba(22, 163, 74, 0.2);
+  color: var(--success-500, #22c55e);
+}
+
+[data-theme="dark"] .entry-status-draft {
+  background: rgba(217, 119, 6, 0.2);
+  color: var(--warning-500, #f59e0b);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .activity-filter-btn.active {
+    color: var(--text-primary, #f8fafc);
+  }
+
+  [data-theme="system"] .entry-status-published {
+    background: rgba(22, 163, 74, 0.2);
+    color: var(--success-500, #22c55e);
+  }
+
+  [data-theme="system"] .entry-status-draft {
+    background: rgba(217, 119, 6, 0.2);
+    color: var(--warning-500, #f59e0b);
+  }
+}

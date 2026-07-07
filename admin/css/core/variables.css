@@ -240,6 +240,9 @@
   --notif-color-red: #fee2e2;
   --notif-color-purple: #e9d5ff;
   --notif-color-gray: #f3f4f6;
+
+  --surface: var(--bg-elevated);
+  --surface-secondary: var(--bg-secondary);
 }
 
 /* ============================================
@@ -250,7 +253,9 @@
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
   --bg-elevated: #1e293b;
+  --bg-hover: #334155;
   --bg-overlay: rgba(0, 0, 0, 0.7);
+  --background-global: #0f172a;
   
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
@@ -262,18 +267,36 @@
   --border-strong: #64748b;
   --border-color: var(--border-medium);
   --primary-color: var(--primary-500);
+
+  --color-neutral-100: #1e293b;
+  --color-neutral-200: #334155;
+  --color-lightest: #1e293b;
+  --color-base-white: #1e293b;
+  --color-black: #f8fafc;
+
+  --surface: var(--bg-elevated);
+  --surface-secondary: var(--bg-secondary);
+
+  --notif-color-blue: #1e3a5f;
+  --notif-color-green: #14532d;
+  --notif-color-orange: #78350f;
+  --notif-color-red: #7f1d1d;
+  --notif-color-purple: #581c87;
+  --notif-color-gray: #334155;
 }
 
 /* ============================================
    System Theme Detection
    ============================================ */
 @media (prefers-color-scheme: dark) {
-  :root[data-theme="system"] {
+  [data-theme="system"] {
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
     --bg-tertiary: #334155;
     --bg-elevated: #1e293b;
+    --bg-hover: #334155;
     --bg-overlay: rgba(0, 0, 0, 0.7);
+    --background-global: #0f172a;
     
     --text-primary: #f8fafc;
     --text-secondary: #cbd5e1;
@@ -285,6 +308,22 @@
     --border-strong: #64748b;
     --border-color: var(--border-medium);
     --primary-color: var(--primary-500);
+
+    --color-neutral-100: #1e293b;
+    --color-neutral-200: #334155;
+    --color-lightest: #1e293b;
+    --color-base-white: #1e293b;
+    --color-black: #f8fafc;
+
+    --surface: var(--bg-elevated);
+    --surface-secondary: var(--bg-secondary);
+
+    --notif-color-blue: #1e3a5f;
+    --notif-color-green: #14532d;
+    --notif-color-orange: #78350f;
+    --notif-color-red: #7f1d1d;
+    --notif-color-purple: #581c87;
+    --notif-color-gray: #334155;
   }
 }
 

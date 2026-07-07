@@ -2286,5 +2286,67 @@
   .user-actions .btn {
     justify-content: center;
   }
+
+  .settings-tabs .tabs {
+    flex-wrap: wrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .settings-tabs .tabs .tab {
+    flex-shrink: 0;
+  }
+}
+
+[data-theme="dark"] .denylist-item code,
+[data-theme="dark"] .setup-card code {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .denylist-type-badge {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .setup-card-recommended {
+  background: rgba(22, 163, 74, 0.12);
+  border-color: var(--success-600);
+}
+
+[data-theme="dark"] .setup-card-warning {
+  background: rgba(217, 119, 6, 0.12);
+  border-color: var(--warning-600);
+}
+
+[data-theme="dark"] .settings-actions {
+  background: var(--bg-secondary);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .denylist-item code,
+  [data-theme="system"] .setup-card code {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  [data-theme="system"] .denylist-type-badge {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+
+  [data-theme="system"] .setup-card-recommended {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: var(--success-600);
+  }
+
+  [data-theme="system"] .setup-card-warning {
+    background: rgba(217, 119, 6, 0.12);
+    border-color: var(--warning-600);
+  }
+
+  [data-theme="system"] .settings-actions {
+    background: var(--bg-secondary);
+  }
 }
 
