@@ -46,7 +46,12 @@ Run existing tests or manual smoke checks before opening PRs. Verify admin login
 - Cloud VMs run Ubuntu. PHP is installed via `.cursor/environment.json` `install` script.
 - **Multi-repo layout:** In a multi-repo environment, repos clone as siblings (e.g. `/agent/repos/Birkly`, `/agent/repos/Birkly-Marketplace`). If an expected repo is missing, see `docs/agent-ops/CLOUD_ENV_REPOS.md` and ask the human to add it in the Cursor Cloud dashboard.
 - CMS dev server (Birkly repo root): `php -S localhost:8080 -t . server-router.php`
+- `.cursor/environment.json` already installs `php-cli`/`curl` and auto-starts the CMS server; the core CMS is **dependency-free** (no Composer/npm install needed). PHP built-in extensions (json, mbstring, gd, curl, etc.) are sufficient.
+- Admin login requires a user first: `users/` starts empty, so run `php scripts/create-default-user.php` (creates `admin@localhost` / `password`). Optional demo content: `php scripts/create-demo-content.php`.
+- Admin panel redirects `/admin/` → `/admin/login.php` until authenticated; `/` (site root) returns 404 by design — use `/admin/` or a client site.
+- On a brand-new checkout the **first** `scripts/agent-smoke-test.sh` run can report a couple of failed suites while runtime state (`settings/`, `data/`, `cache/`) is being initialized; re-running the smoke test passes. Treat a single first-run failure as transient, not a regression.
 - Client sites are static HTML; serve with `python3 -m http.server 8000` when needed.
+- Docs (`Birkly-Docs`): build with `node build-static.js` (uses only Node built-ins, no `npm install`); serve statically like the client sites.
 - Do not commit runtime data (see Architecture rules above).
 
 ## Roadmap workflow
