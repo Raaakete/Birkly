@@ -74,6 +74,16 @@ if (is_dir($dest)) {
     birkly_marketplace_remove_directory($dest);
 }
 
+$fallbackCatalog = birkly_marketplace_fallback_catalog();
+test_assert('bundled fallback catalog has offers', count($fallbackCatalog['offers'] ?? []) >= 2);
+
+$GLOBALS['birkly_marketplace_mock_handler'] = function (string $method, string $path, ?array $body, array $query): array {
+    return ['ok' => false, 'status' => 0, 'data' => null, 'error' => 'Marketplace request failed'];
+};
+$browseFallback = birkly_marketplace_browse('', '', 'plugin');
+test_assert('browse uses fallback when registry fails', !empty($browseFallback['ok']) && !empty($browseFallback['fallback']) && count($browseFallback['offers']) >= 2);
+unset($GLOBALS['birkly_marketplace_mock_handler']);
+
 // Mock HTTP handler
 $GLOBALS['birkly_marketplace_mock_handler'] = function (string $method, string $path, ?array $body, array $query): array {
     if ($method === 'GET' && $path === '/api/v1/registry') {

@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "updated_at": "2026-07-07",
+  "offers": [
+    {
+      "slug": "birkly-hello-starter",
+      "title": "Birkly Hello Starter",
+      "summary": "Official free starter plugin — admin greeting widget and hello-world hooks.",
+      "offer_type": "plugin",
+      "category": "utilities",
+      "tags": ["starter", "official", "free"],
+      "pricing": {
+        "currency": "USD",
+        "model": "free",
+        "amount_cents": 0
+      },
+      "trust_level": "trusted",
+      "latest_version": "1.0.0",
+      "provider_id": "prov_official_birkly"
+    },
+    {
+      "slug": "birkly-seo-basics",
+      "title": "Birkly SEO Basics",
+      "summary": "Official SEO helpers — meta tags, sitemap, and Open Graph defaults.",
+      "offer_type": "plugin",
+      "category": "marketing",
+      "tags": ["seo", "official", "meta"],
+      "pricing": {
+        "currency": "USD",
+        "model": "one_time",
+        "amount_cents": 1499
+      },
+      "trust_level": "trusted",
+      "latest_version": "1.0.0",
+      "provider_id": "prov_official_birkly"
+    }
+  ]
+}

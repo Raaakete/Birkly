@@ -2876,24 +2876,16 @@ function getEntryDetailData() {
 // ===== NEW PAGE DATA FUNCTIONS =====
 
 function getPluginsData() {
-    $pluginsPath = __DIR__ . '/../plugins';
-    $plugins = [];
-    
-    if (is_dir($pluginsPath)) {
-        $pluginDirs = glob($pluginsPath . '/*', GLOB_ONLYDIR);
-        foreach ($pluginDirs as $dir) {
-            $pluginName = basename($dir);
-            $manifestFile = $dir . '/manifest.json';
-            
-            if (file_exists($manifestFile)) {
-                $manifest = json_decode(file_get_contents($manifestFile), true);
-                $plugins[] = array_merge(['slug' => $pluginName], $manifest);
-            }
-        }
+    $tab = isset($_GET['tab']) ? (string) $_GET['tab'] : 'marketplace';
+    if (!in_array($tab, ['marketplace', 'installed'], true)) {
+        $tab = 'marketplace';
     }
-    
+
     return [
-        'plugins' => $plugins
+        'active_tab' => $tab,
+        'page_title' => $tab === 'installed' ? __('admin.installed_plugins') : __('admin.marketplace'),
+        'marketplace_title' => __('admin.marketplace'),
+        'installed_title' => __('admin.installed_plugins'),
     ];
 }
 
