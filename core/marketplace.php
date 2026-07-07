@@ -231,19 +231,126 @@ function birkly_marketplace_filter_offers(array $offers, string $query, string $
     return $filtered;
 }
 
+function birkly_marketplace_offer_is_free(array $offer): bool
+{
+    $pricing = is_array($offer['pricing'] ?? null) ? $offer['pricing'] : [];
+    $model = (string) ($pricing['model'] ?? '');
+    if ($model === 'free') {
+        return true;
+    }
+
+    return (int) ($pricing['amount_cents'] ?? -1) === 0;
+}
+
 /**
- * @return array{ok:bool,offer?:array,releases?:array,error?:string}
+ * @return array<string, mixed>|null
+ */
+function birkly_marketplace_find_fallback_offer(string $slug): ?array
+{
+    $catalog = birkly_marketplace_fallback_catalog();
+    foreach ($catalog['offers'] ?? [] as $offer) {
+        if (is_array($offer) && ($offer['slug'] ?? '') === $slug) {
+            return $offer;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * @return array{ok:bool,offer?:array,releases?:array,fallback?:bool,error?:string}
  */
 function birkly_marketplace_offer_detail(string $slug): array
 {
     $response = birkly_marketplace_request('GET', '/api/v1/offers/' . rawurlencode($slug));
-    if (!$response['ok'] || !is_array($response['data'])) {
-        return ['ok' => false, 'error' => $response['error'] ?? 'Offer not found'];
+    if ($response['ok'] && is_array($response['data'])) {
+        return [
+            'ok' => true,
+            'offer' => is_array($response['data']['offer'] ?? null) ? $response['data']['offer'] : [],
+            'releases' => is_array($response['data']['releases'] ?? null) ? $response['data']['releases'] : [],
+            'fallback' => false,
+        ];
     }
+
+    $offer = birkly_marketplace_find_fallback_offer($slug);
+    if ($offer !== null) {
+        $releases = [];
+        $latest = (string) ($offer['latest_version'] ?? '');
+        if ($latest !== '') {
+            $releases[] = ['version' => $latest];
+        }
+
+        return [
+            'ok' => true,
+            'offer' => $offer,
+            'releases' => $releases,
+            'fallback' => true,
+        ];
+    }
+
+    return ['ok' => false, 'error' => $response['error'] ?? 'Offer not found'];
+}
+
+function birkly_marketplace_local_free_license_key(string $slug): string
+{
+    return 'BIRKLY-LOCAL-FREE-' . strtoupper(substr(hash('sha256', $slug), 0, 16));
+}
+
+/**
+ * Auto-issue or skip license activation for free marketplace offers.
+ *
+ * @return array{ok:bool,license_key?:string,offer_slug?:string,source?:string,code?:string,error?:string}
+ */
+function birkly_marketplace_claim_free_license(string $slug): array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return ['ok' => false, 'error' => 'Offer slug required', 'code' => 'missing_slug'];
+    }
+
+    $detail = birkly_marketplace_offer_detail($slug);
+    if (!$detail['ok']) {
+        return ['ok' => false, 'error' => $detail['error'] ?? 'Offer not found', 'code' => 'offer_not_found'];
+    }
+
+    $offer = is_array($detail['offer'] ?? null) ? $detail['offer'] : [];
+    if (!birkly_marketplace_offer_is_free($offer)) {
+        return ['ok' => false, 'error' => 'This offer requires a license key', 'code' => 'license_required'];
+    }
+
+    if (empty($detail['fallback'])) {
+        $installId = preg_replace('/[^a-zA-Z0-9._-]/', '', birkly_installation_id()) ?: 'install';
+        $email = $installId . '@install.birkly.local';
+        $checkout = birkly_marketplace_request('POST', '/api/v1/checkout', [
+            'offer_slug' => $slug,
+            'email' => $email,
+        ]);
+
+        if ($checkout['ok'] && is_array($checkout['data'])) {
+            $licenseKey = (string) (
+                $checkout['data']['license']['license_key']
+                ?? $checkout['data']['order']['license_key']
+                ?? ''
+            );
+            if ($licenseKey !== '') {
+                $activation = birkly_marketplace_activate_license($licenseKey);
+                if ($activation['ok']) {
+                    return [
+                        'ok' => true,
+                        'license_key' => $licenseKey,
+                        'offer_slug' => (string) ($activation['offer_slug'] ?? $slug),
+                        'source' => 'marketplace',
+                    ];
+                }
+            }
+        }
+    }
+
     return [
         'ok' => true,
-        'offer' => is_array($response['data']['offer'] ?? null) ? $response['data']['offer'] : [],
-        'releases' => is_array($response['data']['releases'] ?? null) ? $response['data']['releases'] : [],
+        'license_key' => birkly_marketplace_local_free_license_key($slug),
+        'offer_slug' => $slug,
+        'source' => 'local',
     ];
 }
 

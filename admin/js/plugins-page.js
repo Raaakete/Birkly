@@ -62,6 +62,21 @@
         return result;
     }
 
+    function t(key, fallback) {
+        var i18n = window.PluginsPageI18n || {};
+        return i18n[key] || fallback || key;
+    }
+
+    function isFreeOffer(offer) {
+        if (!offer || !offer.pricing) {
+            return false;
+        }
+        if (offer.pricing.model === 'free') {
+            return true;
+        }
+        return (offer.pricing.amount_cents || 0) === 0;
+    }
+
     function setUpdateBadge(count) {
         var badge = document.getElementById('plugins-update-badge');
         if (!badge) return;
@@ -78,7 +93,14 @@
         if (!grid) return;
 
         if (!installedPlugins.length) {
-            grid.innerHTML = '<div class="empty-state"><p>No plugins installed yet.</p></div>';
+            grid.innerHTML =
+                '<div class="empty-state plugins-empty-state">' +
+                '<p>' + escapeHtml(t('no_plugins_installed', 'No plugins installed yet.')) + '</p>' +
+                '<p class="form-help">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse the Marketplace tab to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
+                '<button type="button" class="btn btn-primary" onclick="PluginsPage.switchToMarketplace()">' +
+                escapeHtml(t('browse_marketplace', 'Browse Marketplace')) +
+                '</button>' +
+                '</div>';
             return;
         }
 
@@ -182,10 +204,19 @@
         }
 
         grid.innerHTML = offers.map(function (offer) {
-            var price = 'Free';
+            var price = t('price_free', 'Free');
             if (offer.pricing && offer.pricing.model !== 'free' && offer.pricing.amount_cents > 0) {
                 price = ((offer.pricing.amount_cents || 0) / 100).toFixed(2) + ' ' + (offer.pricing.currency || 'USD');
             }
+            var free = isFreeOffer(offer);
+            var installLabel = free
+                ? t('install', 'Install')
+                : t('install_with_license', 'Install with license');
+            var installHandler = free
+                ? 'PluginsPage.installFreePlugin(\'' + escapeHtml(offer.slug) + '\', \'' + escapeHtml(offer.latest_version || '') + '\')'
+                : 'PluginsPage.openMarketplaceInstall(\'' +
+                escapeHtml(offer.slug) + '\', \'' + escapeHtml(offer.title || offer.slug) + '\', \'' +
+                escapeHtml(offer.latest_version || '') + '\', false)';
             return (
                 '<div class="card marketplace-offer-card">' +
                 '<div class="plugin-header">' +
@@ -199,9 +230,9 @@
                 '<span class="marketplace-price">' + escapeHtml(price) + '</span>' +
                 '</div>' +
                 '<div class="plugin-actions">' +
-                '<button type="button" class="btn btn-sm btn-primary" onclick="PluginsPage.openMarketplaceInstall(\'' +
-                escapeHtml(offer.slug) + '\', \'' + escapeHtml(offer.title || offer.slug) + '\', \'' +
-                escapeHtml(offer.latest_version || '') + '\')">Install with license</button>' +
+                '<button type="button" class="btn btn-sm btn-primary" onclick="' + installHandler + '">' +
+                escapeHtml(installLabel) +
+                '</button>' +
                 '</div>' +
                 '</div>'
             );
@@ -311,13 +342,21 @@
         if (modal) modal.classList.remove('active');
     }
 
-    function openMarketplaceInstall(slug, title, version) {
+    function openMarketplaceInstall(slug, title, version, isFree) {
+        var free = isFree === true || isFree === 'true';
         document.getElementById('marketplace-install-slug').value = slug;
         document.getElementById('marketplace-install-version').value = version || '';
-        document.getElementById('marketplace-install-title').textContent = 'Install: ' + title;
+        document.getElementById('marketplace-install-title').textContent =
+            t('install_from_marketplace', 'Install from Marketplace') + ': ' + title;
         document.getElementById('marketplace-install-summary').textContent =
             version ? 'Latest version: v' + version : 'Latest release will be installed.';
         document.getElementById('marketplace-license-key').value = '';
+
+        var licenseGroup = document.getElementById('marketplace-license-group');
+        if (licenseGroup) {
+            licenseGroup.hidden = free;
+        }
+
         var modal = document.getElementById('marketplace-install-modal');
         if (modal) modal.classList.add('active');
     }
@@ -330,21 +369,33 @@
     async function installFromMarketplace() {
         var slug = document.getElementById('marketplace-install-slug').value;
         var version = document.getElementById('marketplace-install-version').value;
+        var licenseGroup = document.getElementById('marketplace-license-group');
         var licenseKey = document.getElementById('marketplace-license-key').value.trim();
-        if (!licenseKey) {
-            showMessage('Enter your license key', 'error');
+        if (licenseGroup && !licenseGroup.hidden && !licenseKey) {
+            showMessage(t('enter_license_key', 'Enter your license key'), 'error');
             return;
         }
+        await runMarketplaceInstall(slug, version, licenseKey);
+    }
+
+    async function installFreePlugin(slug, version) {
+        if (!confirm(t('confirm_free_install', 'Install this free plugin now?'))) {
+            return;
+        }
+        await runMarketplaceInstall(slug, version, '');
+    }
+
+    async function runMarketplaceInstall(slug, version, licenseKey) {
         var btn = document.getElementById('marketplace-install-btn');
         if (btn) btn.disabled = true;
         try {
-            await marketplaceApi('install', {
-                slug: slug,
-                version: version,
-                license_key: licenseKey,
-            });
+            var payload = { slug: slug, version: version };
+            if (licenseKey) {
+                payload.license_key = licenseKey;
+            }
+            await marketplaceApi('install', payload);
             closeMarketplaceInstallModal();
-            showMessage('Plugin installed successfully', 'success');
+            showMessage(t('install_success', 'Plugin installed successfully'), 'success');
             switchTab('installed');
             await loadInstalled();
             await checkAllUpdates();
@@ -355,8 +406,12 @@
         }
     }
 
+    function switchToMarketplace() {
+        switchTab('marketplace');
+    }
+
     function installFromFile() {
-        showMessage('Manual zip install is not available yet. Use the Marketplace tab with your license key.', 'info');
+        showMessage(t('manual_install_unavailable', 'Manual zip install is not available yet. Use the Marketplace tab with your license key.'), 'info');
     }
 
     function initTabs() {
@@ -398,9 +453,12 @@
         openMarketplaceInstall: openMarketplaceInstall,
         closeMarketplaceInstallModal: closeMarketplaceInstallModal,
         installFromMarketplace: installFromMarketplace,
+        installFreePlugin: installFreePlugin,
         installFromFile: installFromFile,
         searchMarketplace: searchMarketplace,
         loadMarketplace: loadMarketplace,
+        switchToMarketplace: switchToMarketplace,
+        switchTab: switchTab,
     };
 
     window.openInstallPluginModal = openInstallModal;
