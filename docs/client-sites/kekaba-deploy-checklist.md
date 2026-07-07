@@ -8,6 +8,46 @@ Use this checklist when promoting kekaba to production or recovering a broken ho
 
 ---
 
+## Staging (pre-production)
+
+Use staging to validate embed sync, marketplace plugin installs, and commerce/events routes before promoting to production.
+
+**Default staging URL:** `https://service.kekaba.com` (override with `BIRKLY_STAGING_BASE_URL`).
+
+### Staging workflow
+
+- [ ] Sync embed and run `prepare-kekaba-deploy.sh` (same as production § Before upload).
+- [ ] Upload to **staging** document root (human).
+- [ ] Admin → Plugins → Marketplace — install in order:
+  1. **commerce** (shop + cart API routes)
+  2. **events** (calendar / iCal routes)
+  3. **automation** (optional workflows)
+  4. **user_management** (optional community features)
+- [ ] Register staging host under Settings → Domains.
+
+### Staging smoke (agent / CI)
+
+From Birkly repo (requires sibling `kekaba` checkout or `KEKABA_REPO`):
+
+```bash
+cd /path/to/Birkly
+chmod +x ./scripts/staging-smoke-kekaba.sh
+BIRKLY_STAGING_BASE_URL=https://service.kekaba.com ./scripts/staging-smoke-kekaba.sh
+```
+
+Runs:
+
+1. `kekaba/scripts/check-production.sh` — static site, loaders, snapshots, commerce page routes
+2. `scripts/production-smoke.sh` — `Birkly-0.1` health, build_info, marketplace reachability
+
+Skip marketplace egress in CI:
+
+```bash
+BIRKLY_SMOKE_SKIP_MARKETPLACE=1 BIRKLY_STAGING_BASE_URL=https://service.kekaba.com ./scripts/staging-smoke-kekaba.sh
+```
+
+---
+
 ## Before upload (local)
 
 - [ ] Platform changes merged on Birkly `main` (security/API fixes land in Birkly first).

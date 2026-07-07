@@ -93,7 +93,7 @@ if (empty($userAvatar)) {
         $avatarInitials = strtoupper(substr($userName, 0, 2));
     }
 }
-?><aside class="sidebar" id="admin-sidebar">
+?><aside class="sidebar">
         <div>
             <div class="sidebar-header">
                 <div id="brandingLogoSidebar" class="logo branding-logo">
@@ -212,4 +212,3 @@ if (empty($userAvatar)) {
                 </nav>
                 </div>
             </aside>
-<div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
