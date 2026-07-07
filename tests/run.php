@@ -116,6 +116,7 @@ $suites = [
     'settings_storage_test.php',
     'settings_save_test.php',
     'settings_page_test.php',
+    'cloud_account_link_test.php',
 ];
 
 $root = dirname(__DIR__);
