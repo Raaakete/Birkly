@@ -201,6 +201,57 @@ class PaymentShelf
         return array_merge(['provider' => $provider, 'subscription_id' => $subscriptionId], $result);
     }
 
+    public function updateSubscription(string $provider, string $subscriptionId, array $params, array $context = []): array
+    {
+        $impl = $this->resolver->get($provider);
+        $connection = $this->store->getActiveConnectionForProvider($provider);
+        if (!$impl || !$connection) {
+            return $this->error('Provider not configured');
+        }
+
+        $caps = $impl->getCapabilities();
+        if (empty($caps['features']['subscriptions'])) {
+            return $this->error('Provider does not support subscriptions');
+        }
+
+        $result = $impl->updateSubscription($connection['credentials'] ?? [], $subscriptionId, $params);
+
+        $this->activityLog->append([
+            'type' => 'subscription',
+            'provider' => $provider,
+            'status' => $result['status'] ?? ($result['ok'] ? 'updated' : 'failed'),
+            'source_plugin' => $context['source_plugin'] ?? null,
+            'source_ref' => $context['source_ref'] ?? null,
+            'payment_id' => $subscriptionId,
+            'message' => $result['ok'] ? 'Subscription plan updated' : ($result['error'] ?? 'Plan change failed'),
+        ]);
+
+        return array_merge(['provider' => $provider, 'subscription_id' => $subscriptionId], $result);
+    }
+
+    public function retrySubscriptionPayment(string $provider, string $subscriptionId, array $params = [], array $context = []): array
+    {
+        $impl = $this->resolver->get($provider);
+        $connection = $this->store->getActiveConnectionForProvider($provider);
+        if (!$impl || !$connection) {
+            return $this->error('Provider not configured');
+        }
+
+        $result = $impl->retrySubscriptionPayment($connection['credentials'] ?? [], $subscriptionId, $params);
+
+        $this->activityLog->append([
+            'type' => 'subscription',
+            'provider' => $provider,
+            'status' => $result['status'] ?? ($result['ok'] ? 'retry' : 'failed'),
+            'source_plugin' => $context['source_plugin'] ?? null,
+            'source_ref' => $context['source_ref'] ?? null,
+            'payment_id' => $subscriptionId,
+            'message' => $result['ok'] ? 'Subscription payment retry' : ($result['error'] ?? 'Retry failed'),
+        ]);
+
+        return array_merge(['provider' => $provider, 'subscription_id' => $subscriptionId], $result);
+    }
+
     public function testConnection(string $provider, array $credentials): array
     {
         $impl = $this->resolver->get($provider);
