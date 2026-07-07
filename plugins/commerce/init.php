@@ -203,6 +203,13 @@ function commerce_get_setting(string $key, $default = null)
     return $default;
 }
 
+/** Site default charge currency (P14-M1). No FX engine — display = charge currency. */
+function commerce_get_default_currency(): string
+{
+    $cur = strtolower(trim((string) commerce_get_setting('commerce_default_currency', 'eur')));
+    return preg_match('/^[a-z]{3}$/', $cur) ? $cur : 'eur';
+}
+
 function commerce_init_automation_triggers(): void
 {
     if (!function_exists('register_automation_block')) {

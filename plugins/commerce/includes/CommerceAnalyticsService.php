@@ -14,13 +14,18 @@ class CommerceAnalyticsService
     {
         $orders = $this->filterOrders($from, $to);
         $paid = array_values(array_filter($orders, fn ($o) => in_array($o['status'] ?? '', ['paid', 'partially_refunded', 'refunded'], true)));
-        $revenue = 0;
+        $revenueByCurrency = [];
         $products = [];
         $affiliates = [];
         foreach ($paid as $order) {
+            $orderCurrency = strtolower((string) ($order['currency'] ?? 'eur'));
             $total = (int) ($order['total_cents'] ?? 0);
             $refunded = (int) ($order['refunded_cents'] ?? 0);
-            $revenue += max(0, $total - $refunded);
+            $net = max(0, $total - $refunded);
+            if (!isset($revenueByCurrency[$orderCurrency])) {
+                $revenueByCurrency[$orderCurrency] = 0;
+            }
+            $revenueByCurrency[$orderCurrency] += $net;
             foreach ($order['lines'] ?? [] as $line) {
                 $key = ($line['collection_slug'] ?? '') . ':' . ($line['entry_id'] ?? '');
                 if (!isset($products[$key])) {
@@ -44,9 +49,11 @@ class CommerceAnalyticsService
         $aff = array_values($affiliates);
         usort($aff, fn ($a, $b) => ($b['revenue_cents'] ?? 0) <=> ($a['revenue_cents'] ?? 0));
         return [
-            'from' => $from, 'to' => $to, 'order_count' => $count, 'revenue_cents' => $revenue,
+            'from' => $from, 'to' => $to, 'order_count' => $count,
+            'revenue_cents' => count($revenueByCurrency) === 1 ? (int) reset($revenueByCurrency) : 0,
+            'revenue_by_currency' => $revenueByCurrency,
             'refunded_cents' => array_sum(array_map(fn ($o) => (int) ($o['refunded_cents'] ?? 0), $paid)),
-            'aov_cents' => $count > 0 ? (int) round($revenue / $count) : 0,
+            'aov_cents' => $count > 0 && count($revenueByCurrency) === 1 ? (int) round(reset($revenueByCurrency) / $count) : 0,
             'top_products' => array_slice($top, 0, 10), 'affiliates' => $aff,
         ];
     }

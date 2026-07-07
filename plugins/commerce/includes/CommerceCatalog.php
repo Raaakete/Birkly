@@ -56,9 +56,10 @@ class CommerceCatalog
         $lines = [];
         $totalCents = 0;
         $totalDiscount = 0;
-        $currency = 'eur';
+        $currency = function_exists('commerce_get_default_currency') ? commerce_get_default_currency() : 'eur';
         $discountEngine = $discounts ?? new DiscountEngine();
         $billingModes = [];
+        $lineCurrencies = [];
         $errors = [];
 
         foreach ($cartItems as $item) {
@@ -111,7 +112,8 @@ class CommerceCatalog
             $effectiveUnit = (int) $pricing['effective_unit_cents'];
             $lineDiscount = (int) $pricing['discount_cents'];
             $lineTotal = $effectiveUnit * $qty;
-            $currency = $option['currency'] ?: $currency;
+            $lineCurrency = strtolower((string) ($option['currency'] ?? $currency));
+            $lineCurrencies[$lineCurrency] = true;
 
             $lines[] = [
                 'line_id' => $collectionSlug . ':' . $entryId . ':' . ($option['id'] ?? 'default'),
@@ -134,12 +136,24 @@ class CommerceCatalog
                 'effective_amount_cents' => $lineTotal,
                 'line_total_cents' => $lineTotal,
                 'unit_price_cents' => $effectiveUnit,
-                'currency' => $currency,
+                'currency' => $lineCurrency,
                 'billing' => $option['billing'] ?? 'one_time',
                 'interval' => $option['interval'] ?? null,
             ];
+            $currency = $lineCurrency ?: $currency;
             $totalCents += $lineTotal;
             $totalDiscount += $lineDiscount;
+        }
+
+        if (count($lineCurrencies) > 1) {
+            return [
+                'ok' => false,
+                'error' => 'Cannot mix currencies in the same cart',
+                'lines' => [],
+                'total_cents' => 0,
+                'discount_cents' => 0,
+                'currency' => $currency,
+            ];
         }
 
         if (count($billingModes) > 1) {

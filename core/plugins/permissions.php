@@ -182,6 +182,16 @@ function add_to_denylist($resource, array $options = []) {
             }
             $options['deny_collections'] = $collections;
         }
+        if (!empty($options['as_space'])) {
+            $spaces = $meta['deny_spaces'];
+            if (!in_array($resource, $spaces, true)) {
+                $spaces[] = $resource;
+            }
+            $options['deny_spaces'] = $spaces;
+            if (!in_array('space:' . $resource, $denylist, true)) {
+                $denylist[] = 'space:' . $resource;
+            }
+        }
         return set_plugin_denylist($denylist, $options);
     }
 
@@ -198,15 +208,18 @@ function remove_from_denylist($resource) {
     $denylist = get_plugin_denylist();
 
     $denylist = array_values(array_filter($denylist, function($r) use ($resource) {
-        return $r !== $resource;
+        return $r !== $resource && $r !== ('space:' . $resource);
     }));
 
     $meta = get_plugin_denylist_meta();
     $collections = array_values(array_filter($meta['deny_collections'], function($c) use ($resource) {
         return $c !== $resource;
     }));
+    $spaces = array_values(array_filter($meta['deny_spaces'], function($s) use ($resource) {
+        return $s !== $resource;
+    }));
 
-    return set_plugin_denylist($denylist, ['deny_collections' => $collections, 'deny_spaces' => $meta['deny_spaces']]);
+    return set_plugin_denylist($denylist, ['deny_collections' => $collections, 'deny_spaces' => $spaces]);
 }
 
 /**

@@ -66,6 +66,18 @@ function is_resource_protected($resource) {
     if (in_array($resource, $denylist)) {
         return true;
     }
+
+    $meta = get_plugin_denylist_meta();
+    $spaces = $meta['deny_spaces'] ?? [];
+    if (in_array($resource, $spaces, true)) {
+        return true;
+    }
+    if (str_starts_with((string) $resource, 'space:')) {
+        $spaceId = substr($resource, 6);
+        if (in_array($spaceId, $spaces, true)) {
+            return true;
+        }
+    }
     
     // Check wildcard patterns (e.g., 'payroll/*')
     foreach ($denylist as $pattern) {
