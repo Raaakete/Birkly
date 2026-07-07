@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 10+** (deferred) — see § Phase 6.12+
+**Next active phase:** **Phase 11** — commerce production wave (then **Phase 12** — ecosystem & deploy closure)
+
+**2026-07-07 — Phase 11 & 12 proposed** (planner)
+
+**Priorities:** P11 — subscriptions, dunning, gift cards, B2B quotes, analytics, migration wizard, official CI publish · P12 — GitHub App, live import, denylist, membership wiring, production deploy closure.
+
+**Spec:** `docs/reviews/P11-P12-complete-plan.md` · **Handoffs:** `docs/reviews/P11-lead-engineer-handoff.md` · `docs/reviews/P12-lead-engineer-handoff.md`
 
 **2026-07-07 — Phase 10 complete** (autonomous M0–M7)
 
@@ -2231,6 +2237,58 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
+## Phase 11 — Commerce production wave
+
+**Status:** **Proposed** — awaiting human approval
+
+**Spec:** `docs/reviews/P11-P12-complete-plan.md` § Phase 11  
+**Handoff:** `docs/reviews/P11-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P11-verification-matrix.md`
+
+**Goal:** Subscription upgrades, dunning, gift cards, B2B quotes, commerce analytics, Shop/Events migration wizard, official plugin CI publish.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P11-M0** | Gap register, verification matrix | pending |
+| **P11-M1** | Subscription upgrades | pending |
+| **P11-M2** | Dunning automation | pending |
+| **P11-M3** | Gift cards / store credit | pending |
+| **P11-M4** | B2B quotes | pending |
+| **P11-M5** | Commerce analytics | pending |
+| **P11-M6** | Shop/Events migration wizard | pending |
+| **P11-M6b** | Official plugin CI publish on tag | pending |
+| **P11-M7** | Docs, matrix, closure | pending |
+
+**Depends on:** P10 complete. **Blocks:** P12.
+
+---
+
+## Phase 12 — Ecosystem growth, live import & production closure
+
+**Status:** **Proposed** — awaiting human approval; **blocked on P11**
+
+**Spec:** `docs/reviews/P11-P12-complete-plan.md` § Phase 12  
+**Handoff:** `docs/reviews/P12-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P12-verification-matrix.md`
+
+**Goal:** Third-party GitHub App, marketplace provider growth, live Shopify/Woo import, plugin denylist, membership commerce, production deploy closure.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P12-M0** | Gap register, import threat model | pending |
+| **P12-M1** | Third-party GitHub App → QC | pending |
+| **P12-M2** | Provider growth (webhooks, payouts, fees) | pending |
+| **P12-M3** | Live Shopify + WooCommerce API import | pending |
+| **P12-M4** | Plugin denylist + membership wiring | pending |
+| **P12-M5** | Production deploy closure + monitoring | pending |
+| **P12-M6** | Birkly-Website production | pending |
+| **P12-M7** | Birkly-Docs sync | pending |
+| **P12-M8** | Verification matrix, closure | pending |
+
+**Depends on:** P11 complete.
+
+---
+
 **Status:** Proposed — see master plan
 
 **Spec:** `docs/reviews/P6-commerce-phase2-master-plan.md`
@@ -2239,13 +2297,17 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
-## Phase 6.12+ — Deferred platform
+## Phase 6.12+ — Deferred platform (superseded by P11–P12)
 
-| Phase | Focus |
-|-------|--------|
-| **P6.12** | Shop/Events migration wizards, gift cards, B2B quotes, analytics |
-| **P7.0** | Birkly Marketplace (external hub) |
-| **P7.1** | Live Shopify/Woo API import |
+| Former ID | Focus | New home |
+|-----------|--------|----------|
+| **P6.12** | Gift cards, B2B quotes, analytics, migration wizards | **P11** |
+| **P7.0** | Birkly Marketplace | **P9–P10** (complete) |
+| **P7.1** | Live Shopify/Woo API import | **P12-M3** |
+| **P8.1** | Subscription upgrades, dunning | **P11-M1, M2** |
+| Post-P10 | GitHub auto-publish (third-party) | **P12-M1** |
+| Post-P10 | Production deploy, kekaba | **P12-M5** |
+| Post-P10 | Plugin denylist, membership | **P12-M4** |
 
 **Design rule:** Commerce owns providers + checkout; entries with Commerce fieldtype are the catalog.
 
