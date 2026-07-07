@@ -161,12 +161,13 @@ function commerce_require_admin_capability(string $capability): void
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
         exit;
     }
-    $role = $_SESSION['user']['role'] ?? '';
-    if ($role !== 'admin' && $role !== 'superadmin') {
-        http_response_code(403);
-        echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
-        exit;
-    }
+    if (!commerce_user_has_capability($capability)) { http_response_code(403); echo json_encode(['status'=>'error','message'=>'Forbidden']); exit; }
+}
+function commerce_user_has_capability(string $capability): bool {
+    if (!isset($_SESSION['user'])) return false;
+    if (in_array($_SESSION['user']['role']??'', ['admin','superadmin'], true)) return true;
+    $caps=$_SESSION['user']['capabilities']??$_SESSION['user']['plugin_capabilities']['commerce']??[];
+    return is_array($caps) && (in_array($capability,$caps,true) || (in_array($capability,['view_commerce_stats','view_payment_stats'],true)&&(in_array('view_commerce_stats',$caps,true)||in_array('view_payment_stats',$caps,true))) || (in_array($capability,['manage_commerce','manage_payments'],true)&&(in_array('manage_commerce',$caps,true)||in_array('manage_payments',$caps,true))));
 }
 
 function commerce_can_view_activity(): bool
@@ -180,7 +181,7 @@ function commerce_can_view_activity(): bool
 
 function commerce_can_manage(): bool
 {
-    return commerce_can_view_activity();
+    return commerce_user_has_capability('view_commerce_stats')||commerce_user_has_capability('manage_commerce');
 }
 
 function commerce_can_view_stats(): bool
@@ -188,10 +189,8 @@ function commerce_can_view_stats(): bool
     return commerce_can_view_activity();
 }
 
-function commerce_can_view_orders(): bool
-{
-    return commerce_can_view_activity();
-}
+function commerce_require_stats_capability(): void { if (!commerce_can_view_stats()) { http_response_code(403); echo json_encode(['status'=>'error','message'=>'Forbidden']); exit; } }
+function commerce_can_view_orders(): bool { return commerce_user_has_capability('view_commerce_orders')||commerce_user_has_capability('manage_commerce'); }
 
 function commerce_get_setting(string $key, $default = null)
 {
@@ -447,6 +446,9 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/SubscriptionUpgradeService.php';
     require_once $dir . '/includes/CommerceDunningNotifier.php';
     require_once $dir . '/includes/DiscountEngine.php';
+    require_once $dir . '/includes/GiftCardStore.php';
+    require_once $dir . '/includes/CommerceQuoteStore.php';
+    require_once $dir . '/includes/CommerceAnalyticsService.php';
     require_once $dir . '/includes/CommerceCheckoutService.php';
     require_once $dir . '/includes/CatalogIndexer.php';
     require_once $dir . '/includes/PurchaseMappingService.php';

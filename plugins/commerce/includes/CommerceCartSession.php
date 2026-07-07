@@ -8,6 +8,7 @@ class CommerceCartSession
     private const SESSION_KEY = 'commerce_cart_items';
     private const AFFILIATE_KEY = 'commerce_affiliate_id';
     private const COUPON_KEY = 'commerce_coupon_code';
+    private const GIFT_CARD_KEY = 'commerce_gift_card_code';
 
     public function getItems(): array
     {
@@ -134,6 +135,15 @@ class CommerceCartSession
     public function getCouponCode(): ?string
     {
         $code = $_SESSION[self::COUPON_KEY] ?? null;
+        return is_string($code) && $code !== '' ? $code : null;
+    }
+
+    public function setGiftCardCode(?string $code): void {
+        if ($code === null || $code === '') { unset($_SESSION[self::GIFT_CARD_KEY]); return; }
+        $_SESSION[self::GIFT_CARD_KEY] = strtoupper(trim($code));
+    }
+    public function getGiftCardCode(): ?string {
+        $code = $_SESSION[self::GIFT_CARD_KEY] ?? null;
         return is_string($code) && $code !== '' ? $code : null;
     }
 }

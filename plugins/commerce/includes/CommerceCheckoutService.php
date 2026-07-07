@@ -13,6 +13,8 @@ class CommerceCheckoutService
     private PurchaseMappingService $mappings;
     private PostPurchaseRouter $router;
     private ?CommerceSubscriptionService $subscriptionService = null;
+    private ?GiftCardStore $giftCards = null;
+    private ?CommerceQuoteStore $quotes = null;
 
     public function __construct(
         ?CommerceOrderStore $orders = null,
@@ -22,7 +24,9 @@ class CommerceCheckoutService
         ?DiscountEngine $discounts = null,
         ?PurchaseMappingService $mappings = null,
         ?PostPurchaseRouter $router = null,
-        ?CommerceSubscriptionService $subscriptionService = null
+        ?CommerceSubscriptionService $subscriptionService = null,
+        ?GiftCardStore $giftCards = null,
+        ?CommerceQuoteStore $quotes = null
     ) {
         $this->orders = $orders ?? new CommerceOrderStore();
         $this->indexer = $indexer ?? new CatalogIndexer();
@@ -32,6 +36,8 @@ class CommerceCheckoutService
         $this->mappings = $mappings ?? new PurchaseMappingService();
         $this->router = $router ?? new PostPurchaseRouter();
         $this->subscriptionService = $subscriptionService;
+        $this->giftCards = $giftCards;
+        $this->quotes = $quotes;
     }
 
     /**
@@ -54,6 +60,18 @@ class CommerceCheckoutService
             );
         }
         return $this->subscriptionService;
+    }
+
+
+    private function giftCardStore(): GiftCardStore {
+        if ($this->giftCards === null) { if (!class_exists('GiftCardStore')) require_once __DIR__ . '/GiftCardStore.php';
+            $this->giftCards = new GiftCardStore(dirname($this->orders->getDataDir()) . '/gift_cards'); }
+        return $this->giftCards;
+    }
+    private function quoteStore(): CommerceQuoteStore {
+        if ($this->quotes === null) { if (!class_exists('CommerceQuoteStore')) require_once __DIR__ . '/CommerceQuoteStore.php';
+            $this->quotes = new CommerceQuoteStore(dirname($this->orders->getDataDir()) . '/quotes'); }
+        return $this->quotes;
     }
 
     public function getShelf(): ?PaymentShelf
@@ -130,6 +148,12 @@ class CommerceCheckoutService
         $built['tax_country'] = $tax['country'];
         $built['total_cents'] += $tax['tax_cents'];
 
+        $giftCardCode = $this->cart->getGiftCardCode();
+        $giftTender = $this->discounts->applyGiftCardTender((int) $built['total_cents'], $giftCardCode, $this->giftCardStore());
+        if (!($giftTender['ok'] ?? false)) return ['ok' => false, 'error' => $giftTender['error'] ?? 'Gift card error'];
+        $giftCardCents = (int) ($giftTender['applied_cents'] ?? 0);
+        if ($giftCardCents > 0) { $built['gift_card_cents'] = $giftCardCents; $built['gift_card_code'] = $giftTender['gift_card_code'] ?? $giftCardCode; $built['total_cents'] -= $giftCardCents; }
+
         foreach ($built['lines'] as $line) {
             if (!$this->reserveLineStock($line)) {
                 return ['ok' => false, 'error' => 'Insufficient stock for ' . ($line['title'] ?? 'item')];
@@ -150,6 +174,7 @@ class CommerceCheckoutService
             'coupon_code' => $coupon,
             'affiliate_id' => $affiliate,
         ];
+        if ($giftCardCents > 0) { $orderPayload['gift_card_code'] = $built['gift_card_code'] ?? $giftCardCode; $orderPayload['gift_card_cents'] = $giftCardCents; }
         if (is_array($shippingAddress)) {
             $orderPayload['shipping_address'] = $shippingAddress;
         }
@@ -228,6 +253,28 @@ class CommerceCheckoutService
         ];
     }
 
+    public function checkoutQuote(string $token, string $customerEmail = '', string $returnUrl = '', string $cancelUrl = ''): array {
+        $qs = $this->quoteStore(); $quote = $qs->findByToken($token);
+        if (!$quote) return ['ok'=>false,'error'=>'Quote not found'];
+        if (($quote['status']??'')==='quote') { $a=$qs->accept($token); if(!($a['ok']??false)) return $a; $quote=$a['quote']; }
+        if (($quote['status']??'')!=='pending_payment') return ['ok'=>false,'error'=>'Quote not available'];
+        $pending = $this->createPendingOrderFromQuote($quote, trim($customerEmail)!==''?trim($customerEmail):(string)($quote['customer_email']??''));
+        if (!($pending['ok']??false)) return $pending; $order=$pending['order']; $shelf=$this->getShelf();
+        if (!$shelf||!$shelf->isConfigured()) return ['ok'=>false,'error'=>'Payments not configured','order_id'=>$order['id']];
+        $params=['amount_cents'=>(int)$order['total_cents'],'currency'=>$order['currency'],'description'=>'Quote '.($quote['id']??'')];
+        if ($returnUrl!=='') $params['return_url']=$returnUrl; if ($cancelUrl!=='') $params['cancel_url']=$cancelUrl;
+        $result=$shelf->createPayment('auto',$params,['source_plugin'=>'commerce','source_ref'=>$order['id']]);
+        if (!($result['ok']??false)) { $this->orders->update($order['id'],['status'=>'failed']); return ['ok'=>false,'error'=>$result['error']??'Payment failed','order_id'=>$order['id']]; }
+        $this->orders->update($order['id'],['payment_id'=>$result['payment_id']??null,'provider'=>$result['provider']??null,'status'=>'pending']);
+        return ['ok'=>true,'order_id'=>$order['id'],'quote_id'=>$quote['id']??null,'payment_id'=>$result['payment_id']??null,'redirect_url'=>$result['redirect_url']??null];
+    }
+    public function createPendingOrderFromQuote(array $quote, string $customerEmail=''): array {
+        $lines=$quote['lines']??[]; if(empty($lines)) return ['ok'=>false,'error'=>'Quote has no lines'];
+        foreach($lines as $line){ if(!$this->reserveLineStock($line)) return ['ok'=>false,'error'=>'Insufficient stock']; }
+        $order=$this->orders->create(['status'=>'pending','lines'=>$lines,'total_cents'=>(int)($quote['total_cents']??0),'currency'=>$quote['currency']??'eur','customer_email'=>$customerEmail,'quote_id'=>$quote['id']??null]);
+        $this->quoteStore()->update($quote['id'],['order_id'=>$order['id']]); $this->fireOrderCreated($order); return ['ok'=>true,'order'=>$order];
+    }
+
     public function markPaidByPaymentId(string $paymentId): ?array
     {
         $order = $this->orders->findByPaymentId($paymentId);
@@ -241,7 +288,8 @@ class CommerceCheckoutService
 
         $updated = $this->orders->update($order['id'], ['status' => 'paid']);
         $this->cart->clear();
-
+        if ((int)($updated['gift_card_cents']??0)>0 && ($updated['gift_card_code']??'')!=='') $this->giftCardStore()->redeem($updated['gift_card_code'],(int)$updated['gift_card_cents'],$order['id']);
+        if (!empty($updated['quote_id'])) $this->quoteStore()->markPaid((string)$updated['quote_id'],$order['id']);
         $this->fireOrderPaid($updated);
         $fulfillmentResults = $this->router->route($updated);
         $this->mappings->applyPurchaseMappings($updated);
