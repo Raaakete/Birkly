@@ -793,7 +793,8 @@ function birkly_ai_user_can_review_mcp_approval(array $approval, string $userId,
     require_once __DIR__ . '/../core/ai_agents.php';
 
     $endpoint = birkly_mcp_find_endpoint($aiUserId);
-    if ($endpoint === null) {
+    $agent = birkly_ai_agents_find_by_endpoint_id($aiUserId);
+    if ($endpoint === null && $agent === null) {
         return false;
     }
 
@@ -805,7 +806,6 @@ function birkly_ai_user_can_review_mcp_approval(array $approval, string $userId,
         return true;
     }
 
-    $agent = birkly_ai_agents_find_by_endpoint_id($aiUserId);
     $authorizedBy = (string) ($approval['authorized_by'] ?? '');
 
     if ($agent !== null && ($agent['type'] ?? '') === 'personal') {
