@@ -241,15 +241,11 @@ function birkly_build_help_manifest(): array
 {
     birkly_bootstrap_plugins_for_docs();
 
-    $corePath = dirname(__DIR__, 2) . '/docs/help-manifest.json';
-    if (!is_file($corePath)) {
-        return ['version' => 2, 'sections' => [], 'topics' => []];
+    if (!function_exists('birkly_build_platform_help_manifest')) {
+        require_once dirname(__DIR__) . '/help_docs.php';
     }
 
-    $manifest = json_decode((string) file_get_contents($corePath), true);
-    if (!is_array($manifest)) {
-        $manifest = ['version' => 2, 'topics' => []];
-    }
+    $manifest = birkly_build_platform_help_manifest();
 
     $manifest['sections'] = [
         ['id' => 'platform', 'title' => 'Birkly platform'],
