@@ -10,9 +10,6 @@
     <button class="payments-tab" data-tab="orders" role="tab">Orders</button>
     <button class="payments-tab" data-tab="subscriptions" role="tab">Subscriptions</button>
     <button class="payments-tab" data-tab="discounts" role="tab">Discounts</button>
-    <button class="payments-tab" data-tab="gift-cards" role="tab">Gift Cards</button>
-    <button class="payments-tab" data-tab="quotes" role="tab">Quotes</button>
-    <button class="payments-tab" data-tab="analytics" role="tab">Analytics</button>
     <button class="payments-tab" data-tab="import" role="tab">Import</button>
     <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
@@ -75,54 +72,6 @@
       <h2>Discount Rules</h2>
     </div>
     <div id="commerce-discounts-list" class="payments-connections-list"></div>
-  </div>
-
-  <div id="payments-tab-gift-cards" class="payments-tab-panel" role="tabpanel" hidden>
-    <div class="tab-panel-actions">
-      <button class="btn btn-primary" id="commerce-issue-gift-card">Issue Gift Card</button>
-    </div>
-    <div class="payments-panel-header">
-      <h2>Gift Cards</h2>
-      <p class="form-text">Store credit codes customers can apply at checkout as tender (partial redeem supported).</p>
-    </div>
-    <div id="commerce-gift-cards-list" class="payments-connections-list">
-      <div class="loading-state"><p>Loading gift cards…</p></div>
-    </div>
-  </div>
-
-  <div id="payments-tab-quotes" class="payments-tab-panel" role="tabpanel" hidden>
-    <div class="tab-panel-actions">
-      <button class="btn btn-primary" id="commerce-create-quote">Create Quote from Cart</button>
-    </div>
-    <div class="payments-panel-header">
-      <h2>B2B Quotes</h2>
-      <p class="form-text">Create a quote from the current session cart and send the accept link to your customer.</p>
-    </div>
-    <div id="commerce-quotes-list" class="payments-connections-list">
-      <div class="loading-state"><p>Loading quotes…</p></div>
-    </div>
-  </div>
-
-  <div id="payments-tab-analytics" class="payments-tab-panel" role="tabpanel" hidden>
-    <div class="tab-panel-actions">
-      <button class="btn btn-secondary" id="commerce-analytics-refresh">Refresh</button>
-      <button class="btn btn-secondary" id="commerce-analytics-export-orders">Export Orders CSV</button>
-      <button class="btn btn-secondary" id="commerce-analytics-export-summary">Export Summary CSV</button>
-    </div>
-    <div class="payments-panel-header">
-      <h2>Commerce Analytics</h2>
-    </div>
-    <div class="commerce-analytics-filters">
-      <label>From <input type="date" id="commerce-analytics-from" class="input"></label>
-      <label>To <input type="date" id="commerce-analytics-to" class="input"></label>
-    </div>
-    <div id="commerce-analytics-summary" class="commerce-analytics-summary">
-      <div class="loading-state"><p>Loading analytics…</p></div>
-    </div>
-    <div class="payments-panel-header"><h3>Top Products</h3></div>
-    <div id="commerce-analytics-products" class="payments-connections-list"></div>
-    <div class="payments-panel-header"><h3>Affiliates</h3></div>
-    <div id="commerce-analytics-affiliates" class="payments-connections-list"></div>
   </div>
 
   <div id="payments-tab-import" class="payments-tab-panel" role="tabpanel" hidden>
@@ -283,7 +232,6 @@
           <option value="author">Author</option>
           <option value="viewer">Viewer</option>
         </select>
-      </div>
       <hr>
       <h3>Dunning emails</h3>
       <p class="form-hint">Optional built-in emails when a subscription payment fails. Automation triggers remain available for custom flows.</p>

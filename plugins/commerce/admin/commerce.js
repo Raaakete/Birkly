@@ -167,7 +167,7 @@
       var canCancel = s.status !== 'canceled';
       var canRetry = s.status === 'past_due';
       var html = '<div class="commerce-order-card">';
-      html += '<h3>' + s.id + ' ' + subStatusBadge(s.status, s) + '</h3>';
+      html += '<h3>' + s.id + ' ' + subStatusBadge(s.status, s) + ' ' + dunningBadge(s) + '</h3>';
       html += '<p>Customer: ' + (s.customer_email || '—') + '</p>';
       html += '<p>Order: ' + (s.order_id || '—') + ' · Provider: ' + (s.provider || '—') + '</p>';
       html += '<p>Amount: ' + formatCents(s.amount_cents, s.currency) + ' · Interval: ' + (s.interval || '—') + '</p>';
@@ -200,17 +200,14 @@
       }
       html += '</div>';
       detail.innerHTML = html;
+
       var retryBtn = document.getElementById('commerce-sub-retry');
       if (retryBtn) {
         retryBtn.addEventListener('click', function () {
           if (!confirm('Retry payment for this subscription?')) return;
           commercePost('retry_subscription_payment', { id: retryBtn.getAttribute('data-id') }).then(function (r) {
-            if (r.status === 'ok') {
-              loadSubscriptions();
-              viewSubscription(id);
-            } else {
-              alert((r.message) || 'Payment retry failed');
-            }
+            if (r.status === 'ok') { loadSubscriptions(); viewSubscription(id); }
+            else { alert((r.message) || 'Payment retry failed'); }
           });
         });
       }
@@ -219,10 +216,7 @@
       if (upgradeSelect && upgradeBtn) {
         commercePost('list_subscription_upgrade_options', { id: id }).then(function (optRes) {
           var options = (optRes.data && optRes.data.options) || [];
-          if (!options.length) {
-            upgradeSelect.innerHTML = '<option value="">No other plans available</option>';
-            return;
-          }
+          if (!options.length) { upgradeSelect.innerHTML = '<option value="">No other plans available</option>'; return; }
           upgradeSelect.innerHTML = '<option value="">Select plan…</option>';
           options.forEach(function (opt) {
             var label = (opt.label || opt.id) + ' — ' + formatCents(opt.price_cents, opt.currency) + ' / ' + (opt.interval || 'month');
@@ -232,18 +226,11 @@
         });
         upgradeBtn.addEventListener('click', function () {
           var optionId = upgradeSelect.value;
-          if (!optionId) {
-            alert('Select a plan to upgrade to');
-            return;
-          }
+          if (!optionId) { alert('Select a plan to upgrade to'); return; }
           if (!confirm('Change subscription to the selected plan? Proration may apply.')) return;
           commercePost('upgrade_subscription', { id: upgradeBtn.getAttribute('data-id'), purchase_option_id: optionId }).then(function (r) {
-            if (r.status === 'ok') {
-              loadSubscriptions();
-              viewSubscription(id);
-            } else {
-              alert((r.message) || 'Upgrade failed');
-            }
+            if (r.status === 'ok') { loadSubscriptions(); viewSubscription(id); }
+            else { alert((r.message) || 'Upgrade failed'); }
           });
         });
       }
@@ -1322,160 +1309,6 @@
     });
   }
 
-  function loadGiftCards() {
-    var el = document.getElementById('commerce-gift-cards-list');
-    if (!el) return;
-    el.innerHTML = '<div class="loading-state"><p>Loading gift cards…</p></div>';
-    commercePost('list_gift_cards').then(function (res) {
-      var cards = (res.data && res.data.gift_cards) || [];
-      if (!cards.length) {
-        el.innerHTML = '<p>No gift cards issued yet.</p>';
-        return;
-      }
-      var html = '<table class="payments-table"><thead><tr><th>Code</th><th>Balance</th><th>Status</th><th>Expires</th><th></th></tr></thead><tbody>';
-      cards.forEach(function (card) {
-        html += '<tr><td><code>' + card.code + '</code></td><td>' + formatCents(card.balance_cents, card.currency)
-          + '</td><td>' + (card.status || 'active') + '</td><td>' + (card.expires_at ? card.expires_at.slice(0, 10) : '—')
-          + '</td><td><button type="button" class="btn btn-secondary commerce-void-gift-card" data-code="' + card.code + '">Void</button></td></tr>';
-      });
-      html += '</tbody></table>';
-      el.innerHTML = html;
-      el.querySelectorAll('.commerce-void-gift-card').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          if (!confirm('Void gift card ' + btn.getAttribute('data-code') + '?')) return;
-          commercePost('void_gift_card', { code: btn.getAttribute('data-code') }).then(loadGiftCards);
-        });
-      });
-    });
-  }
-
-  function issueGiftCard() {
-    var balance = parseInt(prompt('Initial balance (cents):', '5000') || '0', 10);
-    if (!balance || balance <= 0) return;
-    var code = prompt('Custom code (leave blank to auto-generate):', '') || null;
-    var expires = prompt('Expiry date YYYY-MM-DD (optional):', '') || null;
-    commercePost('issue_gift_card', {
-      balance_cents: balance,
-      code: code,
-      expires_at: expires || null,
-    }).then(function (res) {
-      if (res.status !== 'ok') {
-        alert(res.message || 'Could not issue gift card');
-        return;
-      }
-      loadGiftCards();
-    });
-  }
-
-  function loadQuotes() {
-    var el = document.getElementById('commerce-quotes-list');
-    if (!el) return;
-    el.innerHTML = '<div class="loading-state"><p>Loading quotes…</p></div>';
-    commercePost('list_quotes').then(function (res) {
-      var quotes = (res.data && res.data.quotes) || [];
-      if (!quotes.length) {
-        el.innerHTML = '<p>No quotes yet. Add items to the cart, then create a quote.</p>';
-        return;
-      }
-      var html = '<table class="payments-table"><thead><tr><th>ID</th><th>Status</th><th>Customer</th><th>Total</th><th>Accept link</th><th></th></tr></thead><tbody>';
-      quotes.forEach(function (q) {
-        var link = (typeof Birkly !== 'undefined' && Birkly.url)
-          ? Birkly.url('/api/index.php?route=commerce&action=get_quote&token=' + encodeURIComponent(q.token))
-          : '/api/index.php?route=commerce&action=get_quote&token=' + encodeURIComponent(q.token);
-        html += '<tr><td>' + q.id + '</td><td>' + (q.status || 'quote') + '</td><td>' + (q.customer_email || '—')
-          + '</td><td>' + formatCents(q.total_cents, q.currency) + '</td><td><input class="input commerce-quote-link" readonly value="' + link + '"></td>'
-          + '<td><button type="button" class="btn btn-secondary commerce-cancel-quote" data-id="' + q.id + '">Cancel</button></td></tr>';
-      });
-      html += '</tbody></table>';
-      el.innerHTML = html;
-      el.querySelectorAll('.commerce-cancel-quote').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          commercePost('cancel_quote', { id: btn.getAttribute('data-id') }).then(loadQuotes);
-        });
-      });
-    });
-  }
-
-  function createQuoteFromCart() {
-    var email = prompt('Customer email:', '') || '';
-    commercePost('create_quote', { customer_email: email }).then(function (res) {
-      if (res.status !== 'ok') {
-        alert(res.message || 'Could not create quote');
-        return;
-      }
-      var url = (res.data && res.data.accept_url) || '';
-      if (url) {
-        prompt('Quote created. Share this accept link:', url);
-      }
-      loadQuotes();
-    });
-  }
-
-  function analyticsPeriodParams() {
-    var from = document.getElementById('commerce-analytics-from')?.value || '';
-    var to = document.getElementById('commerce-analytics-to')?.value || '';
-    var params = {};
-    if (from) params.from = from;
-    if (to) params.to = to + 'T23:59:59';
-    return params;
-  }
-
-  function loadAnalytics() {
-    var summaryEl = document.getElementById('commerce-analytics-summary');
-    var productsEl = document.getElementById('commerce-analytics-products');
-    var affiliatesEl = document.getElementById('commerce-analytics-affiliates');
-    if (!summaryEl) return;
-    summaryEl.innerHTML = '<div class="loading-state"><p>Loading analytics…</p></div>';
-    commercePost('analytics_summary', analyticsPeriodParams()).then(function (res) {
-      if (res.status !== 'ok' || !res.data || !res.data.summary) {
-        summaryEl.innerHTML = '<p class="error">Unable to load analytics.</p>';
-        return;
-      }
-      var s = res.data.summary;
-      summaryEl.innerHTML = '<div class="commerce-analytics-grid">'
-        + '<div class="commerce-analytics-stat"><strong>' + formatCents(s.revenue_cents) + '</strong><span>Revenue</span></div>'
-        + '<div class="commerce-analytics-stat"><strong>' + (s.order_count || 0) + '</strong><span>Orders</span></div>'
-        + '<div class="commerce-analytics-stat"><strong>' + formatCents(s.aov_cents) + '</strong><span>AOV</span></div>'
-        + '<div class="commerce-analytics-stat"><strong>' + formatCents(s.refunded_cents) + '</strong><span>Refunded</span></div>'
-        + '</div>';
-
-      var products = s.top_products || [];
-      if (!productsEl) return;
-      if (!products.length) {
-        productsEl.innerHTML = '<p>No product data for this period.</p>';
-      } else {
-        var phtml = '<table class="payments-table"><thead><tr><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>';
-        products.forEach(function (p) {
-          phtml += '<tr><td>' + (p.title || p.key) + '</td><td>' + p.quantity + '</td><td>' + formatCents(p.revenue_cents) + '</td></tr>';
-        });
-        phtml += '</tbody></table>';
-        productsEl.innerHTML = phtml;
-      }
-
-      var affiliates = s.affiliates || [];
-      if (!affiliatesEl) return;
-      if (!affiliates.length) {
-        affiliatesEl.innerHTML = '<p>No affiliate-attributed orders in this period.</p>';
-      } else {
-        var ahtml = '<table class="payments-table"><thead><tr><th>Affiliate</th><th>Orders</th><th>Revenue</th></tr></thead><tbody>';
-        affiliates.forEach(function (a) {
-          ahtml += '<tr><td>' + a.affiliate_id + '</td><td>' + a.orders + '</td><td>' + formatCents(a.revenue_cents) + '</td></tr>';
-        });
-        ahtml += '</tbody></table>';
-        affiliatesEl.innerHTML = ahtml;
-      }
-    });
-  }
-
-  function exportAnalyticsCsv(type) {
-    var params = analyticsPeriodParams();
-    params.action = 'analytics_export_csv';
-    params.type = type;
-    var qs = Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&');
-    var url = COMMERCE_API + (COMMERCE_API.indexOf('?') >= 0 ? '&' : '?') + qs;
-    window.open(url, '_blank');
-  }
-
   function initCommerceTabs() {
     document.querySelectorAll('.commerce-tabs .payments-tab').forEach(function (tab) {
       tab.addEventListener('click', function () {
@@ -1484,9 +1317,6 @@
         if (name === 'orders') loadOrders();
         if (name === 'subscriptions') loadSubscriptions();
         if (name === 'discounts') loadDiscounts();
-        if (name === 'gift-cards') loadGiftCards();
-        if (name === 'quotes') loadQuotes();
-        if (name === 'analytics') loadAnalytics();
         if (name === 'mappings') loadMappings();
         if (name === 'shipping') loadShippingZones();
         if (name === 'tax') loadTaxRules();
@@ -1500,6 +1330,8 @@
     document.getElementById('commerce-reindex')?.addEventListener('click', function () {
       commercePost('reindex_catalog').then(function () { loadCatalog(); });
     });
+
+    document.getElementById('commerce-subscriptions-refresh')?.addEventListener('click', loadSubscriptions);
 
     document.getElementById('commerce-add-discount')?.addEventListener('click', function () {
       var type = prompt('Rule type (percent_off, fixed_off, coupon, affiliate):', 'percent_off');

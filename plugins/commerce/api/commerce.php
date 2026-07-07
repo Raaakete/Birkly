@@ -8,13 +8,13 @@ ini_set('display_errors', 0);
 
 require_once __DIR__ . '/../../../api/session.php';
 haru_secure_session_start();
+header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../../api/auth.php';
 require_once __DIR__ . '/../../../core/csrf.php';
 require_once __DIR__ . '/../init.php';
 
 if (!commerce_plugin_active()) {
-    header('Content-Type: application/json');
     http_response_code(404);
     echo json_encode(['status' => 'error', 'message' => 'Commerce plugin is not active']);
     exit;
@@ -25,10 +25,6 @@ commerce_bootstrap_cart_services();
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $action = $input['action'] ?? $_GET['action'] ?? '';
-
-if ($action !== 'analytics_export_csv') {
-    header('Content-Type: application/json');
-}
 
 $cart = new CommerceCartSession();
 $catalog = new CommerceCatalog();
@@ -46,14 +42,8 @@ require_once __DIR__ . '/../includes/SubscriptionUpgradeService.php';
 $subscriptionStore = new CommerceSubscriptionStore();
 $subscriptions = new CommerceSubscriptionService($subscriptionStore, commerce_bootstrap());
 $subscriptionUpgrades = new SubscriptionUpgradeService($subscriptionStore, commerce_bootstrap(), $catalog);
-$giftCards = new GiftCardStore();
-$quoteStore = new CommerceQuoteStore();
-$analytics = new CommerceAnalyticsService($orders);
 
-$publicActions = [
-    'get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate', 'set_gift_card',
-    'get_quote', 'accept_quote', 'quote_checkout',
-];
+$publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate'];
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order', 'refund_order',
     'list_subscriptions', 'get_subscription', 'cancel_subscription', 'upgrade_subscription',
@@ -65,20 +55,13 @@ $adminActions = [
     'list_shipping_zones', 'save_shipping_zones',
     'list_tax_rules', 'save_tax_rules',
     'list_fieldtype_profiles', 'save_fieldtype_profile', 'delete_fieldtype_profile',
-    'list_gift_cards', 'issue_gift_card', 'void_gift_card',
-    'create_quote', 'list_quotes', 'cancel_quote',
 ];
-$statsActions = ['analytics_summary', 'analytics_export_csv'];
 
 if (in_array($action, $adminActions, true)) {
     commerce_require_admin_capability('manage_commerce');
 }
 
-if (in_array($action, $statsActions, true)) {
-    commerce_require_stats_capability();
-}
-
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -101,12 +84,6 @@ switch ($action) {
         echo json_encode(['status' => 'ok', 'coupon' => $cart->getCouponCode()]);
         break;
 
-    case 'set_gift_card':
-        $code = $input['code'] ?? $_GET['code'] ?? '';
-        $cart->setGiftCardCode($code !== '' ? $code : null);
-        echo json_encode(['status' => 'ok', 'gift_card' => $cart->getGiftCardCode()]);
-        break;
-
     case 'get':
         $built = $catalog->buildCartLines(
             $cart->getItems(),
@@ -114,16 +91,6 @@ switch ($action) {
             $cart->getCouponCode(),
             $cart->getAffiliateId()
         );
-        $giftTender = $discounts->applyGiftCardTender(
-            (int) ($built['total_cents'] ?? 0),
-            $cart->getGiftCardCode(),
-            $giftCards
-        );
-        if (($giftTender['applied_cents'] ?? 0) > 0) {
-            $built['gift_card_cents'] = (int) $giftTender['applied_cents'];
-            $built['gift_card_code'] = $giftTender['gift_card_code'] ?? $cart->getGiftCardCode();
-            $built['total_cents'] = (int) ($giftTender['remaining_due_cents'] ?? $built['total_cents']);
-        }
         echo json_encode([
             'status' => 'ok',
             'data' => [
@@ -131,8 +98,6 @@ switch ($action) {
                 'count' => $cart->count(),
                 'total_cents' => $built['total_cents'],
                 'discount_cents' => $built['discount_cents'] ?? 0,
-                'gift_card_cents' => $built['gift_card_cents'] ?? 0,
-                'gift_card_code' => $built['gift_card_code'] ?? $cart->getGiftCardCode(),
                 'currency' => $built['currency'],
                 'coupon' => $cart->getCouponCode(),
                 'affiliate_id' => $cart->getAffiliateId(),
@@ -533,137 +498,6 @@ switch ($action) {
         }
         echo json_encode(['status' => $ok ? 'ok' : 'error']);
         break;
-
-    case 'list_gift_cards':
-        echo json_encode(['status' => 'ok', 'data' => ['gift_cards' => $giftCards->listAll()]]);
-        break;
-
-    case 'issue_gift_card':
-        try {
-            $card = $giftCards->issue([
-                'code' => $input['code'] ?? null,
-                'balance_cents' => (int) ($input['balance_cents'] ?? 0),
-                'currency' => $input['currency'] ?? 'eur',
-                'expires_at' => $input['expires_at'] ?? null,
-                'note' => $input['note'] ?? '',
-                'issued_by' => $_SESSION['user']['email'] ?? null,
-            ]);
-            echo json_encode(['status' => 'ok', 'data' => ['gift_card' => $card]]);
-        } catch (InvalidArgumentException $e) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
-        }
-        break;
-
-    case 'void_gift_card':
-        $code = $input['code'] ?? '';
-        if ($code === '') {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'code required']);
-            break;
-        }
-        $ok = $giftCards->voidCard($code);
-        echo json_encode(['status' => $ok ? 'ok' : 'error']);
-        break;
-
-    case 'create_quote':
-        $built = $catalog->buildCartLines(
-            $cart->getItems(),
-            $discounts,
-            $cart->getCouponCode(),
-            $cart->getAffiliateId()
-        );
-        if (($built['ok'] ?? true) === false || empty($built['lines'])) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => $built['error'] ?? 'Cart is empty']);
-            break;
-        }
-        $email = trim((string) ($input['customer_email'] ?? ''));
-        $overrides = is_array($input['line_overrides'] ?? null) ? $input['line_overrides'] : [];
-        $quote = $quoteStore->createFromBuiltCart($built, $email, $overrides, [
-            'created_by' => $_SESSION['user']['email'] ?? null,
-            'note' => trim((string) ($input['note'] ?? '')),
-        ]);
-        echo json_encode([
-            'status' => 'ok',
-            'data' => [
-                'quote' => $quote,
-                'accept_url' => $quoteStore->acceptUrl($quote['token']),
-            ],
-        ]);
-        break;
-
-    case 'list_quotes':
-        echo json_encode(['status' => 'ok', 'data' => ['quotes' => $quoteStore->listAll()]]);
-        break;
-
-    case 'cancel_quote':
-        $id = $input['id'] ?? '';
-        if ($id === '') {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'id required']);
-            break;
-        }
-        $ok = $quoteStore->cancel($id);
-        echo json_encode(['status' => $ok ? 'ok' : 'error']);
-        break;
-
-    case 'get_quote':
-        $token = $input['token'] ?? $_GET['token'] ?? '';
-        $quote = $quoteStore->findByToken($token);
-        if (!$quote) {
-            http_response_code(404);
-            echo json_encode(['status' => 'error', 'message' => 'Quote not found']);
-            break;
-        }
-        $publicQuote = $quote;
-        unset($publicQuote['created_by']);
-        echo json_encode([
-            'status' => 'ok',
-            'data' => [
-                'quote' => $publicQuote,
-                'accept_url' => $quoteStore->acceptUrl($token),
-            ],
-        ]);
-        break;
-
-    case 'accept_quote':
-        $token = $input['token'] ?? $_GET['token'] ?? '';
-        $result = $quoteStore->accept($token);
-        if (!($result['ok'] ?? false)) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Accept failed']);
-            break;
-        }
-        echo json_encode(['status' => 'ok', 'data' => ['quote' => $result['quote']]]);
-        break;
-
-    case 'quote_checkout':
-        $token = $input['token'] ?? $_GET['token'] ?? '';
-        $email = $input['email'] ?? $_GET['email'] ?? '';
-        $returnUrl = $input['return_url'] ?? '';
-        $cancelUrl = $input['cancel_url'] ?? '';
-        $result = $checkout->checkoutQuote($token, $email, $returnUrl, $cancelUrl);
-        echo json_encode(['status' => ($result['ok'] ?? false) ? 'ok' : 'error', 'data' => $result]);
-        break;
-
-    case 'analytics_summary':
-        $from = $input['from'] ?? $_GET['from'] ?? null;
-        $to = $input['to'] ?? $_GET['to'] ?? null;
-        echo json_encode(['status' => 'ok', 'data' => ['summary' => $analytics->getSummary($from, $to)]]);
-        break;
-
-    case 'analytics_export_csv':
-        $from = $input['from'] ?? $_GET['from'] ?? null;
-        $to = $input['to'] ?? $_GET['to'] ?? null;
-        $type = $input['type'] ?? $_GET['type'] ?? 'orders';
-        $csv = $type === 'summary'
-            ? $analytics->exportSummaryCsv($from, $to)
-            : $analytics->exportOrdersCsv($from, $to);
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="commerce-' . $type . '.csv"');
-        echo $csv;
-        exit;
 
     default:
         http_response_code(400);
