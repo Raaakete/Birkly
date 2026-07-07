@@ -233,6 +233,15 @@
         loadMarketplace(q ? q.value : '');
     }
 
+    function getInitialTab() {
+        var params = new URLSearchParams(window.location.search);
+        var tab = params.get('tab');
+        if (tab === 'marketplace' || tab === 'installed') {
+            return tab;
+        }
+        return 'installed';
+    }
+
     function switchTab(tab) {
         document.querySelectorAll('.plugins-tab').forEach(function (btn) {
             var active = btn.getAttribute('data-tab') === tab;
@@ -247,6 +256,15 @@
         });
         if (tab === 'marketplace') {
             loadMarketplace('');
+        }
+        if (window.history && typeof window.history.replaceState === 'function') {
+            var url = new URL(window.location.href);
+            if (tab === 'installed') {
+                url.searchParams.delete('tab');
+            } else {
+                url.searchParams.set('tab', tab);
+            }
+            window.history.replaceState({}, '', url.pathname + url.search + url.hash);
         }
     }
 
@@ -327,6 +345,7 @@
 
     async function init() {
         initTabs();
+        switchTab(getInitialTab());
         try {
             await loadInstalled();
             await checkAllUpdates();
