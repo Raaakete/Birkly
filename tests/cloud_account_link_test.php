@@ -226,16 +226,19 @@ try {
         birkly_cloud_oauth_base_url() === 'https://cloud.birkly.io'
     );
 
+    putenv('BIRKLY_CLOUD_ACCOUNT_MOCK=0');
     $GLOBALS['birkly_cloud_oauth_reachable_override'] = false;
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-    $blocked = birkly_cloud_account_start_link('https://cms.example.test/api/cloud_account.php?action=callback');
+    $oauthStatus = birkly_cloud_oauth_status();
     test_assert(
-        'start_link blocked when cloud unreachable',
-        empty($blocked['ok']) && str_contains((string) ($blocked['error'] ?? ''), 'unaffected')
+        'oauth status reports unreachable',
+        ($oauthStatus['reachable'] ?? null) === false
+    );
+    test_assert(
+        'oauth unreachable message is graceful',
+        str_contains((string) ($oauthStatus['message'] ?? ''), 'unaffected')
     );
     unset($GLOBALS['birkly_cloud_oauth_reachable_override']);
+    putenv('BIRKLY_CLOUD_ACCOUNT_MOCK=1');
     putenv('BIRKLY_CLOUD_OAUTH_URL');
 } finally {
     birkly_test_http_server_stop($serverPid);
