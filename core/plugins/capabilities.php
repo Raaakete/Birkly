@@ -7,6 +7,7 @@
  */
 
 require_once __DIR__ . '/permissions.php';
+require_once __DIR__ . '/../spaces.php';
 
 /**
  * Check if a plugin has a specific capability
@@ -19,6 +20,10 @@ require_once __DIR__ . '/permissions.php';
 function has_plugin_capability($plugin_id, $capability, $scope = null) {
     // First check denylist - if resource is protected, deny immediately
     if ($scope && is_resource_protected($scope)) {
+        return false;
+    }
+
+    if ($scope && birkly_collection_in_denylisted_space($scope)) {
         return false;
     }
     

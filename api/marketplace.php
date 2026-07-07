@@ -219,13 +219,42 @@ if ($action === 'install') {
         $version = $latest;
     }
 
-    $install = birkly_marketplace_install_plugin($slug, $version, $licenseKey, false);
+    $offerType = 'plugin';
+    $detailForType = birkly_marketplace_offer_detail($slug);
+    if ($detailForType['ok'] && is_array($detailForType['offer'] ?? null)) {
+        $offerType = (string) ($detailForType['offer']['offer_type'] ?? 'plugin');
+    }
+
+    $install = birkly_marketplace_install_offer($slug, $version, $licenseKey, $offerType, false);
     if (!$install['ok']) {
         echo json_encode([
             'status' => 'error',
             'message' => 'Install failed: ' . implode('; ', $install['errors'] ?? []),
             'errors' => $install['errors'] ?? [],
             'preflight' => $install['preflight'] ?? null,
+        ]);
+        exit;
+    }
+
+    if (in_array($offerType, ['theme', 'template_pack'], true)) {
+        log_security_event('marketplace_theme_installed', [
+            'theme' => $install['theme_id'] ?? '',
+            'slug' => $slug,
+            'version' => $version,
+            'offer_type' => $offerType,
+            'free_install' => $freeInstall,
+            'user' => $_SESSION['user']['email'] ?? 'unknown',
+        ]);
+
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Theme installed successfully',
+            'data' => [
+                'theme_id' => $install['theme_id'] ?? '',
+                'version' => $install['version'] ?? $version,
+                'offer_type' => $offerType,
+                'path' => $install['path'] ?? '',
+            ],
         ]);
         exit;
     }
