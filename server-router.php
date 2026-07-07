@@ -30,6 +30,7 @@ if ($base !== '' && str_starts_with($uri, $base)) {
 }
 
 $oauthRoutes = [
+    '/health' => '/api/health.php',
     '/favicon.ico' => '/admin/assets/birkly-icon.svg',
     '/.well-known/oauth-protected-resource' => '/api/oauth_protected_resource.php',
     '/.well-known/oauth-authorization-server' => '/api/oauth_authorization_server.php',
