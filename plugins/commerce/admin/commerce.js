@@ -456,6 +456,98 @@
     });
   }
 
+  var mappingWizardCatalog = [];
+  var mappingWizardTiers = [];
+
+  function showMappingWizardStep(step) {
+    [1, 2, 3].forEach(function (n) {
+      var panel = document.getElementById('commerce-wizard-step-' + n);
+      var tab = document.querySelector('.commerce-wizard-step[data-step="' + n + '"]');
+      if (panel) panel.hidden = n !== step;
+      if (tab) tab.classList.toggle('active', n === step);
+    });
+  }
+
+  function getSelectedCatalogItem() {
+    var sel = document.getElementById('commerce-wizard-catalog');
+    var idx = parseInt(sel && sel.value, 10);
+    if (isNaN(idx) || idx < 0 || !mappingWizardCatalog[idx]) return null;
+    return mappingWizardCatalog[idx];
+  }
+
+  function populateMappingOptions(item) {
+    var optSel = document.getElementById('commerce-wizard-option');
+    if (!optSel) return;
+    optSel.innerHTML = '<option value="">Any / default</option>';
+    var options = (item && item.purchase_options) || (item && item.commerce && item.commerce.purchase_options) || [];
+    options.forEach(function (opt) {
+      var o = document.createElement('option');
+      o.value = opt.id || '';
+      o.textContent = (opt.label || opt.id || 'option') + (opt.billing ? ' (' + opt.billing + ')' : '');
+      optSel.appendChild(o);
+    });
+  }
+
+  function updateMappingWizardSummary() {
+    var summary = document.getElementById('commerce-wizard-summary');
+    if (!summary) return;
+    var item = getSelectedCatalogItem();
+    var sku = document.getElementById('commerce-wizard-sku')?.value || '';
+    var optionId = document.getElementById('commerce-wizard-option')?.value || '';
+    var tierSel = document.getElementById('commerce-wizard-tier');
+    var tierLabel = tierSel && tierSel.selectedOptions[0] ? tierSel.selectedOptions[0].textContent : '';
+    var parts = [];
+    if (item) {
+      parts.push((item.entry_title || item.entry_slug) + ' (' + item.collection_slug + ')');
+    } else if (sku) {
+      parts.push('SKU ' + sku);
+    }
+    if (optionId) parts.push('option ' + optionId);
+    if (tierLabel) parts.push('→ tier ' + tierLabel);
+    summary.textContent = parts.length ? parts.join(' · ') : 'Complete the wizard steps to preview the mapping.';
+  }
+
+  function initMappingWizard() {
+    commercePost('mapping_wizard_data').then(function (res) {
+      if (res.status !== 'ok') return;
+      var data = res.data || {};
+      mappingWizardCatalog = data.catalog || [];
+      mappingWizardTiers = data.tiers || [];
+
+      var catalogSel = document.getElementById('commerce-wizard-catalog');
+      if (catalogSel) {
+        catalogSel.innerHTML = '<option value="">Select catalog item…</option>';
+        mappingWizardCatalog.forEach(function (item, idx) {
+          var o = document.createElement('option');
+          o.value = String(idx);
+          o.textContent = (item.entry_title || item.entry_slug) + ' · ' + item.collection_slug + (item.sku ? ' · ' + item.sku : '');
+          catalogSel.appendChild(o);
+        });
+      }
+
+      var tierSel = document.getElementById('commerce-wizard-tier');
+      var tierHint = document.getElementById('commerce-wizard-tier-hint');
+      if (tierSel) {
+        tierSel.innerHTML = '';
+        if (!mappingWizardTiers.length) {
+          tierSel.innerHTML = '<option value="">No tiers available</option>';
+          tierSel.disabled = true;
+          if (tierHint) tierHint.hidden = false;
+        } else {
+          tierSel.disabled = false;
+          if (tierHint) tierHint.hidden = true;
+          tierSel.innerHTML = '<option value="">Select tier…</option>';
+          mappingWizardTiers.forEach(function (tier) {
+            var o = document.createElement('option');
+            o.value = tier.id || tier.slug || '';
+            o.textContent = tier.name || tier.id || 'tier';
+            tierSel.appendChild(o);
+          });
+        }
+      }
+    });
+  }
+
   function loadMappings() {
     var el = document.getElementById('commerce-mappings-list');
     if (!el) return;
@@ -468,10 +560,22 @@
       }
       var html = '<ul class="payments-conn-list">';
       keys.forEach(function (k) {
-        html += '<li><code>' + k + '</code> → tier <strong>' + (mappings[k].grant_tier || '') + '</strong></li>';
+        var label = mappings[k].label || k;
+        html += '<li><code>' + k + '</code> — ' + label + ' → tier <strong>' + (mappings[k].grant_tier || '') + '</strong>'
+          + ' <button type="button" class="btn btn-sm btn-secondary commerce-delete-mapping" data-key="' + k + '">Remove</button></li>';
       });
       html += '</ul>';
       el.innerHTML = html;
+      el.querySelectorAll('.commerce-delete-mapping').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var key = btn.getAttribute('data-key');
+          if (!key || !confirm('Remove mapping ' + key + '?')) return;
+          commercePost('delete_mapping', { key: key }).then(function () {
+            loadMappings();
+            initMappingWizard();
+          });
+        });
+      });
     });
   }
 
@@ -1348,6 +1452,7 @@
 
   function initImportWizard() {
     document.getElementById('commerce-import-start')?.addEventListener('click', openImportWizard);
+    bindLiveImportUi();
     document.getElementById('commerce-import-history-refresh')?.addEventListener('click', loadImportHistory);
     document.getElementById('commerce-import-wizard-close')?.addEventListener('click', closeImportWizard);
     document.getElementById('commerce-import-wizard-overlay')?.addEventListener('click', closeImportWizard);
@@ -1568,7 +1673,10 @@
         if (name === 'orders') loadOrders();
         if (name === 'subscriptions') loadSubscriptions();
         if (name === 'discounts') loadDiscounts();
-        if (name === 'mappings') loadMappings();
+        if (name === 'mappings') {
+          loadMappings();
+          initMappingWizard();
+        }
         if (name === 'shipping') loadShippingZones();
         if (name === 'tax') loadTaxRules();
         if (name === 'fieldtypes') loadFieldtypeProfiles();
@@ -1678,12 +1786,68 @@
     initImportWizard();
     initMigrationTab();
 
-    document.getElementById('commerce-mapping-form')?.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var key = document.getElementById('commerce-mapping-key')?.value || '';
-      var tier = document.getElementById('commerce-mapping-tier')?.value || '';
-      if (!key || !tier) return;
-      commercePost('save_mapping', { key: key, config: { grant_tier: tier } }).then(loadMappings);
+    document.getElementById('commerce-wizard-catalog')?.addEventListener('change', function () {
+      var item = getSelectedCatalogItem();
+      if (item && item.sku) {
+        var skuInput = document.getElementById('commerce-wizard-sku');
+        if (skuInput && !skuInput.value) skuInput.value = item.sku;
+      }
+      populateMappingOptions(item);
+      updateMappingWizardSummary();
+    });
+    document.getElementById('commerce-wizard-sku')?.addEventListener('input', updateMappingWizardSummary);
+    document.getElementById('commerce-wizard-option')?.addEventListener('change', updateMappingWizardSummary);
+    document.getElementById('commerce-wizard-tier')?.addEventListener('change', updateMappingWizardSummary);
+
+    document.getElementById('commerce-wizard-next-1')?.addEventListener('click', function () {
+      var item = getSelectedCatalogItem();
+      var sku = document.getElementById('commerce-wizard-sku')?.value || '';
+      if (!item && !sku) {
+        alert('Select a catalog item or enter a SKU');
+        return;
+      }
+      populateMappingOptions(item);
+      showMappingWizardStep(2);
+      updateMappingWizardSummary();
+    });
+    document.getElementById('commerce-wizard-back-2')?.addEventListener('click', function () { showMappingWizardStep(1); });
+    document.getElementById('commerce-wizard-next-2')?.addEventListener('click', function () {
+      showMappingWizardStep(3);
+      updateMappingWizardSummary();
+    });
+    document.getElementById('commerce-wizard-back-3')?.addEventListener('click', function () { showMappingWizardStep(2); });
+    document.getElementById('commerce-wizard-save')?.addEventListener('click', function () {
+      var item = getSelectedCatalogItem();
+      var sku = document.getElementById('commerce-wizard-sku')?.value || '';
+      var optionId = document.getElementById('commerce-wizard-option')?.value || '';
+      var tier = document.getElementById('commerce-wizard-tier')?.value || '';
+      if (!tier) {
+        alert('Select a tier to grant');
+        return;
+      }
+      if (!item && !sku) {
+        alert('Select a catalog item or enter a SKU');
+        return;
+      }
+      var payload = {
+        grant_tier: tier,
+        purchase_option_id: optionId,
+        sku: sku,
+      };
+      if (item) {
+        payload.collection_slug = item.collection_slug || '';
+        payload.entry_slug = item.entry_slug || item.entry_id || '';
+      }
+      commercePost('create_membership_mapping', payload).then(function (res) {
+        if (res.status !== 'ok') {
+          alert(res.message || 'Failed to save mapping');
+          return;
+        }
+        loadMappings();
+        initMappingWizard();
+        showMappingWizardStep(1);
+        alert('Mapping saved');
+      });
     });
 
     document.getElementById('commerce-test-fulfillment')?.addEventListener('click', function () {

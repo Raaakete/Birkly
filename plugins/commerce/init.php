@@ -456,6 +456,11 @@ function commerce_bootstrap_cart_services(): void
     require_once $dir . '/includes/ManualFulfillmentAdapter.php';
     require_once $dir . '/includes/ShipStationStubAdapter.php';
     require_once $dir . '/includes/ImportService.php';
+    require_once $dir . '/includes/ImportHttpClient.php';
+    require_once $dir . '/includes/CommerceImportCredentialStore.php';
+    require_once $dir . '/includes/ShopifyImportAdapter.php';
+    require_once $dir . '/includes/WooImportAdapter.php';
+    require_once $dir . '/includes/CommerceLiveImportService.php';
     require_once $dir . '/includes/CommerceSchema.php';
     require_once $dir . '/includes/CommerceBundleSchema.php';
     require_once $dir . '/includes/EventRegistrationStore.php';
