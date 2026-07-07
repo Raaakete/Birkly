@@ -119,7 +119,6 @@ function createPermissionsGrid(containerId, permissions = {}) {
         container.appendChild(section);
     });
     
-    console.log('Permissions grid created in:', containerId, 'with', container.querySelectorAll('input[type="checkbox"]').length, 'checkboxes');
 }
 
 function hasPermission(permissions, resource, action) {
@@ -170,14 +169,12 @@ function collectPermissions(form) {
         // Use attribute selector with escaped brackets
         const selector = `input[name="permissions[${resource}][]"]:checked`;
         const checkboxes = form.querySelectorAll(selector);
-        console.log(`Found ${checkboxes.length} checked boxes for ${resource}`, checkboxes);
         
         if (checkboxes.length > 0) {
             permissions[resource] = Array.from(checkboxes).map(cb => cb.value);
         }
     });
     
-    console.log('Collected permissions:', permissions);
     return permissions;
 }
 
@@ -188,13 +185,11 @@ function openAddRoleModal() {
         showMessage('Role modal not found. Please refresh the page.', 'error');
         return;
     }
-    console.log('Opening add role modal');
     modal.style.display = 'flex';
     modal.classList.add('active');
     const form = document.getElementById('add-role-form');
     if (form) form.reset();
     createPermissionsGrid('add-permissions-grid');
-    console.log('Modal opened, permissions grid created');
 }
 
 function closeAddRoleModal() {
@@ -206,7 +201,6 @@ function closeAddRoleModal() {
 }
 
 async function editRole(roleId) {
-    console.log('editRole called for:', roleId);
     const modal = document.getElementById('edit-role-modal');
     if (!modal) {
         console.error('Edit role modal not found');
@@ -234,7 +228,6 @@ async function editRole(roleId) {
             // Create permissions grid with existing permissions
             createPermissionsGrid('edit-permissions-grid', role.permissions || {});
             
-            console.log('Role loaded:', role);
         } else {
             showMessage('Error loading role: ' + (result.message || 'Unknown error'), 'error');
             closeEditRoleModal();
@@ -255,7 +248,6 @@ function closeEditRoleModal() {
 }
 
 async function updateRole() {
-    console.log('updateRole called');
     const form = document.getElementById('edit-role-form');
     if (!form) {
         console.error('Edit form not found');
@@ -278,7 +270,6 @@ async function updateRole() {
     
     // Collect permissions
     const permissions = collectPermissions(form);
-    console.log('Updated role data:', { id: roleId, name: roleName, description: roleDescription, permissions });
     
     const roleData = {
         role: {
@@ -290,7 +281,6 @@ async function updateRole() {
         _csrf: getCsrfToken()
     };
     
-    console.log('Sending update role data:', roleData);
     
     try {
         const response = await fetch(apiUrl('/api/roles.php?action=update_role'), {
@@ -299,9 +289,7 @@ async function updateRole() {
             body: JSON.stringify(roleData)
         });
         
-        console.log('Response status:', response.status);
         const result = await response.json();
-        console.log('Response data:', result);
         
         if (result.status === 'ok') {
             showMessage('Role updated successfully!', 'success');
@@ -317,7 +305,6 @@ async function updateRole() {
 }
 
 async function createRole() {
-    console.log('createRole called');
     const form = document.getElementById('add-role-form');
     if (!form) {
         console.error('Form not found');
@@ -340,7 +327,6 @@ async function createRole() {
     
     // Collect permissions
     const permissions = collectPermissions(form);
-    console.log('Role data:', { name: roleName, description: roleDescription, permissions });
     
     const roleData = {
         action: 'create_role',
@@ -353,7 +339,6 @@ async function createRole() {
         _csrf: getCsrfToken()
     };
     
-    console.log('Sending role data:', roleData);
     
     try {
         // API expects action in query string, not in body
@@ -366,9 +351,7 @@ async function createRole() {
             })
         });
         
-        console.log('Response status:', response.status);
         const result = await response.json();
-        console.log('Response data:', result);
         
         if (result.status === 'ok') {
             showMessage('Role created successfully!', 'success');
@@ -848,7 +831,6 @@ async function deletePlugin(pluginId) {
     // Domains loading is handled in the main tab click handler
     
     async function loadDomains() {
-        console.log('loadDomains called');
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
             console.error('domains-list container not found');
@@ -858,7 +840,6 @@ async function deletePlugin(pluginId) {
         listContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading domains...</p></div>';
         
         try {
-            console.log('Fetching domains from API...');
             var response = await fetch(apiUrl('/api/domain_management.php?action=list_licenses'), {
                 method: 'GET',
                 credentials: 'same-origin',
@@ -866,15 +847,11 @@ async function deletePlugin(pluginId) {
                     'Content-Type': 'application/json'
                 }
             });
-            console.log('Response status:', response.status);
             var data = await response.json();
-            console.log('Response data:', data);
             
             if (data.status === 'ok' && data.data && data.data.licenses) {
-                console.log('Rendering domains:', data.data.licenses.length);
                 renderDomains(data.data.licenses);
             } else {
-                console.log('No domains found or invalid response');
                 listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet.</p></div>';
             }
         } catch (error) {
@@ -884,7 +861,6 @@ async function deletePlugin(pluginId) {
     }
     
     function renderDomains(domains) {
-        console.log('renderDomains called with', domains);
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
             console.error('domains-list container not found in renderDomains');
@@ -931,7 +907,6 @@ async function deletePlugin(pluginId) {
             
             // Build analytics HTML if enabled
             var analyticsHtml = '';
-            console.log('Domain:', domain.domain, 'analytics_enabled:', domain.analytics_enabled);
             if (domain.analytics_enabled) {
                 var domainName = String(domain.domain || '');
                 // Use relative path - the client library auto-detects the CMS URL from the script src
@@ -1043,14 +1018,12 @@ async function deletePlugin(pluginId) {
 })();
 
 function openAddDomainModal() {
-    console.log('openAddDomainModal called');
     var modal = document.getElementById('add-domain-modal');
     var form = document.getElementById('add-domain-form');
     if (!modal) {
         console.error('Add domain modal not found');
         return;
     }
-    console.log('Opening modal');
     modal.style.display = 'flex';
     modal.classList.add('active');
     if (form) {
@@ -1117,7 +1090,6 @@ async function registerDomain() {
     };
     
     try {
-        console.log('Sending domain registration request:', domainData);
         const response = await fetch(apiUrl('/api/domain_management.php'), {
             method: 'POST',
             credentials: 'same-origin',
@@ -1125,9 +1097,7 @@ async function registerDomain() {
             body: JSON.stringify(domainData)
         });
         
-        console.log('Response status:', response.status);
         const responseText = await response.text();
-        console.log('Response text:', responseText);
         
         let result;
         try {
@@ -1139,7 +1109,6 @@ async function registerDomain() {
             return;
         }
         
-        console.log('Response data:', result);
         
         if (result.status === 'ok') {
             showMessage('Domain registered successfully!', 'success');
@@ -1155,7 +1124,6 @@ async function registerDomain() {
 }
 
 window.editDomain = async function(domainName) {
-    console.log('editDomain called with:', domainName);
     try {
         const response = await fetch(apiUrl('/api/domain_management.php?action=list_licenses'), {
             method: 'GET',
@@ -1165,11 +1133,9 @@ window.editDomain = async function(domainName) {
             }
         });
         const data = await response.json();
-        console.log('Edit domain - response data:', data);
         
         if (data.status === 'ok' && data.data.licenses) {
             const domain = data.data.licenses.find(d => d.domain === domainName);
-            console.log('Found domain for editing:', domain);
             if (domain) {
                 const permissions = domain.permissions || {};
                 const rateLimits = permissions.rate_limits || {};
@@ -1235,7 +1201,6 @@ async function updateDomain() {
     };
     
     try {
-        console.log('Sending update request:', updateData);
         const response = await fetch(apiUrl('/api/domain_management.php'), {
             method: 'POST',
             credentials: 'same-origin',
@@ -1243,9 +1208,7 @@ async function updateDomain() {
             body: JSON.stringify(updateData)
         });
         
-        console.log('Response status:', response.status);
         const responseText = await response.text();
-        console.log('Response text:', responseText);
         
         let result;
         try {
@@ -1257,7 +1220,6 @@ async function updateDomain() {
             return;
         }
         
-        console.log('Response data:', result);
         
         if (result.status === 'ok') {
             showMessage('Domain updated successfully!', 'success');
@@ -1273,7 +1235,6 @@ async function updateDomain() {
 }
 
 window.deleteDomain = async function(domainName) {
-    console.log('deleteDomain called with:', domainName);
     if (!confirm('Are you sure you want to delete domain "' + domainName + '"? This will revoke all access.')) {
         return;
     }
@@ -1291,7 +1252,6 @@ window.deleteDomain = async function(domainName) {
         });
         
         const result = await response.json();
-        console.log('Delete domain - response:', result);
         
         if (result.status === 'ok') {
             showMessage('Domain deleted successfully!', 'success');
