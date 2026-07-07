@@ -314,7 +314,10 @@ function birkly_ai_agents_ensure_personal(): array
 
     $existing = birkly_ai_agents_find(BIRKLY_AI_AGENT_PERSONAL_ID);
     if ($existing !== null && ($existing['status'] ?? 'active') !== 'revoked') {
-        return $existing;
+        $endpointId = (string) ($existing['mcp_endpoint_id'] ?? '');
+        if ($endpointId !== '' && birkly_mcp_find_endpoint($endpointId) !== null) {
+            return $existing;
+        }
     }
 
     $endpoint = birkly_mcp_create_endpoint([
@@ -336,8 +339,8 @@ function birkly_ai_agents_ensure_personal(): array
         'mcp_endpoint_id' => $endpoint['id'],
         'connector_url' => birkly_ai_agent_connector_url(BIRKLY_AI_AGENT_PERSONAL_ID),
         'status' => 'active',
-        'created_at' => date('c'),
-        'created_by' => 'system',
+        'created_at' => $existing['created_at'] ?? date('c'),
+        'created_by' => $existing['created_by'] ?? 'system',
     ]);
 
     $store = birkly_ai_agents_load_store();
