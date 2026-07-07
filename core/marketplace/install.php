@@ -318,7 +318,7 @@ function birkly_marketplace_installed_plugin_updates(): array
     $updates = [];
 
     foreach ($plugins as $id => $plugin) {
-        $slug = (string) ($plugin['marketplace_slug'] ?? '');
+        $slug = birkly_marketplace_plugin_offer_slug((string) $id, $plugin);
         if ($slug === '') {
             continue;
         }
