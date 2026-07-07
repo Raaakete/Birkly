@@ -153,25 +153,40 @@ if ($action === 'install') {
     $slug = trim((string) ($input['slug'] ?? ''));
     $version = trim((string) ($input['version'] ?? ''));
 
-    if ($licenseKey === '' || $slug === '') {
-        echo json_encode(['status' => 'error', 'message' => 'License key and offer slug required']);
+    if ($slug === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Offer slug required']);
         exit;
     }
 
-    $activation = birkly_marketplace_activate_license($licenseKey);
-    if (!$activation['ok']) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => $activation['error'] ?? 'License activation failed',
-            'code' => $activation['code'] ?? 'activation_failed',
-        ]);
-        exit;
-    }
+    $freeInstall = false;
+    if ($licenseKey === '') {
+        $freeClaim = birkly_marketplace_claim_free_license($slug);
+        if (!$freeClaim['ok']) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $freeClaim['error'] ?? 'License key required',
+                'code' => $freeClaim['code'] ?? 'license_required',
+            ]);
+            exit;
+        }
+        $licenseKey = (string) ($freeClaim['license_key'] ?? '');
+        $freeInstall = true;
+    } else {
+        $activation = birkly_marketplace_activate_license($licenseKey);
+        if (!$activation['ok']) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $activation['error'] ?? 'License activation failed',
+                'code' => $activation['code'] ?? 'activation_failed',
+            ]);
+            exit;
+        }
 
-    $offerSlug = (string) ($activation['offer_slug'] ?? $slug);
-    if ($offerSlug !== $slug) {
-        echo json_encode(['status' => 'error', 'message' => 'License does not match this offer']);
-        exit;
+        $offerSlug = (string) ($activation['offer_slug'] ?? $slug);
+        if ($offerSlug !== $slug) {
+            echo json_encode(['status' => 'error', 'message' => 'License does not match this offer']);
+            exit;
+        }
     }
 
     if ($version === '') {
@@ -213,6 +228,7 @@ if ($action === 'install') {
         'plugin' => $install['plugin_id'] ?? '',
         'slug' => $slug,
         'version' => $version,
+        'free_install' => $freeInstall,
         'user' => $_SESSION['user']['email'] ?? 'unknown',
     ]);
 

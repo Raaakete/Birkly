@@ -452,6 +452,16 @@ function getDashboardData() {
     $settingsAdminFile = __DIR__ . '/../settings/admin.json';
     $hasSettings = file_exists($settingsAdminFile);
 
+    require_once __DIR__ . '/../core/plugins.php';
+    $installedPlugins = get_all_plugins();
+    $hasMarketplacePlugin = false;
+    foreach ($installedPlugins as $plugin) {
+        if (!empty($plugin['marketplace_slug'])) {
+            $hasMarketplacePlugin = true;
+            break;
+        }
+    }
+
     // D3: essential items only — upload_media and create_template removed per P5.6 locked decision
     $checklist = [
         [
@@ -459,6 +469,12 @@ function getDashboardData() {
             'label' => 'Complete site setup',
             'completed' => $onboardingStatus['setup_wizard_completed'] ?? false,
             'link' => birkly_admin_url('onboarding')
+        ],
+        [
+            'id' => 'install_marketplace_plugins',
+            'label' => __('admin.install_marketplace_plugins'),
+            'completed' => $hasMarketplacePlugin,
+            'link' => birkly_admin_url('plugins', ['tab' => 'marketplace']),
         ],
         [
             'id' => 'first_collection',
@@ -2886,6 +2902,19 @@ function getPluginsData() {
         'page_title' => $tab === 'installed' ? __('admin.installed_plugins') : __('admin.marketplace'),
         'marketplace_title' => __('admin.marketplace'),
         'installed_title' => __('admin.installed_plugins'),
+        'i18n' => [
+            'no_plugins_installed' => __('admin.no_plugins_installed'),
+            'no_plugins_marketplace_hint' => __('admin.no_plugins_marketplace_hint'),
+            'browse_marketplace' => __('admin.browse_marketplace'),
+            'price_free' => __('admin.price_free'),
+            'install' => __('admin.install'),
+            'install_with_license' => __('admin.install_with_license'),
+            'install_from_marketplace' => __('admin.install_from_marketplace'),
+            'enter_license_key' => __('admin.enter_license_key'),
+            'confirm_free_install' => __('admin.confirm_free_install'),
+            'install_success' => __('admin.install_plugin_success'),
+            'manual_install_unavailable' => __('admin.manual_install_unavailable'),
+        ],
     ];
 }
 
