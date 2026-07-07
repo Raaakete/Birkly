@@ -15,6 +15,7 @@ class CommerceCheckoutService
     private ?CommerceSubscriptionService $subscriptionService = null;
     private ?GiftCardStore $giftCards = null;
     private ?CommerceQuoteStore $quotes = null;
+    private ?WarehouseStockStore $warehouse = null;
 
     public function __construct(
         ?CommerceOrderStore $orders = null,
@@ -26,7 +27,8 @@ class CommerceCheckoutService
         ?PostPurchaseRouter $router = null,
         ?CommerceSubscriptionService $subscriptionService = null,
         ?GiftCardStore $giftCards = null,
-        ?CommerceQuoteStore $quotes = null
+        ?CommerceQuoteStore $quotes = null,
+        ?WarehouseStockStore $warehouse = null
     ) {
         $this->orders = $orders ?? new CommerceOrderStore();
         $this->indexer = $indexer ?? new CatalogIndexer();
@@ -38,6 +40,18 @@ class CommerceCheckoutService
         $this->subscriptionService = $subscriptionService;
         $this->giftCards = $giftCards;
         $this->quotes = $quotes;
+        $this->warehouse = $warehouse;
+    }
+
+    private function warehouseStore(): WarehouseStockStore
+    {
+        if ($this->warehouse === null) {
+            if (!class_exists('WarehouseStockStore')) {
+                require_once __DIR__ . '/WarehouseStockStore.php';
+            }
+            $this->warehouse = new WarehouseStockStore(dirname($this->orders->getDataDir()));
+        }
+        return $this->warehouse;
     }
 
     /**
@@ -149,7 +163,7 @@ class CommerceCheckoutService
         $built['total_cents'] += $tax['tax_cents'];
 
         $giftCardCode = $this->cart->getGiftCardCode();
-        $giftTender = $this->discounts->applyGiftCardTender((int) $built['total_cents'], $giftCardCode, $this->giftCardStore());
+        $giftTender = $this->discounts->applyGiftCardTender((int) $built['total_cents'], $giftCardCode, $this->giftCardStore(), $built['currency'] ?? null);
         if (!($giftTender['ok'] ?? false)) return ['ok' => false, 'error' => $giftTender['error'] ?? 'Gift card error'];
         $giftCardCents = (int) ($giftTender['applied_cents'] ?? 0);
         if ($giftCardCents > 0) { $built['gift_card_cents'] = $giftCardCents; $built['gift_card_code'] = $giftTender['gift_card_code'] ?? $giftCardCode; $built['total_cents'] -= $giftCardCents; }
@@ -381,6 +395,12 @@ class CommerceCheckoutService
             'status' => $newStatus,
         ]);
 
+        if ($isFull) {
+            foreach ($order['lines'] ?? [] as $line) {
+                $this->restoreLineStock($line);
+            }
+        }
+
         $this->fireOrderRefunded($updated ?? $order, $refundRecord);
 
         return ['ok' => true, 'order' => $updated, 'refund' => $refundRecord];
@@ -474,6 +494,11 @@ class CommerceCheckoutService
 
     private function reserveLineStock(array $line): bool
     {
+        $sku = trim((string) ($line['sku'] ?? ''));
+        if ($sku !== '' && !$this->warehouseStore()->hasSufficient($sku, (int) ($line['quantity'] ?? 1))) {
+            return false;
+        }
+
         if (!$this->indexer->reserveQuantity(
             $line['collection_slug'] ?? '',
             $line['entry_id'] ?? '',
@@ -497,8 +522,37 @@ class CommerceCheckoutService
         return true;
     }
 
+    private function restoreLineStock(array $line): void
+    {
+        $sku = trim((string) ($line['sku'] ?? ''));
+        if ($sku !== '') {
+            $this->warehouseStore()->increment($sku, (int) ($line['quantity'] ?? 1));
+        }
+
+        $this->indexer->incrementQuantity(
+            $line['collection_slug'] ?? '',
+            $line['entry_id'] ?? '',
+            (int) ($line['quantity'] ?? 1)
+        );
+
+        if (!empty($line['is_bundle'])) {
+            foreach ($line['components'] ?? [] as $comp) {
+                $this->indexer->incrementQuantity(
+                    $comp['collection'] ?? '',
+                    $comp['entry_id'] ?? '',
+                    (int) ($comp['quantity'] ?? 1)
+                );
+            }
+        }
+    }
+
     private function decrementLineStock(array $line): void
     {
+        $sku = trim((string) ($line['sku'] ?? ''));
+        if ($sku !== '') {
+            $this->warehouseStore()->decrement($sku, (int) ($line['quantity'] ?? 1));
+        }
+
         $this->indexer->decrementQuantity(
             $line['collection_slug'] ?? '',
             $line['entry_id'] ?? '',

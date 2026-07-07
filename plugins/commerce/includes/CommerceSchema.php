@@ -110,7 +110,7 @@ class CommerceSchema
                 'label' => trim((string) ($opt['label'] ?? $id)),
                 'billing' => $billing,
                 'price_cents' => max(0, (int) ($opt['price_cents'] ?? 0)),
-                'currency' => strtolower((string) ($opt['currency'] ?? 'eur')),
+                'currency' => strtolower((string) ($opt['currency'] ?? (function_exists('commerce_get_default_currency') ? commerce_get_default_currency() : 'eur'))),
                 'interval' => $interval,
             ];
         }
@@ -162,6 +162,8 @@ class CommerceSchema
 
     public static function defaultValue(): array
     {
+        $defaultCurrency = function_exists('commerce_get_default_currency') ? commerce_get_default_currency() : 'eur';
+
         return self::withLegacyFields([
             'fulfillment' => 'ship',
             'purchase_options' => [[
@@ -169,7 +171,7 @@ class CommerceSchema
                 'label' => 'Default',
                 'billing' => 'one_time',
                 'price_cents' => 0,
-                'currency' => 'eur',
+                'currency' => $defaultCurrency,
                 'interval' => null,
             ]],
             'quantity_available' => null,

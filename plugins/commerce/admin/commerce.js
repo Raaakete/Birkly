@@ -984,11 +984,199 @@
 
   function loadImportTab() {
     loadImportHistory();
+    loadLiveImportConfig();
     if (!importSourcesCache.length) {
       commercePost('import_sources').then(function (res) {
         importSourcesCache = (res.data && res.data.sources) || [];
       });
     }
+  }
+
+  var liveImportCollectionsLoaded = false;
+
+  function populateLiveImportCollections(selectIds) {
+    if (liveImportCollectionsLoaded) {
+      return Promise.resolve();
+    }
+    return commercePost('import_collections').then(function (res) {
+      var collections = (res.data && res.data.collections) || [];
+      selectIds.forEach(function (id) {
+        var sel = document.getElementById(id);
+        if (!sel) return;
+        var current = sel.value;
+        sel.innerHTML = collections.map(function (c) {
+          return '<option value="' + escapeHtml(c.slug || c) + '">' + escapeHtml(c.title || c.slug || c) + '</option>';
+        }).join('');
+        if (current) sel.value = current;
+      });
+      liveImportCollectionsLoaded = true;
+    });
+  }
+
+  function livePlatformPrefix(platform) {
+    if (platform === 'woocommerce') return 'woo';
+    return platform;
+  }
+
+  function applyLiveImportConfig(config) {
+    if (!config) return;
+    ['shopify', 'woocommerce', 'etsy', 'square'].forEach(function (platform) {
+      var p = config[platform] || {};
+      var prefix = livePlatformPrefix(platform);
+      var status = document.getElementById('commerce-live-' + prefix + '-status');
+      if (status) {
+        status.textContent = p.connected ? 'Connected' : 'Not connected';
+        status.classList.toggle('is-connected', !!p.connected);
+      }
+      var collection = document.getElementById('commerce-live-' + prefix + '-collection');
+      if (collection && p.collection) collection.value = p.collection;
+      var currency = document.getElementById('commerce-live-' + prefix + '-currency');
+      if (currency && p.default_currency) currency.value = p.default_currency;
+      var enabled = document.getElementById('commerce-live-' + prefix + '-enabled');
+      if (enabled) enabled.checked = !!p.enabled;
+      var schedule = document.getElementById('commerce-live-' + prefix + '-schedule');
+      if (schedule) schedule.checked = !!p.schedule_enabled;
+      if (platform === 'shopify') {
+        var domain = document.getElementById('commerce-live-shopify-domain');
+        if (domain && p.shop_domain) domain.value = p.shop_domain;
+      }
+      if (platform === 'woocommerce') {
+        var url = document.getElementById('commerce-live-woo-url');
+        if (url && p.site_url) url.value = p.site_url;
+      }
+      if (platform === 'etsy') {
+        var shopId = document.getElementById('commerce-live-etsy-shop-id');
+        if (shopId && p.shop_id) shopId.value = p.shop_id;
+      }
+      if (platform === 'square') {
+        var loc = document.getElementById('commerce-live-square-location');
+        if (loc && p.location_id) loc.value = p.location_id;
+      }
+      var meta = document.getElementById('commerce-live-' + prefix + '-meta');
+      if (meta && p.last_sync_at) {
+        meta.textContent = 'Last sync: ' + formatImportDate(p.last_sync_at) + (p.last_sync_status ? ' (' + p.last_sync_status + ')' : '');
+      }
+    });
+    var cron = document.getElementById('commerce-live-import-cron-command');
+    if (cron && config.cron_token) {
+      cron.textContent = 'php scripts/commerce-live-import-cron.php --token=' + config.cron_token;
+    }
+  }
+
+  function loadLiveImportConfig() {
+    var collectionSelects = [
+      'commerce-live-shopify-collection', 'commerce-live-woo-collection',
+      'commerce-live-etsy-collection', 'commerce-live-square-collection',
+    ];
+    populateLiveImportCollections(collectionSelects).then(function () {
+      return commercePost('import_live_config');
+    }).then(function (res) {
+      if (res.status === 'ok' && res.data) {
+        applyLiveImportConfig(res.data);
+      }
+    });
+    commercePost('get_inventory_webhook_config').then(function (res) {
+      if (res.status !== 'ok' || !res.data) return;
+      ['shopify', 'woocommerce'].forEach(function (platform) {
+        var row = res.data[platform] || {};
+        var urlEl = document.getElementById('commerce-webhook-url-' + platform);
+        if (urlEl && row.webhook_url) urlEl.value = row.webhook_url;
+      });
+    });
+  }
+
+  function liveImportPatch(platform) {
+    var prefix = livePlatformPrefix(platform);
+    var patch = {
+      enabled: !!document.getElementById('commerce-live-' + prefix + '-enabled')?.checked,
+      schedule_enabled: !!document.getElementById('commerce-live-' + prefix + '-schedule')?.checked,
+      collection: document.getElementById('commerce-live-' + prefix + '-collection')?.value || 'products',
+      default_currency: document.getElementById('commerce-live-' + prefix + '-currency')?.value || 'eur',
+    };
+    if (platform === 'shopify') {
+      patch.shop_domain = document.getElementById('commerce-live-shopify-domain')?.value || '';
+      var token = document.getElementById('commerce-live-shopify-token')?.value;
+      if (token) patch.access_token = token;
+    }
+    if (platform === 'woocommerce') {
+      patch.site_url = document.getElementById('commerce-live-woo-url')?.value || '';
+      var key = document.getElementById('commerce-live-woo-key')?.value;
+      var secret = document.getElementById('commerce-live-woo-secret')?.value;
+      if (key) patch.consumer_key = key;
+      if (secret) patch.consumer_secret = secret;
+    }
+    if (platform === 'etsy') {
+      patch.shop_id = document.getElementById('commerce-live-etsy-shop-id')?.value || '';
+      var apiKey = document.getElementById('commerce-live-etsy-api-key')?.value;
+      var etsyToken = document.getElementById('commerce-live-etsy-token')?.value;
+      if (apiKey) patch.api_key = apiKey;
+      if (etsyToken) patch.access_token = etsyToken;
+    }
+    if (platform === 'square') {
+      patch.location_id = document.getElementById('commerce-live-square-location')?.value || '';
+      var sqToken = document.getElementById('commerce-live-square-token')?.value;
+      if (sqToken) patch.access_token = sqToken;
+    }
+    return patch;
+  }
+
+  function initLiveImportPlatform(platform) {
+    var prefix = livePlatformPrefix(platform);
+    document.getElementById('commerce-live-' + prefix + '-test')?.addEventListener('click', function () {
+      commercePost('import_live_save', { platform: platform, config: liveImportPatch(platform) }).then(function () {
+        return commercePost('import_live_test', { platform: platform });
+      }).then(function (res) {
+        alert(res.status === 'ok' ? 'Connection OK' : (res.message || 'Connection failed'));
+      });
+    });
+    document.getElementById('commerce-live-' + prefix + '-save')?.addEventListener('click', function () {
+      commercePost('import_live_save', { platform: platform, config: liveImportPatch(platform) }).then(function (res) {
+        if (res.status === 'ok') {
+          loadLiveImportConfig();
+          alert('Saved');
+        } else {
+          alert(res.message || 'Save failed');
+        }
+      });
+    });
+    document.getElementById('commerce-live-' + prefix + '-sync')?.addEventListener('click', function () {
+      commercePost('import_live_sync', { platform: platform }).then(function (res) {
+        if (res.status !== 'ok') {
+          alert(res.message || 'Sync failed');
+          return;
+        }
+        loadImportHistory();
+        loadLiveImportConfig();
+        alert('Imported ' + ((res.data && res.data.imported_count) || 0) + ' product(s)');
+      });
+    });
+  }
+
+  function initLiveImportWebhooks() {
+    document.querySelectorAll('.commerce-webhook-rotate').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var platform = btn.getAttribute('data-platform');
+        if (!platform || !confirm('Generate a new webhook secret for ' + platform + '? Update your store webhook configuration.')) return;
+        commercePost('rotate_inventory_webhook_secret', { platform: platform }).then(function (res) {
+          if (res.status !== 'ok') {
+            alert(res.message || 'Failed to rotate secret');
+            return;
+          }
+          var secret = (res.data && res.data.webhook_secret) || '';
+          var el = document.getElementById('commerce-webhook-secret-' + platform);
+          if (el && secret) {
+            el.hidden = false;
+            el.textContent = 'New secret (copy now): ' + secret;
+          }
+          loadLiveImportConfig();
+        });
+      });
+    });
+  }
+
+  function initLiveImport() {
+    ['shopify', 'woocommerce', 'etsy', 'square'].forEach(initLiveImportPlatform);
+    initLiveImportWebhooks();
   }
 
   function loadImportHistory() {
@@ -1665,11 +1853,33 @@
     document.getElementById('commerce-migration-history-refresh')?.addEventListener('click', loadMigrationHistory);
   }
 
+  function loadStock() {
+    var el = document.getElementById('commerce-stock-list');
+    if (!el) return;
+    commercePost('list_warehouse_stock').then(function (res) {
+      if (res.status !== 'ok') {
+        el.innerHTML = '<p class="error">Failed to load stock</p>';
+        return;
+      }
+      var rows = (res.data && res.data.stock) || [];
+      if (!rows.length) {
+        el.innerHTML = '<p class="form-hint">No warehouse SKUs yet.</p>';
+        return;
+      }
+      var html = '<table class="payments-table"><thead><tr><th>SKU</th><th>On hand</th><th>Low threshold</th></tr></thead><tbody>';
+      rows.forEach(function (row) {
+        html += '<tr><td>' + escapeHtml(row.sku || '') + '</td><td>' + (row.quantity_on_hand ?? 0) + '</td><td>' + (row.low_stock_threshold ?? 0) + '</td></tr>';
+      });
+      el.innerHTML = html + '</tbody></table>';
+    });
+  }
+
   function initCommerceTabs() {
     document.querySelectorAll('.commerce-tabs .payments-tab').forEach(function (tab) {
       tab.addEventListener('click', function () {
         var name = tab.getAttribute('data-tab');
         if (name === 'catalog') loadCatalog();
+        if (name === 'stock') loadStock();
         if (name === 'orders') loadOrders();
         if (name === 'subscriptions') loadSubscriptions();
         if (name === 'discounts') loadDiscounts();
@@ -1692,6 +1902,13 @@
   function initCommerceActions() {
     document.getElementById('commerce-reindex')?.addEventListener('click', function () {
       commercePost('reindex_catalog').then(function () { loadCatalog(); });
+    });
+    document.getElementById('commerce-stock-save')?.addEventListener('click', function () {
+      commercePost('save_warehouse_stock', {
+        sku: document.getElementById('commerce-stock-sku')?.value || '',
+        quantity_on_hand: parseInt(document.getElementById('commerce-stock-qty')?.value || '0', 10),
+        low_stock_threshold: parseInt(document.getElementById('commerce-stock-threshold')?.value || '0', 10),
+      }).then(function () { loadStock(); });
     });
 
     document.getElementById('commerce-subscriptions-refresh')?.addEventListener('click', loadSubscriptions);
@@ -1994,6 +2211,7 @@
   function init() {
     initCommerceTabs();
     initCommerceActions();
+    initLiveImport();
   }
 
   if (document.readyState === 'loading') {
