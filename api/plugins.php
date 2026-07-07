@@ -92,7 +92,10 @@ if ($action === 'list') {
             'active' => $plugin['active'] ?? false,
             'path' => $plugin['path'] ?? '',
             'has_settings' => !empty($plugin['settings_schema'] ?? []),
-            'settings' => $plugin['settings'] ?? []
+            'settings' => $plugin['settings'] ?? [],
+            'marketplace_slug' => $plugin['marketplace_slug'] ?? null,
+            'license_ref' => $plugin['license_ref'] ?? null,
+            'from_marketplace' => !empty($plugin['marketplace_slug']),
         ];
     }
     
@@ -413,55 +416,76 @@ if ($action === 'delete') {
 
 // Check for plugin updates
 if ($action === 'check_updates') {
+    require_once __DIR__ . '/../core/marketplace.php';
+
     $plugin_id = $input['plugin_id'] ?? $_GET['plugin_id'] ?? '';
     $plugins = get_all_plugins();
-    
+
     if (!empty($plugin_id)) {
-        // Check specific plugin
         if (!isset($plugins[$plugin_id])) {
             echo json_encode(['status' => 'error', 'message' => 'Plugin not found']);
             exit;
         }
-        
+
         $plugin = $plugins[$plugin_id];
         $current_version = $plugin['version'] ?? '1.0.0';
-        
-        // For now, return no updates available
-        // In a real implementation, this would check against a plugin repository
+        $slug = (string) ($plugin['marketplace_slug'] ?? '');
+
+        if ($slug === '') {
+            echo json_encode([
+                'status' => 'ok',
+                'data' => [
+                    'plugin_id' => $plugin_id,
+                    'current_version' => $current_version,
+                    'latest_version' => $current_version,
+                    'update_available' => false,
+                    'from_marketplace' => false,
+                ],
+            ]);
+            exit;
+        }
+
+        $check = birkly_marketplace_check_plugin_update($slug, $current_version);
         echo json_encode([
             'status' => 'ok',
             'data' => [
                 'plugin_id' => $plugin_id,
                 'current_version' => $current_version,
-                'latest_version' => $current_version,
-                'update_available' => false,
-                'update_url' => null
-            ]
+                'latest_version' => $check['latest_version'] ?? $current_version,
+                'update_available' => !empty($check['update_available']),
+                'from_marketplace' => true,
+                'marketplace_slug' => $slug,
+                'check_ok' => !empty($check['ok']),
+                'error' => $check['error'] ?? null,
+            ],
         ]);
     } else {
-        // Check all plugins
-        $updates = [];
+        $updates = birkly_marketplace_installed_plugin_updates();
         foreach ($plugins as $id => $plugin) {
-            $current_version = $plugin['version'] ?? '1.0.0';
-            $updates[$id] = [
-                'current_version' => $current_version,
-                'latest_version' => $current_version,
-                'update_available' => false,
-                'update_url' => null
-            ];
+            if (!isset($updates[$id]) && empty($plugin['marketplace_slug'])) {
+                $current_version = $plugin['version'] ?? '1.0.0';
+                $updates[$id] = [
+                    'plugin_id' => $id,
+                    'current_version' => $current_version,
+                    'latest_version' => $current_version,
+                    'update_available' => false,
+                    'from_marketplace' => false,
+                ];
+            }
         }
-        
+
         echo json_encode([
             'status' => 'ok',
             'data' => [
-                'updates' => $updates
-            ]
+                'updates' => $updates,
+                'update_count' => count(array_filter($updates, fn ($u) => !empty($u['update_available']))),
+            ],
         ]);
     }
     exit;
 }
 
-// Update plugin
+// Update plugin (marketplace-sourced one-click upgrade)
 if ($action === 'update') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -469,26 +493,65 @@ if ($action === 'update') {
         echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
         exit;
     }
-    
+
     $plugin_id = $input['plugin_id'] ?? '';
-    $update_url = $input['update_url'] ?? '';
-    
-    if (empty($plugin_id) || empty($update_url)) {
-        echo json_encode(['status' => 'error', 'message' => 'Plugin ID and update URL required']);
+    if (empty($plugin_id)) {
+        echo json_encode(['status' => 'error', 'message' => 'Plugin ID required']);
         exit;
     }
-    
+
     $plugins = get_all_plugins();
     if (!isset($plugins[$plugin_id])) {
         echo json_encode(['status' => 'error', 'message' => 'Plugin not found']);
         exit;
     }
-    
-    // For now, return not implemented
-    // In a real implementation, this would download and install the update
+
+    $plugin = $plugins[$plugin_id];
+    $slug = (string) ($plugin['marketplace_slug'] ?? '');
+    if ($slug === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Plugin was not installed from marketplace']);
+        exit;
+    }
+
+    require_once __DIR__ . '/../core/marketplace.php';
+
+    $current = (string) ($plugin['version'] ?? '0.0.0');
+    $check = birkly_marketplace_check_plugin_update($slug, $current);
+    if (empty($check['update_available'])) {
+        echo json_encode(['status' => 'error', 'message' => 'No update available']);
+        exit;
+    }
+
+    $wasActive = !empty($plugin['active']);
+    if ($wasActive) {
+        set_plugin_state($plugin_id, false);
+    }
+
+    $targetVersion = (string) ($check['latest_version'] ?? $current);
+    $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true);
+
+    if (!$install['ok']) {
+        if ($wasActive) {
+            set_plugin_state($plugin_id, true);
+        }
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Upgrade failed: ' . implode('; ', $install['errors'] ?? []),
+            'errors' => $install['errors'] ?? [],
+        ]);
+        exit;
+    }
+
+    load_plugins();
+    if ($wasActive) {
+        set_plugin_state($plugin_id, true);
+    }
+
+    log_security_event('plugin_updated', ['plugin' => $plugin_id, 'version' => $targetVersion, 'user' => $_SESSION['user']['email'] ?? 'unknown']);
     echo json_encode([
-        'status' => 'error',
-        'message' => 'Plugin updates not yet implemented'
+        'status' => 'ok',
+        'message' => 'Plugin upgraded successfully',
+        'data' => ['plugin_id' => $plugin_id, 'version' => $targetVersion],
     ]);
     exit;
 }
