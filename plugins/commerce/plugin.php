@@ -189,6 +189,23 @@ if (function_exists('register_template_function') && commerce_plugin_active()) {
             'commerce' => ['type' => 'array', 'description' => 'Commerce field value'],
         ],
     ]);
+
+    register_template_function('commerce_gift_card_balance', function ($code = '') {
+        $code = trim((string) $code);
+        if ($code === '') {
+            return '0';
+        }
+        commerce_bootstrap_cart_services();
+        $store = new GiftCardStore();
+        $card = $store->getByCode($code);
+        if (!$card || ($card['status'] ?? '') !== 'active') {
+            return '0';
+        }
+        return (string) number_format(((int) ($card['balance_cents'] ?? 0)) / 100, 2, '.', '');
+    }, [
+        'description' => 'Returns remaining gift card balance in major currency units',
+        'arguments' => ['code' => ['type' => 'string', 'description' => 'Gift card code']],
+    ]);
 }
 
 if (function_exists('register_plugin_docs') && commerce_plugin_active()) {
