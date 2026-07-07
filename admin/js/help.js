@@ -66,10 +66,20 @@
     }
 
     async function loadManifest() {
-        const res = await fetch('/api/help_manifest.php');
-        if (!res.ok) throw new Error('Failed to load help manifest');
-        manifest = await res.json();
-        return manifest;
+        try {
+            const res = await fetch('/api/help_manifest.php');
+            if (!res.ok) throw new Error('Failed to load help manifest');
+            manifest = await res.json();
+            manifest._loadedFrom = 'api';
+            return manifest;
+        } catch (apiErr) {
+            const offlineRes = await fetch('/api/help_offline_manifest.php');
+            if (!offlineRes.ok) throw apiErr;
+            manifest = await offlineRes.json();
+            manifest._loadedFrom = 'offline';
+            manifest._offlineMessage = 'Showing bundled Help topics — live Birkly-Docs manifest unavailable.';
+            return manifest;
+        }
     }
 
     function getTopicFromUrl() {
@@ -157,15 +167,18 @@
         content.innerHTML = '<p class="text-secondary">Loading…</p>';
 
         try {
-            const res = await fetch(topic.snapshot);
-            if (!res.ok) throw new Error('Snapshot not found');
-            const md = await res.text();
             let banner = '';
+            if (manifest && manifest._loadedFrom === 'offline') {
+                banner = '<div class="alert alert-info help-offline-banner">' + escapeHtml(manifest._offlineMessage || 'Offline Help mode') + '</div>';
+            }
             if (topic.source === 'plugin') {
-                banner = '<div class="help-plugin-banner"><strong>Plugin extension</strong> — '
+                banner += '<div class="help-plugin-banner"><strong>Plugin extension</strong> — '
                     + escapeHtml(topic.title)
                     + ' is provided by an installed plugin, not core Birkly.</div>';
             }
+            const res = await fetch(topic.snapshot);
+            if (!res.ok) throw new Error('Snapshot not found');
+            const md = await res.text();
             content.innerHTML = banner + '<div class="markdown-content">' + renderMarkdown(md) + '</div>';
 
             if (source) {

@@ -5,7 +5,8 @@ users/
 content/
 media/
 logs/
-settings/
+settings/*
+!settings/help_manifest.json
 backups/
 temp/
 
