@@ -154,6 +154,17 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
 
     $response = birkly_marketplace_request('GET', '/api/v1/registry', null, $params);
     if (!$response['ok'] || !is_array($response['data'])) {
+        $fallback = birkly_marketplace_fallback_catalog();
+        $offers = is_array($fallback['offers'] ?? null) ? $fallback['offers'] : [];
+        if ($offerType !== '') {
+            $offers = birkly_marketplace_filter_offers($offers, '', '', $offerType);
+        }
+        if ($query !== '' || $category !== '') {
+            $offers = birkly_marketplace_filter_offers($offers, $query, $category, $offerType);
+        }
+        if ($offers !== []) {
+            return ['ok' => true, 'offers' => $offers, 'fallback' => true];
+        }
         return ['ok' => false, 'offers' => [], 'error' => $response['error'] ?? 'Registry unavailable'];
     }
 
@@ -165,6 +176,29 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
     }
 
     return ['ok' => true, 'offers' => $offers];
+}
+
+/**
+ * Bundled catalog used when the remote registry is unreachable (alpha / offline).
+ *
+ * @return array{offers: array}
+ */
+function birkly_marketplace_fallback_catalog(): array
+{
+    static $catalog = null;
+    if ($catalog !== null) {
+        return $catalog;
+    }
+
+    $path = __DIR__ . '/../catalog/marketplace-registry-fallback.json';
+    if (!is_file($path)) {
+        $catalog = ['offers' => []];
+        return $catalog;
+    }
+
+    $decoded = json_decode((string) file_get_contents($path), true);
+    $catalog = is_array($decoded) ? $decoded : ['offers' => []];
+    return $catalog;
 }
 
 function birkly_marketplace_filter_offers(array $offers, string $query, string $category, string $offerType): array
