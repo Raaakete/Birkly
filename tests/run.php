@@ -84,6 +84,7 @@ $suites = [
     'commerce_variants_test.php',
     'commerce_discount_test.php',
     'commerce_import_test.php',
+    'commerce_live_import_test.php',
     'commerce_fulfillment_test.php',
     'commerce_fulfillment_router_test.php',
     'commerce_mapping_test.php',

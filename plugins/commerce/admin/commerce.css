@@ -1102,4 +1102,37 @@ body.commerce-import-wizard-open { overflow: hidden; }
   min-width: 220px;
   margin-right: 0.5rem;
 }
+
+.commerce-mapping-wizard {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: var(--bg-elevated, #fff);
+}
+
+.commerce-wizard-steps {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.commerce-wizard-step {
+  color: var(--text-secondary, #6b7280);
+}
+
+.commerce-wizard-step.active {
+  color: var(--text-primary, #111827);
+  font-weight: 600;
+}
+
+.commerce-wizard-panel .form-group {
+  margin-bottom: 0.75rem;
+}
+
+.commerce-wizard-panel .btn {
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+}
 .commerce-subscription-detail { margin-top: 16px; }
