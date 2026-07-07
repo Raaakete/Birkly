@@ -1,3 +1,4 @@
+<?php include __DIR__ . '/admin-legal-footer.php'; ?>
         </main>
     </div>
 

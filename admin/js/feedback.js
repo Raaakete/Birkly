@@ -38,12 +38,26 @@
         return labels[type] || type;
     }
 
+    function categoryLabel(category) {
+        const labels = {
+            admin: 'Admin',
+            content: 'Content',
+            commerce: 'Commerce',
+            marketplace: 'Marketplace',
+            plugins: 'Plugins',
+            ai: 'AI & MCP',
+            other: 'Other',
+        };
+        return labels[category] || category || 'Other';
+    }
+
     async function loadFeedback() {
         const loading = document.getElementById('feedback-list-loading');
         const empty = document.getElementById('feedback-list-empty');
         const wrap = document.getElementById('feedback-table-wrap');
         const status = document.getElementById('feedback-filter-status')?.value || '';
         const type = document.getElementById('feedback-filter-type')?.value || '';
+        const category = document.getElementById('feedback-filter-category')?.value || '';
 
         if (loading) loading.style.display = 'block';
         if (empty) empty.style.display = 'none';
@@ -52,6 +66,7 @@
         const params = new URLSearchParams({ action: 'list' });
         if (status) params.set('status', status);
         if (type) params.set('type', type);
+        if (category) params.set('category', category);
 
         try {
             const res = await fetch('/api/feedback.php?' + params.toString());
@@ -88,6 +103,7 @@
             <tr>
                 <td>${escapeHtml(formatDate(item.created_at))}</td>
                 <td>${escapeHtml(typeLabel(item.type))}</td>
+                <td>${escapeHtml(categoryLabel(item.category))}</td>
                 <td>${escapeHtml(item.title)}</td>
                 <td>${escapeHtml(item.user_email || item.user_id || '—')}</td>
                 <td>${statusBadge(item.status)}</td>
@@ -115,6 +131,7 @@
         if (body) {
             body.innerHTML = `
                 <p><strong>Type:</strong> ${escapeHtml(typeLabel(item.type))}</p>
+                <p><strong>Category:</strong> ${escapeHtml(categoryLabel(item.category))}</p>
                 <p><strong>From:</strong> ${escapeHtml(item.user_email || item.user_id)} (${escapeHtml(item.user_role || '')})</p>
                 <p><strong>Page:</strong> ${escapeHtml(item.page_context || '—')}</p>
                 <p><strong>Submitted:</strong> ${escapeHtml(formatDate(item.created_at))}</p>
@@ -166,6 +183,7 @@
         document.getElementById('feedback-refresh-btn')?.addEventListener('click', loadFeedback);
         document.getElementById('feedback-filter-status')?.addEventListener('change', loadFeedback);
         document.getElementById('feedback-filter-type')?.addEventListener('change', loadFeedback);
+        document.getElementById('feedback-filter-category')?.addEventListener('change', loadFeedback);
         document.getElementById('feedback-save-status-btn')?.addEventListener('click', saveStatus);
         document.querySelectorAll('[data-close-feedback-modal]').forEach((el) => {
             el.addEventListener('click', closeDetail);
