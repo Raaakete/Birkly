@@ -364,6 +364,8 @@
       dunning_email_subject: document.getElementById('payments-dunning-email-subject')?.value || '',
       dunning_email_body: document.getElementById('payments-dunning-email-body')?.value || '',
       commerce_default_currency: document.getElementById('payments-default-currency')?.value || 'eur',
+      commerce_display_currency: document.getElementById('payments-display-currency')?.value || '',
+      commerce_fx_rates: document.getElementById('payments-fx-rates')?.value || '',
     };
     apiCall('save_settings', { settings: settings }).then(function (res) {
       if (res.status === 'ok') {
@@ -396,6 +398,13 @@
       if (dunningBody && s.dunning_email_body) dunningBody.value = s.dunning_email_body;
       var defaultCurrency = document.getElementById('payments-default-currency');
       if (defaultCurrency && s.commerce_default_currency) defaultCurrency.value = s.commerce_default_currency;
+      var displayCurrency = document.getElementById('payments-display-currency');
+      if (displayCurrency) displayCurrency.value = s.commerce_display_currency || '';
+      var fxRates = document.getElementById('payments-fx-rates');
+      if (fxRates) {
+        if (typeof s.commerce_fx_rates === 'string') fxRates.value = s.commerce_fx_rates;
+        else if (s.commerce_fx_rates && typeof s.commerce_fx_rates === 'object') fxRates.value = JSON.stringify(s.commerce_fx_rates);
+      }
     });
   }
 
