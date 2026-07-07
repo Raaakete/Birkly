@@ -2,9 +2,10 @@
 
 **Status:** Approved (2026-07-07, Keven) — **blocked on P11 closure**  
 **Baseline:** P11 complete (required)  
-**Human rule:** Execute **P12-M0 → P12-M8** autonomously. Notify human **once** at **P12-M8 closure**.
+**Human rule:** Superseded — use **combined single-wave** handoff. Notify once at P12-M8.
 
 **Master plan:** `docs/reviews/P11-P12-complete-plan.md` § Phase 12  
+**Combined handoff:** `docs/reviews/P11-P12-lead-engineer-handoff.md` (canonical for execution)  
 **Roadmap:** `docs/roadmap/ROADMAP.md` § Phase 12
 
 ---

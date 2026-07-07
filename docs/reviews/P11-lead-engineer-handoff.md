@@ -2,9 +2,10 @@
 
 **Status:** Approved (2026-07-07, Keven) — autonomous execution P11-M0→M7  
 **Baseline:** P10 complete — Birkly **100 test suites** · Marketplace **10 test suites**  
-**Human rule:** Execute **P11-M0 → P11-M7** autonomously. Notify human **once** at **P11-M7 closure**.
+**Human rule:** Superseded — use **combined single-wave** handoff. Execute P11 as part of P11+P12; notify once at P12-M8.
 
 **Master plan:** `docs/reviews/P11-P12-complete-plan.md` § Phase 11  
+**Combined handoff:** `docs/reviews/P11-P12-lead-engineer-handoff.md` (canonical for execution)  
 **Roadmap:** `docs/roadmap/ROADMAP.md` § Phase 11
 
 ---

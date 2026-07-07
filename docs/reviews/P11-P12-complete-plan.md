@@ -3,7 +3,7 @@
 **Status:** **Approved (2026-07-07, Keven)** — autonomous execution P11-M0→M7, then P12-M0→M8  
 **Baseline:** P10 complete on `main` (2026-07-07) — Birkly **100 test suites** · Marketplace **10 test suites**  
 **Roadmap:** `docs/roadmap/ROADMAP.md` § Phase 11 · § Phase 12  
-**Handoffs:** `docs/reviews/P11-lead-engineer-handoff.md` · `docs/reviews/P12-lead-engineer-handoff.md`
+**Handoffs:** `docs/reviews/P11-P12-lead-engineer-handoff.md` (combined single wave) · `docs/reviews/P11-lead-engineer-handoff.md` · `docs/reviews/P12-lead-engineer-handoff.md`
 
 ---
 
@@ -16,9 +16,9 @@ Phases 11 and 12 complete the post-marketplace backlog: **merchant-grade commerc
 | **P11** | Commerce production wave | Birkly (`plugins/commerce/`) · Birkly-Docs |
 | **P12** | Marketplace automation, live import, deploy closure, platform hardening | Birkly-Marketplace · Birkly · kekaba · Birkly-Website |
 
-**Cross-phase rule:** **P11 completes before P12 starts.** CMS commerce changes land in Birkly first; P12 marketplace/import work may reference stable commerce APIs from P11.
+**Cross-phase rule:** **P11 before P12-M3** (commerce APIs stable). Marketplace P12-M1–M2 may parallel with late P11.
 
-**Execution:** Human approves this document once → lead-engineer runs P11-M0→M7 autonomously, notifies once at P11 closure → then P12-M0→M8 autonomously, notifies once at P12 closure.
+**Execution:** Human approved **single-wave** (2026-07-07) — lead-engineer runs P11-M0→M7 then P12-M0→M8 **without pause**. Notify human **once** at **P12-M8** only. See `docs/reviews/P11-P12-lead-engineer-handoff.md`.
 
 ---
 
@@ -36,7 +36,9 @@ Phases 11 and 12 complete the post-marketplace backlog: **merchant-grade commerc
 | P11-D6 | Shop/Events migration wizard: **read-only** import from legacy plugin data → Commerce fieldtype entries; does not remove legacy plugins |
 | P11-D7 | Official plugin **CI publish on git tag** (GitHub Actions in Birkly repo only; no third-party GitHub App) |
 | P11-D8 | **Kekaba deferred** in P11 — deploy closure is P12-M5 |
-| P11-D9 | Notify human **once** at P11-M7 closure |
+| P11-D9 | **No separate P11 notification** — single closure at P12-M8 (P11-P12-D-EXEC) |
+
+| P11-P12-D-EXEC | **Single wave** — develop P11 then P12 in one run; one human notification at P12-M8 |
 
 ### Phase 12
 
@@ -51,7 +53,7 @@ Phases 11 and 12 complete the post-marketplace backlog: **merchant-grade commerc
 | P12-D7 | User plugin ↔ commerce: purchase → tier mapping uses existing PostPurchaseRouter; wire membership products in wizard |
 | P12-D8 | CMS cloud SSO / connected accounts: **defer to P13** unless human elevates in approval |
 | P12-D9 | Paid official plugin tiers: **defer to P13** — remain free in P11–P12 |
-| P12-D10 | Notify human **once** at P12-M8 closure |
+| P12-D10 | Notify human **once** at P12-M8 — combined P11+P12 closure |
 
 ---
 
