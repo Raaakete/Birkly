@@ -36,5 +36,7 @@ unset($GLOBALS['birkly_marketplace_mock_handler']);
 $endpointReport = birkly_health_report();
 test_assert('endpoint payload ok/degraded', in_array($endpointReport['status'] ?? '', ['ok', 'degraded'], true));
 test_assert('endpoint includes service id', ($endpointReport['service'] ?? '') === 'birkly-cms');
+test_assert('endpoint includes checks catalog', isset($endpointReport['checks']['writable_dirs']['status']));
+test_assert('required response keys include checks', in_array('checks', birkly_health_required_response_keys(), true));
 
 exit(test_finish('Health diagnostics tests'));
