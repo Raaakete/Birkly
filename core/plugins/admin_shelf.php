@@ -18,7 +18,7 @@ function register_plugin_admin_meta(string $plugin_id, array $config = []): bool
 {
     global $birkly_plugin_admin_meta;
 
-    if ($plugin_id === '' || !preg_match('/^[a-z0-9_]+$/', $plugin_id)) {
+    if ($plugin_id === '' || !preg_match('/^[a-z0-9_-]+$/', $plugin_id)) {
         error_log('Invalid plugin admin meta id: ' . $plugin_id);
         return false;
     }
