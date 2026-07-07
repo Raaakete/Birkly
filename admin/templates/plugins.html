@@ -15,13 +15,28 @@
     </div>
 
     <div class="plugins-tabs" role="tablist">
+        <button type="button" class="plugins-tab" data-tab="marketplace" role="tab" aria-selected="false">
+            <?= __('admin.marketplace') ?>
+        </button>
         <button type="button" class="plugins-tab active" data-tab="installed" role="tab" aria-selected="true">
             <?= __('admin.installed_plugins') ?>
             <span class="update-badge hidden" id="plugins-update-badge" title="<?= __('admin.updates_available') ?>">0</span>
         </button>
-        <button type="button" class="plugins-tab" data-tab="marketplace" role="tab" aria-selected="false">
-            <?= __('admin.marketplace') ?>
-        </button>
+    </div>
+
+    <div class="plugins-tab-panel" id="plugins-tab-marketplace" role="tabpanel" hidden>
+        <div class="marketplace-toolbar">
+            <div class="marketplace-search">
+                <input type="search" id="marketplace-search" class="input" placeholder="<?= __('admin.marketplace_search_placeholder') ?>" autocomplete="off">
+                <button type="button" class="btn btn-primary" onclick="PluginsPage.searchMarketplace()"><?= __('admin.search') ?></button>
+            </div>
+            <p class="form-help marketplace-hint" id="marketplace-url-hint"></p>
+        </div>
+        <div class="marketplace-grid" id="marketplace-grid">
+            <div class="loading-state">
+                <p><?= __('admin.loading_marketplace') ?></p>
+            </div>
+        </div>
     </div>
 
     <div class="plugins-tab-panel active" id="plugins-tab-installed" role="tabpanel">
@@ -44,21 +59,6 @@
                 <div class="loading-state">
                     <p><?= __('admin.loading_plugins') ?></p>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="plugins-tab-panel" id="plugins-tab-marketplace" role="tabpanel" hidden>
-        <div class="marketplace-toolbar">
-            <div class="marketplace-search">
-                <input type="search" id="marketplace-search" class="input" placeholder="<?= __('admin.marketplace_search_placeholder') ?>" autocomplete="off">
-                <button type="button" class="btn btn-primary" onclick="PluginsPage.searchMarketplace()"><?= __('admin.search') ?></button>
-            </div>
-            <p class="form-help marketplace-hint" id="marketplace-url-hint"></p>
-        </div>
-        <div class="marketplace-grid" id="marketplace-grid">
-            <div class="loading-state">
-                <p><?= __('admin.loading_marketplace') ?></p>
             </div>
         </div>
     </div>
