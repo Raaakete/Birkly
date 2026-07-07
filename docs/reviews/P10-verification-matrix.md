@@ -4,7 +4,9 @@
 **Spec:** `docs/reviews/P10-marketplace-go-live-plan.md`  
 **Handoff:** `docs/reviews/P10-lead-engineer-handoff.md`
 
-Execute and mark results at P10-M7 closure.
+**Canonical milestone matrix:** `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md` (M0–M7 acceptance rows).
+
+This file lists integration-flow probes for Birkly-side QA. Execute and mark results at P10-M7 closure.
 
 ## Plugin unbundling (Birkly)
 

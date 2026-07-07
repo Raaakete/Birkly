@@ -4,6 +4,9 @@
 **Repos:** **Birkly-Marketplace** (primary) · Birkly · Birkly-Docs · Birkly-Website · kekaba (embed)  
 **Baseline:** P9 complete on `main` — Birkly **97 test suites** · Marketplace **8 test suites**  
 **Handoff:** `docs/reviews/P10-lead-engineer-handoff.md`  
+**Coupling register:** `docs/reviews/P10-plugin-coupling-register.md`  
+**Release manifest:** `scripts/cms-release-manifest.json`  
+**Verification matrix:** `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md`  
 **Roadmap:** `docs/roadmap/ROADMAP.md` § Phase 10
 
 ---
@@ -71,6 +74,22 @@ flowchart TB
 
 ---
 
+## Repo mapping
+
+| Repo | P10 responsibility | Key paths |
+|------|-------------------|-----------|
+| **Birkly** | CMS unbundling, API gating, dev install script, plugin zip build, marketplace client UX | `scripts/cms-release-manifest.json` · `scripts/build-plugin-zip.sh` · `scripts/install-dev-plugins.sh` · `api/index.php` · `api/public.php` · `api/automation.php` · `api/marketplace.php` · `core/marketplace/` · `plugins/{commerce,events,automation,user_management}/` |
+| **Birkly-Marketplace** | Official catalog entries, registry publish, go-live ops, platform admin UI, refunds | `catalog/` · `api/v1/registry.php` · `core/qc.php` · `core/admin_routes.php` · `views/admin/` · `docs/P10-VERIFICATION-MATRIX.md` |
+| **Birkly-Docs** | Plugin install guide, refund policy, provider publishing | `03-plugins/` · marketplace buyer/provider guides |
+| **Birkly-Website** | Marketplace CTA, featured official plugins | `beta/` collections · homepage links |
+| **kekaba** | Client embed without `plugins/`; demo install path | `Birkly-0.1/` sync · `scripts/` or docs for post-sync plugin install |
+
+**Dependency order:** Birkly M1 (unbundle) → Birkly M2 + Marketplace listings → Birkly M3 → Marketplace M4+M4b (parallel) → Docs/Website + kekaba → M7 closure.
+
+**Branches:** `cursor/p10-m[N]-<slug>-030a` (all repos; same milestone id when cross-repo).
+
+---
+
 ## Offer & provider status model
 
 ### Offer statuses
@@ -126,7 +145,7 @@ P9 scaffold exists (`core/admin_auth.php`, `core/admin_routes.php`); views are s
 
 | ID | Focus | Repo |
 |----|--------|------|
-| **P10-M0** | Gap register, release manifest, verification matrix shell | Birkly + Marketplace |
+| **P10-M0** | Coupling register, CMS release manifest, verification matrix shell | Birkly + Marketplace |
 | **P10-M1** | Core unbundling — exclude plugins from CMS zip; graceful API gating; dev install script | Birkly |
 | **P10-M2** | Official plugin zip pipeline + marketplace listings | Birkly + Marketplace |
 | **P10-M3** | CMS marketplace UX — free install, updates, onboarding hint | Birkly |
@@ -146,9 +165,11 @@ P9 scaffold exists (`core/admin_auth.php`, `core/admin_routes.php`); views are s
 
 ### P10-M0 — Planning gate
 
-- [ ] **P10-M0-T1** Core→plugin coupling register (`api/index.php`, `api/public.php`, `api/automation.php`, tests, embed)
-- [ ] **P10-M0-T2** CMS release manifest doc — what ships in download zip
-- [ ] **P10-M0-T3** `docs/reviews/P10-verification-matrix.md` shell
+- [x] **P10-M0-T1** Core→plugin coupling register — `docs/reviews/P10-plugin-coupling-register.md`
+- [x] **P10-M0-T2** CMS release manifest — `scripts/cms-release-manifest.json`
+- [x] **P10-M0-T3** Verification matrix shell — `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md`
+
+**Acceptance:** Coupling register lists all 25 in-scope couplings with gating strategy; manifest defines excludes/includes; matrix has M0–M7 rows with M0 **partial**.
 
 ### P10-M1 — Core unbundling
 
@@ -159,6 +180,8 @@ P9 scaffold exists (`core/admin_auth.php`, `core/admin_routes.php`); views are s
 - [ ] **P10-M1-T5** CI: run tests with dev-plugins script before suite
 - [ ] **P10-M1-T6** Migration note for existing installs (grandfather P10-D5)
 
+**Acceptance:** Release zip matches manifest; no plugin fatals on fresh tree; CI runs `install-dev-plugins.sh` before tests; automation no longer default-active on discovery.
+
 ### P10-M2 — Official plugin packaging
 
 - [ ] **P10-M2-T1** `scripts/build-plugin-zip.sh` — zip per plugin, semver, sha256
@@ -166,6 +189,8 @@ P9 scaffold exists (`core/admin_auth.php`, `core/admin_routes.php`); views are s
 - [ ] **P10-M2-T3** Declare dependencies (`events` → `commerce`) in manifests
 - [ ] **P10-M2-T4** CI/tag workflow publishes release to registry API
 - [ ] **P10-M2-T5** Remove `sample-plugin` from release zip (dev-only or marketplace hello-starter)
+
+**Acceptance:** Four official slugs live on registry with free tier; CI publishes artifact + sha256 on tag; `events` manifest declares commerce dependency.
 
 ### P10-M3 — CMS marketplace UX
 

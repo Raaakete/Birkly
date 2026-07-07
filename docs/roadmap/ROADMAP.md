@@ -188,8 +188,8 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 9 complete** — marketplace client, commerce ops, ContentEditor, automation node editor. **97 test suites** green. Official plugins still bundled in `plugins/` (unbundle in P10). |
-| **Birkly-Marketplace** | **Phase 9 complete** — provider, catalog, checkout, licenses, QC backend, reviews backend. **8 test suites** green. Admin UI = stubs. |
+| **Birkly (CMS)** | **Phase 10 in progress** — marketplace client complete; plugin unbundling + platform admin pending. **97 test suites** green. Official plugins still bundled in dev `plugins/` (excluded from release zip in P10-M1). |
+| **Birkly-Marketplace** | **Phase 10 in progress** — P9 backend complete; admin UI stubs; go-live ops pending. **8 test suites** green. |
 | **Birkly-Docs** | P6–P9 plugin + marketplace guides. |
 | **kekaba** | Embed current; demo shop/events. Live deploy smoke pending (human). |
 | **Agent ops** | CI + autonomous execution policy on `main`. |
@@ -198,11 +198,11 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Next active phase:** **Phase 10** — marketplace go-live, plugin unbundling, platform admin
 
-**2026-07-07 — Phase 10 approved** (Keven)
+**2026-07-07 — Phase 10 in progress** (Keven)
 
 **Priorities:** Unbundle official plugins to marketplace · production go-live · platform admin UI · refunds · official zip pipeline.
 
-**Handoff:** `docs/reviews/P10-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P10-marketplace-go-live-plan.md`
+**Handoff:** `docs/reviews/P10-lead-engineer-handoff.md` · **Spec:** `docs/reviews/P10-marketplace-go-live-plan.md` · **Coupling:** `docs/reviews/P10-plugin-coupling-register.md` · **Matrix:** `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md`
 
 **2026-07-07 — Phase 9 complete** (autonomous M0–M7)
 
@@ -2206,17 +2206,19 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 10 — Marketplace go-live, plugin unbundling & platform admin
 
-**Status:** **Approved** (2026-07-07, Keven) — autonomous execution P10-M0→M7
+**Status:** **in progress** (2026-07-07, Keven) — autonomous execution P10-M0→M7
 
 **Handoff:** `docs/reviews/P10-lead-engineer-handoff.md`  
 **Spec:** `docs/reviews/P10-marketplace-go-live-plan.md`  
-**Matrix:** `docs/reviews/P10-verification-matrix.md`
+**Coupling register:** `docs/reviews/P10-plugin-coupling-register.md`  
+**Release manifest:** `scripts/cms-release-manifest.json`  
+**Matrix:** `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md`
 
-**Goal:** Official plugins install only via marketplace; production go-live; full platform admin at `/admin/*`.
+**Goal:** Official plugins install only via marketplace; production go-live; full platform admin at `marketplace.birkly.com/admin`.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P10-M0** | Gap register, release manifest, matrix shell | pending |
+| **P10-M0** | Coupling register, CMS release manifest, verification matrix shell | **partial** |
 | **P10-M1** | Core unbundling — exclude plugins from CMS zip | pending |
 | **P10-M2** | Official plugin zip pipeline + marketplace listings | pending |
 | **P10-M3** | CMS marketplace UX — free install, updates | pending |
@@ -2225,6 +2227,8 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P10-M5** | Docs, legal, Birkly-Website | pending |
 | **P10-M6** | kekaba embed excludes plugins | pending |
 | **P10-M7** | Verification matrix, closure | pending |
+
+**Branches:** `cursor/p10-m[N]-<slug>-030a`
 
 **Human decisions (locked):** See `docs/reviews/P10-marketplace-go-live-plan.md` § Locked decisions (P10-D1–D13).
 
