@@ -6,10 +6,10 @@
   "requires": "1.0.0",
   "dependencies": {
     "plugins": [
-      { "id": "payments", "version": "1.0.0", "required": false }
+      { "id": "commerce", "version": "1.0.0", "required": false }
     ],
     "services": [
-      { "id": "payment_shelf", "version": "1.0.0", "provided_by": "payments", "required": false }
+      { "id": "payment_shelf", "version": "1.0.0", "provided_by": "commerce", "required": false }
     ]
   },
   "hooks": [
