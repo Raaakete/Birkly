@@ -1,6 +1,6 @@
 # Birkly plugins directory
 
-Official plugin packages are **not** included in the CMS release download. Install them from the [Birkly Marketplace](https://marketplace.birkly.com) (Admin → Plugins → Marketplace).
+Official plugin packages are **not** included in the CMS release download. Install them from the [Birkly Marketplace](https://marketplace.birkly.io) (Admin → Plugins → Marketplace).
 
 ## Local development
 

@@ -203,7 +203,7 @@ P9 scaffold exists (`core/admin_auth.php`, `core/admin_routes.php`); views are s
 ### P10-M4 — Marketplace operations
 
 - [ ] **P10-M4-T1** Production config docs — Stripe live, webhooks, fee %, env template
-- [ ] **P10-M4-T2** Deploy runbook — DNS, TLS, `marketplace.birkly.com`
+- [ ] **P10-M4-T2** Deploy runbook — DNS, TLS, `marketplace.birkly.io`
 - [ ] **P10-M4-T3** Reviews visible on catalog cards + offer detail
 - [ ] **P10-M4-T4** Provider `support_email` + `support_url` on listings; contact CTA
 - [ ] **P10-M4-T5** Refund request API + provider dashboard + admin queue

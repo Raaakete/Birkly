@@ -173,7 +173,7 @@ Buyer pays gross price
 
 | Feature | Detail |
 |---------|--------|
-| Setting | `marketplace_url` default `https://marketplace.birkly.com` |
+| Setting | `marketplace_url` default `https://marketplace.birkly.io` |
 | Plugins admin | **Marketplace** tab — browse/search (read-only API) |
 | Install | Enter license key; optional deep-link token from buyer session (stretch) |
 | Updates | Badge + one-click upgrade for marketplace-sourced plugins |
