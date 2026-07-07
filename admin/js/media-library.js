@@ -9,7 +9,6 @@
     const mediaData = window.mediaData || {};
     const csrfToken = mediaData.csrfToken || '';
     
-    console.log('Media library initialized');
     
     // File upload handling
     const uploadForm = document.getElementById('media-upload-form');
@@ -48,7 +47,6 @@
     mediaItems.forEach(item => {
         item.addEventListener('click', function() {
             // Handle media item selection
-            console.log('Media item clicked:', this);
         });
     });
     

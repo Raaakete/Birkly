@@ -628,7 +628,6 @@
             
             // Get raw text first to debug
             const responseText = await response.text();
-            console.log('Raw response:', responseText.substring(0, 200)); // Log first 200 chars
             
             // Try to parse JSON
             let result;

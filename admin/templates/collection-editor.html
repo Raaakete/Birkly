@@ -2532,7 +2532,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prevent form submission when Enter is pressed in language input - use capture phase
         form.addEventListener('keydown', function(e) {
             if ((e.key === 'Enter' || e.keyCode === 13) && e.target && e.target.id === 'language-input') {
-                console.log('[Form] Enter key in language input - handling it here');
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -2540,7 +2539,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle language addition here since we're in capture phase
                 const input = e.target;
                 const inputValue = input.value.trim().toLowerCase();
-                console.log('[Form] Input value:', inputValue, 'length:', inputValue.length);
                 
                 // Get autocomplete list
                 const autocompleteList = document.getElementById('language-autocomplete');
@@ -2552,11 +2550,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (autocompleteList && autocompleteList.style.display === 'block' && selectedIndex >= 0 && autocompleteList.children[selectedIndex]) {
                     const selected = autocompleteList.children[selectedIndex];
                     langCodeToAdd = selected.dataset.code;
-                    console.log('[Form] Adding from autocomplete:', langCodeToAdd);
                 } else if (inputValue && inputValue.length >= 2 && inputValue.length <= 5) {
                     // Check if it's a valid language code (2-5 chars)
                     langCodeToAdd = inputValue;
-                    console.log('[Form] Using as language code:', langCodeToAdd);
                 } else if (inputValue) {
                     // Try to find matching language by name (English or native)
                     const langList = window.__languageList || [];
@@ -2573,9 +2569,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (matchingLang) {
                         langCodeToAdd = matchingLang.code;
-                        console.log('[Form] Found matching language:', matchingLang.name, '/', matchingLang.native, '->', langCodeToAdd);
                     } else {
-                        console.log('[Form] No matching language found for:', inputValue);
                     }
                 }
                 
@@ -2589,7 +2583,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.hideAutocomplete();
                     }
                 } else {
-                    console.log('[Form] Could not determine language code from:', inputValue);
                 }
                 
                 return false;
@@ -2599,9 +2592,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             // Check if submit was triggered from language input
             const activeElement = document.activeElement;
-            console.log('[Form] Submit event - active element:', activeElement ? activeElement.id : 'none');
             if (activeElement && activeElement.id === 'language-input') {
-                console.log('[Form] Preventing form submit - language input is active');
                 e.preventDefault();
                 e.stopPropagation();
                 return false;
@@ -2612,10 +2603,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(form);
             
             // Debug: Log CSS URL values before submission
-            console.log('Form submission - checking CSS URL fields:');
             for (let [key, value] of formData.entries()) {
                 if (key.includes('css_url')) {
-                    console.log('Found CSS URL field:', key, '=', value);
                 }
             }
             
@@ -2792,32 +2781,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log('[Language Input] Keydown:', e.key, 'keyCode:', e.keyCode, 'target:', e.target.id);
             
             if (e.key === 'Enter' || e.keyCode === 13) {
-                console.log('[Language Input] Enter key detected!');
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
                 
                 const input = e.target;
                 const langCode = input.value.trim().toLowerCase();
-                console.log('[Language Input] Language code:', langCode, 'length:', langCode.length);
                 
                 if (autocompleteList && autocompleteList.style.display === 'block' && selectedIndex >= 0 && autocompleteList.children[selectedIndex]) {
                     const selected = autocompleteList.children[selectedIndex];
                     const selectedLangCode = selected.dataset.code;
-                    console.log('[Language Input] Adding from autocomplete:', selectedLangCode);
                     addLanguageTag(selectedLangCode);
                     input.value = '';
                     hideAutocomplete();
                 } else if (langCode && langCode.length >= 2 && langCode.length <= 5) {
-                    console.log('[Language Input] Adding from input value:', langCode);
                     addLanguageTag(langCode);
                     input.value = '';
                     hideAutocomplete();
                 } else {
-                    console.log('[Language Input] Invalid language code:', langCode, 'length:', langCode.length);
                 }
                 return false;
             } else if (e.key === 'ArrowDown') {
@@ -3009,14 +2992,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const languageInput = document.getElementById('language-input');
         
         if (!languageTagsContainer || !languageInput) {
-            console.log('[addLanguageTag] Missing elements');
             return;
         }
         
         // Check if already exists
         const existing = languageTagsContainer.querySelector(`[data-lang="${langCode}"]`);
         if (existing) {
-            console.log('[addLanguageTag] Language already added:', langCode);
             return;
         }
         
@@ -3037,7 +3018,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Insert before input
         languageTagsContainer.insertBefore(tag, languageInput);
         
-        console.log('[addLanguageTag] Language added:', langCode);
     }
     
     // Make it globally accessible immediately
@@ -3052,7 +3032,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const tag = languageTagsContainer.querySelector(`[data-lang="${langCode}"]`);
         if (tag) {
             tag.remove();
-            console.log('Language removed:', langCode);
         }
     }
     

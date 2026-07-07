@@ -16,17 +16,18 @@ $storage = new Storage(__DIR__ . '/../');
 $rolesFile = 'settings/roles.json';
 
 function requireAuthRole($perm) {
-    // TODO: Implement permission check for roles management
-    requireAuth('manage_users');
+    requireAuth($perm);
 }
 
 if ($action === 'list_roles') {
+    requireAuthRole('manage_users');
     $roles = birkly_ensure_default_roles();
     echo json_encode(['status' => 'ok', 'roles' => $roles]);
     exit;
 }
 
 if ($action === 'get_role') {
+    requireAuthRole('manage_users');
     $id = $_REQUEST['id'] ?? '';
     $roles = $storage->read($rolesFile) ?: [];
     foreach ($roles as $role) {
@@ -40,7 +41,7 @@ if ($action === 'get_role') {
 }
 
 if ($action === 'create_role') {
-    requireAuthRole('manage_roles');
+    requireAuthRole('manage_users');
     $input = json_decode(file_get_contents('php://input'), true);
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -55,7 +56,7 @@ if ($action === 'create_role') {
 }
 
 if ($action === 'update_role') {
-    requireAuthRole('manage_roles');
+    requireAuthRole('manage_users');
     $input = json_decode(file_get_contents('php://input'), true);
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -75,7 +76,7 @@ if ($action === 'update_role') {
 }
 
 if ($action === 'delete_role') {
-    requireAuthRole('manage_roles');
+    requireAuthRole('manage_users');
     $input = json_decode(file_get_contents('php://input'), true);
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {

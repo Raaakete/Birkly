@@ -150,9 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Navigate to folder
 function navigateToFolder(folder) {
-  console.log('navigateToFolder called with:', folder);
   currentFolder = folder;
-  console.log('currentFolder set to:', currentFolder);
   loadMedia();
   updateBreadcrumb();
   highlightCurrentFolder();
@@ -443,18 +441,14 @@ function selectMoveFolder(folder) {
 // Load media
 async function loadMedia() {
   const url = `/api/admin_media.php?action=list&folder=${encodeURIComponent(currentFolder)}`;
-  console.log('loadMedia called with currentFolder:', currentFolder);
-  console.log('API URL:', url);
   
   try {
     const response = await fetch(url);
     const result = await response.json();
     
-    console.log('API response:', result);
     
     if (result.status === 'ok') {
       currentMedia = result.data;
-      console.log('Loaded media count:', currentMedia.length);
       renderMediaGrid();
     } else {
       showError('Failed to load media: ' + result.message);
@@ -783,8 +777,6 @@ async function deleteFolderWithOptions(folderPath) {
 
 // View media details
 function viewMedia(id) {
-  console.log('viewMedia called with id:', id);
-  console.log('currentMedia:', currentMedia);
   
   const item = currentMedia.find(m => m.id === id);
   if (!item) {
@@ -792,7 +784,6 @@ function viewMedia(id) {
     return;
   }
   
-  console.log('Found media item:', item);
   currentMediaItem = item;
   
   const modal = document.getElementById('media-modal');
@@ -859,7 +850,6 @@ function closeMediaModalCompletely() {
 
 // Open move modal
 function openMoveModal() {
-  console.log('openMoveModal called, currentMediaItem:', currentMediaItem);
   
   if (!currentMediaItem) {
     console.error('No currentMediaItem in openMoveModal');
@@ -868,7 +858,6 @@ function openMoveModal() {
   }
   
   selectedMoveFolder = currentMediaItem.folder || '';
-  console.log('Selected move folder:', selectedMoveFolder);
   
   renderMoveFolderTree();
   
@@ -895,7 +884,6 @@ async function confirmMove() {
     return;
   }
   
-  console.log('Moving media:', currentMediaItem.id, 'to folder:', selectedMoveFolder);
   
   try {
     const formData = new FormData();
@@ -909,7 +897,6 @@ async function confirmMove() {
     });
     
     const result = await response.json();
-    console.log('Move result:', result);
     
     if (result.status === 'ok') {
       showSuccess('Media moved successfully!');
