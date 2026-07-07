@@ -77,6 +77,7 @@ if ($action === 'browse') {
         'data' => [
             'offers' => $result['offers'],
             'marketplace_url' => birkly_marketplace_url(),
+            'fallback' => !empty($result['fallback']),
         ],
     ]);
     exit;

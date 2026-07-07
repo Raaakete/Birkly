@@ -27,12 +27,6 @@
         </svg>
         <?= __('admin.users_and_roles') ?>
       </button>
-      <button type="button" class="tab" data-tab="plugins">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-        </svg>
-        <?= __('admin.plugins') ?>
-      </button>
       <button type="button" class="tab" data-tab="security">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -397,53 +391,6 @@
               </div>
             </div>
             <?php endforeach; ?>
-          </div>
-        </div>
-      </div>
-
-      <!-- Plugins Tab -->
-      <div class="tab-pane" id="plugins">
-        <div class="settings-section">
-          <div class="section-header">
-            <h2><?= __('admin.installed_plugins') ?></h2>
-          </div>
-          <div class="plugins-grid">
-            <?php if (empty($settings['plugins'])): ?>
-              <div class="empty-state">
-                <p>No plugins installed yet.</p>
-              </div>
-            <?php else: ?>
-              <?php foreach ($settings['plugins'] ?? [] as $pluginId => $plugin): ?>
-              <div class="card plugin-card">
-                <div class="plugin-header">
-                  <div>
-                    <h3><?= htmlspecialchars($plugin['name'] ?? $pluginId) ?></h3>
-                    <?php if (!empty($plugin['description'])): ?>
-                      <p class="settings-help"><?= htmlspecialchars($plugin['description']) ?></p>
-                    <?php endif; ?>
-                  </div>
-                  <span class="status-badge <?= !empty($plugin['active']) ? 'active' : 'inactive' ?>">
-                    <?= !empty($plugin['active']) ? 'Active' : 'Inactive' ?>
-                  </span>
-                </div>
-                <div class="plugin-meta">
-                  <span class="plugin-id"><?= htmlspecialchars($pluginId) ?></span>
-                  <?php if (!empty($plugin['version'])): ?>
-                    <span class="plugin-version">v<?= htmlspecialchars($plugin['version']) ?></span>
-                  <?php endif; ?>
-                </div>
-                <div class="plugin-actions">
-                  <button class="btn btn-sm <?= !empty($plugin['active']) ? 'btn-secondary' : 'btn-primary' ?>"
-                          onclick="togglePlugin('<?= htmlspecialchars($pluginId, ENT_QUOTES) ?>', <?= !empty($plugin['active']) ? 'false' : 'true' ?>)">
-                    <?= !empty($plugin['active']) ? 'Deactivate' : 'Activate' ?>
-                  </button>
-                  <button class="btn btn-sm btn-danger" onclick="deletePlugin('<?= htmlspecialchars($pluginId, ENT_QUOTES) ?>')">
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <?php endforeach; ?>
-            <?php endif; ?>
           </div>
         </div>
       </div>
