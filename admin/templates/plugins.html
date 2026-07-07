@@ -6,7 +6,7 @@
 </div>
 <div class="plugins-page">
     <div class="page-header">
-        <h1><?= __('admin.plugin_management') ?></h1>
+        <h1>{translate 'admin.plugin_management'}</h1>
         <div class="breadcrumbs">
             <a href="{admin_url 'settings'}">{translate 'admin.settings'}</a>
             <span class="separator">›</span>
@@ -16,25 +16,25 @@
 
     <div class="plugins-tabs" role="tablist">
         <button type="button" class="plugins-tab" data-tab="marketplace" role="tab" aria-selected="false">
-            <?= __('admin.marketplace') ?>
+            {translate 'admin.marketplace'}
         </button>
         <button type="button" class="plugins-tab active" data-tab="installed" role="tab" aria-selected="true">
-            <?= __('admin.installed_plugins') ?>
-            <span class="update-badge hidden" id="plugins-update-badge" title="<?= __('admin.updates_available') ?>">0</span>
+            {translate 'admin.installed_plugins'}
+            <span class="update-badge hidden" id="plugins-update-badge" title="{translate 'admin.updates_available'}">0</span>
         </button>
     </div>
 
     <div class="plugins-tab-panel" id="plugins-tab-marketplace" role="tabpanel" hidden>
         <div class="marketplace-toolbar">
             <div class="marketplace-search">
-                <input type="search" id="marketplace-search" class="input" placeholder="<?= __('admin.marketplace_search_placeholder') ?>" autocomplete="off">
-                <button type="button" class="btn btn-primary" onclick="PluginsPage.searchMarketplace()"><?= __('admin.search') ?></button>
+                <input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
+                <button type="button" class="btn btn-primary" onclick="PluginsPage.searchMarketplace()">{translate 'admin.search'}</button>
             </div>
             <p class="form-help marketplace-hint" id="marketplace-url-hint"></p>
         </div>
         <div class="marketplace-grid" id="marketplace-grid">
             <div class="loading-state">
-                <p><?= __('admin.loading_marketplace') ?></p>
+                <p>{translate 'admin.loading_marketplace'}</p>
             </div>
         </div>
     </div>
@@ -42,7 +42,7 @@
     <div class="plugins-tab-panel active" id="plugins-tab-installed" role="tabpanel">
         <div class="main-actions-bar">
             <button class="btn btn-secondary" type="button" onclick="PluginsPage.checkAllUpdates()">
-                <?= __('admin.check_updates') ?>
+                {translate 'admin.check_updates'}
             </button>
             <button class="btn btn-primary" type="button" onclick="PluginsPage.openInstallModal()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -50,14 +50,14 @@
                     <polyline points="7,10 12,15 17,10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                <?= __('admin.install_plugin') ?>
+                {translate 'admin.install_plugin'}
             </button>
         </div>
 
         <div class="plugins-container">
             <div class="plugins-grid" id="plugins-grid">
                 <div class="loading-state">
-                    <p><?= __('admin.loading_plugins') ?></p>
+                    <p>{translate 'admin.loading_plugins'}</p>
                 </div>
             </div>
         </div>
@@ -68,26 +68,26 @@
 <div id="install-plugin-modal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
-            <h2><?= __('admin.install_plugin') ?></h2>
+            <h2>{translate 'admin.install_plugin'}</h2>
             <button class="modal-close-btn" type="button" onclick="PluginsPage.closeInstallModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <p class="form-help"><?= __('admin.marketplace_install_hint') ?></p>
+            <p class="form-help">{translate 'admin.marketplace_install_hint'}</p>
             <form id="install-plugin-form">
                 <div class="form-group">
-                    <label for="plugin-url"><?= __('admin.plugin_url_or_zip') ?></label>
+                    <label for="plugin-url">{translate 'admin.plugin_url_or_zip'}</label>
                     <input type="url" id="plugin-url" name="plugin_url" class="input" placeholder="https://example.com/plugin.zip">
-                    <small class="form-help"><?= __('admin.plugin_url_help') ?></small>
+                    <small class="form-help">{translate 'admin.plugin_url_help'}</small>
                 </div>
                 <div class="form-group">
-                    <label for="plugin-file"><?= __('admin.or_upload_plugin_file') ?></label>
+                    <label for="plugin-file">{translate 'admin.or_upload_plugin_file'}</label>
                     <input type="file" id="plugin-file" name="plugin_file" accept=".zip" class="input">
                 </div>
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="PluginsPage.closeInstallModal()"><?= __('admin.cancel') ?></button>
-            <button type="button" class="btn btn-primary" onclick="PluginsPage.installFromFile()"><?= __('admin.install_plugin') ?></button>
+            <button type="button" class="btn btn-secondary" onclick="PluginsPage.closeInstallModal()">{translate 'admin.cancel'}</button>
+            <button type="button" class="btn btn-primary" onclick="PluginsPage.installFromFile()">{translate 'admin.install_plugin'}</button>
         </div>
     </div>
 </div>
@@ -96,22 +96,22 @@
 <div id="marketplace-install-modal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="marketplace-install-title"><?= __('admin.install_from_marketplace') ?></h2>
+            <h2 id="marketplace-install-title">{translate 'admin.install_from_marketplace'}</h2>
             <button class="modal-close-btn" type="button" onclick="PluginsPage.closeMarketplaceInstallModal()">&times;</button>
         </div>
         <div class="modal-body">
             <p id="marketplace-install-summary" class="settings-help"></p>
             <div class="form-group">
-                <label for="marketplace-license-key"><?= __('admin.license_key') ?></label>
+                <label for="marketplace-license-key">{translate 'admin.license_key'}</label>
                 <input type="text" id="marketplace-license-key" class="input" placeholder="BIRKLY-XXXX-XXXX-XXXX-XXXX" autocomplete="off">
-                <small class="form-help"><?= __('admin.license_key_help') ?></small>
+                <small class="form-help">{translate 'admin.license_key_help'}</small>
             </div>
             <input type="hidden" id="marketplace-install-slug" value="">
             <input type="hidden" id="marketplace-install-version" value="">
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="PluginsPage.closeMarketplaceInstallModal()"><?= __('admin.cancel') ?></button>
-            <button type="button" class="btn btn-primary" id="marketplace-install-btn" onclick="PluginsPage.installFromMarketplace()"><?= __('admin.install_plugin') ?></button>
+            <button type="button" class="btn btn-secondary" onclick="PluginsPage.closeMarketplaceInstallModal()">{translate 'admin.cancel'}</button>
+            <button type="button" class="btn btn-primary" id="marketplace-install-btn" onclick="PluginsPage.installFromMarketplace()">{translate 'admin.install_plugin'}</button>
         </div>
     </div>
 </div>
@@ -120,7 +120,7 @@
 <div id="plugin-settings-modal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="plugin-settings-title"><?= __('admin.plugin_settings') ?></h2>
+            <h2 id="plugin-settings-title">{translate 'admin.plugin_settings'}</h2>
             <button class="modal-close-btn" onclick="closePluginSettingsModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -131,8 +131,8 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePluginSettingsModal()"><?= __('admin.cancel') ?></button>
-            <button type="button" class="btn btn-primary" onclick="savePluginSettings()"><?= __('admin.save_settings') ?></button>
+            <button type="button" class="btn btn-secondary" onclick="closePluginSettingsModal()">{translate 'admin.cancel'}</button>
+            <button type="button" class="btn btn-primary" onclick="savePluginSettings()">{translate 'admin.save_settings'}</button>
         </div>
     </div>
 </div>
@@ -141,20 +141,20 @@
 <div id="plugin-permissions-modal" class="modal-backdrop">
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
-            <h2 id="plugin-permissions-title"><?= __('admin.plugin_permissions') ?></h2>
+            <h2 id="plugin-permissions-title">{translate 'admin.plugin_permissions'}</h2>
             <button class="modal-close-btn" onclick="closePluginPermissionsModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div id="plugin-permissions-content">
-                <p><?= __('admin.loading_permissions') ?></p>
+                <p>{translate 'admin.loading_permissions'}</p>
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePluginPermissionsModal()"><?= __('admin.close') ?></button>
+            <button type="button" class="btn btn-secondary" onclick="closePluginPermissionsModal()">{translate 'admin.close'}</button>
         </div>
     </div>
 </div>
 
-{include_style '../css/plugins.css'}
-{include_script 'plugins-page.js'}
-{include_script 'plugin-ui.js'}
+<link rel="stylesheet" href="{birkly_url '/admin/css/pages/plugins.css'}">
+<script src="{birkly_url '/admin/js/plugins-page.js'}"></script>
+<script src="{birkly_url '/admin/js/plugin-ui.js'}"></script>

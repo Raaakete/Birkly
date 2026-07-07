@@ -155,14 +155,7 @@ class TemplateParser {
                     $filename .= '.js';
                 }
                 $jsPath = '/admin/js/' . $filename;
-                return '<?php
-                    if (!function_exists(\'birkly_build_info\')) {
-                        require_once __DIR__ . \'/../core/build_info.php\';
-                    }
-                    $__jsVer = (string) (birkly_build_info()[\'git_commit\'] ?? \'\');
-                    $__jsUrl = birkly_url(\'' . addslashes($jsPath) . '\') . ($__jsVer !== \'\' ? \'?v=\' . rawurlencode($__jsVer) : \'\');
-                    echo \'<script src="\' . htmlspecialchars($__jsUrl) . \'"></script>\';
-                ?>';
+                return '<?= \'<script src="\' . htmlspecialchars(birkly_url(\'' . addslashes($jsPath) . '\')) . \'"></script>\' ?>';
             },
             $parsed
         );
