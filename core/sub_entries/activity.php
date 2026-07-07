@@ -7,6 +7,14 @@
 
 require_once __DIR__ . '/../storage/StorageFactory.php';
 
+function birkly_activity_settings_dir(): string
+{
+    if (isset($GLOBALS['__birkly_activity_settings_dir'])) {
+        return (string) $GLOBALS['__birkly_activity_settings_dir'];
+    }
+    return __DIR__ . '/../../settings';
+}
+
 /**
  * Log sub-entry activity
  * 
@@ -19,7 +27,7 @@ require_once __DIR__ . '/../storage/StorageFactory.php';
  * @return bool True on success
  */
 function log_sub_entry_activity($action, $parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id, $data = []) {
-    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+    $storage = StorageFactory::createStorage(birkly_activity_settings_dir());
     
     $activity = [
         'id' => uniqid('act_', true),
@@ -35,18 +43,31 @@ function log_sub_entry_activity($action, $parent_collection, $parent_entry_id, $
         'data' => $data
     ];
     
-    // Load existing activities
-    $activities = $storage->read('sub_entry_activities.json') ?? [];
+    $streamFile = 'activity_stream.json';
+    $activities = $storage->read($streamFile) ?? [];
+    if (!is_array($activities)) {
+        $activities = [];
+    }
     
-    // Add new activity
     $activities[] = $activity;
     
-    // Keep only last 10,000 activities (prevent file from growing too large)
     if (count($activities) > 10000) {
         $activities = array_slice($activities, -10000);
     }
     
-    return $storage->write('sub_entry_activities.json', $activities);
+    $storage->write($streamFile, $activities);
+
+    $legacy = $storage->read('sub_entry_activities.json') ?? [];
+    if (!is_array($legacy)) {
+        $legacy = [];
+    }
+    $legacy[] = $activity;
+    if (count($legacy) > 10000) {
+        $legacy = array_slice($legacy, -10000);
+    }
+    $storage->write('sub_entry_activities.json', $legacy);
+    
+    return true;
 }
 
 /**
@@ -57,8 +78,11 @@ function log_sub_entry_activity($action, $parent_collection, $parent_entry_id, $
  * @return array Activities
  */
 function get_sub_entry_activities($filters = [], $options = []) {
-    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
-    $activities = $storage->read('sub_entry_activities.json') ?? [];
+    $storage = StorageFactory::createStorage(birkly_activity_settings_dir());
+    $activities = $storage->read('activity_stream.json') ?? [];
+    if (!is_array($activities) || $activities === []) {
+        $activities = $storage->read('sub_entry_activities.json') ?? [];
+    }
     
     // Apply filters
     if (!empty($filters)) {
@@ -197,8 +221,11 @@ function get_sub_entry_activity_summary($filters = []) {
  * @return int Number of activities removed
  */
 function clear_old_sub_entry_activities($days_to_keep = 90) {
-    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
-    $activities = $storage->read('sub_entry_activities.json') ?? [];
+    $storage = StorageFactory::createStorage(birkly_activity_settings_dir());
+    $activities = $storage->read('activity_stream.json') ?? [];
+    if (!is_array($activities) || $activities === []) {
+        $activities = $storage->read('sub_entry_activities.json') ?? [];
+    }
     
     $cutoff = time() - ($days_to_keep * 24 * 60 * 60);
     $kept = [];
@@ -213,6 +240,7 @@ function clear_old_sub_entry_activities($days_to_keep = 90) {
         }
     }
     
+    $storage->write('activity_stream.json', $kept);
     $storage->write('sub_entry_activities.json', $kept);
     
     return $removed;

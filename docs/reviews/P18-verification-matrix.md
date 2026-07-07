@@ -9,14 +9,14 @@
 
 | Milestone | Focus | Result | Evidence |
 |-----------|--------|--------|----------|
-| **P18-M0** | Gap register | pending | ecosystem gap register |
-| **P18-M1** | Self-serve providers | pending | `provider_self_serve_test.php` |
-| **P18-M2** | Review votes | pending | `review_votes_test.php` |
-| **P18-M3** | Plugin health | pending | `plugin_health_test.php` |
-| **P18-M4** | Theme install | pending | `marketplace_theme_install_test.php` |
-| **P18-M5** | Activity stream | pending | `activity_stream_test.php` |
-| **P18-M6** | Spaces stub | pending | `spaces_stub_test.php` |
-| **P18-M7** | i18n + NPM go/no-go | pending | `P18-npm-docs-go-no-go.md` |
+| **P18-M0** | Gap register | pass | `P18-ecosystem-gap-register.md` |
+| **P18-M1** | Self-serve providers | pass | Marketplace `provider_self_serve_test.php` |
+| **P18-M2** | Review votes | pass | Marketplace `review_votes_test.php` |
+| **P18-M3** | Plugin health | pass | `plugin_health_test.php` |
+| **P18-M4** | Theme install | pass | `marketplace_theme_install_test.php` |
+| **P18-M5** | Activity stream | pass | `activity_stream_test.php` |
+| **P18-M6** | Spaces stub | pass | `spaces_stub_test.php` |
+| **P18-M7** | i18n + NPM go/no-go | pass | `P18-npm-docs-go-no-go.md` |
 | **P18-M8** | Docs + matrix | pending | Birkly-Docs |
 
 ## Marketplace

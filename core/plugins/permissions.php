@@ -7,6 +7,14 @@
 
 require_once __DIR__ . '/../../core/storage/StorageFactory.php';
 
+function birkly_plugin_settings_dir(): string
+{
+    if (isset($GLOBALS['__birkly_plugin_settings_dir'])) {
+        return (string) $GLOBALS['__birkly_plugin_settings_dir'];
+    }
+    return __DIR__ . '/../../settings';
+}
+
 /**
  * Get plugin permissions
  * 
@@ -15,7 +23,7 @@ require_once __DIR__ . '/../../core/storage/StorageFactory.php';
  */
 function get_plugin_permissions($plugin_id) {
     if (!array_key_exists('_plugin_permissions_cache', $GLOBALS)) {
-        $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+        $storage = StorageFactory::createStorage(birkly_plugin_settings_dir());
         $permissionsData = $storage->read('plugin_permissions.json') ?? [];
         $GLOBALS['_plugin_permissions_cache'] = $permissionsData;
     }
@@ -32,7 +40,7 @@ function get_plugin_permissions($plugin_id) {
  * @return bool True on success
  */
 function set_plugin_permissions($plugin_id, $permissions) {
-    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+    $storage = StorageFactory::createStorage(birkly_plugin_settings_dir());
     $permissionsData = $storage->read('plugin_permissions.json') ?? [];
     $permissionsData[$plugin_id] = $permissions;
     
@@ -103,7 +111,7 @@ function revoke_plugin_capability($plugin_id, $capability, $scope = 'global') {
  */
 function get_plugin_denylist() {
     if (!array_key_exists('_plugin_denylist_cache', $GLOBALS)) {
-        $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+        $storage = StorageFactory::createStorage(birkly_plugin_settings_dir());
         $denylistData = $storage->read('plugin_denylist.json') ?? [];
         $GLOBALS['_plugin_denylist_cache'] = $denylistData['resources'] ?? [];
     }
@@ -117,7 +125,7 @@ function get_plugin_denylist() {
  * @return array{collections: array, spaces: array, resources: array}
  */
 function get_plugin_denylist_meta() {
-    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+    $storage = StorageFactory::createStorage(birkly_plugin_settings_dir());
     $denylistData = $storage->read('plugin_denylist.json') ?? [];
     $resources = $denylistData['resources'] ?? [];
     $collections = $denylistData['deny_collections'] ?? [];
@@ -147,7 +155,7 @@ function get_plugin_denylist_meta() {
  * @return bool True on success
  */
 function set_plugin_denylist($resources, array $options = []) {
-    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+    $storage = StorageFactory::createStorage(birkly_plugin_settings_dir());
     $existing = $storage->read('plugin_denylist.json') ?? [];
     $denylistData = [
         'resources' => array_values(array_unique($resources)),
@@ -229,7 +237,7 @@ function remove_from_denylist($resource) {
  * @param array $permissions New permissions
  */
 function log_permission_change($plugin_id, $permissions) {
-    $storage = StorageFactory::createStorage(__DIR__ . '/../../settings');
+    $storage = StorageFactory::createStorage(birkly_plugin_settings_dir());
     $auditLog = $storage->read('plugin_permissions_audit.json') ?? [];
     
     $auditLog[] = [
