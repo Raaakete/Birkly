@@ -340,3 +340,211 @@ function birkly_marketplace_installed_plugin_updates(): array
 
     return $updates;
 }
+
+function birkly_marketplace_themes_dir(): string
+{
+    if (isset($GLOBALS['__birkly_themes_dir'])) {
+        return (string) $GLOBALS['__birkly_themes_dir'];
+    }
+    return dirname(__DIR__, 2) . '/themes';
+}
+
+function birkly_marketplace_resolve_theme_id(string $zipPath, string $marketplaceSlug, string $offerType = 'theme'): string
+{
+    $slug = preg_replace('/[^a-z0-9_-]/i', '', $marketplaceSlug) ?? '';
+    if ($slug !== '') {
+        return strtolower($slug);
+    }
+
+    if (!class_exists('ZipArchive')) {
+        return $offerType === 'template_pack' ? 'template-pack' : 'theme';
+    }
+
+    $zip = new ZipArchive();
+    if ($zip->open($zipPath) !== true) {
+        return 'theme';
+    }
+
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $name = $zip->getNameIndex($i);
+        if (!is_string($name) || str_ends_with($name, '/')) {
+            continue;
+        }
+        if (basename($name) === 'theme.json') {
+            $content = $zip->getFromIndex($i);
+            if (is_string($content)) {
+                $json = json_decode($content, true);
+                if (is_array($json) && !empty($json['id'])) {
+                    $id = preg_replace('/[^a-z0-9_-]/i', '-', strtolower((string) $json['id']));
+                    $zip->close();
+                    return trim((string) $id, '-') ?: 'theme';
+                }
+            }
+        }
+    }
+    $zip->close();
+    return 'theme';
+}
+
+/**
+ * @return array{ok:bool,theme_id?:string,path?:string,errors:array}
+ */
+function birkly_marketplace_extract_theme_zip(string $zipPath, string $themeId, bool $replaceExisting = false): array
+{
+    $errors = [];
+    $themeId = preg_replace('/[^a-z0-9_-]/i', '', $themeId) ?? '';
+    if ($themeId === '') {
+        return ['ok' => false, 'errors' => ['Invalid theme id']];
+    }
+
+    if (!class_exists('ZipArchive')) {
+        return ['ok' => false, 'errors' => ['ZipArchive extension not available']];
+    }
+
+    $themesRoot = birkly_marketplace_themes_dir();
+    $dest = $themesRoot . '/' . $themeId;
+
+    if (is_dir($dest)) {
+        if (!$replaceExisting) {
+            return ['ok' => false, 'errors' => ["Theme directory '{$themeId}' already exists"]];
+        }
+        birkly_marketplace_remove_directory($dest);
+    }
+
+    if (!is_dir($themesRoot)) {
+        mkdir($themesRoot, 0755, true);
+    }
+
+    $zip = new ZipArchive();
+    if ($zip->open($zipPath) !== true) {
+        return ['ok' => false, 'errors' => ['Cannot open zip archive']];
+    }
+
+    $prefix = birkly_marketplace_zip_root_prefix($zip);
+    $hasTemplate = false;
+    mkdir($dest, 0755, true);
+
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $name = $zip->getNameIndex($i);
+        if (!is_string($name) || str_ends_with($name, '/')) {
+            continue;
+        }
+        if (str_contains($name, '..')) {
+            $zip->close();
+            birkly_marketplace_remove_directory($dest);
+            return ['ok' => false, 'errors' => ['Unsafe path in zip: ' . $name]];
+        }
+
+        $relative = $prefix !== '' && str_starts_with($name, $prefix)
+            ? substr($name, strlen($prefix))
+            : $name;
+        $relative = ltrim($relative, '/');
+        if ($relative === '') {
+            continue;
+        }
+
+        if (preg_match('/\.(html|htm|css|js|json|md|svg|png|jpg|jpeg|webp)$/i', $relative)) {
+            $hasTemplate = true;
+        }
+
+        $target = $dest . '/' . $relative;
+        $targetDir = dirname($target);
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        $content = $zip->getFromIndex($i);
+        if ($content === false || file_put_contents($target, $content) === false) {
+            $errors[] = 'Failed to extract: ' . $relative;
+        }
+    }
+
+    $zip->close();
+
+    if ($errors !== []) {
+        birkly_marketplace_remove_directory($dest);
+        return ['ok' => false, 'errors' => $errors];
+    }
+
+    if (!$hasTemplate) {
+        birkly_marketplace_remove_directory($dest);
+        return ['ok' => false, 'errors' => ['Theme zip must contain at least one template asset']];
+    }
+
+    return ['ok' => true, 'theme_id' => $themeId, 'path' => $dest, 'errors' => []];
+}
+
+function birkly_marketplace_save_theme_source(string $themeId, string $slug, string $version, string $offerType): void
+{
+    require_once dirname(__DIR__, 2) . '/api/storage.php';
+    $storage = new Storage(birkly_marketplace_settings_dir());
+    $data = $storage->read('installed_themes.json') ?? [];
+    if (!is_array($data)) {
+        $data = [];
+    }
+    $data[$themeId] = [
+        'theme_id' => $themeId,
+        'marketplace_slug' => $slug,
+        'offer_type' => $offerType,
+        'version' => $version,
+        'installed_at' => gmdate('Y-m-d\TH:i:s\Z'),
+        'path' => birkly_marketplace_themes_dir() . '/' . $themeId,
+    ];
+    $storage->write('installed_themes.json', $data);
+}
+
+/**
+ * @return array{ok:bool,theme_id?:string,version?:string,offer_type?:string,path?:string,errors:array}
+ */
+function birkly_marketplace_install_theme(string $slug, string $version, string $licenseKey, string $offerType = 'theme'): array
+{
+    $release = birkly_marketplace_release_download($slug, $version);
+    if (!$release['ok']) {
+        return ['ok' => false, 'errors' => [$release['error'] ?? 'Release lookup failed']];
+    }
+
+    $download = birkly_marketplace_download_artifact(
+        (string) ($release['download_url'] ?? ''),
+        $release['checksum_sha256'] ?? null
+    );
+    if (!$download['ok'] || empty($download['path'])) {
+        return ['ok' => false, 'errors' => [$download['error'] ?? 'Download failed']];
+    }
+
+    $zipPath = $download['path'];
+    $themeId = birkly_marketplace_resolve_theme_id($zipPath, $slug, $offerType);
+    $extract = birkly_marketplace_extract_theme_zip($zipPath, $themeId, false);
+    @unlink($zipPath);
+
+    if (!$extract['ok']) {
+        return ['ok' => false, 'errors' => $extract['errors']];
+    }
+
+    birkly_marketplace_save_theme_source($themeId, $slug, $version, $offerType);
+
+    return [
+        'ok' => true,
+        'theme_id' => $themeId,
+        'version' => $version,
+        'offer_type' => $offerType,
+        'path' => $extract['path'] ?? '',
+        'errors' => [],
+    ];
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function birkly_marketplace_install_offer(
+    string $slug,
+    string $version,
+    string $licenseKey,
+    string $offerType = 'plugin',
+    bool $upgrade = false
+): array {
+    if (in_array($offerType, ['theme', 'template_pack'], true)) {
+        return birkly_marketplace_install_theme($slug, $version, $licenseKey, $offerType);
+    }
+
+    return birkly_marketplace_install_plugin($slug, $version, $licenseKey, $upgrade);
+}
