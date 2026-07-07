@@ -100,6 +100,7 @@ $suites = [
     'commerce_etsy_square_import_test.php',
     'plugin_docs_shelf_test.php',
     'help_docs_wiring_test.php',
+    'scaffold_plugin_test.php',
     'plugin_admin_shell_test.php',
     'events_plugin_test.php',
     'events_shelf_test.php',
