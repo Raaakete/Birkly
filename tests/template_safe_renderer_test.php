@@ -122,4 +122,11 @@ try {
     test_assert('Entry editor template compiles', false, $e->getMessage());
 }
 
+try {
+    test_template_compiles(dirname(__DIR__) . '/admin/templates/plugins.html');
+    test_assert('Plugins template compiles', true);
+} catch (Throwable $e) {
+    test_assert('Plugins template compiles', false, $e->getMessage());
+}
+
 exit(test_finish('template_safe_renderer_test'));
