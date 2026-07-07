@@ -57,7 +57,7 @@ P10-D8: Autonomous M0→M7; single human notification at closure
 P10-D9: Manual QC for ALL non-official provider offers before publish
 P10-D10: Third-party NEW RELEASE versions re-enter QC before registry live
 P10-D11: Reviews soft-hide only (no hard delete)
-P10-D12: Platform admin at marketplace.birkly.com/admin only
+P10-D12: Platform admin at marketplace.birkly.io/admin only
 P10-D13: Pause = hide listing, licensed install/update OK; Suspend = block install/update
 
 ## Deliverables by milestone

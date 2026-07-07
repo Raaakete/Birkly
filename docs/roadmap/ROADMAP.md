@@ -2211,7 +2211,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 **Release manifest:** `scripts/cms-release-manifest.json`  
 **Matrix:** `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md`
 
-**Goal:** Official plugins install only via marketplace; production go-live; full platform admin at `marketplace.birkly.com/admin`.
+**Goal:** Official plugins install only via marketplace; production go-live; full platform admin at `marketplace.birkly.io/admin`.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
