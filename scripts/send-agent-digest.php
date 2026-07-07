@@ -21,6 +21,63 @@ $root = dirname(__DIR__);
 $date = date('Y-m-d');
 $bodyFile = null;
 
+/**
+ * @return array{ok:bool,code:int,output:string}
+ */
+function birkly_digest_run_production_smoke(string $root): array
+{
+    $script = $root . '/scripts/production-smoke.sh';
+    if (!is_file($script)) {
+        return ['ok' => false, 'code' => 127, 'output' => 'production-smoke.sh not found'];
+    }
+
+    if (!is_executable($script)) {
+        @chmod($script, 0755);
+    }
+
+    $baseUrl = getenv('BIRKLY_SMOKE_BASE_URL') ?: 'http://127.0.0.1:8080';
+    $skipMarketplace = getenv('BIRKLY_SMOKE_SKIP_MARKETPLACE') ?: '1';
+    $cmd = 'cd ' . escapeshellarg($root)
+        . ' && BIRKLY_SMOKE_SKIP_MARKETPLACE=' . escapeshellarg($skipMarketplace)
+        . ' BIRKLY_SMOKE_BASE_URL=' . escapeshellarg($baseUrl)
+        . ' ' . escapeshellarg($script)
+        . ' 2>&1';
+
+    $output = [];
+    $code = 0;
+    exec($cmd, $output, $code);
+
+    return [
+        'ok' => $code === 0,
+        'code' => $code,
+        'output' => implode("\n", $output),
+    ];
+}
+
+/**
+ * @return string
+ */
+function birkly_digest_ops_failure_section(array $smoke): string
+{
+    if (!empty($smoke['ok'])) {
+        return '';
+    }
+
+    $lines = [
+        '',
+        '## Ops failure (production smoke)',
+        '',
+        'Production smoke did not pass. Review health endpoints and writable directories before deploy.',
+        '',
+        '```text',
+        (string) ($smoke['output'] ?? ''),
+        '```',
+        '',
+    ];
+
+    return implode("\n", $lines);
+}
+
 for ($i = 1; $i < $argc; $i++) {
     if ($argv[$i] === '--date' && isset($argv[$i + 1])) {
         $date = $argv[++$i];
@@ -52,6 +109,12 @@ No agent activity was recorded for this date. The team will resume on the next a
 **Blocked / needs you:** none  
 **Today:** awaiting next scheduled work block
 MD;
+}
+
+$smoke = birkly_digest_run_production_smoke($root);
+$opsSection = birkly_digest_ops_failure_section($smoke);
+if ($opsSection !== '') {
+    $body .= $opsSection;
 }
 
 file_put_contents($outPath, $body);
