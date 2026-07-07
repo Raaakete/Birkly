@@ -188,8 +188,8 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 12 complete** (2026-07-07) — commerce production + ecosystem closure; **110 test suites** green. |
-| **Birkly-Marketplace** | **Phase 12 complete** — GitHub App QC, provider growth, listing reports. **12 test suites** green. |
+| **Birkly (CMS)** | **Phase 15 complete** (2026-07-07) — alpha closure; **121 test suites** green. |
+| **Birkly-Marketplace** | **Phase 15 complete** — paid tiers, subscription licenses, health v2. **15 test suites** green. |
 | **Birkly-Docs** | P10 go-live docs + updated marketplace buyer/plugins guides. |
 | **kekaba** | Embed excludes plugins; demo install via `install-kekaba-demo-plugins.sh`. |
 | **Birkly-Website** | Marketplace CTA on homepage. |
@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 13–15** — single-wave execution (platform monetization → commerce scale → alpha closure)
+**Next active phase:** **Post-alpha** — human production deploy + live Stripe/legal (no P16 plan yet)
+
+**2026-07-07 — Phase 13, 14 & 15 complete** (single-wave autonomous execution)
+
+**Delivered:** Cloud SSO link · paid/subscription marketplace licenses · health alerts · multi-currency · inventory webhooks · warehouse stock · Etsy/Square import · denylist spaces · dark mode · Help wiring · scaffold CLI · kekaba content · website production refresh.
+
+**Matrices:** `docs/reviews/P13-verification-matrix.md` · `P14-verification-matrix.md` · `P15-verification-matrix.md` · **Closure:** `docs/reviews/P13-P15-phase-closure-checklist.md`
 
 **2026-07-07 — Phase 13, 14 & 15 approved** (Keven)
 
@@ -2306,7 +2312,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 13 — Platform accounts, monetization & production hardening
 
-**Status:** **Approved** (2026-07-07) — single-wave with P14+P15
+**Status:** **Complete** (2026-07-07, single-wave with P14+P15)
 
 **Spec:** `docs/reviews/P13-P15-complete-plan.md` § Phase 13  
 **Handoff:** `docs/reviews/P13-P15-lead-engineer-handoff.md`  
@@ -2316,14 +2322,14 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P13-M0** | Gap register, SSO threat model | approved |
-| **P13-M1** | CMS cloud SSO optional link | approved |
-| **P13-M2** | Paid official marketplace tiers | approved |
-| **P13-M3** | Subscription marketplace licenses | approved |
-| **P13-M4** | Health alerts + smoke v2 | approved |
-| **P13-M5** | Critical code hygiene | approved |
-| **P13-M6** | kekaba staging assist | approved |
-| **P13-M7** | Docs (no separate notification) | approved |
+| **P13-M0** | Gap register, SSO threat model | complete |
+| **P13-M1** | CMS cloud SSO optional link | complete |
+| **P13-M2** | Paid official marketplace tiers | complete |
+| **P13-M3** | Subscription marketplace licenses | complete |
+| **P13-M4** | Health alerts + smoke v2 | complete |
+| **P13-M5** | Critical code hygiene | complete |
+| **P13-M6** | kekaba staging assist | complete |
+| **P13-M7** | Docs | complete |
 
 **Depends on:** P11+P12 complete. **Blocks:** P14-M2 (webhooks need ops baseline).
 
@@ -2333,7 +2339,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 14 — Commerce scale & import depth
 
-**Status:** **Approved** (2026-07-07) — single-wave with P13+P15
+**Status:** **Complete** (2026-07-07, single-wave with P13+P15)
 
 **Spec:** `docs/reviews/P13-P15-complete-plan.md` § Phase 14  
 **Handoff:** `docs/reviews/P13-P15-lead-engineer-handoff.md`  
@@ -2343,14 +2349,14 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P14-M0** | Gap register, webhook threat model | approved |
-| **P14-M1** | Multi-currency checkout | approved |
-| **P14-M2** | Inventory webhooks | approved |
-| **P14-M3** | Warehouse/stock v1 | approved |
-| **P14-M4** | Etsy + Square API import | approved |
-| **P14-M5** | Plugin denylist `deny_spaces` | approved |
-| **P14-M6** | Docs | approved |
-| **P14-M7** | Matrix green (no notification) | approved |
+| **P14-M0** | Gap register, webhook threat model | complete |
+| **P14-M1** | Multi-currency checkout | complete |
+| **P14-M2** | Inventory webhooks | complete |
+| **P14-M3** | Warehouse/stock v1 | complete |
+| **P14-M4** | Etsy + Square API import | complete |
+| **P14-M5** | Plugin denylist `deny_spaces` | complete |
+| **P14-M6** | Docs | complete |
+| **P14-M7** | Matrix green | complete |
 
 **Depends on:** P13-M4 (ops baseline for webhooks).
 
@@ -2360,7 +2366,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 15 — Alpha closure & UX
 
-**Status:** **Approved** (2026-07-07) — single-wave with P13+P14; notify human once at P15-M8
+**Status:** **Complete** (2026-07-07, single-wave with P13+P14)
 
 **Spec:** `docs/reviews/P13-P15-complete-plan.md` § Phase 15  
 **Handoff:** `docs/reviews/P13-P15-lead-engineer-handoff.md`  
@@ -2370,15 +2376,15 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P15-M0** | Gap register, UX audit | approved |
-| **P15-M1** | Admin dark mode + responsive | approved |
-| **P15-M2** | kekaba content expansion | approved |
-| **P15-M3** | CMS Help → live Birkly-Docs | approved |
-| **P15-M4** | Closed-alpha legal + feedback | approved |
-| **P15-M5** | Plugin scaffolding CLI | approved |
-| **P15-M6** | Birkly-Website production | approved |
-| **P15-M7** | Full P13–P15 docs sync | approved |
-| **P15-M8** | Combined closure + human notification | approved |
+| **P15-M0** | Gap register, UX audit | complete |
+| **P15-M1** | Admin dark mode + responsive | complete |
+| **P15-M2** | kekaba content expansion | complete |
+| **P15-M3** | CMS Help → live Birkly-Docs | complete |
+| **P15-M4** | Closed-alpha legal + feedback | complete |
+| **P15-M5** | Plugin scaffolding CLI | complete |
+| **P15-M6** | Birkly-Website production | complete |
+| **P15-M7** | Full P13–P15 docs sync | complete |
+| **P15-M8** | Combined closure + human notification | complete |
 
 **Depends on:** P14 complete.
 
