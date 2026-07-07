@@ -92,15 +92,20 @@ if (!function_exists('escape_attr')) {
 
 /**
  * SECURITY FIX: Set comprehensive security headers including CSP
- * 
+ *
  * @param string $context Context: 'admin', 'api', or 'public'
+ * @param string|null $cspNonce Per-request nonce for admin inline scripts (P16-M5)
  */
-function set_security_headers($context = 'api') {
+function set_security_headers($context = 'api', ?string $cspNonce = null) {
     // Content Security Policy - more restrictive for admin, permissive for public APIs
     if ($context === 'admin') {
-        // Admin panel CSP - strict but allows inline scripts/styles for compatibility
-        // TODO: Phase 2 - Remove 'unsafe-inline' and 'unsafe-eval' by using nonces
-        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+        $nonce = trim((string) ($cspNonce ?? ''));
+        if ($nonce !== '') {
+            // Admin shell: inline scripts require nonce; external scripts allowed via 'self'
+            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-" . $nonce . "' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+        } else {
+            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+        }
     } elseif ($context === 'api') {
         // API endpoints - very restrictive, no scripts/styles needed
         header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");

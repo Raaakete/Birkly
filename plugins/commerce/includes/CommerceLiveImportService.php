@@ -18,6 +18,12 @@ if (!class_exists('EtsyImportAdapter')) {
 if (!class_exists('SquareImportAdapter')) {
     require_once __DIR__ . '/SquareImportAdapter.php';
 }
+if (!class_exists('AmazonImportAdapter')) {
+    require_once __DIR__ . '/AmazonImportAdapter.php';
+}
+if (!class_exists('EbayImportAdapter')) {
+    require_once __DIR__ . '/EbayImportAdapter.php';
+}
 if (!class_exists('ImportService')) {
     require_once __DIR__ . '/ImportService.php';
 }
@@ -30,6 +36,8 @@ class CommerceLiveImportService
         'woocommerce' => 'WooCommerce',
         'etsy' => 'Etsy',
         'square' => 'Square',
+        'amazon' => 'Amazon',
+        'ebay' => 'eBay',
     ];
 
     private CommerceImportCredentialStore $credentials;
@@ -38,6 +46,8 @@ class CommerceLiveImportService
     private ?WooImportAdapter $woo;
     private ?EtsyImportAdapter $etsy;
     private ?SquareImportAdapter $square;
+    private ?AmazonImportAdapter $amazon;
+    private ?EbayImportAdapter $ebay;
 
     public function __construct(
         ?CommerceImportCredentialStore $credentials = null,
@@ -45,7 +55,9 @@ class CommerceLiveImportService
         ?ShopifyImportAdapter $shopify = null,
         ?WooImportAdapter $woo = null,
         ?EtsyImportAdapter $etsy = null,
-        ?SquareImportAdapter $square = null
+        ?SquareImportAdapter $square = null,
+        ?AmazonImportAdapter $amazon = null,
+        ?EbayImportAdapter $ebay = null
     ) {
         $this->credentials = $credentials ?? new CommerceImportCredentialStore();
         $this->import = $import ?? new ImportService();
@@ -53,6 +65,8 @@ class CommerceLiveImportService
         $this->woo = $woo;
         $this->etsy = $etsy;
         $this->square = $square;
+        $this->amazon = $amazon;
+        $this->ebay = $ebay;
     }
 
     /** @return array<string, mixed> */
@@ -248,7 +262,7 @@ class CommerceLiveImportService
         return isset(self::PLATFORMS[$platform]) ? $platform : null;
     }
 
-    private function adapterFor(string $platform): ShopifyImportAdapter|WooImportAdapter|EtsyImportAdapter|SquareImportAdapter|null
+    private function adapterFor(string $platform): ShopifyImportAdapter|WooImportAdapter|EtsyImportAdapter|SquareImportAdapter|AmazonImportAdapter|EbayImportAdapter|null
     {
         if ($platform === 'shopify') {
             return $this->shopify ?? new ShopifyImportAdapter();
@@ -261,6 +275,12 @@ class CommerceLiveImportService
         }
         if ($platform === 'square') {
             return $this->square ?? new SquareImportAdapter();
+        }
+        if ($platform === 'amazon') {
+            return $this->amazon ?? new AmazonImportAdapter();
+        }
+        if ($platform === 'ebay') {
+            return $this->ebay ?? new EbayImportAdapter();
         }
 
         return null;

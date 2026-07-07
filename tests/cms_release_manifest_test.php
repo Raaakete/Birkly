@@ -51,6 +51,8 @@ test_assert('release zip opens', $opened === true);
 $hasPluginPackage = false;
 $hasPluginsReadme = false;
 $hasPluginsGitkeep = false;
+$hasStartHere = false;
+$hasStartHereTxt = false;
 if ($opened === true) {
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = $zip->getNameIndex($i);
@@ -63,6 +65,12 @@ if ($opened === true) {
         if ($name === 'plugins/.gitkeep') {
             $hasPluginsGitkeep = true;
         }
+        if ($name === 'START_HERE.html') {
+            $hasStartHere = true;
+        }
+        if ($name === 'START_HERE.txt') {
+            $hasStartHereTxt = true;
+        }
     }
     $zip->close();
 }
@@ -70,6 +78,12 @@ if ($opened === true) {
 test_assert('release zip excludes plugin packages', $hasPluginPackage === false);
 test_assert('release zip includes plugins/README.md', $hasPluginsReadme === true);
 test_assert('release zip includes plugins/.gitkeep', $hasPluginsGitkeep === true);
+test_assert('release zip includes START_HERE.html at zip root', $hasStartHere === true);
+test_assert('release zip includes START_HERE.txt', $hasStartHereTxt === true);
+
+$includes = $manifest['includes'] ?? [];
+test_assert('manifest includes START_HERE.html', in_array('START_HERE.html', $includes, true));
+test_assert('manifest includes START_HERE.txt', in_array('START_HERE.txt', $includes, true));
 
 @unlink($outZip);
 

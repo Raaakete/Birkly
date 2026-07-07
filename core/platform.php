@@ -50,8 +50,22 @@ function birkly_alpha_program_enabled(): bool
     if (array_key_exists('alpha_program', $config)) {
         return (bool) $config['alpha_program'];
     }
-    // Closed alpha default: floating submit on customer installs unless owner triage install.
+    // Open beta default: floating submit on customer installs unless owner triage install.
     return !birkly_is_platform_owner_install();
+}
+
+/**
+ * Human-readable program tier label (P16-M7 — invite beta, not public flood).
+ */
+function birkly_program_status_label(): string
+{
+    $config = birkly_platform_config();
+    $tier = trim((string) ($config['program_tier'] ?? 'open_beta'));
+    if ($tier === 'closed_alpha') {
+        return 'Closed alpha';
+    }
+
+    return 'Open beta · invite only';
 }
 
 function birkly_platform_install_id(): string

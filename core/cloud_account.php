@@ -79,6 +79,68 @@ function birkly_cloud_oauth_base_url(): string
 }
 
 /**
+ * Probe whether the cloud OAuth base URL responds (null = probe unavailable).
+ */
+function birkly_cloud_oauth_probe_reachable(): ?bool
+{
+    if (array_key_exists('birkly_cloud_oauth_reachable_override', $GLOBALS)) {
+        $override = $GLOBALS['birkly_cloud_oauth_reachable_override'];
+        return is_bool($override) ? $override : null;
+    }
+
+    if (birkly_cloud_account_mock_enabled()) {
+        return true;
+    }
+
+    if (!function_exists('curl_init')) {
+        return null;
+    }
+
+    $url = birkly_cloud_oauth_base_url();
+    $ch = curl_init($url);
+    if ($ch === false) {
+        return false;
+    }
+
+    curl_setopt_array($ch, [
+        CURLOPT_NOBODY => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 3,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+    ]);
+    curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $errno = curl_errno($ch);
+    curl_close($ch);
+
+    if ($errno !== 0 || $code === 0) {
+        return false;
+    }
+
+    return $code < 500;
+}
+
+/**
+ * @return array{reachable:bool|null,base_url:string,message:?string}
+ */
+function birkly_cloud_oauth_status(): array
+{
+    $reachable = birkly_cloud_oauth_probe_reachable();
+    $message = null;
+    if ($reachable === false) {
+        $message = 'Birkly Cloud sign-in is temporarily unavailable. Your local CMS login is unaffected.';
+    }
+
+    return [
+        'reachable' => $reachable,
+        'base_url' => birkly_cloud_oauth_base_url(),
+        'message' => $message,
+    ];
+}
+
+/**
  * @return array{linked:bool,email:?string,linked_at:?string,expires_at:?string}
  */
 function birkly_cloud_account_status(): array
@@ -106,6 +168,16 @@ function birkly_cloud_account_start_link(string $callbackUrl): array
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         return ['ok' => false, 'error' => 'Session required'];
+    }
+
+    if (!birkly_cloud_account_mock_enabled()) {
+        $oauth = birkly_cloud_oauth_status();
+        if (($oauth['reachable'] ?? null) === false) {
+            return [
+                'ok' => false,
+                'error' => $oauth['message'] ?? 'Birkly Cloud sign-in is temporarily unavailable. Your local CMS login is unaffected.',
+            ];
+        }
     }
 
     $state = bin2hex(random_bytes(16));

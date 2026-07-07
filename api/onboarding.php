@@ -71,10 +71,21 @@ function isFirstTimeSetup() {
     return !$hasContent;
 }
 
+// Helper to get site-wide onboarding settings (install path, etc.)
+function getSiteOnboardingSettings() {
+    $settingsStorage = new Storage('../settings');
+    return $settingsStorage->read('onboarding.json') ?? [];
+}
+
+function saveSiteOnboardingSettings(array $data) {
+    $settingsStorage = new Storage('../settings');
+    $existing = $settingsStorage->read('onboarding.json') ?? [];
+    return $settingsStorage->write('onboarding.json', array_merge($existing, $data));
+}
+
 // Helper to get onboarding status
 function getOnboardingStatus($userId = null) {
-    $settingsStorage = new Storage('../settings');
-    $onboardingData = $settingsStorage->read('onboarding.json') ?? [];
+    $siteOnboarding = getSiteOnboardingSettings();
     
     $needsFirstUser = !hasUsers();
     $isFirstTime = isFirstTimeSetup();
@@ -84,7 +95,8 @@ function getOnboardingStatus($userId = null) {
         return [
             'needs_first_user' => $needsFirstUser,
             'is_first_time' => $isFirstTime,
-            'completed' => false
+            'completed' => false,
+            'install_path' => $siteOnboarding['install_path'] ?? null,
         ];
     }
     
@@ -92,6 +104,8 @@ function getOnboardingStatus($userId = null) {
     $userStorage = new Storage('../users');
     $userOnboardingFile = normalizeOnboardingUserKey($userId) . '_onboarding.json';
     $userOnboarding = $userStorage->read($userOnboardingFile) ?? [];
+    
+    $progress = $userOnboarding['progress'] ?? [];
     
     return [
         'needs_first_user' => $needsFirstUser,
@@ -101,8 +115,14 @@ function getOnboardingStatus($userId = null) {
         'setup_wizard_completed' => $userOnboarding['setup_wizard_completed'] ?? false,
         'demo_content_installed' => $userOnboarding['demo_content_installed'] ?? false,
         'demo_template_installed' => $userOnboarding['demo_template_installed'] ?? false,
-        'progress' => $userOnboarding['progress'] ?? [],
+        'progress' => $progress,
         'last_step' => $userOnboarding['last_step'] ?? null,
+        'use_case' => $progress['use_case'] ?? ($userOnboarding['use_case'] ?? null),
+        'ai_skipped' => !empty($progress['ai_skipped']) || !empty($userOnboarding['ai_skipped']),
+        'ai_connected' => !empty($progress['ai_connected']) || !empty($userOnboarding['ai_connected']),
+        'install_path' => $siteOnboarding['install_path'] ?? null,
+        'checklist_dismissed' => $userOnboarding['checklist_dismissed'] ?? [],
+        'checklist_hidden' => $userOnboarding['checklist_hidden'] ?? false,
         'started_at' => $userOnboarding['started_at'] ?? null,
         'completed_at' => $userOnboarding['completed_at'] ?? null
     ];
@@ -151,6 +171,13 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         // Get onboarding status - can work without authentication for first user check
         $userId = isset($_SESSION['user']) ? ($_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown') : null;
         $status = getOnboardingStatus($userId);
+        
+        // Persist install path from query param when wizard loads
+        $installParam = $_GET['install'] ?? '';
+        if (in_array($installParam, ['local', 'cloud'], true)) {
+            saveSiteOnboardingSettings(['install_path' => $installParam]);
+            $status['install_path'] = $installParam;
+        }
         
         echo json_encode([
             'status' => 'ok',
@@ -343,6 +370,17 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             $progressData['demo_content_choice'] = $demoContentChoice;
         }
         
+        // Track AI skip for dashboard checklist (P19-D4 / P5.6-D)
+        $userStorage = new Storage('../users');
+        $existing = $userStorage->read(normalizeOnboardingUserKey($userId) . '_onboarding.json') ?? [];
+        $existingProgress = $existing['progress'] ?? [];
+        if (!empty($existingProgress['ai_skipped'])) {
+            $progressData['ai_skipped'] = true;
+        }
+        if (!empty($existingProgress['ai_connected'])) {
+            $progressData['ai_connected'] = true;
+        }
+        
         saveOnboardingProgress($userId, $progressData);
         
         // Store in session for modal display
@@ -376,6 +414,46 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             'message' => 'Onboarding skipped',
             'data' => getOnboardingStatus($userId)
         ]);
+        exit;
+
+    case 'set_install_path':
+        $installPath = $input['install_path'] ?? ($_GET['install'] ?? '');
+        if (!in_array($installPath, ['local', 'cloud'], true)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'install_path must be local or cloud']);
+            exit;
+        }
+        saveSiteOnboardingSettings(['install_path' => $installPath]);
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Install path saved',
+            'data' => ['install_path' => $installPath]
+        ]);
+        exit;
+
+    case 'dismiss_checklist_item':
+        $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+        $itemId = $input['item_id'] ?? '';
+        if ($itemId === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'item_id required']);
+            exit;
+        }
+        $userStorage = new Storage('../users');
+        $file = normalizeOnboardingUserKey($userId) . '_onboarding.json';
+        $existing = $userStorage->read($file) ?? [];
+        $dismissed = $existing['checklist_dismissed'] ?? [];
+        if (!in_array($itemId, $dismissed, true)) {
+            $dismissed[] = $itemId;
+        }
+        saveOnboardingProgress($userId, ['checklist_dismissed' => $dismissed]);
+        echo json_encode(['status' => 'ok', 'data' => getOnboardingStatus($userId)]);
+        exit;
+
+    case 'hide_checklist':
+        $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+        saveOnboardingProgress($userId, ['checklist_hidden' => true]);
+        echo json_encode(['status' => 'ok', 'data' => getOnboardingStatus($userId)]);
         exit;
         
         default:

@@ -36,9 +36,14 @@ if ($rawInput !== '') {
 $action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
 
 if ($action === 'status') {
+    $oauth = birkly_cloud_oauth_status();
     echo json_encode([
         'status' => 'ok',
-        'data' => birkly_cloud_account_status(),
+        'data' => array_merge(birkly_cloud_account_status(), [
+            'oauth_base_url' => $oauth['base_url'],
+            'oauth_reachable' => $oauth['reachable'],
+            'oauth_message' => $oauth['message'],
+        ]),
     ]);
     exit;
 }

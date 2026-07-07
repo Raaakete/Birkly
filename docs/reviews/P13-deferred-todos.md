@@ -12,7 +12,7 @@ This document lists remaining TODO/FIXME items that are **not** security-critica
 
 | File | Line | Item | Rationale |
 |------|------|------|-----------|
-| `api/validate.php` | ~102 | Phase 2 CSP: remove `unsafe-inline` / `unsafe-eval` via nonces | Hardening improvement; admin currently relies on inline scripts. Requires coordinated admin bundle refactor. |
+| `api/validate.php` | ~102 | ~~Phase 2 CSP: remove `unsafe-inline` / `unsafe-eval` via nonces~~ | **Closed P16-M5** — admin shell uses per-request nonces; `unsafe-eval` retained for admin JS compat. |
 
 ---
 
@@ -32,5 +32,5 @@ No `TODO` / `FIXME` markers in `core/` at audit time.
 
 ## Follow-up (out of P13-M5 scope)
 
-- CSP nonce rollout (admin asset pipeline)
+- ~~CSP nonce rollout (admin asset pipeline)~~ — done P16-M5
 - Broader `grep` across `plugins/` and `fieldtypes/` if a later hygiene pass is scheduled

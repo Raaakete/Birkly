@@ -126,11 +126,18 @@ function renderCloudAccountStatus(container, status) {
             + '<span class="text-muted">' + escapeHtml(status.email || '') + '</span></div>'
             + '<button class="btn btn-danger btn-sm" type="button" id="cloud-account-unlink-btn">Unlink cloud account</button>';
         document.getElementById('cloud-account-unlink-btn')?.addEventListener('click', unlinkCloudAccount);
-    } else {
-        container.innerHTML = '<p class="text-muted" style="margin-bottom:16px;">No Birkly cloud account is linked to this installation.</p>'
-            + '<button class="btn btn-primary" type="button" id="cloud-account-link-btn">Link Birkly cloud account</button>';
-        document.getElementById('cloud-account-link-btn')?.addEventListener('click', startCloudAccountLink);
+        return;
     }
+
+    if (status.oauth_reachable === false) {
+        const msg = status.oauth_message || 'Birkly Cloud sign-in is temporarily unavailable. Your local CMS login is unaffected.';
+        container.innerHTML = '<p class="text-muted" style="margin-bottom:16px;">' + escapeHtml(msg) + '</p>';
+        return;
+    }
+
+    container.innerHTML = '<p class="text-muted" style="margin-bottom:16px;">No Birkly cloud account is linked to this installation.</p>'
+        + '<button class="btn btn-primary" type="button" id="cloud-account-link-btn">Link Birkly cloud account</button>';
+    document.getElementById('cloud-account-link-btn')?.addEventListener('click', startCloudAccountLink);
 }
 
 async function startCloudAccountLink() {

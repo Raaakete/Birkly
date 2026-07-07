@@ -66,6 +66,8 @@ $adminActions = [
     'migration_scan', 'migration_preview', 'migration_import', 'migration_history', 'migration_rollback',
     'list_gift_cards', 'issue_gift_card', 'void_gift_card', 'create_quote', 'list_quotes', 'cancel_quote',
     'list_warehouse_stock', 'save_warehouse_stock',
+    'list_warehouses', 'save_warehouse', 'delete_warehouse', 'transfer_warehouse_stock',
+    'bundle_validate', 'bundle_preview_price',
     'get_inventory_webhook_config', 'rotate_inventory_webhook_secret',
 ];
 $statsActions=['analytics_summary','analytics_export_csv'];
@@ -77,7 +79,7 @@ if (in_array($action, $statsActions, true)) {
     commerce_require_stats_capability();
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'import_live_save', 'import_live_sync', 'migration_import', 'migration_rollback', 'save_mapping', 'delete_mapping', 'create_membership_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote', 'save_warehouse_stock', 'rotate_inventory_webhook_secret'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'import_live_save', 'import_live_sync', 'migration_import', 'migration_rollback', 'save_mapping', 'delete_mapping', 'create_membership_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote', 'save_warehouse_stock', 'save_warehouse', 'delete_warehouse', 'transfer_warehouse_stock', 'rotate_inventory_webhook_secret'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -740,7 +742,67 @@ switch ($action) {
     case 'list_warehouse_stock':
         require_once __DIR__ . '/../includes/WarehouseStockStore.php';
         $warehouse = new WarehouseStockStore();
-        echo json_encode(['status' => 'ok', 'data' => ['stock' => $warehouse->listAll()]]);
+        $warehouseId = trim((string) ($input['warehouse_id'] ?? ''));
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'stock' => $warehouse->listAll($warehouseId !== '' ? $warehouseId : null),
+                'warehouses' => $warehouse->listWarehouses(),
+            ],
+        ]);
+        break;
+
+    case 'list_warehouses':
+        require_once __DIR__ . '/../includes/WarehouseStockStore.php';
+        $warehouse = new WarehouseStockStore();
+        echo json_encode(['status' => 'ok', 'data' => ['warehouses' => $warehouse->listWarehouses()]]);
+        break;
+
+    case 'save_warehouse':
+        require_once __DIR__ . '/../includes/WarehouseStockStore.php';
+        $warehouse = new WarehouseStockStore();
+        $id = trim((string) ($input['id'] ?? ''));
+        $name = trim((string) ($input['name'] ?? ''));
+        try {
+            if ($id === '') {
+                $row = $warehouse->createWarehouse($name, isset($input['sort_order']) ? (int) $input['sort_order'] : null);
+            } else {
+                $row = $warehouse->updateWarehouse($id, $name, isset($input['sort_order']) ? (int) $input['sort_order'] : null);
+            }
+            echo json_encode(['status' => 'ok', 'data' => ['warehouse' => $row]]);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+        break;
+
+    case 'delete_warehouse':
+        require_once __DIR__ . '/../includes/WarehouseStockStore.php';
+        $warehouse = new WarehouseStockStore();
+        $id = trim((string) ($input['id'] ?? ''));
+        try {
+            echo json_encode(['status' => $warehouse->deleteWarehouse($id) ? 'ok' : 'error']);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+        break;
+
+    case 'transfer_warehouse_stock':
+        require_once __DIR__ . '/../includes/WarehouseStockStore.php';
+        $warehouse = new WarehouseStockStore();
+        try {
+            $result = $warehouse->transfer(
+                trim((string) ($input['sku'] ?? '')),
+                (int) ($input['quantity'] ?? 0),
+                trim((string) ($input['from_warehouse_id'] ?? '')),
+                trim((string) ($input['to_warehouse_id'] ?? ''))
+            );
+            echo json_encode(['status' => 'ok', 'data' => $result]);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
         break;
 
     case 'save_warehouse_stock':
@@ -752,8 +814,47 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => 'sku required']);
             break;
         }
-        $row = $warehouse->set($sku, (int) ($input['quantity_on_hand'] ?? 0), isset($input['low_stock_threshold']) ? (int) $input['low_stock_threshold'] : null);
+        $warehouseId = trim((string) ($input['warehouse_id'] ?? ''));
+        $row = $warehouse->set(
+            $sku,
+            (int) ($input['quantity_on_hand'] ?? 0),
+            isset($input['low_stock_threshold']) ? (int) $input['low_stock_threshold'] : null,
+            $warehouseId !== '' ? $warehouseId : null
+        );
         echo json_encode(['status' => 'ok', 'data' => ['row' => $row]]);
+        break;
+
+    case 'bundle_validate':
+        require_once __DIR__ . '/../includes/CommerceBundleSchema.php';
+        $bundle = is_array($input['bundle'] ?? null) ? $input['bundle'] : [];
+        $index = $indexer->loadIndex();
+        $resolved = CommerceBundleSchema::resolveComponents($bundle, $index['entries'] ?? []);
+        $errors = CommerceBundleSchema::validate($bundle);
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'valid' => $resolved['valid'] && empty($errors),
+                'issues' => array_merge($resolved['issues'] ?? [], $errors),
+                'components' => $resolved['items'] ?? [],
+            ],
+        ]);
+        break;
+
+    case 'bundle_preview_price':
+        require_once __DIR__ . '/../includes/CommerceBundleSchema.php';
+        $bundle = is_array($input['bundle'] ?? null) ? $input['bundle'] : [];
+        $index = $indexer->loadIndex();
+        $resolved = CommerceBundleSchema::resolveComponents($bundle, $index['entries'] ?? []);
+        $priceCents = CommerceBundleSchema::computePriceCents($bundle, $resolved['items'] ?? []);
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'price_cents' => $priceCents,
+                'currency' => strtolower((string) (commerce_bundle_normalize_value($bundle)['currency'] ?? 'eur')),
+                'valid' => $resolved['valid'],
+                'issues' => $resolved['issues'] ?? [],
+            ],
+        ]);
         break;
 
     case 'get_inventory_webhook_config':

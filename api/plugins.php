@@ -24,6 +24,7 @@ require_once 'log.php';
 require_once '../core/plugins.php';
 require_once '../core/plugins/security.php';
 require_once '../core/plugins/validation.php';
+require_once '../core/plugins/health.php';
 
 // Use the PluginStorage class from core/plugins.php
 $storage = new PluginStorage('../settings');
@@ -83,6 +84,7 @@ if ($action === 'list') {
     $plugins_list = [];
     
     foreach ($plugins as $id => $plugin) {
+        $health = birkly_plugin_health_check((string) $id);
         $plugins_list[] = [
             'id' => $id,
             'name' => $plugin['name'] ?? ucwords(str_replace(['_', '-'], ' ', $id)),
@@ -96,6 +98,7 @@ if ($action === 'list') {
             'marketplace_slug' => $plugin['marketplace_slug'] ?? null,
             'license_ref' => $plugin['license_ref'] ?? null,
             'from_marketplace' => !empty($plugin['marketplace_slug']),
+            'health' => $health,
         ];
     }
     
@@ -104,6 +107,23 @@ if ($action === 'list') {
         'data' => [
             'plugins' => $plugins_list
         ]
+    ]);
+    exit;
+}
+
+if ($action === 'health') {
+    $pluginId = trim((string) ($input['plugin_id'] ?? $_GET['plugin_id'] ?? ''));
+    if ($pluginId !== '') {
+        echo json_encode([
+            'status' => 'ok',
+            'data' => birkly_plugin_health_check($pluginId),
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => ['plugins' => birkly_plugin_health_all()],
     ]);
     exit;
 }

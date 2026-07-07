@@ -2,19 +2,26 @@
         </main>
     </div>
 
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/theme.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/dropdown.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/custom-select.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/ai-chat-button.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/feedback-button.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/contextual-help.js')) ?>"></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtypes-shim.js')) ?>"></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20250804-15')) ?>"></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"></script>
-    <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>"></script><?php endif; ?>
+<?php
+if (!function_exists('birkly_csp_nonce_attr')) {
+    require_once __DIR__ . '/../../core/csp.php';
+}
+$__birklyScriptNonceAttr = birkly_csp_nonce_attr();
+?>
 
-    <script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/theme.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/dropdown.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/custom-select.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/ai-chat-button.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/feedback-button.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/contextual-help.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtypes-shim.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20250804-15')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+    <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
+
+    <script<?= $__birklyScriptNonceAttr ?>>
     // If user was redirected due to missing permission, show unified modal.
     (function() {
         try {
@@ -41,7 +48,7 @@
     </script>
     
     <!-- Logout functionality -->
-    <script>
+    <script<?= $__birklyScriptNonceAttr ?>>
     document.addEventListener('DOMContentLoaded', function() {
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
@@ -350,7 +357,7 @@
     </div>
     
     <!-- Search Functionality -->
-    <script>
+    <script<?= $__birklyScriptNonceAttr ?>>
     (function() {
         let searchTimeout = null;
         let currentResults = [];
@@ -602,7 +609,7 @@
     </div>
     
     <!-- Notifications Functionality -->
-    <script>
+    <script<?= $__birklyScriptNonceAttr ?>>
     (function() {
         let notifications = [];
         let unreadCount = 0;

@@ -108,6 +108,7 @@ $suites = [
     'dashboard_widgets_test.php',
     'platform_test.php',
     'plugin_dependencies_test.php',
+    'plugin_health_test.php',
     'cms_release_manifest_test.php',
     'plugin_availability_test.php',
     'marketplace_client_test.php',
@@ -127,6 +128,7 @@ $suites = [
     'settings_save_test.php',
     'settings_page_test.php',
     'cloud_account_link_test.php',
+    'csp_nonce_test.php',
 ];
 
 $root = dirname(__DIR__);

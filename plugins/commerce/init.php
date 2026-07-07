@@ -203,11 +203,98 @@ function commerce_get_setting(string $key, $default = null)
     return $default;
 }
 
-/** Site default charge currency (P14-M1). No FX engine — display = charge currency. */
+/** Site default charge currency (P14-M1). No FX engine — display = charge currency unless P17 display currency set. */
 function commerce_get_default_currency(): string
 {
     $cur = strtolower(trim((string) commerce_get_setting('commerce_default_currency', 'eur')));
     return preg_match('/^[a-z]{3}$/', $cur) ? $cur : 'eur';
+}
+
+/** Optional display currency for catalog templates (P17-M2). Empty = charge currency. */
+function commerce_get_display_currency(): ?string
+{
+    $cur = strtolower(trim((string) commerce_get_setting('commerce_display_currency', '')));
+    if ($cur === '' || $cur === 'same') {
+        return null;
+    }
+
+    return preg_match('/^[a-z]{3}$/', $cur) ? $cur : null;
+}
+
+/**
+ * Manual FX rates relative to display currency (P17-M2).
+ *
+ * @return array<string, float> e.g. ['eur' => 1.0, 'usd' => 1.08]
+ */
+function commerce_get_fx_rates(): array
+{
+    $raw = commerce_get_setting('commerce_fx_rates', []);
+    if (is_string($raw) && $raw !== '') {
+        $decoded = json_decode($raw, true);
+        $raw = is_array($decoded) ? $decoded : [];
+    }
+    if (!is_array($raw)) {
+        return [];
+    }
+    $rates = [];
+    foreach ($raw as $code => $rate) {
+        $code = strtolower(trim((string) $code));
+        if (preg_match('/^[a-z]{3}$/', $code) && is_numeric($rate)) {
+            $rates[$code] = (float) $rate;
+        }
+    }
+
+    return $rates;
+}
+
+/** Convert amount_cents from charge currency to display currency using manual rates. */
+function commerce_convert_display_cents(int $amountCents, string $fromCurrency): int
+{
+    $display = commerce_get_display_currency();
+    if ($display === null) {
+        return $amountCents;
+    }
+    $from = strtolower($fromCurrency);
+    if ($from === $display) {
+        return $amountCents;
+    }
+    $rates = commerce_get_fx_rates();
+    if (empty($rates)) {
+        return $amountCents;
+    }
+    $baseRate = (float) ($rates[$display] ?? 0);
+    $fromRate = (float) ($rates[$from] ?? 0);
+    if ($baseRate <= 0 || $fromRate <= 0) {
+        return $amountCents;
+    }
+    $major = ($amountCents / 100) * ($baseRate / $fromRate);
+
+    return (int) round($major * 100);
+}
+
+/**
+ * Format price for catalog display with optional FX conversion (P17-M2).
+ * Checkout charge amounts are unchanged — use raw cents + charge currency there.
+ */
+function commerce_format_price_display(int $amountCents, string $chargeCurrency, bool $includeCode = true): string
+{
+    $display = commerce_get_display_currency() ?? strtolower($chargeCurrency);
+    $displayCents = commerce_convert_display_cents($amountCents, $chargeCurrency);
+    $major = number_format($displayCents / 100, 2, '.', ',');
+    $symbol = match ($display) {
+        'usd' => '$',
+        'eur' => '€',
+        'gbp' => '£',
+        'jpy' => '¥',
+        'chf' => 'CHF ',
+        default => '',
+    };
+    $formatted = $symbol !== '' ? $symbol . $major : $major;
+    if ($includeCode) {
+        $formatted .= ' ' . strtoupper($display);
+    }
+
+    return trim($formatted);
 }
 
 function commerce_init_automation_triggers(): void

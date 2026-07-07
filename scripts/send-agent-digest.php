@@ -57,6 +57,41 @@ function birkly_digest_run_production_smoke(string $root): array
 /**
  * @return string
  */
+function birkly_digest_last_smoke_section(string $root): string
+{
+    $metaFile = $root . '/logs/last-production-smoke.json';
+    if (!is_readable($metaFile)) {
+        return '';
+    }
+
+    $meta = json_decode((string) file_get_contents($metaFile), true);
+    if (!is_array($meta)) {
+        return '';
+    }
+
+    $lastRun = trim((string) ($meta['last_run'] ?? ''));
+    if ($lastRun === '') {
+        return '';
+    }
+
+    $result = (string) ($meta['result'] ?? 'unknown');
+    $service = (string) ($meta['service'] ?? 'birkly-cms');
+    $exitCode = (int) ($meta['exit_code'] ?? -1);
+
+    return implode("\n", [
+        '',
+        '## Last production smoke',
+        '',
+        "- **Service:** {$service}",
+        "- **Last run (UTC):** {$lastRun}",
+        "- **Result:** {$result} (exit {$exitCode})",
+        '',
+    ]);
+}
+
+/**
+ * @return string
+ */
 function birkly_digest_ops_failure_section(array $smoke): string
 {
     if (!empty($smoke['ok'])) {
@@ -113,8 +148,12 @@ MD;
 
 $smoke = birkly_digest_run_production_smoke($root);
 $opsSection = birkly_digest_ops_failure_section($smoke);
+$smokeMetaSection = birkly_digest_last_smoke_section($root);
 if ($opsSection !== '') {
     $body .= $opsSection;
+}
+if ($smokeMetaSection !== '') {
+    $body .= $smokeMetaSection;
 }
 
 file_put_contents($outPath, $body);

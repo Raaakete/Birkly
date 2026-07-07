@@ -435,23 +435,7 @@ function getDashboardData() {
     // Get recent collections (last 5)
     $recentCollections = array_slice($collections, 0, 5);
     
-    // Build onboarding checklist — derive completion from real state
-    $mediaPath = __DIR__ . '/../media';
-    $hasMediaFiles = false;
-    if (is_dir($mediaPath)) {
-        $mediaFiles = glob($mediaPath . '/*');
-        $mediaFiles = array_filter($mediaFiles ?: [], function ($path) {
-            return is_file($path) && basename($path) !== '.metadata.json' && basename($path) !== '.gitkeep';
-        });
-        $hasMediaFiles = count($mediaFiles) > 0;
-    }
-
-    $templatesPath = __DIR__ . '/../templates';
-    $hasTemplates = is_dir($templatesPath) && count(glob($templatesPath . '/*.html')) > 0;
-
-    $settingsAdminFile = __DIR__ . '/../settings/admin.json';
-    $hasSettings = file_exists($settingsAdminFile);
-
+    // Build onboarding checklist v2 — essential steps only (P19-M6 / P5.6-D)
     require_once __DIR__ . '/../core/plugins.php';
     $installedPlugins = get_all_plugins();
     $hasMarketplacePlugin = false;
@@ -462,39 +446,69 @@ function getDashboardData() {
         }
     }
 
-    // D3: essential items only — upload_media and create_template removed per P5.6 locked decision
+    $installPath = $onboardingStatus['install_path'] ?? null;
+    $aiSkipped = !empty($onboardingStatus['ai_skipped']);
+    $aiConnected = !empty($onboardingStatus['ai_connected']);
+    $dismissed = $onboardingStatus['checklist_dismissed'] ?? [];
+    $checklistHidden = !empty($onboardingStatus['checklist_hidden']);
+
+    // Check for existing AI connections
+    $hasAiConnection = $aiConnected;
+    if (!$hasAiConnection) {
+        $usersStorage = new Storage('../users');
+        foreach ($usersStorage->list('') as $userFile) {
+            $u = $usersStorage->read($userFile);
+            if ($u && ($u['type'] ?? '') === 'ai' && ($u['status'] ?? 'active') === 'active') {
+                $hasAiConnection = true;
+                break;
+            }
+        }
+    }
+
     $checklist = [
-        [
-            'id' => 'setup_complete',
-            'label' => 'Complete site setup',
-            'completed' => $onboardingStatus['setup_wizard_completed'] ?? false,
-            'link' => birkly_admin_url('onboarding')
-        ],
-        [
-            'id' => 'install_marketplace_plugins',
-            'label' => __('admin.install_marketplace_plugins'),
-            'completed' => $hasMarketplacePlugin,
-            'link' => birkly_admin_url('plugins', ['tab' => 'marketplace']),
-        ],
         [
             'id' => 'first_collection',
             'label' => 'Create your first collection',
             'completed' => count($collections) > 0,
-            'link' => birkly_admin_url('content')
+            'link' => birkly_admin_url('content'),
+            'hint' => $installPath === 'local'
+                ? 'Use Content in the admin sidebar. Your local server is at http://localhost:8080'
+                : ($installPath === 'cloud' ? 'Need FTP help? Re-open START_HERE.html from your site root.' : null),
         ],
         [
             'id' => 'first_entry',
             'label' => 'Add your first entry',
             'completed' => $totalEntries > 0,
-            'link' => count($collections) > 0 ? birkly_admin_url('entry-editor', ['collection' => $collections[0]['slug']]) : birkly_admin_url('content'),
-        ],
-        [
-            'id' => 'configure_settings',
-            'label' => 'Configure site settings',
-            'completed' => $hasSettings,
-            'link' => birkly_admin_url('settings')
+            'link' => count($collections) > 0
+                ? birkly_admin_url('entry-editor', ['collection' => $collections[0]['slug']])
+                : birkly_admin_url('content'),
         ],
     ];
+
+    if (!$hasMarketplacePlugin) {
+        $checklist[] = [
+            'id' => 'install_marketplace_plugins',
+            'label' => __('admin.install_marketplace_plugins'),
+            'completed' => false,
+            'link' => birkly_admin_url('plugins', ['tab' => 'marketplace']),
+        ];
+    }
+
+    // AI checklist item ONLY when user skipped the wizard AI step (P19-D4 / P5.6-D)
+    if ($aiSkipped && !$hasAiConnection) {
+        $checklist[] = [
+            'id' => 'connect_ai',
+            'label' => __('admin.connect_ai_assistant'),
+            'completed' => false,
+            'link' => birkly_admin_url('settings') . '#ai-integrations',
+            'optional' => true,
+        ];
+    }
+
+    // Filter dismissed items
+    $checklist = array_values(array_filter($checklist, function ($item) use ($dismissed) {
+        return !in_array($item['id'] ?? '', $dismissed, true);
+    }));
     
     $checklistCompleted = 0;
     foreach ($checklist as $item) {
@@ -515,7 +529,9 @@ function getDashboardData() {
         'onboarding' => [
             'completed' => $onboardingStatus['completed'] ?? false,
             'is_first_time' => $onboardingStatus['is_first_time'] ?? false,
-            'checklist' => $checklist,
+            'install_path' => $installPath,
+            'checklist_hidden' => $checklistHidden,
+            'checklist' => $checklistHidden ? [] : $checklist,
             'checklist_progress' => [
                 'completed' => $checklistCompleted,
                 'total' => count($checklist)
@@ -2503,6 +2519,9 @@ function getOnboardingData() {
     return [
         'status' => $status,
         'demo_content' => $demoContentInfo,
+        'install_path' => getSiteOnboardingSettings()['install_path'] ?? ($_GET['install'] ?? null),
+        'resume_step' => $status['last_step'] ?? null,
+        'use_case' => $status['use_case'] ?? null,
         'user' => [
             'name' => $_SESSION['user']['name'] ?? $_SESSION['user']['email'] ?? 'User',
             'email' => $_SESSION['user']['email'] ?? ''
