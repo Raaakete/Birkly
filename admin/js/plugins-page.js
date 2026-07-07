@@ -8,6 +8,7 @@
     var updateMap = {};
     var marketplaceFilterOptions = { categories: [], offer_types: [] };
     var currentOfferSlug = null;
+    var marketplaceBaseUrl = '';
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function'
@@ -110,7 +111,16 @@
             return t('price_free', 'Free');
         }
         var pricing = offer.pricing || {};
-        return ((pricing.amount_cents || 0) / 100).toFixed(2) + ' ' + (pricing.currency || 'USD');
+        var amount = ((pricing.amount_cents || 0) / 100).toFixed(2) + ' ' + (pricing.currency || 'USD');
+        if (pricing.model === 'subscription') {
+            return amount + '/' + (pricing.subscription_interval || 'month');
+        }
+        return amount;
+    }
+
+    function marketplacePurchaseUrl(slug) {
+        var base = marketplaceBaseUrl || 'https://marketplace.birkly.io';
+        return base.replace(/\/$/, '') + '/buy/' + encodeURIComponent(slug || '');
     }
 
     function formatRating(summary) {
@@ -176,10 +186,12 @@
         }
 
         return (
+            '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(marketplacePurchaseUrl(slug)) + '" target="_blank" rel="noopener noreferrer" onclick="' + clickGuard + '">' +
+            escapeHtml(t('purchase', 'Purchase')) + '</a>' +
             '<button type="button" class="btn btn-sm btn-primary" onclick="' + clickGuard +
             'PluginsPage.openMarketplaceInstall(\'' + escapeHtml(slug) + '\', \'' +
             escapeHtml(title) + '\', \'' + escapeHtml(version) + '\', false)">' +
-            escapeHtml(t('buy', 'Buy')) + '</button>'
+            escapeHtml(t('install_with_license', 'Install')) + '</button>'
         );
     }
 
@@ -603,9 +615,14 @@
                 throw new Error(result.message || 'Browse failed');
             }
 
+            marketplaceBaseUrl = (result.data && result.data.marketplace_url) || marketplaceBaseUrl;
+
             var hint = document.getElementById('marketplace-url-hint');
             if (hint) {
                 var hintText = 'Registry: ' + ((result.data && result.data.marketplace_url) || '');
+                if (result.data && result.data.installation_owner_email) {
+                    hintText += ' · Owner: ' + result.data.installation_owner_email;
+                }
                 if (result.data && result.data.fallback) {
                     hintText += ' (showing bundled catalog — registry unreachable)';
                 }
