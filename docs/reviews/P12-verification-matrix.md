@@ -10,7 +10,7 @@ Execute and mark at P12-M8 closure.
 
 | Milestone | Focus | Result | Evidence |
 |-----------|--------|--------|----------|
-| **P12-M0** | Gap register, threat model, matrix | | |
+| **P12-M0** | Gap register, threat model, matrix | pass | `P12-import-threat-model.md`, `P12-ecosystem-gap-register.md` |
 | **P12-M1** | GitHub App → QC | | |
 | **P12-M2** | Provider growth | | |
 | **P12-M3** | Live Shopify/Woo import | | |
