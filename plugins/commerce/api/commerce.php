@@ -53,7 +53,7 @@ $adminActions = [
     'list_subscription_upgrade_options', 'retry_subscription_payment',
     'list_discounts', 'save_discount', 'delete_discount',
     'import_dry_run', 'import_csv', 'import_sources', 'import_history', 'import_detail', 'import_collections', 'import_rollback',
-    'list_mappings', 'save_mapping', 'delete_mapping',
+    'list_mappings', 'save_mapping', 'delete_mapping', 'create_membership_mapping', 'mapping_wizard_data', 'list_membership_tiers',
     'list_fulfillment', 'test_fulfillment', 'save_fulfillment',
     'list_shipping_zones', 'save_shipping_zones',
     'list_tax_rules', 'save_tax_rules',
@@ -69,7 +69,7 @@ if (in_array($action, $statsActions, true)) {
     commerce_require_stats_capability();
 }
 
-if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote'], true)
+if (in_array($action, ['save_discount', 'delete_discount', 'import_csv', 'import_rollback', 'save_mapping', 'delete_mapping', 'create_membership_mapping', 'save_fulfillment', 'save_shipping_zones', 'save_tax_rules', 'refund_order', 'save_fieldtype_profile', 'delete_fieldtype_profile', 'cancel_subscription', 'upgrade_subscription', 'retry_subscription_payment', 'issue_gift_card', 'void_gift_card', 'create_quote', 'cancel_quote'], true)
     && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -421,6 +421,50 @@ switch ($action) {
         $key = $input['key'] ?? '';
         $ok = $mappings->deleteMapping($key);
         echo json_encode(['status' => $ok ? 'ok' : 'error']);
+        break;
+
+    case 'list_membership_tiers':
+        $tiers = [];
+        if (function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('user_management')) {
+            $storageFile = dirname(__DIR__, 2) . '/user_management/includes/UserStorage.php';
+            if (is_file($storageFile)) {
+                require_once $storageFile;
+                $userStorage = new UserStorage();
+                $tiers = $userStorage->listTiers();
+            }
+        }
+        echo json_encode(['status' => 'ok', 'data' => ['tiers' => $tiers, 'user_management_active' => !empty($tiers)]]);
+        break;
+
+    case 'mapping_wizard_data':
+        $tiers = [];
+        if (function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('user_management')) {
+            $storageFile = dirname(__DIR__, 2) . '/user_management/includes/UserStorage.php';
+            if (is_file($storageFile)) {
+                require_once $storageFile;
+                $userStorage = new UserStorage();
+                $tiers = $userStorage->listTiers();
+            }
+        }
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'catalog' => $catalog->listItems([]),
+                'tiers' => $tiers,
+                'mappings' => $mappings->getMappings(),
+                'user_management_active' => function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('user_management'),
+            ],
+        ]);
+        break;
+
+    case 'create_membership_mapping':
+        $result = $mappings->createMembershipMapping($input);
+        if (!($result['ok'] ?? false)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Failed to create mapping']);
+            break;
+        }
+        echo json_encode(['status' => 'ok', 'data' => $result]);
         break;
 
     case 'list_fulfillment':
