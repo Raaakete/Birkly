@@ -45,6 +45,7 @@ CORE_SYNTAX=(
   api/public.php
   api/page_bundle.php
   api/page_snapshot.php
+  api/health.php
   api/automation.php
   api/updates.php
   core/public_read.php

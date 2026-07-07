@@ -35,7 +35,7 @@
 - [ ] P12-M2 provider webhooks, payouts, fee tiers
 - [ ] P12-M3 Shopify + Woo live import
 - [ ] P12-M4 denylist + membership wiring
-- [ ] P12-M5 deploy smoke + kekaba checklist
+- [x] P12-M5 deploy smoke + kekaba checklist (`scripts/production-smoke.sh`, `api/health.php`, `docs/client-sites/kekaba-deploy-checklist.md`)
 - [ ] P12-M6 Birkly-Website production refresh
 - [ ] P12-M7 Birkly-Docs full sync
 - [ ] P12-M8 this checklist complete + human notified **once**
