@@ -168,11 +168,12 @@ class CommerceCheckoutService
         $giftCardCents = (int) ($giftTender['applied_cents'] ?? 0);
         if ($giftCardCents > 0) { $built['gift_card_cents'] = $giftCardCents; $built['gift_card_code'] = $giftTender['gift_card_code'] ?? $giftCardCode; $built['total_cents'] -= $giftCardCents; }
 
-        foreach ($built['lines'] as $line) {
+        foreach ($built['lines'] as &$line) {
             if (!$this->reserveLineStock($line)) {
                 return ['ok' => false, 'error' => 'Insufficient stock for ' . ($line['title'] ?? 'item')];
             }
         }
+        unset($line);
 
         $orderPayload = [
             'status' => 'pending',
@@ -284,7 +285,8 @@ class CommerceCheckoutService
     }
     public function createPendingOrderFromQuote(array $quote, string $customerEmail=''): array {
         $lines=$quote['lines']??[]; if(empty($lines)) return ['ok'=>false,'error'=>'Quote has no lines'];
-        foreach($lines as $line){ if(!$this->reserveLineStock($line)) return ['ok'=>false,'error'=>'Insufficient stock']; }
+        foreach($lines as &$line){ if(!$this->reserveLineStock($line)) return ['ok'=>false,'error'=>'Insufficient stock']; }
+        unset($line);
         $order=$this->orders->create(['status'=>'pending','lines'=>$lines,'total_cents'=>(int)($quote['total_cents']??0),'currency'=>$quote['currency']??'eur','customer_email'=>$customerEmail,'quote_id'=>$quote['id']??null]);
         $this->quoteStore()->update($quote['id'],['order_id'=>$order['id']]); $this->fireOrderCreated($order); return ['ok'=>true,'order'=>$order];
     }
@@ -492,11 +494,15 @@ class CommerceCheckoutService
         ];
     }
 
-    private function reserveLineStock(array $line): bool
+    private function reserveLineStock(array &$line): bool
     {
         $sku = trim((string) ($line['sku'] ?? ''));
-        if ($sku !== '' && !$this->warehouseStore()->hasSufficient($sku, (int) ($line['quantity'] ?? 1))) {
-            return false;
+        if ($sku !== '') {
+            $warehouseId = $this->warehouseStore()->allocateWarehouse($sku, (int) ($line['quantity'] ?? 1));
+            if ($warehouseId === null) {
+                return false;
+            }
+            $line['warehouse_id'] = $warehouseId;
         }
 
         if (!$this->indexer->reserveQuantity(
@@ -526,7 +532,8 @@ class CommerceCheckoutService
     {
         $sku = trim((string) ($line['sku'] ?? ''));
         if ($sku !== '') {
-            $this->warehouseStore()->increment($sku, (int) ($line['quantity'] ?? 1));
+            $warehouseId = $line['warehouse_id'] ?? null;
+            $this->warehouseStore()->increment($sku, (int) ($line['quantity'] ?? 1), $warehouseId);
         }
 
         $this->indexer->incrementQuantity(
@@ -550,7 +557,8 @@ class CommerceCheckoutService
     {
         $sku = trim((string) ($line['sku'] ?? ''));
         if ($sku !== '') {
-            $this->warehouseStore()->decrement($sku, (int) ($line['quantity'] ?? 1));
+            $warehouseId = $line['warehouse_id'] ?? $this->warehouseStore()->allocateWarehouse($sku, (int) ($line['quantity'] ?? 1));
+            $this->warehouseStore()->decrement($sku, (int) ($line['quantity'] ?? 1), $warehouseId);
         }
 
         $this->indexer->decrementQuantity(

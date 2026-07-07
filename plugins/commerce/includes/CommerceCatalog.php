@@ -228,14 +228,76 @@ class CommerceCatalog
         }
 
         $country = strtoupper(trim((string) ($shippingAddress['country'] ?? '')));
+        $totalWeight = $this->calculateCartWeightGrams($lines);
         foreach ($zones as $zone) {
-            $countries = $zone['countries'] ?? ['*'];
+            $countries = array_map('strtoupper', $zone['countries'] ?? ['*']);
             if (in_array('*', $countries, true) || ($country !== '' && in_array($country, $countries, true))) {
-                return max(0, (int) ($zone['flat_rate_cents'] ?? 0));
+                return $this->resolveZoneRateCents($zone, $totalWeight);
             }
         }
 
-        return max(0, (int) ($zones[0]['flat_rate_cents'] ?? 0));
+        return $this->resolveZoneRateCents($zones[0], $totalWeight);
+    }
+
+    private function calculateCartWeightGrams(array $lines): int
+    {
+        $total = 0;
+        foreach ($lines as $line) {
+            $total += $this->lineWeightGrams($line);
+            if (!empty($line['is_bundle'])) {
+                foreach ($line['components'] ?? [] as $comp) {
+                    $total += $this->lineWeightGrams($comp);
+                }
+            }
+        }
+
+        return max(0, $total);
+    }
+
+    private function lineWeightGrams(array $line): int
+    {
+        if (($line['fulfillment'] ?? '') !== 'ship' && empty($line['is_bundle'])) {
+            return 0;
+        }
+        $commerce = $line['commerce'] ?? [];
+        $grams = (int) ($commerce['weight_grams'] ?? $line['weight_grams'] ?? 0);
+        $qty = max(1, (int) ($line['quantity'] ?? 1));
+
+        return max(0, $grams) * $qty;
+    }
+
+    /** @param array<string, mixed> $zone */
+    private function resolveZoneRateCents(array $zone, int $totalWeightGrams): int
+    {
+        $rateType = strtolower((string) ($zone['rate_type'] ?? 'flat'));
+        if ($rateType === 'weight_tiers') {
+            $tiers = is_array($zone['weight_tiers'] ?? null) ? $zone['weight_tiers'] : [];
+            usort($tiers, function ($a, $b) {
+                $aMax = $a['max_grams'] ?? null;
+                $bMax = $b['max_grams'] ?? null;
+                if ($aMax === null) {
+                    return 1;
+                }
+                if ($bMax === null) {
+                    return -1;
+                }
+
+                return (int) $aMax <=> (int) $bMax;
+            });
+            foreach ($tiers as $tier) {
+                if (!is_array($tier)) {
+                    continue;
+                }
+                $max = $tier['max_grams'] ?? null;
+                if ($max === null || $max === '' || (int) $totalWeightGrams <= (int) $max) {
+                    return max(0, (int) ($tier['rate_cents'] ?? 0));
+                }
+            }
+
+            return max(0, (int) ($zone['flat_rate_cents'] ?? 0));
+        }
+
+        return max(0, (int) ($zone['flat_rate_cents'] ?? 0));
     }
 
     public function loadShippingZones(): array

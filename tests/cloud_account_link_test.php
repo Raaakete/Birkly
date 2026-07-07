@@ -217,6 +217,26 @@ try {
         'follow' => false,
     ]);
     test_assert('local login works after unlink', in_array($loginPost2['code'] ?? 0, [302, 303], true));
+
+    // P16-M3: production OAuth URL fixture + unreachable graceful handling
+    putenv('BIRKLY_CLOUD_OAUTH_URL=https://cloud.birkly.io');
+    birkly_cloud_account_reset();
+    test_assert(
+        'prod fixture oauth base url',
+        birkly_cloud_oauth_base_url() === 'https://cloud.birkly.io'
+    );
+
+    $GLOBALS['birkly_cloud_oauth_reachable_override'] = false;
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+    $blocked = birkly_cloud_account_start_link('https://cms.example.test/api/cloud_account.php?action=callback');
+    test_assert(
+        'start_link blocked when cloud unreachable',
+        empty($blocked['ok']) && str_contains((string) ($blocked['error'] ?? ''), 'unaffected')
+    );
+    unset($GLOBALS['birkly_cloud_oauth_reachable_override']);
+    putenv('BIRKLY_CLOUD_OAUTH_URL');
 } finally {
     birkly_test_http_server_stop($serverPid);
     birkly_test_restore_directory($usersDir, $backupUsers);
@@ -235,6 +255,7 @@ try {
     @unlink($cookieFile);
     putenv('BIRKLY_CLOUD_ACCOUNT_MOCK');
     putenv('BIRKLY_CLOUD_ACCOUNT_MOCK_EMAIL');
+    putenv('BIRKLY_CLOUD_OAUTH_URL');
     birkly_cloud_account_reset();
     birkly_marketplace_settings_reset();
     array_map('unlink', glob($settingsDir . '/*') ?: []);

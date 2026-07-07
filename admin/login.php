@@ -42,12 +42,14 @@ function birkly_login_redirect_is_safe(string $redirect): bool
     return str_contains($path, '/oauth/authorize');
 }
 
-// SECURITY FIX: Set comprehensive security headers
+// SECURITY FIX: Set comprehensive security headers with CSP nonce (P16-M5)
 require_once __DIR__ . '/../api/validate.php';
+require_once __DIR__ . '/../core/csp.php';
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
-    set_security_headers('admin');
+    birkly_set_admin_csp_headers();
 }
+$__birklyLoginNonceAttr = birkly_csp_nonce_attr();
 
 $error = '';
 $success = '';
@@ -492,11 +494,26 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         </form>
         
         <div class="login-footer">
+            <?php
+            require_once __DIR__ . '/../core/platform.php';
+            if (birkly_alpha_program_enabled()):
+                $termsUrl = birkly_legal_terms_url();
+                $privacyUrl = birkly_legal_privacy_url();
+            ?>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                <?= htmlspecialchars(birkly_program_status_label()) ?> ·
+                <a href="<?= htmlspecialchars($termsUrl) ?>" target="_blank" rel="noopener noreferrer">Terms</a>
+                ·
+                <a href="<?= htmlspecialchars($privacyUrl) ?>" target="_blank" rel="noopener noreferrer">Privacy</a>
+                ·
+                <a href="https://birkly.com/#waitlist" target="_blank" rel="noopener noreferrer">Request invite</a>
+            </p>
+            <?php endif; ?>
             <p>Need help? <a href="#" onclick="alert('Contact your system administrator')">Contact Support</a></p>
         </div>
     </div>
     
-    <script>
+    <script<?= $__birklyLoginNonceAttr ?>>
         // Auto-focus email field
         document.getElementById('email').focus();
         

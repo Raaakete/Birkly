@@ -139,6 +139,70 @@ Checks:
 
 ---
 
+## Live production (human)
+
+Promote from staging after `staging-smoke-kekaba.sh` passes on `https://service.kekaba.com` (or your staging host).
+
+### Live cutover checklist
+
+- [ ] DNS A/AAAA for production domain points to host (human)
+- [ ] TLS certificate valid (human)
+- [ ] Upload bundle per § Upload bundle — **preserve** server `content/`, `users/`, `settings/`, `media/`
+- [ ] Root `.htaccess` allows `/Birkly-0.1/` PHP (no `RewriteRule ^Birkly-0\.1/ - [F,L]`)
+- [ ] Marketplace plugins installed on **production** admin (order below)
+- [ ] Settings → Domains: production host registered
+- [ ] Settings → Marketplace: `marketplace_url` → `https://marketplace.birkly.io`
+- [ ] Commerce live Stripe keys in CMS Settings (human) if shop enabled
+- [ ] Run post-upload smoke (both scripts below) — expect **PASS**
+
+### Production plugin install order
+
+Install via Admin → Plugins → Marketplace on the **live** host (not local demo zip):
+
+1. **commerce** — shop, cart, checkout API routes
+2. **events** — calendar / iCal routes
+3. **automation** — optional workflows
+4. **user_management** — optional community features
+
+Re-run smoke after each required plugin; shop/events routes fail until commerce + events are active.
+
+### Live smoke (required)
+
+```bash
+# From kekaba repo — static site + loaders + commerce routes
+cd /path/to/kekaba
+./scripts/check-production.sh https://YOUR-PRODUCTION-DOMAIN
+
+# From Birkly repo — embed health + marketplace
+cd /path/to/Birkly
+./scripts/production-smoke.sh https://YOUR-PRODUCTION-DOMAIN/Birkly-0.1
+# Cron on ops host:
+./scripts/scheduled-production-smoke.sh https://YOUR-PRODUCTION-DOMAIN/Birkly-0.1
+```
+
+### Live verification gates
+
+| Check | URL | Expected |
+|-------|-----|----------|
+| Embed reachable | `/Birkly-0.1/ping.txt` | HTTP 200 |
+| Admin login | `/Birkly-0.1/admin/login.php` | HTTP 200 |
+| Health JSON | `/Birkly-0.1/api/health.php` | `status` ok or degraded |
+| Shop route | `/shop.html` or commerce slug | Page loads with commerce plugin |
+| Marketplace registry | CMS health `marketplace.status` | reachable |
+
+### Embed sync verify (agent, before human upload)
+
+```bash
+cd /path/to/Birkly
+./scripts/sync-client-embed.sh /path/to/kekaba scripts/fixtures/kekaba-embed-excludes.txt
+./scripts/patch-kekaba-plugins.php.sh /path/to/kekaba/Birkly-0.1/core/plugins.php
+cd /path/to/kekaba && ./scripts/prepare-kekaba-deploy.sh
+```
+
+Confirm `Birkly-0.1/VERSION` or `api/build_info.php` version matches Birkly `main` you intend to ship.
+
+---
+
 ## Human-only gates (agent does not run)
 
 - [ ] DNS / TLS for production domain
@@ -162,6 +226,7 @@ Details: kekaba `DEPLOY-RECOVERY.md`, `AUDIT-TODAY.md`.
 
 ## Related
 
+- `docs/reviews/P16-production-deploy-playbook.md` — ecosystem deploy index
 - `docs/client-sites/cms-vendoring.md` — embed policy
 - `scripts/production-smoke.sh` — CMS + marketplace smoke
 - `docs/reviews/P11-P12-phase-closure-checklist.md` — phase closure

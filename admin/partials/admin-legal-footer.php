@@ -13,9 +13,11 @@ $privacyUrl = birkly_legal_privacy_url();
 ?>
 <footer class="admin-legal-footer" aria-label="Legal">
     <p class="admin-legal-footer-text">
-        Closed alpha ·
+        <?= htmlspecialchars(birkly_program_status_label()) ?> ·
         <a href="<?= htmlspecialchars($termsUrl) ?>" target="_blank" rel="noopener noreferrer">Terms of service</a>
         ·
         <a href="<?= htmlspecialchars($privacyUrl) ?>" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+        ·
+        <a href="https://birkly.com/#waitlist" target="_blank" rel="noopener noreferrer">Request invite</a>
     </p>
 </footer>

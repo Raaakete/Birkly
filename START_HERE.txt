@@ -1,0 +1,16 @@
+BIRKLY — GETTING STARTED
+========================
+
+Open START_HERE.html in your web browser first.
+
+That page will help you:
+  1. Confirm you extracted the zip to the correct folder
+  2. Choose local development or cloud/FTP hosting
+  3. Continue to the admin setup wizard
+
+Quick local start (after opening START_HERE.html):
+  chmod +x ./start-server.sh
+  ./start-server.sh
+  Visit http://localhost:8080/admin
+
+Documentation: https://github.com/Raaakete/Birkly-Docs
