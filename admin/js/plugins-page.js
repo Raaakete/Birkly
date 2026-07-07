@@ -7,6 +7,7 @@
     var installedPlugins = [];
     var updateMap = {};
     var marketplaceFilterOptions = { categories: [], offer_types: [] };
+    var currentOfferSlug = null;
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function'
@@ -129,6 +130,74 @@
             return (n / 1000).toFixed(1) + 'k ' + t('marketplace_downloads', 'downloads');
         }
         return n + ' ' + t('marketplace_downloads', 'downloads');
+    }
+
+    function getOfferInstallState(offer) {
+        if (offer && offer.install_state) {
+            return offer.install_state;
+        }
+        return {
+            installed: false,
+            plugin_id: null,
+            installed_version: null,
+            latest_version: (offer && offer.latest_version) || '',
+            update_available: false,
+        };
+    }
+
+    function renderOfferActionButtons(offer, stopPropagation) {
+        var state = getOfferInstallState(offer);
+        var slug = offer.slug || '';
+        var title = offer.title || slug;
+        var version = offer.latest_version || '';
+        var free = isFreeOffer(offer);
+        var clickGuard = stopPropagation ? 'event.stopPropagation(); ' : '';
+
+        if (state.installed) {
+            if (state.update_available && state.plugin_id) {
+                return (
+                    '<button type="button" class="btn btn-sm btn-secondary" onclick="' + clickGuard +
+                    'PluginsPage.upgradePlugin(\'' + escapeHtml(state.plugin_id) + '\')">' +
+                    escapeHtml(t('update', 'Update')) + '</button>'
+                );
+            }
+            return (
+                '<button type="button" class="btn btn-sm btn-secondary" disabled>' +
+                escapeHtml(t('installed', 'Installed')) + '</button>'
+            );
+        }
+
+        if (free) {
+            return (
+                '<button type="button" class="btn btn-sm btn-primary" onclick="' + clickGuard +
+                'PluginsPage.installFreePlugin(\'' + escapeHtml(slug) + '\', \'' + escapeHtml(version) + '\')">' +
+                escapeHtml(t('install', 'Install')) + '</button>'
+            );
+        }
+
+        return (
+            '<button type="button" class="btn btn-sm btn-primary" onclick="' + clickGuard +
+            'PluginsPage.openMarketplaceInstall(\'' + escapeHtml(slug) + '\', \'' +
+            escapeHtml(title) + '\', \'' + escapeHtml(version) + '\', false)">' +
+            escapeHtml(t('buy', 'Buy')) + '</button>'
+        );
+    }
+
+    function renderOfferMetaRows(offer) {
+        return (
+            '<div class="marketplace-offer-meta">' +
+            '<div class="marketplace-offer-meta-row">' +
+            '<span class="marketplace-price">' + escapeHtml(formatPrice(offer)) + '</span>' +
+            '<span class="marketplace-rating">' + escapeHtml(formatRating(offer.rating_summary)) + '</span>' +
+            '</div>' +
+            '<div class="marketplace-offer-meta-row">' +
+            '<span class="marketplace-downloads">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
+            (offer.latest_version
+                ? '<span class="marketplace-version">v' + escapeHtml(offer.latest_version) + '</span>'
+                : '<span class="marketplace-version"></span>') +
+            '</div>' +
+            '</div>'
+        );
     }
 
     function offerImageHtml(offer) {
@@ -301,39 +370,189 @@
         }
 
         grid.innerHTML = offers.map(function (offer) {
-            var free = isFreeOffer(offer);
-            var installLabel = free ? t('install', 'Install') : t('install_with_license', 'Install with license');
-            var installHandler = free
-                ? 'PluginsPage.installFreePlugin(\'' + escapeHtml(offer.slug) + '\', \'' + escapeHtml(offer.latest_version || '') + '\')'
-                : 'PluginsPage.openMarketplaceInstall(\'' +
-                escapeHtml(offer.slug) + '\', \'' + escapeHtml(offer.title || offer.slug) + '\', \'' +
-                escapeHtml(offer.latest_version || '') + '\', false)';
-
+            var slug = offer.slug || '';
             return (
-                '<article class="marketplace-offer-card">' +
+                '<article class="marketplace-offer-card" role="button" tabindex="0" onclick="PluginsPage.openOfferDetail(\'' + escapeHtml(slug) + '\')" onkeydown="if(event.key===\'Enter\'){PluginsPage.openOfferDetail(\'' + escapeHtml(slug) + '\')}">' +
                 '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
                 '<div class="marketplace-offer-body">' +
                 '<div class="marketplace-offer-top">' +
                 '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
-                '<span class="trust-badge">' + escapeHtml(offer.trust_level || 'untrusted') + '</span>' +
                 '</div>' +
-                '<h3 class="marketplace-offer-title">' + escapeHtml(offer.title || offer.slug) + '</h3>' +
-                '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
-                '<div class="marketplace-offer-meta">' +
-                '<span class="marketplace-price">' + escapeHtml(formatPrice(offer)) + '</span>' +
-                (offer.latest_version ? '<span class="marketplace-version">v' + escapeHtml(offer.latest_version) + '</span>' : '') +
-                '<span class="marketplace-rating">' + escapeHtml(formatRating(offer.rating_summary)) + '</span>' +
-                '<span class="marketplace-downloads">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
-                '</div>' +
-                '<div class="marketplace-offer-actions">' +
-                '<button type="button" class="btn btn-sm btn-primary" onclick="' + installHandler + '">' +
-                escapeHtml(installLabel) +
+                '<h3 class="marketplace-offer-title">' +
+                '<button type="button" class="marketplace-offer-title-link" onclick="event.stopPropagation(); PluginsPage.openOfferDetail(\'' + escapeHtml(slug) + '\')">' +
+                escapeHtml(offer.title || slug) +
                 '</button>' +
+                '</h3>' +
+                '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
+                renderOfferMetaRows(offer) +
+                '<div class="marketplace-offer-actions">' +
+                renderOfferActionButtons(offer, true) +
                 '</div>' +
                 '</div>' +
                 '</article>'
             );
         }).join('');
+    }
+
+    function setMarketplaceView(mode) {
+        var browse = document.getElementById('marketplace-browse-view');
+        var detail = document.getElementById('marketplace-offer-detail');
+        if (browse) {
+            browse.hidden = mode === 'detail';
+        }
+        if (detail) {
+            detail.hidden = mode !== 'detail';
+        }
+    }
+
+    function updateMarketplaceUrl(slug) {
+        if (!window.history || typeof window.history.replaceState !== 'function') {
+            return;
+        }
+        var pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.set('tab', 'marketplace');
+        if (slug) {
+            pageUrl.searchParams.set('offer', slug);
+        } else {
+            pageUrl.searchParams.delete('offer');
+        }
+        window.history.replaceState({}, '', pageUrl.pathname + pageUrl.search + pageUrl.hash);
+    }
+
+    function renderOfferDetailScreenshots(offer) {
+        var shots = Array.isArray(offer.screenshots) ? offer.screenshots : [];
+        if (!shots.length) {
+            return '';
+        }
+        return (
+            '<div class="marketplace-offer-detail-section">' +
+            '<h3>Screenshots</h3>' +
+            '<div class="marketplace-screenshots">' +
+            shots.map(function (src) {
+                return '<img src="' + escapeHtml(src) + '" alt="" loading="lazy">';
+            }).join('') +
+            '</div></div>'
+        );
+    }
+
+    function renderOfferDetailReleases(releases) {
+        if (!releases || !releases.length) {
+            return '';
+        }
+        var rows = releases.map(function (release) {
+            var version = release.version || '';
+            var changelog = release.changelog || '';
+            var published = (release.published_at || '').substring(0, 10);
+            return (
+                '<tr>' +
+                '<td>v' + escapeHtml(version) + '</td>' +
+                '<td>' + escapeHtml(published) + '</td>' +
+                '<td>' + escapeHtml(changelog) + '</td>' +
+                '</tr>'
+            );
+        }).join('');
+
+        return (
+            '<div class="marketplace-offer-detail-section">' +
+            '<h3>' + escapeHtml(t('releases', 'Releases')) + '</h3>' +
+            '<table class="marketplace-release-table">' +
+            '<thead><tr><th>Version</th><th>Published</th><th>' + escapeHtml(t('changelog', 'Changelog')) + '</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table></div>'
+        );
+    }
+
+    function renderMarketplaceOfferDetail(offer, releases) {
+        var slug = offer.slug || '';
+        var compatibility = offer.compatibility || {};
+        var description = offer.description || offer.summary || t('no_description', 'No detailed description provided yet.');
+        var providerId = offer.provider_id || '';
+
+        return (
+            '<div class="marketplace-offer-detail-inner">' +
+            '<button type="button" class="btn btn-secondary btn-sm" onclick="PluginsPage.backToMarketplaceBrowse()">' +
+            escapeHtml(t('back_to_marketplace', 'Back to marketplace')) +
+            '</button>' +
+            '<div class="marketplace-offer-detail-header">' +
+            '<div>' +
+            '<div class="marketplace-offer-detail-media">' + offerImageHtml(offer) + '</div>' +
+            '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
+            '<h2 class="marketplace-offer-title">' + escapeHtml(offer.title || slug) + '</h2>' +
+            '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
+            renderOfferMetaRows(offer) +
+            '</div>' +
+            '<aside class="marketplace-offer-detail-sidebar">' +
+            '<p class="marketplace-offer-detail-price">' + escapeHtml(formatPrice(offer)) + '</p>' +
+            '<div class="marketplace-offer-actions">' + renderOfferActionButtons(offer, false) + '</div>' +
+            '</aside>' +
+            '</div>' +
+            '<div class="marketplace-offer-detail-section">' +
+            '<h3>' + escapeHtml(t('description', 'Description')) + '</h3>' +
+            '<div class="marketplace-offer-description">' + escapeHtml(description) + '</div>' +
+            '</div>' +
+            renderOfferDetailScreenshots(offer) +
+            '<div class="marketplace-offer-detail-section">' +
+            '<h3>' + escapeHtml(t('compatibility', 'Compatibility')) + '</h3>' +
+            '<dl class="marketplace-detail-meta-list">' +
+            (compatibility.requires_birkly
+                ? '<div><dt>' + escapeHtml(t('requires_birkly', 'Requires Birkly')) + '</dt><dd>' + escapeHtml(compatibility.requires_birkly) + '</dd></div>'
+                : '') +
+            (compatibility.requires_php
+                ? '<div><dt>' + escapeHtml(t('requires_php', 'Requires PHP')) + '</dt><dd>' + escapeHtml(compatibility.requires_php) + '</dd></div>'
+                : '') +
+            '</dl></div>' +
+            (providerId
+                ? '<div class="marketplace-offer-detail-section"><h3>' + escapeHtml(t('provider', 'Provider')) + '</h3><p>' + escapeHtml(providerId) + '</p></div>'
+                : '') +
+            renderOfferDetailReleases(releases) +
+            '</div>'
+        );
+    }
+
+    async function openOfferDetail(slug) {
+        if (!slug) {
+            return;
+        }
+        currentOfferSlug = slug;
+        setMarketplaceView('detail');
+        updateMarketplaceUrl(slug);
+
+        var detailEl = document.getElementById('marketplace-offer-detail');
+        if (!detailEl) {
+            return;
+        }
+        detailEl.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('loading_marketplace', 'Loading marketplace...')) + '</p></div>';
+
+        var titleEl = document.getElementById('plugins-page-title');
+        if (titleEl) {
+            titleEl.textContent = slug;
+        }
+
+        try {
+            var response = await fetch(url('/api/marketplace.php?action=offer&slug=' + encodeURIComponent(slug)), {
+                credentials: 'same-origin',
+            });
+            var result = await response.json();
+            if (result.status !== 'ok' || !result.data || !result.data.offer) {
+                throw new Error(result.message || 'Offer not found');
+            }
+            var offer = result.data.offer;
+            if (titleEl) {
+                titleEl.textContent = offer.title || slug;
+            }
+            detailEl.innerHTML = renderMarketplaceOfferDetail(offer, result.data.releases || []);
+        } catch (err) {
+            detailEl.innerHTML = '<div class="error-state"><p>' + escapeHtml(err.message) + '</p>' +
+                '<button type="button" class="btn btn-secondary" onclick="PluginsPage.backToMarketplaceBrowse()">' +
+                escapeHtml(t('back_to_marketplace', 'Back to marketplace')) + '</button></div>';
+        }
+    }
+
+    function backToMarketplaceBrowse() {
+        currentOfferSlug = null;
+        setMarketplaceView('browse');
+        updateMarketplaceUrl('');
+        updatePageTitle('marketplace');
+        loadMarketplace();
     }
 
     function updateCategoryFilterOptions(categories) {
@@ -361,6 +580,7 @@
     }
 
     async function loadMarketplace() {
+        setMarketplaceView('browse');
         var grid = document.getElementById('marketplace-grid');
         if (grid) {
             grid.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('loading_marketplace', 'Loading marketplace...')) + '</p></div>';
@@ -431,6 +651,11 @@
         return 'marketplace';
     }
 
+    function getInitialOfferSlug() {
+        var params = new URLSearchParams(window.location.search);
+        return params.get('offer') || '';
+    }
+
     function switchTab(tab) {
         updatePageTitle(tab);
         document.querySelectorAll('.plugins-tab').forEach(function (btn) {
@@ -445,8 +670,16 @@
             panel.hidden = !show;
         });
         if (tab === 'marketplace') {
-            loadMarketplace();
+            var offerSlug = getInitialOfferSlug();
+            if (offerSlug) {
+                openOfferDetail(offerSlug);
+            } else {
+                setMarketplaceView('browse');
+                loadMarketplace();
+            }
         } else if (tab === 'installed') {
+            currentOfferSlug = null;
+            setMarketplaceView('browse');
             loadInstalled()
                 .then(function () { return refreshUpdateBadge(true); })
                 .catch(function (err) { showMessage(err.message, 'error'); });
@@ -455,6 +688,7 @@
             var pageUrl = new URL(window.location.href);
             if (tab === 'installed') {
                 pageUrl.searchParams.delete('tab');
+                pageUrl.searchParams.delete('offer');
             } else {
                 pageUrl.searchParams.set('tab', tab);
             }
@@ -600,6 +834,8 @@
         loadMarketplace: loadMarketplace,
         switchToMarketplace: switchToMarketplace,
         switchTab: switchTab,
+        openOfferDetail: openOfferDetail,
+        backToMarketplaceBrowse: backToMarketplaceBrowse,
     };
 
     window.togglePlugin = togglePlugin;

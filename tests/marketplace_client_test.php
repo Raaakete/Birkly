@@ -82,6 +82,9 @@ $GLOBALS['birkly_marketplace_mock_handler'] = function (string $method, string $
 };
 $browseFallback = birkly_marketplace_browse('', '', 'plugin');
 test_assert('browse uses fallback when registry fails', !empty($browseFallback['ok']) && !empty($browseFallback['fallback']) && count($browseFallback['offers']) >= 2);
+$firstOffer = $browseFallback['offers'][0] ?? [];
+test_assert('browse offers include install_state', isset($firstOffer['install_state']) && is_array($firstOffer['install_state']));
+test_assert('install_state defaults to not installed', ($firstOffer['install_state']['installed'] ?? true) === false);
 unset($GLOBALS['birkly_marketplace_mock_handler']);
 
 // Mock HTTP handler
