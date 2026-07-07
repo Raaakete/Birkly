@@ -94,8 +94,6 @@
             });
             
             const responseText = await response.text();
-            console.log('[Bulk Operation] Response status:', response.status);
-            console.log('[Bulk Operation] Response text:', responseText);
             
             let data;
             try {
@@ -105,7 +103,6 @@
                 return { status: 'error', message: 'Invalid JSON response: ' + responseText.substring(0, 100) };
             }
             
-            console.log('[Bulk Operation] Parsed data:', data);
             return data;
         } catch (error) {
             console.error('Bulk operation error:', error);
@@ -429,7 +426,6 @@
                 return;
             }
             
-            console.log('[Reorder] Using collection identifier:', collectionIdentifier);
             
             const response = await fetch(apiUrl('/api/content.php?action=set_entry_order'), {
                 method: 'POST',
@@ -453,7 +449,6 @@
                 return;
             }
             
-            console.log('[Reorder] Response:', data);
             
             if (data.status === 'ok') {
                 // Reorder DOM elements to match new order
