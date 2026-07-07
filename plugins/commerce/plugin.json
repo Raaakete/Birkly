@@ -102,6 +102,12 @@
       "default": ["admin"],
       "label": "Dashboard Widget Roles",
       "description": "Roles allowed to see the commerce stats widget"
+    },
+    "commerce_default_currency": {
+      "type": "string",
+      "default": "eur",
+      "label": "Default Currency",
+      "description": "Site default charge currency for new purchase options (no FX conversion)"
     }
   }
 }

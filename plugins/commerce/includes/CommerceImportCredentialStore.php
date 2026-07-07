@@ -1,6 +1,6 @@
 <?php
 /**
- * Encrypted credential storage for live Shopify/WooCommerce import.
+ * Encrypted credential storage for live Shopify/WooCommerce/Etsy/Square import.
  * Stored in settings/commerce_import.json (not committed).
  */
 
@@ -52,6 +52,8 @@ class CommerceImportCredentialStore
         return [
             'shopify' => $this->defaultPlatformConfig('shopify'),
             'woocommerce' => $this->defaultPlatformConfig('woocommerce'),
+            'etsy' => $this->defaultPlatformConfig('etsy'),
+            'square' => $this->defaultPlatformConfig('square'),
             'cron_token' => '',
             'updated_at' => null,
         ];
@@ -69,14 +71,28 @@ class CommerceImportCredentialStore
             'last_sync_status' => null,
             'last_sync_message' => null,
             'last_import_id' => null,
+            'webhook_secret_enc' => '',
         ];
-        if ($platform === 'shopify') {
-            $base['shop_domain'] = '';
-            $base['access_token_enc'] = '';
-        } else {
-            $base['site_url'] = '';
-            $base['consumer_key_enc'] = '';
-            $base['consumer_secret_enc'] = '';
+
+        switch ($platform) {
+            case 'shopify':
+                $base['shop_domain'] = '';
+                $base['access_token_enc'] = '';
+                break;
+            case 'woocommerce':
+                $base['site_url'] = '';
+                $base['consumer_key_enc'] = '';
+                $base['consumer_secret_enc'] = '';
+                break;
+            case 'etsy':
+                $base['shop_id'] = '';
+                $base['api_key_enc'] = '';
+                $base['access_token_enc'] = '';
+                break;
+            case 'square':
+                $base['location_id'] = '';
+                $base['access_token_enc'] = '';
+                break;
         }
 
         return $base;
@@ -124,7 +140,7 @@ class CommerceImportCredentialStore
         $config = $this->load();
         $current = is_array($config[$platform] ?? null) ? $config[$platform] : $this->defaultPlatformConfig($platform);
 
-        foreach (['enabled', 'collection', 'default_currency', 'schedule_enabled', 'shop_domain', 'site_url'] as $key) {
+        foreach (['enabled', 'collection', 'default_currency', 'schedule_enabled', 'shop_domain', 'site_url', 'shop_id', 'location_id'] as $key) {
             if (array_key_exists($key, $patch)) {
                 $current[$key] = $patch[$key];
             }
@@ -140,6 +156,20 @@ class CommerceImportCredentialStore
             if (isset($patch['consumer_secret']) && is_string($patch['consumer_secret']) && $patch['consumer_secret'] !== '') {
                 $current['consumer_secret_enc'] = $this->crypto->encrypt($patch['consumer_secret']);
             }
+        }
+        if ($platform === 'etsy') {
+            if (isset($patch['api_key']) && is_string($patch['api_key']) && $patch['api_key'] !== '') {
+                $current['api_key_enc'] = $this->crypto->encrypt($patch['api_key']);
+            }
+            if (isset($patch['access_token']) && is_string($patch['access_token']) && $patch['access_token'] !== '') {
+                $current['access_token_enc'] = $this->crypto->encrypt($patch['access_token']);
+            }
+        }
+        if ($platform === 'square' && isset($patch['access_token']) && is_string($patch['access_token']) && $patch['access_token'] !== '') {
+            $current['access_token_enc'] = $this->crypto->encrypt($patch['access_token']);
+        }
+        if (isset($patch['webhook_secret']) && is_string($patch['webhook_secret']) && $patch['webhook_secret'] !== '') {
+            $current['webhook_secret_enc'] = $this->crypto->encrypt($patch['webhook_secret']);
         }
 
         $config[$platform] = $current;
@@ -176,6 +206,8 @@ class CommerceImportCredentialStore
         return [
             'shopify' => $this->publicPlatformConfig('shopify', is_array($config['shopify'] ?? null) ? $config['shopify'] : []),
             'woocommerce' => $this->publicPlatformConfig('woocommerce', is_array($config['woocommerce'] ?? null) ? $config['woocommerce'] : []),
+            'etsy' => $this->publicPlatformConfig('etsy', is_array($config['etsy'] ?? null) ? $config['etsy'] : []),
+            'square' => $this->publicPlatformConfig('square', is_array($config['square'] ?? null) ? $config['square'] : []),
             'cron_token' => $this->getCronToken(),
             'updated_at' => $config['updated_at'] ?? null,
         ];
@@ -194,12 +226,17 @@ class CommerceImportCredentialStore
             'last_sync_message' => $platformConfig['last_sync_message'] ?? null,
             'last_import_id' => $platformConfig['last_import_id'] ?? null,
             'connected' => $this->platformHasCredentials($platform, $platformConfig),
+            'webhook_configured' => !empty($platformConfig['webhook_secret_enc']),
         ];
 
         if ($platform === 'shopify') {
             $out['shop_domain'] = (string) ($platformConfig['shop_domain'] ?? '');
-        } else {
+        } elseif ($platform === 'woocommerce') {
             $out['site_url'] = (string) ($platformConfig['site_url'] ?? '');
+        } elseif ($platform === 'etsy') {
+            $out['shop_id'] = (string) ($platformConfig['shop_id'] ?? '');
+        } elseif ($platform === 'square') {
+            $out['location_id'] = (string) ($platformConfig['location_id'] ?? '');
         }
 
         return $out;
@@ -211,10 +248,21 @@ class CommerceImportCredentialStore
         if ($platform === 'shopify') {
             return !empty($platformConfig['access_token_enc']) && trim((string) ($platformConfig['shop_domain'] ?? '')) !== '';
         }
+        if ($platform === 'woocommerce') {
+            return !empty($platformConfig['consumer_key_enc'])
+                && !empty($platformConfig['consumer_secret_enc'])
+                && trim((string) ($platformConfig['site_url'] ?? '')) !== '';
+        }
+        if ($platform === 'etsy') {
+            return !empty($platformConfig['api_key_enc'])
+                && !empty($platformConfig['access_token_enc'])
+                && trim((string) ($platformConfig['shop_id'] ?? '')) !== '';
+        }
+        if ($platform === 'square') {
+            return !empty($platformConfig['access_token_enc']);
+        }
 
-        return !empty($platformConfig['consumer_key_enc'])
-            && !empty($platformConfig['consumer_secret_enc'])
-            && trim((string) ($platformConfig['site_url'] ?? '')) !== '';
+        return false;
     }
 
     /** @param array<string, mixed> $platformConfig */
@@ -232,7 +280,21 @@ class CommerceImportCredentialStore
                 $out['consumer_secret'] = $this->crypto->decrypt((string) $platformConfig['consumer_secret_enc']);
             }
         }
-        unset($out['access_token_enc'], $out['consumer_key_enc'], $out['consumer_secret_enc']);
+        if ($platform === 'etsy') {
+            if (!empty($platformConfig['api_key_enc'])) {
+                $out['api_key'] = $this->crypto->decrypt((string) $platformConfig['api_key_enc']);
+            }
+            if (!empty($platformConfig['access_token_enc'])) {
+                $out['access_token'] = $this->crypto->decrypt((string) $platformConfig['access_token_enc']);
+            }
+        }
+        if ($platform === 'square' && !empty($platformConfig['access_token_enc'])) {
+            $out['access_token'] = $this->crypto->decrypt((string) $platformConfig['access_token_enc']);
+        }
+        if (!empty($platformConfig['webhook_secret_enc'])) {
+            $out['webhook_secret'] = $this->crypto->decrypt((string) $platformConfig['webhook_secret_enc']);
+        }
+        unset($out['access_token_enc'], $out['consumer_key_enc'], $out['consumer_secret_enc'], $out['api_key_enc'], $out['webhook_secret_enc']);
 
         return $out;
     }

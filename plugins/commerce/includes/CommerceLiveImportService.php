@@ -12,6 +12,12 @@ if (!class_exists('ShopifyImportAdapter')) {
 if (!class_exists('WooImportAdapter')) {
     require_once __DIR__ . '/WooImportAdapter.php';
 }
+if (!class_exists('EtsyImportAdapter')) {
+    require_once __DIR__ . '/EtsyImportAdapter.php';
+}
+if (!class_exists('SquareImportAdapter')) {
+    require_once __DIR__ . '/SquareImportAdapter.php';
+}
 if (!class_exists('ImportService')) {
     require_once __DIR__ . '/ImportService.php';
 }
@@ -22,23 +28,31 @@ class CommerceLiveImportService
     public const PLATFORMS = [
         'shopify' => 'Shopify',
         'woocommerce' => 'WooCommerce',
+        'etsy' => 'Etsy',
+        'square' => 'Square',
     ];
 
     private CommerceImportCredentialStore $credentials;
     private ImportService $import;
     private ?ShopifyImportAdapter $shopify;
     private ?WooImportAdapter $woo;
+    private ?EtsyImportAdapter $etsy;
+    private ?SquareImportAdapter $square;
 
     public function __construct(
         ?CommerceImportCredentialStore $credentials = null,
         ?ImportService $import = null,
         ?ShopifyImportAdapter $shopify = null,
-        ?WooImportAdapter $woo = null
+        ?WooImportAdapter $woo = null,
+        ?EtsyImportAdapter $etsy = null,
+        ?SquareImportAdapter $square = null
     ) {
         $this->credentials = $credentials ?? new CommerceImportCredentialStore();
         $this->import = $import ?? new ImportService();
         $this->shopify = $shopify;
         $this->woo = $woo;
+        $this->etsy = $etsy;
+        $this->square = $square;
     }
 
     /** @return array<string, mixed> */
@@ -171,7 +185,7 @@ class CommerceLiveImportService
         $collection = (string) ($config['collection'] ?? 'products');
         $dryRun = !empty($options['dry_run']);
         $importResult = $this->import->importRows($rows, $collection, $dryRun, [
-            'preset' => $platform === 'shopify' ? 'shopify' : 'woocommerce',
+            'preset' => $platform,
             'platform' => self::PLATFORMS[$platform] ?? $platform,
             'currency' => strtolower((string) ($config['default_currency'] ?? 'eur')),
             'file_name' => null,
@@ -234,13 +248,19 @@ class CommerceLiveImportService
         return isset(self::PLATFORMS[$platform]) ? $platform : null;
     }
 
-    private function adapterFor(string $platform): ShopifyImportAdapter|WooImportAdapter|null
+    private function adapterFor(string $platform): ShopifyImportAdapter|WooImportAdapter|EtsyImportAdapter|SquareImportAdapter|null
     {
         if ($platform === 'shopify') {
             return $this->shopify ?? new ShopifyImportAdapter();
         }
         if ($platform === 'woocommerce') {
             return $this->woo ?? new WooImportAdapter();
+        }
+        if ($platform === 'etsy') {
+            return $this->etsy ?? new EtsyImportAdapter();
+        }
+        if ($platform === 'square') {
+            return $this->square ?? new SquareImportAdapter();
         }
 
         return null;

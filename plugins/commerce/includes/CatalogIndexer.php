@@ -196,6 +196,26 @@ class CatalogIndexer
         return true;
     }
 
+    public function incrementQuantity(string $collectionSlug, string $entryId, int $qty): bool
+    {
+        $index = $this->loadIndex();
+        $key = $collectionSlug . ':' . $entryId;
+        if (!isset($index['entries'][$key])) {
+            return false;
+        }
+        $row = $index['entries'][$key];
+        if ($row['quantity_available'] === null) {
+            return true;
+        }
+        $available = (int) $row['quantity_available'];
+        $row['quantity_available'] = $available + max(1, $qty);
+        $row['updated_at'] = date('c');
+        $index['entries'][$key] = $row;
+        $this->saveIndex($index);
+
+        return true;
+    }
+
     public function reserveQuantity(string $collectionSlug, string $entryId, int $qty): bool
     {
         $index = $this->loadIndex();
