@@ -57,12 +57,10 @@ if ($action === 'config') {
 if ($action === 'browse') {
     $query = trim((string) ($input['q'] ?? $_GET['q'] ?? ''));
     $category = trim((string) ($input['category'] ?? $_GET['category'] ?? ''));
-    $offerType = trim((string) ($input['offer_type'] ?? $_GET['offer_type'] ?? 'plugin'));
-    if ($offerType === '') {
-        $offerType = 'plugin';
-    }
+    $offerType = trim((string) ($input['offer_type'] ?? $_GET['offer_type'] ?? ''));
+    $sort = trim((string) ($input['sort'] ?? $_GET['sort'] ?? 'name'));
 
-    $result = birkly_marketplace_browse($query, $category, $offerType);
+    $result = birkly_marketplace_browse($query, $category, $offerType, $sort);
     if (!$result['ok']) {
         echo json_encode([
             'status' => 'error',
@@ -78,6 +76,8 @@ if ($action === 'browse') {
             'offers' => $result['offers'],
             'marketplace_url' => birkly_marketplace_url(),
             'fallback' => !empty($result['fallback']),
+            'filter_options' => $result['filter_options'] ?? ['categories' => [], 'offer_types' => []],
+            'total' => count($result['offers']),
         ],
     ]);
     exit;
