@@ -475,6 +475,22 @@
   }
 }
 
+@media (max-width: 768px) {
+  .entries-smart-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .entries-smart-table .head-row,
+  .entries-smart-table .table-row {
+    min-width: 720px;
+  }
+
+  .entries-smart-table .table-viewport {
+    overflow-x: visible;
+  }
+}
+
 /* ============================================
    Drag & Drop States for Tables
    ============================================ */

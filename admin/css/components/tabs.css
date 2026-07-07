@@ -49,17 +49,20 @@
 /* Responsive */
 @media (max-width: 768px) {
   .tabs {
-    flex-direction: column;
+    flex-wrap: wrap;
+    overflow-x: auto;
+    flex-direction: row;
   }
   
   .tab {
-    border-bottom: none;
-    border-right: 2px solid transparent;
+    border-right: none;
+    border-bottom: 2px solid transparent;
+    flex-shrink: 0;
   }
   
   .tab.active {
-    border-right-color: var(--primary-500, #3b82f6);
-    border-bottom-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: var(--primary-500, #3b82f6);
   }
 }
 

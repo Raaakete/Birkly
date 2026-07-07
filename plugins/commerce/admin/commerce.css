@@ -1172,3 +1172,104 @@ body.commerce-import-wizard-open { overflow: hidden; }
   background: var(--surface, #fff);
 }
 .commerce-migration-history-head { margin-bottom: 0.25rem; }
+
+@media (max-width: 768px) {
+  .payments-tabs,
+  .commerce-tabs {
+    flex-wrap: wrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .payments-tab {
+    flex-shrink: 0;
+  }
+
+  .payments-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+[data-theme="dark"] .payments-provider-card .badge {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .payments-table th,
+[data-theme="dark"] .commerce-import-history-table th,
+[data-theme="dark"] .commerce-import-preview-table th {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .payments-webhook-url,
+[data-theme="dark"] .commerce-ft-list-item,
+[data-theme="dark"] .commerce-import-review-stat,
+[data-theme="dark"] .commerce-import-result-card,
+[data-theme="dark"] .commerce-ft-modal-footer,
+[data-theme="dark"] .commerce-import-wizard-footer {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .commerce-ft-card.is-default,
+[data-theme="dark"] .commerce-import-hero,
+[data-theme="dark"] .commerce-import-selected-platform,
+[data-theme="dark"] .commerce-ft-toggle-card:has(input:checked) {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .commerce-ft-section,
+[data-theme="dark"] .commerce-import-stat-card,
+[data-theme="dark"] .commerce-import-export-steps,
+[data-theme="dark"] .commerce-import-dropzone {
+  background: var(--bg-elevated);
+}
+
+[data-theme="dark"] .commerce-ft-presets {
+  background: var(--bg-secondary);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .payments-provider-card .badge {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+
+  [data-theme="system"] .payments-table th,
+  [data-theme="system"] .commerce-import-history-table th,
+  [data-theme="system"] .commerce-import-preview-table th {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+
+  [data-theme="system"] .payments-webhook-url,
+  [data-theme="system"] .commerce-ft-list-item,
+  [data-theme="system"] .commerce-import-review-stat,
+  [data-theme="system"] .commerce-import-result-card,
+  [data-theme="system"] .commerce-ft-modal-footer,
+  [data-theme="system"] .commerce-import-wizard-footer {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  [data-theme="system"] .commerce-ft-card.is-default,
+  [data-theme="system"] .commerce-import-hero,
+  [data-theme="system"] .commerce-import-selected-platform,
+  [data-theme="system"] .commerce-ft-toggle-card:has(input:checked) {
+    background: var(--bg-secondary);
+  }
+
+  [data-theme="system"] .commerce-ft-section,
+  [data-theme="system"] .commerce-import-stat-card,
+  [data-theme="system"] .commerce-import-export-steps,
+  [data-theme="system"] .commerce-import-dropzone {
+    background: var(--bg-elevated);
+  }
+
+  [data-theme="system"] .commerce-ft-presets {
+    background: var(--bg-secondary);
+  }
+}
