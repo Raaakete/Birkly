@@ -677,3 +677,14 @@
 
 
 
+
+function loadCommerceStatsWidget() {
+  var el = document.getElementById('commerce-dash-widget');
+  if (!el) return;
+  var url = (window.Birkly && Birkly.url) ? Birkly.url('/api/index.php?route=commerce&action=analytics_summary') : '/api/index.php?route=commerce&action=analytics_summary';
+  fetch(url, {credentials:'same-origin'}).then(r=>r.json()).then(function(d){
+    if (d.status!=='ok'||!d.data||!d.data.summary) { el.innerHTML='<p class="payments-dash-empty">No commerce orders yet.</p>'; return; }
+    var s=d.data.summary;
+    el.innerHTML='<div class="payments-dash-grid"><div class="payments-dash-stat"><strong>'+((s.revenue_cents||0)/100).toFixed(2)+'</strong><span>Revenue</span></div><div class="payments-dash-stat"><strong>'+(s.order_count||0)+'</strong><span>Orders</span></div></div>';
+  });
+}

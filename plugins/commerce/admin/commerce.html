@@ -10,6 +10,9 @@
     <button class="payments-tab" data-tab="orders" role="tab">Orders</button>
     <button class="payments-tab" data-tab="subscriptions" role="tab">Subscriptions</button>
     <button class="payments-tab" data-tab="discounts" role="tab">Discounts</button>
+    <button class="payments-tab" data-tab="gift-cards" role="tab">Gift Cards</button>
+    <button class="payments-tab" data-tab="quotes" role="tab">Quotes</button>
+    <button class="payments-tab" data-tab="analytics" role="tab">Analytics</button>
     <button class="payments-tab" data-tab="import" role="tab">Import</button>
     <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
     <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
@@ -74,6 +77,26 @@
     <div id="commerce-discounts-list" class="payments-connections-list"></div>
   </div>
 
+    <div id="payments-tab-gift-cards" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions"><button class="btn btn-primary" id="commerce-issue-gift-card">Issue Gift Card</button></div>
+    <div class="payments-panel-header"><h2>Gift Cards</h2></div>
+    <div id="commerce-gift-cards-list" class="payments-connections-list"><div class="loading-state"><p>Loading…</p></div></div>
+  </div>
+  <div id="payments-tab-quotes" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions"><button class="btn btn-primary" id="commerce-create-quote">Create Quote from Cart</button></div>
+    <div class="payments-panel-header"><h2>B2B Quotes</h2></div>
+    <div id="commerce-quotes-list" class="payments-connections-list"><div class="loading-state"><p>Loading…</p></div></div>
+  </div>
+  <div id="payments-tab-analytics" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="commerce-analytics-refresh">Refresh</button>
+      <button class="btn btn-secondary" id="commerce-analytics-export-orders">Export Orders CSV</button>
+    </div>
+    <div class="payments-panel-header"><h2>Analytics</h2></div>
+    <div id="commerce-analytics-summary"></div>
+    <div id="commerce-analytics-products"></div>
+    <div id="commerce-analytics-affiliates"></div>
+  </div>
   <div id="payments-tab-import" class="payments-tab-panel" role="tabpanel" hidden>
     <div class="tab-panel-actions">
       <button type="button" class="btn btn-primary" id="commerce-import-start">Import products</button>
