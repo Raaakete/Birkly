@@ -585,7 +585,35 @@
             if (widget.id === 'payments-stats') {
                 loadPaymentsStatsWidget();
             }
+            if (widget.id === 'commerce-stats') {
+                loadCommerceStatsWidget();
+            }
         });
+    }
+
+    function loadCommerceStatsWidget() {
+        var el = document.getElementById('commerce-dash-widget');
+        if (!el) return;
+        var url = (window.Birkly && typeof Birkly.url === 'function')
+            ? Birkly.url('/api/index.php?route=commerce&action=analytics_summary')
+            : '/api/index.php?route=commerce&action=analytics_summary';
+        fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.status !== 'ok' || !data.data || !data.data.summary) {
+                    el.innerHTML = '<p class="payments-dash-empty">No commerce orders yet.</p>';
+                    return;
+                }
+                var s = data.data.summary;
+                el.innerHTML =
+                    '<div class="payments-dash-grid">' +
+                    '<div class="payments-dash-stat"><strong>' + formatCents(s.revenue_cents || 0) + '</strong><span>Revenue</span></div>' +
+                    '<div class="payments-dash-stat"><strong>' + (s.order_count || 0) + '</strong><span>Orders</span></div>' +
+                    '</div>';
+            })
+            .catch(function() {
+                el.innerHTML = '<p class="payments-dash-empty">Unable to load commerce stats.</p>';
+            });
     }
 
     function loadPaymentsStatsWidget() {
@@ -674,6 +702,3 @@
     // Setup activity filters after a short delay to ensure DOM is ready
     setTimeout(setupActivityFilters, 100);
 })();
-
-
-
