@@ -103,6 +103,7 @@ $suites = [
     'plugin_availability_test.php',
     'marketplace_client_test.php',
     'marketplace_free_install_test.php',
+    'health_test.php',
     'user_plugin_permissions_test.php',
     'user_plugin_admin_test.php',
     'feedback_test.php',
