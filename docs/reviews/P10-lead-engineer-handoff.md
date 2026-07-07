@@ -5,6 +5,9 @@
 **Human rule:** Execute **P10-M0 → P10-M7** autonomously. Notify human **once** at **P10-M7 closure**.
 
 **Product spec:** `docs/reviews/P10-marketplace-go-live-plan.md`  
+**Coupling register:** `docs/reviews/P10-plugin-coupling-register.md`  
+**Release manifest:** `scripts/cms-release-manifest.json`  
+**Verification matrix:** `Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md`  
 **Roadmap:** `docs/roadmap/ROADMAP.md` § Phase 10  
 **Repos:** `Raaakete/Birkly-Marketplace` (primary) · `Raaakete/Birkly` · `Raaakete/Birkly-Docs` · `Raaakete/Birkly-Website` · `Raaakete/kekaba`
 
@@ -20,6 +23,9 @@ Human approved full P10 autonomous execution (M0→M7). Notify human ONCE at P10
 Read first:
 - docs/reviews/P10-lead-engineer-handoff.md
 - docs/reviews/P10-marketplace-go-live-plan.md
+- docs/reviews/P10-plugin-coupling-register.md
+- scripts/cms-release-manifest.json
+- Birkly-Marketplace/docs/P10-VERIFICATION-MATRIX.md
 - docs/roadmap/ROADMAP.md § Phase 10
 - docs/reviews/P9-marketplace-plan.md (baseline P9 decisions)
 - Birkly-Marketplace/core/admin_routes.php + core/qc.php (admin scaffold — views are stubs)
@@ -104,7 +110,7 @@ Merge PRs yourself after qa-verifier pass (and design-reviewer when UI changes).
 
 | ID | Deliverable | Acceptance |
 |----|-------------|------------|
-| **M0** | Gap register + matrix shell | Coupling doc complete |
+| **M0** | Coupling register + manifest + matrix shell | `P10-plugin-coupling-register.md` · `cms-release-manifest.json` · `P10-VERIFICATION-MATRIX.md` |
 | **M1** | Core unbundling | CMS zip has no plugins/; CI green with dev install script |
 | **M2** | Official offers + zip pipeline | 4 official plugins on marketplace; registry releases |
 | **M3** | CMS marketplace UX | Fresh install → free plugin install → update check |
