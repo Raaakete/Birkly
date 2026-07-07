@@ -55,6 +55,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 2FA status
+    if (document.getElementById('cloud-account-status')) {
+        loadCloudAccountStatus();
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('cloud_linked') === '1') {
+            showCloudAccountMessage('Birkly cloud account linked successfully.', 'success');
+            if (window.history && window.history.replaceState) {
+                params.delete('cloud_linked');
+                const qs = params.toString();
+                window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+            }
+        }
+    }
+
     if (document.getElementById('account-2fa-status')) {
         loadAccount2FAStatus();
     }
@@ -91,6 +104,79 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = String(text);
     return div.innerHTML;
+}
+
+async function loadCloudAccountStatus() {
+    const container = document.getElementById('cloud-account-status');
+    if (!container) return;
+    try {
+        const response = await fetch('/api/cloud_account.php?action=status', { credentials: 'same-origin' });
+        const data = await response.json();
+        if (data.status !== 'ok') throw new Error(data.message || 'Failed to load cloud account status');
+        renderCloudAccountStatus(container, data.data || {});
+    } catch (err) {
+        container.innerHTML = '<p class="text-muted">Error loading cloud account status</p>';
+    }
+}
+
+function renderCloudAccountStatus(container, status) {
+    if (status.linked) {
+        container.innerHTML = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">'
+            + '<span class="badge badge-success">Linked</span>'
+            + '<span class="text-muted">' + escapeHtml(status.email || '') + '</span></div>'
+            + '<button class="btn btn-danger btn-sm" type="button" id="cloud-account-unlink-btn">Unlink cloud account</button>';
+        document.getElementById('cloud-account-unlink-btn')?.addEventListener('click', unlinkCloudAccount);
+    } else {
+        container.innerHTML = '<p class="text-muted" style="margin-bottom:16px;">No Birkly cloud account is linked to this installation.</p>'
+            + '<button class="btn btn-primary" type="button" id="cloud-account-link-btn">Link Birkly cloud account</button>';
+        document.getElementById('cloud-account-link-btn')?.addEventListener('click', startCloudAccountLink);
+    }
+}
+
+async function startCloudAccountLink() {
+    const btn = document.getElementById('cloud-account-link-btn');
+    if (btn) btn.disabled = true;
+    try {
+        const response = await fetch('/api/cloud_account.php?action=start_link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ _csrf: getCsrfToken() }),
+        });
+        const data = await response.json();
+        if (data.status !== 'ok') throw new Error(data.message || 'Failed to start link');
+        window.location.href = data.data.authorization_url;
+    } catch (err) {
+        showCloudAccountMessage(err.message || 'Failed to start cloud account link', 'error');
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function unlinkCloudAccount() {
+    if (!confirm('Unlink your Birkly cloud account from this CMS installation?')) return;
+    try {
+        const response = await fetch('/api/cloud_account.php?action=unlink', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ _csrf: getCsrfToken() }),
+        });
+        const data = await response.json();
+        if (data.status !== 'ok') throw new Error(data.message || 'Unlink failed');
+        showCloudAccountMessage('Cloud account unlinked.', 'success');
+        loadCloudAccountStatus();
+    } catch (err) {
+        showCloudAccountMessage(err.message || 'Failed to unlink cloud account', 'error');
+    }
+}
+
+function showCloudAccountMessage(message, type) {
+    const el = document.getElementById('cloud-account-message');
+    if (!el) return;
+    el.textContent = message;
+    el.className = 'settings-message ' + (type || 'info');
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
 }
 
 async function loadAccount2FAStatus() {
