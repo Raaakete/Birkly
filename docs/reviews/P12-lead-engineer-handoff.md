@@ -1,6 +1,6 @@
 # Phase 12 — Ecosystem growth, live import & production closure — lead-engineer handoff
 
-**Status:** Proposed — awaiting human approval; **blocked on P11 closure**  
+**Status:** Approved (2026-07-07, Keven) — **blocked on P11 closure**  
 **Baseline:** P11 complete (required)  
 **Human rule:** Execute **P12-M0 → P12-M8** autonomously. Notify human **once** at **P12-M8 closure**.
 

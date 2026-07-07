@@ -1,6 +1,6 @@
 # Phase 11 — Commerce production wave — lead-engineer handoff
 
-**Status:** Proposed — awaiting human approval of `P11-P12-complete-plan.md`  
+**Status:** Approved (2026-07-07, Keven) — autonomous execution P11-M0→M7  
 **Baseline:** P10 complete — Birkly **100 test suites** · Marketplace **10 test suites**  
 **Human rule:** Execute **P11-M0 → P11-M7** autonomously. Notify human **once** at **P11-M7 closure**.
 
@@ -14,7 +14,7 @@
 ```
 You are the lead-engineer for Birkly Phase 11 — Commerce production wave.
 
-Human approved P11 as part of the P11+P12 plan. Execute P11-M0→M7 autonomously. Notify human ONCE at P11-M7 closure only. Do NOT start P12 until P11 is closed.
+Human approved P11 as part of the P11+P12 plan (2026-07-07). Execute P11-M0→M7 autonomously. Notify human ONCE at P11-M7 closure only. Do NOT start P12 until P11 is closed.
 
 Read first:
 - docs/reviews/P11-P12-complete-plan.md § Phase 11

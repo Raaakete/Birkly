@@ -199,7 +199,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Next active phase:** **Phase 11** — commerce production wave (then **Phase 12** — ecosystem & deploy closure)
 
-**2026-07-07 — Phase 11 & 12 proposed** (planner)
+**2026-07-07 — Phase 11 & 12 approved** (Keven)
 
 **Priorities:** P11 — subscriptions, dunning, gift cards, B2B quotes, analytics, migration wizard, official CI publish · P12 — GitHub App, live import, denylist, membership wiring, production deploy closure.
 
@@ -2239,7 +2239,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 11 — Commerce production wave
 
-**Status:** **Proposed** — awaiting human approval
+**Status:** **Approved** (2026-07-07, Keven) — autonomous execution P11-M0→M7
 
 **Spec:** `docs/reviews/P11-P12-complete-plan.md` § Phase 11  
 **Handoff:** `docs/reviews/P11-lead-engineer-handoff.md`  
@@ -2265,7 +2265,7 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 12 — Ecosystem growth, live import & production closure
 
-**Status:** **Proposed** — awaiting human approval; **blocked on P11**
+**Status:** **Approved** (2026-07-07, Keven) — autonomous execution P12-M0→M8; **blocked on P11**
 
 **Spec:** `docs/reviews/P11-P12-complete-plan.md` § Phase 12  
 **Handoff:** `docs/reviews/P12-lead-engineer-handoff.md`  

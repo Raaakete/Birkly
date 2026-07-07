@@ -1,6 +1,6 @@
 # Phase 11 & 12 — Complete platform plan
 
-**Status:** **Proposed** — awaiting human approval  
+**Status:** **Approved (2026-07-07, Keven)** — autonomous execution P11-M0→M7, then P12-M0→M8  
 **Baseline:** P10 complete on `main` (2026-07-07) — Birkly **100 test suites** · Marketplace **10 test suites**  
 **Roadmap:** `docs/roadmap/ROADMAP.md` § Phase 11 · § Phase 12  
 **Handoffs:** `docs/reviews/P11-lead-engineer-handoff.md` · `docs/reviews/P12-lead-engineer-handoff.md`
