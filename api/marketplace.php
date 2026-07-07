@@ -24,6 +24,7 @@ require_once '../core/plugins.php';
 require_once '../core/plugins/security.php';
 require_once '../core/plugins/validation.php';
 require_once '../core/marketplace.php';
+require_once '../core/cloud_account.php';
 
 $rawInput = json_decode(file_get_contents('php://input'), true);
 $input = [];
@@ -49,6 +50,8 @@ if ($action === 'config') {
         'data' => [
             'marketplace_url' => birkly_marketplace_url(),
             'installation_id' => birkly_installation_id(),
+            'installation_owner_email' => birkly_marketplace_installation_owner_email(),
+            'cloud_account_linked' => birkly_cloud_account_is_linked(),
         ],
     ]);
     exit;
@@ -75,6 +78,7 @@ if ($action === 'browse') {
         'data' => [
             'offers' => $result['offers'],
             'marketplace_url' => birkly_marketplace_url(),
+            'installation_owner_email' => birkly_marketplace_installation_owner_email(),
             'fallback' => !empty($result['fallback']),
             'filter_options' => $result['filter_options'] ?? ['categories' => [], 'offer_types' => []],
             'total' => count($result['offers']),
@@ -294,7 +298,16 @@ if ($action === 'upgrade') {
     }
 
     $current = (string) ($plugin['version'] ?? '0.0.0');
-    $check = birkly_marketplace_check_plugin_update($slug, $current);
+    $licenseRef = trim((string) ($plugin['license_ref'] ?? ''));
+    $check = birkly_marketplace_check_plugin_update($slug, $current, $licenseRef !== '' ? $licenseRef : null);
+    if (!empty($check['license_lapsed'])) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $check['license_warning'] ?? 'Marketplace license is inactive. Renew to upgrade.',
+            'code' => 'license_lapsed',
+        ]);
+        exit;
+    }
     if (empty($check['update_available'])) {
         echo json_encode(['status' => 'error', 'message' => 'No update available']);
         exit;
