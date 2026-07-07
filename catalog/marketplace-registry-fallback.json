@@ -33,6 +33,70 @@
       "trust_level": "trusted",
       "latest_version": "1.0.0",
       "provider_id": "prov_official_birkly"
+    },
+    {
+      "slug": "birkly-commerce",
+      "title": "Birkly Commerce",
+      "summary": "Official commerce plugin — payment providers, catalog, cart, checkout, orders, and fulfillment.",
+      "offer_type": "plugin",
+      "category": "commerce",
+      "tags": ["commerce", "official", "free", "payments"],
+      "pricing": {
+        "currency": "USD",
+        "model": "free",
+        "amount_cents": 0
+      },
+      "trust_level": "trusted",
+      "latest_version": "1.0.0",
+      "provider_id": "prov_official_birkly"
+    },
+    {
+      "slug": "birkly-events",
+      "title": "Birkly Events",
+      "summary": "Official events plugin — free RSVP and paid tickets via commerce.",
+      "offer_type": "plugin",
+      "category": "events",
+      "tags": ["events", "official", "free", "commerce"],
+      "pricing": {
+        "currency": "USD",
+        "model": "free",
+        "amount_cents": 0
+      },
+      "trust_level": "trusted",
+      "latest_version": "1.0.0",
+      "provider_id": "prov_official_birkly"
+    },
+    {
+      "slug": "birkly-automation",
+      "title": "Birkly Automation",
+      "summary": "Official workflow automation — triggers, conditions, and actions.",
+      "offer_type": "plugin",
+      "category": "utilities",
+      "tags": ["automation", "official", "free", "workflows"],
+      "pricing": {
+        "currency": "USD",
+        "model": "free",
+        "amount_cents": 0
+      },
+      "trust_level": "trusted",
+      "latest_version": "1.0.0",
+      "provider_id": "prov_official_birkly"
+    },
+    {
+      "slug": "birkly-user-management",
+      "title": "Birkly User Management",
+      "summary": "Official user management — registration, authentication, permissions, and tiers.",
+      "offer_type": "plugin",
+      "category": "users",
+      "tags": ["users", "official", "free", "auth"],
+      "pricing": {
+        "currency": "USD",
+        "model": "free",
+        "amount_cents": 0
+      },
+      "trust_level": "trusted",
+      "latest_version": "1.0.0",
+      "provider_id": "prov_official_birkly"
     }
   ]
 }
