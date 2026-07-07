@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Production / staging smoke — P12-M5 deploy closure.
+# Production / staging smoke — P12-M5 deploy closure, P13-M4 structured health validation.
 # Checks CMS health (writable dirs, version, disk) and marketplace reachability.
 #
 # Usage:
@@ -35,22 +35,64 @@ report "Marketplace: $MARKETPLACE"
 
 health_tmp=$(mktemp)
 health_code=$(curl -sS -o "$health_tmp" -w "%{http_code}" "$BASE/api/health.php" 2>/dev/null || echo "000")
-if [[ "$health_code" == "200" ]]; then
+if [[ "$health_code" == "200" ]] || [[ "$health_code" == "503" ]]; then
   if smoke_meta=$(php -r '
+    require_once $argv[2] . "/core/health.php";
     $data = json_decode(file_get_contents($argv[1]), true);
     if (!is_array($data)) { fwrite(STDERR, "invalid JSON\n"); exit(1); }
+
+    $requiredKeys = birkly_health_required_response_keys();
+    foreach ($requiredKeys as $key) {
+      if (!array_key_exists($key, $data)) {
+        fwrite(STDERR, "missing key: $key\n");
+        exit(1);
+      }
+    }
+
     $status = (string) ($data["status"] ?? "");
     if ($status === "error") { fwrite(STDERR, "health status error\n"); exit(1); }
+
     $version = trim((string) ($data["version"] ?? ""));
     if ($version === "") { fwrite(STDERR, "missing version\n"); exit(1); }
+
+    if (($data["service"] ?? "") !== "birkly-cms") { fwrite(STDERR, "unexpected service id\n"); exit(1); }
+    if (trim((string) ($data["php"] ?? "")) === "") { fwrite(STDERR, "missing php\n"); exit(1); }
+    if (trim((string) ($data["time"] ?? "")) === "") { fwrite(STDERR, "missing time\n"); exit(1); }
+
+    foreach (["settings", "content", "cache", "logs", "media", "temp"] as $dir) {
+      if (!isset($data["writable"][$dir]) || !is_array($data["writable"][$dir])) {
+        fwrite(STDERR, "missing writable entry: $dir\n");
+        exit(1);
+      }
+    }
     foreach (["settings", "content", "cache", "logs"] as $dir) {
       if (empty($data["writable"][$dir]["writable"])) {
         fwrite(STDERR, "not writable: $dir\n");
         exit(1);
       }
     }
+
+    foreach (["free_bytes", "total_bytes", "free_percent", "low_space"] as $diskKey) {
+      if (!array_key_exists($diskKey, $data["disk"] ?? [])) {
+        fwrite(STDERR, "missing disk key: $diskKey\n");
+        exit(1);
+      }
+    }
+
+    if (!isset($data["marketplace"]["status"], $data["marketplace"]["url"])) {
+      fwrite(STDERR, "missing marketplace block\n");
+      exit(1);
+    }
+
+    foreach (["writable_dirs", "disk", "marketplace"] as $checkName) {
+      if (!isset($data["checks"][$checkName]["status"])) {
+        fwrite(STDERR, "missing checks.$checkName.status\n");
+        exit(1);
+      }
+    }
+
     echo $version . "\t" . $status;
-  ' "$health_tmp" 2>/dev/null); then
+  ' "$health_tmp" "$ROOT" 2>/dev/null); then
     smoke_version="${smoke_meta%%$'\t'*}"
     smoke_status="${smoke_meta#*$'\t'}"
     report "OK: health ($smoke_version, status=$smoke_status)"
@@ -91,8 +133,28 @@ if [[ "${BIRKLY_SMOKE_SKIP_MARKETPLACE:-}" == "1" ]]; then
   report "SKIP: marketplace (BIRKLY_SMOKE_SKIP_MARKETPLACE=1)"
 else
   mp_code=$(curl -sS -o "$mp_tmp" -w "%{http_code}" --connect-timeout 10 "$MARKETPLACE/health" 2>/dev/null || echo "000")
-  if [[ "$mp_code" == "200" ]] && grep -q '"status"[[:space:]]*:[[:space:]]*"ok"' "$mp_tmp" 2>/dev/null; then
-    report "OK: marketplace health ($MARKETPLACE/health)"
+  if [[ "$mp_code" == "200" ]] || [[ "$mp_code" == "503" ]]; then
+    if php -r '
+      $data = json_decode(file_get_contents($argv[1]), true);
+      if (!is_array($data)) { exit(1); }
+      if (($data["status"] ?? "") === "error") { exit(1); }
+      if (($data["service"] ?? "") !== "birkly-marketplace") { exit(1); }
+      foreach (["writable", "disk", "checks"] as $key) {
+        if (!array_key_exists($key, $data)) { exit(1); }
+      }
+      foreach (["data", "logs"] as $dir) {
+        if (empty($data["writable"][$dir]["writable"])) { exit(1); }
+      }
+      foreach (["writable_dirs", "disk"] as $checkName) {
+        if (!isset($data["checks"][$checkName]["status"])) { exit(1); }
+      }
+      exit(0);
+    ' "$mp_tmp" 2>/dev/null; then
+      report "OK: marketplace health ($MARKETPLACE/health)"
+    else
+      report "FAIL: marketplace health payload ($MARKETPLACE/health)"
+      FAIL=1
+    fi
   else
     report "FAIL: marketplace health HTTP $mp_code ($MARKETPLACE/health)"
     FAIL=1
