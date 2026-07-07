@@ -1,6 +1,6 @@
 # Phase 10 — Marketplace go-live & plugin unbundling — lead-engineer handoff
 
-**Status:** Approved (2026-07-07, Keven) — autonomous execution P10-M0→M7  
+**Status:** Complete (2026-07-07) — autonomous execution P10-M0→M7 delivered  
 **Baseline:** P9 complete on `main` — Birkly **97 test suites** · Marketplace **8 test suites**  
 **Human rule:** Execute **P10-M0 → P10-M7** autonomously. Notify human **once** at **P10-M7 closure**.
 
