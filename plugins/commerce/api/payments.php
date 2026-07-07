@@ -159,7 +159,7 @@ switch ($action) {
         $settings = [];
         foreach ([
             'selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles',
-            'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body',
+            'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body', 'commerce_default_currency',
         ] as $key) {
             $settings[$key] = commerce_get_setting($key, null);
         }
@@ -178,6 +178,9 @@ switch ($action) {
         if ($settings['dunning_email_body'] === null) {
             $settings['dunning_email_body'] = "Hello,\n\nWe were unable to process your subscription payment. Please update your payment method to avoid interruption.\n\nSubscription: {subscription_id}\nAmount: {amount}\n\nThank you.";
         }
+        if ($settings['commerce_default_currency'] === null) {
+            $settings['commerce_default_currency'] = commerce_get_default_currency();
+        }
         echo json_encode(['status' => 'ok', 'data' => ['settings' => $settings]]);
         break;
 
@@ -185,7 +188,7 @@ switch ($action) {
         $settings = $input['settings'] ?? [];
         $allowed = [
             'selection_mode', 'default_provider', 'auto_rules', 'enable_dashboard_widget', 'dashboard_widget_roles',
-            'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body',
+            'dunning_email_enabled', 'dunning_email_subject', 'dunning_email_body', 'commerce_default_currency',
         ];
         $pluginId = commerce_active_plugin_id();
         foreach ($allowed as $key) {
