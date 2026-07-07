@@ -132,7 +132,7 @@
         renderInstalledPlugins();
     }
 
-    async function checkAllUpdates() {
+    async function refreshUpdateBadge(silent) {
         try {
             var result = await marketplaceApi('check_updates');
             var updates = (result.data && result.data.updates) || {};
@@ -140,13 +140,21 @@
             var count = (result.data && result.data.update_count) || 0;
             setUpdateBadge(count);
             renderInstalledPlugins();
-            if (count > 0) {
-                showMessage(count + ' plugin update(s) available', 'info');
-            } else {
-                showMessage('All marketplace plugins are up to date', 'success');
-            }
+            return count;
         } catch (err) {
-            showMessage(err.message, 'error');
+            if (!silent) {
+                showMessage(err.message, 'error');
+            }
+            return 0;
+        }
+    }
+
+    async function checkAllUpdates() {
+        var count = await refreshUpdateBadge(false);
+        if (count > 0) {
+            showMessage(count + ' plugin update(s) available', 'info');
+        } else {
+            showMessage('All marketplace plugins are up to date', 'success');
         }
     }
 
@@ -207,12 +215,6 @@
         }
 
         try {
-            var config = await marketplaceApi('config');
-            var hint = document.getElementById('marketplace-url-hint');
-            if (hint && config.data) {
-                hint.textContent = 'Registry: ' + (config.data.marketplace_url || '');
-            }
-
             var browse = await fetch(url('/api/marketplace.php?action=browse&q=' + encodeURIComponent(query || '') + '&offer_type=plugin'), {
                 credentials: 'same-origin',
             });
@@ -220,6 +222,16 @@
             if (result.status !== 'ok') {
                 throw new Error(result.message || 'Browse failed');
             }
+
+            var hint = document.getElementById('marketplace-url-hint');
+            if (hint) {
+                var hintText = 'Registry: ' + ((result.data && result.data.marketplace_url) || '');
+                if (result.data && result.data.fallback) {
+                    hintText += ' (showing bundled catalog — registry unreachable)';
+                }
+                hint.textContent = hintText;
+            }
+
             renderMarketplaceOffers((result.data && result.data.offers) || []);
         } catch (err) {
             if (grid) {
@@ -233,16 +245,33 @@
         loadMarketplace(q ? q.value : '');
     }
 
+    function updatePageTitle(tab) {
+        var el = document.getElementById('plugins-page-title');
+        var titles = window.PluginsPageTitles || {};
+        if (!el) {
+            return;
+        }
+        if (tab === 'installed' && titles.installed) {
+            el.textContent = titles.installed;
+        } else if (titles.marketplace) {
+            el.textContent = titles.marketplace;
+        }
+    }
+
     function getInitialTab() {
+        if (window.PluginsPageInitialTab === 'marketplace' || window.PluginsPageInitialTab === 'installed') {
+            return window.PluginsPageInitialTab;
+        }
         var params = new URLSearchParams(window.location.search);
         var tab = params.get('tab');
         if (tab === 'marketplace' || tab === 'installed') {
             return tab;
         }
-        return 'installed';
+        return 'marketplace';
     }
 
     function switchTab(tab) {
+        updatePageTitle(tab);
         document.querySelectorAll('.plugins-tab').forEach(function (btn) {
             var active = btn.getAttribute('data-tab') === tab;
             btn.classList.toggle('active', active);
@@ -256,6 +285,10 @@
         });
         if (tab === 'marketplace') {
             loadMarketplace('');
+        } else if (tab === 'installed') {
+            loadInstalled()
+                .then(function () { return refreshUpdateBadge(true); })
+                .catch(function (err) { showMessage(err.message, 'error'); });
         }
         if (window.history && typeof window.history.replaceState === 'function') {
             var url = new URL(window.location.href);
@@ -345,10 +378,13 @@
 
     async function init() {
         initTabs();
-        switchTab(getInitialTab());
+        var tab = getInitialTab();
+        switchTab(tab);
         try {
-            await loadInstalled();
-            await checkAllUpdates();
+            if (tab === 'installed') {
+                await loadInstalled();
+                await refreshUpdateBadge(true);
+            }
         } catch (err) {
             showMessage(err.message, 'error');
         }
