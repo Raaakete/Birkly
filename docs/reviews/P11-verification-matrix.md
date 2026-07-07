@@ -10,7 +10,7 @@ Execute and mark at P11-M7 closure.
 
 | Milestone | Focus | Result | Evidence |
 |-----------|--------|--------|----------|
-| **P11-M0** | Gap register, matrix shell | | |
+| **P11-M0** | Gap register, matrix shell | pass | `P11-commerce-gap-register.md` |
 | **P11-M1** | Subscription upgrades | | |
 | **P11-M2** | Dunning | | |
 | **P11-M3** | Gift cards | | |
