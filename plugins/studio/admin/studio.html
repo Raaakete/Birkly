@@ -4,22 +4,25 @@
 {plugin_page_header}
 
 <div class="studio-ide plugin-page" id="studio-app">
+  <div id="studio-status" class="studio-status" hidden role="status"></div>
+
   <div id="studio-dashboard" class="studio-dashboard">
     <div class="studio-toolbar">
       <h2>Studio projects</h2>
-      <button type="button" class="btn btn-primary" id="studio-new-project">New project</button>
+      <button type="button" class="btn btn-primary" data-action="new-project">New project</button>
     </div>
     <div id="studio-project-list" class="studio-project-list"></div>
   </div>
 
   <div id="studio-workspace" class="studio-workspace" hidden>
     <header class="studio-ide-toolbar">
-      <button type="button" class="btn btn-secondary btn-sm" id="studio-back">← Projects</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="back">← Projects</button>
       <span id="studio-project-name" class="studio-project-name"></span>
       <div class="studio-ide-toolbar-actions">
-        <button type="button" class="btn btn-secondary btn-sm" id="studio-open-external" title="Open home page in new tab">Open project ↗</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="studio-export">Export</button>
-        <button type="button" class="btn btn-primary btn-sm" id="studio-publish">Publish</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="save" title="Save (Ctrl+S)">Save</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="open-external" title="Open home page in new tab">Open project ↗</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="export">Export</button>
+        <button type="button" class="btn btn-primary btn-sm" data-action="publish">Publish</button>
       </div>
     </header>
 
@@ -27,15 +30,37 @@
       <aside class="studio-sidebar" id="studio-sidebar">
         <div class="studio-sidebar-header">
           <strong>Files</strong>
-          <button type="button" class="btn btn-secondary btn-sm" id="studio-refresh-tree" title="Refresh">↻</button>
+          <div class="studio-sidebar-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-action="new-page" title="New page">+ Page</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="refresh-tree" title="Refresh">↻</button>
+          </div>
         </div>
         <div id="studio-file-tree" class="studio-file-tree"></div>
+
+        <div class="studio-sidebar-section">
+          <strong>Elements</strong>
+          <div class="studio-palette">
+            <button type="button" class="studio-palette-btn" data-add="section">+ Section</button>
+            <button type="button" class="studio-palette-btn" data-add="text">Text</button>
+            <button type="button" class="studio-palette-btn" data-add="heading">Heading</button>
+            <button type="button" class="studio-palette-btn" data-add="image">Image</button>
+            <button type="button" class="studio-palette-btn" data-add="button">Button</button>
+            <button type="button" class="studio-palette-btn" data-add="spacer">Spacer</button>
+            <button type="button" class="studio-palette-btn" data-add="divider">Divider</button>
+            <button type="button" class="studio-palette-btn" data-add="html">HTML block</button>
+            <button type="button" class="studio-palette-btn" data-add="binding-loop">Collection loop</button>
+            <button type="button" class="studio-palette-btn" data-add="binding-filtered">Filtered list</button>
+            <button type="button" class="studio-palette-btn" data-add="binding-single">Single entry</button>
+            <button type="button" class="studio-palette-btn" data-add="binding-site">Site element</button>
+          </div>
+        </div>
+
         <div class="studio-sidebar-section">
           <strong>Sections</strong>
           <div id="studio-section-lib" class="studio-section-lib"></div>
         </div>
         <div class="studio-sidebar-section">
-          <strong>Blocks</strong>
+          <strong>Plugin blocks</strong>
           <div id="studio-blocks" class="studio-blocks"></div>
         </div>
       </aside>
@@ -51,15 +76,11 @@
             <option value="tablet">Tablet</option>
             <option value="desktop">Desktop</option>
           </select>
-          <button type="button" class="btn btn-secondary btn-sm" id="studio-undo" title="Undo">Undo</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="undo" title="Undo">Undo</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="add-column" title="Add column to section">+ Col</button>
         </div>
         <div class="studio-editor-panes" id="studio-panes">
           <div class="studio-pane studio-pane-visual" id="studio-pane-visual">
-            <div class="studio-canvas-toolbar">
-              <button type="button" class="btn btn-secondary btn-sm" data-add="section">+ Section</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-add="text">Text</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-add="binding-loop">Blog loop</button>
-            </div>
             <div id="studio-canvas" class="studio-canvas"></div>
           </div>
           <div class="studio-pane studio-pane-code" id="studio-pane-code" hidden>
@@ -71,17 +92,19 @@
       </main>
 
       <aside class="studio-inspector" id="studio-inspector">
+        <h3>Layers</h3>
+        <div id="studio-layers" class="studio-layers"></div>
         <h3>Inspector</h3>
-        <div id="studio-inspector-body"><p class="form-hint">Select an element</p></div>
+        <div id="studio-inspector-body"><p class="form-hint">Select a section or element</p></div>
         <h3>Design tokens</h3>
         <textarea id="studio-tokens-editor" class="studio-tokens-editor" spellcheck="false"></textarea>
-        <button type="button" class="btn btn-secondary btn-sm" id="studio-save-tokens">Save tokens</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="save-tokens">Save tokens</button>
       </aside>
     </div>
   </div>
 
   <div id="studio-new-modal" class="studio-modal" hidden>
-    <div class="studio-modal-backdrop" data-close-new></div>
+    <div class="studio-modal-backdrop" data-action="close-new"></div>
     <div class="studio-modal-content studio-modal-sm">
       <h3>New project</h3>
       <label>Name <input type="text" id="studio-new-name" class="input"></label>
@@ -93,8 +116,8 @@
         </select>
       </label>
       <div class="studio-modal-actions">
-        <button type="button" class="btn btn-secondary" data-close-new>Cancel</button>
-        <button type="button" class="btn btn-primary" id="studio-create-project">Create</button>
+        <button type="button" class="btn btn-secondary" data-action="close-new">Cancel</button>
+        <button type="button" class="btn btn-primary" data-action="create-project">Create</button>
       </div>
     </div>
   </div>
