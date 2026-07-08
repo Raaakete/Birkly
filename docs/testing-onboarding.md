@@ -19,7 +19,7 @@ php tests/release_manifest_test.php
 # Full harness
 php tests/run.php
 
-# Release zip must include START_HERE
+# Release zip must include START_HERE.html only (no duplicate entry files)
 ./scripts/build-cms-release.sh && unzip -l /tmp/birkly-release.zip | grep START_HERE
 ```
 
