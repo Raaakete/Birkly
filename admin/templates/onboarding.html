@@ -45,13 +45,10 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
         <!-- Step 0: First user -->
         <div class="onboarding-step" id="step-first-user" data-step="0" style="display: none;">
-            <div class="onboarding-content">
-                <div class="step-header">
-                    <div class="step-icon-badge">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </div>
+            <div class="onboarding-content onboarding-content--wide">
+                <div class="step-header step-header--brand">
+                    <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?>" class="step-brand-logo">
                     <h2 class="step-title"><?= __('admin.create_admin_account') ?></h2>
-                    <p class="step-subtitle"><?= __('admin.create_admin_account_subtitle') ?></p>
                 </div>
                 <form id="first-user-form" class="onboarding-form">
                     <div class="form-group" id="form-group-name">
@@ -86,8 +83,8 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     <p class="welcome-subtitle"><?= __('admin.setup_in_few_steps') ?></p>
                 </div>
                 <div class="onboarding-actions onboarding-actions--centered">
-                    <button class="btn btn-primary btn-large" onclick="onboarding.nextStep()"><?= __('admin.get_started') ?></button>
-                    <button class="btn btn-ghost" onclick="onboarding.skip()"><?= __('admin.skip_setup') ?></button>
+                    <button type="button" class="btn btn-primary btn-large" data-onboarding-action="next"><?= __('admin.get_started') ?></button>
+                    <button type="button" class="btn btn-ghost" data-onboarding-action="skip"><?= __('admin.skip_setup') ?></button>
                 </div>
             </div>
         </div>
@@ -103,8 +100,8 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     <p id="install-context-body">Loading…</p>
                 </div>
                 <div class="onboarding-actions">
-                    <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()"><?= __('admin.back') ?></button>
-                    <button type="button" class="btn btn-primary" onclick="onboarding.nextStep()"><?= __('admin.continue') ?></button>
+                    <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
+                    <button type="button" class="btn btn-primary" data-onboarding-action="next"><?= __('admin.continue') ?></button>
                 </div>
             </div>
         </div>
@@ -126,7 +123,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                         <textarea id="project-description" name="project_description" rows="3"></textarea>
                     </div>
                     <div class="onboarding-actions">
-                        <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()"><?= __('admin.back') ?></button>
+                        <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
                         <button type="submit" class="btn btn-primary"><?= __('admin.continue') ?></button>
                     </div>
                 </form>
@@ -141,30 +138,30 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     <p class="step-subtitle">We'll tailor demo content suggestions. You can skip this step.</p>
                 </div>
                 <div class="use-case-grid">
-                    <button type="button" class="use-case-card" data-use-case="blog" onclick="onboarding.selectUseCase('blog')">
+                    <button type="button" class="use-case-card" data-use-case="blog" data-onboarding-action="select-use-case" data-onboarding-param="blog">
                         <strong>Blog</strong><span>Posts &amp; articles</span>
                     </button>
-                    <button type="button" class="use-case-card" data-use-case="business" onclick="onboarding.selectUseCase('business')">
+                    <button type="button" class="use-case-card" data-use-case="business" data-onboarding-action="select-use-case" data-onboarding-param="business">
                         <strong>Business site</strong><span>Services &amp; pages</span>
                     </button>
-                    <button type="button" class="use-case-card" data-use-case="shop" onclick="onboarding.selectUseCase('shop')">
+                    <button type="button" class="use-case-card" data-use-case="shop" data-onboarding-action="select-use-case" data-onboarding-param="shop">
                         <strong>Shop</strong><span>Commerce &amp; products</span>
                     </button>
-                    <button type="button" class="use-case-card" data-use-case="docs" onclick="onboarding.selectUseCase('docs')">
+                    <button type="button" class="use-case-card" data-use-case="docs" data-onboarding-action="select-use-case" data-onboarding-param="docs">
                         <strong>Documentation</strong><span>Guides &amp; help</span>
                     </button>
-                    <button type="button" class="use-case-card" data-use-case="developer" onclick="onboarding.selectUseCase('developer')">
+                    <button type="button" class="use-case-card" data-use-case="developer" data-onboarding-action="select-use-case" data-onboarding-param="developer">
                         <strong>Developer</strong><span>API &amp; headless</span>
                     </button>
                 </div>
                 <div class="demo-options" id="use-case-demo-options" style="margin-top: 1.5rem;">
-                    <div class="demo-card keep-card" onclick="onboarding.keepDemoContent()">
+                    <div class="demo-card keep-card" data-onboarding-action="keep-demo" role="button" tabindex="0">
                         <div class="demo-card-body">
                             <h3><?= __('admin.keep_demo_content') ?></h3>
                             <p><?= __('admin.keep_demo_content_help') ?></p>
                         </div>
                     </div>
-                    <div class="demo-card delete-card" onclick="onboarding.deleteDemoContent()">
+                    <div class="demo-card delete-card" data-onboarding-action="delete-demo" role="button" tabindex="0">
                         <div class="demo-card-body">
                             <h3><?= __('admin.start_fresh') ?></h3>
                             <p><?= __('admin.start_fresh_help') ?></p>
@@ -172,9 +169,9 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     </div>
                 </div>
                 <div class="onboarding-actions">
-                    <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()"><?= __('admin.back') ?></button>
-                    <button type="button" class="btn btn-ghost" onclick="onboarding.skipUseCase()">Skip use case</button>
-                    <button type="button" class="btn btn-primary" onclick="onboarding.nextStep()" id="use-case-continue" disabled><?= __('admin.continue') ?></button>
+                    <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
+                    <button type="button" class="btn btn-ghost" data-onboarding-action="skip-use-case">Skip use case</button>
+                    <button type="button" class="btn btn-primary" data-onboarding-action="next" id="use-case-continue" disabled><?= __('admin.continue') ?></button>
                 </div>
             </div>
         </div>
@@ -191,8 +188,8 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     <a href="<?= admin_url('plugins', ['tab' => 'marketplace']) ?>" class="btn btn-secondary" target="_blank"><?= __('admin.browse_marketplace') ?></a>
                 </div>
                 <div class="onboarding-actions">
-                    <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()"><?= __('admin.back') ?></button>
-                    <button type="button" class="btn btn-primary" onclick="onboarding.nextStep()"><?= __('admin.continue') ?></button>
+                    <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
+                    <button type="button" class="btn btn-primary" data-onboarding-action="next"><?= __('admin.continue') ?></button>
                 </div>
             </div>
         </div>
@@ -238,11 +235,11 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                 </div>
 
                 <div class="onboarding-actions onboarding-actions--ai">
-                    <button type="button" class="btn btn-secondary" onclick="onboarding.previousStep()"><?= __('admin.back') ?></button>
+                    <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
                     <div class="ai-action-group">
-                        <button type="button" class="btn btn-ghost ai-skip-btn" onclick="onboarding.skipAI()"><?= __('admin.skip_for_now') ?></button>
-                        <button type="button" class="btn btn-ghost" onclick="onboarding.skipAI()">Set up later</button>
-                        <button type="button" class="btn btn-primary" id="onboarding-save-ai-btn" onclick="onboarding.saveAIConnection()"><?= __('admin.connect_ai') ?></button>
+                        <button type="button" class="btn btn-ghost ai-skip-btn" data-onboarding-action="skip-ai"><?= __('admin.skip_for_now') ?></button>
+                        <button type="button" class="btn btn-ghost" data-onboarding-action="skip-ai">Set up later</button>
+                        <button type="button" class="btn btn-primary" id="onboarding-save-ai-btn" data-onboarding-action="save-ai"><?= __('admin.connect_ai') ?></button>
                     </div>
                 </div>
                 <p class="ai-later-hint"><?= __('admin.ai_connect_later_hint') ?> <a href="<?= admin_url('settings') ?>#ai-integrations"><?= __('admin.settings_ai') ?></a>.</p>
