@@ -12,28 +12,82 @@ function birkly_demo_starter_catalog(): array
             'label' => 'Blog starter',
             'description' => 'Blog posts, pages, and a sample front-end site.',
             'collections' => ['blog', 'about', 'contact', 'services', 'site_elements'],
+            'onboarding_enabled' => true,
         ],
         'shop' => [
             'label' => 'Shop starter',
             'description' => 'Product catalog with a storefront demo site.',
             'collections' => ['products', 'about', 'contact', 'site_elements'],
+            'onboarding_enabled' => false,
         ],
         'business' => [
             'label' => 'Business starter',
             'description' => 'Services, team, and a company site demo.',
             'collections' => ['services', 'about', 'contact', 'site_elements'],
+            'onboarding_enabled' => false,
         ],
         'docs' => [
             'label' => 'Documentation starter',
             'description' => 'Help articles and a docs-style demo site.',
             'collections' => ['docs', 'about', 'site_elements'],
+            'onboarding_enabled' => false,
         ],
         'blank' => [
             'label' => 'Start blank',
             'description' => 'No demo collections or demo website.',
             'collections' => [],
+            'onboarding_enabled' => true,
         ],
     ];
+}
+
+function birkly_demo_starter_primary_collection(string $templateId): ?string
+{
+    $catalog = birkly_demo_starter_catalog();
+    if (!isset($catalog[$templateId])) {
+        return null;
+    }
+    return $catalog[$templateId]['collections'][0] ?? null;
+}
+
+function birkly_demo_starter_pack_ready(string $projectRoot, string $templateId): bool
+{
+    if ($templateId === 'blank') {
+        return true;
+    }
+
+    $primary = birkly_demo_starter_primary_collection($templateId);
+    if ($primary === null) {
+        return false;
+    }
+
+    $packRoot = $projectRoot . '/demo-content/' . $templateId;
+    return is_dir($packRoot . '/collections/' . $primary);
+}
+
+function birkly_demo_starter_is_selectable(string $projectRoot, string $templateId): bool
+{
+    $catalog = birkly_demo_starter_catalog();
+    if (!isset($catalog[$templateId])) {
+        return false;
+    }
+    if (empty($catalog[$templateId]['onboarding_enabled'])) {
+        return false;
+    }
+    return birkly_demo_starter_pack_ready($projectRoot, $templateId);
+}
+
+function birkly_demo_starter_availability(string $projectRoot): array
+{
+    $availability = [];
+    foreach (birkly_demo_starter_catalog() as $templateId => $pack) {
+        $availability[$templateId] = [
+            'enabled' => !empty($pack['onboarding_enabled']),
+            'ready' => birkly_demo_starter_pack_ready($projectRoot, $templateId),
+            'selectable' => birkly_demo_starter_is_selectable($projectRoot, $templateId),
+        ];
+    }
+    return $availability;
 }
 
 function birkly_demo_all_starter_collection_slugs(): array
@@ -94,6 +148,13 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         return ['success' => false, 'message' => 'Unknown starter template'];
     }
 
+    if ($templateId !== 'blank' && !birkly_demo_starter_is_selectable($projectRoot, $templateId)) {
+        return [
+            'success' => false,
+            'message' => 'This starter template is not available yet',
+        ];
+    }
+
     $pack = $catalog[$templateId];
     $contentRoot = $projectRoot . '/content/collections';
     $websiteRoot = $projectRoot . '/demo-website';
@@ -123,6 +184,17 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         ];
     }
 
+    if (!birkly_demo_starter_pack_ready($projectRoot, $templateId)) {
+        return [
+            'success' => false,
+            'template' => $templateId,
+            'installed_collections' => [],
+            'demo_website' => false,
+            'removed' => $removed,
+            'message' => 'Starter template files are missing from this install',
+        ];
+    }
+
     $installed = [];
     $srcCollections = $packRoot . '/collections';
     if (is_dir($srcCollections)) {
@@ -141,12 +213,16 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         $hasWebsite = birkly_demo_copy_tree($srcWebsite, $websiteRoot);
     }
 
+    $primary = birkly_demo_starter_primary_collection($templateId);
+    $primaryInstalled = $primary !== null && in_array($primary, $installed, true);
+    $success = $primaryInstalled;
+
     return [
-        'success' => count($installed) > 0 || $templateId === 'blank',
+        'success' => $success,
         'template' => $templateId,
         'installed_collections' => $installed,
         'demo_website' => $hasWebsite,
         'removed' => $removed,
-        'message' => 'Starter template installed',
+        'message' => $success ? 'Starter template installed' : 'Starter template could not be installed',
     ];
 }

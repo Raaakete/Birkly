@@ -40,21 +40,16 @@ try {
     $catalog = birkly_demo_starter_catalog();
     test_assert('catalog includes shop', isset($catalog['shop']));
     test_assert('catalog includes blank', isset($catalog['blank']));
-    test_assert('shop lists products collection', in_array('products', $catalog['shop']['collections'], true));
-
-    $shop = birkly_demo_install_starter_template('shop', $root);
-    test_assert('shop install succeeds', $shop['success'] === true);
-    test_assert('shop installs products collection', is_dir($contentRoot . '/products'));
-    test_assert('shop installs demo website', is_dir($websiteRoot));
-    test_assert('shop demo index exists', is_file($websiteRoot . '/index.html'));
-
-    $shopIndex = file_get_contents($websiteRoot . '/index.html') ?: '';
-    test_assert('shop demo index references products', strpos($shopIndex, "'products'") !== false);
+    test_assert('blog is selectable in dev tree', birkly_demo_starter_is_selectable($root, 'blog'));
+    test_assert('blank is selectable', birkly_demo_starter_is_selectable($root, 'blank'));
+    test_assert('shop is not selectable yet', !birkly_demo_starter_is_selectable($root, 'shop'));
 
     $blog = birkly_demo_install_starter_template('blog', $root);
     test_assert('blog install succeeds', $blog['success'] === true);
-    test_assert('blog removes products after switch', !is_dir($contentRoot . '/products'));
     test_assert('blog installs blog collection', is_dir($contentRoot . '/blog'));
+
+    $shop = birkly_demo_install_starter_template('shop', $root);
+    test_assert('shop install blocked while coming soon', $shop['success'] === false);
 
     $blank = birkly_demo_install_starter_template('blank', $root);
     test_assert('blank install succeeds', $blank['success'] === true);

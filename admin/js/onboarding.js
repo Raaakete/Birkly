@@ -263,6 +263,10 @@ const onboarding = {
     },
 
     selectStarterTemplate(template) {
+        const card = document.querySelector(`[data-starter="${template}"]`);
+        if (card && card.dataset.starterSelectable !== '1') {
+            return;
+        }
         this.starterTemplate = template;
         document.querySelectorAll('[data-starter]').forEach(card => {
             card.classList.toggle('selected', card.dataset.starter === template);
@@ -299,7 +303,7 @@ const onboarding = {
                 body: JSON.stringify({ template: this.starterTemplate })
             });
             const data = await response.json();
-            if (data.status === 'ok') {
+            if (data.status === 'ok' && data.data?.template === this.starterTemplate) {
                 if (this.starterTemplate !== 'blank' && data.data?.demo_website) {
                     this.demoWebsiteUrl = this.getDemoWebsiteUrl();
                 } else {
