@@ -10,6 +10,9 @@ RewriteRule ^oauth/token$ api/oauth_token.php [L,QSA]
 RewriteRule ^oauth/register$ api/oauth_register.php [L,QSA]
 RewriteRule ^mcp(/.*)?$ api/mcp.php [L,QSA]
 
+# Studio published sites (P22)
+RewriteRule ^site(/.*)?$ api/studio_public.php [L,QSA]
+
 # Connector branding for MCP clients (Claude connector icon)
 RewriteRule ^favicon\.ico$ admin/assets/birkly-icon.svg [L]
 
