@@ -27,7 +27,61 @@ const onboarding = {
             : (['local', 'cloud'].includes(dataInstall) ? dataInstall : null);
 
         this.setupForms();
+        this.bindStepActions();
         this.checkFirstUser();
+    },
+
+    bindStepActions() {
+        const page = document.querySelector('.onboarding-page');
+        if (!page) return;
+
+        page.addEventListener('click', (e) => {
+            const el = e.target.closest('[data-onboarding-action]');
+            if (!el || el.disabled) return;
+
+            const action = el.dataset.onboardingAction;
+            const param = el.dataset.onboardingParam;
+
+            switch (action) {
+                case 'next':
+                    this.nextStep();
+                    break;
+                case 'prev':
+                    this.previousStep();
+                    break;
+                case 'skip':
+                    this.skip();
+                    break;
+                case 'skip-use-case':
+                    this.skipUseCase();
+                    break;
+                case 'select-use-case':
+                    if (param) this.selectUseCase(param);
+                    break;
+                case 'keep-demo':
+                    this.keepDemoContent();
+                    break;
+                case 'delete-demo':
+                    this.deleteDemoContent();
+                    break;
+                case 'skip-ai':
+                    this.skipAI();
+                    break;
+                case 'save-ai':
+                    this.saveAIConnection();
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        page.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const el = e.target.closest('[data-onboarding-action="keep-demo"], [data-onboarding-action="delete-demo"]');
+            if (!el) return;
+            e.preventDefault();
+            el.click();
+        });
     },
 
     async checkFirstUser() {
@@ -132,6 +186,11 @@ const onboarding = {
         document.querySelectorAll('.onboarding-step').forEach(el => {
             el.style.display = el.id === `step-${stepName}` ? 'block' : 'none';
         });
+
+        const header = document.querySelector('.onboarding-header');
+        if (header) {
+            header.style.display = step === 0 ? 'none' : '';
+        }
 
         if (step === 2) this.renderInstallContext();
         if (step === 4 && this.useCase) this.highlightUseCase(this.useCase);
