@@ -1,9 +1,11 @@
 <?php
 /**
- * Execute page_bundle read requests (M4).
+ * Execute page_bundle read requests (M4 + P21 bundle v2).
  */
 
 require_once __DIR__ . '/public_read.php';
+require_once __DIR__ . '/page_bundle_helpers.php';
+require_once __DIR__ . '/page_bundle_template_functions.php';
 
 function birkly_page_bundle_collection_allowed(string $collectionSlug): bool {
     if ($collectionSlug === '' || $collectionSlug === 'site_elements') {
@@ -21,9 +23,10 @@ function birkly_page_bundle_collection_allowed(string $collectionSlug): bool {
     return !empty($check['allowed']);
 }
 
-function birkly_run_page_bundle_requests($storage, array $requests, string $language = 'en'): array {
+function birkly_run_page_bundle_requests($storage, array $requests, string $language = 'en', array $options = []): array {
     $out = [];
     $errors = [];
+    $lean = !array_key_exists('lean', $options) || !empty($options['lean']);
 
     foreach ($requests as $index => $req) {
         if (!is_array($req)) {
@@ -31,8 +34,12 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
         }
         $type = $req['type'] ?? '';
         $into = $req['into'] ?? '';
-        if (!$type || !$into) {
-            $errors[] = "Request $index: missing type or into";
+        if (!$type) {
+            $errors[] = "Request $index: missing type";
+            continue;
+        }
+        if ($type !== 'template_functions_meta' && !$into) {
+            $errors[] = "Request $index: missing into";
             continue;
         }
 
@@ -58,7 +65,7 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                         return (string)($e[$filterField] ?? '') === (string)$filterValue;
                     }));
                 }
-                $out[$into] = $entries;
+                $out[$into] = birkly_page_bundle_prune_list($entries, $lean);
             } elseif ($type === 'get_entry') {
                 $collection = $req['collection'] ?? '';
                 if (!birkly_page_bundle_collection_allowed($collection)) {
@@ -70,7 +77,8 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                 $entryId = $req['entry_id'] ?? '';
                 $result = birkly_public_get_entry($storage, $collection, $slug, $entryId, $language);
                 if (($result['status'] ?? '') === 'ok') {
-                    $out[$into] = $result['data']['entry'] ?? null;
+                    $entry = $result['data']['entry'] ?? null;
+                    $out[$into] = birkly_page_bundle_prune_entry($entry, $lean);
                 } else {
                     $out[$into] = null;
                     $errors[] = "get_entry:$collection:$slug failed";
@@ -90,22 +98,36 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                     continue;
                 }
                 $result = birkly_public_list_sub_entries($parentCollection, $parentEntryId, $subCollection);
-                $out[$into] = $result['data']['entries'] ?? [];
+                $entries = $result['data']['entries'] ?? [];
+                $out[$into] = birkly_page_bundle_prune_list($entries, $lean);
+            } elseif ($type === 'template_functions_meta') {
+                $key = $into !== '' ? $into : '__tf_meta__';
+                $out[$key] = birkly_page_bundle_template_functions_meta_list();
+            } elseif ($type === 'template_function') {
+                $name = $req['name'] ?? '';
+                $args = $req['args'] ?? [];
+                if (!is_array($args)) {
+                    $args = [];
+                }
+                $out[$into] = birkly_page_bundle_call_template_function($name, $args);
             } else {
                 $errors[] = "Unknown type: $type";
             }
         } catch (Throwable $e) {
             error_log('page_bundle error: ' . $e->getMessage());
             $errors[] = "Request $index failed";
-            if (!isset($out[$into])) {
-                $out[$into] = [];
+            if ($into !== '' && !isset($out[$into])) {
+                $out[$into] = ($type === 'get_entry') ? null : [];
             }
         }
     }
+
+    $revision = birkly_page_bundle_compute_revision($storage, $requests, $language);
 
     return [
         'status' => 'ok',
         'data' => $out,
         'errors' => $errors,
+        'revision' => $revision,
     ];
 }
