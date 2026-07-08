@@ -1,0 +1,26 @@
+{
+  "id": "var-col-250-whole",
+  "slug": "col-250-whole",
+  "status": "published",
+  "parent_id": "coffee-colombia",
+  "parent_collection": "products",
+  "sub_collection": "variants",
+  "title": "250g · Whole bean",
+  "size": "250g",
+  "grind": "Whole bean",
+  "commerce": {
+    "fulfillment": "ship",
+    "purchase_options": [
+      {
+        "id": "buy_once",
+        "label": "One-time purchase",
+        "billing": "one_time",
+        "price_cents": 1599,
+        "currency": "eur"
+      }
+    ],
+    "quantity_available": 80,
+    "sku": "COL-250-WB",
+    "weight_grams": 250
+  }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — Birkly Reference</title>
+    <link rel="stylesheet" href="/reference-projects/blog/website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/blog/website/index.html">Birkly Blog</a></h1>
+            <nav>
+                <a href="/reference-projects/blog/website/index.html">Home</a>
+                <a href="/reference-projects/blog/website/blog.html" class="active">Blog</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                {from 'site_elements' get entry 'blog_headline'}
+                <h1>{'content'.0.'value'}</h1>
+                <p class="page-subtitle">{'content'.1.'value'}</p>
+                {endget}
+            </div>
+        </section>
+
+        <section class="blog-section">
+            <div class="container">
+                <div class="blog-posts">
+                    {for each entry in 'blog' with status = published ordered by newest}
+                    <article class="post-card">
+                        <h3><a href="/reference-projects/blog/website/post.html?slug={slug}">{ title }</a></h3>
+                        <div class="post-meta">
+                            {if entry has created_at}
+                            <time>{ created_at }</time>
+                            {endif}
+                            {if entry has 'tags'}
+                            <div class="tags">
+                                {for each item in 'tags'}
+                                <span class="tag">{item}</span>
+                                {endfor}
+                            </div>
+                            {endif}
+                        </div>
+                        {if entry has 'excerpt'}
+                        <p class="excerpt">{'excerpt'}</p>
+                        {endif}
+                        <a href="/reference-projects/blog/website/post.html?slug={slug}" class="read-more">Read More →</a>
+                    </article>
+                    {endfor}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; Birkly Reference — Blog</p>
+        </div>
+    </footer>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

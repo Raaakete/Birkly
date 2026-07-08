@@ -1,0 +1,11 @@
+{
+  "id": "social-hero",
+  "slug": "hero",
+  "status": "published",
+  "title": "Hero",
+  "key": "hero",
+  "content": [
+    { "type": "text", "value": "HaruSocial" },
+    { "type": "textarea", "value": "Connect, share, and shop — powered by Birkly." }
+  ]
+}

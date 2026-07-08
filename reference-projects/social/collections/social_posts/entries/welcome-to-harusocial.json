@@ -1,0 +1,11 @@
+{
+  "id": "post-welcome",
+  "slug": "welcome-to-harusocial",
+  "status": "published",
+  "created_at": "2026-07-01T10:00:00+00:00",
+  "updated_at": "2026-07-01T10:00:00+00:00",
+  "content": "Welcome to HaruSocial — a Birkly reference site demonstrating user auth, feeds, and merch. Log in to create your first post!",
+  "author_name": "Demo Admin",
+  "author_user_id": "demo-admin",
+  "visibility": "public"
+}

@@ -1,0 +1,20 @@
+{
+  "fields": [
+    { "name": "title", "type": "text", "label": "Title", "required": true },
+    { "name": "slug", "type": "text", "label": "Slug", "required": true },
+    { "name": "start", "type": "datetime", "label": "Start", "required": true },
+    { "name": "end", "type": "datetime", "label": "End" },
+    { "name": "venue", "type": "text", "label": "Venue" },
+    { "name": "capacity", "type": "number", "label": "Capacity (0 = unlimited)" },
+    { "name": "visibility", "type": "select", "label": "Visibility", "options": [
+      { "label": "Public", "value": "public" },
+      { "label": "Hidden", "value": "hidden" }
+    ], "default": "public" },
+    { "name": "ticket_types", "type": "textarea", "label": "Ticket types (JSON array)" },
+    { "name": "description", "type": "textarea", "label": "Description" },
+    { "name": "status", "type": "select", "label": "Status", "options": [
+      { "label": "Draft", "value": "draft" },
+      { "label": "Published", "value": "published" }
+    ], "default": "published" }
+  ]
+}

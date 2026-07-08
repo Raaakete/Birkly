@@ -1,0 +1,14 @@
+{
+  "id": "proj-north",
+  "slug": "north-coast-campaign",
+  "status": "published",
+  "created_at": "2025-01-20T10:00:00+00:00",
+  "updated_at": "2025-01-20T10:00:00+00:00",
+  "title": "North Coast — Summer Campaign",
+  "description": "Photography direction and landing page for a travel brand.",
+  "content": "<p>A seasonal campaign highlighting coastal routes. We art-directed the shoot and built a lightweight landing page with itinerary cards fed from the CMS.</p>",
+  "client": "North Coast Travel",
+  "year": "2025",
+  "category": "Campaign",
+  "featured": false
+}

@@ -1,0 +1,13 @@
+{
+  "fields": [
+    { "name": "title", "type": "text", "label": "Title", "required": true },
+    { "name": "slug", "type": "text", "label": "Slug", "required": true },
+    { "name": "description", "type": "textarea", "label": "Short description" },
+    { "name": "content", "type": "editor", "label": "Case study" },
+    { "name": "client", "type": "text", "label": "Client" },
+    { "name": "year", "type": "text", "label": "Year" },
+    { "name": "category", "type": "text", "label": "Category" },
+    { "name": "featured", "type": "checkbox", "label": "Featured" },
+    { "name": "featured_image", "type": "media", "label": "Cover image" }
+  ]
+}
