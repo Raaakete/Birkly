@@ -23,6 +23,10 @@ if (!studio_plugin_active()) {
 require_once __DIR__ . '/../includes/StudioProjectRepository.php';
 require_once __DIR__ . '/../includes/StudioCompiler.php';
 require_once __DIR__ . '/../includes/StudioExporter.php';
+require_once __DIR__ . '/../includes/StudioFileSystem.php';
+require_once __DIR__ . '/../includes/StudioRevisionStore.php';
+require_once __DIR__ . '/../includes/StudioBlockRegistry.php';
+require_once __DIR__ . '/../includes/StudioCanvasMigrator.php';
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $action = $input['action'] ?? $_GET['action'] ?? '';
@@ -32,7 +36,10 @@ $adminActions = [
     'duplicate_project', 'publish_project', 'list_pages', 'get_page', 'save_page',
     'add_page', 'delete_page', 'reorder_pages', 'set_home_page', 'compile_page',
     'save_custom_css', 'get_custom_css', 'export_project', 'parse_code', 'list_collections',
-    'list_style_kits', 'preview_url',
+    'list_style_kits', 'preview_url', 'open_project_url',
+    'list_files', 'read_file', 'write_file', 'create_file', 'create_directory',
+    'delete_path', 'rename_path', 'list_revisions', 'list_studio_blocks', 'list_sections',
+    'insert_section', 'get_tokens', 'save_tokens', 'list_components', 'save_component',
 ];
 
 if (in_array($action, $adminActions, true)) {
@@ -42,6 +49,9 @@ if (in_array($action, $adminActions, true)) {
 $repo = new StudioProjectRepository();
 $compiler = new StudioCompiler($repo);
 $exporter = new StudioExporter($repo);
+$fs = new StudioFileSystem($repo);
+$revisions = new StudioRevisionStore($repo);
+studio_load_plugin_blocks();
 
 function studio_ok($data = []): void
 {
@@ -94,6 +104,9 @@ switch ($action) {
         $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
         $slug = (string) ($input['page_slug'] ?? $_GET['page_slug'] ?? 'index');
         $canvas = $repo->getPageCanvas($id, $slug);
+        if ($canvas) {
+            $canvas = StudioCanvasMigrator::upgrade($canvas);
+        }
         $html = $repo->getPageHtml($id, $slug);
         $canvas ? studio_ok(['canvas' => $canvas, 'html' => $html]) : studio_err('Not found', 404);
     case 'save_page':
@@ -183,6 +196,118 @@ switch ($action) {
             'preview_html' => is_file($htmlPath) ? file_get_contents($htmlPath) : '',
             'cms_url' => $base,
         ]);
+    case 'open_project_url':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $project = $repo->getProject($id);
+        if (!$project) {
+            studio_err('Not found', 404);
+        }
+        $slug = $project['slug'] ?? $id;
+        $base = function_exists('birkly_url') ? birkly_url('') : '';
+        if (!empty($project['published'])) {
+            $url = rtrim($base, '/') . '/site/' . rawurlencode($slug) . '/';
+        } else {
+            $url = rtrim($base, '/') . '/site/' . rawurlencode($slug) . '/?birkly_studio_preview=1';
+        }
+        studio_ok(['url' => $url]);
+    case 'list_files':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        studio_ok(['tree' => $fs->listTree($id)]);
+    case 'read_file':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $path = (string) ($input['path'] ?? $_GET['path'] ?? '');
+        $file = $fs->readFile($id, $path);
+        $file ? studio_ok(['file' => $file]) : studio_err('Not found', 404);
+    case 'write_file':
+        $id = (string) ($input['project_id'] ?? '');
+        $path = (string) ($input['path'] ?? '');
+        $content = (string) ($input['content'] ?? '');
+        studio_ok(['saved' => $fs->writeFile($id, $path, $content)]);
+    case 'create_file':
+        $id = (string) ($input['project_id'] ?? '');
+        $path = (string) ($input['path'] ?? '');
+        $content = (string) ($input['content'] ?? '');
+        $fs->createFile($id, $path, $content) ? studio_ok() : studio_err('Create failed', 400);
+    case 'create_directory':
+        $id = (string) ($input['project_id'] ?? '');
+        $path = (string) ($input['path'] ?? '');
+        $fs->createDirectory($id, $path) ? studio_ok() : studio_err('Create failed', 400);
+    case 'delete_path':
+        $id = (string) ($input['project_id'] ?? '');
+        $path = (string) ($input['path'] ?? '');
+        studio_ok(['deleted' => $fs->deletePath($id, $path)]);
+    case 'rename_path':
+        $id = (string) ($input['project_id'] ?? '');
+        $from = (string) ($input['from'] ?? '');
+        $to = (string) ($input['to'] ?? '');
+        studio_ok(['renamed' => $fs->renamePath($id, $from, $to)]);
+    case 'list_revisions':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $path = (string) ($input['path'] ?? $_GET['path'] ?? '');
+        studio_ok(['revisions' => $revisions->listForPath($id, $path)]);
+    case 'list_studio_blocks':
+        studio_ok(['blocks' => array_values(get_studio_blocks())]);
+    case 'list_sections':
+        $sections = [];
+        $dir = dirname(__DIR__) . '/sections';
+        foreach (glob($dir . '/*.json') ?: [] as $file) {
+            $data = json_decode((string) file_get_contents($file), true);
+            if (is_array($data)) {
+                $sections[] = $data;
+            }
+        }
+        studio_ok(['sections' => $sections]);
+    case 'insert_section':
+        $id = (string) ($input['project_id'] ?? '');
+        $slug = (string) ($input['page_slug'] ?? 'index');
+        $sectionId = (string) ($input['section_id'] ?? 'hero');
+        $libDir = dirname(__DIR__) . '/sections';
+        $libFile = $libDir . '/' . preg_replace('/[^a-z0-9_-]/', '', $sectionId) . '.json';
+        if (!is_file($libFile)) {
+            studio_err('Section not found', 404);
+        }
+        $section = json_decode((string) file_get_contents($libFile), true);
+        $canvas = $repo->getPageCanvas($id, $slug) ?? StudioCanvasMigrator::upgrade(['version' => 2, 'sections' => []]);
+        $canvas['sections'][] = $section['section'] ?? $section;
+        $saved = $repo->savePageCanvas($id, $slug, $canvas);
+        studio_ok(['canvas' => $saved]);
+    case 'get_tokens':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $path = $repo->projectDir($id) . '/tokens.json';
+        $tokens = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+        studio_ok(['tokens' => is_array($tokens) ? $tokens : []]);
+    case 'save_tokens':
+        $id = (string) ($input['project_id'] ?? '');
+        $tokens = $input['tokens'] ?? [];
+        if (!is_array($tokens)) {
+            studio_err('tokens must be object');
+        }
+        $path = $repo->projectDir($id) . '/tokens.json';
+        file_put_contents($path, json_encode($tokens, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        studio_ok();
+    case 'list_components':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $dir = $repo->projectDir($id) . '/components';
+        $list = [];
+        if (is_dir($dir)) {
+            foreach (glob($dir . '/*.json') ?: [] as $f) {
+                $list[] = ['name' => basename($f, '.json'), 'data' => json_decode((string) file_get_contents($f), true)];
+            }
+        }
+        studio_ok(['components' => $list]);
+    case 'save_component':
+        $id = (string) ($input['project_id'] ?? '');
+        $name = preg_replace('/[^a-z0-9_-]/', '', (string) ($input['name'] ?? ''));
+        $data = $input['data'] ?? [];
+        if ($name === '' || !is_array($data)) {
+            studio_err('Invalid component');
+        }
+        $dir = $repo->projectDir($id) . '/components';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        file_put_contents($dir . '/' . $name . '.json', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        studio_ok();
     default:
         studio_err('Unknown action', 400);
 }

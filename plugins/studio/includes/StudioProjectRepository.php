@@ -73,6 +73,7 @@ class StudioProjectRepository
         mkdir($dir . '/styles', 0755, true);
         mkdir($dir . '/pages', 0755, true);
         mkdir($dir . '/website', 0755, true);
+        mkdir($dir . '/components', 0755, true);
 
         $kitPath = studio_kit_css_path($styleKit);
         if ($kitPath) {
@@ -81,6 +82,11 @@ class StudioProjectRepository
             file_put_contents($dir . '/styles/kit.css', "/* studio kit */\n");
         }
         file_put_contents($dir . '/styles/custom.css', "/* custom rules */\n");
+
+        file_put_contents($dir . '/tokens.json', json_encode([
+            'colors' => ['primary' => '#0d6efd', 'text' => '#1a1a1a'],
+            'spacing' => ['sm' => '0.5rem', 'md' => '1rem', 'lg' => '2rem'],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
         $now = date('c');
         $meta = [
@@ -231,6 +237,8 @@ class StudioProjectRepository
         if (!isset($canvas['version'])) {
             $canvas['version'] = 1;
         }
+        require_once __DIR__ . '/StudioCanvasMigrator.php';
+        $canvas = StudioCanvasMigrator::upgrade($canvas);
         $this->writeJson($this->pageCanvasPath($projectId, $pageSlug), $canvas);
 
         $meta = $this->readProjectJson($projectId);

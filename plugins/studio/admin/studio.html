@@ -3,84 +3,80 @@
 
 {plugin_page_header}
 
-<div class="studio-admin plugin-page" id="studio-app">
-  <div id="studio-dashboard-view">
+<div class="studio-ide plugin-page" id="studio-app">
+  <div id="studio-dashboard" class="studio-dashboard">
     <div class="studio-toolbar">
       <h2>Studio projects</h2>
       <button type="button" class="btn btn-primary" id="studio-new-project">New project</button>
     </div>
-    <div id="studio-project-list" class="studio-project-list">
-      <div class="loading-state"><p>Loading projects…</p></div>
-    </div>
+    <div id="studio-project-list" class="studio-project-list"></div>
   </div>
 
-  <div id="studio-editor-view" hidden>
-    <div class="studio-toolbar studio-editor-toolbar">
-      <button type="button" class="btn btn-secondary" id="studio-back">← Projects</button>
-      <span id="studio-project-title" class="studio-project-title"></span>
-      <div class="studio-toolbar-actions">
-        <select id="studio-page-select" class="input"></select>
-        <button type="button" class="btn btn-secondary" id="studio-add-page">Add page</button>
-        <button type="button" class="btn btn-secondary" id="studio-preview">Preview</button>
-        <button type="button" class="btn btn-secondary" id="studio-export">Export ZIP</button>
-        <button type="button" class="btn btn-primary" id="studio-publish">Publish</button>
+  <div id="studio-workspace" class="studio-workspace" hidden>
+    <header class="studio-ide-toolbar">
+      <button type="button" class="btn btn-secondary btn-sm" id="studio-back">← Projects</button>
+      <span id="studio-project-name" class="studio-project-name"></span>
+      <div class="studio-ide-toolbar-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="studio-open-external" title="Open home page in new tab">Open project ↗</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="studio-export">Export</button>
+        <button type="button" class="btn btn-primary btn-sm" id="studio-publish">Publish</button>
       </div>
-    </div>
+    </header>
 
-    <div class="studio-editor-tabs" role="tablist">
-      <button type="button" class="studio-tab active" data-tab="visual" role="tab">Visual</button>
-      <button type="button" class="studio-tab" data-tab="code" role="tab">Code</button>
-      <button type="button" class="studio-tab" data-tab="styles" role="tab">Styles</button>
-    </div>
-
-    <div class="studio-editor-layout">
-      <aside class="studio-palette" id="studio-palette">
-        <h3>Elements</h3>
-        <button type="button" class="studio-palette-btn" data-add="text">Text</button>
-        <button type="button" class="studio-palette-btn" data-add="image">Image</button>
-        <button type="button" class="studio-palette-btn" data-add="button">Button</button>
-        <button type="button" class="studio-palette-btn" data-add="spacer">Spacer</button>
-        <button type="button" class="studio-palette-btn" data-add="divider">Divider</button>
-        <button type="button" class="studio-palette-btn" data-add="html">Raw HTML</button>
-        <h3>Birkly</h3>
-        <button type="button" class="studio-palette-btn" data-add="binding-loop">Collection loop</button>
-        <button type="button" class="studio-palette-btn" data-add="binding-filtered">Filtered list</button>
-        <button type="button" class="studio-palette-btn" data-add="binding-site">Site element</button>
-        <h3>Layout</h3>
-        <button type="button" class="studio-palette-btn" data-add="section">Add section</button>
+    <div class="studio-ide-body">
+      <aside class="studio-sidebar" id="studio-sidebar">
+        <div class="studio-sidebar-header">
+          <strong>Files</strong>
+          <button type="button" class="btn btn-secondary btn-sm" id="studio-refresh-tree" title="Refresh">↻</button>
+        </div>
+        <div id="studio-file-tree" class="studio-file-tree"></div>
+        <div class="studio-sidebar-section">
+          <strong>Sections</strong>
+          <div id="studio-section-lib" class="studio-section-lib"></div>
+        </div>
+        <div class="studio-sidebar-section">
+          <strong>Blocks</strong>
+          <div id="studio-blocks" class="studio-blocks"></div>
+        </div>
       </aside>
 
-      <main class="studio-canvas-wrap">
-        <div id="studio-visual-panel" class="studio-panel active">
-          <div id="studio-canvas" class="studio-canvas"></div>
+      <main class="studio-main">
+        <div class="studio-tabbar" id="studio-tabbar" role="tablist"></div>
+        <div class="studio-viewbar">
+          <button type="button" class="studio-view-btn active" data-view="visual">Visual</button>
+          <button type="button" class="studio-view-btn" data-view="code">Code</button>
+          <button type="button" class="studio-view-btn" data-view="split">Split</button>
+          <select id="studio-breakpoint" class="input studio-breakpoint-select" title="Breakpoint">
+            <option value="default">Mobile</option>
+            <option value="tablet">Tablet</option>
+            <option value="desktop">Desktop</option>
+          </select>
+          <button type="button" class="btn btn-secondary btn-sm" id="studio-undo" title="Undo">Undo</button>
         </div>
-        <div id="studio-code-panel" class="studio-panel" hidden>
-          <textarea id="studio-code-editor" class="studio-code-editor" spellcheck="false"></textarea>
-          <button type="button" class="btn btn-primary" id="studio-apply-code">Apply code → visual</button>
-        </div>
-        <div id="studio-styles-panel" class="studio-panel" hidden>
-          <label>Custom CSS <span class="form-hint">(saved to styles/custom.css)</span></label>
-          <textarea id="studio-custom-css" class="studio-code-editor" spellcheck="false"></textarea>
-          <button type="button" class="btn btn-primary" id="studio-save-css">Save CSS</button>
+        <div class="studio-editor-panes" id="studio-panes">
+          <div class="studio-pane studio-pane-visual" id="studio-pane-visual">
+            <div class="studio-canvas-toolbar">
+              <button type="button" class="btn btn-secondary btn-sm" data-add="section">+ Section</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-add="text">Text</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-add="binding-loop">Blog loop</button>
+            </div>
+            <div id="studio-canvas" class="studio-canvas"></div>
+          </div>
+          <div class="studio-pane studio-pane-code" id="studio-pane-code" hidden>
+            <div class="studio-code-wrap">
+              <textarea id="studio-code-editor" class="studio-code-editor" spellcheck="false" aria-label="Code editor"></textarea>
+            </div>
+          </div>
         </div>
       </main>
 
       <aside class="studio-inspector" id="studio-inspector">
         <h3>Inspector</h3>
-        <p class="form-hint" id="studio-inspector-empty">Select an element</p>
-        <div id="studio-inspector-fields" hidden></div>
+        <div id="studio-inspector-body"><p class="form-hint">Select an element</p></div>
+        <h3>Design tokens</h3>
+        <textarea id="studio-tokens-editor" class="studio-tokens-editor" spellcheck="false"></textarea>
+        <button type="button" class="btn btn-secondary btn-sm" id="studio-save-tokens">Save tokens</button>
       </aside>
-    </div>
-  </div>
-
-  <div id="studio-preview-modal" class="studio-modal" hidden>
-    <div class="studio-modal-backdrop" data-close-preview></div>
-    <div class="studio-modal-content">
-      <div class="studio-modal-header">
-        <strong>Live preview</strong>
-        <button type="button" class="btn btn-secondary" data-close-preview>Close</button>
-      </div>
-      <iframe id="studio-preview-frame" class="studio-preview-frame" title="Studio preview"></iframe>
     </div>
   </div>
 
@@ -88,7 +84,7 @@
     <div class="studio-modal-backdrop" data-close-new></div>
     <div class="studio-modal-content studio-modal-sm">
       <h3>New project</h3>
-      <label>Name <input type="text" id="studio-new-name" class="input" placeholder="My site"></label>
+      <label>Name <input type="text" id="studio-new-name" class="input"></label>
       <label>Style kit
         <select id="studio-new-kit" class="input">
           <option value="minimal">Minimal</option>
@@ -104,4 +100,4 @@
   </div>
 </div>
 
-<script src="{birkly_url '/plugins/studio/admin/studio.js'}"></script>
+<script src="{birkly_url '/plugins/studio/admin/studio-ide.js'}"></script>
