@@ -21,7 +21,9 @@ $defaultLogo = '/admin/assets/birkly-icon.svg';
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 require_once $root . '/core/demo_starter_templates.php';
+require_once $root . '/core/birkly_paths.php';
 $starterAvailability = birkly_demo_starter_availability($root);
+$showAiOnboardingStep = !birkly_is_local_dev_request();
 $starterCards = [
     'blog' => ['label' => 'Blog', 'hint' => 'Posts + demo site'],
     'shop' => ['label' => 'Shop', 'hint' => 'Products + storefront'],
@@ -31,7 +33,7 @@ $starterCards = [
 ];
 ?>
 
-<div class="onboarding-page" data-install-path="<?= htmlspecialchars($installPath) ?>">
+<div class="onboarding-page" data-install-path="<?= htmlspecialchars($installPath) ?>" data-ai-step="<?= $showAiOnboardingStep ? '1' : '0' ?>">
     <div class="onboarding-container">
         <div class="onboarding-header">
             <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?>" class="onboarding-logo">
@@ -46,7 +48,9 @@ $starterCards = [
                 <li class="progress-step" data-step="1"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.welcome') ?></span></li>
                 <li class="progress-step" data-step="2"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.project_info') ?></span></li>
                 <li class="progress-step" data-step="3"><span class="progress-step-dot"></span><span class="progress-step-label">Starters</span></li>
+                <?php if ($showAiOnboardingStep): ?>
                 <li class="progress-step" data-step="4"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.connect_ai') ?></span></li>
+                <?php endif; ?>
             </ol>
         </div>
 
@@ -160,7 +164,8 @@ $starterCards = [
             </div>
         </div>
 
-        <!-- Step 4: Connect AI (optional) -->
+        <!-- Step 4: Connect AI (optional, web server only) -->
+        <?php if ($showAiOnboardingStep): ?>
         <div class="onboarding-step" id="step-connect-ai" data-step="4" style="display: none;">
             <div class="onboarding-content">
                 <div class="step-header step-header--optional">
@@ -224,5 +229,6 @@ $starterCards = [
                 </div>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>

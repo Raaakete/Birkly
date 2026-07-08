@@ -12,6 +12,9 @@ foreach (($onboardingData['checklist'] ?? []) as $checklistItem) {
 }
 $showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipped']) && $hasIncompleteChecklist && empty($onboardingData['checklist_hidden']);
 $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
+
+require_once dirname(dirname(__DIR__)) . '/core/birkly_paths.php';
+$isLocalDev = birkly_is_local_dev_request();
 ?><!-- Onboarding Completion Modal -->
 <div class="modal" id="onboarding-complete-modal" style="display: none;">
     <div class="modal-backdrop"></div>
@@ -28,10 +31,10 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
                     <p><?= __('admin.start_adding_content') ?></p>
                     <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
                 </div>
-                <div class="onboarding-complete-card">
+                <div class="onboarding-complete-card" id="onboarding-complete-ai-card">
                     <h3><?= __('admin.connect_ai_assistant') ?></h3>
-                    <p>Connect admin chat AI or set up MCP for external tools.</p>
-                    <a href="<?= admin_url('settings') ?>#ai-integrations" class="btn btn-secondary btn-small">AI settings</a>
+                    <p id="onboarding-complete-ai-copy"><?= $isLocalDev ? __('admin.ai_connect_after_deploy_hint') : __('admin.ai_connect_modal_hint') ?></p>
+                    <a href="<?= admin_url('settings') ?>#ai-integrations" class="btn btn-secondary btn-small"><?= __('admin.ai_settings') ?></a>
                 </div>
                 <div class="onboarding-complete-card" id="onboarding-complete-demo-card" style="display: none;">
                     <h3>View demo website</h3>

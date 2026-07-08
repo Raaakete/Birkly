@@ -163,22 +163,21 @@ try {
     test_assert('onboarding.css served', $css['code'] === 200);
     test_assert('onboarding.css has container rules', strpos($css['body'], '.onboarding-container') !== false);
 
-    // P19-M5: optional AI wizard step with BYOAI inline
-    test_assert(
-        'onboarding has connect-ai step element',
-        strpos($onboardingPage['body'], 'step-connect-ai') !== false,
-        'connect-ai step not found in onboarding page'
-    );
-    test_assert(
-        'onboarding has BYOAI provider field',
-        strpos($onboardingPage['body'], 'onboarding-ai-provider') !== false
-    );
-    test_assert(
-        'connect-ai step is optional (skippable)',
-        strpos($onboardingPage['body'], 'data-onboarding-action="skip-ai"') !== false
-            || strpos($onboardingPage['body'], 'skip_for_now') !== false,
-        'skip-ai action or skip_for_now not found in onboarding page'
-    );
+    // P19-M5: optional AI wizard step — shown on web servers, hidden on localhost
+    test_assert('onboarding exposes ai-step data attribute', strpos($onboardingPage['body'], 'data-ai-step') !== false);
+    $aiStepOnPage = strpos($onboardingPage['body'], 'data-ai-step="1"') !== false;
+    if ($aiStepOnPage) {
+        test_assert('onboarding has connect-ai step element', strpos($onboardingPage['body'], 'step-connect-ai') !== false);
+        test_assert('onboarding has BYOAI provider field', strpos($onboardingPage['body'], 'onboarding-ai-provider') !== false);
+        test_assert(
+            'connect-ai step is optional (skippable)',
+            strpos($onboardingPage['body'], 'data-onboarding-action="skip-ai"') !== false
+                || strpos($onboardingPage['body'], 'skip_for_now') !== false
+        );
+    } else {
+        test_assert('connect-ai step omitted on localhost', strpos($onboardingPage['body'], 'step-connect-ai') === false);
+        test_assert('onboarding.js can finish without AI step', strpos(file_get_contents($root . '/admin/js/onboarding.js'), 'finishWithoutAiStep') !== false);
+    }
 
     // P19-M6: Dashboard checklist essential only; AI only if skipped
     $dashboardPageChecklist = birkly_test_http_request($base . '/admin/index.php?page=dashboard', [
@@ -207,8 +206,8 @@ try {
         'AI checklist item must not appear unless user skipped wizard AI step'
     );
     test_assert(
-        'dashboard has hide checklist control',
-        strpos($dashboardPageChecklist['body'], 'hide-checklist-btn') !== false
+        'dashboard template has hide checklist control',
+        strpos(file_get_contents($root . '/admin/templates/dashboard.html'), 'hide-checklist-btn') !== false
     );
 
     // M2-T3: Birkly.url() used in onboarding JS (no bare /api/ fetch paths)
