@@ -37,6 +37,77 @@
         alert(message);
     }
 
+    /**
+     * CSP nonce blocks inline onclick — use delegated listeners (P16-M5 / plugin activate fix).
+     */
+    function bindDelegatedEvents() {
+        var root = document.querySelector('.plugins-page');
+        if (!root || root.dataset.delegationBound === '1') {
+            return;
+        }
+        root.dataset.delegationBound = '1';
+
+        root.addEventListener('click', function (e) {
+            var el = e.target.closest('[data-plugin-action]');
+            if (el) {
+                var action = el.getAttribute('data-plugin-action');
+                if (action === 'toggle') {
+                    togglePlugin(el.getAttribute('data-plugin-id'), el.getAttribute('data-plugin-activate') === 'true');
+                } else if (action === 'delete') {
+                    deletePlugin(el.getAttribute('data-plugin-id'));
+                } else if (action === 'upgrade') {
+                    upgradePlugin(el.getAttribute('data-plugin-id'));
+                } else if (action === 'switch-marketplace') {
+                    switchToMarketplace();
+                } else if (action === 'back-marketplace') {
+                    backToMarketplaceBrowse();
+                } else if (action === 'open-offer') {
+                    openOfferDetail(el.getAttribute('data-offer-slug'));
+                } else if (action === 'install-free') {
+                    installFreePlugin(el.getAttribute('data-offer-slug'), el.getAttribute('data-offer-version'));
+                } else if (action === 'open-install') {
+                    openMarketplaceInstall(
+                        el.getAttribute('data-offer-slug'),
+                        el.getAttribute('data-offer-title'),
+                        el.getAttribute('data-offer-version'),
+                        el.getAttribute('data-offer-free') === 'true'
+                    );
+                } else if (action === 'search-marketplace') {
+                    searchMarketplace();
+                } else if (action === 'check-updates') {
+                    checkAllUpdates();
+                } else if (action === 'open-install-modal') {
+                    openInstallModal();
+                } else if (action === 'close-install-modal') {
+                    closeInstallModal();
+                } else if (action === 'install-from-file') {
+                    installFromFile();
+                } else if (action === 'close-marketplace-install') {
+                    closeMarketplaceInstallModal();
+                } else if (action === 'install-marketplace') {
+                    installFromMarketplace();
+                }
+                return;
+            }
+
+            var card = e.target.closest('.marketplace-offer-card[data-offer-slug]');
+            if (card) {
+                openOfferDetail(card.getAttribute('data-offer-slug'));
+            }
+        });
+
+        root.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') {
+                return;
+            }
+            var card = e.target.closest('.marketplace-offer-card[data-offer-slug]');
+            if (card && !e.target.closest('[data-plugin-action]')) {
+                e.preventDefault();
+                openOfferDetail(card.getAttribute('data-offer-slug'));
+            }
+        });
+    }
+
     /** Sidebar nav is server-rendered; reload after plugin state changes (matches legacy Settings → Plugins). */
     function reloadAfterPluginChange(message, tab) {
         if (message) {
@@ -161,13 +232,13 @@
         var title = offer.title || slug;
         var version = offer.latest_version || '';
         var free = isFreeOffer(offer);
-        var clickGuard = stopPropagation ? 'event.stopPropagation(); ' : '';
+        void stopPropagation;
 
         if (state.installed) {
             if (state.update_available && state.plugin_id) {
                 return (
-                    '<button type="button" class="btn btn-sm btn-secondary" onclick="' + clickGuard +
-                    'PluginsPage.upgradePlugin(\'' + escapeHtml(state.plugin_id) + '\')">' +
+                    '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="upgrade" data-plugin-id="' +
+                    escapeHtml(state.plugin_id) + '">' +
                     escapeHtml(t('update', 'Update')) + '</button>'
                 );
             }
@@ -179,18 +250,18 @@
 
         if (free) {
             return (
-                '<button type="button" class="btn btn-sm btn-primary" onclick="' + clickGuard +
-                'PluginsPage.installFreePlugin(\'' + escapeHtml(slug) + '\', \'' + escapeHtml(version) + '\')">' +
+                '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="install-free" data-offer-slug="' +
+                escapeHtml(slug) + '" data-offer-version="' + escapeHtml(version) + '">' +
                 escapeHtml(t('install', 'Install')) + '</button>'
             );
         }
 
         return (
-            '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(marketplacePurchaseUrl(slug)) + '" target="_blank" rel="noopener noreferrer" onclick="' + clickGuard + '">' +
+            '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(marketplacePurchaseUrl(slug)) + '" target="_blank" rel="noopener noreferrer">' +
             escapeHtml(t('purchase', 'Purchase')) + '</a>' +
-            '<button type="button" class="btn btn-sm btn-primary" onclick="' + clickGuard +
-            'PluginsPage.openMarketplaceInstall(\'' + escapeHtml(slug) + '\', \'' +
-            escapeHtml(title) + '\', \'' + escapeHtml(version) + '\', false)">' +
+            '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="open-install" data-offer-slug="' +
+            escapeHtml(slug) + '" data-offer-title="' + escapeHtml(title) + '" data-offer-version="' +
+            escapeHtml(version) + '" data-offer-free="false">' +
             escapeHtml(t('install_with_license', 'Install')) + '</button>'
         );
     }
@@ -245,7 +316,7 @@
                 '<div class="empty-state plugins-empty-state">' +
                 '<p>' + escapeHtml(t('no_plugins_installed', 'No plugins installed yet.')) + '</p>' +
                 '<p class="form-help">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse the Marketplace tab to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
-                '<button type="button" class="btn btn-primary" onclick="PluginsPage.switchToMarketplace()">' +
+                '<button type="button" class="btn btn-primary" data-plugin-action="switch-marketplace">' +
                 escapeHtml(t('browse_marketplace', 'Browse Marketplace')) +
                 '</button>' +
                 '</div>';
@@ -284,12 +355,12 @@
                 '</div>' +
                 '<div class="plugin-actions">' +
                 (hasUpdate
-                    ? '<button type="button" class="btn btn-sm btn-primary" onclick="PluginsPage.upgradePlugin(\'' + escapeHtml(plugin.id) + '\')">Upgrade</button>'
+                    ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
                     : '') +
-                '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" onclick="PluginsPage.togglePlugin(\'' + escapeHtml(plugin.id) + '\', ' + (!active) + ')">' +
+                '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
                 (active ? 'Deactivate' : 'Activate') +
                 '</button>' +
-                '<button type="button" class="btn btn-sm btn-danger" onclick="PluginsPage.deletePlugin(\'' + escapeHtml(plugin.id) + '\')">Delete</button>' +
+                '<button type="button" class="btn btn-sm btn-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '">Delete</button>' +
                 '</div>' +
                 '</div>'
             );
@@ -393,14 +464,14 @@
         grid.innerHTML = offers.map(function (offer) {
             var slug = offer.slug || '';
             return (
-                '<article class="marketplace-offer-card" role="button" tabindex="0" onclick="PluginsPage.openOfferDetail(\'' + escapeHtml(slug) + '\')" onkeydown="if(event.key===\'Enter\'){PluginsPage.openOfferDetail(\'' + escapeHtml(slug) + '\')}">' +
+                '<article class="marketplace-offer-card" role="button" tabindex="0" data-offer-slug="' + escapeHtml(slug) + '">' +
                 '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
                 '<div class="marketplace-offer-body">' +
                 '<div class="marketplace-offer-top">' +
                 '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
                 '</div>' +
                 '<h3 class="marketplace-offer-title">' +
-                '<button type="button" class="marketplace-offer-title-link" onclick="event.stopPropagation(); PluginsPage.openOfferDetail(\'' + escapeHtml(slug) + '\')">' +
+                '<button type="button" class="marketplace-offer-title-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
                 escapeHtml(offer.title || slug) +
                 '</button>' +
                 '</h3>' +
@@ -490,7 +561,7 @@
 
         return (
             '<div class="marketplace-offer-detail-inner">' +
-            '<button type="button" class="btn btn-secondary btn-sm" onclick="PluginsPage.backToMarketplaceBrowse()">' +
+            '<button type="button" class="btn btn-secondary btn-sm" data-plugin-action="back-marketplace">' +
             escapeHtml(t('back_to_marketplace', 'Back to marketplace')) +
             '</button>' +
             '<div class="marketplace-offer-detail-header">' +
@@ -563,7 +634,7 @@
             detailEl.innerHTML = renderMarketplaceOfferDetail(offer, result.data.releases || []);
         } catch (err) {
             detailEl.innerHTML = '<div class="error-state"><p>' + escapeHtml(err.message) + '</p>' +
-                '<button type="button" class="btn btn-secondary" onclick="PluginsPage.backToMarketplaceBrowse()">' +
+                '<button type="button" class="btn btn-secondary" data-plugin-action="back-marketplace">' +
                 escapeHtml(t('back_to_marketplace', 'Back to marketplace')) + '</button></div>';
         }
     }
@@ -831,6 +902,7 @@
     }
 
     async function init() {
+        bindDelegatedEvents();
         initTabs();
         var tab = getInitialTab();
         switchTab(tab);
