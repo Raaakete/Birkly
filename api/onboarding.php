@@ -94,12 +94,14 @@ function getOnboardingStatus($userId = null) {
     if ($userId === null) {
         $projectRoot = dirname(__DIR__);
         require_once __DIR__ . '/../core/demo_starter_templates.php';
+        require_once __DIR__ . '/../core/birkly_paths.php';
         return [
             'needs_first_user' => $needsFirstUser,
             'is_first_time' => $isFirstTime,
             'completed' => false,
             'install_path' => $siteOnboarding['install_path'] ?? null,
             'starter_availability' => birkly_demo_starter_availability($projectRoot),
+            'is_local_dev' => birkly_is_local_dev_request(),
         ];
     }
     
@@ -111,6 +113,7 @@ function getOnboardingStatus($userId = null) {
     $progress = $userOnboarding['progress'] ?? [];
     $projectRoot = dirname(__DIR__);
     require_once __DIR__ . '/../core/demo_starter_templates.php';
+    require_once __DIR__ . '/../core/birkly_paths.php';
     
     return [
         'needs_first_user' => $needsFirstUser,
@@ -123,7 +126,7 @@ function getOnboardingStatus($userId = null) {
         'progress' => $progress,
         'last_step' => $userOnboarding['last_step'] ?? null,
         'use_case' => $progress['use_case'] ?? ($userOnboarding['use_case'] ?? null),
-        'ai_skipped' => !empty($progress['ai_skipped']) || !empty($userOnboarding['ai_skipped']),
+        'ai_skipped' => !empty($progress['ai_skipped']) || !empty($progress['ai_skipped_local']) || !empty($userOnboarding['ai_skipped']),
         'ai_connected' => !empty($progress['ai_connected']) || !empty($userOnboarding['ai_connected']),
         'install_path' => $siteOnboarding['install_path'] ?? null,
         'checklist_dismissed' => $userOnboarding['checklist_dismissed'] ?? [],
@@ -131,6 +134,7 @@ function getOnboardingStatus($userId = null) {
         'started_at' => $userOnboarding['started_at'] ?? null,
         'completed_at' => $userOnboarding['completed_at'] ?? null,
         'starter_availability' => birkly_demo_starter_availability($projectRoot),
+        'is_local_dev' => birkly_is_local_dev_request(),
     ];
 }
 

@@ -7,6 +7,7 @@
 const onboarding = {
     currentStep: 0,
     maxSteps: 4,
+    showAiStep: true,
     needsFirstUser: false,
     starterTemplate: null,
     demoWebsiteUrl: null,
@@ -21,6 +22,8 @@ const onboarding = {
 
         const pageEl = document.querySelector('.onboarding-page');
         const dataInstall = pageEl?.dataset?.installPath || '';
+        this.showAiStep = pageEl?.dataset?.aiStep !== '0';
+        this.maxSteps = this.showAiStep ? 4 : 3;
         const urlInstall = new URLSearchParams(window.location.search).get('install');
         this.installPath = ['local', 'cloud'].includes(urlInstall) ? urlInstall
             : (['local', 'cloud'].includes(dataInstall) ? dataInstall : null);
@@ -105,6 +108,10 @@ const onboarding = {
                 if (data.data.install_path) {
                     this.installPath = data.data.install_path;
                 }
+                if (typeof data.data.is_local_dev === 'boolean') {
+                    this.showAiStep = !data.data.is_local_dev;
+                    this.maxSteps = this.showAiStep ? 4 : 3;
+                }
                 if (data.data.needs_first_user) {
                     this.needsFirstUser = true;
                     this.showStep(0);
@@ -115,6 +122,12 @@ const onboarding = {
                     this.resumeHandled = true;
                     this.starterTemplate = data.data.starter_template || data.data.use_case || null;
                     this.showStep(resume);
+                    return;
+                }
+                if (!this.resumeHandled && resume === 4 && !this.showAiStep) {
+                    this.resumeHandled = true;
+                    await this.updateProgressAPI('ai_skipped_local', true);
+                    await this.complete();
                     return;
                 }
             }
@@ -248,10 +261,19 @@ const onboarding = {
     },
 
     nextStep() {
+        if (this.currentStep === 3 && !this.showAiStep) {
+            this.finishWithoutAiStep();
+            return;
+        }
         if (this.currentStep < this.maxSteps) {
             this.showStep(this.currentStep + 1);
             this.updateProgressAPI();
         }
+    },
+
+    async finishWithoutAiStep() {
+        await this.updateProgressAPI('ai_skipped_local', true);
+        await this.complete();
     },
 
     previousStep() {

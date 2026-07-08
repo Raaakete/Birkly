@@ -241,3 +241,27 @@ function birkly_paths_reset_cache(): void
 {
     unset($GLOBALS['__birkly_base_path']);
 }
+
+/**
+ * True when the CMS is accessed on a local dev host (localhost, loopback, .local/.test/.dev).
+ */
+function birkly_is_local_dev_request(): bool
+{
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    if ($host === '') {
+        return false;
+    }
+    if (strpos($host, ':') !== false) {
+        $host = explode(':', $host, 2)[0];
+    }
+    $localHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
+    if (in_array($host, $localHosts, true)) {
+        return true;
+    }
+    foreach (['.local', '.test', '.dev'] as $suffix) {
+        if (strlen($host) > strlen($suffix) && substr($host, -strlen($suffix)) === $suffix) {
+            return true;
+        }
+    }
+    return false;
+}
