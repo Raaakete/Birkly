@@ -845,18 +845,14 @@
         withBusy(async () => {
           const data = await api('open_project_url', { project_id: state.project.id });
           const url = absUrl(data.url);
-          const label = data.published ? 'Live site' : 'Draft preview (admin only)';
+          const label = data.published ? 'Live site' : 'Draft preview';
           setStatus(label + ': ' + url, 'info');
-          if (data.route_ready === false) {
-            const hints = Array.isArray(data.route_hints) ? data.route_hints.join(' ') : '';
-            toast('Server routing not ready — /site/ may 404. ' + hints, 'error');
-          }
           const w = window.open(url, '_blank', 'noopener,noreferrer');
           if (!w) {
-            toast('Popup blocked. URL: ' + url, 'error');
+            toast('Popup blocked — copy the link from the status bar.', 'error');
             try {
               await navigator.clipboard.writeText(url);
-              toast('URL copied to clipboard', 'success');
+              toast('Link copied to clipboard', 'success');
             } catch (_) { /* ignore */ }
           }
         });
@@ -866,13 +862,8 @@
           await saveActiveFile();
           const data = await api('publish_project', { id: state.project.id });
           if (data.project) state.project = data.project;
-          const url = absUrl(data.public_url || '/site/' + (state.project.slug || '') + '/');
-          if (data.route_ready === false) {
-            const hints = Array.isArray(data.route_hints) ? data.route_hints.join(' ') : '';
-            toast('Published (files saved) but /site/ may 404 until server routing is deployed. ' + hints, 'error');
-          } else {
-            toast('Published! ' + url, 'success');
-          }
+          const url = absUrl(data.view_url || data.public_url || '/api/studio_view.php?slug=' + encodeURIComponent(state.project.slug || ''));
+          toast('Published! Open with ↗ or visit: ' + url, 'success');
         });
         break;
       case 'export':

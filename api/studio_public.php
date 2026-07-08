@@ -11,16 +11,10 @@ require_once __DIR__ . '/../core/plugins.php';
 
 load_plugins(dirname(__DIR__) . '/plugins');
 
-$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/site/', PHP_URL_PATH) ?: '/site/';
-$base = birkly_base_path();
-if ($base !== '' && str_starts_with($uri, $base)) {
-    $uri = substr($uri, strlen($base));
-    if ($uri === '') {
-        $uri = '/';
-    }
-}
-
+require_once __DIR__ . '/../plugins/studio/includes/studio_public_uri.php';
 require_once __DIR__ . '/../plugins/studio/includes/StudioRenderer.php';
+
+$uri = studio_resolve_public_uri();
 $renderer = new StudioRenderer();
 if ($renderer->handlePublicRequest($uri)) {
     exit;

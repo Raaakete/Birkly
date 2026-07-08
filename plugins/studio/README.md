@@ -52,6 +52,7 @@ content/studio-projects/{project-id}/
 | `/site/{slug}/{page}/` | Inner page |
 | `/site/{slug}/styles.css` | Kit + generated + custom CSS |
 | `/site/{slug}/?birkly_studio_preview=1` | Draft preview (admin session) |
+| `/api/studio_view.php?slug={slug}` | **Reliable viewer** — use when `/site/` rewrite fails (LiteSpeed, etc.) |
 
 ## Production deploy (Apache / nginx)
 
