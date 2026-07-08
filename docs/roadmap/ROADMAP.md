@@ -197,7 +197,19 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** TBD — propose Phase 20+ with human approval
+**Next active phase:** Phase 20 complete (2026-07-08) — templating excellence & reference projects
+
+**2026-07-08 — Phase 20 complete** (autonomous P20-M0→M12)
+
+**Delivered:** JS↔PHP parity matrix · live-path `page_bundle` + `get_entry` slug prefetch · client fixture tests · six reference projects (blog→influencer) · install script · user story catalog · engine sprint (sub-collection `of`, count) · production-optimization docs · single human notification at P20-M12.
+
+**Matrices:** `docs/reviews/P20-verification-matrix.md` · **Closure:** `docs/reviews/P20-phase-closure-checklist.md`
+
+**2026-07-08 — Phase 20 approved** (Keven)
+
+**Priorities:** Live `birkly-client.js` default on reference sites · ≤5 API RTTs · six copy-paste reference projects · eliminate kekaba workarounds · hydrate optional only in docs.
+
+**Spec:** `docs/reviews/P20-templating-excellence-plan.md` · **Handoff:** `docs/reviews/P20-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P20-verification-matrix.md`
 
 **2026-07-07 — Phase 16, 17, 18 & 19 complete** (single-wave autonomous execution)
 
@@ -2508,6 +2520,36 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 **Depends on:** P16-M1 (install copy matches playbooks).
 
 **Human decisions (locked):** See `docs/reviews/P16-P19-complete-plan.md` § P19-D1–D6. **AI optional in onboarding only** — not dashboard required checklist (P5.6-D).
+
+---
+
+## Phase 20 — Templating excellence & reference projects
+
+**Status:** **Complete** (2026-07-08) — human notified at P20-M12
+
+**Spec:** `docs/reviews/P20-templating-excellence-plan.md`  
+**Handoff:** `docs/reviews/P20-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P20-verification-matrix.md`
+
+**Goal:** Production-ready template-first sites via live `birkly-client.js`, six reference projects, ≤5 API round-trips, no kekaba-style workarounds.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P20-M0** | Gap register + JS↔PHP parity matrix | complete |
+| **P20-M1** | Live-path engine + client fixture tests | complete |
+| **P20-M2** | reference-projects/ kit + install script | complete |
+| **P20-M3** | User story catalog | complete |
+| **P20-M4** | Blog reference + V-TPL-01 | complete |
+| **P20-M5** | Portfolio reference + V-TPL-02 | complete |
+| **P20-M6** | Yoga (events) + V-TPL-03 | complete |
+| **P20-M7** | Coffee (commerce) + V-TPL-04 | complete |
+| **P20-M8** | Social (user+commerce) + V-TPL-05 | complete |
+| **P20-M9** | Influencer (all plugins) + V-TPL-06 | complete |
+| **P20-M10** | Engine sprint from gaps | complete |
+| **P20-M11** | Birkly-Docs + production-optimization.md | complete |
+| **P20-M12** | Closure + human notification | complete |
+
+**Human decisions (locked):** P20-D8 live client only on reference projects · P20-D9 no hydrate/snapshots/bake · P20-D10 hydrate-only stories = bugs · P20-D11 canonical script tag.
 
 ---
 

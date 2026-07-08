@@ -24,8 +24,8 @@ Legend: **pass** = both engines support · **partial** = works with limits · **
 | Template functions (plugins) | pass | pass | pass | Parallel batch, not in bundle |
 | `{set var = {func args}}` | partial | pass | pass | |
 | Date `format` filter | pass | pass | pass | |
-| `page_bundle` prefetch | n/a | partial | partial | M1: add `get_entry` for slug pages |
-| Slug detail `get_entry` | pass (API) | fail | **fail→M1** | G-01: client scans list |
+| `page_bundle` prefetch | n/a | pass | pass | M1: `get_entry` for slug pages |
+| Slug detail `get_entry` | pass (API) | pass | pass | M1: bundle + `fetchContent('get_entry')` |
 | Sub-entries threaded render | pass | pass | pass | `birkly-client-sub-entries.js` |
 | Admin `{admin_url …}` | pass | n/a | n/a | |
 | `{json collection}` | pass | n/a | n/a | |
