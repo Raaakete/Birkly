@@ -34,6 +34,15 @@ $html = $repo->getPageHtml($project['id'], 'index');
 $out = $renderer->renderHtml($html ?: '');
 test_assert('render html contains title', str_contains($out, 'Hello SSR'));
 
+// Published home URL with trailing slash
+$birkly_plugins['studio'] = ['active' => true];
+$repo->publishProject($project['id']);
+ob_start();
+$handledHome = $renderer->handlePublicRequest('/site/ssr-test/');
+$homeBody = ob_get_clean();
+test_assert('trailing slash home handled', $handledHome === true);
+test_assert('home page renders', str_contains($homeBody, 'Hello SSR'));
+
 // Inactive plugin returns 503
 global $birkly_plugins;
 $birkly_plugins['studio'] = ['active' => false];
