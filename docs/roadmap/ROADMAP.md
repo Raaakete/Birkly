@@ -197,7 +197,9 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** TBD — propose Phase 22+ with human approval
+**Next active phase:** **Phase 22** — Studio plugin (visual site builder) — **proposed, awaiting human approval**
+
+**Spec:** `docs/reviews/P22-studio-plugin-plan.md` · **Handoff:** `docs/reviews/P22-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P22-verification-matrix.md`
 
 **2026-07-08 — Phase 21 complete** (autonomous P21-M0→M10)
 
@@ -318,8 +320,10 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 | Multi-warehouse, FX display, Amazon/eBay | Commerce backlog | **P17** |
 | Self-serve marketplace, plugin health | Ecosystem backlog | **P18** |
 | First-run START_HERE, onboarding v2, AI in wizard | UX backlog | **P19** (complete) |
-| Templating live-path default, reference projects | Engine + client sites | **P20** |
-| Hydrate/snapshot/bake as required path | kekaba workaround | **P20 fixes core; optional advanced only** |
+| Templating live-path default, reference projects | Engine + client sites | **P20** (complete) |
+| Live-client performance (bundle v2, cache) | Platform | **P21** (complete) |
+| Visual site builder inside CMS | Studio plugin | **P22** (proposed) |
+| Hydrate/snapshot/bake as required path | kekaba workaround | **P20/P21 fix core; optional advanced only** |
 
 ---
 
@@ -2593,6 +2597,38 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 **Human decisions (locked):** P21-D1 zero new user steps · P21-D2 bundle v2 · P21-D3 snapshot opt-in · P21-D4 GET/ETag · P21-D5 session cache · P21-D6 CI gate · P21-D7 video proof · P21-D8 single notification at M10.
 
 **Depends on:** P20 (reference projects + live client baseline).
+
+---
+
+## Phase 22 — Studio plugin (visual site builder)
+
+**Status:** **Proposed** (2026-07-08) — awaiting human approval — autonomous execution P22-M0→M12 after approval
+
+**Spec:** `docs/reviews/P22-studio-plugin-plan.md`  
+**Handoff:** `docs/reviews/P22-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P22-verification-matrix.md`
+
+**Goal:** Deactivatable `plugins/studio` — create/manage projects inside Birkly (`content/studio-projects/`), pick style kits (minimal, Bootstrap, Tailwind-lite), visual layout + style tools, dual visual/code editor, Birkly collection bindings, live preview, **SSR public route**, and ZIP export.
+
+| ID | Focus | Status |
+|----|--------|--------|
+| **P22-M0** | Gap register + architecture | proposed |
+| **P22-M1** | Core public route shelf + plugin scaffold | proposed |
+| **P22-M2** | Projects + pages CRUD | proposed |
+| **P22-M3** | Style kits (minimal, bootstrap, tailwind-lite) | proposed |
+| **P22-M4** | Visual layout editor | proposed |
+| **P22-M5** | Style & rules editor | proposed |
+| **P22-M6** | Birkly bindings + compiler | proposed |
+| **P22-M7** | Dual visual ↔ code editor | proposed |
+| **P22-M8** | Live preview (P21 client path) | proposed |
+| **P22-M9** | SSR public serve | proposed |
+| **P22-M10** | Export ZIP | proposed |
+| **P22-M11** | Docs + video V-STU-01 | proposed |
+| **P22-M12** | Closure + human notification | proposed |
+
+**Human decisions (proposed):** See `docs/reviews/P22-studio-plugin-plan.md` § P22-D1–D12. **Projects live inside Birkly** · **SSR default for published Studio sites** · **export optional** · **thin core `register_public_route()` shelf** (P22-D8).
+
+**Depends on:** P20 (templating parity, reference patterns) · P21 (bundle v2, performance — preview + SSR data path).
 
 ---
 
