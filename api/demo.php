@@ -45,8 +45,9 @@ if (empty($action)) {
 
 // Helper to delete demo content
 function deleteDemoContent() {
+    require_once __DIR__ . '/../core/demo_starter_templates.php';
     $collectionsPath = __DIR__ . '/../content/collections';
-    $demoCollections = ['blog']; // Collections that are demo content
+    $demoCollections = birkly_demo_all_starter_collection_slugs();
     
     $deleted = [];
     $errors = [];
@@ -199,7 +200,6 @@ switch ($action) {
         }
         
         if ($allSuccess) {
-            // Update onboarding progress
             require_once __DIR__ . '/onboarding.php';
             $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
             saveOnboardingProgress($userId, [
@@ -220,6 +220,30 @@ switch ($action) {
                 'data' => $results
             ]);
         }
+        exit;
+
+    case 'install_starter':
+        require_once __DIR__ . '/../core/demo_starter_templates.php';
+        $templateId = strtolower(trim((string) ($input['template'] ?? $input['starter_template'] ?? '')));
+        $projectRoot = dirname(__DIR__);
+        $result = birkly_demo_install_starter_template($templateId, $projectRoot);
+        if (!$result['success']) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => $result['message'] ?? 'Install failed']);
+            exit;
+        }
+        require_once __DIR__ . '/onboarding.php';
+        $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+        saveOnboardingProgress($userId, [
+            'starter_template' => $templateId,
+            'demo_content_installed' => $templateId !== 'blank',
+            'demo_content_kept' => $templateId !== 'blank',
+        ]);
+        echo json_encode([
+            'status' => 'ok',
+            'message' => $result['message'],
+            'data' => $result,
+        ]);
         exit;
         
     case 'keep':

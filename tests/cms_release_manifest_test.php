@@ -65,10 +65,10 @@ if ($opened === true) {
         if ($name === 'plugins/.gitkeep') {
             $hasPluginsGitkeep = true;
         }
-        if ($name === 'START_HERE.html') {
+        if ($name === '0_START-HERE.html') {
             $hasStartHere = true;
         }
-        if ($name === '0_START-HERE.html' || $name === 'START_HERE.txt') {
+        if ($name === 'START_HERE.html' || $name === 'START_HERE.txt') {
             $hasDuplicateStart = true;
         }
     }
@@ -78,12 +78,13 @@ if ($opened === true) {
 test_assert('release zip excludes plugin packages', $hasPluginPackage === false);
 test_assert('release zip includes plugins/README.md', $hasPluginsReadme === true);
 test_assert('release zip includes plugins/.gitkeep', $hasPluginsGitkeep === true);
-test_assert('release zip includes START_HERE.html at zip root', $hasStartHere === true);
+test_assert('release zip includes 0_START-HERE.html at zip root', $hasStartHere === true);
 test_assert('release zip excludes duplicate START_HERE files', $hasDuplicateStart === false);
 
 $includes = $manifest['includes'] ?? [];
-test_assert('manifest includes START_HERE.html', in_array('START_HERE.html', $includes, true));
-test_assert('manifest excludes 0_START-HERE.html', !in_array('0_START-HERE.html', $includes, true));
+test_assert('manifest includes 0_START-HERE.html', in_array('0_START-HERE.html', $includes, true));
+test_assert('manifest includes demo-content', in_array('demo-content/**', $includes, true));
+test_assert('manifest excludes START_HERE.html', !in_array('START_HERE.html', $includes, true));
 test_assert('manifest excludes START_HERE.txt', !in_array('START_HERE.txt', $includes, true));
 
 @unlink($outZip);

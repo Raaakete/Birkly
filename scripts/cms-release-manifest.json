@@ -21,7 +21,8 @@
     "VERSION",
     "AGENTS.md",
     "README.md",
-    "START_HERE.html",
+    "0_START-HERE.html",
+    "demo-content/**",
     ".htaccess"
   ],
   "excludes": [

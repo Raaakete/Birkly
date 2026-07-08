@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile – HaruSocial</title>
+    <link rel="stylesheet" href="/demo-website/styles.css">
+    <link rel="stylesheet" href="/demo-website/social/social.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/demo-website/social/index.html">HaruSocial</a></h1>
+            <nav>
+                <a href="/demo-website/social/index.html">Feed</a>
+                {if user_logged_in}
+                    <a href="/demo-website/social/profile.html?user_id={user_current.id}">My Profile</a>
+                {else}
+                    <a href="/demo-website/social/login.html">Login</a>
+                {endif}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 2rem;">
+        <meta
+            data-birkly-prefetch="template_function"
+            data-birkly-into="profile"
+            data-name="user_profile"
+            data-args='["{query.user_id}"]'
+        />
+        <meta
+            data-birkly-prefetch="template_function"
+            data-birkly-into="profile_user"
+            data-name="user_by_id"
+            data-args='["{query.user_id}"]'
+        />
+        <meta
+            data-birkly-prefetch="entries"
+            data-birkly-into="profile_posts"
+            data-collection="social_posts"
+            data-filter-field="author_user_id"
+            data-filter-value="{query.user_id}"
+        />
+        <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+            <div class="card-body" style="padding: 2rem;">
+                <div class="d-flex justify-between align-center flex-wrap gap-2">
+                    <div>
+                        <h2 style="margin:0; color: white; font-size: 1.75rem; font-weight: 700;">Profile</h2>
+                        {if profile exist}
+                            <p style="margin:.5rem 0 0 0; color: rgba(255,255,255,0.9); font-size: 1rem;">
+                                <strong style="color: white;">{ profile.name }</strong> · { profile_user.email }
+                            </p>
+                        {else}
+                            <p style="margin:.5rem 0 0 0; color: rgba(255,255,255,0.9);">User not found.</p>
+                        {endif}
+                    </div>
+                    {if user_logged_in}
+                        {if user_is_self "{query.user_id}"}
+                        {else}
+                            {if profile exist}
+                                <div class="d-flex gap-1 flex-wrap">
+                                    {if user_in_field profile.followers}
+                                        <form data-birkly-route="user_relations" data-birkly-action="unfollow" data-birkly-success="redirect" data-birkly-redirect="self" style="display:inline;">
+                                            <input type="hidden" name="target_user_id" value="{query.user_id}" />
+                                            <button class="btn btn-sm btn-outline-secondary" type="submit">Unfollow</button>
+                                        </form>
+                                    {else}
+                                        <form data-birkly-route="user_relations" data-birkly-action="follow" data-birkly-success="redirect" data-birkly-redirect="self" style="display:inline;">
+                                            <input type="hidden" name="target_user_id" value="{query.user_id}" />
+                                            <button class="btn btn-sm btn-outline-secondary" type="submit">Follow</button>
+                                        </form>
+                                    {endif}
+
+                                    {if user_in_field profile.connections}
+                                        <form data-birkly-route="user_relations" data-birkly-action="disconnect" data-birkly-success="redirect" data-birkly-redirect="self" style="display:inline;">
+                                            <input type="hidden" name="target_user_id" value="{query.user_id}" />
+                                            <button class="btn btn-sm btn-outline-secondary" type="submit">Disconnect</button>
+                                        </form>
+                                    {else}
+                                        <form data-birkly-route="user_relations" data-birkly-action="connect" data-birkly-success="redirect" data-birkly-redirect="self" style="display:inline;">
+                                            <input type="hidden" name="target_user_id" value="{query.user_id}" />
+                                            <button class="btn btn-sm btn-outline-secondary" type="submit">Connect</button>
+                                        </form>
+                                    {endif}
+                                </div>
+                            {endif}
+                        {endif}
+                    {endif}
+                </div>
+            </div>
+        </div>
+
+        {if profile exist}
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-body">
+                    <h3 style="margin-top:0; font-weight: 600; color: var(--social-text); margin-bottom: 1rem;">📊 Profile Stats</h3>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <strong>{ profile_posts.length || 0 }</strong>
+                            <div class="text-muted">Posts</div>
+                        </div>
+                        <div class="stat-item">
+                            <strong>{ profile.connections.length || 0 }</strong>
+                            <div class="text-muted">Connections</div>
+                        </div>
+                        <div class="stat-item">
+                            <strong>{ profile.followers.length || 0 }</strong>
+                            <div class="text-muted">Followers</div>
+                        </div>
+                        <div class="stat-item">
+                            <strong>{ profile.following.length || 0 }</strong>
+                            <div class="text-muted">Following</div>
+                        </div>
+                    </div>
+                    {if profile.bio exist}
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+                            <p style="white-space: pre-wrap; margin: 0;">{ profile.bio }</p>
+                        </div>
+                    {endif}
+                </div>
+            </div>
+            
+            <h3 style="margin-bottom: 1rem; font-weight: 600; color: var(--social-text); display: flex; align-items: center; gap: 0.5rem;">
+                <span>📝</span> Posts
+            </h3>
+            {for each entry in profile_posts}
+                <div class="post">
+                    <div class="post-meta">
+                        <div>
+                            <strong>{ entry.author_name }</strong>
+                            <div class="text-muted" style="font-size:.9rem;">
+                                { entry.created_at }
+                                {if entry.visibility = "public"}
+                                    <span style="margin-left: .5rem;">🌍</span>
+                                {elseif entry.visibility = "private"}
+                                    <span style="margin-left: .5rem;">🔒</span>
+                                {else}
+                                    <span style="margin-left: .5rem;">🔗</span>
+                                {endif}
+                            </div>
+                        </div>
+                        <div class="pill">
+                            <span>❤️ { entry.likes_count || 0 }</span>
+                            <span style="margin-left: .5rem;">💬 { entry.comments_count || 0 }</span>
+                        </div>
+                    </div>
+                    <div style="white-space: pre-wrap; margin: .75rem 0;">{ entry.content }</div>
+                    <div class="post-actions">
+                        {if user_logged_in}
+                            <form data-birkly-url="/api/public_sub_entry.php" data-birkly-success="reload" style="display:inline;">
+                                <input type="hidden" name="operation" value="toggle" />
+                                <input type="hidden" name="parent_collection" value="social_posts" />
+                                <input type="hidden" name="parent_entry_id" value="{ entry.id }" />
+                                <input type="hidden" name="sub_collection" value="likes" />
+                                <input type="hidden" name="id" value="like_{user_current.id}" />
+                                <input type="hidden" name="user_id" value="{user_current.id}" />
+                                <button class="btn btn-sm btn-outline-secondary" type="submit" title="Like this post">
+                                    ❤️ Like
+                                </button>
+                            </form>
+                        {endif}
+                        <a class="btn btn-sm btn-outline-secondary" href="/demo-website/social/post.html?slug={ entry.slug }&collection=social_posts">💬 Comment</a>
+                        {if user_logged_in}
+                            {if entry.author_user_id = user_current.id}
+                                <button class="btn btn-sm btn-outline-danger" onclick="deletePost('{entry.id}', '{entry.slug}')" style="margin-left: .5rem;">🗑️ Delete</button>
+                            {endif}
+                        {endif}
+                    </div>
+                </div>
+            {endfor}
+            {if profile_posts exist}
+            {else}
+                <div class="card">
+                    <div class="empty-state">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;">📝</div>
+                        <div>No posts yet.</div>
+                    </div>
+                </div>
+            {endif}
+        {endif}
+    </main>
+    <script src="/birkly-client.js?v=dev8" data-cms-url="http://localhost:8080"></script>
+    <script>
+        // Handle form success with reload
+        document.addEventListener('DOMContentLoaded', function() {
+            // Forms now use data-birkly-* attributes and are handled by birkly-client.js
+            // The reload behavior is already handled by data-birkly-success="reload"
+        });
+        
+        function deletePost(entryId, slug) {
+            if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+                return;
+            }
+            
+            // Get CSRF token
+            const csrfInput = document.querySelector('input[name="_csrf"]');
+            const csrfToken = csrfInput ? csrfInput.value : '';
+            
+            fetch('/api/index.php?route=content&action=delete_entry', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    collection: 'social_posts',
+                    id: entryId,
+                    _csrf: csrfToken
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to delete post'));
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting post:', error);
+                alert('Error: Failed to delete post');
+            });
+        }
+    </script>
+</body>
+</html>
+

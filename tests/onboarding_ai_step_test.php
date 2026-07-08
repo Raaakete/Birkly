@@ -32,7 +32,8 @@ $onboardingHtml = file_get_contents($root . '/admin/templates/onboarding.html');
 test_assert('onboarding template has BYOAI provider select', strpos($onboardingHtml, 'onboarding-ai-provider') !== false);
 test_assert('onboarding template has test connection button', strpos($onboardingHtml, 'onboarding-test-ai-btn') !== false);
 test_assert('onboarding template has skip for now', strpos($onboardingHtml, 'data-onboarding-action="skip-ai"') !== false);
-test_assert('onboarding template has set up later', strpos($onboardingHtml, 'Set up later') !== false);
+test_assert('onboarding template has external MCP panel', strpos($onboardingHtml, 'ai-panel-external') !== false);
+test_assert('onboarding template has no set up later button', strpos($onboardingHtml, 'Set up later') === false);
 test_assert('require approval checkbox default checked', strpos($onboardingHtml, 'onboarding-ai-require-approval') !== false
     && strpos($onboardingHtml, 'checked') !== false);
 
