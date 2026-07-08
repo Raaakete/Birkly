@@ -6,6 +6,15 @@
 
   const SESSION_KEY = 'studio-ide-tabs';
 
+  const CSS_STYLE_KEYS = ['textAlign', 'fontSize', 'color', 'padding', 'margin', 'backgroundColor'];
+
+  const BINDING_TYPES = [
+    { id: 'loop', label: 'Collection loop', desc: 'Iterate all entries in a collection' },
+    { id: 'filtered', label: 'Filtered list', desc: 'Filter, order, and limit entries' },
+    { id: 'single', label: 'Single entry', desc: 'One entry by slug' },
+    { id: 'site_element', label: 'Site element', desc: 'Reusable site_elements entry' },
+  ];
+
   const state = {
     projects: [],
     project: null,
@@ -16,11 +25,14 @@
     breakpoint: 'default',
     canvas: null,
     selected: null,
+    inspectorTab: 'props',
     collections: [],
     blocks: [],
     undoStack: [],
     dirtyPaths: new Set(),
     busy: false,
+    ssrHealth: null,
+    bindingWizard: null,
   };
 
   const $ = (s, root) => (root || document).querySelector(s);
@@ -180,7 +192,7 @@
     $('#studio-dashboard').hidden = true;
     $('#studio-workspace').hidden = false;
     $('#studio-project-name').textContent = state.project.name;
-    await Promise.all([loadFileTree(), loadBlocks(), loadSections(), loadTokens(), loadCollections()]);
+    await Promise.all([loadFileTree(), loadBlocks(), loadSections(), loadTokens(), loadCollections(), loadSsrHealth()]);
     if (!state.tabs.length) {
       openTab('pages/index.studio.json');
     } else {
@@ -237,10 +249,12 @@
       const slug = pageSlugFromPath(path);
       const data = await api('get_page', { project_id: state.project.id, page_slug: slug });
       state.canvas = data.canvas;
+      ensureCanvasNav();
       $('#studio-code-editor').value = data.html || '';
       renderCanvas();
       renderLayers();
       renderInspector();
+      updateInspectorTabs();
     } else {
       state.canvas = null;
       state.selected = null;
@@ -337,10 +351,17 @@
   }
 
   // ——— Canvas helpers ———
+  function ensureCanvasNav() {
+    if (!state.canvas) return;
+    if (!Array.isArray(state.canvas.nav)) {
+      state.canvas.nav = [];
+    }
+  }
+
   function getSelectedElement() {
     if (!state.selected || state.selected.ei === undefined || !state.canvas) return null;
     const sec = state.canvas.sections[state.selected.si];
-    return sec?.rows?.[0]?.columns?.[0]?.elements?.[state.selected.ei] ?? null;
+    return sec?.rows?.[0]?.columns?.[state.selected.ci ?? 0]?.elements?.[state.selected.ei] ?? null;
   }
 
   function getSelectedSection() {
@@ -348,8 +369,112 @@
     return state.canvas.sections[state.selected.si] ?? null;
   }
 
+  function getSelectedColumn() {
+    if (!state.selected || state.selected.ci === undefined || !state.canvas) return null;
+    const sec = state.canvas.sections[state.selected.si];
+    return sec?.rows?.[0]?.columns?.[state.selected.ci] ?? null;
+  }
+
+  async function loadSsrHealth() {
+    if (!state.project) return;
+    try {
+      const data = await api('diagnose_public', { project_id: state.project.id });
+      state.ssrHealth = data.route || {};
+    } catch (_) {
+      state.ssrHealth = { route_ready: false, hints: ['Could not check SSR route'] };
+    }
+    renderStatusBar();
+  }
+
+  function renderStatusBar() {
+    const hint = $('#studio-statusbar-hint');
+    const meta = $('#studio-statusbar-meta');
+    if (!hint) return;
+    const h = state.ssrHealth;
+    if (!h) {
+      hint.textContent = 'SSR route: —';
+      hint.className = 'studio-statusbar-hint';
+      return;
+    }
+    const ready = h.route_ready;
+    hint.className = 'studio-statusbar-hint' + (ready ? ' studio-statusbar-ok' : ' studio-statusbar-warn');
+    const routeHint = ready
+      ? '/site/' + (state.project?.slug || '…') + '/ ready'
+      : (h.hints?.[0] || 'SSR route not configured');
+    hint.textContent = 'SSR: ' + routeHint;
+    if (meta && state.project) {
+      meta.textContent = state.project.published ? 'Published' : 'Draft';
+    }
+  }
+
+  function setInspectorTab(tab) {
+    state.inspectorTab = tab;
+    updateInspectorTabs();
+    renderInspector();
+  }
+
+  function updateInspectorTabs() {
+    const hasEl = !!getSelectedElement();
+    $('#studio-inspector')?.querySelectorAll('.studio-insp-tab').forEach((btn) => {
+      const t = btn.dataset.inspTab;
+      btn.classList.toggle('active', t === state.inspectorTab);
+      if (t === 'css') {
+        btn.disabled = !hasEl;
+        btn.title = hasEl ? '' : 'Select an element to edit CSS';
+      }
+    });
+    if (state.inspectorTab === 'css' && !hasEl) {
+      state.inspectorTab = 'props';
+    }
+  }
+
+  function bindingCanonicalPreview(wiz) {
+    const collection = wiz.collection || state.collections[0] || 'blog';
+    const template = wiz.itemTemplate || '<div>{ title }</div>';
+    const order = wiz.orderBy && wiz.orderBy !== 'newest' ? ' ordered by ' + wiz.orderBy : ' ordered by newest';
+    const limit = wiz.limit > 0 ? ' limit ' + wiz.limit : '';
+    if (wiz.type === 'single') {
+      const slug = wiz.slug || 'example';
+      return "{from '" + collection + "' get entry '" + slug + "'}\n" + template + "\n{endget}";
+    }
+    if (wiz.type === 'site_element') {
+      const slug = wiz.slug || 'hero';
+      return "{from 'site_elements' get entry '" + slug + "'}\n" + template + "\n{endget}";
+    }
+    if (wiz.type === 'filtered') {
+      const field = wiz.filterField || 'status';
+      const value = wiz.filterValue || 'published';
+      return "{for each entry in '" + collection + "' with " + field + ' = ' + value + order + limit + "}\n" + template + "\n{endfor}";
+    }
+    return "{for each entry in '" + collection + "'" + order + limit + "}\n" + template + "\n{endfor}";
+  }
+
+  function syncSectionColumns(section, targetCols) {
+    const cols = Math.max(1, Math.min(4, targetCols));
+    section.layout = section.layout || { type: 'grid', columns: cols, gap: '1rem' };
+    section.layout.columns = cols;
+    const row = section.rows[0];
+    if (!row) return;
+    row.columns = row.columns || [];
+    while (row.columns.length < cols) {
+      row.columns.push({ id: uid('col'), width: Math.floor(100 / cols) + '%', elements: [] });
+    }
+    while (row.columns.length > cols) {
+      const removed = row.columns.pop();
+      if (removed?.elements?.length && row.columns.length) {
+        row.columns[row.columns.length - 1].elements.push(...removed.elements);
+      }
+    }
+    row.columns.forEach((c) => {
+      if (!c.width || c.width === '100%') {
+        c.width = Math.floor(100 / cols) + '%';
+      }
+    });
+  }
+
   function select(sel) {
     state.selected = sel;
+    updateInspectorTabs();
     renderCanvas();
     renderLayers();
     renderInspector();
@@ -367,31 +492,49 @@
     const bp = state.breakpoint;
     (state.canvas.sections || []).forEach((section, si) => {
       const sec = document.createElement('div');
-      const selSec = state.selected?.si === si && state.selected.ei === undefined;
+      const selSec = state.selected?.si === si && state.selected.ei === undefined && state.selected.ci === undefined;
       sec.className = 'studio-section-block' + (selSec ? ' selected' : '');
       sec.draggable = true;
       sec.dataset.si = si;
       const layout = section.responsive?.[bp] || section.layout || {};
+      const layoutType = layout.type || section.layout?.type || 'grid';
       const cols = layout.columns || section.layout?.columns || 1;
-      sec.innerHTML = `<div class="studio-section-label">Section ${si + 1} · ${cols} col · ${bp}</div>`;
+      const gap = layout.gap || section.layout?.gap || '1rem';
+      sec.innerHTML = `<div class="studio-section-label">Section ${si + 1} · ${layoutType} · ${cols} col · ${bp}</div>`;
       const rowWrap = document.createElement('div');
       rowWrap.className = 'studio-row-preview';
-      rowWrap.style.display = 'grid';
-      rowWrap.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-      rowWrap.style.gap = layout.gap || section.layout?.gap || '1rem';
+      if (layoutType === 'flex') {
+        rowWrap.style.display = 'flex';
+        rowWrap.style.flexWrap = 'wrap';
+        rowWrap.style.gap = gap;
+      } else {
+        rowWrap.style.display = 'grid';
+        rowWrap.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+        rowWrap.style.gap = gap;
+      }
       (section.rows || []).forEach((row) => {
-        (row.columns || []).forEach((col) => {
+        (row.columns || []).forEach((col, ci) => {
           const colEl = document.createElement('div');
-          colEl.className = 'studio-col-preview';
+          const selCol = state.selected?.si === si && state.selected.ci === ci && state.selected.ei === undefined;
+          colEl.className = 'studio-col-preview' + (selCol ? ' selected' : '');
+          if (col.width && col.width !== '100%') {
+            colEl.style.flex = '0 0 ' + col.width;
+            if (layoutType === 'grid') colEl.style.maxWidth = col.width;
+          }
+          colEl.addEventListener('click', (e) => {
+            if (e.target.closest('.studio-el')) return;
+            e.stopPropagation();
+            select({ si, ci });
+          });
           (col.elements || []).forEach((el, ei) => {
-            colEl.appendChild(renderElPreview(el, si, ei));
+            colEl.appendChild(renderElPreview(el, si, ci, ei));
           });
           rowWrap.appendChild(colEl);
         });
       });
       sec.appendChild(rowWrap);
       sec.addEventListener('click', (e) => {
-        if (e.target.closest('.studio-el')) return;
+        if (e.target.closest('.studio-el') || e.target.closest('.studio-col-preview')) return;
         e.stopPropagation();
         select({ si });
       });
@@ -406,9 +549,9 @@
     });
   }
 
-  function renderElPreview(el, si, ei) {
+  function renderElPreview(el, si, ci, ei) {
     const div = document.createElement('div');
-    const sel = state.selected?.si === si && state.selected?.ei === ei;
+    const sel = state.selected?.si === si && state.selected?.ci === ci && state.selected?.ei === ei;
     div.className = 'studio-el' + (sel ? ' selected' : '');
     if (el.type === 'binding') {
       div.className += ' studio-binding';
@@ -437,7 +580,7 @@
     }
     div.addEventListener('click', (e) => {
       e.stopPropagation();
-      select({ si, ei });
+      select({ si, ci, ei });
     });
     return div;
   }
@@ -473,7 +616,8 @@
         addElement('section');
         section = state.canvas.sections[0];
       }
-      const col = section.rows[0].columns[0];
+      const ci = state.selected?.ci ?? 0;
+      const col = section.rows[0].columns[ci] || section.rows[0].columns[0];
       const el = { id: uid('el'), type: 'text', tag: 'p', content: 'New text', classes: [], styles: {} };
       if (type === 'heading') { el.tag = 'h2'; el.content = 'Heading'; }
       else if (type === 'image') { el.type = 'image'; el.src = '/admin/assets/birkly-icon.svg'; el.alt = ''; }
@@ -481,17 +625,8 @@
       else if (type === 'spacer') { el.type = 'spacer'; el.height = 32; }
       else if (type === 'divider') { el.type = 'divider'; }
       else if (type === 'html') { el.type = 'html'; el.content = '<p>Custom HTML</p>'; }
-      else if (type === 'binding-loop') {
-        Object.assign(el, { type: 'binding', bindingType: 'loop', collection: state.collections[0] || 'blog', itemTemplate: '<article><h2>{title}</h2><p>{excerpt}</p></article>' });
-      } else if (type === 'binding-filtered') {
-        Object.assign(el, { type: 'binding', bindingType: 'filtered', collection: state.collections[0] || 'blog', filterField: 'status', filterValue: 'published', itemTemplate: '<article><h2>{title}</h2></article>' });
-      } else if (type === 'binding-single') {
-        Object.assign(el, { type: 'binding', bindingType: 'single', collection: state.collections[0] || 'blog', slug: 'example', itemTemplate: '<div><h2>{title}</h2></div>' });
-      } else if (type === 'binding-site') {
-        Object.assign(el, { type: 'binding', bindingType: 'site_element', collection: 'site_elements', slug: 'hero', itemTemplate: '<div>{title}</div>' });
-      }
       col.elements.push(el);
-      select({ si: state.selected?.si ?? 0, ei: col.elements.length - 1 });
+      select({ si: state.selected?.si ?? 0, ci, ei: col.elements.length - 1 });
     }
     saveActiveFile().catch(alertErr);
     renderCanvas();
@@ -505,18 +640,53 @@
       return;
     }
     pushUndo();
-    const cols = (section.layout?.columns || 1) + 1;
-    section.layout = section.layout || { type: 'grid', columns: 1, gap: '1rem' };
-    section.layout.columns = cols;
+    const cols = Math.min(4, (section.layout?.columns || 1) + 1);
+    syncSectionColumns(section, cols);
     if (section.responsive) {
       Object.keys(section.responsive).forEach((bp) => {
         section.responsive[bp].columns = Math.min(cols, (section.responsive[bp].columns || 1) + 1);
       });
     }
-    section.rows[0].columns.push({ id: uid('col'), width: Math.floor(100 / cols) + '%', elements: [] });
     saveActiveFile().catch(alertErr);
     renderCanvas();
     renderInspector();
+  }
+
+  function duplicateSection() {
+    const si = state.selected?.si;
+    if (si === undefined || !state.canvas) {
+      toast('Select a section first', 'error');
+      return;
+    }
+    pushUndo();
+    const copy = JSON.parse(JSON.stringify(state.canvas.sections[si]));
+    copy.id = uid('section');
+    (copy.rows || []).forEach((row) => {
+      row.id = uid('row');
+      (row.columns || []).forEach((col) => {
+        col.id = uid('col');
+        (col.elements || []).forEach((el) => { el.id = uid('el'); });
+      });
+    });
+    state.canvas.sections.splice(si + 1, 0, copy);
+    select({ si: si + 1 });
+    saveActiveFile().catch(alertErr);
+    renderCanvas();
+    renderLayers();
+  }
+
+  function moveSectionUp() {
+    const si = state.selected?.si;
+    if (si === undefined || si <= 0 || !state.canvas) return;
+    reorderSection(si, si - 1);
+    select({ si: si - 1 });
+  }
+
+  function moveSectionDown() {
+    const si = state.selected?.si;
+    if (si === undefined || !state.canvas || si >= state.canvas.sections.length - 1) return;
+    reorderSection(si, si + 1);
+    select({ si: si + 1 });
   }
 
   function renderLayers() {
@@ -528,11 +698,15 @@
     }
     let html = '';
     (state.canvas.sections || []).forEach((sec, si) => {
-      const secSel = state.selected?.si === si && state.selected.ei === undefined;
+      const secSel = state.selected?.si === si && state.selected.ei === undefined && state.selected.ci === undefined;
       html += `<button type="button" class="studio-layer-btn${secSel ? ' active' : ''}" data-action="select-layer" data-si="${si}">📦 Section ${si + 1}</button>`;
-      (sec.rows?.[0]?.columns?.[0]?.elements || []).forEach((item, ei) => {
-        const elSel = state.selected?.si === si && state.selected.ei === ei;
-        html += `<button type="button" class="studio-layer-btn studio-layer-el${elSel ? ' active' : ''}" data-action="select-layer" data-si="${si}" data-ei="${ei}">↳ ${esc(item.type)}</button>`;
+      (sec.rows?.[0]?.columns || []).forEach((col, ci) => {
+        const colSel = state.selected?.si === si && state.selected.ci === ci && state.selected.ei === undefined;
+        html += `<button type="button" class="studio-layer-btn studio-layer-col${colSel ? ' active' : ''}" data-action="select-layer" data-si="${si}" data-ci="${ci}">↳ Col ${ci + 1}</button>`;
+        (col.elements || []).forEach((item, ei) => {
+          const elSel = state.selected?.si === si && state.selected.ci === ci && state.selected.ei === ei;
+          html += `<button type="button" class="studio-layer-btn studio-layer-el${elSel ? ' active' : ''}" data-action="select-layer" data-si="${si}" data-ci="${ci}" data-ei="${ei}">↳ ${esc(item.type)}</button>`;
+        });
       });
     });
     el.innerHTML = html || '<p class="form-hint">No layers</p>';
@@ -541,7 +715,31 @@
   function renderInspector() {
     const body = $('#studio-inspector-body');
     if (!body) return;
+
+    if (state.inspectorTab === 'nav') {
+      renderNavInspector(body);
+      return;
+    }
+
+    if (state.inspectorTab === 'css') {
+      const el = getSelectedElement();
+      if (!el) {
+        body.innerHTML = '<p class="form-hint">Select an element to edit CSS rules.</p>';
+        return;
+      }
+      let html = '<p class="form-hint studio-css-hint">Styles write to <code>element.styles</code> and compile to inline CSS.</p>';
+      CSS_STYLE_KEYS.forEach((key) => {
+        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+        html += field(label, key, el.styles?.[key] || '');
+      });
+      html += `<button type="button" class="btn btn-secondary btn-sm" data-action="clear-element-styles">Clear styles</button>`;
+      body.innerHTML = html;
+      bindCssInspector(el);
+      return;
+    }
+
     const el = getSelectedElement();
+    const column = getSelectedColumn();
     const section = getSelectedSection();
 
     if (el) {
@@ -560,9 +758,12 @@
         html += selectField('Binding type', 'bindingType', ['loop', 'filtered', 'single', 'site_element'], el.bindingType);
         html += selectField('Collection', 'collection', state.collections.length ? state.collections : ['blog'], el.collection);
         html += field('Item template', 'itemTemplate', el.itemTemplate, true);
+        html += `<div class="studio-canonical-preview"><strong>Compiled syntax</strong><pre>${esc(bindingCanonicalPreview({ type: el.bindingType, collection: el.collection, itemTemplate: el.itemTemplate, filterField: el.filterField, filterValue: el.filterValue, orderBy: el.orderBy, limit: el.limit, slug: el.slug }))}</pre></div>`;
         if (el.bindingType === 'filtered') {
           html += field('Filter field', 'filterField', el.filterField);
           html += field('Filter value', 'filterValue', el.filterValue);
+          html += selectField('Order by', 'orderBy', ['newest', 'oldest', 'last-updated'], el.orderBy || 'newest');
+          html += field('Limit', 'limit', el.limit || '');
         }
         if (el.bindingType === 'single' || el.bindingType === 'site_element') {
           html += field('Entry slug', 'slug', el.slug);
@@ -570,20 +771,35 @@
       }
       if (el.type === 'spacer') html += field('Height (px)', 'height', el.height);
       html += field('Classes', 'classesStr', (el.classes || []).join(' '));
-      html += field('Text align', 'textAlign', el.styles?.textAlign || '');
-      html += field('Color', 'color', el.styles?.color || '');
-      html += field('Font size', 'fontSize', el.styles?.fontSize || '');
-      html += field('Padding', 'padding', el.styles?.padding || '');
       html += `<button type="button" class="btn btn-secondary btn-sm" data-action="delete-element">Delete element</button>`;
       body.innerHTML = html;
       bindInspector(el);
       return;
     }
 
+    if (column && state.selected?.ci !== undefined && state.selected.ei === undefined) {
+      let html = `<p><strong>Column ${(state.selected.ci ?? 0) + 1}</strong></p>`;
+      html += field('Width %', 'width', column.width || '100%');
+      html += `<p class="form-hint">${(column.elements || []).length} element(s) in this column.</p>`;
+      body.innerHTML = html;
+      bindColumnInspector(column);
+      return;
+    }
+
     if (section) {
       const layout = section.layout || {};
+      const layoutType = layout.type || 'grid';
+      const cols = layout.columns || 1;
       let html = `<p><strong>Section ${(state.selected?.si ?? 0) + 1}</strong></p>`;
-      html += field('Columns', 'columns', layout.columns || 1);
+      html += `<label>Layout type
+        <div class="studio-layout-toggle">
+          <button type="button" class="studio-layout-btn${layoutType === 'grid' ? ' active' : ''}" data-action="set-layout-type" data-layout="grid">Grid</button>
+          <button type="button" class="studio-layout-btn${layoutType === 'flex' ? ' active' : ''}" data-action="set-layout-type" data-layout="flex">Flex</button>
+        </div>
+      </label>`;
+      html += `<label>Columns <span class="studio-slider-val" id="studio-cols-val">${cols}</span>
+        <input type="range" class="studio-insp-field studio-cols-slider" data-insp="columns" min="1" max="4" value="${cols}">
+      </label>`;
       html += field('Gap', 'gap', layout.gap || '1rem');
       html += field('Classes', 'classesStr', (section.classes || []).join(' '));
       html += `<button type="button" class="btn btn-secondary btn-sm" data-action="delete-section">Delete section</button>`;
@@ -592,7 +808,78 @@
       return;
     }
 
-    body.innerHTML = '<p class="form-hint">Select a section or element on the canvas or in Layers.</p>';
+    body.innerHTML = '<p class="form-hint">Select a section, column, or element — or use the <strong>Nav</strong> tab for page navigation.</p>';
+  }
+
+  function renderNavInspector(body) {
+    if (!state.canvas) {
+      body.innerHTML = '<p class="form-hint">Open a page to edit navigation.</p>';
+      return;
+    }
+    ensureCanvasNav();
+    const items = state.canvas.nav;
+    let html = '<p class="form-hint">Page header navigation (<code>canvas.nav</code>). Compiled into site header HTML.</p>';
+    items.forEach((item, i) => {
+      html += `<div class="studio-nav-item" data-nav-idx="${i}">
+        <label>Label<input class="input studio-nav-field" data-nav="${i}" data-key="label" value="${esc(item.label || '')}"></label>
+        <label>Href<input class="input studio-nav-field" data-nav="${i}" data-key="href" value="${esc(item.href || '')}"></label>
+        <label class="studio-nav-active"><input type="checkbox" class="studio-nav-field" data-nav="${i}" data-key="active"${item.active ? ' checked' : ''}> Active</label>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="remove-nav-item" data-nav-idx="${i}">Remove</button>
+      </div>`;
+    });
+    html += `<button type="button" class="btn btn-secondary btn-sm" data-action="add-nav-item">+ Add link</button>`;
+    body.innerHTML = html;
+    bindNavInspector();
+  }
+
+  function bindNavInspector() {
+    $('#studio-inspector-body')?.querySelectorAll('.studio-nav-field').forEach((input) => {
+      const handler = () => {
+        const idx = parseInt(input.dataset.nav, 10);
+        const key = input.dataset.key;
+        if (!state.canvas?.nav?.[idx]) return;
+        pushUndo();
+        if (key === 'active') {
+          state.canvas.nav.forEach((n, i) => { n.active = i === idx && input.checked; });
+        } else {
+          state.canvas.nav[idx][key] = input.value;
+        }
+        markDirty(state.activeTab);
+        saveActiveFile().catch(alertErr);
+      };
+      input.addEventListener('change', handler);
+      if (input.type === 'text') input.addEventListener('input', handler);
+    });
+  }
+
+  function bindCssInspector(el) {
+    $('#studio-inspector-body')?.querySelectorAll('.studio-insp-field').forEach((input) => {
+      const handler = () => {
+        pushUndo();
+        const key = input.dataset.insp;
+        el.styles = el.styles || {};
+        el.styles[key] = input.value;
+        markDirty(state.activeTab);
+        saveActiveFile().catch(alertErr);
+        renderCanvas();
+      };
+      input.addEventListener('change', handler);
+      if (input.tagName === 'INPUT') input.addEventListener('input', handler);
+    });
+  }
+
+  function bindColumnInspector(column) {
+    $('#studio-inspector-body')?.querySelectorAll('.studio-insp-field').forEach((input) => {
+      input.addEventListener('change', () => {
+        pushUndo();
+        let w = input.value.trim();
+        if (w && !w.endsWith('%') && !w.endsWith('px')) w += '%';
+        column.width = w || '100%';
+        markDirty(state.activeTab);
+        saveActiveFile().catch(alertErr);
+        renderCanvas();
+      });
+    });
   }
 
   function field(label, key, value, textarea) {
@@ -615,17 +902,17 @@
         const key = input.dataset.insp;
         if (key === 'classesStr') {
           el.classes = input.value.split(/\s+/).filter(Boolean);
-        } else if (['textAlign', 'color', 'fontSize', 'padding'].includes(key)) {
-          el.styles = el.styles || {};
-          el.styles[key] = input.value;
         } else if (key === 'height') {
           el.height = parseInt(input.value, 10) || 24;
+        } else if (key === 'limit') {
+          el.limit = parseInt(input.value, 10) || 0;
         } else {
           el[key] = input.value;
         }
         markDirty(state.activeTab);
         saveActiveFile().catch(alertErr);
         renderCanvas();
+        if (el.type === 'binding') renderInspector();
       };
       input.addEventListener('change', handler);
       if (input.tagName === 'INPUT') input.addEventListener('input', handler);
@@ -634,20 +921,187 @@
 
   function bindSectionInspector(section) {
     $('#studio-inspector-body')?.querySelectorAll('.studio-insp-field').forEach((input) => {
-      input.addEventListener('change', () => {
+      const handler = () => {
         pushUndo();
         const key = input.dataset.insp;
         if (key === 'classesStr') {
           section.classes = input.value.split(/\s+/).filter(Boolean);
+        } else if (key === 'columns') {
+          const cols = parseInt(input.value, 10) || 1;
+          syncSectionColumns(section, cols);
+          const valEl = $('#studio-cols-val');
+          if (valEl) valEl.textContent = String(cols);
         } else {
           section.layout = section.layout || { type: 'grid', columns: 1, gap: '1rem' };
-          section.layout[key] = key === 'columns' ? parseInt(input.value, 10) || 1 : input.value;
+          section.layout[key] = input.value;
         }
         markDirty(state.activeTab);
         saveActiveFile().catch(alertErr);
         renderCanvas();
-      });
+        renderLayers();
+      };
+      input.addEventListener('change', handler);
+      if (input.type === 'range') input.addEventListener('input', handler);
     });
+  }
+
+  function openBindingWizard(type) {
+    if (!state.canvas) {
+      toast('Open a .studio.json page first', 'error');
+      return;
+    }
+    state.bindingWizard = {
+      step: 1,
+      type: type || 'loop',
+      collection: state.collections[0] || 'blog',
+      itemTemplate: '<article><h2>{ title }</h2><p>{ excerpt }</p></article>',
+      filterField: 'status',
+      filterValue: 'published',
+      orderBy: 'newest',
+      limit: 3,
+      slug: type === 'site_element' ? 'hero' : 'example',
+    };
+    $('#studio-binding-modal').hidden = false;
+    renderBindingWizard();
+  }
+
+  function closeBindingWizard() {
+    state.bindingWizard = null;
+    const modal = $('#studio-binding-modal');
+    if (modal) modal.hidden = true;
+  }
+
+  function renderBindingWizard() {
+    const wiz = state.bindingWizard;
+    if (!wiz) return;
+    const stepsEl = $('#studio-wizard-steps');
+    const bodyEl = $('#studio-wizard-body');
+    const prevBtn = $('#studio-wizard-prev');
+    const nextBtn = $('#studio-wizard-next');
+    const maxStep = wiz.type === 'filtered' ? 4 : 3;
+    const labels = ['Type', 'Collection', 'Template', wiz.type === 'filtered' ? 'Filters' : ''];
+    if (stepsEl) {
+      stepsEl.innerHTML = [1, 2, 3, 4].slice(0, maxStep).map((n) => {
+        const cls = n === wiz.step ? 'active' : (n < wiz.step ? 'done' : '');
+        return `<span class="studio-wizard-step ${cls}">${n}. ${labels[n - 1]}</span>`;
+      }).join('');
+    }
+    if (prevBtn) prevBtn.hidden = wiz.step <= 1;
+    if (nextBtn) nextBtn.textContent = wiz.step >= maxStep ? 'Add binding' : 'Next';
+
+    let html = '';
+    if (wiz.step === 1) {
+      html = '<p class="form-hint">Choose binding type:</p><div class="studio-wizard-types">';
+      BINDING_TYPES.forEach((bt) => {
+        html += `<button type="button" class="studio-wizard-type-btn${wiz.type === bt.id ? ' active' : ''}" data-action="wizard-set-type" data-type="${bt.id}">
+          <strong>${esc(bt.label)}</strong><small>${esc(bt.desc)}</small></button>`;
+      });
+      html += '</div>';
+    } else if (wiz.step === 2) {
+      const cols = state.collections.length ? state.collections : ['blog'];
+      if (wiz.type === 'site_element') {
+        html = '<p class="form-hint">Site elements use the <code>site_elements</code> collection.</p>';
+        wiz.collection = 'site_elements';
+      } else {
+        html = selectField('Collection', 'wiz-collection', cols, wiz.collection);
+      }
+      if (wiz.type === 'single' || wiz.type === 'site_element') {
+        html += field('Entry slug', 'wiz-slug', wiz.slug);
+      }
+    } else if (wiz.step === 3) {
+      html = field('Item template', 'wiz-template', wiz.itemTemplate, true);
+      html += `<div class="studio-canonical-preview"><strong>Canonical syntax preview</strong><pre>${esc(bindingCanonicalPreview(wiz))}</pre></div>`;
+      html += '<p class="form-hint">Use spaced placeholders like <code>{ title }</code> — compiler normalizes these.</p>';
+    } else if (wiz.step === 4) {
+      html = field('Filter field', 'wiz-filterField', wiz.filterField);
+      html += field('Filter value', 'wiz-filterValue', wiz.filterValue);
+      html += `<label>Order by<select class="input studio-wiz-field" data-wiz="orderBy">
+        <option value="newest"${wiz.orderBy === 'newest' ? ' selected' : ''}>newest</option>
+        <option value="oldest"${wiz.orderBy === 'oldest' ? ' selected' : ''}>oldest</option>
+        <option value="last-updated"${wiz.orderBy === 'last-updated' ? ' selected' : ''}>last-updated</option>
+      </select></label>`;
+      html += field('Limit', 'wiz-limit', wiz.limit);
+      html += `<div class="studio-canonical-preview"><strong>Canonical syntax preview</strong><pre>${esc(bindingCanonicalPreview(wiz))}</pre></div>`;
+    }
+    if (bodyEl) {
+      bodyEl.innerHTML = html;
+      bodyEl.querySelectorAll('.studio-wiz-field, [data-wiz]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const key = input.dataset.wiz || input.dataset.insp?.replace('wiz-', '');
+          if (key === 'orderBy') wiz.orderBy = input.value;
+        });
+      });
+      bodyEl.querySelectorAll('[data-insp^="wiz-"]').forEach((input) => {
+        const key = input.dataset.insp.replace('wiz-', '');
+        const sync = () => {
+          if (key === 'collection') wiz.collection = input.value;
+          else if (key === 'slug') wiz.slug = input.value;
+          else if (key === 'template') wiz.itemTemplate = input.value;
+          else if (key === 'filterField') wiz.filterField = input.value;
+          else if (key === 'filterValue') wiz.filterValue = input.value;
+          else if (key === 'limit') wiz.limit = parseInt(input.value, 10) || 0;
+          if (wiz.step >= 3) renderBindingWizard();
+        };
+        input.addEventListener('change', sync);
+        if (input.tagName === 'TEXTAREA' || input.type === 'text') input.addEventListener('input', sync);
+      });
+    }
+  }
+
+  function wizardNext() {
+    const wiz = state.bindingWizard;
+    if (!wiz) return;
+    const maxStep = wiz.type === 'filtered' ? 4 : 3;
+    if (wiz.step < maxStep) {
+      wiz.step += 1;
+      renderBindingWizard();
+      return;
+    }
+    applyBindingWizard();
+  }
+
+  function applyBindingWizard() {
+    const wiz = state.bindingWizard;
+    if (!wiz || !state.canvas) return;
+    pushUndo();
+    let section = state.canvas.sections[state.selected?.si ?? 0];
+    if (!section) {
+      state.canvas.sections.push({
+        id: uid('section'),
+        classes: ['studio-section'],
+        layout: { type: 'grid', columns: 1, gap: '1rem' },
+        responsive: { default: { columns: 1 }, tablet: { columns: 2 }, desktop: { columns: 3 } },
+        rows: [{ id: uid('row'), columns: [{ id: uid('col'), width: '100%', elements: [] }] }],
+      });
+      section = state.canvas.sections[0];
+    }
+    const ci = state.selected?.ci ?? 0;
+    const col = section.rows[0].columns[ci] || section.rows[0].columns[0];
+    const el = {
+      id: uid('el'),
+      type: 'binding',
+      bindingType: wiz.type,
+      collection: wiz.type === 'site_element' ? 'site_elements' : wiz.collection,
+      itemTemplate: wiz.itemTemplate,
+      classes: [],
+      styles: {},
+    };
+    if (wiz.type === 'filtered') {
+      el.filterField = wiz.filterField;
+      el.filterValue = wiz.filterValue;
+      el.orderBy = wiz.orderBy;
+      el.limit = wiz.limit;
+    }
+    if (wiz.type === 'single' || wiz.type === 'site_element') {
+      el.slug = wiz.slug;
+    }
+    col.elements.push(el);
+    closeBindingWizard();
+    select({ si: state.selected?.si ?? 0, ci, ei: col.elements.length - 1 });
+    saveActiveFile().catch(alertErr);
+    renderCanvas();
+    renderLayers();
+    toast('Binding added', 'success');
   }
 
   function deleteSelectedElement() {
@@ -655,8 +1109,9 @@
     if (!el || !state.canvas || state.selected?.ei === undefined) return;
     pushUndo();
     const sec = state.canvas.sections[state.selected.si];
-    sec.rows[0].columns[0].elements.splice(state.selected.ei, 1);
-    state.selected = { si: state.selected.si };
+    const ci = state.selected.ci ?? 0;
+    sec.rows[0].columns[ci].elements.splice(state.selected.ei, 1);
+    state.selected = { si: state.selected.si, ci };
     saveActiveFile().catch(alertErr);
     renderCanvas();
     renderLayers();
@@ -781,6 +1236,12 @@
       return;
     }
 
+    const inspTab = e.target.closest('.studio-insp-tab');
+    if (inspTab && !inspTab.disabled) {
+      setInspectorTab(inspTab.dataset.inspTab);
+      return;
+    }
+
     const closeTabBtn = e.target.closest('[data-action="close-tab"]');
     if (closeTabBtn) {
       e.stopPropagation();
@@ -862,6 +1323,8 @@
           await saveActiveFile();
           const data = await api('publish_project', { id: state.project.id });
           if (data.project) state.project = data.project;
+          state.ssrHealth = { route_ready: data.route_ready, hints: data.route_hints || [] };
+          renderStatusBar();
           const url = absUrl(data.view_url || data.public_url || '/api/studio_view.php?slug=' + encodeURIComponent(state.project.slug || ''));
           toast('Published! Open with ↗ or visit: ' + url, 'success');
         });
@@ -892,6 +1355,79 @@
       case 'add-column':
         addColumn();
         break;
+      case 'dup-section':
+        duplicateSection();
+        break;
+      case 'move-section-up':
+        moveSectionUp();
+        break;
+      case 'move-section-down':
+        moveSectionDown();
+        break;
+      case 'open-binding-wizard':
+        openBindingWizard(actionEl.dataset.bindingType);
+        break;
+      case 'close-binding-wizard':
+        closeBindingWizard();
+        break;
+      case 'wizard-next':
+        wizardNext();
+        break;
+      case 'wizard-prev':
+        if (state.bindingWizard && state.bindingWizard.step > 1) {
+          state.bindingWizard.step -= 1;
+          renderBindingWizard();
+        }
+        break;
+      case 'wizard-set-type':
+        if (state.bindingWizard) {
+          state.bindingWizard.type = actionEl.dataset.type;
+          renderBindingWizard();
+        }
+        break;
+      case 'set-layout-type': {
+        const section = getSelectedSection();
+        if (!section) break;
+        pushUndo();
+        section.layout = section.layout || { type: 'grid', columns: 1, gap: '1rem' };
+        section.layout.type = actionEl.dataset.layout;
+        markDirty(state.activeTab);
+        saveActiveFile().catch(alertErr);
+        renderCanvas();
+        renderInspector();
+        break;
+      }
+      case 'add-nav-item':
+        ensureCanvasNav();
+        pushUndo();
+        state.canvas.nav.push({ id: uid('nav'), label: 'Link', href: '/', active: state.canvas.nav.length === 0 });
+        markDirty(state.activeTab);
+        saveActiveFile().catch(alertErr);
+        renderInspector();
+        break;
+      case 'remove-nav-item': {
+        const idx = parseInt(actionEl.dataset.navIdx, 10);
+        if (!isNaN(idx) && state.canvas?.nav) {
+          pushUndo();
+          state.canvas.nav.splice(idx, 1);
+          markDirty(state.activeTab);
+          saveActiveFile().catch(alertErr);
+          renderInspector();
+        }
+        break;
+      }
+      case 'clear-element-styles': {
+        const el = getSelectedElement();
+        if (el) {
+          pushUndo();
+          el.styles = {};
+          markDirty(state.activeTab);
+          saveActiveFile().catch(alertErr);
+          renderInspector();
+          renderCanvas();
+        }
+        break;
+      }
       case 'save-tokens':
         withBusy(async () => {
           const tokens = JSON.parse($('#studio-tokens-editor').value);
@@ -908,6 +1444,7 @@
       case 'select-layer':
         select({
           si: parseInt(actionEl.dataset.si, 10),
+          ci: actionEl.dataset.ci !== undefined ? parseInt(actionEl.dataset.ci, 10) : undefined,
           ei: actionEl.dataset.ei !== undefined ? parseInt(actionEl.dataset.ei, 10) : undefined,
         });
         break;
