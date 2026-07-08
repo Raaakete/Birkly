@@ -1,0 +1,14 @@
+{
+  "id": "proj-acme",
+  "slug": "brand-identity-acme",
+  "status": "published",
+  "created_at": "2025-03-01T10:00:00+00:00",
+  "updated_at": "2025-03-01T10:00:00+00:00",
+  "title": "Brand Identity — Acme Studio",
+  "description": "Complete visual identity for a boutique architecture firm.",
+  "content": "<p>We developed a restrained wordmark, stationery system, and website art direction for Acme Studio. The palette draws from concrete and warm oak tones found in their showroom.</p><h2>Deliverables</h2><ul><li>Logo and sub-mark</li><li>Typography system</li><li>Print collateral</li><li>Web style guide</li></ul>",
+  "client": "Acme Studio",
+  "year": "2025",
+  "category": "Branding",
+  "featured": true
+}

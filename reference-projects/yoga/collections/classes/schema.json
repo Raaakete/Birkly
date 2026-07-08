@@ -1,0 +1,11 @@
+{
+  "fields": [
+    { "name": "title", "type": "text", "label": "Class name", "required": true },
+    { "name": "slug", "type": "text", "label": "Slug", "required": true },
+    { "name": "day", "type": "text", "label": "Day of week" },
+    { "name": "time", "type": "text", "label": "Time" },
+    { "name": "teacher", "type": "text", "label": "Teacher" },
+    { "name": "level", "type": "text", "label": "Level" },
+    { "name": "description", "type": "textarea", "label": "Description" }
+  ]
+}

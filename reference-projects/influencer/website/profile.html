@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — Maya Rivers</title>
+    <link rel="stylesheet" href="/reference-projects/influencer/website/styles.css">
+    <meta data-birkly-prefetch="template_function" data-birkly-into="profile" data-name="user_profile" data-args='["{query.user_id}"]'>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/influencer/website/index.html">Maya Rivers</a></h1>
+        </div>
+    </header>
+    <main class="container" style="padding: 2rem 0; max-width: 480px;">
+        {if profile exist}
+        <h2>{ profile.name }</h2>
+        <p class="text-muted">{ profile.email }</p>
+        {endif}
+        <p style="margin-top: 1.5rem;"><a href="/reference-projects/influencer/website/index.html">← Home</a></p>
+    </main>
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

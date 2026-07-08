@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — HaruSocial</title>
+    <link rel="stylesheet" href="/reference-projects/social/website/styles.css">
+    <link rel="stylesheet" href="/reference-projects/social/website/social.css">
+</head>
+<body>
+    <header class="social-header">
+        <div class="social-header-inner">
+            <h1><a href="/reference-projects/social/website/index.html">HaruSocial</a></h1>
+            <nav class="social-header-nav">
+                <a href="/reference-projects/social/website/register.html">Register</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 2rem; max-width: 480px;">
+        <div class="card">
+            <div class="card-body">
+                <h2 style="margin-top: 0;">Login</h2>
+                <p class="text-muted">Use your account or register first.</p>
+
+                {if query.error exist}
+                <p class="text-muted" style="border-left: 4px solid #d33; padding-left: 0.75rem;">{ query.error }</p>
+                {endif}
+
+                <form
+                    data-birkly-route="user_auth"
+                    data-birkly-action="login"
+                    data-birkly-success="redirect"
+                    data-birkly-redirect="/reference-projects/social/website/index.html"
+                >
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input name="email" class="form-control" type="email" autocomplete="email" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input name="password" class="form-control" type="password" autocomplete="current-password" required />
+                    </div>
+                    <button class="btn btn-primary" type="submit">Login</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

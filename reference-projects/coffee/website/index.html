@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ember &amp; Bean — Reference</title>
+    <link rel="stylesheet" href="/reference-projects/coffee/website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/coffee/website/index.html">Ember &amp; Bean</a></h1>
+            <span class="cart">Cart: {commerce_cart_count} items</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            {from 'site_elements' get entry 'hero'}
+            <h2>{'content'.0.'value'}</h2>
+            <p>{'content'.1.'value'}</p>
+            {endget}
+        </section>
+
+        <div class="product-grid">
+            {for each entry in 'products' with status = published ordered by newest}
+            <article class="product-card">
+                <h3><a href="/reference-projects/coffee/website/product.html?slug={ slug }">{ title }</a></h3>
+                <p class="product-meta">
+                    {if entry has 'origin'}{ origin }{endif}
+                    {if entry has 'roast'} · { roast }{endif}
+                </p>
+                {if entry has 'description'}
+                <p>{ description }</p>
+                {endif}
+                <p class="price-from"><a href="/reference-projects/coffee/website/product.html?slug={ slug }">View options →</a></p>
+            </article>
+            {endfor}
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Birkly Reference — Coffee</p>
+    </footer>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

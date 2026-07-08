@@ -1,0 +1,34 @@
+{
+  "id": "var-eth-250-whole",
+  "slug": "eth-250-whole",
+  "status": "published",
+  "parent_id": "coffee-ethiopian",
+  "parent_collection": "products",
+  "sub_collection": "variants",
+  "title": "250g · Whole bean",
+  "size": "250g",
+  "grind": "Whole bean",
+  "commerce": {
+    "fulfillment": "ship",
+    "purchase_options": [
+      {
+        "id": "buy_once",
+        "label": "One-time purchase",
+        "billing": "one_time",
+        "price_cents": 1499,
+        "currency": "eur"
+      },
+      {
+        "id": "subscribe",
+        "label": "Subscribe monthly",
+        "billing": "recurring",
+        "interval": "month",
+        "price_cents": 1299,
+        "currency": "eur"
+      }
+    ],
+    "quantity_available": 100,
+    "sku": "ETH-250-WB",
+    "weight_grams": 250
+  }
+}
