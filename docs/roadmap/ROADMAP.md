@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** Phase 21 — performance excellence (approved 2026-07-08)
+**Next active phase:** TBD — propose Phase 22+ with human approval
+
+**2026-07-08 — Phase 21 complete** (autonomous P21-M0→M10)
+
+**Delivered:** Bundle v2 (TF + meta in page_bundle) · unified template scan · snapshot opt-in · GET/ETag + revision · sessionStorage cache · lean payloads · CI perf gate · benchmark v2 · V-PERF-01 evidence.
+
+**Matrices:** `docs/reviews/P21-verification-matrix.md` · **Closure:** `docs/reviews/P21-phase-closure-checklist.md`
 
 **2026-07-08 — Phase 21 approved** (Keven)
 
@@ -2556,6 +2562,36 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 | **P20-M12** | Closure + human notification | complete |
 
 **Human decisions (locked):** P20-D8 live client only on reference projects · P20-D9 no hydrate/snapshots/bake · P20-D10 hydrate-only stories = bugs · P20-D11 canonical script tag.
+
+---
+
+## Phase 21 — Performance excellence (live path)
+
+**Status:** **Complete** (2026-07-08) — human notified at P21-M10
+
+**Spec:** `docs/reviews/P21-performance-excellence-plan.md`  
+**Handoff:** `docs/reviews/P21-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P21-verification-matrix.md`
+
+**Goal:** Above-average performance for a no-build CMS — ≤1–2 content RTTs typical, 0 on repeat visit — with **no bake/hydrate/build steps** for site owners.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P21-M0** | Gap register + performance budgets | complete |
+| **P21-M1** | Bundle v2 (TF + meta in page_bundle) | complete |
+| **P21-M2** | Unified template scan before network | complete |
+| **P21-M3** | Snapshot probe opt-in only | complete |
+| **P21-M4** | GET page_bundle + ETag | complete |
+| **P21-M5** | Client sessionStorage cache | complete |
+| **P21-M6** | Lean bundle payloads | complete |
+| **P21-M7** | CI performance gate | complete |
+| **P21-M8** | Benchmark v2 + Birkly-Docs | complete |
+| **P21-M9** | Video evidence (V-PERF-01) | complete |
+| **P21-M10** | Closure + human notification | complete |
+
+**Human decisions (locked):** P21-D1 zero new user steps · P21-D2 bundle v2 · P21-D3 snapshot opt-in · P21-D4 GET/ETag · P21-D5 session cache · P21-D6 CI gate · P21-D7 video proof · P21-D8 single notification at M10.
+
+**Depends on:** P20 (reference projects + live client baseline).
 
 ---
 

@@ -32,4 +32,4 @@ Legend: **pass** = both engines support · **partial** = works with limits · **
 
 ## Closure gate (P20-M12)
 
-All rows marked **fail** or **partial** for client-facing features must be **pass** before human notification.
+All client-facing rows **pass** (2026-07-08).

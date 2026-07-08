@@ -21,6 +21,7 @@ $listResult = birkly_run_page_bundle_requests($storage, [
 ], 'en');
 
 test_assert('list_entries status ok', ($listResult['status'] ?? '') === 'ok');
+test_assert('revision present', !empty($listResult['revision']));
 test_assert('blog key present', isset($listResult['data']['blog']));
 test_assert('blog is array', is_array($listResult['data']['blog'] ?? null));
 test_assert('site_elements key present', isset($listResult['data']['site_elements']));

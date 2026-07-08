@@ -83,7 +83,8 @@
             data: {},
             keys: new Set(),
             failed: new Set(),
-            subIndex: {}
+            subIndex: {},
+            revision: null
         },
         
         // Tracking ID (from data-tracking-id attribute)
@@ -752,8 +753,26 @@
                         filter_field: el.getAttribute('data-filter-field') || '',
                         filter_value: el.getAttribute('data-filter-value') || ''
                     });
+                } else if (type === 'template_function') {
+                    const name = el.getAttribute('data-name') || '';
+                    let args = [];
+                    try {
+                        args = JSON.parse(el.getAttribute('data-args') || '[]');
+                    } catch (e) { args = []; }
+                    if (name) {
+                        add({
+                            type: 'template_function',
+                            into,
+                            name,
+                            args: Array.isArray(args) ? args : []
+                        });
+                    }
                 }
             });
+
+            if (Birkly.enableTemplateFunctions !== false) {
+                add({ type: 'template_functions_meta', into: '__tf_meta__' });
+            }
 
             const route = Birkly.bundle.detectPageRoute();
             if (route && route.slug) {
@@ -790,16 +809,67 @@
             return null;
         };
 
+        Birkly.bundle.ingestTemplateFunctionsMeta = function (list) {
+            const meta = Array.isArray(list) ? list : [];
+            Birkly.templateFunctions.meta = meta;
+            Birkly.templateFunctions.names = new Set(meta.map((f) => f.name).filter(Boolean));
+            Birkly.templateFunctions.zeroArg = new Set(
+                meta
+                    .filter((f) => Array.isArray(f.arguments) && f.arguments.length === 0)
+                    .map((f) => f.name)
+            );
+            Birkly.templateFunctions.loaded = true;
+        };
+
+        Birkly.bundle.shouldProbeSnapshot = function () {
+            const meta = document.querySelector('meta[name="birkly-snapshot"]');
+            if (meta && String(meta.content || '').trim() === '1') {
+                return true;
+            }
+            if (document.documentElement.getAttribute('data-birkly-snapshot') === '1') {
+                return true;
+            }
+            return false;
+        };
+
+        Birkly.bundle.getBundleCacheKey = function (requests) {
+            const route = Birkly.bundle.detectPageRoute();
+            const page = route && route.page ? route.page : 'index';
+            const slug = route && route.slug ? route.slug : '';
+            let h = 0;
+            const s = JSON.stringify(requests || []);
+            for (let i = 0; i < s.length; i++) {
+                h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            }
+            return 'birkly_bundle_v2:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
+        };
+
         Birkly.bundle.applyBundleResponse = function (requests, json) {
             if (!Birkly.pageBundle.data) Birkly.pageBundle.data = {};
             Object.assign(Birkly.pageBundle.data, json.data);
+            if (json.revision) {
+                Birkly.pageBundle.revision = json.revision;
+            }
+            if (json.data && json.data.__tf_meta__) {
+                Birkly.bundle.ingestTemplateFunctionsMeta(json.data.__tf_meta__);
+            }
             const errorList = Array.isArray(json.errors) ? json.errors : [];
             requests.forEach((req) => {
-                Birkly.pageBundle.keys.add(req.into);
-                const failed = errorList.some((err) => String(err).indexOf(req.into) !== -1);
-                const rows = json.data[req.into];
-                if (failed || (req.type !== 'get_entry' && !Array.isArray(rows))) {
-                    Birkly.pageBundle.failed.add(req.into);
+                const into = req.into || (req.type === 'template_functions_meta' ? '__tf_meta__' : '');
+                if (!into) return;
+                Birkly.pageBundle.keys.add(into);
+                const failed = errorList.some((err) => String(err).indexOf(into) !== -1);
+                const rows = json.data[into];
+                if (req.type === 'template_function' && req.name) {
+                    const tfKey = req.name + '|' + JSON.stringify(req.args || []);
+                    Birkly.templateFunctions.cache.set(tfKey, rows);
+                    return;
+                }
+                if (req.type === 'template_functions_meta') {
+                    return;
+                }
+                if (failed || (req.type !== 'get_entry' && req.type !== 'template_function' && !Array.isArray(rows))) {
+                    Birkly.pageBundle.failed.add(into);
                 }
             });
             Birkly.pageBundle.loaded = true;
@@ -809,25 +879,70 @@
             if (!requests || !requests.length) return false;
             const label = options.label || 'page bundle';
             const url = Birkly.cmsUrl + '/api/page_bundle.php';
+            const language = Birkly.currentLanguage || 'en';
+            const cacheKey = Birkly.bundle.getBundleCacheKey(requests);
+            let cached = null;
+            try {
+                const raw = sessionStorage.getItem(cacheKey);
+                if (raw) cached = JSON.parse(raw);
+            } catch (e) { /* ignore */ }
+
+            if (cached && cached.data && cached.revision) {
+                Birkly.bundle.applyBundleResponse(requests, cached);
+                Birkly.log('Birkly: loadPageBundle from session cache', { revision: cached.revision });
+            }
+
             try {
                 Birkly.log('Birkly: loadPageBundle', { count: requests.length, label });
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        language: Birkly.currentLanguage || 'en',
-                        requests
-                    }),
-                    credentials: 'include'
-                });
-                const json = await res.json().catch(() => ({}));
-                if (!res.ok || json.status !== 'ok' || !json.data) {
-                    Birkly.warn('Birkly: page bundle failed', json);
-                    return false;
+                const headers = {};
+                if (cached && cached.revision) {
+                    headers['If-None-Match'] = cached.revision;
+                }
+                let json = null;
+                try {
+                    const encoded = btoa(JSON.stringify(requests))
+                        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                    const getUrl = url + '?language=' + encodeURIComponent(language)
+                        + '&requests=' + encodeURIComponent(encoded) + '&lean=1';
+                    const getRes = await fetch(getUrl, { method: 'GET', headers, credentials: 'include' });
+                    if (getRes.status === 304 && cached) {
+                        return true;
+                    }
+                    if (getRes.ok) {
+                        json = await getRes.json().catch(() => ({}));
+                    }
+                } catch (getErr) {
+                    Birkly.warn('Birkly: GET page bundle failed, falling back to POST', getErr);
+                }
+                if (!json || json.status !== 'ok' || !json.data) {
+                    const postRes = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...headers },
+                        body: JSON.stringify({ language, requests, lean: true }),
+                        credentials: 'include'
+                    });
+                    json = await postRes.json().catch(() => ({}));
+                    if (!postRes.ok || json.status !== 'ok' || !json.data) {
+                        if (cached && cached.data) {
+                            return true;
+                        }
+                        Birkly.warn('Birkly: page bundle failed', json);
+                        return false;
+                    }
                 }
                 Birkly.bundle.applyBundleResponse(requests, json);
+                try {
+                    sessionStorage.setItem(cacheKey, JSON.stringify({
+                        revision: json.revision || null,
+                        data: json.data,
+                        errors: json.errors || []
+                    }));
+                } catch (e) { /* quota */ }
                 return true;
             } catch (err) {
+                if (cached && cached.data) {
+                    return true;
+                }
                 Birkly.warn('Birkly: page bundle error', err);
                 return false;
             }
@@ -942,6 +1057,19 @@
         cache: new Map() // key -> result
     };
 
+    function mergePageBundleIntoData(data) {
+        if (!Birkly.pageBundle.loaded || !Birkly.pageBundle.data) {
+            return data;
+        }
+        Object.keys(Birkly.pageBundle.data).forEach((key) => {
+            if (key === '__tf_meta__') return;
+            if (data[key] === undefined) {
+                data[key] = Birkly.pageBundle.data[key];
+            }
+        });
+        return data;
+    }
+
     async function loadTemplateFunctionsMeta() {
         // Short‑circuit when template functions are disabled.
         if (!Birkly.enableTemplateFunctions) {
@@ -953,6 +1081,11 @@
         }
 
         if (Birkly.templateFunctions.loaded) return Birkly.templateFunctions.meta;
+
+        if (Birkly.pageBundle.data && Birkly.pageBundle.data.__tf_meta__) {
+            Birkly.bundle.ingestTemplateFunctionsMeta(Birkly.pageBundle.data.__tf_meta__);
+            return Birkly.templateFunctions.meta;
+        }
 
         try {
             const res = await fetch(Birkly.apiEndpoint + '?action=template_functions_list', { credentials: 'include' });
@@ -1087,8 +1220,6 @@
         const html = templateString || (document.body ? (document.body.innerHTML || '') : '');
         
         // Hydrate only template functions that are registered (by plugins) and used in the template.
-        // No project-specific names: user_logged_in, user_current, etc. come from the user plugin
-        // when it is active and registers them via the API.
         if (Birkly.templateFunctions.zeroArg.size > 0) {
             const namesToFetch = [];
             for (const name of Birkly.templateFunctions.zeroArg) {
@@ -3851,6 +3982,7 @@
                     current_year: new Date().getFullYear(),
                     site_elements: siteElements // Add site elements for use in templates
                 };
+                mergePageBundleIntoData(defaultData);
                 
                 const walker = document.createTreeWalker(
                     document.body,
@@ -4513,6 +4645,7 @@
                             language: Birkly.currentLanguage || 'en'
                         }
                     };
+                    mergePageBundleIntoData(data);
                     Birkly.log('Birkly: Data object created with site_elements:', Object.keys(data.site_elements || {}));
 
                     // Load template functions metadata first (required before hydration)
@@ -4928,6 +5061,14 @@
             const into = el.getAttribute('data-birkly-into');
             if (!type || !into) return;
 
+            if (into in data && data[into] !== undefined && data[into] !== null) {
+                return;
+            }
+            if (Birkly.pageBundle.loaded && Birkly.pageBundle.data[into] !== undefined) {
+                data[into] = Birkly.pageBundle.data[into];
+                return;
+            }
+
             try {
                 if (type === 'sub_entries') {
                     const parentCollection = resolve(el.getAttribute('data-parent-collection'));
@@ -5213,7 +5354,8 @@
         Birkly.log('Birkly: API endpoint detected:', Birkly.apiEndpoint);
 
         const bundleRequests = collectBundleRequests();
-        const snapshotLoaded = bundleRequests.length > 0 ? await tryLoadPageSnapshot() : false;
+        const snapshotLoaded = bundleRequests.length > 0 && Birkly.bundle.shouldProbeSnapshot()
+            ? await tryLoadPageSnapshot() : false;
         if (!snapshotLoaded && bundleRequests.length > 0) {
             await loadPageBundle(bundleRequests);
         }

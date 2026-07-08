@@ -57,4 +57,12 @@ test_assert('index lists services', in_array('services', $collections, true));
 test_assert('index lists blog', in_array('blog', $collections, true));
 test_assert('index lists site_elements', in_array('site_elements', $collections, true));
 
+$hasTfMeta = false;
+foreach ($index['requests'] ?? [] as $req) {
+    if (($req['type'] ?? '') === 'template_functions_meta') {
+        $hasTfMeta = true;
+    }
+}
+test_assert('index includes template_functions_meta in bundle plan', $hasTfMeta);
+
 exit(test_finish('client_bundle_fixture_test'));

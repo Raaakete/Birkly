@@ -14,7 +14,7 @@ Reference projects in `reference-projects/` intentionally use the **default live
 ```
 
 - Content fetched at runtime via `page_bundle` and templating
-- Target: ≤5 API round-trips per page (see `docs/benchmarks/kekaba-index-roundtrips.md`)
+- Target: ≤**2 total cold RTTs**, ≤**1 content RTT** (see `docs/benchmarks/kekaba-index-roundtrips-v2.md`)
 - No build step; HTML templates are the source of truth
 - **All P20 reference projects use this path**
 
