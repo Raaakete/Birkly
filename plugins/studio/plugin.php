@@ -18,6 +18,7 @@ require_once __DIR__ . '/includes/StudioProjectRepository.php';
 require_once __DIR__ . '/includes/StudioCompiler.php';
 require_once __DIR__ . '/includes/StudioRenderer.php';
 require_once __DIR__ . '/includes/StudioExporter.php';
+require_once __DIR__ . '/includes/StudioBlockRegistry.php';
 
 if (function_exists('register_api_endpoint')) {
     register_api_endpoint('studio', __DIR__ . '/api/studio.php');
@@ -64,7 +65,7 @@ if (function_exists('register_hook')) {
 if (function_exists('register_plugin_docs')) {
     register_plugin_docs('studio', [
         'title' => 'Studio',
-        'summary' => 'Visual site builder with style kits, Birkly bindings, SSR publish, and ZIP export.',
+        'summary' => 'Project IDE: filesystem, tabs, visual/code/split editor, style kits, Birkly bindings, SSR publish, and ZIP export.',
         'badge' => 'Extension',
         'docs' => [
             'help' => __DIR__ . '/README.md',

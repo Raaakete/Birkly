@@ -34,7 +34,10 @@ class StudioExporter
         $stylesDir = $this->repo->projectDir($projectId) . '/styles';
         $kit = is_file($stylesDir . '/kit.css') ? file_get_contents($stylesDir . '/kit.css') : '';
         $custom = is_file($stylesDir . '/custom.css') ? file_get_contents($stylesDir . '/custom.css') : '';
-        file_put_contents($websiteDir . '/styles.css', $kit . "\n" . $custom);
+        $generated = is_file($stylesDir . '/generated.css') ? file_get_contents($stylesDir . '/generated.css') : '';
+        require_once __DIR__ . '/StudioCssOptimizer.php';
+        $combined = StudioCssOptimizer::minify($kit . "\n" . $generated . "\n" . $custom);
+        file_put_contents($websiteDir . '/styles.css', $combined);
 
         $home = $project['home_page'] ?? 'index';
         foreach ($this->repo->listPageSlugs($projectId) as $slug) {

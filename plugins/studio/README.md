@@ -1,34 +1,46 @@
 # Studio Plugin
 
-Visual site builder for Birkly (Phase 22). Projects live at `content/studio-projects/{id}/`.
+Project IDE and visual site builder for Birkly (Phase 22–23). Projects live at `content/studio-projects/{id}/`.
 
 ## Features
 
-- **Projects:** create, rename, duplicate, delete, dashboard list
-- **Pages:** add, reorder, delete, set home page
+### IDE workspace (P23)
+
+- **Filesystem sidebar:** real disk tree — browse, create, rename, delete project files
+- **File tabs:** multi-file editing with dirty state + sessionStorage restore
+- **Views:** Visual canvas, Code editor, Split (side-by-side)
+- **Open project ↗:** opens home page in a **new browser tab** (SSR or draft preview)
+- **Canvas v2:** DnD sections, multi-column, responsive breakpoints, design tokens
+- **Plugin blocks:** `register_studio_block()` from commerce, events, etc.
+- **Section library:** insert pre-built sections from `plugins/studio/sections/`
+- **Undo + revisions:** canvas undo stack; file revisions on save
+
+### Core (P22)
+
+- **Projects:** create, duplicate, delete, dashboard list
 - **Style kits:** minimal, bootstrap (vendored subset), tailwind-lite
-- **Layout:** sections → rows → columns; element palette
 - **Birkly bindings:** collection loops, filtered lists, site elements
-- **Dual editor:** visual canvas ↔ code tab
-- **Preview:** admin iframe with `birkly-client.js` (P21 bundle path)
 - **SSR:** published sites at `/site/{project-slug}/`
-- **Export:** ZIP with `website/` mirror (in-CMS copy remains source of truth)
+- **Export:** ZIP with optimized `website/` mirror
 
 ## Quick start
 
 1. Activate **Studio** in Admin → Settings → Plugins
-2. Open **Studio** in the sidebar
-3. Create a project (pick a style kit)
-4. Add sections and a blog loop binding
-5. **Publish** for SSR, or **Export ZIP** for static deploy
+2. Open **Studio** in the sidebar → **New project**
+3. Use the file tree, tabs, and visual/code/split views to edit
+4. Click **Open project ↗** to preview in a new tab
+5. **Publish** for SSR, or **Export** for static deploy
 
 ## Storage layout
 
 ```
 content/studio-projects/{project-id}/
 ├── project.json
-├── styles/kit.css, custom.css
+├── tokens.json
+├── components/
+├── styles/kit.css, custom.css, generated.css
 ├── pages/{slug}.studio.json, {slug}.html
+├── .revisions/
 └── website/   # export mirror
 ```
 
@@ -38,7 +50,21 @@ content/studio-projects/{project-id}/
 |-----|---------|
 | `/site/{slug}/` | Home page (SSR) |
 | `/site/{slug}/{page}/` | Inner page |
-| `/site/{slug}/styles.css` | Combined kit + custom CSS |
+| `/site/{slug}/styles.css` | Kit + generated + custom CSS |
+| `/site/{slug}/?birkly_studio_preview=1` | Draft preview (admin session) |
+
+## Plugin blocks
+
+Plugins register blocks via `studio-blocks.php`:
+
+```php
+register_studio_block('my_block', [
+    'label' => 'My block',
+    'bindingType' => 'loop',
+    'collection' => 'blog',
+    'itemTemplate' => '<article>{title}</article>',
+]);
+```
 
 ## Deactivation
 
@@ -46,4 +72,4 @@ When Studio is deactivated, `/site/*` returns **503** — project files remain o
 
 ## Values
 
-Self-contained plugin (P22-D1). No npm/webpack at runtime (P22-D5). Compiled HTML uses Birkly template tags only on public pages (P22-D4).
+Self-contained plugin. No npm/webpack at runtime. Compiled HTML uses Birkly template tags only on public pages — no `.studio.json` at runtime.
