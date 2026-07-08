@@ -16,19 +16,23 @@
 
   <div id="studio-workspace" class="studio-workspace" hidden>
     <header class="studio-ide-toolbar">
-      <button type="button" class="btn btn-secondary btn-sm" data-action="back">← Projects</button>
-      <span id="studio-project-name" class="studio-project-name"></span>
-      <div class="studio-ide-toolbar-actions">
+      <div class="studio-toolbar-group studio-toolbar-group-nav">
+        <button type="button" class="btn btn-secondary btn-sm" data-action="back" title="Back to projects">← Projects</button>
+        <span id="studio-project-name" class="studio-project-name"></span>
+      </div>
+      <div class="studio-toolbar-group studio-toolbar-group-file">
         <button type="button" class="btn btn-secondary btn-sm" data-action="save" title="Save (Ctrl+S)">Save</button>
-        <button type="button" class="btn btn-secondary btn-sm" data-action="open-external" title="Open home page in new tab">Open project ↗</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="open-external" title="Open home page in new tab">Open ↗</button>
         <button type="button" class="btn btn-secondary btn-sm" data-action="export">Export</button>
+      </div>
+      <div class="studio-toolbar-group studio-toolbar-group-publish">
         <button type="button" class="btn btn-primary btn-sm" data-action="publish">Publish</button>
       </div>
     </header>
 
     <div class="studio-ide-body">
       <aside class="studio-sidebar" id="studio-sidebar">
-        <div class="studio-sidebar-header">
+        <div class="studio-panel-header">
           <strong>Files</strong>
           <div class="studio-sidebar-actions">
             <button type="button" class="btn btn-secondary btn-sm" data-action="new-page" title="New page">+ Page</button>
@@ -38,29 +42,64 @@
         <div id="studio-file-tree" class="studio-file-tree"></div>
 
         <div class="studio-sidebar-section">
-          <strong>Elements</strong>
+          <div class="studio-panel-header">
+            <strong>Elements</strong>
+          </div>
           <div class="studio-palette">
-            <button type="button" class="studio-palette-btn" data-add="section">+ Section</button>
-            <button type="button" class="studio-palette-btn" data-add="text">Text</button>
-            <button type="button" class="studio-palette-btn" data-add="heading">Heading</button>
-            <button type="button" class="studio-palette-btn" data-add="image">Image</button>
-            <button type="button" class="studio-palette-btn" data-add="button">Button</button>
-            <button type="button" class="studio-palette-btn" data-add="spacer">Spacer</button>
-            <button type="button" class="studio-palette-btn" data-add="divider">Divider</button>
-            <button type="button" class="studio-palette-btn" data-add="html">HTML block</button>
-            <button type="button" class="studio-palette-btn" data-add="binding-loop">Collection loop</button>
-            <button type="button" class="studio-palette-btn" data-add="binding-filtered">Filtered list</button>
-            <button type="button" class="studio-palette-btn" data-add="binding-single">Single entry</button>
-            <button type="button" class="studio-palette-btn" data-add="binding-site">Site element</button>
+            <div class="studio-palette-group">
+              <span class="studio-palette-label">Layout</span>
+              <button type="button" class="studio-palette-btn" data-add="section">+ Section</button>
+            </div>
+            <div class="studio-palette-group">
+              <span class="studio-palette-label">Content</span>
+              <button type="button" class="studio-palette-btn" data-add="text">Text</button>
+              <button type="button" class="studio-palette-btn" data-add="heading">Heading</button>
+              <button type="button" class="studio-palette-btn" data-add="image">Image</button>
+              <button type="button" class="studio-palette-btn" data-add="button">Button</button>
+              <button type="button" class="studio-palette-btn" data-add="spacer">Spacer</button>
+              <button type="button" class="studio-palette-btn" data-add="divider">Divider</button>
+              <button type="button" class="studio-palette-btn" data-add="html">HTML block</button>
+            </div>
+            <div class="studio-palette-group">
+              <span class="studio-palette-label">Bindings</span>
+              <button type="button" class="studio-binding-card" data-action="open-binding-wizard" data-binding-type="loop">
+                <span class="studio-binding-card-icon">⟳</span>
+                <span class="studio-binding-card-body">
+                  <strong>Collection loop</strong>
+                  <small>List all entries</small>
+                </span>
+              </button>
+              <button type="button" class="studio-binding-card" data-action="open-binding-wizard" data-binding-type="filtered">
+                <span class="studio-binding-card-icon">⊘</span>
+                <span class="studio-binding-card-body">
+                  <strong>Filtered list</strong>
+                  <small>Filter + order + limit</small>
+                </span>
+              </button>
+              <button type="button" class="studio-binding-card" data-action="open-binding-wizard" data-binding-type="single">
+                <span class="studio-binding-card-icon">1</span>
+                <span class="studio-binding-card-body">
+                  <strong>Single entry</strong>
+                  <small>One entry by slug</small>
+                </span>
+              </button>
+              <button type="button" class="studio-binding-card" data-action="open-binding-wizard" data-binding-type="site_element">
+                <span class="studio-binding-card-icon">◇</span>
+                <span class="studio-binding-card-body">
+                  <strong>Site element</strong>
+                  <small>Reusable block</small>
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="studio-sidebar-section">
-          <strong>Sections</strong>
+          <div class="studio-panel-header"><strong>Sections</strong></div>
           <div id="studio-section-lib" class="studio-section-lib"></div>
         </div>
         <div class="studio-sidebar-section">
-          <strong>Plugin blocks</strong>
+          <div class="studio-panel-header"><strong>Plugin blocks</strong></div>
           <div id="studio-blocks" class="studio-blocks"></div>
         </div>
       </aside>
@@ -68,16 +107,31 @@
       <main class="studio-main">
         <div class="studio-tabbar" id="studio-tabbar" role="tablist"></div>
         <div class="studio-viewbar">
-          <button type="button" class="studio-view-btn active" data-view="visual">Visual</button>
-          <button type="button" class="studio-view-btn" data-view="code">Code</button>
-          <button type="button" class="studio-view-btn" data-view="split">Split</button>
-          <select id="studio-breakpoint" class="input studio-breakpoint-select" title="Breakpoint">
-            <option value="default">Mobile</option>
-            <option value="tablet">Tablet</option>
-            <option value="desktop">Desktop</option>
-          </select>
-          <button type="button" class="btn btn-secondary btn-sm" data-action="undo" title="Undo">Undo</button>
-          <button type="button" class="btn btn-secondary btn-sm" data-action="add-column" title="Add column to section">+ Col</button>
+          <div class="studio-viewbar-group">
+            <span class="studio-viewbar-label">View</span>
+            <button type="button" class="studio-view-btn active" data-view="visual">Visual</button>
+            <button type="button" class="studio-view-btn" data-view="code">Code</button>
+            <button type="button" class="studio-view-btn" data-view="split">Split</button>
+          </div>
+          <div class="studio-viewbar-group">
+            <span class="studio-viewbar-label">Breakpoint</span>
+            <select id="studio-breakpoint" class="input studio-breakpoint-select" title="Breakpoint">
+              <option value="default">Mobile</option>
+              <option value="tablet">Tablet</option>
+              <option value="desktop">Desktop</option>
+            </select>
+          </div>
+          <div class="studio-viewbar-group">
+            <span class="studio-viewbar-label">Edit</span>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="undo" title="Undo">Undo</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="add-column" title="Add column to section">+ Col</button>
+          </div>
+          <div class="studio-viewbar-group">
+            <span class="studio-viewbar-label">Section</span>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="dup-section" title="Duplicate section">Duplicate</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="move-section-up" title="Move section up">↑</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="move-section-down" title="Move section down">↓</button>
+          </div>
         </div>
         <div class="studio-editor-panes" id="studio-panes">
           <div class="studio-pane studio-pane-visual" id="studio-pane-visual">
@@ -92,15 +146,29 @@
       </main>
 
       <aside class="studio-inspector" id="studio-inspector">
-        <h3>Layers</h3>
+        <div class="studio-panel-header"><strong>Layers</strong></div>
         <div id="studio-layers" class="studio-layers"></div>
-        <h3>Inspector</h3>
+
+        <div class="studio-panel-header studio-inspector-tabs-header">
+          <strong>Inspector</strong>
+          <div class="studio-inspector-tabs" role="tablist">
+            <button type="button" class="studio-insp-tab active" data-insp-tab="props" role="tab">Properties</button>
+            <button type="button" class="studio-insp-tab" data-insp-tab="css" role="tab">CSS</button>
+            <button type="button" class="studio-insp-tab" data-insp-tab="nav" role="tab">Nav</button>
+          </div>
+        </div>
         <div id="studio-inspector-body"><p class="form-hint">Select a section or element</p></div>
-        <h3>Design tokens</h3>
+
+        <div class="studio-panel-header studio-tokens-header"><strong>Design tokens</strong></div>
         <textarea id="studio-tokens-editor" class="studio-tokens-editor" spellcheck="false"></textarea>
         <button type="button" class="btn btn-secondary btn-sm" data-action="save-tokens">Save tokens</button>
       </aside>
     </div>
+
+    <footer class="studio-statusbar" id="studio-statusbar">
+      <span id="studio-statusbar-hint" class="studio-statusbar-hint">SSR route: checking…</span>
+      <span id="studio-statusbar-meta" class="studio-statusbar-meta"></span>
+    </footer>
   </div>
 
   <div id="studio-new-modal" class="studio-modal" hidden>
@@ -118,6 +186,20 @@
       <div class="studio-modal-actions">
         <button type="button" class="btn btn-secondary" data-action="close-new">Cancel</button>
         <button type="button" class="btn btn-primary" data-action="create-project">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="studio-binding-modal" class="studio-modal" hidden>
+    <div class="studio-modal-backdrop" data-action="close-binding-wizard"></div>
+    <div class="studio-modal-content studio-modal-md">
+      <h3>Add binding</h3>
+      <div class="studio-wizard-steps" id="studio-wizard-steps"></div>
+      <div id="studio-wizard-body" class="studio-wizard-body"></div>
+      <div class="studio-modal-actions">
+        <button type="button" class="btn btn-secondary" data-action="wizard-prev" id="studio-wizard-prev" hidden>Back</button>
+        <button type="button" class="btn btn-secondary" data-action="close-binding-wizard">Cancel</button>
+        <button type="button" class="btn btn-primary" data-action="wizard-next" id="studio-wizard-next">Next</button>
       </div>
     </div>
   </div>
