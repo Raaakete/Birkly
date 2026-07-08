@@ -31,6 +31,7 @@ $suites = [
     'onboarding_test.php',
     'onboarding_install_path_test.php',
     'demo_starter_templates_test.php',
+    'demo_api_onboarding_include_test.php',
     'onboarding_ai_step_test.php',
     'onboarding_checklist_test.php',
     'onboarding_e2e_test.php',

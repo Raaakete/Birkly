@@ -43,6 +43,13 @@ if (empty($action)) {
     exit;
 }
 
+// Helper to load onboarding helpers without triggering the onboarding API router
+function birkly_demo_load_onboarding_helpers(): void
+{
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once __DIR__ . '/onboarding.php';
+}
+
 // Helper to delete demo content
 function deleteDemoContent() {
     require_once __DIR__ . '/../core/demo_starter_templates.php';
@@ -200,7 +207,7 @@ switch ($action) {
         }
         
         if ($allSuccess) {
-            require_once __DIR__ . '/onboarding.php';
+            birkly_demo_load_onboarding_helpers();
             $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
             saveOnboardingProgress($userId, [
                 'demo_content_deleted' => true,
@@ -232,7 +239,7 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => $result['message'] ?? 'Install failed']);
             exit;
         }
-        require_once __DIR__ . '/onboarding.php';
+        birkly_demo_load_onboarding_helpers();
         $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
         saveOnboardingProgress($userId, [
             'starter_template' => $templateId,
@@ -248,7 +255,7 @@ switch ($action) {
         
     case 'keep':
         // Keep demo content (just update onboarding progress)
-        require_once __DIR__ . '/onboarding.php';
+        birkly_demo_load_onboarding_helpers();
         $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
         saveOnboardingProgress($userId, [
             'demo_content_deleted' => false,
