@@ -1,8 +1,8 @@
 # Phase 23 — Lead-engineer handoff (Studio IDE)
 
-**Status:** Proposed (2026-07-08) — awaiting human approval  
+**Status:** Approved (2026-07-08, Keven)  
 **Baseline:** P22 complete — `plugins/studio` v1, SSR, 145 test suites  
-**Human rule:** Execute **P23-M0→M16** autonomously after approval. Notify human **once** at **P23-M16** only.
+**Human rule:** Execute **P23-M0→M16** autonomously. Notify human **once** at **P23-M16** only.
 
 **Master plan:** `docs/reviews/P23-studio-pro-plan.md`  
 **Matrix:** `docs/reviews/P23-verification-matrix.md`
@@ -115,6 +115,6 @@ ANTI-PATTERNS:
 
 ## Human approval checklist
 
-- [ ] P23-D1–D17 accepted (especially IDE: tree, tabs, visual/code/split, open project ↗)
-- [ ] P23-D13 `register_studio_block()` accepted
-- [ ] M0–M16 single-wave execution approved
+- [x] P23-D1–D17 accepted (IDE: tree, tabs, visual/code/split, open project ↗)
+- [x] P23-D13 `register_studio_block()` accepted
+- [x] M0–M16 single-wave execution approved (2026-07-08, Keven)

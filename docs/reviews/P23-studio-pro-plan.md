@@ -1,8 +1,8 @@
 # P23 — Studio IDE (advanced visual builder + project workspace)
 
-**Status:** Proposed (2026-07-08) — awaiting human approval  
+**Status:** Approved (2026-07-08, Keven)  
 **Baseline:** P22 complete — `plugins/studio` v1, SSR, 145 test suites  
-**Human rule:** Execute P23-M0→M16 autonomously after approval. Notify human **once** at **P23-M16** only.
+**Human rule:** Execute P23-M0→M16 autonomously. Notify human **once** at **P23-M16** only.
 
 **Handoff:** `docs/reviews/P23-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P23-verification-matrix.md`
@@ -64,7 +64,7 @@ Transform Studio from a **single-page form editor** into a **full project IDE** 
 
 ---
 
-## Locked decisions (proposed)
+## Locked decisions (approved 2026-07-08, Keven)
 
 | ID | Decision |
 |----|----------|
