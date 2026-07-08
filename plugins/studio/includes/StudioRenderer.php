@@ -25,7 +25,7 @@ class StudioRenderer
             return true;
         }
 
-        if (!preg_match('#^/site/([^/]+)(?:/([^/]+)/?)?$#', $uri, $m)) {
+        if (!preg_match('#^/site/([^/]+)(?:/([^/]+))?/?$#', $uri, $m)) {
             return false;
         }
 
