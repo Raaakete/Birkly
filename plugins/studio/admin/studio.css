@@ -15,7 +15,23 @@
 
 .studio-ide-body { display: grid; grid-template-columns: 220px 1fr 260px; flex: 1; min-height: 0; }
 .studio-sidebar { border-right: 1px solid var(--border-color, #ddd); background: var(--bg-secondary, #fafafa); overflow: auto; display: flex; flex-direction: column; }
-.studio-sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-color, #eee); }
+.studio-sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-color, #eee); flex-wrap: wrap; gap: 0.35rem; }
+.studio-sidebar-actions { display: flex; gap: 0.25rem; }
+.studio-palette { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.35rem; }
+.studio-palette-btn { display: block; width: 100%; padding: 0.35rem 0.5rem; text-align: left; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+.studio-palette-btn:hover { background: #f0f0f0; }
+.studio-layers { display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 0.75rem; max-height: 160px; overflow: auto; }
+.studio-layer-btn { text-align: left; border: none; background: transparent; padding: 0.25rem 0.5rem; font-size: 0.8rem; cursor: pointer; border-radius: 3px; }
+.studio-layer-btn.active { background: rgba(13, 110, 253, 0.12); font-weight: 600; }
+.studio-layer-el { padding-left: 1rem; }
+.studio-tree-file.active { background: rgba(13, 110, 253, 0.1); font-weight: 600; }
+.studio-row-preview { margin-top: 0.35rem; }
+.studio-col-preview { min-height: 2rem; border: 1px dashed #e0e0e0; padding: 0.25rem; border-radius: 3px; }
+.studio-spacer-preview { background: repeating-linear-gradient(45deg, #f5f5f5, #f5f5f5 4px, #eee 4px, #eee 8px); }
+.studio-status { padding: 0.4rem 0.75rem; font-size: 0.85rem; border-bottom: 1px solid #ddd; }
+.studio-status-error { background: #fee; color: #900; }
+.studio-status-info { background: #e7f1ff; color: #084298; }
+.studio-inspector .studio-insp-field { width: 100%; margin-top: 0.25rem; }
 .studio-sidebar-section { padding: 0.5rem 0.75rem; border-top: 1px solid var(--border-color, #eee); }
 .studio-file-tree { flex: 1; overflow: auto; padding: 0.25rem 0; font-size: 0.85rem; }
 .studio-tree-node { line-height: 1.6; }
