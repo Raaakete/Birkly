@@ -106,6 +106,14 @@ function studio_kit_css_path(string $kitId): ?string
  */
 function studio_public_site_url(string $projectSlug, bool $preview = false): string
 {
+    return studio_absolute_url(studio_public_site_path($projectSlug, $preview));
+}
+
+/**
+ * Pretty /site/{slug}/ path (needs web-server rewrite on some hosts).
+ */
+function studio_public_site_path(string $projectSlug, bool $preview = false): string
+{
     $path = '/site/' . rawurlencode($projectSlug) . '/';
     if ($preview) {
         $path .= '?birkly_studio_preview=1';
@@ -113,10 +121,37 @@ function studio_public_site_url(string $projectSlug, bool $preview = false): str
     if (function_exists('birkly_url')) {
         $path = birkly_url($path);
     }
+
+    return $path;
+}
+
+/**
+ * Direct viewer URL — works without /site/ rewrite (LiteSpeed, nginx, etc.).
+ */
+function studio_view_url(string $projectSlug, bool $preview = false, ?string $page = null): string
+{
+    $query = ['slug' => $projectSlug];
+    if ($page !== null && $page !== '') {
+        $query['page'] = $page;
+    }
+    if ($preview) {
+        $query['birkly_studio_preview'] = '1';
+    }
+    $path = '/api/studio_view.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    if (function_exists('birkly_url')) {
+        $path = birkly_url($path);
+    }
+
+    return studio_absolute_url($path);
+}
+
+function studio_absolute_url(string $path): string
+{
     if (preg_match('#^https?://#i', $path)) {
         return $path;
     }
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
     return $scheme . '://' . $host . $path;
 }
