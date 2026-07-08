@@ -195,9 +195,21 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 | **Birkly-Website** | Open-beta copy (go-live deferred). |
 | **Agent ops** | CI + autonomous execution policy on `main`. |
 
-**Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
+**Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** TBD — propose Phase 22+ with human approval
+**Next active phase:** TBD — propose Phase 23+ with human approval
+
+**2026-07-08 — Phase 22 complete** (autonomous P22-M0→M12)
+
+**Delivered:** `plugins/studio` visual site builder · style kits · dual editor · Birkly bindings compiler · SSR `/site/{slug}/` · export ZIP · `core/plugin_public_routes.php` shelf · V-STU-01 evidence.
+
+**Matrices:** `docs/reviews/P22-verification-matrix.md` · **Closure:** `docs/reviews/P22-phase-closure-checklist.md`
+
+**2026-07-08 — Phase 22 approved** (Keven)
+
+**Priorities:** Visual site builder inside CMS · projects at `content/studio-projects/` · SSR default · live client preview · no Elementor-style runtime JSON on public pages.
+
+**Spec:** `docs/reviews/P22-studio-plugin-plan.md` · **Handoff:** `docs/reviews/P22-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P22-verification-matrix.md`
 
 **2026-07-08 — Phase 21 complete** (autonomous P21-M0→M10)
 
@@ -2593,6 +2605,38 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 **Human decisions (locked):** P21-D1 zero new user steps · P21-D2 bundle v2 · P21-D3 snapshot opt-in · P21-D4 GET/ETag · P21-D5 session cache · P21-D6 CI gate · P21-D7 video proof · P21-D8 single notification at M10.
 
 **Depends on:** P20 (reference projects + live client baseline).
+
+---
+
+## Phase 22 — Studio plugin (visual site builder)
+
+**Status:** **Complete** (2026-07-08) — human notified at P22-M12
+
+**Spec:** `docs/reviews/P22-studio-plugin-plan.md`  
+**Handoff:** `docs/reviews/P22-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P22-verification-matrix.md`
+
+**Goal:** Deactivatable visual site builder — projects in `content/studio-projects/`, compile to HTML + Birkly tags, SSR at `/site/{slug}/`, live client preview.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P22-M0** | Gap register + SSR parity requirements | complete |
+| **P22-M1** | Public route shelf + plugin shell | complete |
+| **P22-M2** | StudioProjectRepository CRUD | complete |
+| **P22-M3** | Style kits (minimal, bootstrap, tailwind-lite) | complete |
+| **P22-M4** | Visual layout editor | complete |
+| **P22-M5** | Style inspector + custom.css | complete |
+| **P22-M6** | Bindings UI + StudioCompiler | complete |
+| **P22-M7** | Dual editor round-trip | complete |
+| **P22-M8** | Live preview iframe (P21 bundle) | complete |
+| **P22-M9** | SSR StudioRenderer + /site/{slug}/ | complete |
+| **P22-M10** | Export ZIP + publish revision | complete |
+| **P22-M11** | Docs + V-STU-01 evidence | complete |
+| **P22-M12** | Closure + human notification | complete |
+
+**Human decisions (locked):** P22-D1 plugin-only · P22-D2 in-CMS storage · P22-D3 dual editor · P22-D4 compile artifact · P22-D5 vendored CSS kits · P22-D7 SSR default · P22-D9 export never deletes · P22-D12 single notification at M12.
+
+**Depends on:** P20 (parity matrix), P21 (preview bundle path).
 
 ---
 

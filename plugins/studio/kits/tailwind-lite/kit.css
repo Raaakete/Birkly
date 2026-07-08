@@ -1,0 +1,17 @@
+/* Studio tailwind-lite — pre-built utility subset (P22-D6) */
+*, *::before, *::after { box-sizing: border-box; }
+body.studio-page { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; }
+.flex { display: flex; }
+.grid { display: grid; }
+.gap-4 { gap: 1rem; }
+.p-4 { padding: 1rem; }
+.p-8 { padding: 2rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.max-w-5xl { max-width: 64rem; }
+.text-center { text-align: center; }
+.text-3xl { font-size: 1.875rem; line-height: 2.25rem; font-weight: 700; }
+.text-gray-900 { color: #111827; }
+.bg-white { background: #fff; }
+.rounded { border-radius: 0.25rem; }
+.shadow { box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.studio-section { padding: 2rem 1rem; max-width: 64rem; margin: 0 auto; }

@@ -1,0 +1,107 @@
+<link rel="stylesheet" href="{birkly_url '/admin/css/plugin-page.css'}">
+<link rel="stylesheet" href="{birkly_url '/plugins/studio/admin/studio.css'}">
+
+{plugin_page_header}
+
+<div class="studio-admin plugin-page" id="studio-app">
+  <div id="studio-dashboard-view">
+    <div class="studio-toolbar">
+      <h2>Studio projects</h2>
+      <button type="button" class="btn btn-primary" id="studio-new-project">New project</button>
+    </div>
+    <div id="studio-project-list" class="studio-project-list">
+      <div class="loading-state"><p>Loading projects…</p></div>
+    </div>
+  </div>
+
+  <div id="studio-editor-view" hidden>
+    <div class="studio-toolbar studio-editor-toolbar">
+      <button type="button" class="btn btn-secondary" id="studio-back">← Projects</button>
+      <span id="studio-project-title" class="studio-project-title"></span>
+      <div class="studio-toolbar-actions">
+        <select id="studio-page-select" class="input"></select>
+        <button type="button" class="btn btn-secondary" id="studio-add-page">Add page</button>
+        <button type="button" class="btn btn-secondary" id="studio-preview">Preview</button>
+        <button type="button" class="btn btn-secondary" id="studio-export">Export ZIP</button>
+        <button type="button" class="btn btn-primary" id="studio-publish">Publish</button>
+      </div>
+    </div>
+
+    <div class="studio-editor-tabs" role="tablist">
+      <button type="button" class="studio-tab active" data-tab="visual" role="tab">Visual</button>
+      <button type="button" class="studio-tab" data-tab="code" role="tab">Code</button>
+      <button type="button" class="studio-tab" data-tab="styles" role="tab">Styles</button>
+    </div>
+
+    <div class="studio-editor-layout">
+      <aside class="studio-palette" id="studio-palette">
+        <h3>Elements</h3>
+        <button type="button" class="studio-palette-btn" data-add="text">Text</button>
+        <button type="button" class="studio-palette-btn" data-add="image">Image</button>
+        <button type="button" class="studio-palette-btn" data-add="button">Button</button>
+        <button type="button" class="studio-palette-btn" data-add="spacer">Spacer</button>
+        <button type="button" class="studio-palette-btn" data-add="divider">Divider</button>
+        <button type="button" class="studio-palette-btn" data-add="html">Raw HTML</button>
+        <h3>Birkly</h3>
+        <button type="button" class="studio-palette-btn" data-add="binding-loop">Collection loop</button>
+        <button type="button" class="studio-palette-btn" data-add="binding-filtered">Filtered list</button>
+        <button type="button" class="studio-palette-btn" data-add="binding-site">Site element</button>
+        <h3>Layout</h3>
+        <button type="button" class="studio-palette-btn" data-add="section">Add section</button>
+      </aside>
+
+      <main class="studio-canvas-wrap">
+        <div id="studio-visual-panel" class="studio-panel active">
+          <div id="studio-canvas" class="studio-canvas"></div>
+        </div>
+        <div id="studio-code-panel" class="studio-panel" hidden>
+          <textarea id="studio-code-editor" class="studio-code-editor" spellcheck="false"></textarea>
+          <button type="button" class="btn btn-primary" id="studio-apply-code">Apply code → visual</button>
+        </div>
+        <div id="studio-styles-panel" class="studio-panel" hidden>
+          <label>Custom CSS <span class="form-hint">(saved to styles/custom.css)</span></label>
+          <textarea id="studio-custom-css" class="studio-code-editor" spellcheck="false"></textarea>
+          <button type="button" class="btn btn-primary" id="studio-save-css">Save CSS</button>
+        </div>
+      </main>
+
+      <aside class="studio-inspector" id="studio-inspector">
+        <h3>Inspector</h3>
+        <p class="form-hint" id="studio-inspector-empty">Select an element</p>
+        <div id="studio-inspector-fields" hidden></div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="studio-preview-modal" class="studio-modal" hidden>
+    <div class="studio-modal-backdrop" data-close-preview></div>
+    <div class="studio-modal-content">
+      <div class="studio-modal-header">
+        <strong>Live preview</strong>
+        <button type="button" class="btn btn-secondary" data-close-preview>Close</button>
+      </div>
+      <iframe id="studio-preview-frame" class="studio-preview-frame" title="Studio preview"></iframe>
+    </div>
+  </div>
+
+  <div id="studio-new-modal" class="studio-modal" hidden>
+    <div class="studio-modal-backdrop" data-close-new></div>
+    <div class="studio-modal-content studio-modal-sm">
+      <h3>New project</h3>
+      <label>Name <input type="text" id="studio-new-name" class="input" placeholder="My site"></label>
+      <label>Style kit
+        <select id="studio-new-kit" class="input">
+          <option value="minimal">Minimal</option>
+          <option value="bootstrap">Bootstrap</option>
+          <option value="tailwind-lite">Tailwind Lite</option>
+        </select>
+      </label>
+      <div class="studio-modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-new>Cancel</button>
+        <button type="button" class="btn btn-primary" id="studio-create-project">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{birkly_url '/plugins/studio/admin/studio.js'}"></script>

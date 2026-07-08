@@ -54,6 +54,22 @@ foreach ($oauthRoutes as $prefix => $handler) {
     }
 }
 
+if (str_starts_with($uri, '/site') && ($uri === '/site' || str_starts_with($uri, '/site/'))) {
+    require __DIR__ . '/api/studio_public.php';
+    return true;
+}
+
+require_once __DIR__ . '/core/plugin_public_routes.php';
+if (!function_exists('load_plugins')) {
+    require_once __DIR__ . '/core/plugins.php';
+}
+if (function_exists('load_plugins')) {
+    load_plugins(__DIR__ . '/plugins');
+}
+if (function_exists('birkly_dispatch_public_routes') && birkly_dispatch_public_routes($uri)) {
+    return true;
+}
+
 $file = __DIR__ . $uri;
 
 if (file_exists($file) && is_file($file)) {
