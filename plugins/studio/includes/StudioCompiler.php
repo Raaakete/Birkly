@@ -52,6 +52,7 @@ HTML;
             mkdir($dir, 0755, true);
         }
         file_put_contents($path, $html);
+        $this->writeGeneratedStyles($projectId);
         return $html;
     }
 
@@ -92,12 +93,87 @@ HTML;
         return $canvas;
     }
 
+    public function buildTokensCss(string $projectId): string
+    {
+        $path = $this->repo->projectDir($projectId) . '/tokens.json';
+        if (!is_file($path)) {
+            return '';
+        }
+        $tokens = json_decode((string) file_get_contents($path), true);
+        if (!is_array($tokens)) {
+            return '';
+        }
+        $vars = [];
+        foreach ($tokens as $group => $values) {
+            if (!is_array($values)) {
+                continue;
+            }
+            foreach ($values as $key => $val) {
+                $vars[] = '--studio-' . preg_replace('/[^a-z0-9-]/', '-', strtolower((string) $group . '-' . $key)) . ':' . $val;
+            }
+        }
+        return $vars !== [] ? ':root{' . implode(';', $vars) . '}' : '';
+    }
+
+    public function buildResponsiveCss(string $projectId): string
+    {
+        $breakpoints = [
+            'default' => 0,
+            'tablet' => 768,
+            'desktop' => 1024,
+        ];
+        $rules = [];
+        foreach ($this->repo->listPageSlugs($projectId) as $slug) {
+            $canvas = $this->repo->getPageCanvas($projectId, $slug);
+            if (!$canvas) {
+                continue;
+            }
+            if (isset($canvas['breakpoints']) && is_array($canvas['breakpoints'])) {
+                foreach ($canvas['breakpoints'] as $name => $bp) {
+                    if (isset($bp['minWidth'])) {
+                        $breakpoints[$name] = (int) $bp['minWidth'];
+                    }
+                }
+            }
+            foreach ($canvas['sections'] ?? [] as $section) {
+                $sid = preg_replace('/[^a-z0-9_-]/', '', (string) ($section['id'] ?? ''));
+                if ($sid === '') {
+                    continue;
+                }
+                $responsive = $section['responsive'] ?? [];
+                foreach ($responsive as $bpName => $layout) {
+                    $cols = (int) ($layout['columns'] ?? 1);
+                    $gap = $layout['gap'] ?? ($section['layout']['gap'] ?? '1rem');
+                    $min = $breakpoints[$bpName] ?? 0;
+                    $selector = '[data-studio-section="' . $sid . '"]';
+                    $rule = $selector . '{display:grid;grid-template-columns:repeat(' . $cols . ',minmax(0,1fr));gap:' . $gap . '}';
+                    if ($min > 0) {
+                        $rules[] = '@media(min-width:' . $min . 'px){' . $rule . '}';
+                    } else {
+                        $rules[] = $rule;
+                    }
+                }
+            }
+        }
+        return implode("\n", $rules);
+    }
+
+    public function writeGeneratedStyles(string $projectId): void
+    {
+        $css = "/* Studio generated (P23) */\n" . $this->buildTokensCss($projectId) . "\n" . $this->buildResponsiveCss($projectId);
+        $path = $this->repo->projectDir($projectId) . '/styles/generated.css';
+        file_put_contents($path, $css);
+    }
+
     private function renderSections(array $sections): string
     {
         $out = '';
         foreach ($sections as $section) {
             $classes = $this->classAttr($section['classes'] ?? ['studio-section']);
-            $style = $this->layoutStyle($section['layout'] ?? []);
+            $sid = preg_replace('/[^a-z0-9_-]/', '', (string) ($section['id'] ?? ''));
+            $dataAttr = $sid !== '' ? ' data-studio-section="' . htmlspecialchars($sid, ENT_QUOTES) . '"' : '';
+            $layout = $section['responsive']['default'] ?? $section['layout'] ?? [];
+            $style = $this->layoutStyle($layout);
             $rowsHtml = '';
             foreach ($section['rows'] ?? [] as $row) {
                 $colsHtml = '';
@@ -110,7 +186,7 @@ HTML;
                 }
                 $rowsHtml .= '<div class="studio-row">' . $colsHtml . '</div>';
             }
-            $out .= '<section class="' . $classes . '" style="' . htmlspecialchars($style, ENT_QUOTES) . '">' . $rowsHtml . '</section>';
+            $out .= '<section class="' . $classes . '"' . $dataAttr . ' style="' . htmlspecialchars($style, ENT_QUOTES) . '">' . $rowsHtml . '</section>';
         }
         return $out;
     }

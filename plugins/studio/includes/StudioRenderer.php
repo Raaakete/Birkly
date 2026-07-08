@@ -37,7 +37,10 @@ class StudioRenderer
         }
 
         $project = $this->repo->findBySlug($projectSlug);
-        if (!$project || empty($project['published'])) {
+        $preview = $this->isPreviewRequest();
+        $allowDraft = $preview && $this->allowAdminPreview();
+
+        if (!$project || (empty($project['published']) && !$allowDraft)) {
             http_response_code(404);
             header('Content-Type: text/html; charset=utf-8');
             echo '<!DOCTYPE html><html><body><h1>Not found</h1></body></html>';
@@ -92,14 +95,17 @@ class StudioRenderer
     private function serveStyles(string $projectSlug): bool
     {
         $project = $this->repo->findBySlug($projectSlug);
-        if (!$project || empty($project['published'])) {
+        $preview = $this->isPreviewRequest();
+        $allowDraft = $preview && $this->allowAdminPreview();
+        if (!$project || (empty($project['published']) && !$allowDraft)) {
             http_response_code(404);
             return true;
         }
         $dir = $this->repo->projectDir($project['id']) . '/styles';
         $kit = is_file($dir . '/kit.css') ? (string) file_get_contents($dir . '/kit.css') : '';
         $custom = is_file($dir . '/custom.css') ? (string) file_get_contents($dir . '/custom.css') : '';
-        $css = "/* Studio styles */\n" . $kit . "\n" . $custom;
+        $generated = is_file($dir . '/generated.css') ? (string) file_get_contents($dir . '/generated.css') : '';
+        $css = "/* Studio styles */\n" . $kit . "\n" . $generated . "\n" . $custom;
         header('Content-Type: text/css; charset=utf-8');
         if (function_exists('set_public_read_cache_headers')) {
             set_public_read_cache_headers(300);
@@ -150,5 +156,21 @@ class StudioRenderer
         }
 
         return $requests;
+    }
+
+    private function isPreviewRequest(): bool
+    {
+        return isset($_GET['birkly_studio_preview']) && $_GET['birkly_studio_preview'] === '1';
+    }
+
+    private function allowAdminPreview(): bool
+    {
+        if (!function_exists('haru_secure_session_start')) {
+            require_once dirname(__DIR__, 3) . '/api/session.php';
+        }
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            haru_secure_session_start();
+        }
+        return function_exists('studio_user_can_manage') && studio_user_can_manage();
     }
 }

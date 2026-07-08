@@ -80,14 +80,15 @@ design-reviewer:     M1 shell, M5 split view, M9 inspector
 docs-writer:         M15
 qa-verifier:         M16
 
-CLOSURE (P23-M16):
-[ ] STU-IDE-01…10 + STU-PRO-01…15 all pass
-[ ] Smoke: file tree → 3 tabs → visual+code split → Open project ↗ → SSR publish
-[ ] Filesystem path traversal blocked
-[ ] P22 v1 project opens in IDE without data loss
-[ ] performance_budget_test.php green
-[ ] V-STU-02 evidence
-[ ] Single digest notification
+## Closure (P23-M16)
+
+- [x] STU-IDE-01…10 + STU-PRO-01…15 all pass
+- [x] Smoke: file tree → 3 tabs → visual+code split → Open project ↗ → SSR publish
+- [x] Filesystem path traversal blocked
+- [x] P22 v1 project opens in IDE without data loss
+- [x] performance_budget_test.php green
+- [x] V-STU-02 evidence
+- [x] Single digest notification
 
 ANTI-PATTERNS:
 - Keeping v1 single-page dropdown UI as primary — IDE replaces it

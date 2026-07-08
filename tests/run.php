@@ -72,6 +72,8 @@ $suites = [
     'studio_public_routes_test.php',
     'studio_repository_test.php',
     'studio_renderer_test.php',
+    'studio_filesystem_test.php',
+    'studio_compiler_v2_test.php',
     'client_template_parity_test.php',
     'ai_permissions_test.php',
     'ai_context_pack_test.php',
