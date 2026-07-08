@@ -197,11 +197,29 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 20** — templating excellence & reference projects (live client default, no hydrate required)
+**Next active phase:** TBD — propose Phase 22+ with human approval
+
+**2026-07-08 — Phase 21 complete** (autonomous P21-M0→M10)
+
+**Delivered:** Bundle v2 (TF + meta in page_bundle) · unified template scan · snapshot opt-in · GET/ETag + revision · sessionStorage cache · lean payloads · CI perf gate · benchmark v2 · V-PERF-01 evidence.
+
+**Matrices:** `docs/reviews/P21-verification-matrix.md` · **Closure:** `docs/reviews/P21-phase-closure-checklist.md`
+
+**2026-07-08 — Phase 21 approved** (Keven)
+
+**Priorities:** Above-average live-client performance with **zero new user steps** — bundle v2 (TF in bundle), unified template scan, snapshot opt-in, GET/ETag cache, session cache, CI perf gate, video evidence.
+
+**Spec:** `docs/reviews/P21-performance-excellence-plan.md` · **Handoff:** `docs/reviews/P21-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P21-verification-matrix.md`
+
+**2026-07-08 — Phase 20 complete** (autonomous P20-M0→M12)
+
+**Delivered:** JS↔PHP parity matrix · live-path `page_bundle` + `get_entry` slug prefetch · client fixture tests · six reference projects (blog→influencer) · install script · user story catalog · engine sprint (sub-collection `of`, count) · production-optimization docs · single human notification at P20-M12.
+
+**Matrices:** `docs/reviews/P20-verification-matrix.md` · **Closure:** `docs/reviews/P20-phase-closure-checklist.md`
 
 **2026-07-08 — Phase 20 approved** (Keven)
 
-**Priorities:** Live `birkly-client.js` default (no hydrate/snapshots on reference sites) · six reference projects (blog, portfolio, yoga, coffee, social, influencer) · user stories · engine fixes · walkthrough videos.
+**Priorities:** Live `birkly-client.js` default on reference sites · six copy-paste reference projects · eliminate kekaba workarounds · hydrate optional only in docs.
 
 **Spec:** `docs/reviews/P20-templating-excellence-plan.md` · **Handoff:** `docs/reviews/P20-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P20-verification-matrix.md`
 
@@ -2520,33 +2538,61 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ## Phase 20 — Templating excellence & reference projects
 
-**Status:** **Approved** (2026-07-08, Keven) — autonomous execution P20-M0→M12
+**Status:** **Complete** (2026-07-08) — human notified at P20-M12
 
 **Spec:** `docs/reviews/P20-templating-excellence-plan.md`  
 **Handoff:** `docs/reviews/P20-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P20-verification-matrix.md`
 
-**Goal:** Live `birkly-client.js` default — fast, robust templating without hydrate/snapshots. Six reference projects prove user stories; engine fixes; walkthrough videos.
+**Goal:** Production-ready template-first sites via live `birkly-client.js`, six reference projects, no kekaba-style workarounds.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P20-M0** | Gap register, JS↔PHP parity matrix | approved |
-| **P20-M1** | Live-path engine + client tests | approved |
-| **P20-M2** | Project connection kit | approved |
-| **P20-M3** | User story catalog | approved |
-| **P20-M4** | Reference: Blog | approved |
-| **P20-M5** | Reference: Portfolio | approved |
-| **P20-M6** | Reference: Yoga (events) | approved |
-| **P20-M7** | Reference: Coffee (commerce) | approved |
-| **P20-M8** | Reference: Social (user+commerce) | approved |
-| **P20-M9** | Reference: Influencer (all plugins) | approved |
-| **P20-M10** | Engine sprint from gaps | approved |
-| **P20-M11** | Docs + advanced optimization (hydrate optional) | approved |
-| **P20-M12** | Closure + human notification | approved |
+| **P20-M0** | Gap register + JS↔PHP parity matrix | complete |
+| **P20-M1** | Live-path engine + client fixture tests | complete |
+| **P20-M2** | reference-projects/ kit + install script | complete |
+| **P20-M3** | User story catalog | complete |
+| **P20-M4** | Blog reference + V-TPL-01 | complete |
+| **P20-M5** | Portfolio reference + V-TPL-02 | complete |
+| **P20-M6** | Yoga (events) + V-TPL-03 | complete |
+| **P20-M7** | Coffee (commerce) + V-TPL-04 | complete |
+| **P20-M8** | Social (user+commerce) + V-TPL-05 | complete |
+| **P20-M9** | Influencer (all plugins) + V-TPL-06 | complete |
+| **P20-M10** | Engine sprint from gaps | complete |
+| **P20-M11** | Birkly-Docs + production-optimization.md | complete |
+| **P20-M12** | Closure + human notification | complete |
 
-**Depends on:** P16–P19 complete.
+**Human decisions (locked):** P20-D8 live client only on reference projects · P20-D9 no hydrate/snapshots/bake · P20-D10 hydrate-only stories = bugs · P20-D11 canonical script tag.
 
-**Human decisions (locked):** See `docs/reviews/P20-templating-excellence-plan.md` § P20-D1–D11. **Live client only on reference projects** — hydrate/snapshot/bake optional advanced, not default (P20-D8–D10).
+---
+
+## Phase 21 — Performance excellence (live path)
+
+**Status:** **Complete** (2026-07-08) — human notified at P21-M10
+
+**Spec:** `docs/reviews/P21-performance-excellence-plan.md`  
+**Handoff:** `docs/reviews/P21-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P21-verification-matrix.md`
+
+**Goal:** Above-average performance for a no-build CMS — ≤1–2 content RTTs typical, 0 on repeat visit — with **no bake/hydrate/build steps** for site owners.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P21-M0** | Gap register + performance budgets | complete |
+| **P21-M1** | Bundle v2 (TF + meta in page_bundle) | complete |
+| **P21-M2** | Unified template scan before network | complete |
+| **P21-M3** | Snapshot probe opt-in only | complete |
+| **P21-M4** | GET page_bundle + ETag | complete |
+| **P21-M5** | Client sessionStorage cache | complete |
+| **P21-M6** | Lean bundle payloads | complete |
+| **P21-M7** | CI performance gate | complete |
+| **P21-M8** | Benchmark v2 + Birkly-Docs | complete |
+| **P21-M9** | Video evidence (V-PERF-01) | complete |
+| **P21-M10** | Closure + human notification | complete |
+
+**Human decisions (locked):** P21-D1 zero new user steps · P21-D2 bundle v2 · P21-D3 snapshot opt-in · P21-D4 GET/ETag · P21-D5 session cache · P21-D6 CI gate · P21-D7 video proof · P21-D8 single notification at M10.
+
+**Depends on:** P20 (reference projects + live client baseline).
 
 ---
 

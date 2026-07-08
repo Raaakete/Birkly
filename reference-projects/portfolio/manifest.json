@@ -1,0 +1,8 @@
+{
+  "name": "portfolio",
+  "title": "Portfolio Reference Site",
+  "description": "Creative portfolio with gallery index and project detail pages.",
+  "plugins": [],
+  "collections": ["projects", "site_elements"],
+  "video_story": "V-TPL-02"
+}

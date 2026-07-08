@@ -1,0 +1,8 @@
+{
+  "name": "blog",
+  "title": "Blog Reference Site",
+  "description": "Minimal blog with homepage teaser, blog index, and slug-based post detail.",
+  "plugins": [],
+  "collections": ["blog", "site_elements"],
+  "video_story": "V-TPL-01"
+}

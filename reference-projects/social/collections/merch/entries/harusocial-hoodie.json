@@ -1,0 +1,23 @@
+{
+  "id": "merch-hoodie",
+  "slug": "harusocial-hoodie",
+  "status": "published",
+  "created_at": "2026-07-08T00:00:00+00:00",
+  "title": "HaruSocial Hoodie",
+  "description": "Soft cotton hoodie with embroidered logo.",
+  "commerce": {
+    "fulfillment": "ship",
+    "purchase_options": [
+      {
+        "id": "default",
+        "label": "One size",
+        "billing": "one_time",
+        "price_cents": 4999,
+        "currency": "eur"
+      }
+    ],
+    "quantity_available": 50,
+    "sku": "HS-HOODIE",
+    "weight_grams": 500
+  }
+}

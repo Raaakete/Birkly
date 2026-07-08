@@ -1,0 +1,26 @@
+{
+  "fields": [
+    { "name": "content", "type": "textarea", "label": "Content", "required": true },
+    { "name": "author_name", "type": "text", "label": "Author name" },
+    { "name": "author_user_id", "type": "text", "label": "Author user ID" },
+    { "name": "visibility", "type": "select", "label": "Visibility", "options": [
+      { "label": "Public", "value": "public" },
+      { "label": "Private", "value": "private" },
+      { "label": "Connections", "value": "relationship" }
+    ], "default": "public" }
+  ],
+  "sub_collections": {
+    "comments": {
+      "fields": [
+        { "name": "content", "type": "textarea", "label": "Comment", "required": true },
+        { "name": "author_name", "type": "text", "label": "Author" },
+        { "name": "author_user_id", "type": "text", "label": "Author user ID" }
+      ]
+    },
+    "likes": {
+      "fields": [
+        { "name": "user_id", "type": "text", "label": "User ID" }
+      ]
+    }
+  }
+}

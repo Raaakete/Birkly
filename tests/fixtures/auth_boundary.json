@@ -44,10 +44,10 @@
       "expect": [200]
     },
     {
-      "label": "page_bundle.php POST required",
+      "label": "page_bundle.php GET requires requests",
       "path": "/api/page_bundle.php",
       "method": "GET",
-      "expect": [405]
+      "expect": [400]
     },
     {
       "label": "page_bundle.php empty body",

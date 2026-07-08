@@ -1,0 +1,51 @@
+/* Yoga studio reference site */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --sage: #7d9b8a;
+  --sage-dark: #5a7a68;
+  --cream: #f7f4ef;
+  --text: #2c3330;
+  --muted: #6b7570;
+  --border: #dde5e0;
+}
+body { font-family: system-ui, sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 1.25rem; }
+header { background: var(--sage); color: #fff; padding: 1.25rem 0; }
+header h1 { font-size: 1.35rem; font-weight: 600; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { margin-top: 0.75rem; display: flex; gap: 1.25rem; }
+nav a { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 0.95rem; }
+nav a:hover, nav a.active { color: #fff; text-decoration: underline; }
+.hero { text-align: center; padding: 3rem 0 2rem; }
+.hero h2 { font-size: 2.25rem; font-weight: 300; margin-bottom: 0.5rem; }
+.hero p { color: var(--muted); font-size: 1.1rem; }
+.section-title { font-size: 1.5rem; margin-bottom: 1.25rem; color: var(--sage-dark); }
+.event-list, .schedule-list { list-style: none; margin-bottom: 3rem; }
+.event-list li, .schedule-list li {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.event-list h3 { font-size: 1.1rem; margin-bottom: 0.35rem; }
+.event-list h3 a { color: var(--text); text-decoration: none; }
+.event-list h3 a:hover { color: var(--sage-dark); }
+.event-meta { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.5rem; }
+.btn {
+  display: inline-block;
+  background: var(--sage);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.35rem;
+  text-decoration: none;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+}
+.btn:hover { background: var(--sage-dark); }
+.schedule-list .day { font-weight: 600; color: var(--sage-dark); }
+.event-detail { max-width: 640px; margin: 2rem auto 3rem; }
+.event-detail h1 { font-size: 2rem; font-weight: 400; margin-bottom: 0.5rem; }
+.event-detail .meta { color: var(--muted); margin-bottom: 1.5rem; }
+footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.875rem; border-top: 1px solid var(--border); }

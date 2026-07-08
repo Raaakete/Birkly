@@ -1,0 +1,26 @@
+{
+  "id": "var-eth-1kg-ground",
+  "slug": "eth-1kg-ground",
+  "status": "published",
+  "parent_id": "coffee-ethiopian",
+  "parent_collection": "products",
+  "sub_collection": "variants",
+  "title": "1kg · Filter grind",
+  "size": "1kg",
+  "grind": "Filter grind",
+  "commerce": {
+    "fulfillment": "ship",
+    "purchase_options": [
+      {
+        "id": "buy_once",
+        "label": "One-time purchase",
+        "billing": "one_time",
+        "price_cents": 4499,
+        "currency": "eur"
+      }
+    ],
+    "quantity_available": 50,
+    "sku": "ETH-1KG-FG",
+    "weight_grams": 1000
+  }
+}

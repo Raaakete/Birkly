@@ -83,7 +83,8 @@
             data: {},
             keys: new Set(),
             failed: new Set(),
-            subIndex: {}
+            subIndex: {},
+            revision: null
         },
         
         // Tracking ID (from data-tracking-id attribute)
@@ -310,14 +311,44 @@
         };
         
         Birkly.conditionals.resolveCollectionEntryRef = function(ref, data) {
-            const m = String(ref || '').trim().match(/^'([^']+)'\.'([^']+)'$/);
+            const trimmed = String(ref || '').trim();
+            const special = trimmed.match(/^'([^']+)'\.'(current|newest|last-updated)'$/);
+            if (special) {
+                return Birkly.conditionals.resolveParentCollectionEntry(special[1], special[2], data);
+            }
+            const m = trimmed.match(/^'([^']+)'\.'([^']+)'$/);
             if (!m) return undefined;
-            const collection = m[1];
-            const identifier = m[2];
+            return Birkly.conditionals.resolveParentCollectionEntry(m[1], m[2], data);
+        };
 
+        Birkly.conditionals.resolveParentCollectionEntry = function(collection, identifier, data) {
             if (collection === 'site_elements') {
                 const se = data.site_elements || {};
                 return se[identifier];
+            }
+
+            if (identifier === 'current') {
+                if (data.entry) {
+                    return data.entry;
+                }
+                const prefix = '__entry__:' + collection + ':';
+                for (const key of Object.keys(data)) {
+                    if (key.startsWith(prefix) && data[key]) {
+                        return data[key];
+                    }
+                }
+                return undefined;
+            }
+
+            if (identifier === 'newest' || identifier === 'last-updated') {
+                const entries = data[collection];
+                if (!Array.isArray(entries) || !entries.length) return undefined;
+                const field = identifier === 'last-updated' ? 'updated_at' : 'created_at';
+                return entries.slice().sort((a, b) => {
+                    const da = Date.parse(a && a[field] ? a[field] : 0) || 0;
+                    const db = Date.parse(b && b[field] ? b[field] : 0) || 0;
+                    return db - da;
+                })[0];
             }
 
             const entries = data[collection];
@@ -329,6 +360,90 @@
             }
 
             return undefined;
+        };
+
+        Birkly.conditionals.parseLoopInClause = function(inClause) {
+            const raw = String(inClause || '').trim();
+            const ofSub = raw.match(/^['"]([^'"]+)['"]\s+of\s+['"]([^'"]+)['"]\.(?:['"]([^'"]+)['"]|(current|newest|last-updated))\s*$/);
+            if (ofSub) {
+                return {
+                    kind: 'sub_of',
+                    subCollection: ofSub[1],
+                    parentCollection: ofSub[2],
+                    parentIdentifier: ofSub[3] || ofSub[4]
+                };
+            }
+            const quoted = raw.match(/^['"]([^'"]+)['"]\s*$/);
+            if (quoted) return { kind: 'collection', name: quoted[1] };
+            if (/^[a-zA-Z0-9_\.]+$/.test(raw)) return { kind: 'path', path: raw };
+            return { kind: 'raw', raw };
+        };
+
+        Birkly.conditionals.resolveSubCollectionItems = function(subCollection, parentCollection, parentIdentifier, data) {
+            const parent = Birkly.conditionals.resolveParentCollectionEntry(parentCollection, parentIdentifier, data);
+            if (!parent) return [];
+
+            const ids = [parent.id, parent.slug, parentIdentifier].filter(v => v !== undefined && v !== null && v !== '');
+            for (const id of ids) {
+                const key = '__sub__:' + parentCollection + ':' + id + ':' + subCollection;
+                if (Array.isArray(data[key])) return data[key];
+            }
+
+            if (Array.isArray(data[subCollection]) && data.entry) {
+                const entry = data.entry;
+                if (ids.some(id => String(entry.id) === String(id) || String(entry.slug) === String(id))) {
+                    return data[subCollection];
+                }
+            }
+
+            if (Array.isArray(parent[subCollection])) return parent[subCollection];
+            return [];
+        };
+
+        Birkly.conditionals.resolveLoopItems = function(inClause, data) {
+            const parsed = Birkly.conditionals.parseLoopInClause(inClause);
+            if (parsed.kind === 'sub_of') {
+                return Birkly.conditionals.resolveSubCollectionItems(
+                    parsed.subCollection,
+                    parsed.parentCollection,
+                    parsed.parentIdentifier,
+                    data
+                );
+            }
+            if (parsed.kind === 'collection') {
+                const name = parsed.name;
+                if (data[name] !== undefined && data[name] !== null && Array.isArray(data[name])) {
+                    return data[name];
+                }
+                if (data.entry && Array.isArray(data.entry[name])) {
+                    return data.entry[name];
+                }
+                return Array.isArray(data[name]) ? data[name] : [];
+            }
+            if (parsed.kind === 'path') {
+                const value = getNestedValue(data, parsed.path);
+                return Array.isArray(value) ? value : [];
+            }
+            return [];
+        };
+
+        Birkly.conditionals.parseForLoopHeader = function(str) {
+            const m = String(str || '').match(/\{for\s+(?:each\s+)?([a-zA-Z0-9_]+)\s+in\s+(.+?)\}/);
+            if (!m) return null;
+            let rest = m[2].trim();
+            let filterExpr = null;
+            let orderExpr = null;
+            const orderMatch = rest.match(/\s+ordered\s+by\s+(.+)$/i);
+            if (orderMatch) {
+                orderExpr = orderMatch[1].trim();
+                rest = rest.substring(0, orderMatch.index).trim();
+            }
+            const withMatch = rest.match(/\s+with\s+(.+)$/i);
+            if (withMatch) {
+                filterExpr = withMatch[1].trim();
+                rest = rest.substring(0, withMatch.index).trim();
+            }
+            return { full: m[0], itemVar: m[1], inClause: rest, filterExpr, orderExpr };
         };
         
         Birkly.conditionals.renderConditionals = function(template, data, itemPrefix = '') {
@@ -638,22 +753,123 @@
                         filter_field: el.getAttribute('data-filter-field') || '',
                         filter_value: el.getAttribute('data-filter-value') || ''
                     });
+                } else if (type === 'template_function') {
+                    const name = el.getAttribute('data-name') || '';
+                    let args = [];
+                    try {
+                        args = JSON.parse(el.getAttribute('data-args') || '[]');
+                    } catch (e) { args = []; }
+                    if (name) {
+                        add({
+                            type: 'template_function',
+                            into,
+                            name,
+                            args: Array.isArray(args) ? args : []
+                        });
+                    }
                 }
             });
 
+            if (Birkly.enableTemplateFunctions !== false) {
+                add({ type: 'template_functions_meta', into: '__tf_meta__' });
+            }
+
+            const route = Birkly.bundle.detectPageRoute();
+            if (route && route.slug) {
+                const collection = Birkly.bundle.resolveSlugPageCollection(combined, route);
+                if (collection) {
+                    const into = '__entry__:' + collection + ':' + route.slug;
+                    add({ type: 'get_entry', into, collection, slug: route.slug });
+                }
+            }
+
             return requests;
+        };
+
+        Birkly.bundle.resolveSlugPageCollection = function (templateHtml, route) {
+            const collMeta = document.querySelector('meta[name="birkly-collection"]');
+            let collection = collMeta && collMeta.content ? collMeta.content.trim() : '';
+            if (collection && /^[a-zA-Z0-9_-]+$/.test(collection)) {
+                return collection;
+            }
+            try {
+                const qp = new URLSearchParams(window.location.search);
+                collection = qp.get('collection') || '';
+                if (collection && /^[a-zA-Z0-9_-]+$/.test(collection)) {
+                    return collection;
+                }
+            } catch (e) { /* ignore */ }
+            const page = route && route.page ? route.page : '';
+            if (page === 'post') return 'blog';
+            if (page === 'service') return 'services';
+            if (page === 'product') return 'products';
+            if (page === 'event') return 'events';
+            const slugs = Birkly.bundle.getTemplateCollectionSlugs(templateHtml || '');
+            if (slugs.length === 1) return slugs[0];
+            return null;
+        };
+
+        Birkly.bundle.ingestTemplateFunctionsMeta = function (list) {
+            const meta = Array.isArray(list) ? list : [];
+            Birkly.templateFunctions.meta = meta;
+            Birkly.templateFunctions.names = new Set(meta.map((f) => f.name).filter(Boolean));
+            Birkly.templateFunctions.zeroArg = new Set(
+                meta
+                    .filter((f) => Array.isArray(f.arguments) && f.arguments.length === 0)
+                    .map((f) => f.name)
+            );
+            Birkly.templateFunctions.loaded = true;
+        };
+
+        Birkly.bundle.shouldProbeSnapshot = function () {
+            const meta = document.querySelector('meta[name="birkly-snapshot"]');
+            if (meta && String(meta.content || '').trim() === '1') {
+                return true;
+            }
+            if (document.documentElement.getAttribute('data-birkly-snapshot') === '1') {
+                return true;
+            }
+            return false;
+        };
+
+        Birkly.bundle.getBundleCacheKey = function (requests) {
+            const route = Birkly.bundle.detectPageRoute();
+            const page = route && route.page ? route.page : 'index';
+            const slug = route && route.slug ? route.slug : '';
+            let h = 0;
+            const s = JSON.stringify(requests || []);
+            for (let i = 0; i < s.length; i++) {
+                h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            }
+            return 'birkly_bundle_v2:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
         };
 
         Birkly.bundle.applyBundleResponse = function (requests, json) {
             if (!Birkly.pageBundle.data) Birkly.pageBundle.data = {};
             Object.assign(Birkly.pageBundle.data, json.data);
+            if (json.revision) {
+                Birkly.pageBundle.revision = json.revision;
+            }
+            if (json.data && json.data.__tf_meta__) {
+                Birkly.bundle.ingestTemplateFunctionsMeta(json.data.__tf_meta__);
+            }
             const errorList = Array.isArray(json.errors) ? json.errors : [];
             requests.forEach((req) => {
-                Birkly.pageBundle.keys.add(req.into);
-                const failed = errorList.some((err) => String(err).indexOf(req.into) !== -1);
-                const rows = json.data[req.into];
-                if (failed || (req.type !== 'get_entry' && !Array.isArray(rows))) {
-                    Birkly.pageBundle.failed.add(req.into);
+                const into = req.into || (req.type === 'template_functions_meta' ? '__tf_meta__' : '');
+                if (!into) return;
+                Birkly.pageBundle.keys.add(into);
+                const failed = errorList.some((err) => String(err).indexOf(into) !== -1);
+                const rows = json.data[into];
+                if (req.type === 'template_function' && req.name) {
+                    const tfKey = req.name + '|' + JSON.stringify(req.args || []);
+                    Birkly.templateFunctions.cache.set(tfKey, rows);
+                    return;
+                }
+                if (req.type === 'template_functions_meta') {
+                    return;
+                }
+                if (failed || (req.type !== 'get_entry' && req.type !== 'template_function' && !Array.isArray(rows))) {
+                    Birkly.pageBundle.failed.add(into);
                 }
             });
             Birkly.pageBundle.loaded = true;
@@ -663,25 +879,70 @@
             if (!requests || !requests.length) return false;
             const label = options.label || 'page bundle';
             const url = Birkly.cmsUrl + '/api/page_bundle.php';
+            const language = Birkly.currentLanguage || 'en';
+            const cacheKey = Birkly.bundle.getBundleCacheKey(requests);
+            let cached = null;
+            try {
+                const raw = sessionStorage.getItem(cacheKey);
+                if (raw) cached = JSON.parse(raw);
+            } catch (e) { /* ignore */ }
+
+            if (cached && cached.data && cached.revision) {
+                Birkly.bundle.applyBundleResponse(requests, cached);
+                Birkly.log('Birkly: loadPageBundle from session cache', { revision: cached.revision });
+            }
+
             try {
                 Birkly.log('Birkly: loadPageBundle', { count: requests.length, label });
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        language: Birkly.currentLanguage || 'en',
-                        requests
-                    }),
-                    credentials: 'include'
-                });
-                const json = await res.json().catch(() => ({}));
-                if (!res.ok || json.status !== 'ok' || !json.data) {
-                    Birkly.warn('Birkly: page bundle failed', json);
-                    return false;
+                const headers = {};
+                if (cached && cached.revision) {
+                    headers['If-None-Match'] = cached.revision;
+                }
+                let json = null;
+                try {
+                    const encoded = btoa(JSON.stringify(requests))
+                        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                    const getUrl = url + '?language=' + encodeURIComponent(language)
+                        + '&requests=' + encodeURIComponent(encoded) + '&lean=1';
+                    const getRes = await fetch(getUrl, { method: 'GET', headers, credentials: 'include' });
+                    if (getRes.status === 304 && cached) {
+                        return true;
+                    }
+                    if (getRes.ok) {
+                        json = await getRes.json().catch(() => ({}));
+                    }
+                } catch (getErr) {
+                    Birkly.warn('Birkly: GET page bundle failed, falling back to POST', getErr);
+                }
+                if (!json || json.status !== 'ok' || !json.data) {
+                    const postRes = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...headers },
+                        body: JSON.stringify({ language, requests, lean: true }),
+                        credentials: 'include'
+                    });
+                    json = await postRes.json().catch(() => ({}));
+                    if (!postRes.ok || json.status !== 'ok' || !json.data) {
+                        if (cached && cached.data) {
+                            return true;
+                        }
+                        Birkly.warn('Birkly: page bundle failed', json);
+                        return false;
+                    }
                 }
                 Birkly.bundle.applyBundleResponse(requests, json);
+                try {
+                    sessionStorage.setItem(cacheKey, JSON.stringify({
+                        revision: json.revision || null,
+                        data: json.data,
+                        errors: json.errors || []
+                    }));
+                } catch (e) { /* quota */ }
                 return true;
             } catch (err) {
+                if (cached && cached.data) {
+                    return true;
+                }
                 Birkly.warn('Birkly: page bundle error', err);
                 return false;
             }
@@ -772,6 +1033,8 @@
     // renderConditionals is defined as a function below to maintain backward compatibility
     const isTruthyTemplateValue = Birkly.conditionals.isTruthyTemplateValue.bind(Birkly.conditionals);
     const resolveCollectionEntryRef = Birkly.conditionals.resolveCollectionEntryRef.bind(Birkly.conditionals);
+    const resolveLoopItems = Birkly.conditionals.resolveLoopItems.bind(Birkly.conditionals);
+    const parseForLoopHeader = Birkly.conditionals.parseForLoopHeader.bind(Birkly.conditionals);
     const getTemplateCollectionSlugs = Birkly.bundle.getTemplateCollectionSlugs;
     const collectBundleRequests = Birkly.bundle.collectBundleRequests;
     const applyBundleResponse = Birkly.bundle.applyBundleResponse;
@@ -794,6 +1057,19 @@
         cache: new Map() // key -> result
     };
 
+    function mergePageBundleIntoData(data) {
+        if (!Birkly.pageBundle.loaded || !Birkly.pageBundle.data) {
+            return data;
+        }
+        Object.keys(Birkly.pageBundle.data).forEach((key) => {
+            if (key === '__tf_meta__') return;
+            if (data[key] === undefined) {
+                data[key] = Birkly.pageBundle.data[key];
+            }
+        });
+        return data;
+    }
+
     async function loadTemplateFunctionsMeta() {
         // Short‑circuit when template functions are disabled.
         if (!Birkly.enableTemplateFunctions) {
@@ -805,6 +1081,11 @@
         }
 
         if (Birkly.templateFunctions.loaded) return Birkly.templateFunctions.meta;
+
+        if (Birkly.pageBundle.data && Birkly.pageBundle.data.__tf_meta__) {
+            Birkly.bundle.ingestTemplateFunctionsMeta(Birkly.pageBundle.data.__tf_meta__);
+            return Birkly.templateFunctions.meta;
+        }
 
         try {
             const res = await fetch(Birkly.apiEndpoint + '?action=template_functions_list', { credentials: 'include' });
@@ -939,8 +1220,6 @@
         const html = templateString || (document.body ? (document.body.innerHTML || '') : '');
         
         // Hydrate only template functions that are registered (by plugins) and used in the template.
-        // No project-specific names: user_logged_in, user_current, etc. come from the user plugin
-        // when it is active and registers them via the API.
         if (Birkly.templateFunctions.zeroArg.size > 0) {
             const namesToFetch = [];
             for (const name of Birkly.templateFunctions.zeroArg) {
@@ -1273,56 +1552,25 @@
         }
         
         // Process loops one at a time
-        const loopRegex = /\{for\s+(?:each\s+)?([a-zA-Z0-9_]+)\s+in\s+(?:['"]([^'"]+)['"]|([a-zA-Z0-9_\.]+))\}/;
-        const match = template.match(loopRegex);
-        if (!match) return template; // No more loops to process
+        const loopHeader = parseForLoopHeader(template);
+        if (!loopHeader) return template;
+        const match = [loopHeader.full, loopHeader.itemVar, loopHeader.inClause];
+        match.filterExpr = loopHeader.filterExpr;
+        match.orderExpr = loopHeader.orderExpr;
         
-        const itemVar = match[1];
-        const quotedName = match[2];
-        const unquotedPath = match[3];
-        const collectionName = quotedName || unquotedPath || '';
+        const itemVar = loopHeader.itemVar;
+        const inClause = loopHeader.inClause;
         
-        // Resolve the array to loop over
-        let resolved = null;
-        if (unquotedPath) {
-            // Dot notation path (e.g., entry.tags)
-            resolved = getNestedValue(data, unquotedPath);
-        } else if (quotedName) {
-            // Quoted name: could be a collection OR a field on current entry
-            // When inside a loop, entry fields are spread into data, so check top-level first
-            // Then check data.entry, then fallback to collection
-            if (data[quotedName] !== undefined && data[quotedName] !== null) {
-                // Check top-level data first (for when entry fields are spread)
-                resolved = data[quotedName];
-            } else if (data.entry && data.entry[quotedName] !== undefined && data.entry[quotedName] !== null) {
-                // Check if it's a field on the current entry
-                resolved = data.entry[quotedName];
-            } else {
-                // Fallback: treat as collection name
-                resolved = data[quotedName] || [];
-            }
-        } else {
-            resolved = data[collectionName] || [];
-        }
+        const items = resolveLoopItems(inClause, data);
         
-        // Ensure resolved is an array
-        const items = Array.isArray(resolved) ? resolved : [];
-        
-        // Debug logging for tags specifically
-        if (quotedName === 'tags') {
+        if (inClause === "'tags'" || inClause === '"tags"') {
             Birkly.log('Birkly: processNestedLoops - resolving tags:', {
-                quotedName,
-                resolved,
-                resolvedType: typeof resolved,
-                isArray: Array.isArray(resolved),
+                inClause,
                 itemsLength: items.length,
                 dataKeys: Object.keys(data).slice(0, 20),
                 hasEntry: !!data.entry,
-                entryKeys: data.entry ? Object.keys(data.entry).slice(0, 20) : [],
                 hasTagsInData: 'tags' in data,
-                tagsInData: data.tags,
-                hasTagsInEntry: data.entry && 'tags' in data.entry,
-                tagsInEntry: data.entry ? data.entry.tags : null
+                tagsInData: data.tags
             });
         }
         
@@ -1727,22 +1975,30 @@
             }
         }
         
+        // Handle {count of 'collection'} and {count of 'sub' of 'parent'.'slug'}
+        output = output.replace(/\{\s*count\s+of\s+([^}]+)\}/gi, (m, clause) => {
+            const items = resolveLoopItems(String(clause || '').trim(), data);
+            return String(Array.isArray(items) ? items.length : 0);
+        });
+        
         // Handle {for each item in 'collection'} loops (quoted) AND {for each item in collectionVar} loops (unquoted)
         // Extended syntax supports optional filtering and ordering:
         // - {for each entry in 'blog'}
         // - {for each entry in 'blog' with status = published}
         // - {for each entry in 'blog' ordered by newest}
-        // - {for each entry in 'blog' with status = published ordered by newest}
-        // - {for each comment in comments}
-        // - {for each entry in profile_posts}
-        const loopRegex = /\{for\s+(?:each\s+)?([a-zA-Z0-9_]+)\s+in\s+(?:['"]([^'"]+)['"]|([a-zA-Z0-9_\.]+))(?:\s+with\s+([^{}]+?))?(?:\s+ordered\s+by\s+([^{}]+?))?\}/g;
+        // - {for each entry in 'comments' of 'blog'.'slug-here'}
+        // - {for each entry in 'comments' of 'blog'.current ordered by newest}
         const __loopPlaceholders = [];
-        output = output.replace(loopRegex, (match, itemVar, quotedName, unquotedPath, filterExpr, orderExpr) => {
+        let loopHeader = parseForLoopHeader(output);
+        while (loopHeader) {
+            const match = loopHeader.full;
+            const itemVar = loopHeader.itemVar;
+            const inClause = loopHeader.inClause;
+            const filterExpr = loopHeader.filterExpr;
+            const orderExpr = loopHeader.orderExpr;
             const __token = '__BIRKLY_LOOP__' + Math.random().toString(36).slice(2) + '__';
-            const collectionName = quotedName || unquotedPath || '';
-            const resolved = unquotedPath ? getNestedValue(data, unquotedPath) : (data[collectionName] || []);
-            let items = resolved || [];
-            if (!Array.isArray(items)) return '';
+            let items = resolveLoopItems(inClause, data);
+            if (!Array.isArray(items)) items = [];
             
             // Apply simple filters: currently supports single condition:
             // - status = published
@@ -1811,10 +2067,10 @@
             const loopContent = extractLoopContent(output, match);
             if (!loopContent) {
                 Birkly.warn('Birkly: extractLoopContent failed for loop:', match, 'in template sample:', output.substring(Math.max(0, output.indexOf(match) - 50), Math.min(output.length, output.indexOf(match) + 200)));
-                return match; // Return the original match so it doesn't disappear
+                break;
             }
             
-            Birkly.log('Birkly: Processing loop:', itemVar, 'in', collectionName, 'with', items.length, 'items');
+            Birkly.log('Birkly: Processing loop:', itemVar, 'in', inClause, 'with', items.length, 'items');
             Birkly.log('Birkly: Outer loop extracted content length:', loopContent.length, 'contains {for each item:', loopContent.includes('{for each item'), 'contains {endfor}:', loopContent.includes('{endfor}'));
             if (loopContent.includes('{for each item')) {
                 const nestedLoopIndex = loopContent.indexOf('{for each item');
@@ -1847,7 +2103,7 @@
                 
                 // Process nested loops FIRST (loops with 'in' clause like {for each reply_check in comments})
                 // This must happen BEFORE the old {for each tag} handler
-                const hasNestedLoopWithIn = /\{for\s+(?:each\s+)?([a-zA-Z0-9_]+)\s+in\s+(?:['"]([^'"]+)['"]|([a-zA-Z0-9_\.]+))\}/.test(itemOutput);
+                const hasNestedLoopWithIn = /\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+/.test(itemOutput);
                 if (hasNestedLoopWithIn) {
                     itemOutput = processNestedLoops(itemOutput, loopData, 0);
                 }
@@ -2320,8 +2576,10 @@
             // We return a token here, and after replace() we remove the original loopContent + matching {endfor}.
             Birkly.log('Birkly: Loop placeholder pushed, rendered length:', __rendered.length, 'items:', items.length, 'sample:', __rendered.substring(0, 120));
             __loopPlaceholders.push({ token: __token, loopContent, rendered: __rendered });
-            return __token;
-        });
+            const matchPos = output.indexOf(match);
+            output = output.substring(0, matchPos) + __token + output.substring(matchPos + match.length);
+            loopHeader = parseForLoopHeader(output);
+        }
 
         // Post-process: replace each token + original loopContent + matching {endfor}/{endforeach}
         // with the already-rendered HTML. Process in REVERSE order (innermost loops first) so that
@@ -3724,6 +3982,7 @@
                     current_year: new Date().getFullYear(),
                     site_elements: siteElements // Add site elements for use in templates
                 };
+                mergePageBundleIntoData(defaultData);
                 
                 const walker = document.createTreeWalker(
                     document.body,
@@ -4386,6 +4645,7 @@
                             language: Birkly.currentLanguage || 'en'
                         }
                     };
+                    mergePageBundleIntoData(data);
                     Birkly.log('Birkly: Data object created with site_elements:', Object.keys(data.site_elements || {}));
 
                     // Load template functions metadata first (required before hydration)
@@ -4727,51 +4987,25 @@
     async function getEntryBySlug(collection, slug) {
         try {
             Birkly.log('Birkly: Fetching entry by slug', { collection, slug });
-            const data = await fetchContent('list_entries', { collection: collection });
-            
+            const data = await fetchContent('get_entry', { collection: collection, slug: slug });
+
             if (!data) {
                 Birkly.warn('Birkly: No data returned from API');
                 return null;
             }
-            
+
             if (data.status !== 'ok') {
                 Birkly.warn('Birkly: API returned error:', data.message || data.status);
                 return null;
             }
-            
-            if (!data.data || !data.data.entries) {
-                Birkly.warn('Birkly: No entries in API response');
-                return null;
-            }
-            
-            // Normalize slug for comparison (handle both formats)
-            const normalizedSlug = slug.toLowerCase().trim();
-            
-            Birkly.log('Birkly: Searching for slug', normalizedSlug, 'in', data.data.entries.length, 'entries');
-            Birkly.log('Birkly: Available slugs:', data.data.entries.map(e => e.slug).filter(Boolean));
-            
-            const entry = data.data.entries.map(flattenLocalizedEntry).find(entry => {
-                const entrySlug = (entry.slug || '').toLowerCase().trim();
-                const match = entrySlug === normalizedSlug;
-                if (match) {
-                    Birkly.log('Birkly: Found entry:', entry.title || entry.id);
-                }
-                return match;
-            });
-            
+
+            const entry = data.data && data.data.entry;
             if (entry) {
-                return entry;
+                Birkly.log('Birkly: Found entry:', entry.title || entry.id);
+                return flattenLocalizedEntry(entry);
             }
-            
-            // If not found, log for debugging
-            Birkly.warn('Birkly: Entry not found', {
-                collection: collection,
-                slug: slug,
-                normalizedSlug: normalizedSlug,
-                availableSlugs: data.data.entries.map(e => e.slug).filter(Boolean),
-                entriesCount: data.data.entries.length,
-                allEntries: data.data.entries.map(e => ({ id: e.id, title: e.title, slug: e.slug, status: e.status }))
-            });
+
+            Birkly.warn('Birkly: Entry not found', { collection, slug });
         } catch (error) {
             console.error('Birkly: Error fetching entry by slug:', error);
             console.error('Birkly: Error stack:', error.stack);
@@ -4826,6 +5060,14 @@
             const type = el.getAttribute('data-birkly-prefetch');
             const into = el.getAttribute('data-birkly-into');
             if (!type || !into) return;
+
+            if (into in data && data[into] !== undefined && data[into] !== null) {
+                return;
+            }
+            if (Birkly.pageBundle.loaded && Birkly.pageBundle.data[into] !== undefined) {
+                data[into] = Birkly.pageBundle.data[into];
+                return;
+            }
 
             try {
                 if (type === 'sub_entries') {
@@ -5112,7 +5354,8 @@
         Birkly.log('Birkly: API endpoint detected:', Birkly.apiEndpoint);
 
         const bundleRequests = collectBundleRequests();
-        const snapshotLoaded = bundleRequests.length > 0 ? await tryLoadPageSnapshot() : false;
+        const snapshotLoaded = bundleRequests.length > 0 && Birkly.bundle.shouldProbeSnapshot()
+            ? await tryLoadPageSnapshot() : false;
         if (!snapshotLoaded && bundleRequests.length > 0) {
             await loadPageBundle(bundleRequests);
         }

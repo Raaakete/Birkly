@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="birkly-page" content="post">
+    <meta name="birkly-collection" content="social_posts">
+    <title>Post — HaruSocial</title>
+    <link rel="stylesheet" href="/reference-projects/social/website/styles.css">
+    <link rel="stylesheet" href="/reference-projects/social/website/social.css">
+    <meta
+        data-birkly-prefetch="sub_entries"
+        data-birkly-into="comments"
+        data-parent-collection="social_posts"
+        data-parent-entry-id="{id}"
+        data-sub-collection="comments"
+    >
+</head>
+<body>
+    <header class="social-header">
+        <div class="social-header-inner">
+            <h1><a href="/reference-projects/social/website/index.html">HaruSocial</a></h1>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 2rem; max-width: 640px;">
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-body">
+                <p class="text-muted"><strong>{ author_name }</strong> · { created_at }</p>
+                <div style="white-space: pre-wrap; margin: 1rem 0;">{ content }</div>
+            </div>
+        </div>
+
+        <h3>Comments</h3>
+        {for each comment in comments}
+        <div class="card" style="margin-bottom: 0.5rem;">
+            <div class="card-body">
+                <p class="text-muted" style="font-size: 0.875rem;"><strong>{ comment.author_name }</strong></p>
+                <p style="white-space: pre-wrap;">{ comment.content }</p>
+            </div>
+        </div>
+        {endfor}
+
+        {if user_logged_in}
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-body">
+                <form data-birkly-url="/api/public_sub_entry.php" data-birkly-success="redirect" data-birkly-redirect="self">
+                    <input type="hidden" name="parent_collection" value="social_posts" />
+                    <input type="hidden" name="parent_entry_id" value="{ id }" />
+                    <input type="hidden" name="sub_collection" value="comments" />
+                    <textarea name="content" class="form-control" rows="2" placeholder="Write a comment…" required></textarea>
+                    <input type="hidden" name="author_user_id" value="{user_current.id}" />
+                    <input type="hidden" name="author_name" value="{user_current.name}" />
+                    <button class="btn btn-primary" type="submit" style="margin-top: 0.5rem;">Comment</button>
+                </form>
+            </div>
+        </div>
+        {else}
+        <p class="text-muted"><a href="/reference-projects/social/website/login.html">Log in</a> to comment.</p>
+        {endif}
+
+        <p style="margin-top: 1.5rem;"><a href="/reference-projects/social/website/index.html">← Back to feed</a></p>
+    </main>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>
