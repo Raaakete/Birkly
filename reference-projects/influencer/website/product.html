@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="birkly-page" content="product">
+    <meta name="birkly-collection" content="products">
+    <title>{ title } — Maya Rivers Shop</title>
+    <link rel="stylesheet" href="/reference-projects/influencer/website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/influencer/website/index.html">Maya Rivers</a></h1>
+            <span>Cart: {commerce_cart_count}</span>
+        </div>
+    </header>
+    <main class="container" style="padding: 2rem 0; max-width: 640px;">
+        <h1>{ title }</h1>
+        <p>{ description }</p>
+        {for each variant in sub_entries variants}
+        <div style="border: 1px solid var(--color-border); padding: 1rem; margin: 0.75rem 0; border-radius: 0.5rem;">
+            <h3>{ variant.title }</h3>
+            {if variant has 'commerce'}
+            <p>€{commerce_price_from variant.commerce}</p>
+            {endif}
+            <form data-birkly-route="commerce" data-birkly-action="add" data-birkly-success="reload">
+                <input type="hidden" name="entry_id" value="{ variant.id }" />
+                <input type="hidden" name="collection" value="products" />
+                <input type="hidden" name="quantity" value="1" />
+                <input type="hidden" name="purchase_option_id" value="buy_once" />
+                <button type="submit" class="btn btn-primary">Add to cart</button>
+            </form>
+        </div>
+        {endfor}
+        <p style="margin-top: 1rem;"><a href="/reference-projects/influencer/website/index.html#shop">← Shop</a></p>
+    </main>
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

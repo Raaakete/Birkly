@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="birkly-page" content="project">
+    <meta name="birkly-collection" content="projects">
+    <title>{ title } — Studio North</title>
+    <link rel="stylesheet" href="/reference-projects/portfolio/website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/portfolio/website/index.html">Studio North</a></h1>
+        </div>
+    </header>
+
+    <main>
+        <article class="project-detail container">
+            <h1>{ title }</h1>
+            <p class="meta">
+                {if entry has 'client'}{ client }{endif}
+                {if entry has 'year'} · { year }{endif}
+                {if entry has 'category'} · { category }{endif}
+            </p>
+            <div class="content">
+                { content }
+            </div>
+            <a class="back-link" href="/reference-projects/portfolio/website/index.html">← All projects</a>
+        </article>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; Birkly Reference — Portfolio</p>
+        </div>
+    </footer>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maya Rivers — Influencer Reference</title>
+    <link rel="stylesheet" href="/reference-projects/influencer/website/styles.css">
+    <link rel="stylesheet" href="/reference-projects/influencer/website/social.css">
+    <link rel="stylesheet" href="/reference-projects/influencer/website/influencer.css">
+    <meta data-birkly-prefetch="template_function" data-birkly-into="upcoming" data-name="upcoming_events" data-args="[3]">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/influencer/website/index.html">Maya Rivers</a></h1>
+            <nav class="influencer-nav">
+                <a href="#blog">Blog</a>
+                <a href="#events">Events</a>
+                <a href="#shop">Shop</a>
+                <a href="#feed">Feed</a>
+                {if user_logged_in}
+                <a href="/reference-projects/influencer/website/profile.html?user_id={user_current.id}">Profile</a>
+                {else}
+                <a href="/reference-projects/influencer/website/login.html">Login</a>
+                {endif}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            {from 'site_elements' get entry 'hero'}
+            <h2>{'content'.0.'value'}</h2>
+            <p class="hero-subtitle">{'content'.1.'value'}</p>
+            {endget}
+        </section>
+
+        <section id="blog" class="influencer-section">
+            <h2>Latest posts</h2>
+            <div class="influencer-grid">
+                {for each entry in 'blog' with status = published ordered by newest limit 2}
+                <article class="influencer-card">
+                    <h3><a href="/reference-projects/influencer/website/post.html?slug={ slug }">{ title }</a></h3>
+                    {if entry has 'excerpt'}
+                    <p class="excerpt">{'excerpt'}</p>
+                    {endif}
+                </article>
+                {endfor}
+            </div>
+        </section>
+
+        <section id="events" class="influencer-section">
+            <h2>Upcoming events</h2>
+            <div class="influencer-grid">
+                {for each event in upcoming}
+                <article class="influencer-card">
+                    <h3><a href="/reference-projects/influencer/website/event.html?slug={ slug }">{ title }</a></h3>
+                    <p class="text-muted" style="font-size: 0.875rem;">{ start } · { venue }</p>
+                </article>
+                {endfor}
+            </div>
+        </section>
+
+        <section id="shop" class="influencer-section">
+            <h2>Shop <span style="font-size: 0.875rem; font-weight: normal; color: var(--color-text-light);">Cart: {commerce_cart_count}</span></h2>
+            <div class="influencer-grid">
+                {for each entry in 'products' with status = published}
+                <article class="influencer-card">
+                    <h3><a href="/reference-projects/influencer/website/product.html?slug={ slug }">{ title }</a></h3>
+                    <p>{ description }</p>
+                </article>
+                {endfor}
+            </div>
+        </section>
+
+        <section id="feed" class="influencer-section">
+            <h2>Community feed</h2>
+            {for each entry in 'social_posts' with status = published ordered by newest limit 3}
+            <div class="influencer-card" style="margin-bottom: 0.75rem;">
+                <p><strong>{ author_name }</strong></p>
+                <p style="white-space: pre-wrap;">{ content }</p>
+            </div>
+            {endfor}
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; Birkly Reference — Influencer</p>
+        </div>
+    </footer>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

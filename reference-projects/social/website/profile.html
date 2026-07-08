@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — HaruSocial</title>
+    <link rel="stylesheet" href="/reference-projects/social/website/styles.css">
+    <link rel="stylesheet" href="/reference-projects/social/website/social.css">
+    <meta data-birkly-prefetch="template_function" data-birkly-into="profile" data-name="user_profile" data-args='["{query.user_id}"]'>
+    <meta
+        data-birkly-prefetch="entries"
+        data-birkly-into="profile_posts"
+        data-collection="social_posts"
+        data-filter-field="author_user_id"
+        data-filter-value="{query.user_id}"
+    >
+</head>
+<body>
+    <header class="social-header">
+        <div class="social-header-inner">
+            <h1><a href="/reference-projects/social/website/index.html">HaruSocial</a></h1>
+            <nav class="social-header-nav">
+                <a href="/reference-projects/social/website/index.html">Feed</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 2rem; max-width: 640px;">
+        {if profile exist}
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-body">
+                <h2 style="margin-top: 0;">{ profile.name }</h2>
+                <p class="text-muted">{ profile.email }</p>
+            </div>
+        </div>
+        {endif}
+
+        <h3>Posts</h3>
+        {for each entry in profile_posts}
+        <div class="card" style="margin-bottom: 0.75rem;">
+            <div class="card-body">
+                <p style="white-space: pre-wrap;">{ content }</p>
+                <a href="/reference-projects/social/website/post.html?slug={ slug }&collection=social_posts">View thread</a>
+            </div>
+        </div>
+        {endfor}
+    </main>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "id": "col-social-posts",
+  "name": "Social Posts",
+  "slug": "social_posts",
+  "description": "User-generated posts for the social reference site",
+  "created_at": "2026-07-08T00:00:00+00:00",
+  "sub_collections": [
+    { "slug": "comments", "name": "Comments" },
+    { "slug": "likes", "name": "Likes" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "post-tip",
+  "slug": "template-first-tip",
+  "status": "published",
+  "created_at": "2026-07-02T14:00:00+00:00",
+  "updated_at": "2026-07-02T14:00:00+00:00",
+  "content": "Tip: reference projects use live birkly-client.js only — no hydrate, no snapshots, no custom fetch().",
+  "author_name": "Alice Demo",
+  "author_user_id": "alice-demo",
+  "visibility": "public"
+}

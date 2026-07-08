@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="birkly-page" content="event">
+    <meta name="birkly-collection" content="events">
+    <title>{ title } — Stillwater Yoga</title>
+    <link rel="stylesheet" href="/reference-projects/yoga/website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/yoga/website/index.html">Stillwater Yoga</a></h1>
+            <nav>
+                <a href="/reference-projects/yoga/website/index.html">Upcoming</a>
+                <a href="/reference-projects/yoga/website/schedule.html">Schedule</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <article class="event-detail container">
+            <h1>{ title }</h1>
+            <p class="meta">
+                {if entry has 'start'}{ start }{endif}
+                {if entry has 'venue'} · { venue }{endif}
+                {if entry has 'capacity'} · { capacity } spots{endif}
+            </p>
+            <div class="content">
+                { description }
+            </div>
+            <p style="margin-top: 1.5rem;">
+                <a class="btn" href="{event_register_url id}">Register for this class</a>
+            </p>
+            <p style="margin-top: 1rem;">
+                <a href="/reference-projects/yoga/website/index.html">← Back to upcoming</a>
+            </p>
+        </article>
+    </main>
+
+    <footer>
+        <p>&copy; Birkly Reference — Yoga</p>
+    </footer>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

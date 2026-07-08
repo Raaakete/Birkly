@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stillwater Yoga — Reference</title>
+    <link rel="stylesheet" href="/reference-projects/yoga/website/styles.css">
+    <meta data-birkly-prefetch="template_function" data-birkly-into="upcoming" data-name="upcoming_events" data-args="[6]">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/reference-projects/yoga/website/index.html">Stillwater Yoga</a></h1>
+            <nav>
+                <a href="/reference-projects/yoga/website/index.html" class="active">Upcoming</a>
+                <a href="/reference-projects/yoga/website/schedule.html">Schedule</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            {from 'site_elements' get entry 'hero'}
+            <h2>{'content'.0.'value'}</h2>
+            <p>{'content'.1.'value'}</p>
+            {endget}
+        </section>
+
+        <section>
+            <h2 class="section-title">Upcoming classes &amp; workshops</h2>
+            <ul class="event-list">
+                {for each event in upcoming}
+                <li>
+                    <h3><a href="/reference-projects/yoga/website/event.html?slug={ slug }">{ title }</a></h3>
+                    <p class="event-meta">{ start } · { venue }</p>
+                    <a class="btn" href="/reference-projects/yoga/website/event.html?slug={ slug }">Details &amp; register</a>
+                </li>
+                {endfor}
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; Birkly Reference — Yoga</p>
+    </footer>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>

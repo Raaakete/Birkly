@@ -1,0 +1,18 @@
+{
+  "fields": [
+    { "name": "title", "type": "text", "label": "Title", "required": true },
+    { "name": "key", "type": "text", "label": "Key", "required": true },
+    {
+      "name": "content",
+      "type": "repeater",
+      "label": "Content blocks",
+      "fields": [
+        { "name": "type", "type": "select", "label": "Type", "options": [
+          { "label": "Text", "value": "text" },
+          { "label": "Textarea", "value": "textarea" }
+        ]},
+        { "name": "value", "type": "textarea", "label": "Value" }
+      ]
+    }
+  ]
+}

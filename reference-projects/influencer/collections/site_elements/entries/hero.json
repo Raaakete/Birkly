@@ -1,0 +1,15 @@
+{
+  "id": "influencer-hero",
+  "slug": "hero",
+  "status": "published",
+  "title": "Hero",
+  "created_at": "2026-07-08T00:00:00+00:00",
+  "en": {
+    "title": "Hero",
+    "key": "hero",
+    "content": [
+      { "type": "text", "value": "Maya Rivers" },
+      { "type": "textarea", "value": "Yoga teacher, coffee enthusiast, and creator — one template-first site." }
+    ]
+  }
+}
