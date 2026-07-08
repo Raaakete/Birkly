@@ -92,11 +92,14 @@ function getOnboardingStatus($userId = null) {
     
     // If no userId provided (not logged in yet), return basic status
     if ($userId === null) {
+        $projectRoot = dirname(__DIR__);
+        require_once __DIR__ . '/../core/demo_starter_templates.php';
         return [
             'needs_first_user' => $needsFirstUser,
             'is_first_time' => $isFirstTime,
             'completed' => false,
             'install_path' => $siteOnboarding['install_path'] ?? null,
+            'starter_availability' => birkly_demo_starter_availability($projectRoot),
         ];
     }
     
@@ -106,6 +109,8 @@ function getOnboardingStatus($userId = null) {
     $userOnboarding = $userStorage->read($userOnboardingFile) ?? [];
     
     $progress = $userOnboarding['progress'] ?? [];
+    $projectRoot = dirname(__DIR__);
+    require_once __DIR__ . '/../core/demo_starter_templates.php';
     
     return [
         'needs_first_user' => $needsFirstUser,
@@ -124,7 +129,8 @@ function getOnboardingStatus($userId = null) {
         'checklist_dismissed' => $userOnboarding['checklist_dismissed'] ?? [],
         'checklist_hidden' => $userOnboarding['checklist_hidden'] ?? false,
         'started_at' => $userOnboarding['started_at'] ?? null,
-        'completed_at' => $userOnboarding['completed_at'] ?? null
+        'completed_at' => $userOnboarding['completed_at'] ?? null,
+        'starter_availability' => birkly_demo_starter_availability($projectRoot),
     ];
 }
 

@@ -136,7 +136,8 @@ try {
     test_assert('onboarding has welcome step (merged install info)', strpos($onboardingPage['body'], 'step-welcome') !== false);
     test_assert('onboarding has starter-templates step', strpos($onboardingPage['body'], 'step-starter-templates') !== false);
     test_assert('onboarding has no marketplace step', strpos($onboardingPage['body'], 'step-marketplace') === false);
-    test_assert('onboarding has shop starter option', strpos($onboardingPage['body'], 'data-starter="shop"') !== false);
+    test_assert('onboarding has blog starter option', strpos($onboardingPage['body'], 'data-starter="blog"') !== false);
+    test_assert('onboarding marks shop as coming soon', strpos($onboardingPage['body'], 'starter-coming-soon') !== false);
 
     // P19-M3: install path query param
     $onboardingLocal = birkly_test_http_request($base . '/admin/index.php?page=onboarding&install=local', [

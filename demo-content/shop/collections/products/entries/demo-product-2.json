@@ -4,9 +4,16 @@
   "status": "published",
   "created_at": "2025-01-02T00:00:00+00:00",
   "updated_at": "2025-01-02T00:00:00+00:00",
-  "fields": {
+  "en": {
     "title": "Canvas tote bag",
+    "slug": "canvas-tote",
     "description": "Reusable tote with minimalist Birkly branding.",
     "price": "18.00"
+  },
+  "de": {
+    "title": "Canvas-Tragetasche",
+    "slug": "canvas-tote",
+    "description": "Wiederverwendbare Tasche mit dezentem Birkly-Branding.",
+    "price": "18,00"
   }
 }
