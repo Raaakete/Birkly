@@ -36,15 +36,19 @@
 .onboarding-page {
   min-height: 100vh;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   padding: var(--space-8, 2rem) var(--space-6, 1.5rem);
   box-sizing: border-box;
 }
 
 .onboarding-container {
-  width: min(100%, 840px);
+  box-sizing: border-box;
+  width: 100%;
   max-width: 840px;
+  min-width: min(100%, 840px);
+  flex: 0 0 auto;
   margin: 0 auto;
 }
 
@@ -163,6 +167,7 @@
 
 .onboarding-step {
   display: none;
+  width: 100%;
   animation: fadeInUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
