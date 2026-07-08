@@ -847,6 +847,10 @@
           const url = absUrl(data.url);
           const label = data.published ? 'Live site' : 'Draft preview (admin only)';
           setStatus(label + ': ' + url, 'info');
+          if (data.route_ready === false) {
+            const hints = Array.isArray(data.route_hints) ? data.route_hints.join(' ') : '';
+            toast('Server routing not ready — /site/ may 404. ' + hints, 'error');
+          }
           const w = window.open(url, '_blank', 'noopener,noreferrer');
           if (!w) {
             toast('Popup blocked. URL: ' + url, 'error');
@@ -863,7 +867,12 @@
           const data = await api('publish_project', { id: state.project.id });
           if (data.project) state.project = data.project;
           const url = absUrl(data.public_url || '/site/' + (state.project.slug || '') + '/');
-          toast('Published! ' + url, 'success');
+          if (data.route_ready === false) {
+            const hints = Array.isArray(data.route_hints) ? data.route_hints.join(' ') : '';
+            toast('Published (files saved) but /site/ may 404 until server routing is deployed. ' + hints, 'error');
+          } else {
+            toast('Published! ' + url, 'success');
+          }
         });
         break;
       case 'export':

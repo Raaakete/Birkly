@@ -100,6 +100,18 @@ if [[ "$health_code" == "200" ]] || [[ "$health_code" == "503" ]]; then
     report "FAIL: health payload validation"
     FAIL=1
   fi
+  if php -r '
+    $data = json_decode(file_get_contents($argv[1]), true);
+    if (!is_array($data) || !isset($data["studio"]["route_ready"])) { exit(2); }
+    exit(!empty($data["studio"]["route_ready"]) ? 0 : 1);
+  ' "$health_tmp" 2>/dev/null; then
+    report "OK: Studio public route ready"
+  elif php -r '
+    $data = json_decode(file_get_contents($argv[1]), true);
+    exit(is_array($data) && isset($data["studio"]["route_ready"]) ? 0 : 1);
+  ' "$health_tmp" 2>/dev/null; then
+    report "WARN: Studio /site/ routing not ready (see health.studio.hints)"
+  fi
 else
   report "FAIL: health HTTP $health_code ($BASE/api/health.php)"
   FAIL=1
