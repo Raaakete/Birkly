@@ -68,6 +68,7 @@ $suites = [
     'page_snapshot_test.php',
     'page_bundle_test.php',
     'client_bundle_fixture_test.php',
+    'performance_budget_test.php',
     'client_template_parity_test.php',
     'ai_permissions_test.php',
     'ai_context_pack_test.php',

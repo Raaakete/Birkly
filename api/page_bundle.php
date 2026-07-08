@@ -1,8 +1,9 @@
 <?php
 /**
- * page_bundle.php — batch public reads for template-first sites (M4).
+ * page_bundle.php — batch public reads for template-first sites (M4 + P21 v2).
  *
- * POST JSON: { "language": "en", "requests": [ {"type":"list_entries","into":"blog","collection":"blog"} ] }
+ * POST JSON: { "language": "en", "requests": [ ... ] }
+ * GET: ?language=en&requests=<base64url JSON>&lean=1
  */
 header('Content-Type: application/json');
 
@@ -22,6 +23,7 @@ require_once __DIR__ . '/validate.php';
 set_security_headers('api');
 require_once __DIR__ . '/domain_auth.php';
 require_once __DIR__ . '/../core/page_bundle_runner.php';
+require_once __DIR__ . '/../core/storage/StorageFactory.php';
 
 if (birkly_request_is_local_dev()) {
     setDynamicCORS();
@@ -30,22 +32,51 @@ if (birkly_request_is_local_dev()) {
     applyDomainRateLimit('read');
 }
 
-function page_bundle_respond($data, $code = 200) {
+function page_bundle_respond($data, $code = 200, $etag = null) {
     if (function_exists('set_public_read_cache_headers')) {
         set_public_read_cache_headers(120);
+    }
+    if ($etag) {
+        header('ETag: "' . $etag . '"');
     }
     http_response_code($code);
     echo json_encode($data);
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    page_bundle_respond(['status' => 'error', 'message' => 'POST required'], 405);
+function page_bundle_decode_requests($raw): array {
+    if (!is_array($raw)) {
+        return [];
+    }
+    $requests = $raw['requests'] ?? [];
+    return is_array($requests) ? $requests : [];
 }
 
-$raw = json_decode(file_get_contents('php://input'), true) ?? [];
-$language = $raw['language'] ?? 'en';
-$requests = $raw['requests'] ?? [];
+$language = 'en';
+$requests = [];
+$lean = true;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $raw = json_decode(file_get_contents('php://input'), true) ?? [];
+    $language = $raw['language'] ?? 'en';
+    $requests = $raw['requests'] ?? [];
+    if (array_key_exists('lean', $raw)) {
+        $lean = !empty($raw['lean']);
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $language = $_GET['language'] ?? 'en';
+    $encoded = $_GET['requests'] ?? '';
+    if ($encoded !== '') {
+        $json = base64_decode(strtr($encoded, '-_', '+/'), true);
+        $decoded = json_decode($json ?: '[]', true);
+        $requests = is_array($decoded) ? $decoded : [];
+    }
+    if (isset($_GET['lean'])) {
+        $lean = $_GET['lean'] !== '0' && $_GET['lean'] !== 'false';
+    }
+} else {
+    page_bundle_respond(['status' => 'error', 'message' => 'POST or GET required'], 405);
+}
 
 if (!is_array($requests) || count($requests) === 0) {
     page_bundle_respond(['status' => 'error', 'message' => 'No requests'], 400);
@@ -56,5 +87,19 @@ if (count($requests) > 40) {
 }
 
 $storage = get_storage(__DIR__ . '/../content');
-$result = birkly_run_page_bundle_requests($storage, $requests, $language);
-page_bundle_respond($result);
+$revision = birkly_page_bundle_compute_revision($storage, $requests, $language);
+$ifNoneMatch = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+$ifNoneMatch = trim(str_replace('"', '', $ifNoneMatch));
+
+if ($ifNoneMatch !== '' && $ifNoneMatch === $revision) {
+    if (function_exists('set_public_read_cache_headers')) {
+        set_public_read_cache_headers(120);
+    }
+    header('ETag: "' . $revision . '"');
+    http_response_code(304);
+    exit;
+}
+
+$result = birkly_run_page_bundle_requests($storage, $requests, $language, ['lean' => $lean]);
+$result['revision'] = $revision;
+page_bundle_respond($result, 200, $revision);
