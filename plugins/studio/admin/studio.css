@@ -31,6 +31,27 @@
 .studio-status { padding: 0.4rem 0.75rem; font-size: 0.85rem; border-bottom: 1px solid #ddd; }
 .studio-status-error { background: #fee; color: #900; }
 .studio-status-info { background: #e7f1ff; color: #084298; }
+.studio-status-success { background: #d1e7dd; color: #0f5132; }
+
+.studio-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 10000;
+  max-width: min(420px, 90vw);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+.studio-toast-visible { opacity: 1; transform: translateY(0); }
+.studio-toast-success { background: #198754; color: #fff; }
+.studio-toast-error { background: #dc3545; color: #fff; }
+.studio-toast-info { background: #0d6efd; color: #fff; }
 .studio-inspector .studio-insp-field { width: 100%; margin-top: 0.25rem; }
 .studio-sidebar-section { padding: 0.5rem 0.75rem; border-top: 1px solid var(--border-color, #eee); }
 .studio-file-tree { flex: 1; overflow: auto; padding: 0.25rem 0; font-size: 0.85rem; }
