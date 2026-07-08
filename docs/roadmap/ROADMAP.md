@@ -2652,6 +2652,64 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 
 ---
 
+## Phase 23 — Studio IDE (project workspace + advanced builder)
+
+**Status:** **Complete** (2026-07-08) — human notified at P23-M16
+
+**Spec:** `docs/reviews/P23-studio-pro-plan.md`  
+**Handoff:** `docs/reviews/P23-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P23-verification-matrix.md`
+
+**Goal:** Project IDE — filesystem, file tabs, visual/code/split, canvas v2, plugin blocks, SSR optimizer.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P23-M0** … **P23-M16** | IDE + pro builder | complete |
+
+**Known follow-up:** Production render bug (raw template tags on `studio_view.php`) → **P24**.
+
+---
+
+## Phase 24 — Studio visual excellence
+
+**Status:** **Proposed** (2026-07-08) — awaiting human approval — autonomous P24-M0→M20
+
+**Spec:** `docs/reviews/P24-studio-visual-excellence-plan.md`  
+**Handoff:** `docs/reviews/P24-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P24-verification-matrix.md`
+
+**Goal:** Fix render pipeline (canonical syntax + `StudioTemplateEngine`); full UI/UX redesign; visual layout tools; CSS rules panel; binding wizard; nav builder. **~4 phases in one wave.**
+
+| ID | Focus | Status |
+|----|--------|--------|
+| **P24-M0** | Render gap register + UX spec | proposed |
+| **P24-M1** | Fix StudioCompiler canonical syntax | proposed |
+| **P24-M2** | StudioTemplateEngine (PHP parity) | proposed |
+| **P24-M3** | SSR integration tests (no raw tags) | proposed |
+| **P24-M4** | UI shell redesign | proposed |
+| **P24-M5** | Toolbar v2 | proposed |
+| **P24-M6** | Canvas chrome | proposed |
+| **P24-M7** | Layout tools (resize, grid, flex) | proposed |
+| **P24-M8** | Box model overlay | proposed |
+| **P24-M9** | Align & distribute | proposed |
+| **P24-M10** | CSS rules panel | proposed |
+| **P24-M11** | Class manager | proposed |
+| **P24-M12** | Stylesheet tabs | proposed |
+| **P24-M13** | Binding wizard v2 | proposed |
+| **P24-M14** | Live client preview pane | proposed |
+| **P24-M15** | Navigation builder | proposed |
+| **P24-M16** | Page settings (SEO) | proposed |
+| **P24-M17** | Open project hardening | proposed |
+| **P24-M18** | Plugin blocks polish | proposed |
+| **P24-M19** | E2E smoke | proposed |
+| **P24-M20** | Closure + human notification | proposed |
+
+**P0:** Open project / `studio_view.php` must not show raw `{for each…}` tags.
+
+**Depends on:** P23 (Studio IDE), P20 (template parity), P21 (client preview).
+
+---
+
 **Status:** Proposed — see master plan
 
 **Spec:** `docs/reviews/P6-commerce-phase2-master-plan.md`
