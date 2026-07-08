@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{ title } - Birkly</title>
+    <link rel="stylesheet" href="/demo-website/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/demo-website/index.html">Birkly</a></h1>
+            <nav>
+                <a href="/demo-website/index.html">Home</a>
+                <a href="/demo-website/services.html">Services</a>
+                <a href="/demo-website/blog.html">Blog</a>
+                <a href="/demo-website/about.html">About</a>
+                <a href="/demo-website/contact.html">Contact</a>
+                <div class="language-selector">
+                    <select id="language-select" data-birkly-language-select>
+                        <option value="en">English</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="service-detail">
+            <div class="container">
+                <div class="service-header">
+                    <div class="service-icon-large">{ icon }</div>
+                    <h1>{ title }</h1>
+                    {if entry has 'price'}
+                    <p class="service-price-large">{'price'}</p>
+                    {endif}
+                </div>
+                
+                <div class="service-content">
+                    <p class="lead">{ description }</p>
+                    {if entry has 'content'}
+                    <div class="content">{'content'}</div>
+                    {endif}
+                </div>
+                
+                <div class="service-cta">
+                    <a href="/demo-website/contact.html" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; Birkly 2025</p>
+        </div>
+    </footer>
+
+    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+</body>
+</html>
+

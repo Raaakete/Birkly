@@ -1,0 +1,12 @@
+{
+  "id": "prod-sample-1",
+  "slug": "sample-product",
+  "status": "published",
+  "created_at": "2025-01-01T00:00:00+00:00",
+  "updated_at": "2025-01-01T00:00:00+00:00",
+  "fields": {
+    "title": "Sample product",
+    "description": "A demo product from the shop starter template.",
+    "price": "29.00"
+  }
+}

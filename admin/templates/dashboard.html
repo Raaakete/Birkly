@@ -15,58 +15,37 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 ?><!-- Onboarding Completion Modal -->
 <div class="modal" id="onboarding-complete-modal" style="display: none;">
     <div class="modal-backdrop"></div>
-    <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-content onboarding-complete-modal-content">
         <div class="modal-header">
             <h2>🎉 <?= __('admin.you_are_all_set') ?></h2>
             <button class="modal-close" id="onboarding-complete-close" aria-label="<?= __('admin.close') ?>">×</button>
         </div>
         <div class="modal-body">
-            <p style="margin-bottom: var(--space-6, 1.5rem); color: var(--text-secondary, #64748b);">
-                <?= __('admin.birkly_ready_message') ?>
-            </p>
-            
-            <div style="display: grid; gap: var(--space-4, 1rem); margin-bottom: var(--space-6, 1.5rem);">
-                <div class="card" style="padding: var(--space-4, 1rem);">
-                    <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
-                        <div style="font-size: 2rem; flex-shrink: 0;">📝</div>
-                        <div style="flex: 1;">
-                            <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;"><?= __('admin.create_first_entry') ?></h3>
-                            <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
-                                <?= __('admin.start_adding_content') ?>
-                            </p>
-                            <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
-                        </div>
-                    </div>
+            <p class="onboarding-complete-lead"><?= __('admin.birkly_ready_message') ?></p>
+            <div class="onboarding-complete-grid">
+                <div class="onboarding-complete-card">
+                    <h3><?= __('admin.create_first_entry') ?></h3>
+                    <p><?= __('admin.start_adding_content') ?></p>
+                    <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
                 </div>
-                
-                <div class="card" style="padding: var(--space-4, 1rem);">
-                    <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
-                        <div style="font-size: 2rem; flex-shrink: 0;">🧩</div>
-                        <div style="flex: 1;">
-                            <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;"><?= __('admin.install_marketplace_plugins') ?></h3>
-                            <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
-                                <?= __('admin.install_marketplace_plugins_hint') ?>
-                            </p>
-                            <a href="<?= admin_url('plugins', ['tab' => 'marketplace']) ?>" class="btn btn-secondary btn-small"><?= __('admin.browse_marketplace') ?></a>
-                        </div>
-                    </div>
+                <div class="onboarding-complete-card">
+                    <h3><?= __('admin.connect_ai_assistant') ?></h3>
+                    <p>Connect admin chat AI or set up MCP for external tools.</p>
+                    <a href="<?= admin_url('settings') ?>#ai-integrations" class="btn btn-secondary btn-small">AI settings</a>
                 </div>
-
-                <div class="card" style="padding: var(--space-4, 1rem);">
-                    <div style="display: flex; align-items: start; gap: var(--space-4, 1rem);">
-                        <div style="font-size: 2rem; flex-shrink: 0;">📚</div>
-                        <div style="flex: 1;">
-                            <h3 style="margin: 0 0 var(--space-2, 0.5rem); font-size: 1.125rem; font-weight: 600;"><?= __('admin.read_documentation') ?></h3>
-                            <p style="margin: 0 0 var(--space-3, 0.75rem); color: var(--text-secondary, #64748b); font-size: 0.875rem;">
-                                <?= __('admin.learn_more_features') ?>
-                            </p>
-                            <a href="<?= admin_url('help') ?>" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
-                        </div>
-                    </div>
+                <div class="onboarding-complete-card" id="onboarding-complete-demo-card" style="display: none;">
+                    <h3>View demo website</h3>
+                    <p>Open the starter template site that was installed with your CMS.</p>
+                    <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-small" target="_blank" rel="noopener">Open demo site</a>
+                </div>
+                <div class="onboarding-complete-card">
+                    <h3><?= __('admin.read_documentation') ?></h3>
+                    <p><?= __('admin.learn_more_features') ?></p>
+                    <a href="<?= admin_url('help') ?>" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
                 </div>
             </div>
         </div>
-        <div class="modal-footer" style="padding: var(--space-4, 1rem) var(--space-6, 1.5rem); border-top: 1px solid var(--border-light, #e2e8f0); display: flex; justify-content: flex-end;">
+        <div class="modal-footer onboarding-complete-footer">
             <button class="btn btn-primary" id="onboarding-complete-close-btn"><?= __('admin.get_started') ?></button>
         </div>
     </div>
@@ -379,6 +358,13 @@ $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('onboarding_complete') === 'true' && onboardingModal) {
         onboardingModal.style.display = 'flex';
+        const demoUrl = urlParams.get('demo_website_url');
+        const demoCard = document.getElementById('onboarding-complete-demo-card');
+        const demoLink = document.getElementById('onboarding-complete-demo-link');
+        if (demoUrl && demoCard && demoLink) {
+            demoCard.style.display = '';
+            demoLink.href = demoUrl;
+        }
     }
 
     async function postOnboardingAction(action, body) {

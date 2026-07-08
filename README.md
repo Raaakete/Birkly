@@ -4,7 +4,7 @@ A flat-file, modular, zero-dependency CMS designed for simplicity, security, and
 
 ## 🚀 Quick Start
 
-**New to Birkly?** Open **`START_HERE.html`** in your browser after extracting the zip — it guides you through local or cloud install and the admin setup wizard.
+**New to Birkly?** Open **`0_START-HERE.html`** in your browser after extracting the zip — it guides you through local or cloud install and the admin setup wizard.
 
 ## Project Structure
 

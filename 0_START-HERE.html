@@ -117,12 +117,37 @@
         .step h4 { font-size: 1.0625rem; font-weight: 700; }
         .step p, .step li { color: var(--text-secondary); font-size: 0.9375rem; margin: var(--space-2) 0; }
         .step ul { margin-left: 1.25rem; }
+        .cmd-row { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-3) 0; }
         pre.cmd {
-            background: #20221D; color: #f4f6f2;
-            padding: var(--space-4); border-radius: var(--radius-s);
-            overflow-x: auto; font-size: 0.8125rem; line-height: 1.5;
-            margin: var(--space-3) 0;
+            flex: 1;
+            margin: 0;
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-neutral-200);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-s);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
+        .copy-btn {
+            background: var(--color-neutral-200); border: 1px solid var(--border-light);
+            border-radius: var(--radius-s); padding: var(--space-2) var(--space-3);
+            cursor: pointer; font-size: 0.75rem; font-weight: 600; flex-shrink: 0;
+        }
+        .local-method-tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+        .local-method-tab {
+            flex: 1; padding: var(--space-3); border: 2px solid var(--border-light);
+            border-radius: var(--radius-m); background: var(--bg-elevated); cursor: pointer;
+            font-weight: 600; font-size: 0.875rem; text-align: center;
+        }
+        .local-method-tab.active { border-color: var(--color-primary); }
+        .local-method-panel { display: none; }
+        .local-method-panel.active { display: block; }
+        #folder-status { display: none; }
+        #folder-status.visible { display: block; }
         pre.cmd .comment { color: #9B9D98; }
         .cmd-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-top: var(--space-3); }
         .probe {
@@ -197,10 +222,7 @@
                 <p>Your flat-file CMS — no database required.</p>
             </div>
 
-            <div id="folder-status" class="status info" role="status" aria-live="polite">
-                <h3>Checking your setup…</h3>
-                <p>One moment.</p>
-            </div>
+            <div id="folder-status" class="status" role="status" aria-live="polite"></div>
 
             <p class="docs-link">
                 Need help? Read the
@@ -221,42 +243,54 @@
 
             <!-- Local -->
             <div class="steps" id="local-steps">
+                <p style="font-weight:600;margin-bottom:var(--space-3);">How are you running PHP locally?</p>
+                <div class="local-method-tabs">
+                    <button type="button" class="local-method-tab active" data-local-method="birkly">Birkly built-in server</button>
+                    <button type="button" class="local-method-tab" data-local-method="stack">XAMPP / MAMP / Laragon</button>
+                </div>
+
+                <div class="local-method-panel active" id="local-method-birkly">
                 <div class="step">
                     <div class="step-head"><span class="step-num">1</span><h4>Open a terminal in your Birkly folder</h4></div>
-                    <p>You need a terminal pointed at the folder that contains <code>admin/</code>, <code>start-server.sh</code>, and this file.</p>
+                    <p>The folder that contains <code>admin/</code>, <code>start-server.sh</code>, and this file.</p>
                     <details class="accordion">
                         <summary>How to open a terminal here (Windows, Mac, Linux)</summary>
                         <div class="accordion-body">
-                            <p><strong>Mac:</strong> Open Finder → go to your Birkly folder → right-click → <em>New Terminal at Folder</em> (or drag the folder onto Terminal).</p>
-                            <p><strong>Windows:</strong> Open the Birkly folder in File Explorer → click the address bar → type <code>cmd</code> and press Enter. Or use Windows Terminal / PowerShell and <code>cd</code> to the folder.</p>
-                            <p><strong>Linux:</strong> Open your file manager → right-click the Birkly folder → <em>Open in Terminal</em>, or run <code>cd /path/to/Birkly</code>.</p>
+                            <p><strong>Mac:</strong> Finder → your Birkly folder → right-click → <em>Services</em> → <em>New Terminal at Folder</em>. On newer macOS you may see <em>New Terminal at Folder</em> directly in the right-click menu.</p>
+                            <p><strong>Windows:</strong> Open the folder in File Explorer → click the address bar → type <code>cmd</code> → Enter. Or use Windows Terminal and <code>cd</code> to the folder.</p>
+                            <p><strong>Linux:</strong> Right-click the folder → <em>Open in Terminal</em>, or <code>cd /path/to/Birkly</code>.</p>
+                            <p><em>Browsers cannot open a terminal for you — use one of the methods above.</em></p>
                         </div>
                     </details>
                 </div>
 
                 <div class="step">
                     <div class="step-head"><span class="step-num">2</span><h4>Start the Birkly server</h4></div>
-                    <p>Run these commands in that terminal. Keep the window open while you work.</p>
-                    <p class="cmd-label">First time only (Mac/Linux) — make the script executable:</p>
-                    <pre class="cmd">chmod +x ./start-server.sh</pre>
-                    <p class="cmd-label">Start on the default port (8080):</p>
-                    <pre class="cmd">./start-server.sh</pre>
+                    <p>Run in the terminal and keep the window open:</p>
+                    <div class="cmd-row"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
                     <p class="cmd-label">Optional — custom port or stop an old server first:</p>
-                    <pre class="cmd"><span class="comment"># Kill anything on the port, then start on 8001</span>
-./start-server.sh -k -p 8001</pre>
+                    <div class="cmd-row"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>
                     <details class="accordion">
-                        <summary>Or use XAMPP, MAMP, Laragon, etc.</summary>
+                        <summary>Permission denied on ./start-server.sh?</summary>
                         <div class="accordion-body">
-                            <p>Point your stack's document root at this Birkly folder (the one with <code>admin/</code> and <code>index.php</code>). Use your stack's URL instead of <code>localhost:8080</code> in the steps below.</p>
+                            <p>On Mac/Linux only, run once: <code>chmod +x ./start-server.sh</code> — then try <code>./start-server.sh</code> again. Windows usually does not need this.</p>
                         </div>
                     </details>
+                </div>
+                </div>
+
+                <div class="local-method-panel" id="local-method-stack">
+                <div class="step">
+                    <div class="step-head"><span class="step-num">1</span><h4>Point your PHP stack at this folder</h4></div>
+                    <p>In XAMPP, MAMP, Laragon, or similar, set the <strong>document root</strong> to this Birkly folder (where <code>admin/</code> and <code>index.php</code> live).</p>
+                    <p>Note the URL your stack gives you (e.g. <code>http://localhost:8888</code>) — use it in the steps below instead of <code>localhost:8080</code>.</p>
+                </div>
                 </div>
 
                 <div class="step">
                     <div class="step-head"><span class="step-num">3</span><h4>Open this page through the server</h4></div>
-                    <p>Do <strong>not</strong> continue from a <code>file://</code> tab. Open Birkly in your browser at:</p>
-                    <code class="localhost-url" id="local-start-here-url">http://localhost:8080/START_HERE.html</code>
-                    <p id="local-open-hint">After the server is running, click below or paste the URL into your browser.</p>
+                    <p>Do <strong>not</strong> continue from a <code>file://</code> tab. After the server is running, open:</p>
+                    <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
                     <div class="text-center">
                         <a href="#" id="local-open-link" class="btn btn-secondary">Open via localhost →</a>
                     </div>
@@ -298,7 +332,7 @@
                             <ul>
                                 <li>Upload the full folder, not only <code>admin/</code></li>
                                 <li>Typical web root: <code>public_html</code>, <code>www</code>, or <code>htdocs</code></li>
-                                <li>After upload, visit <code>https://yourdomain.com/START_HERE.html</code> to verify</li>
+                                <li>After upload, visit <code>https://yourdomain.com/0_START-HERE.html</code> to verify</li>
                             </ul>
                         </div>
                     </details>
@@ -325,6 +359,7 @@
     </div>
 
     <script>
+        const START_FILE = '0_START-HERE.html';
         const MARKERS = { admin: 'admin/index.php', serverRouter: 'server-router.php', startServer: 'start-server.sh' };
         const DEFAULT_PORT = 8080;
         let serverReady = false;
@@ -355,13 +390,17 @@
         }
 
         function buildStartHereUrl() {
-            return getLocalOrigin() + getBasePath() + 'START_HERE.html';
+            if (isFileProtocol()) {
+                return 'http://localhost:' + DEFAULT_PORT + '/' + START_FILE;
+            }
+            return window.location.origin + getBasePath() + START_FILE;
         }
 
         function buildOnboardingUrl(install) {
-            const origin = isFileProtocol() ? getLocalOrigin() : window.location.origin;
-            const base = isFileProtocol() ? '/' : getBasePath();
-            return origin + base + 'admin/index.php?page=onboarding&install=' + install;
+            if (isFileProtocol()) {
+                return 'http://localhost:' + DEFAULT_PORT + '/admin/index.php?page=onboarding&install=' + install;
+            }
+            return window.location.origin + getBasePath() + 'admin/index.php?page=onboarding&install=' + install;
         }
 
         async function fileExists(relative) {
@@ -376,10 +415,11 @@
 
         async function detectFolder() {
             const box = document.getElementById('folder-status');
+            if (!box) return 'skip';
 
             if (isFileProtocol()) {
-                box.className = 'status info';
-                box.innerHTML = '<h3>Start the local server first</h3><p>You opened this file directly from your computer. That is fine for reading — but to continue setup, start <code>./start-server.sh</code> and open <strong>http://localhost:8080/START_HERE.html</strong> in your browser.</p>';
+                box.className = 'status';
+                box.style.display = 'none';
                 return 'file';
             }
 
@@ -389,26 +429,26 @@
             const childHasAdmin = await fileExists('Birkly/' + MARKERS.admin);
 
             if (hasAdmin && hasRouter) {
-                box.className = 'status ok';
-                box.innerHTML = '<h3>✓ Correct Birkly folder</h3><p>Found <code>admin/</code> and <code>server-router.php</code>. Choose how you want to run Birkly below.</p>';
+                box.style.display = 'none';
                 return 'ok';
             }
+            box.classList.add('visible');
             if (!hasAdmin && parentHasAdmin) {
-                box.className = 'status warn';
-                box.innerHTML = '<h3>Move up one folder</h3><p>You may be inside a subfolder (e.g. only <code>admin/</code>). Open <code>START_HERE.html</code> from the parent folder that contains <code>admin/</code> and <code>api/</code>.</p>';
+                box.className = 'status warn visible';
+                box.innerHTML = '<h3>Move up one folder</h3><p>Open <code>0_START-HERE.html</code> from the parent folder that contains <code>admin/</code> and <code>api/</code>.</p>';
                 return 'parent';
             }
             if (hasAdmin && childHasAdmin) {
-                box.className = 'status warn';
+                box.className = 'status warn visible';
                 box.innerHTML = '<h3>Open the inner Birkly folder</h3><p>Double-nested unzip detected. Use the inner folder where <code>admin/</code> sits next to <code>api/</code>.</p>';
                 return 'nested';
             }
             if (!hasAdmin) {
-                box.className = 'status error';
-                box.innerHTML = '<h3>Wrong folder</h3><p>Could not find <code>admin/index.php</code>. Re-extract the zip so <code>START_HERE.html</code> sits next to <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p>';
+                box.className = 'status error visible';
+                box.innerHTML = '<h3>Wrong folder</h3><p>Could not find <code>admin/index.php</code>. Re-extract the zip so <code>0_START-HERE.html</code> sits next to <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p>';
                 return 'wrong';
             }
-            box.className = 'status warn';
+            box.className = 'status warn visible';
             box.innerHTML = '<h3>Almost there</h3><p>Found <code>admin/</code> but some files are missing. Re-extract the zip if setup fails.</p>';
             return 'partial';
         }
@@ -518,6 +558,28 @@
             card.addEventListener('click', activate);
             card.addEventListener('keydown', e => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+            });
+        });
+
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.copyTarget;
+                const el = id ? document.getElementById(id) : null;
+                const text = el ? el.textContent.trim() : '';
+                if (!text) return;
+                navigator.clipboard?.writeText(text).then(() => {
+                    btn.textContent = 'Copied';
+                    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+                });
+            });
+        });
+
+        document.querySelectorAll('.local-method-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const method = tab.dataset.localMethod;
+                document.querySelectorAll('.local-method-tab').forEach(t => t.classList.toggle('active', t === tab));
+                document.querySelectorAll('.local-method-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById('local-method-' + method)?.classList.add('active');
             });
         });
 
