@@ -188,16 +188,22 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 15 complete** (2026-07-07) — alpha closure; **121 test suites** green. |
-| **Birkly-Marketplace** | **Phase 15 complete** — paid tiers, subscription licenses, health v2. **15 test suites** green. |
-| **Birkly-Docs** | P10 go-live docs + updated marketplace buyer/plugins guides. |
-| **kekaba** | Embed excludes plugins; demo install via `install-kekaba-demo-plugins.sh`. |
-| **Birkly-Website** | Marketplace CTA on homepage. |
+| **Birkly (CMS)** | **Phase 19 complete** (2026-07-07) — beta-ready platform; **138 test suites** green. |
+| **Birkly-Marketplace** | **Phase 19 complete** — **17 test suites** green. |
+| **Birkly-Docs** | P16–P19 corpus synced. |
+| **kekaba** | Uses hydrate/snapshots (legacy workaround) — **P20 targets live-path default instead**. |
+| **Birkly-Website** | Open-beta copy (go-live deferred). |
 | **Agent ops** | CI + autonomous execution policy on `main`. |
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** TBD — propose Phase 20+ with human approval
+**Next active phase:** **Phase 20** — templating excellence & reference projects (live client default, no hydrate required)
+
+**2026-07-08 — Phase 20 approved** (Keven)
+
+**Priorities:** Live `birkly-client.js` default (no hydrate/snapshots on reference sites) · six reference projects (blog, portfolio, yoga, coffee, social, influencer) · user stories · engine fixes · walkthrough videos.
+
+**Spec:** `docs/reviews/P20-templating-excellence-plan.md` · **Handoff:** `docs/reviews/P20-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P20-verification-matrix.md`
 
 **2026-07-07 — Phase 16, 17, 18 & 19 complete** (single-wave autonomous execution)
 
@@ -293,8 +299,9 @@ Week 6–8:                              M6 Site hygiene (minimal) ►
 | CMS cloud SSO prod URL | Human infra | **P16-M3** |
 | Multi-warehouse, FX display, Amazon/eBay | Commerce backlog | **P17** |
 | Self-serve marketplace, plugin health | Ecosystem backlog | **P18** |
-| First-run START_HERE, onboarding v2, AI in wizard | UX backlog | **P19** |
-| START_HERE not in release zip | Gap found P19-M0 | **P19-M1** |
+| First-run START_HERE, onboarding v2, AI in wizard | UX backlog | **P19** (complete) |
+| Templating live-path default, reference projects | Engine + client sites | **P20** |
+| Hydrate/snapshot/bake as required path | kekaba workaround | **P20 fixes core; optional advanced only** |
 
 ---
 
@@ -2508,6 +2515,38 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 **Depends on:** P16-M1 (install copy matches playbooks).
 
 **Human decisions (locked):** See `docs/reviews/P16-P19-complete-plan.md` § P19-D1–D6. **AI optional in onboarding only** — not dashboard required checklist (P5.6-D).
+
+---
+
+## Phase 20 — Templating excellence & reference projects
+
+**Status:** **Approved** (2026-07-08, Keven) — autonomous execution P20-M0→M12
+
+**Spec:** `docs/reviews/P20-templating-excellence-plan.md`  
+**Handoff:** `docs/reviews/P20-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P20-verification-matrix.md`
+
+**Goal:** Live `birkly-client.js` default — fast, robust templating without hydrate/snapshots. Six reference projects prove user stories; engine fixes; walkthrough videos.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P20-M0** | Gap register, JS↔PHP parity matrix | approved |
+| **P20-M1** | Live-path engine + client tests | approved |
+| **P20-M2** | Project connection kit | approved |
+| **P20-M3** | User story catalog | approved |
+| **P20-M4** | Reference: Blog | approved |
+| **P20-M5** | Reference: Portfolio | approved |
+| **P20-M6** | Reference: Yoga (events) | approved |
+| **P20-M7** | Reference: Coffee (commerce) | approved |
+| **P20-M8** | Reference: Social (user+commerce) | approved |
+| **P20-M9** | Reference: Influencer (all plugins) | approved |
+| **P20-M10** | Engine sprint from gaps | approved |
+| **P20-M11** | Docs + advanced optimization (hydrate optional) | approved |
+| **P20-M12** | Closure + human notification | approved |
+
+**Depends on:** P16–P19 complete.
+
+**Human decisions (locked):** See `docs/reviews/P20-templating-excellence-plan.md` § P20-D1–D11. **Live client only on reference projects** — hydrate/snapshot/bake optional advanced, not default (P20-D8–D10).
 
 ---
 
