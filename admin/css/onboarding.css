@@ -44,7 +44,7 @@
 
 .onboarding-container {
   width: 100%;
-  max-width: 680px;
+  max-width: 840px;
   margin: 0 auto;
 }
 
@@ -169,6 +169,12 @@
   box-shadow: 0 4px 6px rgba(32, 34, 29, 0.04), 0 20px 48px rgba(32, 34, 29, 0.08);
   padding: var(--space-8, 2rem) var(--space-8, 2rem) var(--space-7, 1.75rem);
   position: relative;
+  width: 100%;
+  min-width: min(100%, 520px);
+}
+
+.onboarding-content--wide {
+  min-width: min(100%, 560px);
 }
 
 /* ---- Step header ---- */
@@ -179,6 +185,24 @@
   align-items: flex-start;
   gap: var(--space-2, 0.5rem);
   margin-bottom: var(--space-7, 1.75rem);
+}
+
+.step-header--brand {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4, 1rem);
+  margin-bottom: var(--space-8, 2rem);
+}
+
+.step-brand-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.step-header--brand .step-title {
+  margin: 0;
 }
 
 .step-header--optional {

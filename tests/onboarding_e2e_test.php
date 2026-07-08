@@ -174,9 +174,9 @@ try {
     );
     test_assert(
         'connect-ai step is optional (skippable)',
-        strpos($onboardingPage['body'], 'skipAI') !== false
+        strpos($onboardingPage['body'], 'data-onboarding-action="skip-ai"') !== false
             || strpos($onboardingPage['body'], 'skip_for_now') !== false,
-        'skipAI or skip-for-now not found in onboarding page'
+        'skip-ai action or skip_for_now not found in onboarding page'
     );
 
     // P19-M6: Dashboard checklist essential only; AI only if skipped
