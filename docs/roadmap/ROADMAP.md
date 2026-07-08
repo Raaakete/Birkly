@@ -197,7 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** Phase 20 complete (2026-07-08) — templating excellence & reference projects
+**Next active phase:** Phase 21 — performance excellence (approved 2026-07-08)
+
+**2026-07-08 — Phase 21 approved** (Keven)
+
+**Priorities:** Above-average live-client performance with **zero new user steps** — bundle v2 (TF in bundle), unified template scan, snapshot opt-in, GET/ETag cache, session cache, CI perf gate, video evidence.
+
+**Spec:** `docs/reviews/P21-performance-excellence-plan.md` · **Handoff:** `docs/reviews/P21-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P21-verification-matrix.md`
 
 **2026-07-08 — Phase 20 complete** (autonomous P20-M0→M12)
 
