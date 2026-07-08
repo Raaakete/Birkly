@@ -5,6 +5,8 @@
  */
 
 require_once __DIR__ . '/../core/birkly_paths.php';
+require_once __DIR__ . '/../api/session.php';
+haru_secure_session_start();
 require_once __DIR__ . '/../core/plugins.php';
 
 load_plugins(dirname(__DIR__) . '/plugins');

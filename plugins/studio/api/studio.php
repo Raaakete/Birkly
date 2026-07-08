@@ -96,7 +96,13 @@ switch ($action) {
     case 'publish_project':
         $id = (string) ($input['id'] ?? '');
         $project = $repo->publishProject($id);
-        $project ? studio_ok(['project' => $project]) : studio_err('Not found', 404);
+        if (!$project) {
+            studio_err('Not found', 404);
+        }
+        studio_ok([
+            'project' => $project,
+            'public_url' => studio_public_site_url($project['slug'] ?? $id, false),
+        ]);
     case 'list_pages':
         $id = (string) ($input['id'] ?? $_GET['id'] ?? '');
         studio_ok(['pages' => $repo->listPages($id)]);
@@ -203,13 +209,14 @@ switch ($action) {
             studio_err('Not found', 404);
         }
         $slug = $project['slug'] ?? $id;
-        $base = function_exists('birkly_url') ? birkly_url('') : '';
-        if (!empty($project['published'])) {
-            $url = rtrim($base, '/') . '/site/' . rawurlencode($slug) . '/';
-        } else {
-            $url = rtrim($base, '/') . '/site/' . rawurlencode($slug) . '/?birkly_studio_preview=1';
+        $published = !empty($project['published']);
+        if (!$published) {
+            foreach ($repo->listPageSlugs($id) as $pageSlug) {
+                $compiler->compilePage($id, $pageSlug);
+            }
         }
-        studio_ok(['url' => $url]);
+        $url = studio_public_site_url($slug, !$published);
+        studio_ok(['url' => $url, 'published' => $published]);
     case 'list_files':
         $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
         studio_ok(['tree' => $fs->listTree($id)]);
