@@ -1,21 +1,20 @@
 /**
- * Onboarding wizard v2 (P19)
- * Flow: (0 first-user?) → 1 welcome → 2 install context → 3 site info →
- *       4 use-case + demo → 5 marketplace → 6 connect AI (optional BYOAI) → complete
+ * Onboarding wizard v3
+ * Flow: (0 first-user?) → 1 welcome+install info → 2 site info →
+ *       3 starter templates → 4 connect AI (optional) → complete
  */
 
 const onboarding = {
     currentStep: 0,
-    maxSteps: 6,
+    maxSteps: 4,
     needsFirstUser: false,
-    demoContentChoice: null,
-    siteInfo: {},
+    starterTemplate: null,
     demoWebsiteUrl: null,
     installPath: null,
-    useCase: null,
     aiTestPassed: false,
     aiProviders: null,
     resumeHandled: false,
+    aiMode: 'chat',
 
     init() {
         if (!document.querySelector('.onboarding-page')) return;
@@ -28,7 +27,27 @@ const onboarding = {
 
         this.setupForms();
         this.bindStepActions();
+        this.bindAiModeTabs();
         this.checkFirstUser();
+    },
+
+    bindAiModeTabs() {
+        document.querySelectorAll('.ai-mode-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.aiMode = tab.dataset.aiMode || 'chat';
+                document.querySelectorAll('.ai-mode-tab').forEach(t => {
+                    const active = t === tab;
+                    t.classList.toggle('active', active);
+                    t.setAttribute('aria-selected', active ? 'true' : 'false');
+                });
+                const chatPanel = document.getElementById('ai-panel-chat');
+                const extPanel = document.getElementById('ai-panel-external');
+                const saveBtn = document.getElementById('onboarding-save-ai-btn');
+                if (chatPanel) chatPanel.hidden = this.aiMode !== 'chat';
+                if (extPanel) extPanel.hidden = this.aiMode !== 'external';
+                if (saveBtn) saveBtn.style.display = this.aiMode === 'chat' ? '' : 'none';
+            });
+        });
     },
 
     bindStepActions() {
@@ -52,17 +71,14 @@ const onboarding = {
                 case 'skip':
                     this.skip();
                     break;
-                case 'skip-use-case':
-                    this.skipUseCase();
+                case 'select-starter':
+                    if (param) this.selectStarterTemplate(param);
                     break;
-                case 'select-use-case':
-                    if (param) this.selectUseCase(param);
+                case 'skip-starter':
+                    this.skipStarterTemplate();
                     break;
-                case 'keep-demo':
-                    this.keepDemoContent();
-                    break;
-                case 'delete-demo':
-                    this.deleteDemoContent();
+                case 'apply-starter':
+                    this.applyStarterTemplate();
                     break;
                 case 'skip-ai':
                     this.skipAI();
@@ -73,14 +89,6 @@ const onboarding = {
                 default:
                     break;
             }
-        });
-
-        page.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter' && e.key !== ' ') return;
-            const el = e.target.closest('[data-onboarding-action="keep-demo"], [data-onboarding-action="delete-demo"]');
-            if (!el) return;
-            e.preventDefault();
-            el.click();
         });
     },
 
@@ -105,7 +113,7 @@ const onboarding = {
                 const resume = parseInt(data.data.last_step, 10);
                 if (!this.resumeHandled && resume > 1 && resume <= this.maxSteps) {
                     this.resumeHandled = true;
-                    this.useCase = data.data.use_case || null;
+                    this.starterTemplate = data.data.starter_template || data.data.use_case || null;
                     this.showStep(resume);
                     return;
                 }
@@ -119,22 +127,14 @@ const onboarding = {
     },
 
     setupForms() {
-        const firstUserForm = document.getElementById('first-user-form');
-        if (firstUserForm) {
-            firstUserForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.createFirstUser();
-            });
-        }
-
-        const siteInfoForm = document.getElementById('site-info-form');
-        if (siteInfoForm) {
-            siteInfoForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.saveSiteInfo();
-            });
-        }
-
+        document.getElementById('first-user-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.createFirstUser();
+        });
+        document.getElementById('site-info-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveSiteInfo();
+        });
         document.getElementById('onboarding-ai-provider')?.addEventListener('change', () => {
             this.updateAiProviderFields();
             this.aiTestPassed = false;
@@ -192,9 +192,9 @@ const onboarding = {
             header.style.display = step === 0 ? 'none' : '';
         }
 
-        if (step === 2) this.renderInstallContext();
-        if (step === 4 && this.useCase) this.highlightUseCase(this.useCase);
-        if (step === 6) this.initAiWizard();
+        if (step === 1) this.renderInstallContext();
+        if (step === 3 && this.starterTemplate) this.highlightStarter(this.starterTemplate);
+        if (step === 4) this.initAiWizard();
 
         this.updateProgress();
     },
@@ -203,11 +203,9 @@ const onboarding = {
         const steps = {
             0: 'first-user',
             1: 'welcome',
-            2: 'install-context',
-            3: 'site-info',
-            4: 'use-case',
-            5: 'marketplace',
-            6: 'connect-ai',
+            2: 'site-info',
+            3: 'starter-templates',
+            4: 'connect-ai',
         };
         return steps[step] || 'welcome';
     },
@@ -215,12 +213,19 @@ const onboarding = {
     renderInstallContext() {
         const body = document.getElementById('install-context-body');
         if (!body) return;
+        const adminUrl = Birkly.url('/admin/index.php');
         if (this.installPath === 'local') {
-            body.innerHTML = '<strong>Local development</strong><p>You are setting up on <code>localhost</code>. Use <code>./start-server.sh</code> and visit <code>http://localhost:8080/admin</code>.</p>';
+            body.innerHTML = '<p><strong>You are running Birkly locally.</strong></p>'
+                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
+                + '<p>To start again later, run <code>./start-server.sh</code> from your Birkly folder, then open the admin URL above.</p>';
         } else if (this.installPath === 'cloud') {
-            body.innerHTML = '<strong>Cloud / FTP hosting</strong><p>You uploaded Birkly to your web server. Ensure <code>content/</code>, <code>media/</code>, <code>users/</code>, and <code>settings/</code> are writable.</p>';
+            body.innerHTML = '<p><strong>Birkly is on your web server.</strong></p>'
+                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
+                + '<p>Ensure <code>content/</code>, <code>media/</code>, <code>users/</code>, and <code>settings/</code> stay writable.</p>';
         } else {
-            body.innerHTML = '<strong>Not sure?</strong><p>Re-open <code>START_HERE.html</code> from your Birkly folder and pick local or cloud.</p>';
+            body.innerHTML = '<p><strong>Birkly is ready.</strong></p>'
+                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
+                + '<p>Re-open <code>0_START-HERE.html</code> from your Birkly folder if you need local vs cloud setup notes.</p>';
         }
     },
 
@@ -257,27 +262,63 @@ const onboarding = {
         }
     },
 
-    selectUseCase(useCase) {
-        this.useCase = useCase;
-        document.querySelectorAll('.use-case-card').forEach(card => {
-            card.classList.toggle('selected', card.dataset.useCase === useCase);
+    selectStarterTemplate(template) {
+        this.starterTemplate = template;
+        document.querySelectorAll('[data-starter]').forEach(card => {
+            card.classList.toggle('selected', card.dataset.starter === template);
         });
-        const btn = document.getElementById('use-case-continue');
+        const btn = document.getElementById('starter-continue');
         if (btn) btn.disabled = false;
-        this.updateProgressAPI('use_case', useCase);
+        this.updateProgressAPI('starter_template', template);
     },
 
-    async skipUseCase() {
-        await this.updateProgressAPI('use_case_skipped', true);
-        this.nextStep();
+    highlightStarter(template) {
+        document.querySelectorAll('[data-starter]').forEach(card => {
+            card.classList.toggle('selected', card.dataset.starter === template);
+        });
+        const btn = document.getElementById('starter-continue');
+        if (btn) btn.disabled = false;
     },
 
-    highlightUseCase(useCase) {
-        document.querySelectorAll('.use-case-card').forEach(card => {
-            card.classList.toggle('selected', card.dataset.useCase === useCase);
-        });
-        const btn = document.getElementById('use-case-continue');
-        if (btn) btn.disabled = false;
+    async skipStarterTemplate() {
+        this.starterTemplate = 'blank';
+        await this.applyStarterTemplate(true);
+    },
+
+    async applyStarterTemplate(skipConfirm) {
+        if (!this.starterTemplate) return;
+        const btn = document.getElementById('starter-continue');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Installing…';
+        }
+        try {
+            const response = await fetch(Birkly.url('/api/demo.php?action=install_starter'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ template: this.starterTemplate })
+            });
+            const data = await response.json();
+            if (data.status === 'ok') {
+                if (this.starterTemplate !== 'blank' && data.data?.demo_website) {
+                    this.demoWebsiteUrl = this.getDemoWebsiteUrl();
+                } else {
+                    this.demoWebsiteUrl = null;
+                }
+                if (skipConfirm) {
+                    await this.updateProgressAPI('starter_skipped', true);
+                }
+                this.nextStep();
+            } else {
+                alert(data.message || 'Failed to install starter template');
+            }
+        } catch (error) {
+            alert('Failed to install starter template.');
+        }
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Continue';
+        }
     },
 
     async getCSRFToken() {
@@ -312,12 +353,6 @@ const onboarding = {
             return;
         }
 
-        const formData = new FormData(form);
-        this.siteInfo = {
-            project_name: formData.get('project_name'),
-            project_description: formData.get('project_description')
-        };
-
         try {
             const response = await fetch(Birkly.url('/api/settings.php?action=update'), {
                 method: 'POST',
@@ -325,7 +360,10 @@ const onboarding = {
                 body: JSON.stringify({
                     action: 'update',
                     category: 'admin',
-                    settings: this.siteInfo,
+                    settings: {
+                        project_name: projectName,
+                        project_description: document.getElementById('project-description').value
+                    },
                     _csrf: csrfToken
                 })
             });
@@ -341,32 +379,6 @@ const onboarding = {
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Continue';
-        }
-    },
-
-    async keepDemoContent() {
-        this.demoContentChoice = 'keep';
-        await this.updateProgressAPI('demo_content_kept', true);
-        this.demoWebsiteUrl = this.getDemoWebsiteUrl();
-        document.getElementById('use-case-continue')?.removeAttribute('disabled');
-    },
-
-    async deleteDemoContent() {
-        if (!confirm('Delete all demo content? This cannot be undone.')) return;
-        try {
-            const response = await fetch(Birkly.url('/api/demo.php?action=delete'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ delete_content: true, delete_website: true })
-            });
-            const data = await response.json();
-            if (data.status === 'ok') {
-                this.demoContentChoice = 'delete';
-                await this.updateProgressAPI('demo_content_deleted', true);
-                document.getElementById('use-case-continue')?.removeAttribute('disabled');
-            }
-        } catch (error) {
-            alert('Error deleting demo content.');
         }
     },
 
@@ -465,6 +477,10 @@ const onboarding = {
     },
 
     async saveAIConnection() {
+        if (this.aiMode !== 'chat') {
+            await this.complete();
+            return;
+        }
         const provider = document.getElementById('onboarding-ai-provider')?.value;
         const apiKey = document.getElementById('onboarding-ai-api-key')?.value || '';
         const apiUrl = document.getElementById('onboarding-ai-api-url')?.value || '';
@@ -526,22 +542,22 @@ const onboarding = {
     },
 
     async _doComplete() {
-        const demoWebsiteUrl = this.demoContentChoice === 'keep' ? this.getDemoWebsiteUrl() : null;
         const response = await fetch(Birkly.url('/api/onboarding.php?action=complete'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                demo_website_url: demoWebsiteUrl,
-                demo_content_choice: this.demoContentChoice
+                demo_website_url: this.demoWebsiteUrl,
+                starter_template: this.starterTemplate,
+                demo_content_choice: this.starterTemplate && this.starterTemplate !== 'blank' ? 'keep' : 'delete'
             })
         });
         const data = await response.json();
         if (data.status === 'ok') {
             const params = new URLSearchParams();
-            if (demoWebsiteUrl) params.set('demo_website_url', demoWebsiteUrl);
-            if (this.demoContentChoice) params.set('demo_choice', this.demoContentChoice);
-            const qs = params.toString();
-            window.location.href = Birkly.url('/admin/index.php?page=dashboard') + (qs ? '&' + qs : '');
+            params.set('onboarding_complete', 'true');
+            if (this.demoWebsiteUrl) params.set('demo_website_url', this.demoWebsiteUrl);
+            if (this.starterTemplate) params.set('starter_template', this.starterTemplate);
+            window.location.href = Birkly.url('/admin/index.php?page=dashboard') + '&' + params.toString();
         } else {
             alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
         }

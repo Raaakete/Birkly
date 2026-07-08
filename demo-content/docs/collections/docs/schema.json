@@ -1,0 +1,7 @@
+{
+  "fields": [
+    {"id": "title", "type": "text", "label": "Title", "required": true},
+    {"id": "content", "type": "editor", "label": "Content"},
+    {"id": "category", "type": "text", "label": "Category"}
+  ]
+}

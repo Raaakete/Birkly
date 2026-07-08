@@ -1,0 +1,12 @@
+{
+  "id": "prod-sample-3",
+  "slug": "ceramic-mug",
+  "status": "published",
+  "created_at": "2025-01-03T00:00:00+00:00",
+  "updated_at": "2025-01-03T00:00:00+00:00",
+  "fields": {
+    "title": "Ceramic mug",
+    "description": "12 oz mug — perfect for late-night content editing.",
+    "price": "14.50"
+  }
+}

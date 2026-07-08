@@ -1,0 +1,8 @@
+{
+  "fields": [
+    {"id": "title", "type": "text", "label": "Title", "required": true},
+    {"id": "description", "type": "textarea", "label": "Description"},
+    {"id": "price", "type": "text", "label": "Price"},
+    {"id": "featured_image", "type": "media", "label": "Image"}
+  ]
+}

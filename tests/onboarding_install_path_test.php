@@ -40,9 +40,9 @@ try {
 
     chdir($prevCwd);
 
-    test_assert('START_HERE.html exists', is_file($root . '/START_HERE.html'));
-    test_assert('0_START-HERE.html removed', !is_file($root . '/0_START-HERE.html'));
-    $startHere = file_get_contents($root . '/START_HERE.html');
+    test_assert('0_START-HERE.html exists', is_file($root . '/0_START-HERE.html'));
+    test_assert('START_HERE.html removed', !is_file($root . '/START_HERE.html'));
+    $startHere = file_get_contents($root . '/0_START-HERE.html');
     test_assert('START_HERE builds install param in JS', strpos($startHere, 'buildOnboardingUrl') !== false);
     test_assert('START_HERE cloud install param', strpos($startHere, "install=cloud") !== false);
     test_assert('START_HERE handles file protocol', strpos($startHere, "file:") !== false);

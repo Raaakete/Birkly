@@ -132,11 +132,11 @@ try {
     test_assert('onboarding.css linked', strpos($onboardingPage['body'], '/admin/css/onboarding.css') !== false);
     test_assert('onboarding page wrapper present', strpos($onboardingPage['body'], 'onboarding-page') !== false);
 
-    // P19-M4: wizard v2 steps
-    test_assert('onboarding has install-context step', strpos($onboardingPage['body'], 'step-install-context') !== false);
-    test_assert('onboarding has use-case step', strpos($onboardingPage['body'], 'step-use-case') !== false);
-    test_assert('onboarding has marketplace step', strpos($onboardingPage['body'], 'step-marketplace') !== false);
-    test_assert('onboarding has use-case blog option', strpos($onboardingPage['body'], 'data-use-case="blog"') !== false);
+    // P19 wizard v3 steps
+    test_assert('onboarding has welcome step (merged install info)', strpos($onboardingPage['body'], 'step-welcome') !== false);
+    test_assert('onboarding has starter-templates step', strpos($onboardingPage['body'], 'step-starter-templates') !== false);
+    test_assert('onboarding has no marketplace step', strpos($onboardingPage['body'], 'step-marketplace') === false);
+    test_assert('onboarding has shop starter option', strpos($onboardingPage['body'], 'data-starter="shop"') !== false);
 
     // P19-M3: install path query param
     $onboardingLocal = birkly_test_http_request($base . '/admin/index.php?page=onboarding&install=local', [
