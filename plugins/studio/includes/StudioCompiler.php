@@ -29,7 +29,7 @@ class StudioCompiler
             ? birkly_url('/site/' . rawurlencode($projectSlug) . '/styles.css?v=' . $revision)
             : '/site/' . rawurlencode($projectSlug) . '/styles.css?v=' . $revision;
 
-        $body = $this->renderSections($canvas['sections'] ?? []);
+        $body = $this->renderNavHeader($canvas) . $this->renderSections($canvas['sections'] ?? []);
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -165,6 +165,30 @@ HTML;
         file_put_contents($path, $css);
     }
 
+    private function renderNavHeader(array $canvas): string
+    {
+        $nav = $canvas['nav'] ?? [];
+        if (!is_array($nav) || $nav === []) {
+            return '';
+        }
+        $links = '';
+        foreach ($nav as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $label = htmlspecialchars((string) ($item['label'] ?? 'Link'), ENT_QUOTES, 'UTF-8');
+            $href = htmlspecialchars((string) ($item['href'] ?? '#'), ENT_QUOTES, 'UTF-8');
+            $active = !empty($item['active']) ? ' active' : '';
+            $links .= '<a href="' . $href . '" class="studio-nav-link' . $active . '">' . $label . '</a>';
+        }
+        if ($links === '') {
+            return '';
+        }
+        $title = htmlspecialchars((string) ($canvas['page']['title'] ?? 'Site'), ENT_QUOTES, 'UTF-8');
+
+        return '<header class="studio-header"><div class="studio-header-inner"><h1 class="studio-site-title">' . $title . '</h1><nav class="studio-nav">' . $links . '</nav></div></header>';
+    }
+
     private function renderSections(array $sections): string
     {
         $out = '';
@@ -229,20 +253,22 @@ HTML;
     {
         $bindingType = $el['bindingType'] ?? 'loop';
         $collection = preg_replace('/[^a-z0-9_-]/', '', (string) ($el['collection'] ?? ''));
-        $template = (string) ($el['itemTemplate'] ?? '<div>{title}</div>');
+        $template = $this->normalizeItemTemplate((string) ($el['itemTemplate'] ?? '<div>{ title }</div>'));
 
         if ($bindingType === 'single') {
             $slug = preg_replace('/[^a-z0-9_-]/', '', (string) ($el['slug'] ?? ''));
-            return "{from '{$collection}' get entry '{$slug}'}\n" . $template . "\n{end}";
+            return "{from '{$collection}' get entry '{$slug}'}\n" . $template . "\n{endget}";
         }
         if ($bindingType === 'site_element') {
             $slug = preg_replace('/[^a-z0-9_-]/', '', (string) ($el['slug'] ?? ''));
-            return "{from 'site_elements' get entry '{$slug}'}\n" . $template . "\n{end}";
+            return "{from 'site_elements' get entry '{$slug}'}\n" . $template . "\n{endget}";
         }
         if ($bindingType === 'filtered') {
             $field = preg_replace('/[^a-z0-9_-]/', '', (string) ($el['filterField'] ?? 'status'));
             $value = preg_replace('/[^a-z0-9_-]/', '', (string) ($el['filterValue'] ?? 'published'));
-            return "{for each entry in '{$collection}' with {$field} = {$value}}\n" . $template . "\n{end}";
+            $order = $this->canonicalOrderClause($el);
+            $limit = $this->canonicalLimitClause($el);
+            return "{for each entry in '{$collection}' with {$field} = {$value}{$order}{$limit}}\n" . $template . "\n{endfor}";
         }
         if ($bindingType === 'template_function') {
             $name = preg_replace('/[^a-z0-9_-]/', '', (string) ($el['functionName'] ?? ''));
@@ -250,7 +276,30 @@ HTML;
             return '{' . $name . ($args !== '' ? ' ' . $args : '') . '}';
         }
 
-        return "{for each entry in '{$collection}'}\n" . $template . "\n{end}";
+        $order = $this->canonicalOrderClause($el);
+        $limit = $this->canonicalLimitClause($el);
+        return "{for each entry in '{$collection}'{$order}{$limit}}\n" . $template . "\n{endfor}";
+    }
+
+    private function normalizeItemTemplate(string $template): string
+    {
+        $template = preg_replace('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', '{ $1 }', $template) ?? $template;
+        return $template;
+    }
+
+    private function canonicalOrderClause(array $el): string
+    {
+        $order = strtolower((string) ($el['orderBy'] ?? 'newest'));
+        if (!in_array($order, ['newest', 'oldest', 'last-updated'], true)) {
+            $order = 'newest';
+        }
+        return ' ordered by ' . $order;
+    }
+
+    private function canonicalLimitClause(array $el): string
+    {
+        $limit = (int) ($el['limit'] ?? 0);
+        return $limit > 0 ? ' limit ' . $limit : '';
     }
 
     private function elementAttrs(array $el): string

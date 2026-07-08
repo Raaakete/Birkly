@@ -1,19 +1,21 @@
 <?php
 /**
- * SSR renderer for published Studio sites (P22-M9).
+ * SSR renderer for published Studio sites (P22-M9, P24-M2).
  */
 
 require_once __DIR__ . '/StudioProjectRepository.php';
-require_once dirname(__DIR__, 3) . '/admin/template_parser.php';
+require_once __DIR__ . '/StudioTemplateEngine.php';
 require_once dirname(__DIR__, 3) . '/core/page_bundle_runner.php';
 
 class StudioRenderer
 {
     private StudioProjectRepository $repo;
+    private StudioTemplateEngine $engine;
 
-    public function __construct(?StudioProjectRepository $repo = null)
+    public function __construct(?StudioProjectRepository $repo = null, ?StudioTemplateEngine $engine = null)
     {
         $this->repo = $repo ?? new StudioProjectRepository();
+        $this->engine = $engine ?? new StudioTemplateEngine();
     }
 
     public function handlePublicRequest(string $uri): bool
@@ -75,9 +77,10 @@ class StudioRenderer
 
     public function renderHtml(string $html): string
     {
-        $requests = $this->collectBundleRequests($html);
+        $requests = StudioTemplateEngine::collectBundleRequests($html);
         $data = [];
         if ($requests !== []) {
+            require_once dirname(__DIR__, 3) . '/core/storage/StorageFactory.php';
             $root = dirname(__DIR__, 3);
             $storage = get_storage($root . '/content/collections');
             $bundle = birkly_run_page_bundle_requests($storage, $requests, 'en', ['lean' => true]);
@@ -88,13 +91,7 @@ class StudioRenderer
             }
         }
 
-        try {
-            $parser = new TemplateParser($data);
-            return $parser->render($html);
-        } catch (Throwable $e) {
-            error_log('studio_ssr: render failed: ' . $e->getMessage());
-            return $html . "\n<!-- studio_ssr: render error logged -->";
-        }
+        return $this->engine->render($html, $data);
     }
 
     private function serveStyles(string $projectSlug): bool
@@ -117,50 +114,6 @@ class StudioRenderer
         }
         echo $css;
         return true;
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    private function collectBundleRequests(string $html): array
-    {
-        $requests = [];
-        $seen = [];
-
-        if (preg_match_all("/\{for each entry in '([a-z0-9_-]+)'(?: with ([a-z0-9_-]+) = ([a-z0-9_-]+))?\}/i", $html, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $m) {
-                $col = $m[1];
-                if (isset($seen['list:' . $col])) {
-                    continue;
-                }
-                $seen['list:' . $col] = true;
-                $req = ['type' => 'list_entries', 'into' => $col, 'collection' => $col];
-                if (!empty($m[2]) && !empty($m[3])) {
-                    $req['filter_field'] = $m[2];
-                    $req['filter_value'] = $m[3];
-                }
-                $requests[] = $req;
-            }
-        }
-
-        if (preg_match_all("/\{from '([a-z0-9_-]+)' get entry '([a-z0-9_-]+)'\}/i", $html, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $m) {
-                $col = $m[1];
-                $slug = $m[2];
-                $into = '__entry__:' . $col . ':' . $slug;
-                if (isset($seen['get:' . $into])) {
-                    continue;
-                }
-                $seen['get:' . $into] = true;
-                $requests[] = ['type' => 'get_entry', 'into' => $into, 'collection' => $col, 'slug' => $slug];
-            }
-        }
-
-        if (str_contains($html, 'site_elements') && !isset($seen['list:site_elements'])) {
-            $requests[] = ['type' => 'list_entries', 'into' => 'site_elements', 'collection' => 'site_elements'];
-        }
-
-        return $requests;
     }
 
     private function isPreviewRequest(): bool
