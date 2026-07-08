@@ -70,6 +70,7 @@ $suites = [
     'client_bundle_fixture_test.php',
     'performance_budget_test.php',
     'studio_public_routes_test.php',
+    'studio_public_url_test.php',
     'studio_repository_test.php',
     'studio_renderer_test.php',
     'studio_filesystem_test.php',

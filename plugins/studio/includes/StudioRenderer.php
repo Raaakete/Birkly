@@ -43,7 +43,12 @@ class StudioRenderer
         if (!$project || (empty($project['published']) && !$allowDraft)) {
             http_response_code(404);
             header('Content-Type: text/html; charset=utf-8');
-            echo '<!DOCTYPE html><html><body><h1>Not found</h1></body></html>';
+            $hint = $preview && !$allowDraft
+                ? '<p>Draft preview requires an active admin session. Log in to Birkly admin, then try again — or click <strong>Publish</strong> in Studio.</p>'
+                : '<p>Publish the project in Studio first, or use draft preview while logged in as admin.</p>';
+            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Not found</title></head><body>'
+                . '<h1>Studio site not available</h1>' . $hint
+                . '<p>Project slug: <code>' . htmlspecialchars($projectSlug, ENT_QUOTES) . '</code></p></body></html>';
             return true;
         }
 

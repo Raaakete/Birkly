@@ -100,3 +100,23 @@ function studio_kit_css_path(string $kitId): ?string
     $path = studio_plugin_dir() . '/' . $rel;
     return is_file($path) ? $path : null;
 }
+
+/**
+ * Build absolute public URL for a Studio site (respects subdirectory installs).
+ */
+function studio_public_site_url(string $projectSlug, bool $preview = false): string
+{
+    $path = '/site/' . rawurlencode($projectSlug) . '/';
+    if ($preview) {
+        $path .= '?birkly_studio_preview=1';
+    }
+    if (function_exists('birkly_url')) {
+        $path = birkly_url($path);
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    return $scheme . '://' . $host . $path;
+}

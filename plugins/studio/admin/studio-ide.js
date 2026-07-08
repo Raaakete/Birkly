@@ -36,11 +36,22 @@
   }
 
   function toast(message, type) {
-    if (window.Birkly?.Utils?.showNotification) {
-      Birkly.Utils.showNotification(message, type || 'info');
-    } else {
-      alert(message);
-    }
+    setStatus(message, type === 'error' ? 'error' : 'success');
+    const el = document.createElement('div');
+    el.className = 'studio-toast studio-toast-' + (type || 'info');
+    el.textContent = message;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('studio-toast-visible'));
+    setTimeout(() => {
+      el.classList.remove('studio-toast-visible');
+      setTimeout(() => el.remove(), 300);
+    }, 4500);
+  }
+
+  function absUrl(path) {
+    if (!path) return window.location.origin;
+    if (/^https?:\/\//i.test(path)) return path;
+    return window.location.origin + (path.startsWith('/') ? path : '/' + path);
   }
 
   function setStatus(message, type) {
@@ -122,7 +133,10 @@
   }
 
   async function withBusy(fn) {
-    if (state.busy) return;
+    if (state.busy) {
+      toast('Please wait…', 'info');
+      return;
+    }
     state.busy = true;
     setStatus('Working…', 'info');
     try {
@@ -300,7 +314,6 @@
     if (!path || !state.project) return;
     if (isStudioPage(path)) {
       if (!state.canvas) return;
-      pushUndo();
       const slug = pageSlugFromPath(path);
       await api('save_page', { project_id: state.project.id, page_slug: slug, canvas: state.canvas });
       const compiled = await api('compile_page', { project_id: state.project.id, page_slug: slug });
@@ -831,15 +844,26 @@
       case 'open-external':
         withBusy(async () => {
           const data = await api('open_project_url', { project_id: state.project.id });
-          const w = window.open(data.url, '_blank', 'noopener,noreferrer');
-          if (!w) toast('Popup blocked — allow popups for this site', 'error');
+          const url = absUrl(data.url);
+          const label = data.published ? 'Live site' : 'Draft preview (admin only)';
+          setStatus(label + ': ' + url, 'info');
+          const w = window.open(url, '_blank', 'noopener,noreferrer');
+          if (!w) {
+            toast('Popup blocked. URL: ' + url, 'error');
+            try {
+              await navigator.clipboard.writeText(url);
+              toast('URL copied to clipboard', 'success');
+            } catch (_) { /* ignore */ }
+          }
         });
         break;
       case 'publish':
         withBusy(async () => {
           await saveActiveFile();
-          await api('publish_project', { id: state.project.id });
-          toast('Published! View at /site/' + state.project.slug + '/', 'success');
+          const data = await api('publish_project', { id: state.project.id });
+          if (data.project) state.project = data.project;
+          const url = absUrl(data.public_url || '/site/' + (state.project.slug || '') + '/');
+          toast('Published! ' + url, 'success');
         });
         break;
       case 'export':
