@@ -53,6 +53,48 @@ content/studio-projects/{project-id}/
 | `/site/{slug}/styles.css` | Kit + generated + custom CSS |
 | `/site/{slug}/?birkly_studio_preview=1` | Draft preview (admin session) |
 
+## Production deploy (Apache / nginx)
+
+Published Studio sites need **two things** on the server:
+
+1. **`api/studio_public.php`** — must exist in the deployed Birkly tree (included in current releases).
+2. **URL routing** — requests to `/site/*` must reach that file.
+
+### Apache
+
+Shipped `.htaccess` already contains:
+
+```apache
+RewriteRule ^site(/.*)?$ api/studio_public.php [L,QSA]
+```
+
+Ensure `AllowOverride All` (or at least `FileInfo`) so `.htaccess` rewrites apply.
+
+### nginx
+
+`.htaccess` is ignored on nginx. Add one of:
+
+```nginx
+# Option A — direct rewrite
+location ~ ^/site(/.*)?$ {
+    try_files $uri /api/studio_public.php$is_args$args;
+}
+
+# Option B — front controller (index.php also routes /site/* when studio_public.php exists)
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+```
+
+After deploy, verify:
+
+```bash
+curl -sI https://your-cms.example/api/studio_public.php   # should NOT be 404
+curl -sI https://your-cms.example/site/your-project-slug/ # 200 after publish
+```
+
+`GET /api/health.php` includes a `studio` block (`route_ready`, `hints`) for monitoring.
+
 ## Plugin blocks
 
 Plugins register blocks via `studio-blocks.php`:

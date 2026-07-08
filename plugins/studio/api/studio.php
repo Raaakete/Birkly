@@ -36,7 +36,7 @@ $adminActions = [
     'duplicate_project', 'publish_project', 'list_pages', 'get_page', 'save_page',
     'add_page', 'delete_page', 'reorder_pages', 'set_home_page', 'compile_page',
     'save_custom_css', 'get_custom_css', 'export_project', 'parse_code', 'list_collections',
-    'list_style_kits', 'preview_url', 'open_project_url',
+    'list_style_kits', 'preview_url', 'open_project_url', 'diagnose_public',
     'list_files', 'read_file', 'write_file', 'create_file', 'create_directory',
     'delete_path', 'rename_path', 'list_revisions', 'list_studio_blocks', 'list_sections',
     'insert_section', 'get_tokens', 'save_tokens', 'list_components', 'save_component',
@@ -99,9 +99,13 @@ switch ($action) {
         if (!$project) {
             studio_err('Not found', 404);
         }
+        require_once __DIR__ . '/../../../core/health.php';
+        $route = birkly_health_studio();
         studio_ok([
             'project' => $project,
             'public_url' => studio_public_site_url($project['slug'] ?? $id, false),
+            'route_ready' => $route['route_ready'],
+            'route_hints' => $route['hints'],
         ]);
     case 'list_pages':
         $id = (string) ($input['id'] ?? $_GET['id'] ?? '');
@@ -216,7 +220,31 @@ switch ($action) {
             }
         }
         $url = studio_public_site_url($slug, !$published);
-        studio_ok(['url' => $url, 'published' => $published]);
+        require_once __DIR__ . '/../../../core/health.php';
+        $route = birkly_health_studio();
+        studio_ok([
+            'url' => $url,
+            'published' => $published,
+            'route_ready' => $route['route_ready'],
+            'route_hints' => $route['hints'],
+        ]);
+    case 'diagnose_public':
+        require_once __DIR__ . '/../../../core/health.php';
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $project = $id !== '' ? $repo->getProject($id) : null;
+        $route = birkly_health_studio();
+        $out = ['route' => $route];
+        if ($project) {
+            $out['project'] = [
+                'id' => $project['id'],
+                'slug' => $project['slug'] ?? $project['id'],
+                'published' => !empty($project['published']),
+            ];
+            if (empty($project['published'])) {
+                $out['route']['hints'][] = 'Project is not published — use draft preview (?birkly_studio_preview=1) while logged in, or click Publish.';
+            }
+        }
+        studio_ok($out);
     case 'list_files':
         $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
         studio_ok(['tree' => $fs->listTree($id)]);

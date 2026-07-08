@@ -33,7 +33,7 @@ function birkly_health_required_response_keys(): array
  *
  * @return array<string, array{status:string}>
  */
-function birkly_health_checks_catalog(array $writable, array $disk, array $marketplace): array
+function birkly_health_checks_catalog(array $writable, array $disk, array $marketplace, ?array $studio = null): array
 {
     $writableStatus = 'ok';
     foreach (['settings', 'content', 'cache', 'logs'] as $required) {
@@ -59,11 +59,18 @@ function birkly_health_checks_catalog(array $writable, array $disk, array $marke
         default => 'degraded',
     };
 
-    return [
+    $checks = [
         'writable_dirs' => ['status' => $writableStatus],
         'disk' => ['status' => $diskStatus],
         'marketplace' => ['status' => $marketplaceStatus],
     ];
+    if (is_array($studio)) {
+        $checks['studio'] = [
+            'status' => !empty($studio['route_ready']) ? 'ok' : (!empty($studio['public_entry']) ? 'degraded' : 'error'),
+        ];
+    }
+
+    return $checks;
 }
 
 /**
@@ -156,6 +163,55 @@ function birkly_health_marketplace(): array
 }
 
 /**
+ * Studio SSR / public route readiness (P23).
+ *
+ * @return array{public_entry:bool,htaccess_rule:bool,index_route:bool,plugin_active:bool,route_ready:bool,hints:list<string>}
+ */
+function birkly_health_studio(): array
+{
+    $root = birkly_project_root();
+    $publicEntry = is_file($root . '/api/studio_public.php');
+    $htaccessRule = false;
+    $htaccess = $root . '/.htaccess';
+    if (is_readable($htaccess)) {
+        $body = (string) file_get_contents($htaccess);
+        $htaccessRule = str_contains($body, 'studio_public.php');
+    }
+    $indexRoute = false;
+    $index = $root . '/index.php';
+    if (is_readable($index)) {
+        $body = (string) file_get_contents($index);
+        $indexRoute = str_contains($body, '/site') && str_contains($body, 'studio_public.php');
+    }
+    $pluginActive = false;
+    if (function_exists('birkly_is_plugin_active')) {
+        require_once __DIR__ . '/plugins.php';
+        load_plugins();
+        $pluginActive = birkly_is_plugin_active('studio');
+    }
+    $routeReady = $publicEntry && $pluginActive && ($htaccessRule || $indexRoute);
+    $hints = [];
+    if (!$publicEntry) {
+        $hints[] = 'Deploy api/studio_public.php (missing on this server).';
+    }
+    if (!$htaccessRule && !$indexRoute) {
+        $hints[] = 'Route /site/* to api/studio_public.php (.htaccess on Apache, or nginx — see plugins/studio/README.md).';
+    }
+    if (!$pluginActive) {
+        $hints[] = 'Activate the Studio plugin in Admin → Settings → Plugins.';
+    }
+
+    return [
+        'public_entry' => $publicEntry,
+        'htaccess_rule' => $htaccessRule,
+        'index_route' => $indexRoute,
+        'plugin_active' => $pluginActive,
+        'route_ready' => $routeReady,
+        'hints' => $hints,
+    ];
+}
+
+/**
  * @return array<string, mixed>
  */
 function birkly_health_report(): array
@@ -163,6 +219,7 @@ function birkly_health_report(): array
     $writable = birkly_health_writable_dirs();
     $disk = birkly_health_disk();
     $marketplace = birkly_health_marketplace();
+    $studio = birkly_health_studio();
 
     $criticalFail = false;
     foreach (['settings', 'content', 'cache', 'logs'] as $required) {
@@ -186,7 +243,7 @@ function birkly_health_report(): array
     }
 
     $status = $criticalFail ? 'error' : ($degraded ? 'degraded' : 'ok');
-    $checks = birkly_health_checks_catalog($writable, $disk, $marketplace);
+    $checks = birkly_health_checks_catalog($writable, $disk, $marketplace, $studio);
 
     return [
         'status' => $status,
@@ -197,6 +254,7 @@ function birkly_health_report(): array
         'writable' => $writable,
         'disk' => $disk,
         'marketplace' => $marketplace,
+        'studio' => $studio,
         'checks' => $checks,
     ];
 }

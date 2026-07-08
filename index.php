@@ -6,7 +6,29 @@ require_once __DIR__ . '/core/birkly_paths.php';
 // Note: This file should NOT be used as a router for PHP built-in server
 // PHP files should execute directly without going through this router
 
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$base = birkly_base_path();
+if ($base !== '' && str_starts_with($uri, $base)) {
+    $uri = substr($uri, strlen($base));
+    if ($uri === '') {
+        $uri = '/';
+    }
+}
+
+// Studio published sites (P22) — nginx/other hosts that route unknown paths to index.php
+if (str_starts_with($uri, '/site') && ($uri === '/site' || str_starts_with($uri, '/site/'))) {
+    $entry = __DIR__ . '/api/studio_public.php';
+    if (is_file($entry)) {
+        require $entry;
+        exit;
+    }
+    http_response_code(503);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!DOCTYPE html><html><body><h1>Studio route not configured</h1>'
+        . '<p>Missing <code>api/studio_public.php</code> on this server. Deploy the latest Birkly build and ensure '
+        . '<code>/site/*</code> rewrites to that file (see <code>.htaccess</code> or nginx config in plugins/studio/README.md).</p></body></html>';
+    exit;
+}
 
 // If accessing a PHP file directly, don't interfere - let PHP execute it
 // This router should only handle non-PHP files and special routes
