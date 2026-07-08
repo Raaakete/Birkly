@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" data-test-pathname="/reference-projects/blog/index.html" data-test-search="">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<main>
+    {for each entry in 'services' with status = published ordered by newest}
+    <div>{ title }</div>
+    {endfor}
+    {for each entry in 'blog' with status = published ordered by newest}
+    <article>{ title }</article>
+    {endfor}
+</main>
+</body>
+</html>
