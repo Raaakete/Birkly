@@ -4,9 +4,16 @@
   "status": "published",
   "created_at": "2025-01-01T00:00:00+00:00",
   "updated_at": "2025-01-01T00:00:00+00:00",
-  "fields": {
+  "en": {
     "title": "Sample product",
+    "slug": "sample-product",
     "description": "A demo product from the shop starter template.",
     "price": "29.00"
+  },
+  "de": {
+    "title": "Beispielprodukt",
+    "slug": "sample-product",
+    "description": "Ein Demo-Produkt aus der Shop-Vorlage.",
+    "price": "29,00"
   }
 }

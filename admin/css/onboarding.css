@@ -28,32 +28,38 @@
 .onboarding-body {
   margin: 0;
   min-height: 100vh;
+  --onboarding-shell-width: 840px;
   background: linear-gradient(160deg, var(--color-neutral-100, #f8f9f7) 0%, var(--color-neutral-200, #f4f6f2) 45%, #eef3ec 100%);
   color: var(--text-primary, #20221d);
 }
 
-.onboarding-wrapper,
-.onboarding-page {
+.onboarding-wrapper {
+  width: 100%;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
+  align-items: flex-start;
   padding: var(--space-8, 2rem) var(--space-6, 1.5rem);
   box-sizing: border-box;
 }
 
-.onboarding-container {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 840px;
-  min-width: min(100%, 840px);
+.onboarding-page {
+  width: var(--onboarding-shell-width);
+  max-width: 100%;
   flex: 0 0 auto;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
-#step-first-user .onboarding-content {
+.onboarding-container,
+.onboarding-step,
+.onboarding-content {
   width: 100%;
+  box-sizing: border-box;
+}
+
+.onboarding-container {
+  margin: 0 auto;
 }
 
 /* ---- Brand header ---- */
@@ -719,10 +725,10 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.use-case-card:hover,
+.use-case-card:hover:not(.use-case-card--disabled),
 .use-case-card.selected {
-  border-color: var(--primary-500, #3b82f6);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+  border-color: var(--color-primary, #7ce3bf);
+  box-shadow: 0 0 0 3px rgba(124, 227, 191, 0.25);
 }
 
 .use-case-card span {
@@ -800,6 +806,27 @@
 
 .ai-mode-panel[hidden] {
   display: none !important;
+}
+
+.use-case-card--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  position: relative;
+}
+
+.starter-coming-soon {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--color-neutral-200, #f4f6f2);
+  color: var(--text-secondary, #72746f);
+  font-size: 0.6875rem;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .starter-template-grid {

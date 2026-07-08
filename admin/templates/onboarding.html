@@ -19,6 +19,16 @@ if (file_exists($root . '/api/storage.php')) {
 
 $defaultLogo = '/admin/assets/birkly-icon.svg';
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
+
+require_once $root . '/core/demo_starter_templates.php';
+$starterAvailability = birkly_demo_starter_availability($root);
+$starterCards = [
+    'blog' => ['label' => 'Blog', 'hint' => 'Posts + demo site'],
+    'shop' => ['label' => 'Shop', 'hint' => 'Products + storefront'],
+    'business' => ['label' => 'Business', 'hint' => 'Services + pages'],
+    'docs' => ['label' => 'Documentation', 'hint' => 'Help articles'],
+    'blank' => ['label' => 'Start blank', 'hint' => 'No demo content'],
+];
 ?>
 
 <div class="onboarding-page" data-install-path="<?= htmlspecialchars($installPath) ?>">
@@ -121,21 +131,24 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     <p class="step-subtitle">Optional sample collections and a demo website on your server. Nothing is sent to Birkly — templates install locally only.</p>
                 </div>
                 <div class="use-case-grid starter-template-grid">
-                    <button type="button" class="use-case-card" data-starter="blog" data-onboarding-action="select-starter" data-onboarding-param="blog">
-                        <strong>Blog</strong><span>Posts + demo site</span>
-                    </button>
-                    <button type="button" class="use-case-card" data-starter="shop" data-onboarding-action="select-starter" data-onboarding-param="shop">
-                        <strong>Shop</strong><span>Products + storefront</span>
-                    </button>
-                    <button type="button" class="use-case-card" data-starter="business" data-onboarding-action="select-starter" data-onboarding-param="business">
-                        <strong>Business</strong><span>Services + pages</span>
-                    </button>
-                    <button type="button" class="use-case-card" data-starter="docs" data-onboarding-action="select-starter" data-onboarding-param="docs">
-                        <strong>Documentation</strong><span>Help articles</span>
-                    </button>
-                    <button type="button" class="use-case-card" data-starter="blank" data-onboarding-action="select-starter" data-onboarding-param="blank">
-                        <strong>Start blank</strong><span>No demo content</span>
-                    </button>
+                    <?php foreach ($starterCards as $starterId => $card): ?>
+                        <?php
+                        $meta = $starterAvailability[$starterId] ?? ['selectable' => false, 'enabled' => false, 'ready' => false];
+                        $selectable = !empty($meta['selectable']);
+                        $comingSoon = !$selectable && $starterId !== 'blank';
+                        ?>
+                        <button type="button"
+                            class="use-case-card<?= $selectable ? '' : ' use-case-card--disabled' ?>"
+                            data-starter="<?= htmlspecialchars($starterId) ?>"
+                            data-starter-selectable="<?= $selectable ? '1' : '0' ?>"
+                            <?= $selectable ? 'data-onboarding-action="select-starter" data-onboarding-param="' . htmlspecialchars($starterId) . '"' : 'disabled aria-disabled="true"' ?>>
+                            <strong><?= htmlspecialchars($card['label']) ?></strong>
+                            <span><?= htmlspecialchars($card['hint']) ?></span>
+                            <?php if ($comingSoon): ?>
+                                <em class="starter-coming-soon">Coming soon</em>
+                            <?php endif; ?>
+                        </button>
+                    <?php endforeach; ?>
                 </div>
                 <div class="onboarding-actions onboarding-actions--split">
                     <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
