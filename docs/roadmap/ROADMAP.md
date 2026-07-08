@@ -197,7 +197,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 23** — Studio Pro (advanced visual builder) — **proposed, awaiting human approval**
+**Next active phase:** **Phase 23** — Studio IDE (project workspace + advanced builder) — **proposed, awaiting human approval**
 
 **Spec:** `docs/reviews/P23-studio-pro-plan.md` · **Handoff:** `docs/reviews/P23-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P23-verification-matrix.md`
 
@@ -2639,6 +2639,42 @@ Events (collection) · ticket types · RSVP · paid registration via shelf · ca
 **Human decisions (locked):** P22-D1 plugin-only · P22-D2 in-CMS storage · P22-D3 dual editor · P22-D4 compile artifact · P22-D5 vendored CSS kits · P22-D7 SSR default · P22-D9 export never deletes · P22-D12 single notification at M12.
 
 **Depends on:** P20 (parity matrix), P21 (preview bundle path).
+
+---
+
+## Phase 23 — Studio IDE (project workspace + advanced builder)
+
+**Status:** **Proposed** (2026-07-08) — awaiting human approval — autonomous execution P23-M0→M16 after approval
+
+**Spec:** `docs/reviews/P23-studio-pro-plan.md`  
+**Handoff:** `docs/reviews/P23-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P23-verification-matrix.md`
+
+**Goal:** Transform `plugins/studio` into a **project IDE**: file tree, file tabs, visual/code/split views, **Open project ↗** (home page in new browser tab), plus DnD canvas, responsive design, global components, plugin blocks, SSR, export optimizer.
+
+| ID | Focus | Status |
+|----|--------|--------|
+| **P23-M0** | Gap register + IDE UX spec + canvas v2 | proposed |
+| **P23-M1** | IDE shell + Open project button | proposed |
+| **P23-M2** | File system API + tree | proposed |
+| **P23-M3** | File tabs | proposed |
+| **P23-M4** | Code view | proposed |
+| **P23-M5** | Visual + split view | proposed |
+| **P23-M6** | Canvas v2 DnD + layers | proposed |
+| **P23-M7** | Multi-column layout | proposed |
+| **P23-M8** | Responsive breakpoints | proposed |
+| **P23-M9** | Style panel + design tokens | proposed |
+| **P23-M10** | Global components | proposed |
+| **P23-M11** | Media + inline WYSIWYG | proposed |
+| **P23-M12** | Advanced Birkly blocks | proposed |
+| **P23-M13** | `register_studio_block()` + plugin blocks | proposed |
+| **P23-M14** | Section library + templates | proposed |
+| **P23-M15** | Undo/revisions + SSR + optimizer + docs | proposed |
+| **P23-M16** | Closure + human notification | proposed |
+
+**Human requirements:** visual view · code view · file system · file tabs · open project in new tab.
+
+**Depends on:** P22 (Studio v1), P20 (parity), P21 (performance).
 
 ---
 
