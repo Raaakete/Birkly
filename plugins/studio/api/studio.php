@@ -104,6 +104,7 @@ switch ($action) {
         studio_ok([
             'project' => $project,
             'public_url' => studio_public_site_url($project['slug'] ?? $id, false),
+            'view_url' => studio_view_url($project['slug'] ?? $id, false),
             'route_ready' => $route['route_ready'],
             'route_hints' => $route['hints'],
         ]);
@@ -219,11 +220,12 @@ switch ($action) {
                 $compiler->compilePage($id, $pageSlug);
             }
         }
-        $url = studio_public_site_url($slug, !$published);
+        $url = studio_view_url($slug, !$published);
         require_once __DIR__ . '/../../../core/health.php';
         $route = birkly_health_studio();
         studio_ok([
             'url' => $url,
+            'public_url' => studio_public_site_url($slug, !$published),
             'published' => $published,
             'route_ready' => $route['route_ready'],
             'route_hints' => $route['hints'],
