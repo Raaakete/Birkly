@@ -25,6 +25,7 @@ require_once 'rate_limit.php';
 require_once 'log.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/birkly_users.php';
+require_once __DIR__ . '/../core/security_policy.php';
 
 // Use a storage instance that points to the users directory
 $usersDir = birkly_users_write_dir();
@@ -204,6 +205,7 @@ if ($action === 'create_user') {
         'created_at' => date('c'),
         'created_by' => $_SESSION['user']['id']
     ];
+    $user = birkly_save_user_with_2fa_policy($user);
     
     try {
         $result = $storage->write($userId . '.json', $user);
@@ -251,6 +253,7 @@ if ($action === 'list_users') {
     foreach ($users as $user) {
         $data = $storage->read($user);
         if ($data) {
+            $data = birkly_save_user_with_2fa_policy($data);
             unset($data['password']); // Don't send password hashes
             $userData[] = $data;
         }
@@ -294,7 +297,7 @@ if ($action === 'update_user') {
     }
     
     // Update allowed fields
-    $allowedFields = ['role', 'email'];
+    $allowedFields = ['role', 'email', '2fa_grace_until'];
     foreach ($allowedFields as $field) {
         if (isset($updates[$field])) {
             $user[$field] = $updates[$field];
@@ -305,6 +308,8 @@ if ($action === 'update_user') {
     if (!empty($updates['password'])) {
         $user['password'] = hashPassword($updates['password']);
     }
+
+    $user = birkly_save_user_with_2fa_policy($user);
     
     $user['updated_at'] = date('c');
     $user['updated_by'] = $_SESSION['user']['id'];
@@ -314,6 +319,66 @@ if ($action === 'update_user') {
     echo json_encode([
         'status' => $result ? 'ok' : 'error',
         'message' => $result ? 'User updated' : 'Failed to update user'
+    ]);
+    exit;
+}
+
+// Extend 2FA grace period for a user (admin only)
+if ($action === 'extend_2fa_grace') {
+    if (!isset($_SESSION['user']) || !checkPermission($_SESSION['user'], 'update_user')) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $userId = $input['id'] ?? '';
+    if ($userId === '') {
+        echo json_encode(['status' => 'error', 'message' => 'User ID required']);
+        exit;
+    }
+
+    $user = $storage->read($userId . '.json');
+    if (!$user) {
+        echo json_encode(['status' => 'error', 'message' => 'User not found']);
+        exit;
+    }
+
+    if (!empty($input['2fa_grace_until']) || !empty($input['until'])) {
+        $until = (string) ($input['2fa_grace_until'] ?? $input['until']);
+        $ts = strtotime($until);
+        if ($ts === false) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid grace until date']);
+            exit;
+        }
+        $user['2fa_grace_until'] = date('c', $ts);
+    } elseif (isset($input['days'])) {
+        $days = max(0, (int) $input['days']);
+        $baseTs = time();
+        $currentUntil = $user['2fa_grace_until'] ?? null;
+        if (is_string($currentUntil) && ($currentTs = strtotime($currentUntil)) !== false && $currentTs > $baseTs) {
+            $baseTs = $currentTs;
+        }
+        $user['2fa_grace_until'] = date('c', strtotime('+' . $days . ' days', $baseTs));
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'days or 2fa_grace_until required']);
+        exit;
+    }
+
+    $user['updated_at'] = date('c');
+    $user['updated_by'] = $_SESSION['user']['id'];
+    $result = $storage->write($userId . '.json', $user);
+
+    unset($user['password']);
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? '2FA grace extended' : 'Failed to update user',
+        'data' => $user,
     ]);
     exit;
 }

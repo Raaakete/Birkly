@@ -134,32 +134,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Use the same user storage + ID scheme as api/2fa.php / api/users.php
             $GLOBALS['__HARU_INTERNAL_CALL'] = true;
             require_once __DIR__ . '/../api/2fa.php';
+            require_once __DIR__ . '/../core/security_policy.php';
 
             $normalizedEmail = trim(strtolower($email));
-            $userId = birkly_user_id_from_email($email);
 
             $userFile = birkly_user_account_path($email);
             
             if ($userFile !== null && file_exists($userFile)) {
                 $userData = json_decode(file_get_contents($userFile), true);
-                if (isset($userData['2fa']['enabled']) && $userData['2fa']['enabled']) {
-                    // Store email in session for 2FA verification
-                    $_SESSION['2fa_pending'] = $normalizedEmail;
-                    // Don't keep full user session yet - require 2FA verification first
-                    unset($_SESSION['user']);
-                    // CRITICAL: Clear output buffer before redirect
-                    if (ob_get_level() > 0) {
-                        ob_clean();
+                if (is_array($userData)) {
+                    $userData = birkly_save_user_with_2fa_policy($userData);
+                    if (isset($userData['2fa']['enabled']) && $userData['2fa']['enabled']) {
+                        // Store email in session for 2FA verification
+                        $_SESSION['2fa_pending'] = $normalizedEmail;
+                        // Don't keep full user session yet - require 2FA verification first
+                        unset($_SESSION['user']);
+                        // CRITICAL: Clear output buffer before redirect
+                        if (ob_get_level() > 0) {
+                            ob_clean();
+                        }
+                        if (!headers_sent()) {
+                            http_response_code(302);
+                            header('Location: ' . birkly_url('/admin/verify-2fa.php'));
+                        }
+                        exit;
                     }
-                    if (!headers_sent()) {
-                        http_response_code(302);
-                        header('Location: ' . birkly_url('/admin/verify-2fa.php'));
+
+                    if (birkly_user_2fa_blocked($userData)) {
+                        $_SESSION['flash_2fa_policy'] = 'Two-factor authentication is required for all admin users. Enable 2FA in your account settings to continue.';
+                        if (ob_get_level() > 0) {
+                            ob_clean();
+                        }
+                        if (!headers_sent()) {
+                            http_response_code(302);
+                            header('Location: ' . birkly_admin_url('account', ['2fa_required' => '1']) . '#2fa');
+                        }
+                        exit;
                     }
-                    exit;
+
+                    $_SESSION['user'] = array_merge($_SESSION['user'] ?? [], $userData);
+                    unset($_SESSION['user']['password']);
                 }
             }
             
-            // No 2FA - proceed with normal login
+            // No per-user 2FA verification required — proceed with normal login
             // Redirect to dashboard or original page
             // Use absolute path to ensure correct routing
             $redirect = $_GET['redirect'] ?? birkly_admin_url('dashboard');

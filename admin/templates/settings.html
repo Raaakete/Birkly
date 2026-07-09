@@ -444,7 +444,21 @@
             </div>
           </div>
 
-          <!-- 2FA is a per-user feature and is managed in Account settings, not global Settings -->
+          <div class="settings-section">
+            <h2>Two-factor authentication policy</h2>
+            <p class="settings-help">When enabled, all admin users must set up two-factor authentication. Users without 2FA receive a configurable grace period before login is blocked.</p>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="security-require-2fa" name="securityRequire2fa" <?= !empty($settings['security']['require_2fa']) ? 'checked' : '' ?>>
+                <span>Require 2FA for all admin users</span>
+              </label>
+            </div>
+            <div class="form-group">
+              <label for="security-require-2fa-grace-days">Grace period (days)</label>
+              <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
+              <p class="settings-help">Days users have to enable 2FA after the policy is turned on (default 30).</p>
+            </div>
+          </div>
 
           <div class="settings-section">
             <h2><?= __('admin.plugin_security_denylist') ?></h2>

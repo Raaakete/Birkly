@@ -12,9 +12,7 @@ foreach (($onboardingData['checklist'] ?? []) as $checklistItem) {
 }
 $showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipped']) && $hasIncompleteChecklist && empty($onboardingData['checklist_hidden']);
 $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
-
-require_once dirname(dirname(__DIR__)) . '/core/birkly_paths.php';
-$isLocalDev = birkly_is_local_dev_request();
+$isLocalDev = !empty($is_local_dev);
 ?><!-- Onboarding Completion Modal -->
 <div class="modal" id="onboarding-complete-modal" style="display: none;">
     <div class="modal-backdrop"></div>

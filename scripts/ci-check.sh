@@ -17,12 +17,17 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
-chmod +x "$ROOT/scripts/agent-smoke-test.sh" "$ROOT/scripts/auth-probe.sh" "$ROOT/scripts/studio-smoke.sh" 2>/dev/null || true
+chmod +x "$ROOT/scripts/agent-smoke-test.sh" "$ROOT/scripts/auth-probe.sh" "$ROOT/scripts/studio-smoke.sh" "$ROOT/scripts/admin-polish-smoke.sh" 2>/dev/null || true
 "$ROOT/scripts/agent-smoke-test.sh"
 
 if [[ -x "$ROOT/scripts/studio-smoke.sh" ]]; then
   "$ROOT/scripts/studio-smoke.sh"
   echo "[ci-check] OK: studio-smoke.sh"
+fi
+
+if [[ -x "$ROOT/scripts/admin-polish-smoke.sh" ]]; then
+  "$ROOT/scripts/admin-polish-smoke.sh"
+  echo "[ci-check] OK: admin-polish-smoke.sh"
 fi
 
 echo "[ci-check] RESULT: PASS"

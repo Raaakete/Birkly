@@ -157,6 +157,8 @@ $suites = [
     'settings_storage_test.php',
     'settings_save_test.php',
     'settings_page_test.php',
+    'admin_dashboard_paths_test.php',
+    'security_policy_2fa_test.php',
     'cloud_account_link_test.php',
     'csp_nonce_test.php',
 ];
