@@ -240,6 +240,13 @@ $isLocalDev = !empty($is_local_dev);
 // Dashboard data loading
 (function() {
     const csrfToken = document.getElementById('csrf-token')?.value;
+
+    function dashboardApiUrl(path) {
+        if (window.Birkly && typeof Birkly.url === 'function') {
+            return Birkly.url(path);
+        }
+        return path[0] === '/' ? path : '/' + path;
+    }
     
     // Escape HTML helper
     function escapeHtml(text) {
@@ -250,7 +257,7 @@ $isLocalDev = !empty($is_local_dev);
     
     // Load dashboard stats
     function loadStats() {
-        fetch('/api/dashboard.php?action=stats')
+        fetch(dashboardApiUrl('/api/dashboard.php?action=stats'), { credentials: 'same-origin' })
             .then(r => r.json())
             .then(data => {
                 if (data.status === 'ok' && data.data && data.data.stats) {
@@ -283,7 +290,7 @@ $isLocalDev = !empty($is_local_dev);
         const collectionsList = document.getElementById('recent-collections-list');
         if (!collectionsList) return;
         
-        fetch('/api/content.php?action=list_collections')
+        fetch(dashboardApiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
             .then(r => r.json())
             .then(data => {
                 // Handle different response formats
