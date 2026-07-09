@@ -75,6 +75,7 @@ $suites = [
     'studio_repository_test.php',
     'studio_renderer_test.php',
     'studio_template_engine_test.php',
+    'studio_template_engine_v2_test.php',
     'studio_compiler_canonical_test.php',
     'studio_ssr_curl_test.php',
     'studio_filesystem_test.php',

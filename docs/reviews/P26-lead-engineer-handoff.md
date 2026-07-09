@@ -1,8 +1,8 @@
 # Phase 26 — Lead-engineer handoff (Studio creative suite & design bridge)
 
-**Status:** Proposed (2026-07-09) — awaiting human approval  
-**Prerequisite:** **P25-M18 closure on `main`** — do not start P26 until P25 verification matrix is green  
-**Human rule:** Execute **P26-M0→M16** autonomously after approval. Notify human **once** at **P26-M16** only.
+**Status:** Approved (2026-07-09, Keven) — execute as part of P25+P26 single run  
+**Prerequisite:** None if P25 already complete on `main`; otherwise complete P25 first in same run  
+**Human rule:** Combined with P26 — notify human **once** at **P26-M16** only (not P25-M18).
 
 **Master plan:** `docs/reviews/P26-studio-creative-design-plan.md`  
 **Matrix:** `docs/reviews/P26-verification-matrix.md`
@@ -61,6 +61,6 @@ CLOSURE:
 
 ## Human approval checklist
 
-- [ ] P26-D1–D14 accepted
-- [ ] P25 complete on `main` confirmed
-- [ ] M0–M16 single-wave execution approved
+- [x] P26-D1–D14 accepted (2026-07-09)
+- [x] P25+P26 single-run execution approved (2026-07-09)
+- [x] M0–M16 single-wave execution approved (2026-07-09)

@@ -1,9 +1,7 @@
 # P26 — Studio creative suite & design bridge
 
-**Status:** Proposed (2026-07-09) — awaiting human approval  
-**Baseline:** P25 complete (required) — design canvas, live preview, engine v2, CSS studio, section presets  
-**Prerequisite:** Finish **P25-M0→M18** on `main` before starting P26 execution  
-**Human rule:** Execute P26-M0→M16 autonomously after approval. Notify human **once** at **P26-M16** only.
+**Status:** Approved (2026-07-09, Keven) — execute as part of P25+P26 single run  
+**Human rule:** Combined with P25 — notify human **once** at **P26-M16** only.
 
 **Handoff:** `docs/reviews/P26-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P26-verification-matrix.md`

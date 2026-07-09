@@ -26,6 +26,7 @@ require_once __DIR__ . '/../includes/StudioExporter.php';
 require_once __DIR__ . '/../includes/StudioFileSystem.php';
 require_once __DIR__ . '/../includes/StudioRevisionStore.php';
 require_once __DIR__ . '/../includes/StudioBlockRegistry.php';
+require_once __DIR__ . '/../includes/StudioTemplateEngine.php';
 require_once __DIR__ . '/../includes/StudioCanvasMigrator.php';
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -40,6 +41,7 @@ $adminActions = [
     'list_files', 'read_file', 'write_file', 'create_file', 'create_directory',
     'delete_path', 'rename_path', 'list_revisions', 'list_studio_blocks', 'list_sections',
     'insert_section', 'get_tokens', 'save_tokens', 'list_components', 'save_component',
+    'get_canvas_styles', 'preview_live', 'get_page_settings', 'save_page_settings',
 ];
 
 if (in_array($action, $adminActions, true)) {
@@ -158,6 +160,90 @@ switch ($action) {
     case 'get_custom_css':
         $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
         studio_ok(['css' => $repo->getCustomCss($id)]);
+    case 'get_canvas_styles':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $project = $repo->getProject($id);
+        if (!$project) {
+            studio_err('Not found', 404);
+        }
+        $compiler->writeGeneratedStyles($id);
+        $styleDir = $repo->projectDir($id) . '/styles';
+        $readCss = static function (string $path): string {
+            return is_file($path) ? (string) file_get_contents($path) : '';
+        };
+        $kit = $readCss($styleDir . '/kit.css');
+        $generated = $readCss($styleDir . '/generated.css');
+        $custom = $readCss($styleDir . '/custom.css');
+        $projectSlug = $project['slug'] ?? $id;
+        $revision = (int) ($project['revision'] ?? 1);
+        $base = '/site/' . rawurlencode($projectSlug) . '/styles.css?v=' . $revision;
+        $stylesUrl = function_exists('birkly_url') ? birkly_url($base) : $base;
+        studio_ok([
+            'css' => "/* kit */\n" . $kit . "\n/* generated */\n" . $generated . "\n/* custom */\n" . $custom,
+            'kit' => $kit,
+            'generated' => $generated,
+            'custom' => $custom,
+            'urls' => [
+                'bundle' => $stylesUrl,
+                'kit' => $stylesUrl,
+                'generated' => $stylesUrl,
+                'custom' => $stylesUrl,
+            ],
+        ]);
+    case 'preview_live':
+        $id = (string) ($input['project_id'] ?? '');
+        $slug = (string) ($input['page_slug'] ?? 'index');
+        $project = $repo->getProject($id);
+        if (!$project) {
+            studio_err('Not found', 404);
+        }
+        $compiler->compilePage($id, $slug);
+        $compiled = $repo->getPageHtml($id, $slug) ?? '';
+        $requests = StudioTemplateEngine::collectBundleRequests($compiled);
+        $bundleData = [];
+        if ($requests !== []) {
+            require_once __DIR__ . '/../../../core/page_bundle_runner.php';
+            require_once __DIR__ . '/../../../core/storage/StorageFactory.php';
+            $root = dirname(__DIR__, 3);
+            $storage = get_storage($root . '/content/collections');
+            $bundle = birkly_run_page_bundle_requests($storage, $requests, 'en', ['lean' => true]);
+            if (($bundle['status'] ?? '') === 'ok') {
+                $bundleData = $bundle['data'] ?? [];
+            }
+        }
+        $engine = new StudioTemplateEngine();
+        $rendered = $engine->render($compiled, is_array($bundleData) ? $bundleData : []);
+        studio_ok(['html' => $rendered, 'bundle_requests' => count($requests)]);
+    case 'get_page_settings':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $slug = (string) ($input['page_slug'] ?? $_GET['page_slug'] ?? 'index');
+        $canvas = $repo->getPageCanvas($id, $slug);
+        if (!$canvas) {
+            studio_err('Not found', 404);
+        }
+        $meta = $canvas['page']['meta'] ?? $canvas['meta'] ?? [];
+        studio_ok([
+            'settings' => is_array($meta) ? $meta : [],
+            'page' => $canvas['page'] ?? ['slug' => $slug],
+        ]);
+    case 'save_page_settings':
+        $id = (string) ($input['project_id'] ?? '');
+        $slug = (string) ($input['page_slug'] ?? 'index');
+        $canvas = $repo->getPageCanvas($id, $slug);
+        if (!$canvas) {
+            studio_err('Not found', 404);
+        }
+        $meta = $input['meta'] ?? $input['settings'] ?? [];
+        if (!is_array($meta)) {
+            studio_err('meta must be object');
+        }
+        if (!isset($canvas['page']) || !is_array($canvas['page'])) {
+            $canvas['page'] = ['slug' => $slug];
+        }
+        $canvas['page']['meta'] = $meta;
+        $canvas['meta'] = $meta;
+        $saved = $repo->savePageCanvas($id, $slug, $canvas);
+        $saved ? studio_ok(['settings' => $meta, 'canvas' => $saved]) : studio_err('Save failed', 500);
     case 'export_project':
         $id = (string) ($input['id'] ?? '');
         $result = $exporter->exportZip($id);

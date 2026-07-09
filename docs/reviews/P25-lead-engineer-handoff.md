@@ -2,7 +2,7 @@
 
 **Status:** Approved (2026-07-09, Keven) — execute now  
 **Baseline:** P24 complete — SSR engine, binding wizard, nav, 152 suites  
-**Human rule:** Execute **P25-M0→M18** autonomously. Notify human **once** at **P25-M18** only.
+**Human rule:** Execute **P25-M0→M18** then **P26-M0→M16** in one run. Notify human **once** at **P26-M16** only (combined handoff: `docs/reviews/P25-P26-combined-lead-engineer-handoff.md`).
 
 **Master plan:** `docs/reviews/P25-studio-production-builder-plan.md`  
 **Matrix:** `docs/reviews/P25-verification-matrix.md`
