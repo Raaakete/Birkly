@@ -20,7 +20,7 @@
             const csrf = csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
             if (csrf) formData.append('_csrf', csrf);
 
-            fetch('/api/admin_media.php?action=upload', {
+            fetch(Birkly.url('/api/admin_media.php?action=upload'), {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -63,7 +63,7 @@
                 body.append('id', mediaId);
                 if (csrf) body.append('_csrf', csrf);
 
-                fetch('/api/admin_media.php?action=delete', {
+                fetch(Birkly.url('/api/admin_media.php?action=delete'), {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: {

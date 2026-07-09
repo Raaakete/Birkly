@@ -22,6 +22,11 @@
   flex: 1 1 auto;
   display: flex;
   align-items: center;
+  gap: var(--space-3, 0.75rem);
+}
+
+.admin-topbar-left .sidebar-toggle + .admin-topbar-breadcrumbs {
+  margin-left: var(--space-1, 0.25rem);
 }
 
 .admin-topbar-breadcrumbs {
