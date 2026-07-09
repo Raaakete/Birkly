@@ -15,6 +15,9 @@
     // Initialize dashboard when DOM is ready
     function initDashboard() {
         if (document.querySelector('.dashboard-page, .stats-grid')) {
+            loadStats();
+            loadRecentCollections();
+            setupOnboardingHandlers();
             loadAnalytics();
             loadActivityFeed();
             loadPerformanceMetrics();
@@ -27,6 +30,146 @@
                 loadPerformanceMetrics();
             }, 30000);
         }
+    }
+
+    function loadStats() {
+        const ids = ['stat-collections', 'stat-total-entries', 'stat-published', 'stat-drafts'];
+        fetch(apiUrl('/api/dashboard.php?action=stats'), { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                const stats = (data.status === 'ok' && data.data && data.data.stats) ? data.data.stats : {};
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const key = id.replace('stat-', '').replace(/-/g, '_');
+                    if (id === 'stat-total-entries') {
+                        el.textContent = stats.total_entries ?? '0';
+                    } else if (id === 'stat-collections') {
+                        el.textContent = stats.collections ?? '0';
+                    } else if (id === 'stat-published') {
+                        el.textContent = stats.published ?? '0';
+                    } else if (id === 'stat-drafts') {
+                        el.textContent = stats.drafts ?? '0';
+                    } else {
+                        el.textContent = stats[key] ?? '0';
+                    }
+                });
+            })
+            .catch(err => {
+                console.error('Error loading stats:', err);
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = '0';
+                });
+            });
+    }
+
+    function loadRecentCollections() {
+        const collectionsList = document.getElementById('recent-collections-list');
+        if (!collectionsList) return;
+
+        fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                let collections = [];
+                if (data.status === 'ok' && data.data && data.data.collections && Array.isArray(data.data.collections)) {
+                    collections = data.data.collections;
+                } else if (data.status === 'ok' && data.data && Array.isArray(data.data)) {
+                    collections = data.data;
+                } else if (Array.isArray(data)) {
+                    collections = data;
+                } else if (data.data && Array.isArray(data.data)) {
+                    collections = data.data;
+                }
+
+                collections.sort((a, b) => {
+                    const dateA = a.modified_at || a.updated_at || a.created_at || 0;
+                    const dateB = b.modified_at || b.updated_at || b.created_at || 0;
+                    if (dateA && dateB) {
+                        return new Date(dateB) - new Date(dateA);
+                    }
+                    const nameA = (a.name || a.title || a.slug || '').toLowerCase();
+                    const nameB = (b.name || b.title || b.slug || '').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                });
+
+                const recentCollections = collections.slice(0, 5);
+                if (recentCollections.length === 0) {
+                    collectionsList.innerHTML = '<p class="empty-state">No collections found</p>';
+                    return;
+                }
+
+                collectionsList.innerHTML = recentCollections.map(collection => {
+                    const name = collection.name || collection.title || collection.slug || 'Untitled';
+                    const entriesCount = collection.total_entries || collection.entries_count || 0;
+                    const slug = collection.slug || '';
+                    const entryLabel = entriesCount === 1 ? 'entry' : 'entries';
+                    const viewUrl = (window.Birkly && Birkly.adminUrl)
+                        ? Birkly.adminUrl('entries', { collection: slug })
+                        : '/admin/index.php?page=entries&collection=' + encodeURIComponent(slug);
+                    return `
+                        <div class="collection-item">
+                            <div class="collection-info">
+                                <h4>${escapeHtml(name)}</h4>
+                                <p>${entriesCount} ${entryLabel}</p>
+                            </div>
+                            <a class="btn btn-sm" href="${viewUrl}">View</a>
+                        </div>
+                    `;
+                }).join('');
+            })
+            .catch(err => {
+                console.error('Error loading collections:', err);
+                collectionsList.innerHTML = '<p class="empty-state error">Error loading data</p>';
+            });
+    }
+
+    function setupOnboardingHandlers() {
+        const onboardingModal = document.getElementById('onboarding-complete-modal');
+        const closeModal = () => {
+            if (onboardingModal) onboardingModal.style.display = 'none';
+        };
+
+        document.getElementById('onboarding-complete-close')?.addEventListener('click', closeModal);
+        document.getElementById('onboarding-complete-close-btn')?.addEventListener('click', closeModal);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('onboarding_complete') === 'true' && onboardingModal) {
+            onboardingModal.style.display = 'flex';
+            const demoUrl = urlParams.get('demo_website_url');
+            const demoCard = document.getElementById('onboarding-complete-demo-card');
+            const demoLink = document.getElementById('onboarding-complete-demo-link');
+            if (demoUrl && demoCard && demoLink) {
+                demoCard.style.display = '';
+                demoLink.href = demoUrl;
+            }
+        }
+
+        async function postOnboardingAction(action, body) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const res = await fetch(apiUrl('/api/onboarding.php?action=' + action), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ ...body, _csrf: csrf })
+            });
+            return res.json();
+        }
+
+        document.getElementById('hide-checklist-btn')?.addEventListener('click', async () => {
+            await postOnboardingAction('hide_checklist', {});
+            document.getElementById('onboarding-checklist-panel')?.remove();
+        });
+
+        document.querySelectorAll('.checklist-dismiss').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const id = btn.getAttribute('data-dismiss-id');
+                if (!id) return;
+                await postOnboardingAction('dismiss_checklist_item', { item_id: id });
+                btn.closest('.checklist-item')?.remove();
+            });
+        });
     }
     
     // Load analytics widget
