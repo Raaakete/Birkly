@@ -1,8 +1,8 @@
 # P27 — Admin polish & platform fixes
 
-**Status:** Proposed (2026-07-09) — awaiting human approval  
+**Status:** Approved (2026-07-09, Keven) — execute now  
 **Baseline:** P25 complete (153 suites) · P26 Studio creative suite **paused** per human  
-**Human rule:** Execute P27-M0→M16 autonomously after approval. Notify human **once** at **P27-M16** only.
+**Human rule:** Execute P27-M0→M16 autonomously. Notify human **once** at **P27-M16** only.
 
 **Gap register:** `docs/reviews/P27-admin-polish-gap-register.md`  
 **Handoff:** `docs/reviews/P27-lead-engineer-handoff.md`  
@@ -18,13 +18,13 @@ Fix broken admin flows and polish the shell **before** resuming Studio (P26). Fo
 
 ---
 
-## Locked decisions (proposed)
+## Locked decisions (approved)
 
 | ID | Decision |
 |----|----------|
 | **P27-D1** | **Pause P26 Studio** until P27-M16 closure |
 | **P27-D2** | 2FA enforcement: settings flag `require_2fa` + per-user `2fa_grace_until` (ISO date); block login after grace |
-| **P27-D3** | Grace period default **30 days** from policy enable; admins can extend per user |
+| **P27-D3** | Grace period **admin-configurable** in Settings (days, default 30); admins can extend per user |
 | **P27-D4** | Banner in admin for users inside grace period; modal gate at login after expiry |
 | **P27-D5** | Breadcrumbs: single source via topbar hoist; plugin title + sub-page trail; gap between hamburger and trail |
 | **P27-D6** | Sidebar bg = `--background-global`; nav links/cards = `--bg-elevated` |
@@ -33,8 +33,8 @@ Fix broken admin flows and polish the shell **before** resuming Studio (P26). Fo
 | **P27-D9** | Program label default **Closed alpha**; single line in sidebar footer |
 | **P27-D10** | ToS, Privacy, Request invite → account dropdown (not content footer) |
 | **P27-D11** | Remove `admin-legal-footer` from main content area |
-| **P27-D12** | `scripts/sync-birkly-docs.sh` copies Birkly-Docs corpus → `admin/docs/snapshots/` + manifest |
-| **P27-D13** | CI fails if docs snapshot older than Birkly-Docs pin (or sync not run) |
+| **P27-D12** | `scripts/sync-birkly-docs.sh` copies **sibling `Birkly-Docs` repo** → `admin/docs/snapshots/` + manifest at **release time** |
+| **P27-D13** | Release/CI runs sync before zip; env `BIRKLY_DOCS_PATH` defaults to sibling `../Birkly-Docs` |
 | **P27-D14** | Help page: full corpus search; **remove** generic plugin-insert help section (plugins ship own docs) |
 | **P27-D15** | All admin API fetches use `Birkly.url()` / `birkly_url()` — no bare `/api/` |
 | **P27-D16** | Single notification at **P27-M16** |
@@ -93,15 +93,15 @@ Fix broken admin flows and polish the shell **before** resuming Studio (P26). Fo
 
 ### P27-M10–M11 — 2FA enforcement
 
-- [ ] `settings/security.json` or platform settings: `require_2fa`, `require_2fa_enabled_at`
-- [ ] User record: `2fa_grace_until`
+- [ ] `settings/security.json`: `require_2fa`, `require_2fa_grace_days` (admin-configurable, default 30)
+- [ ] User record: `2fa_grace_until` computed from policy enable + grace days
 - [ ] On login: if policy on && !user.2fa.enabled && now > grace → redirect to 2FA setup (no admin access)
 - [ ] Admin settings → Security tab: toggle + grace period display
 
 ### P27-M12–M13 — Docs
 
-- [ ] `scripts/sync-birkly-docs.sh` (sibling repo `Birkly-Docs` or env var `BIRKLY_DOCS_PATH`)
-- [ ] Copy markdown/HTML topics to `admin/docs/snapshots/`
+- [ ] `scripts/sync-birkly-docs.sh` — source: sibling `Birkly-Docs` (`$BIRKLY_DOCS_PATH` or `../Birkly-Docs`)
+- [ ] Run at release time (document in release checklist + wire into `scripts/ci-check.sh` or release script)
 - [ ] Regenerate `help-offline-manifest.json`
 - [ ] Release note: every Birkly tag runs sync before zip
 - [ ] Remove help topics that duplicate per-plugin docs inserts
@@ -116,7 +116,7 @@ Fix broken admin flows and polish the shell **before** resuming Studio (P26). Fo
 4. Sidebar collapses to icons; toggle at bottom persists.
 5. Avatar appears in topbar after account upload.
 6. Closed alpha label in sidebar only; legal links in account menu.
-7. Admin enables forced 2FA → user has 30 days → login blocked until 2FA set.
+7. Admin enables forced 2FA with configurable grace (e.g. 30 days) → login blocked until 2FA set after expiry.
 8. Help search covers synced Birkly-Docs corpus; no stale plugin-insert page.
 9. CI green; admin-polish-smoke.sh green.
 

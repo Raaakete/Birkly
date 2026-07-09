@@ -39,7 +39,7 @@
 | ID | Story | Result | Evidence |
 |----|-------|--------|----------|
 | ADM-SEC-01 | Admin can enable require_2fa | pending | |
-| ADM-SEC-02 | User gets 30-day grace timestamp | pending | |
+| ADM-SEC-02 | Admin-configurable grace days (default 30) | pending | |
 | ADM-SEC-03 | Grace banner visible in admin | pending | |
 | ADM-SEC-04 | Login blocked after grace without 2FA | pending | |
 | ADM-SEC-05 | 2FA setup completes and restores access | pending | |
@@ -48,7 +48,7 @@
 
 | ID | Story | Result | Evidence |
 |----|-------|--------|----------|
-| ADM-DOCS-01 | sync-birkly-docs.sh updates snapshots | pending | |
+| ADM-DOCS-01 | sync-birkly-docs.sh copies sibling Birkly-Docs | pending | |
 | ADM-DOCS-02 | help-offline-manifest regenerated | pending | |
 | ADM-DOCS-03 | Help search finds synced topics | pending | |
 | ADM-DOCS-04 | Plugin-insert help section removed | pending | |

@@ -199,7 +199,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **2026-07-09 — Phase 25 complete** (autonomous P25-M0→M18)
 
-**Next active phase:** **Phase 27** — Admin polish & platform fixes — **proposed, awaiting human approval**
+**Next active phase:** **Phase 27** — Admin polish & platform fixes — **approved, in execution** (2026-07-09)
 
 **P27 spec:** `docs/reviews/P27-admin-polish-plan.md` · **Gap register:** `docs/reviews/P27-admin-polish-gap-register.md` · **Handoff:** `docs/reviews/P27-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P27-verification-matrix.md`
 
