@@ -106,7 +106,7 @@ if (empty($userAvatar)) {
                 <ul class="nav-links" id="links-main">
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>" title="<?= htmlspecialchars(__('admin.dashboard')) ?>">
-                            <img src="<?= htmlspecialchars(birkly_url('/admin/assets/Speedometer.svg')) ?>" alt="<?= __('admin.dashboard') ?>" class="nav-icon"> <?= __('admin.dashboard') ?>
+                            <img src="<?= htmlspecialchars(birkly_url('/admin/assets/Speedometer.svg')) ?>" alt="<?= __('admin.dashboard') ?>" class="nav-icon"><span class="nav-label"><?= __('admin.dashboard') ?></span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -118,7 +118,7 @@ if (empty($userAvatar)) {
                                 <line x1="16" y1="17" x2="8" y2="17"></line>
                                 <polyline points="10,9 9,9 8,9"></polyline>
                             </svg>
-                            <?= __('admin.content') ?>
+                            <span class="nav-label"><?= __('admin.content') ?></span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -128,7 +128,7 @@ if (empty($userAvatar)) {
                                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                                 <polyline points="21,15 16,10 5,21"></polyline>
                             </svg>
-                            <?= __('admin.media') ?>
+                            <span class="nav-label"><?= __('admin.media') ?></span>
                         </a>
                     </li>
                 </ul>
@@ -150,14 +150,14 @@ if (empty($userAvatar)) {
                                     <line x1="3" y1="6" x2="21" y2="6"></line>
                                     <path d="M16 10a4 4 0 0 1-8 0"></path>
                                 </svg>
-                                <?= __('admin.marketplace') ?>
+                                <span class="nav-label"><?= __('admin.marketplace') ?></span>
                             </a>
                         </li>
                         <?php foreach ($activePluginNavigation as $plugin): ?>
                         <li class="nav-item">
                             <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>" title="<?= htmlspecialchars($plugin['name']) ?>">
                                 <?= $plugin['icon'] ?>
-                                <?= htmlspecialchars($plugin['name']) ?>
+                                <span class="nav-label"><?= htmlspecialchars($plugin['name']) ?></span>
                             </a>
                         </li>
                         <?php endforeach; ?>
@@ -179,7 +179,7 @@ if (empty($userAvatar)) {
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                             </svg>
-                            <?= __('admin.settings') ?>
+                            <span class="nav-label"><?= __('admin.settings') ?></span>
                         </a>
                     </li>
                     <?php
@@ -194,7 +194,7 @@ if (empty($userAvatar)) {
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
-                            Alpha Feedback
+                            <span class="nav-label">Alpha Feedback</span>
                         </a>
                     </li>
                     <?php endif; ?>
@@ -205,7 +205,7 @@ if (empty($userAvatar)) {
                                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
                             </svg>
-                            <?= __('admin.help') ?>
+                            <span class="nav-label"><?= __('admin.help') ?></span>
                         </a>
                     </li>
                 </ul>

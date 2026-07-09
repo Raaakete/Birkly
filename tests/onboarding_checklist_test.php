@@ -14,6 +14,7 @@ echo "Onboarding checklist tests\n\n";
 $root = dirname(__DIR__);
 $adminTemplates = file_get_contents($root . '/api/admin_templates.php');
 $dashboardHtml = file_get_contents($root . '/admin/templates/dashboard.html');
+$dashboardJs = file_get_contents($root . '/admin/js/dashboard.js');
 
 test_assert('checklist uses first_collection id', strpos($adminTemplates, "'id' => 'first_collection'") !== false);
 test_assert('checklist uses first_entry id', strpos($adminTemplates, "'id' => 'first_entry'") !== false);
@@ -27,8 +28,8 @@ test_assert('install path hints in checklist', strpos($adminTemplates, 'install_
 
 test_assert('dashboard has hide checklist button', strpos($dashboardHtml, 'hide-checklist-btn') !== false);
 test_assert('dashboard has dismiss per item', strpos($dashboardHtml, 'checklist-dismiss') !== false);
-test_assert('dashboard hide_checklist API call', strpos($dashboardHtml, 'hide_checklist') !== false);
-test_assert('dashboard dismiss_checklist_item API call', strpos($dashboardHtml, 'dismiss_checklist_item') !== false);
+test_assert('dashboard hide_checklist API call', strpos($dashboardJs, 'hide_checklist') !== false);
+test_assert('dashboard dismiss_checklist_item API call', strpos($dashboardJs, 'dismiss_checklist_item') !== false);
 
 // dismiss/hide API helpers exist
 test_assert('onboarding.php has dismiss_checklist_item action', strpos(file_get_contents($root . '/api/onboarding.php'), "case 'dismiss_checklist_item'") !== false);
