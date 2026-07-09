@@ -197,9 +197,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 
-**Next active phase:** **Phase 25** — Studio production builder — **approved, in execution**
+**Next active phase:** **Phase 25** — Studio production builder — **approved, in execution** (finish M0→M18 before P26)
 
 **Spec:** `docs/reviews/P25-studio-production-builder-plan.md` · **Handoff:** `docs/reviews/P25-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P25-verification-matrix.md`
+
+**Proposed next (after P25):** **Phase 26** — Studio creative suite & design bridge — **proposed, awaiting human approval**
+
+**P26 spec:** `docs/reviews/P26-studio-creative-design-plan.md` · **Handoff:** `docs/reviews/P26-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P26-verification-matrix.md`
 
 **2026-07-08 — Phase 24 complete** (autonomous P24-M0→M20)
 
