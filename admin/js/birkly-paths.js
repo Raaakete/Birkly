@@ -27,6 +27,11 @@
 
     Birkly.url = url;
     Birkly.adminUrl = adminUrl;
+    Birkly.mediaUrl = function (query) {
+        const base = url('/api/admin_media.php');
+        if (!query) return base;
+        return base + (query[0] === '?' ? query : '?' + String(query).replace(/^\?/, ''));
+    };
 
     if (!basePath) return;
 

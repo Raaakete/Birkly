@@ -197,13 +197,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 
+**2026-07-09 — Phase 27 complete** (autonomous P27-M0→M16)
+
+**Delivered:** Admin **polish & platform fixes** — dashboard paths fix, media `Birkly.url()` API, breadcrumbs + collapsible sidebar + topbar chrome, closed-alpha label + legal links in account menu, 2FA enforcement with configurable grace, `sync-birkly-docs.sh`, help v2, `admin-polish-smoke.sh` CI · ADM-BUG/NAV/CHROME/SEC/DOCS green.
+
+**Matrices:** `docs/reviews/P27-verification-matrix.md` · **Closure:** `docs/reviews/P27-phase-closure-checklist.md` · **Docs sync:** `docs/agent-ops/BIRKLY_DOCS_SYNC.md`
+
+**Next active phase:** **Phase 26** — Studio creative suite — **unpaused** (resume execution)
+
 **2026-07-09 — Phase 25 complete** (autonomous P25-M0→M18)
-
-**Next active phase:** **Phase 27** — Admin polish & platform fixes — **approved, in execution** (2026-07-09)
-
-**P27 spec:** `docs/reviews/P27-admin-polish-plan.md` · **Gap register:** `docs/reviews/P27-admin-polish-gap-register.md` · **Handoff:** `docs/reviews/P27-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P27-verification-matrix.md`
-
-**Paused:** **Phase 26** — Studio creative suite — approved 2026-07-09, **paused** until P27 complete (human request)
 
 **Delivered:** Studio **production builder** — design canvas with project CSS, live preview pane (`birkly-client.js`), `StudioTemplateEngine` v2 (conditionals, sub-entries, template functions), box model + column resize + align toolbar, CSS rules panel + class manager + stylesheet tabs, rich text toolbar, section presets, page SEO, content panel, plugin blocks v2, redo + revisions, `studio-smoke.sh` CI · STU-CANVAS/ENGINE/CSS/SITE + V-STU-04 evidence.
 

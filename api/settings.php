@@ -65,7 +65,9 @@ $defaultSettings = [
         'password_min_length' => 8,
         'require_strong_password' => true,
         'max_login_attempts' => 5,
-        'lockout_time' => 900 // 15 minutes
+        'lockout_time' => 900, // 15 minutes
+        'require_2fa' => false,
+        'require_2fa_grace_days' => 30,
     ]
 ];
 
@@ -249,6 +251,12 @@ if ($action === 'save_all') {
     if (isset($settings['securityEnableCsrf'])) {
         $securitySettings['enable_csrf'] = filter_var($settings['securityEnableCsrf'], FILTER_VALIDATE_BOOLEAN);
     }
+    if (isset($settings['securityRequire2fa'])) {
+        $securitySettings['require_2fa'] = filter_var($settings['securityRequire2fa'], FILTER_VALIDATE_BOOLEAN);
+    }
+    if (isset($settings['securityRequire2faGraceDays'])) {
+        $securitySettings['require_2fa_grace_days'] = max(0, intval($settings['securityRequire2faGraceDays']));
+    }
 
     // Monitoring settings (P13-M4)
     $monitoringSettings = [];
@@ -331,6 +339,8 @@ if ($action === 'save_all') {
         $updated['_updated_at'] = date('c');
         $updated['_updated_by'] = $_SESSION['user']['id'];
         $storage->write('security.json', $updated);
+        require_once __DIR__ . '/../core/security_policy.php';
+        birkly_security_policy_reset_cache();
     }
 
     if ($monitoringSettings !== [] || array_key_exists('monitoringAlertEmail', $settings) || array_key_exists('monitoringAlertWebhookUrl', $settings)) {

@@ -348,6 +348,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
         <!-- Main Content -->
         <main class="main-content">
             <?php include __DIR__ . '/partials/admin-topbar.php'; ?>
+            <?php include __DIR__ . '/partials/2fa-grace-banner.php'; ?>
             <?php
             $renderAdminError = static function (string $title, string $message, ?Throwable $e = null, array $context = []): void {
                 echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
@@ -431,6 +432,12 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     $data['onboarding'] = array_merge($data['onboarding'], $onboardingStatus);
                 } elseif ($page === 'dashboard') {
                     $data['onboarding'] = $onboardingStatus;
+                }
+
+                if ($page === 'dashboard') {
+                    require_once __DIR__ . '/../core/birkly_paths.php';
+                    $data['is_local_dev'] = birkly_is_local_dev_request();
+                    $data['project_root'] = dirname(__DIR__);
                 }
                 
                 // Check if there's an error in the data

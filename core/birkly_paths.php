@@ -88,6 +88,18 @@ function birkly_admin_url(string $page, array $params = []): string
 }
 
 /**
+ * Admin media API URL (subdirectory-safe).
+ */
+function birkly_media_url(string $query = ''): string
+{
+    $base = birkly_url('/api/admin_media.php');
+    if ($query === '') {
+        return $base;
+    }
+    return $base . (str_starts_with($query, '?') ? $query : '?' . ltrim($query, '?'));
+}
+
+/**
  * Filesystem path to the Birkly project root (directory containing admin/, api/, core/).
  */
 function birkly_project_root(): string

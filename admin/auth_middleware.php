@@ -46,6 +46,9 @@ function requireAdminAuth() {
     
     // Update last activity
     $_SESSION['last_activity'] = $now;
+
+    require_once __DIR__ . '/../core/security_policy.php';
+    birkly_enforce_2fa_policy_for_admin_page();
     
     // Check if user has admin access
     $userRole = $_SESSION['user']['role'] ?? 'viewer';
