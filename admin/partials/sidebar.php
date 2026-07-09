@@ -94,7 +94,7 @@ if (empty($userAvatar)) {
     }
 }
 ?><aside class="sidebar" id="admin-sidebar">
-        <div>
+        <div class="sidebar-body">
             <div class="sidebar-header">
                 <div id="brandingLogoSidebar" class="logo branding-logo">
                     <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="logo-img">
@@ -105,12 +105,12 @@ if (empty($userAvatar)) {
                 <!-- First Section: Main Navigation -->
                 <ul class="nav-links" id="links-main">
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>">
+                        <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>" title="<?= htmlspecialchars(__('admin.dashboard')) ?>">
                             <img src="<?= htmlspecialchars(birkly_url('/admin/assets/Speedometer.svg')) ?>" alt="<?= __('admin.dashboard') ?>" class="nav-icon"> <?= __('admin.dashboard') ?>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('content')) ?>" class="nav-link <?= is_nav_active('content') || is_nav_active('entries') || is_nav_active('entry-editor') || is_nav_active('collection-editor') ? 'active' : '' ?>">
+                        <a href="<?= htmlspecialchars(admin_url('content')) ?>" class="nav-link <?= is_nav_active('content') || is_nav_active('entries') || is_nav_active('entry-editor') || is_nav_active('collection-editor') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.content')) ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14,2 14,8 20,8"></polyline>
@@ -122,7 +122,7 @@ if (empty($userAvatar)) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('media')) ?>" class="nav-link <?= is_nav_active('media') ?>">
+                        <a href="<?= htmlspecialchars(admin_url('media')) ?>" class="nav-link <?= is_nav_active('media') ?>" title="<?= htmlspecialchars(__('admin.media')) ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -144,7 +144,7 @@ if (empty($userAvatar)) {
                 <div class="nav-section" id="nav-plugins-section">
                     <ul class="nav-links" id="links-plugins">
                         <li class="nav-item">
-                            <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'marketplace'])) ?>" class="nav-link <?= is_plugins_tab_active('marketplace') ? 'active' : '' ?>">
+                            <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'marketplace'])) ?>" class="nav-link <?= is_plugins_tab_active('marketplace') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.marketplace')) ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                                     <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -155,7 +155,7 @@ if (empty($userAvatar)) {
                         </li>
                         <?php foreach ($activePluginNavigation as $plugin): ?>
                         <li class="nav-item">
-                            <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>">
+                            <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>" title="<?= htmlspecialchars($plugin['name']) ?>">
                                 <?= $plugin['icon'] ?>
                                 <?= htmlspecialchars($plugin['name']) ?>
                             </a>
@@ -174,7 +174,7 @@ if (empty($userAvatar)) {
                 <!-- Third Section: Settings, Help, Logout -->
                 <ul class="nav-links" id="links-settings">
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('roles') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>">
+                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('roles') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.settings')) ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -190,7 +190,7 @@ if (empty($userAvatar)) {
                     if ($canManageFeedback):
                     ?>
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('feedback')) ?>" class="nav-link <?= is_nav_active('feedback') ?>">
+                        <a href="<?= htmlspecialchars(admin_url('feedback')) ?>" class="nav-link <?= is_nav_active('feedback') ?>" title="Alpha Feedback">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
@@ -199,7 +199,7 @@ if (empty($userAvatar)) {
                     </li>
                     <?php endif; ?>
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>">
+                        <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>" title="<?= htmlspecialchars(__('admin.help')) ?>">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -210,6 +210,20 @@ if (empty($userAvatar)) {
                     </li>
                 </ul>
                 </nav>
-                </div>
-            </aside>
+        </div>
+        <div class="sidebar-footer">
+            <?php
+            require_once __DIR__ . '/../../core/platform.php';
+            if (birkly_alpha_program_enabled()):
+            ?>
+            <p class="sidebar-program-label"><?= htmlspecialchars(birkly_program_status_label()) ?></p>
+            <?php endif; ?>
+            <button type="button" class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" aria-label="Collapse sidebar" aria-pressed="false" title="Collapse sidebar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polyline points="15,18 9,12 15,6"></polyline>
+                </svg>
+                <span class="sidebar-collapse-label">Collapse</span>
+            </button>
+        </div>
+    </aside>
 <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>

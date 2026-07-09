@@ -20,6 +20,7 @@ Birkly.Theme = {
         this._bindSystemPreferenceListener();
         this.initSwitcher();
         this.initMobileSidebar();
+        this.initDesktopSidebarCollapse();
     },
 
     applyTheme() {
@@ -145,6 +146,47 @@ Birkly.Theme = {
         window.addEventListener('resize', () => {
             if (window.matchMedia('(min-width: 769px)').matches) {
                 closeSidebar();
+            }
+        });
+    },
+
+    initDesktopSidebarCollapse() {
+        const STORAGE_KEY = 'birkly_sidebar_collapsed';
+        const toggle = document.getElementById('sidebar-collapse-toggle');
+        if (!toggle) {
+            return;
+        }
+
+        const applyCollapsed = (collapsed) => {
+            document.body.classList.toggle('sidebar-collapsed', collapsed);
+            toggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+            toggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            toggle.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            const label = toggle.querySelector('.sidebar-collapse-label');
+            if (label) {
+                label.textContent = collapsed ? 'Expand' : 'Collapse';
+            }
+        };
+
+        const saved = localStorage.getItem(STORAGE_KEY) === '1';
+        if (saved && window.matchMedia('(min-width: 769px)').matches) {
+            applyCollapsed(true);
+        }
+
+        toggle.addEventListener('click', () => {
+            if (!window.matchMedia('(min-width: 769px)').matches) {
+                return;
+            }
+            const next = !document.body.classList.contains('sidebar-collapsed');
+            localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
+            applyCollapsed(next);
+        });
+
+        window.addEventListener('resize', () => {
+            if (!window.matchMedia('(min-width: 769px)').matches) {
+                document.body.classList.remove('sidebar-collapsed');
+            } else {
+                applyCollapsed(localStorage.getItem(STORAGE_KEY) === '1');
             }
         });
     }

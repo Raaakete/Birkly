@@ -71,7 +71,7 @@
     width: 48px;
     height: 48px;
     border-radius: var(--radius-full, 50%);
-    background: var(--warning-500, #f59e0b);
+    background: var(--color-primary, #7CE3BF);
     border: none;
     color: var(--text-inverse, #ffffff);
     cursor: pointer;
@@ -122,8 +122,8 @@
 }
 
 .ai-chat-view-tab.active {
-    color: var(--warning-600, #d97706);
-    border-bottom-color: var(--warning-500, #f59e0b);
+    color: var(--color-primary, #7CE3BF);
+    border-bottom-color: var(--color-primary, #7CE3BF);
 }
 
 .ai-chat-tab-badge {
@@ -170,7 +170,7 @@
 }
 
 .ai-chat-floating-btn:hover {
-    background: var(--warning-600, #d97706);
+    background: var(--color-primary-hover, #8CECCA);
     transform: scale(1.1);
     box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
 }
@@ -348,7 +348,7 @@
 }
 
 .ai-chat-message-user .ai-chat-message-content {
-    background: var(--warning-500, #f59e0b);
+    background: var(--color-primary, #7CE3BF);
     color: var(--text-inverse, #ffffff);
 }
 

@@ -6,8 +6,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-1, 0.25rem);
+  height: 36px;
   padding: 2px;
   background: var(--bg-tertiary, #f5f5f5);
+  border: 1px solid var(--border-light, #f3f4f6);
   border-radius: var(--radius-md, 0.5rem);
   margin-bottom: var(--space-6, 1.5rem);
 }
@@ -20,8 +22,10 @@
 .theme-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-1, 0.25rem);
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  height: 32px;
+  padding: 0 var(--space-2, 0.5rem);
   border: none;
   background: none;
   color: var(--text-secondary, #72746F);
@@ -42,8 +46,9 @@
 }
 
 .theme-btn.active {
-  background: var(--primary-500, #3b82f6);
-  color: white;
+  background: var(--bg-elevated, #ffffff);
+  color: var(--text-primary, #20221D);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
 }
 
 .admin-topbar .theme-btn-label {

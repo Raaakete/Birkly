@@ -107,7 +107,7 @@
             uploadBtn.disabled = true;
             uploadBtn.textContent = 'Uploading...';
 
-            fetch('/api/admin_media.php?action=upload', {
+            fetch(Birkly.url('/api/admin_media.php?action=upload'), {
                 method: 'POST',
                 credentials: 'same-origin',
                 body: formData
@@ -156,7 +156,7 @@
         // Check if there's a value already set
         if (hiddenInput.value) {
             // Try to load file info
-            fetch(`/api/admin_media.php?action=get&id=${encodeURIComponent(hiddenInput.value)}`, { credentials: 'same-origin' })
+            fetch(Birkly.url('/api/admin_media.php?action=get&id=' + encodeURIComponent(hiddenInput.value)), { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'ok' && data.data) {
