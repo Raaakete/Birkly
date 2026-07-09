@@ -199,13 +199,17 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **2026-07-09 — Phase 25 complete** (autonomous P25-M0→M18)
 
-**Next active phase:** **Phase 26** — Studio creative suite & design bridge — **approved, in execution** (P25+P26 single run; notify once at P26-M16)
+**Next active phase:** **Phase 27** — Admin polish & platform fixes — **proposed, awaiting human approval**
+
+**P27 spec:** `docs/reviews/P27-admin-polish-plan.md` · **Gap register:** `docs/reviews/P27-admin-polish-gap-register.md` · **Handoff:** `docs/reviews/P27-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P27-verification-matrix.md`
+
+**Paused:** **Phase 26** — Studio creative suite — approved 2026-07-09, **paused** until P27 complete (human request)
 
 **Delivered:** Studio **production builder** — design canvas with project CSS, live preview pane (`birkly-client.js`), `StudioTemplateEngine` v2 (conditionals, sub-entries, template functions), box model + column resize + align toolbar, CSS rules panel + class manager + stylesheet tabs, rich text toolbar, section presets, page SEO, content panel, plugin blocks v2, redo + revisions, `studio-smoke.sh` CI · STU-CANVAS/ENGINE/CSS/SITE + V-STU-04 evidence.
 
 **Matrices:** `docs/reviews/P25-verification-matrix.md` · **Closure:** `docs/reviews/P25-phase-closure-checklist.md` · **Docs:** `plugins/studio/docs/production-builder.md`
 
-**Proposed next (after P25):** **Phase 26** — Studio creative suite & design bridge — **approved, in execution** (2026-07-09)
+**Proposed next (after P25):** **Phase 26** — Studio creative suite — **paused** (resume after P27)
 
 **P26 spec:** `docs/reviews/P26-studio-creative-design-plan.md` · **Handoff:** `docs/reviews/P26-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P26-verification-matrix.md`
 
