@@ -29,6 +29,26 @@ class StudioCompiler
             ? birkly_url('/site/' . rawurlencode($projectSlug) . '/styles.css?v=' . $revision)
             : '/site/' . rawurlencode($projectSlug) . '/styles.css?v=' . $revision;
 
+        $pageMeta = $canvas['page']['meta'] ?? $canvas['meta'] ?? [];
+        if (!is_array($pageMeta)) {
+            $pageMeta = [];
+        }
+        if (!empty($pageMeta['title'])) {
+            $title = htmlspecialchars((string) $pageMeta['title'], ENT_QUOTES, 'UTF-8');
+        }
+        $headMeta = '';
+        $description = trim((string) ($pageMeta['description'] ?? ''));
+        if ($description !== '') {
+            $headMeta .= '  <meta name="description" content="' . htmlspecialchars($description, ENT_QUOTES, 'UTF-8') . '">' . "\n";
+        }
+        $ogTitle = trim((string) ($pageMeta['og_title'] ?? $pageMeta['ogTitle'] ?? ''));
+        if ($ogTitle === '' && !empty($pageMeta['title'])) {
+            $ogTitle = (string) $pageMeta['title'];
+        }
+        if ($ogTitle !== '') {
+            $headMeta .= '  <meta property="og:title" content="' . htmlspecialchars($ogTitle, ENT_QUOTES, 'UTF-8') . '">' . "\n";
+        }
+
         $body = $this->renderNavHeader($canvas) . $this->renderSections($canvas['sections'] ?? []);
 
         $html = <<<HTML
@@ -38,7 +58,7 @@ class StudioCompiler
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{$title}</title>
-  <link rel="stylesheet" href="{$stylesUrl}">
+{$headMeta}  <link rel="stylesheet" href="{$stylesUrl}">
 </head>
 <body class="studio-page">
 {$body}
