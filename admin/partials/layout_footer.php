@@ -19,6 +19,7 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20250804-15')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
+    <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
 
     <script<?= $__birklyScriptNonceAttr ?>>
     // If user was redirected due to missing permission, show unified modal.
