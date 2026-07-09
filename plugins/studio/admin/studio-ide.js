@@ -13,6 +13,9 @@
     { id: 'filtered', label: 'Filtered list', desc: 'Filter, order, and limit entries' },
     { id: 'single', label: 'Single entry', desc: 'One entry by slug' },
     { id: 'site_element', label: 'Site element', desc: 'Reusable site_elements entry' },
+    { id: 'conditional', label: 'Conditional', desc: 'Show block when field matches' },
+    { id: 'sub_entry', label: 'Sub-entry loop', desc: 'Iterate child entries' },
+    { id: 'template_function', label: 'Template function', desc: 'Call a template function block' },
   ];
 
   const state = {
@@ -29,6 +32,7 @@
     collections: [],
     blocks: [],
     undoStack: [],
+    redoStack: [],
     dirtyPaths: new Set(),
     busy: false,
     ssrHealth: null,
@@ -142,6 +146,13 @@
     if (!state.canvas) return;
     state.undoStack.push(JSON.stringify(state.canvas));
     if (state.undoStack.length > 30) state.undoStack.shift();
+    state.redoStack = [];
+  }
+
+  function ensureCanvasPage() {
+    if (!state.canvas) return;
+    state.canvas.page = state.canvas.page || {};
+    state.canvas.page.meta = state.canvas.page.meta || {};
   }
 
   async function withBusy(fn) {
@@ -188,6 +199,7 @@
     const data = await api('get_project', { id });
     state.project = data.project;
     state.undoStack = [];
+    state.redoStack = [];
     restoreTabs(id);
     $('#studio-dashboard').hidden = true;
     $('#studio-workspace').hidden = false;
@@ -250,6 +262,7 @@
       const data = await api('get_page', { project_id: state.project.id, page_slug: slug });
       state.canvas = data.canvas;
       ensureCanvasNav();
+      ensureCanvasPage();
       $('#studio-code-editor').value = data.html || '';
       renderCanvas();
       renderLayers();
@@ -549,10 +562,26 @@
     });
   }
 
+  function stylesToCss(styles) {
+    if (!styles || typeof styles !== 'object') return '';
+    return Object.entries(styles)
+      .filter(([, v]) => v != null && v !== '')
+      .map(([k, v]) => {
+        const prop = k.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return prop + ':' + v;
+      })
+      .join(';');
+  }
+
   function renderElPreview(el, si, ci, ei) {
     const div = document.createElement('div');
     const sel = state.selected?.si === si && state.selected?.ci === ci && state.selected?.ei === ei;
     div.className = 'studio-el' + (sel ? ' selected' : '');
+    if (el.classes?.length) {
+      div.className += ' ' + el.classes.join(' ');
+    }
+    const inlineCss = stylesToCss(el.styles);
+    if (inlineCss) div.style.cssText = inlineCss;
     if (el.type === 'binding') {
       div.className += ' studio-binding';
       div.textContent = `[${el.bindingType || 'loop'}] ${el.collection || ''}`;
@@ -582,6 +611,9 @@
       e.stopPropagation();
       select({ si, ci, ei });
     });
+    if (typeof window.StudioIDE?.afterRenderEl === 'function') {
+      window.StudioIDE.afterRenderEl(div, el, si, ci, ei);
+    }
     return div;
   }
 
@@ -1344,11 +1376,25 @@
         break;
       case 'undo': {
         const prev = state.undoStack.pop();
-        if (prev) {
+        if (prev && state.canvas) {
+          state.redoStack.push(JSON.stringify(state.canvas));
           state.canvas = JSON.parse(prev);
           saveActiveFile().catch(alertErr);
           renderCanvas();
           renderLayers();
+          renderInspector();
+        }
+        break;
+      }
+      case 'redo': {
+        const next = state.redoStack.pop();
+        if (next && state.canvas) {
+          state.undoStack.push(JSON.stringify(state.canvas));
+          state.canvas = JSON.parse(next);
+          saveActiveFile().catch(alertErr);
+          renderCanvas();
+          renderLayers();
+          renderInspector();
         }
         break;
       }
@@ -1501,6 +1547,30 @@
         e.preventDefault();
         withBusy(() => saveActiveFile());
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        const prev = state.undoStack.pop();
+        if (prev && state.canvas) {
+          state.redoStack.push(JSON.stringify(state.canvas));
+          state.canvas = JSON.parse(prev);
+          saveActiveFile().catch(alertErr);
+          renderCanvas();
+          renderLayers();
+          renderInspector();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        const next = state.redoStack.pop();
+        if (next && state.canvas) {
+          state.undoStack.push(JSON.stringify(state.canvas));
+          state.canvas = JSON.parse(next);
+          saveActiveFile().catch(alertErr);
+          renderCanvas();
+          renderLayers();
+          renderInspector();
+        }
+      }
     });
   }
 
@@ -1518,4 +1588,41 @@
   } else {
     boot();
   }
+
+  window.StudioIDE = {
+    state,
+    api,
+    apiUrl,
+    csrfToken,
+    toast,
+    esc,
+    uid,
+    isStudioPage,
+    pageSlugFromPath,
+    pushUndo,
+    markDirty,
+    withBusy,
+    alertErr,
+    saveActiveFile,
+    renderCanvas,
+    renderLayers,
+    renderInspector,
+    updateInspectorTabs,
+    setInspectorTab,
+    select,
+    getSelectedElement,
+    getSelectedSection,
+    getSelectedColumn,
+    applyViewMode,
+    renderElPreview,
+    stylesToCss,
+    bindingCanonicalPreview,
+    openBindingWizard,
+    renderBindingWizard,
+    applyBindingWizard,
+    ensureCanvasPage,
+    ensureCanvasNav,
+    BINDING_TYPES,
+    CSS_STYLE_KEYS,
+  };
 })();

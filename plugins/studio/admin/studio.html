@@ -90,6 +90,27 @@
                   <small>Reusable block</small>
                 </span>
               </button>
+              <button type="button" class="studio-binding-card" data-action="open-binding-wizard" data-binding-type="conditional">
+                <span class="studio-binding-card-icon">?</span>
+                <span class="studio-binding-card-body">
+                  <strong>Conditional</strong>
+                  <small>Show when field matches</small>
+                </span>
+              </button>
+              <button type="button" class="studio-binding-card" data-action="open-binding-wizard" data-binding-type="sub_entry">
+                <span class="studio-binding-card-icon">↳</span>
+                <span class="studio-binding-card-body">
+                  <strong>Sub-entry loop</strong>
+                  <small>Child entries</small>
+                </span>
+              </button>
+              <button type="button" class="studio-binding-card" data-action="open-binding-wizard" data-binding-type="template_function">
+                <span class="studio-binding-card-icon">ƒ</span>
+                <span class="studio-binding-card-body">
+                  <strong>Template function</strong>
+                  <small>TF block call</small>
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -102,6 +123,10 @@
           <div class="studio-panel-header"><strong>Plugin blocks</strong></div>
           <div id="studio-blocks" class="studio-blocks"></div>
         </div>
+        <div class="studio-sidebar-section" id="studio-content-section">
+          <div class="studio-panel-header"><strong>Content</strong></div>
+          <div id="studio-content-panel" class="studio-content-panel"></div>
+        </div>
       </aside>
 
       <main class="studio-main">
@@ -111,7 +136,18 @@
             <span class="studio-viewbar-label">View</span>
             <button type="button" class="studio-view-btn active" data-view="visual">Visual</button>
             <button type="button" class="studio-view-btn" data-view="code">Code</button>
+            <button type="button" class="studio-view-btn" data-view="live">Live</button>
             <button type="button" class="studio-view-btn" data-view="split">Split</button>
+          </div>
+          <div class="studio-viewbar-group" id="studio-align-group" hidden>
+            <span class="studio-viewbar-label">Align</span>
+            <button type="button" class="studio-align-btn" data-align="left" title="Align left">⫷</button>
+            <button type="button" class="studio-align-btn" data-align="center" title="Align center">☰</button>
+            <button type="button" class="studio-align-btn" data-align="right" title="Align right">⫸</button>
+          </div>
+          <div class="studio-viewbar-group">
+            <span class="studio-viewbar-label">Canvas</span>
+            <button type="button" class="btn btn-secondary btn-sm studio-outlines-btn active" data-action="toggle-outlines" title="Show layout outlines">Outlines</button>
           </div>
           <div class="studio-viewbar-group">
             <span class="studio-viewbar-label">Breakpoint</span>
@@ -123,7 +159,8 @@
           </div>
           <div class="studio-viewbar-group">
             <span class="studio-viewbar-label">Edit</span>
-            <button type="button" class="btn btn-secondary btn-sm" data-action="undo" title="Undo">Undo</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="undo" title="Undo (Ctrl+Z)">Undo</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
             <button type="button" class="btn btn-secondary btn-sm" data-action="add-column" title="Add column to section">+ Col</button>
           </div>
           <div class="studio-viewbar-group">
@@ -135,7 +172,13 @@
         </div>
         <div class="studio-editor-panes" id="studio-panes">
           <div class="studio-pane studio-pane-visual" id="studio-pane-visual">
-            <div id="studio-canvas" class="studio-canvas"></div>
+            <div class="studio-canvas-wrap studio-canvas--design" id="studio-canvas-wrap">
+              <div id="studio-canvas" class="studio-canvas"></div>
+              <div id="studio-box-overlay" class="studio-box-overlay" hidden></div>
+            </div>
+          </div>
+          <div class="studio-pane studio-pane-live" id="studio-pane-live" hidden>
+            <iframe id="studio-live-frame" class="studio-live-frame" title="Live preview" sandbox="allow-scripts allow-same-origin"></iframe>
           </div>
           <div class="studio-pane studio-pane-code" id="studio-pane-code" hidden>
             <div class="studio-code-wrap">
@@ -154,6 +197,8 @@
           <div class="studio-inspector-tabs" role="tablist">
             <button type="button" class="studio-insp-tab active" data-insp-tab="props" role="tab">Properties</button>
             <button type="button" class="studio-insp-tab" data-insp-tab="css" role="tab">CSS</button>
+            <button type="button" class="studio-insp-tab" data-insp-tab="stylesheets" role="tab">Stylesheets</button>
+            <button type="button" class="studio-insp-tab" data-insp-tab="page" role="tab">Page</button>
             <button type="button" class="studio-insp-tab" data-insp-tab="nav" role="tab">Nav</button>
           </div>
         </div>
@@ -205,4 +250,12 @@
   </div>
 </div>
 
+<div id="studio-rich-toolbar" class="studio-rich-toolbar" hidden>
+  <button type="button" class="studio-rich-btn" data-rich="bold" title="Bold"><strong>B</strong></button>
+  <button type="button" class="studio-rich-btn" data-rich="italic" title="Italic"><em>I</em></button>
+  <button type="button" class="studio-rich-btn" data-rich="underline" title="Underline"><u>U</u></button>
+  <button type="button" class="studio-rich-btn" data-rich="link" title="Link">🔗</button>
+</div>
+
 <script src="{birkly_url '/plugins/studio/admin/studio-ide.js'}"></script>
+<script src="{birkly_url '/plugins/studio/admin/studio-production.js'}"></script>
