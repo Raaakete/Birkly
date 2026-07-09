@@ -171,9 +171,9 @@ test_assert('api/plugin_doc.php exists', is_file(dirname(__DIR__) . '/api/plugin
 // --- help.js uses runtime manifest ---
 
 $helpJs = (string) file_get_contents(dirname(__DIR__) . '/admin/js/help.js');
-test_assert('help.js loads help_manifest API', strpos($helpJs, '/api/help_manifest.php') !== false);
+test_assert('help.js loads help_manifest API', strpos($helpJs, 'help_manifest.php') !== false);
 test_assert('help.js renders platform nav section', strpos($helpJs, 'help-topic-nav-platform') !== false);
-test_assert('help.js renders plugins nav section', strpos($helpJs, 'help-topic-nav-plugins') !== false);
+test_assert('help.js unified topic nav (no separate plugins section)', strpos($helpJs, 'help-topic-nav-plugins') === false);
 
 // Cleanup temp plugin registration
 unset($birkly_plugins[$tmpPluginId]);

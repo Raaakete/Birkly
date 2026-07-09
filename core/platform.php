@@ -60,7 +60,7 @@ function birkly_alpha_program_enabled(): bool
 function birkly_program_status_label(): string
 {
     $config = birkly_platform_config();
-    $tier = trim((string) ($config['program_tier'] ?? 'open_beta'));
+    $tier = trim((string) ($config['program_tier'] ?? 'closed_alpha'));
     if ($tier === 'closed_alpha') {
         return 'Closed alpha';
     }
