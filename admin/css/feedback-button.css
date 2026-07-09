@@ -7,10 +7,10 @@
 .feedback-floating-btn {
     border-radius: 50%;
     border: none;
-    background: var(--primary-color, #6366f1);
-    color: #fff;
+    background: var(--color-primary, #7CE3BF);
+    color: var(--text-inverse, #ffffff);
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md, 0 4px 14px rgba(0, 0, 0, 0.2));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -19,16 +19,16 @@
 
 .feedback-floating-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow-lg, 0 6px 18px rgba(0, 0, 0, 0.25));
 }
 
 .feedback-floating-btn:focus-visible {
-    outline: 2px solid var(--primary-color, #6366f1);
+    outline: 2px solid var(--color-primary, #7CE3BF);
     outline-offset: 2px;
 }
 
 .feedback-modal .feedback-privacy-notice a {
-    color: var(--primary-color, #6366f1);
+    color: var(--color-primary, #7CE3BF);
 }
 
 .feedback-admin-page {

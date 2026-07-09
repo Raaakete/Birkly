@@ -125,6 +125,8 @@
 
 
 <script>
+const ADMIN_MEDIA_API = () => Birkly.url('/api/admin_media.php');
+
 // Media Library JavaScript
 let currentMedia = [];
 let currentMediaItem = null;
@@ -194,7 +196,7 @@ function updateBreadcrumb() {
 // Load folders
 async function loadFolders() {
   try {
-    const response = await fetch('/api/admin_media.php?action=folders');
+    const response = await fetch(ADMIN_MEDIA_API() + '?action=folders');
     const result = await response.json();
     
     if (result.status === 'ok') {
@@ -440,7 +442,7 @@ function selectMoveFolder(folder) {
 
 // Load media
 async function loadMedia() {
-  const url = `/api/admin_media.php?action=list&folder=${encodeURIComponent(currentFolder)}`;
+  const url = ADMIN_MEDIA_API() + `?action=list&folder=${encodeURIComponent(currentFolder)}`;
   
   try {
     const response = await fetch(url);
@@ -642,7 +644,7 @@ async function handleUpload() {
   formData.append('_csrf', getCSRFToken());
   
   try {
-    const response = await fetch('/api/admin_media.php?action=upload', {
+    const response = await fetch(ADMIN_MEDIA_API() + '?action=upload', {
       method: 'POST',
       body: formData
     });
@@ -672,7 +674,7 @@ async function createFolder() {
     formData.append('name', name);
     formData.append('_csrf', getCSRFToken());
     
-    const response = await fetch('/api/admin_media.php?action=create_folder', {
+    const response = await fetch(ADMIN_MEDIA_API() + '?action=create_folder', {
       method: 'POST',
       body: formData
     });
@@ -708,7 +710,7 @@ async function renameFolder(folderPath) {
     formData.append('new_name', newPath);
     formData.append('_csrf', getCSRFToken());
     
-    const response = await fetch('/api/admin_media.php?action=rename_folder', {
+    const response = await fetch(ADMIN_MEDIA_API() + '?action=rename_folder', {
       method: 'POST',
       body: formData
     });
@@ -756,7 +758,7 @@ async function deleteFolderWithOptions(folderPath) {
     formData.append('handle_files', handleFiles);
     formData.append('_csrf', getCSRFToken());
     
-    const response = await fetch('/api/admin_media.php?action=delete_folder', {
+    const response = await fetch(ADMIN_MEDIA_API() + '?action=delete_folder', {
       method: 'POST',
       body: formData
     });
@@ -891,7 +893,7 @@ async function confirmMove() {
     formData.append('folder', selectedMoveFolder);
     formData.append('_csrf', getCSRFToken());
     
-    const response = await fetch('/api/admin_media.php?action=move_to_folder', {
+    const response = await fetch(ADMIN_MEDIA_API() + '?action=move_to_folder', {
       method: 'POST',
       body: formData
     });
@@ -922,7 +924,7 @@ async function deleteMedia(id) {
     formData.append('id', id);
     formData.append('_csrf', getCSRFToken());
     
-    const response = await fetch('/api/admin_media.php?action=delete', {
+    const response = await fetch(ADMIN_MEDIA_API() + '?action=delete', {
       method: 'POST',
       body: formData
     });

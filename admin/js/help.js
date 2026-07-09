@@ -1,5 +1,5 @@
 /**
- * Help v1 — manifest search + markdown-ish snapshot renderer (P3-M11, P6.5-M5 plugin sections)
+ * Help v2 — manifest search + markdown-ish snapshot renderer
  */
 (function () {
     'use strict';
@@ -11,6 +11,12 @@
         const div = document.createElement('div');
         div.textContent = text ?? '';
         return div.innerHTML;
+    }
+
+    function resolveUrl(path) {
+        if (!path) return '';
+        if (/^https?:\/\//i.test(path)) return path;
+        return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
     }
 
     function renderMarkdown(md) {
@@ -67,13 +73,13 @@
 
     async function loadManifest() {
         try {
-            const res = await fetch('/api/help_manifest.php');
+            const res = await fetch(Birkly.url('/api/help_manifest.php'));
             if (!res.ok) throw new Error('Failed to load help manifest');
             manifest = await res.json();
             manifest._loadedFrom = 'api';
             return manifest;
         } catch (apiErr) {
-            const offlineRes = await fetch('/api/help_offline_manifest.php');
+            const offlineRes = await fetch(Birkly.url('/api/help_offline_manifest.php'));
             if (!offlineRes.ok) throw apiErr;
             manifest = await offlineRes.json();
             manifest._loadedFrom = 'offline';
@@ -93,28 +99,28 @@
         window.history.replaceState({}, '', url.toString());
     }
 
+    function topicSearchText(topic) {
+        return [
+            topic.title,
+            topic.id,
+            topic.section || '',
+            topic.description || '',
+            topic.docs_path || '',
+            ...(topic.keywords || []),
+        ].join(' ').toLowerCase();
+    }
+
     function searchTopics(query) {
         if (!manifest?.topics) return [];
         const q = query.trim().toLowerCase();
         if (!q) return [];
 
-        return manifest.topics.filter((topic) => {
-            const hay = [
-                topic.title,
-                topic.id,
-                topic.plugin_id || '',
-                ...(topic.keywords || []),
-            ].join(' ').toLowerCase();
-            return hay.includes(q) || q.split(/\s+/).every((word) => hay.includes(word));
-        });
-    }
+        const words = q.split(/\s+/).filter(Boolean);
 
-    function topicNavLabel(topic) {
-        let label = escapeHtml(topic.title);
-        if (topic.source === 'plugin' && topic.badge) {
-            label += ' <span class="help-nav-badge">' + escapeHtml(topic.badge) + '</span>';
-        }
-        return label;
+        return manifest.topics.filter((topic) => {
+            const hay = topicSearchText(topic);
+            return hay.includes(q) || words.every((word) => hay.includes(word));
+        });
     }
 
     function renderNavList(navEl, topics, currentId) {
@@ -123,7 +129,7 @@
             <li class="help-nav-item${topic.parent ? ' help-nav-item-sub' : ''}">
                 <a href="#" class="help-nav-link ${topic.id === currentId ? 'active' : ''}"
                    data-help-topic-link="${escapeHtml(topic.id)}">
-                    ${topicNavLabel(topic)}
+                    ${escapeHtml(topic.title)}
                 </a>
             </li>
         `).join('');
@@ -138,17 +144,7 @@
 
     function renderNav(currentId) {
         if (!manifest?.topics) return;
-
-        const platformTopics = manifest.topics.filter((t) => (t.section || 'platform') === 'platform');
-        const pluginTopics = manifest.topics.filter((t) => t.section === 'plugins');
-
-        renderNavList(document.getElementById('help-topic-nav-platform'), platformTopics, currentId);
-        renderNavList(document.getElementById('help-topic-nav-plugins'), pluginTopics, currentId);
-
-        const pluginsSection = document.getElementById('help-plugins-section');
-        if (pluginsSection) {
-            pluginsSection.hidden = pluginTopics.length === 0;
-        }
+        renderNavList(document.getElementById('help-topic-nav-platform'), manifest.topics, currentId);
     }
 
     async function showTopic(topicId) {
@@ -171,12 +167,7 @@
             if (manifest && manifest._loadedFrom === 'offline') {
                 banner = '<div class="alert alert-info help-offline-banner">' + escapeHtml(manifest._offlineMessage || 'Offline Help mode') + '</div>';
             }
-            if (topic.source === 'plugin') {
-                banner += '<div class="help-plugin-banner"><strong>Plugin extension</strong> — '
-                    + escapeHtml(topic.title)
-                    + ' is provided by an installed plugin, not core Birkly.</div>';
-            }
-            const res = await fetch(topic.snapshot);
+            const res = await fetch(resolveUrl(topic.snapshot));
             if (!res.ok) throw new Error('Snapshot not found');
             const md = await res.text();
             content.innerHTML = banner + '<div class="markdown-content">' + renderMarkdown(md) + '</div>';
@@ -215,15 +206,12 @@
                 return;
             }
 
-            results.innerHTML = matches.map((topic) => {
-                const sectionLabel = topic.section === 'plugins' ? 'Plugin' : 'Platform';
-                return `
+            results.innerHTML = matches.map((topic) => `
                 <a href="#" class="help-search-result-item" data-help-search-id="${escapeHtml(topic.id)}">
-                    <div class="help-search-result-title">${escapeHtml(topic.title)} <span class="help-search-section-tag">${sectionLabel}</span></div>
+                    <div class="help-search-result-title">${escapeHtml(topic.title)}</div>
                     <div class="help-search-result-keywords">${escapeHtml((topic.keywords || []).slice(0, 5).join(', '))}</div>
                 </a>
-            `;
-            }).join('');
+            `).join('');
 
             results.querySelectorAll('[data-help-search-id]').forEach((el) => {
                 el.addEventListener('click', (e) => {

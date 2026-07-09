@@ -99,6 +99,43 @@ function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
 
+function refreshTopbarAvatars(avatarUrl) {
+    const topbarMenu = document.querySelector('.topbar-user-menu');
+    if (!topbarMenu) {
+        return;
+    }
+
+    const trigger = topbarMenu.querySelector('.user-menu-trigger');
+    const headerAvatar = topbarMenu.querySelector('.user-menu-header .user-menu-avatar');
+
+    [trigger, headerAvatar].forEach((container) => {
+        if (!container) return;
+        const existingImg = container.querySelector('img.user-avatar, img');
+        const existingInitials = container.querySelector('.user-avatar-initials');
+
+        if (avatarUrl) {
+            if (existingImg) {
+                existingImg.src = avatarUrl;
+                existingImg.style.display = '';
+            } else if (existingInitials) {
+                const img = document.createElement('img');
+                img.src = avatarUrl;
+                img.alt = existingInitials.textContent || 'User';
+                img.className = 'user-avatar';
+                existingInitials.replaceWith(img);
+            }
+        } else if (existingImg && existingInitials === null) {
+            const initials = document.createElement('div');
+            initials.className = 'user-avatar-initials';
+            const name = topbarMenu.querySelector('.user-menu-name')?.textContent?.trim() || 'U';
+            initials.textContent = name.substring(0, 2).toUpperCase();
+            existingImg.replaceWith(initials);
+        }
+    });
+
+    document.dispatchEvent(new CustomEvent('birkly:avatar-updated', { detail: { url: avatarUrl || '' } }));
+}
+
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -110,7 +147,7 @@ async function loadCloudAccountStatus() {
     const container = document.getElementById('cloud-account-status');
     if (!container) return;
     try {
-        const response = await fetch('/api/cloud_account.php?action=status', { credentials: 'same-origin' });
+        const response = await fetch(Birkly.url('/api/cloud_account.php?action=status'), { credentials: 'same-origin' });
         const data = await response.json();
         if (data.status !== 'ok') throw new Error(data.message || 'Failed to load cloud account status');
         renderCloudAccountStatus(container, data.data || {});
@@ -144,7 +181,7 @@ async function startCloudAccountLink() {
     const btn = document.getElementById('cloud-account-link-btn');
     if (btn) btn.disabled = true;
     try {
-        const response = await fetch('/api/cloud_account.php?action=start_link', {
+        const response = await fetch(Birkly.url('/api/cloud_account.php?action=start_link'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
@@ -162,7 +199,7 @@ async function startCloudAccountLink() {
 async function unlinkCloudAccount() {
     if (!confirm('Unlink your Birkly cloud account from this CMS installation?')) return;
     try {
-        const response = await fetch('/api/cloud_account.php?action=unlink', {
+        const response = await fetch(Birkly.url('/api/cloud_account.php?action=unlink'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
@@ -191,7 +228,7 @@ async function loadAccount2FAStatus() {
     if (!container) return;
 
     try {
-        const response = await fetch('/api/2fa.php?action=status', { credentials: 'same-origin' });
+        const response = await fetch(Birkly.url('/api/2fa.php?action=status'), { credentials: 'same-origin' });
         const data = await response.json();
         if (data.status !== 'ok') throw new Error(data.message || 'Failed to load 2FA status');
 
@@ -247,7 +284,7 @@ async function openAccount2FASetupModal() {
     content.innerHTML = '<div class="text-center"><div class="spinner">Setting up 2FA...</div></div>';
 
     try {
-        const response = await fetch('/api/2fa.php?action=setup', {
+        const response = await fetch(Birkly.url('/api/2fa.php?action=setup'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
@@ -323,7 +360,7 @@ async function enableAccount2FA() {
     }
 
     try {
-        const response = await fetch('/api/2fa.php?action=enable', {
+        const response = await fetch(Birkly.url('/api/2fa.php?action=enable'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
@@ -385,7 +422,7 @@ document.getElementById('account-2fa-disable-form')?.addEventListener('submit', 
     if (!password) return;
 
     try {
-        const response = await fetch('/api/2fa.php?action=disable', {
+        const response = await fetch(Birkly.url('/api/2fa.php?action=disable'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
@@ -429,7 +466,7 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
     if (!password) return;
 
     try {
-        const response = await fetch('/api/2fa.php?action=regenerate_backup_codes', {
+        const response = await fetch(Birkly.url('/api/2fa.php?action=regenerate_backup_codes'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
@@ -476,7 +513,7 @@ function handleProfileSubmit(e) {
     const formData = new FormData(form);
     const messageEl = document.getElementById('account-message');
     
-    fetch('/api/users.php', {
+    fetch(Birkly.url('/api/users.php'), {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
@@ -489,10 +526,7 @@ function handleProfileSubmit(e) {
             showMessage(messageEl, 'Profile updated successfully', 'success');
             // Update avatar if changed
             if (data.data && data.data.avatar) {
-                const avatarImg = document.querySelector('.user-avatar, .user-avatar-initials');
-                if (avatarImg && avatarImg.tagName === 'IMG') {
-                    avatarImg.src = data.data.avatar;
-                }
+                refreshTopbarAvatars(data.data.avatar);
             }
         } else {
             showMessage(messageEl, data.message || 'Error updating profile', 'error');
@@ -523,7 +557,7 @@ function handlePasswordSubmit(e) {
         return;
     }
     
-    fetch('/api/users.php', {
+    fetch(Birkly.url('/api/users.php'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -552,7 +586,7 @@ function handleLanguageSubmit(e) {
     const language = form.querySelector('#account-language').value;
     const messageEl = document.getElementById('language-message');
     
-    fetch('/api/users.php', {
+    fetch(Birkly.url('/api/users.php'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -597,7 +631,7 @@ function handleNotificationsSubmit(e) {
         security_events: document.getElementById('notify-security-events')?.checked ?? false
     };
     
-    fetch('/api/users.php', {
+    fetch(Birkly.url('/api/users.php'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -628,7 +662,7 @@ function handleRemoveAvatar() {
         return;
     }
     
-    fetch('/api/users.php', {
+    fetch(Birkly.url('/api/users.php'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -84,7 +84,7 @@ window.Birkly.MediaModal = {
                 <div class="media-modal-content" style="padding: 20px; flex: 1; overflow-y: auto;">
                     <div class="media-upload-section" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
                         <input type="file" id="media-upload" accept="image/*" style="display: none;">
-                        <button type="button" class="btn btn-primary" onclick="document.getElementById('media-upload').click()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('media-upload').click()" style="padding: 8px 16px; background: var(--color-primary, #7CE3BF); color: var(--text-inverse, #fff); border: none; border-radius: 4px; cursor: pointer;">
                             Upload New Media
                         </button>
                     </div>
@@ -152,7 +152,7 @@ window.Birkly.MediaModal = {
         grid.innerHTML = '<div class="media-loading" style="text-align: center; padding: 40px; color: #666;">Loading media...</div>';
         
         try {
-            const response = await fetch('/api/admin_media.php?action=list', { credentials: 'same-origin' });
+            const response = await fetch(Birkly.url('/api/admin_media.php?action=list'), { credentials: 'same-origin' });
             const result = await response.json();
             
             // Check if modal is still open before rendering
@@ -227,7 +227,7 @@ window.Birkly.MediaModal = {
         if (csrf) formData.append('_csrf', csrf);
 
         try {
-            const response = await fetch('/api/admin_media.php?action=upload', {
+            const response = await fetch(Birkly.url('/api/admin_media.php?action=upload'), {
                 method: 'POST',
                 credentials: 'same-origin',
                 body: formData
@@ -333,7 +333,7 @@ const mediaModalCSS = `
 }
 
 .media-item:hover {
-    border-color: #007bff;
+    border-color: var(--color-primary, #7CE3BF);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
