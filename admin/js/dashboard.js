@@ -1,6 +1,13 @@
 // Dashboard JavaScript - Enhanced dashboard functionality
 (function() {
     'use strict';
+
+    function apiUrl(path) {
+        if (window.Birkly && typeof Birkly.url === 'function') {
+            return Birkly.url(path);
+        }
+        return path;
+    }
     
     let activityFilter = 'all';
     let refreshInterval = null;
@@ -28,7 +35,7 @@
         const container = document.getElementById('analytics-content');
         if (!section || !container) return;
         
-        fetch('/api/dashboard.php?action=analytics')
+        fetch(apiUrl('/api/dashboard.php?action=analytics'), { credentials: 'same-origin' })
             .then(response => {
                 // Try to parse as JSON even if status is not ok
                 return response.text().then(text => {
@@ -98,7 +105,7 @@
         
         activityContainer.innerHTML = '<p class="empty-state loading">Loading...</p>';
         
-        fetch(`/api/dashboard.php?action=activity&limit=20&filter=${activityFilter}`)
+        fetch(apiUrl(`/api/dashboard.php?action=activity&limit=20&filter=${activityFilter}`), { credentials: 'same-origin' })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok' && data.data && data.data.activity) {
@@ -200,7 +207,7 @@
         if (!container) return;
         
         // Get all collections and their recent entries
-        fetch('/api/content.php?action=list_collections')
+        fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok' && data.data && Array.isArray(data.data)) {
@@ -211,7 +218,7 @@
                     const entryPromises = collections.slice(0, 6).map(collection => {
                         const slug = collection.slug || '';
                         // Use admin_entries API which returns entries with status and dates
-                        return fetch(`/api/admin_entries.php?action=list&collection=${encodeURIComponent(slug)}`)
+                        return fetch(apiUrl(`/api/admin_entries.php?action=list&collection=${encodeURIComponent(slug)}`), { credentials: 'same-origin' })
                             .then(r => r.json())
                             .then(entryData => {
                                 // Handle different response formats
@@ -328,7 +335,7 @@
     
     // Load performance metrics
     function loadPerformanceMetrics() {
-        fetch('/api/dashboard.php?action=performance')
+        fetch(apiUrl('/api/dashboard.php?action=performance'), { credentials: 'same-origin' })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok' && data.data) {
@@ -421,7 +428,7 @@
     
     // Load plugin widgets
     function loadPluginWidgets() {
-        fetch('/api/dashboard.php?action=widgets')
+        fetch(apiUrl('/api/dashboard.php?action=widgets'), { credentials: 'same-origin' })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok' && data.data.widgets && data.data.widgets.length > 0) {
@@ -438,7 +445,7 @@
         const container = document.getElementById('analytics-widget-content');
         if (!container) return;
         
-        fetch('/api/dashboard.php?action=analytics')
+        fetch(apiUrl('/api/dashboard.php?action=analytics'), { credentials: 'same-origin' })
             .then(response => {
                 if (!response.ok) {
                     // If response is not ok, show setup message
