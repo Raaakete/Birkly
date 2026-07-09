@@ -26,6 +26,10 @@ if (!function_exists('get_studio_blocks')) {
 if (!function_exists('studio_load_plugin_blocks')) {
     function studio_load_plugin_blocks(): void
     {
+        $core = dirname(__DIR__) . '/studio-blocks.php';
+        if (is_file($core)) {
+            include_once $core;
+        }
         if (!function_exists('get_all_plugins')) {
             return;
         }
