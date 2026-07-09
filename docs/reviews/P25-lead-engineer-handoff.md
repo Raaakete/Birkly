@@ -1,8 +1,8 @@
 # Phase 25 — Lead-engineer handoff (Studio production builder)
 
-**Status:** Proposed (2026-07-09) — awaiting human approval  
+**Status:** Approved (2026-07-09, Keven) — execute now  
 **Baseline:** P24 complete — SSR engine, binding wizard, nav, 152 suites  
-**Human rule:** Execute **P25-M0→M18** autonomously after approval. Notify human **once** at **P25-M18** only.
+**Human rule:** Execute **P25-M0→M18** autonomously. Notify human **once** at **P25-M18** only.
 
 **Master plan:** `docs/reviews/P25-studio-production-builder-plan.md`  
 **Matrix:** `docs/reviews/P25-verification-matrix.md`
@@ -62,5 +62,5 @@ CLOSURE:
 
 ## Human approval checklist
 
-- [ ] P25-D1–D14 accepted
-- [ ] M0–M18 single-wave execution approved
+- [x] P25-D1–D14 accepted (2026-07-09)
+- [x] M0–M18 single-wave execution approved (2026-07-09)

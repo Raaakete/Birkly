@@ -1,8 +1,8 @@
 # P25 — Studio production builder (WYSIWYG canvas + template parity + polish)
 
-**Status:** Proposed (2026-07-09) — awaiting human approval  
+**Status:** Approved (2026-07-09, Keven) — execute now  
 **Baseline:** P24 complete — `StudioTemplateEngine`, canonical compiler, IDE redesign, binding wizard, nav builder; **152 test suites**  
-**Human rule:** Execute P25-M0→M18 autonomously after approval. Notify human **once** at **P25-M18** only.
+**Human rule:** Execute P25-M0→M18 autonomously. Notify human **once** at **P25-M18** only.
 
 **Handoff:** `docs/reviews/P25-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P25-verification-matrix.md`
