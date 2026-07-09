@@ -109,6 +109,10 @@ register_studio_block('my_block', [
 ]);
 ```
 
+## Production builder (P25)
+
+Design canvas with project CSS, live preview pane, template engine v2, CSS studio, section presets, and layout pro tools. See **`plugins/studio/docs/production-builder.md`**.
+
 ## Deactivation
 
 When Studio is deactivated, `/site/*` returns **503** — project files remain on disk.
