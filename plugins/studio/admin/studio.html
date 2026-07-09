@@ -127,6 +127,26 @@
           <div class="studio-panel-header"><strong>Content</strong></div>
           <div id="studio-content-panel" class="studio-content-panel"></div>
         </div>
+        <div class="studio-sidebar-section" id="studio-creative-section">
+          <div class="studio-panel-header">
+            <strong>Creative</strong>
+            <button type="button" class="btn btn-secondary btn-sm" data-action="open-figma-import" title="Import Figma JSON">Figma</button>
+          </div>
+          <div class="studio-creative-panels">
+            <details class="studio-creative-details" open>
+              <summary>Animation timeline</summary>
+              <div id="studio-timeline-body" class="studio-timeline-body"></div>
+            </details>
+            <details class="studio-creative-details">
+              <summary>Popups</summary>
+              <div id="studio-popup-body" class="studio-popup-body"></div>
+            </details>
+            <details class="studio-creative-details">
+              <summary>Funnel flow</summary>
+              <div id="studio-funnel-body" class="studio-funnel-body"></div>
+            </details>
+          </div>
+        </div>
       </aside>
 
       <main class="studio-main">
@@ -199,6 +219,7 @@
             <button type="button" class="studio-insp-tab" data-insp-tab="css" role="tab">CSS</button>
             <button type="button" class="studio-insp-tab" data-insp-tab="stylesheets" role="tab">Stylesheets</button>
             <button type="button" class="studio-insp-tab" data-insp-tab="page" role="tab">Page</button>
+            <button type="button" class="studio-insp-tab" data-insp-tab="creative" role="tab">Creative</button>
             <button type="button" class="studio-insp-tab" data-insp-tab="nav" role="tab">Nav</button>
           </div>
         </div>
@@ -248,6 +269,19 @@
       </div>
     </div>
   </div>
+
+  <div id="studio-figma-modal" class="studio-modal" hidden>
+    <div class="studio-modal-backdrop" data-action="close-figma-import"></div>
+    <div class="studio-modal-content studio-modal-md">
+      <h3>Import Figma JSON</h3>
+      <p class="form-hint">Paste a simplified Figma export (<code>frames</code> or <code>document.children</code>). Creates sections + color tokens.</p>
+      <textarea id="studio-figma-json" class="input studio-figma-json" rows="12" spellcheck="false" placeholder='{"frames":[{"name":"Hero","type":"FRAME","children":[...]}]}'></textarea>
+      <div class="studio-modal-actions">
+        <button type="button" class="btn btn-secondary" data-action="close-figma-import">Cancel</button>
+        <button type="button" class="btn btn-primary" data-action="run-figma-import">Import sections</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="studio-rich-toolbar" class="studio-rich-toolbar" hidden>
@@ -259,3 +293,4 @@
 
 <script src="{birkly_url '/plugins/studio/admin/studio-ide.js'}"></script>
 <script src="{birkly_url '/plugins/studio/admin/studio-production.js'}"></script>
+<script src="{birkly_url '/plugins/studio/admin/studio-creative.js'}"></script>

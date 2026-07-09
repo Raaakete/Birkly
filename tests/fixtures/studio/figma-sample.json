@@ -1,0 +1,29 @@
+{
+  "name": "Smoke landing",
+  "frames": [
+    {
+      "name": "Hero banner",
+      "type": "FRAME",
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": { "r": 0.96, "g": 0.97, "b": 0.98, "a": 1 }
+        }
+      ],
+      "children": [
+        {
+          "type": "TEXT",
+          "name": "Headline",
+          "characters": "Creative smoke headline",
+          "style": { "fontSize": 36 }
+        },
+        {
+          "type": "TEXT",
+          "name": "Sub",
+          "characters": "Imported from Figma JSON fixture",
+          "style": { "fontSize": 16 }
+        }
+      ]
+    }
+  ]
+}

@@ -753,6 +753,15 @@
       return;
     }
 
+    if (state.inspectorTab === 'creative') {
+      if (typeof window.StudioCreative?.renderCreativeInspector === 'function') {
+        window.StudioCreative.renderCreativeInspector();
+      } else {
+        body.innerHTML = '<p class="form-hint">Creative inspector — use Timeline / Popups in the sidebar.</p>';
+      }
+      return;
+    }
+
     if (state.inspectorTab === 'css') {
       const el = getSelectedElement();
       if (!el) {

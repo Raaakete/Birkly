@@ -38,6 +38,10 @@ class StudioRenderer
             return $this->serveStyles($projectSlug);
         }
 
+        if ($pageSlug === 'creative.css') {
+            return $this->serveCreativeStyles($projectSlug);
+        }
+
         $project = $this->repo->findBySlug($projectSlug);
         $preview = $this->isPreviewRequest();
         $allowDraft = $preview && $this->allowAdminPreview();
@@ -108,6 +112,31 @@ class StudioRenderer
         $custom = is_file($dir . '/custom.css') ? (string) file_get_contents($dir . '/custom.css') : '';
         $generated = is_file($dir . '/generated.css') ? (string) file_get_contents($dir . '/generated.css') : '';
         $css = "/* Studio styles */\n" . $kit . "\n" . $generated . "\n" . $custom;
+        header('Content-Type: text/css; charset=utf-8');
+        if (function_exists('set_public_read_cache_headers')) {
+            set_public_read_cache_headers(300);
+        }
+        echo $css;
+        return true;
+    }
+
+    private function serveCreativeStyles(string $projectSlug): bool
+    {
+        $project = $this->repo->findBySlug($projectSlug);
+        $preview = $this->isPreviewRequest();
+        $allowDraft = $preview && $this->allowAdminPreview();
+        if (!$project || (empty($project['published']) && !$allowDraft)) {
+            http_response_code(404);
+            return true;
+        }
+        $path = $this->repo->projectDir($project['id']) . '/styles/creative.css';
+        if (!is_file($path)) {
+            require_once __DIR__ . '/StudioCompiler.php';
+            $compiler = new StudioCompiler($this->repo);
+            $css = $compiler->buildProjectCreativeCss($project['id']);
+            $compiler->writeCreativeStyles($project['id'], $css);
+        }
+        $css = is_file($path) ? (string) file_get_contents($path) : '';
         header('Content-Type: text/css; charset=utf-8');
         if (function_exists('set_public_read_cache_headers')) {
             set_public_read_cache_headers(300);

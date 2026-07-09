@@ -261,3 +261,18 @@
 .studio-field-btn:hover { background: #e7f1ff; border-color: #b6d4fe; }
 
 .studio-page-field { margin-top: 0.25rem; }
+
+/* P26 creative suite */
+.studio-creative-panels { padding: 0 0.75rem 0.75rem; }
+.studio-creative-details { margin-bottom: 0.5rem; border: 1px solid #e8e8e8; border-radius: 6px; background: #fafafa; }
+.studio-creative-details summary { padding: 0.45rem 0.6rem; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+.studio-timeline-body, .studio-popup-body, .studio-funnel-body { padding: 0.5rem 0.6rem 0.65rem; font-size: 0.78rem; }
+.studio-timeline-list, .studio-popup-list { list-style: none; margin: 0.5rem 0; padding: 0; }
+.studio-timeline-item, .studio-popup-list-item { padding: 0.35rem 0.5rem; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 0.25rem; cursor: pointer; background: #fff; }
+.studio-timeline-item.active, .studio-popup-list-item.active { border-color: #0d6efd; background: #e7f1ff; }
+.studio-timeline-item small, .studio-popup-list-item small { display: block; color: #666; }
+.studio-timeline-editor label, .studio-popup-editor label, .studio-funnel-editor-step label { display: block; margin-top: 0.35rem; }
+.studio-timeline-kf, .studio-figma-json { font-family: ui-monospace, monospace; font-size: 0.72rem; width: 100%; }
+.studio-funnel-editor { list-style: none; margin: 0.5rem 0; padding: 0; }
+.studio-funnel-editor-step { padding: 0.5rem; border: 1px solid #e8e8e8; border-radius: 6px; margin-bottom: 0.35rem; background: #fff; }
+.studio-funnel-enable { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.5rem; }

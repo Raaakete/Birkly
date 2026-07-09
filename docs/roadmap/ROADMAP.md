@@ -197,6 +197,12 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 
+**2026-07-09 — Phase 26 complete** (autonomous P26-M0→M16, combined with P25 verification)
+
+**Delivered:** Studio **creative suite** — animation timeline (`@keyframes` + scroll/click/load triggers), popup/modal builder (click, delay, exit intent + a11y), Figma JSON import → sections + tokens, funnel flows (multi-page stepper), `studio-creative-runtime.js`, `studio-creative-smoke.sh` CI · STU-ANIM/POPUP/FIGMA/FUNNEL matrix green.
+
+**Matrices:** `docs/reviews/P26-verification-matrix.md` · **Closure:** `docs/reviews/P26-phase-closure-checklist.md` · **Docs:** `plugins/studio/docs/creative-suite.md`
+
 **2026-07-09 — Phase 25 complete** (autonomous P25-M0→M18)
 
 **Delivered:** Studio **production builder** — design canvas with project CSS, live preview pane (`birkly-client.js`), `StudioTemplateEngine` v2 (conditionals, sub-entries, template functions), box model + column resize + align toolbar, CSS rules panel + class manager + stylesheet tabs, rich text toolbar, section presets, page SEO, content panel, plugin blocks v2, redo + revisions, `studio-smoke.sh` CI · STU-CANVAS/ENGINE/CSS/SITE + V-STU-04 evidence.

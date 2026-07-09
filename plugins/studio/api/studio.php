@@ -28,6 +28,8 @@ require_once __DIR__ . '/../includes/StudioRevisionStore.php';
 require_once __DIR__ . '/../includes/StudioBlockRegistry.php';
 require_once __DIR__ . '/../includes/StudioTemplateEngine.php';
 require_once __DIR__ . '/../includes/StudioCanvasMigrator.php';
+require_once __DIR__ . '/../includes/StudioCreative.php';
+require_once __DIR__ . '/../includes/StudioFigmaImporter.php';
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $action = $input['action'] ?? $_GET['action'] ?? '';
@@ -42,6 +44,7 @@ $adminActions = [
     'delete_path', 'rename_path', 'list_revisions', 'list_studio_blocks', 'list_sections',
     'insert_section', 'get_tokens', 'save_tokens', 'list_components', 'save_component',
     'get_canvas_styles', 'preview_live', 'get_page_settings', 'save_page_settings',
+    'get_funnel', 'save_funnel', 'import_figma',
 ];
 
 if (in_array($action, $adminActions, true)) {
@@ -431,6 +434,63 @@ switch ($action) {
         }
         file_put_contents($dir . '/' . $name . '.json', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         studio_ok();
+    case 'get_funnel':
+        $id = (string) ($input['project_id'] ?? $_GET['project_id'] ?? '');
+        $project = $repo->getProject($id);
+        if (!$project) {
+            studio_err('Not found', 404);
+        }
+        $funnel = StudioCreative::readFunnel($repo->projectDir($id));
+        studio_ok(['funnel' => $funnel ?? ['enabled' => false, 'steps' => [], 'title' => 'Progress']]);
+    case 'save_funnel':
+        $id = (string) ($input['project_id'] ?? '');
+        $project = $repo->getProject($id);
+        if (!$project) {
+            studio_err('Not found', 404);
+        }
+        $funnel = $input['funnel'] ?? [];
+        if (!is_array($funnel)) {
+            studio_err('funnel must be object');
+        }
+        StudioCreative::writeFunnel($repo->projectDir($id), $funnel);
+        studio_ok(['funnel' => $funnel]);
+    case 'import_figma':
+        $id = (string) ($input['project_id'] ?? '');
+        $slug = (string) ($input['page_slug'] ?? 'index');
+        $json = $input['json'] ?? null;
+        if (!is_array($json)) {
+            studio_err('json required');
+        }
+        $canvas = $repo->getPageCanvas($id, $slug);
+        if (!$canvas) {
+            studio_err('Not found', 404);
+        }
+        $result = StudioFigmaImporter::import($json);
+        foreach ($result['sections'] as $section) {
+            $canvas['sections'][] = $section;
+        }
+        if ($result['tokens'] !== []) {
+            $tokenPath = $repo->projectDir($id) . '/tokens.json';
+            $existing = is_file($tokenPath) ? json_decode((string) file_get_contents($tokenPath), true) : [];
+            if (!is_array($existing)) {
+                $existing = [];
+            }
+            foreach ($result['tokens'] as $group => $vals) {
+                if (!is_array($vals)) {
+                    continue;
+                }
+                $existing[$group] = array_merge($existing[$group] ?? [], $vals);
+            }
+            file_put_contents($tokenPath, json_encode($existing, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+            $compiler->writeGeneratedStyles($id);
+        }
+        $saved = $repo->savePageCanvas($id, $slug, $canvas);
+        studio_ok([
+            'canvas' => $saved,
+            'sections_added' => count($result['sections']),
+            'tokens' => $result['tokens'],
+            'warnings' => $result['warnings'],
+        ]);
     default:
         studio_err('Unknown action', 400);
 }

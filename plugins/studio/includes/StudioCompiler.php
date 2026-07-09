@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/StudioProjectRepository.php';
+require_once __DIR__ . '/StudioCreative.php';
 
 class StudioCompiler
 {
@@ -49,7 +50,22 @@ class StudioCompiler
             $headMeta .= '  <meta property="og:title" content="' . htmlspecialchars($ogTitle, ENT_QUOTES, 'UTF-8') . '">' . "\n";
         }
 
-        $body = $this->renderNavHeader($canvas) . $this->renderSections($canvas['sections'] ?? []);
+        $projectDir = $this->repo->projectDir($projectId);
+        $funnel = StudioCreative::readFunnel($projectDir);
+        $funnelHtml = StudioCreative::buildFunnelHtml($funnel, $projectSlug, $pageSlug);
+        $creative = StudioCreative::buildRuntimeConfig($canvas, $funnel, $projectSlug, $pageSlug);
+
+        $body = $funnelHtml . $this->renderNavHeader($canvas) . $this->renderSections($canvas['sections'] ?? []);
+        $popupsHtml = StudioCreative::buildPopupsHtml(
+            is_array(StudioCreative::creativeFromCanvas($canvas)['popups'] ?? null)
+                ? StudioCreative::creativeFromCanvas($canvas)['popups']
+                : []
+        );
+        $runtimeUrl = htmlspecialchars(StudioCreative::runtimeScriptUrl(), ENT_QUOTES, 'UTF-8');
+        $runtimeConfig = htmlspecialchars(json_encode($creative['config'] ?? [], JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8');
+        $creativeCssUrl = function_exists('birkly_url')
+            ? birkly_url('/site/' . rawurlencode($projectSlug) . '/creative.css?v=' . $revision)
+            : '/site/' . rawurlencode($projectSlug) . '/creative.css?v=' . $revision;
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -59,9 +75,13 @@ class StudioCompiler
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{$title}</title>
 {$headMeta}  <link rel="stylesheet" href="{$stylesUrl}">
+  <link rel="stylesheet" href="{$creativeCssUrl}">
 </head>
-<body class="studio-page">
+<body class="studio-page" data-studio-creative="1">
 {$body}
+{$popupsHtml}
+<script src="{$runtimeUrl}" defer></script>
+<script>window.__STUDIO_CREATIVE__={$runtimeConfig};<\/script>
 </body>
 </html>
 HTML;
@@ -73,6 +93,7 @@ HTML;
         }
         file_put_contents($path, $html);
         $this->writeGeneratedStyles($projectId);
+        $this->writeCreativeStyles($projectId, $this->buildProjectCreativeCss($projectId));
         return $html;
     }
 
@@ -183,6 +204,26 @@ HTML;
         $css = "/* Studio generated (P23) */\n" . $this->buildTokensCss($projectId) . "\n" . $this->buildResponsiveCss($projectId);
         $path = $this->repo->projectDir($projectId) . '/styles/generated.css';
         file_put_contents($path, $css);
+    }
+
+    public function writeCreativeStyles(string $projectId, string $css): void
+    {
+        $path = $this->repo->projectDir($projectId) . '/styles/creative.css';
+        file_put_contents($path, $css !== '' ? $css : "/* Studio creative (P26) */\n");
+    }
+
+    public function buildProjectCreativeCss(string $projectId): string
+    {
+        $chunks = [];
+        foreach ($this->repo->listPageSlugs($projectId) as $slug) {
+            $canvas = $this->repo->getPageCanvas($projectId, $slug);
+            if (!$canvas) {
+                continue;
+            }
+            $creative = StudioCreative::buildRuntimeConfig($canvas, null, '', $slug);
+            $chunks[] = $creative['css'] ?? '';
+        }
+        return implode("\n", array_filter($chunks));
     }
 
     private function renderNavHeader(array $canvas): string
@@ -325,6 +366,10 @@ HTML;
     private function elementAttrs(array $el): string
     {
         $parts = [];
+        $eid = preg_replace('/[^a-z0-9_-]/', '', (string) ($el['id'] ?? ''));
+        if ($eid !== '') {
+            $parts[] = 'data-studio-el="' . htmlspecialchars($eid, ENT_QUOTES) . '"';
+        }
         $classes = $el['classes'] ?? [];
         if (is_array($classes) && $classes !== []) {
             $parts[] = 'class="' . htmlspecialchars(implode(' ', $classes), ENT_QUOTES) . '"';
