@@ -47,6 +47,7 @@ try {
 
 test_assert('dashboard template renders without fatal', $error === null, (string) $error);
 test_assert('dashboard output not empty', $output !== '');
+test_assert('dashboard renders server-side stats', strpos($output, 'stat-collections"><span class="loading"') === false);
 test_assert('project_root available to template', strpos($output, 'dashboard') !== false || strpos($output, 'Dashboard') !== false || strpos($output, 'welcome') !== false);
 
 exit(test_finish('admin_dashboard_paths_test'));
