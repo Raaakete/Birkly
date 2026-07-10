@@ -31,8 +31,8 @@ function getCSRFToken() {
   return meta ? meta.getAttribute('content') : '';
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize — scripts load at end of body, so DOMContentLoaded may have already fired.
+function initMediaPage() {
   loadFolders();
   loadMedia();
   setupMediaPageActions();
@@ -41,7 +41,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const typeFilter = document.getElementById('type-filter');
   if (search) search.addEventListener('input', filterMedia);
   if (typeFilter) typeFilter.addEventListener('change', filterMedia);
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMediaPage);
+} else {
+  initMediaPage();
+}
 
 function setupMediaPageActions() {
   document.querySelectorAll('[data-media-action="upload"]').forEach(el => el.addEventListener('click', uploadMedia));

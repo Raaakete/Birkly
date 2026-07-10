@@ -5,7 +5,11 @@
 if (!function_exists('birkly_csp_nonce_attr')) {
     require_once __DIR__ . '/../../core/csp.php';
 }
+if (!function_exists('birkly_build_info')) {
+    require_once __DIR__ . '/../../core/build_info.php';
+}
 $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
+$__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_commit'] ?? '1'), ENT_QUOTES, 'UTF-8');
 ?>
 
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
@@ -18,8 +22,8 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtypes-shim.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20250804-15')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
-    <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
-    <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
+    <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
+    <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
 
     <script<?= $__birklyScriptNonceAttr ?>>
     // If user was redirected due to missing permission, show unified modal.
