@@ -322,9 +322,26 @@ body.sidebar-collapsed .sidebar-collapse-toggle svg {
     display: block;
   }
 
-  body.sidebar-collapsed .nav-links a:hover {
+  body.sidebar-collapsed .nav-links a:not(.active):hover {
+    color: var(--text-primary, #20221D);
     border-left: none !important;
     box-shadow: none !important;
+  }
+
+  body.sidebar-collapsed .nav-links a:not(.active):hover::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-neutral-300, #E7EAE4);
+    border-radius: 0 2px 2px 0;
+  }
+
+  body.sidebar-collapsed .nav-links a:hover .nav-icon,
+  body.sidebar-collapsed .nav-links a:hover svg {
+    color: var(--text-primary, #20221D);
   }
 
   body.sidebar-collapsed .sidebar-program-label {
