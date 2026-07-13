@@ -203,11 +203,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Matrices:** `docs/reviews/P27-verification-matrix.md` · **Closure:** `docs/reviews/P27-phase-closure-checklist.md` · **Docs sync:** `docs/agent-ops/BIRKLY_DOCS_SYNC.md`
 
-**Next active phase:** **Phase 28** — Beta launch automation & product gaps — **approved, in execution** (2026-07-13)
+**2026-07-13 — Phase 28 complete** (autonomous P28-M0→M20)
 
-**P28 spec:** `docs/reviews/P28-beta-launch-automation-plan.md` · **Journeys:** `docs/reviews/P28-user-journey-catalog.md` · **Handoff:** `docs/reviews/P28-lead-engineer-handoff.md`
+**Delivered:** Beta **launch automation** — `journey-runner.php` with 13 real-disk journeys (J-INSTALL through J-KEKABA), wired into CI; ops scheduling + health alerts + Admin Operations tab; product gap fixes (update E2E, START_HERE README, studio renderer stability, marketplace catalog audit, Birkly-Website deploy-smoke); `beta-launch-preflight.sh`; human review pack + V-BETA video evidence.
 
-**Paused:** **Phase 26** — Studio creative suite — resume after P28-M18
+**Matrices:** `docs/reviews/P28-verification-matrix.md` · **Closure:** `docs/reviews/P28-human-review-pack.md`
+
+**Next active phase:** **Phase 26** — Studio creative suite — **resume** (unpaused after P28-M20)
+
+**P26 spec:** `docs/reviews/P26-studio-creative-design-plan.md` · **Handoff:** `docs/reviews/P26-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P26-verification-matrix.md`
 
 **2026-07-09 — Phase 25 complete** (autonomous P25-M0→M18)
 

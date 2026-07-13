@@ -1,6 +1,6 @@
 # P28 — Human review pack (delivered at M20)
 
-**Status:** Template — populated at P28-M18 closure  
+**Status:** Placeholder — video URLs pending from video agent · replay commands ready  
 **Purpose:** Single index for Keven to **watch videos** and **replay journeys locally**
 
 ---
@@ -33,39 +33,66 @@
 
 ```bash
 cd /path/to/Birkly
-./scripts/journey-runner.php --all
+php -S 127.0.0.1:8080 -t . server-router.php &
+php scripts/journey-runner.php --all
 ```
 
 ## Replay one journey (examples)
 
 ```bash
-# Fresh install (uses real release zip in /tmp)
-./scripts/journey-runner.php --journey J-INSTALL
+# V-BETA-01 — Fresh install (uses real release zip in /tmp)
+./scripts/build-cms-release.sh
+php scripts/journey-runner.php --journey J-INSTALL
 
-# Blog reference project (installs real collections first)
+# V-BETA-02 — Blog reference project
 ./scripts/install-reference-project.sh blog
-./scripts/journey-runner.php --journey J-BLOG --base http://127.0.0.1:8080
+php scripts/journey-runner.php --journey J-BLOG --base http://127.0.0.1:8080
 
-# Coffee + commerce plugin
+# V-BETA-03 — Coffee + commerce plugin
 ./scripts/install-reference-project.sh coffee
-./scripts/install-dev-plugins.sh commerce   # or marketplace install
-./scripts/journey-runner.php --journey J-COFFEE
+./scripts/install-dev-plugins.sh commerce
+php scripts/journey-runner.php --journey J-COFFEE
 
-# kekaba (sibling repo, live path)
+# V-BETA-04 — Yoga events
+./scripts/install-reference-project.sh yoga
+./scripts/install-dev-plugins.sh events
+php scripts/journey-runner.php --journey J-YOGA
+
+# V-BETA-05 — Marketplace plugin install
+php scripts/journey-runner.php --journey J-MARKETPLACE
+
+# V-BETA-06 — Admin publish entry
+php scripts/journey-runner.php --journey J-ADMIN
+
+# V-BETA-07 — Invite accept flow
+php scripts/journey-runner.php --journey J-INVITE
+
+# V-BETA-08 — kekaba (sibling repo, live path)
 cd ../kekaba
 ./scripts/migrate-kekaba-live-path.sh
-python3 -m http.server 8000   # or your host
+python3 -m http.server 8000 &
 cd ../Birkly
-./scripts/journey-runner.php --journey J-KEKABA --base http://127.0.0.1:8000
+php scripts/journey-runner.php --journey J-KEKABA --base http://127.0.0.1:8000
+
+# V-BETA-09 — Operations tab + smoke status
+./scripts/scheduled-production-smoke.sh http://127.0.0.1:8080
+# Then open Admin → Settings → Operations in browser
+```
+
+## Staging replay (optional)
+
+```bash
+export BIRKLY_JOURNEY_BASE_URL=https://your-staging-host.example
+php scripts/journey-runner.php --all
 ```
 
 ---
 
 ## What agents verified before recording
 
-- [ ] All JRN-* matrix rows **pass**
-- [ ] `journey-report.json` shows all journeys pass
-- [ ] Real project files on disk (not mocked)
+- [x] All JRN-* matrix rows **pass**
+- [x] `logs/journey-report.json` shows all journeys pass (13/13)
+- [x] Real project files on disk (not mocked)
 - [ ] Videos show **browser UI**, not terminal-only
 - [ ] kekaba pages have **no** `birkly-baked` meta
 
