@@ -11,9 +11,7 @@ return [
     'server' => 'dev',
     'run' => function (array $ctx): void {
         $base = $ctx['base_url'];
-        journey_install_dev_plugins();
-        journey_activate_plugins('commerce', 'user_management');
-        journey_install_reference_project('social');
+        journey_prepare_reference_demo('social');
 
         $collectionPath = journey_repo_root() . '/content/collections/social_posts/collection.json';
         $backup = journey_enable_collection_public_api('social_posts', true);

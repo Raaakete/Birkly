@@ -1,6 +1,6 @@
 <?php
 /**
- * J-BLOG — Blog visitor (reference-projects/blog).
+ * J-BLOG — Blog visitor: list → open post → read article content.
  */
 
 require_once __DIR__ . '/_helpers.php';
@@ -11,22 +11,35 @@ return [
     'server' => 'dev',
     'run' => function (array $ctx): void {
         $base = $ctx['base_url'];
-        journey_install_reference_project('blog');
+        journey_prepare_reference_demo('blog');
 
         $prefix = '/reference-projects/blog/website';
-        foreach (['index.html', 'blog.html', 'post.html?slug=welcome-to-birkly'] as $page) {
-            $res = journey_http($base, $prefix . '/' . ltrim($page, '/'));
-            journey_assert("GET $page HTTP 200", $res['code'] === 200, 'code ' . $res['code']);
-            journey_assert("$page includes birkly-client.js", strpos($res['body'], 'birkly-client.js') !== false);
-        }
+        $blogList = journey_http($base, $prefix . '/blog.html');
+        journey_assert('blog list HTTP 200', $blogList['code'] === 200);
+        journey_assert('blog list has birkly-client.js', strpos($blogList['body'], 'birkly-client.js') !== false);
 
-        $bundle = journey_page_bundle($base, [
+        $post = journey_http($base, $prefix . '/post.html?slug=welcome-to-birkly');
+        journey_assert('post page HTTP 200', $post['code'] === 200);
+        journey_assert('post page has birkly-client.js', strpos($post['body'], 'birkly-client.js') !== false);
+        journey_assert('post page has birkly-collection blog', stripos($post['body'], 'birkly-collection') !== false);
+
+        $entry = journey_page_bundle($base, [
+            ['type' => 'get_entry', 'into' => 'post', 'collection' => 'blog', 'slug' => 'welcome-to-birkly'],
+        ]);
+        journey_assert('get_entry status ok', ($entry['status'] ?? '') === 'ok', json_encode($entry));
+        $postData = $entry['data']['post'] ?? [];
+        journey_assert('post title present', ($postData['title'] ?? '') !== '', json_encode($postData));
+        journey_assert(
+            'post body contains Welcome to Birkly',
+            stripos(json_encode($postData), 'Welcome to Birkly') !== false,
+            json_encode($postData)
+        );
+
+        $list = journey_page_bundle($base, [
             ['type' => 'list_entries', 'into' => 'blog', 'collection' => 'blog'],
         ]);
-        journey_assert('page_bundle status ok', ($bundle['status'] ?? '') === 'ok', json_encode($bundle));
-        $entries = $bundle['data']['blog'] ?? [];
-        journey_assert('page_bundle blog entries present', is_array($entries) && count($entries) > 0);
-        $slugs = array_column($entries, 'slug');
-        journey_assert('page_bundle includes welcome-to-birkly', in_array('welcome-to-birkly', $slugs, true));
+        journey_assert('blog list bundle ok', ($list['status'] ?? '') === 'ok');
+        $slugs = array_column($list['data']['blog'] ?? [], 'slug');
+        journey_assert('blog list includes welcome-to-birkly', in_array('welcome-to-birkly', $slugs, true));
     },
 ];

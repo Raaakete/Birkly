@@ -24,7 +24,13 @@ commerce_bootstrap();
 commerce_bootstrap_cart_services();
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
-$action = $input['action'] ?? $_GET['action'] ?? '';
+if (!is_array($input)) {
+    $input = [];
+}
+if ($input === [] && !empty($_POST)) {
+    $input = $_POST;
+}
+$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
 
 $cart = new CommerceCartSession();
 $catalog = new CommerceCatalog();
@@ -131,11 +137,11 @@ switch ($action) {
         break;
 
     case 'add':
-        $entryId = $input['entry_id'] ?? $_GET['entry_id'] ?? '';
-        $collection = $input['collection'] ?? $_GET['collection'] ?? '';
-        $qty = (int) ($input['quantity'] ?? $_GET['quantity'] ?? 1);
-        $purchaseOptionId = $input['purchase_option_id'] ?? $_GET['purchase_option_id'] ?? null;
-        $parentId = $input['parent_id'] ?? $_GET['parent_id'] ?? null;
+        $entryId = $input['entry_id'] ?? $_POST['entry_id'] ?? $_GET['entry_id'] ?? '';
+        $collection = $input['collection'] ?? $_POST['collection'] ?? $_GET['collection'] ?? '';
+        $qty = (int) ($input['quantity'] ?? $_POST['quantity'] ?? $_GET['quantity'] ?? 1);
+        $purchaseOptionId = $input['purchase_option_id'] ?? $_POST['purchase_option_id'] ?? $_GET['purchase_option_id'] ?? null;
+        $parentId = $input['parent_id'] ?? $_POST['parent_id'] ?? $_GET['parent_id'] ?? null;
         if ($entryId === '' || $collection === '') {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'entry_id and collection required']);

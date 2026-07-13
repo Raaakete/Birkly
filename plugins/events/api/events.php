@@ -147,10 +147,10 @@ switch ($action) {
 
     case 'rsvp':
         header('Content-Type: application/json');
-        $eventId = $input['event_id'] ?? $_GET['event_id'] ?? '';
-        $name = trim($input['name'] ?? '');
-        $email = trim($input['email'] ?? '');
-        $ticketType = $input['ticket_type'] ?? 'free';
+        $eventId = $input['event_id'] ?? $_POST['event_id'] ?? $_GET['event_id'] ?? '';
+        $name = trim($input['name'] ?? $_POST['name'] ?? '');
+        $email = trim($input['email'] ?? $_POST['email'] ?? '');
+        $ticketType = $input['ticket_type'] ?? $_POST['ticket_type'] ?? 'free';
         $result = $service->registerFree($eventId, $name, $email, $ticketType);
         if (!($result['ok'] ?? false)) {
             http_response_code(400);
@@ -162,10 +162,10 @@ switch ($action) {
 
     case 'paid_register':
         header('Content-Type: application/json');
-        $eventId = $input['event_id'] ?? $_GET['event_id'] ?? '';
-        $ticketType = $input['ticket_type'] ?? $_GET['ticket_type'] ?? '';
-        $name = trim($input['name'] ?? '');
-        $email = trim($input['email'] ?? '');
+        $eventId = $input['event_id'] ?? $_POST['event_id'] ?? $_GET['event_id'] ?? '';
+        $ticketType = $input['ticket_type'] ?? $_POST['ticket_type'] ?? $_GET['ticket_type'] ?? '';
+        $name = trim($input['name'] ?? $_POST['name'] ?? '');
+        $email = trim($input['email'] ?? $_POST['email'] ?? '');
         $result = $service->startPaidRegistration($eventId, $ticketType, $name, $email);
         if (!($result['ok'] ?? false)) {
             http_response_code(400);

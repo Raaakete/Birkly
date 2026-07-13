@@ -1,61 +1,37 @@
-# V-BETA-03 — Coffee shop with commerce cart
+# V-BETA-03 — Coffee: browse product and add to cart
 
-**Date:** 2026-07-13 · **Phase:** P28-M17  
-**Journey:** J-COFFEE
-
-Shopper browses coffee products and adds to cart using commerce plugin.
+**Journey:** J-COFFEE · **Date:** 2026-07-13
 
 ## Prerequisites
 
-- Birkly dev server running
-- Commerce plugin installed: `./scripts/install-dev-plugins.sh commerce`
-- Coffee reference project: `./scripts/install-reference-project.sh coffee`
-- Commerce index built: `php scripts/commerce-reindex.php`
-
-## Steps
-
-1. **Coffee shop homepage**
-   - Navigate to `/reference-projects/coffee/website/index.html`
-   - Hero with brand messaging
-   - Featured products grid
-   - Products loaded from `products` collection via `page_bundle`
-
-2. **Product listing**
-   - Products displayed with images, names, prices
-   - Each product links to detail page
-   - Price variants shown (e.g., 250g, 500g, 1kg)
-   - "Add to Cart" buttons visible
-
-3. **Product detail page**
-   - `/reference-projects/coffee/website/product.html?slug=ethiopian-single-origin`
-   - Full product description
-   - Variant selector (size, grind type)
-   - Purchase option selector (buy once, subscription)
-   - Commerce template functions render pricing: `commerce_price_from`
-
-4. **Add to cart**
-   - Select variant: `var-eth-250-whole` (250g whole bean)
-   - Click "Add to Cart"
-   - API request to `/api/index.php?route=commerce&action=add`
-   - Cart badge updates with item count
-   - Success confirmation shown
-
-5. **Cart verification**
-   - Cart API returns `status: ok`, `count: 1`
-   - Session cookie tracks cart state
-   - Product variant ID and quantity stored
-
-## Automated verification
-
 ```bash
-./scripts/install-dev-plugins.sh commerce
-./scripts/install-reference-project.sh coffee
-php scripts/commerce-reindex.php
-./scripts/journey-runner.php --journey J-COFFEE
+./scripts/prepare-reference-demo.sh coffee
+php -S localhost:8080 -t . server-router.php
 ```
 
-Journey verifies product pages load, page_bundle returns products, add-to-cart API succeeds with cart count > 0.
+## Browser steps
 
-## Status
+1. Open `/reference-projects/coffee/website/index.html`
+2. Wait for **Ember & Bean** header and product grid
+3. Open `/reference-projects/coffee/website/product.html?slug=ethiopian-single-origin`
+4. Wait for variant rows: **250g · Whole bean**, **1kg · Filter grind** with prices
+5. Click **Add to cart** on a variant
+6. After reload, cart header should show **Cart: 1 items**
 
-✅ Automated journey passes (J-COFFEE)
+## Fixes applied
+
+- `normalize-reference-sub-entries.php` — variant files → `sub_entries/variants/` paths
+- `birkly-client.js` — prefetch `sub_entries` on product pages; collection detection fix
+- `plugins/commerce/api/commerce.php` — read `$_POST` for add-to-cart forms
+
+## Automated gate
+
+```bash
+php scripts/journey-runner.php --journey J-COFFEE
+```
+
+Asserts: variants in page_bundle, add-to-cart API, cart count.
+
+## Video
+
+`v-beta-03-coffee-add-to-cart.mp4`

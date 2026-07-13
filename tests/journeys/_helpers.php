@@ -211,6 +211,24 @@ function journey_commerce_reindex(): void
     $indexer->reindexAll($root . '/content');
 }
 
+function journey_events_reindex(): void
+{
+    $root = journey_repo_root();
+    require_once $root . '/plugins/events/init.php';
+    require_once $root . '/plugins/events/includes/EventIndexer.php';
+    events_bootstrap();
+    $indexer = new EventIndexer();
+    $indexer->reindexAll($root . '/content');
+}
+
+function journey_prepare_reference_demo(string $project): void
+{
+    $result = journey_run_script('scripts/prepare-reference-demo.sh', [$project]);
+    if (!$result['ok']) {
+        journey_fail('prepare-reference-demo.sh ' . $project . ' failed: ' . $result['output']);
+    }
+}
+
 function journey_http(string $base, string $path, array $options = []): array
 {
     $url = str_starts_with($path, 'http') ? $path : rtrim($base, '/') . '/' . ltrim($path, '/');

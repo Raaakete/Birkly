@@ -1,55 +1,38 @@
-# V-BETA-04 — Yoga studio events
+# V-BETA-04 — Yoga: enroll in an event
 
-**Date:** 2026-07-13 · **Phase:** P28-M17  
-**Journey:** J-YOGA
-
-Events visitor browses upcoming yoga classes using events plugin.
+**Journey:** J-YOGA · **Date:** 2026-07-13
 
 ## Prerequisites
 
-- Birkly dev server running
-- Events plugin installed: `./scripts/install-dev-plugins.sh events`
-- Yoga reference project: `./scripts/install-reference-project.sh yoga`
-
-## Steps
-
-1. **Yoga studio homepage**
-   - Navigate to `/reference-projects/yoga/website/index.html`
-   - Hero section with studio mission
-   - "Upcoming Classes" section
-   - Events loaded via `upcoming_events` template function
-   - Shows next 6 events by default
-
-2. **Schedule page**
-   - `/reference-projects/yoga/website/schedule.html`
-   - Full weekly class schedule
-   - Events grouped by date
-   - Each event shows: time, instructor, level, duration
-
-3. **Event detail page**
-   - `/reference-projects/yoga/website/event.html?slug=community-meetup`
-   - Event title, description, full details
-   - Date/time, location information
-   - Instructor bio and photo
-   - Registration CTA button
-
-4. **API verification**
-   - `page_bundle` with `template_function` type
-   - Function name: `upcoming_events`, args: `[6]`
-   - Returns array of upcoming event entries
-   - Filtered by `event_date >= now()`
-   - Sorted by `event_date` ascending
-
-## Automated verification
-
 ```bash
-./scripts/install-dev-plugins.sh events
-./scripts/install-reference-project.sh yoga
-./scripts/journey-runner.php --journey J-YOGA
+./scripts/prepare-reference-demo.sh yoga
+php -S localhost:8080 -t . server-router.php
 ```
 
-Journey verifies homepage references `upcoming_events`, schedule and detail pages load, page_bundle returns upcoming events array.
+## Browser steps (recorded)
 
-## Status
+1. Open `/reference-projects/yoga/website/index.html`
+2. Wait for **Stillwater Yoga** events list (not coffee products)
+3. Click **Details & register** on **Sunrise Vinyasa**
+4. Verify event detail: title, date, description, RSVP form
+5. Fill **Your name** and **Email**
+6. Click **Complete registration**
+7. Page reloads with cleared form (success)
 
-✅ Automated journey passes (J-YOGA)
+## Fixes applied
+
+- `event.html` RSVP form (`data-birkly-route="events"`, `action=rsvp`)
+- `plugins/events/api/events.php` reads `$_POST` for browser forms
+- Wrong slug `community-meetup` → `sunrise-vinyasa`
+
+## Automated gate
+
+```bash
+php scripts/journey-runner.php --journey J-YOGA
+```
+
+Asserts: upcoming events, RSVP API returns registration.
+
+## Video
+
+`v-beta-blog-yoga-interaction-demos.mp4` (yoga segment)

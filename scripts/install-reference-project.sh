@@ -60,6 +60,11 @@ for col in "$COL_SRC"/*/; do
   echo "  + $slug"
 done
 
+# Flat variant seeds → proper sub_entries/ paths (commerce reference projects)
+if command -v php >/dev/null 2>&1; then
+  php "$ROOT/scripts/normalize-reference-sub-entries.php"
+fi
+
 # Install plugins listed in manifest.json when present
 MANIFEST="$SRC/manifest.json"
 if [[ -f "$MANIFEST" ]] && command -v php >/dev/null 2>&1; then

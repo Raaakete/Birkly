@@ -1,49 +1,31 @@
-# V-BETA-02 — Blog reference site
+# V-BETA-02 — Blog: read a full post
 
-**Date:** 2026-07-13 · **Phase:** P28-M17  
-**Journey:** J-BLOG
-
-Public blog visitor browses posts using blog reference project.
+**Journey:** J-BLOG · **Date:** 2026-07-13
 
 ## Prerequisites
 
-- Birkly dev server: `php -S localhost:8080 -t . server-router.php`
-- Blog reference project installed: `./scripts/install-reference-project.sh blog`
-
-## Steps
-
-1. **Blog homepage**
-   - Navigate to `/reference-projects/blog/website/index.html`
-   - Hero section with site title
-   - Recent posts grid loaded via `page_bundle` API
-   - Each post shows title, excerpt, date, author
-
-2. **Blog listing page**
-   - `/reference-projects/blog/website/blog.html`
-   - Full blog archive with filtering
-   - Posts dynamically loaded from `blog` collection
-   - `birkly-client.js` handles API binding
-
-3. **Single post view**
-   - `/reference-projects/blog/website/post.html?slug=welcome-to-birkly`
-   - Full post content rendered
-   - Meta tags populated from entry data
-   - No raw template syntax in HTML source
-
-4. **API verification**
-   - `page_bundle` API returns blog entries
-   - `welcome-to-birkly` slug present in collection
-   - Entry data includes title, content, published_date
-
-## Automated verification
-
 ```bash
-./scripts/install-reference-project.sh blog
-./scripts/journey-runner.php --journey J-BLOG
+./scripts/prepare-reference-demo.sh blog
+php -S localhost:8080 -t . server-router.php
 ```
 
-Journey verifies all pages HTTP 200, birkly-client.js present, page_bundle API returns entries.
+## Browser steps (recorded)
 
-## Status
+1. Open `/reference-projects/blog/website/blog.html`
+2. Wait for `birkly-client.js` hydration — post titles must appear (not raw `{for each`)
+3. Click **Welcome to Birkly** (or any post title)
+4. Verify full article loads — title, body paragraphs, tags (**not** "Post Not Found")
+5. Scroll through article content
+6. Click **← Back to Blog**
 
-✅ Automated journey passes (J-BLOG)
+## Automated gate
+
+```bash
+php scripts/journey-runner.php --journey J-BLOG
+```
+
+Asserts: post `get_entry` returns body text, list includes `welcome-to-birkly`.
+
+## Video
+
+`v-beta-blog-yoga-interaction-demos.mp4` (blog segment)

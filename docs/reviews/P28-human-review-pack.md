@@ -1,25 +1,26 @@
 # P28 — Human review pack (delivered at M20)
 
-**Status:** Complete — delivered 2026-07-13 at P28-M20  
-**Purpose:** Single index for Keven to **watch the walkthrough video**, **review step docs**, and **replay journeys locally**
+**Status:** Updated 2026-07-13 — real interaction videos + deeper journeys  
+**Purpose:** Watch videos showing **actual site usage**, then replay journeys locally
 
 ---
 
-## Video walkthrough (V-BETA-02…09)
+## Video walkthroughs (real interactions)
 
-Combined browser recording covering blog, coffee, yoga, admin Operations tab, and kekaba live path:
+| Video | What you will see |
+|-------|-------------------|
+| [v-beta-blog-yoga-interaction-demos.mp4](/opt/cursor/artifacts/v-beta-blog-yoga-interaction-demos.mp4) | **Blog:** open post → read article → back. **Yoga:** event list → detail → RSVP form submit |
+| [v-beta-03-coffee-add-to-cart.mp4](/opt/cursor/artifacts/v-beta-03-coffee-add-to-cart.mp4) | **Coffee:** product variants → add to cart |
+| [v-beta-07-social-register-partial.mp4](/opt/cursor/artifacts/v-beta-07-social-register-partial.mp4) | **Social:** register → login → feed |
 
-<video src="/opt/cursor/artifacts/p28-beta-launch-v-beta-walkthrough.mp4"></video>
+### Prepare before each demo
 
-| Segment | Journey | Covered in video |
-|---------|---------|------------------|
-| Blog reference site | V-BETA-02 / J-BLOG | ✅ |
-| Coffee shop + products | V-BETA-03 / J-COFFEE | ✅ |
-| Yoga events | V-BETA-04 / J-YOGA | ✅ |
-| Admin Operations tab | V-BETA-09 | ✅ |
-| kekaba live path (no bake) | V-BETA-08 / J-KEKABA | ✅ |
+```bash
+./scripts/prepare-reference-demo.sh blog   # or coffee | yoga | social
+php -S localhost:8080 -t . server-router.php
+```
 
-**Replay-only (automated, no separate video):** V-BETA-01 install, V-BETA-05 marketplace, V-BETA-06 admin publish, V-BETA-07 invite — see step docs + `php scripts/journey-runner.php --journey J-*` below.
+**Important:** Always run `prepare-reference-demo.sh` for the project you are testing. Installing one project overwrites shared `site_elements` — opening yoga without prep after coffee shows wrong branding.
 
 ---
 

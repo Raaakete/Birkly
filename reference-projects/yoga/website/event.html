@@ -30,9 +30,27 @@
             <div class="content">
                 { description }
             </div>
-            <p style="margin-top: 1.5rem;">
-                <a class="btn" href="{event_register_url id}">Register for this class</a>
-            </p>
+            <section class="event-register" style="margin-top: 2rem; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 8px; max-width: 420px;">
+                <h2 style="font-size: 1.1rem; margin: 0 0 1rem;">Register for this class</h2>
+                <form
+                    data-birkly-route="events"
+                    data-birkly-action="rsvp"
+                    data-birkly-success="redirect"
+                    data-birkly-redirect="self"
+                    data-birkly-ok-param="registered"
+                >
+                    <input type="hidden" name="event_id" value="{ slug }" />
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="rsvp-name">Your name</label>
+                        <input id="rsvp-name" name="name" class="form-control" type="text" required autocomplete="name" style="width: 100%; padding: 0.5rem;" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="rsvp-email">Email</label>
+                        <input id="rsvp-email" name="email" class="form-control" type="email" required autocomplete="email" style="width: 100%; padding: 0.5rem;" />
+                    </div>
+                    <button type="submit" class="btn">Complete registration</button>
+                </form>
+            </section>
             <p style="margin-top: 1rem;">
                 <a href="/reference-projects/yoga/website/index.html">← Back to upcoming</a>
             </p>

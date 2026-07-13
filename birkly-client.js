@@ -375,6 +375,8 @@
             }
             const quoted = raw.match(/^['"]([^'"]+)['"]\s*$/);
             if (quoted) return { kind: 'collection', name: quoted[1] };
+            const subEntries = raw.match(/^sub_entries\s+([a-zA-Z0-9_-]+)$/);
+            if (subEntries) return { kind: 'sub_entries', subCollection: subEntries[1] };
             if (/^[a-zA-Z0-9_\.]+$/.test(raw)) return { kind: 'path', path: raw };
             return { kind: 'raw', raw };
         };
@@ -409,6 +411,18 @@
                     parsed.parentIdentifier,
                     data
                 );
+            }
+            if (parsed.kind === 'sub_entries') {
+                const subCollection = parsed.subCollection;
+                const entry = data.entry || data;
+                const parentCollection = data.collection || (document.querySelector('meta[name="birkly-collection"]') || {}).content || '';
+                const ids = [entry.id, entry.slug, data.slug].filter(v => v !== undefined && v !== null && v !== '');
+                for (const id of ids) {
+                    const key = '__sub__:' + parentCollection + ':' + id + ':' + subCollection;
+                    if (Array.isArray(data[key])) return data[key];
+                }
+                if (Array.isArray(data[subCollection])) return data[subCollection];
+                return [];
             }
             if (parsed.kind === 'collection') {
                 const name = parsed.name;
@@ -3805,6 +3819,25 @@
                     }
                     
                     Birkly.log('Birkly: Found', templates.length, 'templates for single entry page (main container mode)');
+
+                    // Prefetch sub_entries loops (e.g. commerce product variants: {for each variant in sub_entries variants})
+                    for (const template of templates) {
+                        const subLoops = template.template.matchAll(/\{for\s+each\s+[a-zA-Z0-9_]+\s+in\s+sub_entries\s+([a-zA-Z0-9_-]+)\}/g);
+                        for (const subMatch of subLoops) {
+                            const subCollection = subMatch[1];
+                            const parentId = entry.id || entry.slug || slug;
+                            if (!parentId || !collection || !subCollection) continue;
+                            try {
+                                const subEntries = await fetchSubEntries(collection, parentId, subCollection);
+                                data[subCollection] = Array.isArray(subEntries) ? subEntries : [];
+                                data['__sub__:' + collection + ':' + parentId + ':' + subCollection] = data[subCollection];
+                                Birkly.log('Birkly: Prefetched sub_entries for single entry:', { collection, parentId, subCollection, count: data[subCollection].length });
+                            } catch (subErr) {
+                                Birkly.warn('Birkly: sub_entries prefetch failed:', subErr);
+                                data[subCollection] = [];
+                            }
+                        }
+                    }
                     
                     // Render each template with the entry data
                     for (let template of templates) {
@@ -4930,11 +4963,38 @@
      * IMPORTANT: Ignore /demo-website/ path - that's just the website folder, not a collection
      */
     function detectCollectionFromTemplate() {
-        // Try to extract from template
+        const collMeta = document.querySelector('meta[name="birkly-collection"]');
+        if (collMeta && collMeta.content) {
+            const fromMeta = collMeta.content.trim();
+            if (/^[a-zA-Z0-9_-]+$/.test(fromMeta)) {
+                return fromMeta;
+            }
+        }
+
+        const pageMeta = document.querySelector('meta[name="birkly-page"]');
+        const page = pageMeta && pageMeta.content ? pageMeta.content.trim() : '';
+        if (page === 'post') return 'blog';
+        if (page === 'product') return 'products';
+        if (page === 'event') return 'events';
+        if (page === 'service') return 'services';
+
+        try {
+            const qp = new URLSearchParams(window.location.search);
+            const fromQuery = qp.get('collection') || '';
+            if (fromQuery && /^[a-zA-Z0-9_-]+$/.test(fromQuery)) {
+                return fromQuery;
+            }
+        } catch (e) { /* ignore */ }
+
+        // Try to extract from template (skip field loops like tags)
         const bodyText = document.body.innerHTML;
-        const match = bodyText.match(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/);
-        if (match && match[1] !== 'demo-website') {
-            return match[1];
+        const skipCollections = new Set(['tags', 'items', 'variants', 'comments']);
+        const forMatches = bodyText.matchAll(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/g);
+        for (const match of forMatches) {
+            const slug = match[1];
+            if (slug && !skipCollections.has(slug) && slug !== 'demo-website') {
+                return slug;
+            }
         }
         
         // Try to extract from URL path (but ignore demo-website prefix)
@@ -4949,9 +5009,10 @@
         // Check if we're on a post/entry/article page
         const filename = cleanPath.split('/').pop() || '';
         if (filename.includes('post') || filename.includes('entry') || filename.includes('article')) {
-            // Default to 'blog' for post pages
             return 'blog';
         }
+        if (filename.includes('product')) return 'products';
+        if (filename.includes('event')) return 'events';
         
         // Common defaults based on path (but exclude demo-website)
         if (cleanPath.includes('/blog') || cleanPath.includes('blog')) return 'blog';
