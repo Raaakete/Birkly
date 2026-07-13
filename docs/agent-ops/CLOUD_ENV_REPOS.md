@@ -11,8 +11,12 @@ Cloud agents only see repositories that are **attached to the environment** in t
 | `Raaakete/Birkly-Website` | Marketing site |
 | `Raaakete/kekaba` | Reference client site |
 | `Raaakete/Birkly-Marketplace` | Marketplace app (Phase 9+) |
+| `business/` in **Birkly** | Business plan, pitch deck, investor materials (not a separate clone yet) |
+| `Raaakete/Birkly-Business` | *(optional)* Standalone business repo — add to environment when created; until then use `Birkly/business/` |
 
 On the VM, repos usually appear as siblings, e.g. `/agent/repos/Birkly`, `/agent/repos/Birkly-Marketplace`. Run `ls` at session start — paths may vary.
+
+**Business-advisor** reads product facts from sibling repos (`Birkly-Marketplace`, `Birkly-Website`, `Birkly-Docs`) and writes only under `Birkly/business/`.
 
 ## Step-by-step: add a new repo
 
