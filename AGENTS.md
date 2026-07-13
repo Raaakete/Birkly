@@ -8,11 +8,11 @@ Flat-file PHP CMS and its client sites. This repo (`Birkly`) is the **platform c
 |------|---------|
 | `Raaakete/Birkly` | Core CMS — admin, API, fieldtypes, plugins, templating (this repo) |
 | `Raaakete/Birkly-Marketplace` | Plugin/theme marketplace — catalog, providers, payments, registry API |
-| `Raaakete/Birkly-Website` | Birkly marketing / beta site |
+| `Raaakete/Birkly-Website` | Marketing site + **business plan, pitch deck** (`business/`) |
 | `Raaakete/kekaba` | Kekaba client site |
 | `Raaakete/Birkly-Docs` | Product and API documentation |
-| `business/` (this repo) | Business plan, pitch deck, investor materials — see `business/README.md` |
-| `Raaakete/Birkly-Business` | *(optional future)* Standalone business repo — migrate `business/` wholesale when created |
+
+`business/` in **this CMS repo** is a redirect pointer only — see `business/README.md`.
 
 ## Agent team
 
@@ -25,9 +25,9 @@ Flat-file PHP CMS and its client sites. This repo (`Birkly`) is the **platform c
 | `docs-writer` | Birkly-Docs |
 | `qa-verifier` | Test and regression gates |
 | `design-reviewer` | Admin and site UI |
-| `business-advisor` | Business plan, pitch deck, investor briefings — **no product code** |
+| `business-advisor` | Business plan, pitch deck, investor briefings — workspace **`Birkly-Website/business/`** |
 
-Business handoff: `business/docs/BUSINESS-advisor-handoff.md`
+Business handoff: `Birkly-Website/business/docs/BUSINESS-advisor-handoff.md`
 
 ## Cloud VM layout
 
