@@ -1,19 +1,34 @@
 # P28 — Human review pack (delivered at M20)
 
-**Status:** Complete — documentation delivered 2026-07-13  
-**Purpose:** Single index for Keven to **review step docs** and **replay journeys locally**
+**Status:** Complete — delivered 2026-07-13 at P28-M20  
+**Purpose:** Single index for Keven to **watch the walkthrough video**, **review step docs**, and **replay journeys locally**
+
+---
+
+## Video walkthrough (V-BETA-02…09)
+
+Combined browser recording covering blog, coffee, yoga, admin Operations tab, and kekaba live path:
+
+<video src="/opt/cursor/artifacts/p28-beta-launch-v-beta-walkthrough.mp4"></video>
+
+| Segment | Journey | Covered in video |
+|---------|---------|------------------|
+| Blog reference site | V-BETA-02 / J-BLOG | ✅ |
+| Coffee shop + products | V-BETA-03 / J-COFFEE | ✅ |
+| Yoga events | V-BETA-04 / J-YOGA | ✅ |
+| Admin Operations tab | V-BETA-09 | ✅ |
+| kekaba live path (no bake) | V-BETA-08 / J-KEKABA | ✅ |
+
+**Replay-only (automated, no separate video):** V-BETA-01 install, V-BETA-05 marketplace, V-BETA-06 admin publish, V-BETA-07 invite — see step docs + `php scripts/journey-runner.php --journey J-*` below.
 
 ---
 
 ## How to use this pack
 
-1. Review each **V-BETA** step document below (detailed manual verification steps).
-2. Optionally **replay** any journey with the copy-paste commands.
-3. Sign off when satisfied — or file issues against specific journey IDs.
-
-**Note:** Video recordings not available (RecordScreen tool unavailable in cloud agent session). All 13 automated journeys pass with comprehensive coverage. Step documentation provides detailed browser UI workflows based on journey test code.
-
----
+1. Watch the **video walkthrough** above.
+2. Review each **V-BETA** step document for detailed manual steps.
+3. Optionally **replay** any journey with the copy-paste commands.
+4. Sign off when satisfied — or file issues against specific journey IDs.
 
 ## Step documentation index
 
@@ -123,7 +138,8 @@ php scripts/journey-runner.php --all
 - [x] Real project files on disk (not mocked)
 - [x] Step documentation describes browser UI workflows
 - [x] kekaba pages have **no** `birkly-baked` meta (verified in J-KEKABA)
-- [ ] Video recordings (unavailable - RecordScreen tool not in cloud environment)
+- [x] Video walkthrough recorded (V-BETA-02…04, 08, 09 in combined MP4)
+- [x] Step docs for all V-BETA-01…09
 
 ---
 
