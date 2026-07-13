@@ -1,27 +1,16 @@
-# Birkly Business
+# Birkly Business — moved
 
-Business strategy, fundraising, and investor materials for the Birkly platform.
+Business plan, pitch deck, and investor materials now live in:
 
-**Not product code.** This folder holds the business plan, pitch deck, investor briefings, and related narratives — maintained by the **business-advisor** agent.
+**`Raaakete/Birkly-Website`** → **`business/`**
 
-> **Note:** When `Raaakete/Birkly-Business` is created as a standalone GitHub repo, migrate this folder wholesale. Until then, it lives in the Birkly monorepo at `business/`.
+| What | Where |
+|------|--------|
+| Business plan | `Birkly-Website/business/business-plan/` |
+| Pitch deck | `Birkly-Website/business/pitch-deck/slides.md` |
+| Handoff prompt | `Birkly-Website/business/docs/BUSINESS-advisor-handoff.md` |
+| business-advisor agent | `Birkly-Website/.cursor/agents/business-advisor.md` |
 
-## Structure
+Run **business-advisor** against the **Birkly-Website** repo (included in the Birkly Platform cloud environment).
 
-| Path | Purpose |
-|------|---------|
-| `business-plan/` | Complete business plan (markdown, section by section) |
-| `pitch-deck/` | Pitch deck — slide-by-slide markdown |
-| `investor/` | One-pager, FAQ, briefing notes |
-| `docs/` | Agent handoffs, source-of-truth index |
-| `archive/` | Retired drafts |
-
-## Agent
-
-- Cursor agent: `.cursor/agents/business-advisor.md` (repo root)
-- **Handoff:** `business/docs/BUSINESS-advisor-handoff.md`
-- **Facts:** `business/docs/SOURCE_OF_TRUTH.md`
-
-## Human review
-
-Business-advisor drafts; **human approves** before external distribution.
+This folder in the CMS repo is a pointer only — do not add business docs here.
