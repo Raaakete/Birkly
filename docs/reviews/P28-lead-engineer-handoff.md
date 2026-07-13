@@ -1,11 +1,12 @@
 # Phase 28 — Lead-engineer handoff (Beta launch automation)
 
 **Status:** Proposed (2026-07-13) — awaiting human approval  
-**Human rule:** Execute **P28-M0→M18** autonomously after approval. Notify human **once** at **P28-M18** only.
+**Human rule:** Execute **P28-M0→M20** autonomously after approval. Notify human **once** at **P28-M20** with **video review pack links**.
 
 **Master plan:** `docs/reviews/P28-beta-launch-automation-plan.md`  
+**Real projects + videos:** `docs/reviews/P28-real-projects-and-video-policy.md`  
 **Journeys:** `docs/reviews/P28-user-journey-catalog.md`  
-**Gap register:** `docs/reviews/P28-beta-launch-gap-register.md`  
+**Human review pack:** `docs/reviews/P28-human-review-pack.md`  
 **Matrix:** `docs/reviews/P28-verification-matrix.md`
 
 ---
@@ -15,81 +16,89 @@
 ```
 You are the lead-engineer for Birkly Phase 28 — Beta launch automation & product gaps.
 
-Human approved P28. Execute P28-M0→M18 autonomously in one wave.
-Notify human ONCE at P28-M18 closure only.
+Human approved P28. Execute P28-M0→M20 autonomously in one wave.
+Notify human ONCE at P28-M20 with video review pack (V-BETA-01…09 links).
 
 Human handles Part 1 manually (DNS, Stripe live, legal). YOU automate Part 2, 4, 5.
 
 READ FIRST:
-1. docs/reviews/P28-lead-engineer-handoff.md
+1. docs/reviews/P28-real-projects-and-video-policy.md  ← REAL projects, not mocks
 2. docs/reviews/P28-beta-launch-automation-plan.md
 3. docs/reviews/P28-user-journey-catalog.md
-4. docs/reference-projects/user-stories.md
-5. scripts/production-smoke.sh, staging-smoke-kekaba.sh, onboarding_e2e_test.php
-6. kekaba repo — bake scripts, check-production.sh
+4. docs/reviews/P28-human-review-pack.md
+5. docs/reference-projects/user-stories.md
+6. scripts/install-reference-project.sh, build-cms-release.sh
 
-═══ PART 2 — AUTOMATED USER JOURNEYS (M1–M12) ═══
+═══ REAL TEST PROJECTS (mandatory) ═══
 
-Build scripts/journey-runner.php:
-- Loads tests/journeys/J-*.php
-- Runs against local php -S OR BIRKLY_JOURNEY_BASE_URL
-- Outputs logs/journey-report.json; non-zero exit on fail
+Journeys MUST use real disk state:
+- J-INSTALL: extract build-cms-release.sh zip to temp dir
+- J-BLOG…INFLUENCER: install-reference-project.sh (real collections + website/)
+- J-COFFEE/YOGA: real plugin install (marketplace ZIP or install-dev-plugins.sh)
+- J-MARKETPLACE: real plugin files in plugins/ — NOT mocked API responses
+- J-KEKABA: real kekaba repo after migrate-kekaba-live-path.sh
 
-Implement journeys:
-  J-INSTALL, J-BLOG, J-PORTFOLIO, J-COFFEE, J-YOGA
-  J-SOCIAL, J-INFLUENCER, J-ADMIN, J-MARKETPLACE, J-INVITE
-  J-KEKABA (after live-path migration), J-HEALTH, J-WEBSITE
+HTTP assertions in journey-runner prove CI; videos prove UI for human.
 
-kekaba (sibling repo):
-- scripts/migrate-kekaba-live-path.sh — remove birkly-baked, canonical client tag
-- CI: sync embed → migrate → J-KEKABA
+═══ PART 2 — JOURNEYS (M1–M12) ═══
 
+scripts/journey-runner.php + tests/journeys/J-*.php
 Wire into ci-check.sh + agent-smoke-test.sh
+Optional BIRKLY_JOURNEY_BASE_URL for staging
 
 ═══ PART 4 — OPS (M13–M14) ═══
 
-- scheduled-production-smoke.sh runs J-HEALTH after production-smoke
-- On fail → health_alerts.php email/webhook
-- Admin Settings → Operations tab (last smoke + last journey JSON)
-- docs/agent-ops/PRODUCTION_CRON.md
+Scheduled smoke + J-HEALTH, alerts, Operations admin tab
 
-═══ PART 5 — PRODUCT GAPS (M15–M16) ═══
+═══ PART 5 — PRODUCT (M15–M16) ═══
 
-- update_system_e2e_test.php
-- README START_HERE fix
-- studio_renderer_test flake fix
-- Marketplace catalog audit script
-- Birkly-Website deploy-smoke.sh
-- Refresh docs/reviews/ux-flow-matrix.md from journey results
+Update E2E, README, flakes, website smoke, catalog audit
 
-═══ PREFLIGHT (M17) ═══
+═══ VIDEO REVIEWS (M17–M18) — human must SEE solutions ═══
 
-scripts/beta-launch-preflight.sh — automated checks + human checklist for DNS/Stripe/legal
+After all journeys PASS in CI:
+- qa-verifier + computerUse record V-BETA-01…09 (browser walkthroughs)
+- Write docs/reviews/artifacts/v-beta-*.md step docs (like V-STU-04)
+- Populate docs/reviews/P28-human-review-pack.md with video URLs + replay commands
+
+Videos must show:
+  V-BETA-01 install/wizard
+  V-BETA-02 blog site in browser
+  V-BETA-03 coffee shop + cart
+  V-BETA-04 yoga events
+  V-BETA-05 marketplace plugin install
+  V-BETA-06 admin publish
+  V-BETA-07 invite accept
+  V-BETA-08 kekaba live path (no bake)
+  V-BETA-09 ops panel
+
+M19: beta-launch-preflight.sh
+M20: closure + digest WITH video links
 
 DO NOT start Studio P26.
 
-Branches: cursor/p28-m[N]-<slug>-030a
-
 DELEGATION:
-cms-developer:      M1–M2, M6–M8, M11, M13–M15, M17
-frontend-developer: M14 (ops UI)
-kekaba/frontend:    M9–M10 (kekaba repo PRs)
-docs-writer:        M16–M17, PRODUCTION_CRON.md
-qa-verifier:        M12, M18 — run full journey suite against staging if URL set
+cms-developer:      M1–M12, M15, M19
+frontend-developer: M14
+qa-verifier:        M17 videos + M12 staging + M20 matrix
+computerUse:        V-BETA-01…09 recordings (mandatory)
+docs-writer:        artifacts/v-beta-*.md, human review pack
+kekaba agent:       M9–M10 kekaba repo PRs
 
 CLOSURE:
-[ ] 12+ journeys green in CI
+[ ] Real projects installed (not mocked)
+[ ] 12+ journeys green in CI + journey-report.json
 [ ] kekaba live-path (no birkly-baked)
-[ ] Ops smoke + alerts + admin panel
-[ ] Update E2E + marketplace install journey
-[ ] beta-launch-preflight.sh
-[ ] Single digest notification
+[ ] V-BETA-01…09 videos + step docs
+[ ] P28-human-review-pack.md complete
+[ ] Single digest with video index for human review
 ```
 
 ---
 
 ## Human approval checklist
 
-- [ ] P28-D1–D16 accepted
-- [ ] P26 Studio remains paused until P28-M18
-- [ ] M0–M18 single-wave execution approved
+- [ ] P28-D1–D19 accepted
+- [ ] Real test projects + video reviews required
+- [ ] P26 Studio paused until P28-M20
+- [ ] M0–M20 single-wave execution approved

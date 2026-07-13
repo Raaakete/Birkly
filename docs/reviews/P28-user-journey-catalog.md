@@ -2,7 +2,20 @@
 
 **Date:** 2026-07-13 · **Runner:** `scripts/journey-runner.php` (P28-M1)
 
-Each journey is an automated HTTP script run by agents in CI or against `BIRKLY_JOURNEY_BASE_URL`.
+Each journey runs against a **real CMS instance** with **real files on disk**. Setup steps are executed by the runner before HTTP assertions — not simulated.
+
+### Setup (real projects)
+
+| Journey | Real setup command |
+|---------|-------------------|
+| J-INSTALL | `build-cms-release.sh` → unzip → `php -S` in extract dir |
+| J-BLOG, J-PORTFOLIO | `install-reference-project.sh blog\|portfolio` |
+| J-COFFEE, J-YOGA | Above + `install-dev-plugins.sh commerce\|events` (or marketplace install) |
+| J-SOCIAL, J-INFLUENCER | `install-reference-project.sh` + user_management plugin |
+| J-MARKETPLACE | Fresh CMS tree + marketplace client installs real ZIP to `plugins/` |
+| J-KEKABA | kekaba repo + `migrate-kekaba-live-path.sh` + synced `Birkly-0.1/` |
+
+**Video:** Each journey has matching V-BETA-* recording after CI pass — see `P28-human-review-pack.md`.
 
 ---
 

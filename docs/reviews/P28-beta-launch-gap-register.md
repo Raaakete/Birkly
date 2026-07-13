@@ -11,7 +11,7 @@
 | G2-03 | Staging smoke = health only | `production-smoke.sh` | Journeys against `BIRKLY_JOURNEY_BASE_URL` |
 | G2-04 | Reference projects not CI-proven | Install script exists | J-BLOG through J-INFLUENCER in CI |
 | G2-05 | Birkly-Website not smoke-tested | Manual | `deploy-smoke.sh` in Website repo |
-| G2-06 | Agent proof = human deploy | kekaba deploy checklist human | Agents run journeys in cloud with staging URL |
+| G2-07 | Human cannot see journey outcomes | No video pack | V-BETA-01…09 + P28-human-review-pack.md |
 
 ## Part 4 — Ops (optimize)
 

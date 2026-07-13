@@ -1,17 +1,17 @@
 # P28 — Verification matrix
 
-**Date:** 2026-07-13 · **Closure:** P28-M18 — pending
+**Date:** 2026-07-13 · **Closure:** P28-M20 — pending
 
 ## Journey automation (JRN)
 
 | ID | Story | Result | Evidence |
 |----|-------|--------|----------|
 | JRN-01 | journey-runner.php framework | pending | |
-| JRN-02 | J-INSTALL fresh CMS | pending | |
-| JRN-03 | J-BLOG visitor | pending | |
-| JRN-04 | J-COFFEE shopper + cart | pending | |
-| JRN-05 | J-YOGA events | pending | |
-| JRN-06 | J-MARKETPLACE plugin install | pending | |
+| JRN-02 | J-INSTALL — real release zip | pending | |
+| JRN-03 | J-BLOG — real reference project | pending | |
+| JRN-04 | J-COFFEE — real commerce plugin + cart | pending | |
+| JRN-05 | J-YOGA — real events plugin | pending | |
+| JRN-06 | J-MARKETPLACE — real plugin ZIP install | pending | |
 | JRN-07 | J-INVITE accept flow | pending | |
 | JRN-08 | J-KEKABA live path (no bake) | pending | |
 | JRN-09 | Journeys in ci-check.sh | pending | |
@@ -52,8 +52,17 @@
 | PR-02 | P25 studio-smoke.sh | pending | |
 | PR-03 | 156+ test suites PASS | pending | |
 
-## Video
+## Video evidence (required — human review)
 
 | ID | Story | Result | Evidence |
 |----|-------|--------|----------|
-| V-BETA-01 | Journey runner demo + kekaba live path | pending | |
+| V-BETA-01 | J-INSTALL — real zip, wizard, dashboard | pending | `artifacts/v-beta-01-install.md` + recording |
+| V-BETA-02 | J-BLOG — reference blog in browser | pending | `artifacts/v-beta-02-blog.md` + recording |
+| V-BETA-03 | J-COFFEE — shop + cart | pending | `artifacts/v-beta-03-coffee.md` + recording |
+| V-BETA-04 | J-YOGA — events | pending | `artifacts/v-beta-04-yoga.md` + recording |
+| V-BETA-05 | J-MARKETPLACE — plugin install UI | pending | `artifacts/v-beta-05-marketplace.md` + recording |
+| V-BETA-06 | J-ADMIN — publish entry | pending | `artifacts/v-beta-06-admin.md` + recording |
+| V-BETA-07 | J-INVITE — accept flow | pending | `artifacts/v-beta-07-invite.md` + recording |
+| V-BETA-08 | J-KEKABA — live path, no bake | pending | `artifacts/v-beta-08-kekaba.md` + recording |
+| V-BETA-09 | Operations tab + smoke status | pending | `artifacts/v-beta-09-ops.md` + recording |
+| V-BETA-10 | Human review pack complete | pending | `P28-human-review-pack.md` |
