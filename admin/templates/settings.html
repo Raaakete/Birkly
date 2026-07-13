@@ -89,6 +89,14 @@
         </svg>
         <?= __('admin.monitoring') ?>
       </button>
+      <button type="button" class="tab" data-tab="operations">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <?= __('admin.operations') ?>
+      </button>
     </div>
 
     <div class="settings-tab-panels">
@@ -753,6 +761,130 @@
             </div>
           </div>
         </form>
+      </div>
+
+      <!-- Operations Tab (P28-M14) -->
+      <div class="tab-pane" id="operations">
+<?php
+  require_once __DIR__ . '/../../core/birkly_paths.php';
+  $opsRoot = birkly_project_root();
+  $lastSmokePath = $opsRoot . '/logs/last-production-smoke.json';
+  $journeyReportPath = $opsRoot . '/logs/journey-report.json';
+  $lastSmoke = null;
+  $journeyReport = null;
+  if (is_file($lastSmokePath) && is_readable($lastSmokePath)) {
+      $decoded = json_decode((string) file_get_contents($lastSmokePath), true);
+      $lastSmoke = is_array($decoded) ? $decoded : null;
+  }
+  if (is_file($journeyReportPath) && is_readable($journeyReportPath)) {
+      $decoded = json_decode((string) file_get_contents($journeyReportPath), true);
+      $journeyReport = is_array($decoded) ? $decoded : null;
+  }
+  $opsResult = (string) ($lastSmoke['result'] ?? '');
+  $opsResultClass = $opsResult === 'pass' ? 'pass' : ($opsResult === 'fail' ? 'fail' : 'unknown');
+  $journeyHealth = is_array($lastSmoke['journey_health'] ?? null) ? $lastSmoke['journey_health'] : null;
+  $jhResult = (string) ($journeyHealth['result'] ?? '');
+  $jhResultClass = $jhResult === 'pass' ? 'pass' : ($jhResult === 'fail' ? 'fail' : 'unknown');
+?>
+        <div class="operations-settings">
+          <div class="settings-section">
+            <h2><?= __('admin.operations_production_smoke') ?></h2>
+            <p class="settings-help"><?= __('admin.operations_production_smoke_help') ?></p>
+            <?php if ($lastSmoke === null): ?>
+              <div class="empty-state operations-empty">
+                <p><?= __('admin.operations_no_smoke_data') ?></p>
+                <p class="settings-help"><?= __('admin.operations_no_smoke_data_hint') ?></p>
+              </div>
+            <?php else: ?>
+              <dl class="operations-meta">
+                <div class="operations-meta-row">
+                  <dt><?= __('admin.operations_result') ?></dt>
+                  <dd><span class="operations-status operations-status-<?= htmlspecialchars($opsResultClass) ?>"><?= htmlspecialchars($opsResult !== '' ? $opsResult : __('admin.unknown')) ?></span></dd>
+                </div>
+                <div class="operations-meta-row">
+                  <dt><?= __('admin.operations_last_run') ?></dt>
+                  <dd><code><?= htmlspecialchars((string) ($lastSmoke['last_run'] ?? '—')) ?></code></dd>
+                </div>
+                <div class="operations-meta-row">
+                  <dt><?= __('admin.operations_cms_base_url') ?></dt>
+                  <dd><code><?= htmlspecialchars((string) ($lastSmoke['cms_base_url'] ?? '—')) ?></code></dd>
+                </div>
+                <?php if ($journeyHealth !== null): ?>
+                <div class="operations-meta-row">
+                  <dt><?= __('admin.operations_journey_health') ?></dt>
+                  <dd>
+                    <span class="operations-status operations-status-<?= htmlspecialchars($jhResultClass) ?>"><?= htmlspecialchars($jhResult !== '' ? $jhResult : __('admin.unknown')) ?></span>
+                    <?php if (!empty($journeyHealth['method'])): ?>
+                      <span class="operations-method">(<?= htmlspecialchars((string) $journeyHealth['method']) ?>)</span>
+                    <?php endif; ?>
+                  </dd>
+                </div>
+                <?php endif; ?>
+              </dl>
+            <?php endif; ?>
+          </div>
+
+          <div class="settings-section">
+            <h2><?= __('admin.operations_journey_report') ?></h2>
+            <p class="settings-help"><?= __('admin.operations_journey_report_help') ?></p>
+            <?php if ($journeyReport === null): ?>
+              <div class="empty-state operations-empty">
+                <p><?= __('admin.operations_no_journey_data') ?></p>
+              </div>
+            <?php else: ?>
+              <dl class="operations-meta">
+                <div class="operations-meta-row">
+                  <dt><?= __('admin.operations_last_run') ?></dt>
+                  <dd><code><?= htmlspecialchars((string) ($journeyReport['run_at'] ?? $journeyReport['last_run'] ?? '—')) ?></code></dd>
+                </div>
+                <?php if (!empty($journeyReport['base_url'])): ?>
+                <div class="operations-meta-row">
+                  <dt><?= __('admin.operations_base_url') ?></dt>
+                  <dd><code><?= htmlspecialchars((string) $journeyReport['base_url']) ?></code></dd>
+                </div>
+                <?php endif; ?>
+              </dl>
+              <?php if (!empty($journeyReport['journeys']) && is_array($journeyReport['journeys'])): ?>
+              <div class="table-container operations-journey-table-wrap">
+                <table class="table operations-journey-table">
+                  <thead>
+                    <tr>
+                      <th><?= __('admin.operations_journey_id') ?></th>
+                      <th><?= __('admin.operations_result') ?></th>
+                      <th><?= __('admin.operations_duration') ?></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($journeyReport['journeys'] as $journeyRow): ?>
+                      <?php if (!is_array($journeyRow)) { continue; } ?>
+                      <?php
+                        $rowResult = (string) ($journeyRow['result'] ?? '');
+                        $rowClass = $rowResult === 'pass' ? 'pass' : ($rowResult === 'fail' ? 'fail' : 'unknown');
+                      ?>
+                      <tr>
+                        <td><code><?= htmlspecialchars((string) ($journeyRow['id'] ?? '—')) ?></code></td>
+                        <td><span class="operations-status operations-status-<?= htmlspecialchars($rowClass) ?>"><?= htmlspecialchars($rowResult !== '' ? $rowResult : '—') ?></span></td>
+                        <td><?= isset($journeyRow['duration_ms']) ? htmlspecialchars((string) $journeyRow['duration_ms']) . ' ms' : '—' ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+              <?php endif; ?>
+            <?php endif; ?>
+          </div>
+
+          <div class="settings-section operations-cron-hint">
+            <h2><?= __('admin.operations_cron') ?></h2>
+            <p class="settings-help"><?= __('admin.operations_cron_help') ?></p>
+            <pre class="operations-cron-example"><code>0 * * * * cd /path/to/birkly &amp;&amp; \
+  BIRKLY_SMOKE_BASE_URL=https://your-domain.com/Birkly-0.1 \
+  ./scripts/scheduled-production-smoke.sh</code></pre>
+            <p class="settings-help">
+              <a href="https://github.com/Raaakete/Birkly/blob/main/docs/agent-ops/PRODUCTION_CRON.md" target="_blank" rel="noopener noreferrer"><?= __('admin.operations_cron_doc_link') ?></a>
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- AI Tab -->

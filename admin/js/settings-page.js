@@ -406,6 +406,7 @@ window.updateRole = updateRole;
 window.deleteRole = deleteRole;
 
 // Tab functionality - simplified and robust
+// Read-only tabs (no form): activity-log, operations (data-tab="operations")
 (function() {
     var LEGACY_AI_HASH_MAP = {
         'ai-connections': 'outbound-connections',
