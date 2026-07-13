@@ -1,52 +1,11 @@
 {
-  "id": "hero",
+  "id": "yoga-hero",
   "slug": "hero",
   "status": "published",
-  "title": "Hero Section",
-  "created_at": "2025-01-20T00:00:00+00:00",
-  "updated_at": "2025-01-20T00:00:00+00:00",
-  "en": {
-    "title": "Hero Section",
-    "key": "hero",
-    "content": [
-      {
-        "type": "text",
-        "value": "Welcome to Our Demo Website"
-      },
-      {
-        "type": "textarea",
-        "value": "Built with Birkly - A modern, flexible content management system"
-      },
-      {
-        "type": "text",
-        "value": "Our Services"
-      },
-      {
-        "type": "text",
-        "value": "Get in Touch"
-      }
-    ]
-  },
-  "de": {
-    "title": "Hero-Bereich",
-    "key": "hero",
-    "content": [
-      {
-        "type": "text",
-        "value": "Willkommen auf unserer Demo-Website"
-      },
-      {
-        "type": "textarea",
-        "value": "Erstellt mit Birkly - Ein modernes, flexibles Content-Management-System"
-      },
-      {
-        "type": "text",
-        "value": "Unsere Dienstleistungen"
-      },
-      {
-        "type": "text",
-        "value": "Kontakt aufnehmen"
-      }
-    ]
-  }
+  "title": "Hero",
+  "key": "hero",
+  "content": [
+    { "type": "text", "value": "Stillwater Yoga" },
+    { "type": "textarea", "value": "Mindful movement in the heart of the city." }
+  ]
 }

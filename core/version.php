@@ -4,6 +4,8 @@
 class BirklyVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
+    /** @var string|null Override CMS root for install E2E tests only */
+    private static $testCmsRootOverride = null;
     // GitHub repository for update checks and downloads
     private static $githubRepo = 'Raaakete/Birkly';
     private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/Birkly/releases/latest';
@@ -269,9 +271,27 @@ class BirklyVersion {
     /**
      * Install update package
      */
+    public static function setTestCmsRootOverride(?string $root): void
+    {
+        self::$testCmsRootOverride = $root;
+    }
+
+    private static function cmsRoot(): string
+    {
+        return self::$testCmsRootOverride ?? dirname(__DIR__);
+    }
+
+    /**
+     * @internal Restore a pre-update backup in tests (rollback verification).
+     */
+    public static function restoreBackupForTest(string $backupDir, string $cmsRoot): bool
+    {
+        return self::restoreBackup($backupDir, $cmsRoot);
+    }
+
     public static function installUpdate(string $tempFile, string $version): array {
-        $backupDir = __DIR__ . '/../backups/pre-update-' . date('Y-m-d-H-i-s');
-        $cmsRoot = dirname(__DIR__);
+        $cmsRoot = self::cmsRoot();
+        $backupDir = $cmsRoot . '/backups/pre-update-' . date('Y-m-d-H-i-s');
         
         try {
             // Create backup
@@ -323,7 +343,7 @@ class BirklyVersion {
             }
             
             // Update version file
-            file_put_contents(self::$versionFile, $version);
+            file_put_contents($cmsRoot . '/VERSION', $version);
             
             // Clean up
             self::cleanupTempFiles($tempFile, $tempExtractDir);
@@ -374,6 +394,10 @@ class BirklyVersion {
             $backupPath = $backupDir . '/' . $file;
             
             if (is_file($sourcePath)) {
+                $backupParent = dirname($backupPath);
+                if (!is_dir($backupParent) && !mkdir($backupParent, 0755, true)) {
+                    return false;
+                }
                 if (!copy($sourcePath, $backupPath)) {
                     return false;
                 }
@@ -395,7 +419,7 @@ class BirklyVersion {
             return false;
         }
         
-        if (!mkdir($destination, 0755, true)) {
+        if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
             return false;
         }
         
@@ -408,7 +432,7 @@ class BirklyVersion {
             $targetPath = $destination . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
             
             if ($item->isDir()) {
-                if (!mkdir($targetPath, 0755, true)) {
+                if (!is_dir($targetPath) && !mkdir($targetPath, 0755, true)) {
                     return false;
                 }
             } else {

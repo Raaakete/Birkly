@@ -1,12 +1,7 @@
 {
-  "id": "col-site-elements",
+  "id": "col-site-elements-yoga",
   "name": "Site Elements",
   "slug": "site_elements",
-  "description": "Reusable site elements like navigation, headlines, and static content",
-  "created_at": "2025-01-20T00:00:00+00:00",
-  "multilanguage": {
-    "enabled": true,
-    "languages": ["en", "de"]
-  }
+  "description": "Singleton blocks for yoga reference site",
+  "created_at": "2026-07-08T00:00:00+00:00"
 }
-
