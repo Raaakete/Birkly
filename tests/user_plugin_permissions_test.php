@@ -102,15 +102,11 @@ test_assert(
 );
 
 global $birkly_admin_pages;
-$registryBefore = $birkly_admin_pages;
-$birkly_admin_pages = [];
-include_once $root . '/plugins/user_management/plugin.php';
 test_assert(
     'register_admin_page maps site_users',
     isset($birkly_admin_pages['site_users'])
         && is_file($birkly_admin_pages['site_users'])
 );
-$birkly_admin_pages = $registryBefore;
 
 // Restore metadata and remove test users
 if ($previousCollectionPerms === null) {

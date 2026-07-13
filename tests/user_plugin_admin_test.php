@@ -45,8 +45,6 @@ $tiers = file_get_contents($root . '/plugins/user_management/admin/tiers.html');
 test_assert('tiers breadcrumb User › Tiers', strpos($tiers, "{admin_url 'site_users'}") !== false && strpos($tiers, '>User</a>') !== false && strpos($tiers, '<span class="current">Tiers</span>') !== false);
 
 global $birkly_plugin_admin_meta;
-$birkly_plugin_admin_meta = [];
-require_once $root . '/plugins/user_management/plugin.php';
 test_assert('user_management admin meta registered', ($birkly_plugin_admin_meta['user_management']['title'] ?? '') === 'User');
 test_assert('user_management sidebar label', ($birkly_plugin_admin_meta['user_management']['sidebar']['label'] ?? '') === 'User');
 test_assert('user_management sub_pages', isset($birkly_plugin_admin_meta['user_management']['sub_pages']['user_tiers']));
