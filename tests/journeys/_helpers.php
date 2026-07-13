@@ -84,7 +84,14 @@ function journey_start_cms_server(string $root, int $port): int
 
 function journey_stop_cms_server(int $pid): void
 {
+    if ($pid <= 0) {
+        return;
+    }
     birkly_test_http_server_stop($pid);
+    if (function_exists('posix_kill')) {
+        @posix_kill($pid, SIGKILL);
+    }
+    usleep(200000);
 }
 
 /**
@@ -292,11 +299,48 @@ function journey_onboarding_skip(string $base, string $cookieFile): void
     journey_assert('onboarding skip ok', ($skipData['status'] ?? '') === 'ok', $skip['body']);
 }
 
+function journey_unique_suffix(): string
+{
+    static $counter = 0;
+    $counter++;
+    return getmypid() . '-' . $counter . '-' . bin2hex(random_bytes(4));
+}
+
+function journey_prepare_isolated_cms(string $root): void
+{
+    foreach (['users', 'settings', 'cache', 'logs', 'media', 'temp', 'content'] as $dir) {
+        $path = $root . '/' . $dir;
+        if (!is_dir($path)) {
+            mkdir($path, 0775, true);
+        }
+    }
+}
+
+function journey_allocate_port(int $offset = 0): int
+{
+    static $used = [];
+    for ($attempt = 0; $attempt < 50; $attempt++) {
+        $port = 18000 + $offset + (($attempt * 17 + getmypid() + random_int(0, 999)) % 2000);
+        if (isset($used[$port])) {
+            continue;
+        }
+        $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.05);
+        if ($fp !== false) {
+            fclose($fp);
+            continue;
+        }
+        $used[$port] = true;
+        return $port;
+    }
+    journey_fail('could not allocate free port for isolated journey server');
+}
+
 function journey_build_release_extract(): array
 {
     $root = journey_repo_root();
-    $zip = sys_get_temp_dir() . '/birkly-journey-release-' . getmypid() . '.zip';
-    $extract = sys_get_temp_dir() . '/birkly-journey-extract-' . getmypid();
+    $suffix = journey_unique_suffix();
+    $zip = sys_get_temp_dir() . '/birkly-journey-release-' . $suffix . '.zip';
+    $extract = sys_get_temp_dir() . '/birkly-journey-extract-' . $suffix;
 
     $cmd = 'OUT=' . escapeshellarg($zip) . ' ' . escapeshellarg($root . '/scripts/build-cms-release.sh');
     exec($cmd, $out, $code);
@@ -315,6 +359,8 @@ function journey_build_release_extract(): array
     }
     $zipArchive->extractTo($extract);
     $zipArchive->close();
+
+    journey_prepare_isolated_cms($extract);
 
     return ['zip' => $zip, 'dir' => $extract];
 }

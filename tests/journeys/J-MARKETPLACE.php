@@ -12,7 +12,7 @@ return [
     'run' => function (array $ctx): void {
         $extractInfo = journey_build_release_extract();
         $extractDir = $extractInfo['dir'];
-        $port = 18090 + (getmypid() % 1000);
+        $port = journey_allocate_port(90);
         $base = "http://127.0.0.1:$port";
         $pid = 0;
         $zipPath = null;

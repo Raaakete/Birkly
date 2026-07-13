@@ -15,8 +15,8 @@ return [
             journey_fail('kekaba sibling repo not found');
         }
 
-        $workDir = sys_get_temp_dir() . '/birkly-journey-kekaba-' . getmypid();
-        $port = 18100 + (getmypid() % 1000);
+        $workDir = sys_get_temp_dir() . '/birkly-journey-kekaba-' . journey_unique_suffix();
+        $port = journey_allocate_port(100);
         $base = "http://127.0.0.1:$port";
         $pid = 0;
 
