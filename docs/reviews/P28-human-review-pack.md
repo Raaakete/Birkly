@@ -7,11 +7,14 @@
 
 ## Video walkthroughs (real interactions)
 
+Videos are committed in `docs/reviews/artifacts/` (open from the repo or use the GitHub links below).
+
 | Video | What you will see |
 |-------|-------------------|
-| [v-beta-blog-yoga-interaction-demos.mp4](/opt/cursor/artifacts/v-beta-blog-yoga-interaction-demos.mp4) | **Blog:** open post → read article → back. **Yoga:** event list → detail → RSVP form submit |
-| [v-beta-03-coffee-add-to-cart.mp4](/opt/cursor/artifacts/v-beta-03-coffee-add-to-cart.mp4) | **Coffee:** product variants → add to cart |
-| [v-beta-07-social-register-partial.mp4](/opt/cursor/artifacts/v-beta-07-social-register-partial.mp4) | **Social:** register → login → feed |
+| [v-beta-02-04-blog-yoga-interaction.mp4](artifacts/v-beta-02-04-blog-yoga-interaction.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-02-04-blog-yoga-interaction.mp4) | **Blog:** open post → read article → back. **Yoga:** event list → detail → RSVP form submit |
+| [v-beta-03-coffee-add-to-cart.mp4](artifacts/v-beta-03-coffee-add-to-cart.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-03-coffee-add-to-cart.mp4) | **Coffee:** product variants → add to cart |
+| [v-beta-07-social-register.mp4](artifacts/v-beta-07-social-register.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-07-social-register.mp4) | **Social:** register → login → feed |
+| [v-beta-walkthrough-overview.mp4](artifacts/v-beta-walkthrough-overview.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-walkthrough-overview.mp4) | Earlier overview walkthrough (sites open; less interaction detail) |
 
 ### Prepare before each demo
 
@@ -139,7 +142,7 @@ php scripts/journey-runner.php --all
 - [x] Real project files on disk (not mocked)
 - [x] Step documentation describes browser UI workflows
 - [x] kekaba pages have **no** `birkly-baked` meta (verified in J-KEKABA)
-- [x] Video walkthrough recorded (V-BETA-02…04, 08, 09 in combined MP4)
+- [x] Video walkthrough recorded (V-BETA-02…04 blog/yoga/coffee + social register; overview MP4)
 - [x] Step docs for all V-BETA-01…09
 
 ---
