@@ -276,8 +276,11 @@ function sendInvitationEmail($email, $inviteUrl, $role, $expiresDays) {
         'invite_url' => $inviteUrl
     ]);
     
-    // For localhost, always return true but log the URL
-    if ($_SERVER['HTTP_HOST'] === 'localhost:8001' || strpos($_SERVER['HTTP_HOST'], 'localhost') === 0) {
+    // For localhost / loopback dev servers, always return true but log the URL
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    if ($host === 'localhost:8001'
+        || str_starts_with($host, 'localhost')
+        || str_starts_with($host, '127.0.0.1')) {
         error_log("LOCALHOST: Email would be sent to $email with URL: $inviteUrl");
         return true; // Always return true on localhost for testing
     }

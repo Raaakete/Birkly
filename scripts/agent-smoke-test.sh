@@ -89,6 +89,15 @@ else
   FAIL=1
 fi
 
+# P28-M11: user journey runner (real disk state + HTTP assertions)
+chmod +x "$ROOT/scripts/journey-runner.php" 2>/dev/null || true
+if php "$ROOT/scripts/journey-runner.php" --all; then
+  report "OK: journey-runner.php --all"
+else
+  report "FAIL: journey-runner.php --all"
+  FAIL=1
+fi
+
 # P2-M6: dev page snapshots available for hydrate smoke
 if php "$ROOT/scripts/generate-page-snapshots.php" >/dev/null 2>&1; then
   if [[ -f "$ROOT/cache/page-snapshots/index.json" ]]; then
