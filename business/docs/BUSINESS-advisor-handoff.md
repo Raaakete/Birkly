@@ -4,13 +4,56 @@
 **Assignment:** **Start from scratch** — replace any bad prior drafts; archive obsolete content to `business/archive/2026-07-13/`  
 **Human rule:** Draft for human review. Notify when **first complete draft** is ready (business plan + pitch deck + one-pager). Do not claim investor-ready until human approves.
 
-**Workspace:** `business/`  
+**Workspace:** `business/` in **`Raaakete/Birkly`** (repo root, branch `main`)  
 **Agent:** `.cursor/agents/business-advisor.md`  
 **Facts:** `business/docs/SOURCE_OF_TRUTH.md`
 
+> **Cloud agents:** Materials landed on `main` via PR #166 (2026-07-13). Start a **new** session on the Birkly environment so the VM clones latest `main`. If the advisor says files are missing, the session predates the merge.
+
 ---
 
-## Copy-paste prompt for business-advisor
+## Copy-paste prompt — refine v1 (after you supply TBD data)
+
+```
+You are the business-advisor for Birkly.
+
+VERIFY FIRST — in Raaakete/Birkly repo root on main:
+  ls business/docs/
+  ls business/business-plan/
+  ls business/pitch-deck/
+Required: HUMAN-REVIEW-PACK.md, SOURCE_OF_TRUTH.md, slides.md, 00-executive-summary.md through 12-risks.md.
+If missing: stop — human must use latest main (PR #166 merged) and a new cloud session.
+
+ASSIGNMENT: Refine the v1 business plan and pitch deck. Resolve [TBD] items using HUMAN DATA below.
+
+READ:
+1. business/docs/HUMAN-REVIEW-PACK.md
+2. business/docs/SOURCE_OF_TRUTH.md
+3. business/business-plan/ (all sections)
+4. business/pitch-deck/slides.md
+5. business/investor/one-pager.md
+
+HUMAN DATA (fill in before running — or mark remaining TBDs):
+- Funding: [amount, instrument, use of funds %]
+- Team: [founder bio, photo ref, advisors]
+- Financials: [take rate %, Y1–Y3 install/revenue assumptions]
+- Market: [primary geography, 5-year SOM target]
+- Traction: [waitlist/install numbers if citeable]
+- Contact: [email, URL, calendar link]
+- Open source: [license + GA timing]
+
+DELIVERABLES:
+- Update all business-plan sections + executive summary for consistency
+- Update pitch-deck/slides.md and investor/one-pager.md
+- Refresh HUMAN-REVIEW-PACK.md (remaining TBDs only)
+- Do NOT invent metrics — use human data or keep [TBD]
+
+Notify when investor-ready draft is complete for human sign-off.
+```
+
+---
+
+## Copy-paste prompt — initial draft (complete)
 
 ```
 You are the business-advisor for Birkly.

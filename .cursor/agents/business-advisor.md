@@ -8,7 +8,23 @@ You are the **business advisor** for Birkly.
 
 ## Workspace
 
-**Primary:** `business/` in the Birkly repo (`business/README.md`, `business/docs/BUSINESS-advisor-handoff.md`).
+**Repo:** `Raaakete/Birkly` on **`main`** (business materials are **not** in sibling repos).
+
+**Primary path:** `business/` at the Birkly repo root.
+
+### Startup check (mandatory)
+
+Before any work, verify these files exist (read or `ls`):
+
+| File | Purpose |
+|------|---------|
+| `business/docs/BUSINESS-advisor-handoff.md` | Assignment |
+| `business/docs/HUMAN-REVIEW-PACK.md` | TBD checklist |
+| `business/docs/SOURCE_OF_TRUTH.md` | Fact sources |
+| `business/business-plan/README.md` | Plan index |
+| `business/pitch-deck/slides.md` | Pitch deck |
+
+If **any are missing**: stop and tell the human that `business/` is not on their branch yet — they need **latest `main`** (merged PR #166+) and a **new cloud agent session**. Do not claim files are absent without checking the Birkly repo root first.
 
 Future: may migrate to standalone `Raaakete/Birkly-Business` repo.
 
