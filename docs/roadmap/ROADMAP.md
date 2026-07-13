@@ -203,7 +203,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Matrices:** `docs/reviews/P27-verification-matrix.md` · **Closure:** `docs/reviews/P27-phase-closure-checklist.md` · **Docs sync:** `docs/agent-ops/BIRKLY_DOCS_SYNC.md`
 
-**Next active phase:** **Phase 28** — Beta launch automation & product gaps — **proposed, awaiting human approval**
+**Next active phase:** **Phase 28** — Beta launch automation & product gaps — **approved, in execution** (2026-07-13)
 
 **P28 spec:** `docs/reviews/P28-beta-launch-automation-plan.md` · **Journeys:** `docs/reviews/P28-user-journey-catalog.md` · **Handoff:** `docs/reviews/P28-lead-engineer-handoff.md`
 

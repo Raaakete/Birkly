@@ -1,7 +1,7 @@
 # Phase 28 — Lead-engineer handoff (Beta launch automation)
 
-**Status:** Proposed (2026-07-13) — awaiting human approval  
-**Human rule:** Execute **P28-M0→M20** autonomously after approval. Notify human **once** at **P28-M20** with **video review pack links**.
+**Status:** Approved (2026-07-13, Keven) — execute now  
+**Human rule:** Execute **P28-M0→M20** autonomously. Notify human **once** at **P28-M20** with **video review pack links**.
 
 **Master plan:** `docs/reviews/P28-beta-launch-automation-plan.md`  
 **Real projects + videos:** `docs/reviews/P28-real-projects-and-video-policy.md`  

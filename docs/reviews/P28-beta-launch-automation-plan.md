@@ -1,6 +1,6 @@
 # P28 — Beta launch automation & product gaps
 
-**Status:** Proposed (2026-07-13) — awaiting human approval  
+**Status:** Approved (2026-07-13, Keven) — execute now  
 **Baseline:** P27 complete (156 suites) · P26 Studio **paused** · Human handles DNS/Stripe/legal (Part 1)  
 **Human rule:** Execute P28-M0→M20 autonomously after approval. Notify human **once** at **P28-M20** with **video review pack links**.
 
