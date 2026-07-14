@@ -18,7 +18,27 @@
         <h1>{ title }</h1>
         <p class="text-muted">{ start } · { venue }</p>
         <div style="margin: 1.5rem 0;">{ description }</div>
-        <a class="btn btn-primary" href="{event_register_url id}">Register</a>
+        <section style="margin-top: 1.5rem; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="font-size: 1.1rem; margin: 0 0 1rem;">Register for this event</h2>
+            <form
+                data-birkly-route="events"
+                data-birkly-action="rsvp"
+                data-birkly-success="redirect"
+                data-birkly-redirect="self"
+                data-birkly-ok-param="registered"
+            >
+                <input type="hidden" name="event_id" value="{ slug }" />
+                <div style="margin-bottom: 0.75rem;">
+                    <label for="rsvp-name">Your name</label>
+                    <input id="rsvp-name" name="name" type="text" required style="width: 100%; padding: 0.5rem;" />
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="rsvp-email">Email</label>
+                    <input id="rsvp-email" name="email" type="email" required style="width: 100%; padding: 0.5rem;" />
+                </div>
+                <button type="submit" class="btn btn-primary">Complete registration</button>
+            </form>
+        </section>
         <p style="margin-top: 1rem;"><a href="/reference-projects/influencer/website/index.html#events">← Home</a></p>
     </main>
     <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>

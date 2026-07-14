@@ -447,9 +447,21 @@
             let rest = m[2].trim();
             let filterExpr = null;
             let orderExpr = null;
+            let limitExpr = null;
+            const limitTail = rest.match(/\s+limit\s+(\d+)\s*$/i);
+            if (limitTail) {
+                limitExpr = parseInt(limitTail[1], 10);
+                rest = rest.substring(0, limitTail.index).trim();
+            }
             const orderMatch = rest.match(/\s+ordered\s+by\s+(.+)$/i);
             if (orderMatch) {
-                orderExpr = orderMatch[1].trim();
+                let orderPart = orderMatch[1].trim();
+                const orderLimit = orderPart.match(/\s+limit\s+(\d+)\s*$/i);
+                if (orderLimit) {
+                    limitExpr = parseInt(orderLimit[1], 10);
+                    orderPart = orderPart.substring(0, orderLimit.index).trim();
+                }
+                orderExpr = orderPart;
                 rest = rest.substring(0, orderMatch.index).trim();
             }
             const withMatch = rest.match(/\s+with\s+(.+)$/i);
@@ -457,7 +469,7 @@
                 filterExpr = withMatch[1].trim();
                 rest = rest.substring(0, withMatch.index).trim();
             }
-            return { full: m[0], itemVar: m[1], inClause: rest, filterExpr, orderExpr };
+            return { full: m[0], itemVar: m[1], inClause: rest, filterExpr, orderExpr, limitExpr };
         };
         
         Birkly.conditionals.renderConditionals = function(template, data, itemPrefix = '') {
@@ -1228,6 +1240,95 @@
         return h.toString(16);
     }
 
+    function buildLoopData(data, itemVar, item) {
+        const loopData = { ...data, [itemVar]: item };
+        if (itemVar === 'entry' || !Object.prototype.hasOwnProperty.call(data, 'entry')) {
+            loopData.entry = item;
+            if (item && typeof item === 'object') {
+                Object.assign(loopData, item);
+            }
+        } else if (item && typeof item === 'object') {
+            const parentEntry = loopData.entry;
+            Object.assign(loopData, item);
+            loopData.entry = parentEntry;
+            loopData[itemVar] = item;
+        }
+        return loopData;
+    }
+
+    function priceFromCommerceField(commerce) {
+        if (!commerce || typeof commerce !== 'object') {
+            return '0';
+        }
+        const opts = commerce.purchase_options || commerce.purchaseOptions || [];
+        if (!Array.isArray(opts) || opts.length === 0) {
+            return '0';
+        }
+        let min = null;
+        for (const opt of opts) {
+            const cents = parseInt(opt.price_cents, 10);
+            if (!Number.isNaN(cents) && (min === null || cents < min)) {
+                min = cents;
+            }
+        }
+        if (min === null) {
+            return '0';
+        }
+        return (min / 100).toFixed(2);
+    }
+
+    function replaceScopedTemplateFunctions(template, data) {
+        const controlStarts = new Set(['if', 'else', 'endif', 'for', 'endfor', 'foreach', 'endforeach', 'from', 'get', 'has', 'exist', 'set']);
+        return template.replace(/\{([a-zA-Z0-9_]+)\s+([a-zA-Z0-9_.]+)\}/g, (m, funcName, argPath) => {
+            if (!funcName || controlStarts.has(funcName)) {
+                return m;
+            }
+            if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(argPath) || !argPath.includes('.')) {
+                return m;
+            }
+            if (funcName === 'commerce_price_from') {
+                const val = getNestedValue(data, argPath);
+                return priceFromCommerceField(val);
+            }
+            return m;
+        });
+    }
+
+    function referenceProjectHomeUrl() {
+        const path = window.location.pathname || '';
+        const refMatch = path.match(/^(\/reference-projects\/[^/]+\/website\/)/);
+        if (refMatch) {
+            return refMatch[1] + 'index.html';
+        }
+        if (path.includes('/demo-website/')) {
+            return '/demo-website/index.html';
+        }
+        return '/';
+    }
+
+    function collectTemplatedElements() {
+        const templates = [];
+        const add = (el) => {
+            if (!el || !el.innerHTML) {
+                return;
+            }
+            if (/\{\s*['"]?[a-zA-Z0-9_]/.test(el.innerHTML) || /\{\{/.test(el.innerHTML)) {
+                templates.push({
+                    element: el,
+                    originalHtml: el.innerHTML,
+                    template: el.innerHTML
+                });
+            }
+        };
+        add(document.querySelector('header'));
+        add(document.querySelector('main'));
+        add(document.querySelector('footer'));
+        if (templates.length === 0) {
+            add(document.body);
+        }
+        return templates;
+    }
+
     async function hydrateTemplateFunctionsIntoData(data, templateString = null) {
         await loadTemplateFunctionsMeta();
         // Check both the provided template string and document.body.innerHTML
@@ -1338,6 +1439,10 @@
             if (!Birkly.templateFunctions.names.has(funcName)) continue;
 
             const args = parseQuotedArgs(m[2] || '');
+            const hasScopedArg = args.some((a) => /^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(a) && a.includes('.'));
+            if (hasScopedArg) {
+                continue;
+            }
 
             if (args.length === 0 && (funcName in data)) {
                 out = out.replace(m[0], `{ ${funcName} }`);
@@ -1560,7 +1665,7 @@
         }
         
         // Limit recursion depth to prevent infinite loops
-        if (depth > 2) {
+        if (depth > 5) {
             Birkly.warn('Birkly: processNestedLoops reached max depth', depth, ', stopping');
             return template;
         }
@@ -1619,8 +1724,10 @@
         }
         
         const output = items.map(item => {
-            const itemData = { ...data, [itemVar]: item };
+            const itemData = buildLoopData(data, itemVar, item);
             let itemOutput = loopContent;
+            
+            itemOutput = replaceScopedTemplateFunctions(itemOutput, itemData);
             
             // Handle simple unquoted variables first: {item}
             itemOutput = itemOutput.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, (m, varName) => {
@@ -1718,7 +1825,7 @@
             
             // Recursively process deeper nested loops (limit depth)
             // This processes nested loops like {for each reply_check in comments} within each comment item
-            if (depth < 2 && (itemOutput.includes('{for each') || itemOutput.includes('{for '))) {
+            if (depth < 5 && (itemOutput.includes('{for each') || itemOutput.includes('{for '))) {
                 const beforeNested = itemOutput;
                 itemOutput = processNestedLoops(itemOutput, itemData, depth + 1);
                 // Verify that nested loops were actually processed and removed
@@ -2003,13 +2110,19 @@
         // - {for each entry in 'comments' of 'blog'.'slug-here'}
         // - {for each entry in 'comments' of 'blog'.current ordered by newest}
         const __loopPlaceholders = [];
-        let loopHeader = parseForLoopHeader(output);
+        let loopSearchStart = 0;
+        let loopHeader = parseForLoopHeader(output.substring(loopSearchStart));
         while (loopHeader) {
             const match = loopHeader.full;
+            const matchPos = output.indexOf(match, loopSearchStart);
+            if (matchPos === -1) {
+                break;
+            }
             const itemVar = loopHeader.itemVar;
             const inClause = loopHeader.inClause;
             const filterExpr = loopHeader.filterExpr;
             const orderExpr = loopHeader.orderExpr;
+            const limitExpr = loopHeader.limitExpr;
             const __token = '__BIRKLY_LOOP__' + Math.random().toString(36).slice(2) + '__';
             let items = resolveLoopItems(inClause, data);
             if (!Array.isArray(items)) items = [];
@@ -2077,8 +2190,12 @@
                 }
             }
 
+            if (limitExpr && limitExpr > 0) {
+                items = items.slice(0, limitExpr);
+            }
+
             // Find the matching {endfor} or {endforeach}
-            const loopContent = extractLoopContent(output, match);
+            const loopContent = extractLoopContent(output.substring(matchPos), match);
             if (!loopContent) {
                 Birkly.warn('Birkly: extractLoopContent failed for loop:', match, 'in template sample:', output.substring(Math.max(0, output.indexOf(match) - 50), Math.min(output.length, output.indexOf(match) + 200)));
                 break;
@@ -2102,18 +2219,7 @@
                 // Important: only alias the current item to `entry` if:
                 // - the loop variable is already `entry`, OR
                 // - the outer data has no `entry` (so we don't clobber single-entry pages that already have `entry`)
-                const loopData = {
-                    ...data,
-                    [itemVar]: item
-                };
-                // For entry loops, alias and spread entry fields so nested loops and field access
-                // like {for each item in 'tags'} and {'tags'} can see fields at top level.
-                if (itemVar === 'entry' || !Object.prototype.hasOwnProperty.call(data, 'entry')) {
-                    loopData.entry = item;
-                    if (item && typeof item === 'object') {
-                        Object.assign(loopData, item);
-                    }
-                }
+                const loopData = buildLoopData(data, itemVar, item);
                 
                 // Process nested loops FIRST (loops with 'in' clause like {for each reply_check in comments})
                 // This must happen BEFORE the old {for each tag} handler
@@ -2121,6 +2227,7 @@
                 if (hasNestedLoopWithIn) {
                     itemOutput = processNestedLoops(itemOutput, loopData, 0);
                 }
+                itemOutput = replaceScopedTemplateFunctions(itemOutput, loopData);
                 
                 // Handle nested {for each tag} loops (without 'in' clause) - refers to item's property
                 let nestedLoopProcessed = true;
@@ -2590,9 +2697,12 @@
             // We return a token here, and after replace() we remove the original loopContent + matching {endfor}.
             Birkly.log('Birkly: Loop placeholder pushed, rendered length:', __rendered.length, 'items:', items.length, 'sample:', __rendered.substring(0, 120));
             __loopPlaceholders.push({ token: __token, loopContent, rendered: __rendered });
-            const matchPos = output.indexOf(match);
             output = output.substring(0, matchPos) + __token + output.substring(matchPos + match.length);
-            loopHeader = parseForLoopHeader(output);
+            const afterToken = matchPos + __token.length;
+            const endforPos = afterToken + loopContent.length;
+            const endMatch = output.substring(endforPos).match(/^\s*\{\s*(endfor|endforeach)\s*\}/);
+            loopSearchStart = endforPos + (endMatch ? endMatch[0].length : 0);
+            loopHeader = parseForLoopHeader(output.substring(loopSearchStart));
         }
 
         // Post-process: replace each token + original loopContent + matching {endfor}/{endforeach}
@@ -3075,12 +3185,14 @@
         } else {
             Birkly.log('Birkly: renderTemplate completed successfully, output length:', output.length);
         }
+
+        output = replaceScopedTemplateFunctions(output, data);
         
         return output;
     }
     
     /**
-     * Extract loop content between {for} and {endfor}
+     * Extract loop content between {for} and matching {endfor}, including nested loops verbatim.
      */
     function extractLoopContent(template, startMatch) {
         const startPos = template.indexOf(startMatch);
@@ -3088,163 +3200,46 @@
             Birkly.warn('Birkly: extractLoopContent - startMatch not found:', startMatch);
             return null;
         }
-        
+
         const afterStart = template.substring(startPos + startMatch.length);
-        Birkly.log('Birkly: extractLoopContent - startMatch:', startMatch, 'afterStart length:', afterStart.length);
-        Birkly.log('Birkly: extractLoopContent - afterStart sample:', afterStart.substring(0, 300));
-        
-        // Direct search for {endfor} to debug
-        const directEndforIndex = afterStart.indexOf('{endfor');
-        if (directEndforIndex !== -1) {
-            Birkly.log('Birkly: extractLoopContent - FOUND {endfor at index:', directEndforIndex, 'context:', afterStart.substring(Math.max(0, directEndforIndex - 20), directEndforIndex + 30));
-        } else {
-            Birkly.log('Birkly: extractLoopContent - {endfor NOT FOUND in afterStart. Full afterStart:', JSON.stringify(afterStart.substring(0, 500)));
-        }
-        
-        // Count how many {endfor} we should find - try multiple patterns
-        const endforPatterns = [
-            /\{endfor\}/g,
-            /\{\s*endfor\s*\}/g,
-            /\{endfor\s*\}/g,
-            /\{\s*endfor\}/g
-        ];
-        let endforCount = 0;
-        for (const pattern of endforPatterns) {
-            const matches = afterStart.match(pattern);
-            if (matches) {
-                endforCount = matches.length;
-                Birkly.log('Birkly: extractLoopContent - found', endforCount, '{endfor} with pattern:', pattern);
-                break;
-            }
-        }
-        const endforeachCount = (afterStart.match(/\{endforeach\}/g) || []).length;
-        const forCount = (afterStart.match(/\{for\s+(?:each\s+)?[^}]+\}/g) || []).length;
-        Birkly.log('Birkly: extractLoopContent - found', endforCount, '{endfor},', endforeachCount, '{endforeach},', forCount, 'nested {for}');
-        
-        // Also check for {endfor} with different whitespace
-        if (endforCount === 0) {
-            const endforIndex = afterStart.indexOf('{endfor');
-            if (endforIndex !== -1) {
-                Birkly.log('Birkly: extractLoopContent - found {endfor at index:', endforIndex, 'context:', afterStart.substring(Math.max(0, endforIndex - 20), endforIndex + 30));
-            }
-        }
-        
+        const forRegex = /\{for\s+(?:each\s+)?[^}]+\}/g;
+        const endRegex = /\{\s*endfor\s*\}|\{\s*endforeach\s*\}/g;
+
         let depth = 1;
         let pos = 0;
-        let content = '';
-        
-        // Use a simpler approach: find all {for} and {endfor} markers and track depth
-        const markers = [];
-        let searchPos = 0;
-        
-        // Find all {for...} directives
-        const forRegex = /\{for\s+(?:each\s+)?[^}]+\}/g;
-        let forMatch;
-        while ((forMatch = forRegex.exec(afterStart)) !== null) {
-            markers.push({ type: 'for', pos: forMatch.index, end: forMatch.index + forMatch[0].length });
-        }
-        
-        // Find all {endfor} and {endforeach} - handle optional whitespace
-        const endforRegex = /\{\s*endfor\s*\}/g;
-        let endforMatch;
-        while ((endforMatch = endforRegex.exec(afterStart)) !== null) {
-            markers.push({ type: 'endfor', pos: endforMatch.index, end: endforMatch.index + endforMatch[0].length });
-        }
-        
-        const endforeachRegex = /\{\s*endforeach\s*\}/g;
-        let endforeachMatch;
-        while ((endforeachMatch = endforeachRegex.exec(afterStart)) !== null) {
-            markers.push({ type: 'endfor', pos: endforeachMatch.index, end: endforeachMatch.index + endforeachMatch[0].length });
-        }
-        
-        // Sort markers by position
-        markers.sort((a, b) => a.pos - b.pos);
-        
-        Birkly.log('Birkly: extractLoopContent - found', markers.length, 'markers:', markers.map(m => m.type + '@' + m.pos));
-        
-        // Process markers to find matching {endfor}
-        // Only add to content when at depth 1 so that sibling loops (e.g. posts then users)
-        // are not included in the outer loop's content.
-        let currentDepth = 1;
-        let lastPos = 0;
-        
-        for (const marker of markers) {
-            // Add content before this marker only when at top level (depth 1)
-            if (marker.pos > lastPos && currentDepth === 1) {
-                content += afterStart.substring(lastPos, marker.pos);
+
+        while (depth > 0 && pos < afterStart.length) {
+            forRegex.lastIndex = pos;
+            endRegex.lastIndex = pos;
+            const forMatch = forRegex.exec(afterStart);
+            const endMatch = endRegex.exec(afterStart);
+            const nextFor = forMatch ? forMatch.index : Infinity;
+            const nextEnd = endMatch ? endMatch.index : Infinity;
+
+            if (nextFor < nextEnd) {
+                depth++;
+                pos = forMatch.index + forMatch[0].length;
+                continue;
             }
-            
-            if (marker.type === 'for') {
-                // Nested/sibling {for} - do not include in this loop's content
-                currentDepth++;
-                lastPos = marker.end;
-            } else if (marker.type === 'endfor') {
-                currentDepth--;
-                lastPos = marker.end;
-                // Return when we close a nested loop (depth 2->1) so this loop's content
-                // is only up to the first {endfor} that closes a child, not the whole block.
-                if (currentDepth === 1) {
-                    Birkly.log('Birkly: extractLoopContent - extracted content length (depth 2->1):', content.length);
-                    Birkly.log('Birkly: extractLoopContent - extracted content sample:', content.substring(0, 300));
+            if (nextEnd < Infinity) {
+                depth--;
+                if (depth === 0) {
+                    const content = afterStart.substring(0, nextEnd);
+                    Birkly.log('Birkly: extractLoopContent - extracted content length:', content.length);
                     return content;
                 }
-                if (currentDepth === 0) {
-                    Birkly.log('Birkly: extractLoopContent - extracted content length (depth 1->0):', content.length);
-                    Birkly.log('Birkly: extractLoopContent - extracted content sample:', content.substring(0, 300));
-                    return content;
-                }
+                pos = endMatch.index + endMatch[0].length;
+                continue;
             }
+            break;
         }
-        
-        // If we get here, we didn't find a matching {endfor}
-        // Try a simpler fallback: find the first {endfor} if depth tracking failed
-        if (currentDepth > 0 && markers.length === 0) {
-            // No markers found at all - try direct search for {endfor}
-            const directEndfor = afterStart.search(/\{\s*endfor\s*\}/);
-            if (directEndfor !== -1) {
-                Birkly.log('Birkly: extractLoopContent - using fallback, found {endfor at:', directEndfor);
-                return afterStart.substring(0, directEndfor);
-            }
+
+        const fallback = afterStart.match(/\{\s*endfor\s*\}|\{\s*endforeach\s*\}/);
+        if (fallback && fallback.index !== undefined) {
+            return afterStart.substring(0, fallback.index);
         }
-        
-        // Additional fallback: if we're looking for a nested loop (indicated by 'item' variable)
-        // and no {endfor} was found, try to find it by looking for the closing </span> tag
-        // This handles the case where the outer loop extraction removed the {endfor}
-        if (markers.length === 0 && startMatch.includes('item')) {
-            // Look for </span> which should close the <span class="tag"> tag
-            const spanClose = afterStart.indexOf('</span>');
-            if (spanClose !== -1) {
-                // Include the </span> tag and everything up to it
-                // The loop content should be: <span class="tag">{item}</span>
-                const endPos = spanClose + 7; // Length of '</span>'
-                const extracted = afterStart.substring(0, endPos);
-                Birkly.log('Birkly: extractLoopContent - using nested loop fallback, found </span> at:', spanClose, 'extracted:', JSON.stringify(extracted));
-                return extracted;
-            }
-        }
-        
-        // Add any remaining content
-        if (lastPos < afterStart.length) {
-            content += afterStart.substring(lastPos);
-        }
-        
-        // Final fallback: use first occurrence of "{endfor" or "{ endfor" or "{endforeach" so we never leave loop unexpanded
-        const endforFallback = afterStart.match(/\{\s*endfor\s*\}/);
-        const endforeachFallback = afterStart.match(/\{\s*endforeach\s*\}/);
-        let fallbackEnd = -1;
-        if (endforFallback && endforFallback.index !== undefined) {
-            fallbackEnd = endforFallback.index;
-        }
-        if (endforeachFallback && endforeachFallback.index !== undefined) {
-            const idx = endforeachFallback.index;
-            if (fallbackEnd === -1 || idx < fallbackEnd) fallbackEnd = idx;
-        }
-        if (fallbackEnd !== -1) {
-            Birkly.log('Birkly: extractLoopContent - using final fallback, content up to index:', fallbackEnd);
-            return afterStart.substring(0, fallbackEnd);
-        }
-        
-        Birkly.log('Birkly: extractLoopContent - failed to extract content, depth:', currentDepth, 'markers found:', markers.length);
+
+        Birkly.warn('Birkly: extractLoopContent - failed to extract content for:', startMatch);
         return null;
     }
     
@@ -3736,7 +3731,8 @@
         
         // Check for URL parameters that might indicate we need a specific entry
         urlParams = new URLSearchParams(window.location.search);
-        const slug = urlParams.get('slug');
+        const slugMeta = document.querySelector('meta[name="birkly-slug"]');
+        let slug = urlParams.get('slug') || (slugMeta && slugMeta.content ? slugMeta.content.trim() : '');
         let collection = urlParams.get('collection');
         // Expose query params to templates as `query.*` (generic)
         const query = {};
@@ -3797,28 +3793,10 @@
                     // NOTE: no project-specific behavior here.
                     // Any additional data should be loaded via generic mechanisms (template functions or generic endpoints).
                     
-                    // Single entry pages are easiest/most robust if we render ONE top-level container.
-                    // Rendering multiple nested elements can cause partial updates (e.g. only the <h1> updates),
-                    // or DOM replacement invalidating later element references.
-                    const templates = [];
-                    const mainEl = document.querySelector('main');
-                    if (mainEl && mainEl.innerHTML && (/\{\s*['"]?[a-zA-Z0-9_]/.test(mainEl.innerHTML) || /\{\{/.test(mainEl.innerHTML))) {
-                        templates.push({
-                            element: mainEl,
-                            originalHtml: mainEl.innerHTML,
-                            template: mainEl.innerHTML
-                        });
-                    } else {
-                        // Fallback: render whole body if main isn't present (rare)
-                        const bodyEl = document.body;
-                        templates.push({
-                            element: bodyEl,
-                            originalHtml: bodyEl.innerHTML,
-                            template: bodyEl.innerHTML
-                        });
-                    }
+                    // Render header, main, and footer so cart counts and nav hydrate on detail pages.
+                    const templates = collectTemplatedElements();
                     
-                    Birkly.log('Birkly: Found', templates.length, 'templates for single entry page (main container mode)');
+                    Birkly.log('Birkly: Found', templates.length, 'templates for single entry page');
 
                     // Prefetch sub_entries loops (e.g. commerce product variants: {for each variant in sub_entries variants})
                     for (const template of templates) {
@@ -3838,6 +3816,8 @@
                             }
                         }
                     }
+
+                    await performPrefetches(data);
                     
                     // Render each template with the entry data
                     for (let template of templates) {
@@ -3894,6 +3874,7 @@
                             // Second pass: nested field-type loops like {for each item in 'tags'}
                             // Reuse the dedicated nested-loop processor so behaviour matches list pages.
                             rendered = processNestedLoops(rendered, data);
+                            rendered = replaceScopedTemplateFunctions(rendered, data);
                             Birkly.log('Birkly: Template rendered, checking for comments in output:', rendered.includes('comment'), 'checking for "Post not found":', rendered.includes('Post not found'));
                             if (!safeSetInnerHTML(template.element, rendered, template.template, 'single-entry')) {
                                 // Content was not replaced - skip further processing for this template
@@ -3933,7 +3914,7 @@
                             <div style="text-align: center; padding: 3rem;">
                                 <h1 style="font-size: 2rem; margin-bottom: 1rem;">Post Not Found</h1>
                                 <p style="color: #6b7280; margin-bottom: 2rem;">The post you're looking for doesn't exist.</p>
-                                <a href="/demo-website/index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Home</a>
+                                <a href="${referenceProjectHomeUrl()}" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Home</a>
                             </div>
                         `;
                     }
@@ -6017,7 +5998,11 @@
         /**
          * Render template manually
          */
-        render: renderTemplate,
+        render: function(template, data) {
+            let out = renderTemplate(template, data);
+            out = replaceScopedTemplateFunctions(out, data);
+            return out;
+        },
         
         /**
          * Process all templates in page

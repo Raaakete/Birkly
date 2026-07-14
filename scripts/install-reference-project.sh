@@ -47,6 +47,7 @@ if [[ ! -d "$WEB_SRC" ]]; then
 fi
 
 mkdir -p "$DEST_COL"
+MANIFEST="$SRC/manifest.json"
 
 echo "[install-reference-project] Installing '$PROJECT'..."
 echo "[install-reference-project] Collections → $DEST_COL"
@@ -65,8 +66,32 @@ if command -v php >/dev/null 2>&1; then
   php "$ROOT/scripts/normalize-reference-sub-entries.php"
 fi
 
+# Reindex commerce/events catalogs when manifest requires those plugins
+if [[ -f "$MANIFEST" ]] && command -v php >/dev/null 2>&1; then
+  needs_commerce="$(MANIFEST="$MANIFEST" php -r '$m=json_decode(file_get_contents(getenv("MANIFEST")),true); echo in_array("commerce", $m["plugins"] ?? [], true) ? "1" : "";')"
+  needs_events="$(MANIFEST="$MANIFEST" php -r '$m=json_decode(file_get_contents(getenv("MANIFEST")),true); echo in_array("events", $m["plugins"] ?? [], true) ? "1" : "";')"
+  if [[ -n "$needs_commerce" ]]; then
+    echo "[install-reference-project] Reindexing commerce catalog..."
+    php -r "
+      chdir('$ROOT');
+      require 'plugins/commerce/init.php';
+      require 'plugins/commerce/includes/CatalogIndexer.php';
+      (new CatalogIndexer())->reindexAll('$ROOT/content');
+    " 2>/dev/null || true
+  fi
+  if [[ -n "$needs_events" ]]; then
+    echo "[install-reference-project] Reindexing events..."
+    php -r "
+      chdir('$ROOT');
+      require 'plugins/events/init.php';
+      require 'plugins/events/includes/EventIndexer.php';
+      events_bootstrap();
+      (new EventIndexer())->reindexAll('$ROOT/content');
+    " 2>/dev/null || true
+  fi
+fi
+
 # Install plugins listed in manifest.json when present
-MANIFEST="$SRC/manifest.json"
 if [[ -f "$MANIFEST" ]] && command -v php >/dev/null 2>&1; then
   plugins="$(MANIFEST="$MANIFEST" php -r '
     $m = json_decode(file_get_contents(getenv("MANIFEST")), true);

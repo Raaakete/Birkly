@@ -20,7 +20,7 @@
     <main class="container" style="padding-top: 2rem;">
         <h2 class="section-title">Weekly class schedule</h2>
         <ul class="schedule-list">
-            {for each entry in 'classes' with status = published ordered by newest}
+            {for each entry in 'classes' with status = published ordered by oldest}
             <li>
                 <p class="day">{ day } · { time }</p>
                 <h3>{ title }</h3>

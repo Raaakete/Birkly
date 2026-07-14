@@ -1,20 +1,22 @@
 # P28 — Human review pack (delivered at M20)
 
-**Status:** Updated 2026-07-13 — real interaction videos + deeper journeys  
+**Status:** Updated 2026-07-14 — client rendering fixes + J-RENDER journey  
 **Purpose:** Watch videos showing **actual site usage**, then replay journeys locally
 
 ---
 
 ## Video walkthroughs (real interactions)
 
-Videos are committed in `docs/reviews/artifacts/` (open from the repo or use the GitHub links below).
+Videos are committed in `docs/reviews/artifacts/`.
 
 | Video | What you will see |
 |-------|-------------------|
-| [v-beta-02-04-blog-yoga-interaction.mp4](artifacts/v-beta-02-04-blog-yoga-interaction.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-02-04-blog-yoga-interaction.mp4) | **Blog:** open post → read article → back. **Yoga:** event list → detail → RSVP form submit |
-| [v-beta-03-coffee-add-to-cart.mp4](artifacts/v-beta-03-coffee-add-to-cart.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-03-coffee-add-to-cart.mp4) | **Coffee:** product variants → add to cart |
-| [v-beta-07-social-register.mp4](artifacts/v-beta-07-social-register.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-07-social-register.mp4) | **Social:** register → login → feed |
-| [v-beta-walkthrough-overview.mp4](artifacts/v-beta-walkthrough-overview.mp4) · [GitHub](https://github.com/Raaakete/Birkly/blob/cursor/p28-m0-m20-beta-launch-030a/docs/reviews/artifacts/v-beta-walkthrough-overview.mp4) | Earlier overview walkthrough (sites open; less interaction detail) |
+| [v-beta-02-blog-fixed.mp4](artifacts/v-beta-02-blog-fixed.mp4) | **Blog:** post cards render correctly (no nesting) → open post → back |
+| [v-beta-03-coffee-fixed.mp4](artifacts/v-beta-03-coffee-fixed.mp4) | **Coffee:** product grid → detail with variant prices → add to cart |
+| [v-beta-04-yoga-fixed.mp4](artifacts/v-beta-04-yoga-fixed.mp4) | **Yoga:** upcoming events → event detail → RSVP submit |
+| [v-beta-07-social-fixed.mp4](artifacts/v-beta-07-social-fixed.mp4) | **Social:** register → login → feed |
+
+Older recordings (pre-fix): `v-beta-02-04-blog-yoga-interaction.mp4`, `v-beta-03-coffee-add-to-cart.mp4`, etc.
 
 ### Prepare before each demo
 
@@ -47,6 +49,7 @@ php -S localhost:8080 -t . server-router.php
 | V-BETA-07 | J-INVITE | `artifacts/v-beta-07-invite.md` | ✅ Pass | complete |
 | V-BETA-08 | J-KEKABA | `artifacts/v-beta-08-kekaba.md` | ✅ Pass | complete |
 | V-BETA-09 | Ops panel | `artifacts/v-beta-09-ops.md` | ✅ J-ADMIN (UI) | complete |
+| J-RENDER | Client render | — | ✅ Pass | validates blog/coffee/yoga templates hydrate via node harness |
 
 ---
 
