@@ -7,16 +7,16 @@
 
 ## Video walkthroughs (real interactions)
 
-Videos are committed in `docs/reviews/artifacts/`.
+**Download all videos:** https://github.com/Raaakete/Birkly/releases/tag/p28-demo-videos-2026-07-14
 
-| Video | What you will see |
-|-------|-------------------|
-| [v-beta-02-blog-fixed.mp4](artifacts/v-beta-02-blog-fixed.mp4) | **Blog:** post cards render correctly (no nesting) → open post → back |
-| [v-beta-03-coffee-fixed.mp4](artifacts/v-beta-03-coffee-fixed.mp4) | **Coffee:** product grid → detail with variant prices → add to cart |
-| [v-beta-04-yoga-fixed.mp4](artifacts/v-beta-04-yoga-fixed.mp4) | **Yoga:** upcoming events → event detail → RSVP submit |
-| [v-beta-07-social-fixed.mp4](artifacts/v-beta-07-social-fixed.mp4) | **Social:** register → login → feed |
+| Video | What you will see | Download |
+|-------|-------------------|----------|
+| v-beta-02-blog-fixed.mp4 | **Blog:** post cards (no nesting) → open post → back | [download](https://github.com/Raaakete/Birkly/releases/download/p28-demo-videos-2026-07-14/v-beta-02-blog-fixed.mp4) |
+| v-beta-03-coffee-fixed.mp4 | **Coffee:** product grid → variant prices → add to cart | [download](https://github.com/Raaakete/Birkly/releases/download/p28-demo-videos-2026-07-14/v-beta-03-coffee-fixed.mp4) |
+| v-beta-04-yoga-fixed.mp4 | **Yoga:** upcoming events → event detail → RSVP | [download](https://github.com/Raaakete/Birkly/releases/download/p28-demo-videos-2026-07-14/v-beta-04-yoga-fixed.mp4) |
+| v-beta-07-social-fixed.mp4 | **Social:** register → login → feed | [download](https://github.com/Raaakete/Birkly/releases/download/p28-demo-videos-2026-07-14/v-beta-07-social-fixed.mp4) |
 
-Older recordings (pre-fix): `v-beta-02-04-blog-yoga-interaction.mp4`, `v-beta-03-coffee-add-to-cart.mp4`, etc.
+Also in repo: `docs/reviews/artifacts/v-beta-*-fixed.mp4` on branch `cursor/reference-demo-client-fixes-4b7a`
 
 ### Prepare before each demo
 
