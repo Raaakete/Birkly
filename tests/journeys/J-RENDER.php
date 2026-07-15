@@ -113,5 +113,43 @@ return [
         $yout = (string) ($yogaRender['output'] ?? '');
         journey_assert('yoga render lists events', strpos($yout, (string) ($upcoming[0]['title'] ?? '')) !== false);
         journey_assert('yoga render no raw tags', strpos($yout, '{for each') === false);
+
+        journey_prepare_reference_demo('blog');
+        $postBundle = journey_page_bundle($base, [
+            ['type' => 'get_entry', 'into' => 'entry', 'collection' => 'blog', 'slug' => 'welcome-to-birkly'],
+        ]);
+        journey_assert('blog post bundle ok', ($postBundle['status'] ?? '') === 'ok');
+        $postEntry = $postBundle['data']['entry'] ?? [];
+        journey_assert('blog post entry for render', ($postEntry['title'] ?? '') !== '');
+
+        $postTplPath = $root . '/reference-projects/blog/website/post.html';
+        preg_match('/<main[^>]*>(.*)<\/main>/s', file_get_contents($postTplPath), $postm);
+        $postTpl = $postm[1] ?? '';
+        $postData = array_merge($postEntry, ['entry' => $postEntry, 'tags' => $postEntry['tags'] ?? []]);
+        $postRender = journey_client_render($harness, $postTpl, $postData);
+        journey_assert('post detail render harness ok', ($postRender['ok'] ?? false), json_encode($postRender));
+        $postOut = (string) ($postRender['output'] ?? '');
+        journey_assert('post detail has html content', strpos($postOut, '<p>') !== false);
+        journey_assert('post detail has tag text', strpos($postOut, 'cms') !== false);
+        journey_assert('post detail no raw placeholders', strpos($postOut, '{ content }') === false && strpos($postOut, '{item}') === false);
+
+        journey_prepare_reference_demo('yoga');
+        $eventBundle = journey_page_bundle($base, [
+            ['type' => 'get_entry', 'into' => 'entry', 'collection' => 'events', 'slug' => 'sunrise-vinyasa'],
+        ]);
+        journey_assert('yoga event bundle ok', ($eventBundle['status'] ?? '') === 'ok');
+        $eventEntry = $eventBundle['data']['entry'] ?? [];
+        journey_assert('yoga event entry for render', ($eventEntry['title'] ?? '') !== '');
+
+        $eventTplPath = $root . '/reference-projects/yoga/website/event.html';
+        preg_match('/<main[^>]*>(.*)<\/main>/s', file_get_contents($eventTplPath), $evm);
+        $eventTpl = $evm[1] ?? '';
+        $eventData = array_merge($eventEntry, ['entry' => $eventEntry]);
+        $eventRender = journey_client_render($harness, $eventTpl, $eventData);
+        journey_assert('event detail render harness ok', ($eventRender['ok'] ?? false), json_encode($eventRender));
+        $eventOut = (string) ($eventRender['output'] ?? '');
+        journey_assert('event detail has description', strlen(trim(strip_tags($eventOut))) > 50);
+        journey_assert('event detail no raw description tag', strpos($eventOut, '{ description }') === false);
+        journey_assert('event detail has rsvp form', strpos($eventOut, 'data-birkly-action="rsvp"') !== false);
     },
 ];

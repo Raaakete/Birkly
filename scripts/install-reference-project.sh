@@ -47,6 +47,11 @@ if [[ ! -d "$WEB_SRC" ]]; then
 fi
 
 mkdir -p "$DEST_COL"
+
+echo "[install-reference-project] Clearing existing collections for demo isolation..."
+rm -rf "$DEST_COL"/*
+mkdir -p "$DEST_COL"
+
 MANIFEST="$SRC/manifest.json"
 
 echo "[install-reference-project] Installing '$PROJECT'..."
@@ -98,7 +103,7 @@ if [[ -f "$MANIFEST" ]] && command -v php >/dev/null 2>&1; then
   foreach (($m["plugins"] ?? []) as $p) echo $p . "\n";
   ')"
   if [[ -n "$plugins" ]]; then
-    echo "[install-reference-project] Required plugins (activate in Admin → Plugins):"
+    echo "[install-reference-project] Required plugins:"
     while IFS= read -r pid; do
       [[ -n "$pid" ]] && echo "  - $pid"
     done <<< "$plugins"
@@ -106,8 +111,32 @@ if [[ -f "$MANIFEST" ]] && command -v php >/dev/null 2>&1; then
       echo "[install-reference-project] Running install-dev-plugins.sh..."
       "$ROOT/scripts/install-dev-plugins.sh" || true
     fi
+    SETTINGS="$ROOT/settings/plugins.json"
+    mkdir -p "$(dirname "$SETTINGS")"
+    php -r '
+$settingsPath = $argv[1];
+$plugins = array_filter(array_map("trim", explode("\n", $argv[2])));
+$data = [];
+if (is_file($settingsPath)) {
+    $decoded = json_decode(file_get_contents($settingsPath), true);
+    if (is_array($decoded)) $data = $decoded;
+}
+foreach ($plugins as $id) {
+    if ($id === "") continue;
+    if (!isset($data[$id]) || !is_array($data[$id])) {
+        $data[$id] = ["active" => true, "settings" => []];
+    } else {
+        $data[$id]["active"] = true;
+    }
+}
+file_put_contents($settingsPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+' "$SETTINGS" "$plugins"
   fi
 fi
+
+# Clear page snapshot cache so client fetches fresh bundle data
+rm -rf "$ROOT/cache/page-snapshots"/* 2>/dev/null || true
+mkdir -p "$ROOT/cache/page-snapshots"
 
 SITE_URL="/reference-projects/$PROJECT/website/index.html"
 echo ""

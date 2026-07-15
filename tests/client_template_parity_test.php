@@ -130,4 +130,46 @@ $limitTpl = "{for each entry in 'blog' ordered by newest limit 1}{ title }{endfo
 $r = client_render($harness, $limitTpl, $nestedBlogData);
 test_assert('loop limit 1', ($r['ok'] ?? false) && trim($r['output'] ?? '') === 'Post A', 'got: ' . json_encode($r));
 
+$postTpl = <<<'TPL'
+<h1>{ title }</h1>
+<div class="tags">
+{for each item in 'tags'}
+<span class="tag">{item}</span>
+{endfor}
+</div>
+<div class="post-content">{ content }</div>
+TPL;
+$postData = [
+    'title' => 'Welcome',
+    'content' => '<p>Hello <strong>world</strong></p>',
+    'tags' => ['cms', 'tutorial'],
+    'entry' => [
+        'title' => 'Welcome',
+        'content' => '<p>Hello <strong>world</strong></p>',
+        'tags' => ['cms', 'tutorial'],
+    ],
+];
+$r = client_render($harness, $postTpl, $postData);
+test_assert('single-entry post renders content and tags', ($r['ok'] ?? false)
+    && strpos($r['output'] ?? '', '<p>Hello <strong>world</strong></p>') !== false
+    && strpos($r['output'] ?? '', '<span class="tag">cms</span>') !== false
+    && strpos($r['output'] ?? '', '{item}') === false
+    && strpos($r['output'] ?? '', '{ content }') === false,
+    'got: ' . json_encode($r));
+
+$eventTpl = '<h1>{ title }</h1><div class="content">{ description }</div>';
+$eventData = [
+    'title' => 'Morning Flow',
+    'description' => '<p>Beginner-friendly <em>vinyasa</em> class.</p>',
+    'entry' => [
+        'title' => 'Morning Flow',
+        'description' => '<p>Beginner-friendly <em>vinyasa</em> class.</p>',
+    ],
+];
+$r = client_render($harness, $eventTpl, $eventData);
+test_assert('single-entry event renders description html', ($r['ok'] ?? false)
+    && strpos($r['output'] ?? '', '<em>vinyasa</em>') !== false
+    && strpos($r['output'] ?? '', '{ description }') === false,
+    'got: ' . json_encode($r));
+
 exit(test_finish('client_template_parity_test'));

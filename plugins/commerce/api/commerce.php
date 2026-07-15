@@ -7,7 +7,24 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 
 require_once __DIR__ . '/../../../api/session.php';
-haru_secure_session_start();
+
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
+if (!is_array($input)) {
+    $input = [];
+}
+if ($input === [] && !empty($_POST)) {
+    $input = $_POST;
+}
+$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
+
+// Storefront cart/checkout uses the site session so {commerce_cart_count} and add-to-cart
+// forms share the same session (public.php template functions use birkly_site_sid).
+$publicActions = ['get', 'add', 'update', 'remove', 'checkout', 'set_coupon', 'set_affiliate', 'set_gift_card', 'get_quote', 'accept_quote', 'quote_checkout'];
+if ($action !== '' && in_array($action, $publicActions, true)) {
+    birkly_site_session_start();
+} else {
+    haru_secure_session_start();
+}
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../../../api/auth.php';
@@ -22,15 +39,6 @@ if (!commerce_plugin_active()) {
 
 commerce_bootstrap();
 commerce_bootstrap_cart_services();
-
-$input = json_decode(file_get_contents('php://input'), true) ?? [];
-if (!is_array($input)) {
-    $input = [];
-}
-if ($input === [] && !empty($_POST)) {
-    $input = $_POST;
-}
-$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
 
 $cart = new CommerceCartSession();
 $catalog = new CommerceCatalog();
@@ -56,7 +64,6 @@ $giftCards = new GiftCardStore();
 $quoteStore = new CommerceQuoteStore();
 $analytics = new CommerceAnalyticsService($orders);
 
-$publicActions=['get','add','update','remove','checkout','set_coupon','set_affiliate','set_gift_card','get_quote','accept_quote','quote_checkout'];
 $adminActions = [
     'list_catalog', 'reindex_catalog', 'list_orders', 'get_order', 'refund_order',
     'list_subscriptions', 'get_subscription', 'cancel_subscription', 'upgrade_subscription',

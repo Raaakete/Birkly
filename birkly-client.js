@@ -1067,6 +1067,22 @@
     const loadPageBundle = Birkly.bundle.loadPageBundle;
     const tryLoadPageSnapshot = Birkly.bundle.tryLoadPageSnapshot;
 
+    function isRawHtmlField(name) {
+        if (!name) return false;
+        const n = String(name).toLowerCase();
+        if (n === 'content' || n === 'description' || n === 'body' || n === 'html') return true;
+        return /\.content$/.test(n) || /\.description$/.test(n);
+    }
+
+    function formatLoopScalar(item) {
+        if (typeof item === 'string') return escapeHtml(item);
+        if (item && typeof item === 'object') {
+            const v = item.value ?? item.name ?? item.id ?? item.label ?? item;
+            return typeof v === 'string' ? escapeHtml(v) : String(v);
+        }
+        return escapeHtml(String(item));
+    }
+
     // ---------------------------------------------------------------------
     // Plugin Template Functions (template-first, plugin self-contained)
     //
@@ -1737,12 +1753,7 @@
                 
                 // If it's the loop variable (e.g., 'item'), output the current item
                 if (varName === itemVar) {
-                    if (typeof item === 'string') return escapeHtml(item);
-                    if (item && typeof item === 'object') {
-                        const v = item.value ?? item.name ?? item.id ?? item.label ?? item;
-                        return typeof v === 'string' ? escapeHtml(v) : String(v);
-                    }
-                    return escapeHtml(String(item));
+                    return formatLoopScalar(item);
                 }
                 
                 // Otherwise, check if it's in the data context
@@ -1772,6 +1783,9 @@
                 const value = getNestedValue(itemData, pathParts.join('.'));
                 if (value === null || value === undefined) return '';
                 if (pathParts.includes('content') || pathParts[pathParts.length - 1] === 'content') {
+                    return String(value);
+                }
+                if (isRawHtmlField(pathParts[pathParts.length - 1])) {
                     return String(value);
                 }
                 return escapeHtml(String(value));
@@ -1811,7 +1825,7 @@
                 if (value === null || value === undefined) return '';
                 
                 const lastSegment = rawPath.split('.').pop();
-                if (lastSegment === 'content' || /\.content$/.test(rawPath)) {
+                if (lastSegment === 'content' || /\.content$/.test(rawPath) || isRawHtmlField(lastSegment)) {
                     return String(value);
                 }
                 if (rawPath === 'date' && arg) {
@@ -2360,13 +2374,13 @@
                                 
                                 // Otherwise, try to get from the outer loop item
                                 if (item && Object.prototype.hasOwnProperty.call(item, name)) {
-                                    if (name === 'content') return (item[name] || '');
+                                    if (isRawHtmlField(name)) return (item[name] || '');
                                     return escapeHtml(item[name] || '');
                                 }
                                 
                                 // Fallback to outer data
                                 if (data && Object.prototype.hasOwnProperty.call(data, name)) {
-                                    if (name === 'content') return (data[name] || '');
+                                    if (isRawHtmlField(name)) return (data[name] || '');
                                     return escapeHtml(data[name] || '');
                                 }
                                 
@@ -2496,12 +2510,17 @@
                     const lowers = name.toLowerCase();
                     if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
                     
+                    // Loop scalar: {item} inside {for each item in 'tags'}
+                    if (name === itemVar) {
+                        return formatLoopScalar(item);
+                    }
+                    
                     // Check if this is a date field
                     const isDateField = name === 'created_at' || name === 'updated_at' || name === 'published_at' || name === 'date';
                     
                     // Prefer current item property (in loop context, item is the entry)
                     if (item && Object.prototype.hasOwnProperty.call(item, name)) {
-                        if (name === 'content') return (item[name] || ''); // auto-raw for editor content
+                        if (isRawHtmlField(name)) return (item[name] || '');
                         if (isDateField) {
                             // Format date fields to show just the date (YYYY-MM-DD) by default
                             return formatValueForOutput(item[name], name);
@@ -2510,7 +2529,7 @@
                     }
                     // Fallback to outer data (loopData)
                     if (data && Object.prototype.hasOwnProperty.call(data, name)) {
-                        if (name === 'content') return (data[name] || '');
+                        if (isRawHtmlField(name)) return (data[name] || '');
                         if (isDateField) {
                             // Format date fields to show just the date (YYYY-MM-DD) by default
                             return formatValueForOutput(data[name], name);
@@ -2548,6 +2567,9 @@
                     
                     // Auto-raw for content fields
                     if (pathParts.includes('content') || pathParts[pathParts.length - 1] === 'content') {
+                        return String(value);
+                    }
+                    if (isRawHtmlField(pathParts[pathParts.length - 1])) {
                         return String(value);
                     }
                     return escapeHtml(String(value));
@@ -2634,7 +2656,7 @@
                     
                     // Auto-raw only for content fields (entry.content, content, etc.)
                     const lastSegment = rawPath.split('.').pop();
-                    if (lastSegment === 'content' || /\.content$/.test(rawPath)) {
+                    if (lastSegment === 'content' || /\.content$/.test(rawPath) || isRawHtmlField(lastSegment)) {
                         return String(value);
                     }
                     
@@ -2899,7 +2921,7 @@
                         
                         // Otherwise, try to get from the data object
                         if (data && Object.prototype.hasOwnProperty.call(data, name)) {
-                            if (name === 'content') return (data[name] || '');
+                            if (isRawHtmlField(name)) return (data[name] || '');
                             return escapeHtml(data[name] || '');
                         }
                         
@@ -3078,7 +3100,7 @@
                     // Log site element access for debugging
                     Birkly.log('Birkly: Accessing site element:', varName, 'value:', value, 'type:', typeof value);
                 }
-                if (varName === 'content' || /\.content$/.test(varName)) {
+                if (varName === 'content' || /\.content$/.test(varName) || isRawHtmlField(varName)) {
                     result += value; // auto-raw
                 } else {
                     // Check if this is a date field
@@ -3116,9 +3138,14 @@
 
         // Safety: ensure common raw content placeholder renders even if earlier
         // directive/variable heuristics kept it intact.
-        // (Single-entry pages rely heavily on `{ content }`.)
-        if (data && typeof data === 'object' && typeof data.content === 'string' && data.content.length) {
-            output = output.replace(/\{\s*content\s*\}/g, data.content);
+        // (Single-entry pages rely heavily on `{ content }` / `{ description }`.)
+        if (data && typeof data === 'object') {
+            if (typeof data.content === 'string' && data.content.length) {
+                output = output.replace(/\{\s*content\s*\}/g, data.content);
+            }
+            if (typeof data.description === 'string' && data.description.length) {
+                output = output.replace(/\{\s*description\s*\}/g, data.description);
+            }
         }
         
         // {set} directives are already processed in preprocessTemplateFunctionCalls
@@ -5399,18 +5426,22 @@
         const snapshotLoaded = bundleRequests.length > 0 && Birkly.bundle.shouldProbeSnapshot()
             ? await tryLoadPageSnapshot() : false;
         if (!snapshotLoaded && bundleRequests.length > 0) {
-            await loadPageBundle(bundleRequests);
+            try {
+                await loadPageBundle(bundleRequests);
+            } catch (bundleErr) {
+                Birkly.warn('Birkly: page bundle preload failed (continuing with templates):', bundleErr);
+            }
         }
 
-        // Bind generic action forms ASAP (templates can take time to process)
-        bindActionForms();
-        
-        // Process templates immediately (don't wait for DOMContentLoaded)
+        // Process templates before binding forms so hidden fields are rendered
         console.log('[Birkly] init: processing templates...');
         Birkly.log('Birkly: Processing templates...');
         await processTemplates();
         console.log('[Birkly] init: templates processed');
         Birkly.log('Birkly: Templates processed');
+
+        // Bind action forms after templates (forms need rendered field values)
+        bindActionForms();
         } catch (err) {
             console.error('[Birkly] init error:', err);
             Birkly.error('Birkly: init error:', err);

@@ -20,11 +20,14 @@ if (!events_plugin_active()) {
 
 events_bootstrap();
 
-$action = $_GET['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
-if ($action === '' && isset($input['action'])) {
-    $action = $input['action'];
+if (!is_array($input)) {
+    $input = [];
 }
+if ($input === [] && !empty($_POST)) {
+    $input = $_POST;
+}
+$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
 
 $catalog = new EventsCatalog();
 $registrations = new EventsRegistrationStore();
