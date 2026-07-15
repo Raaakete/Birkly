@@ -151,5 +151,77 @@ return [
         journey_assert('event detail has description', strlen(trim(strip_tags($eventOut))) > 50);
         journey_assert('event detail no raw description tag', strpos($eventOut, '{ description }') === false);
         journey_assert('event detail has rsvp form', strpos($eventOut, 'data-birkly-action="rsvp"') !== false);
+
+        journey_prepare_reference_demo('social');
+        $socialBundle = journey_page_bundle($base, [
+            ['type' => 'list_entries', 'into' => 'social_posts', 'collection' => 'social_posts'],
+            ['type' => 'list_entries', 'into' => 'merch', 'collection' => 'merch'],
+            ['type' => 'list_entries', 'into' => 'site_elements', 'collection' => 'site_elements'],
+        ]);
+        journey_assert('social bundle ok', ($socialBundle['status'] ?? '') === 'ok');
+        $socialPosts = $socialBundle['data']['social_posts'] ?? [];
+        journey_assert('social posts for render', count($socialPosts) > 0);
+
+        $socialTplPath = $root . '/reference-projects/social/website/index.html';
+        $socialFeedTpl = <<<'TPL'
+{for each entry in 'social_posts' with status = published ordered by newest}
+<div class="post card">
+<strong>{ author_name }</strong>
+<div>{ content }</div>
+</div>
+{endfor}
+TPL;
+        $socialRender = journey_client_render($harness, $socialFeedTpl, [
+            'social_posts' => $socialPosts,
+        ]);
+        journey_assert('social feed render harness ok', ($socialRender['ok'] ?? false), json_encode($socialRender));
+        $sout = (string) ($socialRender['output'] ?? '');
+        journey_assert('social feed lists posts', substr_count($sout, 'class="post card"') >= 1);
+        journey_assert('social feed includes seed content', strpos($sout, 'HaruSocial') !== false || strpos($sout, 'reference projects') !== false);
+        journey_assert('social feed no raw loop tags', strpos($sout, '{for each') === false);
+        journey_assert('social feed no yoga bleed', stripos($sout, 'Stillwater Yoga') === false && stripos($sout, 'Sunrise Vinyasa') === false);
+
+        $socialMainTpl = '';
+        preg_match('/<main[^>]*>(.*)<\/main>/s', file_get_contents($socialTplPath), $sm);
+        $socialMainTpl = $sm[1] ?? '';
+        $socialSe = [];
+        foreach ($socialBundle['data']['site_elements'] ?? [] as $entry) {
+            $key = $entry['key'] ?? $entry['slug'] ?? $entry['id'] ?? '';
+            if ($key !== '') {
+                $socialSe[$key] = $entry;
+            }
+        }
+        $socialMainRender = journey_client_render($harness, $socialMainTpl, array_merge($socialBundle['data'] ?? [], [
+            'site_elements' => $socialSe,
+            'user_logged_in' => false,
+            'user_current' => false,
+            'commerce_cart_count' => 0,
+        ]));
+        journey_assert('social main render harness ok', ($socialMainRender['ok'] ?? false), json_encode($socialMainRender));
+        $socialMainOut = (string) ($socialMainRender['output'] ?? '');
+        journey_assert('social main lists seed author', strpos($socialMainOut, 'Demo Admin') !== false);
+        journey_assert('social main has merch section', strpos($socialMainOut, 'Merch') !== false);
+
+        journey_prepare_reference_demo('influencer');
+        $influencerBundle = journey_page_bundle($base, [
+            ['type' => 'list_entries', 'into' => 'blog', 'collection' => 'blog'],
+            ['type' => 'list_entries', 'into' => 'products', 'collection' => 'products'],
+            ['type' => 'list_entries', 'into' => 'social_posts', 'collection' => 'social_posts'],
+            ['type' => 'template_function', 'into' => 'upcoming', 'name' => 'upcoming_events', 'args' => [3]],
+        ]);
+        journey_assert('influencer bundle ok', ($influencerBundle['status'] ?? '') === 'ok');
+        $influencerTplPath = $root . '/reference-projects/influencer/website/index.html';
+        preg_match('/<main[^>]*>(.*)<\/main>/s', file_get_contents($influencerTplPath), $im);
+        $influencerTpl = $im[1] ?? '';
+        $influencerData = array_merge($influencerBundle['data'] ?? [], [
+            'upcoming' => $influencerBundle['data']['upcoming'] ?? [],
+            'commerce_cart_count' => 0,
+        ]);
+        $influencerRender = journey_client_render($harness, $influencerTpl, $influencerData);
+        journey_assert('influencer render harness ok', ($influencerRender['ok'] ?? false), json_encode($influencerRender));
+        $iout = (string) ($influencerRender['output'] ?? '');
+        journey_assert('influencer has blog section', strpos($iout, 'Latest posts') !== false);
+        journey_assert('influencer has shop section', strpos($iout, 'Shop') !== false);
+        journey_assert('influencer no raw tags', strpos($iout, '{for each') === false);
     },
 ];

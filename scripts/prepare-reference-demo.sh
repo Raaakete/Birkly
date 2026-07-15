@@ -77,7 +77,9 @@ if echo "$PLUGINS" | grep -qx events; then
   " 2>/dev/null || true
 fi
 
-# Clear page snapshot cache so client fetches fresh bundle data
+# Clear collection + page snapshot caches (see install-reference-project.sh)
+rm -rf "$ROOT/cache/collections"/* 2>/dev/null || true
+mkdir -p "$ROOT/cache/collections"
 rm -rf "$ROOT/cache/page-snapshots"/* 2>/dev/null || true
 mkdir -p "$ROOT/cache/page-snapshots"
 

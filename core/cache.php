@@ -8,13 +8,17 @@ class Cache {
     private $cacheDir;
     private $enabled;
     
-    public function __construct($cacheDir = '../cache') {
-        $this->cacheDir = $cacheDir;
+    public function __construct($cacheDir = null) {
+        if ($cacheDir === null || $cacheDir === '../cache') {
+            $this->cacheDir = dirname(__DIR__) . '/cache';
+        } else {
+            $this->cacheDir = $cacheDir;
+        }
         $this->enabled = true; // Can be configured via settings
         
         // Create cache directory if it doesn't exist
         if (!is_dir($this->cacheDir)) {
-            mkdir($this->cacheDir, 0755, true);
+            @mkdir($this->cacheDir, 0755, true);
         }
     }
     
@@ -24,7 +28,7 @@ class Cache {
     private function getCachePath($collectionSlug, $type = 'entries') {
         $collectionCacheDir = $this->cacheDir . '/collections/' . $collectionSlug;
         if (!is_dir($collectionCacheDir)) {
-            mkdir($collectionCacheDir, 0755, true);
+            @mkdir($collectionCacheDir, 0755, true);
         }
         return $collectionCacheDir . '/' . $type . '.json';
     }
@@ -60,6 +64,20 @@ class Cache {
         
         // If cache is older than most recent entry, invalidate
         if (isset($cacheData['cache_time']) && $mostRecentEntryTime > $cacheData['cache_time']) {
+            return null;
+        }
+
+        // Invalidate when cached entry ids no longer match disk (e.g. demo project switch).
+        $diskIds = $this->getEntryIdsOnDisk($entriesDir);
+        $cachedIds = [];
+        foreach ($cacheData['entries'] as $entry) {
+            if (!empty($entry['id'])) {
+                $cachedIds[] = (string) $entry['id'];
+            }
+        }
+        sort($diskIds);
+        sort($cachedIds);
+        if ($diskIds !== $cachedIds) {
             return null;
         }
         
@@ -165,6 +183,27 @@ class Cache {
         return true;
     }
     
+    /**
+     * Entry ids present on disk (published JSON files only).
+     */
+    private function getEntryIdsOnDisk($entriesDir) {
+        $ids = [];
+        if (!is_dir($entriesDir)) {
+            return $ids;
+        }
+        foreach (scandir($entriesDir) as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            $filePath = $entriesDir . '/' . $file;
+            if (is_dir($filePath) || pathinfo($file, PATHINFO_EXTENSION) !== 'json') {
+                continue;
+            }
+            $ids[] = pathinfo($file, PATHINFO_FILENAME);
+        }
+        return $ids;
+    }
+
     /**
      * Get most recent entry modification time
      */

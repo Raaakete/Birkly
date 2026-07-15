@@ -71,8 +71,8 @@ function haru_secure_session_start() {
 
 /**
  * Start the site (frontend) session so user_current / user_logged_in see the website user.
- * Used by public API and demo site so template functions see the logged-in demo user (e.g. Alice),
- * not the admin session (e.g. CMS admin).
+ * Used by public API template functions and storefront plugin actions (commerce cart,
+ * events RSVP). Admin panel and CMS API routes use birkly_cms_sid / birkly_admin_sid.
  */
 function birkly_site_session_start() {
     if (session_status() !== PHP_SESSION_NONE) {

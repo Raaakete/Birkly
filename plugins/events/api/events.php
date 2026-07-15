@@ -7,7 +7,24 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 
 require_once __DIR__ . '/../../../api/session.php';
-haru_secure_session_start();
+
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
+if (!is_array($input)) {
+    $input = [];
+}
+if ($input === [] && !empty($_POST)) {
+    $input = $_POST;
+}
+$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
+
+$publicActions = [
+    'ics', 'webcal', 'feed', 'list_occurrences', 'list_events', 'rsvp', 'paid_register',
+];
+if ($action !== '' && in_array($action, $publicActions, true)) {
+    birkly_site_session_start();
+} else {
+    haru_secure_session_start();
+}
 
 require_once __DIR__ . '/../init.php';
 
@@ -19,15 +36,6 @@ if (!events_plugin_active()) {
 }
 
 events_bootstrap();
-
-$input = json_decode(file_get_contents('php://input'), true) ?? [];
-if (!is_array($input)) {
-    $input = [];
-}
-if ($input === [] && !empty($_POST)) {
-    $input = $_POST;
-}
-$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
 
 $catalog = new EventsCatalog();
 $registrations = new EventsRegistrationStore();

@@ -82,6 +82,7 @@ $suites = [
     'studio_filesystem_test.php',
     'studio_compiler_v2_test.php',
     'client_template_parity_test.php',
+    'reference_demo_isolation_test.php',
     'ai_permissions_test.php',
     'ai_context_pack_test.php',
     'ai_knowledge_coverage_test.php',

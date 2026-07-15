@@ -137,8 +137,8 @@
         }
     };
     
-    // Unconditional so we can confirm script loaded (even without ?__dbg)
-    console.log('[Birkly] script loaded');
+    // Confirm script load in debug mode only
+    if (Birkly.debug) console.log('[Birkly] script loaded');
     if (Birkly.debug) console.warn('Birkly client build: dev8 (debug on)');
 
     // ---------------------------------------------------------------------
@@ -3027,6 +3027,14 @@
             const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry','else'];
             const isDirectiveKeyword = directiveKeywords.includes(lowers);
             
+            // Standalone conditional/loop closers must never be replaced as variables.
+            const standaloneDirectives = ['else', 'elseif', 'endif', 'endfor', 'endforeach', 'endget'];
+            if (standaloneDirectives.includes(lowers)) {
+                result += varMatch[0];
+                lastIndex = matchEnd;
+                continue;
+            }
+
             // Check if it's in a directive context
             // Examples: "{if entry exist}" - "entry" should NOT be replaced, "exist" should NOT be replaced
             // Examples: "{ entry.author_name }" - "entry" is NOT in a directive, should be replaced
@@ -3743,6 +3751,15 @@
             });
             return false; // Don't clear existing content
         }
+
+        // Strip leftover template directives rather than showing raw {for each ...} tags
+        if (/\{for\s+(?:each\s+)?/.test(rendered) || /\{if\s+/.test(rendered) || /\{\s*[a-zA-Z_][a-zA-Z0-9_.]*\s*\}/.test(rendered)) {
+            const stripped = stripRemainingTemplateTags(rendered);
+            if (stripped !== rendered) {
+                Birkly.warn('Birkly: Stripped leftover template tags before DOM update', { context });
+                rendered = stripped;
+            }
+        }
         
         element.innerHTML = rendered;
         return true; // Indicate success
@@ -4380,7 +4397,7 @@
         }
         
         // Process each template (always log count so we see if templates were found)
-        console.log('[Birkly] processTemplates: found', templates.length, 'templates');
+        Birkly.log('[Birkly] processTemplates: found', templates.length, 'templates');
         Birkly.log('Birkly: About to process', templates.length, 'templates');
         for (let template of templates) {
             try {
@@ -5405,11 +5422,9 @@
         }
 
         // Process templates before binding forms so hidden fields are rendered
-        console.log('[Birkly] init: processing templates...');
-        Birkly.log('Birkly: Processing templates...');
+        Birkly.log('[Birkly] init: processing templates...');
         await processTemplates();
-        console.log('[Birkly] init: templates processed');
-        Birkly.log('Birkly: Templates processed');
+        Birkly.log('[Birkly] init: templates processed');
 
         // Bind action forms after templates (forms need rendered field values)
         bindActionForms();
@@ -5619,14 +5634,14 @@
         // Avoid double-binding if init() is called multiple times
         if (bindActionForms._bound) return;
         bindActionForms._bound = true;
-        Birkly.warn('Birkly: bindActionForms() bound');
+        Birkly.log('Birkly: bindActionForms() bound');
 
         const bound = new WeakSet();
 
         async function handleSubmit(form, e) {
             if (form.dataset.haruSubmitting === '1') return;
             form.dataset.haruSubmitting = '1';
-            Birkly.warn('Birkly: handleSubmit()', {
+            Birkly.log('Birkly: handleSubmit()', {
                 eventType: e?.type,
                 hasDirectUrl: !!form.getAttribute('data-birkly-url'),
                 route: form.getAttribute('data-birkly-route'),
@@ -5680,7 +5695,7 @@
                     ? (directUrl.startsWith('http') ? directUrl : (Birkly.cmsUrl + directUrl))
                     : (Birkly.cmsUrl + '/api/index.php');
 
-                Birkly.warn('Birkly: action form submit ->', {
+                Birkly.log('Birkly: action form submit ->', {
                     endpoint,
                     route,
                     action,

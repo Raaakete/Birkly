@@ -134,7 +134,10 @@ file_put_contents($settingsPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNE
   fi
 fi
 
-# Clear page snapshot cache so client fetches fresh bundle data
+# Clear collection + page snapshot caches (cp -a preserves entry mtimes; mtime-based
+# cache validation alone would serve stale entries after project switch).
+rm -rf "$ROOT/cache/collections"/* 2>/dev/null || true
+mkdir -p "$ROOT/cache/collections"
 rm -rf "$ROOT/cache/page-snapshots"/* 2>/dev/null || true
 mkdir -p "$ROOT/cache/page-snapshots"
 

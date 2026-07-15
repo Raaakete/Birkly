@@ -6,6 +6,13 @@
     <title>Profile — Maya Rivers</title>
     <link rel="stylesheet" href="/reference-projects/influencer/website/styles.css">
     <meta data-birkly-prefetch="template_function" data-birkly-into="profile" data-name="user_profile" data-args='["{query.user_id}"]'>
+    <meta
+        data-birkly-prefetch="entries"
+        data-birkly-into="profile_posts"
+        data-collection="social_posts"
+        data-filter-field="author_user_id"
+        data-filter-value="{query.user_id}"
+    >
 </head>
 <body>
     <header>
@@ -18,8 +25,17 @@
         <h2>{ profile.name }</h2>
         <p class="text-muted">{ profile.email }</p>
         {endif}
+
+        <h3 style="margin-top: 1.5rem;">Posts</h3>
+        {for each entry in profile_posts}
+        <div class="influencer-card" style="margin-bottom: 0.75rem;">
+            <p style="white-space: pre-wrap;">{ content }</p>
+            <a href="/reference-projects/influencer/website/post.html?slug={ slug }">View post</a>
+        </div>
+        {endfor}
+
         <p style="margin-top: 1.5rem;"><a href="/reference-projects/influencer/website/index.html">← Home</a></p>
     </main>
-    <script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>
+    <script src="/birkly-client.js"></script>
 </body>
 </html>

@@ -46,7 +46,7 @@ http://localhost:8080/reference-projects/blog/website/index.html
 
 ## Rules (all projects)
 
-- **Client script only:** `<script src="/birkly-client.js" data-cms-url="http://localhost:8080"></script>`
+- **Client script only:** `<script src="/birkly-client.js"></script>` (CMS URL auto-detected from script origin on same host)
 - **No** `<meta name="birkly-baked">`, **no** `birkly-hydrate.js`, **no** snapshot scripts
 - **No** custom `fetch()` in site JavaScript — use templating and `data-birkly-*` forms
 - Slug/detail pages use `meta[name=birkly-page]`, `meta[name=birkly-collection]`, and optionally `meta[name=birkly-slug]`
