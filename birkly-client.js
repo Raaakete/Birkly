@@ -5350,61 +5350,35 @@
      * Initialize Birkly
      */
     /**
-     * Create language selector UI
+     * Wire template-defined language selectors (opt-in only).
+     * Sites add: <select data-birkly-language-select>...</select>
+     * The client does not inject a default language UI.
      */
-    function createLanguageSelector() {
-        // Prefer template-defined selectors: any <select data-birkly-language-select>
+    function wireLanguageSelectors() {
         const selects = document.querySelectorAll('select[data-birkly-language-select]');
-        if (selects.length) {
-            const current = Birkly.currentLanguage || 'en';
-            selects.forEach(sel => {
-                try {
-                    sel.value = current;
-                } catch (_) {
-                    // ignore invalid values
-                }
-                sel.addEventListener('change', function () {
-                    const newLang = this.value || 'en';
-                    Birkly.currentLanguage = newLang;
-                    localStorage.setItem('birkly_language', newLang);
-                    // Update URL with language parameter
-                    const url = new URL(window.location);
-                    url.searchParams.set('lang', newLang);
-                    window.location.href = url.toString();
-                });
+        if (!selects.length) {
+            return;
+        }
+        const current = Birkly.currentLanguage || 'en';
+        selects.forEach(sel => {
+            if (sel.dataset.birklyLanguageWired === '1') {
+                return;
+            }
+            sel.dataset.birklyLanguageWired = '1';
+            try {
+                sel.value = current;
+            } catch (_) {
+                // ignore invalid values
+            }
+            sel.addEventListener('change', function () {
+                const newLang = this.value || 'en';
+                Birkly.currentLanguage = newLang;
+                localStorage.setItem('birkly_language', newLang);
+                const url = new URL(window.location);
+                url.searchParams.set('lang', newLang);
+                window.location.href = url.toString();
             });
-            return;
-        }
-
-        // Fallback: create a simple floating selector if no template hook exists
-        if (document.getElementById('birkly-language-selector')) {
-            return;
-        }
-        
-        const selector = document.createElement('div');
-        selector.id = 'birkly-language-selector';
-        selector.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
-        
-        const select = document.createElement('select');
-        select.style.cssText = 'border: none; outline: none; font-size: 14px; padding: 4px 8px; cursor: pointer;';
-        select.innerHTML = `
-            <option value="en" ${Birkly.currentLanguage === 'en' ? 'selected' : ''}>English</option>
-            <option value="de" ${Birkly.currentLanguage === 'de' ? 'selected' : ''}>Deutsch</option>
-        `;
-        
-        select.addEventListener('change', function() {
-            const newLang = this.value;
-            Birkly.currentLanguage = newLang;
-            localStorage.setItem('birkly_language', newLang);
-            
-            // Update URL with language parameter
-            const url = new URL(window.location);
-            url.searchParams.set('lang', newLang);
-            window.location.href = url.toString();
         });
-        
-        selector.appendChild(select);
-        document.body.appendChild(selector);
     }
     
     async function init() {
@@ -5414,9 +5388,6 @@
         
         try {
         Birkly.log('Birkly: Initializing...');
-        
-        // Create language selector
-        createLanguageSelector();
         
         // Detect API endpoint first
         await detectApiEndpoint();
@@ -5451,6 +5422,7 @@
         if (typeof bindActionForms.refresh === 'function') {
             bindActionForms.refresh();
         }
+        wireLanguageSelectors();
         
         // Process {entry for 'collection'} blocks (wait a bit for DOM to update)
         // Use setTimeout to ensure DOM is fully updated after template processing
