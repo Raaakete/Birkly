@@ -184,16 +184,16 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-07)
+## Current state (verified 2026-07-19)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **Phase 19 complete** (2026-07-07) — beta-ready platform; **138 test suites** green. |
-| **Birkly-Marketplace** | **Phase 19 complete** — **17 test suites** green. |
-| **Birkly-Docs** | P16–P19 corpus synced. |
-| **kekaba** | Uses hydrate/snapshots (legacy workaround) — **P20 targets live-path default instead**. |
-| **Birkly-Website** | Open-beta copy (go-live deferred). |
-| **Agent ops** | CI + autonomous execution policy on `main`. |
+| **Birkly (CMS)** | **P27 complete** — **~156 test suites**; 1 known flake (`studio_renderer_test`, P28-M15) |
+| **Birkly-Marketplace** | P10 complete — **17 test suites** green |
+| **Birkly-Docs** | Synced at release (P27 `sync-birkly-docs.sh`) |
+| **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
+| **Birkly-Website** | Open-beta copy + `business/` materials |
+| **Agent ops** | CI + autonomous execution on `main` |
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 
@@ -203,11 +203,11 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Matrices:** `docs/reviews/P27-verification-matrix.md` · **Closure:** `docs/reviews/P27-phase-closure-checklist.md` · **Docs sync:** `docs/agent-ops/BIRKLY_DOCS_SYNC.md`
 
-**Next active phase:** **Phase 28** — Beta launch automation & product gaps — **approved, in execution** (2026-07-13)
+**Next active phase:** **Phase 28** — Beta launch automation & product gaps — **approved, execution started** (2026-07-19)
 
 **P28 spec:** `docs/reviews/P28-beta-launch-automation-plan.md` · **Journeys:** `docs/reviews/P28-user-journey-catalog.md` · **Handoff:** `docs/reviews/P28-lead-engineer-handoff.md`
 
-**Paused:** **Phase 26** — Studio creative suite — resume after P28-M18
+**Paused:** **Phase 26** — Studio creative suite — resume after P28-M20
 
 **2026-07-09 — Phase 25 complete** (autonomous P25-M0→M18)
 
