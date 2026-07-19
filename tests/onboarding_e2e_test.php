@@ -16,7 +16,6 @@ if (!function_exists('curl_init')) {
 
 $root = dirname(__DIR__);
 $port = (int) (getenv('ONBOARDING_E2E_PORT') ?: 18082);
-$base = "http://127.0.0.1:$port";
 $usersDir = $root . '/users';
 $settingsDir = $root . '/settings';
 $backupUsers = sys_get_temp_dir() . '/birkly-e2e-users-' . getmypid();
@@ -26,6 +25,8 @@ $testEmail = 'onboarding-e2e-' . getmypid() . '@birkly.test';
 $testPassword = 'SecurePass123!';
 
 $serverPid = birkly_test_http_server_start($root, $port);
+$port = birkly_test_http_server_port();
+$base = "http://127.0.0.1:$port";
 
 try {
     birkly_test_backup_directory($usersDir, $backupUsers);

@@ -15,8 +15,7 @@ if (!function_exists('curl_init')) {
 }
 
 $root = dirname(__DIR__);
-$port = 18100 + (getmypid() % 1000);
-$base = "http://127.0.0.1:$port";
+$port = birkly_test_allocate_http_port(18100 + (getmypid() % 1000));
 $usersDir = $root . '/users';
 $backupUsers = sys_get_temp_dir() . '/birkly-csp-users-' . getmypid();
 $cookieFile = sys_get_temp_dir() . '/birkly-csp-cookies-' . getmypid() . '.txt';
@@ -25,6 +24,8 @@ $testEmail = 'csp-nonce-' . getmypid() . '@birkly.test';
 $testPassword = 'SecurePass123!';
 
 $serverPid = birkly_test_http_server_start($root, $port);
+$port = birkly_test_http_server_port();
+$base = "http://127.0.0.1:$port";
 
 try {
     birkly_test_backup_directory($usersDir, $backupUsers);

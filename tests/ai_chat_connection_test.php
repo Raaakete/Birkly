@@ -11,13 +11,14 @@ echo "AI chat connection regression tests\n\n";
 
 $root = dirname(__DIR__);
 $port = (int) (getenv('AI_CONNECTION_TEST_PORT') ?: 18084);
-$base = "http://127.0.0.1:$port";
 $usersDir = $root . '/users';
 $backupUsers = sys_get_temp_dir() . '/birkly-ai-users-' . getmypid();
 $cookieFile = sys_get_temp_dir() . '/birkly-ai-cookies-' . getmypid() . '.txt';
 $testEmail = 'ai-conn-e2e-' . getmypid() . '@birkly.test';
 
 $serverPid = birkly_test_http_server_start($root, $port);
+$port = birkly_test_http_server_port();
+$base = "http://127.0.0.1:$port";
 
 try {
     birkly_test_backup_directory($usersDir, $backupUsers);

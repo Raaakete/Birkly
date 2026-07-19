@@ -17,11 +17,11 @@ if (!function_exists('curl_init')) {
 }
 
 $root = dirname(__DIR__);
-$port = 18000 + (getmypid() % 1000);
-$base = "http://127.0.0.1:$port";
+$port = 0;
 $settingsDir = sys_get_temp_dir() . '/birkly-cloud-account-' . getmypid();
 $usersDir = $root . '/users';
 $backupUsers = sys_get_temp_dir() . '/birkly-cloud-users-' . getmypid();
+$backupAdmin = sys_get_temp_dir() . '/birkly-cloud-admin-backup-' . getmypid() . '.json';
 $cookieFile = sys_get_temp_dir() . '/birkly-cloud-cookies-' . getmypid() . '.txt';
 
 $testEmail = 'cloud-link-' . getmypid() . '@birkly.test';
@@ -41,7 +41,13 @@ $backupMp = sys_get_temp_dir() . '/birkly-mp-backup-' . getmypid() . '.json';
 putenv('BIRKLY_CLOUD_ACCOUNT_MOCK=1');
 putenv('BIRKLY_CLOUD_ACCOUNT_MOCK_EMAIL=' . $cloudEmail);
 
-$serverPid = birkly_test_http_server_start($root, $port);
+$serverEnv = [
+    'BIRKLY_CLOUD_ACCOUNT_MOCK' => '1',
+    'BIRKLY_CLOUD_ACCOUNT_MOCK_EMAIL' => $cloudEmail,
+];
+$serverPid = birkly_test_http_server_start($root, $port, ['env' => $serverEnv]);
+$port = birkly_test_http_server_port();
+$base = "http://127.0.0.1:$port";
 
 try {
     birkly_test_backup_directory($usersDir, $backupUsers);
@@ -97,6 +103,12 @@ try {
             unset($mpExisting['installation_owner_email']);
             file_put_contents($realMpFile, json_encode($mpExisting, JSON_PRETTY_PRINT));
         }
+    }
+
+    $adminSettingsPath = $realSettingsDir . '/admin.json';
+    if (is_file($adminSettingsPath)) {
+        copy($adminSettingsPath, $backupAdmin);
+        unlink($adminSettingsPath);
     }
 
     @unlink($cookieFile);
@@ -253,6 +265,12 @@ try {
     if (is_file($backupMp)) {
         copy($backupMp, $realMpFile);
         @unlink($backupMp);
+    }
+    if (is_file($backupAdmin)) {
+        copy($backupAdmin, $realSettingsDir . '/admin.json');
+        @unlink($backupAdmin);
+    } else {
+        @unlink($realSettingsDir . '/admin.json');
     }
 
     @unlink($cookieFile);

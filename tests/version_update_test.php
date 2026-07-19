@@ -65,13 +65,14 @@ if (function_exists('curl_init')) {
 
     $root = dirname(__DIR__);
     $port = (int) (getenv('VERSION_UPDATE_HTTP_PORT') ?: 18084);
-    $base = "http://127.0.0.1:$port";
     $usersDir = $root . '/users';
     $backupUsers = sys_get_temp_dir() . '/birkly-updates-users-' . getmypid();
     $cookieFile = sys_get_temp_dir() . '/birkly-updates-cookies-' . getmypid() . '.txt';
     $testEmail = 'updates-auth-' . getmypid() . '@birkly.test';
 
     $serverPid = birkly_test_http_server_start($root, $port);
+    $port = birkly_test_http_server_port();
+    $base = "http://127.0.0.1:$port";
 
     try {
         birkly_test_backup_directory($usersDir, $backupUsers);

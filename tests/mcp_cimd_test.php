@@ -13,13 +13,14 @@ echo "MCP CIMD OAuth tests\n\n";
 
 $root = dirname(__DIR__);
 $port = (int) (getenv('MCP_CIMD_TEST_PORT') ?: 18188);
-$base = "http://127.0.0.1:$port";
 $settingsFile = $root . '/settings/mcp_endpoints.json';
 $oauthFile = $root . '/settings/mcp_oauth.json';
 $backupSettings = $settingsFile . '.bak.' . getmypid();
 $backupOAuth = $oauthFile . '.bak.' . getmypid();
 
 $serverPid = birkly_test_http_server_start($root, $port);
+$port = birkly_test_http_server_port();
+$base = "http://127.0.0.1:$port";
 
 function cimd_pkce_pair(): array
 {

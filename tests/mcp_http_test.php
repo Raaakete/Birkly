@@ -12,11 +12,12 @@ echo "MCP HTTP integration tests\n\n";
 
 $root = dirname(__DIR__);
 $port = (int) (getenv('MCP_HTTP_TEST_PORT') ?: 18085);
-$base = "http://127.0.0.1:$port";
 $settingsFile = $root . '/settings/mcp_endpoints.json';
 $backupSettings = $settingsFile . '.bak.' . getmypid();
 
 $serverPid = birkly_test_http_server_start($root, $port);
+$port = birkly_test_http_server_port();
+$base = "http://127.0.0.1:$port";
 
 try {
     if (is_file($settingsFile)) {

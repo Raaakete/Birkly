@@ -14,7 +14,6 @@ echo "MCP Streamable HTTP tests\n\n";
 
 $root = dirname(__DIR__);
 $port = (int) (getenv('MCP_STREAMABLE_TEST_PORT') ?: 18187);
-$base = "http://127.0.0.1:$port";
 $settingsFile = $root . '/settings/mcp_endpoints.json';
 $oauthFile = $root . '/settings/mcp_oauth.json';
 $backupSettings = $settingsFile . '.bak.' . getmypid();
@@ -29,6 +28,8 @@ if (!is_dir($root . '/content/collections/blog')) {
 }
 
 $serverPid = birkly_test_http_server_start($root, $port);
+$port = birkly_test_http_server_port();
+$base = "http://127.0.0.1:$port";
 
 try {
     if (is_file($settingsFile)) {

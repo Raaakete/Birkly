@@ -11,10 +11,6 @@ test_reset_failures();
 echo "AI provider mock harness tests\n\n";
 
 $root = dirname(__DIR__);
-$mockPort = (int) (getenv('AI_MOCK_PROVIDER_PORT') ?: 18088);
-$cmsPort = (int) (getenv('AI_MOCK_CMS_PORT') ?: 18089);
-$mockBase = "http://127.0.0.1:$mockPort";
-$cmsBase = "http://127.0.0.1:$cmsPort";
 $mockRouter = __DIR__ . '/fixtures/mock_ai_provider_router.php';
 $settingsFile = $root . '/settings/security.json';
 $settingsBackup = sys_get_temp_dir() . '/birkly-security-' . getmypid() . '.json';
@@ -22,10 +18,14 @@ $usersDir = $root . '/users';
 $backupUsers = sys_get_temp_dir() . '/birkly-ai-mock-users-' . getmypid();
 $cookieFile = sys_get_temp_dir() . '/birkly-ai-mock-cookies-' . getmypid() . '.txt';
 $testEmail = 'ai-mock-e2e-' . getmypid() . '@birkly.test';
-$mockUrl = $mockBase . '/v1/chat/completions';
 
-$mockPid = birkly_test_mock_server_start($mockRouter, $mockPort);
-$cmsPid = birkly_test_http_server_start($root, $cmsPort);
+$mockPid = birkly_test_mock_server_start($mockRouter, (int) (getenv('AI_MOCK_PROVIDER_PORT') ?: 18088));
+$mockPort = (int) ($GLOBALS['__birkly_test_mock_server_port'] ?? 0);
+$cmsPid = birkly_test_http_server_start($root, (int) (getenv('AI_MOCK_CMS_PORT') ?: 18089));
+$cmsPort = birkly_test_http_server_port();
+$mockBase = "http://127.0.0.1:$mockPort";
+$cmsBase = "http://127.0.0.1:$cmsPort";
+$mockUrl = $mockBase . '/v1/chat/completions';
 
 try {
     if (is_file($settingsFile)) {
@@ -163,6 +163,9 @@ exit(test_finish('ai_provider_mock_test'));
  */
 function birkly_test_mock_server_start(string $routerScript, int $port): int
 {
+    $port = birkly_test_allocate_http_port($port);
+    $GLOBALS['__birkly_test_mock_server_port'] = $port;
+
     $cmd = sprintf(
         'php -S 127.0.0.1:%d %s',
         $port,
