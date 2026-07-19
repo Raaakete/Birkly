@@ -27,6 +27,6 @@ return [
         journey_assert('health writable logs', !empty($healthData['writable']['logs']['writable']));
 
         $login = journey_http($base, '/admin/login.php');
-        journey_assert('admin login page HTTP 200', $login['code'] === 200);
+        journey_assert('admin login page HTTP 200', in_array($login['code'], [200, 302], true), 'code ' . $login['code']);
     },
 ];

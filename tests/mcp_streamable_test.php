@@ -20,6 +20,14 @@ $oauthFile = $root . '/settings/mcp_oauth.json';
 $backupSettings = $settingsFile . '.bak.' . getmypid();
 $backupOAuth = $oauthFile . '.bak.' . getmypid();
 
+// list_entries tool expects a blog collection; journeys may have switched reference demos.
+if (!is_dir($root . '/content/collections/blog')) {
+    $installScript = $root . '/scripts/install-reference-project.sh';
+    if (is_file($installScript)) {
+        exec('bash ' . escapeshellarg($installScript) . ' blog 2>&1', $installOut, $installCode);
+    }
+}
+
 $serverPid = birkly_test_http_server_start($root, $port);
 
 try {

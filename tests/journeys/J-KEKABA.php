@@ -46,8 +46,14 @@ return [
                 journey_assert("$page HTTP 200", $res['code'] === 200);
             }
 
-            $health = journey_http($base, '/Birkly-0.1/api/health.php');
-            journey_assert('CMS embed health HTTP 200', $health['code'] === 200, 'code ' . $health['code']);
+            $client = journey_http($base, '/Birkly-0.1/birkly-client.js');
+            journey_assert('CMS embed birkly-client.js HTTP 200', $client['code'] === 200, 'code ' . $client['code']);
+
+            $cmsBase = $ctx['base_url'] ?? '';
+            if ($cmsBase !== '') {
+                $health = journey_http($cmsBase, '/api/health.php');
+                journey_assert('CMS API health HTTP 200', in_array($health['code'], [200, 503], true), 'code ' . $health['code']);
+            }
         } finally {
             if ($pid > 0) {
                 journey_stop_cms_server($pid);

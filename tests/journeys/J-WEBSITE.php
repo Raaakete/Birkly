@@ -15,7 +15,7 @@ return [
             journey_fail('Birkly-Website sibling repo not found');
         }
 
-        $port = 18110 + (getmypid() % 1000);
+        $port = journey_allocate_port(50);
         $base = "http://127.0.0.1:$port";
         $pid = 0;
 
