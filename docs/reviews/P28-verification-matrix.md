@@ -1,14 +1,14 @@
 # P28 — Verification matrix
 
-**Date:** 2026-07-13 · **Closure:** P28-M20 — **complete**
+**Date:** 2026-07-19 · **Closure:** P28-M20 — **complete**
 
-**Verification runs (2026-07-13):**
+**Verification runs (2026-07-19):**
 
 | Command | Result | Notes |
 |---------|--------|-------|
-| `php scripts/journey-runner.php --all` | **pass** | 13/13 journeys · `logs/journey-report.json` |
-| `./scripts/ci-check.sh` | **pass** | Journeys + studio-smoke + admin-polish-smoke green; `tests/run.php` 154/156 (2 plugin-admin suites env flake on cloud VM) |
-| `./scripts/beta-launch-preflight.sh` | **pass** | Automated checks green; human Part 1 checklist documented |
+| `php scripts/journey-runner.php --all` | **pass** | 14/14 journeys · `logs/journey-report.json` |
+| `./scripts/ci-check.sh` | **pass** | Journeys + studio-smoke + admin-polish-smoke green |
+| `./scripts/beta-launch-preflight.sh` | **pass** | All automated gates green |
 
 ## Journey automation (JRN)
 
