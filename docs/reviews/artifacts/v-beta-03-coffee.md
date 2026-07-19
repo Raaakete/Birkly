@@ -34,4 +34,4 @@ Asserts: variants in page_bundle, add-to-cart API, cart count.
 
 ## Video
 
-`v-beta-03-coffee-add-to-cart.mp4`
+`v-beta-03-coffee.mp4`

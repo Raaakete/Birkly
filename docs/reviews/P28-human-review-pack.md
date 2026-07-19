@@ -1,6 +1,6 @@
 # P28 — Human review pack (delivered at M20)
 
-**Status:** Closed 2026-07-19 — P28-M0→M20 complete  
+**Status:** Re-recorded 2026-07-19 — Playwright viewport capture (1280×720, no screen zoom)  
 **Purpose:** Watch videos showing **actual site usage**, then replay journeys locally
 
 ---
@@ -9,23 +9,27 @@
 
 Videos live in `docs/reviews/artifacts/` on branch `cursor/p28-m0-m20-beta-launch-030a`.
 
+Recorded with `./scripts/record-beta-videos.sh` — Playwright browser capture at fixed 1280×720, converted to H.264 MP4. Admin demos use a pre-authenticated session (no login screen).
+
 | ID | Video file | Journey | What you will see |
 |----|------------|---------|-------------------|
-| V-BETA-01 | [v-beta-01-install.mp4](artifacts/v-beta-01-install.mp4) | J-INSTALL | Fresh admin setup — create-first-user / onboarding |
-| V-BETA-02 | [v-beta-02-blog-fixed.mp4](artifacts/v-beta-02-blog-fixed.mp4) | J-BLOG | Blog list → post detail → rendered content |
-| V-BETA-03 | [v-beta-03-coffee-fixed.mp4](artifacts/v-beta-03-coffee-fixed.mp4) | J-COFFEE | Product variants → add to cart |
-| V-BETA-04 | [v-beta-04-yoga-fixed.mp4](artifacts/v-beta-04-yoga-fixed.mp4) | J-YOGA | Upcoming events → event detail → RSVP form |
-| V-BETA-05 | [v-beta-05-marketplace.mp4](artifacts/v-beta-05-marketplace.mp4) | J-MARKETPLACE | Marketplace plugin install in admin |
-| V-BETA-06 | [v-beta-06-admin-publish.mp4](artifacts/v-beta-06-admin-publish.mp4) | J-ADMIN | Content editor publish workflow |
-| V-BETA-07 | [v-beta-07-social-fixed.mp4](artifacts/v-beta-07-social-fixed.mp4) | J-INVITE / J-SOCIAL | Social register/login + community feed |
-| V-BETA-08 | [v-beta-08-kekaba.mp4](artifacts/v-beta-08-kekaba.mp4) | J-KEKABA | kekaba live path — no `birkly-baked` meta, client hydrates |
-| V-BETA-09 | [v-beta-09-ops.mp4](artifacts/v-beta-09-ops.mp4) | J-HEALTH / Ops | Admin Settings → Operations + smoke status |
+| V-BETA-01 | [v-beta-01-install.mp4](artifacts/v-beta-01-install.mp4) | J-INSTALL | START_HERE → create admin account (typed) → onboarding → dashboard |
+| V-BETA-02 | [v-beta-02-blog.mp4](artifacts/v-beta-02-blog.mp4) | J-BLOG | Blog list → post detail → rendered article content |
+| V-BETA-03 | [v-beta-03-coffee.mp4](artifacts/v-beta-03-coffee.mp4) | J-COFFEE | Product page with variants → add to cart → cart count updates |
+| V-BETA-04 | [v-beta-04-yoga.mp4](artifacts/v-beta-04-yoga.mp4) | J-YOGA | Events index → event detail → RSVP form |
+| V-BETA-05 | [v-beta-05-marketplace.mp4](artifacts/v-beta-05-marketplace.mp4) | J-MARKETPLACE | Admin marketplace catalog (bundled catalog when registry offline) |
+| V-BETA-06 | [v-beta-06-admin-publish.mp4](artifacts/v-beta-06-admin-publish.mp4) | J-ADMIN | Blog entries list → open entry in editor |
+| V-BETA-07 | [v-beta-07-social.mp4](artifacts/v-beta-07-social.mp4) | J-SOCIAL | HaruSocial feed with rendered posts, scroll |
+| V-BETA-08 | [v-beta-08-kekaba.mp4](artifacts/v-beta-08-kekaba.mp4) | J-KEKABA | kekaba portfolio site — live path, client hydrates |
+| V-BETA-09 | [v-beta-09-ops.mp4](artifacts/v-beta-09-ops.mp4) | J-HEALTH / Ops | Admin Settings → Operations tab + smoke status |
 
-**Combined walkthroughs (older, still useful):**
+**Re-record locally:**
 
-- [v-beta-02-04-blog-yoga-interaction.mp4](artifacts/v-beta-02-04-blog-yoga-interaction.mp4) — blog + yoga in one session
-- [v-beta-03-coffee-add-to-cart.mp4](artifacts/v-beta-03-coffee-add-to-cart.mp4) — coffee cart interaction
-- [v-beta-walkthrough-overview.mp4](artifacts/v-beta-walkthrough-overview.mp4) — multi-site overview
+```bash
+php -S 127.0.0.1:8080 -t . server-router.php &
+./scripts/record-beta-videos.sh          # all nine
+./scripts/record-beta-videos.sh 03       # single video by number
+```
 
 ### Prepare before each reference demo
 
@@ -102,6 +106,9 @@ cd ../Birkly && php scripts/journey-runner.php --journey J-KEKABA --base http://
 
 # Browser smoke (Playwright, optional)
 ./scripts/reference-browser-smoke.sh
+
+# Re-record review videos
+./scripts/record-beta-videos.sh
 ```
 
 ## Staging replay
@@ -118,7 +125,7 @@ php scripts/journey-runner.php --all
 - [x] Real projects installed via `install-reference-project.sh` (not mocked)
 - [x] 14 journeys green + `logs/journey-report.json`
 - [x] kekaba live-path migration (`migrate-kekaba-live-path.sh`)
-- [x] V-BETA-01…09 videos + step docs
+- [x] V-BETA-01…09 videos re-recorded (Playwright 1280×720) + step docs
 - [x] `beta-launch-preflight.sh` automated gates
 - [x] Wired into `ci-check.sh` + `agent-smoke-test.sh`
 
