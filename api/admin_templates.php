@@ -922,6 +922,14 @@ function getEntryEditorData($includeFieldHtml = false) {
     }
     
     
+    // Filter reserved system fields from main editor loop (P29-M6)
+    require_once __DIR__ . '/../core/entry_slug.php';
+    $reservedFieldNames = array_flip(array_map('strtolower', birkly_entry_reserved_field_names()));
+    $fields = array_values(array_filter($fields, static function ($field) use ($reservedFieldNames) {
+        $name = strtolower((string) ($field['name'] ?? ''));
+        return $name === 'title' || !isset($reservedFieldNames[$name]);
+    }));
+
     // Get all available fieldtypes (including plugin-registered ones)
     // Use the admin_fieldtypes API function to get fieldtypes
     // Prevent admin_fieldtypes.php from executing its switch statement when included
