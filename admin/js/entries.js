@@ -362,15 +362,9 @@
                 const statusBadge = row.querySelector('.status-badge');
                 if (!statusBadge) return;
                 
-                let status = statusBadge.textContent.trim().toLowerCase().replace(/\s+/g, '_');
-                // Map "draft" to "unpublished" for backward compatibility
-                if (status === 'draft') {
-                    status = 'unpublished';
-                }
-                // Map "pending for review" to "pending_review"
-                if (status === 'pending_for_review') {
-                    status = 'pending_review';
-                }
+                const status = (statusBadge.dataset.status || statusBadge.textContent.trim().toLowerCase().replace(/\s+/g, '_'))
+                    .replace(/^draft$/, 'unpublished')
+                    .replace(/^pending_for_review$/, 'pending_review');
                 
                 if (!filterValue || status === filterValue) {
                     row.style.display = '';

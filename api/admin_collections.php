@@ -341,15 +341,27 @@ try {
     error_log("sort: " . $sort);
     error_log("fields: " . print_r($fields, true));
     
-    // Validate required fields
-    if (empty($name)) {
-        throw new Exception('Collection name is required');
+    require_once __DIR__ . '/../core/entry_slug.php';
+
+    // Check if collection already exists (for updates) — use posted slug to locate directory
+    $existingCollection = null;
+    $collectionsPath = __DIR__ . '/../content/collections';
+    $postedSlug = trim((string) $slug);
+    if ($postedSlug !== '') {
+        $candidateDir = $collectionsPath . '/' . birkly_normalize_slug($postedSlug);
+        if (is_dir($candidateDir)) {
+            $collectionFile = $candidateDir . '/collection.json';
+            if (file_exists($collectionFile)) {
+                $existingCollection = json_decode(file_get_contents($collectionFile), true);
+            }
+        }
     }
-    
-    // Generate slug if not provided
-    if (empty($slug)) {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
-        $slug = trim($slug, '-');
+
+    $collectionId = $existingCollection['id'] ?? null;
+    $slug = birkly_resolve_collection_slug($_POST, $existingCollection, $name, $collectionId);
+
+    if ($slug === '') {
+        throw new Exception('Collection slug is required');
     }
     
     error_log("Generated slug: " . $slug);
@@ -363,9 +375,6 @@ try {
     
     error_log("Slug validation passed");
     
-    // Check if collection already exists (for updates)
-    $existingCollection = null;
-    $collectionsPath = __DIR__ . '/../content/collections';
     $collectionDir = $collectionsPath . '/' . $slug;
     
     error_log("Collection path: " . $collectionsPath);
@@ -373,7 +382,7 @@ try {
     error_log("Collections path exists: " . (is_dir($collectionsPath) ? 'yes' : 'no'));
     error_log("Collection dir exists: " . (is_dir($collectionDir) ? 'yes' : 'no'));
     
-    if (is_dir($collectionDir)) {
+    if (!$existingCollection && is_dir($collectionDir)) {
         $collectionFile = $collectionDir . '/collection.json';
         error_log("Collection file: " . $collectionFile);
         error_log("Collection file exists: " . (file_exists($collectionFile) ? 'yes' : 'no'));

@@ -752,7 +752,8 @@ function saveEntry() {
         $action,
         $entryData,
         $entry ?: null,
-        $entryOutput['title']
+        $entryOutput['title'],
+        $entryId
     );
 
     if ($action === 'create') {
