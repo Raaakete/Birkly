@@ -166,9 +166,30 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                     <div class="tab-content">
                         <!-- General Information Tab -->
                         <div class="tab-pane active" id="general-tab">
+                            <?php
+                            if (!function_exists('birkly_generate_slug')) {
+                                require_once __DIR__ . '/../../core/entry_slug.php';
+                            }
+                            $entrySlugValue = $entry['slug'] ?? '';
+                            $entryTitleValue = $entry['title'] ?? '';
+                            $entryIdValue = $entry['id'] ?? '';
+                            $expectedAutoSlug = '';
+                            if ($entryTitleValue !== '') {
+                                $expectedAutoSlug = birkly_generate_slug($entryTitleValue);
+                            } elseif ($entryIdValue !== '') {
+                                $expectedAutoSlug = birkly_normalize_slug($entryIdValue);
+                            }
+                            $isNewEntry = empty($entry['id']);
+                            $autoSlugChecked = $isNewEntry || $entrySlugValue === '' || $entrySlugValue === $expectedAutoSlug;
+                            ?>
                             <div class="form-group">
                                 <label for="slug">Slug</label>
-                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="Auto-generated">
+                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entrySlugValue) ?>" placeholder="Auto-generated">
+                                <input type="hidden" name="auto_slug" id="auto_slug" value="<?= $autoSlugChecked ? '1' : '0' ?>">
+                                <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                    <input type="checkbox" id="auto_slug_checkbox" <?= $autoSlugChecked ? 'checked' : '' ?>>
+                                    Auto-generate slug from title
+                                </label>
                                 <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
                                     URL-friendly identifier for this entry
                                 </small>
@@ -792,25 +813,10 @@ echo htmlspecialchars($collectionExample);
         <script src="<?= htmlspecialchars($jsFile) ?>"></script>
     <?php endforeach; ?>
 <?php endif; ?>
+<script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/entry-editor.js') ?>"></script>
 <script>
-// Tab switching for sidebar tabs
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const tabName = this.dataset.tab;
-            
-            // Update buttons
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Update panes
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            const targetPane = document.getElementById(tabName + '-tab');
-            if (targetPane) targetPane.classList.add('active');
-        });
-    });
-    
     // Copy button functionality for templating tab
     document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', function() {

@@ -2,6 +2,19 @@
    Content Management Page Styles
    ============================================ */
 
+/* Editor sidebar tabs — override global tabs.css (.tab-content { display: none }) */
+.sidebar-tabs .tab-content {
+  display: block;
+}
+
+.sidebar-tabs .tab-pane {
+  display: none;
+}
+
+.sidebar-tabs .tab-pane.active {
+  display: block;
+}
+
 /* Entry Form */
 .entry-form {
   display: flex;
