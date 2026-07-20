@@ -7,6 +7,11 @@ $parent_sub_collection = $parent_sub_collection ?? null;
 $fields = $fields ?? [];
 $fieldtypes = $fieldtypes ?? [];
 
+if (!isset($__birklyScriptNonceAttr) || $__birklyScriptNonceAttr === '') {
+    require_once dirname(__DIR__) . '/../core/csp.php';
+    $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
+}
+
 // Detect if this is a sub-collection editor
 $isSubCollection = !empty($sub_collection) || !empty($subCollection);
 $subCollectionData = $sub_collection ?? $subCollection ?? null;
@@ -583,7 +588,6 @@ if (!$cancelUrl) {
                 <div class="sidebar-tabs">
                     <div class="tab-nav">
                         <button type="button" class="tab-btn active" data-tab="settings"><?= __('admin.settings') ?></button>
-                        <button type="button" class="tab-btn" data-tab="automation"><?= __('admin.automation') ?></button>
                         <button type="button" class="tab-btn" data-tab="templating"><?= __('admin.templating') ?></button>
                     </div>
                     
@@ -910,45 +914,6 @@ if (!$cancelUrl) {
                                         <label>Last Update</label>
                                         <div class="info-value"><?= $updatedAt ? date('m.d.Y, g:i A', strtotime($updatedAt)) : '—' ?></div>
                                     </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <!-- Automation Tab -->
-                        <div class="tab-pane" id="automation-tab">
-                            <div class="automation-tab-content">
-                                <?php if (!empty($automation_plugin_inactive)): ?>
-                                    <p class="text-muted">Enable the <a href="<?= admin_url('plugins') ?>">Automation plugin</a> to manage workflows for this collection.</p>
-                                <?php elseif (empty($collection_automations)): ?>
-                                    <p class="text-muted">No automations are configured for this collection yet.</p>
-                                    <a href="<?= admin_url('automation') ?>" class="btn btn-secondary btn-sm" style="margin-top: 0.75rem;">Create automation</a>
-                                <?php else: ?>
-                                    <p class="text-muted" style="margin-bottom: 0.75rem;">Workflows that run when entries in this collection change.</p>
-                                    <ul class="collection-automation-list">
-                                        <?php foreach ($collection_automations as $automation): ?>
-                                            <?php
-                                            $autoName = htmlspecialchars($automation['name'] ?? 'Untitled');
-                                            $autoEnabled = !empty($automation['enabled']);
-                                            $triggerLabel = '';
-                                            foreach (($automation['triggers'] ?? []) as $trigger) {
-                                                if (is_array($trigger)) {
-                                                    $triggerLabel = htmlspecialchars($trigger['type'] ?? $trigger['label'] ?? 'trigger');
-                                                    break;
-                                                }
-                                            }
-                                            ?>
-                                            <li class="collection-automation-item">
-                                                <div class="collection-automation-main">
-                                                    <strong><?= $autoName ?></strong>
-                                                    <span class="badge <?= $autoEnabled ? 'badge-success' : 'badge-muted' ?>"><?= $autoEnabled ? 'Enabled' : 'Disabled' ?></span>
-                                                </div>
-                                                <?php if ($triggerLabel !== ''): ?>
-                                                    <div class="collection-automation-meta">Trigger: <?= $triggerLabel ?></div>
-                                                <?php endif; ?>
-                                            </li>
-                                        <?php endforeach; ?>
-                                    </ul>
-                                    <a href="<?= admin_url('automation') ?>" class="btn btn-secondary btn-sm" style="margin-top: 0.75rem;">Manage automations</a>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -2741,12 +2706,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const publicApiSettings = document.getElementById('public-api-settings');
     
     // Multi-language toggle
-    const multilanguageEnabled = document.getElementById('multilanguage_enabled');
-    const multilanguageSettings = document.getElementById('multilanguage-settings');
+    const multilanguageEnabled = document.getElementById('multilanguage_enabled') || document.getElementById('sub-collection-multilanguage_enabled');
+    const multilanguageSettings = document.getElementById('multilanguage-settings') || document.getElementById('sub-collection-multilanguage-settings');
+    const isSubCollectionMultilang = !!document.getElementById('sub-collection-multilanguage_enabled');
+    const multilanguageHiddenName = isSubCollectionMultilang
+        ? 'sub_collections[0][multilanguage_languages][]'
+        : 'multilanguage_languages[]';
     
     if (multilanguageEnabled && multilanguageSettings) {
         multilanguageEnabled.addEventListener('change', function() {
             multilanguageSettings.style.display = this.checked ? 'block' : 'none';
+            if (this.checked) {
+                setTimeout(initLanguageInput, 100);
+            }
         });
     }
     
@@ -2799,8 +2771,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize language input when multi-language is enabled
     function initLanguageInput() {
-        const languageInput = document.getElementById('language-input');
-        const languageTagsContainer = document.getElementById('language-tags-container');
+        const languageInput = document.getElementById('language-input') || document.getElementById('sub-collection-language-input');
+        const languageTagsContainer = document.getElementById('language-tags-container') || document.getElementById('sub-collection-language-tags-container');
         
         if (!languageInput || !languageTagsContainer) {
             return;
@@ -2938,16 +2910,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize language input on page load
     initLanguageInput();
     
-    // Re-initialize when multi-language toggle is changed
-    if (multilanguageEnabled && multilanguageSettings) {
-        multilanguageEnabled.addEventListener('change', function() {
-            multilanguageSettings.style.display = this.checked ? 'block' : 'none';
-            if (this.checked) {
-                setTimeout(initLanguageInput, 100); // Small delay to ensure DOM is updated
-            }
-        });
-    }
-    
     function showAutocomplete(query) {
         if (!autocompleteList) {
             return;
@@ -3032,8 +2994,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Define addLanguageTag function early so it's accessible
     function addLanguageTag(langCode) {
-        const languageTagsContainer = document.getElementById('language-tags-container');
-        const languageInput = document.getElementById('language-input');
+        const languageTagsContainer = document.getElementById('language-tags-container') || document.getElementById('sub-collection-language-tags-container');
+        const languageInput = document.getElementById('language-input') || document.getElementById('sub-collection-language-input');
         
         if (!languageTagsContainer || !languageInput) {
             return;
@@ -3056,7 +3018,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tag.innerHTML = `
             ${langCode.toUpperCase()}
             <button type="button" class="language-tag-remove" data-lang="${langCode}" aria-label="Remove language">×</button>
-            <input type="hidden" name="multilanguage_languages[]" value="${langCode}">
+            <input type="hidden" name="${multilanguageHiddenName}" value="${langCode}">
         `;
         
         // Insert before input
@@ -3068,7 +3030,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addLanguageTag = addLanguageTag;
     
     function removeLanguageTag(langCode) {
-        const languageTagsContainer = document.getElementById('language-tags-container');
+        const languageTagsContainer = document.getElementById('language-tags-container') || document.getElementById('sub-collection-language-tags-container');
         if (!languageTagsContainer) {
             return;
         }
