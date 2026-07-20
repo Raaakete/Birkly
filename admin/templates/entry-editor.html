@@ -166,28 +166,12 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                     <div class="tab-content">
                         <!-- General Information Tab -->
                         <div class="tab-pane active" id="general-tab">
-                            <?php
-                            if (!function_exists('birkly_generate_slug')) {
-                                require_once __DIR__ . '/../../core/entry_slug.php';
-                            }
-                            $entrySlugValue = $entry['slug'] ?? '';
-                            $entryTitleValue = $entry['title'] ?? '';
-                            $entryIdValue = $entry['id'] ?? '';
-                            $expectedAutoSlug = '';
-                            if ($entryTitleValue !== '') {
-                                $expectedAutoSlug = birkly_generate_slug($entryTitleValue);
-                            } elseif ($entryIdValue !== '') {
-                                $expectedAutoSlug = birkly_normalize_slug($entryIdValue);
-                            }
-                            $isNewEntry = empty($entry['id']);
-                            $autoSlugChecked = $isNewEntry || $entrySlugValue === '' || $entrySlugValue === $expectedAutoSlug;
-                            ?>
                             <div class="form-group">
                                 <label for="slug">Slug</label>
-                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entrySlugValue) ?>" placeholder="Auto-generated">
-                                <input type="hidden" name="auto_slug" id="auto_slug" value="<?= $autoSlugChecked ? '1' : '0' ?>">
+                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="Auto-generated">
+                                <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($autoSlugChecked) ? '1' : '0' ?>">
                                 <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
-                                    <input type="checkbox" id="auto_slug_checkbox" <?= $autoSlugChecked ? 'checked' : '' ?>>
+                                    <input type="checkbox" id="auto_slug_checkbox" <?= !empty($autoSlugChecked) ? 'checked' : '' ?>>
                                     Auto-generate slug from title
                                 </label>
                                 <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
