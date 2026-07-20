@@ -120,6 +120,28 @@ function birkly_resolve_entry_slug(
  * @param array<string, mixed> $postData
  * @param array<string, mixed>|null $existingCollection
  */
+/**
+ * Whether the auto-generate slug checkbox should be checked in admin UI.
+ *
+ * @param string $slugValue Current slug field value
+ * @param string $titleValue Title or collection name
+ * @param string|null $idValue Entry/collection ID fallback
+ * @param bool $isNew True when creating a new record
+ */
+function birkly_auto_slug_checked(
+    string $slugValue,
+    string $titleValue,
+    ?string $idValue = null,
+    bool $isNew = false
+): bool {
+    $expected = birkly_slug_from_title_or_id($titleValue, $idValue);
+    if ($isNew || $slugValue === '') {
+        return true;
+    }
+
+    return $slugValue === $expected;
+}
+
 function birkly_resolve_collection_slug(
     array $postData,
     ?array $existingCollection,
