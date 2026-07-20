@@ -1,6 +1,6 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-06-26 (Phase 4 complete)  
+**Last updated:** 2026-07-20 (P29 collections & entries excellence)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
 **Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (29 suites)  
 **Browser QA:** P4 HTTP E2E in CI; MCP `mcp_http_test.php`; design-reviewer approved MCP tab + BYOAI wizard
@@ -11,9 +11,9 @@
 |------|------|---------|---------|------------------|
 | Admin login | Auth | **pass** | — | Unchanged from P2-M1 baseline. |
 | Onboarding wizard (fresh user) | Onboarding | **pass** | P2-M5 | `reset-onboarding.php --keep-entries` → wizard loads; skip/complete sets dashboard checklist (#25). |
-| Create collection + fields | Collections | **pass** | P2-M2 | `collection_schema_test.php`; create_collection accepts multiple schema shapes. |
-| Create/edit/publish entry | Entries | **pass** | P2-M2/M3 | Select options, slug preservation, legacy `editor`/`media` aliases (#16–#17). |
-| ContentEditor visual ↔ HTML save/reload | ContentEditor | **pass** | P2-M3 | Visual/HTML tabs; `html_roundtrip_test.php`; browser QA on blog entry (#19–#24). |
+| Create collection + fields | Collections | **pass** | P29 | Settings tab slug checkbox; sidebar tabs not empty; `collection_editor_sidebar_test.php`. |
+| Create/edit/publish entry | Entries | **pass** | P29 | Sidebar tabs visible; slug/status in General; auto-generate checkbox; ID fallback; reserved fields filtered from main loop. |
+| ContentEditor visual ↔ HTML save/reload | ContentEditor | **pass** | P2-M3/P29 | Visual/HTML tabs; `html_roundtrip_test.php`; no regression from sidebar `tabs.css` scope fix. |
 | Media upload + pick in field | Media | **pass** | P2-M3 | `media` alias → `file` fieldtype (#16). |
 | Collection groups + drag/drop | Groups/DnD | **pass** | P2-M4 | `collection_groups_test.php`; browser QA reorder groups after refresh (#20). |
 | Settings (domains, plugins) | Settings | **pass** | — | Unchanged from P2-M1 baseline. |
@@ -62,3 +62,11 @@
 **Phase 4 UX gate:** All matrix rows pass (28/28). Automated CI 29 suites PASS. Walkthrough videos V15–V17 in `docs/reviews/artifacts/`.
 
 **Post-merge hotfix:** P2-M6 safe renderer was blocking legacy admin PHP (`require_once`, `include`, `required` keys). Fixed by validating parser output only; trusted template PHP blocks excluded from validation.
+
+---
+
+## P29 closure (2026-07-20)
+
+**Status:** Complete — sidebar CSS/JS fix, slug UX, reserved fields, `admin-content-smoke.sh` in CI.
+
+**Evidence:** `tests/entry_editor_sidebar_test.php`, `tests/collection_editor_sidebar_test.php`, `scripts/admin-content-smoke.sh`, `docs/reviews/P29-verification-matrix.md`

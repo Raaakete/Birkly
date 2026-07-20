@@ -61,6 +61,14 @@
                             <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['id'] ?? '']) ?>" class="title-text">
                                 <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?>
                             </a>
+                            <?php if (!empty($entry['slug'])): ?>
+                                <div class="entry-slug-meta" style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-secondary, #6b7280);">
+                                    <span style="margin-right: 0.25rem;">Slug:</span>
+                                    <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['id'] ?? '']) ?>" style="font-family: monospace; color: var(--primary-600, #2563eb); text-decoration: none;">
+                                        <?= htmlspecialchars($entry['slug']) ?>
+                                    </a>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         <div class="cell cell-status" role="cell">
                             <?php
