@@ -580,11 +580,6 @@ if (!$cancelUrl) {
                     }
                 }
                 ?>
-                <?php
-                if (!function_exists('birkly_generate_slug')) {
-                    require_once __DIR__ . '/../../core/entry_slug.php';
-                }
-                ?>
                 <div class="sidebar-tabs">
                     <div class="tab-nav">
                         <button type="button" class="tab-btn active" data-tab="settings"><?= __('admin.settings') ?></button>
@@ -606,20 +601,10 @@ if (!$cancelUrl) {
                                     
                                     <div class="info-item">
                                         <label for="sub-collection-slug-sidebar">Slug</label>
-                                        <?php
-                                        $subSlugValue = $subCollectionData['slug'] ?? '';
-                                        $subNameValue = $subCollectionData['name'] ?? '';
-                                        $subExpectedAutoSlug = $subNameValue !== ''
-                                            ? birkly_generate_slug($subNameValue)
-                                            : ($subSlugValue !== '' ? birkly_normalize_slug($subSlugValue) : '');
-                                        $subAutoSlugChecked = empty($subCollectionData['slug'])
-                                            || $subSlugValue === ''
-                                            || $subSlugValue === $subExpectedAutoSlug;
-                                        ?>
-                                        <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subSlugValue) ?>" placeholder="auto-generated">
-                                        <input type="hidden" name="sub_collections[0][auto_slug]" id="sub_auto_slug" value="<?= $subAutoSlugChecked ? '1' : '0' ?>">
+                                        <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subCollectionData['slug'] ?? '') ?>" placeholder="auto-generated">
+                                        <input type="hidden" name="sub_collections[0][auto_slug]" id="sub_auto_slug" value="<?= !empty($subAutoSlugChecked) ? '1' : '0' ?>">
                                         <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
-                                            <input type="checkbox" id="sub_auto_slug_checkbox" <?= $subAutoSlugChecked ? 'checked' : '' ?>>
+                                            <input type="checkbox" id="sub_auto_slug_checkbox" <?= !empty($subAutoSlugChecked) ? 'checked' : '' ?>>
                                             Auto-generate slug from title
                                         </label>
                                     </div>
@@ -658,21 +643,10 @@ if (!$cancelUrl) {
                                     
                                     <div class="info-item">
                                         <label for="slug">Slug</label>
-                                        <?php
-                                        $collSlugValue = $collection['slug'] ?? '';
-                                        $collNameValue = $collection['name'] ?? $collection['title'] ?? '';
-                                        $collIdValue = $collection['id'] ?? '';
-                                        $collExpectedAutoSlug = $collNameValue !== ''
-                                            ? birkly_generate_slug($collNameValue)
-                                            : ($collIdValue !== '' ? birkly_normalize_slug($collIdValue) : '');
-                                        $collAutoSlugChecked = empty($collection['slug'])
-                                            || $collSlugValue === ''
-                                            || $collSlugValue === $collExpectedAutoSlug;
-                                        ?>
-                                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collSlugValue) ?>" placeholder="auto-generated">
-                                        <input type="hidden" name="auto_slug" id="auto_slug" value="<?= $collAutoSlugChecked ? '1' : '0' ?>">
+                                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated">
+                                        <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($collAutoSlugChecked) ? '1' : '0' ?>">
                                         <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
-                                            <input type="checkbox" id="auto_slug_checkbox" <?= $collAutoSlugChecked ? 'checked' : '' ?>>
+                                            <input type="checkbox" id="auto_slug_checkbox" <?= !empty($collAutoSlugChecked) ? 'checked' : '' ?>>
                                             Auto-generate slug from title
                                         </label>
                                     </div>

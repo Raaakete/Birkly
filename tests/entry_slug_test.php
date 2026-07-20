@@ -90,4 +90,14 @@ test_assert(
     ) === 'blog'
 );
 
+test_assert(
+    'auto_slug checked helper defaults on for new entries',
+    birkly_auto_slug_checked('', '', null, true) === true
+);
+
+test_assert(
+    'auto_slug checked helper off when slug differs from title',
+    birkly_auto_slug_checked('custom-slug', 'Hello World', 'abc123', false) === false
+);
+
 exit(test_finish('entry_slug_test'));
