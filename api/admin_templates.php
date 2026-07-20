@@ -1454,6 +1454,11 @@ function getEntryEditorData($includeFieldHtml = false) {
         $payload['entry']['id'] ?? $entryId,
         !empty($subCollectionSlug)
     );
+    $payload['is_nested_sub_entry'] = $isNestedSubEntry;
+
+    require_once __DIR__ . '/../admin/template-helpers.php';
+    $payload['breadcrumbs'] = build_entry_breadcrumbs($payload);
+    $payload['cancel_url'] = build_cancel_url($payload);
 
     return $payload;
 }
@@ -2708,6 +2713,13 @@ function getEntryDetailData() {
             $parentEntry = json_decode(file_get_contents($parentEntryFile), true);
             $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
         }
+
+        if ($isNestedSubEntryDetail) {
+            $parentSubEntry = getSubEntry($collectionSlug, $entryId, $parentSubCollectionSlug, $parentSubEntryId);
+            if ($parentSubEntry) {
+                $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? __('admin.untitled');
+            }
+        }
         
         // Get sub-collection config for fields (handle nested sub-collections)
         // For nested sub-entries, we need to determine the parent sub-collection
@@ -2987,7 +2999,7 @@ function getEntryDetailData() {
         }
     }
     
-    return [
+    $detailPayload = [
         'collection' => $collectionData,
         'entry' => $entryWithCells,
         'fields' => $fields,
@@ -2995,14 +3007,21 @@ function getEntryDetailData() {
         'sub_entries_by_collection' => $subEntriesByCollection,
         'is_sub_entry' => $isSubEntryDetail,
         'is_sub_entry_detail' => $isSubEntryDetail,
+        'is_nested_sub_entry' => $isNestedSubEntryDetail ?? false,
         'is_nested_sub_entry_detail' => $isNestedSubEntryDetail ?? false,
         'sub_collection' => $subCollectionSlug, // This is the sub-collection of the sub-entry we're viewing (e.g., "comments")
         'sub_collection_slug' => $subCollectionSlug,
         'sub_entry_id' => $subEntryId,
         'parent_entry_id' => $entryId,
+        'parent_sub_collection' => $parentSubCollectionSlug ?? null,
         'parent_sub_collection_slug' => $parentSubCollectionSlug ?? null,
-        'parent_sub_entry_id' => $parentSubEntryId ?? null
+        'parent_sub_entry_id' => $parentSubEntryId ?? null,
     ];
+
+    require_once __DIR__ . '/../admin/template-helpers.php';
+    $detailPayload['breadcrumbs'] = build_entry_breadcrumbs($detailPayload);
+
+    return $detailPayload;
 }
 
 // ===== NEW PAGE DATA FUNCTIONS =====

@@ -13,17 +13,28 @@
     <div class="page-header pt-m pb-m">
         <div class="page-header-left">
         <div class="breadcrumbs">
-            <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
-            <span class="separator">›</span>
-            <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
-            <?php if (!empty($is_sub_entry_detail)): ?>
-                <span class="separator">›</span>
-                <a href="<?= admin_url('entry-detail', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['_parent_entry_id'] ?? '']) ?>"><?= htmlspecialchars($entry['_parent_entry_title'] ?? 'Parent Entry') ?></a>
-                <span class="separator">›</span>
-                <span class="current"><?= htmlspecialchars($sub_collection_slug ?? 'Sub-Entry') ?>: <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
+            <?php if (!empty($breadcrumbs)): ?>
+                <?php foreach ($breadcrumbs as $crumb): ?>
+                    <?php if (!empty($crumb['is_current'])): ?>
+                        <span class="current"><?= htmlspecialchars($crumb['label']) ?></span>
+                    <?php else: ?>
+                        <a href="<?= htmlspecialchars($crumb['url']) ?>"><?= htmlspecialchars($crumb['label']) ?></a>
+                        <span class="separator">›</span>
+                    <?php endif; ?>
+                <?php endforeach; ?>
             <?php else: ?>
+                <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
                 <span class="separator">›</span>
-                <span class="current"><?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
+                <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
+                <?php if (!empty($is_sub_entry_detail)): ?>
+                    <span class="separator">›</span>
+                    <a href="<?= admin_url('entry-detail', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['_parent_entry_id'] ?? '']) ?>"><?= htmlspecialchars($entry['_parent_entry_title'] ?? 'Parent Entry') ?></a>
+                    <span class="separator">›</span>
+                    <span class="current"><?= htmlspecialchars($sub_collection_slug ?? 'Sub-Entry') ?>: <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
+                <?php else: ?>
+                    <span class="separator">›</span>
+                    <span class="current"><?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
         </div>

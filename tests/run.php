@@ -45,6 +45,7 @@ $suites = [
     'admin_entries_direct_test.php',
     'entry_editor_template_test.php',
     'entry_editor_sidebar_test.php',
+    'entry_breadcrumbs_test.php',
     'collection_editor_sidebar_test.php',
     'contenteditor_dropdown_test.php',
     'base_path_test.php',
