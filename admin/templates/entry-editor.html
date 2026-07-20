@@ -88,14 +88,17 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     </div>
     
     <div class="main-actions-bar">
-        <button type="submit" form="entry-form" class="btn btn-primary">
-            <?= !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry') ?>
-        </button>
-        <?php if (!empty($cancel_url)): ?>
-            <a href="<?= htmlspecialchars($cancel_url) ?>" class="btn btn-secondary">
-                <?= __('admin.cancel') ?>
-            </a>
-        <?php endif; ?>
+        <div class="main-actions-left">
+            <button type="submit" form="entry-form" class="btn btn-primary">
+                <?= !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry') ?>
+            </button>
+            <?php if (!empty($cancel_url)): ?>
+                <a href="<?= htmlspecialchars($cancel_url) ?>" class="btn btn-secondary">
+                    <?= __('admin.cancel') ?>
+                </a>
+            <?php endif; ?>
+        </div>
+        <span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>
     </div>
     
     <form id="entry-form" class="entry-form" method="POST" action="<?= htmlspecialchars($formAction) ?>">
@@ -158,10 +161,6 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
             <!-- Right Sidebar -->
             <div class="editor-sidebar">
                 <div class="sidebar-tabs">
-                    <div class="sidebar-tabs-header">
-                        <span>Entry settings</span>
-                        <span id="sidebar-unsaved-badge" class="sidebar-unsaved-badge" aria-live="polite">Unsaved changes</span>
-                    </div>
                     <div class="tab-nav">
                         <button type="button" class="tab-btn active" data-tab="general">General</button>
                         <button type="button" class="tab-btn" data-tab="metadata">Meta Data</button>
