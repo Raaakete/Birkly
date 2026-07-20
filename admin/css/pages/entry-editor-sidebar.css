@@ -1,22 +1,29 @@
 /* Entry editor sidebar enhancements */
 
-.sidebar-tabs-header {
+.main-actions-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-2) var(--space-4);
-  border-bottom: 1px solid var(--border-light);
-  background: var(--bg-secondary);
-  font-size: 0.75rem;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
-.sidebar-unsaved-badge {
+.main-actions-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.editor-unsaved-badge {
   display: none;
   color: var(--warning-700, #b45309);
   font-weight: 600;
+  font-size: 0.8125rem;
+  margin-left: auto;
 }
 
-.sidebar-unsaved-badge.is-visible {
+.editor-unsaved-badge.is-visible {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
