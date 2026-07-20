@@ -184,16 +184,26 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-19)
+## Current state (verified 2026-07-20)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P27 complete** — **~156 test suites**; 1 known flake (`studio_renderer_test`, P28-M15) |
+| **Birkly (CMS)** | **P29 complete** — collections & entries excellence; `admin-content-smoke.sh` in CI; 3 pre-existing unrelated test flakes |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | Synced at release (P27 `sync-birkly-docs.sh`) |
+| **Birkly-Docs** | P29 editor sidebar + slug docs synced |
 | **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
+
+**2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
+
+**Delivered:** Editor sidebar tab fix (`.sidebar-tabs` CSS/JS scope), slug auto-generation with checkbox in sidebar only, reserved fields filtered from main loop, entry detail slug display, entries status filter fix, `admin-content-smoke.sh` wired in CI.
+
+**Matrices:** `docs/reviews/P29-verification-matrix.md` · **Closure:** `docs/reviews/P29-phase-closure-checklist.md` · **Plan:** `docs/reviews/P29-collections-entries-excellence-plan.md`
+
+**Next active phase:** **Phase 28** — Beta launch automation — **paused during P29; resume now**
+
+**Paused:** **Phase 26** — Studio creative suite — resume after P28-M20
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 

@@ -1,6 +1,6 @@
 # P29 — Collections & entries excellence
 
-**Status:** Approved (2026-07-20, Keven) — execute now  
+**Status:** Complete (2026-07-20, P29-M15)  
 **Baseline:** P27 complete · P28 **paused** until P29-M15 · P26 Studio **paused**  
 **Human rule:** Execute P29-M0→M15 autonomously. Notify human **once** at **P29-M15**.
 
