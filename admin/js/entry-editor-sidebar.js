@@ -272,7 +272,7 @@
 
     function markDirty() {
         formDirty = true;
-        const badge = $('sidebar-unsaved-badge');
+        const badge = $('editor-unsaved-badge');
         if (badge) badge.classList.add('is-visible');
     }
 
@@ -283,7 +283,7 @@
         form.addEventListener('change', markDirty);
         form.addEventListener('submit', function () {
             formDirty = false;
-            const badge = $('sidebar-unsaved-badge');
+            const badge = $('editor-unsaved-badge');
             if (badge) badge.classList.remove('is-visible');
         });
         window.addEventListener('beforeunload', function (e) {

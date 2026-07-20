@@ -20,9 +20,10 @@ test_assert('does not use global tab-pane querySelectorAll', strpos($template, "
 test_assert('does not use global tab-btn querySelectorAll', strpos($template, "querySelectorAll('.tab-btn')") === false);
 test_assert('sub-collection auto_slug support', strpos($template, 'sub_auto_slug') !== false);
 test_assert('does not require entry_slug.php from template', strpos($template, 'entry_slug.php') === false);
-test_assert('inline script has CSP nonce attribute', strpos($template, 'birklyScriptNonceAttr') !== false);
+test_assert('inline script has CSP nonce attribute', strpos($template, 'birklyScriptNonceAttr') !== false || strpos($template, 'birkly_csp_nonce_attr') !== false);
 test_assert('add sub-collection field button wired', strpos($template, 'add-sub-collection-field-btn') !== false);
-test_assert('automation tab lists collection automations', strpos($template, 'collection-automation-list') !== false);
-test_assert('automation tab not placeholder only', strpos($template, 'Automation settings coming soon') === false);
+test_assert('automation tab removed from sidebar', strpos($template, 'data-tab="automation"') === false);
+$indexPhp = file_get_contents(dirname(__DIR__) . '/admin/index.php');
+test_assert('collection editor uses direct php include', strpos($indexPhp, "'collection-editor' => 'collection-editor.html'") !== false);
 
 exit(test_finish('collection_editor_sidebar_test'));

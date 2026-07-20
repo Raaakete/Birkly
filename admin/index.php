@@ -383,6 +383,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                 'entries' => 'entries.html',
                 'entry-detail' => 'entry-detail.html',
                 'entry-editor' => 'entry-editor.html',
+                'collection-editor' => 'collection-editor.html',
             ];
             if ($page === 'content') {
                 try {
@@ -481,7 +482,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     }
                 }
             } elseif (in_array($page, [
-                'settings', 'collection-editor',
+                'settings',
                 'users', 'roles', 'plugins', 'webhooks', 'help', 'feedback', 'audit-log', 'activity', 'updates',
             ], true)) {
                 // Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, etc.
