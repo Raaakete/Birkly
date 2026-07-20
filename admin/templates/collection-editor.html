@@ -916,8 +916,40 @@ if (!$cancelUrl) {
                         
                         <!-- Automation Tab -->
                         <div class="tab-pane" id="automation-tab">
-                            <div class="card">
-                                <p class="text-muted">Automation settings coming soon.</p>
+                            <div class="automation-tab-content">
+                                <?php if (!empty($automation_plugin_inactive)): ?>
+                                    <p class="text-muted">Enable the <a href="<?= admin_url('plugins') ?>">Automation plugin</a> to manage workflows for this collection.</p>
+                                <?php elseif (empty($collection_automations)): ?>
+                                    <p class="text-muted">No automations are configured for this collection yet.</p>
+                                    <a href="<?= admin_url('automation') ?>" class="btn btn-secondary btn-sm" style="margin-top: 0.75rem;">Create automation</a>
+                                <?php else: ?>
+                                    <p class="text-muted" style="margin-bottom: 0.75rem;">Workflows that run when entries in this collection change.</p>
+                                    <ul class="collection-automation-list">
+                                        <?php foreach ($collection_automations as $automation): ?>
+                                            <?php
+                                            $autoName = htmlspecialchars($automation['name'] ?? 'Untitled');
+                                            $autoEnabled = !empty($automation['enabled']);
+                                            $triggerLabel = '';
+                                            foreach (($automation['triggers'] ?? []) as $trigger) {
+                                                if (is_array($trigger)) {
+                                                    $triggerLabel = htmlspecialchars($trigger['type'] ?? $trigger['label'] ?? 'trigger');
+                                                    break;
+                                                }
+                                            }
+                                            ?>
+                                            <li class="collection-automation-item">
+                                                <div class="collection-automation-main">
+                                                    <strong><?= $autoName ?></strong>
+                                                    <span class="badge <?= $autoEnabled ? 'badge-success' : 'badge-muted' ?>"><?= $autoEnabled ? 'Enabled' : 'Disabled' ?></span>
+                                                </div>
+                                                <?php if ($triggerLabel !== ''): ?>
+                                                    <div class="collection-automation-meta">Trigger: <?= $triggerLabel ?></div>
+                                                <?php endif; ?>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                    <a href="<?= admin_url('automation') ?>" class="btn btn-secondary btn-sm" style="margin-top: 0.75rem;">Manage automations</a>
+                                <?php endif; ?>
                             </div>
                         </div>
                         
@@ -1964,10 +1996,10 @@ echo htmlspecialchars($formCode);
 }
 </style>
 
-<script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"></script>
-<script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"></script>
+<script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
+<script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 
-<script>
+<script<?= $__birklyScriptNonceAttr ?? '' ?>>
 document.addEventListener('DOMContentLoaded', function() {
     function normalizeSlug(value) {
         return (value || '')
@@ -2020,9 +2052,122 @@ document.addEventListener('DOMContentLoaded', function() {
     initCollectionSlugGeneration(nameField, slugField, autoSlugHidden, autoSlugCheckbox, collectionId);
     // Add field functionality
     const addFieldBtn = document.getElementById('add-field-btn');
+    const addSubCollectionFieldBtn = document.getElementById('add-sub-collection-field-btn');
     const fieldsContainer = document.getElementById('fields-container');
-    
+    const subCollectionFieldsContainer = document.getElementById('sub-collection-fields-container');
+    let fieldtypeModalTarget = 'collection';
+    const availableFieldtypes = <?php echo json_encode($fieldtypes ?? []); ?>;
+    window.fieldtypes = availableFieldtypes;
+    const fieldtypeModal = document.getElementById('fieldtype-selector-modal');
+    const fieldtypeGrid = document.getElementById('fieldtype-grid');
+    const closeFieldtypeModal = document.getElementById('close-fieldtype-modal');
+    function getNextSubCollectionSchemaFieldIndex() {
+        if (!subCollectionFieldsContainer) return 0;
+        return subCollectionFieldsContainer.querySelectorAll('.fieldtype-section[data-sub-field-index]').length;
+    }
+
+    function appendSubCollectionSchemaField(selectedFieldtype) {
+        if (!subCollectionFieldsContainer) return;
+        const fieldIndex = getNextSubCollectionSchemaFieldIndex();
+        const selectedType = availableFieldtypes.find(ft => ft.name === selectedFieldtype || ft.type === selectedFieldtype);
+        const typeValue = selectedType ? (selectedType.type || selectedType.name) : selectedFieldtype;
+        const typeLabel = selectedType ? (selectedType.label || selectedType.name) : selectedFieldtype;
+        const optionsHtml = (window.fieldtypes || availableFieldtypes || []).map(function(ft) {
+            const val = ft.type || ft.name;
+            const selected = val === typeValue ? ' selected' : '';
+            return '<option value="' + val + '"' + selected + '>' + (ft.label || ft.name) + '</option>';
+        }).join('');
+        const fieldHtml = `
+            <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
+                <div class="fieldtype-header">
+                    <div class="fieldtype-title">
+                        <span class="fieldtype-type">${String(typeLabel).toUpperCase()}</span>
+                        <span class="fieldtype-name">New Field</span>
+                    </div>
+                    <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="fieldtype-body">
+                    <div class="fieldtype-row">
+                        <div class="fieldtype-field">
+                            <label>Display Name <span class="required">*</span></label>
+                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][label]" value="" placeholder="Field label" class="input" required>
+                        </div>
+                        <div class="fieldtype-field">
+                            <label>API Name</label>
+                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][name]" value="" placeholder="Field name" class="input">
+                        </div>
+                    </div>
+                    <div class="fieldtype-row">
+                        <div class="fieldtype-field">
+                            <label>Field Type</label>
+                            <select name="sub_collections[0][schema][fields][${fieldIndex}][type]" class="input sub-field-type-select" required>
+                                <option value="">Select type...</option>
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                        <div class="fieldtype-field">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="sub_collections[0][schema][fields][${fieldIndex}][required]" value="1">
+                                <span class="checkmark"></span>
+                                <span>Mandatory Field</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        subCollectionFieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
+        const newField = subCollectionFieldsContainer.lastElementChild;
+        const labelInput = newField ? newField.querySelector('input[name*="[label]"]') : null;
+        if (labelInput) {
+            labelInput.focus();
+            newField.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function addFieldFromModalSelection(selectedFieldtype) {
+        if (fieldtypeModalTarget === 'sub-collection-schema') {
+            appendSubCollectionSchemaField(selectedFieldtype);
+            return;
+        }
+        if (!fieldsContainer) return;
+        const fieldIndex = getNextFieldIndex();
+        const fieldData = {
+            type: selectedFieldtype,
+            label: '',
+            name: '',
+            required: false
+        };
+        const fieldElement = renderFieldtype(fieldIndex, fieldData);
+        fieldsContainer.appendChild(fieldElement);
+        const selectedType = availableFieldtypes.find(ft => ft.name === selectedFieldtype);
+        if (selectedType) {
+            fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+            const typeSelect = fieldElement.querySelector('.field-type-select');
+            if (typeSelect) {
+                typeSelect.value = selectedType.type || selectedType.name;
+            }
+        }
+        loadFieldtypeConfig(fieldIndex, selectedFieldtype, fieldElement);
+        updateFieldIndices();
+        if (fieldtypeSorter) {
+            fieldtypeSorter.destroy();
+        }
+        initFieldtypeDragDrop();
+        const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
+        if (displayNameInput) {
+            displayNameInput.focus();
+            fieldElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
     function getNextFieldIndex() {
+        if (!fieldsContainer) return 0;
         const existingFields = fieldsContainer.querySelectorAll('.fieldtype-section');
         let maxIndex = -1;
         existingFields.forEach(function(field) {
@@ -2036,11 +2181,72 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return maxIndex + 1;
     }
-    
-    const availableFieldtypes = <?php echo json_encode($fieldtypes ?? []); ?>;
-    // Also set window.fieldtypes for sub-collection fields
-    window.fieldtypes = availableFieldtypes;
 
+    function populateFieldtypeModalGrid(onSelect) {
+        if (!fieldtypeGrid) return;
+        const fieldtypesByCategory = {};
+        availableFieldtypes.forEach(function(ft) {
+            const category = ft.category || 'Misc';
+            if (!fieldtypesByCategory[category]) {
+                fieldtypesByCategory[category] = [];
+            }
+            fieldtypesByCategory[category].push(ft);
+        });
+        const categoryOrder = [
+            'Content & Text',
+            'Numeric',
+            'Date & Time',
+            'Selection',
+            'Media',
+            'Location',
+            'Misc'
+        ];
+        fieldtypeGrid.innerHTML = '';
+        function renderCategory(category, items) {
+            const categoryHeader = document.createElement('div');
+            categoryHeader.className = 'fieldtype-category-header';
+            categoryHeader.textContent = category;
+            fieldtypeGrid.appendChild(categoryHeader);
+            const categoryGrid = document.createElement('div');
+            categoryGrid.className = 'fieldtype-category-grid';
+            items.forEach(function(ft) {
+                const fieldtypeCard = document.createElement('div');
+                fieldtypeCard.className = 'fieldtype-card';
+                fieldtypeCard.dataset.fieldtype = ft.name;
+                fieldtypeCard.innerHTML = `
+                    <div class="fieldtype-card-icon">${getFieldtypeIcon(ft.name)}</div>
+                    <div class="fieldtype-card-name">${ft.label || ft.name}</div>
+                `;
+                fieldtypeCard.addEventListener('click', function() {
+                    const selectedFieldtype = this.dataset.fieldtype;
+                    if (closeFieldtypeModal) closeFieldtypeModal.click();
+                    onSelect(selectedFieldtype);
+                });
+                categoryGrid.appendChild(fieldtypeCard);
+            });
+            fieldtypeGrid.appendChild(categoryGrid);
+        }
+        categoryOrder.forEach(function(category) {
+            if (fieldtypesByCategory[category] && fieldtypesByCategory[category].length > 0) {
+                renderCategory(category, fieldtypesByCategory[category]);
+            }
+        });
+        Object.keys(fieldtypesByCategory).forEach(function(category) {
+            if (categoryOrder.indexOf(category) === -1) {
+                renderCategory(category, fieldtypesByCategory[category]);
+            }
+        });
+    }
+
+    function openFieldtypeSelectorModal(target) {
+        fieldtypeModalTarget = target || 'collection';
+        if (!fieldtypeModal) return;
+        if (fieldtypeModalTarget === 'collection' && !fieldsContainer) return;
+        if (fieldtypeModalTarget === 'sub-collection-schema' && !subCollectionFieldsContainer) return;
+        populateFieldtypeModalGrid(addFieldFromModalSelection);
+        fieldtypeModal.style.display = 'flex';
+    }
+    
     function getFieldtypeIcon(name) {
         const icons = {
             contenteditor: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M7 7h6"></path><path d="M7 11h10"></path><path d="M7 15h4"></path><circle cx="16" cy="15" r="1.5"></circle></svg>',
@@ -2111,172 +2317,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return fieldElement;
     }
     
-    // Fieldtype selector modal
-    const fieldtypeModal = document.getElementById('fieldtype-selector-modal');
-    const fieldtypeGrid = document.getElementById('fieldtype-grid');
-    const closeFieldtypeModal = document.getElementById('close-fieldtype-modal');
+    // Fieldtype selector modal — elements declared above with add-field handlers
     
     // Open modal when clicking "Add Field"
     if (addFieldBtn && fieldtypeModal) {
         addFieldBtn.addEventListener('click', function() {
-            // Group fieldtypes by category
-            const fieldtypesByCategory = {};
-            availableFieldtypes.forEach(function(ft) {
-                const category = ft.category || 'Misc';
-                if (!fieldtypesByCategory[category]) {
-                    fieldtypesByCategory[category] = [];
-                }
-                fieldtypesByCategory[category].push(ft);
-            });
-            
-            // Define category order
-            const categoryOrder = [
-                'Content & Text',
-                'Numeric',
-                'Date & Time',
-                'Selection',
-                'Media',
-                'Location',
-                'Misc'
-            ];
-            
-            // Populate fieldtype grid with categories
-            fieldtypeGrid.innerHTML = '';
-            
-            // Render categories in order
-            categoryOrder.forEach(function(category) {
-                if (!fieldtypesByCategory[category] || fieldtypesByCategory[category].length === 0) {
-                    return;
-                }
-                
-                // Category header
-                const categoryHeader = document.createElement('div');
-                categoryHeader.className = 'fieldtype-category-header';
-                categoryHeader.textContent = category;
-                fieldtypeGrid.appendChild(categoryHeader);
-                
-                // Category grid
-                const categoryGrid = document.createElement('div');
-                categoryGrid.className = 'fieldtype-category-grid';
-                
-                fieldtypesByCategory[category].forEach(function(ft) {
-                    const fieldtypeCard = document.createElement('div');
-                    fieldtypeCard.className = 'fieldtype-card';
-                    fieldtypeCard.dataset.fieldtype = ft.name;
-                    fieldtypeCard.innerHTML = `
-                        <div class="fieldtype-card-icon">${getFieldtypeIcon(ft.name)}</div>
-                        <div class="fieldtype-card-name">${ft.label || ft.name}</div>
-                    `;
-                    fieldtypeCard.addEventListener('click', function() {
-                        const selectedFieldtype = this.dataset.fieldtype;
-                        closeFieldtypeModal.click();
-                        
-                        // Add field with selected fieldtype
-                        const fieldIndex = getNextFieldIndex();
-                        const fieldData = {
-                            type: selectedFieldtype,
-                            label: '',
-                            name: '',
-                            required: false
-                        };
-                        const fieldElement = renderFieldtype(fieldIndex, fieldData);
-                        fieldsContainer.appendChild(fieldElement);
-                        
-                        // Update the fieldtype type display and select
-                        const selectedType = availableFieldtypes.find(ft => ft.name === selectedFieldtype);
-                        if (selectedType) {
-                            fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
-                            // Set the select value - use type if available, otherwise name (to match PHP template option values)
-                            const typeSelect = fieldElement.querySelector('.field-type-select');
-                            if (typeSelect) {
-                                typeSelect.value = selectedType.type || selectedType.name;
-                            }
-                        }
-                        
-                        // Load fieldtype config if needed
-                        loadFieldtypeConfig(fieldIndex, selectedFieldtype, fieldElement);
-                        
-                        // Focus on display name input
-                        const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
-                        if (displayNameInput) {
-                            displayNameInput.focus();
-                            // Scroll into view
-                            fieldElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    });
-                    categoryGrid.appendChild(fieldtypeCard);
-                });
-                
-                fieldtypeGrid.appendChild(categoryGrid);
-            });
-            
-            // Show any remaining categories not in the order list
-            Object.keys(fieldtypesByCategory).forEach(function(category) {
-                if (categoryOrder.indexOf(category) === -1) {
-                    const categoryHeader = document.createElement('div');
-                    categoryHeader.className = 'fieldtype-category-header';
-                    categoryHeader.textContent = category;
-                    fieldtypeGrid.appendChild(categoryHeader);
-                    
-                    const categoryGrid = document.createElement('div');
-                    categoryGrid.className = 'fieldtype-category-grid';
-                    
-                    fieldtypesByCategory[category].forEach(function(ft) {
-                        const fieldtypeCard = document.createElement('div');
-                        fieldtypeCard.className = 'fieldtype-card';
-                        fieldtypeCard.dataset.fieldtype = ft.name;
-                        fieldtypeCard.innerHTML = `
-                            <div class="fieldtype-card-icon">${getFieldtypeIcon(ft.name)}</div>
-                            <div class="fieldtype-card-name">${ft.label || ft.name}</div>
-                        `;
-                        fieldtypeCard.addEventListener('click', function() {
-                            const selectedFieldtype = this.dataset.fieldtype;
-                            closeFieldtypeModal.click();
-                            
-                            const fieldIndex = getNextFieldIndex();
-                            const fieldData = {
-                                type: selectedFieldtype,
-                                label: '',
-                                name: '',
-                                required: false
-                            };
-                            const fieldElement = renderFieldtype(fieldIndex, fieldData);
-                            fieldsContainer.appendChild(fieldElement);
-                            
-                            const selectedType = availableFieldtypes.find(ft => ft.name === selectedFieldtype);
-                            if (selectedType) {
-                                fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
-                                const typeSelect = fieldElement.querySelector('.field-type-select');
-                                if (typeSelect) {
-                                    // Use type if available, otherwise name (to match PHP template option values)
-                                    typeSelect.value = selectedType.type || selectedType.name;
-                                }
-                            }
-                            
-                            loadFieldtypeConfig(fieldIndex, selectedFieldtype, fieldElement);
-                            
-                            // Update indices and reinitialize drag drop after adding field
-                            updateFieldIndices();
-                            if (fieldtypeSorter) {
-                                fieldtypeSorter.destroy();
-                            }
-                            initFieldtypeDragDrop();
-                            
-                            const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
-                            if (displayNameInput) {
-                                displayNameInput.focus();
-                                fieldElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                            }
-                        });
-                        categoryGrid.appendChild(fieldtypeCard);
-                    });
-                    
-                    fieldtypeGrid.appendChild(categoryGrid);
-                }
-            });
-            
-            // Show modal
-            fieldtypeModal.style.display = 'flex';
+            openFieldtypeSelectorModal('collection');
+        });
+    }
+
+    if (addSubCollectionFieldBtn && fieldtypeModal) {
+        addSubCollectionFieldBtn.addEventListener('click', function() {
+            openFieldtypeSelectorModal('sub-collection-schema');
         });
     }
     
@@ -3264,6 +3316,17 @@ document.addEventListener('DOMContentLoaded', function() {
         return div;
     }
     
+    if (subCollectionFieldsContainer) {
+        subCollectionFieldsContainer.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-sub-field-btn')) {
+                const fieldSection = e.target.closest('.fieldtype-section[data-sub-field-index]');
+                if (fieldSection && confirm('Are you sure you want to remove this field?')) {
+                    fieldSection.remove();
+                }
+            }
+        });
+    }
+
     if (addSubCollectionBtn && subCollectionsContainer) {
         addSubCollectionBtn.addEventListener('click', function() {
             const index = getNextSubCollectionIndex();

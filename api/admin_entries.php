@@ -723,7 +723,7 @@ function saveEntry() {
     foreach ($entryData as $key => $value) {
         // Skip system fields and form helper fields
         // Also skip password field (used for user creation only, not stored in entry)
-        if (!in_array($key, ['id', 'title', 'slug', 'status', 'created_at', 'updated_at', 'meta_title', 'meta_description', 'reviewer_hidden', 'password']) 
+        if (!in_array($key, ['id', 'title', 'slug', 'status', 'created_at', 'updated_at', 'meta_title', 'meta_description', 'meta_keywords', 'og_title', 'og_description', 'og_image', 'canonical_url', 'robots_noindex', 'ai_summary', 'structured_data_json', 'reviewer_hidden', 'password']) 
             && !isset($entryOutput[$key])) {
             // Special handling for JSON strings
             if (is_string($value) && (str_starts_with($value, '[') || str_starts_with($value, '{'))) {
@@ -740,11 +740,20 @@ function saveEntry() {
     }
     
     // Add meta fields
-    if (isset($entryData['meta_title'])) {
-        $entryOutput['meta_title'] = $entryData['meta_title'];
+    $metaKeys = [
+        'meta_title', 'meta_description', 'meta_keywords',
+        'og_title', 'og_description', 'og_image',
+        'canonical_url', 'ai_summary', 'structured_data_json',
+    ];
+    foreach ($metaKeys as $metaKey) {
+        if (isset($entryData[$metaKey])) {
+            $entryOutput[$metaKey] = $entryData[$metaKey];
+        }
     }
-    if (isset($entryData['meta_description'])) {
-        $entryOutput['meta_description'] = $entryData['meta_description'];
+    if (isset($entryData['robots_noindex'])) {
+        $entryOutput['robots_noindex'] = !empty($entryData['robots_noindex']);
+    } elseif (array_key_exists('robots_noindex', $entryData)) {
+        $entryOutput['robots_noindex'] = false;
     }
     
     // Auto-generate slug from title only when missing (preserve slug on title-only updates)
