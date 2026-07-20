@@ -34,6 +34,8 @@ test_assert('has structured data field', strpos($template, 'structured_data_json
 test_assert('has AI summary field', strpos($template, 'ai_summary') !== false);
 test_assert('sidebar config JSON present', strpos($template, 'entry-editor-sidebar-config') !== false);
 test_assert('inline script has CSP nonce', strpos($template, 'birklyScriptNonceAttr') !== false);
+test_assert('unsaved badge in main actions bar', strpos($template, 'editor-unsaved-badge') !== false);
+test_assert('no entry settings sidebar header', strpos($template, 'sidebar-tabs-header') === false);
 
 $sidebarJs = file_get_contents(dirname(__DIR__) . '/admin/js/entry-editor-sidebar.js');
 test_assert('sidebar js handles permalink preview', strpos($sidebarJs, 'buildPermalink') !== false);
