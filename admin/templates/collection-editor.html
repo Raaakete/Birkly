@@ -580,6 +580,11 @@ if (!$cancelUrl) {
                     }
                 }
                 ?>
+                <?php
+                if (!function_exists('birkly_generate_slug')) {
+                    require_once __DIR__ . '/../../core/entry_slug.php';
+                }
+                ?>
                 <div class="sidebar-tabs">
                     <div class="tab-nav">
                         <button type="button" class="tab-btn active" data-tab="settings"><?= __('admin.settings') ?></button>
@@ -600,12 +605,23 @@ if (!$cancelUrl) {
                                     <?php endif; ?>
                                     
                                     <div class="info-item">
-                                        <label>Slug</label>
-                                        <div class="info-value">
-                                            <span id="slug-display"><?= htmlspecialchars($subCollectionData['slug'] ?? 'auto-generated') ?></span>
-                                            <a href="#" id="change-slug-link" class="link">Change Slug</a>
-                                        </div>
-                                        <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subCollectionData['slug'] ?? '') ?>" placeholder="auto-generated" style="display: none; margin-top: 0.5rem;">
+                                        <label for="sub-collection-slug-sidebar">Slug</label>
+                                        <?php
+                                        $subSlugValue = $subCollectionData['slug'] ?? '';
+                                        $subNameValue = $subCollectionData['name'] ?? '';
+                                        $subExpectedAutoSlug = $subNameValue !== ''
+                                            ? birkly_generate_slug($subNameValue)
+                                            : ($subSlugValue !== '' ? birkly_normalize_slug($subSlugValue) : '');
+                                        $subAutoSlugChecked = empty($subCollectionData['slug'])
+                                            || $subSlugValue === ''
+                                            || $subSlugValue === $subExpectedAutoSlug;
+                                        ?>
+                                        <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subSlugValue) ?>" placeholder="auto-generated">
+                                        <input type="hidden" name="sub_collections[0][auto_slug]" id="sub_auto_slug" value="<?= $subAutoSlugChecked ? '1' : '0' ?>">
+                                        <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                            <input type="checkbox" id="sub_auto_slug_checkbox" <?= $subAutoSlugChecked ? 'checked' : '' ?>>
+                                            Auto-generate slug from title
+                                        </label>
                                     </div>
                                     
                                     <div class="info-item">
@@ -641,12 +657,24 @@ if (!$cancelUrl) {
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Slug</label>
-                                        <div class="info-value">
-                                            <span id="slug-display"><?= htmlspecialchars($collection['slug'] ?? 'auto-generated') ?></span>
-                                            <a href="#" id="change-slug-link" class="link">Change Slug</a>
-                                        </div>
-                                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated" style="display: none; margin-top: 0.5rem;">
+                                        <label for="slug">Slug</label>
+                                        <?php
+                                        $collSlugValue = $collection['slug'] ?? '';
+                                        $collNameValue = $collection['name'] ?? $collection['title'] ?? '';
+                                        $collIdValue = $collection['id'] ?? '';
+                                        $collExpectedAutoSlug = $collNameValue !== ''
+                                            ? birkly_generate_slug($collNameValue)
+                                            : ($collIdValue !== '' ? birkly_normalize_slug($collIdValue) : '');
+                                        $collAutoSlugChecked = empty($collection['slug'])
+                                            || $collSlugValue === ''
+                                            || $collSlugValue === $collExpectedAutoSlug;
+                                        ?>
+                                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collSlugValue) ?>" placeholder="auto-generated">
+                                        <input type="hidden" name="auto_slug" id="auto_slug" value="<?= $collAutoSlugChecked ? '1' : '0' ?>">
+                                        <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                            <input type="checkbox" id="auto_slug_checkbox" <?= $collAutoSlugChecked ? 'checked' : '' ?>>
+                                            Auto-generate slug from title
+                                        </label>
                                     </div>
                                     
                                     <div class="info-item">
@@ -1963,69 +1991,59 @@ echo htmlspecialchars($formCode);
 </style>
 
 <script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"></script>
+<script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-generate slug from name
-    const nameField = document.getElementById('name');
-    const slugField = document.getElementById('slug');
-    const slugDisplay = document.getElementById('slug-display');
-    const changeSlugLink = document.getElementById('change-slug-link');
-    
-    if (nameField && slugField) {
-        nameField.addEventListener('input', function() {
-            if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
-                const slug = nameField.value
-                    .toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim('-');
-                slugField.value = slug;
-                if (slugDisplay) slugDisplay.textContent = slug || 'auto-generated';
-                slugField.dataset.autoGenerated = 'true';
+    function normalizeSlug(value) {
+        return (value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
+    function initCollectionSlugGeneration(nameField, slugField, autoSlugHidden, autoSlugCheckbox, fallbackId) {
+        if (!nameField || !slugField) return;
+
+        function syncAutoSlugHidden() {
+            if (autoSlugHidden && autoSlugCheckbox) {
+                autoSlugHidden.value = autoSlugCheckbox.checked ? '1' : '0';
             }
-        });
-        
+        }
+
+        function regenerateSlug() {
+            if (autoSlugCheckbox && !autoSlugCheckbox.checked) return;
+            const name = (nameField.value || '').trim();
+            const slug = name ? normalizeSlug(name) : normalizeSlug(fallbackId || '');
+            slugField.value = slug;
+        }
+
+        if (autoSlugCheckbox) {
+            autoSlugCheckbox.addEventListener('change', function() {
+                syncAutoSlugHidden();
+                if (this.checked) regenerateSlug();
+            });
+            syncAutoSlugHidden();
+        }
+
+        nameField.addEventListener('input', regenerateSlug);
+
         slugField.addEventListener('input', function() {
-            slugField.dataset.autoGenerated = 'false';
-            if (slugDisplay) slugDisplay.textContent = this.value || 'auto-generated';
-        });
-    }
-    
-    // Change slug link
-    if (changeSlugLink && slugField) {
-        changeSlugLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (slugField.style.display === 'none') {
-                slugField.style.display = 'block';
-                slugDisplay.style.display = 'none';
-                changeSlugLink.textContent = 'Cancel';
-                slugField.focus();
-            } else {
-                slugField.style.display = 'none';
-                slugDisplay.style.display = 'inline';
-                changeSlugLink.textContent = 'Change Slug';
+            if (autoSlugCheckbox) {
+                autoSlugCheckbox.checked = false;
+                syncAutoSlugHidden();
             }
         });
     }
-    
-    // Tab switching
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const tabName = this.dataset.tab;
-            
-            // Update buttons
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Update panes
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            const targetPane = document.getElementById(tabName + '-tab');
-            if (targetPane) targetPane.classList.add('active');
-        });
-    });
-    
+
+    const nameField = document.getElementById('name');
+    const slugField = document.getElementById('slug') || document.getElementById('sub-collection-slug-sidebar');
+    const autoSlugHidden = document.getElementById('auto_slug') || document.getElementById('sub_auto_slug');
+    const autoSlugCheckbox = document.getElementById('auto_slug_checkbox') || document.getElementById('sub_auto_slug_checkbox');
+    const collectionId = <?= json_encode($collection['id'] ?? $collection['slug'] ?? '') ?>;
+    initCollectionSlugGeneration(nameField, slugField, autoSlugHidden, autoSlugCheckbox, collectionId);
     // Add field functionality
     const addFieldBtn = document.getElementById('add-field-btn');
     const fieldsContainer = document.getElementById('fields-container');
