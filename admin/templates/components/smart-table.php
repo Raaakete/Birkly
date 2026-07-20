@@ -231,7 +231,7 @@ if (!empty($entries)): ?>
                         </div>
                         
                         <div class="cell cell-status" role="cell">
-                            <span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
+                            <span class="status-badge <?= htmlspecialchars($statusClass) ?>" data-status="<?= htmlspecialchars($status) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
                                 <?= htmlspecialchars($statusLabel) ?>
                             </span>
                             <?php if ($status === 'pending_review' && $reviewer): ?>
