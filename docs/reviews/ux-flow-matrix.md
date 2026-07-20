@@ -62,3 +62,18 @@
 **Phase 4 UX gate:** All matrix rows pass (28/28). Automated CI 29 suites PASS. Walkthrough videos V15–V17 in `docs/reviews/artifacts/`.
 
 **Post-merge hotfix:** P2-M6 safe renderer was blocking legacy admin PHP (`require_once`, `include`, `required` keys). Fixed by validating parser output only; trusted template PHP blocks excluded from validation.
+
+---
+
+## P29 refresh notes (2026-07-20)
+
+**Status:** Pending P29-M14 closure — update rows below after sidebar/slug work ships.
+
+| Row / area | What to refresh |
+|------------|-----------------|
+| **Create/edit/publish entry** | Sidebar tabs visible (General / Meta Data / Templating); slug + status in General only; auto-generate checkbox; no-title → ID fallback; reserved fields not in main loop |
+| **Create collection + fields** | Settings tab slug checkbox parity; sidebar tabs not empty (`.sidebar-tabs` CSS scope) |
+| **ContentEditor visual ↔ HTML** | Confirm no regression from `tabs.css` fix on editor main tabs (if any) |
+| **Evidence** | `tests/entry_editor_sidebar_test.php`, `tests/collection_editor_sidebar_test.php`, `scripts/admin-content-smoke.sh` |
+
+**Last updated target:** 2026-07-20 (P29-M14)
