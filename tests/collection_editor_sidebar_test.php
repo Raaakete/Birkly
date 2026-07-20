@@ -19,5 +19,6 @@ test_assert('slug input visible (no change-slug link)', strpos($template, 'id="c
 test_assert('does not use global tab-pane querySelectorAll', strpos($template, "querySelectorAll('.tab-pane')") === false);
 test_assert('does not use global tab-btn querySelectorAll', strpos($template, "querySelectorAll('.tab-btn')") === false);
 test_assert('sub-collection auto_slug support', strpos($template, 'sub_auto_slug') !== false);
+test_assert('does not require entry_slug.php from template', strpos($template, 'entry_slug.php') === false);
 
 exit(test_finish('collection_editor_sidebar_test'));

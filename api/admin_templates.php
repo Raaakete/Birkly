@@ -552,6 +552,27 @@ function getContentData() {
     return birkly_get_content_page_data();
 }
 
+function birkly_admin_collection_slug_sidebar_state(array $collection, bool $isNew = false): bool
+{
+    require_once __DIR__ . '/../core/entry_slug.php';
+    $slug = (string) ($collection['slug'] ?? '');
+    $name = (string) ($collection['name'] ?? $collection['title'] ?? '');
+    $id = (string) ($collection['id'] ?? $slug);
+
+    return birkly_auto_slug_checked($slug, $name, $id !== '' ? $id : null, $isNew || $slug === '');
+}
+
+function birkly_admin_entry_slug_sidebar_state(array $entry): bool
+{
+    require_once __DIR__ . '/../core/entry_slug.php';
+    $slug = (string) ($entry['slug'] ?? '');
+    $title = (string) ($entry['title'] ?? '');
+    $id = (string) ($entry['id'] ?? '');
+    $isNew = $id === '';
+
+    return birkly_auto_slug_checked($slug, $title, $id !== '' ? $id : null, $isNew);
+}
+
 function getCollectionEditorData() {
     // Get collection data from URL parameters
     $collectionSlug = $_GET['collection'] ?? null;
@@ -689,28 +710,24 @@ function getCollectionEditorData() {
             $subCollection = getSubCollectionConfig($collectionSlug, $subCollectionSlug, $parentSubCollectionSlug);
         }
         
+        $subData = $subCollection ?? [
+                'slug' => '',
+                'name' => '',
+                'description' => '',
+                'entry_method' => 'admin_only',
+                'auto_publish' => false,
+                'fields' => [],
+                'parent_sub_collection' => $parentSubCollectionSlug
+            ];
+
         return [
             'collection' => $collectionData,
-            'sub_collection' => $subCollection ?? [
-                'slug' => '',
-                'name' => '',
-                'description' => '',
-                'entry_method' => 'admin_only',
-                'auto_publish' => false,
-                'fields' => [],
-                'parent_sub_collection' => $parentSubCollectionSlug
-            ],
+            'sub_collection' => $subData,
             'parent_sub_collection' => $parentSubCollection,
             'fieldtypes' => $fieldtypes,
-            'subCollection' => $subCollection ?? [
-                'slug' => '',
-                'name' => '',
-                'description' => '',
-                'entry_method' => 'admin_only',
-                'auto_publish' => false,
-                'fields' => [],
-                'parent_sub_collection' => $parentSubCollectionSlug
-            ]
+            'subCollection' => $subData,
+            'is_sub_collection' => true,
+            'subAutoSlugChecked' => birkly_admin_collection_slug_sidebar_state($subData, empty($subData['slug'])),
         ];
     }
     
@@ -741,7 +758,9 @@ function getCollectionEditorData() {
             return [
                 'collection' => $collectionData,
                 'fields' => $fields,
-                'fieldtypes' => $fieldtypes
+                'fieldtypes' => $fieldtypes,
+                'is_sub_collection' => false,
+                'collAutoSlugChecked' => birkly_admin_collection_slug_sidebar_state($collectionData),
             ];
         }
     }
@@ -756,7 +775,9 @@ function getCollectionEditorData() {
             'sort' => 'created_desc'
         ],
         'fields' => [],
-        'fieldtypes' => $fieldtypes
+        'fieldtypes' => $fieldtypes,
+        'is_sub_collection' => false,
+        'collAutoSlugChecked' => true,
     ];
 }
 
@@ -1365,6 +1386,8 @@ function getEntryEditorData($includeFieldHtml = false) {
             ];
         }
     }
+
+    $payload['autoSlugChecked'] = birkly_admin_entry_slug_sidebar_state($payload['entry']);
 
     return $payload;
 }
