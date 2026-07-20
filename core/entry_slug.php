@@ -18,6 +18,14 @@ function birkly_entry_reserved_field_names(): array
         'reviewer',
         'meta_title',
         'meta_description',
+        'meta_keywords',
+        'og_title',
+        'og_description',
+        'og_image',
+        'canonical_url',
+        'robots_noindex',
+        'ai_summary',
+        'structured_data_json',
     ];
 }
 
