@@ -41,7 +41,10 @@ $backupMp = sys_get_temp_dir() . '/birkly-mp-backup-' . getmypid() . '.json';
 putenv('BIRKLY_CLOUD_ACCOUNT_MOCK=1');
 putenv('BIRKLY_CLOUD_ACCOUNT_MOCK_EMAIL=' . $cloudEmail);
 
-$serverPid = birkly_test_http_server_start($root, $port);
+$serverPid = birkly_test_http_server_start($root, $port, [
+    'BIRKLY_CLOUD_ACCOUNT_MOCK' => '1',
+    'BIRKLY_CLOUD_ACCOUNT_MOCK_EMAIL' => $cloudEmail,
+]);
 
 try {
     birkly_test_backup_directory($usersDir, $backupUsers);

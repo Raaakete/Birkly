@@ -480,13 +480,32 @@
   }
 }
 
-@media (max-width: 960px) {
+/* Below --bp-xl (1280px), favour readable entry cells over a cramped grid. */
+@media (max-width: 1279px) {
+  .entries-smart-table .head-title,
+  .entries-smart-table .cell-title {
+    min-width: 240px;
+  }
+
+  .entries-smart-table .head-status,
+  .entries-smart-table .cell-status {
+    width: 140px;
+  }
+
+  .entries-smart-table .head-field,
+  .entries-smart-table .cell-field {
+    width: min(var(--col-field, 240px), 180px);
+    min-width: min(var(--col-field-min, var(--col-field, 240px)), 180px);
+    max-width: 180px;
+  }
+
   .entries-smart-table .row-scroll {
     grid-template-columns: 220px 120px 1fr;
   }
 }
 
-@media (max-width: 768px) {
+/* Below --bp-md (768px) */
+@media (max-width: 767px) {
   .entries-smart-table {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;

@@ -17,6 +17,9 @@ require_once $root . '/plugins/commerce/includes/PurchaseMappingService.php';
 require_once $root . '/plugins/commerce/includes/PostPurchaseRouter.php';
 
 $dataDir = sys_get_temp_dir() . '/birkly-commerce-membership-' . getmypid();
+$tierId = 'tier_membership_' . getmypid();
+$baselineTierId = 'tier_baseline_' . getmypid();
+$userId = 'user_membership_wiring_' . getmypid();
 @mkdir($dataDir, 0755, true);
 
 require_once $root . '/core/plugins.php';
@@ -29,14 +32,14 @@ $wizardResult = $mappings->createMembershipMapping([
     'collection_slug' => 'memberships',
     'entry_slug' => 'mem-1',
     'purchase_option_id' => 'community_monthly',
-    'grant_tier' => 'premium',
+    'grant_tier' => $tierId,
 ]);
 test_assert('wizard creates purchase_option mapping', ($wizardResult['ok'] ?? false) === true);
 test_assert('purchase_option key stored', ($wizardResult['key'] ?? '') === 'purchase_option:memberships:mem-1:community_monthly');
 
 $skuResult = $mappings->createMembershipMapping([
     'sku' => 'MEMBERSHIP-PRO',
-    'grant_tier' => 'pro',
+    'grant_tier' => $tierId,
 ]);
 test_assert('wizard creates sku mapping', ($skuResult['ok'] ?? false) === true);
 test_assert('sku key stored', ($skuResult['key'] ?? '') === 'sku:MEMBERSHIP-PRO');
@@ -49,9 +52,8 @@ $lineKeys = $mappings->resolveLineMappingKeys([
 ]);
 test_assert('resolveLineMappingKeys prefers purchase_option', ($lineKeys[0] ?? '') === 'purchase_option:memberships:mem-1:community_monthly');
 
-$userId = null;
 $userTiersPath = $root . '/plugins/user_management/includes/UserTiers.php';
-$testUserEmail = 'membership-wiring@test.local';
+$testUserEmail = 'membership-wiring-' . getmypid() . '@test.local';
 
 if (is_file($userTiersPath)) {
     require_once $root . '/plugins/user_management/includes/UserStorage.php';
@@ -59,26 +61,24 @@ if (is_file($userTiersPath)) {
     require_once $userTiersPath;
 
     $storage = new UserStorage();
-    $storage->saveTier('premium', [
-        'id' => 'premium', 'name' => 'Premium', 'description' => 'Test tier',
+    $storage->saveTier($tierId, [
+        'id' => $tierId, 'name' => 'Membership test tier', 'description' => 'Test tier',
+        'permissions' => [], 'features' => [], 'custom' => [], 'created_at' => date('c'),
+    ]);
+    $storage->saveTier($baselineTierId, [
+        'id' => $baselineTierId, 'name' => 'Membership baseline tier', 'description' => 'Test tier',
         'permissions' => [], 'features' => [], 'custom' => [], 'created_at' => date('c'),
     ]);
     $service = new UserService();
-    $users = $service->listUsers();
-    foreach ($users as $u) {
-        $userId = $u['id'];
-        break;
-    }
-    if (!$userId) {
-        $userId = 'user_membership_wiring_' . getmypid();
-        $service->createUser([
-            'id' => $userId,
-            'username' => 'membership_wiring',
-            'email' => 'membership-wiring@test.local',
-            'password' => 'testpassword123',
-            'tier' => 'all',
-        ]);
-    }
+    $storage->purgeUser($userId);
+    $createdUser = $service->createUser([
+        'id' => $userId,
+        'username' => 'membership_wiring',
+        'email' => $testUserEmail,
+        'password' => 'testpassword123',
+        'tier' => $baselineTierId,
+    ]);
+    $userId = $createdUser['id'];
     $testUser = $service->getUser($userId);
     $testUserEmail = $testUser['email'] ?? $testUserEmail;
 }
@@ -101,7 +101,7 @@ $mappings->createMembershipMapping([
     'collection_slug' => 'classes',
     'entry_slug' => 'yoga-1',
     'purchase_option_id' => 'class_ticket',
-    'grant_tier' => 'premium',
+    'grant_tier' => $tierId,
 ]);
 
 $registerOrder = [
@@ -118,7 +118,7 @@ test_assert('register fulfillment routes ok', ($registerResult[0]['ok'] ?? false
 
 if ($userId && is_file($userTiersPath)) {
     $tiers = new UserTiers();
-    test_assert('register fulfillment grants tier via PostPurchaseRouter', $tiers->getUserTier($userId) === 'premium');
+    test_assert('register fulfillment grants tier via PostPurchaseRouter', $tiers->getUserTier($userId) === $tierId);
 }
 
 $noneLine = [
@@ -136,7 +136,7 @@ $noneLine = [
 
 if ($userId) {
     $tiers = new UserTiers();
-    $tiers->setUserTier($userId, 'all');
+    $tiers->setUserTier($userId, $baselineTierId);
 }
 
 $noneOrder = [
@@ -152,12 +152,17 @@ test_assert('none fulfillment reports tier_granted', ($noneResult[0]['tier_grant
 
 if ($userId && is_file($userTiersPath)) {
     $tiers = new UserTiers();
-    test_assert('none fulfillment grants purchase_option tier', $tiers->getUserTier($userId) === 'premium');
+    test_assert('none fulfillment grants purchase_option tier', $tiers->getUserTier($userId) === $tierId);
 }
 
 @unlink($dataDir . '/purchase_mappings.json');
 @unlink($dataDir . '/registrations.json');
 @unlink($dataDir . '/fulfillment_state.json');
 @rmdir($dataDir);
+if (isset($storage)) {
+    $storage->purgeUser($userId);
+    $storage->deleteTier($tierId);
+    $storage->deleteTier($baselineTierId);
+}
 
 exit(test_finish('Commerce membership wiring tests'));

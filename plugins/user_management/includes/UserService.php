@@ -195,7 +195,9 @@ class UserService {
         }
         
         // Send verification email if email verification is enabled
-        $emailVerificationEnabled = get_plugin_setting('user_management', 'email_verification', true);
+        $emailVerificationEnabled = function_exists('get_plugin_setting')
+            ? get_plugin_setting('user_management', 'email_verification', true)
+            : true;
         if ($emailVerificationEnabled && !empty($userData['email'])) {
             try {
                 require_once __DIR__ . '/EmailVerification.php';

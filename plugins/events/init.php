@@ -234,3 +234,27 @@ function events_upcoming(int $limit = 10): array
     });
     return array_slice($events, 0, max(1, $limit));
 }
+
+/**
+ * Widget API v2 definition for the upcoming-events dashboard card.
+ *
+ * @return list<array<string, mixed>>
+ */
+function events_dashboard_widgets(): array
+{
+    if (!events_plugin_active() || !isset($_SESSION['user'])
+        || !in_array($_SESSION['user']['role'] ?? '', ['admin', 'superadmin'], true)) {
+        return [];
+    }
+
+    return [[
+        'id' => 'events-upcoming',
+        'title' => 'Upcoming events',
+        'roles' => ['admin'],
+        'size' => 'md',
+        'priority' => 70,
+        'endpoint' => '/api/index.php?route=events&action=dashboard_summary',
+        'mount' => 'eventsUpcoming',
+        'refresh' => 60,
+    ]];
+}

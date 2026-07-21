@@ -264,8 +264,21 @@ body.sidebar-collapsed .sidebar-collapse-toggle svg {
   transform: rotate(180deg);
 }
 
+/* Below --bp-xl (1280px), Theme marks an unset sidebar preference as a
+   non-disruptive hint. A saved expanded or collapsed preference always wins. */
+body.sidebar-collapse-suggested .sidebar-collapse-toggle {
+  border-color: var(--color-neutral-400, #D9DBD5);
+  background: var(--bg-secondary, #fafafa);
+}
+
+body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label::after {
+  content: ' for more space';
+  color: var(--text-tertiary, #C4C6C1);
+  font-weight: 400;
+}
+
 /* Desktop collapsed sidebar — icon rail */
-@media (min-width: 769px) {
+@media (min-width: 768px) {
   body.sidebar-collapsed .sidebar {
     width: calc(var(--space-10, 2.5rem) + 3rem);
     padding: var(--space-10, 2.5rem);
@@ -613,7 +626,7 @@ body.sidebar-collapsed .sidebar-collapse-toggle svg {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .sidebar-toggle {
     display: inline-flex;
     flex-shrink: 0;
@@ -638,7 +651,7 @@ body.sidebar-collapsed .sidebar-collapse-toggle svg {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 639px) {
   .sidebar {
     padding: var(--space-4, 1rem);
   }
@@ -648,7 +661,7 @@ body.sidebar-collapsed .sidebar-collapse-toggle svg {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   body.sidebar-collapsed .sidebar {
     width: 280px;
   }

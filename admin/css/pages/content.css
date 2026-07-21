@@ -303,7 +303,7 @@
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .content-page {
     padding: var(--space-4, 1rem);
   }
@@ -729,7 +729,7 @@
 }
 
 /* Responsive Media Queries */
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .collection-editor {
     grid-template-columns: 1fr;
     gap: var(--space-4, 1rem);
@@ -743,7 +743,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .group-collections,
   .ungrouped-collections {
     grid-template-columns: 1fr;
@@ -1103,7 +1103,7 @@ body.dragging-group .group-drop-indicator {
 
 /* Collection actions menu and item styles moved to components/dropdowns.css */
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .collection-actions-bar {
     flex-direction: column;
     align-items: stretch;

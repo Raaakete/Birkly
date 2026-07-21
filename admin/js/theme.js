@@ -133,7 +133,7 @@ Birkly.Theme = {
 
         sidebar.querySelectorAll('.nav-links a').forEach((link) => {
             link.addEventListener('click', () => {
-                if (window.matchMedia('(max-width: 768px)').matches) {
+                if (window.matchMedia('(max-width: 767px)').matches) {
                     closeSidebar();
                 }
             });
@@ -146,7 +146,7 @@ Birkly.Theme = {
         });
 
         window.addEventListener('resize', () => {
-            if (window.matchMedia('(min-width: 769px)').matches) {
+            if (window.matchMedia('(min-width: 768px)').matches) {
                 closeSidebar();
             }
         });
@@ -154,10 +154,18 @@ Birkly.Theme = {
 
     initDesktopSidebarCollapse() {
         const STORAGE_KEY = 'birkly_sidebar_collapsed';
+        const DESKTOP_QUERY = '(min-width: 768px)';
+        const COMPACT_QUERY = '(min-width: 768px) and (max-width: 1279px)';
         const toggle = document.getElementById('sidebar-collapse-toggle');
         if (!toggle) {
             return;
         }
+
+        const hasSavedPreference = () => localStorage.getItem(STORAGE_KEY) !== null;
+        const updateCollapseHint = () => {
+            const suggest = !hasSavedPreference() && window.matchMedia(COMPACT_QUERY).matches;
+            document.body.classList.toggle('sidebar-collapse-suggested', suggest);
+        };
 
         const applyCollapsed = (collapsed) => {
             document.body.classList.toggle('sidebar-collapsed', collapsed);
@@ -172,25 +180,28 @@ Birkly.Theme = {
         };
 
         const saved = localStorage.getItem(STORAGE_KEY) === '1';
-        if (saved && window.matchMedia('(min-width: 769px)').matches) {
+        if (saved && window.matchMedia(DESKTOP_QUERY).matches) {
             applyCollapsed(true);
         }
+        updateCollapseHint();
 
         toggle.addEventListener('click', () => {
-            if (!window.matchMedia('(min-width: 769px)').matches) {
+            if (!window.matchMedia(DESKTOP_QUERY).matches) {
                 return;
             }
             const next = !document.body.classList.contains('sidebar-collapsed');
             localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
             applyCollapsed(next);
+            updateCollapseHint();
         });
 
         window.addEventListener('resize', () => {
-            if (!window.matchMedia('(min-width: 769px)').matches) {
+            if (!window.matchMedia(DESKTOP_QUERY).matches) {
                 document.body.classList.remove('sidebar-collapsed');
             } else {
                 applyCollapsed(localStorage.getItem(STORAGE_KEY) === '1');
             }
+            updateCollapseHint();
         });
     }
 };

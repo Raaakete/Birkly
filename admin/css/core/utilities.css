@@ -408,7 +408,8 @@
   overflow-x: scroll;
 }
 
-@media (max-width: 640px) {
+/* Below --bp-sm (640px) */
+@media (max-width: 639px) {
   .off-screen-scroll-mobile {
     width: 100vw;
     overflow-x: scroll;
@@ -424,7 +425,8 @@
   .show-mobile { display: inherit; }
 }
 
-@media (max-width: 1080px) and (min-width: 641px) {
+/* --bp-sm through below --bp-lg (1024px) */
+@media (max-width: 1023px) and (min-width: 640px) {
   .off-screen-scroll-tablet {
     width: 100vw;
     overflow-x: scroll;
@@ -439,7 +441,8 @@
   .show-tablet { display: inherit; }
 }
 
-@media (min-width: 1080px) {
+/* --bp-lg (1024px) and above */
+@media (min-width: 1024px) {
   .hide-desktop { display: none !important; }
   .show-desktop { display: inherit; }
 }

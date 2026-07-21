@@ -41,7 +41,7 @@ $adminActions = [
     'list_files', 'read_file', 'write_file', 'create_file', 'create_directory',
     'delete_path', 'rename_path', 'list_revisions', 'list_studio_blocks', 'list_sections',
     'insert_section', 'get_tokens', 'save_tokens', 'list_components', 'save_component',
-    'get_canvas_styles', 'preview_live', 'get_page_settings', 'save_page_settings',
+    'get_canvas_styles', 'preview_live', 'get_page_settings', 'save_page_settings', 'dashboard_summary',
 ];
 
 if (in_array($action, $adminActions, true)) {
@@ -69,6 +69,32 @@ function studio_err(string $msg, int $code = 400): void
 }
 
 switch ($action) {
+    case 'dashboard_summary':
+        $projects = $repo->listProjects();
+        $published = array_values(array_filter($projects, static fn (array $project): bool => !empty($project['published'])));
+        $drafts = array_values(array_filter($projects, static fn (array $project): bool => empty($project['published'])));
+        $recent = array_map(static function (array $project) use ($repo): array {
+            $projectId = (string) ($project['id'] ?? '');
+            return [
+                'id' => $projectId,
+                'name' => (string) ($project['name'] ?? $projectId),
+                'slug' => (string) ($project['slug'] ?? $projectId),
+                'published' => !empty($project['published']),
+                'updated_at' => (string) ($project['updated_at'] ?? ''),
+                'pages' => count($repo->listPages($projectId)),
+            ];
+        }, array_slice($projects, 0, 4));
+        studio_ok([
+            'data' => [
+                'projects' => count($projects),
+                'published' => count($published),
+                'drafts' => count($drafts),
+                'recent' => $recent,
+                'studio_url' => function_exists('admin_url')
+                    ? admin_url('studio')
+                    : '/admin/index.php?page=studio',
+            ],
+        ]);
     case 'list_projects':
         studio_ok(['projects' => $repo->listProjects()]);
     case 'get_project':
