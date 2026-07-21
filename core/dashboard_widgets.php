@@ -143,16 +143,16 @@ function birkly_normalize_dashboard_widget_roles($roles): ?array
 function birkly_get_core_dashboard_widgets(): array
 {
     $widgets = [
-        ['id' => 'content-snapshot', 'title' => 'Content overview', 'size' => 'full', 'priority' => 5, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
+        ['id' => 'content-snapshot', 'title' => 'Content overview', 'size' => 'md', 'priority' => 5, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
         ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'md', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
         ['id' => 'recent-collections', 'title' => 'Recent collections', 'size' => 'md', 'priority' => 20, 'mount' => 'recentCollections'],
         ['id' => 'recent-entries', 'title' => 'Recent entries', 'size' => 'md', 'priority' => 25, 'mount' => 'recentEntries'],
-        ['id' => 'pending-review', 'title' => 'Pending review', 'size' => 'lg', 'priority' => 28, 'endpoint' => '/api/dashboard.php?action=pending_review&limit=12', 'mount' => 'pendingReview', 'roles' => ['admin', 'editor']],
+        ['id' => 'pending-review', 'title' => 'Pending review', 'size' => 'md', 'priority' => 28, 'endpoint' => '/api/dashboard.php?action=pending_review&limit=12', 'mount' => 'pendingReview', 'roles' => ['admin', 'editor']],
         ['id' => 'recent-activity', 'title' => 'Recent activity', 'size' => 'md', 'priority' => 30, 'endpoint' => '/api/dashboard.php?action=activity&limit=12&filter=all', 'mount' => 'recentActivity', 'refresh' => 30],
-        ['id' => 'drafts', 'title' => 'Drafts', 'size' => 'sm', 'priority' => 35, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'drafts'],
+        ['id' => 'drafts', 'title' => 'Drafts', 'size' => 'md', 'priority' => 35, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'drafts'],
         ['id' => 'system-status', 'title' => 'System health', 'size' => 'md', 'priority' => 40, 'endpoint' => '/api/dashboard.php?action=performance', 'mount' => 'systemStatus', 'refresh' => 30, 'roles' => ['admin']],
-        ['id' => 'security', 'title' => 'Security', 'size' => 'sm', 'priority' => 45, 'endpoint' => '/api/dashboard.php?action=activity&limit=10&filter=users', 'mount' => 'security', 'roles' => ['admin']],
-        ['id' => 'updates', 'title' => 'Updates & alerts', 'size' => 'sm', 'priority' => 50, 'endpoint' => '/api/dashboard.php?action=notifications', 'mount' => 'updates', 'roles' => ['admin']],
+        ['id' => 'security', 'title' => 'Security', 'size' => 'md', 'priority' => 45, 'endpoint' => '/api/dashboard.php?action=activity&limit=10&filter=users', 'mount' => 'security', 'roles' => ['admin']],
+        ['id' => 'updates', 'title' => 'Updates & alerts', 'size' => 'md', 'priority' => 50, 'endpoint' => '/api/dashboard.php?action=notifications', 'mount' => 'updates', 'roles' => ['admin']],
     ];
 
     return array_values(array_filter(array_map('birkly_normalize_dashboard_widget', $widgets)));
@@ -284,15 +284,52 @@ function birkly_build_user_display_index(): array
 }
 
 /**
+ * Map review notification log entries to submitter references.
+ *
+ * @return array<string, string>
+ */
+function birkly_build_review_submitter_index(): array
+{
+    $index = [];
+    $logFile = dirname(__DIR__) . '/logs/security.log';
+    if (!is_file($logFile)) {
+        return $index;
+    }
+
+    foreach (file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        $row = json_decode($line, true);
+        if (!is_array($row) || ($row['event'] ?? '') !== 'review_action') {
+            continue;
+        }
+        $details = $row['details'] ?? [];
+        if (($details['action'] ?? '') !== 'pending_review') {
+            continue;
+        }
+        $collection = trim((string) ($details['collection'] ?? ''));
+        $entryId = trim((string) ($details['id'] ?? $details['entry_id'] ?? ''));
+        if ($collection === '' || $entryId === '') {
+            continue;
+        }
+        $index[$collection . ':' . $entryId] = trim((string) (
+            $details['assigned_by']
+            ?? $details['submitted_by']
+            ?? ''
+        ));
+    }
+
+    return $index;
+}
+
+/**
  * Resolve a stored user id or email to a display label.
  *
  * @param array<string, array{id: string, name: string, email: string}> $index
  */
-function birkly_resolve_user_display(string $reference, array $index): string
+function birkly_resolve_user_display(string $reference, array $index, string $emptyLabel = 'Unassigned'): string
 {
     $reference = trim($reference);
     if ($reference === '') {
-        return 'Unassigned';
+        return $emptyLabel;
     }
 
     $normalized = strtolower($reference);
@@ -329,6 +366,7 @@ function birkly_collect_pending_review_entries(
     $assignedTo = $assignedTo === 'me' ? 'me' : 'all';
     $storage = $storage ?? get_storage();
     $userIndex = $userIndex ?? birkly_build_user_display_index();
+    $submitterIndex = birkly_build_review_submitter_index();
     $pending = [];
 
     foreach ($storage->list('collections') as $collectionSlug) {
@@ -352,12 +390,16 @@ function birkly_collect_pending_review_entries(
             }
 
             $creatorRef = trim((string) (
-                $entry['author_id']
+                $entry['submitted_by']
+                ?? $entry['author_id']
                 ?? $entry['author_user_id']
                 ?? $entry['created_by']
                 ?? ''
             ));
             $entryId = trim((string) ($entry['id'] ?? pathinfo($entryFile, PATHINFO_FILENAME)));
+            if ($creatorRef === '') {
+                $creatorRef = $submitterIndex[$collectionSlug . ':' . $entryId] ?? '';
+            }
             $updatedAt = (string) ($entry['updated_at'] ?? $entry['modified_at'] ?? $entry['created_at'] ?? '');
 
             $pending[] = [
@@ -365,9 +407,9 @@ function birkly_collect_pending_review_entries(
                 'title' => trim((string) ($entry['title'] ?? $entry['name'] ?? 'Untitled')),
                 'collection' => $collectionSlug,
                 'status' => 'pending_review',
-                'reviewer' => birkly_resolve_user_display($reviewerRef, $userIndex),
+                'reviewer' => birkly_resolve_user_display($reviewerRef, $userIndex, 'Unassigned'),
                 'reviewer_id' => $reviewerRef,
-                'submitted_by' => birkly_resolve_user_display($creatorRef, $userIndex),
+                'submitted_by' => birkly_resolve_user_display($creatorRef, $userIndex, 'Unknown'),
                 'submitted_by_id' => $creatorRef,
                 'updated_at' => $updatedAt,
             ];
@@ -551,9 +593,7 @@ function birkly_apply_dashboard_layout(array $widgets, array $layout): array
             continue;
         }
         $id = (string) $widget['id'];
-        if (isset($sizes[$id])) {
-            $widget['size'] = $sizes[$id];
-        }
+        $widget['size'] = 'md';
         $widget['hidden'] = isset($hidden[$id]);
         $byId[$id] = $widget;
     }

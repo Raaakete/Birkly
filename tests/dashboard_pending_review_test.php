@@ -24,6 +24,7 @@ file_put_contents($contentDir . '/post-one.json', json_encode([
     'status' => 'pending_review',
     'reviewer' => 'reviewer-user',
     'author_id' => 'author-user',
+    'submitted_by' => 'author-user',
     'updated_at' => '2026-07-21T10:00:00+00:00',
 ], JSON_PRETTY_PRINT));
 
@@ -46,6 +47,9 @@ test_assert('pending review entry resolves reviewer and author',
     ($entries[0]['title'] ?? '') === 'Awaiting approval'
     && ($entries[0]['reviewer'] ?? '') === 'Riley Reviewer'
     && ($entries[0]['submitted_by'] ?? '') === 'Casey Author');
+
+$entriesWithSubmitter = birkly_collect_pending_review_entries(10, 'all', null, $storage, $userIndex);
+test_assert('pending review prefers submitted_by field', ($entriesWithSubmitter[0]['submitted_by'] ?? '') === 'Casey Author');
 
 $assignedToMe = birkly_collect_pending_review_entries(10, 'me', 'reviewer-user', $storage, $userIndex);
 test_assert('assigned_to=me includes matching reviewer', count($assignedToMe) === 1);

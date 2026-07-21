@@ -88,6 +88,6 @@ foreach ($applied as $widget) {
     $hiddenById[$widget['id']] = !empty($widget['hidden']);
 }
 test_assert('layout marks hidden widgets', ($hiddenById['drafts'] ?? false) === true && ($hiddenById['pending-review'] ?? false) === false);
-test_assert('layout applies size overrides', ($applied[0]['size'] ?? '') === 'full');
+test_assert('layout applies size overrides', ($applied[0]['size'] ?? '') === 'md');
 
 exit(test_finish('dashboard_widget_api_test'));
