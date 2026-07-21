@@ -648,12 +648,6 @@ body.sidebar-collapsed .sidebar-collapse-toggle svg {
   display: none;
 }
 
-/* Topbar hamburger — visible on all breakpoints; mobile opens overlay, desktop collapses rail */
-.admin-topbar .sidebar-toggle {
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
 @media (max-width: 768px) {
   body.sidebar-collapsed .sidebar {
     width: 280px;
