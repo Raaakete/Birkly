@@ -792,6 +792,29 @@ function saveEntry() {
             'field_errors' => $fieldErrors,
         ];
     }
+
+    foreach (['author_id', 'author_user_id', 'created_by', 'submitted_by', 'submitted_at'] as $metaKey) {
+        if (!isset($entryOutput[$metaKey]) && is_array($entry) && isset($entry[$metaKey])) {
+            $entryOutput[$metaKey] = $entry[$metaKey];
+        }
+    }
+
+    $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+    $previousStatus = is_array($entry) ? (string) ($entry['status'] ?? '') : '';
+    if ($currentUserId !== '') {
+        if ($action === 'create' && empty($entryOutput['author_id']) && empty($entryOutput['author_user_id'])) {
+            $entryOutput['author_id'] = $currentUserId;
+        }
+        if ($status === 'pending_review') {
+            if (empty($entryOutput['author_id']) && empty($entryOutput['author_user_id'])) {
+                $entryOutput['author_id'] = $entry['author_id'] ?? $entry['author_user_id'] ?? $currentUserId;
+            }
+            if ($previousStatus !== 'pending_review') {
+                $entryOutput['submitted_by'] = $currentUserId;
+                $entryOutput['submitted_at'] = date('c');
+            }
+        }
+    }
     
     // Save entry to file
     $entryFile = "$entriesDir/$entryId.json";
