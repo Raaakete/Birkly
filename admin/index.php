@@ -117,6 +117,10 @@ if (isset($_SESSION['user'])) {
 
 // If first-time setup and onboarding not completed, redirect to welcome
 $page = isset($_GET['page']) && $_GET['page'] !== '' ? $_GET['page'] : 'dashboard';
+if ($page === 'redirects') {
+    header('Location: ' . birkly_admin_url('settings') . '#redirects', true, 302);
+    exit;
+}
 if ($page !== 'onboarding' && isset($_SESSION['user'])) {
     $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
     if (shouldRedirectToOnboarding($userId)) {
