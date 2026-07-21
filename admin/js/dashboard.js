@@ -249,6 +249,44 @@
         const close = () => { if (modal) modal.style.display = 'none'; };
         document.getElementById('onboarding-complete-close')?.addEventListener('click', close);
         document.getElementById('onboarding-complete-close-btn')?.addEventListener('click', close);
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('onboarding_complete') === 'true' && modal) {
+            modal.style.display = 'flex';
+            const demoUrl = params.get('demo_website_url');
+            const demoCard = document.getElementById('onboarding-complete-demo-card');
+            const demoLink = document.getElementById('onboarding-complete-demo-link');
+            if (demoUrl && demoCard && demoLink) {
+                demoCard.style.display = '';
+                demoLink.href = demoUrl;
+            }
+        }
+
+        async function postOnboardingAction(action, body) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const response = await fetch(apiUrl('/api/onboarding.php?action=' + action), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ ...body, _csrf: csrf })
+            });
+            return response.json();
+        }
+
+        document.getElementById('hide-checklist-btn')?.addEventListener('click', async function () {
+            await postOnboardingAction('hide_checklist', {});
+            document.getElementById('onboarding-checklist-panel')?.remove();
+        });
+
+        document.querySelectorAll('.checklist-dismiss').forEach(function (button) {
+            button.addEventListener('click', async function (event) {
+                event.preventDefault();
+                const id = button.getAttribute('data-dismiss-id');
+                if (!id) return;
+                await postOnboardingAction('dismiss_checklist_item', { item_id: id });
+                button.closest('.checklist-item')?.remove();
+            });
+        });
     }
 
     function initDashboard() {
