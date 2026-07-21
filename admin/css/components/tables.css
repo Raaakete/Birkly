@@ -83,7 +83,7 @@
 .entries-smart-table .table-row {
   display: flex;
   align-items: center;
-  width: 100%;
+  width: max-content;
   min-width: 100%;
   transition: all var(--transition-normal, 200ms ease);
   gap: 1px;
@@ -176,7 +176,7 @@
 
 .entries-smart-table.is-actions-overlapping .head-actions,
 .entries-smart-table.is-actions-overlapping .cell-actions {
-  box-shadow: -5px 0 15px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: -8px 0 16px -4px rgba(0, 0, 0, 0.18);
 }
 
 .entries-smart-table .head-actions {
