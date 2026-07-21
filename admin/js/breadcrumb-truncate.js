@@ -10,6 +10,8 @@
     const MIN_VISIBLE_SEGMENTS = 2;
     const ELLIPSIS = '…';
 
+    let truncateFrame = null;
+
     function makeSeparator() {
         const sep = document.createElement('span');
         sep.className = 'separator';
@@ -37,7 +39,7 @@
                 });
                 return;
             }
-            if (el.classList.contains('current') || el.tagName === 'SPAN') {
+            if (el.classList.contains('current') || el.classList.contains('breadcrumb-segment')) {
                 segments.push({
                     label: (el.textContent || '').trim(),
                     href: null,
@@ -66,6 +68,12 @@
     }
 
     function renderSegments(nav, segments, collapsedStart, fullPathLabel) {
+        const renderKey = collapsedStart + '|' + fullPathLabel;
+        if (nav._birklyBreadcrumbRenderKey === renderKey) {
+            return;
+        }
+        nav._birklyBreadcrumbRenderKey = renderKey;
+
         nav.innerHTML = '';
         nav.classList.add('breadcrumbs--truncated-ready');
 
@@ -114,7 +122,7 @@
         return nav.scrollWidth > nav.clientWidth + 1;
     }
 
-    function truncateNav(nav) {
+    function truncateNavNow(nav) {
         if (!nav || !nav.classList.contains('breadcrumbs')) {
             return;
         }
@@ -130,38 +138,51 @@
         const segments = nav._birklyBreadcrumbSegments.map((s) => ({ ...s }));
         const fullPathLabel = buildFullPathLabel(segments);
 
-        if (segments.length <= MIN_VISIBLE_SEGMENTS) {
-            renderSegments(nav, segments, 0, fullPathLabel);
-            nav.classList.remove('breadcrumbs--collapsed');
-            return;
-        }
+        nav._birklyBreadcrumbMeasuring = true;
+        const prevVisibility = nav.style.visibility;
+        nav.style.visibility = 'hidden';
+        delete nav._birklyBreadcrumbRenderKey;
 
         let collapsedStart = 0;
-        for (let start = 0; start <= segments.length - MIN_VISIBLE_SEGMENTS; start++) {
-            renderSegments(nav, segments, start, fullPathLabel);
-            if (!measureOverflow(nav)) {
-                collapsedStart = start;
-                break;
-            }
-            collapsedStart = start + 1;
-        }
-
-        if (collapsedStart > segments.length - MIN_VISIBLE_SEGMENTS) {
+        if (segments.length > MIN_VISIBLE_SEGMENTS) {
             collapsedStart = segments.length - MIN_VISIBLE_SEGMENTS;
+            for (let start = 0; start <= segments.length - MIN_VISIBLE_SEGMENTS; start++) {
+                renderSegments(nav, segments, start, fullPathLabel);
+                if (!measureOverflow(nav)) {
+                    collapsedStart = start;
+                    break;
+                }
+                collapsedStart = Math.min(start + 1, segments.length - MIN_VISIBLE_SEGMENTS);
+            }
         }
 
         renderSegments(nav, segments, collapsedStart, fullPathLabel);
         nav.classList.toggle('breadcrumbs--collapsed', collapsedStart > 0);
+
+        nav.style.visibility = prevVisibility;
+        nav._birklyBreadcrumbMeasuring = false;
+    }
+
+    function truncateNav(nav) {
+        if (!nav) {
+            return;
+        }
+        if (truncateFrame) {
+            cancelAnimationFrame(truncateFrame);
+        }
+        truncateFrame = requestAnimationFrame(() => {
+            truncateFrame = null;
+            truncateNavNow(nav);
+        });
     }
 
     function initNav(nav) {
-        if (!nav || nav.dataset.breadcrumbTruncateInit === '1') {
-            if (nav) {
-                truncateNav(nav);
-            }
+        if (!nav) {
             return;
         }
-        nav.dataset.breadcrumbTruncateInit = '1';
+        if (nav.dataset.breadcrumbTruncateInit !== '1') {
+            nav.dataset.breadcrumbTruncateInit = '1';
+        }
         truncateNav(nav);
     }
 
@@ -174,9 +195,11 @@
 
         if (typeof ResizeObserver !== 'undefined' && !nav._birklyBreadcrumbResizeObserver) {
             nav._birklyBreadcrumbResizeObserver = new ResizeObserver(() => {
+                if (nav._birklyBreadcrumbMeasuring) {
+                    return;
+                }
                 truncateNav(nav);
             });
-            nav._birklyBreadcrumbResizeObserver.observe(nav);
             const topbarLeft = nav.closest('.admin-topbar-left');
             if (topbarLeft) {
                 nav._birklyBreadcrumbResizeObserver.observe(topbarLeft);
@@ -190,8 +213,8 @@
             return;
         }
         delete nav._birklyBreadcrumbSegments;
+        delete nav._birklyBreadcrumbRenderKey;
         initNav(nav);
-        truncateNav(nav);
     }
 
     Birkly.BreadcrumbTruncate = {
@@ -205,5 +228,11 @@
     };
 
     document.addEventListener('birkly:layout-change', refresh);
-    window.addEventListener('resize', refresh);
+    window.addEventListener('resize', () => {
+        const nav = document.getElementById('admin-topbar-breadcrumbs');
+        if (nav) {
+            delete nav._birklyBreadcrumbRenderKey;
+            truncateNav(nav);
+        }
+    });
 })();
