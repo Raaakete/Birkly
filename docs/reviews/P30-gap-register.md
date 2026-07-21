@@ -30,5 +30,5 @@
 
 | ID | Item |
 |----|------|
-| — | P28 journey automation (resume after P30-M18) |
+| — | P28 journey automation (resume after P31-M18) |
 | — | P26 Studio creative |

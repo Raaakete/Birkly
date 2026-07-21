@@ -8,6 +8,7 @@
 - [x] P30-M12–M14 — Editor layout polish
 - [x] P30-M15 — admin-content-smoke extended
 - [x] P30-M16–M17 — Docs + ux-flow-matrix
+<<<<<<< Updated upstream
 - [x] P30-M18 — Matrix green + notification
 
 **Closure criteria**
@@ -17,5 +18,12 @@
 - [x] Field errors inline where possible
 - [x] Tests + admin-content-smoke green
 - [x] Single digest at M18
+=======
+- [x] P30-M18 — Matrix green + notification (closed in P31-M0 docs wave)
+>>>>>>> Stashed changes
 
-**Human sign-off:** pending
+**Human sign-off:** approved (implementation merged #178–#181)
+
+**Branch:** `cursor/p30-admin-form-navigation-4b7a`
+
+**Resume after closure:** P31 admin responsive & dashboard (P28 still paused until P31-M18)

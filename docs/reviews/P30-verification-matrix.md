@@ -28,7 +28,7 @@
 
 | ID | Story | Result | Evidence |
 |----|-------|--------|----------|
-| LAY-01 | Editor usable at 1280px with sidebars | pass | `main-content.css` grid tuning |
+| LAY-01 | Editor usable at 1280px with sidebars | pass* | `main-content.css` grid tuning; P31-M15 may refine |
 | LAY-02 | No dead page-header gap after hoist | pass | `.page-header--hoisted-empty` |
 
 ## Regression (REG)
@@ -45,3 +45,5 @@
 |----|-------|--------|----------|
 | DOC-01 | Birkly-Docs admin form layout | pass | `01-admin/admin-forms-navigation.md` |
 | DOC-02 | ux-flow-matrix updated | pass | `docs/reviews/ux-flow-matrix.md` |
+
+**Status:** green (2026-07-21)

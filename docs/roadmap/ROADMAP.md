@@ -170,6 +170,14 @@ When in doubt, treat as major and ask the human.
 
 **Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md` · **Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`
 
+**2026-07-21 — Phase 31 approved** (Keven)
+
+**Priorities:** **Admin responsive system** — canonical breakpoints, laptop shell polish · **Dashboard excellence** — widget API v2, unified `.card` styling, core + plugin widgets (Commerce, Events, Studio, Automation).
+
+**Human decisions (locked):** Widget API v2 with `endpoint` + named `mount` (no `eval`) · Commerce dashboard widget **on by default** for admin · fixed layout (no drag-and-drop v1) · pause P28 until P31-M18 · notify once at P31-M18.
+
+**Spec:** `docs/reviews/P31-admin-responsive-dashboard-plan.md` · **Handoff:** `docs/reviews/P31-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P31-verification-matrix.md`
+
 ---
 
 ## Vision
@@ -188,32 +196,34 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P30 complete** — admin forms & navigation UX; smart breadcrumbs; stacked field-blocks; `admin-content-smoke.sh` extended |
+| **Birkly (CMS)** | **P30 complete** — smart breadcrumbs, stacked forms; **P31 approved** — responsive + dashboard widgets |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | P30 admin forms/navigation docs synced |
-| **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
+| **Birkly-Docs** | P29/P30 admin UX docs; P31 dashboard widgets guide pending |
+| **kekaba** | **Baked HTML** — P28-M9/M10 when P28 resumes |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
 
-**2026-07-21 — Phase 30 complete** (autonomous P30-M0→M18)
+**2026-07-21 — Phase 30 complete** (autonomous P30-M0→M18 + hotfixes #179–#181)
 
-**Delivered:** Smart breadcrumb left-truncation in topbar (`breadcrumb-truncate.js`), stacked `.field-block` label-above-control layout, inline `field_errors` on entry save, editor grid laptop tuning, table title ellipsis, extended `admin-content-smoke.sh`.
+**Delivered:** Smart breadcrumb left-truncation, stacked `.field-block` forms, editor laptop layout, mobile hamburger fixes.
 
-**Matrices:** `docs/reviews/P30-verification-matrix.md` · **Closure:** `docs/reviews/P30-phase-closure-checklist.md` · **Plan:** `docs/reviews/P30-admin-form-navigation-plan.md`
+**Matrices:** `docs/reviews/P30-verification-matrix.md` · **Plan:** `docs/reviews/P30-admin-form-navigation-plan.md`
 
-**Next active phase:** **Phase 28** — Beta launch automation — **resume now** (paused during P30)
+**2026-07-21 — Phase 31 approved** (Keven) — Admin responsive system & dashboard excellence
 
-**Paused:** **Phase 26** — Studio creative suite — resume after P28-M20
+**Priorities:** Widget API v2 · dashboard rebuild on `.card.dash-widget` · core + plugin widgets · canonical breakpoints · responsive shell.
 
-**2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
+**P31 spec:** `docs/reviews/P31-admin-responsive-dashboard-plan.md` · **Handoff:** `docs/reviews/P31-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P31-verification-matrix.md`
 
-**Delivered:** Editor sidebar tab fix (`.sidebar-tabs` CSS/JS scope), slug auto-generation with checkbox in sidebar only, reserved fields filtered from main loop, entry detail slug display, entries status filter fix, `admin-content-smoke.sh` wired in CI.
+**Next active phase:** **Phase 31** — **approved, execution ready** (2026-07-21)
 
-**Matrices:** `docs/reviews/P29-verification-matrix.md` · **Closure:** `docs/reviews/P29-phase-closure-checklist.md` · **Plan:** `docs/reviews/P29-collections-entries-excellence-plan.md`
+**Paused:** **Phase 28** — Beta launch automation — resume after P31-M18 · **Phase 26** — Studio creative — resume after P28-M20
 
-**Paused during P30:** Phase 28 — resumed after P30-M18
+**2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15 + hotfixes)
 
-**Paused:** **Phase 26** — Studio creative suite — resume after P28-M20
+**Delivered:** Editor sidebar tab fix, slug auto-generation in sidebar, reserved fields, entry breadcrumbs, collection editor fixes, `admin-content-smoke.sh`.
+
+**Matrices:** `docs/reviews/P29-verification-matrix.md` · **Plan:** `docs/reviews/P29-collections-entries-excellence-plan.md`
 
 **Active plugins on `main` (dev tree):** `automation`, `commerce`, `events`, `user_management`, `sample-plugin`, `studio` — **excluded from CMS release zip; install via marketplace**
 

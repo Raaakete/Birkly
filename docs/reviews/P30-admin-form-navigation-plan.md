@@ -1,6 +1,6 @@
 # P30 — Admin form system & navigation UX
 
-**Status:** Approved (2026-07-21, Keven) — execute now  
+**Status:** Complete (2026-07-21, P30-M18) — merged #178–#181; docs closed in P31-M0  
 **Baseline:** P29 complete · P28 **paused** until P30-M18 · P26 **paused**  
 **Human rule:** Execute P30-M0→M18 autonomously. Notify human **once** at **P30-M18**.
 
