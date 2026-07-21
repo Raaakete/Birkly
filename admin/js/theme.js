@@ -166,6 +166,7 @@ Birkly.Theme = {
             if (label) {
                 label.textContent = collapsed ? 'Expand' : 'Collapse';
             }
+            document.dispatchEvent(new CustomEvent('birkly:layout-change'));
         };
 
         const saved = localStorage.getItem(STORAGE_KEY) === '1';

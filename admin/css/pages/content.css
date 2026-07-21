@@ -141,40 +141,62 @@
   cursor: not-allowed;
 }
 
-/* Field Management */
+/* Field Management — stacked label-above-control (P30) */
 .field-block {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  align-items: stretch;
   background: var(--bg-elevated, #ffffff);
   border-radius: var(--border-radius-s, 4px);
   margin-bottom: var(--space-4, 1rem);
   padding: var(--space-4, 1rem) var(--space-6, 1.5rem);
   position: relative;
+  min-width: 0;
 }
 
 .field-header {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  width: 250px;
-  min-height: 50px;
-  border-right: 1px solid var(--color-neutral-200, #F4F6F2);
-  margin-right: var(--space-4, 1rem);
+  justify-content: flex-start;
+  width: 100%;
+  min-height: auto;
+  border-right: none;
+  margin-right: 0;
+  margin-bottom: var(--space-2, 0.5rem);
+  padding-bottom: 0;
 }
 
 .field-title {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   color: var(--text-primary, #20221D);
 }
 
 .field-subtitle {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary, #C4C6C1);
+  margin-top: var(--space-1, 0.25rem);
 }
 
 .field-control {
   width: 100%;
+  min-width: 0;
+}
+
+.field-control > * {
+  max-width: 100%;
+}
+
+.field-control .fieldtype-wrapper,
+.field-control .content-editor-root,
+.field-control .ft-editor,
+.field-control .media-field-container,
+.field-control .relation-field-container,
+.field-control .tags-field-container,
+.field-control .dynamic-items-field {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .field-control input,
@@ -284,19 +306,6 @@
 @media (max-width: 768px) {
   .content-page {
     padding: var(--space-4, 1rem);
-  }
-
-  .field-block {
-    flex-direction: column;
-  }
-
-  .field-header {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--color-neutral-200, #F4F6F2);
-    margin-right: 0;
-    margin-bottom: var(--space-4, 1rem);
-    padding-bottom: var(--space-4, 1rem);
   }
 
   .block-item .block-drag-handle {
