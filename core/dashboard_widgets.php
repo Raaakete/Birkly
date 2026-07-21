@@ -143,13 +143,12 @@ function birkly_normalize_dashboard_widget_roles($roles): ?array
 function birkly_get_core_dashboard_widgets(): array
 {
     $widgets = [
-        ['id' => 'quick-actions', 'title' => 'Quick actions', 'size' => 'full', 'priority' => 5, 'mount' => 'quickActions', 'roles' => ['admin', 'editor']],
-        ['id' => 'content-snapshot', 'title' => 'Content snapshot', 'size' => 'full', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
-        ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'md', 'priority' => 15, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
+        ['id' => 'content-snapshot', 'title' => 'Content overview', 'size' => 'full', 'priority' => 5, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
+        ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'md', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
         ['id' => 'recent-collections', 'title' => 'Recent collections', 'size' => 'md', 'priority' => 20, 'mount' => 'recentCollections'],
         ['id' => 'recent-entries', 'title' => 'Recent entries', 'size' => 'md', 'priority' => 25, 'mount' => 'recentEntries'],
-        ['id' => 'recent-activity', 'title' => 'Recent activity', 'size' => 'lg', 'priority' => 30, 'endpoint' => '/api/dashboard.php?action=activity&limit=20&filter=all', 'mount' => 'recentActivity', 'refresh' => 30],
-        ['id' => 'drafts', 'title' => 'Drafts', 'size' => 'md', 'priority' => 35, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'drafts'],
+        ['id' => 'recent-activity', 'title' => 'Recent activity', 'size' => 'md', 'priority' => 30, 'endpoint' => '/api/dashboard.php?action=activity&limit=12&filter=all', 'mount' => 'recentActivity', 'refresh' => 30],
+        ['id' => 'drafts', 'title' => 'Drafts', 'size' => 'sm', 'priority' => 35, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'drafts'],
         ['id' => 'system-status', 'title' => 'System health', 'size' => 'md', 'priority' => 40, 'endpoint' => '/api/dashboard.php?action=performance', 'mount' => 'systemStatus', 'refresh' => 30, 'roles' => ['admin']],
         ['id' => 'security', 'title' => 'Security', 'size' => 'sm', 'priority' => 45, 'endpoint' => '/api/dashboard.php?action=activity&limit=10&filter=users', 'mount' => 'security', 'roles' => ['admin']],
         ['id' => 'updates', 'title' => 'Updates & alerts', 'size' => 'sm', 'priority' => 50, 'endpoint' => '/api/dashboard.php?action=notifications', 'mount' => 'updates', 'roles' => ['admin']],
