@@ -1,6 +1,6 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-07-21 (P31 dashboard documentation prepared)
+**Last updated:** 2026-07-21 (P31 dashboard complete)
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
 **Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (29 suites)  
 **Browser QA:** P4 HTTP E2E in CI; MCP `mcp_http_test.php`; design-reviewer approved MCP tab + BYOAI wizard
@@ -10,7 +10,7 @@
 | Flow | Area | Verdict | Phase 2 | Evidence / notes |
 |------|------|---------|---------|------------------|
 | Admin login | Auth | **pass** | — | Unchanged from P2-M1 baseline. |
-| Dashboard widgets | Admin dashboard | **pending** | P31 | Planned widget grid: quick actions, content snapshot, activity, system status, and active-plugin widgets; verify API v2 and responsive 3 → 2 → 1 layout at P31-M18. |
+| Dashboard widgets | Admin dashboard | **pass** | P31 | API v2 named mounts, core/plugin widgets, and responsive 3 → 2 → 1 grid verified by widget tests, CI, and browser walkthrough. |
 | Onboarding wizard (fresh user) | Onboarding | **pass** | P2-M5 | `reset-onboarding.php --keep-entries` → wizard loads; skip/complete sets dashboard checklist (#25). |
 | Create collection + fields | Collections | **pass** | P29 | Settings tab slug checkbox; sidebar tabs not empty; `collection_editor_sidebar_test.php`. |
 | Create/edit/publish entry | Entries | **pass** | P29/P30 | Stacked field labels; inline field_errors; breadcrumb left-truncation in topbar. |
@@ -82,8 +82,8 @@
 
 ---
 
-## P31 dashboard coverage (prepared 2026-07-21)
+## P31 dashboard coverage (complete 2026-07-21)
 
-**Status:** Pending implementation and P31-M16 regression verification.
+**Status:** Complete — Widget API v2, one responsive widget grid, core and plugin mounts, and responsive admin-shell passes.
 
-**Acceptance evidence:** `tests/dashboard_widgets_test.php`, `admin/js/dashboard-widgets.js`, `core/dashboard_widgets.php`, responsive dashboard CSS, and `docs/reviews/P31-verification-matrix.md`.
+**Acceptance evidence:** `tests/dashboard_widget_api_test.php`, `tests/dashboard_lifecycle_contract_test.php`, `tests/dashboard_widgets_test.php`, `./scripts/ci-check.sh`, `admin/js/dashboard-widgets.js`, `core/dashboard_widgets.php`, and `docs/reviews/P31-verification-matrix.md`.

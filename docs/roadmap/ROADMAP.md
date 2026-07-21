@@ -188,9 +188,9 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P30 formally closed** — admin forms & navigation UX; **P31 approved** — responsive dashboard and widget API v2 |
+| **Birkly (CMS)** | **P30 formally closed** — admin forms & navigation UX; **P31 complete** — responsive dashboard and widget API v2 |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | P30 admin forms/navigation docs synced; P31 dashboard widgets guide prepared |
+| **Birkly-Docs** | P30 admin forms/navigation docs synced; P31 dashboard widgets guide published |
 | **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
@@ -201,15 +201,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Matrices:** `docs/reviews/P30-verification-matrix.md` · **Closure:** `docs/reviews/P30-phase-closure-checklist.md` · **Plan:** `docs/reviews/P30-admin-form-navigation-plan.md`
 
-**2026-07-21 — Phase 31 approved** — Admin responsive system & dashboard excellence
+**2026-07-21 — Phase 31 complete** — Admin responsive system & dashboard excellence
 
 **Priorities:** Widget API v2 · dashboard rebuild on `.card.dash-widget` · core and plugin widgets · canonical breakpoints · responsive shell.
 
 **P31 spec:** `docs/reviews/P31-admin-responsive-dashboard-plan.md` · **Handoff:** `docs/reviews/P31-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P31-verification-matrix.md`
 
-**Next active phase:** **Phase 31** — approved, execution ready
+**Next active phase:** Phase 28 remains paused pending the next approved execution wave
 
-**Paused:** Phase 28 beta-launch automation until P31-M18 · Phase 26 Studio creative suite remains paused
+**Paused:** Phase 28 beta-launch automation · Phase 26 Studio creative suite remains paused
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
