@@ -71,6 +71,8 @@ try {
     if (ob_get_level() > 0) {
         ob_clean();
     }
+    
+    @require_once __DIR__ . '/../core/csrf.php';
 } catch (Throwable $e) {
     // Suppress any output from included files
     if (ob_get_level() > 0) {
@@ -113,10 +115,140 @@ if (!headers_sent()) {
 // If it fails, it will exit with 401/403, so we only get here if auth succeeds
 requireAuth('view_dashboard');
 
-$action = trim($_GET['action'] ?? '');
+$rawInput = file_get_contents('php://input');
+$input = is_string($rawInput) && $rawInput !== '' ? json_decode($rawInput, true) : [];
+if (!is_array($input)) {
+    $input = [];
+}
+
+$action = trim((string) ($_GET['action'] ?? $input['action'] ?? ''));
 
 // Start performance tracking
 $startTime = microtime(true);
+
+if ($action === 'pending_review') {
+    try {
+        require_once __DIR__ . '/../core/dashboard_widgets.php';
+        $limit = intval($_GET['limit'] ?? 12);
+        $assignedTo = trim((string) ($_GET['assigned_to'] ?? 'all'));
+        $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+        $entries = birkly_collect_pending_review_entries($limit, $assignedTo, $currentUserId);
+
+        ob_clean();
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'entries' => $entries,
+                'total' => count($entries),
+            ],
+        ]);
+        ob_end_flush();
+        exit;
+    } catch (Exception $e) {
+        error_log('Error in dashboard pending_review: ' . $e->getMessage());
+        ob_clean();
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'entries' => [],
+                'total' => 0,
+            ],
+        ]);
+        ob_end_flush();
+        exit;
+    }
+}
+
+if ($action === 'layout') {
+    try {
+        require_once __DIR__ . '/../core/dashboard_widgets.php';
+        $widgets = birkly_merge_dashboard_widgets([]);
+        $widgets = birkly_filter_dashboard_widgets_for_user($widgets);
+        $widgetIds = array_column($widgets, 'id');
+        $userId = (string) ($_SESSION['user']['id'] ?? '');
+        $layout = birkly_load_user_dashboard_layout($userId, $widgetIds);
+
+        ob_clean();
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'layout' => $layout,
+            ],
+        ]);
+        ob_end_flush();
+        exit;
+    } catch (Exception $e) {
+        error_log('Error in dashboard layout: ' . $e->getMessage());
+        ob_clean();
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Failed to load dashboard layout',
+        ]);
+        ob_end_flush();
+        exit;
+    }
+}
+
+if ($action === 'save_layout') {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        ob_clean();
+        http_response_code(405);
+        echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+        ob_end_flush();
+        exit;
+    }
+
+    $csrf = (string) ($input['_csrf'] ?? '');
+    if (!validate_csrf_token($csrf)) {
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        ob_end_flush();
+        exit;
+    }
+
+    try {
+        require_once __DIR__ . '/../core/dashboard_widgets.php';
+        $widgets = birkly_merge_dashboard_widgets([]);
+        $widgets = birkly_filter_dashboard_widgets_for_user($widgets);
+        $widgetIds = array_column($widgets, 'id');
+        $userId = (string) ($_SESSION['user']['id'] ?? '');
+        $layoutInput = $input['layout'] ?? null;
+
+        if ($layoutInput === null && isset($input['reset']) && $input['reset'] === true) {
+            $layoutInput = birkly_default_dashboard_layout();
+        }
+
+        if (!is_array($layoutInput)) {
+            ob_clean();
+            echo json_encode(['status' => 'error', 'message' => 'Invalid layout format']);
+            ob_end_flush();
+            exit;
+        }
+
+        $saved = birkly_save_user_dashboard_layout($userId, $layoutInput, $widgetIds);
+        $layout = birkly_load_user_dashboard_layout($userId, $widgetIds);
+
+        ob_clean();
+        echo json_encode([
+            'status' => $saved ? 'ok' : 'error',
+            'message' => $saved ? 'Dashboard layout saved' : 'Failed to save dashboard layout',
+            'data' => [
+                'layout' => $layout,
+            ],
+        ]);
+        ob_end_flush();
+        exit;
+    } catch (Exception $e) {
+        error_log('Error in dashboard save_layout: ' . $e->getMessage());
+        ob_clean();
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Failed to save dashboard layout',
+        ]);
+        ob_end_flush();
+        exit;
+    }
+}
 
 if ($action === 'stats') {
     try {
@@ -696,12 +828,17 @@ if ($action === 'widgets') {
     require_once __DIR__ . '/../core/dashboard_widgets.php';
     $widgets = birkly_merge_dashboard_widgets($widgets);
     $widgets = birkly_filter_dashboard_widgets_for_user($widgets);
+    $widgetIds = array_column($widgets, 'id');
+    $userId = (string) ($_SESSION['user']['id'] ?? '');
+    $layout = birkly_load_user_dashboard_layout($userId, $widgetIds);
+    $widgets = birkly_apply_dashboard_layout($widgets, $layout);
 
         ob_clean();
         echo json_encode([
             'status' => 'ok',
             'data' => [
-                'widgets' => $widgets
+                'widgets' => $widgets,
+                'layout' => $layout,
             ]
         ]);
         ob_end_flush();

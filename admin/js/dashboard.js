@@ -2,6 +2,17 @@
     'use strict';
 
     const refreshTimers = [];
+    const dashboardState = {
+        widgets: [],
+        layout: {
+            widget_order: [],
+            hidden_widgets: [],
+            widget_sizes: {},
+            customized: false,
+        },
+        customizing: false,
+        pickerDraft: null,
+    };
 
     function apiUrl(path) {
         return window.Birkly && typeof Birkly.url === 'function' ? Birkly.url(path) : path;
@@ -63,6 +74,9 @@
     }
 
     function statusBadge(status) {
+        if (status === 'pending_review') {
+            return '<span class="dash-badge dash-badge--review">Pending review</span>';
+        }
         const published = status === 'published';
         const label = published ? 'Published' : 'Draft';
         const className = published ? 'dash-badge dash-badge--published' : 'dash-badge dash-badge--draft';
@@ -184,6 +198,30 @@
                 .catch(function () { setContent(element, empty('Unable to load entries.')); });
         });
 
+        dashboard.registerMount('pendingReview', function (element, widget, data) {
+            const entries = data && Array.isArray(data.entries) ? data.entries : [];
+            if (!entries.length) {
+                setContent(element, empty('No entries are waiting for review.'));
+                return;
+            }
+            const items = entries.map(function (entry) {
+                const modified = formatTimeAgo(entry.updated_at);
+                const metaParts = [
+                    'By ' + escapeHtml(entry.submitted_by || 'Unknown'),
+                    'Reviewer: ' + escapeHtml(entry.reviewer || 'Unassigned'),
+                ];
+                if (modified) metaParts.push(escapeHtml(modified));
+                return feedItem({
+                    title: entry.title || 'Untitled',
+                    href: adminUrl('entry-editor', { collection: entry.collection, entry: entry.id || '' }),
+                    meta: metaParts.join(' · '),
+                    aside: statusBadge('pending_review'),
+                });
+            });
+            const footer = '<a class="dash-widget-footer-link" href="' + escapeHtml(adminUrl('content')) + '">View all content →</a>';
+            setContent(element, feedList(items) + footer);
+        });
+
         dashboard.registerMount('recentActivity', function (element, widget, data) {
             const activity = data && Array.isArray(data.activity) ? data.activity : [];
             const rows = activity
@@ -193,7 +231,6 @@
                     const time = formatTimeAgo(item.timestamp);
                     return '<div class="dash-activity-row">' +
                         '<span class="dash-activity-row__message">' + escapeHtml(item.message || item.event || 'Activity') + '</span>' +
-                        '<span class="dash-activity-row__user">' + escapeHtml(item.user || 'System') + '</span>' +
                         '<span class="dash-activity-row__time">' + escapeHtml(time || '—') + '</span>' +
                         '</div>';
                 });
@@ -324,31 +361,310 @@
             });
     }
 
-    function renderWidgets(widgets) {
+    function widgetsForDisplay() {
+        const widgets = dashboardState.widgets.slice();
+        if (!dashboardState.customizing) {
+            return widgets.filter(widget => !widget.hidden);
+        }
+        return widgets;
+    }
+
+    function syncLayoutOrderFromWidgets() {
+        dashboardState.layout.widget_order = dashboardState.widgets.map(widget => widget.id);
+    }
+
+    function buildWidgetCard(widget) {
+        const card = document.createElement('section');
+        const size = ['sm', 'md', 'lg', 'full'].includes(widget.size) ? widget.size : 'md';
+        card.className = 'card dash-widget dash-widget--size-' + size;
+        if (widget.hidden) {
+            card.classList.add('dash-widget--hidden');
+        }
+        if (dashboardState.customizing) {
+            card.classList.add('dash-widget--draggable');
+            card.setAttribute('draggable', 'true');
+        }
+        card.dataset.dashboardWidget = widget.id;
+
+        const heading = document.createElement('div');
+        heading.className = 'dash-widget-header';
+
+        if (dashboardState.customizing) {
+            const handle = document.createElement('button');
+            handle.type = 'button';
+            handle.className = 'dash-widget-drag-handle';
+            handle.setAttribute('aria-label', 'Drag to reorder ' + (widget.title || widget.id));
+            handle.textContent = '⋮⋮';
+            heading.appendChild(handle);
+        }
+
+        const title = document.createElement('h2');
+        title.className = 'dash-widget-title';
+        title.textContent = widget.title || widget.id;
+        heading.appendChild(title);
+
+        if (dashboardState.customizing && widget.hidden) {
+            const hiddenBadge = document.createElement('span');
+            hiddenBadge.className = 'dash-widget-hidden-badge';
+            hiddenBadge.textContent = 'Hidden';
+            heading.appendChild(hiddenBadge);
+        }
+
+        const body = document.createElement('div');
+        body.className = 'dash-widget-body dash-widget-content';
+        body.innerHTML = '<p class="dash-empty dash-empty--loading">Loading…</p>';
+        card.append(heading, body);
+        return { card: card, body: body };
+    }
+
+    function renderWidgets() {
         const grid = document.getElementById('dashboard-widget-grid');
         if (!grid || !window.Birkly?.Dashboard) return;
+
+        refreshTimers.splice(0).forEach(timer => clearInterval(timer));
+        grid.classList.toggle('dashboard-widget-grid--customizing', dashboardState.customizing);
         grid.replaceChildren();
-        widgets.slice().sort((left, right) => left.priority - right.priority || left.id.localeCompare(right.id)).forEach(function (widget) {
-            const card = document.createElement('section');
-            const size = ['sm', 'md', 'lg', 'full'].includes(widget.size) ? widget.size : 'md';
-            card.className = 'card dash-widget dash-widget--size-' + size;
-            card.dataset.dashboardWidget = widget.id;
-            const heading = document.createElement('div');
-            heading.className = 'dash-widget-header';
-            const title = document.createElement('h2');
-            title.className = 'dash-widget-title';
-            title.textContent = widget.title || widget.id;
-            heading.appendChild(title);
-            const body = document.createElement('div');
-            body.className = 'dash-widget-body dash-widget-content';
-            body.innerHTML = '<p class="dash-empty dash-empty--loading">Loading…</p>';
-            card.append(heading, body);
-            grid.appendChild(card);
-            loadAndMountWidget(body, widget);
-            if (Number(widget.refresh) > 0) {
+
+        widgetsForDisplay().forEach(function (widget) {
+            const built = buildWidgetCard(widget);
+            grid.appendChild(built.card);
+            loadAndMountWidget(built.body, widget);
+            if (!dashboardState.customizing && Number(widget.refresh) > 0) {
                 refreshTimers.push(window.setInterval(function () {
-                    loadAndMountWidget(body, widget);
+                    loadAndMountWidget(built.body, widget);
                 }, Number(widget.refresh) * 1000));
+            }
+        });
+
+        if (dashboardState.customizing) {
+            setupWidgetDragAndDrop(grid);
+        }
+    }
+
+    function setupWidgetDragAndDrop(grid) {
+        let draggedId = '';
+
+        grid.querySelectorAll('.dash-widget--draggable').forEach(function (card) {
+            card.addEventListener('dragstart', function (event) {
+                draggedId = card.dataset.dashboardWidget || '';
+                card.classList.add('dash-widget--dragging');
+                if (event.dataTransfer) {
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', draggedId);
+                }
+            });
+
+            card.addEventListener('dragend', function () {
+                card.classList.remove('dash-widget--dragging');
+                grid.querySelectorAll('.dash-widget--drag-over').forEach(node => node.classList.remove('dash-widget--drag-over'));
+            });
+
+            card.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                if (event.dataTransfer) {
+                    event.dataTransfer.dropEffect = 'move';
+                }
+                card.classList.add('dash-widget--drag-over');
+            });
+
+            card.addEventListener('dragleave', function () {
+                card.classList.remove('dash-widget--drag-over');
+            });
+
+            card.addEventListener('drop', function (event) {
+                event.preventDefault();
+                const targetId = card.dataset.dashboardWidget || '';
+                const sourceId = draggedId || (event.dataTransfer ? event.dataTransfer.getData('text/plain') : '');
+                card.classList.remove('dash-widget--drag-over');
+                if (!sourceId || !targetId || sourceId === targetId) {
+                    return;
+                }
+                reorderWidgets(sourceId, targetId);
+            });
+        });
+    }
+
+    function reorderWidgets(sourceId, targetId) {
+        const widgets = dashboardState.widgets.slice();
+        const sourceIndex = widgets.findIndex(widget => widget.id === sourceId);
+        const targetIndex = widgets.findIndex(widget => widget.id === targetId);
+        if (sourceIndex < 0 || targetIndex < 0) {
+            return;
+        }
+        const [moved] = widgets.splice(sourceIndex, 1);
+        widgets.splice(targetIndex, 0, moved);
+        dashboardState.widgets = widgets;
+        syncLayoutOrderFromWidgets();
+        renderWidgets();
+        persistLayout(dashboardState.layout, false);
+    }
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.content || '';
+    }
+
+    async function persistLayout(layout, reloadAfterSave) {
+        const response = await fetch(apiUrl('/api/dashboard.php?action=save_layout'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ layout: layout, _csrf: getCsrfToken() }),
+        });
+        const payload = await response.json();
+        if (payload?.data?.layout) {
+            dashboardState.layout = payload.data.layout;
+        }
+        if (reloadAfterSave) {
+            await loadWidgetManifest();
+        }
+        return payload;
+    }
+
+    async function resetLayout() {
+        const response = await fetch(apiUrl('/api/dashboard.php?action=save_layout'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ reset: true, _csrf: getCsrfToken() }),
+        });
+        const payload = await response.json();
+        if (payload?.data?.layout) {
+            dashboardState.layout = payload.data.layout;
+        }
+        await loadWidgetManifest();
+        return payload;
+    }
+
+    function setCustomizeMode(enabled) {
+        dashboardState.customizing = enabled;
+        const bar = document.getElementById('dashboard-customize-bar');
+        const button = document.getElementById('dashboard-customize-btn');
+        if (bar) bar.hidden = !enabled;
+        if (button) {
+            button.textContent = enabled ? 'Customizing…' : 'Customize dashboard';
+            button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+        }
+        renderWidgets();
+    }
+
+    function buildPickerDraft() {
+        const hidden = new Set(dashboardState.layout.hidden_widgets || []);
+        const sizes = dashboardState.layout.widget_sizes || {};
+        return dashboardState.widgets.map(function (widget) {
+            return {
+                id: widget.id,
+                title: widget.title || widget.id,
+                visible: !hidden.has(widget.id),
+                size: sizes[widget.id] || widget.size || 'md',
+                defaultSize: widget.size || 'md',
+            };
+        });
+    }
+
+    function renderWidgetPicker() {
+        const list = document.getElementById('dashboard-widget-picker');
+        if (!list || !dashboardState.pickerDraft) return;
+        list.replaceChildren();
+
+        dashboardState.pickerDraft.forEach(function (item, index) {
+            const row = document.createElement('li');
+            row.className = 'dashboard-widget-picker__item';
+
+            const label = document.createElement('label');
+            label.className = 'dashboard-widget-picker__label';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = item.visible;
+            checkbox.addEventListener('change', function () {
+                dashboardState.pickerDraft[index].visible = checkbox.checked;
+            });
+            label.append(checkbox, document.createTextNode(' ' + item.title));
+
+            const sizeSelect = document.createElement('select');
+            sizeSelect.className = 'input dashboard-widget-picker__size';
+            ['sm', 'md', 'lg', 'full'].forEach(function (size) {
+                const option = document.createElement('option');
+                option.value = size;
+                option.textContent = size.toUpperCase();
+                if (size === item.size) {
+                    option.selected = true;
+                }
+                sizeSelect.appendChild(option);
+            });
+            sizeSelect.addEventListener('change', function () {
+                dashboardState.pickerDraft[index].size = sizeSelect.value;
+            });
+
+            row.append(label, sizeSelect);
+            list.appendChild(row);
+        });
+    }
+
+    function openCustomizeModal() {
+        dashboardState.pickerDraft = buildPickerDraft();
+        renderWidgetPicker();
+        const modal = document.getElementById('dashboard-customize-modal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeCustomizeModal() {
+        const modal = document.getElementById('dashboard-customize-modal');
+        if (modal) modal.style.display = 'none';
+        dashboardState.pickerDraft = null;
+    }
+
+    async function applyPickerDraft() {
+        if (!dashboardState.pickerDraft) return;
+        const hiddenWidgets = dashboardState.pickerDraft
+            .filter(item => !item.visible)
+            .map(item => item.id);
+        const widgetSizes = {};
+        dashboardState.pickerDraft.forEach(function (item) {
+            if (item.size && item.size !== item.defaultSize) {
+                widgetSizes[item.id] = item.size;
+            }
+        });
+        dashboardState.layout.hidden_widgets = hiddenWidgets;
+        dashboardState.layout.widget_sizes = widgetSizes;
+        dashboardState.widgets = dashboardState.widgets.map(function (widget) {
+            return {
+                ...widget,
+                hidden: hiddenWidgets.includes(widget.id),
+                size: widgetSizes[widget.id] || widget.size,
+            };
+        });
+        syncLayoutOrderFromWidgets();
+        closeCustomizeModal();
+        await persistLayout(dashboardState.layout, true);
+        if (dashboardState.customizing) {
+            renderWidgets();
+        }
+    }
+
+    function setupCustomizeUi() {
+        document.getElementById('dashboard-customize-btn')?.addEventListener('click', function () {
+            if (dashboardState.customizing) {
+                setCustomizeMode(false);
+                return;
+            }
+            setCustomizeMode(true);
+        });
+        document.getElementById('dashboard-customize-done')?.addEventListener('click', function () {
+            setCustomizeMode(false);
+        });
+        document.getElementById('dashboard-open-picker-btn')?.addEventListener('click', openCustomizeModal);
+        document.getElementById('dashboard-customize-btn')?.addEventListener('dblclick', openCustomizeModal);
+        document.getElementById('dashboard-customize-close')?.addEventListener('click', closeCustomizeModal);
+        document.getElementById('dashboard-customize-cancel')?.addEventListener('click', closeCustomizeModal);
+        document.getElementById('dashboard-customize-save')?.addEventListener('click', applyPickerDraft);
+        document.getElementById('dashboard-reset-layout-btn')?.addEventListener('click', async function () {
+            await resetLayout();
+            closeCustomizeModal();
+            setCustomizeMode(false);
+        });
+        document.getElementById('dashboard-customize-modal')?.addEventListener('click', function (event) {
+            if (event.target === event.currentTarget) {
+                closeCustomizeModal();
             }
         });
     }
@@ -356,9 +672,13 @@
     function loadWidgetManifest() {
         const grid = document.getElementById('dashboard-widget-grid');
         if (!grid || !registerCoreMounts()) return;
-        fetch(apiUrl('/api/dashboard.php?action=widgets'), { credentials: 'same-origin' })
+        return fetch(apiUrl('/api/dashboard.php?action=widgets'), { credentials: 'same-origin' })
             .then(response => response.json())
-            .then(payload => renderWidgets(payload?.data?.widgets || []))
+            .then(function (payload) {
+                dashboardState.widgets = payload?.data?.widgets || [];
+                dashboardState.layout = payload?.data?.layout || dashboardState.layout;
+                renderWidgets();
+            })
             .catch(function () { grid.innerHTML = empty('Unable to load dashboard widgets.'); });
     }
 
@@ -381,7 +701,7 @@
         }
 
         async function postOnboardingAction(action, body) {
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const csrf = getCsrfToken();
             const response = await fetch(apiUrl('/api/onboarding.php?action=' + action), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -409,6 +729,7 @@
 
     function initDashboard() {
         setupOnboardingHandlers();
+        setupCustomizeUi();
         loadWidgetManifest();
     }
 

@@ -56,7 +56,39 @@ $isLocalDev = !empty($is_local_dev);
     <div class="page-header-left">
         <div class="breadcrumbs"><span class="current"><?= __('admin.dashboard') ?></span></div>
     </div>
-    <div class="page-header-actions"></div>
+    <div class="page-header-actions">
+        <button type="button" class="btn btn-secondary btn-small" id="dashboard-customize-btn" aria-haspopup="dialog" aria-controls="dashboard-customize-modal">
+            Customize dashboard
+        </button>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="dashboard-customize-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="dashboard-customize-title">
+    <div class="modal-content dashboard-customize-modal">
+        <div class="modal-header">
+            <h2 id="dashboard-customize-title">Dashboard widgets</h2>
+            <button type="button" class="modal-close" id="dashboard-customize-close" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="dashboard-customize-lead">Choose which widgets appear on your dashboard and set their size. Drag widgets on the dashboard to reorder them.</p>
+            <div class="dashboard-customize-toolbar">
+                <button type="button" class="btn btn-ghost btn-small" id="dashboard-reset-layout-btn">Reset to defaults</button>
+            </div>
+            <ul class="dashboard-widget-picker" id="dashboard-widget-picker"></ul>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="dashboard-customize-cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="dashboard-customize-save">Save changes</button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-customize-bar" id="dashboard-customize-bar" hidden>
+    <p>Drag widgets to reorder your dashboard.</p>
+    <div class="dashboard-customize-bar__actions">
+        <button type="button" class="btn btn-ghost btn-small" id="dashboard-open-picker-btn">Show / hide widgets</button>
+        <button type="button" class="btn btn-primary btn-small" id="dashboard-customize-done">Done</button>
+    </div>
 </div>
 
 <?php if ($showOnboarding): ?>
