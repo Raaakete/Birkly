@@ -86,6 +86,14 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
         </div>
         <div class="page-header-actions"></div>
     </div>
+
+    <?php
+    $stickySaveBarForm = 'entry-form';
+    $stickySaveBarSaveLabel = !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry');
+    $stickySaveBarCancelUrl = !empty($cancel_url) ? $cancel_url : null;
+    $stickySaveBarStatusHtml = '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
+    include __DIR__ . '/components/sticky-save-bar.php';
+    ?>
     
     <form id="entry-form" class="entry-form" method="POST" action="<?= htmlspecialchars($formAction) ?>">
         <input type="hidden" name="collection" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
@@ -628,13 +636,6 @@ echo htmlspecialchars($collectionExample);
                 </div>
             </div>
         </div>
-    <?php
-    $stickySaveBarForm = 'entry-form';
-    $stickySaveBarSaveLabel = !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry');
-    $stickySaveBarCancelUrl = !empty($cancel_url) ? $cancel_url : null;
-    $stickySaveBarStatusHtml = '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
-    include __DIR__ . '/components/sticky-save-bar.php';
-    ?>
     </form>
 </div>
 
