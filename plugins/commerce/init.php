@@ -501,7 +501,9 @@ function commerce_dashboard_widgets(): array
         return [];
     }
 
-    $enabled = (bool) commerce_get_setting('enable_dashboard_widget', false);
+    // The dashboard is useful as soon as Commerce is activated. Administrators
+    // can still explicitly turn it off in the plugin settings.
+    $enabled = (bool) commerce_get_setting('enable_dashboard_widget', true);
     if (!$enabled) {
         return [];
     }
@@ -511,15 +513,15 @@ function commerce_dashboard_widgets(): array
         $roles = ['admin'];
     }
 
-    $commerceUrl = function_exists('admin_url') ? admin_url('commerce') : '/admin/index.php?page=commerce';
-
     return [[
         'id' => 'commerce-stats',
         'title' => 'Commerce',
         'roles' => $roles,
-        'html' => '<div class="payments-dash-widget" id="commerce-dash-widget">'
-            . '<p class="payments-dash-loading">Loading commerce stats…</p></div>'
-            . '<p class="payments-dash-link"><a href="' . htmlspecialchars($commerceUrl) . '">Manage commerce →</a></p>',
+        'size' => 'md',
+        'priority' => 60,
+        'endpoint' => '/api/index.php?route=commerce&action=analytics_summary',
+        'mount' => 'commerceStats',
+        'refresh' => 60,
     ]];
 }
 

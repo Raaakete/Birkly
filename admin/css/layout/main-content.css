@@ -62,27 +62,46 @@
   min-width: 0;
 }
 
-/* Responsive */
-@media (max-width: 1400px) {
+/* Below --bp-2xl (1440px), keep the editor sidebar compact. */
+@media (max-width: 1439px) {
   .editor-layout {
     grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
     gap: var(--space-5, 1.25rem);
   }
 }
 
-@media (max-width: 1200px) {
+/* Below --bp-xl (1280px), preserve two useful editor columns. */
+@media (max-width: 1279px) {
+  .main-content {
+    padding: var(--space-8, 2rem);
+  }
+
+  .editor-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
+    gap: var(--space-4, 1rem);
+  }
+}
+
+/* Below --bp-lg (1024px), stack the editor rather than compress controls. */
+@media (max-width: 1023px) {
+  .main-content {
+    padding: var(--space-6, 1.5rem);
+  }
+
   .editor-layout {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 768px) {
+/* Below --bp-md (768px) */
+@media (max-width: 767px) {
   .main-content {
     padding: var(--space-4, 1rem);
   }
 }
 
-@media (max-width: 480px) {
+/* Below --bp-sm (640px) */
+@media (max-width: 639px) {
   .main-content {
     padding: var(--space-3, 0.75rem);
   }

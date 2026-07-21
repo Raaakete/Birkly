@@ -15,7 +15,12 @@ if ! command -v php >/dev/null 2>&1; then
   exit 1
 fi
 
-for test in tests/admin_dashboard_paths_test.php tests/security_policy_2fa_test.php; do
+for test in \
+  tests/admin_dashboard_paths_test.php \
+  tests/dashboard_widget_api_test.php \
+  tests/dashboard_widgets_test.php \
+  tests/dashboard_lifecycle_contract_test.php \
+  tests/security_policy_2fa_test.php; do
   if php "$ROOT/$test"; then
     report "OK: $test"
   else

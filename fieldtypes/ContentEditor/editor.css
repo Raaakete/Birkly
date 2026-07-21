@@ -2218,7 +2218,9 @@ details.content-editor-toggle summary::-webkit-details-marker {
 }
 
 .content-editor-toggle:hover > .content-editor-toggle-controls,
-.content-editor-toggle-group:hover > .content-editor-toggle-controls {
+.content-editor-toggle:focus-within > .content-editor-toggle-controls,
+.content-editor-toggle-group:hover > .content-editor-toggle-controls,
+.content-editor-toggle-group:focus-within > .content-editor-toggle-controls {
   opacity: 1;
   transform: translateY(0);
 }
@@ -2569,7 +2571,8 @@ details.content-editor-toggle summary::-webkit-details-marker {
   z-index: 10;
 }
 
-.content-editor-component:hover .content-editor-component-controls {
+.content-editor-component:hover .content-editor-component-controls,
+.content-editor-component:focus-within .content-editor-component-controls {
   opacity: 1;
 }
 

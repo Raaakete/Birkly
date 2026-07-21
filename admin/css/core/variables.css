@@ -221,8 +221,18 @@
   /* ============================================
      Breakpoints
      ============================================ */
-  --breakpoint-mobile: 640px;
-  --breakpoint-tablet: 1280px;
+  /* Canonical admin breakpoints. Use these names in responsive documentation
+     and keep media-query values aligned; CSS custom properties cannot be used
+     directly in @media conditions in supported browsers. */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1440px;
+
+  /* Legacy aliases */
+  --breakpoint-mobile: var(--bp-sm);
+  --breakpoint-tablet: var(--bp-xl);
   
   /* ============================================
      Brand Aliases (for compatibility)

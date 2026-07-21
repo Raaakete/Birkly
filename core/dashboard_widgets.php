@@ -1,14 +1,203 @@
 <?php
 /**
- * Dashboard widget helpers — role and opt-in filtering for plugin widgets.
+ * Dashboard widget registry, Widget API v2 schema, and access filtering.
+ *
+ * Widget API v2 accepts: id, title, size, priority, endpoint, mount, refresh,
+ * roles, enabled, plugin_id, and legacy html. Endpoints must be same-origin
+ * API routes; mounts name a registered client renderer and are never executed
+ * by PHP or evaluated from widget data.
  */
 
 /**
- * Filter plugin dashboard widgets for the current CMS user.
+ * Normalize a dashboard widget to the public Widget API v2 schema.
  *
- * Widgets may specify `roles` (allowed role ids). Plugins may opt in via
- * settings `enable_dashboard_widget` (default: no filter unless explicitly false)
- * and `dashboard_widget_roles`.
+ * Invalid widget identifiers are rejected. Invalid optional values fall back
+ * to safe defaults or null so a plugin cannot make the dashboard fetch an
+ * arbitrary origin or invoke an arbitrary JavaScript expression.
+ *
+ * @param array<string, mixed> $widget
+ * @return array<string, mixed>|null
+ */
+function birkly_normalize_dashboard_widget(array $widget): ?array
+{
+    $id = trim((string) ($widget['id'] ?? ''));
+    if (!preg_match('/^[a-z0-9][a-z0-9-]{0,79}$/', $id)) {
+        return null;
+    }
+
+    $pluginId = trim((string) ($widget['plugin_id'] ?? ''));
+    if ($pluginId !== '' && !preg_match('/^[a-z0-9][a-z0-9_-]{0,79}$/', $pluginId)) {
+        return null;
+    }
+
+    $size = (string) ($widget['size'] ?? 'md');
+    if (!in_array($size, ['sm', 'md', 'lg', 'full'], true)) {
+        $size = 'md';
+    }
+
+    $priority = filter_var($widget['priority'] ?? 100, FILTER_VALIDATE_INT);
+    $priority = $priority === false ? 100 : max(0, min(100000, $priority));
+
+    $refresh = filter_var($widget['refresh'] ?? 0, FILTER_VALIDATE_INT);
+    $refresh = $refresh === false ? 0 : max(0, min(86400, $refresh));
+
+    $endpoint = birkly_normalize_dashboard_widget_endpoint($widget['endpoint'] ?? null);
+    $mount = birkly_normalize_dashboard_widget_mount($widget['mount'] ?? null);
+    $roles = birkly_normalize_dashboard_widget_roles($widget['roles'] ?? null);
+
+    return [
+        'id' => $id,
+        'title' => trim((string) ($widget['title'] ?? '')),
+        'size' => $size,
+        'priority' => $priority,
+        'endpoint' => $endpoint,
+        'mount' => $mount,
+        'refresh' => $refresh,
+        'source' => $pluginId === '' ? 'core' : 'plugin',
+        'roles' => $roles,
+        'enabled' => !array_key_exists('enabled', $widget) || $widget['enabled'] !== false,
+        'plugin_id' => $pluginId === '' ? null : $pluginId,
+        // Legacy plugin widgets remain supported while clients migrate to mount.
+        'html' => (string) ($widget['html'] ?? $widget['content'] ?? ''),
+    ];
+}
+
+/**
+ * Accept only local API endpoints for a widget data fetch.
+ *
+ * @param mixed $endpoint
+ */
+function birkly_normalize_dashboard_widget_endpoint($endpoint): ?string
+{
+    if (!is_string($endpoint)) {
+        return null;
+    }
+
+    $endpoint = trim($endpoint);
+    if ($endpoint === '' || preg_match('/[\x00-\x1F\x7F]/', $endpoint)) {
+        return null;
+    }
+
+    $parts = parse_url($endpoint);
+    if ($parts === false || isset($parts['scheme'], $parts['host'], $parts['user'], $parts['pass'], $parts['port'])
+        || !isset($parts['path']) || !str_starts_with($parts['path'], '/api/')) {
+        return null;
+    }
+
+    foreach (explode('/', trim($parts['path'], '/')) as $segment) {
+        $segment = rawurldecode($segment);
+        if ($segment === '.' || $segment === '..') {
+            return null;
+        }
+    }
+
+    return isset($parts['fragment']) ? null : $endpoint;
+}
+
+/**
+ * Accept a JavaScript identifier path, not executable source.
+ *
+ * @param mixed $mount
+ */
+function birkly_normalize_dashboard_widget_mount($mount): ?string
+{
+    if (!is_string($mount)) {
+        return null;
+    }
+
+    $mount = trim($mount);
+    return preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*$/', $mount)
+        ? $mount
+        : null;
+}
+
+/**
+ * @param mixed $roles
+ * @return list<string>|null
+ */
+function birkly_normalize_dashboard_widget_roles($roles): ?array
+{
+    if (!is_array($roles)) {
+        return null;
+    }
+
+    $normalized = [];
+    foreach ($roles as $role) {
+        if (!is_string($role)) {
+            continue;
+        }
+        $role = trim($role);
+        if ($role !== '' && preg_match('/^[a-z0-9][a-z0-9_-]{0,79}$/', $role)) {
+            $normalized[$role] = true;
+        }
+    }
+
+    return array_keys($normalized);
+}
+
+/**
+ * First-party dashboard widgets, registered alongside plugin callbacks.
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_get_core_dashboard_widgets(): array
+{
+    $widgets = [
+        ['id' => 'quick-actions', 'title' => 'Quick actions', 'size' => 'full', 'priority' => 5, 'mount' => 'quickActions', 'roles' => ['admin', 'editor']],
+        ['id' => 'content-snapshot', 'title' => 'Content snapshot', 'size' => 'full', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
+        ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'md', 'priority' => 15, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
+        ['id' => 'recent-collections', 'title' => 'Recent collections', 'size' => 'md', 'priority' => 20, 'mount' => 'recentCollections'],
+        ['id' => 'recent-entries', 'title' => 'Recent entries', 'size' => 'md', 'priority' => 25, 'mount' => 'recentEntries'],
+        ['id' => 'recent-activity', 'title' => 'Recent activity', 'size' => 'lg', 'priority' => 30, 'endpoint' => '/api/dashboard.php?action=activity&limit=20&filter=all', 'mount' => 'recentActivity', 'refresh' => 30],
+        ['id' => 'drafts', 'title' => 'Drafts', 'size' => 'md', 'priority' => 35, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'drafts'],
+        ['id' => 'system-status', 'title' => 'System health', 'size' => 'md', 'priority' => 40, 'endpoint' => '/api/dashboard.php?action=performance', 'mount' => 'systemStatus', 'refresh' => 30, 'roles' => ['admin']],
+        ['id' => 'security', 'title' => 'Security', 'size' => 'sm', 'priority' => 45, 'endpoint' => '/api/dashboard.php?action=activity&limit=10&filter=users', 'mount' => 'security', 'roles' => ['admin']],
+        ['id' => 'updates', 'title' => 'Updates & alerts', 'size' => 'sm', 'priority' => 50, 'endpoint' => '/api/dashboard.php?action=notifications', 'mount' => 'updates', 'roles' => ['admin']],
+    ];
+
+    return array_values(array_filter(array_map('birkly_normalize_dashboard_widget', $widgets)));
+}
+
+/**
+ * Compose the core registry and plugin callbacks in deterministic display order.
+ *
+ * Core widget IDs are reserved. The first valid widget for any other ID wins,
+ * preventing duplicate DOM identifiers when plugins conflict.
+ *
+ * @param list<array<string, mixed>> $pluginWidgets
+ * @return list<array<string, mixed>>
+ */
+function birkly_merge_dashboard_widgets(array $pluginWidgets): array
+{
+    $widgets = [];
+    $seenIds = [];
+
+    foreach (array_merge(birkly_get_core_dashboard_widgets(), $pluginWidgets) as $widget) {
+        if (!is_array($widget)) {
+            continue;
+        }
+        $normalized = birkly_normalize_dashboard_widget($widget);
+        if ($normalized === null || !$normalized['enabled'] || isset($seenIds[$normalized['id']])) {
+            continue;
+        }
+        $seenIds[$normalized['id']] = true;
+        $widgets[] = $normalized;
+    }
+
+    usort($widgets, static function (array $left, array $right): int {
+        return $left['priority'] === $right['priority']
+            ? strcmp($left['id'], $right['id'])
+            : $left['priority'] <=> $right['priority'];
+    });
+
+    return $widgets;
+}
+
+/**
+ * Filter normalized dashboard widgets for the current CMS user.
+ *
+ * Plugin widgets may opt out with `enable_dashboard_widget` and use
+ * `dashboard_widget_roles` when their definition omits roles.
  *
  * @param list<array<string, mixed>> $widgets
  * @return list<array<string, mixed>>
@@ -26,26 +215,25 @@ function birkly_filter_dashboard_widgets_for_user(array $widgets): array
         if (!is_array($widget)) {
             continue;
         }
-
-        $pluginId = (string) ($widget['plugin_id'] ?? '');
-
-        if ($pluginId !== '' && function_exists('get_plugin_setting')) {
-            $optIn = get_plugin_setting($pluginId, 'enable_dashboard_widget', null);
-            if ($optIn === false) {
-                continue;
-            }
-        }
-
-        if (array_key_exists('enabled', $widget) && $widget['enabled'] === false) {
+        $widget = birkly_normalize_dashboard_widget($widget);
+        if ($widget === null || !$widget['enabled']) {
             continue;
         }
 
-        $roles = $widget['roles'] ?? null;
-        if ($roles === null && $pluginId !== '' && function_exists('get_plugin_setting')) {
-            $roles = get_plugin_setting($pluginId, 'dashboard_widget_roles', null);
+        $pluginId = $widget['plugin_id'] ?? '';
+        if ($pluginId !== '' && function_exists('get_plugin_setting')
+            && get_plugin_setting($pluginId, 'enable_dashboard_widget', null) === false) {
+            continue;
         }
 
-        if (is_array($roles) && $roles !== [] && !in_array($userRole, $roles, true)) {
+        $roles = $widget['roles'];
+        if ($roles === null && $pluginId !== '' && function_exists('get_plugin_setting')) {
+            $roles = birkly_normalize_dashboard_widget_roles(
+                get_plugin_setting($pluginId, 'dashboard_widget_roles', null)
+            );
+        }
+
+        if ($roles !== null && $roles !== [] && !in_array($userRole, $roles, true)) {
             continue;
         }
 

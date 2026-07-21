@@ -1,5 +1,5 @@
 <?php
-// Dashboard - entry point for the admin panel
+// Dashboard - entry point for the admin panel.
 $onboardingData = $onboarding ?? [];
 $wizardDone = !empty($onboardingData['setup_wizard_completed']);
 $fullyComplete = !empty($onboardingData['completed']);
@@ -13,9 +13,7 @@ foreach (($onboardingData['checklist'] ?? []) as $checklistItem) {
 $showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipped']) && $hasIncompleteChecklist && empty($onboardingData['checklist_hidden']);
 $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 $isLocalDev = !empty($is_local_dev);
-$dashboardStats = $stats ?? ['collections' => 0, 'total_entries' => 0, 'published' => 0, 'drafts' => 0];
-$dashboardRecentCollections = $recent_collections ?? [];
-?><!-- Onboarding Completion Modal -->
+?>
 <div class="modal" id="onboarding-complete-modal" style="display: none;">
     <div class="modal-backdrop"></div>
     <div class="modal-content onboarding-complete-modal-content">
@@ -61,197 +59,41 @@ $dashboardRecentCollections = $recent_collections ?? [];
     <div class="page-header-actions"></div>
 </div>
 
-
 <?php if ($showOnboarding): ?>
-    <!-- Welcome Dashboard for New Users -->
-    <details class="welcome-dashboard" open id="onboarding-checklist-panel">
-        <summary class="welcome-dashboard-summary">
-            <span><?= __('admin.welcome_to_birkly_exclamation') ?></span>
-            <span class="welcome-dashboard-hint"><?= __('admin.complete_steps') ?></span>
-        </summary>
+<details class="welcome-dashboard" open id="onboarding-checklist-panel">
+    <summary class="welcome-dashboard-summary">
+        <span><?= __('admin.welcome_to_birkly_exclamation') ?></span>
+        <span class="welcome-dashboard-hint"><?= __('admin.complete_steps') ?></span>
+    </summary>
     <div class="welcome-card">
-            <div class="checklist-toolbar" style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
-                <button type="button" class="btn btn-ghost btn-small" id="hide-checklist-btn">Hide checklist</button>
+        <div class="checklist-toolbar" style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
+            <button type="button" class="btn btn-ghost btn-small" id="hide-checklist-btn">Hide checklist</button>
+        </div>
+        <div class="checklist-progress">
+            <div class="progress-bar-container">
+                <?php
+                $total = count($onboardingData['checklist'] ?? []);
+                $completed = count(array_filter($onboardingData['checklist'] ?? [], static fn ($item) => !empty($item['completed'])));
+                $progressPercent = $total > 0 ? ($completed / $total) * 100 : 0;
+                ?>
+                <div class="progress-bar-fill" style="width: <?= $progressPercent ?>%"></div>
             </div>
-            <div class="checklist-progress">
-                <div class="progress-bar-container">
-                    <?php
-                    $total = count($onboardingData['checklist'] ?? []);
-                    $completed = 0;
-                    foreach (($onboardingData['checklist'] ?? []) as $item) {
-                        if (!empty($item['completed'])) {
-                            $completed++;
-                        }
-                    }
-                    $progressPercent = $total > 0 ? ($completed / $total) * 100 : 0;
-                    ?>
-                    <div class="progress-bar-fill" style="width: <?= $progressPercent ?>%"></div>
+            <div class="progress-text"><?= $completed ?> <?= __('admin.of') ?> <?= $total ?> <?= __('admin.completed') ?></div>
+        </div>
+        <div class="checklist">
+            <?php foreach (($onboardingData['checklist'] ?? []) as $item): ?>
+            <div class="checklist-item <?= !empty($item['completed']) ? 'completed' : '' ?>" data-checklist-id="<?= htmlspecialchars($item['id'] ?? '') ?>">
+                <div class="checklist-label">
+                    <a href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
+                    <?php if (!empty($item['hint'])): ?><small class="checklist-hint"><?= htmlspecialchars($item['hint']) ?></small><?php endif; ?>
                 </div>
-                <div class="progress-text">
-                    <?= $completed ?> <?= __('admin.of') ?> <?= $total ?> <?= __('admin.completed') ?>
-                </div>
+                <?php if (empty($item['completed'])): ?><button type="button" class="btn btn-ghost btn-small checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" title="Dismiss">×</button><?php endif; ?>
             </div>
-            
-            <div class="checklist">
-                <?php foreach (($onboardingData['checklist'] ?? []) as $item): ?>
-                    <div class="checklist-item <?= !empty($item['completed']) ? 'completed' : '' ?>" data-checklist-id="<?= htmlspecialchars($item['id'] ?? '') ?>">
-                        <div class="checklist-checkbox">
-                            <?php if (!empty($item['completed'])): ?>
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                                </svg>
-                            <?php else: ?>
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="10" cy="10" r="9"/>
-                                </svg>
-                            <?php endif; ?>
-                        </div>
-                        <div class="checklist-label">
-                            <a href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
-                            <?php if (!empty($item['hint'])): ?>
-                                <small class="checklist-hint"><?= htmlspecialchars($item['hint']) ?></small>
-                            <?php endif; ?>
-                        </div>
-                        <?php if (empty($item['completed'])): ?>
-                        <button type="button" class="btn btn-ghost btn-small checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" title="Dismiss">×</button>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+            <?php endforeach; ?>
+        </div>
     </div>
-    </details>
+</details>
 <?php endif; ?>
 
-<!-- Dashboard Stats -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>
-        </div>
-        <div class="stat-content">
-            <h3 id="stat-collections"><?= (int) ($dashboardStats['collections'] ?? 0) ?></h3>
-            <p><?= __('admin.collections') ?></p>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-        </div>
-        <div class="stat-content">
-            <h3 id="stat-total-entries"><?= (int) ($dashboardStats['total_entries'] ?? 0) ?></h3>
-            <p><?= __('admin.total_entries') ?></p>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"></path><path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path><path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"></path><path d="M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z"></path><path d="M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z"></path></svg>
-        </div>
-        <div class="stat-content">
-            <h3 id="stat-published"><?= (int) ($dashboardStats['published'] ?? 0) ?></h3>
-            <p><?= __('admin.published') ?></p>
-        </div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-        </div>
-        <div class="stat-content">
-            <h3 id="stat-drafts"><?= (int) ($dashboardStats['drafts'] ?? 0) ?></h3>
-            <p><?= __('admin.drafts') ?></p>
-        </div>
-    </div>
-</div>
-
-<?php if (!$showOnboarding): ?>
-    <!-- Main Dashboard Content -->
-    <div class="dashboard-content">
-        <!-- Analytics Section (Moved to Top) -->
-        <div class="dashboard-section analytics-section" id="analytics-section" style="display: none;">
-            <div class="section-header">
-                <h2 class="section-title"><?= __('admin.website_analytics') ?></h2>
-                <a href="<?= admin_url('settings') ?>#domains" class="section-link"><?= __('admin.manage_domains_analytics') ?> →</a>
-            </div>
-            <div class="analytics-content" id="analytics-content">
-                <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
-            </div>
-        </div>
-        
-        <!-- Recent Collections, Entries, and Activity Side by Side -->
-        <div class="dashboard-content-row dashboard-three-column">
-            <!-- Recent Collections -->
-            <div class="dashboard-section recent-collections">
-                <div class="section-header">
-                    <h2 class="section-title"><?= __('admin.recent_collections') ?></h2>
-                    <a href="<?= admin_url('content') ?>" class="section-link"><?= __('admin.view_all') ?> →</a>
-                </div>
-                <div class="collections-list" id="recent-collections-list">
-                    <?php if (empty($dashboardRecentCollections)): ?>
-                        <p class="empty-state"><?= __('admin.no_collections_found') ?></p>
-                    <?php else: ?>
-                        <?php foreach ($dashboardRecentCollections as $collection): ?>
-                            <?php
-                            $collectionName = $collection['title'] ?? $collection['name'] ?? $collection['slug'] ?? 'Untitled';
-                            $collectionSlug = $collection['slug'] ?? '';
-                            $entriesCount = (int) ($collection['entries_count'] ?? $collection['total_entries'] ?? 0);
-                            ?>
-                            <div class="collection-item">
-                                <div class="collection-info">
-                                    <h4><?= htmlspecialchars($collectionName) ?></h4>
-                                    <p><?= $entriesCount ?> <?= $entriesCount === 1 ? __('admin.entry') : __('admin.entries') ?></p>
-                                </div>
-                                <a class="btn btn-sm" href="<?= htmlspecialchars(admin_url('entries', ['collection' => $collectionSlug])) ?>"><?= __('admin.view') ?></a>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-            
-            <!-- Recent Entries -->
-            <div class="dashboard-section recent-entries-section">
-                <div class="section-header">
-                    <h2 class="section-title"><?= __('admin.recent_entries') ?></h2>
-                    <a href="<?= admin_url('content') ?>" class="section-link"><?= __('admin.view_all') ?> →</a>
-                </div>
-                <div class="entries-list" id="recent-entries-list">
-                    <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
-                </div>
-            </div>
-            
-        <!-- Recent Activity -->
-            <div class="dashboard-section recent-activity">
-            <div class="activity-header">
-                    <h2 class="section-title"><?= __('admin.recent_activity') ?></h2>
-                <div class="activity-filters">
-                    <button class="activity-filter-btn active" data-filter="all"><?= __('admin.all') ?></button>
-                    <button class="activity-filter-btn" data-filter="content"><?= __('admin.content') ?></button>
-                    <button class="activity-filter-btn" data-filter="users"><?= __('admin.users') ?></button>
-                    <button class="activity-filter-btn" data-filter="system"><?= __('admin.system') ?></button>
-                </div>
-            </div>
-            <div class="activity-list" id="activity-list">
-                    <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- System Health -->
-        <div class="dashboard-section system-health">
-            <h2 class="section-title"><?= __('admin.system_health') ?></h2>
-            <div class="health-metrics" id="system-health-metrics">
-                <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
-            </div>
-        </div>
-        
-        <!-- Plugin Widgets -->
-        <div class="dashboard-section plugin-widgets" id="plugin-widgets-section" style="display: none;">
-            <h2 class="section-title"><?= __('admin.plugin_widgets') ?></h2>
-            <div class="plugin-widgets-content" id="plugin-widgets-content">
-                <p class="empty-state loading"><?= __('admin.loading') ?>...</p>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
-
+<!-- Widget API v2 renders the complete dashboard here. -->
+<div class="dashboard-widget-grid" id="dashboard-widget-grid" aria-live="polite"></div>
