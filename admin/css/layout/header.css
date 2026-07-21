@@ -29,6 +29,18 @@
   margin-left: var(--space-1, 0.25rem);
 }
 
+/* Hamburger: mobile-only nav drawer (hidden on desktop — use sidebar Collapse control) */
+.admin-topbar .sidebar-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .admin-topbar .sidebar-toggle {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+}
+
 .admin-topbar-breadcrumbs {
   font-size: 0.9375rem;
   font-weight: 500;
@@ -49,16 +61,16 @@
 }
 
 .admin-topbar-breadcrumbs .breadcrumb-segment {
+  flex-shrink: 0;
   min-width: 0;
 }
 
-.admin-topbar-breadcrumbs .breadcrumb-segment--current {
+.admin-topbar-breadcrumbs.breadcrumbs--segment-ellipsis .breadcrumb-segment--current {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-shrink: 1;
   min-width: 3ch;
-  max-width: 100%;
 }
 
 .admin-topbar-breadcrumbs .breadcrumb-ellipsis {

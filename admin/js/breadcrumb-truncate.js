@@ -67,9 +67,9 @@
         return segmentCount - minVisible;
     }
 
-    function renderSegments(nav, segments, collapsedStart, fullPathLabel) {
+    function renderSegments(nav, segments, collapsedStart, fullPathLabel, force) {
         const renderKey = collapsedStart + '|' + fullPathLabel;
-        if (nav._birklyBreadcrumbRenderKey === renderKey) {
+        if (!force && nav._birklyBreadcrumbRenderKey === renderKey) {
             return;
         }
         nav._birklyBreadcrumbRenderKey = renderKey;
@@ -118,8 +118,25 @@
         nav.title = collapsedStart > 0 ? fullPathLabel : '';
     }
 
-    function measureOverflow(nav) {
-        return nav.scrollWidth > nav.clientWidth + 1;
+    function getAvailableWidth(nav) {
+        const topbarLeft = nav.closest('.admin-topbar-left');
+        if (!topbarLeft) {
+            return nav.clientWidth;
+        }
+
+        const toggle = topbarLeft.querySelector('.sidebar-toggle');
+        const gap = parseFloat(getComputedStyle(topbarLeft).gap || '0') || 12;
+        let reserved = 0;
+
+        if (toggle && getComputedStyle(toggle).display !== 'none') {
+            reserved += toggle.offsetWidth + gap;
+        }
+
+        return Math.max(0, topbarLeft.clientWidth - reserved);
+    }
+
+    function measureOverflow(nav, availableWidth) {
+        return nav.scrollWidth > availableWidth + 1;
     }
 
     function truncateNavNow(nav) {
@@ -137,29 +154,40 @@
 
         const segments = nav._birklyBreadcrumbSegments.map((s) => ({ ...s }));
         const fullPathLabel = buildFullPathLabel(segments);
+        const availableWidth = getAvailableWidth(nav);
 
         nav._birklyBreadcrumbMeasuring = true;
-        const prevVisibility = nav.style.visibility;
-        nav.style.visibility = 'hidden';
         delete nav._birklyBreadcrumbRenderKey;
 
+        const prevWidth = nav.style.width;
+        const prevMaxWidth = nav.style.maxWidth;
+        nav.style.width = availableWidth + 'px';
+        nav.style.maxWidth = availableWidth + 'px';
+
         let collapsedStart = 0;
-        if (segments.length > MIN_VISIBLE_SEGMENTS) {
-            collapsedStart = segments.length - MIN_VISIBLE_SEGMENTS;
-            for (let start = 0; start <= segments.length - MIN_VISIBLE_SEGMENTS; start++) {
-                renderSegments(nav, segments, start, fullPathLabel);
-                if (!measureOverflow(nav)) {
-                    collapsedStart = start;
-                    break;
-                }
-                collapsedStart = Math.min(start + 1, segments.length - MIN_VISIBLE_SEGMENTS);
+        const maxCollapse = Math.max(0, segments.length - MIN_VISIBLE_SEGMENTS);
+
+        for (let start = 0; start <= maxCollapse; start++) {
+            renderSegments(nav, segments, start, fullPathLabel, true);
+            if (!measureOverflow(nav, availableWidth)) {
+                collapsedStart = start;
+                break;
             }
+            collapsedStart = start;
         }
 
-        renderSegments(nav, segments, collapsedStart, fullPathLabel);
-        nav.classList.toggle('breadcrumbs--collapsed', collapsedStart > 0);
+        renderSegments(nav, segments, collapsedStart, fullPathLabel, true);
 
-        nav.style.visibility = prevVisibility;
+        let needsEllipsis = measureOverflow(nav, availableWidth);
+        nav.classList.toggle('breadcrumbs--collapsed', collapsedStart > 0);
+        nav.classList.toggle('breadcrumbs--segment-ellipsis', needsEllipsis);
+
+        if (needsEllipsis) {
+            renderSegments(nav, segments, collapsedStart, fullPathLabel, true);
+        }
+
+        nav.style.width = prevWidth;
+        nav.style.maxWidth = prevMaxWidth;
         nav._birklyBreadcrumbMeasuring = false;
     }
 
@@ -214,6 +242,7 @@
         }
         delete nav._birklyBreadcrumbSegments;
         delete nav._birklyBreadcrumbRenderKey;
+        nav.classList.remove('breadcrumbs--segment-ellipsis');
         initNav(nav);
     }
 
@@ -222,6 +251,7 @@
         collapsedStartIndex,
         buildFullPathLabel,
         truncateNav,
+        getAvailableWidth,
         init,
         refresh,
         MIN_VISIBLE_SEGMENTS,

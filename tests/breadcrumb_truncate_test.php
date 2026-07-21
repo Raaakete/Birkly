@@ -40,5 +40,6 @@ $js = is_file($jsFile) ? file_get_contents($jsFile) : '';
 test_assert('JS exports Birkly.BreadcrumbTruncate', str_contains($js, 'Birkly.BreadcrumbTruncate'));
 test_assert('JS listens for birkly:layout-change', str_contains($js, 'birkly:layout-change'));
 test_assert('JS uses ResizeObserver', str_contains($js, 'ResizeObserver'));
+test_assert('JS has segment ellipsis class toggle', str_contains($js, 'breadcrumbs--segment-ellipsis'));
 
 exit(test_finish('breadcrumb_truncate_test'));
