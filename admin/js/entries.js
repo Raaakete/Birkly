@@ -1,221 +1,133 @@
 /**
- * Entries Page - Bulk Operations
- * Handles bulk selection, actions, and operations
+ * Entries page actions and bulk operations.
  */
-
-(function() {
+(function () {
     'use strict';
-    
+
     function apiUrl(path) {
-        return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+        return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
     }
 
-    // Get collection slug from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const collectionSlug = urlParams.get('collection') || '';
-    
-    if (!collectionSlug) {
-        return; // No collection, exit
+    function adminUrl(page, params) {
+        if (window.Birkly && typeof window.Birkly.adminUrl === 'function') {
+            return window.Birkly.adminUrl(page, params);
+        }
+        return '/admin/index.php?' + new URLSearchParams(Object.assign({ page: page }, params || {})).toString();
     }
-    
-    // DOM elements
+
+    function getCSRFToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const collectionSlug = window.collectionSlug || urlParams.get('collection') || '';
+    const isTrashView = Boolean(window.entriesTrashView);
+
+    if (!collectionSlug) {
+        return;
+    }
+
     const selectAllCheckbox = document.getElementById('select-all-entries');
-    const entryCheckboxes = document.querySelectorAll('.entry-checkbox');
+    const entryCheckboxes = Array.from(document.querySelectorAll('.entry-checkbox'));
     const bulkActionsToolbar = document.getElementById('bulk-actions-toolbar');
     const bulkSelectedCount = document.getElementById('bulk-selected-count');
     const bulkPublishBtn = document.getElementById('bulk-publish-btn');
     const bulkUnpublishBtn = document.getElementById('bulk-unpublish-btn');
     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    const bulkRestoreBtn = document.getElementById('bulk-restore-btn');
     const bulkCancelBtn = document.getElementById('bulk-cancel-btn');
-    
-    // State
-    let selectedEntries = new Set();
-    
-    /**
-     * Update selected count and toolbar visibility
-     */
+    const bulkFieldName = document.getElementById('bulk-field-name');
+    const bulkFieldValue = document.getElementById('bulk-field-value');
+    const bulkFieldApplyBtn = document.getElementById('bulk-field-apply-btn');
+    const statusFilter = document.getElementById('status-filter');
+
+    const selectedEntries = new Set();
+
     function updateBulkUI() {
         const count = selectedEntries.size;
-        bulkSelectedCount.textContent = count;
-        
-        if (count > 0) {
-            bulkActionsToolbar.style.display = 'block';
-        } else {
-            bulkActionsToolbar.style.display = 'none';
+        if (bulkSelectedCount) {
+            bulkSelectedCount.textContent = String(count);
         }
-        
-        // Update select all checkbox state
+
+        if (bulkActionsToolbar) {
+            bulkActionsToolbar.style.display = count > 0 ? 'block' : 'none';
+        }
+
         if (selectAllCheckbox) {
-            selectAllCheckbox.checked = count === entryCheckboxes.length && entryCheckboxes.length > 0;
+            selectAllCheckbox.checked = count > 0 && count === entryCheckboxes.length;
             selectAllCheckbox.indeterminate = count > 0 && count < entryCheckboxes.length;
         }
-        
-        // Update row visual state
-        entryCheckboxes.forEach(checkbox => {
+
+        entryCheckboxes.forEach(function (checkbox) {
             const row = checkbox.closest('.table-row');
-            if (row) {
-                if (selectedEntries.has(checkbox.value)) {
-                    row.setAttribute('data-entry-selected', 'true');
-                } else {
-                    row.removeAttribute('data-entry-selected');
-                }
+            if (!row) return;
+            if (selectedEntries.has(checkbox.value)) {
+                row.setAttribute('data-entry-selected', 'true');
+            } else {
+                row.removeAttribute('data-entry-selected');
             }
         });
     }
-    
-    /**
-     * Get CSRF token
-     */
-    function getCSRFToken() {
-        const meta = document.querySelector('meta[name="csrf-token"]');
-        return meta ? meta.getAttribute('content') : '';
-    }
-    
-    /**
-     * Perform bulk operation
-     */
-    async function performBulkOperation(action, entryIds) {
-        if (!entryIds || entryIds.length === 0) {
-            return { status: 'error', message: 'No entries selected' };
-        }
-        
+
+    async function requestJson(path, payload) {
+        const response = await fetch(apiUrl(path), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload || {}),
+        });
+        const text = await response.text();
+        let data = null;
         try {
-            const response = await fetch(apiUrl('/api/admin_entries.php?action=bulk'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: action,
-                    collection: collectionSlug,
-                    entry_ids: Array.from(entryIds),
-                    _csrf: getCSRFToken()
-                })
-            });
-            
-            const responseText = await response.text();
-            
-            let data;
-            try {
-                data = JSON.parse(responseText);
-            } catch (e) {
-                console.error('[Bulk Operation] Failed to parse JSON:', e);
-                return { status: 'error', message: 'Invalid JSON response: ' + responseText.substring(0, 100) };
-            }
-            
-            return data;
+            data = JSON.parse(text);
         } catch (error) {
-            console.error('Bulk operation error:', error);
-            return { status: 'error', message: error.message || 'An error occurred' };
+            throw new Error('Invalid JSON response');
         }
+        if (!response.ok || data?.status === 'error') {
+            throw new Error(data?.message || ('HTTP ' + response.status));
+        }
+        return data;
     }
-    
-    /**
-     * Show confirmation dialog
-     */
-    function confirmAction(message, actionText) {
-        return confirm(`${message}\n\nThis will ${actionText} ${selectedEntries.size} entr${selectedEntries.size === 1 ? 'y' : 'ies'}.\n\nAre you sure?`);
+
+    async function performBulkOperation(action, entryIds) {
+        return requestJson('/api/admin_entries.php?action=bulk', {
+            action: action,
+            collection: collectionSlug,
+            entry_ids: entryIds,
+            _csrf: getCSRFToken(),
+        });
     }
-    
-    /**
-     * Show progress indicator
-     */
+
+    async function performBulkFieldEdit(entryIds, fieldNameValue, fieldValueValue) {
+        return requestJson('/api/admin_entries.php?action=bulk_field_edit', {
+            collection: collectionSlug,
+            entry_ids: entryIds,
+            field_name: fieldNameValue,
+            value: fieldValueValue,
+            _csrf: getCSRFToken(),
+        });
+    }
+
+    async function performEntryAction(action, entryId) {
+        return requestJson('/api/admin_entries.php?action=' + encodeURIComponent(action), {
+            collection: collectionSlug,
+            entry_id: entryId,
+            _csrf: getCSRFToken(),
+        });
+    }
+
     function showProgress(message) {
-        // Simple progress indicator - could be enhanced with a modal
-        const progressDiv = document.createElement('div');
-        progressDiv.className = 'bulk-progress';
-        progressDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--bg-elevated); padding: var(--space-3); border-radius: var(--border-radius-s); box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000;';
-        progressDiv.textContent = message;
-        document.body.appendChild(progressDiv);
-        return progressDiv;
+        const progress = document.createElement('div');
+        progress.className = 'bulk-progress';
+        progress.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--bg-elevated);padding:var(--space-3);border-radius:var(--radius-sm,8px);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:1000;';
+        progress.textContent = message;
+        document.body.appendChild(progress);
+        return progress;
     }
-    
-    /**
-     * Handle bulk publish
-     */
-    async function handleBulkPublish() {
-        if (selectedEntries.size === 0) return;
-        
-        if (!confirmAction('Publish selected entries?', 'publish')) {
-            return;
-        }
-        
-        const progress = showProgress(`Publishing ${selectedEntries.size} entr${selectedEntries.size === 1 ? 'y' : 'ies'}...`);
-        
-        const result = await performBulkOperation('publish', Array.from(selectedEntries));
-        
-        progress.remove();
-        
-        if (result.status === 'ok') {
-            alert(`Successfully published ${result.data?.count || selectedEntries.size} entr${selectedEntries.size === 1 ? 'y' : 'ies'}.`);
-            // Reload page to show updated status
-            window.location.reload();
-        } else {
-            alert(`Error: ${result.message || 'Failed to publish entries'}`);
-        }
-    }
-    
-    /**
-     * Handle bulk unpublish
-     */
-    async function handleBulkUnpublish() {
-        if (selectedEntries.size === 0) return;
-        
-        if (!confirmAction('Unpublish selected entries?', 'unpublish')) {
-            return;
-        }
-        
-        const progress = showProgress(`Unpublishing ${selectedEntries.size} entr${selectedEntries.size === 1 ? 'y' : 'ies'}...`);
-        
-        const result = await performBulkOperation('unpublish', Array.from(selectedEntries));
-        
-        progress.remove();
-        
-        if (result.status === 'ok') {
-            alert(`Successfully unpublished ${result.data?.count || selectedEntries.size} entr${selectedEntries.size === 1 ? 'y' : 'ies'}.`);
-            // Reload page to show updated status
-            window.location.reload();
-        } else {
-            alert(`Error: ${result.message || 'Failed to unpublish entries'}`);
-        }
-    }
-    
-    /**
-     * Handle bulk delete
-     */
-    async function handleBulkDelete() {
-        if (selectedEntries.size === 0) return;
-        
-        if (!confirmAction('Delete selected entries?', 'permanently delete')) {
-            return;
-        }
-        
-        // Double confirmation for delete
-        if (!confirm('⚠️ WARNING: This action cannot be undone!\n\nAre you absolutely sure you want to delete these entries?')) {
-            return;
-        }
-        
-        const progress = showProgress(`Deleting ${selectedEntries.size} entr${selectedEntries.size === 1 ? 'y' : 'ies'}...`);
-        
-        const result = await performBulkOperation('delete', Array.from(selectedEntries));
-        
-        progress.remove();
-        
-        if (result.status === 'ok') {
-            alert(`Successfully deleted ${result.data?.count || selectedEntries.size} entr${selectedEntries.size === 1 ? 'y' : 'ies'}.`);
-            // Reload page to show updated list
-            window.location.reload();
-        } else {
-            alert(`Error: ${result.message || 'Failed to delete entries'}`);
-        }
-    }
-    
-    /**
-     * Handle cancel selection
-     */
-    function handleBulkCancel() {
+
+    function clearSelection() {
         selectedEntries.clear();
-        entryCheckboxes.forEach(checkbox => {
+        entryCheckboxes.forEach(function (checkbox) {
             checkbox.checked = false;
         });
         if (selectAllCheckbox) {
@@ -224,284 +136,275 @@
         }
         updateBulkUI();
     }
-    
-    /**
-     * Handle select all checkbox
-     */
+
+    async function runBulkAction(action, confirmation, progressLabel, successLabel) {
+        if (selectedEntries.size === 0) {
+            return;
+        }
+        if (!window.confirm(confirmation)) {
+            return;
+        }
+
+        const progress = showProgress(progressLabel);
+        try {
+            const result = await performBulkOperation(action, Array.from(selectedEntries));
+            progress.remove();
+            window.alert(successLabel.replace('%count%', String(result.count || selectedEntries.size)));
+            window.location.reload();
+        } catch (error) {
+            progress.remove();
+            window.alert('Error: ' + error.message);
+        }
+    }
+
+    async function handleBulkFieldEdit() {
+        const fieldNameValue = bulkFieldName?.value || '';
+        const fieldValueValue = bulkFieldValue?.value ?? '';
+
+        if (selectedEntries.size === 0) {
+            return;
+        }
+        if (!fieldNameValue) {
+            window.alert('Choose a field to edit first.');
+            return;
+        }
+        if (!window.confirm('Apply this field update to ' + selectedEntries.size + ' selected entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '?')) {
+            return;
+        }
+
+        const progress = showProgress('Updating field values…');
+        try {
+            const result = await performBulkFieldEdit(Array.from(selectedEntries), fieldNameValue, fieldValueValue);
+            progress.remove();
+            window.alert(result.message || 'Field updated successfully.');
+            window.location.reload();
+        } catch (error) {
+            progress.remove();
+            window.alert('Error: ' + error.message);
+        }
+    }
+
+    async function handleDeleteEntry(entryId) {
+        if (!window.confirm('Move this entry to trash?')) {
+            return;
+        }
+        const progress = showProgress('Moving entry to trash…');
+        try {
+            await performEntryAction('delete', entryId);
+            progress.remove();
+            window.location.reload();
+        } catch (error) {
+            progress.remove();
+            window.alert('Error: ' + error.message);
+        }
+    }
+
+    async function handleRestoreEntry(entryId) {
+        if (!window.confirm('Restore this entry?')) {
+            return;
+        }
+        const progress = showProgress('Restoring entry…');
+        try {
+            await performEntryAction('restore', entryId);
+            progress.remove();
+            window.location.reload();
+        } catch (error) {
+            progress.remove();
+            window.alert('Error: ' + error.message);
+        }
+    }
+
+    async function handleDuplicateEntry(entryId) {
+        const progress = showProgress('Duplicating entry…');
+        try {
+            const result = await performEntryAction('duplicate', entryId);
+            progress.remove();
+            const newEntryId = result?.data?.id || '';
+            if (newEntryId) {
+                window.location.href = adminUrl('entry-editor', { collection: collectionSlug, entry: newEntryId });
+                return;
+            }
+            window.location.reload();
+        } catch (error) {
+            progress.remove();
+            window.alert('Error: ' + error.message);
+        }
+    }
+
     function handleSelectAll() {
+        if (!selectAllCheckbox) {
+            return;
+        }
         if (selectAllCheckbox.checked) {
-            // Select all
-            entryCheckboxes.forEach(checkbox => {
-                selectedEntries.add(checkbox.value);
+            entryCheckboxes.forEach(function (checkbox) {
                 checkbox.checked = true;
+                selectedEntries.add(checkbox.value);
             });
         } else {
-            // Deselect all
-            selectedEntries.clear();
-            entryCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
+            clearSelection();
         }
         updateBulkUI();
     }
-    
-    /**
-     * Handle individual entry checkbox
-     */
-    function handleEntryCheckbox(checkbox) {
-        if (checkbox.checked) {
-            selectedEntries.add(checkbox.value);
+
+    function setStatusFilter(value) {
+        const nextUrl = new URL(window.location.href);
+        if (value) {
+            nextUrl.searchParams.set('status', value);
         } else {
-            selectedEntries.delete(checkbox.value);
+            nextUrl.searchParams.delete('status');
         }
-        updateBulkUI();
+        window.location.href = nextUrl.toString();
     }
-    
-    // Event listeners
+
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', handleSelectAll);
     }
-    
-    entryCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            handleEntryCheckbox(this);
-        });
-    });
-    
-    if (bulkPublishBtn) {
-        bulkPublishBtn.addEventListener('click', handleBulkPublish);
-    }
-    
-    if (bulkUnpublishBtn) {
-        bulkUnpublishBtn.addEventListener('click', handleBulkUnpublish);
-    }
-    
-    if (bulkDeleteBtn) {
-        bulkDeleteBtn.addEventListener('click', handleBulkDelete);
-    }
-    
-    if (bulkCancelBtn) {
-        bulkCancelBtn.addEventListener('click', handleBulkCancel);
-    }
-    
-    // Handle individual entry deletion
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.delete-entry-btn')) {
-            const btn = e.target.closest('.delete-entry-btn');
-            const entryId = btn.dataset.entryId;
-            if (entryId) {
-                deleteEntry(entryId);
-            }
-        }
-    });
-    
-    /**
-     * Delete a single entry
-     */
-    async function deleteEntry(entryId) {
-        if (!confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
-            return;
-        }
-        
-        // Use collection ID if available, otherwise fall back to slug
-        const collectionIdentifier = window.collectionId || collectionSlug;
-        
-        if (!collectionIdentifier) {
-            alert('Error: Collection information not available. Please refresh the page and try again.');
-            return;
-        }
-        
-        try {
-            const response = await fetch(apiUrl('/api/content.php'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'delete_entry',
-                    collection: collectionIdentifier,
-                    id: entryId,
-                    _csrf: getCSRFToken()
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.status === 'ok') {
-                // Remove the entry row from the DOM
-                const row = document.querySelector(`.table-row[data-entry-id="${entryId}"]`);
-                if (row) {
-                    row.remove();
-                    // Update bulk UI in case this entry was selected
-                    selectedEntries.delete(entryId);
-                    updateBulkUI();
-                } else {
-                    // If row not found, reload the page
-                    window.location.reload();
-                }
+
+    entryCheckboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            if (checkbox.checked) {
+                selectedEntries.add(checkbox.value);
             } else {
-                alert('Error: ' + (result.message || 'Failed to delete entry'));
+                selectedEntries.delete(checkbox.value);
             }
-        } catch (error) {
-            alert('Error: ' + error.message);
-            console.error('Delete entry error:', error);
-        }
-    }
-    
-    // Initialize UI
-    updateBulkUI();
-    
-    // Status filter functionality
-    const statusFilter = document.getElementById('status-filter');
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function() {
-            const filterValue = this.value.toLowerCase();
-            const rows = document.querySelectorAll('.table-row');
-            
-            rows.forEach(row => {
-                const statusBadge = row.querySelector('.status-badge');
-                if (!statusBadge) return;
-                
-                const status = (statusBadge.dataset.status || statusBadge.textContent.trim().toLowerCase().replace(/\s+/g, '_'))
-                    .replace(/^draft$/, 'unpublished')
-                    .replace(/^pending_for_review$/, 'pending_review');
-                
-                if (!filterValue || status === filterValue) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+            updateBulkUI();
         });
-    }
-    
-    // ============================================
-    // Drag and Drop Reordering for Entries
-    // ============================================
-    // Now handled by MouseDragDrop in initializeEntryDragHandlers()
-    
-    
-    /**
-     * Reorder entries
-     */
+    });
+
+    bulkPublishBtn?.addEventListener('click', function () {
+        runBulkAction(
+            'publish',
+            'Publish the selected entries?',
+            'Publishing entries…',
+            'Published %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '.'
+        );
+    });
+
+    bulkUnpublishBtn?.addEventListener('click', function () {
+        runBulkAction(
+            'unpublish',
+            'Unpublish the selected entries?',
+            'Unpublishing entries…',
+            'Unpublished %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '.'
+        );
+    });
+
+    bulkDeleteBtn?.addEventListener('click', function () {
+        runBulkAction(
+            'delete',
+            'Move the selected entries to trash?',
+            'Moving entries to trash…',
+            'Moved %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + ' to trash.'
+        );
+    });
+
+    bulkRestoreBtn?.addEventListener('click', function () {
+        runBulkAction(
+            'restore',
+            'Restore the selected entries?',
+            'Restoring entries…',
+            'Restored %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '.'
+        );
+    });
+
+    bulkFieldApplyBtn?.addEventListener('click', handleBulkFieldEdit);
+    bulkCancelBtn?.addEventListener('click', clearSelection);
+
+    statusFilter?.addEventListener('change', function () {
+        setStatusFilter(statusFilter.value);
+    });
+
+    document.addEventListener('click', function (event) {
+        const deleteButton = event.target.closest('.delete-entry-btn');
+        if (deleteButton) {
+            handleDeleteEntry(deleteButton.dataset.entryId || '');
+            return;
+        }
+
+        const restoreButton = event.target.closest('.restore-entry-btn');
+        if (restoreButton) {
+            handleRestoreEntry(restoreButton.dataset.entryId || '');
+            return;
+        }
+
+        const duplicateButton = event.target.closest('.duplicate-entry-btn');
+        if (duplicateButton) {
+            handleDuplicateEntry(duplicateButton.dataset.entryId || '');
+        }
+    });
+
+    let entrySorter = null;
+
     async function reorderEntries(entryId, targetEntryId, insertBefore) {
         const rows = Array.from(document.querySelectorAll('.table-row'));
-        const currentOrder = rows.map(row => row.dataset.entryId).filter(id => id);
-        
-        // Find current and target positions
+        const currentOrder = rows.map(function (row) { return row.dataset.entryId; }).filter(Boolean);
         const currentIndex = currentOrder.indexOf(entryId);
         const targetIndex = currentOrder.indexOf(targetEntryId);
-        
+
         if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) {
             return;
         }
-        
-        // Remove from current position
+
         currentOrder.splice(currentIndex, 1);
-        
-        // Calculate new target index after removal
         let newTargetIndex = targetIndex;
         if (currentIndex < targetIndex) {
             newTargetIndex = targetIndex - 1;
         }
-        
-        // Insert at correct position
-        const insertIndex = insertBefore ? newTargetIndex : newTargetIndex + 1;
-        currentOrder.splice(insertIndex, 0, entryId);
-        
-        // Save new order
+        currentOrder.splice(insertBefore ? newTargetIndex : newTargetIndex + 1, 0, entryId);
+
         try {
-            // Use collection ID if available, otherwise fall back to slug
-            const collectionIdentifier = window.collectionId || collectionSlug;
-            
-            if (!collectionIdentifier) {
-                console.error('[Reorder] No collection identifier found');
-                alert('Error: Collection not found. Please refresh the page.');
-                return;
-            }
-            
-            
-            const response = await fetch(apiUrl('/api/content.php?action=set_entry_order'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    collection: collectionIdentifier,
-                    order: currentOrder,
-                    _csrf: getCSRFToken()
-                })
+            const response = await requestJson('/api/content.php?action=set_entry_order', {
+                collection: window.collectionId || collectionSlug,
+                order: currentOrder,
+                _csrf: getCSRFToken(),
             });
-            
-            const responseText = await response.text();
-            let data;
-            try {
-                data = JSON.parse(responseText);
-            } catch (e) {
-                console.error('[Reorder] Failed to parse JSON:', e, 'Response:', responseText);
-                alert('Error saving entry order: Invalid response from server');
+
+            if (response.status !== 'ok') {
+                throw new Error(response.message || 'Failed to save entry order');
+            }
+
+            const tableBody = document.querySelector('.table-body');
+            const entryMap = {};
+            rows.forEach(function (row) {
+                entryMap[row.dataset.entryId] = row;
+            });
+            if (!tableBody) {
                 return;
             }
-            
-            
-            if (data.status === 'ok') {
-                // Reorder DOM elements to match new order
-                const tableBody = document.querySelector('.table-body');
-                const entryMap = {};
-                rows.forEach(row => {
-                    entryMap[row.dataset.entryId] = row;
-                });
-                
-                // Clear and re-append in new order
-                tableBody.innerHTML = '';
-                currentOrder.forEach(id => {
-                    if (entryMap[id]) {
-                        tableBody.appendChild(entryMap[id]);
-                    }
-                });
-                
-                // Re-initialize drag handlers for reordered rows
-                initializeEntryDragHandlers();
-            } else {
-                alert('Failed to save entry order: ' + (data.message || 'Unknown error'));
-            }
+            tableBody.innerHTML = '';
+            currentOrder.forEach(function (id) {
+                if (entryMap[id]) {
+                    tableBody.appendChild(entryMap[id]);
+                }
+            });
+            initializeEntryDragHandlers();
         } catch (error) {
-            console.error('Error reordering entries:', error);
-            alert('Error saving entry order. Please try again.');
+            window.alert('Error saving entry order: ' + error.message);
         }
     }
-    
-    /**
-     * Initialize drag handlers for entry rows using MouseDragDrop
-     */
-    let entrySorter = null;
-    
+
     function initializeEntryDragHandlers() {
         const tableBody = document.querySelector('.table-body');
-        if (!tableBody) return;
-        
-        // Destroy existing sorter if any
+        if (!tableBody || isTrashView || typeof MouseDragDrop !== 'function') {
+            return;
+        }
+
         if (entrySorter) {
             entrySorter.destroy();
         }
-        
-        // Create new sorter
+
         entrySorter = new MouseDragDrop({
             container: tableBody,
             itemSelector: '.table-row',
             handleSelector: '.cell-drag',
-            onReorder: function(fromIndex, toIndex, placeholder, draggedItem) {
-                // MouseDragDrop has already moved the dragged item to placeholder position
-                // We need to determine the target entry ID from the placeholder's position
-                const draggedEntryId = draggedItem.dataset.entryId;
+            onReorder: function (fromIndex, toIndex, placeholder, draggedItem) {
+                const draggedEntryId = draggedItem?.dataset?.entryId || '';
                 if (!draggedEntryId) return;
-                
-                // Find target entry ID based on placeholder position
+
                 let targetEntryId = null;
                 let insertBefore = false;
-                
+
                 if (placeholder && placeholder.parentNode) {
-                    // Check next sibling (insert before this row)
                     let sibling = placeholder.nextSibling;
                     while (sibling) {
                         if (sibling.classList && sibling.classList.contains('table-row')) {
@@ -511,8 +414,6 @@
                         }
                         sibling = sibling.nextSibling;
                     }
-                    
-                    // If no next sibling, check previous sibling (insert after this row)
                     if (!targetEntryId) {
                         sibling = placeholder.previousSibling;
                         while (sibling) {
@@ -525,103 +426,71 @@
                         }
                     }
                 }
-                
-                // Fallback: use index-based calculation
+
                 if (!targetEntryId) {
-                    const allRows = Array.from(tableBody.querySelectorAll('.table-row'))
-                        .filter(row => row !== draggedItem && !row.classList.contains('drag-placeholder'));
-                    
+                    const allRows = Array.from(tableBody.querySelectorAll('.table-row')).filter(function (row) {
+                        return row !== draggedItem && !row.classList.contains('drag-placeholder');
+                    });
                     if (toIndex < allRows.length) {
                         targetEntryId = allRows[toIndex].dataset.entryId;
                         insertBefore = true;
                     } else if (allRows.length > 0) {
                         targetEntryId = allRows[allRows.length - 1].dataset.entryId;
-                        insertBefore = false;
                     }
                 }
-                
+
                 if (targetEntryId && draggedEntryId !== targetEntryId) {
                     reorderEntries(draggedEntryId, targetEntryId, insertBefore);
                 }
-            }
+            },
         });
     }
-    
-    // Initialize drag handlers on page load
-    // Use setTimeout to ensure DOM is fully ready
-    setTimeout(function() {
-        initializeEntryDragHandlers();
-    }, 100);
-    
-    /**
-     * Sync action cell widths between header and rows
-     * Ensures header action cell matches the width of row action cells
-     */
+
     function syncActionCellWidths() {
-        const tables = document.querySelectorAll('.entries-smart-table');
-        
-        tables.forEach(table => {
+        document.querySelectorAll('.entries-smart-table').forEach(function (table) {
             const headActions = table.querySelector('.head-actions');
             const rowActions = table.querySelectorAll('.cell-actions');
-            
-            if (!headActions || rowActions.length === 0) return;
-            
-            // Find the widest row action cell
+            if (!headActions || rowActions.length === 0) {
+                return;
+            }
+
             let maxWidth = 0;
-            rowActions.forEach(cell => {
-                // Temporarily remove any inline styles to get natural width
+            rowActions.forEach(function (cell) {
                 const originalWidth = cell.style.width;
                 const originalMinWidth = cell.style.minWidth;
                 cell.style.width = '';
                 cell.style.minWidth = '';
-                
-                const width = cell.getBoundingClientRect().width;
-                if (width > maxWidth) {
-                    maxWidth = width;
-                }
-                
-                // Restore original styles
+                maxWidth = Math.max(maxWidth, cell.getBoundingClientRect().width);
                 cell.style.width = originalWidth;
                 cell.style.minWidth = originalMinWidth;
             });
-            
-            // Set header action cell to match the widest row action cell
-            // Use flex-basis instead of width to work better with flexbox
+
             if (maxWidth > 0) {
                 headActions.style.flexBasis = maxWidth + 'px';
                 headActions.style.width = maxWidth + 'px';
                 headActions.style.minWidth = maxWidth + 'px';
-                
-                // Set CSS variable for padding calculation in fields-region
                 table.style.setProperty('--action-cell-width', maxWidth + 'px');
             }
         });
     }
-    
-    // Sync action cell widths on page load and window resize
+
     function initializeActionCellSync() {
         syncActionCellWidths();
-        
-        // Re-sync on window resize
-        let resizeTimeout;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(syncActionCellWidths, 100);
+
+        let resizeTimeout = null;
+        window.addEventListener('resize', function () {
+            window.clearTimeout(resizeTimeout);
+            resizeTimeout = window.setTimeout(syncActionCellWidths, 100);
         });
-        
-        // Re-sync when table content changes (e.g., after AJAX updates)
-        const observer = new MutationObserver(function() {
-            syncActionCellWidths();
-        });
-        
-        document.querySelectorAll('.entries-smart-table').forEach(table => {
+
+        const observer = new MutationObserver(syncActionCellWidths);
+        document.querySelectorAll('.entries-smart-table').forEach(function (table) {
             observer.observe(table, { childList: true, subtree: true });
         });
     }
-    
-    // Initialize action cell width sync
-    setTimeout(function() {
-        initializeActionCellSync();
-    }, 200);
+
+    updateBulkUI();
+    window.setTimeout(initializeEntryDragHandlers, 100);
+    window.setTimeout(initializeActionCellSync, 200);
 })();
 

@@ -233,6 +233,17 @@ a.btn {
 }
 
 .btn-icon:hover {
+  background: var(--color-neutral-100, #f3f4f6);
+  color: var(--text-primary, #20221D);
+}
+
+.btn-icon--edit:hover {
+  background: var(--color-neutral-100, #f3f4f6);
+  color: var(--text-primary, #20221D);
+}
+
+.btn-icon--danger:hover,
+.btn-icon.danger:hover {
   background: var(--error-100, #fee2e2);
   color: var(--error-700, #b91c1c);
 }

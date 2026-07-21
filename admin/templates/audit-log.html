@@ -11,17 +11,17 @@
 </div>
 
 <div class="audit-log-page">
-    <div class="page-header">
-        <h1>{translate 'admin.audit_log'}</h1>
-    </div>
-    
     <div class="main-actions-bar">
-        <div class="filters">
+        <div class="collection-actions-bar">
+        <div class="collection-actions-bar-left">
+            <button class="btn btn-secondary" id="refresh-logs">{translate 'admin.refresh'}</button>
+        </div>
+        <div class="collection-actions-bar-right">
             <select id="event-filter" class="input">
                 <option value="">{translate 'admin.all_events'}</option>
             </select>
             <input type="date" id="date-filter" class="input" placeholder="{translate 'admin.filter_by_date'}">
-            <button class="btn btn-secondary" id="refresh-logs">{translate 'admin.refresh'}</button>
+        </div>
         </div>
     </div>
     

@@ -11,19 +11,19 @@
 </div>
 
 <div class="activity-page">
-    <div class="page-header">
-        <h1>{translate 'admin.activity_feed'}</h1>
-    </div>
-    
     <div class="main-actions-bar">
-        <div class="filters">
+        <div class="collection-actions-bar">
+        <div class="collection-actions-bar-left">
+            <button class="btn btn-secondary" id="refresh-activity">{translate 'admin.refresh'}</button>
+        </div>
+        <div class="collection-actions-bar-right">
             <select id="category-filter" class="input">
                 <option value="all">{translate 'admin.all_activity'}</option>
                 <option value="content">{translate 'admin.content'}</option>
                 <option value="users">{translate 'admin.users'}</option>
                 <option value="system">{translate 'admin.system'}</option>
             </select>
-            <button class="btn btn-secondary" id="refresh-activity">{translate 'admin.refresh'}</button>
+        </div>
         </div>
     </div>
     

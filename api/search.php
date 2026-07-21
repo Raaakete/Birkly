@@ -93,7 +93,9 @@ if (!isset($_SESSION['user'])) {
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     exit;
 }
+requireAuth('read');
 
+$action = trim((string) ($_GET['action'] ?? $_POST['action'] ?? ''));
 $query = trim($_GET['q'] ?? '');
 $scope = $_GET['scope'] ?? 'all'; // all, collections, entries, sub_entries, media, users, plugins
 $limit = intval($_GET['limit'] ?? 20);
@@ -157,6 +159,45 @@ $scopes = [
     'users' => 0,
     'plugins' => 0
 ];
+
+if ($action === 'admin_search') {
+    try {
+        $collectionResults = searchCollections($storage, $query, $limit);
+        $entryResults = searchEntries($storage, $query, $limit);
+        $results = array_merge($collectionResults, $entryResults);
+        $scopes = [
+            'collections' => count($collectionResults),
+            'entries' => count($entryResults),
+        ];
+
+        usort($results, function($a, $b) {
+            return ($b['match_score'] ?? 0) <=> ($a['match_score'] ?? 0);
+        });
+
+        $results = array_slice($results, 0, $limit);
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        echo json_encode([
+            'status' => 'ok',
+            'query' => $query,
+            'results' => $results,
+            'total' => count($results),
+            'scopes' => $scopes,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    } catch (Throwable $e) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        error_log('Admin search error: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Search failed']);
+        exit;
+    }
+}
 
 // Debug logging
 error_log("Search API: Query='{$query}', Scope='{$scope}', Limit={$limit}");

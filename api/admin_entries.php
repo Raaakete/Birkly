@@ -15,6 +15,7 @@ require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/entry_slug.php';
 require_once __DIR__ . '/../core/entry_validation.php';
+require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugins.php';
 if (function_exists('load_plugins')) {
@@ -116,7 +117,7 @@ if ($action === 'create' || $action === 'update') {
 }
 
 // Validate action is in allowed list
-$validActions = ['save', 'delete', 'list', 'versions', 'restore_version', 'review', 'bulk', 'diff'];
+$validActions = ['save', 'delete', 'restore', 'duplicate', 'list', 'versions', 'list_versions', 'restore_version', 'review', 'bulk', 'bulk_field_edit', 'diff'];
 if (!in_array($action, $validActions, true)) {
     // This should never happen, but just in case...
     while (ob_get_level() > 0) {
@@ -148,14 +149,14 @@ if (!in_array($action, $validActions, true)) {
 // - list/versions/diff: read-only
 // - save/restore_version/bulk publish/unpublish: write
 // - delete/bulk delete: delete
-if (in_array($action, ['save', 'restore_version'], true)) {
+if (in_array($action, ['save', 'restore', 'duplicate', 'restore_version', 'bulk_field_edit'], true)) {
     requireAuth('write');
 } elseif ($action === 'delete') {
     requireAuth('delete');
 } elseif ($action === 'bulk') {
     // bulk permission is determined inside performBulkOperation() (depends on bulk action)
     requireAuth('write');
-} elseif (in_array($action, ['list', 'versions', 'diff'], true)) {
+} elseif (in_array($action, ['list', 'versions', 'list_versions', 'diff'], true)) {
     requireAuth('read');
 }
 
@@ -229,6 +230,28 @@ switch ($action) {
         ob_end_flush();
         exit;
         break;
+    case 'restore':
+        $result = restoreEntry();
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        ob_start();
+        error_reporting($oldErrorReporting);
+        ini_set('display_errors', $oldDisplayErrors);
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        ob_end_flush();
+        exit;
+        break;
+    case 'duplicate':
+        $result = duplicateEntry();
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        ob_start();
+        error_reporting($oldErrorReporting);
+        ini_set('display_errors', $oldDisplayErrors);
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        ob_end_flush();
+        exit;
+        break;
     case 'list':
         $result = listEntries();
         while (ob_get_level() > 0) { ob_end_clean(); }
@@ -241,6 +264,17 @@ switch ($action) {
         exit;
         break;
     case 'versions':
+        $result = getVersionHistory();
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        ob_start();
+        error_reporting($oldErrorReporting);
+        ini_set('display_errors', $oldDisplayErrors);
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        ob_end_flush();
+        exit;
+        break;
+    case 'list_versions':
         $result = getVersionHistory();
         while (ob_get_level() > 0) { ob_end_clean(); }
         ob_start();
@@ -316,6 +350,17 @@ switch ($action) {
         
         // Exit immediately - no code after this
         exit(0);
+        break;
+    case 'bulk_field_edit':
+        $result = bulkFieldEdit();
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        ob_start();
+        error_reporting($oldErrorReporting);
+        ini_set('display_errors', $oldDisplayErrors);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        ob_end_flush();
+        exit;
         break;
     case 'diff':
         $result = getVersionDiff();
@@ -805,6 +850,10 @@ function saveEntry() {
         if ($action === 'create' && empty($entryOutput['author_id']) && empty($entryOutput['author_user_id'])) {
             $entryOutput['author_id'] = $currentUserId;
         }
+        if ($action === 'create' && empty($entryOutput['created_by'])) {
+            $entryOutput['created_by'] = $currentUserId;
+        }
+        $entryOutput['updated_by'] = $currentUserId;
         if ($status === 'pending_review') {
             if (empty($entryOutput['author_id']) && empty($entryOutput['author_user_id'])) {
                 $entryOutput['author_id'] = $entry['author_id'] ?? $entry['author_user_id'] ?? $currentUserId;
@@ -814,6 +863,9 @@ function saveEntry() {
                 $entryOutput['submitted_at'] = date('c');
             }
         }
+    }
+    if (($entryOutput['status'] ?? '') !== 'trashed') {
+        unset($entryOutput['deleted_at']);
     }
     
     // Save entry to file
@@ -997,19 +1049,22 @@ function deleteEntry() {
     // SECURITY: deleting entries requires delete permission
     requireAuth('delete');
 
-    $collectionSlug = $_POST['collection'] ?? '';
-    $entryId = $_POST['entry_id'] ?? '';
+    $input = readJsonRequestBody();
+    $collectionSlug = (string) ($input['collection'] ?? $_POST['collection'] ?? '');
+    $entryId = (string) ($input['entry_id'] ?? $_POST['entry_id'] ?? '');
+    $csrf = (string) ($input['_csrf'] ?? $_POST['_csrf'] ?? '');
+
+    if (!validateStateChangeCsrfToken($csrf, 'trash_entry')) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
     
     if (empty($collectionSlug) || empty($entryId)) {
         return ['status' => 'error', 'message' => 'Collection slug and entry ID are required'];
     }
-    
-    $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-    
-    // Load entry data before deletion for webhook
-    $entryData = null;
-    if (file_exists($entryFile)) {
-        $entryData = json_decode(file_get_contents($entryFile), true);
+
+    $entryData = loadEntryRecord($collectionSlug, $entryId);
+    if ($entryData === null) {
+        return ['status' => 'error', 'message' => 'Entry not found'];
     }
 
     try {
@@ -1020,47 +1075,292 @@ function deleteEntry() {
         return ['status' => 'error', 'message' => $e->getMessage()];
     }
     
-    if (file_exists($entryFile) && unlink($entryFile)) {
-        // Invalidate cache for this collection
-        $cache = new Cache();
-        $cache->invalidateCollection($collectionSlug);
-        
-        // Trigger automation system (when plugin active)
-        require_once __DIR__ . '/../core/automation/bootstrap.php';
-        if (automation_bootstrap()) {
-            enqueue_automation('entry_deleted', [
-                'entry' => $entryData,
-                'collection' => $collectionSlug
-            ]);
-        }
-        
-        // Trigger webhook
-        if (file_exists(__DIR__ . '/webhooks.php')) {
-            require_once __DIR__ . '/webhooks.php';
-            triggerWebhook('entry.deleted', [
-                'collection' => $collectionSlug,
-                'entry_id' => $entryId,
-                'entry' => $entryData
-            ]);
-        }
-        
-        return [
-            'status' => 'ok',
-            'message' => 'Entry deleted successfully'
-        ];
-    } else {
-        // SECURITY FIX: Use generic error message
-        return ['status' => 'error', 'message' => 'Failed to delete entry'];
+    saveVersionHistory($collectionSlug, $entryId, $entryData);
+    $entryData['status'] = 'trashed';
+    $entryData['version'] = intval($entryData['version'] ?? 1) + 1;
+    $entryData['updated_at'] = date('Y-m-d H:i:s');
+    $entryData['deleted_at'] = date('c');
+    $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+    if ($currentUserId !== '') {
+        $entryData['updated_by'] = $currentUserId;
     }
+
+    if (!persistEntryRecord($collectionSlug, $entryId, $entryData)) {
+        return ['status' => 'error', 'message' => 'Failed to move entry to trash'];
+    }
+
+    log_security_event('trash_entry', ['collection' => $collectionSlug, 'entry_id' => $entryId]);
+
+    return [
+        'status' => 'ok',
+        'message' => 'Entry moved to trash',
+        'data' => [
+            'id' => $entryId,
+            'status' => 'trashed',
+        ],
+    ];
+}
+
+function restoreEntry() {
+    requireAuth('write');
+
+    $input = readJsonRequestBody();
+    $collectionSlug = (string) ($input['collection'] ?? $_POST['collection'] ?? '');
+    $entryId = (string) ($input['entry_id'] ?? $_POST['entry_id'] ?? '');
+    $csrf = (string) ($input['_csrf'] ?? $_POST['_csrf'] ?? '');
+
+    if (!validateStateChangeCsrfToken($csrf, 'restore_entry')) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
+
+    if ($collectionSlug === '' || $entryId === '') {
+        return ['status' => 'error', 'message' => 'Collection slug and entry ID are required'];
+    }
+
+    $entryData = loadEntryRecord($collectionSlug, $entryId);
+    if ($entryData === null) {
+        return ['status' => 'error', 'message' => 'Entry not found'];
+    }
+
+    saveVersionHistory($collectionSlug, $entryId, $entryData);
+    $entryData['status'] = 'unpublished';
+    $entryData['version'] = intval($entryData['version'] ?? 1) + 1;
+    $entryData['updated_at'] = date('Y-m-d H:i:s');
+    unset($entryData['deleted_at']);
+    $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+    if ($currentUserId !== '') {
+        $entryData['updated_by'] = $currentUserId;
+    }
+
+    if (!persistEntryRecord($collectionSlug, $entryId, $entryData)) {
+        return ['status' => 'error', 'message' => 'Failed to restore entry'];
+    }
+
+    log_security_event('restore_entry', ['collection' => $collectionSlug, 'entry_id' => $entryId]);
+
+    return [
+        'status' => 'ok',
+        'message' => 'Entry restored successfully',
+        'data' => [
+            'id' => $entryId,
+            'status' => 'unpublished',
+        ],
+    ];
 }
 
 function generateSlug($title) {
     return birkly_generate_slug((string)$title);
 }
 
+function readJsonRequestBody(): array {
+    $rawInput = file_get_contents('php://input');
+    if (!is_string($rawInput) || trim($rawInput) === '') {
+        return [];
+    }
+
+    $input = json_decode($rawInput, true);
+    return is_array($input) ? $input : [];
+}
+
+function validateStateChangeCsrfToken(string $csrf, string $actionName): bool {
+    if (validate_csrf_token($csrf)) {
+        return true;
+    }
+
+    log_security_event('permission_denied', ['action' => $actionName, 'reason' => 'invalid CSRF']);
+    return false;
+}
+
+function getCollectionPaths(string $collectionSlug): ?array {
+    $collectionSlug = sanitize_identifier($collectionSlug);
+    if ($collectionSlug === false || $collectionSlug === '') {
+        return null;
+    }
+
+    $baseDir = __DIR__ . '/../content/collections';
+    $collectionDir = sanitize_path($collectionSlug, $baseDir);
+    if ($collectionDir === false || !is_dir($collectionDir)) {
+        return null;
+    }
+
+    $entriesDir = sanitize_path('entries', $collectionDir);
+    if ($entriesDir === false) {
+        return null;
+    }
+
+    if (!is_dir($entriesDir)) {
+        mkdir($entriesDir, 0755, true);
+    }
+
+    return [
+        'slug' => $collectionSlug,
+        'collection_dir' => $collectionDir,
+        'entries_dir' => $entriesDir,
+    ];
+}
+
+function getEntryFilePath(string $collectionSlug, string $entryId): ?string {
+    $paths = getCollectionPaths($collectionSlug);
+    if ($paths === null) {
+        return null;
+    }
+
+    $entryId = sanitize_identifier($entryId);
+    if ($entryId === false || $entryId === '') {
+        return null;
+    }
+
+    $entryFile = sanitize_path($entryId . '.json', $paths['entries_dir']);
+    return $entryFile === false ? null : $entryFile;
+}
+
+function loadEntryRecord(string $collectionSlug, string $entryId): ?array {
+    $entryFile = getEntryFilePath($collectionSlug, $entryId);
+    if ($entryFile === null || !is_file($entryFile)) {
+        return null;
+    }
+
+    $entry = json_decode((string) file_get_contents($entryFile), true);
+    return is_array($entry) ? $entry : null;
+}
+
+function persistEntryRecord(string $collectionSlug, string $entryId, array $entryData): bool {
+    $entryFile = getEntryFilePath($collectionSlug, $entryId);
+    if ($entryFile === null) {
+        return false;
+    }
+
+    $encoded = json_encode($entryData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false) {
+        return false;
+    }
+
+    $written = file_put_contents($entryFile, $encoded);
+    if ($written === false) {
+        return false;
+    }
+
+    $cache = new Cache();
+    $cache->invalidateCollection($collectionSlug);
+    return true;
+}
+
+function ensureUniqueEntrySlug(string $collectionSlug, string $baseSlug, ?string $ignoreEntryId = null): string {
+    $paths = getCollectionPaths($collectionSlug);
+    if ($paths === null) {
+        return $baseSlug;
+    }
+
+    $baseSlug = birkly_normalize_slug($baseSlug);
+    if ($baseSlug === '') {
+        $baseSlug = uniqid();
+    }
+
+    $candidate = $baseSlug;
+    $suffix = 2;
+    $existingSlugs = [];
+    foreach (glob($paths['entries_dir'] . '/*.json') ?: [] as $entryFile) {
+        $entryId = basename($entryFile, '.json');
+        if ($ignoreEntryId !== null && $entryId === $ignoreEntryId) {
+            continue;
+        }
+
+        $entry = json_decode((string) file_get_contents($entryFile), true);
+        if (!is_array($entry)) {
+            continue;
+        }
+
+        $existingSlug = birkly_normalize_slug((string) ($entry['slug'] ?? ''));
+        if ($existingSlug !== '') {
+            $existingSlugs[$existingSlug] = true;
+        }
+    }
+
+    while (isset($existingSlugs[$candidate])) {
+        $candidate = $baseSlug . '-' . $suffix;
+        $suffix++;
+    }
+
+    return $candidate;
+}
+
+function duplicateEntry(): array {
+    requireAuth('write');
+
+    $input = readJsonRequestBody();
+    $collectionSlug = (string) ($input['collection'] ?? $_POST['collection'] ?? '');
+    $entryId = (string) ($input['entry_id'] ?? $_POST['entry_id'] ?? '');
+    $csrf = (string) ($input['_csrf'] ?? $_POST['_csrf'] ?? '');
+
+    if (!validateStateChangeCsrfToken($csrf, 'duplicate_entry')) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
+
+    if ($collectionSlug === '' || $entryId === '') {
+        return ['status' => 'error', 'message' => 'Collection slug and entry ID are required'];
+    }
+
+    $sourceEntry = loadEntryRecord($collectionSlug, $entryId);
+    if ($sourceEntry === null) {
+        return ['status' => 'error', 'message' => 'Entry not found'];
+    }
+
+    $newEntryId = uniqid();
+    $baseTitle = trim((string) ($sourceEntry['title'] ?? $entryId));
+    $copyTitle = $baseTitle !== '' ? $baseTitle . ' (copy)' : $newEntryId . ' (copy)';
+    $baseSlug = trim((string) ($sourceEntry['slug'] ?? ''));
+    if ($baseSlug === '') {
+        $baseSlug = birkly_generate_slug($copyTitle);
+    }
+    $copySlug = ensureUniqueEntrySlug($collectionSlug, $baseSlug . '-copy');
+
+    $duplicatedEntry = $sourceEntry;
+    $duplicatedEntry['id'] = $newEntryId;
+    $duplicatedEntry['title'] = $copyTitle;
+    $duplicatedEntry['slug'] = $copySlug;
+    $duplicatedEntry['status'] = 'unpublished';
+    $duplicatedEntry['version'] = 1;
+    $duplicatedEntry['created_at'] = date('Y-m-d H:i:s');
+    $duplicatedEntry['updated_at'] = date('Y-m-d H:i:s');
+
+    foreach (['reviewed_at', 'reviewed_by', 'submitted_at', 'review_notes', 'deleted_at'] as $key) {
+        unset($duplicatedEntry[$key]);
+    }
+
+    $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+    if ($currentUserId !== '') {
+        $duplicatedEntry['created_by'] = $currentUserId;
+        $duplicatedEntry['updated_by'] = $currentUserId;
+        if (empty($duplicatedEntry['author_id']) && empty($duplicatedEntry['author_user_id'])) {
+            $duplicatedEntry['author_id'] = $currentUserId;
+        }
+    }
+
+    if (!persistEntryRecord($collectionSlug, $newEntryId, $duplicatedEntry)) {
+        return ['status' => 'error', 'message' => 'Failed to duplicate entry'];
+    }
+
+    log_security_event('duplicate_entry', [
+        'collection' => $collectionSlug,
+        'entry_id' => $entryId,
+        'new_entry_id' => $newEntryId,
+    ]);
+
+    return [
+        'status' => 'ok',
+        'message' => 'Entry duplicated successfully',
+        'data' => [
+            'id' => $newEntryId,
+            'slug' => $copySlug,
+            'title' => $copyTitle,
+        ],
+    ];
+}
+
 function listEntries() {
     $collectionSlug = $_GET['collection'] ?? '';
     $search = $_GET['search'] ?? '';
+    $statusFilter = trim((string) ($_GET['status'] ?? ''));
     
     if (empty($collectionSlug)) {
         return ['error' => 'Collection slug is required'];
@@ -1150,6 +1450,17 @@ function listEntries() {
         // Re-index array
         $cachedEntries = array_values($cachedEntries);
     }
+
+    if ($statusFilter !== '') {
+        $normalizedStatus = $statusFilter === 'draft' ? 'unpublished' : $statusFilter;
+        $cachedEntries = array_values(array_filter($cachedEntries, function($entry) use ($normalizedStatus) {
+            $entryStatus = (string) ($entry['status'] ?? 'unpublished');
+            if ($entryStatus === 'draft') {
+                $entryStatus = 'unpublished';
+            }
+            return $entryStatus === $normalizedStatus;
+        }));
+    }
     
     // Return full entry data for admin UI (including status and dates)
     $result = [];
@@ -1161,7 +1472,8 @@ function listEntries() {
             'status' => ($entry['status'] === 'draft' ? 'unpublished' : ($entry['status'] ?? 'unpublished')),
             'updated_at' => $entry['updated_at'] ?? $entry['modified_at'] ?? null,
             'created_at' => $entry['created_at'] ?? null,
-            'modified_at' => $entry['modified_at'] ?? $entry['updated_at'] ?? $entry['created_at'] ?? null
+            'modified_at' => $entry['modified_at'] ?? $entry['updated_at'] ?? $entry['created_at'] ?? null,
+            'reviewer' => $entry['reviewer'] ?? '',
         ];
     }
     
@@ -1275,53 +1587,36 @@ function performBulkOperation() {
             switch ($action) {
                 case 'publish':
                     error_log("performBulkOperation: Setting status to published");
+                    saveVersionHistory($collectionSlug, $entryId, $entryData);
                     $entryData['status'] = 'published';
-                    $entryData['updated_at'] = date('c');
+                    $entryData['version'] = intval($entryData['version'] ?? 1) + 1;
+                    $entryData['updated_at'] = date('Y-m-d H:i:s');
                     break;
                     
                 case 'unpublish':
                     error_log("performBulkOperation: Setting status to unpublished");
+                    saveVersionHistory($collectionSlug, $entryId, $entryData);
                     $entryData['status'] = 'unpublished';
-                    $entryData['updated_at'] = date('c');
+                    $entryData['version'] = intval($entryData['version'] ?? 1) + 1;
+                    $entryData['updated_at'] = date('Y-m-d H:i:s');
                     break;
                     
                 case 'delete':
-                    error_log("performBulkOperation: Deleting entry");
-                    if (unlink($entryFile)) {
-                        // Trigger automation system (when plugin active)
-                        try {
-                            require_once __DIR__ . '/../core/automation/bootstrap.php';
-                            if (automation_bootstrap()) {
-                                enqueue_automation('entry_deleted', [
-                                    'entry' => $entryData,
-                                    'collection' => $collectionSlug
-                                ]);
-                            }
-                        } catch (Exception $e) {
-                            error_log("performBulkOperation: Error triggering automation: " . $e->getMessage());
-                        }
-                        
-                        // Trigger webhook
-                        try {
-                            if (file_exists(__DIR__ . '/webhooks.php')) {
-                                require_once __DIR__ . '/webhooks.php';
-                                triggerWebhook('entry.deleted', [
-                                    'collection' => $collectionSlug,
-                                    'entry_id' => $entryId,
-                                    'entry' => $entryData
-                                ]);
-                            }
-                        } catch (Exception $e) {
-                            error_log("performBulkOperation: Error triggering webhook: " . $e->getMessage());
-                        }
-                        $successCount++;
-                        error_log("performBulkOperation: Entry $entryId deleted successfully");
-                    } else {
-                        $errorCount++;
-                        $errors[] = "Failed to delete entry $entryId";
-                        error_log("performBulkOperation: Failed to delete entry $entryId");
-                    }
-                    continue 2; // Skip to next entry
+                    error_log("performBulkOperation: Moving entry to trash");
+                    saveVersionHistory($collectionSlug, $entryId, $entryData);
+                    $entryData['status'] = 'trashed';
+                    $entryData['version'] = intval($entryData['version'] ?? 1) + 1;
+                    $entryData['deleted_at'] = date('c');
+                    $entryData['updated_at'] = date('Y-m-d H:i:s');
+                    break;
+                case 'restore':
+                    error_log("performBulkOperation: Restoring entry from trash");
+                    saveVersionHistory($collectionSlug, $entryId, $entryData);
+                    $entryData['status'] = 'unpublished';
+                    $entryData['version'] = intval($entryData['version'] ?? 1) + 1;
+                    unset($entryData['deleted_at']);
+                    $entryData['updated_at'] = date('Y-m-d H:i:s');
+                    break;
                     
                 default:
                     $errorCount++;
@@ -1330,24 +1625,12 @@ function performBulkOperation() {
                     continue 2;
             }
             
-            // Save entry (for publish/unpublish)
-            if ($action !== 'delete') {
-                error_log("performBulkOperation: Encoding entry data");
-                $jsonOutput = json_encode($entryData, JSON_PRETTY_PRINT);
-                if ($jsonOutput === false) {
-                    $errorCount++;
-                    $errors[] = "Failed to encode entry $entryId: " . json_last_error_msg();
-                    error_log("performBulkOperation: Failed to encode entry $entryId: " . json_last_error_msg());
-                    continue;
-                }
-                
-                error_log("performBulkOperation: Saving entry file");
-                if (file_put_contents($entryFile, $jsonOutput)) {
-                    $successCount++;
-                } else {
-                    $errorCount++;
-                    $errors[] = "Failed to save entry $entryId";
-                }
+            error_log("performBulkOperation: Saving entry file");
+            if (persistEntryRecord($collectionSlug, $entryId, $entryData)) {
+                $successCount++;
+            } else {
+                $errorCount++;
+                $errors[] = "Failed to save entry $entryId";
             }
         } catch (Exception $e) {
             $errorCount++;
@@ -1381,6 +1664,126 @@ function performBulkOperation() {
     return $result;
 }
 
+function bulkFieldEdit(): array {
+    requireAuth('write');
+
+    $input = readJsonRequestBody();
+    $collectionSlug = (string) ($input['collection'] ?? '');
+    $entryIds = $input['entry_ids'] ?? [];
+    $fieldName = trim((string) ($input['field_name'] ?? ''));
+    $value = $input['value'] ?? '';
+    $csrf = (string) ($input['_csrf'] ?? '');
+
+    if (!validateStateChangeCsrfToken($csrf, 'bulk_field_edit')) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
+
+    if ($collectionSlug === '' || !is_array($entryIds) || $entryIds === [] || $fieldName === '') {
+        return ['status' => 'error', 'message' => 'Collection, entry IDs, and field name are required'];
+    }
+
+    $paths = getCollectionPaths($collectionSlug);
+    if ($paths === null) {
+        return ['status' => 'error', 'message' => 'Invalid collection'];
+    }
+
+    $schema = [];
+    $schemaFile = sanitize_path('schema.json', $paths['collection_dir']);
+    if ($schemaFile !== false && is_file($schemaFile)) {
+        $schema = json_decode((string) file_get_contents($schemaFile), true) ?: [];
+    }
+
+    $fieldDefinition = null;
+    foreach (($schema['fields'] ?? []) as $field) {
+        if (($field['name'] ?? '') === $fieldName) {
+            $fieldDefinition = $field;
+            break;
+        }
+    }
+
+    $processedValue = $value;
+    if (is_string($processedValue)) {
+        $trimmed = trim($processedValue);
+        if (($trimmed !== '') && (($trimmed[0] ?? '') === '[' || ($trimmed[0] ?? '') === '{')) {
+            $decoded = json_decode($trimmed, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $processedValue = $decoded;
+            }
+        }
+    }
+
+    if ($fieldDefinition !== null) {
+        $fieldType = (string) ($fieldDefinition['type'] ?? '');
+        if ($fieldType !== '') {
+            $className = getFieldtypeClass($fieldType);
+            if ($className && class_exists($className)) {
+                try {
+                    $ft = new $className([
+                        'name' => $fieldName,
+                        'label' => $fieldDefinition['label'] ?? $fieldName,
+                        'value' => $processedValue,
+                        'required' => $fieldDefinition['required'] ?? false,
+                        'options' => $fieldDefinition['options'] ?? [],
+                    ]);
+                    if (method_exists($ft, 'processValue') && !is_array($processedValue)) {
+                        $processedValue = $ft->processValue($processedValue);
+                    }
+                } catch (Throwable $e) {
+                    error_log('bulkFieldEdit fieldtype processing failed: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    $successCount = 0;
+    $errors = [];
+    $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+
+    foreach ($entryIds as $rawEntryId) {
+        $entryId = sanitize_identifier((string) $rawEntryId);
+        if ($entryId === false || $entryId === '') {
+            $errors[] = 'Invalid entry identifier';
+            continue;
+        }
+
+        $entryData = loadEntryRecord($collectionSlug, $entryId);
+        if ($entryData === null) {
+            $errors[] = "Entry {$entryId} not found";
+            continue;
+        }
+
+        saveVersionHistory($collectionSlug, $entryId, $entryData);
+        $entryData[$fieldName] = $processedValue;
+        $entryData['version'] = intval($entryData['version'] ?? 1) + 1;
+        $entryData['updated_at'] = date('Y-m-d H:i:s');
+        if ($currentUserId !== '') {
+            $entryData['updated_by'] = $currentUserId;
+        }
+
+        if (!persistEntryRecord($collectionSlug, $entryId, $entryData)) {
+            $errors[] = "Failed to save entry {$entryId}";
+            continue;
+        }
+
+        $successCount++;
+    }
+
+    log_security_event('bulk_field_edit', [
+        'collection' => $collectionSlug,
+        'field_name' => $fieldName,
+        'count' => $successCount,
+    ]);
+
+    return [
+        'status' => ($successCount > 0 || $errors === []) ? 'ok' : 'error',
+        'message' => $successCount > 0
+            ? "Updated {$successCount} entr" . ($successCount === 1 ? 'y' : 'ies')
+            : 'No entries were updated',
+        'count' => $successCount,
+        'errors' => $errors,
+    ];
+}
+
 /**
  * Save version history
  */
@@ -1394,7 +1797,9 @@ function saveVersionHistory($collectionSlug, $entryId, $entryData) {
     $versionFile = "$versionsDir/v{$version}.json";
     
     // Get current user for author info
-    session_start();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $author = $_SESSION['user']['email'] ?? $_SESSION['user']['name'] ?? 'Unknown';
     
     $versionData = array_merge($entryData, [
@@ -1601,12 +2006,16 @@ function restoreVersion() {
     // SECURITY: restoring a version changes content
     requireAuth('write');
 
-    $rawInput = file_get_contents('php://input');
-    $input = json_decode($rawInput, true);
+    $input = readJsonRequestBody();
     
     $collectionSlug = $input['collection'] ?? '';
     $entryId = $input['entry_id'] ?? '';
     $versionToRestore = $input['version'] ?? '';
+    $csrf = (string) ($input['_csrf'] ?? '');
+
+    if (!validateStateChangeCsrfToken($csrf, 'restore_entry_version')) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
     
     if (empty($collectionSlug) || empty($entryId) || empty($versionToRestore)) {
         return ['status' => 'error', 'message' => 'Missing required parameters'];
@@ -1616,10 +2025,12 @@ function restoreVersion() {
     $versionFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId/versions/v{$versionToRestore}.json";
     
     // Load current entry to save as new version
+    $currentEntryVersion = 1;
     if (file_exists($entryFile)) {
         $currentEntry = json_decode(file_get_contents($entryFile), true);
         if ($currentEntry) {
             saveVersionHistory($collectionSlug, $entryId, $currentEntry);
+            $currentEntryVersion = intval($currentEntry['version'] ?? 1) + 1;
         }
     }
     
@@ -1634,12 +2045,21 @@ function restoreVersion() {
     }
     
     // Update version number and timestamps
-    $versionData['version'] = ($versionData['version'] ?? 1) + 1;
+    $versionData['version'] = $currentEntryVersion;
     $versionData['updated_at'] = date('Y-m-d H:i:s');
+    $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+    if ($currentUserId !== '') {
+        $versionData['updated_by'] = $currentUserId;
+    }
     unset($versionData['author']); // Remove author from main entry
     
     // Restore entry
-    if (file_put_contents($entryFile, json_encode($versionData, JSON_PRETTY_PRINT))) {
+    if (persistEntryRecord($collectionSlug, $entryId, $versionData)) {
+        log_security_event('restore_entry_version', [
+            'collection' => $collectionSlug,
+            'entry_id' => $entryId,
+            'version' => $versionToRestore,
+        ]);
         return ['status' => 'ok', 'message' => 'Version restored successfully'];
     } else {
         return ['status' => 'error', 'message' => 'Failed to restore version'];

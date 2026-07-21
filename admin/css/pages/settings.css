@@ -7,14 +7,6 @@
   /* no extra inset; rely on main-content padding */
 }
 
-/* Save + toast in page header (replaces separate save bar) */
-.settings-page-header .settings-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3, 0.75rem);
-  flex-wrap: wrap;
-}
-
 .settings-toast {
   margin-bottom: 0;
   max-width: min(420px, 50vw);
@@ -1220,11 +1212,6 @@
 #activity-log .activity-log-page,
 #updates .updates-page {
     padding: 0;
-}
-
-#activity-log .page-header,
-#updates .page-header {
-    display: none;
 }
 
 #activity-log .main-actions-bar {
