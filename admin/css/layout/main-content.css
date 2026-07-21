@@ -6,7 +6,7 @@
 .main-content {
   flex: 1;
   min-height: calc(100vh - var(--space-10, 2.5rem) * 2);
-  overflow-x: hidden;
+  overflow-x: clip;
   padding: var(--admin-shell-edge-padding, var(--space-10, 2.5rem));
   background: var(--background-global, #f8f9f7);
 }
