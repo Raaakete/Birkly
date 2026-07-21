@@ -170,6 +170,14 @@ When in doubt, treat as major and ask the human.
 
 **Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md` · **Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`
 
+**2026-07-21 — Phase 32 approved** (Keven)
+
+**Priorities:** **Admin chrome polish** — shell alignment, left action bars, sticky save, icon row actions, media library overhaul · **Fieldtypes** — Phone, Toggle, Markdown, oEmbed/Video, Code/JSON · **Core platform** — entry duplicate, global search, trash/restore, bulk field edit, collection field templates, entry revisions, redirect manager, workflow polish.
+
+**Human decisions (locked):** Primary actions in `main-actions-bar` left · sticky save on settings + entry + collection editors · icon edit/delete on smart-table · pause P28 until P32-M24 · notify once at P32-M24.
+
+**Spec:** `docs/reviews/P32-admin-chrome-core-ux-plan.md` · **Handoff:** `docs/reviews/P32-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P32-verification-matrix.md`
+
 ---
 
 ## Vision
@@ -188,28 +196,28 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P30 formally closed** — admin forms & navigation UX; **P31 complete** — responsive dashboard and widget API v2 |
+| **Birkly (CMS)** | **P31 complete** — responsive dashboard, widget API v2 · **P32 approved** — chrome polish + core UX |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | P30 admin forms/navigation docs synced; P31 dashboard widgets guide published |
-| **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
+| **Birkly-Docs** | P31 dashboard widgets guide published; P32 docs pending |
+| **kekaba** | **Baked HTML** — P28-M9/M10 when P28 resumes |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
 
-**2026-07-21 — Phase 30 complete** (autonomous P30-M0→M18)
-
-**Delivered:** Smart breadcrumb left-truncation in topbar (`breadcrumb-truncate.js`), stacked `.field-block` label-above-control layout, inline `field_errors` on entry save, editor grid laptop tuning, table title ellipsis, extended `admin-content-smoke.sh`.
-
-**Matrices:** `docs/reviews/P30-verification-matrix.md` · **Closure:** `docs/reviews/P30-phase-closure-checklist.md` · **Plan:** `docs/reviews/P30-admin-form-navigation-plan.md`
-
 **2026-07-21 — Phase 31 complete** — Admin responsive system & dashboard excellence
 
-**Priorities:** Widget API v2 · dashboard rebuild on `.card.dash-widget` · core and plugin widgets · canonical breakpoints · responsive shell.
+**Delivered:** Widget API v2, `.card.dash-widget` grid, core + plugin widgets, customizable dashboard, breakpoint tokens, responsive shell.
 
-**P31 spec:** `docs/reviews/P31-admin-responsive-dashboard-plan.md` · **Handoff:** `docs/reviews/P31-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P31-verification-matrix.md`
+**Matrices:** `docs/reviews/P31-verification-matrix.md` · **Closure:** `docs/reviews/P31-phase-closure-checklist.md` · **Plan:** `docs/reviews/P31-admin-responsive-dashboard-plan.md`
 
-**Next active phase:** Phase 28 remains paused pending the next approved execution wave
+**2026-07-21 — Phase 32 approved** (Keven) — Admin chrome polish & core platform UX
 
-**Paused:** Phase 28 beta-launch automation · Phase 26 Studio creative suite remains paused
+**Priorities:** Shell alignment · left action bars · sticky save · icon table actions · media overhaul · 5 fieldtypes · 8 core features.
+
+**P32 spec:** `docs/reviews/P32-admin-chrome-core-ux-plan.md` · **Handoff:** `docs/reviews/P32-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P32-verification-matrix.md`
+
+**Next active phase:** **Phase 32** — **approved, execution ready** (2026-07-21)
+
+**Paused:** **Phase 28** — Beta launch automation — resume after P32-M24 · **Phase 26** — Studio creative — resume after P28-M20
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
