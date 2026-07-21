@@ -7,6 +7,9 @@
 
     function injectHelpLinks() {
         document.querySelectorAll('[data-help-topic]').forEach((el) => {
+            if (el.classList.contains('breadcrumbs') || el.id === 'admin-topbar-breadcrumbs') {
+                return;
+            }
             if (el.querySelector('.contextual-help-link')) return;
 
             const topic = el.getAttribute('data-help-topic');
