@@ -480,10 +480,20 @@
         let resizeTimeout = null;
         window.addEventListener('resize', function () {
             window.clearTimeout(resizeTimeout);
-            resizeTimeout = window.setTimeout(syncActionCellWidths, 100);
+            resizeTimeout = window.setTimeout(function () {
+                syncActionCellWidths();
+                if (window.Birkly && window.Birkly.SmartTableScroll && typeof window.Birkly.SmartTableScroll.init === 'function') {
+                    window.Birkly.SmartTableScroll.init();
+                }
+            }, 100);
         });
 
-        const observer = new MutationObserver(syncActionCellWidths);
+        const observer = new MutationObserver(function () {
+            syncActionCellWidths();
+            if (window.Birkly && window.Birkly.SmartTableScroll && typeof window.Birkly.SmartTableScroll.init === 'function') {
+                window.Birkly.SmartTableScroll.init();
+            }
+        });
         document.querySelectorAll('.entries-smart-table').forEach(function (table) {
             observer.observe(table, { childList: true, subtree: true });
         });
