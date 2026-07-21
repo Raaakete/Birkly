@@ -50,6 +50,7 @@ $core = birkly_get_core_dashboard_widgets();
 $coreIds = array_column($core, 'id');
 test_assert('core widget registry is populated', count($core) >= 8);
 test_assert('core registry includes content overview', in_array('content-snapshot', $coreIds, true));
+test_assert('core registry includes pending review widget', in_array('pending-review', $coreIds, true));
 test_assert('core registry includes system status', in_array('system-status', $coreIds, true));
 
 $merged = birkly_merge_dashboard_widgets([
@@ -67,5 +68,26 @@ $_SESSION['user'] = ['role' => 'editor'];
 $visible = birkly_filter_dashboard_widgets_for_user($merged);
 test_assert('role filter excludes admin-only core widgets', !in_array('system-status', array_column($visible, 'id'), true));
 test_assert('role filter retains permitted core widgets', in_array('content-snapshot', array_column($visible, 'id'), true));
+
+$widgetIds = ['content-snapshot', 'pending-review', 'drafts'];
+$layout = birkly_normalize_dashboard_layout([
+    'widget_order' => ['pending-review', 'drafts', 'content-snapshot', 'invalid-widget'],
+    'hidden_widgets' => ['drafts', 'unknown'],
+    'widget_sizes' => ['pending-review' => 'full', 'drafts' => 'huge'],
+], $widgetIds);
+test_assert('layout normalizes widget order', $layout['widget_order'] === ['pending-review', 'drafts', 'content-snapshot']);
+test_assert('layout normalizes hidden widgets', $layout['hidden_widgets'] === ['drafts']);
+test_assert('layout normalizes widget sizes', $layout['widget_sizes'] === ['pending-review' => 'full']);
+
+$widgets = birkly_merge_dashboard_widgets([]);
+$widgets = array_values(array_filter($widgets, static fn ($widget) => in_array($widget['id'], $widgetIds, true)));
+$applied = birkly_apply_dashboard_layout($widgets, $layout);
+test_assert('layout applies custom order', array_column($applied, 'id') === ['pending-review', 'drafts', 'content-snapshot']);
+$hiddenById = [];
+foreach ($applied as $widget) {
+    $hiddenById[$widget['id']] = !empty($widget['hidden']);
+}
+test_assert('layout marks hidden widgets', ($hiddenById['drafts'] ?? false) === true && ($hiddenById['pending-review'] ?? false) === false);
+test_assert('layout applies size overrides', ($applied[0]['size'] ?? '') === 'full');
 
 exit(test_finish('dashboard_widget_api_test'));
