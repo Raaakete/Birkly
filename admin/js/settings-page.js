@@ -459,6 +459,8 @@ window.deleteRole = deleteRole;
                 window.initAuditLog();
             } else if (tabId === 'webhooks' && typeof window.initWebhooksManager === 'function') {
                 window.initWebhooksManager(window.webhooksData || {});
+            } else if (tabId === 'redirects' && typeof window.initRedirectsManager === 'function') {
+                window.initRedirectsManager();
             } else if (tabId === 'general' && typeof window.initUpdates === 'function') {
                 window.initUpdates();
             } else if (tabId === 'domains' && typeof window.loadDomains === 'function') {

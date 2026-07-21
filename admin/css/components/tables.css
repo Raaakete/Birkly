@@ -169,10 +169,14 @@
   right: 0;
   border-left: 1px solid var(--border-light, #f3f4f6);
   z-index: 1;
-  box-shadow: -5px 0px 15px 0 rgba(0, 0, 0, 0.1);
   background: var(--bg-elevated, #ffffff);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
+}
+
+.entries-smart-table.is-actions-overlapping .head-actions,
+.entries-smart-table.is-actions-overlapping .cell-actions {
+  box-shadow: -5px 0 15px 0 rgba(0, 0, 0, 0.1);
 }
 
 .entries-smart-table .head-actions {
