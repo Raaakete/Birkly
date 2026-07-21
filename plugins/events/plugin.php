@@ -124,3 +124,8 @@ if (function_exists('register_template_function') && events_plugin_active()) {
 }
 
 require __DIR__ . '/docs/register_docs.php';
+
+global $birkly_plugins;
+if (isset($birkly_plugins['events'])) {
+    $birkly_plugins['events']['dashboard_widgets_callback'] = 'events_dashboard_widgets';
+}

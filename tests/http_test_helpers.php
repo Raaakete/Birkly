@@ -3,10 +3,19 @@
  * Shared HTTP helpers for integration/E2E tests (P4-M2).
  */
 
-function birkly_test_http_server_start(string $root, int $port): int
+function birkly_test_http_server_start(string $root, int $port, array $env = []): int
 {
+    $envPrefix = '';
+    foreach ($env as $key => $value) {
+        if (!is_string($key) || $key === '' || preg_match('/[^A-Za-z0-9_]/', $key)) {
+            continue;
+        }
+        $envPrefix .= $key . '=' . escapeshellarg((string) $value) . ' ';
+    }
+
     $cmd = sprintf(
-        'php -S 127.0.0.1:%d -t %s %s/server-router.php',
+        '%sphp -S 127.0.0.1:%d -t %s %s/server-router.php',
+        $envPrefix,
         $port,
         escapeshellarg($root),
         escapeshellarg($root)

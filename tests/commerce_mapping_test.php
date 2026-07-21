@@ -13,14 +13,16 @@ require_once $root . '/plugins/commerce/init.php';
 require_once $root . '/plugins/commerce/includes/PurchaseMappingService.php';
 
 $dataDir = sys_get_temp_dir() . '/birkly-commerce-mapping-' . getmypid();
+$tierId = 'tier_mapping_' . getmypid();
+$userId = 'user_mapping_' . getmypid();
 @mkdir($dataDir, 0755, true);
 
 $mappings = new PurchaseMappingService($dataDir);
-$mappings->setMapping('entry:products:premium-plan', ['grant_tier' => 'premium']);
+$mappings->setMapping('entry:products:premium-plan', ['grant_tier' => $tierId]);
 
 $list = $mappings->getMappings();
 test_assert('mapping saved', isset($list['entry:products:premium-plan']));
-test_assert('grant_tier stored', ($list['entry:products:premium-plan']['grant_tier'] ?? '') === 'premium');
+test_assert('grant_tier stored', ($list['entry:products:premium-plan']['grant_tier'] ?? '') === $tierId);
 
 $order = [
     'status' => 'paid',
@@ -47,31 +49,24 @@ if (is_file($userTiersPath)) {
     require_once $userTiersPath;
 
     $storage = new UserStorage();
-    $storage->saveTier('premium', [
-        'id' => 'premium', 'name' => 'Premium', 'description' => 'Test tier',
+    $storage->saveTier($tierId, [
+        'id' => $tierId, 'name' => 'Mapping test tier', 'description' => 'Test tier',
         'permissions' => [], 'features' => [], 'custom' => [], 'created_at' => date('c'),
     ]);
     $service = new UserService();
-    $users = $service->listUsers();
-    $userId = null;
-    foreach ($users as $u) {
-        $userId = $u['id'];
-        break;
-    }
-    if (!$userId) {
-        $userId = 'user_test_mapping';
-        $service->createUser([
-            'id' => $userId,
-            'username' => 'mapping_test',
-            'email' => 'mapping@test.local',
-            'password' => 'testpassword123',
-            'tier' => 'all',
-        ]);
-    }
+    $storage->purgeUser($userId);
+    $createdUser = $service->createUser([
+        'id' => $userId,
+        'username' => 'mapping_test',
+        'email' => 'mapping-' . getmypid() . '@test.local',
+        'password' => 'testpassword123',
+        'tier' => 'all',
+    ]);
+    $userId = $createdUser['id'];
     $order['customer_user_id'] = $userId;
     $mappings->applyPurchaseMappings($order);
     $tiers = new UserTiers();
-    $tierGranted = $tiers->getUserTier($userId) === 'premium';
+    $tierGranted = $tiers->getUserTier($userId) === $tierId;
 }
 
 test_assert('mapping apply runs without error', true);
@@ -81,5 +76,9 @@ if (is_file($userTiersPath)) {
 
 @unlink($dataDir . '/purchase_mappings.json');
 @rmdir($dataDir);
+if (isset($storage)) {
+    $storage->purgeUser($userId);
+    $storage->deleteTier($tierId);
+}
 
 exit(test_finish('Commerce mapping tests'));

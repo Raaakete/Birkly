@@ -165,7 +165,7 @@ switch ($action) {
             $settings[$key] = commerce_get_setting($key, null);
         }
         if ($settings['enable_dashboard_widget'] === null) {
-            $settings['enable_dashboard_widget'] = false;
+            $settings['enable_dashboard_widget'] = true;
         }
         if ($settings['dashboard_widget_roles'] === null) {
             $settings['dashboard_widget_roles'] = ['admin'];

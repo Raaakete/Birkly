@@ -113,6 +113,24 @@ switch ($action) {
         echo json_encode(['status' => 'ok', 'data' => $stats]);
         break;
 
+    case 'dashboard_summary':
+        events_require_admin();
+        header('Content-Type: application/json');
+        $upcoming = events_upcoming(4);
+        $stats = $attendees->overviewStats($indexer);
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'upcoming' => $upcoming,
+                'upcoming_count' => count($upcoming),
+                'registrations' => (int) ($stats['registrations'] ?? $stats['total_registrations'] ?? 0),
+                'events_url' => function_exists('admin_url')
+                    ? admin_url('events')
+                    : '/admin/index.php?page=events',
+            ],
+        ]);
+        break;
+
     case 'reindex':
         events_require_admin();
         header('Content-Type: application/json');

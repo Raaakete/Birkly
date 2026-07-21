@@ -8,6 +8,47 @@
 require_once __DIR__ . '/../../core/storage/StorageFactory.php';
 require_once __DIR__ . '/../../core/plugins.php';
 
+function automation_dashboard_user_can_view(): bool
+{
+    if (!isset($_SESSION['user']) || !is_array($_SESSION['user'])) {
+        return false;
+    }
+
+    $role = (string) ($_SESSION['user']['role'] ?? '');
+    if (in_array($role, ['admin', 'superadmin'], true)) {
+        return true;
+    }
+
+    $capabilities = $_SESSION['user']['capabilities']
+        ?? $_SESSION['user']['plugin_capabilities']['automation']
+        ?? [];
+    return is_array($capabilities) && in_array('manage_content', $capabilities, true);
+}
+
+/**
+ * Widget API v2 definition for the automation activity summary.
+ *
+ * @return list<array<string, mixed>>
+ */
+function automation_dashboard_widgets(): array
+{
+    if (!function_exists('automation_plugin_active') || !automation_plugin_active()
+        || !automation_dashboard_user_can_view()) {
+        return [];
+    }
+
+    return [[
+        'id' => 'automation-runs',
+        'title' => 'Automation runs',
+        'roles' => ['admin', 'editor'],
+        'size' => 'md',
+        'priority' => 90,
+        'endpoint' => '/api/automation.php?action=dashboard_summary',
+        'mount' => 'automationRuns',
+        'refresh' => 30,
+    ]];
+}
+
 /**
  * Get all automations
  * 

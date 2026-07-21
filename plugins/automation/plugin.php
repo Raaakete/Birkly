@@ -66,3 +66,8 @@ if (function_exists('register_plugin_action')) {
 }
 
 require __DIR__ . '/docs/register_docs.php';
+
+global $birkly_plugins;
+if (isset($birkly_plugins['automation'])) {
+    $birkly_plugins['automation']['dashboard_widgets_callback'] = 'automation_dashboard_widgets';
+}

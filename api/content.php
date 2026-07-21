@@ -408,20 +408,14 @@ if ($action === 'list_entries') {
     $id = $input['id'] ?? $_GET['id'] ?? '';
     $dir = '';
     $collections = $storage->list('collections');
-    $debug_ids = [];
-    // Always log the input and found IDs for debugging
-    file_put_contents(__DIR__ . '/../logs/list_entries_debug.log', date('c') . " | input: " . json_encode($input) . " | found ids: " . json_encode(array_map(function($d) use ($storage) { $m = $storage->read("collections/$d/collection.json"); return $m['id'] ?? null; }, $collections)) . "\n", FILE_APPEND);
     if ($id) {
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
-            if ($m && isset($m['id'])) $debug_ids[] = $m['id'];
             if ($m && $m['id'] === $id) {
                 $dir = $d;
                 break;
             }
         }
-        // Log what IDs were found and what was searched for
-        file_put_contents(__DIR__ . '/../logs/list_entries_debug.log', date('c') . " | requested id: $id | found ids: " . json_encode($debug_ids) . "\n", FILE_APPEND);
     } elseif ($collection) {
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
