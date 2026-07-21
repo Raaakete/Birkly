@@ -25,68 +25,123 @@
     }
 
     function empty(message) {
-        return '<p class="empty-state">' + escapeHtml(message) + '</p>';
+        return '<p class="dash-empty">' + escapeHtml(message) + '</p>';
+    }
+
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        return date.toLocaleDateString();
+    }
+
+    function statTile(value, label, modifier) {
+        const mod = modifier ? ' dash-stat-tile--' + modifier : '';
+        return '<div class="dash-stat-tile' + mod + '"><span class="dash-stat-tile__value">' +
+            escapeHtml(value ?? 0) + '</span><span class="dash-stat-tile__label">' + escapeHtml(label) + '</span></div>';
+    }
+
+    function statGrid(tiles) {
+        return '<div class="dash-stat-grid">' + tiles.join('') + '</div>';
+    }
+
+    function feedList(items) {
+        return '<ul class="dash-feed">' + items.join('') + '</ul>';
+    }
+
+    function feedItem(options) {
+        const title = options.href
+            ? '<a class="dash-feed__title" href="' + escapeHtml(options.href) + '">' + escapeHtml(options.title) + '</a>'
+            : '<span class="dash-feed__title">' + escapeHtml(options.title) + '</span>';
+        const meta = options.meta ? '<span class="dash-feed__meta">' + options.meta + '</span>' : '';
+        const aside = options.aside ? '<div class="dash-feed__aside">' + options.aside + '</div>' : '';
+        return '<li class="dash-feed__item"><div class="dash-feed__main">' + title + meta + '</div>' + aside + '</li>';
+    }
+
+    function statusBadge(status) {
+        const published = status === 'published';
+        const label = published ? 'Published' : 'Draft';
+        const className = published ? 'dash-badge dash-badge--published' : 'dash-badge dash-badge--draft';
+        return '<span class="' + className + '">' + label + '</span>';
+    }
+
+    function callout(value, title, description, href, hrefLabel, tone) {
+        const link = href
+            ? '<a class="dash-callout__link" href="' + escapeHtml(href) + '">' + escapeHtml(hrefLabel) + '</a>'
+            : '';
+        return '<div class="dash-callout dash-callout--' + tone + '">' +
+            '<span class="dash-callout__value">' + escapeHtml(value) + '</span>' +
+            '<div class="dash-callout__copy"><strong>' + escapeHtml(title) + '</strong>' +
+            (description ? '<span>' + escapeHtml(description) + '</span>' : '') + link + '</div></div>';
+    }
+
+    function alertItem(title, message, tone) {
+        return '<li class="dash-alert dash-alert--' + (tone || 'info') + '">' +
+            '<div class="dash-alert__copy"><strong>' + escapeHtml(title) + '</strong>' +
+            '<span>' + escapeHtml(message) + '</span></div></li>';
     }
 
     function registerCoreMounts() {
         const dashboard = window.Birkly && Birkly.Dashboard;
         if (!dashboard) return false;
 
-        dashboard.registerMount('quickActions', function (element) {
-            setContent(element,
-                '<div class="dash-widget-actions">' +
-                '<a class="btn btn-primary btn-small" href="' + escapeHtml(adminUrl('content')) + '">Manage content</a>' +
-                '<a class="btn btn-secondary btn-small" href="' + escapeHtml(adminUrl('media')) + '">Open media</a>' +
-                '<a class="btn btn-secondary btn-small" href="' + escapeHtml(adminUrl('settings')) + '">Settings</a>' +
-                '</div>');
-        });
-
         dashboard.registerMount('contentSnapshot', function (element, widget, data) {
             const stats = data && data.stats ? data.stats : {};
-            setContent(element,
-                '<div class="dash-widget-metrics">' +
-                metric('Collections', stats.collections) + metric('Entries', stats.total_entries) +
-                metric('Published', stats.published) + metric('Drafts', stats.drafts) +
-                '</div>');
+            setContent(element, statGrid([
+                statTile(stats.collections, 'Collections', 'collections'),
+                statTile(stats.total_entries, 'Entries', 'entries'),
+                statTile(stats.published, 'Published', 'published'),
+                statTile(stats.drafts, 'Drafts', 'drafts'),
+            ]));
         });
 
         dashboard.registerMount('analyticsMini', function (element, widget, data) {
-            if (!data || !data.has_domains || !data.has_analytics) {
-                setContent(element, empty('Analytics is not configured yet.'));
+            if (!data || !data.has_domains) {
+                setContent(element, callout('—', 'Analytics not configured', 'Register a domain to start tracking visitors.', adminUrl('settings') + '#domains', 'Set up analytics →', 'muted'));
                 return;
             }
-            setContent(element,
-                '<div class="dash-widget-metrics">' +
-                metric('Page views (30d)', Number(data.total_page_views || 0).toLocaleString()) +
-                metric('Visitors (30d)', Number(data.total_visitors || 0).toLocaleString()) +
-                '</div>');
+            if (!data.has_analytics) {
+                setContent(element, callout('—', 'Analytics ready', 'Enable tracking for your registered domains.', adminUrl('settings') + '#domains', 'Enable analytics →', 'muted'));
+                return;
+            }
+            setContent(element, statGrid([
+                statTile(Number(data.total_page_views || 0).toLocaleString(), 'Page views (30d)', 'analytics'),
+                statTile(Number(data.total_visitors || 0).toLocaleString(), 'Visitors (30d)', 'analytics'),
+            ]));
         });
 
         dashboard.registerMount('recentCollections', function (element) {
-            setContent(element, '<p class="empty-state loading">Loading collections…</p>');
+            setContent(element, '<p class="dash-empty dash-empty--loading">Loading collections…</p>');
             fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(function (payload) {
                     const collections = payload?.data?.collections || payload?.data || payload;
                     if (!Array.isArray(collections) || collections.length === 0) {
-                        setContent(element, empty('No collections found.'));
+                        setContent(element, empty('No collections yet.'));
                         return;
                     }
-                    const items = collections.slice().sort(sortByUpdated).slice(0, 5).map(function (collection) {
+                    const items = collections.slice().sort(sortByUpdated).slice(0, 6).map(function (collection) {
                         const name = collection.name || collection.title || collection.slug || 'Untitled';
                         const count = collection.total_entries ?? collection.entries_count ?? 0;
-                        return '<div class="collection-item"><div class="collection-info"><h4>' + escapeHtml(name) +
-                            '</h4><p>' + escapeHtml(count) + ' ' + (Number(count) === 1 ? 'entry' : 'entries') +
-                            '</p></div><a class="btn btn-sm" href="' + escapeHtml(adminUrl('entries', { collection: collection.slug || '' })) +
-                            '">View</a></div>';
+                        const slug = collection.slug || '';
+                        return feedItem({
+                            title: name,
+                            href: adminUrl('entries', { collection: slug }),
+                            meta: escapeHtml(count) + ' ' + (Number(count) === 1 ? 'entry' : 'entries'),
+                            aside: '<span class="dash-feed__chevron" aria-hidden="true">→</span>',
+                        });
                     });
-                    setContent(element, items.join(''));
+                    setContent(element, feedList(items));
                 })
                 .catch(function () { setContent(element, empty('Unable to load collections.')); });
         });
 
         dashboard.registerMount('recentEntries', function (element) {
-            setContent(element, '<p class="empty-state loading">Loading entries…</p>');
+            setContent(element, '<p class="dash-empty dash-empty--loading">Loading entries…</p>');
             fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(function (payload) {
@@ -94,11 +149,14 @@
                     if (!Array.isArray(collections) || collections.length === 0) return [];
                     return Promise.all(collections.slice(0, 6).map(function (collection) {
                         const slug = collection.slug || '';
+                        const collectionName = collection.name || collection.title || slug;
                         return fetch(apiUrl('/api/admin_entries.php?action=list&collection=' + encodeURIComponent(slug)), { credentials: 'same-origin' })
                             .then(response => response.json())
                             .then(function (entryPayload) {
                                 const entries = entryPayload.entries || entryPayload?.data?.entries || entryPayload?.data || [];
-                                return Array.isArray(entries) ? entries.map(entry => ({ ...entry, collection: slug })) : [];
+                                return Array.isArray(entries)
+                                    ? entries.map(entry => ({ ...entry, collection: slug, collectionName: collectionName }))
+                                    : [];
                             })
                             .catch(function () { return []; });
                     }));
@@ -109,49 +167,89 @@
                         setContent(element, empty('No recent entries.'));
                         return;
                     }
-                    setContent(element, entries.map(function (entry) {
+                    const items = entries.map(function (entry) {
                         const title = entry.title || entry.name || 'Untitled';
-                        return '<div class="entry-item"><div class="entry-info"><h4><a href="' +
-                            escapeHtml(adminUrl('entry-editor', { collection: entry.collection, entry: entry.slug || entry.id || '' })) +
-                            '">' + escapeHtml(title) + '</a></h4><p class="entry-meta">' + escapeHtml(entry.collection) + '</p></div></div>';
-                    }).join(''));
+                        const modified = formatTimeAgo(entry.modified_at || entry.updated_at || entry.created_at);
+                        const metaParts = [escapeHtml(entry.collectionName || entry.collection)];
+                        if (modified) metaParts.push(escapeHtml(modified));
+                        return feedItem({
+                            title: title,
+                            href: adminUrl('entry-editor', { collection: entry.collection, entry: entry.slug || entry.id || '' }),
+                            meta: metaParts.join(' · '),
+                            aside: statusBadge(entry.status),
+                        });
+                    });
+                    setContent(element, feedList(items));
                 })
                 .catch(function () { setContent(element, empty('Unable to load entries.')); });
         });
 
         dashboard.registerMount('recentActivity', function (element, widget, data) {
             const activity = data && Array.isArray(data.activity) ? data.activity : [];
-            const rows = activity.filter(item => !['update_check', 'system_update_check'].includes(item.event)).map(function (item) {
-                return '<div class="activity-item"><div class="activity-content"><div class="activity-message">' +
-                    escapeHtml(item.message || item.event || 'Activity') + '</div><div class="activity-meta">' +
-                    escapeHtml(item.user || 'System') + '</div></div></div>';
-            });
-            setContent(element, rows.length ? rows.join('') : empty('No recent activity.'));
+            const rows = activity
+                .filter(item => !['update_check', 'system_update_check'].includes(item.event))
+                .slice(0, 10)
+                .map(function (item) {
+                    const time = formatTimeAgo(item.timestamp);
+                    return '<div class="dash-activity-row">' +
+                        '<span class="dash-activity-row__message">' + escapeHtml(item.message || item.event || 'Activity') + '</span>' +
+                        '<span class="dash-activity-row__user">' + escapeHtml(item.user || 'System') + '</span>' +
+                        '<span class="dash-activity-row__time">' + escapeHtml(time || '—') + '</span>' +
+                        '</div>';
+                });
+            setContent(element, rows.length
+                ? '<div class="dash-activity-list">' + rows.join('') + '</div>'
+                : empty('No recent activity.'));
         });
 
         dashboard.registerMount('drafts', function (element, widget, data) {
-            const stats = data && data.stats ? data.stats : {};
-            setContent(element, '<div class="dash-widget-metrics">' + metric('Drafts needing attention', stats.drafts || 0) + '</div>');
+            const count = Number(data?.stats?.drafts || 0);
+            if (count === 0) {
+                setContent(element, empty('No drafts waiting for review.'));
+                return;
+            }
+            setContent(element, callout(
+                count,
+                'Drafts needing attention',
+                'Review unpublished entries and finish them when ready.',
+                adminUrl('content'),
+                'Open content →',
+                'warning'
+            ));
         });
 
         dashboard.registerMount('systemStatus', function (element, widget, data) {
             if (!data) return setContent(element, empty('System status is unavailable.'));
-            setContent(element, '<div class="dash-widget-metrics">' +
-                metric('API response', (data.api_response_time || 0) + 'ms') +
-                metric('Media storage', (data.media?.size_mb || 0) + 'MB') +
-                metric('Cache files', data.cache?.files || 0) + '</div>');
+            const responseMs = Number(data.api_response_time || 0);
+            const responseTone = responseMs < 100 ? 'good' : responseMs < 500 ? 'warning' : 'error';
+            setContent(element, statGrid([
+                statTile(responseMs + 'ms', 'API response', responseTone),
+                statTile((data.media?.size_mb || 0) + ' MB', 'Media storage', 'storage'),
+                statTile(data.cache?.files || 0, 'Cache files', 'cache'),
+            ]));
         });
 
         dashboard.registerMount('security', function (element, widget, data) {
             const activity = data && Array.isArray(data.activity) ? data.activity : [];
-            setContent(element, '<div class="dash-widget-metrics">' + metric('Recent account events', activity.length) + '</div>');
+            setContent(element, callout(
+                activity.length,
+                'Account events',
+                activity.length === 1 ? 'Recent sign-in or account change.' : 'Recent sign-ins and account changes.',
+                adminUrl('settings'),
+                'Security settings →',
+                activity.length > 0 ? 'info' : 'muted'
+            ));
         });
 
         dashboard.registerMount('updates', function (element, widget, data) {
             const notifications = data && Array.isArray(data.notifications) ? data.notifications : [];
-            setContent(element, notifications.length
-                ? '<ul class="dash-widget-list">' + notifications.map(item => '<li><strong>' + escapeHtml(item.title) + '</strong><span>' + escapeHtml(item.message) + '</span></li>').join('') + '</ul>'
-                : empty('No updates or alerts.'));
+            if (!notifications.length) {
+                setContent(element, empty('No updates or alerts.'));
+                return;
+            }
+            setContent(element, '<ul class="dash-alert-list">' + notifications.map(function (item) {
+                return alertItem(item.title, item.message, item.type || 'info');
+            }).join('') + '</ul>');
         });
 
         dashboard.registerMount('commerceStats', renderCommerce);
@@ -161,34 +259,54 @@
         return true;
     }
 
-    function metric(label, value) {
-        return '<div class="dash-widget-metric"><strong>' + escapeHtml(value ?? 0) + '</strong><span>' + escapeHtml(label) + '</span></div>';
-    }
-
     function sortByUpdated(left, right) {
-        return new Date(right.modified_at || right.updated_at || right.created_at || 0) - new Date(left.modified_at || left.updated_at || left.created_at || 0);
+        return new Date(right.modified_at || right.updated_at || right.created_at || 0) -
+            new Date(left.modified_at || left.updated_at || left.created_at || 0);
     }
 
     function renderCommerce(element, widget, data) {
         const summary = data && data.summary;
-        setContent(element, summary
-            ? '<div class="payments-dash-grid">' + metric('Revenue', formatCents(summary.revenue_cents)) + metric('Orders', summary.order_count) + '</div>'
-            : empty('No commerce orders yet.'));
+        if (!summary) {
+            setContent(element, empty('No commerce orders yet.'));
+            return;
+        }
+        setContent(element, statGrid([
+            statTile(formatCents(summary.revenue_cents), 'Revenue', 'commerce'),
+            statTile(summary.order_count || 0, 'Orders', 'commerce'),
+        ]));
     }
 
     function renderEvents(element, widget, data) {
         const events = data && Array.isArray(data.upcoming) ? data.upcoming : [];
-        setContent(element, events.length
-            ? '<ul class="dash-widget-list">' + events.map(event => '<li><strong>' + escapeHtml(event.title || 'Untitled event') + '</strong></li>').join('') + '</ul>'
-            : empty('No upcoming events.'));
+        if (!events.length) {
+            setContent(element, empty('No upcoming events.'));
+            return;
+        }
+        const items = events.slice(0, 5).map(function (event) {
+            const starts = event.start ? formatTimeAgo(event.start) : '';
+            return feedItem({
+                title: event.title || 'Untitled event',
+                meta: starts ? escapeHtml(starts) : '',
+            });
+        });
+        const footer = data.events_url
+            ? '<a class="dash-widget-footer-link" href="' + escapeHtml(data.events_url) + '">Manage events →</a>'
+            : '';
+        setContent(element, feedList(items) + footer);
     }
 
     function renderStudio(element, widget, data) {
-        setContent(element, '<div class="dash-widget-metrics">' + metric('Published', data?.published || 0) + metric('Drafts', data?.drafts || 0) + '</div>');
+        setContent(element, statGrid([
+            statTile(data?.published || 0, 'Published', 'studio'),
+            statTile(data?.drafts || 0, 'Drafts', 'studio'),
+        ]));
     }
 
     function renderAutomation(element, widget, data) {
-        setContent(element, '<div class="dash-widget-metrics">' + metric('Active', data?.enabled || 0) + metric('Queued', data?.queue?.pending || 0) + '</div>');
+        setContent(element, statGrid([
+            statTile(data?.enabled || 0, 'Active', 'automation'),
+            statTile(data?.queue?.pending || 0, 'Queued', 'automation'),
+        ]));
     }
 
     function formatCents(cents) {
@@ -223,7 +341,7 @@
             heading.appendChild(title);
             const body = document.createElement('div');
             body.className = 'dash-widget-body dash-widget-content';
-            body.innerHTML = '<p class="empty-state loading">Loading…</p>';
+            body.innerHTML = '<p class="dash-empty dash-empty--loading">Loading…</p>';
             card.append(heading, body);
             grid.appendChild(card);
             loadAndMountWidget(body, widget);
