@@ -3,6 +3,14 @@
  * Entries list — pure PHP template (bypasses directive parser).
  */
 $collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection');
+$currentStatusFilter = (string) ($current_status_filter ?? '');
+$isTrashView = !empty($is_trash_view);
+$trashedCount = (int) ($trashed_count ?? 0);
+$bulkEditableFields = array_merge([
+    ['name' => 'title', 'label' => __('admin.title')],
+], array_values(array_filter($fields ?? [], static function ($field): bool {
+    return !empty($field['name']);
+})));
 ?>
 <div class="entries-page">
     <div class="page-header pt-m pb-m">
@@ -27,12 +35,22 @@ $collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] 
             <div class="collection-actions-bar-right">
                 <label for="status-filter" class="collection-filter-label"><?= __('admin.filter') ?>:</label>
                 <select id="status-filter" class="collection-filter-select" style="min-width: 150px;">
-                    <option value=""><?= __('admin.all_statuses') ?></option>
-                    <option value="published"><?= __('admin.published') ?></option>
-                    <option value="unpublished">Unpublished</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="pending_review">Pending for Review</option>
+                    <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
+                    <option value="published" <?= $currentStatusFilter === 'published' ? 'selected' : '' ?>><?= __('admin.published') ?></option>
+                    <option value="unpublished" <?= $currentStatusFilter === 'unpublished' ? 'selected' : '' ?>>Unpublished</option>
+                    <option value="scheduled" <?= $currentStatusFilter === 'scheduled' ? 'selected' : '' ?>>Scheduled</option>
+                    <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>>Pending for Review</option>
+                    <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>>Trashed</option>
                 </select>
+                <?php if ($isTrashView): ?>
+                    <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars(admin_url('entries', ['collection' => $collection['slug'] ?? ''])) ?>">
+                        Active entries
+                    </a>
+                <?php else: ?>
+                    <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars(admin_url('entries', ['collection' => $collection['slug'] ?? '', 'status' => 'trashed'])) ?>">
+                        Trash<?= $trashedCount > 0 ? ' (' . $trashedCount . ')' : '' ?>
+                    </a>
+                <?php endif; ?>
                 
                 <div class="dropdown">
                     <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
@@ -58,9 +76,25 @@ $collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] 
                 <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
             </span>
             <div class="bulk-actions-buttons">
-                <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
-                <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
-                <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Delete selected entries"><?= __('admin.delete') ?></button>
+                <?php if (!$isTrashView): ?>
+                    <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
+                    <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
+                    <label class="sr-only" for="bulk-field-name">Field to edit</label>
+                    <select id="bulk-field-name" class="collection-filter-select" style="min-width: 160px;">
+                        <option value="">Edit field...</option>
+                        <?php foreach ($bulkEditableFields as $field): ?>
+                            <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
+                                <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <label class="sr-only" for="bulk-field-value">Field value</label>
+                    <input type="text" id="bulk-field-value" class="input" placeholder="New value" style="min-width: 180px;">
+                    <button class="btn btn-sm" id="bulk-field-apply-btn" aria-label="Apply bulk field edit">Apply field edit</button>
+                    <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Move selected entries to trash">Move to trash</button>
+                <?php else: ?>
+                    <button class="btn btn-sm" id="bulk-restore-btn" aria-label="Restore selected entries">Restore</button>
+                <?php endif; ?>
                 <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
             </div>
         </div>
@@ -71,12 +105,17 @@ $collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] 
     
     $options = [
         'show_checkbox' => true,
-        'show_drag' => true,
+        'show_drag' => !$isTrashView,
         'show_sub_entries' => $hasSubCollections,
         'checkbox_id_prefix' => 'entry',
         'checkbox_class' => 'entry-checkbox',
         'delete_callback' => 'delete-entry-btn',
         'delete_data_attr' => 'data-entry-id',
+        'show_duplicate_action' => true,
+        'duplicate_callback' => 'duplicate-entry-btn',
+        'show_restore_action' => true,
+        'restore_callback' => 'restore-entry-btn',
+        'delete_label' => 'Move to trash',
         'edit_url_callback' => function ($entry) use ($collection) {
             $collectionSlug = $collection['slug'] ?? '';
             $entryId = $entry['id'] ?? '';
@@ -102,6 +141,9 @@ $collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] 
 window.collectionData = <?= json_encode($collection ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.collectionSlug = <?= json_encode($collection['slug'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.collectionId = <?= json_encode($collection['id'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.collectionFields = <?= json_encode($bulkEditableFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.entriesStatusFilter = <?= json_encode($currentStatusFilter, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.entriesTrashView = <?= json_encode($isTrashView, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/mouse-drag-drop.js')) ?>"></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/entries.js')) ?>"></script>

@@ -15,5 +15,6 @@ $output = [];
 $code = 0;
 exec('php -l ' . escapeshellarg($path) . ' 2>&1', $output, $code);
 test_assert('entry-editor.html PHP syntax valid', $code === 0, implode("\n", $output));
+test_assert('entry editor includes revisions panel markup', strpos((string) file_get_contents($path), 'entry-revisions-list') !== false);
 
 exit(test_finish('entry_editor_template_test'));

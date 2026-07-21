@@ -89,17 +89,20 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     
     <div class="main-actions-bar">
         <div class="main-actions-left">
-            <button type="submit" form="entry-form" class="btn btn-primary">
-                <?= !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry') ?>
-            </button>
             <?php if (!empty($cancel_url)): ?>
                 <a href="<?= htmlspecialchars($cancel_url) ?>" class="btn btn-secondary">
                     <?= __('admin.cancel') ?>
                 </a>
             <?php endif; ?>
         </div>
-        <span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>
     </div>
+    <?php
+    $stickySaveBarForm = 'entry-form';
+    $stickySaveBarSaveLabel = !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry');
+    $stickySaveBarCancelUrl = !empty($cancel_url) ? $cancel_url : null;
+    $stickySaveBarStatusHtml = '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
+    include __DIR__ . '/components/sticky-save-bar.php';
+    ?>
     
     <form id="entry-form" class="entry-form" method="POST" action="<?= htmlspecialchars($formAction) ?>">
         <input type="hidden" name="collection" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
@@ -364,6 +367,21 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     <?php endif; ?>
                                 </div>
                             </div>
+                            <?php if (!$isSubEntry && !empty($entry['id']) && !empty($collection['slug'])): ?>
+                                <div class="entry-revisions-section">
+                                    <div class="section-header">
+                                        <h4>Revisions</h4>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="refresh-entry-revisions-btn">Refresh</button>
+                                    </div>
+                                    <p class="text-muted" style="font-size: 0.8125rem; margin: 0 0 var(--space-3) 0;">
+                                        Review previous saved versions and restore an older revision when needed.
+                                    </p>
+                                    <div id="entry-revisions-feedback" class="entry-revisions-feedback" style="display: none;" aria-live="polite"></div>
+                                    <div id="entry-revisions-list" class="entry-revisions-list">
+                                        <div class="entry-revisions-empty">Loading revisions…</div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                             <div id="sidebar-validation" class="sidebar-validation" style="display:none;" aria-live="polite"></div>
                         </div>
                         
@@ -884,6 +902,73 @@ echo htmlspecialchars($collectionExample);
 .entry-info-user-email {
     font-size: 0.813rem;
     color: var(--text-secondary, #6b7280);
+}
+
+.entry-revisions-section {
+    background: var(--bg-secondary, #f9fafb);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    padding: var(--space-4, 1rem);
+    margin-bottom: var(--space-4, 1rem);
+}
+
+.entry-revisions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 0.5rem);
+}
+
+.entry-revision-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-3, 0.75rem);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: var(--radius-sm, 0.375rem);
+    background: var(--bg-primary, #fff);
+}
+
+.entry-revision-item.is-current {
+    border-color: var(--primary-300, #93c5fd);
+    background: var(--primary-50, #eff6ff);
+}
+
+.entry-revision-meta {
+    min-width: 0;
+}
+
+.entry-revision-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+}
+
+.entry-revision-subtitle {
+    font-size: 0.8125rem;
+    color: var(--text-secondary, #6b7280);
+    margin-top: 0.125rem;
+}
+
+.entry-revision-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    flex-shrink: 0;
+}
+
+.entry-revisions-empty,
+.entry-revisions-feedback {
+    font-size: 0.8125rem;
+    color: var(--text-secondary, #6b7280);
+}
+
+.entry-revisions-feedback.is-error {
+    color: var(--danger-600, #dc2626);
+}
+
+.entry-revisions-feedback.is-success {
+    color: var(--success-600, #16a34a);
 }
 </style>
 

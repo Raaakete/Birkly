@@ -22,6 +22,10 @@
         return document.getElementById(id);
     }
 
+    function apiUrl(path) {
+        return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
+    }
+
     function getTitleValue() {
         return (
             $('field-title')?.value ||
@@ -125,6 +129,10 @@
                 socialImage.style.display = 'none';
             }
         }
+    }
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
     function bindMetaPreviewInputs() {
@@ -294,6 +302,131 @@
         });
     }
 
+    function setRevisionFeedback(message, tone) {
+        const feedback = $('entry-revisions-feedback');
+        if (!feedback) return;
+        if (!message) {
+            feedback.textContent = '';
+            feedback.className = 'entry-revisions-feedback';
+            feedback.style.display = 'none';
+            return;
+        }
+        feedback.textContent = message;
+        feedback.className = 'entry-revisions-feedback is-' + (tone || 'success');
+        feedback.style.display = 'block';
+    }
+
+    function formatRevisionDate(value) {
+        if (!value) return 'Unknown date';
+        const date = new Date(value.replace(' ', 'T'));
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+    }
+
+    function renderRevisionHistory(versions) {
+        const list = $('entry-revisions-list');
+        if (!list) return;
+
+        if (!Array.isArray(versions) || versions.length === 0) {
+            list.innerHTML = '<div class="entry-revisions-empty">No saved revisions yet.</div>';
+            return;
+        }
+
+        list.innerHTML = versions.map(function (version) {
+            const number = Number(version.version || 0);
+            const isCurrent = version.author === 'Current';
+            const author = isCurrent ? 'Current version' : (version.author || 'Unknown author');
+            const subtitle = author + ' · ' + formatRevisionDate(version.created_at || version.updated_at || '');
+            return '<div class="entry-revision-item' + (isCurrent ? ' is-current' : '') + '">' +
+                '<div class="entry-revision-meta">' +
+                    '<div class="entry-revision-title">Version ' + number + (isCurrent ? ' · Current' : '') + '</div>' +
+                    '<div class="entry-revision-subtitle">' + subtitle + '</div>' +
+                '</div>' +
+                '<div class="entry-revision-actions">' +
+                    (isCurrent
+                        ? '<span class="status-badge published" style="white-space:nowrap;">Current</span>'
+                        : '<button type="button" class="btn btn-secondary btn-sm restore-entry-version-btn" data-version="' + number + '">Restore</button>') +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    async function loadRevisionHistory() {
+        const collectionSlug = config.collection_slug || '';
+        const entryId = config.entry_id || '';
+        const list = $('entry-revisions-list');
+        if (!list || !collectionSlug || !entryId) return;
+
+        list.innerHTML = '<div class="entry-revisions-empty">Loading revisions…</div>';
+        setRevisionFeedback('');
+
+        try {
+            const response = await fetch(apiUrl('/api/admin_entries.php?action=list_versions&collection=' + encodeURIComponent(collectionSlug) + '&entry_id=' + encodeURIComponent(entryId)), {
+                credentials: 'same-origin'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'ok') {
+                throw new Error(payload.message || 'Failed to load revisions');
+            }
+            renderRevisionHistory(payload.versions || []);
+        } catch (error) {
+            list.innerHTML = '<div class="entry-revisions-empty">Unable to load revisions.</div>';
+            setRevisionFeedback(error.message || 'Unable to load revisions', 'error');
+        }
+    }
+
+    async function restoreRevision(version) {
+        const collectionSlug = config.collection_slug || '';
+        const entryId = config.entry_id || '';
+        if (!collectionSlug || !entryId || !version) return;
+
+        if (!window.confirm('Restore version ' + version + '? Your current draft will be saved to history first.')) {
+            return;
+        }
+
+        setRevisionFeedback('Restoring version ' + version + '…');
+
+        try {
+            const response = await fetch(apiUrl('/api/admin_entries.php?action=restore_version'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    collection: collectionSlug,
+                    entry_id: entryId,
+                    version: version,
+                    _csrf: getCsrfToken()
+                })
+            });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'ok') {
+                throw new Error(payload.message || 'Failed to restore revision');
+            }
+            setRevisionFeedback('Revision restored. Reloading…', 'success');
+            window.setTimeout(function () {
+                window.location.reload();
+            }, 500);
+        } catch (error) {
+            setRevisionFeedback(error.message || 'Failed to restore revision', 'error');
+        }
+    }
+
+    function initRevisionHistory() {
+        const list = $('entry-revisions-list');
+        if (!list) return;
+
+        $('refresh-entry-revisions-btn')?.addEventListener('click', function () {
+            loadRevisionHistory();
+        });
+
+        list.addEventListener('click', function (event) {
+            const button = event.target.closest('.restore-entry-version-btn');
+            if (!button) return;
+            restoreRevision(button.getAttribute('data-version') || '');
+        });
+
+        loadRevisionHistory();
+    }
+
     function init() {
         updatePermalinkPreview();
         updateStatusClarity();
@@ -327,6 +460,7 @@
 
         updateMetaPreviews();
         validateSidebar();
+        initRevisionHistory();
     }
 
     if (document.readyState === 'loading') {

@@ -182,6 +182,16 @@ if (empty($userAvatar)) {
                             <span class="nav-label"><?= __('admin.settings') ?></span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="<?= htmlspecialchars(admin_url('redirects')) ?>" class="nav-link <?= is_nav_active('redirects') ?>" title="Redirects">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 7l4 4-4 4"></path>
+                                <path d="M3 11h18"></path>
+                                <path d="M7 17l-4-4 4-4"></path>
+                            </svg>
+                            <span class="nav-label">Redirects</span>
+                        </a>
+                    </li>
                     <?php
                     require_once __DIR__ . '/../../core/platform.php';
                     $canManageFeedback = birkly_feedback_triage_enabled()

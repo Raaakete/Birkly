@@ -110,6 +110,9 @@ $__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_comm
                 return;
             }
 
+            const pageHeaderLeft = source.parentElement;
+            const pageHeader = pageHeaderLeft ? pageHeaderLeft.closest('.page-header') : null;
+
             while (source.firstChild) {
                 const child = source.firstChild;
                 if (child.nodeType === Node.ELEMENT_NODE && child.classList.contains('contextual-help-link')) {
@@ -122,12 +125,10 @@ $__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_comm
             topbarSlot.classList.add('breadcrumbs');
             source.remove();
 
-            const pageHeaderLeft = source.parentElement;
             if (pageHeaderLeft && pageHeaderLeft.classList.contains('page-header-left') && pageHeaderLeft.childElementCount === 0) {
                 pageHeaderLeft.style.display = 'none';
             }
 
-            const pageHeader = pageHeaderLeft ? pageHeaderLeft.closest('.page-header') : null;
             if (pageHeader) {
                 const left = pageHeader.querySelector('.page-header-left');
                 const actions = pageHeader.querySelector('.page-header-actions');
@@ -344,272 +345,8 @@ $__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_comm
     });
     </script>
     
-    <!-- Search Overlay -->
-    <div class="search-overlay" id="search-overlay" style="display: none;">
-        <div class="search-overlay-backdrop" onclick="closeSearch()"></div>
-        <div class="search-overlay-content">
-            <div class="search-input-wrapper">
-                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-                </svg>
-                <input 
-                    type="text" 
-                    id="search-input" 
-                    class="search-input" 
-                    placeholder="Search collections, entries, media, users..."
-                    autocomplete="off"
-                />
-                <button class="search-close" onclick="closeSearch()" aria-label="Close search">×</button>
-            </div>
-            <div class="search-results" id="search-results">
-                <div class="search-empty-state">
-                    <p>Type to search...</p>
-                </div>
-            </div>
-            <div class="search-footer">
-                <kbd>↑</kbd><kbd>↓</kbd> Navigate • <kbd>Enter</kbd> Open • <kbd>Esc</kbd> Close
-            </div>
-        </div>
-    </div>
-    
-    <!-- Search Functionality -->
-    <script<?= $__birklyScriptNonceAttr ?>>
-    (function() {
-        let searchTimeout = null;
-        let currentResults = [];
-        let selectedIndex = -1;
-        
-        // Open search overlay
-        function openSearch() {
-            const overlay = document.getElementById('search-overlay');
-            const input = document.getElementById('search-input');
-            if (overlay && input) {
-                overlay.style.display = 'flex';
-                setTimeout(() => {
-                    input.focus();
-                }, 100);
-            }
-        }
-        
-        // Close search overlay
-        function closeSearch() {
-            const overlay = document.getElementById('search-overlay');
-            const input = document.getElementById('search-input');
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
-            if (input) {
-                input.value = '';
-            }
-            currentResults = [];
-            selectedIndex = -1;
-            renderResults([]);
-        }
-        
-        // Perform search
-        function performSearch(query) {
-            if (!query || query.trim().length < 2) {
-                renderResults([]);
-                return;
-            }
-            
-            const resultsContainer = document.getElementById('search-results');
-            if (resultsContainer) {
-                resultsContainer.innerHTML = '<div class="search-loading"><p>Searching...</p></div>';
-            }
-            
-            fetch(Birkly.url('/api/search.php?q=' + encodeURIComponent(query) + '&limit=20'))
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'ok') {
-                        currentResults = data.results || [];
-                        selectedIndex = -1;
-                        renderResults(currentResults);
-                    } else {
-                        console.error('Search API error:', data.message || 'Unknown error');
-                        renderResults([]);
-                    }
-                })
-                .catch(error => {
-                    console.error('Search error:', error);
-                    const resultsContainer = document.getElementById('search-results');
-                    if (resultsContainer) {
-                        resultsContainer.innerHTML = '<div class="search-empty-state"><p>Error: ' + escapeHtml(error.message) + '</p></div>';
-                    }
-                });
-        }
-        
-        // Render search results
-        function renderResults(results) {
-            const resultsContainer = document.getElementById('search-results');
-            if (!resultsContainer) return;
-            
-            if (results.length === 0) {
-                const query = document.getElementById('search-input')?.value || '';
-                if (query.trim().length < 2) {
-                    resultsContainer.innerHTML = '<div class="search-empty-state"><p>Type to search...</p></div>';
-                } else {
-                    resultsContainer.innerHTML = '<div class="search-empty-state"><p>No results found</p></div>';
-                }
-                return;
-            }
-            
-            // Group results by type
-            const grouped = {};
-            results.forEach(result => {
-                const type = result.type || 'other';
-                if (!grouped[type]) {
-                    grouped[type] = [];
-                }
-                grouped[type].push(result);
-            });
-            
-            // Type labels
-            const typeLabels = {
-                'collection': '📁 Collections',
-                'entry': '📝 Entries',
-                'sub_entry': '💬 Sub-Entries',
-                'media': '🖼️ Media',
-                'user': '👤 Users',
-                'plugin': '🔌 Plugins'
-            };
-            
-            let html = '';
-            Object.keys(grouped).forEach(type => {
-                const typeResults = grouped[type];
-                const label = typeLabels[type] || type;
-                html += `<div class="search-results-group">
-                    <div class="search-results-group-header">${label} (${typeResults.length})</div>
-                    <div class="search-results-list">`;
-                
-                typeResults.forEach((result, index) => {
-                    const globalIndex = results.indexOf(result);
-                    html += `<div class="search-result-item ${selectedIndex === globalIndex ? 'selected' : ''}" 
-                        data-index="${globalIndex}" 
-                        data-url="${result.url || '#'}"
-                        onclick="selectSearchResult(${globalIndex})">
-                        <span class="search-result-icon">${result.icon || '📌'}</span>
-                        <div class="search-result-content">
-                            <div class="search-result-title">${escapeHtml(result.title || 'Untitled')}</div>
-                            <div class="search-result-subtitle">${escapeHtml(result.subtitle || '')}</div>
-                        </div>
-                    </div>`;
-                });
-                
-                html += `</div></div>`;
-            });
-            
-            resultsContainer.innerHTML = html;
-        }
-        
-        // Select search result
-        function selectSearchResult(index) {
-            if (currentResults[index] && currentResults[index].url) {
-                window.location.href = currentResults[index].url;
-            }
-        }
-        
-        // Navigate results with keyboard
-        function navigateResults(direction) {
-            if (currentResults.length === 0) return;
-            
-            if (direction === 'up') {
-                selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : currentResults.length - 1;
-            } else if (direction === 'down') {
-                selectedIndex = selectedIndex < currentResults.length - 1 ? selectedIndex + 1 : 0;
-            }
-            
-            renderResults(currentResults);
-            
-            // Scroll selected item into view
-            const selectedItem = document.querySelector(`.search-result-item[data-index="${selectedIndex}"]`);
-            if (selectedItem) {
-                selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-            }
-        }
-        
-        // Escape HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Initialize search
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('search-input');
-            const searchOverlay = document.getElementById('search-overlay');
-            
-            // Wire search icon button
-            const searchBtn = document.getElementById('topbar-search-btn')
-                || document.querySelector('.topbar-icon-btn[aria-label="Search"]');
-            if (searchBtn) {
-                searchBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openSearch();
-                });
-            }
-            
-            // Search input events
-            if (searchInput) {
-                searchInput.addEventListener('input', function(e) {
-                    const query = e.target.value.trim();
-                    
-                    // Debounce search
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        performSearch(query);
-                    }, 300);
-                });
-                
-                // Keyboard navigation
-                searchInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        navigateResults('down');
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        navigateResults('up');
-                    } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (selectedIndex >= 0 && currentResults[selectedIndex]) {
-                            selectSearchResult(selectedIndex);
-                        }
-                    } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        closeSearch();
-                    }
-                });
-            }
-            
-            // Close on backdrop click
-            const backdrop = document.querySelector('.search-overlay-backdrop');
-            if (backdrop) {
-                backdrop.addEventListener('click', closeSearch);
-            }
-            
-            // Global keyboard shortcut: Cmd+K / Ctrl+K
-            document.addEventListener('keydown', function(e) {
-                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                    e.preventDefault();
-                    openSearch();
-                }
-            });
-        });
-        
-        // Expose functions globally
-        window.openSearch = openSearch;
-        window.closeSearch = closeSearch;
-        window.selectSearchResult = selectSearchResult;
-    })();
-    </script>
+    <?php include __DIR__ . '/global-search-modal.php'; ?>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/global-search.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
     
     <!-- Notifications Dropdown (will be moved to notifications-wrapper by JS) - Unified Dropdown System -->
     <div class="dropdown-menu dropdown-menu-right notifications-dropdown" id="notifications-dropdown">
