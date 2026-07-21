@@ -138,6 +138,7 @@ $suites = [
     'events_v2_test.php',
     'dashboard_widgets_test.php',
     'dashboard_widget_api_test.php',
+    'dashboard_pending_review_test.php',
     'dashboard_lifecycle_contract_test.php',
     'platform_test.php',
     'plugin_dependencies_test.php',

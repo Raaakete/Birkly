@@ -23,9 +23,14 @@ test_assert('dashboard loads the Widget API v2 manifest',
     strpos($dashboard, "/api/dashboard.php?action=widgets") !== false
     && strpos($dashboard, 'Birkly.Dashboard.fetchWidgetData(widget)') !== false
     && strpos($dashboard, 'Birkly.Dashboard.mountWidget(body, widget, data)') !== false);
-test_assert('dashboard renders standard widget cards in priority order',
+test_assert('dashboard renders standard widget cards with layout support',
     strpos($dashboard, 'card dash-widget dash-widget--size-') !== false
-    && strpos($dashboard, 'left.priority - right.priority') !== false);
+    && strpos($dashboard, 'dashboardState.widgets') !== false
+    && strpos($dashboard, 'setupWidgetDragAndDrop') !== false);
+test_assert('dashboard exposes customize controls',
+    strpos($template, 'id="dashboard-customize-modal"') !== false
+    && strpos($template, 'id="dashboard-customize-btn"') !== false
+    && strpos($dashboard, 'save_layout') !== false);
 test_assert('dashboard uses one manifest refresh lifecycle',
     substr_count($dashboard, 'setInterval(') === 1
     && strpos($dashboard, 'Number(widget.refresh)') !== false);
