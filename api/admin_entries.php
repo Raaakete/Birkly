@@ -14,6 +14,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/entry_slug.php';
+require_once __DIR__ . '/../core/entry_validation.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugins.php';
 if (function_exists('load_plugins')) {
@@ -781,6 +782,15 @@ function saveEntry() {
     // Allow plugins to modify entry before save (e.g., auto-create users from profile entries)
     if (function_exists('apply_filters')) {
         $entryOutput = apply_filters('before_entry_save', $entryOutput, $collectionSlug);
+    }
+
+    $fieldErrors = birkly_validate_entry_required_fields($fields, $entryOutput, $entryData, $multilanguageEnabled, $multilanguageLanguages);
+    if (!empty($fieldErrors)) {
+        return [
+            'status' => 'error',
+            'message' => 'Please fix the highlighted fields.',
+            'field_errors' => $fieldErrors,
+        ];
     }
     
     // Save entry to file

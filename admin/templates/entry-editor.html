@@ -125,10 +125,11 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                 <div class="editor-content">
                     <?php if (!empty($fields)): ?>
                         <?php foreach ($fields as $field): ?>
-                            <div class="field-block">
+                            <?php $fieldName = $field['name'] ?? ''; ?>
+                            <div class="field-block" data-field-name="<?= htmlspecialchars($fieldName) ?>">
                                 <div class="field-header">
                                     <div class="field-title">
-                                        <?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?>
+                                        <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
                                         <?php if (!empty($field['required'])): ?>
                                             <span class="required">*</span>
                                         <?php endif; ?>
@@ -142,12 +143,12 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <?= $field['html'] ?>
                                     <?php else: ?>
                                         <?php
-                                        $fieldName = $field['name'] ?? '';
                                         $fieldValue = $entry[$fieldName] ?? '';
                                         ?>
                                         <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($fieldValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
                                     <?php endif; ?>
                                 </div>
+                                <div class="field-feedback error" role="alert" aria-live="polite"></div>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
