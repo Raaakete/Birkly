@@ -49,23 +49,23 @@ test_assert('expression mount is rejected', birkly_normalize_dashboard_widget([
 $core = birkly_get_core_dashboard_widgets();
 $coreIds = array_column($core, 'id');
 test_assert('core widget registry is populated', count($core) >= 8);
-test_assert('core registry includes quick actions', in_array('quick-actions', $coreIds, true));
+test_assert('core registry includes content overview', in_array('content-snapshot', $coreIds, true));
 test_assert('core registry includes system status', in_array('system-status', $coreIds, true));
 
 $merged = birkly_merge_dashboard_widgets([
     ['id' => 'plugin-summary', 'plugin_id' => 'sample_plugin', 'priority' => 75],
-    ['id' => 'quick-actions', 'plugin_id' => 'sample_plugin', 'priority' => 1],
+    ['id' => 'content-snapshot', 'plugin_id' => 'sample_plugin', 'priority' => 1],
     ['id' => 'invalid endpoint', 'plugin_id' => 'sample_plugin'],
 ]);
 $mergedIds = array_column($merged, 'id');
 test_assert('composition includes a valid plugin widget', in_array('plugin-summary', $mergedIds, true));
-test_assert('core widget IDs cannot be overridden', count(array_keys($mergedIds, 'quick-actions', true)) === 1);
+test_assert('core widget IDs cannot be overridden', count(array_keys($mergedIds, 'content-snapshot', true)) === 1);
 test_assert('composition rejects invalid plugin widgets', !in_array('invalid endpoint', $mergedIds, true));
-test_assert('composition is ordered by priority', $merged[0]['id'] === 'quick-actions');
+test_assert('composition is ordered by priority', $merged[0]['id'] === 'content-snapshot');
 
 $_SESSION['user'] = ['role' => 'editor'];
 $visible = birkly_filter_dashboard_widgets_for_user($merged);
 test_assert('role filter excludes admin-only core widgets', !in_array('system-status', array_column($visible, 'id'), true));
-test_assert('role filter retains permitted core widgets', in_array('quick-actions', array_column($visible, 'id'), true));
+test_assert('role filter retains permitted core widgets', in_array('content-snapshot', array_column($visible, 'id'), true));
 
 exit(test_finish('dashboard_widget_api_test'));
