@@ -127,6 +127,51 @@
   display: block;
 }
 
+/* Field-block states (entry/collection editors — P30) */
+.field-block--error .field-control input,
+.field-block--error .field-control textarea,
+.field-block--error .field-control select,
+.field-block.error .field-control input,
+.field-block.error .field-control textarea,
+.field-block.error .field-control select {
+  border-color: var(--error-700, #b91c1c);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+.field-block--success .field-control input,
+.field-block--success .field-control textarea,
+.field-block--success .field-control select,
+.field-block.success .field-control input,
+.field-block.success .field-control textarea,
+.field-block.success .field-control select {
+  border-color: var(--success-700, #15803d);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.1);
+}
+
+.field-block--error .field-feedback.error,
+.field-block.error .field-feedback.error,
+.field-block--success .field-feedback.success,
+.field-block.success .field-feedback.success {
+  display: block;
+}
+
+.field-block--error .field-feedback.error,
+.field-block.error .field-feedback.error {
+  color: var(--error-700, #b91c1c);
+}
+
+.field-block--success .field-feedback.success,
+.field-block.success .field-feedback.success {
+  color: var(--success-700, #15803d);
+}
+
+.field-block .field-feedback {
+  display: none;
+  margin-top: var(--space-1, 0.25rem);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

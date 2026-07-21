@@ -157,7 +157,7 @@ if (!$cancelUrl) {
                     <?php endif; ?>
                     
                     <!-- Collection/Sub-Collection Title (Required, First Field) -->
-                    <div class="field-block">
+                    <div class="field-block" data-field-name="name">
                         <div class="field-header">
                             <div class="field-title"><?= $isSubCollection ? 'Sub-Collection Name' : __('admin.collection_title') ?> <span class="required">*</span></div>
                         </div>
@@ -168,6 +168,7 @@ if (!$cancelUrl) {
                                 <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
                             <?php endif; ?>
                         </div>
+                        <div class="field-feedback error" role="alert" aria-live="polite"></div>
                     </div>
                     
                     <?php if ($isSubCollection): ?>

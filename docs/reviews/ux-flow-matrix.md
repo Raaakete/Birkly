@@ -1,6 +1,6 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-07-20 (P29 collections & entries excellence)  
+**Last updated:** 2026-07-21 (P30 admin forms & navigation UX)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
 **Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (29 suites)  
 **Browser QA:** P4 HTTP E2E in CI; MCP `mcp_http_test.php`; design-reviewer approved MCP tab + BYOAI wizard
@@ -12,7 +12,7 @@
 | Admin login | Auth | **pass** | — | Unchanged from P2-M1 baseline. |
 | Onboarding wizard (fresh user) | Onboarding | **pass** | P2-M5 | `reset-onboarding.php --keep-entries` → wizard loads; skip/complete sets dashboard checklist (#25). |
 | Create collection + fields | Collections | **pass** | P29 | Settings tab slug checkbox; sidebar tabs not empty; `collection_editor_sidebar_test.php`. |
-| Create/edit/publish entry | Entries | **pass** | P29 | Sidebar tabs visible; slug/status in General; auto-generate checkbox; ID fallback; reserved fields filtered from main loop. |
+| Create/edit/publish entry | Entries | **pass** | P29/P30 | Stacked field labels; inline field_errors; breadcrumb left-truncation in topbar. |
 | ContentEditor visual ↔ HTML save/reload | ContentEditor | **pass** | P2-M3/P29 | Visual/HTML tabs; `html_roundtrip_test.php`; no regression from sidebar `tabs.css` scope fix. |
 | Media upload + pick in field | Media | **pass** | P2-M3 | `media` alias → `file` fieldtype (#16). |
 | Collection groups + drag/drop | Groups/DnD | **pass** | P2-M4 | `collection_groups_test.php`; browser QA reorder groups after refresh (#20). |
@@ -32,7 +32,7 @@
 | ContentEditor blocks save/reload | ContentEditor | **pass** | P3-M12 | Block registry (divider, table); `html_roundtrip_test.php` |
 | Birkly-Website alpha copy + legal | Client site | **pass** | P3-M13 | Seed script + `beta_legal`; DEV.md preview |
 | Onboarding E2E (CSRF + project save) | Onboarding | **pass** | P4-M2 | `onboarding_e2e_test.php` — create user → CSRF → settings → skip |
-| Admin routing HTTP (content/media/settings) | Admin | **pass** | P4-M2 | `admin_routing_http_test.php` — pages render distinct templates |
+| Admin routing HTTP (content/media/settings) | Admin | **pass** | P4/P30 | `admin_routing_http_test.php`; smart breadcrumbs + stacked forms |
 | AI connection delete → chat rejects | BYOAI | **pass** | P4-M2 | `ai_chat_connection_test.php`; header picker PR #35 |
 | MCP standalone endpoints | MCP | **pass** | P4-M3/M4 | `settings/mcp_endpoints.json`, Settings MCP tab, `mcp_endpoints_test.php` |
 | MCP client setup (Claude Desktop) | MCP | **pass** | P4-M6 | `mcp_http_test.php`; `p4-mcp-client-matrix.md`; video V16 |
@@ -70,3 +70,11 @@
 **Status:** Complete — sidebar CSS/JS fix, slug UX, reserved fields, `admin-content-smoke.sh` in CI.
 
 **Evidence:** `tests/entry_editor_sidebar_test.php`, `tests/collection_editor_sidebar_test.php`, `scripts/admin-content-smoke.sh`, `docs/reviews/P29-verification-matrix.md`
+
+---
+
+## P30 closure (2026-07-21)
+
+**Status:** Complete — smart breadcrumbs, stacked `.field-block` forms, inline field validation, editor grid tuning.
+
+**Evidence:** `tests/breadcrumb_truncate_test.php`, `tests/entry_field_validation_test.php`, `admin/js/breadcrumb-truncate.js`, `docs/reviews/P30-verification-matrix.md`

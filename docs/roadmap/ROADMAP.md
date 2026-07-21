@@ -184,16 +184,26 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-20)
+## Current state (verified 2026-07-21)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P29 complete** — collections & entries excellence; `admin-content-smoke.sh` in CI; 3 pre-existing unrelated test flakes |
+| **Birkly (CMS)** | **P30 complete** — admin forms & navigation UX; smart breadcrumbs; stacked field-blocks; `admin-content-smoke.sh` extended |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | P29 editor sidebar + slug docs synced |
+| **Birkly-Docs** | P30 admin forms/navigation docs synced |
 | **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
+
+**2026-07-21 — Phase 30 complete** (autonomous P30-M0→M18)
+
+**Delivered:** Smart breadcrumb left-truncation in topbar (`breadcrumb-truncate.js`), stacked `.field-block` label-above-control layout, inline `field_errors` on entry save, editor grid laptop tuning, table title ellipsis, extended `admin-content-smoke.sh`.
+
+**Matrices:** `docs/reviews/P30-verification-matrix.md` · **Closure:** `docs/reviews/P30-phase-closure-checklist.md` · **Plan:** `docs/reviews/P30-admin-form-navigation-plan.md`
+
+**Next active phase:** **Phase 28** — Beta launch automation — **resume now** (paused during P30)
+
+**Paused:** **Phase 26** — Studio creative suite — resume after P28-M20
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
 
@@ -201,7 +211,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Matrices:** `docs/reviews/P29-verification-matrix.md` · **Closure:** `docs/reviews/P29-phase-closure-checklist.md` · **Plan:** `docs/reviews/P29-collections-entries-excellence-plan.md`
 
-**Next active phase:** **Phase 28** — Beta launch automation — **paused during P29; resume now**
+**Paused during P30:** Phase 28 — resumed after P30-M18
 
 **Paused:** **Phase 26** — Studio creative suite — resume after P28-M20
 
