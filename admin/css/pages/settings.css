@@ -415,8 +415,22 @@
   font-weight: normal;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Below --bp-xl (1280px), preserve readable user and activity columns. */
+@media (max-width: 1279px) {
+  .users-table,
+  .settings-page .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .users-table table,
+  .settings-page .table-container > .table {
+    min-width: 720px;
+  }
+}
+
+/* Below --bp-md (768px) */
+@media (max-width: 767px) {
   .tab-pane {
     padding: var(--space-5, 1.25rem);
   }
@@ -933,7 +947,7 @@
     background: #b91c1c;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     .ai-intro-cards {
         grid-template-columns: 1fr;
     }
@@ -1414,7 +1428,7 @@
     color: var(--text-tertiary);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     .connector-setup-cards {
         grid-template-columns: 1fr;
     }
@@ -1684,7 +1698,7 @@
     margin-bottom: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     .ai-connections-layout {
         grid-template-columns: 1fr;
     }
@@ -2277,7 +2291,7 @@
   gap: 0.5rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .user-actions {
     flex-direction: column;
     align-items: stretch;

@@ -8,7 +8,7 @@
 - [x] P30-M12–M14 — Editor layout polish
 - [x] P30-M15 — admin-content-smoke extended
 - [x] P30-M16–M17 — Docs + ux-flow-matrix
-- [x] P30-M18 — Matrix green + notification
+- [x] P30-M18 — Matrix green + notification (formally closed in P31-M0)
 
 **Closure criteria**
 
@@ -18,4 +18,6 @@
 - [x] Tests + admin-content-smoke green
 - [x] Single digest at M18
 
-**Human sign-off:** pending
+**Human sign-off:** implementation merged to `main` in #178–#181; formal documentation closure recorded by P31-M0.
+
+**Branch:** `cursor/p30-admin-form-navigation-4b7a`

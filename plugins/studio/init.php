@@ -43,6 +43,29 @@ function studio_user_can_manage(): bool
     return is_array($caps) && in_array('manage_studio', $caps, true);
 }
 
+/**
+ * Widget API v2 definition for Studio publishing work.
+ *
+ * @return list<array<string, mixed>>
+ */
+function studio_dashboard_widgets(): array
+{
+    if (!studio_plugin_active() || !studio_user_can_manage()) {
+        return [];
+    }
+
+    return [[
+        'id' => 'studio-publishing',
+        'title' => 'Studio publishing',
+        'roles' => ['admin', 'editor'],
+        'size' => 'md',
+        'priority' => 80,
+        'endpoint' => '/api/index.php?route=studio&action=dashboard_summary',
+        'mount' => 'studioPublishing',
+        'refresh' => 60,
+    ]];
+}
+
 function studio_require_manage(): void
 {
     studio_require_admin();

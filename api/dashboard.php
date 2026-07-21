@@ -632,10 +632,13 @@ if ($action === 'widgets') {
         }
         
         // Check for dashboard_widgets_callback in plugin array first
-        if (isset($plugin['dashboard_widgets_callback'])) {
+        if (isset($plugin['dashboard_widgets_callback']) && is_callable($plugin['dashboard_widgets_callback'])) {
             $pluginWidgets = call_user_func($plugin['dashboard_widgets_callback']);
             if (is_array($pluginWidgets)) {
                 foreach ($pluginWidgets as $widget) {
+                    if (!is_array($widget)) {
+                        continue;
+                    }
                     $widget['plugin_id'] = $plugin_id;
                     $widgets[] = $widget;
                 }
@@ -644,10 +647,14 @@ if ($action === 'widgets') {
         } else {
             // Also check global plugin registry if not found in plugin array
             global $birkly_plugins;
-            if (isset($birkly_plugins[$plugin_id]['dashboard_widgets_callback'])) {
+            if (isset($birkly_plugins[$plugin_id]['dashboard_widgets_callback'])
+                && is_callable($birkly_plugins[$plugin_id]['dashboard_widgets_callback'])) {
                 $pluginWidgets = call_user_func($birkly_plugins[$plugin_id]['dashboard_widgets_callback']);
                 if (is_array($pluginWidgets)) {
                     foreach ($pluginWidgets as $widget) {
+                        if (!is_array($widget)) {
+                            continue;
+                        }
                         $widget['plugin_id'] = $plugin_id;
                         $widgets[] = $widget;
                     }
@@ -666,10 +673,16 @@ if ($action === 'widgets') {
             if (isset($processedPlugins[$hookPluginId])) {
                 continue;
             }
-            $callback = $hook_data['callback'];
+            $callback = $hook_data['callback'] ?? null;
+            if (!is_callable($callback)) {
+                continue;
+            }
             $pluginWidgets = call_user_func($callback);
             if (is_array($pluginWidgets)) {
                 foreach ($pluginWidgets as $widget) {
+                    if (!is_array($widget)) {
+                        continue;
+                    }
                     $widget['plugin_id'] = $hookPluginId;
                     $widgets[] = $widget;
                 }
@@ -681,6 +694,7 @@ if ($action === 'widgets') {
     // Don't add analytics widget here - it has its own dedicated section at the top
 
     require_once __DIR__ . '/../core/dashboard_widgets.php';
+    $widgets = birkly_merge_dashboard_widgets($widgets);
     $widgets = birkly_filter_dashboard_widgets_for_user($widgets);
 
         ob_clean();

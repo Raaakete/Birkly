@@ -38,6 +38,39 @@ if (!in_array($action, $publicActions) && !isset($_SESSION['user'])) {
     exit;
 }
 
+if ($action === 'dashboard_summary') {
+    if (!automation_dashboard_user_can_view()) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
+        exit;
+    }
+
+    $automations = get_automations();
+    $logs = get_automation_logs(null, 5);
+    $queue = get_automation_queue_status();
+    $recent = array_map(static function (array $log): array {
+        return [
+            'automation_id' => (string) ($log['automation_id'] ?? ''),
+            'status' => (string) ($log['status'] ?? 'unknown'),
+            'executed_at' => (string) ($log['executed_at'] ?? ''),
+        ];
+    }, $logs);
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'enabled' => count(array_filter($automations, static fn (array $automation): bool => !empty($automation['enabled']))),
+            'total' => count($automations),
+            'queue' => $queue,
+            'recent' => $recent,
+            'automation_url' => function_exists('admin_url')
+                ? admin_url('automation')
+                : '/admin/index.php?page=automation',
+        ],
+    ]);
+    exit;
+}
+
 // List automations
 if ($action === 'list') {
     $filters = $input['filters'] ?? [];
