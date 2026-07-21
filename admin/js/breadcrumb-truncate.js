@@ -31,6 +31,9 @@
             if (el.classList.contains('separator') || el.classList.contains('breadcrumb-ellipsis')) {
                 return;
             }
+            if (el.classList.contains('contextual-help-link')) {
+                return;
+            }
             if (el.tagName === 'A') {
                 segments.push({
                     label: (el.textContent || '').trim(),
@@ -143,6 +146,8 @@
         if (!nav || !nav.classList.contains('breadcrumbs')) {
             return;
         }
+
+        nav.querySelectorAll('.contextual-help-link').forEach((link) => link.remove());
 
         if (!nav._birklyBreadcrumbSegments) {
             const parsed = parseSegments(nav);
