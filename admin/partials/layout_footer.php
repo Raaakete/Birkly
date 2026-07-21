@@ -110,8 +110,14 @@ $__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_comm
             }
 
             while (source.firstChild) {
-                topbarSlot.appendChild(source.firstChild);
+                const child = source.firstChild;
+                if (child.nodeType === Node.ELEMENT_NODE && child.classList.contains('contextual-help-link')) {
+                    child.remove();
+                    continue;
+                }
+                topbarSlot.appendChild(child);
             }
+            topbarSlot.querySelectorAll('.contextual-help-link').forEach((link) => link.remove());
             topbarSlot.classList.add('breadcrumbs');
             source.remove();
 
