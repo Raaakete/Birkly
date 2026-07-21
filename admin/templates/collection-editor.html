@@ -76,6 +76,17 @@ if (!$cancelUrl) {
         </div>
         <div class="page-header-actions"></div>
     </div>
+
+    <?php
+    $stickySaveBarForm = 'collection-form';
+    if ($isSubCollection) {
+        $stickySaveBarSaveLabel = !empty($subCollectionData['slug']) ? 'Save Sub-Collection' : 'Create Sub-Collection';
+    } else {
+        $stickySaveBarSaveLabel = !empty($collection['title']) ? __('admin.save_collection') : __('admin.create_collection');
+    }
+    $stickySaveBarCancelUrl = $cancelUrl;
+    include __DIR__ . '/components/sticky-save-bar.php';
+    ?>
     
     <form id="collection-form" class="collection-form" method="POST" action="/api/admin_collections.php">
         <?php if ($isSubCollection): ?>
@@ -1260,16 +1271,6 @@ echo htmlspecialchars($formCode);
                 ?>
             </div>
         </div>
-    <?php
-    $stickySaveBarForm = 'collection-form';
-    if ($isSubCollection) {
-        $stickySaveBarSaveLabel = !empty($subCollectionData['slug']) ? 'Save Sub-Collection' : 'Create Sub-Collection';
-    } else {
-        $stickySaveBarSaveLabel = !empty($collection['title']) ? __('admin.save_collection') : __('admin.create_collection');
-    }
-    $stickySaveBarCancelUrl = $cancelUrl;
-    include __DIR__ . '/components/sticky-save-bar.php';
-    ?>
     </form>
 </div>
 
