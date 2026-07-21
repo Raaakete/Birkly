@@ -228,10 +228,10 @@
   white-space: nowrap;
   min-width: 0;
   max-width: 100%;
+  flex: 1 1 auto;
 }
 
 .entries-smart-table .cell-title {
-  min-width: 0;
   overflow: hidden;
 }
 
