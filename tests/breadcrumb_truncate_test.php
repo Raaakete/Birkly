@@ -41,5 +41,9 @@ test_assert('JS exports Birkly.BreadcrumbTruncate', str_contains($js, 'Birkly.Br
 test_assert('JS listens for birkly:layout-change', str_contains($js, 'birkly:layout-change'));
 test_assert('JS uses ResizeObserver', str_contains($js, 'ResizeObserver'));
 test_assert('JS has segment ellipsis class toggle', str_contains($js, 'breadcrumbs--segment-ellipsis'));
+test_assert('JS ignores contextual help links', str_contains($js, 'contextual-help-link'));
+
+$contextualHelp = file_get_contents($root . '/admin/js/contextual-help.js');
+test_assert('contextual-help skips breadcrumbs', str_contains($contextualHelp, "contains('breadcrumbs')"));
 
 exit(test_finish('breadcrumb_truncate_test'));
