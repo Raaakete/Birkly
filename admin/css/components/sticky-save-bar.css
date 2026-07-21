@@ -1,6 +1,6 @@
 .main-actions-bar--sticky {
   position: sticky;
-  top: calc(var(--admin-topbar-height, 64px) + var(--space-2, 0.5rem));
+  top: 0;
   z-index: 30;
   margin-bottom: var(--space-6, 1.5rem);
   padding: var(--space-2, 0.5rem) 0;
