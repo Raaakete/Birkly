@@ -799,6 +799,80 @@
     }
 
     /**
+     * Clear inline field validation state.
+     */
+    function clearFieldErrors() {
+        document.querySelectorAll('.field-block--error, .field-block.error').forEach((block) => {
+            block.classList.remove('field-block--error', 'error');
+            const feedback = block.querySelector('.field-feedback.error');
+            if (feedback) {
+                feedback.textContent = '';
+            }
+            block.querySelectorAll('input, textarea, select').forEach((input) => {
+                input.removeAttribute('aria-invalid');
+                input.removeAttribute('aria-describedby');
+            });
+        });
+    }
+
+    /**
+     * Apply API field_errors map to .field-block elements.
+     * @param {Record<string, string>} fieldErrors
+     * @returns {boolean} true if any field error was applied
+     */
+    function applyFieldErrors(fieldErrors) {
+        if (!fieldErrors || typeof fieldErrors !== 'object') {
+            return false;
+        }
+
+        let applied = false;
+        let firstBlock = null;
+
+        Object.keys(fieldErrors).forEach((fieldName) => {
+            const message = fieldErrors[fieldName];
+            if (!message) {
+                return;
+            }
+
+            const block = document.querySelector(`.field-block[data-field-name="${CSS.escape(fieldName)}"]`)
+                || document.querySelector(`#field_${CSS.escape(fieldName)}`)?.closest('.field-block')
+                || document.querySelector(`[name="${CSS.escape(fieldName)}"]`)?.closest('.field-block');
+
+            if (!block) {
+                return;
+            }
+
+            block.classList.add('field-block--error');
+            const feedback = block.querySelector('.field-feedback.error');
+            if (feedback) {
+                if (!feedback.id) {
+                    feedback.id = 'field-error-' + fieldName;
+                }
+                feedback.textContent = message;
+            }
+
+            const input = block.querySelector('input, textarea, select');
+            if (input) {
+                input.setAttribute('aria-invalid', 'true');
+                if (feedback && feedback.id) {
+                    input.setAttribute('aria-describedby', feedback.id);
+                }
+            }
+
+            if (!firstBlock) {
+                firstBlock = block;
+            }
+            applied = true;
+        });
+
+        if (firstBlock) {
+            firstBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        return applied;
+    }
+
+    /**
      * Handle form submission
      */
     function initFormSubmission() {
@@ -807,6 +881,7 @@
 
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
+            clearFieldErrors();
             
             // Sync all editor fields before submission
             syncContentEditorFields();
@@ -1133,8 +1208,9 @@
                         window.location.href = Birkly.adminUrl('entries', { collection: collectionSlug });
                     }
                 } else if (data && data.status === 'error') {
-                    // Error in JSON body
-                    alert('Error: ' + (data.message || raw || 'Unknown error'));
+                    if (!applyFieldErrors(data.field_errors)) {
+                        alert('Error: ' + (data.message || raw || 'Unknown error'));
+                    }
                 } else if (!response.ok) {
                     // HTTP error but no valid JSON
                     throw new Error((data && data.message) || (raw || ('HTTP ' + response.status + ' ' + response.statusText)));

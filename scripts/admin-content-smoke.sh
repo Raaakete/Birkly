@@ -18,7 +18,9 @@ fi
 for test in \
   tests/entry_editor_sidebar_test.php \
   tests/collection_editor_sidebar_test.php \
-  tests/entry_slug_test.php; do
+  tests/entry_slug_test.php \
+  tests/breadcrumb_truncate_test.php \
+  tests/entry_field_validation_test.php; do
   if php "$ROOT/$test"; then
     report "OK: $test"
   else

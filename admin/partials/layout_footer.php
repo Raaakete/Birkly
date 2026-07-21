@@ -22,6 +22,7 @@ $__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_comm
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtypes-shim.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20250804-15')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/breadcrumb-truncate.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
     <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
 
@@ -126,11 +127,16 @@ $__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_comm
                 const leftHidden = !left || left.style.display === 'none' || left.childElementCount === 0;
                 const actionsEmpty = !actions || actions.childElementCount === 0;
                 if (leftHidden && actionsEmpty) {
+                    pageHeader.classList.add('page-header--hoisted-empty');
                     pageHeader.style.display = 'none';
                     pageHeader.style.marginBottom = '0';
                     pageHeader.style.height = '0';
                     pageHeader.style.minHeight = '0';
                 }
+            }
+
+            if (window.Birkly && window.Birkly.BreadcrumbTruncate && typeof window.Birkly.BreadcrumbTruncate.init === 'function') {
+                window.Birkly.BreadcrumbTruncate.init();
             }
         }
 
