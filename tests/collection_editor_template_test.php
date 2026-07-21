@@ -11,7 +11,7 @@ echo "Collection editor template PHP tests\n\n";
 $root = dirname(__DIR__);
 $template = $root . '/admin/templates/collection-editor.html';
 $content = file_get_contents($template);
-test_assert('collection editor includes field template controls', strpos($content, 'field-template-select') !== false && strpos($content, 'save-field-template-btn') !== false);
+test_assert('collection editor no longer includes field template controls', strpos($content, 'field-template-select') === false && strpos($content, 'save-field-template-btn') === false);
 
 $blocks = [
     'entry level example' => <<<'PHP'
