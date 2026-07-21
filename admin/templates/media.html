@@ -5,14 +5,33 @@
     <div class="page-header-actions"></div>
 </div>
 
-
-  <!-- Header -->
-  <div class="media-header">
-    <div class="header-actions">
+<div class="main-actions-bar">
+  <div class="collection-actions-bar">
+    <div class="collection-actions-bar-left">
       <button type="button" class="btn btn-primary" data-media-action="upload">{translate 'admin.upload_media'}</button>
       <button type="button" class="btn btn-secondary" data-media-action="create-folder">{translate 'admin.new_folder'}</button>
     </div>
-    <div class="media-toolbar">
+    <div class="collection-actions-bar-right media-toolbar">
+      <div class="media-view-toggle" role="group" aria-label="Media view">
+        <button type="button" class="btn-icon" id="media-view-grid" data-media-view="grid" aria-label="Grid view" title="Grid view">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+        <button type="button" class="btn-icon" id="media-view-list" data-media-view="list" aria-label="List view" title="List view">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+        </button>
+      </div>
       <div class="toolbar-search">
         <input type="text" id="media-search" placeholder="{translate 'admin.search_media'}" class="search-input">
       </div>
@@ -27,6 +46,18 @@
       </div>
     </div>
   </div>
+</div>
+
+<div id="media-bulk-toolbar" class="bulk-actions-toolbar" style="display: none;">
+  <div class="bulk-actions-content">
+    <span class="bulk-actions-count"><span id="media-selected-count">0</span> {translate 'admin.selected'}</span>
+    <div class="bulk-actions-buttons">
+      <button type="button" class="btn btn-sm" data-media-action="move-selected">{translate 'admin.move_to_folder'}</button>
+      <button type="button" class="btn btn-sm btn-danger" data-media-action="delete-selected">{translate 'admin.delete'}</button>
+      <button type="button" class="btn btn-sm btn-secondary" data-media-action="clear-selection">{translate 'admin.cancel'}</button>
+    </div>
+  </div>
+</div>
 
   <div class="media-layout">
     <!-- Sidebar -->
@@ -51,6 +82,13 @@
 
     <!-- Main Content -->
     <main class="media-main">
+      <div class="media-current-folder" id="media-breadcrumb" aria-label="Current folder"></div>
+      <div class="media-drop-zone" id="media-drop-zone" aria-hidden="true">
+        <div class="media-drop-zone__inner">
+          <strong>Drop files to upload</strong>
+          <span>Files upload into the current folder.</span>
+        </div>
+      </div>
       <div class="media-grid" id="media-grid">
         <div class="media-loading">{translate 'admin.loading_media'}</div>
       </div>
@@ -97,6 +135,7 @@
         <!-- Content will be populated by JavaScript -->
       </div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-media-action="save-media">{translate 'admin.save'}</button>
         <button type="button" class="btn btn-secondary" data-media-action="open-move">{translate 'admin.move_to_folder'}</button>
         <button type="button" class="btn btn-danger" data-media-action="delete-media">{translate 'admin.delete'}</button>
         <button type="button" class="btn btn-secondary" data-media-action="close-media">{translate 'admin.close'}</button>

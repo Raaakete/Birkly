@@ -1,0 +1,59 @@
+.sticky-save-bar {
+  position: sticky;
+  bottom: var(--space-4, 1rem);
+  z-index: 20;
+  margin-top: var(--space-6, 1.5rem);
+}
+
+.sticky-save-bar__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+  backdrop-filter: blur(10px);
+}
+
+.sticky-save-bar__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  min-width: 0;
+  flex: 1;
+}
+
+.sticky-save-bar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.sticky-save-bar__message {
+  margin: 0;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .sticky-save-bar {
+    bottom: var(--space-3, 0.75rem);
+  }
+
+  .sticky-save-bar__content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sticky-save-bar__actions {
+    justify-content: stretch;
+  }
+
+  .sticky-save-bar__actions .btn {
+    width: 100%;
+  }
+}

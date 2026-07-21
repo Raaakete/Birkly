@@ -43,6 +43,7 @@ $pageViewPermissions = [
 
     // Settings & admin management
     'settings' => 'read_settings',
+    'redirects' => 'manage_settings',
     'webhooks' => 'read_settings',
     'automation' => 'manage_content',
     'updates' => 'manage_settings',
@@ -129,6 +130,7 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'content' => 'content.html',
             'media' => 'media.html',
             'settings' => 'settings.html',
+            'redirects' => 'redirects.html',
             'account' => 'account.html',
             'updates' => 'updates.html',
             'entries' => 'entries.html',
@@ -482,7 +484,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     }
                 }
             } elseif (in_array($page, [
-                'settings',
+                'settings', 'redirects',
                 'users', 'roles', 'plugins', 'webhooks', 'help', 'feedback', 'audit-log', 'activity', 'updates',
             ], true)) {
                 // Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, etc.

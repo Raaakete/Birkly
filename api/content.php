@@ -28,6 +28,55 @@ $storage = get_storage('../content');
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
+function birkly_field_template_slugify(string $value): string {
+    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $value)));
+    $slug = preg_replace('/-+/', '-', $slug);
+    return trim((string) $slug, '-');
+}
+
+function birkly_field_templates_dir(): string {
+    $dir = realpath(__DIR__ . '/../content/collections');
+    if ($dir === false) {
+        $dir = __DIR__ . '/../content/collections';
+    }
+    $dir .= '/_templates';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+function birkly_load_field_template(string $templateId): ?array {
+    $templateId = birkly_field_template_slugify($templateId);
+    if ($templateId === '') {
+        return null;
+    }
+    $path = birkly_field_templates_dir() . '/' . $templateId . '.json';
+    if (!is_file($path)) {
+        return null;
+    }
+    $data = json_decode((string) file_get_contents($path), true);
+    return is_array($data) ? $data : null;
+}
+
+function birkly_list_field_templates(): array {
+    $templates = [];
+    foreach (glob(birkly_field_templates_dir() . '/*.json') ?: [] as $file) {
+        $data = json_decode((string) file_get_contents($file), true);
+        if (!is_array($data)) {
+            continue;
+        }
+        $data['id'] = $data['id'] ?? basename($file, '.json');
+        $templates[] = $data;
+    }
+
+    usort($templates, static function(array $left, array $right): int {
+        return strcmp((string) ($left['name'] ?? $left['id'] ?? ''), (string) ($right['name'] ?? $right['id'] ?? ''));
+    });
+
+    return $templates;
+}
+
 // Handle collections
 if ($action === 'list_collections') {
     global $birkly_collections;
@@ -889,6 +938,94 @@ if ($action === 'get_schema') {
     echo json_encode([
         'status' => 'ok',
         'data' => [ 'schema' => $schema, 'collection' => $meta ]
+    ]);
+    exit;
+}
+
+if ($action === 'list_field_templates') {
+    requireAuth('manage_content');
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'templates' => birkly_list_field_templates(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'save_field_template') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'save_field_template', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    requireAuth('manage_content');
+    $name = trim((string) ($input['name'] ?? ''));
+    $templateId = trim((string) ($input['template_id'] ?? $input['id'] ?? ''));
+    $fields = $input['fields'] ?? [];
+
+    if ($name === '' || !is_array($fields) || $fields === []) {
+        echo json_encode(['status' => 'error', 'message' => 'Template name and fields are required']);
+        exit;
+    }
+
+    $templateId = birkly_field_template_slugify($templateId !== '' ? $templateId : $name);
+    if ($templateId === '') {
+        $templateId = 'template-' . uniqid();
+    }
+
+    $templatePath = birkly_field_templates_dir() . '/' . $templateId . '.json';
+    $existing = is_file($templatePath)
+        ? (json_decode((string) file_get_contents($templatePath), true) ?: [])
+        : [];
+
+    $template = [
+        'id' => $templateId,
+        'name' => $name,
+        'description' => trim((string) ($input['description'] ?? $existing['description'] ?? '')),
+        'fields' => array_values($fields),
+        'created_at' => $existing['created_at'] ?? date('c'),
+        'updated_at' => date('c'),
+    ];
+
+    $encoded = json_encode($template, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false || file_put_contents($templatePath, $encoded) === false) {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to save template']);
+        exit;
+    }
+
+    log_security_event('save_field_template', ['template_id' => $templateId, 'name' => $name]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Field template saved',
+        'data' => ['template' => $template],
+    ]);
+    exit;
+}
+
+if ($action === 'apply_field_template') {
+    requireAuth('manage_content');
+    $templateId = trim((string) ($input['template_id'] ?? $_GET['template_id'] ?? $_GET['id'] ?? ''));
+    if ($templateId === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Template id required']);
+        exit;
+    }
+
+    $template = birkly_load_field_template($templateId);
+    if ($template === null) {
+        echo json_encode(['status' => 'error', 'message' => 'Template not found']);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Field template loaded',
+        'data' => [
+            'template' => $template,
+            'fields' => $template['fields'] ?? [],
+        ],
     ]);
     exit;
 }

@@ -29,6 +29,10 @@
   gap: 0.25rem;
 }
 
+.sticky-save-bar .editor-unsaved-badge {
+  margin-left: 0;
+}
+
 .permalink-preview {
   margin-top: 0.5rem;
   padding: 0.5rem 0.625rem;

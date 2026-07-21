@@ -123,6 +123,8 @@ function listMedia() {
                     'uploaded_at' => $item['created_at'],
                     'uploaded_by' => $item['uploaded_by'] ?? 'Unknown',
                     'folder' => $item['folder'] ?? $folder,
+                    'alt_text' => $item['alt_text'] ?? '',
+                    'focal_point' => normalizeFocalPoint($item['focal_point'] ?? null),
                     'dimensions' => isset($item['dimensions']) ? $item['dimensions'] : null,
                     'duration' => isset($item['duration']) ? $item['duration'] : null
                 ];
@@ -159,6 +161,8 @@ function listMedia() {
                     'uploaded_at' => $uploadTime,
                     'uploaded_by' => 'System',
                     'folder' => $folder,
+                    'alt_text' => '',
+                    'focal_point' => normalizeFocalPoint(null),
                     'dimensions' => getImageDimensions($file, $fileType),
                     'duration' => null
                 ];
@@ -396,6 +400,8 @@ function uploadMedia() {
         'created_at' => date('Y-m-d H:i:s'),
         'uploaded_by'=> 'Admin',
         'folder'     => $folder,
+        'alt_text'   => '',
+        'focal_point'=> normalizeFocalPoint(null),
         'dimensions' => $dimensions,
         'ext'        => $extension
     ];
@@ -416,6 +422,8 @@ function uploadMedia() {
             'uploaded_at'     => $metadata['created_at'],
             'uploaded_by'     => $metadata['uploaded_by'],
             'folder'          => $folder,
+            'alt_text'        => $metadata['alt_text'],
+            'focal_point'     => $metadata['focal_point'],
             'dimensions'      => $dimensions
         ]
     ];
@@ -441,10 +449,10 @@ function validateMediaFolder($folder) {
     if (!is_string($folder)) {
         return false;
     }
-    if (strpos($folder, '..') !== false || strpos($folder, '/') !== false || strpos($folder, '\\') !== false) {
+    if (strpos($folder, '..') !== false || strpos($folder, '\\') !== false) {
         return false;
     }
-    return preg_match('/^[a-zA-Z0-9_-]+$/', $folder) === 1;
+    return preg_match('/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/', $folder) === 1;
 }
 
 function getMediaItem() {
@@ -475,10 +483,16 @@ function getMediaItem() {
                     'data' => [
                         'id' => $item['id'] ?? $mediaId,
                         'name' => $item['name'] ?? $mediaId,
+                        'title' => $item['title'] ?? ($item['name'] ?? $mediaId),
                         'url' => $item['url'] ?? '/media/' . $mediaId . ($ext ? '.' . $ext : ''),
                         'type' => $item['type'] ?? mime_content_type($realPath),
                         'size' => $item['size'] ?? filesize($realPath),
                         'size_formatted' => formatFileSize($item['size'] ?? filesize($realPath)),
+                        'folder' => $item['folder'] ?? '',
+                        'uploaded_at' => $item['created_at'] ?? '',
+                        'dimensions' => $item['dimensions'] ?? getImageDimensions($realPath, $item['type'] ?? mime_content_type($realPath)),
+                        'alt_text' => $item['alt_text'] ?? '',
+                        'focal_point' => normalizeFocalPoint($item['focal_point'] ?? null),
                     ]
                 ];
             }
@@ -494,10 +508,16 @@ function getMediaItem() {
                 'data' => [
                     'id' => $mediaId,
                     'name' => basename($realPath),
+                    'title' => basename($realPath),
                     'url' => '/media/' . basename($realPath),
                     'type' => mime_content_type($realPath),
                     'size' => filesize($realPath),
                     'size_formatted' => formatFileSize(filesize($realPath)),
+                    'folder' => '',
+                    'uploaded_at' => date('Y-m-d H:i:s', filemtime($realPath)),
+                    'dimensions' => getImageDimensions($realPath, mime_content_type($realPath)),
+                    'alt_text' => '',
+                    'focal_point' => normalizeFocalPoint(null),
                 ]
             ];
         }
@@ -610,19 +630,22 @@ function updateMedia() {
     // SECURITY FIX: Require CSRF token
     $csrf = $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
-        return ['error' => 'Invalid CSRF token'];
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
     }
     
     $mediaId = $_POST['id'] ?? '';
     $title = $_POST['title'] ?? '';
+    $altText = isset($_POST['alt_text']) ? trim((string) $_POST['alt_text']) : null;
+    $focalX = $_POST['focal_x'] ?? null;
+    $focalY = $_POST['focal_y'] ?? null;
 
     if (!validateMediaId($mediaId)) {
-        return ['error' => 'Invalid media ID'];
+        return ['status' => 'error', 'message' => 'Invalid media ID'];
     }
 
     $mediaDir = realpath(__DIR__ . '/../media');
     if (!$mediaDir) {
-        return ['error' => 'Media directory not found'];
+        return ['status' => 'error', 'message' => 'Media directory not found'];
     }
     $metadataPath = $mediaDir . '/.metadata.json';
     
@@ -635,14 +658,29 @@ function updateMedia() {
             if ($title) {
                 $metadata[$mediaId]['title'] = $title;
             }
+            if ($altText !== null) {
+                $metadata[$mediaId]['alt_text'] = $altText;
+            }
+            if ($focalX !== null || $focalY !== null) {
+                $metadata[$mediaId]['focal_point'] = normalizeFocalPoint([
+                    'x' => $focalX,
+                    'y' => $focalY,
+                ]);
+            }
             
             file_put_contents($metadataPath, json_encode($metadata, JSON_PRETTY_PRINT));
             
-            return ['status' => 'ok', 'message' => 'Media updated successfully'];
+            return [
+                'status' => 'ok',
+                'message' => 'Media updated successfully',
+                'data' => [
+                    'media' => $metadata[$mediaId],
+                ],
+            ];
         }
     }
     
-    return ['error' => 'Failed to update media'];
+    return ['status' => 'error', 'message' => 'Failed to update media'];
 }
 
 function getMediaCategory($mimeType) {
@@ -677,6 +715,25 @@ function formatFileSize($bytes) {
     $bytes /= pow(1024, $pow);
     
     return round($bytes, 2) . ' ' . $units[$pow];
+}
+
+function normalizeFocalPoint($focalPoint) {
+    $x = 50;
+    $y = 50;
+
+    if (is_array($focalPoint)) {
+        if (isset($focalPoint['x']) && is_numeric($focalPoint['x'])) {
+            $x = (int) round((float) $focalPoint['x']);
+        }
+        if (isset($focalPoint['y']) && is_numeric($focalPoint['y'])) {
+            $y = (int) round((float) $focalPoint['y']);
+        }
+    }
+
+    $x = max(0, min(100, $x));
+    $y = max(0, min(100, $y));
+
+    return ['x' => $x, 'y' => $y];
 }
 
 function generateMediaId($filename) {

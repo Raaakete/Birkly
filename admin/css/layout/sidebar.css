@@ -7,6 +7,7 @@
   display: flex;
   flex-direction: row;
   min-height: 100vh;
+  --admin-shell-edge-padding: var(--space-10, 2.5rem);
 }
 
 .app {
@@ -26,7 +27,7 @@
   align-self: flex-start;
   overflow: hidden;
   transition: width var(--transition-normal, 200ms ease), transform var(--transition-normal, 200ms ease);
-  padding: var(--space-10, 2.5rem);
+  padding: var(--admin-shell-edge-padding);
   padding-right: 0;
   justify-content: space-between;
   background: var(--background-global, #f8f9f7);
@@ -62,7 +63,7 @@
   color: rgba(30, 31, 42, 1);
   padding: var(--space-3, 0.75rem);
   height: 64px;
-  margin-bottom: var(--space-4, 1rem);
+  margin-bottom: var(--space-2, 0.5rem);
 }
 
 .sidebar-header .logo,
@@ -107,7 +108,7 @@
 .nav-links {
   list-style: none;
   padding: 0;
-  margin: var(--space-4, 1rem) 0;
+  margin: var(--space-2, 0.5rem) 0;
   background: var(--bg-elevated, #ffffff);
   border-radius: var(--border-radius-s, 4px);
   overflow: hidden;
@@ -281,7 +282,7 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 @media (min-width: 768px) {
   body.sidebar-collapsed .sidebar {
     width: calc(var(--space-10, 2.5rem) + 3rem);
-    padding: var(--space-10, 2.5rem);
+    padding: var(--admin-shell-edge-padding);
     padding-right: 0;
   }
 
@@ -384,6 +385,24 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 
   .sidebar-collapse-toggle {
     display: flex;
+  }
+}
+
+@media (max-width: 1279px) {
+  .admin-layout {
+    --admin-shell-edge-padding: var(--space-8, 2rem);
+  }
+}
+
+@media (max-width: 1023px) {
+  .admin-layout {
+    --admin-shell-edge-padding: var(--space-6, 1.5rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-layout {
+    --admin-shell-edge-padding: var(--space-4, 1rem);
   }
 }
 
@@ -652,8 +671,12 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 }
 
 @media (max-width: 639px) {
+  .admin-layout {
+    --admin-shell-edge-padding: var(--space-3, 0.75rem);
+  }
+
   .sidebar {
-    padding: var(--space-4, 1rem);
+    padding: var(--admin-shell-edge-padding);
   }
 }
 

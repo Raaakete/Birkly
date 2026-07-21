@@ -171,6 +171,8 @@ function getPageData($page) {
             return getMediaData();
         case 'settings':
             return getSettingsData();
+        case 'redirects':
+            return [];
         case 'account':
             return getAccountData();
         case 'collection-editor':
@@ -1466,6 +1468,7 @@ function getEntryEditorData($includeFieldHtml = false) {
 function getEntriesData() {
     // Get collection data from URL parameters
     $collectionSlug = $_GET['collection'] ?? null;
+    $statusFilter = trim((string) ($_GET['status'] ?? ''));
     
     if (!$collectionSlug) {
         return ['error' => 'Collection parameter required'];
@@ -1492,6 +1495,13 @@ function getEntriesData() {
             $entryData = json_decode(file_get_contents($entryFile), true);
             $entryData['id'] = basename($entryFile, '.json');
             $entries[] = $entryData;
+        }
+    }
+
+    $trashedCount = 0;
+    foreach ($entries as $entry) {
+        if ((string) ($entry['status'] ?? '') === 'trashed') {
+            $trashedCount++;
         }
     }
     
@@ -1523,6 +1533,20 @@ function getEntriesData() {
             $entries = $orderedEntries;
         }
     }
+
+    $entries = array_values(array_filter($entries, static function (array $entry) use ($statusFilter): bool {
+        $status = (string) ($entry['status'] ?? 'draft');
+        if ($status === 'draft') {
+            $status = 'unpublished';
+        }
+
+        if ($statusFilter === '') {
+            return $status !== 'trashed';
+        }
+
+        $normalizedFilter = $statusFilter === 'draft' ? 'unpublished' : $statusFilter;
+        return $status === $normalizedFilter;
+    }));
     
     // Get sub-collections to calculate sub-entry counts (including nested)
     $subCollections = $collectionData['sub_collections'] ?? [];
@@ -1774,7 +1798,10 @@ function getEntriesData() {
         'collection' => $collectionData,
         'fields' => $fields,
         'entries' => $entriesWithCells,
-        'list_column_width' => $preferredWidth
+        'list_column_width' => $preferredWidth,
+        'current_status_filter' => $statusFilter,
+        'is_trash_view' => $statusFilter === 'trashed',
+        'trashed_count' => $trashedCount,
     ];
 }
 

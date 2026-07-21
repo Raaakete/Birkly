@@ -1,0 +1,272 @@
+<?php ?>
+<div class="page-header pt-m pb-m">
+    <div class="page-header-left">
+        <div class="breadcrumbs">
+            <a href="<?= htmlspecialchars(admin_url('settings')) ?>"><?= __('admin.settings') ?></a>
+            <span class="separator">›</span>
+            <span class="current">Redirects</span>
+        </div>
+    </div>
+    <div class="page-header-actions"></div>
+</div>
+
+<div class="main-actions-bar">
+    <div class="main-actions-left">
+        <p style="margin:0; color: var(--text-secondary);">Manage URL redirects stored in <code>settings/redirects.json</code>.</p>
+    </div>
+</div>
+
+<div class="settings-page">
+    <div class="settings-stack">
+        <section class="card">
+            <div class="section-header">
+                <h2>Create or update redirect</h2>
+            </div>
+            <form id="redirect-form" class="settings-form" style="display:grid; gap: 1rem;">
+                <input type="hidden" id="redirect-id" value="">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="redirect-from-path">From path</label>
+                        <input type="text" id="redirect-from-path" class="input" placeholder="/old-path" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="redirect-to-path">To path or URL</label>
+                        <input type="text" id="redirect-to-path" class="input" placeholder="/new-path or https://example.com" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="redirect-type">Redirect type</label>
+                        <select id="redirect-type" class="input">
+                            <option value="301">301 Permanent</option>
+                            <option value="302">302 Temporary</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:end;">
+                        <label class="checkbox-label" style="margin:0;">
+                            <input type="checkbox" id="redirect-enabled" checked>
+                            <span>Enabled</span>
+                        </label>
+                    </div>
+                </div>
+                <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                    <button type="submit" class="btn btn-primary">Save redirect</button>
+                    <button type="button" class="btn btn-secondary" id="redirect-form-reset">Clear</button>
+                </div>
+                <div id="redirect-feedback" style="display:none; font-size:0.875rem;" aria-live="polite"></div>
+            </form>
+        </section>
+
+        <section class="card">
+            <div class="section-header">
+                <h2>Saved redirects</h2>
+            </div>
+            <div id="redirects-empty" class="empty-state" style="display:none;">
+                <p>No redirects saved yet.</p>
+            </div>
+            <div class="table-viewport">
+                <table class="data-table" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="redirects-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script<?= $__birklyScriptNonceAttr ?? '' ?>>
+(function () {
+    'use strict';
+
+    function apiUrl(path) {
+        return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
+    }
+
+    function escapeHtml(value) {
+        const element = document.createElement('div');
+        element.textContent = String(value ?? '');
+        return element.innerHTML;
+    }
+
+    function csrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
+
+    const form = document.getElementById('redirect-form');
+    const idInput = document.getElementById('redirect-id');
+    const fromInput = document.getElementById('redirect-from-path');
+    const toInput = document.getElementById('redirect-to-path');
+    const typeInput = document.getElementById('redirect-type');
+    const enabledInput = document.getElementById('redirect-enabled');
+    const feedback = document.getElementById('redirect-feedback');
+    const emptyState = document.getElementById('redirects-empty');
+    const tableBody = document.getElementById('redirects-table-body');
+    const resetButton = document.getElementById('redirect-form-reset');
+
+    let redirects = [];
+
+    function setFeedback(message, tone) {
+        if (!feedback) return;
+        if (!message) {
+            feedback.style.display = 'none';
+            feedback.textContent = '';
+            feedback.style.color = '';
+            return;
+        }
+        feedback.style.display = 'block';
+        feedback.textContent = message;
+        feedback.style.color = tone === 'error'
+            ? 'var(--danger-600, #dc2626)'
+            : 'var(--success-600, #16a34a)';
+    }
+
+    function resetForm() {
+        idInput.value = '';
+        fromInput.value = '';
+        toInput.value = '';
+        typeInput.value = '301';
+        enabledInput.checked = true;
+        setFeedback('');
+    }
+
+    function renderTable() {
+        if (!tableBody || !emptyState) return;
+        if (!redirects.length) {
+            tableBody.innerHTML = '';
+            emptyState.style.display = 'block';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        tableBody.innerHTML = redirects.map(function (redirect) {
+            return '<tr>' +
+                '<td><code>' + escapeHtml(redirect.from_path || '') + '</code></td>' +
+                '<td><code>' + escapeHtml(redirect.to_path || '') + '</code></td>' +
+                '<td>' + escapeHtml(String(redirect.type || 301)) + '</td>' +
+                '<td>' + (redirect.enabled ? '<span class="status-badge published">Enabled</span>' : '<span class="status-badge unpublished">Disabled</span>') + '</td>' +
+                '<td>' + escapeHtml(redirect.updated_at || '—') + '</td>' +
+                '<td>' +
+                    '<div style="display:flex; gap:0.5rem; flex-wrap:wrap;">' +
+                        '<button type="button" class="btn btn-secondary btn-sm redirect-edit-btn" data-id="' + escapeHtml(redirect.id || '') + '">Edit</button>' +
+                        '<button type="button" class="btn btn-danger btn-sm redirect-delete-btn" data-id="' + escapeHtml(redirect.id || '') + '">Delete</button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    async function loadRedirects() {
+        try {
+            const response = await fetch(apiUrl('/api/redirects.php?action=list'), { credentials: 'same-origin' });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'ok') {
+                throw new Error(payload.message || 'Failed to load redirects');
+            }
+            redirects = Array.isArray(payload?.data?.redirects) ? payload.data.redirects : [];
+            renderTable();
+        } catch (error) {
+            setFeedback(error.message || 'Failed to load redirects', 'error');
+        }
+    }
+
+    async function saveRedirect(event) {
+        event.preventDefault();
+        setFeedback('');
+
+        try {
+            const response = await fetch(apiUrl('/api/redirects.php?action=save'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    id: idInput.value || undefined,
+                    from_path: fromInput.value,
+                    to_path: toInput.value,
+                    type: Number(typeInput.value || 301),
+                    enabled: enabledInput.checked,
+                    _csrf: csrfToken()
+                })
+            });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'ok') {
+                throw new Error(payload.message || 'Failed to save redirect');
+            }
+            resetForm();
+            setFeedback(payload.message || 'Redirect saved.', 'success');
+            await loadRedirects();
+        } catch (error) {
+            setFeedback(error.message || 'Failed to save redirect', 'error');
+        }
+    }
+
+    async function deleteRedirect(id) {
+        if (!id || !window.confirm('Delete this redirect?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(apiUrl('/api/redirects.php?action=delete'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    id: id,
+                    _csrf: csrfToken()
+                })
+            });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'ok') {
+                throw new Error(payload.message || 'Failed to delete redirect');
+            }
+            if (idInput.value === id) {
+                resetForm();
+            }
+            setFeedback(payload.message || 'Redirect deleted.', 'success');
+            await loadRedirects();
+        } catch (error) {
+            setFeedback(error.message || 'Failed to delete redirect', 'error');
+        }
+    }
+
+    function editRedirect(id) {
+        const redirect = redirects.find(function (item) {
+            return String(item.id || '') === String(id || '');
+        });
+        if (!redirect) {
+            return;
+        }
+        idInput.value = redirect.id || '';
+        fromInput.value = redirect.from_path || '';
+        toInput.value = redirect.to_path || '';
+        typeInput.value = String(redirect.type || 301);
+        enabledInput.checked = Boolean(redirect.enabled);
+        setFeedback('Editing redirect ' + (redirect.from_path || ''), 'success');
+        fromInput.focus();
+    }
+
+    form?.addEventListener('submit', saveRedirect);
+    resetButton?.addEventListener('click', resetForm);
+    tableBody?.addEventListener('click', function (event) {
+        const editButton = event.target.closest('.redirect-edit-btn');
+        if (editButton) {
+            editRedirect(editButton.getAttribute('data-id') || '');
+            return;
+        }
+        const deleteButton = event.target.closest('.redirect-delete-btn');
+        if (deleteButton) {
+            deleteRedirect(deleteButton.getAttribute('data-id') || '');
+        }
+    });
+
+    loadRedirects();
+})();
+</script>

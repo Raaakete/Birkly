@@ -64,6 +64,8 @@ try {
     test_assert('entries template renders', $output !== '');
     test_assert('output contains entries-smart-table or empty-state', strpos($output, 'entries-smart-table') !== false || strpos($output, 'empty-state') !== false);
     test_assert('output contains entry-editor link', strpos($output, 'page=entry-editor') !== false || strpos($output, 'entry-editor') !== false);
+    test_assert('output contains trash filter option', strpos($output, 'value="trashed"') !== false);
+    test_assert('output contains bulk field edit controls', strpos($output, 'bulk-field-apply-btn') !== false && strpos($output, 'bulk-field-name') !== false);
     test_assert('no syntax error text in output', stripos($output, 'syntax error') === false);
     test_assert('no unexpected token in output', stripos($output, 'unexpected token') === false);
 } catch (Throwable $e) {

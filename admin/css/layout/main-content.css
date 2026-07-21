@@ -7,7 +7,7 @@
   flex: 1;
   min-height: calc(100vh - var(--space-10, 2.5rem) * 2);
   overflow-x: hidden;
-  padding: var(--space-10, 2.5rem);
+  padding: var(--admin-shell-edge-padding, var(--space-10, 2.5rem));
   background: var(--background-global, #f8f9f7);
 }
 
@@ -72,10 +72,6 @@
 
 /* Below --bp-xl (1280px), preserve two useful editor columns. */
 @media (max-width: 1279px) {
-  .main-content {
-    padding: var(--space-8, 2rem);
-  }
-
   .editor-layout {
     grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
     gap: var(--space-4, 1rem);
@@ -84,26 +80,9 @@
 
 /* Below --bp-lg (1024px), stack the editor rather than compress controls. */
 @media (max-width: 1023px) {
-  .main-content {
-    padding: var(--space-6, 1.5rem);
-  }
-
   .editor-layout {
     grid-template-columns: 1fr;
   }
 }
 
-/* Below --bp-md (768px) */
-@media (max-width: 767px) {
-  .main-content {
-    padding: var(--space-4, 1rem);
-  }
-}
-
-/* Below --bp-sm (640px) */
-@media (max-width: 639px) {
-  .main-content {
-    padding: var(--space-3, 0.75rem);
-  }
-}
 

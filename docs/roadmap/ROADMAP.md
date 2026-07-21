@@ -188,9 +188,9 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P30 formally closed** — admin forms & navigation UX; **P31 complete** — responsive dashboard and widget API v2 |
+| **Birkly (CMS)** | **P32 complete** — admin chrome polish & core platform UX; **P31 complete** — responsive dashboard |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | P30 admin forms/navigation docs synced; P31 dashboard widgets guide published |
+| **Birkly-Docs** | P32 admin chrome guide + fieldtypes; P31 dashboard widgets guide published |
 | **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
@@ -206,6 +206,12 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 **Priorities:** Widget API v2 · dashboard rebuild on `.card.dash-widget` · core and plugin widgets · canonical breakpoints · responsive shell.
 
 **P31 spec:** `docs/reviews/P31-admin-responsive-dashboard-plan.md` · **Handoff:** `docs/reviews/P31-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P31-verification-matrix.md`
+
+**2026-07-21 — Phase 32 complete** — Admin chrome polish & core platform UX
+
+**Delivered:** Unified `main-actions-bar` action chrome · sticky save bars · icon row actions · media bulk/alt/focal/grid-list · fieldtypes (phone, toggle, markdown, oembed, code) · entry duplicate · global search · trash/restore · bulk field edit · field templates · revision history UI · redirect manager · pending-review inbox links.
+
+**P32 spec:** `docs/reviews/P32-admin-chrome-core-ux-plan.md` · **Handoff:** `docs/reviews/P32-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P32-verification-matrix.md` · **Closure:** `docs/reviews/P32-phase-closure-checklist.md`
 
 **Next active phase:** Phase 28 remains paused pending the next approved execution wave
 

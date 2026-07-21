@@ -218,7 +218,24 @@
                     aside: statusBadge('pending_review'),
                 });
             });
-            const footer = '<a class="dash-widget-footer-link" href="' + escapeHtml(adminUrl('content')) + '">View all content →</a>';
+            const queueLinks = Object.values(entries.reduce(function (acc, entry) {
+                const slug = entry.collection || '';
+                if (!slug) return acc;
+                if (!acc[slug]) {
+                    acc[slug] = {
+                        slug: slug,
+                        name: entry.collection_name || entry.collection || slug,
+                        count: 0,
+                    };
+                }
+                acc[slug].count += 1;
+                return acc;
+            }, {})).map(function (queue) {
+                const label = queue.name + ' (' + queue.count + ')';
+                return '<a class="dash-widget-footer-link" href="' + escapeHtml(adminUrl('entries', { collection: queue.slug, status: 'pending_review' })) + '">' +
+                    escapeHtml(label) + ' →</a>';
+            }).join('');
+            const footer = '<div class="dash-widget-footer-links">' + queueLinks + '</div>';
             setContent(element, feedList(items) + footer);
         });
 
