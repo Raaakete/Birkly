@@ -95,9 +95,12 @@ Birkly.Theme = {
         const toggle = document.getElementById('sidebar-toggle');
         const sidebar = document.querySelector('.sidebar');
         const backdrop = document.getElementById('sidebar-backdrop');
+        const collapseToggle = document.getElementById('sidebar-collapse-toggle');
         if (!toggle || !sidebar) {
             return;
         }
+
+        const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
         const closeSidebar = () => {
             sidebar.classList.remove('open');
@@ -117,12 +120,36 @@ Birkly.Theme = {
             document.body.classList.add('sidebar-open');
         };
 
-        toggle.addEventListener('click', () => {
-            if (sidebar.classList.contains('open')) {
-                closeSidebar();
-            } else {
-                openSidebar();
+        const toggleDesktopCollapse = () => {
+            const next = !document.body.classList.contains('sidebar-collapsed');
+            localStorage.setItem('birkly_sidebar_collapsed', next ? '1' : '0');
+            document.body.classList.toggle('sidebar-collapsed', next);
+            if (collapseToggle) {
+                collapseToggle.setAttribute('aria-pressed', next ? 'true' : 'false');
+                collapseToggle.setAttribute('aria-label', next ? 'Expand sidebar' : 'Collapse sidebar');
+                collapseToggle.setAttribute('title', next ? 'Expand sidebar' : 'Collapse sidebar');
+                const label = collapseToggle.querySelector('.sidebar-collapse-label');
+                if (label) {
+                    label.textContent = next ? 'Expand' : 'Collapse';
+                }
             }
+            document.dispatchEvent(new CustomEvent('birkly:layout-change'));
+        };
+
+        toggle.addEventListener('click', () => {
+            if (isMobile()) {
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+                toggle.setAttribute('aria-label', sidebar.classList.contains('open') ? 'Close menu' : 'Open menu');
+                return;
+            }
+            toggleDesktopCollapse();
+            const collapsed = document.body.classList.contains('sidebar-collapsed');
+            toggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         });
 
         if (backdrop) {
