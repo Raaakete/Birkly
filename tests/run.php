@@ -44,6 +44,7 @@ $suites = [
     'admin_subdir_content_test.php',
     'admin_entries_direct_test.php',
     'pillar_e_api_test.php',
+    'fieldtypes_p32_test.php',
     'global_search_layout_test.php',
     'entry_editor_template_test.php',
     'entry_editor_sidebar_test.php',
