@@ -480,6 +480,18 @@
   }
 }
 
+@media (max-width: 1280px) {
+  .entries-smart-table .head-field:nth-child(n+4),
+  .entries-smart-table .cell-field:nth-child(n+4) {
+    display: none;
+  }
+
+  .entries-smart-table .fields-head-region .head-field:nth-child(n+3),
+  .entries-smart-table .fields-region .cell-field:nth-child(n+3) {
+    display: none;
+  }
+}
+
 @media (max-width: 960px) {
   .entries-smart-table .row-scroll {
     grid-template-columns: 220px 120px 1fr;

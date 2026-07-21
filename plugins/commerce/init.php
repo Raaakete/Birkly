@@ -501,8 +501,8 @@ function commerce_dashboard_widgets(): array
         return [];
     }
 
-    $enabled = (bool) commerce_get_setting('enable_dashboard_widget', false);
-    if (!$enabled) {
+    $enabled = commerce_get_setting('enable_dashboard_widget', null);
+    if ($enabled === false) {
         return [];
     }
 
@@ -511,15 +511,15 @@ function commerce_dashboard_widgets(): array
         $roles = ['admin'];
     }
 
-    $commerceUrl = function_exists('admin_url') ? admin_url('commerce') : '/admin/index.php?page=commerce';
-
     return [[
         'id' => 'commerce-stats',
         'title' => 'Commerce',
+        'size' => 'md',
+        'priority' => 55,
+        'mount' => 'commerceStats',
         'roles' => $roles,
-        'html' => '<div class="payments-dash-widget" id="commerce-dash-widget">'
-            . '<p class="payments-dash-loading">Loading commerce stats…</p></div>'
-            . '<p class="payments-dash-link"><a href="' . htmlspecialchars($commerceUrl) . '">Manage commerce →</a></p>',
+        'plugin_id' => 'commerce',
+        'refresh' => 60,
     ]];
 }
 

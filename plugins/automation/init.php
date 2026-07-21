@@ -32,3 +32,24 @@ require_once __DIR__ . '/plugin_integration.php';
 if (file_exists(__DIR__ . '/cache.php')) {
     require_once __DIR__ . '/cache.php';
 }
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function automation_dashboard_widgets(): array
+{
+    if (!function_exists('birkly_is_plugin_active') || !birkly_is_plugin_active('automation')) {
+        return [];
+    }
+
+    return [[
+        'id' => 'automation-queue',
+        'title' => 'Automation',
+        'size' => 'sm',
+        'priority' => 70,
+        'mount' => 'automationRuns',
+        'roles' => ['admin', 'editor'],
+        'plugin_id' => 'automation',
+        'refresh' => 60,
+    ]];
+}

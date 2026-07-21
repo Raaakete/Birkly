@@ -155,3 +155,23 @@ function studio_absolute_url(string $path): string
 
     return $scheme . '://' . $host . $path;
 }
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function studio_dashboard_widgets(): array
+{
+    if (!studio_plugin_active()) {
+        return [];
+    }
+
+    return [[
+        'id' => 'studio-projects',
+        'title' => 'Studio',
+        'size' => 'md',
+        'priority' => 65,
+        'mount' => 'studioProjects',
+        'roles' => ['admin'],
+        'plugin_id' => 'studio',
+    ]];
+}

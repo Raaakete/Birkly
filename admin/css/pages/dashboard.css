@@ -987,3 +987,214 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   P31 — Unified widget grid
+   ============================================ */
+
+.dash-widget-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6, 1.5rem);
+  margin-top: var(--space-6, 1.5rem);
+  align-items: start;
+}
+
+.dash-widget-grid-loading {
+  grid-column: 1 / -1;
+}
+
+.card.dash-widget {
+  min-height: auto;
+  padding: 0;
+  margin: 0;
+}
+
+.dash-widget--sm {
+  grid-column: span 1;
+}
+
+.dash-widget--md {
+  grid-column: span 1;
+}
+
+.dash-widget--lg {
+  grid-column: span 2;
+}
+
+.dash-widget--full {
+  grid-column: 1 / -1;
+}
+
+.dash-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-5, 1.25rem) var(--space-6, 1.5rem) var(--space-3, 0.75rem);
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.dash-widget-header h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+}
+
+.dash-widget-body {
+  padding: var(--space-5, 1.25rem) var(--space-6, 1.5rem);
+  min-width: 0;
+}
+
+.dash-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+}
+
+.dash-stats-inline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4, 1rem);
+}
+
+.dash-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-4, 1rem);
+  background: var(--bg-secondary, #fafafa);
+  border-radius: var(--radius-md, 0.5rem);
+  border: 1px solid var(--border-light, #f3f4f6);
+}
+
+.dash-stat strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #20221D);
+  line-height: 1.2;
+}
+
+.dash-stat span {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #72746F);
+}
+
+.dash-stat--large strong {
+  font-size: 2rem;
+}
+
+.dash-drafts-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  align-items: flex-start;
+}
+
+.dash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+.dash-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) 0;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.dash-list-item:last-child {
+  border-bottom: none;
+}
+
+.dash-list--compact li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem);
+  font-size: 0.875rem;
+  padding: var(--space-2, 0.5rem) 0;
+}
+
+.dash-list--alerts {
+  gap: var(--space-3, 0.75rem);
+}
+
+.dash-alert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-3, 0.75rem);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-secondary, #fafafa);
+  border: 1px solid var(--border-light, #f3f4f6);
+  font-size: 0.875rem;
+}
+
+.dash-alert--warning {
+  background: var(--warning-50, #fffbeb);
+  border-color: var(--warning-200, #fde68a);
+}
+
+.dash-analytics-mini {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.dash-activity-filters {
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.health-metrics-grid--compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1280px) {
+  .dash-widget-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-widget--lg {
+    grid-column: span 2;
+  }
+
+  .dash-stats-inline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dash-widget-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4, 1rem);
+  }
+
+  .dash-widget--sm,
+  .dash-widget--md,
+  .dash-widget--lg,
+  .dash-widget--full {
+    grid-column: 1;
+  }
+
+  .dash-stats-inline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-quick-actions .btn {
+    flex: 1 1 calc(50% - var(--space-3, 0.75rem));
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-stats-inline {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,6 @@
 # UX Flow Matrix — maintained from P2-M1 baseline
 
-**Last updated:** 2026-07-21 (P30 admin forms & navigation UX)  
+**Last updated:** 2026-07-21 (P31 admin responsive dashboard)  
 **Environment:** PHP 8.3.6, `localhost:8080`, demo content from `create-demo-content.php`  
 **Automated:** `./scripts/ci-check.sh` PASS · `php tests/run.php` PASS (29 suites)  
 **Browser QA:** P4 HTTP E2E in CI; MCP `mcp_http_test.php`; design-reviewer approved MCP tab + BYOAI wizard
@@ -78,3 +78,11 @@
 **Status:** Complete — smart breadcrumbs, stacked `.field-block` forms, inline field validation, editor grid tuning.
 
 **Evidence:** `tests/breadcrumb_truncate_test.php`, `tests/entry_field_validation_test.php`, `admin/js/breadcrumb-truncate.js`, `docs/reviews/P30-verification-matrix.md`
+
+---
+
+## P31 closure (2026-07-21)
+
+**Status:** Complete — unified dashboard widget grid, Widget API v2 (no eval), responsive shell tokens, laptop table/editor pass.
+
+**Evidence:** `tests/dashboard_widget_api_test.php`, `admin/js/dashboard-widgets.js`, `core/dashboard_widgets.php`, `docs/reviews/P31-verification-matrix.md`

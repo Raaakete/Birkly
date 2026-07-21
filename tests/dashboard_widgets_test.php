@@ -42,6 +42,15 @@ $filteredAdmin2 = birkly_filter_dashboard_widgets_for_user([
 ]);
 test_assert('admin sees widget when enabled and roles from settings default', count($filteredAdmin2) === 1);
 
+$merged = birkly_merge_dashboard_widgets([
+    ['id' => 'commerce-stats', 'plugin_id' => 'commerce', 'title' => 'Commerce', 'priority' => 55],
+]);
+test_assert('merge sorts plugin with core widgets', count($merged) > 1);
+
+$commerceInit = file_get_contents(dirname(__DIR__) . '/plugins/commerce/init.php');
+test_assert('commerce widget uses mount not eval html', strpos($commerceInit, "'mount' => 'commerceStats'") !== false);
+test_assert('commerce default widget opt-in not false', strpos($commerceInit, "enable_dashboard_widget', null)") !== false);
+
 $paymentsInit = file_get_contents(dirname(__DIR__) . '/plugins/commerce/init.php');
 test_assert('payments_dashboard_widgets function exists', strpos($paymentsInit, 'function payments_dashboard_widgets') !== false);
 

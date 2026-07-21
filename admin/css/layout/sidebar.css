@@ -265,6 +265,19 @@ body.sidebar-collapsed .sidebar-collapse-toggle svg {
 }
 
 /* Desktop collapsed sidebar — icon rail */
+@media (max-width: 1280px) {
+  .sidebar-collapse-toggle {
+    box-shadow: 0 0 0 2px var(--color-primary, #7CE3BF);
+  }
+
+  .sidebar-collapse-toggle .sidebar-collapse-label::after {
+    content: ' (save space)';
+    font-size: 0.75rem;
+    color: var(--text-tertiary, #94a3b8);
+    font-weight: 400;
+  }
+}
+
 @media (min-width: 769px) {
   body.sidebar-collapsed .sidebar {
     width: calc(var(--space-10, 2.5rem) + 3rem);

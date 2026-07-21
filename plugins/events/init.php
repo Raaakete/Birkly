@@ -234,3 +234,23 @@ function events_upcoming(int $limit = 10): array
     });
     return array_slice($events, 0, max(1, $limit));
 }
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function events_dashboard_widgets(): array
+{
+    if (!events_plugin_active()) {
+        return [];
+    }
+
+    return [[
+        'id' => 'events-upcoming',
+        'title' => 'Events',
+        'size' => 'md',
+        'priority' => 60,
+        'mount' => 'eventsUpcoming',
+        'roles' => ['admin', 'editor'],
+        'plugin_id' => 'events',
+    ]];
+}

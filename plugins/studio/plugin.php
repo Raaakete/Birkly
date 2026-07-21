@@ -73,3 +73,8 @@ if (function_exists('register_plugin_docs')) {
         'keywords' => ['studio', 'visual builder', 'site builder', 'SSR', 'style kit'],
     ]);
 }
+
+global $birkly_plugins;
+if (isset($birkly_plugins['studio'])) {
+    $birkly_plugins['studio']['dashboard_widgets_callback'] = 'studio_dashboard_widgets';
+}
