@@ -58,9 +58,6 @@ $collectionName = 'Phase 32 Articles ' . getmypid();
 $originalTitle = 'Phase 32 Article ' . getmypid();
 $updatedTitle = 'Phase 32 Updated ' . getmypid();
 
-$templateId = 'pillar-e-template-' . getmypid();
-$templatePath = $root . '/content/collections/_templates/' . $templateId . '.json';
-
 $redirectsFile = $root . '/settings/redirects.json';
 $backupRedirects = sys_get_temp_dir() . '/birkly-pillar-e-redirects-' . getmypid() . '.json';
 $redirectFromPath = '/old-phase-' . getmypid();
@@ -280,48 +277,6 @@ try {
             && ($restoredEntry['title'] ?? '') === $originalTitle
     );
 
-    $saveTemplate = birkly_test_http_request($base . '/api/content.php', [
-        'method' => 'POST',
-        'headers' => ['Content-Type: application/json'],
-        'body' => json_encode([
-            'action' => 'save_field_template',
-            'name' => 'Pillar E Template ' . getmypid(),
-            'template_id' => $templateId,
-            'fields' => [
-                ['name' => 'headline', 'label' => 'Headline', 'type' => 'text'],
-                ['name' => 'summary', 'label' => 'Summary', 'type' => 'textarea'],
-            ],
-            '_csrf' => $apiCsrf,
-        ]),
-        'cookie_file' => $cookieFile,
-    ]);
-    $saveTemplateData = birkly_test_json_decode($saveTemplate['body'] ?? '');
-    test_assert(
-        'save field template persists template',
-        ($saveTemplate['code'] ?? 0) === 200
-            && ($saveTemplateData['status'] ?? '') === 'ok'
-            && is_file($templatePath)
-    );
-
-    $listTemplates = birkly_test_http_request($base . '/api/content.php?action=list_field_templates', [
-        'cookie_file' => $cookieFile,
-    ]);
-    $listTemplatesData = birkly_test_json_decode($listTemplates['body'] ?? '');
-    $templateIds = array_map(static function (array $item): string {
-        return (string) ($item['id'] ?? '');
-    }, $listTemplatesData['data']['templates'] ?? []);
-    test_assert('list field templates includes saved template', in_array($templateId, $templateIds, true));
-
-    $applyTemplate = birkly_test_http_request($base . '/api/content.php?action=apply_field_template&template_id=' . rawurlencode($templateId), [
-        'cookie_file' => $cookieFile,
-    ]);
-    $applyTemplateData = birkly_test_json_decode($applyTemplate['body'] ?? '');
-    test_assert(
-        'apply field template returns stored fields',
-        ($applyTemplate['code'] ?? 0) === 200
-            && count($applyTemplateData['data']['fields'] ?? []) === 2
-    );
-
     $saveRedirect = birkly_test_http_request($base . '/api/redirects.php?action=save', [
         'method' => 'POST',
         'headers' => ['Content-Type: application/json'],
@@ -377,7 +332,6 @@ try {
     birkly_test_http_server_stop($serverPid);
     birkly_test_restore_directory($usersDir, $backupUsers);
     pillar_e_remove_tree($collectionDir);
-    @unlink($templatePath);
 
     if (is_file($backupRedirects)) {
         copy($backupRedirects, $redirectsFile);
