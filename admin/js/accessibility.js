@@ -66,10 +66,22 @@
                 input.setAttribute('aria-required', 'true');
                 
                 // Ensure label indicates required
-                const label = group.querySelector('label');
+                const label = group.querySelector('label, .field-title');
                 if (label && !label.textContent.includes('*') && !label.textContent.includes('Required')) {
                     label.innerHTML += ' <span aria-label="required">*</span>';
                 }
+            }
+        });
+        
+        // Field-block inline validation feedback
+        document.querySelectorAll('.field-block--error .field-feedback.error, .field-block.error .field-feedback.error').forEach(error => {
+            const input = error.closest('.field-block')?.querySelector('input, textarea, select');
+            if (input) {
+                if (!error.id) {
+                    error.id = 'error-' + Math.random().toString(36).substr(2, 9);
+                }
+                input.setAttribute('aria-invalid', 'true');
+                input.setAttribute('aria-describedby', error.id);
             }
         });
         
