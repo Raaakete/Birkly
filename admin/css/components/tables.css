@@ -222,6 +222,17 @@
 .entries-smart-table .cell-title .title-text {
   font-weight: 600;
   color: var(--text-primary, #20221D);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.entries-smart-table .cell-title {
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Selected Row */
