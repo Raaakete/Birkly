@@ -6,6 +6,15 @@
   <div class="page-header-actions"></div>
 </div>
 
+<?php
+$stickySaveBarSaveId = 'global-save-settings-btn';
+$stickySaveBarSaveLabel = __('admin.save_settings');
+$stickySaveBarMessageId = 'settings-message';
+$stickySaveBarMessageClass = 'message settings-toast';
+$stickySaveBarSaveClass = 'btn btn-primary';
+include __DIR__ . '/components/sticky-save-bar.php';
+?>
+
 <div class="settings-page">
 
   <div class="settings-tabs">
@@ -1050,15 +1059,6 @@
 
     </div>
   </div>
-
-<?php
-$stickySaveBarSaveId = 'global-save-settings-btn';
-$stickySaveBarSaveLabel = __('admin.save_settings');
-$stickySaveBarMessageId = 'settings-message';
-$stickySaveBarMessageClass = 'message settings-toast';
-$stickySaveBarSaveClass = 'btn btn-primary';
-include __DIR__ . '/components/sticky-save-bar.php';
-?>
 
   <!-- Domain Management Modals -->
   <!-- Add Domain Modal -->
