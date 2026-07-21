@@ -10,8 +10,8 @@
             widget_sizes: {},
             customized: false,
         },
-        customizing: false,
         pickerDraft: null,
+        draggedPickerIndex: null,
     };
 
     function apiUrl(path) {
@@ -362,53 +362,21 @@
     }
 
     function widgetsForDisplay() {
-        const widgets = dashboardState.widgets.slice();
-        if (!dashboardState.customizing) {
-            return widgets.filter(widget => !widget.hidden);
-        }
-        return widgets;
-    }
-
-    function syncLayoutOrderFromWidgets() {
-        dashboardState.layout.widget_order = dashboardState.widgets.map(widget => widget.id);
+        return dashboardState.widgets.filter(widget => !widget.hidden);
     }
 
     function buildWidgetCard(widget) {
         const card = document.createElement('section');
-        const size = ['sm', 'md', 'lg', 'full'].includes(widget.size) ? widget.size : 'md';
-        card.className = 'card dash-widget dash-widget--size-' + size;
-        if (widget.hidden) {
-            card.classList.add('dash-widget--hidden');
-        }
-        if (dashboardState.customizing) {
-            card.classList.add('dash-widget--draggable');
-            card.setAttribute('draggable', 'true');
-        }
+        card.className = 'card dash-widget';
         card.dataset.dashboardWidget = widget.id;
 
         const heading = document.createElement('div');
         heading.className = 'dash-widget-header';
 
-        if (dashboardState.customizing) {
-            const handle = document.createElement('button');
-            handle.type = 'button';
-            handle.className = 'dash-widget-drag-handle';
-            handle.setAttribute('aria-label', 'Drag to reorder ' + (widget.title || widget.id));
-            handle.textContent = '⋮⋮';
-            heading.appendChild(handle);
-        }
-
         const title = document.createElement('h2');
         title.className = 'dash-widget-title';
         title.textContent = widget.title || widget.id;
         heading.appendChild(title);
-
-        if (dashboardState.customizing && widget.hidden) {
-            const hiddenBadge = document.createElement('span');
-            hiddenBadge.className = 'dash-widget-hidden-badge';
-            hiddenBadge.textContent = 'Hidden';
-            heading.appendChild(hiddenBadge);
-        }
 
         const body = document.createElement('div');
         body.className = 'dash-widget-body dash-widget-content';
@@ -422,81 +390,18 @@
         if (!grid || !window.Birkly?.Dashboard) return;
 
         refreshTimers.splice(0).forEach(timer => clearInterval(timer));
-        grid.classList.toggle('dashboard-widget-grid--customizing', dashboardState.customizing);
         grid.replaceChildren();
 
         widgetsForDisplay().forEach(function (widget) {
             const built = buildWidgetCard(widget);
             grid.appendChild(built.card);
             loadAndMountWidget(built.body, widget);
-            if (!dashboardState.customizing && Number(widget.refresh) > 0) {
+            if (Number(widget.refresh) > 0) {
                 refreshTimers.push(window.setInterval(function () {
                     loadAndMountWidget(built.body, widget);
                 }, Number(widget.refresh) * 1000));
             }
         });
-
-        if (dashboardState.customizing) {
-            setupWidgetDragAndDrop(grid);
-        }
-    }
-
-    function setupWidgetDragAndDrop(grid) {
-        let draggedId = '';
-
-        grid.querySelectorAll('.dash-widget--draggable').forEach(function (card) {
-            card.addEventListener('dragstart', function (event) {
-                draggedId = card.dataset.dashboardWidget || '';
-                card.classList.add('dash-widget--dragging');
-                if (event.dataTransfer) {
-                    event.dataTransfer.effectAllowed = 'move';
-                    event.dataTransfer.setData('text/plain', draggedId);
-                }
-            });
-
-            card.addEventListener('dragend', function () {
-                card.classList.remove('dash-widget--dragging');
-                grid.querySelectorAll('.dash-widget--drag-over').forEach(node => node.classList.remove('dash-widget--drag-over'));
-            });
-
-            card.addEventListener('dragover', function (event) {
-                event.preventDefault();
-                if (event.dataTransfer) {
-                    event.dataTransfer.dropEffect = 'move';
-                }
-                card.classList.add('dash-widget--drag-over');
-            });
-
-            card.addEventListener('dragleave', function () {
-                card.classList.remove('dash-widget--drag-over');
-            });
-
-            card.addEventListener('drop', function (event) {
-                event.preventDefault();
-                const targetId = card.dataset.dashboardWidget || '';
-                const sourceId = draggedId || (event.dataTransfer ? event.dataTransfer.getData('text/plain') : '');
-                card.classList.remove('dash-widget--drag-over');
-                if (!sourceId || !targetId || sourceId === targetId) {
-                    return;
-                }
-                reorderWidgets(sourceId, targetId);
-            });
-        });
-    }
-
-    function reorderWidgets(sourceId, targetId) {
-        const widgets = dashboardState.widgets.slice();
-        const sourceIndex = widgets.findIndex(widget => widget.id === sourceId);
-        const targetIndex = widgets.findIndex(widget => widget.id === targetId);
-        if (sourceIndex < 0 || targetIndex < 0) {
-            return;
-        }
-        const [moved] = widgets.splice(sourceIndex, 1);
-        widgets.splice(targetIndex, 0, moved);
-        dashboardState.widgets = widgets;
-        syncLayoutOrderFromWidgets();
-        renderWidgets();
-        persistLayout(dashboardState.layout, false);
     }
 
     function getCsrfToken() {
@@ -535,28 +440,29 @@
         return payload;
     }
 
-    function setCustomizeMode(enabled) {
-        dashboardState.customizing = enabled;
-        const bar = document.getElementById('dashboard-customize-bar');
-        const button = document.getElementById('dashboard-customize-btn');
-        if (bar) bar.hidden = !enabled;
-        if (button) {
-            button.textContent = enabled ? 'Customizing…' : 'Customize dashboard';
-            button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-        }
-        renderWidgets();
-    }
-
     function buildPickerDraft() {
         const hidden = new Set(dashboardState.layout.hidden_widgets || []);
-        const sizes = dashboardState.layout.widget_sizes || {};
-        return dashboardState.widgets.map(function (widget) {
+        const order = dashboardState.layout.widget_order || [];
+        const widgetsById = Object.fromEntries(dashboardState.widgets.map(widget => [widget.id, widget]));
+        const ordered = [];
+
+        order.forEach(function (widgetId) {
+            if (widgetsById[widgetId]) {
+                ordered.push(widgetsById[widgetId]);
+                delete widgetsById[widgetId];
+            }
+        });
+        dashboardState.widgets.forEach(function (widget) {
+            if (widgetsById[widget.id]) {
+                ordered.push(widget);
+            }
+        });
+
+        return ordered.map(function (widget) {
             return {
                 id: widget.id,
                 title: widget.title || widget.id,
                 visible: !hidden.has(widget.id),
-                size: sizes[widget.id] || widget.size || 'md',
-                defaultSize: widget.size || 'md',
             };
         });
     }
@@ -569,6 +475,13 @@
         dashboardState.pickerDraft.forEach(function (item, index) {
             const row = document.createElement('li');
             row.className = 'dashboard-widget-picker__item';
+            row.draggable = true;
+            row.dataset.index = String(index);
+
+            const handle = document.createElement('span');
+            handle.className = 'dashboard-widget-picker__handle';
+            handle.setAttribute('aria-hidden', 'true');
+            handle.textContent = '⋮⋮';
 
             const label = document.createElement('label');
             label.className = 'dashboard-widget-picker__label';
@@ -580,36 +493,67 @@
             });
             label.append(checkbox, document.createTextNode(' ' + item.title));
 
-            const sizeSelect = document.createElement('select');
-            sizeSelect.className = 'input dashboard-widget-picker__size';
-            ['sm', 'md', 'lg', 'full'].forEach(function (size) {
-                const option = document.createElement('option');
-                option.value = size;
-                option.textContent = size.toUpperCase();
-                if (size === item.size) {
-                    option.selected = true;
+            row.append(handle, label);
+            list.appendChild(row);
+        });
+
+        setupPickerDragAndDrop(list);
+    }
+
+    function setupPickerDragAndDrop(list) {
+        let draggedIndex = null;
+
+        list.querySelectorAll('.dashboard-widget-picker__item').forEach(function (row) {
+            row.addEventListener('dragstart', function (event) {
+                draggedIndex = Number(row.dataset.index);
+                row.classList.add('dashboard-widget-picker__item--dragging');
+                if (event.dataTransfer) {
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', String(draggedIndex));
                 }
-                sizeSelect.appendChild(option);
-            });
-            sizeSelect.addEventListener('change', function () {
-                dashboardState.pickerDraft[index].size = sizeSelect.value;
             });
 
-            row.append(label, sizeSelect);
-            list.appendChild(row);
+            row.addEventListener('dragend', function () {
+                row.classList.remove('dashboard-widget-picker__item--dragging');
+                list.querySelectorAll('.dashboard-widget-picker__item--drag-over').forEach(function (node) {
+                    node.classList.remove('dashboard-widget-picker__item--drag-over');
+                });
+            });
+
+            row.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                row.classList.add('dashboard-widget-picker__item--drag-over');
+            });
+
+            row.addEventListener('dragleave', function () {
+                row.classList.remove('dashboard-widget-picker__item--drag-over');
+            });
+
+            row.addEventListener('drop', function (event) {
+                event.preventDefault();
+                row.classList.remove('dashboard-widget-picker__item--drag-over');
+                const sourceIndex = draggedIndex ?? Number(event.dataTransfer?.getData('text/plain'));
+                const targetIndex = Number(row.dataset.index);
+                if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex) || sourceIndex === targetIndex) {
+                    return;
+                }
+                const draft = dashboardState.pickerDraft.slice();
+                const [moved] = draft.splice(sourceIndex, 1);
+                draft.splice(targetIndex, 0, moved);
+                dashboardState.pickerDraft = draft;
+                renderWidgetPicker();
+            });
         });
     }
 
     function openCustomizeModal() {
         dashboardState.pickerDraft = buildPickerDraft();
         renderWidgetPicker();
-        const modal = document.getElementById('dashboard-customize-modal');
-        if (modal) modal.style.display = 'flex';
+        document.getElementById('dashboard-customize-modal')?.classList.add('active');
     }
 
     function closeCustomizeModal() {
-        const modal = document.getElementById('dashboard-customize-modal');
-        if (modal) modal.style.display = 'none';
+        document.getElementById('dashboard-customize-modal')?.classList.remove('active');
         dashboardState.pickerDraft = null;
     }
 
@@ -618,52 +562,33 @@
         const hiddenWidgets = dashboardState.pickerDraft
             .filter(item => !item.visible)
             .map(item => item.id);
-        const widgetSizes = {};
-        dashboardState.pickerDraft.forEach(function (item) {
-            if (item.size && item.size !== item.defaultSize) {
-                widgetSizes[item.id] = item.size;
-            }
-        });
-        dashboardState.layout.hidden_widgets = hiddenWidgets;
-        dashboardState.layout.widget_sizes = widgetSizes;
-        dashboardState.widgets = dashboardState.widgets.map(function (widget) {
-            return {
-                ...widget,
-                hidden: hiddenWidgets.includes(widget.id),
-                size: widgetSizes[widget.id] || widget.size,
-            };
-        });
-        syncLayoutOrderFromWidgets();
+        const widgetOrder = dashboardState.pickerDraft.map(item => item.id);
+        dashboardState.layout = {
+            widget_order: widgetOrder,
+            hidden_widgets: hiddenWidgets,
+            widget_sizes: {},
+            customized: true,
+        };
         closeCustomizeModal();
         await persistLayout(dashboardState.layout, true);
-        if (dashboardState.customizing) {
-            renderWidgets();
-        }
     }
 
     function setupCustomizeUi() {
-        document.getElementById('dashboard-customize-btn')?.addEventListener('click', function () {
-            if (dashboardState.customizing) {
-                setCustomizeMode(false);
-                return;
-            }
-            setCustomizeMode(true);
-        });
-        document.getElementById('dashboard-customize-done')?.addEventListener('click', function () {
-            setCustomizeMode(false);
-        });
-        document.getElementById('dashboard-open-picker-btn')?.addEventListener('click', openCustomizeModal);
-        document.getElementById('dashboard-customize-btn')?.addEventListener('dblclick', openCustomizeModal);
+        document.getElementById('dashboard-customize-btn')?.addEventListener('click', openCustomizeModal);
         document.getElementById('dashboard-customize-close')?.addEventListener('click', closeCustomizeModal);
         document.getElementById('dashboard-customize-cancel')?.addEventListener('click', closeCustomizeModal);
         document.getElementById('dashboard-customize-save')?.addEventListener('click', applyPickerDraft);
         document.getElementById('dashboard-reset-layout-btn')?.addEventListener('click', async function () {
             await resetLayout();
             closeCustomizeModal();
-            setCustomizeMode(false);
         });
         document.getElementById('dashboard-customize-modal')?.addEventListener('click', function (event) {
             if (event.target === event.currentTarget) {
+                closeCustomizeModal();
+            }
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
                 closeCustomizeModal();
             }
         });
