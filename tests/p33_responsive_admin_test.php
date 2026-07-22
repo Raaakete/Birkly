@@ -22,7 +22,8 @@ function p33_assert_contains(string $file, string $needle, string $label): void
     }
 }
 
-p33_assert_contains('admin/css/components/tables.css', 'width: max-content', 'M1 fields-region scroll width');
+p33_assert_contains('admin/css/layout/main-content.css', 'min-width: 0', 'Shell main-content flex shrink');
+p33_assert_contains('admin/css/components/tables.css', 'max-width: 100%', 'Table viewport containment');
 p33_assert_contains('admin/css/layout/sidebar.css', 'max-width: 1279px', 'M6 drawer breakpoint');
 p33_assert_contains('admin/js/theme.js', 'min-width: 1280px', 'M6 theme drawer breakpoint');
 p33_assert_contains('admin/css/components/tabs-v2.css', 'tabs-v2-picker-wrap', 'M3 picker menu affordance');
