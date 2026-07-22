@@ -178,6 +178,14 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md`
 
+**2026-07-22 — Phase 34 approved** (Keven) — **Birkly Ops & platform production** (next strategic phase)
+
+**Priorities:** Three-surface deploy (`ops` / `providers` / `marketplace` on `*.birkly.cloud`) · production registry + plugin install · Provider Studio separate hostname · Ops feedback/registry/releases · CMS wire-up · pause P33/P28 until P34-M22.
+
+**Human decisions (locked):** One repo (`Birkly-Marketplace`) · ops = staff only · providers.birkly.cloud = seller portal · marketplace.birkly.cloud = public + CMS API · shared `data/` on VPS · notify once at P34-M22.
+
+**Spec:** `docs/reviews/P34-birkly-ops-platform-plan.md` · **Handoff:** `docs/reviews/P34-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P34-verification-matrix.md` · **Vision:** `Birkly-Marketplace/docs/BIRKLY_OPS_VISION.md`
+
 ---
 
 ## Vision
@@ -196,8 +204,8 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P32 complete** — chrome polish + core UX · **P33 approved** — responsive refinement |
-| **Birkly-Marketplace** | P10 complete — **17 test suites** green |
+| **Birkly (CMS)** | **P32 complete** — chrome polish + core UX · **P33 paused** — resume after P34-M22 |
+| **Birkly-Marketplace** | P10 complete — VPS at `ops.birkly.cloud` · **P34 approved** — Ops platform production |
 | **Birkly-Docs** | P32 guide published; P33 docs pending |
 | **kekaba** | **Baked HTML** — P28 when P28 resumes |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
@@ -227,9 +235,9 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **P33 spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md`
 
-**Next active phase:** **Phase 33** — **approved, execution ready** (2026-07-22)
+**Next active phase:** **Phase 34** — **Birkly Ops & platform production** — approved, execution ready (2026-07-22)
 
-**Paused:** **Phase 28** — Beta launch automation — resume after P33-M20 · **Phase 26** — Studio creative — resume after P28-M20
+**Paused:** **Phase 33** — Admin responsive refinement — resume after P34-M22 · **Phase 28** — Beta launch automation — resume after P34-M22 · **Phase 26** — Studio creative — resume after P28-M20
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
