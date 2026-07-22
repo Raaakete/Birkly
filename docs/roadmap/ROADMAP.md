@@ -170,6 +170,14 @@ When in doubt, treat as major and ask the human.
 
 **Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md` · **Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`
 
+**2026-07-22 — Phase 33 approved** (Keven)
+
+**Priorities:** Entry table truncation fix · tab system v2 (no link cloud) · tablet drawer at 1280px · sidebar scroll-with-page · account/settings/media/help laptop UX · i18n audit · P32 regression polish.
+
+**Human decisions (locked):** Sidebar scrolls with page · drawer below 1280px · long entry fields truncated not hidden · account one sticky save · pause P28 until P33-M20 · notify once at P33-M20.
+
+**Spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md`
+
 ---
 
 ## Vision
@@ -184,14 +192,14 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-21)
+## Current state (verified 2026-07-22)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P32 complete** — admin chrome polish & core platform UX; **P31 complete** — responsive dashboard |
+| **Birkly (CMS)** | **P32 complete** — chrome polish + core UX · **P33 approved** — responsive refinement |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | P32 admin chrome guide + fieldtypes; P31 dashboard widgets guide published |
-| **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
+| **Birkly-Docs** | P32 guide published; P33 docs pending |
+| **kekaba** | **Baked HTML** — P28 when P28 resumes |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
 
@@ -213,9 +221,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **P32 spec:** `docs/reviews/P32-admin-chrome-core-ux-plan.md` · **Handoff:** `docs/reviews/P32-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P32-verification-matrix.md` · **Closure:** `docs/reviews/P32-phase-closure-checklist.md`
 
-**Next active phase:** Phase 28 remains paused pending the next approved execution wave
+**2026-07-22 — Phase 33 approved** (Keven) — Admin responsive refinement & UX polish
 
-**Paused:** Phase 28 beta-launch automation · Phase 26 Studio creative suite remains paused
+**Priorities:** Smart-table truncation · tab v2 · drawer @ 1280px · sidebar scroll-with-page · account redesign · media/help/settings laptop UX · i18n · regression polish.
+
+**P33 spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md`
+
+**Next active phase:** **Phase 33** — **approved, execution ready** (2026-07-22)
+
+**Paused:** **Phase 28** — Beta launch automation — resume after P33-M20 · **Phase 26** — Studio creative — resume after P28-M20
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
