@@ -188,7 +188,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P32 complete** — admin chrome polish & core platform UX; **P31 complete** — responsive dashboard |
+| **Birkly (CMS)** | **P33 complete** — admin responsive refinement & UX polish; **P32 complete** — admin chrome polish & core platform UX; **P31 complete** — responsive dashboard |
 | **Birkly-Marketplace** | P10 complete — **17 test suites** green |
 | **Birkly-Docs** | P32 admin chrome guide + fieldtypes; P31 dashboard widgets guide published |
 | **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
@@ -212,6 +212,12 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 **Delivered:** Unified `main-actions-bar` action chrome · sticky save bars · icon row actions · media bulk/alt/focal/grid-list · fieldtypes (phone, toggle, markdown, oembed, code) · entry duplicate · global search · trash/restore · bulk field edit · field templates · revision history UI · redirect manager · pending-review inbox links.
 
 **P32 spec:** `docs/reviews/P32-admin-chrome-core-ux-plan.md` · **Handoff:** `docs/reviews/P32-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P32-verification-matrix.md` · **Closure:** `docs/reviews/P32-phase-closure-checklist.md`
+
+**2026-07-22 — Phase 33 complete** — Admin responsive refinement & UX polish
+
+**Delivered:** Entry table fields-region flex + ellipsis truncation · Tab v2 (scroll+More @1024–1279, picker <1024) · drawer @1280px · sidebar scroll-with-page · settings/account/media/help/plugins responsive · account cards + unified sticky save · i18n audit all locales · trash sidebar link · global search + FAB dark-mode polish.
+
+**P33 spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md` · **Docs:** Birkly-Docs `guides/admin-responsive-refinement.md`
 
 **Next active phase:** Phase 28 remains paused pending the next approved execution wave
 

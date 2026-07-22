@@ -5,14 +5,16 @@
   <div class="page-header-actions"></div>
 </div>
 <div class="plugins-page">
-    <div class="plugins-tabs" role="tablist">
-        <button type="button" class="plugins-tab" data-tab="marketplace" role="tab" aria-selected="false">
+    <div class="plugins-tabs tabs-v2-root" role="tablist">
+        <div class="tabs">
+        <button type="button" class="tab plugins-tab" data-tab="marketplace" role="tab" aria-selected="false">
             {translate 'admin.marketplace'}
         </button>
-        <button type="button" class="plugins-tab" data-tab="installed" role="tab" aria-selected="false">
+        <button type="button" class="tab plugins-tab" data-tab="installed" role="tab" aria-selected="false">
             {translate 'admin.installed_plugins'}
             <span class="update-badge hidden" id="plugins-update-badge" title="{translate 'admin.updates_available'}">0</span>
         </button>
+        </div>
     </div>
 
     <div class="plugins-tab-panel" id="plugins-tab-marketplace" role="tabpanel" hidden>

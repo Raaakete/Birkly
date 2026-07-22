@@ -133,7 +133,7 @@ Birkly.Theme = {
 
         sidebar.querySelectorAll('.nav-links a').forEach((link) => {
             link.addEventListener('click', () => {
-                if (window.matchMedia('(max-width: 767px)').matches) {
+                if (window.matchMedia('(max-width: 1279px)').matches) {
                     closeSidebar();
                 }
             });
@@ -146,7 +146,7 @@ Birkly.Theme = {
         });
 
         window.addEventListener('resize', () => {
-            if (window.matchMedia('(min-width: 768px)').matches) {
+            if (window.matchMedia('(min-width: 1280px)').matches) {
                 closeSidebar();
             }
         });
@@ -154,8 +154,8 @@ Birkly.Theme = {
 
     initDesktopSidebarCollapse() {
         const STORAGE_KEY = 'birkly_sidebar_collapsed';
-        const DESKTOP_QUERY = '(min-width: 768px)';
-        const COMPACT_QUERY = '(min-width: 768px) and (max-width: 1279px)';
+        const DESKTOP_QUERY = '(min-width: 1280px)';
+        const COMPACT_QUERY = '(min-width: 1280px) and (max-width: 1439px)';
         const toggle = document.getElementById('sidebar-collapse-toggle');
         if (!toggle) {
             return;
