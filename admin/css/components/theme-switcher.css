@@ -61,8 +61,3 @@
   }
 }
 
-@media (max-width: 768px) {
-  .admin-topbar .theme-switcher {
-    order: -1;
-  }
-}
