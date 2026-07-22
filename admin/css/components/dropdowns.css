@@ -52,12 +52,19 @@
   max-width: calc(100vw - var(--space-4, 1rem));
 }
 
-/* If dropdown would go off-screen, align to left instead */
+/* If dropdown would go off-screen on generic pages, flip alignment */
 @media (max-width: 768px) {
-  .dropdown-menu-right {
+  .dropdown-menu-right:not(.notifications-dropdown) {
     right: auto;
     left: 0;
   }
+}
+
+/* Topbar notifications — keep anchored to the right edge on mobile */
+.admin-topbar .notifications-dropdown.dropdown-menu-right,
+.notifications-wrapper .notifications-dropdown {
+  right: 0;
+  left: auto;
 }
 
 /* Dropdown Menu - Show when active */

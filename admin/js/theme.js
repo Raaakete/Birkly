@@ -38,9 +38,19 @@ Birkly.Theme = {
         this.applyTheme();
     },
 
+    cycleTheme() {
+        const idx = this.THEMES.indexOf(this.currentTheme);
+        const next = this.THEMES[(idx + 1) % this.THEMES.length];
+        this.setTheme(next);
+    },
+
     toggleTheme() {
         const next = this.currentTheme === 'light' ? 'dark' : 'light';
         this.setTheme(next);
+    },
+
+    _isCompactThemeSwitcher() {
+        return window.matchMedia('(max-width: 480px)').matches;
     },
 
     getCurrentTheme() {
@@ -62,20 +72,41 @@ Birkly.Theme = {
         switcher.querySelectorAll('.theme-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const theme = btn.getAttribute('data-theme');
-                if (theme) {
-                    this.setTheme(theme);
+                if (!theme) {
+                    return;
                 }
+                if (this._isCompactThemeSwitcher() && theme === this.currentTheme) {
+                    this.cycleTheme();
+                    return;
+                }
+                this.setTheme(theme);
             });
         });
         this._updateSwitcherUI();
     },
 
     _updateSwitcherUI() {
+        const compact = this._isCompactThemeSwitcher();
         document.querySelectorAll('.theme-switcher .theme-btn').forEach((btn) => {
             const theme = btn.getAttribute('data-theme');
             const active = theme === this.currentTheme;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            if (!theme) {
+                return;
+            }
+            const labels = { light: 'Light', dark: 'Dark', system: 'System' };
+            const baseLabel = labels[theme] || theme;
+            if (active && compact) {
+                const nextIdx = (this.THEMES.indexOf(theme) + 1) % this.THEMES.length;
+                const nextTheme = this.THEMES[nextIdx];
+                const nextLabel = labels[nextTheme] || nextTheme;
+                btn.setAttribute('title', `${baseLabel} theme (tap to switch to ${nextLabel})`);
+                btn.setAttribute('aria-label', `${baseLabel} theme. Tap to switch to ${nextLabel}.`);
+            } else {
+                btn.setAttribute('title', baseLabel);
+                btn.setAttribute('aria-label', `${baseLabel} theme`);
+            }
         });
     },
 

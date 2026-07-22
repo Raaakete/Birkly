@@ -674,20 +674,6 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 }
 
 @media (max-width: 639px) {
-  .admin-layout {
-    --admin-shell-edge-padding: var(--space-3, 0.75rem);
-  }
-
-  .sidebar {
-    padding: var(--admin-shell-edge-padding);
-  }
-}
-
-.sidebar-toggle {
-  display: none;
-}
-
-@media (max-width: 1279px) {
   body.sidebar-collapsed .sidebar {
     width: 280px;
   }
