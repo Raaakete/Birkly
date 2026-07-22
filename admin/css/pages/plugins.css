@@ -188,15 +188,27 @@
   }
 }
 
-/* Marketplace tab (P9-M6) */
-.plugins-tabs {
+/* Marketplace tab (P9-M6) — works with Tab v2 wrapper */
+.plugins-tabs.tabs-v2-root {
+  display: block;
+  margin-bottom: var(--space-5, 1.25rem);
+  border-bottom: none;
+}
+
+.plugins-tabs:not(.tabs-v2-root) {
   display: flex;
   gap: var(--space-2, 0.5rem);
   margin-bottom: var(--space-5, 1.25rem);
   border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
-.plugins-tab {
+.plugins-tabs .tabs {
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  margin-bottom: 0;
+}
+
+.plugins-tab,
+.plugins-tabs .tab.plugins-tab {
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -597,5 +609,60 @@
 
 .plugins-empty-state .form-help {
   margin: var(--space-3, 0.75rem) 0 var(--space-5, 1.25rem);
+}
+
+/* P33 responsive — plugins + marketplace */
+@media (max-width: 1023px) {
+  .plugins-page {
+    min-width: 0;
+  }
+
+  .plugins-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-toolbar {
+    margin-bottom: var(--space-4, 1rem);
+  }
+
+  .marketplace-search {
+    flex-direction: column;
+    max-width: none;
+    width: 100%;
+  }
+
+  .marketplace-search .btn {
+    width: 100%;
+  }
+
+  .marketplace-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-3, 0.75rem);
+    width: 100%;
+  }
+
+  .marketplace-filter {
+    width: 100%;
+  }
+
+  .marketplace-offers-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .plugin-card {
+    padding: var(--space-4, 1rem);
+  }
+
+  .plugin-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .plugin-actions .btn {
+    width: 100%;
+  }
 }
 

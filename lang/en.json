@@ -469,6 +469,7 @@
         "search_navigate_hint": "Navigate",
         "search_open_hint": "Open",
         "search_close_hint": "Close",
-        "select_section": "Select section"
+        "select_section": "Select section",
+        "tab_menu": "Section menu"
     }
 }

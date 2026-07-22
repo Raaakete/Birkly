@@ -22,10 +22,11 @@ function p33_assert_contains(string $file, string $needle, string $label): void
     }
 }
 
-p33_assert_contains('admin/css/components/tables.css', 'flex: 1 1 0', 'M1 fields-region flex');
+p33_assert_contains('admin/css/components/tables.css', 'width: max-content', 'M1 fields-region scroll width');
 p33_assert_contains('admin/css/layout/sidebar.css', 'max-width: 1279px', 'M6 drawer breakpoint');
 p33_assert_contains('admin/js/theme.js', 'min-width: 1280px', 'M6 theme drawer breakpoint');
-p33_assert_contains('admin/js/tabs-v2.js', 'BP_XL = 1280', 'M3 tab v2 breakpoints');
+p33_assert_contains('admin/css/components/tabs-v2.css', 'tabs-v2-picker-wrap', 'M3 picker menu affordance');
+p33_assert_contains('admin/css/components/tabs-v2.css', 'tabs-v2-picker-icon', 'M3 picker hamburger icon');
 p33_assert_contains('admin/templates/settings.html', 'tabs-v2-root', 'M4 settings tabs v2');
 p33_assert_contains('admin/partials/sidebar.php', 'admin.trash', 'M14 trash nav');
 p33_assert_contains('admin/templates/account.html', 'account-save-btn', 'M5 account sticky save');
