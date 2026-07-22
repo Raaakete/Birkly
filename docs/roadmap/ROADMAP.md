@@ -170,6 +170,22 @@ When in doubt, treat as major and ask the human.
 
 **Handoff:** `docs/reviews/P6.5-lead-engineer-handoff.md` · **Model:** `docs/reviews/P6-commerce-scenarios-and-model.md`
 
+**2026-07-22 — Phase 33 approved** (Keven)
+
+**Priorities:** Entry table truncation fix · tab system v2 (no link cloud) · tablet drawer at 1280px · sidebar scroll-with-page · account/settings/media/help laptop UX · i18n audit · P32 regression polish.
+
+**Human decisions (locked):** Sidebar scrolls with page · drawer below 1280px · long entry fields truncated not hidden · account one sticky save · pause P28 until P33-M20 · notify once at P33-M20.
+
+**Spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md`
+
+**2026-07-22 — Phase 34 approved** (Keven) — **Birkly Ops & platform production** (next strategic phase)
+
+**Priorities:** Three-surface deploy (`ops` / `providers` / `marketplace` on `*.birkly.cloud`) · production registry + plugin install · Provider Studio separate hostname · Ops feedback/registry/releases · CMS wire-up · pause P33/P28 until P34-M22.
+
+**Human decisions (locked):** One repo (`Birkly-Marketplace`) · ops = staff only · providers.birkly.cloud = seller portal · marketplace.birkly.cloud = public + CMS API · shared `data/` on VPS · notify once at P34-M22.
+
+**Spec:** `docs/reviews/P34-birkly-ops-platform-plan.md` · **Handoff:** `docs/reviews/P34-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P34-verification-matrix.md` · **Vision:** `Birkly-Marketplace/docs/BIRKLY_OPS_VISION.md`
+
 ---
 
 ## Vision
@@ -184,14 +200,14 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-21)
+## Current state (verified 2026-07-22)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P33 complete** — admin responsive refinement & UX polish; **P32 complete** — admin chrome polish & core platform UX; **P31 complete** — responsive dashboard |
-| **Birkly-Marketplace** | P10 complete — **17 test suites** green |
-| **Birkly-Docs** | P32 admin chrome guide + fieldtypes; P31 dashboard widgets guide published |
-| **kekaba** | **Baked HTML** (`birkly-baked`) — P28-M9/M10 targets live path |
+| **Birkly (CMS)** | **P33 complete** — admin responsive refinement · **P32/P31 complete** |
+| **Birkly-Marketplace** | P10 complete — VPS at `ops.birkly.cloud` · **P34 approved** — Ops platform production |
+| **Birkly-Docs** | P33 admin responsive guide + P32 fieldtypes; P31 dashboard widgets |
+| **kekaba** | **Baked HTML** (`birkly-baked`) — P28 resumes after P34-M22 |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
 
@@ -219,9 +235,9 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **P33 spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md` · **Docs:** Birkly-Docs `guides/admin-responsive-refinement.md`
 
-**Next active phase:** Phase 28 remains paused pending the next approved execution wave
+**Next active phase:** **Phase 34** — **Birkly Ops & platform production** — approved, execution ready (2026-07-22)
 
-**Paused:** Phase 28 beta-launch automation · Phase 26 Studio creative suite remains paused
+**Paused:** **Phase 28** — Beta launch automation — resume after P34-M22 · **Phase 26** — Studio creative — resume after P28-M20
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
