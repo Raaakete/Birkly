@@ -34,6 +34,7 @@
 @import url('components/cards.css');
 @import url('components/messages.css');
 @import url('components/tabs.css');
+@import url('components/tabs-v2.css');
 @import url('components/search.css');
 @import url('components/notifications.css');
 @import url('components/theme-switcher.css');
@@ -57,6 +58,7 @@
 @import url('pages/media.css');
 @import url('pages/plugins.css');
 @import url('pages/help.css');
+@import url('pages/account.css');
 @import url('plugin-page.css');
 
 /* ============================================
