@@ -425,3 +425,64 @@
   }
 }
 
+/* Mobile shell — keep topbar and controls inside the viewport */
+@media (max-width: 1279px) {
+  .admin-topbar {
+    max-width: 100%;
+    min-width: 0;
+    gap: var(--space-2, 0.5rem);
+  }
+
+  .admin-topbar-left {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
+  .admin-topbar-actions {
+    flex-shrink: 0;
+    gap: var(--space-1, 0.25rem);
+  }
+
+  .admin-topbar .sidebar-toggle {
+    position: relative;
+    z-index: 60;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .admin-topbar .topbar-icon-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    touch-action: manipulation;
+  }
+
+  .admin-topbar .theme-switcher {
+    padding: 1px;
+    height: 34px;
+  }
+
+  .admin-topbar .theme-btn {
+    width: 30px;
+    min-width: 30px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-topbar-actions .theme-switcher .theme-btn:not(.active) {
+    display: none;
+  }
+
+  .admin-topbar-actions .theme-switcher .theme-btn.active {
+    width: 34px;
+    min-width: 34px;
+  }
+}
