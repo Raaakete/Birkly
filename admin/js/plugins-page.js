@@ -791,6 +791,10 @@
             }
             window.history.replaceState({}, '', pageUrl.pathname + pageUrl.search + pageUrl.hash);
         }
+        var tabsRoot = document.querySelector('.plugins-tabs.tabs-v2-root');
+        if (tabsRoot && window.Birkly && window.Birkly.TabsV2 && typeof window.Birkly.TabsV2.refresh === 'function') {
+            window.Birkly.TabsV2.refresh(tabsRoot);
+        }
     }
 
     function openInstallModal() {
