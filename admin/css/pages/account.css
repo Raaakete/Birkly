@@ -4,12 +4,26 @@
 
 .account-settings-page {
   max-width: 960px;
+  width: 100%;
+  min-width: 0;
 }
 
 .account-settings-page .settings-stack {
   display: flex;
   flex-direction: column;
   gap: var(--space-6, 1.5rem);
+}
+
+.account-settings-page .settings-stack > .card {
+  min-width: 0;
+}
+
+.account-settings-page .settings-form .form-group input,
+.account-settings-page .settings-form .form-group select,
+.account-settings-page .settings-form .form-group textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .account-settings-page .preference-item {
@@ -54,6 +68,14 @@
   object-fit: cover;
 }
 
+.account-settings-page .avatar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin-top: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+}
+
 .account-settings-page .preference-group-title {
   font-size: 0.9375rem;
   font-weight: 600;
@@ -65,9 +87,32 @@
   margin-top: 0;
 }
 
+.account-settings-page .form-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1023px) {
+  .account-settings-page {
+    max-width: none;
+  }
+
+  .account-settings-page + .main-actions-bar--sticky,
+  .main-actions-bar--sticky + .account-settings-page {
+    width: 100%;
+  }
+}
+
 @media (max-width: 639px) {
   .account-settings-page .preference-item {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .account-settings-page .settings-stack > .card {
+    padding: var(--space-4, 1rem);
+  }
+
+  .account-settings-page .section-header h2 {
+    font-size: 1.0625rem;
   }
 }
