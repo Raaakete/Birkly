@@ -4,6 +4,11 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    const unifiedSaveBtn = document.getElementById('account-save-btn');
+    if (unifiedSaveBtn) {
+        unifiedSaveBtn.addEventListener('click', handleUnifiedAccountSave);
+    }
+
     // Profile form
     const profileForm = document.getElementById('account-profile-form');
     if (profileForm) {
@@ -506,6 +511,103 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
     }
 });
 
+
+async function handleUnifiedAccountSave() {
+    const messageEl = document.getElementById('account-save-message');
+    const btn = document.getElementById('account-save-btn');
+    if (btn) {
+        btn.disabled = true;
+    }
+
+    try {
+        const profileForm = document.getElementById('account-profile-form');
+        if (profileForm) {
+            const profileData = new FormData(profileForm);
+            const profileResponse = await fetch(Birkly.url('/api/users.php'), {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: profileData,
+            });
+            const profileResult = await profileResponse.json();
+            if (profileResult.status !== 'ok') {
+                throw new Error(profileResult.message || 'Error updating profile');
+            }
+            if (profileResult.data && profileResult.data.avatar) {
+                refreshTopbarAvatars(profileResult.data.avatar);
+            }
+        }
+
+        const languageForm = document.getElementById('account-language-form');
+        let reloadAfterLanguage = false;
+        if (languageForm) {
+            const language = languageForm.querySelector('#account-language').value;
+            const languageResponse = await fetch(Birkly.url('/api/users.php'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    action: 'set_language',
+                    language: language,
+                    _csrf: getCsrfToken(),
+                }),
+            });
+            const languageResult = await languageResponse.json();
+            if (languageResult.status !== 'ok') {
+                throw new Error(languageResult.message || 'Error saving language preference');
+            }
+            reloadAfterLanguage = true;
+        }
+
+        const notificationsForm = document.getElementById('account-notifications-form');
+        if (notificationsForm) {
+            const prefs = {
+                entry_published: document.getElementById('notify-entry-published')?.checked || false,
+                entry_review: document.getElementById('notify-entry-review')?.checked || false,
+                entry_commented: document.getElementById('notify-entry-commented')?.checked || false,
+                invitation_accepted: document.getElementById('notify-invitation-accepted')?.checked || false,
+                role_changed: document.getElementById('notify-role-changed')?.checked || false,
+                system_updates: document.getElementById('notify-system-updates')?.checked || false,
+                security_events: document.getElementById('notify-security-events')?.checked || false,
+            };
+            const notificationsResponse = await fetch(Birkly.url('/api/users.php'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    action: 'update_notification_preferences',
+                    notification_preferences: prefs,
+                    _csrf: getCsrfToken(),
+                }),
+            });
+            const notificationsResult = await notificationsResponse.json();
+            if (notificationsResult.status !== 'ok') {
+                throw new Error(notificationsResult.message || 'Error saving notification preferences');
+            }
+        }
+
+        if (messageEl) {
+            showMessage(messageEl, 'Changes saved successfully', 'success');
+        }
+
+        if (reloadAfterLanguage) {
+            setTimeout(function () {
+                window.location.reload();
+            }, 800);
+        }
+    } catch (err) {
+        if (messageEl) {
+            showMessage(messageEl, err.message || 'Error saving changes', 'error');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+        }
+    }
+}
 
 function handleProfileSubmit(e) {
     e.preventDefault();

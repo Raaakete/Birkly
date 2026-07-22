@@ -1,4 +1,4 @@
-<div class="search-overlay" id="search-overlay" style="display: none;">
+<div class="search-overlay" id="search-overlay" style="display: none;" data-i18n-type-to-search="Type to search…" data-i18n-no-results="No results found" data-i18n-placeholder="Search collections and entries…">
     <div class="search-overlay-backdrop" id="search-overlay-backdrop"></div>
     <div class="search-overlay-content" role="dialog" aria-modal="true" aria-labelledby="search-input">
         <div class="search-input-wrapper">
