@@ -23,13 +23,13 @@
   overflow: hidden;
 }
 
-/* Hamburger lives in admin-topbar-actions; hidden on desktop drawer-off widths */
-.admin-topbar .sidebar-toggle {
+/* Hamburger is a direct child of .admin-topbar; hidden on desktop */
+.admin-topbar > .sidebar-toggle {
   display: none;
 }
 
 @media (max-width: 1279px) {
-  .admin-topbar .sidebar-toggle {
+  .admin-topbar > .sidebar-toggle {
     display: inline-flex;
     flex-shrink: 0;
   }
@@ -426,32 +426,18 @@
   }
 }
 
-/* Mobile shell — keep topbar and controls inside the viewport */
+/* Mobile shell — hamburger left, actions right, breadcrumbs below */
 @media (max-width: 1279px) {
   .admin-topbar {
     max-width: 100%;
     min-width: 0;
     gap: var(--space-2, 0.5rem);
     flex-wrap: wrap;
+    align-items: center;
   }
 
-  .admin-topbar-left {
-    min-width: 0;
-    flex: 1 1 100%;
-    order: 2;
-    overflow: hidden;
-  }
-
-  .admin-topbar-actions {
-    flex-shrink: 0;
-    gap: var(--space-1, 0.25rem);
-    order: 1;
-    margin-left: auto;
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .admin-topbar .sidebar-toggle {
+  .admin-topbar > .sidebar-toggle {
+    order: 0;
     position: relative;
     z-index: 60;
     flex-shrink: 0;
@@ -463,6 +449,23 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  .admin-topbar-actions {
+    order: 1;
+    flex: 1 1 auto;
+    flex-shrink: 0;
+    gap: var(--space-1, 0.25rem);
+    margin-left: auto;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .admin-topbar-left {
+    order: 2;
+    min-width: 0;
+    flex: 1 1 100%;
+    overflow: hidden;
+  }
+
   .admin-topbar .topbar-icon-btn {
     width: 40px;
     height: 40px;
@@ -471,33 +474,14 @@
     touch-action: manipulation;
   }
 
-  .admin-topbar .theme-switcher {
+  .admin-topbar .theme-switcher--segmented {
     padding: 1px;
     height: 34px;
   }
 
-  .admin-topbar .theme-btn {
+  .admin-topbar .theme-switcher--segmented .theme-btn {
     width: 30px;
     min-width: 30px;
     padding: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-topbar-actions .theme-switcher .theme-btn:not(.active) {
-    display: none;
-  }
-
-  .admin-topbar-actions .theme-switcher .theme-btn.active {
-    position: relative;
-    width: 34px;
-    min-width: 34px;
-    cursor: pointer;
-  }
-
-  .admin-topbar-actions .theme-switcher .theme-btn.active::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
   }
 }
