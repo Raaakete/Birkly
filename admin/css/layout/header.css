@@ -20,13 +20,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-3, 0.75rem);
+  overflow: hidden;
 }
 
-.admin-topbar-left .sidebar-toggle + .admin-topbar-breadcrumbs {
-  margin-left: var(--space-1, 0.25rem);
-}
-
-/* Hamburger: mobile-only nav drawer (hidden on desktop — use sidebar Collapse control) */
+/* Hamburger lives in admin-topbar-actions; hidden on desktop drawer-off widths */
 .admin-topbar .sidebar-toggle {
   display: none;
 }
@@ -35,6 +32,10 @@
   .admin-topbar .sidebar-toggle {
     display: inline-flex;
     flex-shrink: 0;
+  }
+
+  .admin-topbar-actions {
+    flex-wrap: nowrap;
   }
 }
 
@@ -431,17 +432,23 @@
     max-width: 100%;
     min-width: 0;
     gap: var(--space-2, 0.5rem);
+    flex-wrap: wrap;
   }
 
   .admin-topbar-left {
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 1 100%;
+    order: 2;
     overflow: hidden;
   }
 
   .admin-topbar-actions {
     flex-shrink: 0;
     gap: var(--space-1, 0.25rem);
+    order: 1;
+    margin-left: auto;
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .admin-topbar .sidebar-toggle {
@@ -482,7 +489,15 @@
   }
 
   .admin-topbar-actions .theme-switcher .theme-btn.active {
+    position: relative;
     width: 34px;
     min-width: 34px;
+    cursor: pointer;
+  }
+
+  .admin-topbar-actions .theme-switcher .theme-btn.active::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
   }
 }

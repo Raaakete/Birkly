@@ -5,13 +5,6 @@
 ?>
 <header class="admin-topbar" id="admin-topbar">
     <div class="admin-topbar-left">
-        <button class="topbar-icon-btn sidebar-toggle" type="button" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="admin-sidebar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-        </button>
         <nav class="admin-topbar-breadcrumbs" id="admin-topbar-breadcrumbs" aria-label="Breadcrumb"></nav>
     </div>
     <div class="admin-topbar-spacer"></div>
@@ -33,5 +26,12 @@
             </button>
         </div>
         <?php include __DIR__ . '/user-menu.php'; ?>
+        <button class="topbar-icon-btn sidebar-toggle" type="button" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="admin-sidebar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
     </div>
 </header>
