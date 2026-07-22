@@ -119,13 +119,27 @@ Birkly.Theme = {
             document.body.classList.add('sidebar-open');
         };
 
-        toggle.addEventListener('click', () => {
+        let toggleLock = false;
+        const handleToggle = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (toggleLock) {
+                return;
+            }
+            toggleLock = true;
+            window.setTimeout(() => {
+                toggleLock = false;
+            }, 250);
             if (sidebar.classList.contains('open')) {
                 closeSidebar();
             } else {
                 openSidebar();
             }
-        });
+        };
+
+        toggle.addEventListener('click', handleToggle);
 
         if (backdrop) {
             backdrop.addEventListener('click', closeSidebar);
