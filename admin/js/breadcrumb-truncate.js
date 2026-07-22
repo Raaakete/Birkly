@@ -127,7 +127,10 @@
             return nav.clientWidth;
         }
 
-        const toggle = topbarLeft.querySelector('.sidebar-toggle');
+        const topbar = nav.closest('.admin-topbar');
+        const toggle = topbar
+            ? topbar.querySelector('.sidebar-toggle')
+            : topbarLeft.querySelector('.sidebar-toggle');
         const gap = parseFloat(getComputedStyle(topbarLeft).gap || '0') || 12;
         let reserved = 0;
 
