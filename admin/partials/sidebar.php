@@ -58,6 +58,31 @@ function get_active_plugin_navigation(): array {
 
 $activePluginNavigation = get_active_plugin_navigation();
 
+// First collection slug for trash nav link (P33-M14)
+$trashCollectionSlug = '';
+$collectionsRoot = __DIR__ . '/../../content/collections';
+if (is_dir($collectionsRoot)) {
+    foreach (scandir($collectionsRoot) as $collectionDir) {
+        if ($collectionDir === '.' || $collectionDir === '..') {
+            continue;
+        }
+        $collectionPath = $collectionsRoot . '/' . $collectionDir;
+        if (!is_dir($collectionPath)) {
+            continue;
+        }
+        $metaFile = $collectionPath . '/collection.json';
+        if (!is_file($metaFile)) {
+            continue;
+        }
+        $meta = json_decode((string) file_get_contents($metaFile), true);
+        if (!is_array($meta)) {
+            continue;
+        }
+        $trashCollectionSlug = (string) ($meta['slug'] ?? $collectionDir);
+        break;
+    }
+}
+
 // Load settings to get project name and logo
 require_once __DIR__ . '/../../api/storage.php';
 $storage = new Storage(__DIR__ . '/../../settings');
@@ -131,6 +156,20 @@ if (empty($userAvatar)) {
                             <span class="nav-label"><?= __('admin.media') ?></span>
                         </a>
                     </li>
+                    <?php if ($trashCollectionSlug !== ''): ?>
+                    <li class="nav-item">
+                        <a href="<?= htmlspecialchars(admin_url('entries', ['collection' => $trashCollectionSlug, 'status' => 'trashed'])) ?>" class="nav-link <?= (isset($page) && $page === 'entries' && isset($_GET['status']) && $_GET['status'] === 'trashed') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.trash')) ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                                <path d="M10 11v6"></path>
+                                <path d="M14 11v6"></path>
+                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                            </svg>
+                            <span class="nav-label"><?= __('admin.trash') ?></span>
+                        </a>
+                    </li>
+                    <?php endif; ?>
                 </ul>
 
                 <!-- UI Injection Point: admin_navigation_before_plugins -->

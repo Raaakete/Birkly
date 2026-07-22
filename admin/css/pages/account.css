@@ -1,0 +1,118 @@
+/* ============================================
+   Account Settings Page (P33-M5)
+   ============================================ */
+
+.account-settings-page {
+  max-width: 960px;
+  width: 100%;
+  min-width: 0;
+}
+
+.account-settings-page .settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+.account-settings-page .settings-stack > .card {
+  min-width: 0;
+}
+
+.account-settings-page .settings-form .form-group input,
+.account-settings-page .settings-form .form-group select,
+.account-settings-page .settings-form .form-group textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.account-settings-page .preference-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
+  padding: var(--space-3, 0.75rem) 0;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.account-settings-page .preference-item:last-child {
+  border-bottom: none;
+}
+
+.account-settings-page .preference-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-settings-page .preference-title {
+  font-weight: 500;
+  color: var(--text-primary, #20221D);
+}
+
+.account-settings-page .preference-desc {
+  display: block;
+  color: var(--text-secondary, #72746F);
+  font-size: 0.8125rem;
+  margin-top: var(--space-1, 0.25rem);
+}
+
+.account-settings-page .avatar-preview-wrap {
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.account-settings-page .avatar-preview-wrap img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 1px solid var(--border-light, #e2e8f0);
+  object-fit: cover;
+}
+
+.account-settings-page .avatar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin-top: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.account-settings-page .preference-group-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: var(--space-4, 1rem) 0 var(--space-3, 0.75rem);
+  color: var(--text-primary, #20221D);
+}
+
+.account-settings-page .preference-group-title:first-child {
+  margin-top: 0;
+}
+
+.account-settings-page .form-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1023px) {
+  .account-settings-page {
+    max-width: none;
+  }
+
+  .account-settings-page + .main-actions-bar--sticky,
+  .main-actions-bar--sticky + .account-settings-page {
+    width: 100%;
+  }
+}
+
+@media (max-width: 639px) {
+  .account-settings-page .preference-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-settings-page .settings-stack > .card {
+    padding: var(--space-4, 1rem);
+  }
+
+  .account-settings-page .section-header h2 {
+    font-size: 1.0625rem;
+  }
+}

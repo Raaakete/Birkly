@@ -4,9 +4,11 @@
 
 /* Main Content Area */
 .main-content {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   min-height: calc(100vh - var(--space-10, 2.5rem) * 2);
-  overflow-x: clip;
+  overflow-x: hidden;
   padding: var(--admin-shell-edge-padding, var(--space-10, 2.5rem));
   background: var(--background-global, #f8f9f7);
 }
@@ -21,7 +23,14 @@
 /* Content Wrapper */
 .content-wrapper {
   max-width: 100%;
+  min-width: 0;
   margin: 0 auto;
+}
+
+/* Prevent wide page children from expanding the shell */
+.main-content > * {
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Section */

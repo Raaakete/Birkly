@@ -7,6 +7,9 @@
   display: flex;
   flex-direction: row;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   --admin-shell-edge-padding: var(--space-10, 2.5rem);
 }
 
@@ -15,17 +18,13 @@
   min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar — scrolls with the page (P33-D1); no inner scroll container */
 .sidebar {
   display: flex;
   flex-direction: column;
   width: 280px;
-  height: 100vh;
-  max-height: 100vh;
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  overflow: hidden;
+  min-height: 100vh;
+  align-self: stretch;
   transition: width var(--transition-normal, 200ms ease), transform var(--transition-normal, 200ms ease);
   padding: var(--admin-shell-edge-padding);
   padding-right: 0;
@@ -36,10 +35,8 @@
 }
 
 .sidebar-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* Navigation Sidebar Overrides */
@@ -278,8 +275,8 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
   font-weight: 400;
 }
 
-/* Desktop collapsed sidebar — icon rail */
-@media (min-width: 768px) {
+/* Desktop collapsed sidebar — icon rail (≥1280px persistent sidebar only) */
+@media (min-width: 1280px) {
   body.sidebar-collapsed .sidebar {
     width: calc(var(--space-10, 2.5rem) + 3rem);
     padding: var(--admin-shell-edge-padding);
@@ -644,8 +641,8 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
   color: var(--error-600, #dc2626);
 }
 
-/* Responsive */
-@media (max-width: 767px) {
+/* Tablet + mobile drawer — below --bp-xl (1280px) */
+@media (max-width: 1279px) {
   .sidebar-toggle {
     display: inline-flex;
     flex-shrink: 0;
@@ -661,30 +658,23 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
     left: 0;
     top: 0;
     height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
     z-index: 1000;
     box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+    pointer-events: none;
+    visibility: hidden;
+    padding-right: var(--admin-shell-edge-padding);
   }
 
   .sidebar.open {
     transform: translateX(0);
+    pointer-events: auto;
+    visibility: visible;
   }
 }
 
 @media (max-width: 639px) {
-  .admin-layout {
-    --admin-shell-edge-padding: var(--space-3, 0.75rem);
-  }
-
-  .sidebar {
-    padding: var(--admin-shell-edge-padding);
-  }
-}
-
-.sidebar-toggle {
-  display: none;
-}
-
-@media (max-width: 767px) {
   body.sidebar-collapsed .sidebar {
     width: 280px;
   }

@@ -2,6 +2,10 @@
    Theme Switcher Component
    ============================================ */
 
+.theme-switcher-wrap {
+  display: contents;
+}
+
 .theme-switcher {
   display: flex;
   align-items: center;
@@ -17,6 +21,33 @@
 .admin-topbar .theme-switcher {
   margin-bottom: 0;
   flex-shrink: 0;
+}
+
+.theme-switcher-dropdown {
+  display: none;
+}
+
+.theme-switcher-trigger {
+  position: relative;
+}
+
+.theme-switcher-trigger-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-switcher-trigger-icon.is-active {
+  display: inline-flex;
+}
+
+.theme-switcher-menu {
+  min-width: 180px;
+}
+
+.theme-switcher-menu .theme-option.active {
+  background: var(--bg-hover, #f3f4f6);
+  font-weight: 600;
 }
 
 .theme-btn {
@@ -61,8 +92,12 @@
   }
 }
 
-@media (max-width: 768px) {
-  .admin-topbar .theme-switcher {
-    order: -1;
+@media (max-width: 767px) {
+  .theme-switcher--segmented {
+    display: none;
+  }
+
+  .theme-switcher-dropdown {
+    display: inline-block;
   }
 }

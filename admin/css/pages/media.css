@@ -964,3 +964,44 @@
   }
 }
 
+/* P33 responsive pass */
+@media (max-width: 1279px) {
+  .media-library {
+    height: auto;
+    min-height: 0;
+  }
+
+  .media-layout {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .media-sidebar {
+    width: 100%;
+    max-width: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border-light, #f3f4f6);
+    padding-bottom: var(--space-4, 1rem);
+  }
+
+  .toolbar-search .search-input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .media-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .media-header .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .media-header .header-actions .btn {
+    flex: 1 1 auto;
+  }
+}

@@ -31,16 +31,33 @@
   position: relative;
 }
 
-/* Notifications Dropdown - Extends Unified Dropdown with custom width and flex layout */
+.notifications-dropdown.dropdown-menu-right,
 .dropdown-menu.notifications-dropdown {
   width: 380px;
   max-width: calc(100vw - 2rem);
   max-height: 600px;
   min-width: auto;
   padding: 0;
-  display: none; /* Hidden by default */
+  display: none;
   flex-direction: column;
   overflow: hidden;
+  right: 0;
+  left: auto;
+}
+
+@media (max-width: 767px) {
+  .notifications-wrapper .notifications-dropdown.show,
+  .notifications-wrapper .notifications-dropdown.active,
+  .dropdown-menu.notifications-dropdown.show,
+  .dropdown-menu.notifications-dropdown.active {
+    position: fixed;
+    top: calc(5rem + env(safe-area-inset-top, 0px));
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    max-width: none;
+    z-index: 1100;
+  }
 }
 
 /* Show notifications dropdown when active */

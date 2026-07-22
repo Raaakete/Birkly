@@ -127,15 +127,7 @@
             return nav.clientWidth;
         }
 
-        const toggle = topbarLeft.querySelector('.sidebar-toggle');
-        const gap = parseFloat(getComputedStyle(topbarLeft).gap || '0') || 12;
-        let reserved = 0;
-
-        if (toggle && getComputedStyle(toggle).display !== 'none') {
-            reserved += toggle.offsetWidth + gap;
-        }
-
-        return Math.max(0, topbarLeft.clientWidth - reserved);
+        return topbarLeft.clientWidth;
     }
 
     function measureOverflow(nav, availableWidth) {

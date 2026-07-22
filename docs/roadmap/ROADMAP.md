@@ -204,10 +204,10 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P32 complete** — chrome polish + core UX · **P33 paused** — resume after P34-M22 |
+| **Birkly (CMS)** | **P33 complete** — admin responsive refinement · **P32/P31 complete** |
 | **Birkly-Marketplace** | P10 complete — VPS at `ops.birkly.cloud` · **P34 approved** — Ops platform production |
-| **Birkly-Docs** | P32 guide published; P33 docs pending |
-| **kekaba** | **Baked HTML** — P28 when P28 resumes |
+| **Birkly-Docs** | P33 admin responsive guide + P32 fieldtypes; P31 dashboard widgets |
+| **kekaba** | **Baked HTML** (`birkly-baked`) — P28 resumes after P34-M22 |
 | **Birkly-Website** | Open-beta copy + `business/` materials |
 | **Agent ops** | CI + autonomous execution on `main` |
 
@@ -229,15 +229,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **P32 spec:** `docs/reviews/P32-admin-chrome-core-ux-plan.md` · **Handoff:** `docs/reviews/P32-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P32-verification-matrix.md` · **Closure:** `docs/reviews/P32-phase-closure-checklist.md`
 
-**2026-07-22 — Phase 33 approved** (Keven) — Admin responsive refinement & UX polish
+**2026-07-22 — Phase 33 complete** — Admin responsive refinement & UX polish
 
-**Priorities:** Smart-table truncation · tab v2 · drawer @ 1280px · sidebar scroll-with-page · account redesign · media/help/settings laptop UX · i18n · regression polish.
+**Delivered:** Entry table fields-region flex + ellipsis truncation · Tab v2 (scroll+More @1024–1279, picker <1024) · drawer @1280px · sidebar scroll-with-page · settings/account/media/help/plugins responsive · account cards + unified sticky save · i18n audit all locales · trash sidebar link · global search + FAB dark-mode polish.
 
-**P33 spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md`
+**P33 spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md` · **Docs:** Birkly-Docs `guides/admin-responsive-refinement.md`
 
 **Next active phase:** **Phase 34** — **Birkly Ops & platform production** — approved, execution ready (2026-07-22)
 
-**Paused:** **Phase 33** — Admin responsive refinement — resume after P34-M22 · **Phase 28** — Beta launch automation — resume after P34-M22 · **Phase 26** — Studio creative — resume after P28-M20
+**Paused:** **Phase 28** — Beta launch automation — resume after P34-M22 · **Phase 26** — Studio creative — resume after P28-M20
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)

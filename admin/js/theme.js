@@ -55,11 +55,7 @@ Birkly.Theme = {
     },
 
     initSwitcher() {
-        const switcher = document.querySelector('.theme-switcher');
-        if (!switcher) {
-            return;
-        }
-        switcher.querySelectorAll('.theme-btn').forEach((btn) => {
+        document.querySelectorAll('.theme-switcher--segmented .theme-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const theme = btn.getAttribute('data-theme');
                 if (theme) {
@@ -67,15 +63,68 @@ Birkly.Theme = {
                 }
             });
         });
+
+        document.querySelectorAll('.theme-option').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const theme = btn.getAttribute('data-theme');
+                if (!theme) {
+                    return;
+                }
+                this.setTheme(theme);
+                this._closeThemeDropdown(btn.closest('.theme-switcher-dropdown'));
+            });
+        });
+
         this._updateSwitcherUI();
     },
 
+    _closeThemeDropdown(dropdown) {
+        if (!dropdown) {
+            return;
+        }
+        const menu = dropdown.querySelector('.theme-switcher-menu');
+        const trigger = dropdown.querySelector('.dropdown-trigger');
+        if (menu) {
+            menu.classList.remove('show', 'active');
+            menu.style.display = 'none';
+        }
+        if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    },
+
     _updateSwitcherUI() {
-        document.querySelectorAll('.theme-switcher .theme-btn').forEach((btn) => {
+        const labels = { light: 'Light', dark: 'Dark', system: 'Auto' };
+
+        document.querySelectorAll('.theme-switcher--segmented .theme-btn').forEach((btn) => {
             const theme = btn.getAttribute('data-theme');
             const active = theme === this.currentTheme;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            if (theme) {
+                const baseLabel = labels[theme] || theme;
+                btn.setAttribute('title', baseLabel);
+                btn.setAttribute('aria-label', `${baseLabel} theme`);
+            }
+        });
+
+        document.querySelectorAll('.theme-switcher-trigger-icon').forEach((icon) => {
+            const theme = icon.getAttribute('data-theme-icon');
+            icon.classList.toggle('is-active', theme === this.currentTheme);
+        });
+
+        const trigger = document.querySelector('.theme-switcher-trigger');
+        if (trigger) {
+            const label = labels[this.currentTheme] || this.currentTheme;
+            trigger.setAttribute('aria-label', `Color theme: ${label}`);
+            trigger.setAttribute('title', `Color theme: ${label}`);
+        }
+
+        document.querySelectorAll('.theme-option').forEach((btn) => {
+            const theme = btn.getAttribute('data-theme');
+            const active = theme === this.currentTheme;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-checked', active ? 'true' : 'false');
         });
     },
 
@@ -119,13 +168,27 @@ Birkly.Theme = {
             document.body.classList.add('sidebar-open');
         };
 
-        toggle.addEventListener('click', () => {
+        let toggleLock = false;
+        const handleToggle = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (toggleLock) {
+                return;
+            }
+            toggleLock = true;
+            window.setTimeout(() => {
+                toggleLock = false;
+            }, 250);
             if (sidebar.classList.contains('open')) {
                 closeSidebar();
             } else {
                 openSidebar();
             }
-        });
+        };
+
+        toggle.addEventListener('click', handleToggle);
 
         if (backdrop) {
             backdrop.addEventListener('click', closeSidebar);
@@ -133,7 +196,7 @@ Birkly.Theme = {
 
         sidebar.querySelectorAll('.nav-links a').forEach((link) => {
             link.addEventListener('click', () => {
-                if (window.matchMedia('(max-width: 767px)').matches) {
+                if (window.matchMedia('(max-width: 1279px)').matches) {
                     closeSidebar();
                 }
             });
@@ -146,7 +209,7 @@ Birkly.Theme = {
         });
 
         window.addEventListener('resize', () => {
-            if (window.matchMedia('(min-width: 768px)').matches) {
+            if (window.matchMedia('(min-width: 1280px)').matches) {
                 closeSidebar();
             }
         });
@@ -154,8 +217,8 @@ Birkly.Theme = {
 
     initDesktopSidebarCollapse() {
         const STORAGE_KEY = 'birkly_sidebar_collapsed';
-        const DESKTOP_QUERY = '(min-width: 768px)';
-        const COMPACT_QUERY = '(min-width: 768px) and (max-width: 1279px)';
+        const DESKTOP_QUERY = '(min-width: 1280px)';
+        const COMPACT_QUERY = '(min-width: 1280px) and (max-width: 1439px)';
         const toggle = document.getElementById('sidebar-collapse-toggle');
         if (!toggle) {
             return;

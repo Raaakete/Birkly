@@ -1,76 +1,89 @@
 # P33 — Verification matrix
 
-**Date:** 2026-07-22 · **Closure:** P33-M20 — pending
+**Date:** 2026-07-22 · **Closure target:** P33-M19
 
-## Entry tables (TB)
+Manual verification at breakpoints **1280**, **1024**, **768**, and **480** (px viewport width). Mark each cell `pass` when behavior matches locked decisions P33-D1–D8.
 
-| ID | Story | Result | Evidence |
-|----|-------|--------|----------|
-| TB-01 | `fields-region` flexes; no `width: fit-content` | pending | `tables.css` |
-| TB-02 | Long text columns truncated (content, excerpt) | pending | smart-table render |
-| TB-03 | Actions column visible without page scroll | pending | sticky actions + viewport scroll |
-| TB-04 | No duplicate title column | pending | smart-table.php |
-| TB-05 | `entries_table_layout_test.php` | pending | tests |
+**Legend:** `—` = not applicable at this width · `pending` = not yet verified
 
-## Tabs (TB2)
+## P32 closure (M0)
 
-| ID | Story | Result | Evidence |
-|----|-------|--------|----------|
-| TB2-01 | Tab v2 component exists | pending | `tabs-v2.css`, `tabs-v2.js` |
-| TB2-02 | Settings tabs — no link cloud at 1100px | pending | |
-| TB2-03 | Commerce/plugins tabs v2 | pending | |
-| TB2-04 | Help topics nav v2 | pending | |
-| TB2-05 | Editor tabs v2 | pending | |
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| CL-01 | P32 matrix green on `main` | pass | pass | pass | pass | pending |
+| CL-02 | P32 closure checklist complete | — | — | — | — | pending |
+| CL-03 | ROADMAP records P32 complete, P33 active | — | — | — | — | pending |
 
-## Responsive shell (RS)
+## Entry tables (M1)
 
-| ID | Story | Result | Evidence |
-|----|-------|--------|----------|
-| RS-01 | Drawer sidebar below 1280px | pending | `theme.js`, `header.css` |
-| RS-02 | Sidebar scrolls with page (no inner scrollbar) | pending | `sidebar.css` |
-| RS-03 | Settings usable at 1024–1279px | pending | |
-| RS-04 | Media responsive lg/xl | pending | `media.css` |
-| RS-05 | Shell alignment with sidebar nav | pending | |
-| RS-06 | Help layout padding fixed | pending | |
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| ET-01 | All columns visible; long text ellipsis (P33-D3) | pending | pending | pending | pending | pending |
+| ET-02 | Horizontal scroll only in `.table-viewport` | pending | pending | pending | pending | pending |
+| ET-03 | `.fields-region` flex `1 1 0`; no row blowout | pending | pending | pending | pending | pending |
+| ET-04 | Sticky row actions remain visible while scrolling | pending | pending | pending | pending | pending |
+| ET-05 | No double vertical scroll (page vs table) | pending | pending | pending | pending | pending |
 
-## Account (AC)
+## Shell & drawer (M2, M6, M7)
 
-| ID | Story | Result | Evidence |
-|----|-------|--------|----------|
-| AC-01 | Account uses settings-stack cards | pending | `account.html` |
-| AC-02 | Single sticky save bar | pending | |
-| AC-03 | No inline styles on account page | pending | |
-| AC-04 | Account strings i18n | pending | `lang/*.json` |
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| SH-01 | Persistent sidebar at ≥1280; drawer below (P33-D2) | pending | pending | pending | pending | pending |
+| SH-02 | Hamburger opens/closes drawer; overlay dismisses | — | pending | pending | pending | pending |
+| SH-03 | Sidebar scrolls with page — no inner `.sidebar-body` scroll (P33-D1) | pending | pending | pending | pending | pending |
+| SH-04 | Collapsed icon rail only at ≥1280 when user prefers collapsed | pending | — | — | — | pending |
+| SH-05 | Main content padding scales; no header overlap | pending | pending | pending | pending | pending |
 
-## i18n (I18)
+## Tab v2 (M3, M4, M10)
 
-| ID | Story | Result | Evidence |
-|----|-------|--------|----------|
-| I18-01 | All lang files key parity with en.json | pending | |
-| I18-02 | User-menu language sync | pending | |
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| TB-01 | All tabs visible inline | pending | — | — | — | pending |
+| TB-02 | Scroll + **More** overflow menu (P33-D4) | — | pending | — | — | pending |
+| TB-03 | Picker `<select>` below 1024px; no link cloud | — | — | pending | pending | pending |
+| TB-04 | Settings page uses Tab v2 | pending | pending | pending | pending | pending |
+| TB-05 | Plugins / commerce / editor tabs use Tab v2 | pending | pending | pending | pending | pending |
+| TB-06 | Keyboard focus order and `aria-selected` correct | pending | pending | pending | pending | pending |
 
-## Polish (PL)
+## Page layouts (M4–M5, M8–M11)
 
-| ID | Story | Result | Evidence |
-|----|-------|--------|----------|
-| PL-01 | Trash discoverability from entries | pending | |
-| PL-02 | Global search UX polish | pending | |
-| PL-03 | Field templates re-eval | pending | |
-| PL-04 | FAB mobile overlap fixed | pending | |
-| PL-05 | Dark mode tabs/sidebar/media | pending | |
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| PG-01 | Settings panels readable; forms do not clip | pending | pending | pending | pending | pending |
+| PG-02 | Account: settings cards + sticky save (P33-D6) | pending | pending | pending | pending | pending |
+| PG-03 | Media: actions bar + grid/list usable | pending | pending | pending | pending | pending |
+| PG-04 | Help: nav + content readable | pending | pending | pending | pending | pending |
+| PG-05 | Entry editor two columns usable @ 1280 | pending | — | — | — | pending |
+| PG-06 | Collection editor tabs + field list usable | pending | pending | pending | pending | pending |
 
-## Regression (REG)
+## i18n & discoverability (M12–M15)
 
-| ID | Check | Result | Evidence |
-|----|-------|--------|----------|
-| REG-01 | P32 sticky save still works | pending | |
-| REG-02 | P32 dashboard widgets | pending | |
-| REG-03 | `admin-polish-smoke.sh` extended | pending | |
-| REG-04 | `php tests/run.php` green | pending | |
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| I18-01 | Account page strings from `lang/*.json` | pending | pending | pending | pending | pending |
+| I18-02 | Locale files synced (da, de, es, fr, hi, ja, zh) | — | — | — | — | pending |
+| I18-03 | Trash link visible in sidebar | pending | pending | pending | pending | pending |
+| I18-04 | Global search modal fully translated | pending | pending | pending | pending | pending |
 
-## Docs (DOC)
+## Polish (M16)
 
-| ID | Story | Result | Evidence |
-|----|-------|--------|----------|
-| DOC-01 | Birkly-Docs responsive admin guide | pending | |
-| DOC-02 | ux-flow-matrix P33 | pending | |
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| PL-01 | FAB does not overlap save bar or table actions | — | — | pending | pending | pending |
+| PL-02 | FAB contrast correct in dark mode | pending | pending | pending | pending | pending |
+
+## Regression (M17)
+
+| ID | Check | 1280 | 1024 | 768 | 480 | Status |
+|----|-------|------|------|-----|-----|--------|
+| REG-01 | `admin-polish-smoke.sh` extended for P33 | — | — | — | — | pending |
+| REG-02 | `./scripts/ci-check.sh` green | — | — | — | — | pending |
+| REG-03 | `php tests/run.php` green | — | — | — | — | pending |
+| REG-04 | P31/P32 dashboard + chrome smokes still pass | pending | pending | pending | pending | pending |
+
+## Docs (M18)
+
+| ID | Check | Owner | Status |
+|----|-------|-------|--------|
+| DOC-01 | Birkly-Docs responsive admin guide published | Docs | pending |
+| DOC-02 | Breakpoint table documents 1280 drawer + Tab v2 behavior | Docs | pending |

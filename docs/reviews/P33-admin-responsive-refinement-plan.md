@@ -1,8 +1,8 @@
 # P33 — Admin responsive refinement & UX polish
 
-**Status:** Approved (2026-07-22, Keven) — execute now  
-**Baseline:** P32 complete on `main` · P28 **paused** until P33-M20 · P26 **paused**  
-**Human rule:** Execute P33-M0→M20 autonomously. Notify human **once** at **P33-M20**.
+**Status:** Approved (2026-07-22, Keven) — execution ready  
+**Baseline:** P32 complete on `main` · P28 paused · P26 paused  
+**Human rule:** Execute P33-M0→M20 autonomously. Notify once at P33-M20.
 
 **Gap register:** `docs/reviews/P33-gap-register.md`  
 **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md`  
@@ -12,161 +12,129 @@
 
 ## Vision
 
-Fix **broken responsive behavior** and **inconsistent admin UX** left after P32 — especially laptop/tablet (1024–1280px), tab navigation, entry tables, account settings, media, sidebar chrome, and i18n.
+Close the remaining responsive and UX polish gaps in the admin shell after P31 (breakpoint tokens, dashboard grid) and P32 (action chrome, core features). Every admin page should behave intentionally from 480px through wide desktop, with consistent tab navigation, table scrolling, drawer behavior, and i18n coverage.
 
-Human-reported issues (Keven, 2026-07-22):
+**Scope:** `admin/css/`, `admin/js/`, `admin/templates/`, `lang/*.json`, tests, `scripts/admin-polish-smoke.sh`, and Birkly-Docs responsive admin guide.
 
-1. Settings not properly responsive on smaller desktop screens.
-2. Account settings layout/design does not match settings — needs **one save button** and unified cards.
-3. Hamburger/drawer should activate at **tablet resolutions (1280px)**.
-4. Media page not properly responsive yet.
-5. Sidebar inner scrollbar sits on the seam — **sidebar should scroll with the page**.
-6. Account languages need audit and update.
-7. Tab layout stacks into an unreadable **link cloud** — need obvious sub-page navigation.
-8. Entry overview tables: long field content **not truncated**; actions require scrolling the whole window.
+**Out of scope:** P28 journey runner, P26 Studio creative features, marketplace commerce scope changes, kekaba live path, widget drag-and-drop personalization.
 
-Plus all additional fixes identified in planning review (see gap register).
-
-**Scope:** `admin/`, `core/i18n.php`, `lang/`, tests, Birkly-Docs.
-
-**Out of scope:** P28 journey runner, P26 Studio creative, new fieldtypes, kekaba live-path.
-
----
-
-## Locked decisions (approved 2026-07-22)
+## Locked decisions
 
 | ID | Decision |
 |----|----------|
-| **P33-D1** | **Pause P28** until P33-M20 |
-| **P33-D2** | **Tablet drawer at `--bp-xl` (1280px)** — hamburger + off-canvas sidebar below 1280px |
-| **P33-D3** | **Sidebar scrolls with page** — remove `.sidebar-body { overflow-y: auto }`; sticky sidebar, no inner scrollbar |
-| **P33-D4** | **Tab system v2** — scrollable strip + “More” overflow on laptop; current-tab picker below 1280px; **no wrap-to-cloud** |
-| **P33-D5** | **Entry table long text** — truncate with ellipsis in visible columns; **do not hide** content/excerpt fields |
-| **P33-D6** | **Smart-table layout fix** — `fields-region` flexes; actions column always visible without page horizontal scroll |
-| **P33-D7** | **Account settings** — settings-stack cards + **one sticky save** for all sections |
-| **P33-D8** | **Settings responsive** at 1024–1279px — tabs v2 + card stacks |
-| **P33-D9** | **Media responsive** at `lg`/`xl` — collapsible folder panel, stacked detail |
-| **P33-D10** | **i18n audit** — sync `lang/*.json` to `en.json`; translate account page hardcoded strings |
-| **P33-D11** | Single notification at **P33-M20** |
+| P33-D1 | Sidebar scrolls **with** the page — remove `.sidebar-body { overflow-y: auto }`; no inner sidebar scroll container |
+| P33-D2 | Tablet drawer activates at **1280px** (`--bp-xl`), **not** 768px — persistent sidebar only at ≥1280px |
+| P33-D3 | Entry long text **truncates** with ellipsis; do **not** hide columns at laptop widths |
+| P33-D4 | Tab v2: horizontal scroll + **More** overflow menu at 1024–1279px; full picker/dropdown below 1024px; no link-cloud fallback |
+| P33-D5 | `.fields-region` uses `flex: 1 1 0`; horizontal scroll lives **only** in `.table-viewport` |
+| P33-D6 | Account page uses settings-style cards + one sticky save bar + full i18n keys |
+| P33-D7 | P28 and P26 remain **paused** until P33-M20 closure |
+| P33-D8 | Single human notification at **P33-M20** only |
 
----
+## Pillars
 
-## Tab system v2 (canonical)
+### A — Entry tables & data views (M1, M5 partial)
 
-| Viewport | Behavior |
-|----------|----------|
-| **≥1280px** (`xl+`) | Horizontal tab bar (current style, no wrap) |
-| **1024–1279px** (`lg`) | Horizontal **scroll** strip + left/right fade + **More ▼** overflow menu for off-screen tabs |
-| **<1280px** (tablet drawer zone) | **Current-tab picker** (select or compact dropdown) showing active section; full list in picker — not a wrapped link cloud |
+- Fix `.fields-region` flex sizing so columns share space without blowing out the row.
+- Truncate long field text with ellipsis (P33-D3); keep all columns visible below xl.
+- Sticky row actions column; scroll confined to `.table-viewport`.
+- Reference: `admin/css/components/tables.css`, `admin/js/smart-table-scroll.js`, `admin/templates/components/smart-table.html`.
 
-Apply to: settings, commerce, plugins, help topics sidebar/nav, entry editor tabs, collection editor tabs, plugin admin pages.
+### B — Breakpoint & shell alignment (M2, M6, M7)
 
-Files: `admin/css/components/tabs-v2.css`, `admin/js/tabs-v2.js`.
+- Audit all admin CSS/JS for drawer breakpoint consistency at `--bp-xl` (1280px).
+- Drawer overlay + hamburger below 1280px (`theme.js`, `header.css`, `sidebar.css`).
+- Sidebar body scrolls with page content (P33-D1).
+- Reference: `admin/css/core/variables.css`, `admin/css/layout/sidebar.css`, `admin/css/layout/header.css`, `admin/js/theme.js`.
 
----
+### C — Tab v2 component (M3, M4, M10)
 
-## Sidebar scroll-with-page (P33-D3)
+- New `admin/js/tabs-v2.js` + `admin/css/components/tabs-v2.css`.
+- 1024–1279px: horizontal scroll with overflow **More** menu.
+- Below 1024px: compact tab picker (dropdown), not a link cloud.
+- Roll out to Settings (M4), Plugins/Commerce/Editor tabs (M10).
 
-Remove independent scroll container on `.sidebar-body`.
+### D — Page-level responsive passes (M4–M5, M8–M11)
 
-- Sidebar: `position: sticky; top: 0; align-self: flex-start; height: auto; max-height: none`
-- `.sidebar-body`: `overflow: visible` (not `overflow-y: auto`)
-- Whole `.admin-layout` scrolls in the viewport — no scrollbar on sidebar/content seam
+| Page | Focus |
+|------|-------|
+| Settings | Tab v2 + responsive panels and forms |
+| Account | Settings cards, sticky save, i18n (P33-D6) |
+| Media | Actions bar, grid/list, detail panel at laptop widths |
+| Help | Readable doc layout and nav at md/sm |
+| Plugins / Commerce / Editor | Tab v2 migration, editor two-column layout @ 1280px |
 
----
+### E — i18n & discoverability (M12–M15)
 
-## Entry smart-table truncation (P33-D5–D6)
+- English baseline audit for new/changed admin strings.
+- Sync `lang/da.json`, `de.json`, `es.json`, `fr.json`, `hi.json`, `ja.json`, `zh.json`.
+- Trash sidebar link for soft-delete discoverability (P32-M19 follow-up).
+- Global search modal polish + translated labels.
 
-**Bug:** `.fields-region { width: fit-content; flex-shrink: 0 }` expands to full content width.
+### F — Polish & regression (M16–M20)
 
-**Fix:**
-- `.fields-region`: `flex: 1 1 0; min-width: 0; overflow: hidden`
-- `.cell-field`: `max-width: var(--col-field)` + `text-overflow: ellipsis; white-space: nowrap; overflow: hidden`
-- Long text fields (`content`, `excerpt`, `textarea`, etc.) remain **visible as columns** but **truncated** — never hidden by default
-- `.cell-actions`: stays `flex-shrink: 0; position: sticky; right: 0` — always on screen within `.table-viewport` horizontal scroll if needed, not whole-page scroll
-- Deduplicate **title column** when collection also shows `title` as a field column
+- FAB positioning fixes across breakpoints and dark mode.
+- Extend `admin-polish-smoke.sh` and PHPUnit smoke coverage.
+- Birkly-Docs responsive admin guide.
+- Verification matrix green, gap register closure, ROADMAP update, single notification.
 
----
+## Tab v2 contract
 
-## Account settings redesign (P33-D7)
+```html
+<nav class="tabs-v2" data-tabs-v2>
+  <div class="tabs-v2__scroll" role="tablist">…</div>
+  <button type="button" class="tabs-v2__more" hidden>More</button>
+  <select class="tabs-v2__picker" hidden aria-label="Section">…</select>
+</nav>
+```
 
-Migrate `admin/templates/account.html` to match settings UX:
+- **≥1280px:** all tabs visible inline.
+- **1024–1279px:** scrollable row; overflow tabs move to **More** menu.
+- **&lt;1024px:** picker `<select>` replaces inline tabs; no link cloud.
+- JS: `Birkly.TabsV2.init(container)` — idempotent, keyboard-accessible, respects `data-tab` / `aria-selected`.
 
-- `.settings-stack` + `.card` sections (profile, password, language, cloud, 2FA, notifications)
-- **One sticky save bar** — saves all dirty sections or dispatches per-section via unified bar (profile + language + notifications batch; password remains separate submit for security — **one visible sticky primary** with section-aware logic documented)
-- Remove inline `style=""` — use design tokens
-- i18n all hardcoded English strings
-- Remove redundant per-form save buttons from card footers when sticky bar active
-
----
-
-## Milestones (21 — one wave, M0→M20)
+## Milestones
 
 | ID | Focus |
-|----|--------|
-| **P33-M0** | Gap register + matrix + responsive audit checklist |
-| **P33-M1** | Smart-table `fields-region` fix + cell truncation for all field types |
-| **P33-M2** | Duplicate title column dedup in entries table |
-| **P33-M3** | Tab system v2 component (`tabs-v2.css`, `tabs-v2.js`) |
-| **P33-M4** | Settings tabs v2 + responsive layout 1024–1279px |
-| **P33-M5** | Account settings redesign + single sticky save + i18n strings |
-| **P33-M6** | Tablet drawer at **1280px** (`theme.js`, `header.css`, `sidebar.css`) |
-| **P33-M7** | Sidebar scroll-with-page (remove inner scrollbar) |
-| **P33-M8** | Media responsive `lg`/`xl` — folder panel collapse, detail drawer, grid density |
-| **P33-M9** | Help page — remove double padding, topics nav v2, layout at laptop |
-| **P33-M10** | Commerce + plugins + entry/collection editor tabs v2 |
-| **P33-M11** | Shell alignment pass (help, media, account vertical offset with sidebar nav) |
-| **P33-M12** | i18n audit — sync `da/de/es/fr/hi/ja/zh.json` to `en.json` |
-| **P33-M13** | User-menu language selector sync with account language |
-| **P33-M14** | Settings sub-pages polish — users table, redirects tab, trash discoverability |
-| **P33-M15** | P32 regression sweep — global search UX, trash UI, field templates re-eval, FAB overlap, sticky save edge cases |
-| **P33-M16** | Dark mode pass on tabs v2, sidebar, media panels |
-| **P33-M17** | `admin-polish-smoke.sh` + `tests/entries_table_layout_test.php` |
-| **P33-M18** | Birkly-Docs responsive admin + i18n guide |
-| **P33-M19** | `ux-flow-matrix` P33 section |
-| **P33-M20** | Matrix green, closure, ROADMAP, single notification |
+|----|-------|
+| P33-M0 | Plan, gap register, matrix, handoff (this wave) |
+| P33-M1 | Entry tables — fields-region fix, ellipsis, sticky actions, viewport scroll only |
+| P33-M2 | Breakpoint alignment audit (1280 drawer baseline) |
+| P33-M3 | Tab v2 component (`tabs-v2.js` / `tabs-v2.css`) |
+| P33-M4 | Settings page responsive + Tab v2 |
+| P33-M5 | Account page cards + sticky save + i18n |
+| P33-M6 | Drawer @ 1280px (`theme.js`, `header.css`, `sidebar.css`) |
+| P33-M7 | Sidebar scroll-with-page |
+| P33-M8 | Media page responsive |
+| P33-M9 | Help page responsive |
+| P33-M10 | Plugins / commerce / editor tabs responsive |
+| P33-M11 | Editor layout responsive pass @ 1280px |
+| P33-M12 | i18n English baseline audit |
+| P33-M13 | i18n sync all `lang/*.json` (da, de, es, fr, hi, ja, zh) |
+| P33-M14 | Trash sidebar link |
+| P33-M15 | Global search polish + i18n |
+| P33-M16 | FAB positioning + dark mode fixes |
+| P33-M17 | Tests + `admin-polish-smoke.sh` extensions |
+| P33-M18 | Birkly-Docs responsive admin guide |
+| P33-M19 | Verification matrix green + gap register closure |
+| P33-M20 | ROADMAP update + single human notification |
 
-**Branches:** `cursor/p33-m[N]-<slug>-030a`
+**Branches:** `cursor/p33-m[N]-<slug>-8350`
 
----
-
-## Additional fixes (included in milestones above)
-
-| Item | Milestone |
-|------|-----------|
-| Settings tab link cloud on laptop | M4 |
-| Commerce/plugin tab cloud | M10 |
-| Help topics flat link list | M9 |
-| Notification prefs untranslated | M5, M12 |
-| Cloud account hardcoded English | M5, M12 |
-| Global search keyboard/result grouping polish | M15 |
-| Trash link discoverability from entries | M14 |
-| Field templates P32 regression check | M15 |
-| FAB (+) overlap on mobile | M15, M16 |
-| Collection editor sticky save scroll | M10, M15 |
-| Plugin admin action bar consistency | M10 |
-| Duplicate `title` column in entry table | M2 |
-| `help-page { padding: 2rem }` double inset | M9, M11 |
-
----
-
-## Files (primary)
+## Primary files
 
 | Area | Files |
-|------|--------|
-| Tables | `admin/css/components/tables.css`, `smart-table.html`, `.php` |
-| Tabs v2 | `admin/css/components/tabs-v2.css`, `admin/js/tabs-v2.js` |
-| Sidebar | `admin/css/layout/sidebar.css`, `admin/js/theme.js` |
-| Header | `admin/css/layout/header.css`, `admin/partials/admin-topbar.php` |
-| Account | `admin/templates/account.html`, `admin/js/account-settings.js` |
-| Settings | `admin/templates/settings.html`, `admin/css/pages/settings.css`, `settings-page.js` |
-| Media | `admin/templates/media.html`, `media.css`, `media-page.js` |
-| Help | `admin/templates/help.html`, `help.css`, `help.js` |
-| i18n | `lang/*.json`, `core/i18n.php` |
-| Tests | `tests/entries_table_layout_test.php`, `scripts/admin-polish-smoke.sh` |
-
----
+|------|-------|
+| Tables | `admin/css/components/tables.css`, `admin/js/smart-table-scroll.js`, `admin/templates/components/smart-table.html` |
+| Shell | `admin/css/layout/sidebar.css`, `header.css`, `main-content.css`, `admin/js/theme.js` |
+| Tabs v2 | `admin/js/tabs-v2.js`, `admin/css/components/tabs-v2.css` |
+| Settings / Account | `admin/templates/settings.html`, `account.html`, `admin/css/pages/settings.css`, `admin/js/settings-page.js` |
+| Media / Help | `admin/templates/media.html`, `help.html`, `admin/css/pages/media.css` |
+| Editors | `admin/templates/entry-editor.html`, `collection-editor.html`, `admin/css/pages/content.css` |
+| i18n | `lang/en.json`, `lang/da.json`, `lang/de.json`, `lang/es.json`, `lang/fr.json`, `lang/hi.json`, `lang/ja.json`, `lang/zh.json` |
+| Tests | `scripts/admin-polish-smoke.sh`, `tests/` responsive smoke extensions |
+| Docs | `Birkly-Docs/01-admin/admin-responsive-refinement.md` |
 
 ## After P33
 
-Resume **P28** beta launch automation (journeys + videos).
+Resume P28 beta-launch automation per roadmap governance.

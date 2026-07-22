@@ -27,15 +27,25 @@
         return document.getElementById('search-results');
     }
 
+    function searchStrings() {
+        const modal = overlay();
+        return {
+            typeToSearch: modal?.getAttribute('data-i18n-type-to-search') || 'Type to search…',
+            noResults: modal?.getAttribute('data-i18n-no-results') || 'No results found',
+        };
+    }
+
     function renderResults(results) {
         const container = resultsContainer();
         if (!container) return;
 
+        const strings = searchStrings();
+
         if (!results.length) {
             const query = input()?.value.trim() || '';
             container.innerHTML = query.length < 2
-                ? '<div class="search-empty-state"><p>Type to search...</p></div>'
-                : '<div class="search-empty-state"><p>No results found</p></div>';
+                ? '<div class="search-empty-state"><p>' + escapeHtml(strings.typeToSearch) + '</p></div>'
+                : '<div class="search-empty-state"><p>' + escapeHtml(strings.noResults) + '</p></div>';
             return;
         }
 

@@ -17,7 +17,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
 <div class="settings-page">
 
-  <div class="settings-tabs">
+  <div class="settings-tabs tabs-v2-root">
     <div class="tabs">
       <button type="button" class="tab active" data-tab="general">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -61,7 +61,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <path d="M3 11h18"></path>
           <path d="M7 17l-4-4 4-4"></path>
         </svg>
-        Redirects
+        <?= __('admin.redirects') ?>
       </button>
       <button type="button" class="tab" data-tab="domains">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,7 +87,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <path d="M2 12l10 5 10-5"></path>
           <circle cx="18" cy="6" r="2"></circle>
         </svg>
-        AI
+        <?= __('admin.ai_integrations') ?>
       </button>
       <button type="button" class="tab" data-tab="storage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

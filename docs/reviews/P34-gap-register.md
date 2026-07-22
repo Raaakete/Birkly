@@ -9,7 +9,7 @@
 
 | ID | Gap | Severity | Milestone |
 |----|-----|----------|-----------|
-| G34-01 | Entire app deployed on `ops.birkly.cloud` — no surface split | **blocker** | M1–M6 |
+| G34-01 | Entire app deployed on `ops.birkly.cloud` — no surface split | **blocker** | M1–M6 (code M1–M3 before nginx M4–M6) |
 | G34-02 | No `POST /api/ops/v1/feedback` receiver | **blocker** | M15 |
 | G34-03 | No install registry API or admin UI | high | M16 |
 | G34-04 | No CMS release channel / updates endpoint on Ops | high | M17 |
