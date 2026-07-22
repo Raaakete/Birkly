@@ -20,7 +20,8 @@ for test in \
   tests/collection_editor_sidebar_test.php \
   tests/entry_slug_test.php \
   tests/breadcrumb_truncate_test.php \
-  tests/entry_field_validation_test.php; do
+  tests/entry_field_validation_test.php \
+  tests/p33_responsive_admin_test.php; do
   if php "$ROOT/$test"; then
     report "OK: $test"
   else

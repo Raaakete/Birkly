@@ -356,31 +356,34 @@
   gap: var(--space-2, 0.5rem);
 }
 
-/* Header fields grid mirrors body fields grid */
-.entries-smart-table .fields-head-region {
-  display: flex;
-  flex-direction: row;
-  gap: 1px;
-  flex-shrink: 0;
-  flex-grow: 0;
-  width: fit-content;
-}
-
+/* Header fields grid mirrors body fields grid — flex to fill row, truncate in place */
+.entries-smart-table .fields-head-region,
 .entries-smart-table .fields-region {
   display: flex;
   flex-direction: row;
   gap: 1px;
-  overflow: hidden;
+  flex: 1 1 0;
   min-width: 0;
-  flex-shrink: 0;
-  flex-grow: 0;
-  width: fit-content;
+  overflow: hidden;
 }
 
 .entries-smart-table .cell-field {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.entries-smart-table .cell-field .ft-list-text,
+.entries-smart-table .cell-field .cell-excerpt,
+.entries-smart-table .cell-field .field-text,
+.entries-smart-table .cell-field > span:not(.ft-gallery-preview-container):not(.ft-list-badge) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Allow field cells to wrap content when needed (for images, badges, etc.) */
@@ -484,44 +487,16 @@
   }
 }
 
-/* Below --bp-xl (1280px), favour readable entry cells over a cramped grid. */
+/* Below --bp-xl (1280px), keep all columns visible — truncate long text instead of hiding columns. */
 @media (max-width: 1279px) {
   .entries-smart-table .head-title,
   .entries-smart-table .cell-title {
-    min-width: 240px;
+    min-width: 200px;
   }
 
   .entries-smart-table .head-status,
   .entries-smart-table .cell-status {
-    width: 140px;
-  }
-
-  .entries-smart-table .head-field,
-  .entries-smart-table .cell-field {
-    width: min(var(--col-field, 240px), 180px);
-    min-width: min(var(--col-field-min, var(--col-field, 240px)), 180px);
-    max-width: 180px;
-  }
-
-  .entries-smart-table .row-scroll {
-    grid-template-columns: 220px 120px 1fr;
-  }
-}
-
-/* Below --bp-md (768px) */
-@media (max-width: 767px) {
-  .entries-smart-table {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .entries-smart-table .head-row,
-  .entries-smart-table .table-row {
-    min-width: 720px;
-  }
-
-  .entries-smart-table .table-viewport {
-    overflow-x: visible;
+    width: 120px;
   }
 }
 

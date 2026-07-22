@@ -188,3 +188,25 @@
   color: var(--text-primary, #20221D);
 }
 
+[data-theme="dark"] .search-overlay-content {
+  background: var(--bg-elevated, #1e293b);
+  border: 1px solid var(--border-light, #334155);
+}
+
+[data-theme="dark"] .search-result-item:hover,
+[data-theme="dark"] .search-result-item.selected {
+  background: var(--bg-secondary, #0f172a);
+}
+
+@media (max-width: 767px) {
+  .search-overlay {
+    padding-top: 5vh;
+    padding-left: var(--space-3, 0.75rem);
+    padding-right: var(--space-3, 0.75rem);
+  }
+
+  .search-overlay-content {
+    max-height: 85vh;
+    border-radius: var(--border-radius-m, 12px);
+  }
+}
