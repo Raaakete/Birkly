@@ -69,6 +69,8 @@
 .entries-smart-table {
   border: 1px solid var(--border-light, #f3f4f6);
   border-radius: var(--border-radius-s, 4px);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .entries-smart-table .table-head {
@@ -205,6 +207,8 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .entries-smart-table .table-body {
