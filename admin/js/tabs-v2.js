@@ -25,36 +25,71 @@
         return Array.prototype.slice.call(nav.querySelectorAll('.tab[data-tab]'));
     }
 
-    function buildPicker(wrap, nav, buttons) {
-        if (wrap.querySelector('.tabs-v2-picker')) {
-            return wrap.querySelector('.tabs-v2-picker');
+    function getTabLabel(btn) {
+        var clone = btn.cloneNode(true);
+        clone.querySelectorAll('svg, .update-badge, .tabs-v2-picker-ignore').forEach(function (el) {
+            el.remove();
+        });
+        return (clone.textContent || '').trim();
+    }
+
+    function rebuildPickerOptions(picker, buttons) {
+        if (!picker) {
+            return;
         }
-
-        var picker = document.createElement('select');
-        picker.className = 'tabs-v2-picker input';
-        picker.setAttribute('aria-label', (window.Birkly && window.Birkly.i18n && window.Birkly.i18n.t)
-            ? window.Birkly.i18n.t('admin.select_section', 'Select section')
-            : 'Select section');
-
+        picker.innerHTML = '';
         buttons.forEach(function (btn) {
             var opt = document.createElement('option');
             opt.value = btn.getAttribute('data-tab') || '';
-            opt.textContent = (btn.textContent || '').trim();
+            opt.textContent = getTabLabel(btn);
             if (btn.classList.contains('active')) {
                 opt.selected = true;
             }
             picker.appendChild(opt);
         });
+    }
 
-        picker.addEventListener('change', function () {
-            var tabId = picker.value;
-            var target = nav.querySelector('.tab[data-tab="' + tabId + '"]');
-            if (target) {
-                target.click();
-            }
-        });
+    function buildPicker(wrap, nav, buttons) {
+        var pickerWrap = wrap.querySelector('.tabs-v2-picker-wrap');
+        var picker;
 
-        wrap.insertBefore(picker, nav);
+        if (!pickerWrap) {
+            pickerWrap = document.createElement('div');
+            pickerWrap.className = 'tabs-v2-picker-wrap';
+
+            var icon = document.createElement('span');
+            icon.className = 'tabs-v2-picker-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>';
+
+            picker = document.createElement('select');
+            picker.className = 'tabs-v2-picker';
+            picker.setAttribute('aria-label', (window.Birkly && window.Birkly.i18n && window.Birkly.i18n.t)
+                ? window.Birkly.i18n.t('admin.select_section', 'Select section')
+                : 'Select section');
+
+            var chevron = document.createElement('span');
+            chevron.className = 'tabs-v2-picker-chevron';
+            chevron.setAttribute('aria-hidden', 'true');
+            chevron.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+            picker.addEventListener('change', function () {
+                var tabId = picker.value;
+                var target = nav.querySelector('.tab[data-tab="' + tabId + '"]');
+                if (target) {
+                    target.click();
+                }
+            });
+
+            pickerWrap.appendChild(icon);
+            pickerWrap.appendChild(picker);
+            pickerWrap.appendChild(chevron);
+            wrap.insertBefore(pickerWrap, nav);
+        } else {
+            picker = pickerWrap.querySelector('.tabs-v2-picker');
+        }
+
+        rebuildPickerOptions(picker, buttons);
         return picker;
     }
 
@@ -89,7 +124,7 @@
             item.className = 'tabs-v2-more-item';
             item.setAttribute('role', 'menuitem');
             item.setAttribute('data-tab', btn.getAttribute('data-tab') || '');
-            item.textContent = (btn.textContent || '').trim();
+            item.textContent = getTabLabel(btn);
             item.addEventListener('click', function () {
                 btn.click();
                 moreMenu.hidden = true;
@@ -166,7 +201,8 @@
 
         var mode = getMode();
         var buttons = getTabButtons(nav);
-        var picker = wrap.querySelector('.tabs-v2-picker');
+        var pickerWrap = wrap.querySelector('.tabs-v2-picker-wrap');
+        var picker = pickerWrap ? pickerWrap.querySelector('.tabs-v2-picker') : null;
         var moreParts = wrap.querySelector('.tabs-v2-more-wrap');
 
         wrap.dataset.tabsMode = mode;
@@ -180,14 +216,16 @@
                 moreParts.hidden = true;
             }
             picker = buildPicker(wrap, nav, buttons);
-            picker.hidden = false;
+            if (pickerWrap) {
+                pickerWrap.hidden = false;
+            }
             syncPicker(picker, buttons);
             return;
         }
 
         nav.hidden = false;
-        if (picker) {
-            picker.hidden = true;
+        if (pickerWrap) {
+            pickerWrap.hidden = true;
         }
 
         buttons.forEach(function (btn) {
@@ -222,6 +260,18 @@
                 applyMode(wrap);
             });
         });
+
+        if (typeof MutationObserver !== 'undefined') {
+            var mo = new MutationObserver(function () {
+                if (wrap.dataset.tabsMode === 'picker') {
+                    var buttons = getTabButtons(nav);
+                    var pickerEl = wrap.querySelector('.tabs-v2-picker');
+                    rebuildPickerOptions(pickerEl, buttons);
+                    syncPicker(pickerEl, buttons);
+                }
+            });
+            mo.observe(nav, { attributes: true, subtree: true, attributeFilter: ['class'] });
+        }
 
         var resizeTimer;
         window.addEventListener('resize', function () {

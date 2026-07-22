@@ -470,6 +470,11 @@ window.deleteRole = deleteRole;
             }
             scrollToAiSection(scrollTo);
         }, 100);
+
+        var tabsRoot = document.querySelector('.settings-tabs.tabs-v2-root');
+        if (tabsRoot && window.Birkly && window.Birkly.TabsV2 && typeof window.Birkly.TabsV2.refresh === 'function') {
+            window.Birkly.TabsV2.refresh(tabsRoot);
+        }
     }
 
     function getSettingsTabButtons() {
