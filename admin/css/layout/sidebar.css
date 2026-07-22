@@ -664,6 +664,7 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
     box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
     pointer-events: none;
     visibility: hidden;
+    padding-right: var(--admin-shell-edge-padding);
   }
 
   .sidebar.open {
