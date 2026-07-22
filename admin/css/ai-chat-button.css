@@ -642,3 +642,13 @@
     }
 }
 
+[data-theme="dark"] .assist-fab-action,
+[data-theme="dark"] .ai-chat-floating-btn {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .assist-fab-action {
+    background: var(--bg-elevated, #1e293b);
+    color: var(--text-primary, #f8fafc);
+    border: 1px solid var(--border-light, #334155);
+}

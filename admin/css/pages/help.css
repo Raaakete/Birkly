@@ -294,15 +294,30 @@
     margin-left: 0.35rem;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
+/* Responsive — align with P33 breakpoints */
+@media (max-width: 1279px) {
+    .help-page {
+        padding: var(--space-6, 1.5rem);
+    }
+
     .help-layout {
         grid-template-columns: 1fr;
     }
-    
+
     .help-sidebar {
         position: static;
         max-height: none;
+        order: -1;
+    }
+}
+
+@media (max-width: 767px) {
+    .help-page {
+        padding: var(--space-4, 1rem);
+    }
+
+    .help-header h1 {
+        font-size: 1.5rem;
     }
 }
 

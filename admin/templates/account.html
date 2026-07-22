@@ -4,9 +4,22 @@
   </div>
   <div class="page-header-actions"></div>
 </div>
+
+<div class="main-actions-bar main-actions-bar--sticky">
+  <div class="main-actions-left">
+    <button type="button" class="btn btn-primary" id="account-save-btn">{translate 'admin.save_changes'}</button>
+  </div>
+  <div class="main-actions-right">
+    <div id="account-save-message" class="main-actions-message message settings-toast" style="display: none;" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
 <div class="account-settings-page">
-  <div class="settings-section">
-    <h2>{translate 'admin.profile_information'}</h2>
+  <div class="settings-stack">
+  <section class="card settings-section">
+    <div class="section-header">
+      <h2>{translate 'admin.profile_information'}</h2>
+    </div>
     <form id="account-profile-form" class="settings-form" enctype="multipart/form-data">
       <div class="form-group">
         <label for="account-name">{translate 'admin.name'}</label>
@@ -25,28 +38,26 @@
         <input type="file" id="account-avatar" name="avatar" accept="image/*">
         <small>{translate 'admin.avatar_upload_instructions'}</small>
         {if user.avatar exist}
-          <div style="margin-top: 0.5rem;">
-            <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">{translate 'admin.current_avatar'}:</p>
-            <img src="{user.avatar}" alt="Current avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;">
-            <button type="button" id="remove-avatar-btn" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">{translate 'admin.remove_avatar'}</button>
+          <div class="avatar-preview-wrap">
+            <p class="text-muted">{translate 'admin.current_avatar'}:</p>
+            <img src="{user.avatar}" alt="{translate 'admin.current_avatar'}">
+            <div class="avatar-actions">
+              <button type="button" id="remove-avatar-btn" class="btn btn-danger btn-sm">{translate 'admin.remove_avatar'}</button>
+            </div>
           </div>
         {endif}
-        <div id="avatar-preview" style="margin-top: 0.5rem; display: none;">
-          <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">{translate 'admin.preview'}:</p>
-          <img id="avatar-preview-img" src="" alt="Avatar preview" style="width: 80px; height: 80px; border-radius: 50%; border: 1px solid #e2e8f0; object-fit: cover;">
+        <div id="avatar-preview" class="avatar-preview-wrap" style="display: none;">
+          <p class="text-muted">{translate 'admin.preview'}:</p>
+          <img id="avatar-preview-img" src="" alt="{translate 'admin.preview'}">
         </div>
       </div>
-      
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">{translate 'admin.save_profile'}</button>
-      </div>
-      
-      <div id="account-message" class="settings-message" style="display: none;"></div>
     </form>
-  </div>
+  </section>
 
-  <div class="settings-section">
-    <h2>{translate 'admin.change_password'}</h2>
+  <section class="card settings-section">
+    <div class="section-header">
+      <h2>{translate 'admin.change_password'}</h2>
+    </div>
     <form id="account-password-form" class="settings-form">
       <div class="form-group">
         <label for="current-password">{translate 'admin.current_password'} *</label>
@@ -67,10 +78,12 @@
       
       <div id="password-message" class="settings-message" style="display: none;"></div>
     </form>
-  </div>
+  </section>
 
-  <div class="settings-section">
-    <h2>{translate 'admin.language_preferences'}</h2>
+  <section class="card settings-section">
+    <div class="section-header">
+      <h2>{translate 'admin.language_preferences'}</h2>
+    </div>
     <form id="account-language-form" class="settings-form">
       <div class="form-group">
         <label for="account-language">{translate 'admin.admin_panel_language'}</label>
@@ -85,133 +98,130 @@
         </select>
         <small>{translate 'admin.language_setting_description'}</small>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">{translate 'admin.save_language'}</button>
-      </div>
-      
       <div id="language-message" class="settings-message" style="display: none;"></div>
     </form>
-  </div>
+  </section>
 
-  <div class="settings-section">
-    <h2>Birkly Cloud Account</h2>
-    <p class="text-muted" style="margin-bottom: 1rem;">Optionally link this CMS installation to your Birkly cloud account. Local login always remains available.</p>
+  <section class="card settings-section">
+    <div class="section-header">
+      <h2>{translate 'admin.birkly_cloud_account'}</h2>
+      <p class="section-description text-muted">{translate 'admin.cloud_account_description'}</p>
+    </div>
     <div id="cloud-account-status">
       <div class="text-center">
-        <div class="spinner">Loading cloud account status...</div>
+        <div class="spinner">{translate 'admin.loading_cloud_account'}</div>
       </div>
     </div>
     <div id="cloud-account-message" class="settings-message" style="display: none;"></div>
-  </div>
+  </section>
 
-  <div class="settings-section">
-    <h2>{translate 'admin.two_factor_authentication'}</h2>
+  <section class="card settings-section">
+    <div class="section-header">
+      <h2>{translate 'admin.two_factor_authentication'}</h2>
+    </div>
     <div id="account-2fa-status">
       <div class="text-center">
-        <div class="spinner">Loading 2FA status...</div>
+        <div class="spinner">{translate 'admin.loading_2fa_status'}</div>
       </div>
     </div>
     <div id="account-2fa-message" class="settings-message" style="display: none;"></div>
-  </div>
+  </section>
 
-  <div class="settings-section">
-    <h2>Notification Preferences</h2>
+  <section class="card settings-section">
+    <div class="section-header">
+      <h2>{translate 'admin.notification_preferences'}</h2>
+      <p class="section-description text-muted">{translate 'admin.notification_preferences_help'}</p>
+    </div>
     <form id="account-notifications-form" class="settings-form">
       <div class="form-group">
-        <p class="text-muted" style="margin-bottom: 1rem;">Choose which events you want to be notified about. Notifications appear in the bell icon in the top-right corner.</p>
-        
         <div class="notification-preferences">
-          <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-primary);">Content Events</h3>
-          
-          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
-            <div style="flex: 1; margin-right: 1rem;">
-              <div style="font-weight: 500; color: var(--text-primary);">Entry Published</div>
-              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when someone publishes an entry</small>
+          <h3 class="preference-group-title">{translate 'admin.content_events'}</h3>
+
+          <div class="preference-item">
+            <div class="preference-label">
+              <div class="preference-title">{translate 'admin.notify_entry_published'}</div>
+              <small class="preference-desc">{translate 'admin.notify_entry_published_desc'}</small>
             </div>
-            <label class="toggle-switch" style="flex-shrink: 0;">
+            <label class="toggle-switch">
               <input type="checkbox" id="notify-entry-published" name="entry_published" {if user.notification_preferences.entry_published exist}{if user.notification_preferences.entry_published == true}checked{endif}{else}checked{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
 
-          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
-            <div style="flex: 1; margin-right: 1rem;">
-              <div style="font-weight: 500; color: var(--text-primary);">Entry Needs Review</div>
-              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when an entry is submitted for review</small>
+          <div class="preference-item">
+            <div class="preference-label">
+              <div class="preference-title">{translate 'admin.notify_entry_review'}</div>
+              <small class="preference-desc">{translate 'admin.notify_entry_review_desc'}</small>
             </div>
-            <label class="toggle-switch" style="flex-shrink: 0;">
+            <label class="toggle-switch">
               <input type="checkbox" id="notify-entry-review" name="entry_review" {if user.notification_preferences.entry_review exist}{if user.notification_preferences.entry_review == true}checked{endif}{else}checked{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
 
-          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
-            <div style="flex: 1; margin-right: 1rem;">
-              <div style="font-weight: 500; color: var(--text-primary);">Entry Commented</div>
-              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when someone comments on your entries</small>
+          <div class="preference-item">
+            <div class="preference-label">
+              <div class="preference-title">{translate 'admin.notify_entry_commented'}</div>
+              <small class="preference-desc">{translate 'admin.notify_entry_commented_desc'}</small>
             </div>
-            <label class="toggle-switch" style="flex-shrink: 0;">
+            <label class="toggle-switch">
               <input type="checkbox" id="notify-entry-commented" name="entry_commented" {if user.notification_preferences.entry_commented exist}{if user.notification_preferences.entry_commented == true}checked{endif}{else}checked{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
 
-          <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-primary);">User Events</h3>
+          <h3 class="preference-group-title">{translate 'admin.user_events'}</h3>
 
-          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
-            <div style="flex: 1; margin-right: 1rem;">
-              <div style="font-weight: 500; color: var(--text-primary);">Invitation Accepted</div>
-              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when someone accepts your invitation</small>
+          <div class="preference-item">
+            <div class="preference-label">
+              <div class="preference-title">{translate 'admin.notify_invitation_accepted'}</div>
+              <small class="preference-desc">{translate 'admin.notify_invitation_accepted_desc'}</small>
             </div>
-            <label class="toggle-switch" style="flex-shrink: 0;">
+            <label class="toggle-switch">
               <input type="checkbox" id="notify-invitation-accepted" name="invitation_accepted" {if user.notification_preferences.invitation_accepted exist}{if user.notification_preferences.invitation_accepted == true}checked{endif}{else}checked{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
 
-          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
-            <div style="flex: 1; margin-right: 1rem;">
-              <div style="font-weight: 500; color: var(--text-primary);">Role Changed</div>
-              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when your role or permissions change</small>
+          <div class="preference-item">
+            <div class="preference-label">
+              <div class="preference-title">{translate 'admin.notify_role_changed'}</div>
+              <small class="preference-desc">{translate 'admin.notify_role_changed_desc'}</small>
             </div>
-            <label class="toggle-switch" style="flex-shrink: 0;">
+            <label class="toggle-switch">
               <input type="checkbox" id="notify-role-changed" name="role_changed" {if user.notification_preferences.role_changed exist}{if user.notification_preferences.role_changed == true}checked{endif}{else}checked{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
 
-          <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-primary);">System Events</h3>
+          <h3 class="preference-group-title">{translate 'admin.system_events'}</h3>
 
-          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
-            <div style="flex: 1; margin-right: 1rem;">
-              <div style="font-weight: 500; color: var(--text-primary);">System Updates</div>
-              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified when CMS updates are available</small>
+          <div class="preference-item">
+            <div class="preference-label">
+              <div class="preference-title">{translate 'admin.notify_system_updates'}</div>
+              <small class="preference-desc">{translate 'admin.notify_system_updates_desc'}</small>
             </div>
-            <label class="toggle-switch" style="flex-shrink: 0;">
+            <label class="toggle-switch">
               <input type="checkbox" id="notify-system-updates" name="system_updates" {if user.notification_preferences.system_updates exist}{if user.notification_preferences.system_updates == true}checked{endif}{else}checked{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
 
-          <div class="preference-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
-            <div style="flex: 1; margin-right: 1rem;">
-              <div style="font-weight: 500; color: var(--text-primary);">Security Events</div>
-              <small style="display: block; color: var(--text-secondary); font-size: 0.8125rem; margin-top: 0.25rem;">Get notified about failed login attempts and security issues</small>
+          <div class="preference-item">
+            <div class="preference-label">
+              <div class="preference-title">{translate 'admin.notify_security_events'}</div>
+              <small class="preference-desc">{translate 'admin.notify_security_events_desc'}</small>
             </div>
-            <label class="toggle-switch" style="flex-shrink: 0;">
+            <label class="toggle-switch">
               <input type="checkbox" id="notify-security-events" name="security_events" {if user.notification_preferences.security_events exist}{if user.notification_preferences.security_events == true}checked{endif}{else}{if user.role == 'admin'}checked{endif}{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
         </div>
       </div>
-      
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Save Notification Preferences</button>
-      </div>
-      
       <div id="notifications-message" class="settings-message" style="display: none;"></div>
     </form>
+  </section>
   </div>
 </div>
 
