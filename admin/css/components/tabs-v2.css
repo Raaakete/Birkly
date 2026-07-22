@@ -2,12 +2,13 @@
    Tab v2 — responsive tab navigation
    Desktop ≥1280: standard tabs
    Tablet 1024–1279: scroll + More
-   Mobile <1024: select picker
+   Mobile <1024: menu-style picker
    ============================================ */
 
 .tabs-v2-root {
   position: relative;
   min-width: 0;
+  margin-bottom: var(--space-4, 1rem);
 }
 
 .tabs-v2-root .tabs {
@@ -34,11 +35,56 @@
   display: none !important;
 }
 
-.tabs-v2-picker {
+/* Mobile picker — menu affordance with hamburger icon */
+.tabs-v2-picker-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
   width: 100%;
-  max-width: 100%;
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   margin-bottom: var(--space-4, 1rem);
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-elevated, #ffffff);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  cursor: pointer;
+}
+
+.tabs-v2-picker-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-secondary, #72746F);
+}
+
+.tabs-v2-picker {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary, #20221D);
   font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+}
+
+.tabs-v2-picker:focus {
+  outline: none;
+}
+
+.tabs-v2-picker-wrap:focus-within {
+  outline: 2px solid var(--primary-500, #3b82f6);
+  outline-offset: 2px;
+}
+
+.tabs-v2-picker-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-tertiary, #94a3b8);
+  pointer-events: none;
 }
 
 .tabs-v2-more-wrap {
@@ -81,6 +127,11 @@
 
 .tabs-v2-more-item[hidden] {
   display: none;
+}
+
+[data-theme="dark"] .tabs-v2-picker-wrap {
+  background: var(--bg-elevated, #1e293b);
+  border-color: var(--border-light, #334155);
 }
 
 [data-theme="dark"] .tabs-v2-more-menu {
