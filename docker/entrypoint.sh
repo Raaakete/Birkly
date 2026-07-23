@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "[entrypoint] Birkly CMS starting..."
+echo "[entrypoint] Birkly CMS docker image — document root /app (not /usr/share/nginx/html)"
 
 DIRS="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs"
 

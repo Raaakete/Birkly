@@ -1,0 +1,15 @@
+.git
+.github
+.cursor
+tests
+docs/reviews
+cache
+logs
+settings
+users
+content
+media
+data
+temp
+*.md
+!README.md
