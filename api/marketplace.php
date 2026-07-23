@@ -148,6 +148,71 @@ if ($action === 'activate_license') {
     exit;
 }
 
+if ($action === 'permissions') {
+    $slug = trim((string) ($input['slug'] ?? $_GET['slug'] ?? ''));
+    $version = trim((string) ($input['version'] ?? $_GET['version'] ?? ''));
+    if ($slug === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Offer slug required']);
+        exit;
+    }
+
+    $result = birkly_marketplace_install_permissions($slug, $version);
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Failed to load permissions']);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'slug' => $slug,
+            'version' => $result['version'] ?? $version,
+            'permissions_manifest' => $result['permissions_manifest'] ?? [],
+            'consent_required' => !empty($result['consent_required']),
+            'consent_record' => $result['consent_record'] ?? null,
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'accept_consent') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_plugin_csrf($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $slug = trim((string) ($input['slug'] ?? ''));
+    $version = trim((string) ($input['version'] ?? ''));
+    if ($slug === '' || $version === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Offer slug and version required']);
+        exit;
+    }
+
+    $permInfo = birkly_marketplace_install_permissions($slug, $version);
+    if (!$permInfo['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $permInfo['error'] ?? 'Failed to load permissions']);
+        exit;
+    }
+
+    birkly_marketplace_record_install_consent(
+        $slug,
+        $version,
+        is_array($permInfo['permissions_manifest'] ?? null) ? $permInfo['permissions_manifest'] : []
+    );
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Permission consent recorded',
+        'data' => [
+            'slug' => $slug,
+            'version' => $version,
+            'accepted_at' => birkly_marketplace_load_consent()[$slug][$version]['accepted_at'] ?? null,
+        ],
+    ]);
+    exit;
+}
+
 if ($action === 'install') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_plugin_csrf($csrf)) {
@@ -225,7 +290,25 @@ if ($action === 'install') {
         $offerType = (string) ($detailForType['offer']['offer_type'] ?? 'plugin');
     }
 
-    $install = birkly_marketplace_install_offer($slug, $version, $licenseKey, $offerType, false);
+    $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
+    if ($offerType === 'plugin') {
+        $consentCheck = birkly_marketplace_require_install_consent($slug, $version, $consentAccepted);
+        if (!$consentCheck['ok']) {
+            $permPreview = birkly_marketplace_install_permissions($slug, $version);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $consentCheck['error'] ?? 'Permission consent required',
+                'code' => $consentCheck['code'] ?? 'consent_required',
+                'data' => [
+                    'permissions_manifest' => $permPreview['permissions_manifest'] ?? [],
+                    'version' => $permPreview['version'] ?? $version,
+                ],
+            ]);
+            exit;
+        }
+    }
+
+    $install = birkly_marketplace_install_offer($slug, $version, $licenseKey, $offerType, false, $consentAccepted);
     if (!$install['ok']) {
         echo json_encode([
             'status' => 'error',
@@ -348,7 +431,23 @@ if ($action === 'upgrade') {
     }
 
     $targetVersion = (string) ($check['latest_version'] ?? $current);
-    $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true);
+    $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
+    $consentCheck = birkly_marketplace_require_install_consent($slug, $targetVersion, $consentAccepted);
+    if (!$consentCheck['ok']) {
+        $permPreview = birkly_marketplace_install_permissions($slug, $targetVersion);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $consentCheck['error'] ?? 'Permission consent required',
+            'code' => $consentCheck['code'] ?? 'consent_required',
+            'data' => [
+                'permissions_manifest' => $permPreview['permissions_manifest'] ?? [],
+                'version' => $permPreview['version'] ?? $targetVersion,
+            ],
+        ]);
+        exit;
+    }
+
+    $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true, $consentAccepted);
     if (!$install['ok']) {
         if ($wasActive) {
             set_plugin_state($pluginId, true);
