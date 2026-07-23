@@ -18,6 +18,11 @@ require_once __DIR__ . '/auth_middleware.php';
 // Require authentication for all admin pages
 requireAdminAuth();
 
+if (is_file(__DIR__ . '/../core/platform_ops.php')) {
+    require_once __DIR__ . '/../core/platform_ops.php';
+    birkly_ops_register_installation();
+}
+
 // Page access policy (UX + defense-in-depth).
 // Backend endpoints remain the source of truth; this prevents opening pages a role shouldn't even view.
 $requestedPage = isset($_GET['page']) && $_GET['page'] !== '' ? (string)$_GET['page'] : 'dashboard';
