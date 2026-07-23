@@ -557,6 +557,38 @@
   margin: 0;
 }
 
+.marketplace-offer-embed-modal {
+  width: min(960px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.marketplace-embed-body {
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 420px;
+}
+
+.marketplace-offer-iframe {
+  display: block;
+  width: 100%;
+  height: min(60vh, 640px);
+  border: 0;
+  background: #fff;
+}
+
+.marketplace-embed-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  justify-content: flex-end;
+}
+
+.marketplace-embed-footer .btn + .btn {
+  margin-top: 0;
+}
+
 @media (max-width: 768px) {
   .marketplace-offer-detail-header {
     grid-template-columns: 1fr;
