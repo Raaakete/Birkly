@@ -9,14 +9,14 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| SURF-01 | `ops.birkly.cloud/admin` loads staff dashboard | pending | |
-| SURF-02 | `ops.birkly.cloud/provider/login` returns 404 or redirects to providers host | pending | |
-| SURF-03 | `ops.birkly.cloud/catalog` returns 404 or redirects | pending | |
-| SURF-04 | `providers.birkly.cloud/provider/login` loads | pending | |
-| SURF-05 | `providers.birkly.cloud/admin` blocked | pending | |
-| SURF-06 | `marketplace.birkly.cloud/catalog` loads | pending | |
-| SURF-07 | `marketplace.birkly.cloud/api/v1/registry` returns JSON | pending | |
-| SURF-08 | `marketplace.birkly.cloud/admin` blocked | pending | |
+| SURF-01 | `ops.birkly.cloud/admin` loads staff dashboard | pass | Deployed 2026-07-23 |
+| SURF-02 | `ops.birkly.cloud/provider/login` returns 404 or redirects to providers host | pass | Redirects to providers host |
+| SURF-03 | `ops.birkly.cloud/catalog` returns 404 or redirects | pass | Redirects to marketplace host |
+| SURF-04 | `providers.birkly.cloud/provider/login` loads | pass | Deployed 2026-07-23 |
+| SURF-05 | `providers.birkly.cloud/admin` blocked | pass | 404 JSON wrong_surface |
+| SURF-06 | `marketplace.birkly.cloud/catalog` loads | pass | After nginx catalog fix |
+| SURF-07 | `marketplace.birkly.cloud/api/v1/registry` returns JSON | pass | Deployed 2026-07-23 |
+| SURF-08 | `marketplace.birkly.cloud/admin` blocked | pass | 404 JSON wrong_surface |
 | SURF-09 | Session cookies isolated per surface | pending | |
 
 ---
