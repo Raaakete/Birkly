@@ -323,7 +323,7 @@ function birkly_marketplace_install_plugin(
 
     birkly_marketplace_save_plugin_source($pluginId, $slug, $version, $licenseKey);
 
-    if ($consentAccepted && !birkly_marketplace_has_install_consent($slug, $version)) {
+    if ($consentAccepted) {
         $permInfo = birkly_marketplace_install_permissions($slug, $version);
         if (!empty($permInfo['ok']) && is_array($permInfo['permissions_manifest'] ?? null)) {
             birkly_marketplace_record_install_consent(

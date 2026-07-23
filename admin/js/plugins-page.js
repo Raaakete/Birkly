@@ -314,10 +314,6 @@
             btn.disabled = true;
         }
         try {
-            await marketplaceApi('accept_consent', {
-                slug: pending.slug,
-                version: pending.version || '',
-            });
             await executeMarketplaceInstall(pending.slug, pending.version || '', pending.licenseKey || '', true);
         } catch (err) {
             showMessage(err.message, 'error');
