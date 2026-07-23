@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "description": "Fully self-contained user management plugin with registration, authentication, permissions, and tier-based access",
   "author": "Birkly",
+  "marketplace_slug": "birkly-user-management",
+  "requires_birkly": ">=0.1.0",
+  "requires_php": ">=8.1",
   "requires": "1.0.0",
+  "data_access": {
+    "entries": "read_write",
+    "media": "read",
+    "users": "read_write",
+    "settings": "read_write"
+  },
   "hooks": [
     "template_functions",
     "before_entry_save",
