@@ -3,7 +3,7 @@
  * Birkly marketplace client (P9-M6) — registry API, installation identity, license activate.
  */
 
-const BIRKLY_MARKETPLACE_DEFAULT_URL = 'https://marketplace.birkly.io';
+const BIRKLY_MARKETPLACE_DEFAULT_URL = 'https://marketplace.birkly.cloud';
 
 function birkly_marketplace_settings_dir(): string
 {
