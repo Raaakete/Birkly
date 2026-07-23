@@ -11,6 +11,7 @@
     var marketplaceBaseUrl = '';
     var marketplaceOffersCache = [];
     var reviewStatusMap = {};
+    var pendingInstallContext = null;
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function'
@@ -84,6 +85,10 @@
             closeReviewModal();
         } else if (action === 'submit-review') {
             submitPluginReview();
+        } else if (action === 'close-install-consent') {
+            closeInstallConsentModal();
+        } else if (action === 'accept-install-consent') {
+            acceptInstallConsent();
         }
     }
 
@@ -108,7 +113,9 @@
                     action === 'install-from-file' ||
                     action === 'install-marketplace' ||
                     action === 'close-review-modal' ||
-                    action === 'submit-review'
+                    action === 'submit-review' ||
+                    action === 'close-install-consent' ||
+                    action === 'accept-install-consent'
                 ) {
                     handlePluginAction(el);
                 }
@@ -121,6 +128,8 @@
                 closeInstallModal();
             } else if (e.target.id === 'marketplace-install-modal' && e.target.classList.contains('active')) {
                 closeMarketplaceInstallModal();
+            } else if (e.target.id === 'marketplace-consent-modal' && e.target.classList.contains('active')) {
+                closeInstallConsentModal();
             }
         });
 
@@ -141,6 +150,11 @@
             var marketplaceInstallModal = document.getElementById('marketplace-install-modal');
             if (marketplaceInstallModal && marketplaceInstallModal.classList.contains('active')) {
                 closeMarketplaceInstallModal();
+                return;
+            }
+            var consentModal = document.getElementById('marketplace-consent-modal');
+            if (consentModal && consentModal.classList.contains('active')) {
+                closeInstallConsentModal();
             }
         });
     }
@@ -205,9 +219,144 @@
         });
         var result = await response.json();
         if (!response.ok || result.status === 'error') {
-            throw new Error(result.message || 'Request failed');
+            var err = new Error(result.message || 'Request failed');
+            err.code = result.code || '';
+            err.data = result.data || null;
+            throw err;
         }
         return result;
+    }
+
+    async function marketplaceApiGet(action, params) {
+        var qs = new URLSearchParams(Object.assign({ action: action }, params || {}));
+        var response = await fetch(url('/api/marketplace.php?' + qs.toString()), {
+            credentials: 'same-origin',
+        });
+        var result = await response.json();
+        if (!response.ok || result.status === 'error') {
+            var err = new Error(result.message || 'Request failed');
+            err.code = result.code || '';
+            err.data = result.data || null;
+            throw err;
+        }
+        return result;
+    }
+
+    function renderPermissionsManifest(manifest) {
+        manifest = manifest || {};
+        var parts = [];
+        var perms = manifest.permissions || [];
+        if (perms.length) {
+            parts.push('<h4>Capabilities</h4><ul class="consent-perm-list">');
+            perms.forEach(function (perm) {
+                parts.push('<li><code>' + escapeHtml(perm) + '</code></li>');
+            });
+            parts.push('</ul>');
+        }
+        var hooks = manifest.hooks || [];
+        if (hooks.length) {
+            parts.push('<h4>Hooks</h4><ul class="consent-perm-list">');
+            hooks.forEach(function (hook) {
+                parts.push('<li><code>' + escapeHtml(hook) + '</code></li>');
+            });
+            parts.push('</ul>');
+        }
+        var dataAccess = manifest.data_access || {};
+        var accessLines = [];
+        Object.keys(dataAccess).forEach(function (domain) {
+            var level = dataAccess[domain];
+            if (level && level !== 'none') {
+                accessLines.push('<li>' + escapeHtml(domain) + ': <strong>' + escapeHtml(level) + '</strong></li>');
+            }
+        });
+        if (accessLines.length) {
+            parts.push('<h4>Data access</h4><ul class="consent-perm-list">' + accessLines.join('') + '</ul>');
+        }
+        if (!parts.length) {
+            return '<p class="form-help">This plugin does not declare elevated permissions.</p>';
+        }
+        return parts.join('');
+    }
+
+    function openInstallConsentModal(context) {
+        pendingInstallContext = context;
+        var modal = document.getElementById('marketplace-consent-modal');
+        var manifestEl = document.getElementById('marketplace-consent-manifest');
+        var summaryEl = document.getElementById('marketplace-consent-summary');
+        if (!modal || !manifestEl) {
+            return;
+        }
+        if (summaryEl) {
+            summaryEl.textContent = t(
+                'install_consent_summary',
+                'This plugin requests access to your site. Review the permissions below, then accept to install.'
+            );
+        }
+        manifestEl.innerHTML = renderPermissionsManifest(context.manifest || {});
+        modal.classList.add('active');
+    }
+
+    function closeInstallConsentModal() {
+        var modal = document.getElementById('marketplace-consent-modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+        pendingInstallContext = null;
+    }
+
+    async function acceptInstallConsent() {
+        var pending = pendingInstallContext;
+        if (!pending || !pending.slug) {
+            return;
+        }
+        var btn = document.getElementById('marketplace-consent-accept-btn');
+        if (btn) {
+            btn.disabled = true;
+        }
+        try {
+            await marketplaceApi('accept_consent', {
+                slug: pending.slug,
+                version: pending.version || '',
+            });
+            await executeMarketplaceInstall(pending.slug, pending.version || '', pending.licenseKey || '', true);
+        } catch (err) {
+            showMessage(err.message, 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+            }
+        }
+    }
+
+    async function executeMarketplaceInstall(slug, version, licenseKey, consentAccepted) {
+        var payload = {
+            slug: slug,
+            version: version,
+            consent_accepted: consentAccepted ? 1 : 0,
+        };
+        if (licenseKey) {
+            payload.license_key = licenseKey;
+        }
+        await marketplaceApi('install', payload);
+        closeMarketplaceInstallModal();
+        closeInstallConsentModal();
+        reloadAfterPluginChange(t('install_success', 'Plugin installed successfully'), 'installed');
+    }
+
+    async function ensureInstallConsentThenRun(slug, version, licenseKey) {
+        var perm = await marketplaceApiGet('permissions', { slug: slug, version: version });
+        var data = perm.data || {};
+        var resolvedVersion = data.version || version;
+        if (data.consent_required) {
+            openInstallConsentModal({
+                slug: slug,
+                version: resolvedVersion,
+                licenseKey: licenseKey,
+                manifest: data.permissions_manifest || {},
+            });
+            return;
+        }
+        await executeMarketplaceInstall(slug, resolvedVersion, licenseKey, false);
     }
 
     async function pluginsApi(action, extra) {
@@ -1076,19 +1225,26 @@
 
     async function runMarketplaceInstall(slug, version, licenseKey) {
         var btn = document.getElementById('marketplace-install-btn');
-        if (btn) btn.disabled = true;
+        if (btn) {
+            btn.disabled = true;
+        }
         try {
-            var payload = { slug: slug, version: version };
-            if (licenseKey) {
-                payload.license_key = licenseKey;
-            }
-            await marketplaceApi('install', payload);
-            closeMarketplaceInstallModal();
-            reloadAfterPluginChange(t('install_success', 'Plugin installed successfully'), 'installed');
+            await ensureInstallConsentThenRun(slug, version, licenseKey);
         } catch (err) {
+            if (err.code === 'consent_required') {
+                openInstallConsentModal({
+                    slug: slug,
+                    version: (err.data && err.data.version) || version,
+                    licenseKey: licenseKey,
+                    manifest: (err.data && err.data.permissions_manifest) || {},
+                });
+                return;
+            }
             showMessage(err.message, 'error');
         } finally {
-            if (btn) btn.disabled = false;
+            if (btn) {
+                btn.disabled = false;
+            }
         }
     }
 
