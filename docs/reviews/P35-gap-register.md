@@ -1,6 +1,6 @@
 # P35 — Gap register (Marketplace & Ops excellence)
 
-**Status:** Open — seed at P35-M0  
+**Status:** Open — M0 seeded; Wave 1–2 in progress (2026-07-23)  
 **Plan:** `docs/reviews/P35-marketplace-ops-excellence-plan.md`
 
 ---

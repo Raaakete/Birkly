@@ -1,6 +1,6 @@
 # P35 — Verification matrix (Marketplace & Ops excellence)
 
-**Status:** Draft — populate during P35-M0→M33  
+**Status:** In progress — Wave 1–2 landed 2026-07-23  
 **Plan:** `docs/reviews/P35-marketplace-ops-excellence-plan.md`
 
 ---
