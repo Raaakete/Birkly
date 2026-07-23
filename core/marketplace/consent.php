@@ -41,11 +41,31 @@ function birkly_marketplace_consent_reset(): void
     unset($GLOBALS['__birkly_marketplace_consent']);
 }
 
+function birkly_marketplace_is_offer_version_installed(string $slug, string $version): bool
+{
+    $slug = trim($slug);
+    $version = trim($version);
+    if ($slug === '' || $version === '') {
+        return false;
+    }
+
+    $installed = birkly_marketplace_installed_by_slug()[$slug] ?? null;
+    if (!is_array($installed) || empty($installed['installed'])) {
+        return false;
+    }
+
+    return trim((string) ($installed['installed_version'] ?? '')) === $version;
+}
+
 function birkly_marketplace_has_install_consent(string $slug, string $version): bool
 {
     $slug = trim($slug);
     $version = trim($version);
     if ($slug === '' || $version === '') {
+        return false;
+    }
+
+    if (!birkly_marketplace_is_offer_version_installed($slug, $version)) {
         return false;
     }
 

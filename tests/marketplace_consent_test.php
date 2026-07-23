@@ -25,21 +25,27 @@ $manifest = [
     ],
 ];
 
-test_assert('no consent initially', !birkly_marketplace_has_install_consent('birkly-commerce', '1.0.0'));
+test_assert('no consent initially', !birkly_marketplace_has_install_consent('test-offer-consent', '1.0.0'));
 
-$blocked = birkly_marketplace_require_install_consent('birkly-commerce', '1.0.0', false);
+$blocked = birkly_marketplace_require_install_consent('test-offer-consent', '1.0.0', false);
 test_assert('install blocked without consent', empty($blocked['ok']) && ($blocked['code'] ?? '') === 'consent_required');
 
-$allowed = birkly_marketplace_require_install_consent('birkly-commerce', '1.0.0', true);
+$allowed = birkly_marketplace_require_install_consent('test-offer-consent', '1.0.0', true);
 test_assert('install allowed when consent flag set', !empty($allowed['ok']));
 
-birkly_marketplace_record_install_consent('birkly-commerce', '1.0.0', $manifest, 'admin@test.local');
-test_assert('consent recorded', birkly_marketplace_has_install_consent('birkly-commerce', '1.0.0'));
+birkly_marketplace_record_install_consent('test-offer-consent', '1.0.0', $manifest, 'admin@test.local');
+test_assert('consent not fulfilled without installed plugin', !birkly_marketplace_has_install_consent('test-offer-consent', '1.0.0'));
 
 $stored = birkly_marketplace_load_consent();
 test_assert(
-    'stored manifest matches',
-    ($stored['birkly-commerce']['1.0.0']['permissions_manifest']['permissions'][0] ?? '') === 'manage_commerce'
+    'consent stored in settings',
+    ($stored['test-offer-consent']['1.0.0']['permissions_manifest']['permissions'][0] ?? '') === 'manage_commerce'
+);
+
+$permWithStaleConsent = birkly_marketplace_install_permissions('birkly-hello-starter');
+test_assert(
+    'stale consent still requires UI until plugin installed',
+    !empty($permWithStaleConsent['consent_required'])
 );
 
 $normalized = birkly_marketplace_normalize_permissions_manifest([
