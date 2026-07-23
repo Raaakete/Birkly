@@ -238,8 +238,18 @@ function birkly_marketplace_install_plugin(
     string $slug,
     string $version,
     string $licenseKey,
-    bool $upgrade = false
+    bool $upgrade = false,
+    bool $consentAccepted = false
 ): array {
+    $consentCheck = birkly_marketplace_require_install_consent($slug, $version, $consentAccepted);
+    if (!$consentCheck['ok']) {
+        return [
+            'ok' => false,
+            'errors' => [$consentCheck['error'] ?? 'Permission consent required'],
+            'code' => $consentCheck['code'] ?? 'consent_required',
+        ];
+    }
+
     $release = birkly_marketplace_release_download($slug, $version);
     if (!$release['ok']) {
         return ['ok' => false, 'errors' => [$release['error'] ?? 'Release lookup failed']];
@@ -279,6 +289,17 @@ function birkly_marketplace_install_plugin(
     }
 
     birkly_marketplace_save_plugin_source($pluginId, $slug, $version, $licenseKey);
+
+    if ($consentAccepted && !birkly_marketplace_has_install_consent($slug, $version)) {
+        $permInfo = birkly_marketplace_install_permissions($slug, $version);
+        if (!empty($permInfo['ok']) && is_array($permInfo['permissions_manifest'] ?? null)) {
+            birkly_marketplace_record_install_consent(
+                $slug,
+                $version,
+                $permInfo['permissions_manifest']
+            );
+        }
+    }
 
     return [
         'ok' => true,
@@ -540,11 +561,12 @@ function birkly_marketplace_install_offer(
     string $version,
     string $licenseKey,
     string $offerType = 'plugin',
-    bool $upgrade = false
+    bool $upgrade = false,
+    bool $consentAccepted = false
 ): array {
     if (in_array($offerType, ['theme', 'template_pack'], true)) {
         return birkly_marketplace_install_theme($slug, $version, $licenseKey, $offerType);
     }
 
-    return birkly_marketplace_install_plugin($slug, $version, $licenseKey, $upgrade);
+    return birkly_marketplace_install_plugin($slug, $version, $licenseKey, $upgrade, $consentAccepted);
 }
