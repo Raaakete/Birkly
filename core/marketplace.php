@@ -788,3 +788,4 @@ function birkly_marketplace_preview_zip_capabilities(string $zipPath): array
 }
 
 require_once __DIR__ . '/marketplace/install.php';
+require_once __DIR__ . '/marketplace/consent.php';
