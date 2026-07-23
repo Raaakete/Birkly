@@ -1,24 +1,28 @@
 # Birkly plugins directory
 
-Official plugin packages are **not** included in the CMS release download. Install them from the [Birkly Marketplace](https://marketplace.birkly.io) (Admin → Plugins → Marketplace).
+Official plugin packages are **not** included in the CMS release download. Install them from the [Birkly Marketplace](https://marketplace.birkly.cloud) (Admin → Plugins → Marketplace).
 
 ## Local development
 
-This repository keeps official plugin sources under `plugins/` for day-to-day development:
+Plugin **source** for building marketplace releases lives under `plugins/` in this repository (commerce, events, automation, user_management, studio). These folders are **not** shipped in CMS release zips and are **not** required for a fresh install — they exist for development and CI only.
 
-- `commerce`
-- `events`
-- `automation`
-- `user_management`
-- `sample-plugin` (dev / examples only)
+| Plugin | Marketplace slug |
+|--------|-------------------|
+| commerce | [birkly-commerce](https://marketplace.birkly.cloud/offers/birkly-commerce) |
+| events | [birkly-events](https://marketplace.birkly.cloud/offers/birkly-events) |
+| automation | [birkly-automation](https://marketplace.birkly.cloud/offers/birkly-automation) |
+| user_management | [birkly-user-management](https://marketplace.birkly.cloud/offers/birkly-user-management) |
+| studio | [birkly-studio](https://marketplace.birkly.cloud/offers/birkly-studio) |
 
-If plugin folders are missing (e.g. after extracting a release zip), run:
+`sample-plugin` is dev/examples only and is not published to the marketplace.
+
+If plugin folders are missing (e.g. after extracting a release zip), install from the marketplace registry:
 
 ```bash
 ./scripts/install-dev-plugins.sh
 ```
 
-That script installs official plugins from sibling `Birkly-Marketplace/catalog/packages/` zips when available, or skips directories that are already present.
+That script pulls official plugins from the production registry (`MARKETPLACE_URL`, default `https://marketplace.birkly.cloud`). Set `BIRKLY_INSTALL_FROM_REGISTRY=0` to use only local seed zips from sibling `Birkly-Marketplace/catalog/packages/`.
 
 ## Release publishing
 
