@@ -24,6 +24,26 @@ function birkly_csp_nonce_attr(): string
 }
 
 /**
+ * Marketplace origin allowed in admin iframes (offer embed modal).
+ */
+function birkly_csp_marketplace_frame_origin(): string
+{
+    require_once __DIR__ . '/marketplace.php';
+    $url = birkly_marketplace_url();
+    $parts = parse_url($url);
+    if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
+        return 'https://marketplace.birkly.cloud';
+    }
+
+    $origin = $parts['scheme'] . '://' . $parts['host'];
+    if (!empty($parts['port'])) {
+        $origin .= ':' . $parts['port'];
+    }
+
+    return $origin;
+}
+
+/**
  * Set admin CSP headers using the per-request nonce.
  */
 function birkly_set_admin_csp_headers(): void
@@ -33,5 +53,7 @@ function birkly_set_admin_csp_headers(): void
     }
 
     require_once __DIR__ . '/../api/validate.php';
-    set_security_headers('admin', birkly_csp_nonce());
+    set_security_headers('admin', birkly_csp_nonce(), [
+        'frame_src' => ["'self'", birkly_csp_marketplace_frame_origin()],
+    ]);
 }

@@ -38,6 +38,104 @@
         alert(message);
     }
 
+    function handlePluginAction(el) {
+        var action = el.getAttribute('data-plugin-action');
+        if (action === 'toggle') {
+            togglePlugin(el.getAttribute('data-plugin-id'), el.getAttribute('data-plugin-activate') === 'true');
+        } else if (action === 'delete') {
+            deletePlugin(el.getAttribute('data-plugin-id'));
+        } else if (action === 'upgrade') {
+            upgradePlugin(el.getAttribute('data-plugin-id'));
+        } else if (action === 'switch-marketplace') {
+            switchToMarketplace();
+        } else if (action === 'back-marketplace') {
+            backToMarketplaceBrowse();
+        } else if (action === 'open-offer') {
+            openOfferDetail(el.getAttribute('data-offer-slug'));
+        } else if (action === 'install-free') {
+            installFreePlugin(el.getAttribute('data-offer-slug'), el.getAttribute('data-offer-version'));
+        } else if (action === 'open-install') {
+            openMarketplaceInstall(
+                el.getAttribute('data-offer-slug'),
+                el.getAttribute('data-offer-title'),
+                el.getAttribute('data-offer-version'),
+                el.getAttribute('data-offer-free') === 'true'
+            );
+        } else if (action === 'search-marketplace') {
+            searchMarketplace();
+        } else if (action === 'check-updates') {
+            checkAllUpdates();
+        } else if (action === 'open-install-modal') {
+            openInstallModal();
+        } else if (action === 'close-install-modal') {
+            closeInstallModal();
+        } else if (action === 'install-from-file') {
+            installFromFile();
+        } else if (action === 'close-offer-embed') {
+            closeOfferEmbedModal();
+        } else if (action === 'close-marketplace-install') {
+            closeMarketplaceInstallModal();
+        } else if (action === 'install-marketplace') {
+            installFromMarketplace();
+        }
+    }
+
+    /**
+     * Modals live outside `.plugins-page`; bind document-level handlers (P35 hotfix).
+     */
+    function bindModalDelegatedEvents() {
+        if (document.body.dataset.pluginModalsBound === '1') {
+            return;
+        }
+        document.body.dataset.pluginModalsBound = '1';
+
+        document.addEventListener('click', function (e) {
+            var el = e.target.closest('[data-plugin-action]');
+            if (el) {
+                var action = el.getAttribute('data-plugin-action');
+                if (
+                    action === 'close-offer-embed' ||
+                    action === 'close-install-modal' ||
+                    action === 'close-marketplace-install' ||
+                    action === 'open-install-modal' ||
+                    action === 'install-from-file' ||
+                    action === 'install-marketplace'
+                ) {
+                    handlePluginAction(el);
+                }
+                return;
+            }
+
+            if (e.target.id === 'marketplace-offer-embed-modal' && e.target.classList.contains('active')) {
+                closeOfferEmbedModal();
+            } else if (e.target.id === 'install-plugin-modal' && e.target.classList.contains('active')) {
+                closeInstallModal();
+            } else if (e.target.id === 'marketplace-install-modal' && e.target.classList.contains('active')) {
+                closeMarketplaceInstallModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') {
+                return;
+            }
+            var embedModal = document.getElementById('marketplace-offer-embed-modal');
+            if (embedModal && embedModal.classList.contains('active')) {
+                closeOfferEmbedModal();
+                return;
+            }
+            var installModal = document.getElementById('install-plugin-modal');
+            if (installModal && installModal.classList.contains('active')) {
+                closeInstallModal();
+                return;
+            }
+            var marketplaceInstallModal = document.getElementById('marketplace-install-modal');
+            if (marketplaceInstallModal && marketplaceInstallModal.classList.contains('active')) {
+                closeMarketplaceInstallModal();
+            }
+        });
+    }
+
     /**
      * CSP nonce blocks inline onclick — use delegated listeners (P16-M5 / plugin activate fix).
      */
@@ -51,45 +149,7 @@
         root.addEventListener('click', function (e) {
             var el = e.target.closest('[data-plugin-action]');
             if (el) {
-                var action = el.getAttribute('data-plugin-action');
-                if (action === 'toggle') {
-                    togglePlugin(el.getAttribute('data-plugin-id'), el.getAttribute('data-plugin-activate') === 'true');
-                } else if (action === 'delete') {
-                    deletePlugin(el.getAttribute('data-plugin-id'));
-                } else if (action === 'upgrade') {
-                    upgradePlugin(el.getAttribute('data-plugin-id'));
-                } else if (action === 'switch-marketplace') {
-                    switchToMarketplace();
-                } else if (action === 'back-marketplace') {
-                    backToMarketplaceBrowse();
-                } else if (action === 'open-offer') {
-                    openOfferDetail(el.getAttribute('data-offer-slug'));
-                } else if (action === 'install-free') {
-                    installFreePlugin(el.getAttribute('data-offer-slug'), el.getAttribute('data-offer-version'));
-                } else if (action === 'open-install') {
-                    openMarketplaceInstall(
-                        el.getAttribute('data-offer-slug'),
-                        el.getAttribute('data-offer-title'),
-                        el.getAttribute('data-offer-version'),
-                        el.getAttribute('data-offer-free') === 'true'
-                    );
-                } else if (action === 'search-marketplace') {
-                    searchMarketplace();
-                } else if (action === 'check-updates') {
-                    checkAllUpdates();
-                } else if (action === 'open-install-modal') {
-                    openInstallModal();
-                } else if (action === 'close-install-modal') {
-                    closeInstallModal();
-                } else if (action === 'install-from-file') {
-                    installFromFile();
-                } else if (action === 'close-offer-embed') {
-                    closeOfferEmbedModal();
-                } else if (action === 'close-marketplace-install') {
-                    closeMarketplaceInstallModal();
-                } else if (action === 'install-marketplace') {
-                    installFromMarketplace();
-                }
+                handlePluginAction(el);
                 return;
             }
 
@@ -948,6 +1008,7 @@
     }
 
     async function init() {
+        bindModalDelegatedEvents();
         bindDelegatedEvents();
         initTabs();
         var tab = getInitialTab();
