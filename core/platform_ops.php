@@ -54,6 +54,7 @@ function birkly_ops_request_signature(string $body): string
 
 /**
  * Register or refresh this CMS install on Ops (best-effort).
+ * Persists per-install feedback_relay_secret when Ops returns one.
  */
 function birkly_ops_register_installation(): void
 {
@@ -69,6 +70,7 @@ function birkly_ops_register_installation(): void
         'cms_version' => class_exists('BirklyVersion') ? BirklyVersion::getCurrentVersion() : '0.0.0',
         'channel' => birkly_ops_release_channel(),
         'program_tier' => trim((string) (birkly_platform_config()['program_tier'] ?? 'closed_alpha')),
+        'host' => trim((string) ($_SERVER['HTTP_HOST'] ?? '')),
         'last_seen' => gmdate('c'),
     ];
     $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -91,8 +93,24 @@ function birkly_ops_register_installation(): void
         CURLOPT_TIMEOUT => 6,
         CURLOPT_CONNECTTIMEOUT => 3,
     ]);
-    curl_exec($ch);
+    $response = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+
+    if (!is_string($response) || $code < 200 || $code >= 300) {
+        return;
+    }
+
+    $data = json_decode($response, true);
+    if (!is_array($data) || empty($data['ok'])) {
+        return;
+    }
+
+    $installation = is_array($data['installation'] ?? null) ? $data['installation'] : [];
+    $relaySecret = trim((string) ($installation['feedback_relay_secret'] ?? ''));
+    if ($relaySecret !== '' && birkly_feedback_relay_secret() === '') {
+        birkly_platform_persist_config(['feedback_relay_secret' => $relaySecret]);
+    }
 }
 
 /**

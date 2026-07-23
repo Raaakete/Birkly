@@ -3,6 +3,8 @@
  * Platform install flags (P5.4-M2) — feedback model, alpha program, relay.
  */
 
+const BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL = 'https://ops.birkly.cloud/api/ops/v1/feedback';
+
 /**
  * @return array<string, mixed>
  */
@@ -26,6 +28,38 @@ function birkly_platform_config(): array
 function birkly_platform_config_reset(): void
 {
     unset($GLOBALS['__birkly_platform_config']);
+}
+
+/**
+ * Merge keys into settings/platform.json (creates file when missing).
+ *
+ * @param array<string, mixed> $updates
+ */
+function birkly_platform_persist_config(array $updates): void
+{
+    $path = __DIR__ . '/../settings/platform.json';
+    $config = birkly_platform_config();
+    foreach ($updates as $key => $value) {
+        if (!is_string($key) || $key === '') {
+            continue;
+        }
+        $trimmed = is_string($value) ? trim($value) : $value;
+        if ($trimmed === '' || $trimmed === null) {
+            continue;
+        }
+        $config[$key] = $trimmed;
+    }
+
+    $dir = dirname($path);
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    file_put_contents(
+        $path,
+        json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n"
+    );
+    birkly_platform_config_reset();
 }
 
 function birkly_is_platform_owner_install(): bool
@@ -96,7 +130,16 @@ function birkly_feedback_relay_url(): string
         return $fromConfig;
     }
 
-    return trim((string) (getenv('BIRKLY_FEEDBACK_RELAY_URL') ?: ''));
+    $env = trim((string) (getenv('BIRKLY_FEEDBACK_RELAY_URL') ?: ''));
+    if ($env !== '') {
+        return $env;
+    }
+
+    if (birkly_is_platform_owner_install()) {
+        return '';
+    }
+
+    return BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL;
 }
 
 function birkly_feedback_relay_secret(): string
