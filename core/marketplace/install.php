@@ -138,6 +138,9 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
         if (!is_string($name) || str_ends_with($name, '/')) {
             continue;
         }
+        if (birkly_marketplace_should_skip_zip_entry($name)) {
+            continue;
+        }
         if (str_contains($name, '..')) {
             $zip->close();
             birkly_marketplace_remove_directory($dest);
@@ -180,31 +183,61 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
     return ['ok' => true, 'plugin_id' => $pluginId, 'path' => $dest, 'errors' => []];
 }
 
+function birkly_marketplace_should_skip_zip_entry(string $name): bool
+{
+    $normalized = str_replace('\\', '/', $name);
+    if ($normalized === '' || $normalized === '.DS_Store') {
+        return true;
+    }
+    if (str_starts_with($normalized, '__MACOSX/') || $normalized === '__MACOSX') {
+        return true;
+    }
+    $basename = basename(rtrim($normalized, '/'));
+    return str_starts_with($basename, '._');
+}
+
 function birkly_marketplace_zip_root_prefix(ZipArchive $zip): string
 {
+    $pluginJsonDirs = [];
     $topLevels = [];
+    $hasRootFiles = false;
+
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = $zip->getNameIndex($i);
-        if (!is_string($name) || $name === '') {
+        if (!is_string($name) || $name === '' || birkly_marketplace_should_skip_zip_entry($name)) {
             continue;
         }
-        $parts = explode('/', rtrim($name, '/'));
-        if ($parts[0] !== '') {
-            $topLevels[$parts[0]] = ($topLevels[$parts[0]] ?? 0) + 1;
+
+        $trimmed = rtrim(str_replace('\\', '/', $name), '/');
+        if ($trimmed === '') {
+            continue;
+        }
+
+        if (!str_contains($trimmed, '/')) {
+            $hasRootFiles = true;
+            continue;
+        }
+
+        $parts = explode('/', $trimmed);
+        $top = $parts[0] ?? '';
+        if ($top !== '') {
+            $topLevels[$top] = true;
+        }
+
+        if (basename($trimmed) === 'plugin.json') {
+            array_pop($parts);
+            $pluginJsonDirs[implode('/', $parts)] = true;
         }
     }
 
-    if (count($topLevels) === 1) {
+    if (count($pluginJsonDirs) === 1) {
+        $dir = array_key_first($pluginJsonDirs);
+        return is_string($dir) && $dir !== '' ? $dir . '/' : '';
+    }
+
+    if (count($topLevels) === 1 && !$hasRootFiles) {
         $only = array_key_first($topLevels);
-        $hasRootFiles = false;
-        for ($i = 0; $i < $zip->numFiles; $i++) {
-            $name = $zip->getNameIndex($i);
-            if (is_string($name) && !str_contains(rtrim($name, '/'), '/')) {
-                $hasRootFiles = true;
-                break;
-            }
-        }
-        if (!$hasRootFiles && is_string($only)) {
+        if (is_string($only) && $only !== '') {
             return $only . '/';
         }
     }
@@ -451,6 +484,9 @@ function birkly_marketplace_extract_theme_zip(string $zipPath, string $themeId, 
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = $zip->getNameIndex($i);
         if (!is_string($name) || str_ends_with($name, '/')) {
+            continue;
+        }
+        if (birkly_marketplace_should_skip_zip_entry($name)) {
             continue;
         }
         if (str_contains($name, '..')) {
