@@ -83,6 +83,16 @@ function feedback_generate_id(): string
     return sprintf('%s-%s', date('YmdHis'), bin2hex(random_bytes(4)));
 }
 
+function feedback_cms_version(): string
+{
+    if (!is_file(__DIR__ . '/../core/version.php')) {
+        return '';
+    }
+    require_once __DIR__ . '/../core/version.php';
+
+    return class_exists('BirklyVersion') ? BirklyVersion::getCurrentVersion() : '';
+}
+
 function feedback_user_key(): string
 {
     $user = $_SESSION['user'] ?? [];
@@ -199,6 +209,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
                 'title' => $title,
                 'description' => $description,
                 'status' => 'new',
+                'cms_version' => feedback_cms_version(),
                 'user_id' => $user['id'] ?? '',
                 'user_email' => $user['email'] ?? '',
                 'user_role' => $user['role'] ?? '',
