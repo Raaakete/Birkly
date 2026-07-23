@@ -10,6 +10,7 @@
     var currentOfferSlug = null;
     var marketplaceBaseUrl = '';
     var marketplaceOffersCache = [];
+    var reviewStatusMap = {};
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function'
@@ -77,6 +78,12 @@
             closeMarketplaceInstallModal();
         } else if (action === 'install-marketplace') {
             installFromMarketplace();
+        } else if (action === 'open-review') {
+            openReviewModal(el.getAttribute('data-plugin-id'), el.getAttribute('data-offer-slug'));
+        } else if (action === 'close-review-modal') {
+            closeReviewModal();
+        } else if (action === 'submit-review') {
+            submitPluginReview();
         }
     }
 
@@ -99,7 +106,9 @@
                     action === 'close-marketplace-install' ||
                     action === 'open-install-modal' ||
                     action === 'install-from-file' ||
-                    action === 'install-marketplace'
+                    action === 'install-marketplace' ||
+                    action === 'close-review-modal' ||
+                    action === 'submit-review'
                 ) {
                     handlePluginAction(el);
                 }
@@ -446,6 +455,21 @@
             var healthStatus = health.status || 'unknown';
             var healthTitle = [].concat(health.errors || [], health.warnings || []).join('; ');
             var healthClass = 'health-' + healthStatus;
+            var reviewStatus = reviewStatusMap[plugin.id] || {};
+            var reviewButton = '';
+            if (plugin.from_marketplace && plugin.marketplace_slug) {
+                if (reviewStatus.has_review) {
+                    reviewButton =
+                        '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
+                        escapeHtml(plugin.id) + '" data-offer-slug="' + escapeHtml(plugin.marketplace_slug) +
+                        '">Your review</button>';
+                } else if (reviewStatus.can_review) {
+                    reviewButton =
+                        '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
+                        escapeHtml(plugin.id) + '" data-offer-slug="' + escapeHtml(plugin.marketplace_slug) +
+                        '">Write review</button>';
+                }
+            }
             return (
                 '<div class="card plugin-card' + (hasUpdate ? ' has-update' : '') + '">' +
                 '<div class="plugin-header">' +
@@ -469,6 +493,7 @@
                 (plugin.license_ref ? '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
                 '</div>' +
                 '<div class="plugin-actions">' +
+                reviewButton +
                 (hasUpdate
                     ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
                     : '') +
@@ -494,7 +519,104 @@
             throw new Error(result.message || 'Failed to load plugins');
         }
         installedPlugins = (result.data && result.data.plugins) || [];
+        await loadReviewStatuses();
         renderInstalledPlugins();
+    }
+
+    async function loadReviewStatuses() {
+        reviewStatusMap = {};
+        try {
+            var result = await marketplaceApi('review_status_batch');
+            reviewStatusMap = (result.data && result.data.reviews) || {};
+        } catch (e) {
+            reviewStatusMap = {};
+        }
+    }
+
+    function openReviewModal(pluginId, offerSlug) {
+        var modal = document.getElementById('plugin-review-modal');
+        var plugin = installedPlugins.find(function (p) { return p.id === pluginId; }) || {};
+        var status = reviewStatusMap[pluginId] || {};
+        var titleEl = document.getElementById('plugin-review-title');
+        var summaryEl = document.getElementById('plugin-review-summary');
+        var existingEl = document.getElementById('plugin-review-existing');
+        var form = document.getElementById('plugin-review-form');
+        var submitBtn = document.getElementById('plugin-review-submit-btn');
+        if (!modal) return;
+
+        document.getElementById('plugin-review-plugin-id').value = pluginId || '';
+        document.getElementById('plugin-review-slug').value = offerSlug || plugin.marketplace_slug || '';
+
+        if (titleEl) {
+            titleEl.textContent = status.has_review ? 'Your review' : 'Write a review';
+        }
+        if (summaryEl) {
+            summaryEl.textContent = 'Reviews are tied to this Birkly site installation. Only people who installed and use the plugin here can submit a review.';
+        }
+
+        if (existingEl) {
+            if (status.has_review && status.review) {
+                existingEl.hidden = false;
+                existingEl.innerHTML =
+                    '<p><strong>' + escapeHtml(String(status.review.rating || '')) + ' stars</strong></p>' +
+                    '<p>' + escapeHtml(status.review.body || '') + '</p>';
+            } else {
+                existingEl.hidden = true;
+                existingEl.innerHTML = '';
+            }
+        }
+
+        if (form) {
+            form.style.display = status.has_review ? 'none' : '';
+        }
+        if (submitBtn) {
+            submitBtn.style.display = status.has_review ? 'none' : '';
+        }
+
+        modal.classList.add('active');
+    }
+
+    function closeReviewModal() {
+        var modal = document.getElementById('plugin-review-modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+        var body = document.getElementById('plugin-review-body');
+        if (body) {
+            body.value = '';
+        }
+    }
+
+    async function submitPluginReview() {
+        var pluginId = document.getElementById('plugin-review-plugin-id')?.value || '';
+        var slug = document.getElementById('plugin-review-slug')?.value || '';
+        var body = document.getElementById('plugin-review-body')?.value || '';
+        var ratingInput = document.querySelector('#plugin-review-form input[name="plugin-review-rating"]:checked');
+        var rating = ratingInput ? parseInt(ratingInput.value, 10) : 5;
+
+        if (!slug && !pluginId) {
+            showMessage('Missing plugin information', 'error');
+            return;
+        }
+        if (!body.trim()) {
+            showMessage('Please write a review', 'error');
+            return;
+        }
+
+        try {
+            var result = await marketplaceApi('submit_review', {
+                plugin_id: pluginId,
+                slug: slug,
+                rating: rating,
+                body: body.trim(),
+            });
+            showMessage(result.message || 'Review submitted', 'success');
+            closeReviewModal();
+            await loadReviewStatuses();
+            renderInstalledPlugins();
+        } catch (err) {
+            showMessage(err.message, 'error');
+        }
     }
 
     async function togglePlugin(pluginId, activate) {
