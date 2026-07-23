@@ -97,7 +97,10 @@ Expected: `HTTP/2 200` and `content-type: text/html` (not `application/octet-str
 
 | Symptom | Cause | Fix |
 |---------|--------|-----|
-| **Welcome to nginx!** on `/` | Default nginx image, no Birkly PHP stack | Build type → **Dockerfile**, Rebuild with clean cache |
+| **Welcome to nginx!** on `/` | Default **Static** image still running | Build type → **Dockerfile**, **Stop** → **Clean cache** → **Rebuild** |
+| Logs mention `/usr/share/nginx/html` | Static build, not the Birkly Dockerfile | Same; check **Deployments** tab — build must show `FROM php:8.3-fpm-bookworm` |
+| Docker build fails / old container kept | Repo has a symlink under `tests/fixtures/` that breaks `COPY` without `.dockerignore` | Pull latest `main` (includes `.dockerignore`), rebuild |
+| Logs show `[entrypoint] Birkly CMS docker image` | Good — correct image started | Open `/admin` |
 | `/admin/login.php` downloads as a file | PHP not executed | Same — need Dockerfile image |
 | 502 Bad Gateway | Container crashed | Check Dokploy **Logs**; verify port **80** |
 | Onboarding never appears | Wrong URL | Use `/admin`, not `/` only |
@@ -110,6 +113,24 @@ After **Rebuild**, container should be **Up 1 minute** (not hours). Build log sh
 `FROM php:8.3-fpm-bookworm`
 
 If you still see the nginx welcome page, enable **Clean Cache** → **Rebuild**.
+
+### Verify the Docker build (Deployments tab)
+
+Open **Deployments** → latest deploy → **build log**. You must see:
+
+```
+Step 1/N : FROM php:8.3-fpm-bookworm
+```
+
+If the log only copies files to nginx or never mentions `php:8.3-fpm-bookworm`, the app is still on **Static** — change build type, **Save**, then **Stop** → **Rebuild**.
+
+After a successful deploy, **Logs** should include:
+
+```
+[entrypoint] Birkly CMS docker image — document root /app
+```
+
+If logs only show `nginx/1.31.3` on Alpine with `/usr/share/nginx/html`, the old Static container is still serving traffic.
 
 ---
 
