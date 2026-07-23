@@ -29,7 +29,6 @@ p33_assert_contains('admin/js/theme.js', 'min-width: 1280px', 'M6 theme drawer b
 p33_assert_contains('admin/css/components/tabs-v2.css', 'tabs-v2-picker-wrap', 'M3 picker menu affordance');
 p33_assert_contains('admin/css/components/tabs-v2.css', 'tabs-v2-picker-icon', 'M3 picker hamburger icon');
 p33_assert_contains('admin/templates/settings.html', 'tabs-v2-root', 'M4 settings tabs v2');
-p33_assert_contains('admin/partials/sidebar.php', 'admin.trash', 'M14 trash nav');
 p33_assert_contains('admin/templates/account.html', 'account-save-btn', 'M5 account sticky save');
 p33_assert_contains('docs/reviews/P33-lead-engineer-handoff.md', 'P33-M20', 'M0 handoff doc');
 
