@@ -49,16 +49,19 @@ $manifestPath = getenv("MANIFEST");
 $pluginJsonPath = getenv("PLUGIN_JSON");
 
 $manifest = json_decode((string) file_get_contents($manifestPath), true);
-$slugs = is_array($manifest["official_marketplace_slugs"] ?? null)
-    ? $manifest["official_marketplace_slugs"]
-    : [];
-$slug = $slugs[$pluginId] ?? null;
+$pluginJson = json_decode((string) file_get_contents($pluginJsonPath), true);
+$slug = trim((string) ($pluginJson["marketplace_slug"] ?? ""));
+if ($slug === "") {
+    $slugs = is_array($manifest["official_marketplace_slugs"] ?? null)
+        ? $manifest["official_marketplace_slugs"]
+        : [];
+    $slug = $slugs[$pluginId] ?? null;
+}
 if (!is_string($slug) || $slug === "") {
-    fwrite(STDERR, "No marketplace slug for plugin id: {$pluginId}\n");
+    fwrite(STDERR, "No marketplace slug for plugin id: {$pluginId} (set marketplace_slug in plugin.json)\n");
     exit(1);
 }
 
-$pluginJson = json_decode((string) file_get_contents($pluginJsonPath), true);
 $version = trim($versionArg);
 if ($version === "") {
     $version = trim((string) ($pluginJson["version"] ?? ""));

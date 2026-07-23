@@ -3,7 +3,21 @@
   "version": "1.0.0",
   "description": "Commerce — payment providers, catalog, cart, checkout, orders, discounts, import, and fulfillment. Replaces the legacy Payments plugin.",
   "author": "Birkly",
+  "marketplace_slug": "birkly-commerce",
+  "requires_birkly": ">=0.1.0",
+  "requires_php": ">=8.1",
   "requires": "1.0.0",
+  "dependencies": {
+    "plugins": [
+      { "id": "user_management", "version": "1.0.0", "required": false }
+    ]
+  },
+  "data_access": {
+    "entries": "read_write",
+    "media": "read",
+    "users": "read",
+    "settings": "read_write"
+  },
   "hooks": [
     "plugin_activated",
     "automation_blocks_register",

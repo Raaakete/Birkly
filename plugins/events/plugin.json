@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "description": "Event management with free RSVP and paid tickets via payment_shelf",
   "author": "Birkly",
+  "marketplace_slug": "birkly-events",
+  "requires_birkly": ">=0.1.0",
+  "requires_php": ">=8.1",
   "requires": "1.0.0",
+  "data_access": {
+    "entries": "read_write",
+    "media": "read",
+    "users": "read",
+    "settings": "read"
+  },
   "dependencies": {
     "plugins": [
       { "id": "commerce", "version": "1.0.0", "required": false }
