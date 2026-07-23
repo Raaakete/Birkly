@@ -9,6 +9,7 @@
     var marketplaceFilterOptions = { categories: [], offer_types: [] };
     var currentOfferSlug = null;
     var marketplaceBaseUrl = '';
+    var marketplaceOffersCache = [];
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function'
@@ -82,6 +83,8 @@
                     closeInstallModal();
                 } else if (action === 'install-from-file') {
                     installFromFile();
+                } else if (action === 'close-offer-embed') {
+                    closeOfferEmbedModal();
                 } else if (action === 'close-marketplace-install') {
                     closeMarketplaceInstallModal();
                 } else if (action === 'install-marketplace') {
@@ -189,9 +192,61 @@
         return amount;
     }
 
+    function marketplaceOfferUrl(slug, embed) {
+        var base = marketplaceBaseUrl || 'https://marketplace.birkly.cloud';
+        var url = base.replace(/\/$/, '') + '/offers/' + encodeURIComponent(slug || '');
+        if (embed) {
+            url += '?embed=1';
+        }
+        return url;
+    }
+
     function marketplacePurchaseUrl(slug) {
         var base = marketplaceBaseUrl || 'https://marketplace.birkly.cloud';
         return base.replace(/\/$/, '') + '/buy/' + encodeURIComponent(slug || '');
+    }
+
+    function findCachedOffer(slug) {
+        for (var i = 0; i < marketplaceOffersCache.length; i++) {
+            if (marketplaceOffersCache[i] && marketplaceOffersCache[i].slug === slug) {
+                return marketplaceOffersCache[i];
+            }
+        }
+        return null;
+    }
+
+    function openOfferEmbedModal(slug, offer) {
+        var modal = document.getElementById('marketplace-offer-embed-modal');
+        var iframe = document.getElementById('marketplace-offer-iframe');
+        var titleEl = document.getElementById('marketplace-embed-title');
+        var actionsEl = document.getElementById('marketplace-embed-actions');
+        if (!modal || !iframe) {
+            return;
+        }
+
+        var resolvedOffer = offer || findCachedOffer(slug) || { slug: slug, title: slug };
+        if (titleEl) {
+            titleEl.textContent = resolvedOffer.title || slug;
+        }
+        iframe.src = marketplaceOfferUrl(slug, true);
+        if (actionsEl) {
+            actionsEl.innerHTML = renderOfferActionButtons(resolvedOffer, false);
+        }
+        modal.classList.add('active');
+    }
+
+    function closeOfferEmbedModal() {
+        var modal = document.getElementById('marketplace-offer-embed-modal');
+        var iframe = document.getElementById('marketplace-offer-iframe');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+        if (iframe) {
+            iframe.src = 'about:blank';
+        }
+        currentOfferSlug = null;
+        updateMarketplaceUrl('');
+        updatePageTitle('marketplace');
     }
 
     function formatRating(summary) {
@@ -605,18 +660,12 @@
             return;
         }
         currentOfferSlug = slug;
-        setMarketplaceView('detail');
         updateMarketplaceUrl(slug);
 
-        var detailEl = document.getElementById('marketplace-offer-detail');
-        if (!detailEl) {
+        var cached = findCachedOffer(slug);
+        if (cached) {
+            openOfferEmbedModal(slug, cached);
             return;
-        }
-        detailEl.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('loading_marketplace', 'Loading marketplace...')) + '</p></div>';
-
-        var titleEl = document.getElementById('plugins-page-title');
-        if (titleEl) {
-            titleEl.textContent = slug;
         }
 
         try {
@@ -627,23 +676,15 @@
             if (result.status !== 'ok' || !result.data || !result.data.offer) {
                 throw new Error(result.message || 'Offer not found');
             }
-            var offer = result.data.offer;
-            if (titleEl) {
-                titleEl.textContent = offer.title || slug;
-            }
-            detailEl.innerHTML = renderMarketplaceOfferDetail(offer, result.data.releases || []);
+            openOfferEmbedModal(slug, result.data.offer);
         } catch (err) {
-            detailEl.innerHTML = '<div class="error-state"><p>' + escapeHtml(err.message) + '</p>' +
-                '<button type="button" class="btn btn-secondary" data-plugin-action="back-marketplace">' +
-                escapeHtml(t('back_to_marketplace', 'Back to marketplace')) + '</button></div>';
+            showMessage(err.message, 'error');
         }
     }
 
     function backToMarketplaceBrowse() {
-        currentOfferSlug = null;
+        closeOfferEmbedModal();
         setMarketplaceView('browse');
-        updateMarketplaceUrl('');
-        updatePageTitle('marketplace');
         loadMarketplace();
     }
 
@@ -711,7 +752,8 @@
 
             marketplaceFilterOptions = (result.data && result.data.filter_options) || marketplaceFilterOptions;
             updateCategoryFilterOptions(marketplaceFilterOptions.categories || []);
-            renderMarketplaceOffers((result.data && result.data.offers) || []);
+            marketplaceOffersCache = (result.data && result.data.offers) || [];
+            renderMarketplaceOffers(marketplaceOffersCache);
         } catch (err) {
             if (grid) {
                 grid.innerHTML = '<div class="error-state"><p>' + escapeHtml(err.message) + '</p></div>';
@@ -938,6 +980,8 @@
         switchTab: switchTab,
         openOfferDetail: openOfferDetail,
         backToMarketplaceBrowse: backToMarketplaceBrowse,
+        openOfferEmbedModal: openOfferEmbedModal,
+        closeOfferEmbedModal: closeOfferEmbedModal,
     };
 
     window.togglePlugin = togglePlugin;

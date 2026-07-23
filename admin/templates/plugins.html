@@ -88,6 +88,20 @@
     </div>
 </div>
 
+<!-- Marketplace offer embed modal (P35-M27) -->
+<div id="marketplace-offer-embed-modal" class="modal-backdrop">
+    <div class="modal-content marketplace-offer-embed-modal">
+        <div class="modal-header">
+            <h2 id="marketplace-embed-title">{translate 'admin.marketplace'}</h2>
+            <button class="modal-close-btn" type="button" data-plugin-action="close-offer-embed">&times;</button>
+        </div>
+        <div class="modal-body marketplace-embed-body">
+            <iframe id="marketplace-offer-iframe" class="marketplace-offer-iframe" title="{translate 'admin.marketplace'}" loading="lazy"></iframe>
+        </div>
+        <div class="modal-footer marketplace-embed-footer" id="marketplace-embed-actions"></div>
+    </div>
+</div>
+
 <!-- Install Plugin Modal (local zip/url — legacy) -->
 <div id="install-plugin-modal" class="modal-backdrop">
     <div class="modal-content">
