@@ -95,16 +95,19 @@ if (!function_exists('escape_attr')) {
  *
  * @param string $context Context: 'admin', 'api', or 'public'
  * @param string|null $cspNonce Per-request nonce for admin inline scripts (P16-M5)
+ * @param array<string, list<string>> $cspOverrides Optional CSP directive overrides (e.g. frame_src)
  */
-function set_security_headers($context = 'api', ?string $cspNonce = null) {
+function set_security_headers($context = 'api', ?string $cspNonce = null, array $cspOverrides = []) {
     // Content Security Policy - more restrictive for admin, permissive for public APIs
     if ($context === 'admin') {
         $nonce = trim((string) ($cspNonce ?? ''));
+        $frameSrc = $cspOverrides['frame_src'] ?? ["'self'"];
+        $frameSrcValue = implode(' ', array_unique($frameSrc));
         if ($nonce !== '') {
             // Admin shell: inline scripts require nonce; external scripts allowed via 'self'
-            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-" . $nonce . "' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-" . $nonce . "' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src " . $frameSrcValue . "; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
         } else {
-            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src " . $frameSrcValue . "; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
         }
     } elseif ($context === 'api') {
         // API endpoints - very restrictive, no scripts/styles needed
