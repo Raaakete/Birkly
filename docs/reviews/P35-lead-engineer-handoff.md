@@ -1,6 +1,6 @@
 # Phase 35 — Lead-engineer handoff (Marketplace & Ops excellence)
 
-**Status:** Proposed — execute after human approves P35 plan  
+**Status:** Approved — execute now (2026-07-23, Keven)  
 **Human rule:** Execute **P35-M0→M33** autonomously. Notify human **once** at **P35-M33**.
 
 **Master plan:** `docs/reviews/P35-marketplace-ops-excellence-plan.md`  
@@ -15,15 +15,14 @@
 ```
 You are the lead-engineer for Birkly Phase 35 — Marketplace & Ops excellence.
 
-Human requested P35 (2026-07-23) after P34 production deploy on *.birkly.cloud.
-Execute P35-M0→M33 autonomously. Notify human ONCE at P35-M33.
+Human approved P35 (2026-07-23). Execute P35-M0→M33 autonomously. Notify human ONCE at P35-M33.
 
 BASELINE: P34 deployed — ops/providers/marketplace surfaces live on Dokploy.
 P34 closure sign-off may still be open; do not regress surface routing or Ops APIs.
 
 PAUSED until P35-M28: Phase 28 beta journeys (need solid marketplace install path).
 
-LOCKED DECISIONS (approve in plan PR if not yet merged):
+LOCKED DECISIONS:
 - Ops + Provider UI must match Birkly admin shell (sidebar, cards, tokens)
 - SQLite v1 for accounts/orders/licenses (JSON migration script)
 - API-first catalog; Birkly-Website renders from /api/v1/*
@@ -119,7 +118,7 @@ TESTS: Birkly-Marketplace php tests/run.php + new DB/surface/UI tests; Birkly ./
 
 | When | Task |
 |------|------|
-| Before M1 | Approve P35 plan PR |
+| Before M1 | Approve P35 plan PR | **done** |
 | M32 | Stripe live/test keys on Dokploy if not done in P34 |
 | M33 | Human review pack sign-off |
 | Optional | Create Birkly official provider account on providers.birkly.cloud for M28 |

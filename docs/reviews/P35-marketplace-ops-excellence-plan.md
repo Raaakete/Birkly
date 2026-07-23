@@ -1,6 +1,6 @@
 # P35 — Marketplace & Ops excellence
 
-**Status:** Proposed for approval (2026-07-23, Keven) — **next phase after P34 closure**  
+**Status:** Proposed for approval (2026-07-23, Keven) — **approved 2026-07-23**  
 **Baseline:** P34 deployed on Dokploy (`ops` / `providers` / `marketplace` on `*.birkly.cloud`) · 19 Marketplace test suites · CMS production URL + feedback relay wired  
 **Repos:** **Birkly-Marketplace** (primary) · Birkly · Birkly-Website · Birkly-Docs  
 **Handoff:** `docs/reviews/P35-lead-engineer-handoff.md`  
