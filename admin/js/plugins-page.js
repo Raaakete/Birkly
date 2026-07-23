@@ -190,7 +190,7 @@
     }
 
     function marketplacePurchaseUrl(slug) {
-        var base = marketplaceBaseUrl || 'https://marketplace.birkly.io';
+        var base = marketplaceBaseUrl || 'https://marketplace.birkly.cloud';
         return base.replace(/\/$/, '') + '/buy/' + encodeURIComponent(slug || '');
     }
 
