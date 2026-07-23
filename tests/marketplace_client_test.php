@@ -74,6 +74,35 @@ if (is_dir($dest)) {
     birkly_marketplace_remove_directory($dest);
 }
 
+// Nested folder + macOS metadata (common provider upload mistake)
+$nestedZipPath = $settingsDir . '/nested-plugin.zip';
+$nestedZip = new ZipArchive();
+if ($nestedZip->open($nestedZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+    $nestedZip->addFromString('sample-plugin/plugin.json', json_encode([
+        'name' => 'Nested Folder Plugin',
+        'version' => '1.0.0',
+        'description' => 'Nested zip test',
+    ], JSON_THROW_ON_ERROR));
+    $nestedZip->addFromString('sample-plugin/plugin.php', "<?php\n// nested\n");
+    $nestedZip->addFromString('__MACOSX/._sample-plugin', 'junk');
+    $nestedZip->close();
+}
+
+$nestedPluginId = 'mp_nested_' . getmypid();
+$nestedDest = $pluginsRoot . '/' . $nestedPluginId;
+if (is_dir($nestedDest)) {
+    birkly_marketplace_remove_directory($nestedDest);
+}
+
+$nestedExtract = birkly_marketplace_extract_plugin_zip($nestedZipPath, $nestedPluginId, false);
+test_assert('nested folder zip extract succeeds', !empty($nestedExtract['ok']), implode('; ', $nestedExtract['errors'] ?? []));
+test_assert('nested zip places plugin.php at plugin root', is_file($nestedDest . '/plugin.json') && is_file($nestedDest . '/plugin.php'));
+
+if (is_dir($nestedDest)) {
+    birkly_marketplace_remove_directory($nestedDest);
+}
+@unlink($nestedZipPath);
+
 $fallbackCatalog = birkly_marketplace_fallback_catalog();
 test_assert('bundled fallback catalog has offers', count($fallbackCatalog['offers'] ?? []) >= 2);
 
