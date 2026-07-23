@@ -130,6 +130,28 @@
     </div>
 </div>
 
+<!-- Marketplace install permission consent (P35-M17) -->
+<div id="marketplace-consent-modal" class="modal-backdrop">
+    <div class="modal-content marketplace-consent-modal">
+        <div class="modal-header">
+            <h2 id="marketplace-consent-title">Plugin permissions</h2>
+            <button class="modal-close-btn" type="button" data-plugin-action="close-install-consent">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="marketplace-consent-summary" class="settings-help">
+                This plugin requests access to your site. Review the permissions below before installing.
+            </p>
+            <div id="marketplace-consent-manifest" class="marketplace-consent-manifest"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-plugin-action="close-install-consent">Cancel</button>
+            <button type="button" class="btn btn-primary" id="marketplace-consent-accept-btn" data-plugin-action="accept-install-consent">
+                Accept &amp; install
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Marketplace license install modal -->
 <div id="marketplace-install-modal" class="modal-backdrop">
     <div class="modal-content">
