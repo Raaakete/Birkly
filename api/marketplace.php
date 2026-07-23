@@ -195,19 +195,13 @@ if ($action === 'accept_consent') {
         exit;
     }
 
-    birkly_marketplace_record_install_consent(
-        $slug,
-        $version,
-        is_array($permInfo['permissions_manifest'] ?? null) ? $permInfo['permissions_manifest'] : []
-    );
-
     echo json_encode([
         'status' => 'ok',
-        'message' => 'Permission consent recorded',
+        'message' => 'Permission consent acknowledged',
         'data' => [
             'slug' => $slug,
-            'version' => $version,
-            'accepted_at' => birkly_marketplace_load_consent()[$slug][$version]['accepted_at'] ?? null,
+            'version' => $permInfo['version'] ?? $version,
+            'permissions_manifest' => $permInfo['permissions_manifest'] ?? [],
         ],
     ]);
     exit;
