@@ -184,7 +184,15 @@ When in doubt, treat as major and ask the human.
 
 **Human decisions (locked):** One repo (`Birkly-Marketplace`) · ops = staff only · providers.birkly.cloud = seller portal · marketplace.birkly.cloud = public + CMS API · shared `data/` on VPS · notify once at P34-M22.
 
-**Spec:** `docs/reviews/P34-birkly-ops-platform-plan.md` · **Handoff:** `docs/reviews/P34-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P34-verification-matrix.md` · **Vision:** `Birkly-Marketplace/docs/BIRKLY_OPS_VISION.md`
+**Spec:** `docs/reviews/P34-birkly-ops-platform-plan.md` · **Handoff:** `docs/reviews/P34-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P34-verification-matrix.md` · **Vision:** `Birkly-Marketplace/docs/BIRKLY_OPS_VISION.md` · **Review pack:** `docs/reviews/P34-human-review-pack.md`
+
+**2026-07-23 — Phase 35 proposed** (Keven) — **Marketplace & Ops excellence**
+
+**Priorities:** Birkly admin UI parity · SQLite + security hardening · ops admin users · fix provider fees · API-first catalog · rich offer pages + CMS embed · permission manifest + upload path · official plugin cutover · paid checkout E2E.
+
+**Human decisions (proposed):** SQLite v1 · API catalog for Birkly-Website · embed offer pages · permission consent on CMS install · notify once at P35-M33 · P28 resumes after P35-M28.
+
+**Spec:** `docs/reviews/P35-marketplace-ops-excellence-plan.md` · **Handoff:** `docs/reviews/P35-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P35-verification-matrix.md`
 
 ---
 
@@ -200,15 +208,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-22)
+## Current state (verified 2026-07-23)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P33 complete** — admin responsive refinement · **P32/P31 complete** |
-| **Birkly-Marketplace** | P10 complete — VPS at `ops.birkly.cloud` · **P34 approved** — Ops platform production |
-| **Birkly-Docs** | P33 admin responsive guide + P32 fieldtypes; P31 dashboard widgets |
-| **kekaba** | **Baked HTML** (`birkly-baked`) — P28 resumes after P34-M22 |
-| **Birkly-Website** | Open-beta copy + `business/` materials |
+| **Birkly (CMS)** | **P33 complete** · P34 CMS wire-up on `main` (marketplace URL, feedback relay) |
+| **Birkly-Marketplace** | **P34 deployed** on Dokploy (`ops` / `providers` / `marketplace` · `*.birkly.cloud`) · **P35 proposed** |
+| **Birkly-Docs** | P33 admin responsive guide + P32 fieldtypes |
+| **kekaba** | Baked HTML — P28 after P35-M28 |
+| **Birkly-Website** | Open-beta copy · P35 marketplace API section planned |
 | **Agent ops** | CI + autonomous execution on `main` |
 
 **2026-07-21 — Phase 30 complete** (autonomous P30-M0→M18)
@@ -235,9 +243,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **P33 spec:** `docs/reviews/P33-admin-responsive-refinement-plan.md` · **Handoff:** `docs/reviews/P33-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P33-verification-matrix.md` · **Docs:** Birkly-Docs `guides/admin-responsive-refinement.md`
 
-**Next active phase:** **Phase 34** — **Birkly Ops & platform production** — approved, execution ready (2026-07-22)
+**2026-07-23 — Phase 34 deployed** — Birkly Ops & platform production (M22 sign-off pending)
 
-**Paused:** **Phase 28** — Beta launch automation — resume after P34-M22 · **Phase 26** — Studio creative — resume after P28-M20
+**Delivered:** Three surfaces on Dokploy · surface routing · Ops feedback/installations/releases · Provider Studio branding · production registry · CMS marketplace URL + relay · nginx/Docker docs.
+
+**P34 spec:** `docs/reviews/P34-birkly-ops-platform-plan.md` · **Review pack:** `docs/reviews/P34-human-review-pack.md`
+
+**Next active phase:** **Phase 35** — **Marketplace & Ops excellence** — proposed (2026-07-23)
+
+**Paused:** **Phase 28** — Beta launch automation — resume after P35-M28 · **Phase 26** — Studio creative — resume after P28-M20
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
