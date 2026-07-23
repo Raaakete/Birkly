@@ -18,7 +18,7 @@ test_assert('manifest parses as JSON object', is_array($manifest));
 
 $official = $manifest['official_plugin_ids'] ?? [];
 test_assert('official_plugin_ids is array', is_array($official));
-foreach (['commerce', 'events', 'automation', 'user_management'] as $id) {
+foreach (['commerce', 'events', 'automation', 'user_management', 'studio'] as $id) {
     test_assert("official_plugin_ids includes $id", in_array($id, $official, true));
 }
 
