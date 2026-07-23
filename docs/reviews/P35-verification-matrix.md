@@ -9,9 +9,9 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| UI-01 | Ops admin uses Birkly-style sidebar + topbar | pending | |
-| UI-02 | Provider Studio uses same shell family | pending | |
-| UI-03 | Cards, tables, buttons match CMS design tokens | pending | |
+| UI-01 | Ops admin uses Birkly-style sidebar + topbar | in_progress | P35-M1–M3 branch |
+| UI-02 | Provider Studio uses same shell family | in_progress | P35-M4 branch |
+| UI-03 | Cards, tables, buttons match CMS design tokens | in_progress | marketplace-shell.css bridges |
 | UI-04 | Responsive at 1280px / tablet drawer | pending | |
 
 ---
@@ -20,11 +20,11 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| ADM-01 | Create second ops admin via /admin/users | pending | |
-| ADM-02 | Moderator role cannot access releases upload | pending | |
-| ADM-03 | Per-provider fee 10% saves and applies to checkout | pending | |
+| ADM-01 | Create second ops admin via /admin/users | in_progress | /admin/users CRUD |
+| ADM-02 | Moderator role cannot access releases upload | in_progress | releases gated admin-only |
+| ADM-03 | Per-provider fee 10% saves and applies to checkout | in_progress | CSRF + fee form fix |
 | ADM-04 | Fee change appears in audit log | pending | |
-| ADM-05 | Env default password rejected when admins exist | pending | |
+| ADM-05 | Env default password rejected when admins exist | in_progress | M10 guard in admin_auth |
 
 ---
 
