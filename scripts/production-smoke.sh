@@ -13,7 +13,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASE="${1:-${BIRKLY_SMOKE_BASE_URL:-http://127.0.0.1:8080}}"
-MARKETPLACE="${2:-${BIRKLY_MARKETPLACE_URL:-https://marketplace.birkly.io}}"
+MARKETPLACE="${2:-${BIRKLY_MARKETPLACE_URL:-https://marketplace.birkly.cloud}}"
 BASE="${BASE%/}"
 MARKETPLACE="${MARKETPLACE%/}"
 
@@ -171,6 +171,24 @@ else
     report "FAIL: marketplace health HTTP $mp_code ($MARKETPLACE/health)"
     FAIL=1
   fi
+
+  reg_tmp=$(mktemp)
+  reg_code=$(curl -sS -o "$reg_tmp" -w "%{http_code}" --connect-timeout 10 "$MARKETPLACE/api/v1/registry" 2>/dev/null || echo "000")
+  if [[ "$reg_code" == "200" ]]; then
+    if php -r '
+      $data = json_decode(file_get_contents($argv[1]), true);
+      exit(is_array($data) && ($data["api_version"] ?? "") === "v1" ? 0 : 1);
+    ' "$reg_tmp" 2>/dev/null; then
+      report "OK: marketplace registry API"
+    else
+      report "FAIL: marketplace registry payload"
+      FAIL=1
+    fi
+  else
+    report "FAIL: marketplace registry HTTP $reg_code"
+    FAIL=1
+  fi
+  rm -f "$reg_tmp"
 fi
 rm -f "$mp_tmp"
 

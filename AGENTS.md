@@ -40,6 +40,15 @@ In a multi-repo cloud environment, repos clone as sibling directories. Discover 
 - Read `docs/roadmap/ROADMAP.md` before implementing any milestone task
 - Do not commit runtime data: `users/`, `cache/`, `logs/`, `temp/`, `media/`, `settings/`, `.env`, `config.php`
 
+## Phase 34 — Birkly Ops (production)
+
+Production platform live at `ops.birkly.cloud`, `providers.birkly.cloud`, `marketplace.birkly.cloud`.
+
+- Plan: `docs/reviews/P34-birkly-ops-platform-plan.md`
+- Human review pack (M22): `docs/reviews/P34-human-review-pack.md`
+- CMS default marketplace URL: `https://marketplace.birkly.cloud`
+- Ops relay: `core/platform_ops.php` + `settings/platform.json` (see `docs/reviews/platform.json.example`)
+
 ## Development
 
 ```bash

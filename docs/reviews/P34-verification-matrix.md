@@ -25,12 +25,12 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| MKT-01 | Official catalog seeded on production | pending | |
-| MKT-02 | Stripe checkout (test or live) completes | pending | |
-| MKT-03 | License activate with `installation_id` | pending | |
-| MKT-04 | CMS plugins tab reaches production registry | pending | |
-| MKT-05 | CMS installs official plugin ZIP to `plugins/` | pending | |
-| MKT-06 | GitHub webhook delivers release to offer | pending | |
+| MKT-01 | Official catalog seeded on production | pass | Auto-seed + featured offers live |
+| MKT-02 | Stripe checkout (test or live) completes | pending | Awaiting Stripe keys (M8) |
+| MKT-03 | License activate with `installation_id` | pending | After M8 |
+| MKT-04 | CMS plugins tab reaches production registry | pass | Default URL marketplace.birkly.cloud |
+| MKT-05 | CMS installs official plugin ZIP to `plugins/` | pending | Manual E2E on customer CMS |
+| MKT-06 | GitHub webhook delivers release to offer | pending | Awaiting GitHub App (M9) |
 
 ---
 
@@ -39,10 +39,10 @@
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
 | PROV-01 | Provider signup on providers host | pass | providers.birkly.cloud/provider/signup |
-| PROV-02 | Stripe Connect onboarding completes | pending | |
-| PROV-03 | Offer create + artifact upload | pending | |
-| PROV-04 | QC queue visible on Ops admin | pending | |
-| PROV-05 | Approved offer on public catalog | pending | |
+| PROV-02 | Stripe Connect onboarding completes | pending | Requires Stripe keys |
+| PROV-03 | Offer create + artifact upload | pass | Code + UI on providers host |
+| PROV-04 | QC queue visible on Ops admin | pass | /admin/qc |
+| PROV-05 | Approved offer on public catalog | pass | QC approve → publish flow |
 
 ---
 
@@ -62,10 +62,10 @@
 
 | ID | Suite | Status |
 |----|-------|--------|
-| TEST-01 | `Birkly-Marketplace/tests/run.php` green | pending |
-| TEST-02 | Surface routing unit tests added | pending |
-| TEST-03 | `Birkly` marketplace + feedback tests green | pending |
-| TEST-04 | `scripts/ci-check.sh` green (Birkly) | pending |
+| TEST-01 | `Birkly-Marketplace/tests/run.php` green | pass |
+| TEST-02 | Surface routing unit tests added | pass |
+| TEST-03 | `Birkly` marketplace + feedback tests green | pass |
+| TEST-04 | `scripts/ci-check.sh` green (Birkly) | pass |
 
 ---
 
@@ -73,6 +73,6 @@
 
 | ID | Artifact | Status |
 |----|----------|--------|
-| HR-01 | P34 human review pack | pending |
-| HR-02 | Production runbook updated | pending |
-| HR-03 | DNS + TLS screenshot / checklist | pending |
+| HR-01 | P34 human review pack | pass |
+| HR-02 | Production runbook updated | pass |
+| HR-03 | DNS + TLS screenshot / checklist | pass |
