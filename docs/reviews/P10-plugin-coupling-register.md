@@ -190,3 +190,18 @@ When `plugins/{id}/plugin.php` is included (active only):
 | Date | Change |
 |------|--------|
 | 2026-07-07 | P10-M0 initial register — 25 couplings in scope files |
+| 2026-07-23 | **P35-M30 ecosystem cutover complete** — official plugins (commerce, events, automation, user_management, studio) published on marketplace under `prov_official_birkly`; CMS dev/CI installs via registry (`install-dev-plugins.sh`); plugin source retained in repo for zip builds only |
+
+---
+
+## Ecosystem status (P35-M30)
+
+| Item | Status |
+|------|--------|
+| Official plugins in CMS release zip | **Excluded** (P10-M1) |
+| Official plugins on marketplace | **Published** — `birkly-commerce`, `birkly-events`, `birkly-automation`, `birkly-user-management`, `birkly-studio` |
+| CMS dev install path | **Registry-first** — `scripts/install-dev-plugins.sh` pulls from `marketplace.birkly.cloud` API |
+| Plugin source in Birkly repo | **Retained** for `build-plugin-zip.sh` / CI publish — not shipped to end users |
+| Coupling gating (C-01–C-25) | **Unchanged** — registry/state/file gates; fresh installs have zero active plugins |
+
+**P10 coupling register scope is complete.** Future plugin-specific couplings should be tracked in plugin `plugin.json` permissions (P35 permission manifest v2) rather than expanding this core register.

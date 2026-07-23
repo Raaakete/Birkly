@@ -54,13 +54,15 @@
     "commerce",
     "events",
     "automation",
-    "user_management"
+    "user_management",
+    "studio"
   ],
   "official_marketplace_slugs": {
     "commerce": "birkly-commerce",
     "events": "birkly-events",
     "automation": "birkly-automation",
-    "user_management": "birkly-user-management"
+    "user_management": "birkly-user-management",
+    "studio": "birkly-studio"
   },
   "dev_only_plugin_ids": [
     "sample-plugin"

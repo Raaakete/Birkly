@@ -1,7 +1,8 @@
 # P35 — Verification matrix (Marketplace & Ops excellence)
 
-**Status:** In progress — Wave 1–2 landed 2026-07-23  
-**Plan:** `docs/reviews/P35-marketplace-ops-excellence-plan.md`
+**Status:** M28–M33 complete — 2026-07-23  
+**Plan:** `docs/reviews/P35-marketplace-ops-excellence-plan.md`  
+**Human pack:** `docs/reviews/P35-human-review-pack.md`
 
 ---
 
@@ -22,8 +23,8 @@
 |----|-------|--------|----------|
 | ADM-01 | Create second ops admin via /admin/users | in_progress | /admin/users CRUD |
 | ADM-02 | Moderator role cannot access releases upload | in_progress | releases gated admin-only |
-| ADM-03 | Per-provider fee 10% saves and applies to checkout | in_progress | CSRF + fee form fix |
-| ADM-04 | Fee change appears in audit log | pending | |
+| ADM-03 | Per-provider fee 10% saves and applies to checkout | pass | `stripe_checkout_e2e_test.php` · `provider_growth_test.php` |
+| ADM-04 | Fee change appears in audit log | pass | `marketplace_set_provider_fee_tier` audit |
 | ADM-05 | Env default password rejected when admins exist | in_progress | M10 guard in admin_auth |
 
 ---
@@ -69,11 +70,13 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| ECO-01 | commerce installable from marketplace only | pending | |
-| ECO-02 | install-dev-plugins.sh uses registry | pending | |
-| PAY-01 | Stripe test checkout E2E in CI | pending | |
-| PAY-02 | Live paid smoke (human) | pending | |
-| PAY-03 | Subscription license activates | pending | |
+| ECO-01 | commerce installable from marketplace only | pass | `official_plugins_cutover_test.php` · seed offers |
+| ECO-02 | install-dev-plugins.sh uses registry | pass | `scripts/install-dev-plugins.sh` · `MARKETPLACE_URL` |
+| ECO-03 | studio published on marketplace | pass | `birkly-studio` seed offer + package |
+| ECO-04 | P10 coupling register ecosystem complete | pass | `P10-plugin-coupling-register.md` § P35-M30 |
+| PAY-01 | Stripe test checkout E2E in CI | pass | `stripe_checkout_e2e_test.php` |
+| PAY-02 | Live paid smoke (human) | pending | `DOKPLOY-DEPLOY.md` § 4b — needs Stripe keys |
+| PAY-03 | Subscription license activates | pass | `stripe_checkout_e2e_test.php` · `marketplace_subscription_license_test.php` |
 
 ---
 
@@ -81,9 +84,9 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| REG-01 | Three-surface isolation still holds | pending | |
-| REG-02 | production-smoke.sh PASS | pending | |
-| REG-03 | Feedback relay still works | pending | |
+| REG-01 | Three-surface isolation still holds | pass | `surface_test.php` |
+| REG-02 | production-smoke.sh PASS | pending | Run against production |
+| REG-03 | Feedback relay still works | pass | `platform_test.php` (Birkly) |
 
 ---
 
@@ -91,6 +94,19 @@
 
 | ID | Artifact | Status |
 |----|----------|--------|
-| HR-01 | P35 human review pack | pending |
-| HR-02 | Keven UI walkthrough Ops + Provider | pending |
-| HR-03 | Paid checkout demo | pending |
+| HR-01 | P35 human review pack | pass | `P35-human-review-pack.md` |
+| HR-02 | Keven UI walkthrough Ops + Provider | pending | Earlier waves M1–M6 |
+| HR-03 | Paid checkout demo | pending | Requires Stripe live/test keys on VPS |
+
+---
+
+## Milestone closure (M28–M33)
+
+| ID | Focus | Status |
+|----|-------|--------|
+| P35-M28 | Publish official plugins from Birkly provider | **pass** |
+| P35-M29 | CMS dev/CI marketplace-only install path | **pass** |
+| P35-M30 | Coupling register + docs ecosystem cutover | **pass** |
+| P35-M31 | Stripe test-mode paid checkout E2E | **pass** |
+| P35-M32 | Production paid smoke runbook | **pass** (doc; human execution pending) |
+| P35-M33 | Verification matrix + human review pack | **pass** |
