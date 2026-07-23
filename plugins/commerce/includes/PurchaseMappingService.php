@@ -214,8 +214,14 @@ class PurchaseMappingService
         if (!function_exists('birkly_is_plugin_active') || !birkly_is_plugin_active('user_management')) {
             return;
         }
-        $tiersFile = dirname(__DIR__, 2) . '/user_management/includes/UserTiers.php';
-        if (!is_file($tiersFile)) {
+        $tiersFile = null;
+        if (function_exists('birkly_plugin_install_path')) {
+            $umPath = birkly_plugin_install_path('user_management');
+            if ($umPath !== null) {
+                $tiersFile = $umPath . '/includes/UserTiers.php';
+            }
+        }
+        if ($tiersFile === null || !is_file($tiersFile)) {
             return;
         }
         require_once $tiersFile;
@@ -232,12 +238,23 @@ class PurchaseMappingService
         if (!function_exists('birkly_is_plugin_active') || !birkly_is_plugin_active('user_management')) {
             return null;
         }
-        $serviceFile = dirname(__DIR__, 2) . '/user_management/includes/UserService.php';
-        if (!is_file($serviceFile)) {
+        if (function_exists('get_plugin_service')) {
+            $service = get_plugin_service('user_service', false, 'commerce');
+            if (is_object($service) && method_exists($service, 'getUserByEmail')) {
+                try {
+                    $user = $service->getUserByEmail($email);
+                    return $user['id'] ?? null;
+                } catch (Exception $e) {
+                    return null;
+                }
+            }
+        }
+        if (!function_exists('birkly_plugin_require') || !birkly_plugin_require('user_management', 'includes/UserStorage.php')) {
             return null;
         }
-        require_once dirname(__DIR__, 2) . '/user_management/includes/UserStorage.php';
-        require_once $serviceFile;
+        if (!birkly_plugin_require('user_management', 'includes/UserService.php')) {
+            return null;
+        }
         try {
             $service = new UserService();
             $user = $service->getUserByEmail($email);

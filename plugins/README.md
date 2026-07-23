@@ -2,6 +2,8 @@
 
 Official plugin packages are **not** included in the CMS release download. Install them from the [Birkly Marketplace](https://marketplace.birkly.cloud) (Admin → Plugins → Marketplace).
 
+**Migration:** Official plugin source is moving to a standalone GitHub organization (marketplace provider). See `docs/OFFICIAL-PLUGINS-DECOUPLING.md` and `scripts/official-plugins-manifest.json` for the export layout and handoff checklist.
+
 ## Local development
 
 Plugin **source** for building marketplace releases lives under `plugins/` in this repository (commerce, events, automation, user_management, studio). These folders are **not** shipped in CMS release zips and are **not** required for a fresh install — they exist for development and CI only.
