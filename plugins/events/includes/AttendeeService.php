@@ -61,9 +61,10 @@ class AttendeeService
     private function listCommerceAttendees(?string $collectionSlug, ?string $entryId): array
     {
         if (!class_exists('EventRegistrationStore')) {
-            $commerceInit = dirname(__DIR__, 2) . '/commerce/init.php';
-            if (is_file($commerceInit)) {
-                require_once $commerceInit;
+            if (function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('commerce')) {
+                if (function_exists('birkly_plugin_require')) {
+                    birkly_plugin_require('commerce', 'init.php');
+                }
             }
             if (function_exists('commerce_bootstrap_cart_services')) {
                 commerce_bootstrap_cart_services();

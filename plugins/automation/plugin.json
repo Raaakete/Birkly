@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "description": "Workflow automation with triggers, conditions, and actions. Deactivate to disable all automation hooks, API routes, and admin UI.",
   "author": "Birkly",
+  "marketplace_slug": "birkly-automation",
+  "requires_birkly": ">=0.1.0",
+  "requires_php": ">=8.1",
   "requires": "1.0.0",
+  "data_access": {
+    "entries": "read_write",
+    "media": "none",
+    "users": "none",
+    "settings": "read_write"
+  },
   "hooks": [
     "automation_blocks_register",
     "plugin_activated",

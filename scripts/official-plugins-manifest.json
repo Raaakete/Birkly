@@ -1,0 +1,62 @@
+{
+  "manifest_version": 2,
+  "description": "Official Birkly marketplace plugins — export manifest for the standalone provider organization repository.",
+  "provider_org": "Birkly (official extensions org — set when GitHub org is created)",
+  "marketplace_provider_slug": "birkly-official",
+  "plugins": [
+    {
+      "id": "commerce",
+      "slug": "birkly-commerce",
+      "path": "packages/commerce",
+      "category": "utilities",
+      "depends_on": [{ "id": "user_management", "optional": true }]
+    },
+    {
+      "id": "events",
+      "slug": "birkly-events",
+      "path": "packages/events",
+      "category": "utilities",
+      "depends_on": [{ "id": "commerce", "optional": true }]
+    },
+    {
+      "id": "automation",
+      "slug": "birkly-automation",
+      "path": "packages/automation",
+      "category": "utilities",
+      "depends_on": []
+    },
+    {
+      "id": "user_management",
+      "slug": "birkly-user-management",
+      "path": "packages/user_management",
+      "category": "utilities",
+      "depends_on": []
+    },
+    {
+      "id": "studio",
+      "slug": "birkly-studio",
+      "path": "packages/studio",
+      "category": "design",
+      "depends_on": [
+        { "id": "commerce", "optional": true },
+        { "id": "events", "optional": true }
+      ]
+    }
+  ],
+  "build": {
+    "zip_script": "scripts/build-plugin-zip.sh",
+    "publish_script": "scripts/publish-to-marketplace.sh",
+    "output_dir": "dist/plugins"
+  },
+  "migration_from_birkly_cms": {
+    "source_paths": {
+      "commerce": "plugins/commerce",
+      "events": "plugins/events",
+      "automation": "plugins/automation",
+      "user_management": "plugins/user_management",
+      "studio": "plugins/studio"
+    },
+    "move_command": "git mv plugins/{id} packages/{id}",
+    "cms_repo_after_move": "plugins/README.md points to new org; remove plugin source folders"
+  }
+}

@@ -14,11 +14,12 @@ class EventsConsumerPaymentHelper
         if ($shelf instanceof PaymentShelf) {
             return $shelf;
         }
-        $paymentsInit = dirname(__DIR__, 2) . '/payments/init.php';
-        if (is_file($paymentsInit)) {
-            require_once $paymentsInit;
-            if (function_exists('payments_bootstrap')) {
-                payments_bootstrap();
+        if (function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('commerce')) {
+            if (function_exists('birkly_plugin_require')) {
+                birkly_plugin_require('commerce', 'init.php');
+            }
+            if (function_exists('commerce_bootstrap')) {
+                commerce_bootstrap();
             }
         }
         return get_plugin_service('payment_shelf', false, 'events');
