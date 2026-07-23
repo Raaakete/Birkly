@@ -3,7 +3,22 @@
   "version": "1.0.0",
   "description": "Visual site builder — canvas editor, style kits, Birkly bindings, SSR publish, export ZIP",
   "author": "Birkly",
+  "marketplace_slug": "birkly-studio",
+  "requires_birkly": ">=0.1.0",
+  "requires_php": ">=8.1",
   "requires": "1.0.0",
+  "dependencies": {
+    "plugins": [
+      { "id": "commerce", "version": "1.0.0", "required": false },
+      { "id": "events", "version": "1.0.0", "required": false }
+    ]
+  },
+  "data_access": {
+    "entries": "read_write",
+    "media": "read_write",
+    "users": "none",
+    "settings": "read"
+  },
   "hooks": ["plugin_activated", "plugin_deactivated"],
   "permissions": ["manage_studio"],
   "capabilities": {

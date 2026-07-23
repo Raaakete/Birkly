@@ -491,9 +491,7 @@ switch ($action) {
     case 'list_membership_tiers':
         $tiers = [];
         if (function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('user_management')) {
-            $storageFile = dirname(__DIR__, 2) . '/user_management/includes/UserStorage.php';
-            if (is_file($storageFile)) {
-                require_once $storageFile;
+            if (function_exists('birkly_plugin_require') && birkly_plugin_require('user_management', 'includes/UserStorage.php')) {
                 $userStorage = new UserStorage();
                 $tiers = $userStorage->listTiers();
             }
@@ -504,9 +502,7 @@ switch ($action) {
     case 'mapping_wizard_data':
         $tiers = [];
         if (function_exists('birkly_is_plugin_active') && birkly_is_plugin_active('user_management')) {
-            $storageFile = dirname(__DIR__, 2) . '/user_management/includes/UserStorage.php';
-            if (is_file($storageFile)) {
-                require_once $storageFile;
+            if (function_exists('birkly_plugin_require') && birkly_plugin_require('user_management', 'includes/UserStorage.php')) {
                 $userStorage = new UserStorage();
                 $tiers = $userStorage->listTiers();
             }
