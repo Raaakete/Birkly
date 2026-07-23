@@ -28,7 +28,7 @@ fi
 chmod +x "$SMOKE_SCRIPT" 2>/dev/null || true
 
 BASE="${1:-${BIRKLY_SMOKE_BASE_URL:-http://127.0.0.1:8080}}"
-MARKETPLACE="${2:-${BIRKLY_MARKETPLACE_URL:-https://marketplace.birkly.io}}"
+MARKETPLACE="${2:-${BIRKLY_MARKETPLACE_URL:-https://marketplace.birkly.cloud}}"
 
 OUTPUT=""
 EXIT_CODE=0
