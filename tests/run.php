@@ -151,6 +151,7 @@ $suites = [
     'release_manifest_test.php',
     'plugin_availability_test.php',
     'marketplace_client_test.php',
+    'marketplace_review_test.php',
     'marketplace_free_install_test.php',
     'marketplace_theme_install_test.php',
     'marketplace_paid_official_test.php',

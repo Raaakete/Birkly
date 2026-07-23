@@ -327,6 +327,9 @@ function birkly_marketplace_save_plugin_source(string $pluginId, string $slug, s
             $birkly_plugins[$pluginId]['version'] = $version;
         }
         save_plugin_states();
+
+        $licenseRef = trim((string) ($birkly_plugins[$pluginId]['license_ref'] ?? ''));
+        birkly_marketplace_attest_installation_offer($slug, $licenseRef !== '' ? $licenseRef : null);
     }
 }
 

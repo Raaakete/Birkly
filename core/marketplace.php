@@ -787,5 +787,124 @@ function birkly_marketplace_preview_zip_capabilities(string $zipPath): array
     return ['ok' => true, 'capabilities' => $capabilities, 'plugin_json' => $pluginJson, 'errors' => $errors];
 }
 
+function birkly_marketplace_installation_offer_api_path(string $slug, string $suffix): string
+{
+    return '/api/v1/installations/' . rawurlencode(birkly_installation_id())
+        . '/offers/' . rawurlencode(trim($slug)) . '/' . $suffix;
+}
+
+/**
+ * Tell the marketplace this CMS installation has installed an offer (enables reviews).
+ *
+ * @return array{ok:bool,data?:array,error?:string}
+ */
+function birkly_marketplace_attest_installation_offer(string $slug, ?string $licenseRef = null): array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return ['ok' => false, 'error' => 'Offer slug required'];
+    }
+
+    $body = null;
+    $licenseRef = $licenseRef !== null ? trim($licenseRef) : '';
+    if ($licenseRef !== '') {
+        $body = ['license_ref' => $licenseRef];
+    }
+
+    $response = birkly_marketplace_request(
+        'POST',
+        birkly_marketplace_installation_offer_api_path($slug, 'install'),
+        $body
+    );
+    if (!$response['ok']) {
+        return ['ok' => false, 'error' => $response['error'] ?? 'Install attestation failed'];
+    }
+
+    return ['ok' => true, 'data' => is_array($response['data']) ? $response['data'] : []];
+}
+
+/**
+ * @return array{ok:bool,can_review?:bool,has_review?:bool,installed?:bool,review?:array,error?:string}
+ */
+function birkly_marketplace_review_status(string $slug, ?string $licenseRef = null): array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return ['ok' => false, 'error' => 'Offer slug required'];
+    }
+
+    $query = [];
+    $licenseRef = $licenseRef !== null ? trim($licenseRef) : '';
+    if ($licenseRef !== '') {
+        $query['license_ref'] = $licenseRef;
+    }
+
+    $response = birkly_marketplace_request(
+        'GET',
+        birkly_marketplace_installation_offer_api_path($slug, 'review'),
+        null,
+        $query
+    );
+    if (!$response['ok'] || !is_array($response['data'])) {
+        return ['ok' => false, 'error' => $response['error'] ?? 'Review status unavailable'];
+    }
+
+    $status = is_array($response['data']['status'] ?? null) ? $response['data']['status'] : [];
+
+    return [
+        'ok' => true,
+        'can_review' => !empty($status['can_review']),
+        'has_review' => !empty($status['has_review']),
+        'installed' => !empty($status['installed']),
+        'review' => is_array($status['review'] ?? null) ? $status['review'] : null,
+    ];
+}
+
+/**
+ * @return array{ok:bool,review?:array,error?:string,message?:string}
+ */
+function birkly_marketplace_submit_installation_review(string $slug, int $rating, string $body, ?string $licenseRef = null): array
+{
+    $slug = trim($slug);
+    $body = trim($body);
+    if ($slug === '') {
+        return ['ok' => false, 'error' => 'Offer slug required'];
+    }
+    if ($body === '') {
+        return ['ok' => false, 'error' => 'Please write a review'];
+    }
+    if ($rating < 1 || $rating > 5) {
+        return ['ok' => false, 'error' => 'Rating must be between 1 and 5 stars'];
+    }
+
+    $payload = [
+        'rating' => $rating,
+        'body' => $body,
+    ];
+    $licenseRef = $licenseRef !== null ? trim($licenseRef) : '';
+    if ($licenseRef !== '') {
+        $payload['license_ref'] = $licenseRef;
+    }
+
+    $response = birkly_marketplace_request(
+        'POST',
+        birkly_marketplace_installation_offer_api_path($slug, 'review'),
+        $payload
+    );
+    if (!$response['ok'] || !is_array($response['data'])) {
+        $message = is_array($response['data']) ? (string) ($response['data']['message'] ?? '') : '';
+        return [
+            'ok' => false,
+            'error' => $message !== '' ? $message : ($response['error'] ?? 'Review submission failed'),
+            'message' => $message,
+        ];
+    }
+
+    return [
+        'ok' => true,
+        'review' => is_array($response['data']['review'] ?? null) ? $response['data']['review'] : [],
+    ];
+}
+
 require_once __DIR__ . '/marketplace/install.php';
 require_once __DIR__ . '/marketplace/consent.php';
