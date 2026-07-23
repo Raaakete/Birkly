@@ -362,6 +362,126 @@ if ($action === 'install') {
     exit;
 }
 
+if ($action === 'review_status') {
+    $slug = trim((string) ($input['slug'] ?? $_GET['slug'] ?? ''));
+    $pluginId = trim((string) ($input['plugin_id'] ?? $_GET['plugin_id'] ?? ''));
+    if ($slug === '' && $pluginId !== '') {
+        $plugins = get_all_plugins();
+        $plugin = $plugins[$pluginId] ?? null;
+        if (is_array($plugin)) {
+            $slug = birkly_marketplace_plugin_offer_slug($pluginId, $plugin);
+        }
+    }
+    if ($slug === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Offer slug or plugin_id required']);
+        exit;
+    }
+
+    $licenseRef = null;
+    if ($pluginId !== '') {
+        $plugins = get_all_plugins();
+        $licenseRef = trim((string) (($plugins[$pluginId] ?? [])['license_ref'] ?? ''));
+    }
+
+    $status = birkly_marketplace_review_status($slug, $licenseRef !== '' ? $licenseRef : null);
+    if (!$status['ok']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $status['error'] ?? 'Review status unavailable',
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'slug' => $slug,
+            'can_review' => !empty($status['can_review']),
+            'has_review' => !empty($status['has_review']),
+            'installed' => !empty($status['installed']),
+            'review' => $status['review'] ?? null,
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'review_status_batch') {
+    $plugins = get_all_plugins();
+    $statuses = [];
+    foreach ($plugins as $id => $plugin) {
+        $slug = birkly_marketplace_plugin_offer_slug((string) $id, $plugin);
+        if ($slug === '') {
+            continue;
+        }
+        $licenseRef = trim((string) ($plugin['license_ref'] ?? ''));
+        $status = birkly_marketplace_review_status($slug, $licenseRef !== '' ? $licenseRef : null);
+        $statuses[$id] = [
+            'slug' => $slug,
+            'can_review' => !empty($status['can_review']),
+            'has_review' => !empty($status['has_review']),
+            'installed' => !empty($status['installed']),
+            'review' => $status['review'] ?? null,
+            'ok' => !empty($status['ok']),
+        ];
+    }
+
+    echo json_encode(['status' => 'ok', 'data' => ['reviews' => $statuses]]);
+    exit;
+}
+
+if ($action === 'submit_review') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_plugin_csrf($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $slug = trim((string) ($input['slug'] ?? ''));
+    $pluginId = trim((string) ($input['plugin_id'] ?? ''));
+    $rating = (int) ($input['rating'] ?? 0);
+    $body = trim((string) ($input['body'] ?? ''));
+
+    if ($slug === '' && $pluginId !== '') {
+        $plugins = get_all_plugins();
+        $plugin = $plugins[$pluginId] ?? null;
+        if (is_array($plugin)) {
+            $slug = birkly_marketplace_plugin_offer_slug($pluginId, $plugin);
+        }
+    }
+
+    if ($slug === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Offer slug or plugin_id required']);
+        exit;
+    }
+
+    $licenseRef = null;
+    if ($pluginId !== '') {
+        $plugins = get_all_plugins();
+        $licenseRef = trim((string) (($plugins[$pluginId] ?? [])['license_ref'] ?? ''));
+    }
+
+    $result = birkly_marketplace_submit_installation_review(
+        $slug,
+        $rating,
+        $body,
+        $licenseRef !== '' ? $licenseRef : null
+    );
+    if (!$result['ok']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $result['error'] ?? 'Review submission failed',
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Review submitted',
+        'data' => ['review' => $result['review'] ?? []],
+    ]);
+    exit;
+}
+
 if ($action === 'check_updates') {
     $updates = birkly_marketplace_installed_plugin_updates();
     $anyAvailable = false;

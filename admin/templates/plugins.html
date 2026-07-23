@@ -154,6 +154,40 @@
     </div>
 </div>
 
+<!-- Plugin review modal (CMS installation reviews) -->
+<div id="plugin-review-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="plugin-review-title">Write a review</h2>
+            <button class="modal-close-btn" type="button" data-plugin-action="close-review-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="plugin-review-summary" class="settings-help"></p>
+            <div id="plugin-review-existing" class="plugin-review-existing" hidden></div>
+            <form id="plugin-review-form">
+                <fieldset class="plugin-review-rating">
+                    <legend>Rating</legend>
+                    <label><input type="radio" name="plugin-review-rating" value="5" checked> 5 stars</label>
+                    <label><input type="radio" name="plugin-review-rating" value="4"> 4 stars</label>
+                    <label><input type="radio" name="plugin-review-rating" value="3"> 3 stars</label>
+                    <label><input type="radio" name="plugin-review-rating" value="2"> 2 stars</label>
+                    <label><input type="radio" name="plugin-review-rating" value="1"> 1 star</label>
+                </fieldset>
+                <div class="form-group">
+                    <label for="plugin-review-body">Your review</label>
+                    <textarea id="plugin-review-body" class="input" rows="4" maxlength="2000" required placeholder="Share your experience using this plugin on your site."></textarea>
+                </div>
+                <input type="hidden" id="plugin-review-plugin-id" value="">
+                <input type="hidden" id="plugin-review-slug" value="">
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-plugin-action="close-review-modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="plugin-review-submit-btn" data-plugin-action="submit-review">Submit review</button>
+        </div>
+    </div>
+</div>
+
 <!-- Plugin Settings Modal -->
 <div id="plugin-settings-modal" class="modal-backdrop">
     <div class="modal-content">
