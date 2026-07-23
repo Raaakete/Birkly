@@ -109,6 +109,11 @@ function feedback_relay_to_platform(array $record): void
         return;
     }
 
+    if (birkly_feedback_relay_secret() === '' && is_file(__DIR__ . '/../core/platform_ops.php')) {
+        require_once __DIR__ . '/../core/platform_ops.php';
+        birkly_ops_register_installation();
+    }
+
     $payload = [
         'install_id' => birkly_platform_install_id(),
         'feedback' => $record,
@@ -123,6 +128,9 @@ function feedback_relay_to_platform(array $record): void
     $secret = birkly_feedback_relay_secret();
     if ($secret !== '') {
         $headers[] = 'X-Birkly-Feedback-Signature: ' . hash_hmac('sha256', $body, $secret);
+    } else {
+        error_log('feedback relay skipped: no relay secret for install ' . birkly_platform_install_id());
+        return;
     }
 
     $ch = curl_init($url);

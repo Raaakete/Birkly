@@ -17,6 +17,10 @@ if ($hadFile) {
     copy($platformFile, $backup);
 }
 
+@unlink($platformFile);
+birkly_platform_config_reset();
+test_assert('install register derived from default relay url', birkly_ops_installations_register_url() === 'https://ops.birkly.cloud/api/ops/v1/installations/register');
+
 file_put_contents($platformFile, json_encode([
     'feedback_relay_url' => 'https://ops.birkly.cloud/api/ops/v1/feedback',
     'feedback_relay_secret' => 'secret',

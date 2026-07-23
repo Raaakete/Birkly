@@ -4,7 +4,5 @@
   "install_id": "your-site-slug",
   "program_tier": "closed_alpha",
   "release_channel": "stable",
-  "feedback_relay_url": "https://ops.birkly.cloud/api/ops/v1/feedback",
-  "feedback_relay_secret": "same-as-OPS_FEEDBACK_HMAC_SECRET-on-ops",
   "updates_url": "https://ops.birkly.cloud/api/ops/v1/releases/check"
 }
