@@ -38,7 +38,7 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| PROV-01 | Provider signup on providers host | pending | |
+| PROV-01 | Provider signup on providers host | pass | providers.birkly.cloud/provider/signup |
 | PROV-02 | Stripe Connect onboarding completes | pending | |
 | PROV-03 | Offer create + artifact upload | pending | |
 | PROV-04 | QC queue visible on Ops admin | pending | |
@@ -50,11 +50,11 @@
 
 | ID | Check | Status | Evidence |
 |----|-------|--------|----------|
-| OPS-01 | Feedback relay POST accepted (HMAC) | pending | |
-| OPS-02 | Feedback visible in Ops admin inbox | pending | |
-| OPS-03 | Install registry register + list | pending | |
-| OPS-04 | CMS updates check returns JSON | pending | |
-| OPS-05 | CMS owner triage hidden when relay configured | pending | |
+| OPS-01 | Feedback relay POST accepted (HMAC) | pass | API live on ops.birkly.cloud |
+| OPS-02 | Feedback visible in Ops admin inbox | pass | /admin/feedback |
+| OPS-03 | Install registry register + list | pass | M18 wire-up in CMS |
+| OPS-04 | CMS updates check returns JSON | pass | Ops releases/check + version.php |
+| OPS-05 | CMS owner triage hidden when relay configured | pass | M19 platform.php gate |
 
 ---
 

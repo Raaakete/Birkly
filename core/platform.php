@@ -41,6 +41,10 @@ function birkly_is_platform_owner_install(): bool
  */
 function birkly_feedback_triage_enabled(): bool
 {
+    if (birkly_feedback_relay_url() !== '') {
+        return false;
+    }
+
     return birkly_is_platform_owner_install();
 }
 
@@ -87,13 +91,23 @@ function birkly_platform_install_id(): string
 function birkly_feedback_relay_url(): string
 {
     $config = birkly_platform_config();
-    return trim((string) ($config['feedback_relay_url'] ?? ''));
+    $fromConfig = trim((string) ($config['feedback_relay_url'] ?? ''));
+    if ($fromConfig !== '') {
+        return $fromConfig;
+    }
+
+    return trim((string) (getenv('BIRKLY_FEEDBACK_RELAY_URL') ?: ''));
 }
 
 function birkly_feedback_relay_secret(): string
 {
     $config = birkly_platform_config();
-    return trim((string) ($config['feedback_relay_secret'] ?? ''));
+    $fromConfig = trim((string) ($config['feedback_relay_secret'] ?? ''));
+    if ($fromConfig !== '') {
+        return $fromConfig;
+    }
+
+    return trim((string) (getenv('BIRKLY_FEEDBACK_RELAY_SECRET') ?: ''));
 }
 
 function birkly_legal_terms_url(): string

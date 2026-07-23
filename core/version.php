@@ -153,6 +153,23 @@ class BirklyVersion {
      */
     public static function checkForUpdates(): array {
         $currentVersion = self::getCurrentVersion();
+
+        if (is_file(__DIR__ . '/platform_ops.php')) {
+            require_once __DIR__ . '/platform_ops.php';
+            $ops = birkly_ops_check_updates($currentVersion);
+            if (is_array($ops)) {
+                return [
+                    'current_version' => (string) ($ops['current_version'] ?? $currentVersion),
+                    'latest_version' => (string) ($ops['latest_version'] ?? $currentVersion),
+                    'update_available' => !empty($ops['update_available']),
+                    'release_notes' => (string) ($ops['release_notes'] ?? ''),
+                    'download_url' => (string) ($ops['download_url'] ?? ''),
+                    'published_at' => '',
+                    'prerelease' => birkly_ops_release_channel() !== 'stable',
+                    'source' => 'ops',
+                ];
+            }
+        }
         
         try {
             $release = self::fetchLatestReleaseMeta();

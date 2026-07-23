@@ -1,7 +1,10 @@
 {
   "owner_mode": false,
   "alpha_program": true,
-  "install_id": "kekaba-prod",
-  "feedback_relay_url": "https://platform.example.com/api/feedback",
-  "feedback_relay_secret": "change-me"
+  "install_id": "your-site-slug",
+  "program_tier": "closed_alpha",
+  "release_channel": "stable",
+  "feedback_relay_url": "https://ops.birkly.cloud/api/ops/v1/feedback",
+  "feedback_relay_secret": "same-as-OPS_FEEDBACK_HMAC_SECRET-on-ops",
+  "updates_url": "https://ops.birkly.cloud/api/ops/v1/releases/check"
 }

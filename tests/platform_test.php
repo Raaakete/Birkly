@@ -34,7 +34,7 @@ test_assert('owner_mode detected', birkly_is_platform_owner_install() === true);
 test_assert('alpha off when owner_mode and alpha_program false', birkly_alpha_program_enabled() === false);
 test_assert('install id from config', birkly_platform_install_id() === 'test-install');
 test_assert('relay url from config', birkly_feedback_relay_url() === 'https://example.com/feedback');
-test_assert('triage on owner install', birkly_feedback_triage_enabled() === true);
+test_assert('triage off owner install when relay configured', birkly_feedback_triage_enabled() === false);
 
 file_put_contents($platformFile, json_encode([
     'owner_mode' => false,
