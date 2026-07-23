@@ -148,6 +148,7 @@ $suites = [
     'plugin_dependencies_test.php',
     'plugin_health_test.php',
     'cms_release_manifest_test.php',
+    'official_plugins_manifest_test.php',
     'release_manifest_test.php',
     'plugin_availability_test.php',
     'marketplace_client_test.php',

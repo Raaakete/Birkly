@@ -615,6 +615,41 @@ function birkly_cleanup_empty_plugin_dir($plugin_dir) {
     }
 }
 
+/**
+ * Installed plugin directory (marketplace zip or dev tree).
+ */
+function birkly_plugin_install_path(string $plugin_id): ?string
+{
+    global $birkly_plugins;
+    if (!isset($birkly_plugins) || $birkly_plugins === []) {
+        if (function_exists('load_plugins')) {
+            load_plugins();
+        }
+    }
+    $path = $birkly_plugins[$plugin_id]['path'] ?? null;
+    if (is_string($path) && $path !== '' && is_dir($path)) {
+        return $path;
+    }
+    return null;
+}
+
+/**
+ * Require a file from another installed plugin (cross-package integration).
+ */
+function birkly_plugin_require(string $plugin_id, string $relative_path): bool
+{
+    $base = birkly_plugin_install_path($plugin_id);
+    if ($base === null) {
+        return false;
+    }
+    $file = $base . '/' . ltrim(str_replace('\\', '/', $relative_path), '/');
+    if (!is_file($file)) {
+        return false;
+    }
+    require_once $file;
+    return true;
+}
+
 // Load plugin capability system
 require_once __DIR__ . '/plugins/capabilities.php';
 require_once __DIR__ . '/plugins/permissions.php';
