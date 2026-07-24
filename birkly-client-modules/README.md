@@ -36,7 +36,7 @@ This directory contains the modular components of the Birkly client library.
 
 ### Hydrate script (baked pages)
 
-**birkly-hydrate.js** — lightweight alternative to full `birkly-client.js` when publish-time snapshots exist. See file header for usage.
+**birkly-hydrate.js** — still supported for baked/publish-time pages. Use when HTML is pre-rendered at deploy and you only need interactivity (forms, cart, auth). See file header and [Production optimization](../../admin/docs/snapshots/production-optimization.md) in admin help.
 
 ## Usage
 
