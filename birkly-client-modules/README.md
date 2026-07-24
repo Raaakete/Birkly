@@ -34,6 +34,12 @@ This directory contains the modular components of the Birkly client library.
    - `loadPageBundle()` - POST to `api/page_bundle.php`
    - `tryLoadPageSnapshot()` - Load publish-time snapshot (inline or `page_snapshot.php`)
 
+6. **birkly-render.js** - Template engine v3 (string-based renderer)
+   - `render(html, data)` - Full parse → render pipeline
+   - `collectBundleRequests(html)` - Data needs from template source
+   - `discoverPageRegions(document)` - Header, main, footer, title regions
+   - Inlined into `birkly-client.js` for production (single script tag)
+
 ### Hydrate script (baked pages)
 
 **birkly-hydrate.js** — still supported for baked/publish-time pages. Use when HTML is pre-rendered at deploy and you only need interactivity (forms, cart, auth). See file header and [Production optimization](../../admin/docs/snapshots/production-optimization.md) in admin help.
