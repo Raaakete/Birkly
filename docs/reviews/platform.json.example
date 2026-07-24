@@ -1,8 +1,0 @@
-{
-  "owner_mode": false,
-  "alpha_program": true,
-  "install_id": "your-site-slug",
-  "program_tier": "closed_alpha",
-  "release_channel": "stable",
-  "updates_url": "https://ops.birkly.cloud/api/ops/v1/releases/check"
-}
