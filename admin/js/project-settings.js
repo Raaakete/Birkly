@@ -6,7 +6,10 @@
 
     var state = {
         currentPath: '',
-        selectedFile: null
+        selectedFile: null,
+        visitUrl: '',
+        hasIndex: false,
+        dirty: false
     };
 
     function apiUrl(path) {
@@ -14,6 +17,11 @@
             return window.Birkly.url(path);
         }
         return path;
+    }
+
+    function projectPublicUrl(relativePath) {
+        var path = '/project/' + String(relativePath || '').replace(/^\/+/, '');
+        return apiUrl(path);
     }
 
     function getCsrfToken() {
@@ -65,6 +73,29 @@
         });
     }
 
+    function syncVisitProjectButton(enabled) {
+        var topbar = document.querySelector('.admin-topbar-actions');
+        if (!topbar) return;
+
+        var existing = document.getElementById('admin-visit-project-btn');
+        if (!enabled || !state.visitUrl) {
+            if (existing) existing.remove();
+            return;
+        }
+
+        if (!existing) {
+            existing = document.createElement('a');
+            existing.id = 'admin-visit-project-btn';
+            existing.className = 'btn btn-secondary btn-sm admin-visit-project-btn';
+            existing.target = '_blank';
+            existing.rel = 'noopener noreferrer';
+            existing.textContent = 'Visit project';
+            topbar.insertBefore(existing, topbar.firstChild);
+        }
+
+        existing.href = state.visitUrl;
+    }
+
     function formatActor(item) {
         var user = item.user || 'Unknown';
         var details = item.details || {};
@@ -93,6 +124,27 @@
         container.innerHTML = '<div class="error-state"><p>' + escapeHtml(message) + '</p></div>';
     }
 
+    function clearFilePreview() {
+        state.selectedFile = null;
+        state.dirty = false;
+
+        var placeholder = document.querySelector('.project-file-placeholder');
+        var editor = document.getElementById('project-file-editor');
+        var preview = document.getElementById('project-file-preview');
+        var image = document.getElementById('project-file-image');
+        var saveBtn = document.getElementById('project-save-file-btn');
+        var deleteBtn = document.getElementById('project-delete-file-btn');
+        var title = document.getElementById('project-preview-title');
+
+        if (title) title.textContent = 'Preview';
+        if (placeholder) placeholder.hidden = false;
+        if (editor) { editor.hidden = true; editor.value = ''; }
+        if (preview) { preview.hidden = true; preview.textContent = ''; }
+        if (image) { image.hidden = true; image.removeAttribute('src'); }
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'none';
+    }
+
     function loadOverview() {
         setLoading('project-overview-content', 'Loading project info...');
         return fetchJson(apiUrl('/api/project_site.php?action=overview')).then(function (payload) {
@@ -106,6 +158,9 @@
         var container = document.getElementById('project-overview-content');
         if (!container) return;
 
+        state.visitUrl = data.visit_url || data.public_url || '';
+        state.hasIndex = !!data.has_index;
+
         var starter = data.starter ? escapeHtml(data.starter) : 'Unknown';
         var lastChange = data.last_change && data.last_change.timestamp
             ? formatDate(data.last_change.timestamp) + (data.last_change.path ? ' · ' + escapeHtml(data.last_change.path) : '')
@@ -114,7 +169,7 @@
         container.innerHTML =
             '<div class="project-overview-item"><strong>Path</strong><span><code>' + escapeHtml(data.site_dir || 'project') + '/</code></span></div>' +
             '<div class="project-overview-item"><strong>Public URL</strong><span>' +
-                (data.public_url ? '<a href="' + escapeHtml(data.public_url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>' : '—') +
+                (data.public_url ? '<a href="' + escapeHtml(apiUrl(data.public_url)) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>' : '—') +
             '</span></div>' +
             '<div class="project-overview-item"><strong>Starter</strong><span>' + starter + '</span></div>' +
             '<div class="project-overview-item"><strong>Last change</strong><span>' + lastChange + '</span></div>' +
@@ -124,6 +179,7 @@
         if (toggle) {
             toggle.checked = !!data.show_visit_button;
         }
+        syncVisitProjectButton(!!data.show_visit_button);
     }
 
     function saveVisitButtonSetting(enabled) {
@@ -136,6 +192,14 @@
                 show_visit_button: enabled,
                 _csrf: getCsrfToken()
             })
+        }).then(function (payload) {
+            var data = payload.data || {};
+            state.visitUrl = data.visit_url || state.visitUrl;
+            state.hasIndex = !!data.has_index;
+            syncVisitProjectButton(enabled);
+            if (enabled && !state.visitUrl) {
+                throw new Error('Visit URL is not available');
+            }
         });
     }
 
@@ -186,17 +250,109 @@
         });
     }
 
+    function openFile(path, data) {
+        var placeholder = document.querySelector('.project-file-placeholder');
+        var editor = document.getElementById('project-file-editor');
+        var preview = document.getElementById('project-file-preview');
+        var image = document.getElementById('project-file-image');
+        var saveBtn = document.getElementById('project-save-file-btn');
+        var deleteBtn = document.getElementById('project-delete-file-btn');
+        var title = document.getElementById('project-preview-title');
+
+        state.selectedFile = path;
+        state.dirty = false;
+        if (title) title.textContent = path;
+        if (placeholder) placeholder.hidden = true;
+        if (deleteBtn) deleteBtn.style.display = '';
+
+        if (data.editable && editor) {
+            if (preview) preview.hidden = true;
+            if (image) image.hidden = true;
+            editor.hidden = false;
+            editor.value = data.content || '';
+            if (saveBtn) saveBtn.style.display = '';
+            return;
+        }
+
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (editor) editor.hidden = true;
+
+        if (data.image && image) {
+            if (preview) preview.hidden = true;
+            image.hidden = false;
+            image.src = projectPublicUrl(path);
+            image.alt = path;
+            return;
+        }
+
+        if (image) image.hidden = true;
+        if (preview) {
+            preview.hidden = false;
+            preview.textContent = data.content || '(Binary or unsupported preview)';
+        }
+    }
+
     function previewFile(path) {
         return fetchJson(apiUrl('/api/project_site.php?action=read&path=' + encodeURIComponent(path))).then(function (payload) {
-            var preview = document.getElementById('project-file-preview');
-            var title = document.getElementById('project-preview-title');
-            var deleteBtn = document.getElementById('project-delete-file-btn');
-            if (title) title.textContent = path;
-            if (preview) preview.textContent = (payload.data && payload.data.content) || '';
-            if (deleteBtn) deleteBtn.style.display = '';
-            state.selectedFile = path;
+            openFile(path, payload.data || {});
         }).catch(function (error) {
             alert(error.message || 'Failed to read file');
+        });
+    }
+
+    function saveCurrentFile() {
+        if (!state.selectedFile) return;
+        var editor = document.getElementById('project-file-editor');
+        if (!editor || editor.hidden) return;
+
+        return fetchJson(apiUrl('/api/project_site.php?action=write'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'write',
+                path: state.selectedFile,
+                content: editor.value,
+                _csrf: getCsrfToken()
+            })
+        }).then(function () {
+            state.dirty = false;
+            loadActivity();
+        }).catch(function (error) {
+            alert(error.message || 'Failed to save file');
+        });
+    }
+
+    function uploadFiles(fileList) {
+        if (!fileList || !fileList.length) return;
+
+        var uploads = Array.prototype.map.call(fileList, function (file) {
+            var formData = new FormData();
+            formData.append('action', 'upload');
+            formData.append('path', state.currentPath || '');
+            formData.append('file', file);
+            formData.append('_csrf', getCsrfToken());
+
+            return fetch(apiUrl('/api/project_site.php?action=upload'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: formData
+            }).then(function (response) {
+                return response.text().then(function (text) {
+                    var payload = text ? JSON.parse(text) : {};
+                    if (!response.ok || payload.status !== 'ok') {
+                        throw new Error(payload.message || ('Upload failed for ' + file.name));
+                    }
+                    return payload;
+                });
+            });
+        });
+
+        Promise.all(uploads).then(function () {
+            refreshFiles();
+            loadActivity();
+        }).catch(function (error) {
+            alert(error.message);
         });
     }
 
@@ -234,7 +390,24 @@
                 saveVisitButtonSetting(toggle.checked).catch(function (error) {
                     alert(error.message);
                     toggle.checked = !toggle.checked;
+                    syncVisitProjectButton(toggle.checked);
                 });
+            });
+        }
+
+        var editor = document.getElementById('project-file-editor');
+        if (editor && editor.dataset.bound !== '1') {
+            editor.dataset.bound = '1';
+            editor.addEventListener('input', function () {
+                state.dirty = true;
+            });
+        }
+
+        var saveBtn = document.getElementById('project-save-file-btn');
+        if (saveBtn && saveBtn.dataset.bound !== '1') {
+            saveBtn.dataset.bound = '1';
+            saveBtn.addEventListener('click', function () {
+                saveCurrentFile();
             });
         }
 
@@ -248,7 +421,7 @@
                 var path = btn.getAttribute('data-path') || '';
                 if (type === 'dir') {
                     state.currentPath = path;
-                    state.selectedFile = null;
+                    clearFilePreview();
                     refreshFiles();
                     return;
                 }
@@ -263,8 +436,51 @@
                 var btn = e.target.closest('.project-crumb');
                 if (!btn) return;
                 state.currentPath = btn.getAttribute('data-path') || '';
-                state.selectedFile = null;
+                clearFilePreview();
                 refreshFiles();
+            });
+        }
+
+        var folderBtn = document.getElementById('project-new-folder-btn');
+        if (folderBtn && folderBtn.dataset.bound !== '1') {
+            folderBtn.dataset.bound = '1';
+            folderBtn.addEventListener('click', function () {
+                var name = prompt('New folder name:');
+                if (!name) return;
+                name = name.replace(/^\/+/, '').replace(/\/+$/, '');
+                if (!name || name.indexOf('/') >= 0 || name.indexOf('..') >= 0) {
+                    alert('Enter a single folder name without slashes.');
+                    return;
+                }
+                var fullPath = state.currentPath ? state.currentPath + '/' + name : name;
+                fetchJson(apiUrl('/api/project_site.php?action=create_folder'), {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'create_folder',
+                        path: fullPath,
+                        _csrf: getCsrfToken()
+                    })
+                }).then(function () {
+                    refreshFiles();
+                    loadActivity();
+                }).catch(function (error) {
+                    alert(error.message);
+                });
+            });
+        }
+
+        var uploadBtn = document.getElementById('project-upload-file-btn');
+        var uploadInput = document.getElementById('project-upload-input');
+        if (uploadBtn && uploadInput && uploadBtn.dataset.bound !== '1') {
+            uploadBtn.dataset.bound = '1';
+            uploadBtn.addEventListener('click', function () {
+                uploadInput.click();
+            });
+            uploadInput.addEventListener('change', function () {
+                uploadFiles(uploadInput.files);
+                uploadInput.value = '';
             });
         }
 
@@ -272,9 +488,12 @@
         if (addBtn && addBtn.dataset.bound !== '1') {
             addBtn.dataset.bound = '1';
             addBtn.addEventListener('click', function () {
-                var relative = prompt('New file path (relative to project/, e.g. pages/about.html):');
+                var relative = prompt('New file name (e.g. about.html):');
                 if (!relative) return;
                 relative = relative.replace(/^\/+/, '');
+                if (state.currentPath) {
+                    relative = state.currentPath + '/' + relative;
+                }
                 var content = prompt('Initial content (optional):', '') || '';
                 fetchJson(apiUrl('/api/project_site.php?action=create'), {
                     method: 'POST',
@@ -289,7 +508,9 @@
                 }).then(function () {
                     var parent = relative.indexOf('/') >= 0 ? relative.split('/').slice(0, -1).join('/') : '';
                     state.currentPath = parent;
-                    refreshFiles();
+                    refreshFiles().then(function () {
+                        previewFile(relative);
+                    });
                     loadActivity();
                 }).catch(function (error) {
                     alert(error.message);
@@ -313,12 +534,7 @@
                         _csrf: getCsrfToken()
                     })
                 }).then(function () {
-                    state.selectedFile = null;
-                    var preview = document.getElementById('project-file-preview');
-                    var title = document.getElementById('project-preview-title');
-                    if (preview) preview.innerHTML = '<span class="text-muted">Select a file to preview</span>';
-                    if (title) title.textContent = 'Preview';
-                    deleteBtn.style.display = 'none';
+                    clearFilePreview();
                     refreshFiles();
                     loadActivity();
                 }).catch(function (error) {

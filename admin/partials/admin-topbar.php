@@ -12,11 +12,9 @@ $visitProjectUrl = '';
 if ($showVisitProjectButton) {
     birkly_ensure_public_site_path();
     $indexFile = birkly_public_site_path() . '/index.html';
-    if (is_file($indexFile)) {
-        $visitProjectUrl = birkly_public_site_url('/index.html');
-    } else {
-        $showVisitProjectButton = false;
-    }
+    $visitProjectUrl = is_file($indexFile)
+        ? birkly_public_site_url('/index.html')
+        : birkly_public_site_url('/');
 }
 ?>
 <header class="admin-topbar" id="admin-topbar">
@@ -33,7 +31,7 @@ if ($showVisitProjectButton) {
     <div class="admin-topbar-spacer"></div>
     <div class="page-header-actions admin-topbar-actions">
         <?php if ($showVisitProjectButton && $visitProjectUrl !== ''): ?>
-        <a href="<?= htmlspecialchars($visitProjectUrl) ?>" class="btn btn-secondary btn-sm admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
+        <a href="<?= htmlspecialchars($visitProjectUrl) ?>" id="admin-visit-project-btn" class="btn btn-secondary btn-sm admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
             Visit project
         </a>
         <?php endif; ?>
