@@ -841,7 +841,40 @@
             for (let i = 0; i < s.length; i++) {
                 h = (h * 31 + s.charCodeAt(i)) >>> 0;
             }
-            return 'birkly_bundle_v2:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
+            // v3: invalidates session caches poisoned by pre-#233 admin entry summaries
+            return 'birkly_bundle_v3:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
+        };
+
+        Birkly.bundle.entryPayloadLooksStripped = function (entry) {
+            if (!entry || typeof entry !== 'object') {
+                return true;
+            }
+            if (entry.content || entry.excerpt || entry.slug || entry.key) {
+                return false;
+            }
+            for (const key of Object.keys(entry)) {
+                if (typeof key === 'string' && key.length === 2 && entry[key] && typeof entry[key] === 'object') {
+                    return false;
+                }
+            }
+            const allowed = new Set(['id', 'title', 'status', 'updated_at', 'created_at', 'published_at']);
+            const keys = Object.keys(entry);
+            return keys.length > 0 && keys.every((key) => allowed.has(key));
+        };
+
+        Birkly.bundle.bundlePayloadIsValid = function (data) {
+            if (!data || typeof data !== 'object') {
+                return false;
+            }
+            for (const [key, rows] of Object.entries(data)) {
+                if (key === '__tf_meta__' || !Array.isArray(rows) || rows.length === 0) {
+                    continue;
+                }
+                if (Birkly.bundle.entryPayloadLooksStripped(rows[0])) {
+                    return false;
+                }
+            }
+            return true;
         };
 
         Birkly.bundle.applyBundleResponse = function (requests, json) {
@@ -888,8 +921,14 @@
             } catch (e) { /* ignore */ }
 
             if (cached && cached.data && cached.revision) {
-                Birkly.bundle.applyBundleResponse(requests, cached);
-                Birkly.log('Birkly: loadPageBundle from session cache', { revision: cached.revision });
+                if (Birkly.bundle.bundlePayloadIsValid(cached.data)) {
+                    Birkly.bundle.applyBundleResponse(requests, cached);
+                    Birkly.log('Birkly: loadPageBundle from session cache', { revision: cached.revision });
+                } else {
+                    try { sessionStorage.removeItem(cacheKey); } catch (e) { /* ignore */ }
+                    cached = null;
+                    Birkly.warn('Birkly: Discarded invalid session page bundle cache');
+                }
             }
 
             try {
@@ -906,7 +945,12 @@
                         + '&requests=' + encodeURIComponent(encoded) + '&lean=1';
                     const getRes = await fetch(getUrl, { method: 'GET', headers, credentials: 'include' });
                     if (getRes.status === 304 && cached) {
-                        return true;
+                        if (Birkly.bundle.bundlePayloadIsValid(cached.data)) {
+                            return true;
+                        }
+                        try { sessionStorage.removeItem(cacheKey); } catch (e) { /* ignore */ }
+                        cached = null;
+                        delete headers['If-None-Match'];
                     }
                     if (getRes.ok) {
                         json = await getRes.json().catch(() => ({}));
@@ -923,7 +967,7 @@
                     });
                     json = await postRes.json().catch(() => ({}));
                     if (!postRes.ok || json.status !== 'ok' || !json.data) {
-                        if (cached && cached.data) {
+                        if (cached && cached.data && Birkly.bundle.bundlePayloadIsValid(cached.data)) {
                             return true;
                         }
                         Birkly.warn('Birkly: page bundle failed', json);
@@ -1063,6 +1107,7 @@
         }
         Object.keys(Birkly.pageBundle.data).forEach((key) => {
             if (key === '__tf_meta__') return;
+            if (Birkly.pageBundle.failed.has(key)) return;
             if (data[key] === undefined) {
                 data[key] = Birkly.pageBundle.data[key];
             }
@@ -3610,7 +3655,9 @@
         try {
             const data = await fetchContent('list_entries', { collection: 'site_elements' });
             if (data && data.status === 'ok' && data.data.entries) {
-                const element = data.data.entries.find(entry => entry.key === key);
+                const element = data.data.entries
+                    .map(flattenLocalizedEntry)
+                    .find(entry => (entry.key || entry.slug || entry.id) === key);
                 return element || null;
             }
         } catch (error) {
@@ -3633,16 +3680,16 @@
                 Birkly.log('Birkly: Fetched', data.data.entries.length, 'site elements');
                 const elements = {};
                 data.data.entries.forEach(entry => {
-                    // After API transformation, key should be at top level
-                    const key = entry.key;
+                    const normalized = flattenLocalizedEntry(entry);
+                    const key = normalized.key || normalized.slug || normalized.id;
                     if (key) {
-                        elements[key] = entry;
-                        Birkly.log('Birkly: Added site element:', key, 'with content:', entry.content ? 'yes' : 'no', 'content type:', typeof entry.content, 'is array:', Array.isArray(entry.content));
-                        if (entry.content && Array.isArray(entry.content) && entry.content.length > 0) {
-                            Birkly.log('Birkly: First content item:', entry.content[0]);
+                        elements[key] = normalized;
+                        Birkly.log('Birkly: Added site element:', key, 'with content:', normalized.content ? 'yes' : 'no', 'content type:', typeof normalized.content, 'is array:', Array.isArray(normalized.content));
+                        if (normalized.content && Array.isArray(normalized.content) && normalized.content.length > 0) {
+                            Birkly.log('Birkly: First content item:', normalized.content[0]);
                         }
                     } else {
-                        Birkly.warn('Birkly: Site element missing key:', entry);
+                        Birkly.warn('Birkly: Site element missing key:', normalized);
                     }
                 });
                 Birkly.log('Birkly: Site elements object:', Object.keys(elements));
@@ -4658,8 +4705,13 @@
                     
                     // If a "collection" name is already an array in data (e.g. from a plugin prefetch like user_list → users), use it and don't fetch from CMS
                     await Promise.all(collections.map(async (collectionName) => {
-                        if (Array.isArray(data[collectionName])) {
-                            Birkly.log('Birkly: Using prefetched/virtual list for:', collectionName, 'count:', data[collectionName].length);
+                        const prefetched = data[collectionName];
+                        if (Array.isArray(prefetched) && prefetched.length > 0) {
+                            Birkly.log('Birkly: Using prefetched/virtual list for:', collectionName, 'count:', prefetched.length);
+                            return;
+                        }
+                        if (Array.isArray(prefetched) && prefetched.length === 0 && !Birkly.pageBundle.failed.has(collectionName)) {
+                            Birkly.log('Birkly: Using empty bundled list for:', collectionName);
                             return;
                         }
                         Birkly.log('Birkly: Fetching entries for collection:', collectionName);
@@ -4683,6 +4735,7 @@
                     const pre = await preprocessTemplateFunctionCalls(template.template, data);
                     Birkly.log('Birkly: Preprocessed template length:', pre.length, 'still has template tags:', pre.includes('{for'), 'sample:', pre.substring(0, 200));
                     let rendered = renderTemplate(pre, data);
+                    rendered = processNestedLoops(rendered, data);
                     Birkly.log('Birkly: Rendered collection template length:', rendered.length, 'still has template tags:', rendered.includes('{for'), 'sample:', rendered.substring(0, 300));
                     
                     // Safety check: if rendered output still contains template tags, strip them and ALWAYS update DOM (never leave raw tags)
@@ -5307,33 +5360,40 @@
             return;
         }
 
-        // Fallback: create a simple floating selector if no template hook exists
+        // Sites opt in to the floating widget explicitly; otherwise only template hooks are used.
+        const clientScript = document.querySelector('script[src*="birkly-client"]');
+        if (clientScript && clientScript.getAttribute('data-birkly-no-floating-language-selector') === 'true') {
+            return;
+        }
+        if (!clientScript || clientScript.getAttribute('data-birkly-floating-language-selector') !== 'true') {
+            return;
+        }
+
         if (document.getElementById('birkly-language-selector')) {
             return;
         }
-        
+
         const selector = document.createElement('div');
         selector.id = 'birkly-language-selector';
         selector.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
-        
+
         const select = document.createElement('select');
         select.style.cssText = 'border: none; outline: none; font-size: 14px; padding: 4px 8px; cursor: pointer;';
         select.innerHTML = `
             <option value="en" ${Birkly.currentLanguage === 'en' ? 'selected' : ''}>English</option>
             <option value="de" ${Birkly.currentLanguage === 'de' ? 'selected' : ''}>Deutsch</option>
         `;
-        
+
         select.addEventListener('change', function() {
             const newLang = this.value;
             Birkly.currentLanguage = newLang;
             localStorage.setItem('birkly_language', newLang);
-            
-            // Update URL with language parameter
+
             const url = new URL(window.location);
             url.searchParams.set('lang', newLang);
             window.location.href = url.toString();
         });
-        
+
         selector.appendChild(select);
         document.body.appendChild(selector);
     }
