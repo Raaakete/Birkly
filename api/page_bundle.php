@@ -28,6 +28,7 @@ require_once __DIR__ . '/../core/site_domain.php';
 require_once __DIR__ . '/../core/starter_content_repair.php';
 
 birkly_run_starter_content_repairs();
+birkly_ensure_site_domain_registered();
 
 if (birkly_request_is_local_dev() || birkly_request_is_same_cms_origin()) {
     setDynamicCORS();

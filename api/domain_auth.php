@@ -423,6 +423,16 @@ function requireDomainAuth($operation = 'read', $collection = null) {
     }
     
     if (!$domain) {
+        $cmsHost = birkly_cms_request_host();
+        if ($cmsHost !== '') {
+            $hostValidation = $domainAuth->validateDomain($cmsHost);
+            if (!empty($hostValidation['valid'])) {
+                $domain = $cmsHost;
+            }
+        }
+    }
+
+    if (!$domain) {
         http_response_code(403);
         echo json_encode(['status' => 'error', 'message' => 'Domain validation required']);
         exit;
