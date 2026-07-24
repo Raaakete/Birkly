@@ -194,6 +194,16 @@ When in doubt, treat as major and ask the human.
 
 **Spec:** `docs/reviews/P35-marketplace-ops-excellence-plan.md` · **Handoff:** `docs/reviews/P35-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P35-verification-matrix.md`
 
+**2026-07-24 — Phase 35 largely complete** — Marketplace & Ops excellence (M22–M33 on `main`)
+
+**Delivered:** Birkly admin shell on Ops/Provider · SQLite + repos · CSRF · admin users · security scan v2 · permission manifest · offer pages + embed · official plugin seeds · API catalog enhancements.
+
+**2026-07-24 — Phase 36 proposed** (Keven) — **CMS productization & platform depth**
+
+**Priorities:** Clean CMS release zip · Ops-hosted starters/templates · grouped Ops/Provider nav · platform feature depth · Birkly-Docs plugin economy section.
+
+**Spec:** `docs/reviews/P36-cms-productization-platform-plan.md` · **Handoff:** `docs/reviews/P36-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P36-verification-matrix.md`
+
 ---
 
 ## Vision
@@ -208,13 +218,15 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 ---
 
-## Current state (verified 2026-07-23)
+## Current state (verified 2026-07-24)
 
 | Repo | Status |
 |------|--------|
-| **Birkly (CMS)** | **P33 complete** · P34 CMS wire-up on `main` (marketplace URL, feedback relay) |
-| **Birkly-Marketplace** | **P34 deployed** on Dokploy (`ops` / `providers` / `marketplace` · `*.birkly.cloud`) · **P35 proposed** |
-| **Birkly-Docs** | P33 admin responsive guide + P32 fieldtypes |
+| **Birkly (CMS)** | P35 CMS features on `main` (consent, embed) · **P36 proposed** — clean release zip |
+| **Birkly-Marketplace** | **P35 largely complete** on `main` (shell, SQLite, offer pages, official seeds) · **P36 proposed** |
+| **Birkly-Docs** | Marketplace guides exist · **P36** plugin economy section planned |
+| **kekaba** | Baked HTML — P28 after P36-M18 |
+| **Birkly-Website** | P35 API catalog planned · **P36** featured marketplace section |
 | **kekaba** | Baked HTML — P28 after P35-M28 |
 | **Birkly-Website** | Open-beta copy · P35 marketplace API section planned |
 | **Agent ops** | CI + autonomous execution on `main` |
@@ -249,9 +261,13 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **P34 spec:** `docs/reviews/P34-birkly-ops-platform-plan.md` · **Review pack:** `docs/reviews/P34-human-review-pack.md`
 
-**Next active phase:** **Phase 35** — **Marketplace & Ops excellence** — proposed (2026-07-23)
+**2026-07-24 — Phase 35 largely complete** — Marketplace & Ops excellence
 
-**Paused:** **Phase 28** — Beta launch automation — resume after P35-M28 · **Phase 26** — Studio creative — resume after P28-M20
+**Delivered:** Admin shell · SQLite · permissions · offer embed · official plugin catalog seeds · provider offer editor upgrades.
+
+**Next active phase:** **Phase 36** — **CMS productization & platform depth** — proposed (2026-07-24)
+
+**Paused:** **Phase 28** — Beta launch automation — resume after P36-M18 · **Phase 26** — Studio creative — resume after P28-M20
 
 
 **2026-07-20 — Phase 29 complete** (autonomous P29-M0→M15)
