@@ -44,6 +44,31 @@ function birkly_content_resolve_collection_dir(Storage $storage, string $collect
 }
 
 /**
+ * Resolve collection to on-disk directory name.
+ * Preserves legacy slugs with underscores (e.g. site_elements) for AI/admin writes.
+ */
+function birkly_content_resolve_collection_dir_name(Storage $storage, string $collectionRef): ?string
+{
+    $collectionRef = trim($collectionRef);
+    if ($collectionRef === '') {
+        return null;
+    }
+
+    $dir = birkly_content_resolve_collection_dir($storage, $collectionRef);
+    if ($dir !== null) {
+        return $dir;
+    }
+
+    require_once __DIR__ . '/entry_slug.php';
+    $normalized = birkly_normalize_slug($collectionRef);
+    if ($normalized === '' || strcasecmp($normalized, $collectionRef) === 0) {
+        return null;
+    }
+
+    return birkly_content_resolve_collection_dir($storage, $normalized);
+}
+
+/**
  * Lightweight entry row for MCP list_entries (avoids huge ContentEditor payloads).
  */
 function birkly_content_entry_list_summary(array $entry): array
