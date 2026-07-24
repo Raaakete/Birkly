@@ -1,0 +1,134 @@
+<!-- Tiers Management Page -->
+<div class="page-header pt-m pb-m">
+    <div class="page-header-left">
+        <div class="breadcrumbs">
+            <a href="{admin_url 'site_users'}">User</a>
+            <span class="separator">›</span>
+            <span class="current">Tiers</span>
+        </div>
+    </div>
+    <div class="page-header-actions">
+        <button class="btn btn-primary" onclick="openAddTierModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create Tier
+        </button>
+    </div>
+</div>
+
+<header class="content-header mb-3">
+    <h2 class="h2 m-0">Tier Management</h2>
+    <div class="text-muted mt-1" style="font-size:1rem;">Manage user tiers and access levels</div>
+</header>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- Tiers Grid -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="h4 m-0">Tiers</h3>
+            </div>
+            <div class="card-body">
+                <div id="tiers-container">
+                    <div class="text-center py-5">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tier Detail Modal -->
+<div id="tier-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3 class="h3 m-0" id="tier-modal-title">Create Tier</h3>
+            <button type="button" class="btn-close" onclick="closeTierModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="tier-form">
+                <input type="hidden" id="tier-id" name="id">
+                
+                <div class="form-group">
+                    <label for="tier-name">Tier Name *</label>
+                    <input type="text" id="tier-name" name="name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tier-id-field">Tier ID *</label>
+                    <input type="text" id="tier-id-field" name="tier_id" class="form-control" required pattern="[a-z0-9_]+" placeholder="e.g., premium, enterprise">
+                    <small class="text-muted">Lowercase letters, numbers, and underscores only. Cannot be changed after creation.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tier-description">Description</label>
+                    <textarea id="tier-description" name="description" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tier-price">Price (optional)</label>
+                    <input type="number" id="tier-price" name="price" class="form-control" step="0.01" min="0" placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label>Limits</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="tier-max-entries">Max Entries</label>
+                            <input type="number" id="tier-max-entries" name="max_entries" class="form-control" value="-1" min="-1">
+                            <small class="text-muted">-1 for unlimited</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tier-max-storage">Max Storage (MB)</label>
+                            <input type="number" id="tier-max-storage" name="max_storage_mb" class="form-control" value="100" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Features</label>
+                    <div id="tier-features-list">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="feature-unlimited" name="features[]" value="unlimited_entries">
+                            <label class="form-check-label" for="feature-unlimited">Unlimited Entries</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="feature-custom-domain" name="features[]" value="custom_domain">
+                            <label class="form-check-label" for="feature-custom-domain">Custom Domain</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="feature-priority-support" name="features[]" value="priority_support">
+                            <label class="form-check-label" for="feature-priority-support">Priority Support</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Collection Permissions</label>
+                    <div id="tier-collections-permissions">
+                        <p class="text-muted">Collection permissions can be configured after tier creation.</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeTierModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveTier()">Save Tier</button>
+        </div>
+    </div>
+</div>
+
+<script src=\"{birkly_url '/plugins/user_management/admin/tiers.js'}\"></script>
+<script>
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.initTiersManagement) {
+        window.initTiersManagement();
+    }
+});
+</script>
