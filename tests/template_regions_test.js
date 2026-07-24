@@ -9,10 +9,15 @@ function assertTrue(name, ok) {
     if (!ok) failures++;
 }
 
-function mockElement(tagName, innerHTML, attrs) {
+function mockElement(tagName, innerHTML, attrs, children) {
     const el = {
         tagName: String(tagName || '').toUpperCase(),
         innerHTML: innerHTML || '',
+        children: children || [],
+        contains(other) {
+            if (other === this) return true;
+            return this.children.some((child) => child === other || child.contains(other));
+        },
         getAttribute(name) {
             if (!attrs || !Object.prototype.hasOwnProperty.call(attrs, name)) {
                 return null;
@@ -24,27 +29,34 @@ function mockElement(tagName, innerHTML, attrs) {
     return el;
 }
 
-function mockDocument(spec) {
-    const elements = spec.elements || [];
-    const byTag = {};
-    elements.forEach((el) => {
-        const tag = el.tagName.toLowerCase();
-        if (!byTag[tag]) byTag[tag] = [];
-        byTag[tag].push(el);
-    });
+function mockDocument(elements) {
+    const all = [];
+    const collect = (el) => {
+        all.push(el);
+        (el.children || []).forEach(collect);
+    };
+    elements.forEach(collect);
+
+    const body = mockElement('body', '', {}, elements);
+    body.querySelectorAll = (selector) => {
+        if (selector === '*') {
+            return all.filter((el) => el !== body);
+        }
+        return [];
+    };
 
     return {
+        body,
+        documentElement: body,
         querySelector(selector) {
-            if (selector === 'main') return byTag.main ? byTag.main[0] : null;
-            if (selector === 'header') return byTag.header ? byTag.header[0] : null;
-            if (selector === 'footer') return byTag.footer ? byTag.footer[0] : null;
-            if (selector === 'title') return byTag.title ? byTag.title[0] : null;
+            if (selector === 'title') {
+                return all.find((el) => el.tagName === 'TITLE') || null;
+            }
             return null;
         },
         querySelectorAll(selector) {
-            if (selector === 'nav') return byTag.nav || [];
-            if (selector === '[data-birkly-region]') {
-                return elements.filter((el) => el.getAttribute('data-birkly-region') !== null);
+            if (selector === '*') {
+                return body.querySelectorAll(selector);
             }
             return [];
         }
@@ -53,7 +65,7 @@ function mockDocument(spec) {
 
 const navTpl = "{for each entry in 'nav-links' ordered by order}<a href=\"{url}\">{label}</a>{endfor}";
 const navEl = mockElement('nav', navTpl);
-const doc = mockDocument({ elements: [navEl] });
+const doc = mockDocument([navEl]);
 const regions = engine.discoverPageRegions(doc);
 
 assertTrue('discovers nav with template syntax', regions.length === 1 && regions[0].element === navEl);
@@ -61,9 +73,17 @@ assertTrue('nav region keeps template source', regions[0].template === navTpl);
 
 const overlayTpl = "{for each entry in 'nav-links'}<a>{label}</a>{endfor}";
 const overlay = mockElement('div', overlayTpl, { 'data-birkly-region': '' });
-const overlayDoc = mockDocument({ elements: [overlay] });
+const overlayDoc = mockDocument([overlay]);
 const overlayRegions = engine.discoverPageRegions(overlayDoc);
-assertTrue('discovers data-birkly-region elements', overlayRegions.length === 1);
+assertTrue('discovers any element with template syntax', overlayRegions.length === 1);
+
+const mainInner = "{for each entry in 'blog'}<h2>{title}</h2>{endfor}";
+const sectionInner = "{for each entry in 'gallery'}<figure>{caption}</figure>{endfor}";
+const section = mockElement('section', sectionInner);
+const main = mockElement('main', mainInner, {}, [section]);
+const nestedDoc = mockDocument([main]);
+const nestedRegions = engine.discoverPageRegions(nestedDoc);
+assertTrue('uses outermost template region only', nestedRegions.length === 1 && nestedRegions[0].element === main);
 
 const navData = {
     'nav-links': [

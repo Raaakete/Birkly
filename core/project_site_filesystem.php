@@ -246,10 +246,12 @@ function birkly_project_site_info(): array
       'conditional' => "{if entry 'blog'.'featured' exists}\n  ...\n{endif}",
       'from_block' => "{from 'site_elements' get entry 'navigation'}\n  ...\n{endget}",
       'rules' => [
-        'Collection slugs use single quotes',
+        'Collection slugs use single quotes (hyphens allowed: nav-links)',
         'System fields are bare: {title}, {slug}',
         'Custom fields use quoted names: {\'content\'}',
         'Static assets live under /project/ (css/, js/, images/)',
+        'Public site only shows published entries — set status to published for nav/menu items',
+        'Template tags work in any outermost <body> element with Birkly syntax',
       ],
     ],
   ];
