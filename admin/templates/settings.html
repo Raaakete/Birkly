@@ -686,8 +686,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
           <section class="card project-activity-card">
             <div class="section-header">
-              <h2>AI activity</h2>
-              <p class="section-description">Recent project file changes from AI approvals and direct writes.</p>
+              <h2>Activity</h2>
+              <p class="section-description">Recent project file changes and settings updates, with who made each change.</p>
             </div>
             <div id="project-activity-list" class="project-activity-list">
               <div class="loading-state"><div class="spinner"></div></div>
@@ -1573,7 +1573,7 @@ window.webhooksData = window.webhooksData || { collections: <?= $webhookCollecti
 
 <script src="<?= birkly_url('/admin/js/webhooks.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/redirects.js') ?>"></script>
-<script src="<?= birkly_url('/admin/js/project-settings.js') ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/project-settings.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
 <script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/mcp-connections.js') ?>"></script>
 
