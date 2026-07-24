@@ -54,4 +54,4 @@ Loaders must set `data-cms-url` / `KEKABA_BIRKLY.cmsUrl` to the **public CMS bas
 
 - `AGENTS.md` — multi-repo architecture
 - Milestone M6 — site hygiene tasks
-- `docs/benchmarks/kekaba-index-roundtrips.md` — client performance expectations after M4
+- Birkly-Docs — client performance and templating guides
