@@ -4,19 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profile – HaruSocial</title>
-    <link rel="stylesheet" href="/demo-website/styles.css">
-    <link rel="stylesheet" href="/demo-website/social/social.css">
+    <link rel="stylesheet" href="/project/styles.css">
+    <link rel="stylesheet" href="/project/social/social.css">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1><a href="/demo-website/social/index.html">HaruSocial</a></h1>
+            <h1><a href="/project/social/index.html">HaruSocial</a></h1>
             <nav>
-                <a href="/demo-website/social/index.html">Feed</a>
+                <a href="/project/social/index.html">Feed</a>
                 {if user_logged_in}
-                    <a href="/demo-website/social/profile.html?user_id={user_current.id}">My Profile</a>
+                    <a href="/project/social/profile.html?user_id={user_current.id}">My Profile</a>
                 {else}
-                    <a href="/demo-website/social/login.html">Login</a>
+                    <a href="/project/social/login.html">Login</a>
                 {endif}
             </nav>
         </div>
@@ -160,7 +160,7 @@
                                 </button>
                             </form>
                         {endif}
-                        <a class="btn btn-sm btn-outline-secondary" href="/demo-website/social/post.html?slug={ entry.slug }&collection=social_posts">💬 Comment</a>
+                        <a class="btn btn-sm btn-outline-secondary" href="/project/social/post.html?slug={ entry.slug }&collection=social_posts">💬 Comment</a>
                         {if user_logged_in}
                             {if entry.author_user_id = user_current.id}
                                 <button class="btn btn-sm btn-outline-danger" onclick="deletePost('{entry.id}', '{entry.slug}')" style="margin-left: .5rem;">🗑️ Delete</button>

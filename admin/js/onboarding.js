@@ -592,7 +592,7 @@ const onboarding = {
     getDemoWebsiteUrl() {
         const currentUrl = window.location.origin + window.location.pathname;
         const baseUrl = currentUrl.replace(/\/admin\/.*$/, '');
-        return baseUrl + '/demo-website/';
+        return baseUrl + '/project/';
     },
 
     async skip() {

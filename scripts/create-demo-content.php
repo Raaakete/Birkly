@@ -78,7 +78,7 @@ if (!is_dir("$collectionsDir/blog")) {
             ['name' => 'title', 'type' => 'text', 'label' => 'Title', 'required' => true],
             ['name' => 'slug', 'type' => 'text', 'label' => 'Slug', 'required' => true],
             ['name' => 'excerpt', 'type' => 'textarea', 'label' => 'Excerpt', 'required' => false],
-            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => true, 'css_url' => '/demo-website/styles.css'],
+            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => true, 'css_url' => '/project/styles.css'],
             ['name' => 'featured_image', 'type' => 'file', 'label' => 'Featured Image', 'required' => false],
             ['name' => 'category', 'type' => 'text', 'label' => 'Category', 'required' => false],
             ['name' => 'tags', 'type' => 'tags', 'label' => 'Tags', 'required' => false],
@@ -153,7 +153,7 @@ if (!is_dir("$collectionsDir/services")) {
             ['name' => 'title', 'type' => 'text', 'label' => 'Title', 'required' => true],
             ['name' => 'slug', 'type' => 'text', 'label' => 'Slug', 'required' => true],
             ['name' => 'description', 'type' => 'textarea', 'label' => 'Description', 'required' => true],
-            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => false, 'css_url' => '/demo-website/styles.css'],
+            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => false, 'css_url' => '/project/styles.css'],
             ['name' => 'icon', 'type' => 'text', 'label' => 'Icon', 'required' => false],
             ['name' => 'price', 'type' => 'text', 'label' => 'Price', 'required' => false],
             ['name' => 'featured', 'type' => 'boolean', 'label' => 'Featured', 'required' => false],
@@ -276,7 +276,7 @@ if (!is_dir("$collectionsDir/about")) {
             ['name' => 'title', 'type' => 'text', 'label' => 'Title', 'required' => true],
             ['name' => 'slug', 'type' => 'text', 'label' => 'Slug', 'required' => true],
             ['name' => 'subtitle', 'type' => 'text', 'label' => 'Subtitle', 'required' => false],
-            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => true, 'css_url' => '/demo-website/styles.css'],
+            ['name' => 'content', 'type' => 'content-editor', 'label' => 'Content', 'required' => true, 'css_url' => '/project/styles.css'],
             ['name' => 'status', 'type' => 'select', 'label' => 'Status', 'options' => [['label' => 'Draft', 'value' => 'draft'], ['label' => 'Published', 'value' => 'published']], 'default' => 'published']
         ],
         [
@@ -286,7 +286,7 @@ if (!is_dir("$collectionsDir/about")) {
                 'slug' => 'about',
                 'subtitle' => 'Learn more about our company and what we do',
                 'status' => 'published',
-                'content' => '<p>This is a demo website built with Birkly, a modern flat-file content management system.</p><h2>About Birkly</h2><p>Birkly is designed for simplicity and flexibility. Unlike traditional database-driven CMS platforms, Birkly uses simple JSON files to store your content, making it:</p><ul><li><strong>Fast:</strong> No database queries, just file reads</li><li><strong>Portable:</strong> Move your entire site by copying a folder</li><li><strong>Version-controlled:</strong> Every change is tracked in your version control system</li><li><strong>Secure:</strong> No SQL injection vulnerabilities</li><li><strong>Flexible:</strong> Edit content directly in your code editor if needed</li></ul><h2>This Demo Website</h2><p>This demo website showcases how easy it is to create a professional website with Birkly. The entire website uses minimal JavaScript—just one script tag to connect to the CMS. All content is fetched dynamically from the CMS and rendered using Birkly\'s simple templating language.</p><h2>Features</h2><p>This demo website includes:</p><ul><li>Dynamic blog posts from the CMS</li><li>Services showcase with featured items</li><li>Contact form with public API integration</li><li>Responsive design that works on all devices</li><li>Modern, clean interface</li></ul><h2>Get Started</h2><p>Ready to build your own website with Birkly? Visit our <a href="/demo-website/services.html">services page</a> to see what we offer, or <a href="/demo-website/contact.html">contact us</a> to learn more.</p>'
+                'content' => '<p>This is a demo website built with Birkly, a modern flat-file content management system.</p><h2>About Birkly</h2><p>Birkly is designed for simplicity and flexibility. Unlike traditional database-driven CMS platforms, Birkly uses simple JSON files to store your content, making it:</p><ul><li><strong>Fast:</strong> No database queries, just file reads</li><li><strong>Portable:</strong> Move your entire site by copying a folder</li><li><strong>Version-controlled:</strong> Every change is tracked in your version control system</li><li><strong>Secure:</strong> No SQL injection vulnerabilities</li><li><strong>Flexible:</strong> Edit content directly in your code editor if needed</li></ul><h2>This Demo Website</h2><p>This demo website showcases how easy it is to create a professional website with Birkly. The entire website uses minimal JavaScript—just one script tag to connect to the CMS. All content is fetched dynamically from the CMS and rendered using Birkly\'s simple templating language.</p><h2>Features</h2><p>This demo website includes:</p><ul><li>Dynamic blog posts from the CMS</li><li>Services showcase with featured items</li><li>Contact form with public API integration</li><li>Responsive design that works on all devices</li><li>Modern, clean interface</li></ul><h2>Get Started</h2><p>Ready to build your own website with Birkly? Visit our <a href="/project/services.html">services page</a> to see what we offer, or <a href="/project/contact.html">contact us</a> to learn more.</p>'
             ]
         ]
     );
@@ -295,7 +295,7 @@ if (!is_dir("$collectionsDir/about")) {
 
 echo "\n✅ Demo content creation complete!\n";
 echo "Collections created: Blog, Services, Contact, About\n";
-echo "You can now use the demo website at /demo-website/\n";
+echo "You can now use the demo website at /project/\n";
 
 // Generate page bundle snapshots for dev/hydrate smoke (P2-M6-T2)
 $snapshotScript = "$baseDir/scripts/generate-page-snapshots.php";

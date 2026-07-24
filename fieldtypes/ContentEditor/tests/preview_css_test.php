@@ -22,11 +22,11 @@ $editor = new ContentEditor([
     'name' => 'content',
     'label' => 'Content',
     'value' => '<p>Hi</p>',
-    'css_url' => '/demo-website/styles.css',
+    'css_url' => '/project/styles.css',
 ]);
 
 $html = $editor->render();
-if (strpos($html, 'data-css-url="/demo-website/styles.css"') === false) {
+if (strpos($html, 'data-css-url="/project/styles.css"') === false) {
     echo "FAIL: render exposes data-css-url\n";
     $failures++;
 } else {
@@ -41,7 +41,7 @@ if (strpos($html, 'content-editor-preview-badge') === false) {
 }
 
 $config = $editor->getAdminConfig();
-if (($config['css_url'] ?? '') !== '/demo-website/styles.css') {
+if (($config['css_url'] ?? '') !== '/project/styles.css') {
     echo "FAIL: getAdminConfig includes css_url\n";
     $failures++;
 } else {
