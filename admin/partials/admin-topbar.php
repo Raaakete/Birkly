@@ -2,6 +2,22 @@
 /**
  * Global admin top bar — user menu, search, notifications (always visible, including error pages).
  */
+require_once __DIR__ . '/../../core/project_site.php';
+require_once __DIR__ . '/../../api/storage.php';
+
+$projectSettingsStorage = new Storage(__DIR__ . '/../../settings');
+$projectTabSettings = $projectSettingsStorage->read('project.json') ?? [];
+$showVisitProjectButton = !empty($projectTabSettings['show_visit_button']);
+$visitProjectUrl = '';
+if ($showVisitProjectButton) {
+    birkly_ensure_public_site_path();
+    $indexFile = birkly_public_site_path() . '/index.html';
+    if (is_file($indexFile)) {
+        $visitProjectUrl = birkly_public_site_url('/index.html');
+    } else {
+        $showVisitProjectButton = false;
+    }
+}
 ?>
 <header class="admin-topbar" id="admin-topbar">
     <button class="topbar-icon-btn sidebar-toggle" type="button" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="admin-sidebar">
@@ -16,6 +32,11 @@
     </div>
     <div class="admin-topbar-spacer"></div>
     <div class="page-header-actions admin-topbar-actions">
+        <?php if ($showVisitProjectButton && $visitProjectUrl !== ''): ?>
+        <a href="<?= htmlspecialchars($visitProjectUrl) ?>" class="btn btn-secondary btn-sm admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
+            Visit project
+        </a>
+        <?php endif; ?>
         <?php include __DIR__ . '/theme-switcher.php'; ?>
         <button class="topbar-icon-btn" type="button" aria-label="Search" id="topbar-search-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

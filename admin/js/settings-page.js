@@ -465,6 +465,8 @@ window.deleteRole = deleteRole;
                 window.initUpdates();
             } else if (tabId === 'domains' && typeof window.loadDomains === 'function') {
                 window.loadDomains();
+            } else if (tabId === 'project' && typeof window.initProjectSettings === 'function') {
+                window.initProjectSettings();
             } else if (tabId === 'ai-integrations') {
                 window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
             }
