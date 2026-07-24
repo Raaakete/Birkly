@@ -30,7 +30,33 @@ class Cache {
     }
     
     /**
-     * Get cached entries list
+     * Admin list views cache lightweight summaries; public APIs need full entry payloads.
+     */
+    private function entriesLookLikeSummaries(array $entries): bool
+    {
+        if ($entries === []) {
+            return false;
+        }
+
+        $allowedSummaryKeys = ['id', 'title', 'status', 'updated_at', 'created_at'];
+
+        foreach ($entries as $entry) {
+            if (!is_array($entry)) {
+                return false;
+            }
+
+            foreach (array_keys($entry) as $key) {
+                if (!in_array($key, $allowedSummaryKeys, true)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get cached entries list (full payloads for public read APIs).
      */
     public function getEntries($collectionSlug) {
         if (!$this->enabled) {
@@ -46,6 +72,11 @@ class Cache {
         $cacheData = json_decode(file_get_contents($cacheFile), true);
         
         if (!$cacheData || !isset($cacheData['entries'])) {
+            return null;
+        }
+
+        if ($this->entriesLookLikeSummaries($cacheData['entries'])) {
+            @unlink($cacheFile);
             return null;
         }
         
@@ -65,6 +96,39 @@ class Cache {
         
         return $cacheData['entries'];
     }
+
+    /**
+     * Get cached admin entry summaries (id, title, status, timestamps only).
+     */
+    public function getEntrySummaries($collectionSlug) {
+        if (!$this->enabled) {
+            return null;
+        }
+
+        $cacheFile = $this->getCachePath($collectionSlug, 'summaries');
+
+        if (!file_exists($cacheFile)) {
+            return null;
+        }
+
+        $cacheData = json_decode(file_get_contents($cacheFile), true);
+
+        if (!$cacheData || !isset($cacheData['entries'])) {
+            return null;
+        }
+
+        $entriesDir = __DIR__ . '/../content/collections/' . $collectionSlug . '/entries';
+        if (!is_dir($entriesDir)) {
+            return null;
+        }
+
+        $mostRecentEntryTime = $this->getMostRecentEntryTime($entriesDir);
+        if (isset($cacheData['cache_time']) && $mostRecentEntryTime > $cacheData['cache_time']) {
+            return null;
+        }
+
+        return $cacheData['entries'];
+    }
     
     /**
      * Cache entries list
@@ -82,6 +146,25 @@ class Cache {
             'count' => count($entries)
         ];
         
+        return file_put_contents($cacheFile, json_encode($cacheData, JSON_PRETTY_PRINT)) !== false;
+    }
+
+    /**
+     * Cache admin entry summaries.
+     */
+    public function setEntrySummaries($collectionSlug, $entries) {
+        if (!$this->enabled) {
+            return false;
+        }
+
+        $cacheFile = $this->getCachePath($collectionSlug, 'summaries');
+
+        $cacheData = [
+            'entries' => $entries,
+            'cache_time' => time(),
+            'count' => count($entries),
+        ];
+
         return file_put_contents($cacheFile, json_encode($cacheData, JSON_PRETTY_PRINT)) !== false;
     }
     
