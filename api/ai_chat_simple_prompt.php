@@ -106,6 +106,8 @@ function buildSystemPromptSimple($context, $aiUser) {
     
     $prompt .= "BIRKLY TEMPLATING (for display questions):\n";
     $prompt .= "- Syntax: {for each entry in 'collection-slug'} ... {endfor}\n";
+    $prompt .= "- Hyphenated slugs (e.g. nav-links) are valid in quoted collection names.\n";
+    $prompt .= "- Put template tags only inside <header>, <main>, <footer>, <nav>, or any element with data-birkly-region.\n";
     $prompt .= "- Include: <script src=\"/cms-template.v2.js\"></script>\n";
     $prompt .= "- Use field names: { title }, { text }, etc.\n\n";
 
