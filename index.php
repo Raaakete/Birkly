@@ -60,6 +60,11 @@ if (preg_match('#^/admin($|/)#', $_SERVER['REQUEST_URI'])) {
     exit;
 }
 
+require_once __DIR__ . '/core/http_routes.php';
+if (birkly_dispatch_http_route($uri)) {
+    exit;
+}
+
 // 404 for other requests
 http_response_code(404);
 echo 'Not found'; 
