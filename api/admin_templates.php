@@ -2642,7 +2642,7 @@ function getOnboardingData() {
     }
     
     // Check for demo website
-    $demoBlogPath = __DIR__ . '/../demo-website';
+    $demoBlogPath = __DIR__ . '/../project';
     $demoContentInfo['has_demo_website'] = is_dir($demoBlogPath);
     
     return [

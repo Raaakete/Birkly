@@ -3733,11 +3733,11 @@
             collection = detectCollectionFromTemplate();
         }
         
-        // IMPORTANT: For demo-website website, the collection is always 'blog', not 'demo-website'
-        // The '/demo-website/' path is just the website folder, not the collection name
-        if (window.location.pathname.includes('/demo-website/')) {
-            // If collection was detected as 'demo-website', change it to 'blog'
-            if (collection === 'demo-website') {
+        // IMPORTANT: For project website, the collection is always 'blog', not 'project'
+        // The '/project/' path is just the website folder, not the collection name
+        if (window.location.pathname.includes('/project/')) {
+            // If collection was detected as 'project', change it to 'blog'
+            if (collection === 'project') {
                 collection = 'blog';
             }
             // If no collection detected, default to 'blog' for demo blog
@@ -3900,7 +3900,7 @@
                             <div style="text-align: center; padding: 3rem;">
                                 <h1 style="font-size: 2rem; margin-bottom: 1rem;">Post Not Found</h1>
                                 <p style="color: #6b7280; margin-bottom: 2rem;">The post you're looking for doesn't exist.</p>
-                                <a href="/demo-website/index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Home</a>
+                                <a href="/project/index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Home</a>
                             </div>
                         `;
                     }
@@ -3971,7 +3971,7 @@
                         <div style="text-align: center; padding: 3rem;">
                             <h1 style="font-size: 2rem; margin-bottom: 1rem;">Error Loading Post</h1>
                             <p style="color: #6b7280; margin-bottom: 2rem;">Could not load the post. Please try again later.</p>
-                            <a href="/demo-website/index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Home</a>
+                            <a href="/project/index.html" style="color: #3b82f6; text-decoration: none; font-weight: 600;">← Back to Home</a>
                         </div>
                     `;
                 }
@@ -4927,22 +4927,22 @@
     
     /**
      * Detect collection name from template or URL
-     * IMPORTANT: Ignore /demo-website/ path - that's just the website folder, not a collection
+     * IMPORTANT: Ignore /project/ path - that's just the website folder, not a collection
      */
     function detectCollectionFromTemplate() {
         // Try to extract from template
         const bodyText = document.body.innerHTML;
         const match = bodyText.match(/\{for\s+(?:each\s+)?[^\s]+\s+in\s+['"]([^'"]+)['"]\}/);
-        if (match && match[1] !== 'demo-website') {
+        if (match && match[1] !== 'project') {
             return match[1];
         }
         
-        // Try to extract from URL path (but ignore demo-website prefix)
+        // Try to extract from URL path (but ignore project prefix)
         const path = window.location.pathname;
-        let cleanPath = path.replace(/^\/demo-website/, '');
+        let cleanPath = path.replace(/^\/project/, '');
         
         const pathMatch = cleanPath.match(/\/([^\/]+)\/(?:post|entry|article)/i);
-        if (pathMatch && pathMatch[1] !== 'demo-website') {
+        if (pathMatch && pathMatch[1] !== 'project') {
             return pathMatch[1];
         }
         
@@ -4953,12 +4953,12 @@
             return 'blog';
         }
         
-        // Common defaults based on path (but exclude demo-website)
+        // Common defaults based on path (but exclude project)
         if (cleanPath.includes('/blog') || cleanPath.includes('blog')) return 'blog';
         if (cleanPath.includes('/post')) return 'blog';
         
-        // If we're on a demo-website page, default to 'blog' collection
-        if (path.includes('/demo-website/')) {
+        // If we're on a project page, default to 'blog' collection
+        if (path.includes('/project/')) {
             return 'blog';
         }
         
