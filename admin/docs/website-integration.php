@@ -31,6 +31,10 @@
     <li>Handles routing</li>
 </ul>
 
+<h3>Template regions (client-side)</h3>
+<p>On public sites, <code>birkly-client.js</code> renders the <strong>outermost</strong> elements in <code>&lt;body&gt;</code> that contain Birkly template tags. You are not limited to <code>&lt;main&gt;</code> or <code>&lt;header&gt;</code> — menus, sections, and custom wrappers work too.</p>
+<p><strong>Published content only:</strong> the public API returns published entries. Draft entries will produce empty loops until you publish them in the admin.</p>
+
 <h3>Collection Detection</h3>
 <p>The client library automatically detects which collection to use based on:</p>
 
@@ -53,7 +57,7 @@
 <ol>
     <li>Your HTML page loads</li>
     <li>The client library script runs</li>
-    <li>It scans your HTML for template syntax (<code>{{ }}</code>, <code>{for}</code>, etc.)</li>
+    <li>It scans your HTML for template syntax (<code>{ title }</code>, <code>{for each …}</code>, etc.)</li>
     <li>It connects to your CMS API</li>
     <li>It fetches the necessary content</li>
     <li>It replaces template placeholders with actual content</li>

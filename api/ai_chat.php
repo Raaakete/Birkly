@@ -1407,7 +1407,8 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "- Display variable: { title }\n";
     $prompt .= "- Loop entries: {for each entry in 'collection-slug'} ... {endfor}\n";
     $prompt .= "- Hyphenated collection slugs (nav-links) work in quoted names; do not rename collections to remove hyphens.\n";
-    $prompt .= "- Template tags must live in <header>, <main>, <footer>, <nav>, or an element with data-birkly-region (otherwise they show as raw text).\n";
+    $prompt .= "- Public site loops only receive published entries. Use status: published when creating nav/menu entries (or update_entry after create).\n";
+    $prompt .= "- Template tags work in any HTML element in <body>; client renders outermost elements containing Birkly syntax.\n";
     $prompt .= "- Conditionals: {if condition} ... {endif}\n";
     $prompt .= "- Get entries: {from 'collection' get entries}\n";
     $prompt .= "- Get single entry: {from 'collection' get entry 'slug'}\n";

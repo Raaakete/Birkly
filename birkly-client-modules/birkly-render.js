@@ -604,25 +604,28 @@
 
     function discoverPageRegions(doc) {
         const regions = [];
-        const add = (el) => {
-            if (!el || regions.some((r) => r.element === el)) return;
+        const root = doc.body || doc.documentElement;
+        if (!root || !root.querySelectorAll) {
+            return regions;
+        }
+
+        const candidates = [];
+        root.querySelectorAll('*').forEach((el) => {
+            const tag = String(el.tagName || '').toUpperCase();
+            if (tag === 'SCRIPT' || tag === 'STYLE') return;
             const template = el.innerHTML || '';
-            if (!hasTemplateSyntax(template)) return;
-            regions.push({ element: el, template: template });
-        };
+            if (hasTemplateSyntax(template)) {
+                candidates.push(el);
+            }
+        });
 
-        const main = doc.querySelector('main');
-        if (main) add(main);
+        const outermost = candidates.filter((el) =>
+            !candidates.some((other) => other !== el && other.contains(el))
+        );
 
-        const header = doc.querySelector('header');
-        if (header) add(header);
-
-        doc.querySelectorAll('nav').forEach((nav) => add(nav));
-
-        doc.querySelectorAll('[data-birkly-region]').forEach((el) => add(el));
-
-        const footer = doc.querySelector('footer');
-        if (footer) add(footer);
+        outermost.forEach((el) => {
+            regions.push({ element: el, template: el.innerHTML || '' });
+        });
 
         const title = doc.querySelector('title');
         if (title && hasTemplateSyntax(title.textContent || '')) {
