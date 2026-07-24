@@ -555,12 +555,12 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
         // Use AI user ID or original user ID for attribution
         $createdBy = $aiUser['id'] ?? $originalUserId ?? 'ai';
         
-        $entry = array_merge($entryData, [
+        $entry = array_merge([
             'id' => $entryId,
             'created_at' => date('c'),
             'created_by' => $createdBy,
-            'status' => 'draft' // Default to draft, can be changed
-        ]);
+            'status' => 'draft',
+        ], $entryData);
         
         $writePath = 'collections/' . $collection . '/entries/' . $entryId . '.json';
         error_log("executeCreateEntry: Attempting to write entry to: " . $writePath);
