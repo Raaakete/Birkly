@@ -64,17 +64,27 @@ function birkly_is_local_dev_host(string $host): bool
  */
 function birkly_request_is_same_cms_origin(): bool
 {
-    if (birkly_is_local_dev_request()) {
+    if (function_exists('birkly_is_local_dev_request') && birkly_is_local_dev_request()) {
         return true;
     }
 
     $cmsHost = birkly_cms_request_host();
-    $clientHost = birkly_client_request_host();
-    if ($cmsHost === '' || $clientHost === '') {
+    if ($cmsHost === '') {
         return false;
     }
 
-    return $cmsHost === $clientHost;
+    $clientHost = birkly_client_request_host();
+    if ($clientHost !== '' && $cmsHost === $clientHost) {
+        return true;
+    }
+
+    // fetch() from /project/* on the CMS host may omit Referer/Origin (Safari, privacy settings).
+    $secFetchSite = strtolower(trim((string) ($_SERVER['HTTP_SEC_FETCH_SITE'] ?? '')));
+    if ($secFetchSite === 'same-origin') {
+        return true;
+    }
+
+    return false;
 }
 
 /**
