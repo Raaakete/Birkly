@@ -2025,6 +2025,88 @@ function initGlobalSave() {
             handleGlobalSave();
         });
     }
+
+    initRebuildSystem();
+}
+
+function initRebuildSystem() {
+    const openBtn = document.getElementById('open-rebuild-system-btn');
+    const modal = document.getElementById('rebuild-system-modal');
+    const closeBtn = document.getElementById('close-rebuild-system-modal');
+    const cancelBtn = document.getElementById('cancel-rebuild-system-btn');
+    const confirmBtn = document.getElementById('confirm-rebuild-system-btn');
+    const confirmationInput = document.getElementById('rebuild-system-confirmation');
+
+    if (!openBtn || !modal || !confirmBtn || !confirmationInput) {
+        return;
+    }
+
+    function openModal() {
+        confirmationInput.value = '';
+        confirmBtn.disabled = true;
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        confirmationInput.focus();
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+        confirmationInput.value = '';
+        confirmBtn.disabled = true;
+    }
+
+    function updateConfirmState() {
+        confirmBtn.disabled = confirmationInput.value.trim().toUpperCase() !== 'REBUILD';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    confirmationInput.addEventListener('input', updateConfirmState);
+
+    modal.addEventListener('click', function (event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    confirmBtn.addEventListener('click', async function () {
+        if (confirmationInput.value.trim().toUpperCase() !== 'REBUILD') {
+            return;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Rebuilding…';
+
+        try {
+            const response = await fetch(apiUrl('/api/settings.php'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'rebuild_system',
+                    confirmation: confirmationInput.value.trim(),
+                    _csrf: getCsrfToken(),
+                }),
+            });
+
+            const result = await response.json();
+            if (result.status === 'ok') {
+                showMessage(result.message || 'System rebuilt successfully', 'success');
+                window.location.href = apiUrl(result.redirect || '/admin/index.php?page=onboarding');
+                return;
+            }
+
+            showMessage('Error: ' + (result.message || 'Failed to rebuild system'), 'error');
+        } catch (error) {
+            showMessage('Error: ' + error.message, 'error');
+        } finally {
+            confirmBtn.textContent = 'Rebuild system';
+            updateConfirmState();
+        }
+    });
 }
 
 if (document.readyState === 'loading') {
