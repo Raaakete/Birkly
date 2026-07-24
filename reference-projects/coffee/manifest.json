@@ -1,8 +1,0 @@
-{
-  "name": "coffee",
-  "title": "Coffee Shop Reference Site",
-  "description": "Commerce plugin demo with product variants, price-from display, and add-to-cart forms.",
-  "plugins": ["commerce"],
-  "collections": ["products", "site_elements"],
-  "video_story": "V-TPL-04"
-}
