@@ -11,11 +11,17 @@ require_once __DIR__ . '/ops_starters_client.php';
 function birkly_demo_starter_catalog(): array
 {
     return [
+        'marsk' => [
+            'label' => 'Marsk — slow living journal',
+            'description' => 'Flagship editorial blog starter with journal, gallery, and about pages.',
+            'collections' => ['blog', 'about', 'gallery', 'site_elements'],
+            'onboarding_enabled' => true,
+        ],
         'blog' => [
             'label' => 'Blog starter',
             'description' => 'Blog posts, pages, and a sample front-end site.',
             'collections' => ['blog', 'about', 'contact', 'services', 'site_elements'],
-            'onboarding_enabled' => true,
+            'onboarding_enabled' => false,
         ],
         'shop' => [
             'label' => 'Shop starter',
