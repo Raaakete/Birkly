@@ -55,43 +55,106 @@ function birkly_marketplace_download_artifact(string $downloadUrl, ?string $expe
 }
 
 /**
- * Resolve plugin directory name from zip contents and marketplace slug.
+ * Map marketplace offer slug → installed plugin directory id.
  */
-function birkly_marketplace_resolve_plugin_id(string $zipPath, string $marketplaceSlug): string
+function birkly_marketplace_plugin_id_from_slug(string $marketplaceSlug): ?string
 {
-    $slug = preg_replace('/[^a-z0-9_-]/i', '', $marketplaceSlug) ?? '';
-    if ($slug !== '') {
-        return strtolower($slug);
+    foreach (birkly_official_marketplace_slugs() as $pluginId => $slug) {
+        if ($slug === $marketplaceSlug) {
+            return $pluginId;
+        }
     }
 
+    return null;
+}
+
+/**
+ * Read plugin.json id/name from a zip artifact.
+ */
+function birkly_marketplace_plugin_id_from_zip(string $zipPath): ?string
+{
     if (!class_exists('ZipArchive')) {
-        return 'plugin';
+        return null;
     }
 
     $zip = new ZipArchive();
     if ($zip->open($zipPath) !== true) {
-        return 'plugin';
+        return null;
     }
 
+    $pluginId = null;
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = $zip->getNameIndex($i);
-        if (!is_string($name) || str_ends_with($name, '/')) {
+        if (!is_string($name) || str_ends_with($name, '/') || basename($name) !== 'plugin.json') {
             continue;
         }
-        if (basename($name) === 'plugin.json') {
-            $content = $zip->getFromIndex($i);
-            if (is_string($content)) {
-                $json = json_decode($content, true);
-                if (is_array($json) && !empty($json['name'])) {
-                    $id = preg_replace('/[^a-z0-9_-]/i', '-', strtolower((string) $json['name']));
-                    $zip->close();
-                    return trim((string) $id, '-') ?: 'plugin';
-                }
-            }
+        $content = $zip->getFromIndex($i);
+        if (!is_string($content)) {
+            continue;
+        }
+        $json = json_decode($content, true);
+        if (!is_array($json)) {
+            continue;
+        }
+        if (!empty($json['id']) && is_string($json['id'])) {
+            $pluginId = preg_replace('/[^a-z0-9_-]/i', '', strtolower($json['id'])) ?: null;
+            break;
+        }
+        if (!empty($json['name']) && is_string($json['name'])) {
+            $pluginId = preg_replace('/[^a-z0-9_-]/i', '-', strtolower($json['name']));
+            $pluginId = trim((string) $pluginId, '-') ?: null;
+            break;
         }
     }
     $zip->close();
-    return 'plugin';
+
+    return $pluginId !== null && $pluginId !== '' ? $pluginId : null;
+}
+
+/**
+ * Resolve plugin directory name from zip contents and marketplace slug.
+ */
+function birkly_marketplace_resolve_plugin_id(string $zipPath, string $marketplaceSlug): string
+{
+    $officialId = birkly_marketplace_plugin_id_from_slug($marketplaceSlug);
+    if ($officialId !== null && $officialId !== '') {
+        return $officialId;
+    }
+
+    $fromZip = birkly_marketplace_plugin_id_from_zip($zipPath);
+    if ($fromZip !== null && $fromZip !== '') {
+        return $fromZip;
+    }
+
+    $slug = preg_replace('/[^a-z0-9_-]/i', '', $marketplaceSlug) ?? '';
+    return $slug !== '' ? strtolower($slug) : 'plugin';
+}
+
+/**
+ * Ensure plugins/ exists and is writable by the PHP process.
+ *
+ * @return array{ok:bool,error?:string}
+ */
+function birkly_marketplace_ensure_plugins_root_writable(string $pluginsRoot): array
+{
+    if (!is_dir($pluginsRoot)) {
+        if (!mkdir($pluginsRoot, 0775, true) && !is_dir($pluginsRoot)) {
+            return ['ok' => false, 'error' => 'Cannot create plugins directory'];
+        }
+    }
+
+    if (!is_writable($pluginsRoot)) {
+        @chmod($pluginsRoot, 0775);
+    }
+
+    if (!is_writable($pluginsRoot)) {
+        return [
+            'ok' => false,
+            'error' => 'The plugins/ directory is not writable by the web server. Adjust filesystem permissions (e.g. chown/chmod for your PHP user) and retry.',
+        ];
+    }
+
+    return ['ok' => true];
 }
 
 /**
@@ -121,8 +184,9 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
         birkly_marketplace_remove_directory($dest);
     }
 
-    if (!is_dir($pluginsRoot)) {
-        mkdir($pluginsRoot, 0755, true);
+    $writable = birkly_marketplace_ensure_plugins_root_writable($pluginsRoot);
+    if (!$writable['ok']) {
+        return ['ok' => false, 'errors' => [$writable['error'] ?? 'plugins directory not writable']];
     }
 
     $zip = new ZipArchive();
@@ -131,7 +195,7 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
     }
 
     $prefix = birkly_marketplace_zip_root_prefix($zip);
-    mkdir($dest, 0755, true);
+    mkdir($dest, 0775, true);
 
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = $zip->getNameIndex($i);
@@ -157,13 +221,18 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
 
         $target = $dest . '/' . $relative;
         $targetDir = dirname($target);
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            $errors[] = 'Failed to create directory: ' . $relative;
+            continue;
         }
 
         $content = $zip->getFromIndex($i);
-        if ($content === false || file_put_contents($target, $content) === false) {
-            $errors[] = 'Failed to extract: ' . $relative;
+        if ($content === false) {
+            $errors[] = 'Failed to read from zip: ' . $relative;
+            continue;
+        }
+        if (file_put_contents($target, $content) === false) {
+            $errors[] = 'Failed to write: ' . $relative . ' (check plugins/ permissions)';
         }
     }
 
