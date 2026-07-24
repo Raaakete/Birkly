@@ -108,23 +108,28 @@ function birkly_project_site_last_change(): array
 
     $latestMtime = 0;
     $latestPath = null;
-    $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($base, FilesystemIterator::SKIP_DOTS)
-    );
 
-    foreach ($iterator as $fileInfo) {
-        if (!$fileInfo->isFile()) {
-            continue;
+    try {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($base, FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $fileInfo) {
+            if (!$fileInfo->isFile()) {
+                continue;
+            }
+            $name = $fileInfo->getFilename();
+            if (str_starts_with($name, '.')) {
+                continue;
+            }
+            $mtime = $fileInfo->getMTime();
+            if ($mtime >= $latestMtime) {
+                $latestMtime = $mtime;
+                $latestPath = str_replace('\\', '/', substr($fileInfo->getPathname(), strlen($base) + 1));
+            }
         }
-        $name = $fileInfo->getFilename();
-        if (str_starts_with($name, '.')) {
-            continue;
-        }
-        $mtime = $fileInfo->getMTime();
-        if ($mtime >= $latestMtime) {
-            $latestMtime = $mtime;
-            $latestPath = str_replace('\\', '/', substr($fileInfo->getPathname(), strlen($base) + 1));
-        }
+    } catch (Throwable $e) {
+        return ['timestamp' => null, 'path' => null];
     }
 
     if ($latestMtime === 0) {
@@ -140,64 +145,177 @@ function birkly_project_site_last_change(): array
 /**
  * @return list<array<string, mixed>>
  */
+function birkly_project_site_activity_from_approvals(int $limit): array
+{
+    $storage = new Storage(__DIR__ . '/../data/ai_approvals');
+    if (!is_dir($storage->basePath)) {
+        return [];
+    }
+
+    $items = [];
+    foreach ($storage->list('') as $file) {
+        $approval = $storage->read($file);
+        if (!is_array($approval) || ($approval['status'] ?? '') !== 'approved') {
+            continue;
+        }
+
+        $actionType = (string) ($approval['action_type'] ?? '');
+        if (!in_array($actionType, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
+            continue;
+        }
+
+        $path = (string) ($approval['action_data']['path'] ?? '');
+        $timestamp = (string) ($approval['reviewed_at'] ?? $approval['created_at'] ?? '');
+        $reviewedBy = (string) ($approval['reviewed_by'] ?? '');
+        $aiUserId = (string) ($approval['ai_user_id'] ?? '');
+
+        $items[] = [
+            'event' => $actionType,
+            'user' => $reviewedBy !== '' ? $reviewedBy : $aiUserId,
+            'message' => birkly_project_site_activity_message($actionType, [
+                'path' => $path,
+                'source' => 'ai',
+                'ai_user_id' => $aiUserId,
+            ]),
+            'icon' => birkly_project_site_activity_icon($actionType),
+            'color' => '#17a2b8',
+            'timestamp' => $timestamp,
+            'details' => [
+                'path' => $path,
+                'source' => 'ai',
+                'ai_user_id' => $aiUserId,
+                'reviewed_by' => $reviewedBy,
+            ],
+            'category' => 'content',
+        ];
+    }
+
+    usort($items, static function (array $a, array $b): int {
+        return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));
+    });
+
+    return array_slice($items, 0, $limit);
+}
+
+function birkly_project_site_activity_icon(string $event): string
+{
+    return match ($event) {
+        'write_project_file', 'project_file_written' => '📝',
+        'create_project_file', 'project_file_created' => '📄',
+        'delete_project_file', 'project_file_deleted' => '🗑️',
+        'project_settings_updated' => '⚙️',
+        default => '📌',
+    };
+}
+
+/**
+ * @param array<string, mixed> $details
+ */
+function birkly_project_site_activity_message(string $event, array $details): string
+{
+    $path = (string) ($details['path'] ?? '');
+    $pathSuffix = $path !== '' ? ' ' . $path : '';
+
+    return match ($event) {
+        'write_project_file', 'project_file_written' => 'Wrote project file' . $pathSuffix,
+        'create_project_file', 'project_file_created' => 'Created project file' . $pathSuffix,
+        'delete_project_file', 'project_file_deleted' => 'Deleted project file' . $pathSuffix,
+        'project_settings_updated' => 'Updated project settings',
+        'ai_approval_created' => 'Requested approval: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix,
+        'ai_approval_approved' => 'Approved: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix,
+        default => ucfirst(str_replace('_', ' ', $event)) . $pathSuffix,
+    };
+}
+
+/**
+ * @return list<array<string, mixed>>
+ */
 function birkly_project_site_activity(int $limit = 30): array
 {
-    require_once __DIR__ . '/activity.php';
-
     $projectEvents = [
         'project_file_written',
         'project_file_created',
         'project_file_deleted',
+        'project_settings_updated',
         'ai_approval_approved',
         'ai_approval_created',
     ];
 
-    $activity = [];
+    $items = [];
     $logFile = __DIR__ . '/../logs/security.log';
-    if (!is_file($logFile)) {
-        return [];
-    }
-
-    $lines = array_reverse(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: []);
-    foreach ($lines as $line) {
-        $entry = json_decode($line, true);
-        if (!is_array($entry)) {
-            continue;
-        }
-
-        $event = (string) ($entry['event'] ?? '');
-        if (!in_array($event, $projectEvents, true)) {
-            continue;
-        }
-
-        $details = is_array($entry['details'] ?? null) ? $entry['details'] : [];
-        $actionType = (string) ($details['action_type'] ?? '');
-
-        if ($event === 'ai_approval_approved' || $event === 'ai_approval_created') {
-            if (!in_array($actionType, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
+    if (is_file($logFile)) {
+        $lines = array_reverse(file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: []);
+        foreach ($lines as $line) {
+            $entry = json_decode($line, true);
+            if (!is_array($entry)) {
                 continue;
             }
-        }
 
-        $user = (string) ($entry['user'] ?? 'Unknown');
-        $timestamp = (string) ($entry['timestamp'] ?? '');
-        $item = formatActivityItem($event, $user, $details, $timestamp);
-        if ($item) {
-            $activity[] = $item;
-            if (count($activity) >= $limit) {
-                break;
+            $event = (string) ($entry['event'] ?? '');
+            if (!in_array($event, $projectEvents, true)) {
+                continue;
             }
+
+            $details = is_array($entry['details'] ?? null) ? $entry['details'] : [];
+            $actionType = (string) ($details['action_type'] ?? '');
+
+            if ($event === 'ai_approval_approved' || $event === 'ai_approval_created') {
+                if (!in_array($actionType, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
+                    continue;
+                }
+                $details['action_type'] = $actionType;
+            }
+
+            $user = (string) ($entry['user'] ?? 'Unknown');
+            $timestamp = (string) ($entry['timestamp'] ?? '');
+            $items[] = [
+                'event' => $event,
+                'user' => $user,
+                'message' => birkly_project_site_activity_message(
+                    $event === 'ai_approval_approved' || $event === 'ai_approval_created' ? $actionType : $event,
+                    $details
+                ),
+                'icon' => birkly_project_site_activity_icon(
+                    $event === 'ai_approval_approved' || $event === 'ai_approval_created' ? $actionType : $event
+                ),
+                'color' => '#6c757d',
+                'timestamp' => $timestamp,
+                'details' => $details,
+                'category' => 'content',
+            ];
         }
     }
 
-    return $activity;
+    foreach (birkly_project_site_activity_from_approvals($limit) as $approvalItem) {
+        $items[] = $approvalItem;
+    }
+
+    usort($items, static function (array $a, array $b): int {
+        return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));
+    });
+
+    $deduped = [];
+    $seen = [];
+    foreach ($items as $item) {
+        $key = ($item['event'] ?? '') . '|' . ($item['timestamp'] ?? '') . '|' . ($item['details']['path'] ?? '') . '|' . ($item['user'] ?? '');
+        if (isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        $deduped[] = $item;
+        if (count($deduped) >= $limit) {
+            break;
+        }
+    }
+
+    return $deduped;
 }
 
 if ($action === 'overview') {
     requireAuth('read_settings');
 
     birkly_ensure_public_site_path();
-    $info = birkly_project_site_info();
+    $fs = new ProjectSiteFileSystem();
     $projectSettings = birkly_load_project_settings();
     $lastChange = birkly_project_site_last_change();
     $indexPath = birkly_public_site_path() . '/index.html';
@@ -205,15 +323,14 @@ if ($action === 'overview') {
     echo json_encode([
         'status' => 'ok',
         'data' => [
-            'site_dir' => $info['site_dir'],
-            'site_path' => $info['site_path'],
-            'public_url' => $info['public_url_example'],
+            'site_dir' => birkly_public_site_dir(),
+            'site_path' => birkly_public_site_path(),
+            'public_url' => birkly_public_site_url('/index.html'),
             'has_index' => is_file($indexPath),
             'starter' => birkly_project_site_starter_label(),
             'last_change' => $lastChange,
-            'allowed_extensions' => $info['allowed_extensions'],
+            'allowed_extensions' => $fs->allowedExtensions(),
             'show_visit_button' => (bool) ($projectSettings['show_visit_button'] ?? false),
-            'collections' => $info['collections'],
         ],
     ]);
     exit;
