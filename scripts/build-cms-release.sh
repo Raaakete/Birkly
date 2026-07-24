@@ -30,6 +30,7 @@ if (!is_array($manifest)) {
 
 $excludes = $manifest['excludes'] ?? [];
 $shippedPluginFiles = $manifest['plugins_dir_shipped_files'] ?? ['plugins/README.md', 'plugins/.gitkeep'];
+$runtimeSkeletonFiles = $manifest['runtime_skeleton_files'] ?? [];
 
 $excludeRules = [];
 $includeExceptions = [];
@@ -120,6 +121,21 @@ foreach ($iterator as $item) {
 }
 
 foreach ($shippedPluginFiles as $rel) {
+    $src = $root . '/' . $rel;
+    if (!is_file($src)) {
+        continue;
+    }
+    $dest = $staging . '/' . $rel;
+    $destDir = dirname($dest);
+    if (!is_dir($destDir)) {
+        mkdir($destDir, 0755, true);
+    }
+    if (!is_file($dest)) {
+        copy($src, $dest);
+    }
+}
+
+foreach ($runtimeSkeletonFiles as $rel) {
     $src = $root . '/' . $rel;
     if (!is_file($src)) {
         continue;

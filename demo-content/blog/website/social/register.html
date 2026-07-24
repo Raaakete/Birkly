@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register – HaruSocial</title>
-    <link rel="stylesheet" href="/demo-website/styles.css">
-    <link rel="stylesheet" href="/demo-website/social/social.css">
+    <link rel="stylesheet" href="/project/styles.css">
+    <link rel="stylesheet" href="/project/social/social.css">
 </head>
 <body>
     <header>
         <div class="container">
-            <h1><a href="/demo-website/social/index.html">HaruSocial</a></h1>
+            <h1><a href="/project/social/index.html">HaruSocial</a></h1>
             <nav>
-                <a href="/demo-website/social/index.html">Feed</a>
-                <a href="/demo-website/social/login.html">Login</a>
+                <a href="/project/social/index.html">Feed</a>
+                <a href="/project/social/login.html">Login</a>
             </nav>
         </div>
     </header>
@@ -33,7 +33,7 @@
                 <form method="POST" action="/api/index.php">
                     <input type="hidden" name="route" value="user_registration" />
                     <input type="hidden" name="action" value="register" />
-                    <input type="hidden" name="_haru_redirect" value="/demo-website/social/login.html" />
+                    <input type="hidden" name="_haru_redirect" value="/project/social/login.html" />
                     <div class="form-group">
                         <label>Name</label>
                         <input name="name" class="form-control" type="text" autocomplete="name" />
@@ -48,7 +48,7 @@
                         <small class="text-muted">Min 8 characters.</small>
                     </div>
                     <div class="d-flex justify-between align-center">
-                        <a class="text-muted" href="/demo-website/social/login.html">Already have an account?</a>
+                        <a class="text-muted" href="/project/social/login.html">Already have an account?</a>
                         <button class="btn btn-primary" type="submit">Register</button>
                     </div>
                 </form>

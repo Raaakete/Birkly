@@ -18,6 +18,10 @@ require_once __DIR__ . '/auth_middleware.php';
 // Require authentication for all admin pages
 requireAdminAuth();
 
+require_once __DIR__ . '/../core/birkly_paths.php';
+require_once __DIR__ . '/../core/project_site.php';
+birkly_ensure_public_site_path();
+
 if (is_file(__DIR__ . '/../core/platform_ops.php')) {
     require_once __DIR__ . '/../core/platform_ops.php';
     birkly_ops_register_installation();
