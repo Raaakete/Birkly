@@ -1369,8 +1369,8 @@ function listEntries() {
     // Initialize cache
     $cache = new Cache();
     
-    // Try to get cached entries
-    $cachedEntries = $cache->getEntries($collectionSlug);
+    // Try to get cached entry summaries (admin list view only)
+    $cachedEntries = $cache->getEntrySummaries($collectionSlug);
     
     if ($cachedEntries === null) {
         // Cache miss - load entries from files
@@ -1414,8 +1414,8 @@ function listEntries() {
             }
         }
         
-        // Cache the entries
-        $cache->setEntries($collectionSlug, $entries);
+        // Cache the summaries separately from full public entry payloads
+        $cache->setEntrySummaries($collectionSlug, $entries);
         $cachedEntries = $entries;
     }
     
