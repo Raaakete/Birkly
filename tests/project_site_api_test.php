@@ -25,8 +25,15 @@ function assert_true(string $name, bool $ok): void
 
 $fs = new ProjectSiteFileSystem($tmpdir . '/project');
 
-assert_true('create allowed file', $fs->createFile('pages/test.html', '<p>hi</p>'));
-assert_true('read created file', ($read = $fs->readFile('pages/test.html')) !== null && str_contains($read['content'], 'hi'));
+assert_true('create directory', $fs->createDirectory('assets/images'));
+assert_true('directory listed', count(array_filter(
+    $fs->listFiles(''),
+    static fn(array $e): bool => ($e['path'] ?? '') === 'assets' && ($e['type'] ?? '') === 'dir'
+)) === 1);
+assert_true('text file detection', $fs->isTextFile('pages/test.html'));
+assert_true('image file detection', $fs->isImageFile('assets/logo.png'));
+assert_true('write text file', $fs->writeFile('pages/edit.html', '<p>edit</p>'));
+assert_true('read created file', ($read = $fs->readFile('pages/edit.html')) !== null && str_contains($read['content'], 'edit'));
 assert_true('list root contains pages dir', count(array_filter(
     $fs->listFiles(''),
     static fn(array $e): bool => ($e['path'] ?? '') === 'pages' && ($e['type'] ?? '') === 'dir'
@@ -34,8 +41,8 @@ assert_true('list root contains pages dir', count(array_filter(
 assert_true('reject php extension', $fs->createFile('evil.php', '<?php') === false);
 assert_true('reject dotfile', $fs->createFile('.hidden', 'x') === false);
 assert_true('reject path traversal', $fs->readFile('../settings/admin.json') === null);
-assert_true('delete file', $fs->deleteFile('pages/test.html'));
-assert_true('deleted file missing', $fs->readFile('pages/test.html') === null);
+assert_true('delete file', $fs->deleteFile('pages/edit.html'));
+assert_true('deleted file missing', $fs->readFile('pages/edit.html') === null);
 
 // Last-change helper via API include (without HTTP).
 require_once dirname(__DIR__) . '/api/storage.php';

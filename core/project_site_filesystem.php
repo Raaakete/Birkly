@@ -15,6 +15,12 @@ class ProjectSiteFileSystem
   /** @var string[] */
   private array $allowedExtensions = [
     'html', 'css', 'js', 'json', 'md', 'svg', 'webp', 'txt',
+    'jpg', 'jpeg', 'png', 'gif', 'ico',
+  ];
+
+  /** @var string[] */
+  private array $textExtensions = [
+    'html', 'css', 'js', 'json', 'md', 'svg', 'txt',
   ];
 
   public function __construct(?string $basePath = null)
@@ -31,6 +37,58 @@ class ProjectSiteFileSystem
   public function basePath(): string
   {
     return $this->base;
+  }
+
+  /** @return string[] */
+  public function textExtensions(): array
+  {
+    return $this->textExtensions;
+  }
+
+  public function isTextFile(string $relativePath): bool
+  {
+    $ext = strtolower(pathinfo($this->normalizeRelative($relativePath), PATHINFO_EXTENSION));
+    return in_array($ext, $this->textExtensions, true);
+  }
+
+  public function isImageFile(string $relativePath): bool
+  {
+    $ext = strtolower(pathinfo($this->normalizeRelative($relativePath), PATHINFO_EXTENSION));
+    return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'], true);
+  }
+
+  public function createDirectory(string $relativePath): bool
+  {
+    $rel = $this->normalizeRelative($relativePath);
+    if ($rel === '' || str_contains($rel, '..') || $this->hasDotfileSegment($rel)) {
+      return false;
+    }
+
+    $full = $this->resolvePath($rel, true);
+    if ($full === null) {
+      return false;
+    }
+    if (is_dir($full)) {
+      return true;
+    }
+    if (is_file($full)) {
+      return false;
+    }
+
+    return mkdir($full, 0755, true);
+  }
+
+  public function writeBinaryFile(string $relativePath, string $sourcePath): bool
+  {
+    $full = $this->resolvePath($relativePath, true);
+    if ($full === null || !$this->isAllowedPath($relativePath) || !is_uploaded_file($sourcePath)) {
+      return false;
+    }
+    $parent = dirname($full);
+    if (!is_dir($parent)) {
+      mkdir($parent, 0755, true);
+    }
+    return move_uploaded_file($sourcePath, $full);
   }
 
   /** @return string[] */
