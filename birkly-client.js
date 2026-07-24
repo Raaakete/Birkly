@@ -722,6 +722,34 @@
             return collections;
         };
 
+        // Collections referenced by {from 'blog' get entry 'slug'} blocks (not only {for ... in 'blog'} loops).
+        Birkly.bundle.getTemplateFromEntryCollectionSlugs = function (templateStr) {
+            const collections = [];
+            const re = /\{from\s+['"]([^'"]+)['"]\s+get\s+entry\s+['"][^'"]+['"]\s*\}/g;
+            let match;
+            const text = String(templateStr || '');
+            while ((match = re.exec(text)) !== null) {
+                const name = match[1];
+                if (name && name !== 'site_elements' && collections.indexOf(name) === -1) {
+                    collections.push(name);
+                }
+            }
+            return collections;
+        };
+
+        Birkly.bundle.getAllTemplateCollectionSlugs = function (templateStr) {
+            const collections = Birkly.bundle.getTemplateCollectionSlugs(templateStr);
+            Birkly.bundle.getTemplateFromEntryCollectionSlugs(templateStr).forEach((name) => {
+                if (collections.indexOf(name) === -1) collections.push(name);
+            });
+            return collections;
+        };
+
+        Birkly.bundle.getPageTemplateHtml = function () {
+            if (!document.body) return '';
+            return document.body.innerHTML || '';
+        };
+
         Birkly.bundle.collectBundleRequests = function () {
             const requests = [];
             const seen = new Set();
@@ -733,13 +761,9 @@
                 requests.push(req);
             };
 
-            const parts = [];
-            const mainEl = document.querySelector('main');
-            if (mainEl) parts.push(mainEl.innerHTML || '');
-            else if (document.body) parts.push(document.body.innerHTML || '');
-            const combined = parts.join('\n');
+            const combined = Birkly.bundle.getPageTemplateHtml();
 
-            Birkly.bundle.getTemplateCollectionSlugs(combined).forEach((collection) => {
+            Birkly.bundle.getAllTemplateCollectionSlugs(combined).forEach((collection) => {
                 add({ type: 'list_entries', into: collection, collection });
             });
             add({ type: 'list_entries', into: 'site_elements', collection: 'site_elements' });
@@ -3741,6 +3765,10 @@
         out = out.replace(/\{\s*for\s+[^}]+\s*\}/gi, '');
         out = out.replace(/\{\s*endfor\s*\}/gi, '');
         out = out.replace(/\{\s*endforeach\s*\}/gi, '');
+        out = out.replace(/\{\s*from\s+[^}]+\s*\}/gi, '');
+        out = out.replace(/\{\s*endget\s*\}/gi, '');
+        // Remove {'content'.0.'value'} style field paths
+        out = out.replace(/\{\s*'[^']+'(?:\.\d+|\.'[^']+')+\s*\}/g, '');
         // Remove {{ variable }} and { variable } (only template-like: word chars, dots, pipes)
         out = out.replace(/\{\{\s*[^}]+\s*\}\}/g, '');
         out = out.replace(/\{\s*[a-zA-Z0-9_.]+(?:\s*\|[^}]*)?\s*\}/g, (m) => {
@@ -3767,6 +3795,121 @@
             originalHtml: html,
             template: html
         };
+    }
+
+    async function ensureCollectionsInData(data, collections) {
+        if (!data || !Array.isArray(collections) || !collections.length) {
+            return data;
+        }
+        mergePageBundleIntoData(data);
+        await Promise.all(collections.map(async (collectionName) => {
+            if (!collectionName || collectionName === 'site_elements') {
+                return;
+            }
+            const existing = data[collectionName];
+            if (Array.isArray(existing) && existing.length > 0) {
+                return;
+            }
+            if (Array.isArray(existing) && existing.length === 0 && !Birkly.pageBundle.failed.has(collectionName)) {
+                return;
+            }
+            Birkly.log('Birkly: ensureCollectionsInData fetching:', collectionName);
+            const apiData = await fetchContent('list_entries', { collection: collectionName });
+            if (apiData && apiData.status === 'ok' && apiData.data.entries) {
+                data[collectionName] = apiData.data.entries.map(flattenLocalizedEntry);
+                Birkly.log('Birkly: ensureCollectionsInData loaded', data[collectionName].length, 'entries for', collectionName);
+            } else if (!Array.isArray(data[collectionName])) {
+                data[collectionName] = [];
+            }
+        }));
+        return data;
+    }
+
+    function collectChromeTemplateSnapshots() {
+        const templates = [];
+        const seen = new Set();
+        const mainEl = document.querySelector('main');
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+
+        let node;
+        while ((node = walker.nextNode())) {
+            const nodeValue = node.nodeValue || '';
+            if (!(/\{\s*['"]?[a-zA-Z0-9_]/.test(nodeValue) || /\{\{/.test(nodeValue))) {
+                continue;
+            }
+            const parent = node.parentElement;
+            if (!parent || parent.dataset.cmsProcessed || seen.has(parent)) {
+                continue;
+            }
+            if (mainEl && (mainEl === parent || mainEl.contains(parent))) {
+                continue;
+            }
+            if (parent.classList && parent.classList.contains('birkly-entry-block')) {
+                continue;
+            }
+
+            seen.add(parent);
+            parent.dataset.cmsProcessed = 'true';
+            templates.push(captureTemplateSnapshot(parent));
+        }
+
+        return templates;
+    }
+
+    async function processChromeTemplates(baseData) {
+        const chromeData = {
+            current_year: new Date().getFullYear(),
+            site_elements: (baseData && baseData.site_elements) || {},
+            query: (baseData && baseData.query) || {},
+            current: (baseData && baseData.current) || { language: Birkly.currentLanguage || 'en' },
+            ...(baseData || {})
+        };
+        mergePageBundleIntoData(chromeData);
+
+        const templates = collectChromeTemplateSnapshots();
+        if (!templates.length) {
+            return;
+        }
+
+        const collections = [];
+        templates.forEach((template) => {
+            Birkly.bundle.getAllTemplateCollectionSlugs(template.template).forEach((name) => {
+                if (collections.indexOf(name) === -1) collections.push(name);
+            });
+        });
+
+        await loadTemplateFunctionsMeta();
+        await ensureCollectionsInData(chromeData, collections);
+
+        for (const template of templates) {
+            try {
+                await hydrateTemplateFunctionsIntoData(chromeData, template.template);
+                await performPrefetches(chromeData);
+                const pre = await preprocessTemplateFunctionCalls(template.template, chromeData);
+                let rendered = renderTemplate(pre, chromeData);
+                rendered = processNestedLoops(rendered, chromeData);
+                if (/\{from\s+|\{endget\}|\{for\s+|\{if\s+/.test(rendered)) {
+                    Birkly.warn('Birkly: Chrome template still has tags after render — stripping');
+                    rendered = stripRemainingTemplateTags(rendered);
+                }
+                safeSetInnerHTML(template.element, rendered, template.template, 'chrome');
+            } catch (error) {
+                console.error('Birkly: Error processing chrome template:', error);
+                try {
+                    const stripped = stripRemainingTemplateTags(template.template);
+                    if (stripped.length > 0) {
+                        template.element.innerHTML = stripped;
+                    }
+                } catch (e) {
+                    Birkly.warn('Birkly: Chrome strip fallback failed:', e);
+                }
+            }
+        }
     }
 
     // Helper to safely set innerHTML - prevents clearing content if rendered output is suspiciously short
@@ -3965,11 +4108,21 @@
                             if (entry.title && (template.template.includes('{ title }') || template.template.includes('{{ title }}'))) {
                                 document.title = entry.title + (document.title.includes(' - ') ? document.title.substring(document.title.indexOf(' - ')) : '');
                             }
+                            const headTitle = document.querySelector('title');
+                            if (entry.title && headTitle && /\{\s*title\s*\}/.test(headTitle.textContent || '')) {
+                                headTitle.textContent = (headTitle.textContent || '').replace(/\{\s*title\s*\}/g, entry.title);
+                            }
                         } catch (error) {
                             console.error('Birkly: Error processing template:', error);
                         }
                     }
-                    
+
+                    await processChromeTemplates({
+                        current_year: new Date().getFullYear(),
+                        site_elements: siteElements,
+                        query: query,
+                        current: { language: Birkly.currentLanguage || 'en' }
+                    });
                     return; // Done processing single entry
                 } else {
                     // Entry not found - show error message and process any remaining templates
@@ -3985,51 +4138,13 @@
                     }
                     
                     // Process remaining templates (header, footer) with default data
-                    // Note: site_title is not provided by CMS - websites should define their own
-                    const defaultData = {
+                    await processChromeTemplates({
                         current_year: new Date().getFullYear(),
-                        site_elements: siteElements // Add site elements for use in templates
-                    };
+                        site_elements: siteElements,
+                        query: query,
+                        current: { language: Birkly.currentLanguage || 'en' }
+                    });
 
-                    // Process header and footer templates
-                    const walker = document.createTreeWalker(
-                        document.body,
-                        NodeFilter.SHOW_TEXT,
-                        null,
-                        false
-                    );
-                    
-                    const templates = [];
-                    let node;
-                    
-                    while (node = walker.nextNode()) {
-                        if (node.nodeValue && /\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue)) {
-                            const parent = node.parentElement;
-                            if (!parent || parent.dataset.cmsProcessed) continue;
-                            
-                            parent.dataset.cmsProcessed = 'true';
-                            templates.push(captureTemplateSnapshot(parent));
-                        }
-                    }
-                    
-                    // Render templates with default data
-                    // Load template functions metadata first
-                    await loadTemplateFunctionsMeta();
-                    for (let template of templates) {
-                        try {
-                            await hydrateTemplateFunctionsIntoData(defaultData, template.template);
-                            await performPrefetches(defaultData);
-                            const pre = await preprocessTemplateFunctionCalls(template.template, defaultData);
-                            const rendered = renderTemplate(pre, defaultData);
-                            if (!safeSetInnerHTML(template.element, rendered, template.template, 'single-entry')) {
-                                // Content was not replaced - skip further processing for this template
-                                continue;
-                            }
-                        } catch (error) {
-                            console.error('Birkly: Error processing template:', error);
-                        }
-                    }
-                    
                     return;
                 }
             } catch (error) {
@@ -4053,49 +4168,13 @@
                 }
                 
                 // Process remaining templates (header, footer) with default data
-                // Note: site_title is not provided by CMS - websites should define their own
-                const defaultData = {
+                await processChromeTemplates({
                     current_year: new Date().getFullYear(),
-                    site_elements: siteElements // Add site elements for use in templates
-                };
-                mergePageBundleIntoData(defaultData);
-                
-                const walker = document.createTreeWalker(
-                    document.body,
-                    NodeFilter.SHOW_TEXT,
-                    null,
-                    false
-                );
-                
-                const templates = [];
-                let node;
-                
-                while (node = walker.nextNode()) {
-                    if (node.nodeValue && (/\{\{|\{for|\{if|\{[a-zA-Z0-9_\.\s'"]+\}/.test(node.nodeValue))) {
-                        const parent = node.parentElement;
-                        if (!parent || parent.dataset.cmsProcessed) continue;
-                        
-                        parent.dataset.cmsProcessed = 'true';
-                        templates.push({
-                            element: parent,
-                            template: parent.innerHTML
-                        });
-                    }
-                }
-                
-                // Render templates with default data
-                for (let template of templates) {
-                    try {
-                        await hydrateTemplateFunctionsIntoData(defaultData, template.template);
-                        await performPrefetches(defaultData);
-                        const pre = await preprocessTemplateFunctionCalls(template.template, defaultData);
-                        const rendered = renderTemplate(pre, defaultData);
-                        template.element.innerHTML = rendered;
-                    } catch (error) {
-                        console.error('Birkly: Error processing template:', error);
-                    }
-                }
-                
+                    site_elements: siteElements,
+                    query: query,
+                    current: { language: Birkly.currentLanguage || 'en' }
+                });
+
                 return;
             }
         }
@@ -4156,10 +4235,13 @@
             });
         };
 
-        // Prefer a single <main> pass when it contains CMS collection loops (avoids fragmenting
-        // hero/marquee/blog into separate templates that abort or strip each other).
+        // Prefer a single <main> pass when it contains CMS collection loops or {from ... get entry}
+        // blocks (avoids fragmenting hero/marquee/blog into separate templates that abort or strip each other).
         const mainTemplateRoot = document.querySelector('main');
-        if (mainTemplateRoot && /\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]/.test(mainTemplateRoot.innerHTML || '')) {
+        const mainTemplateHtml = mainTemplateRoot ? (mainTemplateRoot.innerHTML || '') : '';
+        const mainHasCollectionLoops = /\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]/.test(mainTemplateHtml);
+        const mainHasFromEntryBlocks = /\{from\s+['"][^'"]+['"]\s+get\s+entry\s+['"]/.test(mainTemplateHtml);
+        if (mainTemplateRoot && (mainHasCollectionLoops || mainHasFromEntryBlocks)) {
             markTemplateSubtreeProcessed(mainTemplateRoot);
             templates.push(captureTemplateSnapshot(mainTemplateRoot));
             Birkly.log('Birkly: Registered primary main template root');
@@ -4707,15 +4789,7 @@
                 Birkly.log('Birkly: Checking for collection loops in template. Template length:', template.template.length, 'Has quoted collection loop:', hasQuotedCollectionLoops, 'Has prefetch loop:', hasPrefetchCollectionLoops);
                 
                 if (hasQuotedCollectionLoops || hasPrefetchCollectionLoops) {
-                    const collections = [];
-                    (collectionMatchesQuoted || []).forEach(match => {
-                        const m = match.match(/['"]([^'"]+)['"]/);
-                        if (m && collections.indexOf(m[1]) === -1) collections.push(m[1]);
-                    });
-                    (collectionMatchesUnquoted || []).forEach(match => {
-                        const m = match.match(/\s+in\s+([a-zA-Z0-9_\.]+)/);
-                        if (m && !reservedLoopPaths.has(m[1]) && collections.indexOf(m[1]) === -1) collections.push(m[1]);
-                    });
+                    const collections = Birkly.bundle.getAllTemplateCollectionSlugs(template.template);
                     
                     Birkly.log('Birkly: Found collections:', collections);
                     
@@ -4872,8 +4946,7 @@
                     }
                     Birkly.log('Birkly: Template rendered successfully');
                 } else {
-                    // No collections, just render variables
-                    // Note: site_title is not provided by CMS - websites should define their own
+                    // No collection loops — may still use {from 'collection' get entry 'id'} blocks
                     const data = {
                         current_year: new Date().getFullYear(),
                         site_elements: siteElements, // Add site elements for use in templates
@@ -4882,7 +4955,10 @@
                             language: Birkly.currentLanguage || 'en'
                         }
                     };
-                    Birkly.log('Birkly: Data object (no collections) with site_elements:', Object.keys(data.site_elements || {}));
+                    mergePageBundleIntoData(data);
+                    const fromCollections = Birkly.bundle.getTemplateFromEntryCollectionSlugs(template.template);
+                    await ensureCollectionsInData(data, fromCollections);
+                    Birkly.log('Birkly: Data object (no collections) with site_elements:', Object.keys(data.site_elements || {}), 'from collections:', fromCollections);
                     Birkly.log('Birkly: Rendering template without collections');
                     
                     // Load template functions metadata first
