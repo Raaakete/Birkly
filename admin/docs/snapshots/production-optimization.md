@@ -1,10 +1,10 @@
 # Production optimization
 
-Optional advanced delivery modes for high-traffic or SEO-critical sites. **The default — and what all reference projects use — is live `birkly-client.js`.** Add hydrate, snapshots, or bake only when measurement shows the live path cannot meet your targets.
+Optional advanced delivery modes for high-traffic or SEO-critical sites. **The default for starter packs and most sites is live `birkly-client.js`.** Add hydrate, snapshots, or bake only when measurement shows the live path cannot meet your targets.
 
 ## Summary
 
-Most Birkly sites ship with one script tag: `birkly-client.js` fetches content at runtime and renders your HTML templates. That path needs no build step and is the **recommended default**. **Hydrate** (`birkly-hydrate.js`), **snapshots** (pre-generated static HTML), and **bake** (`meta name="birkly-baked"`) are optional optimizations for stricter performance or SEO — they are **not** used in the six [reference projects](reference-projects.md).
+Most Birkly sites ship with one script tag: `birkly-client.js` fetches content at runtime and renders your HTML templates. That path needs no build step and is the **recommended default**. **Hydrate** (`birkly-hydrate.js`), **snapshots** (pre-generated static HTML), and **bake** (`meta name="birkly-baked"`) are optional optimizations for stricter performance or SEO — they are **not** required for starter packs or typical sites.
 
 ## Beginner
 
@@ -19,7 +19,7 @@ When someone opens your page, the script asks Birkly for content and fills in pl
 
 **When is that enough?**
 
-For blogs, portfolios, small shops, and community sites, the live client is usually sufficient — especially if you follow the [reference projects](reference-projects.md) patterns. Birkly targets a small number of API round-trips per page (often bundled into one request).
+For blogs, portfolios, small shops, and community sites, the live client is usually sufficient — especially if you follow the [starter pack](reference-projects.md) patterns. Birkly targets a small number of API round-trips per page (often bundled into one request).
 
 **When might you need more?**
 
@@ -29,7 +29,7 @@ Consider advanced options only if you have measured a real problem:
 - **Search engines** that need fully static HTML files at predictable URLs
 - **CDN-only static hosting** with the CMS on a subdomain and no runtime reads on every page view
 
-Even then, try improving templates and the live client first. Reference projects exist to prove that path works without extra tooling.
+Even then, try improving templates and the live client first. Starter packs exist to prove that path works without extra tooling.
 
 **What the advanced options do (plain terms)**
 
@@ -52,9 +52,9 @@ Interactive features (login, cart, forms) still need `birkly-client.js` or hydra
 
 - Content via `page_bundle` and templating; target ≤5 API round-trips per page
 - No build step; HTML templates are source of truth
-- **All P20 reference projects use this path**
+- **Starter packs and most sites use this path**
 
-If a user story requires hydrate or snapshots on a reference project, treat it as a templating or client bug — fix the engine first.
+If a user story requires hydrate or snapshots on a starter site, treat it as a templating or client bug — fix the engine first.
 
 ---
 
@@ -67,7 +67,7 @@ Secondary delivery for faster first paint while keeping editable templates.
 | First paint | Waits for API + render | Static HTML shell, then enhancement |
 | Build step | None | Pre-render or bake in deploy pipeline |
 | Script | `birkly-client.js` | `birkly-hydrate.js` (+ optional baked meta) |
-| Reference projects | **Yes** | **No** |
+| Starter packs (default) | **Yes** | **No** |
 
 Typical flow:
 
@@ -105,7 +105,7 @@ Embeds resolved template output into HTML at build time:
 <meta name="birkly-baked" content="true">
 ```
 
-Used with hydrate or static export tooling. **Not** used in reference projects.
+Used with hydrate or static export tooling. **Not** required for starter packs.
 
 ---
 
@@ -125,7 +125,7 @@ Need user auth / cart / forms?
 
 ### Summary table
 
-| Technique | Reference projects | Production option |
+| Technique | Starter packs (default) | Production option |
 |-----------|-------------------|-------------------|
 | Live `birkly-client.js` | **Default** | Always supported |
 | `birkly-hydrate.js` | No | Optional advanced |
@@ -133,11 +133,11 @@ Need user auth / cart / forms?
 | Snapshot static HTML | No | Optional advanced |
 | Custom `fetch()` in site JS | No | Discouraged — use `data-birkly-*` |
 
-Start with the [reference project](reference-projects.md) that matches your use case, install collections, and ship live client. Add hydrate or snapshots only when measurement shows it is necessary.
+Start with the [starter pack](reference-projects.md) that matches your use case, install collections, and ship live client. Add hydrate or snapshots only when measurement shows it is necessary.
 
 ## Related
 
-- [Reference projects](reference-projects.md)
+- [Starter packs](reference-projects.md)
 - [Client library](../04-integration/client-library.md)
 - [Templating overview](templating-overview.md)
 - [Website integration](../04-integration/website-integration.md)

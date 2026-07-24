@@ -46,7 +46,7 @@ See `ARCHITECTURE_PROPOSAL.md` for the longer-term modularization plan.
 | `css_url` | Project stylesheet URL for visual preview (editor only; not saved in entry HTML) |
 | `required` | Validation flag |
 
-Aliases: `editor` and `media` field types resolve to `content-editor` via `bootstrap_fieldtypes.php`.
+Aliases: `editor` and `media` field types resolve to `content-editor` via the fieldtype shelf registry.
 
 `getJavaScript()` concatenates modules in dependency order (core utilities → commands → editor). `getCSS()` returns `editor.css`.
 
