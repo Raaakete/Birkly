@@ -188,7 +188,8 @@ if ($action === 'approve') {
         log_security_event('ai_approval_approved', [
             'approval_id' => $approvalId,
             'reviewed_by' => $_SESSION['user']['id'],
-            'action_type' => $approval['action_type']
+            'action_type' => $approval['action_type'],
+            'path' => $approval['action_data']['path'] ?? null,
         ]);
         
         echo json_encode([
