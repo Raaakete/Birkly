@@ -11,5 +11,6 @@ content
 media
 data
 temp
+project
 *.md
 !README.md

@@ -239,6 +239,8 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => $result['message'] ?? 'Install failed']);
             exit;
         }
+        require_once __DIR__ . '/../core/site_domain.php';
+        birkly_ensure_site_domain_registered();
         birkly_demo_load_onboarding_helpers();
         $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
         saveOnboardingProgress($userId, [
