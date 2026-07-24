@@ -149,6 +149,20 @@ Keys encrypted with AES-256-CBC; key material in `settings/security.json`.
 - Client matrix: `docs/reviews/p4-mcp-client-matrix.md`
 - Product doc: Birkly-Docs `01-admin/mcp-connections.md`
 
+## Public site tools (P38 — AI Project Gateway)
+
+Inbound MCP and outbound chat share six tools for the canonical public site folder **`project/`**:
+
+| Tool | Permission | Notes |
+|------|------------|-------|
+| `list_project_files`, `read_project_file`, `get_project_info` | `read` or `manage_project_site` | Reads are immediate |
+| `write_project_file`, `create_project_file` | `manage_project_site` | Outbound: `require_approval` queues in admin; MCP: client confirms |
+| `delete_project_file` | `manage_project_site` | Admin role by default |
+
+Implementation: `core/project_site_filesystem.php` (sandbox under `birkly_public_site_path()`). Studio filesystem remains separate.
+
+MCP resource: `birkly://project` — JSON info pack (paths, collections, templating cheat sheet).
+
 ## Related files
 
 - `api/ai_chat.php` — outbound chat + tool execution
@@ -156,6 +170,7 @@ Keys encrypted with AES-256-CBC; key material in `settings/security.json`.
 - `core/mcp_endpoints.php` — endpoint store + auth helpers
 - `api/ai_approvals.php` — approval queue
 - `core/ai_permissions.php` — RBAC map
+- `core/project_site_filesystem.php` — project/ sandbox (P38)
 - `docs/reviews/p4-oauth-spike.md` — OAuth go/no-go (P4 docs only)
 - `docs/reviews/p3-m1-ai-automation-audit.md` — Phase 3 baseline audit
 
