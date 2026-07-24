@@ -1,8 +1,8 @@
 # P36 — CMS productization & platform depth
 
-**Status:** Proposed for approval (2026-07-24, Keven) — **next phase after P35**  
-**Baseline:** P35 largely complete — Birkly admin shell on Ops/Provider, SQLite, permissions, offer pages, official plugin seeds  
-**Repos:** Birkly · Birkly-Marketplace · Birkly-Docs · Birkly-Website  
+**Status:** Approved (2026-07-24, Keven) — **next phase after P35**  
+**Internal planning:** `Raaakete/Birkly-Internal` (private) — **new repo P36-M0**  
+**Repos:** Birkly (public) · Birkly-Internal (private) · Birkly-Marketplace · Birkly-Docs · Birkly-Website  
 **Handoff:** `docs/reviews/P36-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P36-verification-matrix.md`  
 **Gap register:** `docs/reviews/P36-gap-register.md`
@@ -20,17 +20,21 @@
 | **P35 CMS** | Permission consent, offer embed modal, marketplace URL, install-dev from registry |
 | **P35 gaps** | Stripe live smoke on production, full UI polish pass, grouped Ops nav |
 
-### Still wrong for end users
+### Still wrong for public GitHub & downloads
 
 | Issue | Today |
 |-------|--------|
 | CMS release zip includes `demo-content/**` (~140 files) | Bloated download |
 | CMS release includes `AGENTS.md`, agent scripts | Internal, not customer-facing |
-| Dev repo still contains full `plugins/` tree | Confusing; zip excludes but repo messy |
+| **`docs/reviews/`** — 100+ phase plans, matrices, handoffs | Agent internal — must not be public |
+| **`docs/roadmap/ROADMAP.md`** + legacy planning in `docs/*.md` | Company planning — must not be public |
+| **`docs/agent-ops/`** — digests, reporting, cloud env | Agent internal |
+| **`tests/`** — 160+ PHP test files | Move to **Birkly-Internal**; public repo stays product-clean |
+| **`AGENTS.md`**, **`.cursor/`**, **`.github/`** agent workflows | Move to Birkly-Internal |
+| **`business/`** in CMS repo (if any) | Already on Birkly-Website; remove from CMS |
+| Dev repo still contains full `plugins/` tree | Move to `packages/official-plugins/` |
 | Ops sidebar is flat list of 13 links | No topic grouping |
-| Demo starters read from local `demo-content/` | Cannot update demos without CMS release |
-| Birkly-Docs marketplace pages point at `marketplace.birkly.io` | Stale URLs; no plugin **economy** curriculum |
-| Website folder naming inconsistent | Code uses `demo-website/`; product language says "project" |
+| Demo starters read from local `demo-content/` | Ops-hosted starters |
 
 ---
 
@@ -38,11 +42,107 @@
 
 **P36 makes Birkly shippable as a clean product** and **deepens both platforms** without another foundational rewrite.
 
-1. **CMS download** — minimal, professional, no agent/plugin/demo baggage  
-2. **Ops** — CMS-grade UI with **grouped navigation** and **starter/template ops**  
-3. **Provider Studio** — same polish bar + seller growth features  
-4. **Docs** — authoritative plugin economy & development section  
-5. **Starters** — Ops-hosted packs, not bundled in CMS zip  
+1. **Public CMS repo** — product runtime only; suitable for open source GitHub  
+2. **Birkly-Internal (private)** — all planning, tests, agent config, CI orchestration  
+3. **CMS download** — minimal zip, no demo/agent baggage  
+4. **Ops** — grouped navigation + starter/template ops  
+5. **Provider Studio** — polish + seller features  
+6. **Birkly-Docs** — plugin economy curriculum  
+
+---
+
+## Part A0 — Public vs internal split (P36-D11–D13)
+
+### Why a private internal repo
+
+When `Raaakete/Birkly` is **public open source**, visitors and downloaders should see a **professional CMS product** — not years of agent phase plans, test matrices, and roadmap history.
+
+| | **Birkly** (public) | **Birkly-Internal** (private) |
+|---|---------------------|-------------------------------|
+| **Audience** | Community, contributors, self-hosters | Birkly team + cloud agents |
+| **GitHub** | Public | Private |
+| **Contains** | `admin/`, `api/`, `core/`, `fieldtypes/`, release scripts | `tests/`, `docs/reviews/`, `docs/roadmap/`, `docs/agent-ops/`, `AGENTS.md`, `.cursor/` |
+| **CI** | Optional minimal badge; full CI runs from Internal against Birkly checkout | `scripts/ci-check.sh`, agent smoke, digest |
+
+**Yes — planning belongs in a non-public repo.** Product docs stay in **Birkly-Docs** (public documentation site).
+
+### Move to `Birkly-Internal`
+
+```
+Birkly-Internal/
+├── AGENTS.md                    # platform agent instructions (multi-repo)
+├── .cursor/                     # agents, environment.json
+├── .github/                     # agent CI workflows (if any)
+├── docs/
+│   ├── reviews/                 # P28–P36 plans, matrices, handoffs
+│   ├── roadmap/ROADMAP.md
+│   └── agent-ops/               # REPORTING, digests, CLOUD_ENV_REPOS
+├── tests/                       # full PHP test suite (163+ files)
+├── scripts/
+│   ├── ci-check.sh
+│   ├── agent-smoke-test.sh
+│   ├── send-agent-digest.php
+│   └── run-tests.sh             # php tests/run.php against ../Birkly sibling
+├── packages/official-plugins/   # optional: plugin source for builds
+└── README.md                    # how agents clone Birkly + Internal siblings
+```
+
+### Remove from public `Birkly` (delete or never push again)
+
+| Path | Action |
+|------|--------|
+| `docs/reviews/**` | Move → Internal |
+| `docs/roadmap/**` | Move → Internal |
+| `docs/agent-ops/**` | Move → Internal |
+| `docs/*.md` (63 legacy planning files) | Audit: move internal → Internal; product topics → Birkly-Docs; delete duplicates |
+| `docs/*.html` (old inline docs site) | Remove — superseded by Birkly-Docs |
+| `tests/**` | Move → Internal |
+| `AGENTS.md` | Move → Internal (public README links to CONTRIBUTING + Birkly-Docs) |
+| `.cursor/**` | Move → Internal |
+| `scripts/ci-check.sh`, `agent-smoke-test.sh`, `send-agent-digest.php` | Move → Internal |
+| `business/` | Remove if present — lives on Birkly-Website |
+| `plugins/*` (source) | Move → `packages/official-plugins/` in Internal or Marketplace build |
+| `demo-content/**` | Move packs to Ops; delete from repo |
+
+### Public `Birkly` tree (target)
+
+```
+Birkly/                          # PUBLIC open source
+├── admin/
+├── api/
+├── core/
+├── fieldtypes/
+├── content/.gitkeep
+├── project/.gitkeep
+├── plugins/README.md + .gitkeep
+├── scripts/
+│   ├── build-cms-release.sh
+│   ├── build-plugin-zip.sh      # reads official-plugins path via env
+│   └── start-server.sh
+├── server-router.php
+├── index.php
+├── birkly-client.js
+├── birkly-client-modules/
+├── 0_START-HERE.html
+├── README.md
+├── CONTRIBUTING.md
+├── LICENSE
+├── VERSION
+├── CODE_OF_CONDUCT.md           # optional
+└── .github/
+    └── ISSUE_TEMPLATE/          # public community only — no agent workflows
+```
+
+### Cloud VM & agent workflow after split
+
+1. Cursor Cloud environment adds **`Raaakete/Birkly-Internal`** (private) alongside existing repos  
+2. `Birkly-Internal/AGENTS.md` replaces root `AGENTS.md` as agent entry point  
+3. `ci-check.sh` runs from Internal: `php tests/run.php` with `BIRKLY_ROOT=../Birkly`  
+4. Update `CLOUD_ENV_REPOS.md` in Internal  
+
+### OSS note on tests
+
+Most open-source projects keep tests public. **Keven decision:** tests move to Internal so the public repo stays visually clean. Contributors run tests via Internal clone instructions in CONTRIBUTING.md, or CI publishes green badge from private Actions.
 
 ---
 
@@ -58,8 +158,12 @@
 | **P36-D6** | Provider Studio gets matching shell polish + dedicated feature wave |
 | **P36-D7** | Birkly-Docs new section **06-plugin-economy/** (multi-page curriculum) |
 | **P36-D8** | Template packs (paid, later) reuse same Ops artifact + CMS install path as starters |
-| **P36-D9** | Human notified **once** at **P36-M28** |
+| **P36-D9** | Human notified **once** at **P36-M30** |
 | **P36-D10** | P28 resumes after **P36-M18** (clean CMS + starter install path) |
+| **P36-D11** | **`Raaakete/Birkly` goes public OSS** — product code only; no agent/planning/test clutter on GitHub |
+| **P36-D12** | **`Raaakete/Birkly-Internal` (private)** — roadmap, phase plans, agent-ops, full test suite, CI scripts, `.cursor/`, `AGENTS.md` |
+| **P36-D13** | Product documentation lives in **Birkly-Docs** (public); not duplicated in CMS repo `docs/` |
+| **P36-D14** | Human notified **once** at **P36-M30** (extended scope) |
 
 ---
 
@@ -312,38 +416,55 @@ New curriculum under **`06-plugin-economy/`** (sync to `content/`):
 
 ---
 
-## Milestones (29 — M0→M28)
+## Milestones (32 — M0→M30)
+
+### Public / internal split (first)
 
 | ID | Focus | Repo |
 |----|--------|------|
-| **P36-M0** | Gap register + matrix + CMS zip audit | Birkly |
-| **P36-M1** | Release manifest v2 — strip demo/agent files | Birkly |
-| **P36-M2** | Move official plugins to `packages/official-plugins/` | Birkly |
-| **P36-M3** | Ship empty `content/` + `project/` skeleton; customer README | Birkly |
-| **P36-M4** | `demo-website/` → `project/` migration | Birkly |
-| **P36-M5** | Ops starters schema + admin UI (upload, version, publish) | Marketplace |
-| **P36-M6** | Ops API `GET/POST starters` for CMS | Marketplace |
-| **P36-M7** | CMS onboarding downloads starters from Ops | Birkly |
-| **P36-M8** | Migrate bundled demos to Ops packs; remove `demo-content/` from repo zip path | Birkly + Marketplace |
-| **P36-M9** | Ops grouped sidebar navigation | Marketplace |
-| **P36-M10** | Ops UI polish pass (dark mode, drawer, empty states) | Marketplace |
-| **P36-M11** | Ops starter pack + featured offers + settings pages | Marketplace |
-| **P36-M12** | Ops installation detail + feedback workflow upgrade | Marketplace |
-| **P36-M13** | Ops revenue + webhook health dashboard | Marketplace |
-| **P36-M14** | Provider grouped sidebar + tabbed offer editor | Marketplace |
-| **P36-M15** | Provider analytics + payout detail + GitHub log | Marketplace |
-| **P36-M16** | Provider draft offers + media library | Marketplace |
-| **P36-M17** | Birkly-Docs `06-plugin-economy/` section (8 pages) | Birkly-Docs |
-| **P36-M18** | Birkly-Website featured catalog + starter links | Birkly-Website |
-| **P36-M19** | Docs URL refresh (`*.birkly.cloud`) | Birkly-Docs |
-| **P36-M20** | Template pack install path (license-gated, same as starters) | Birkly + Marketplace |
-| **P36-M21** | Release zip size test + manifest CI gate | Birkly |
-| **P36-M22** | `build-cms-release.sh` smoke on clean tree | Birkly |
-| **P36-M23** | Cross-repo verification matrix | All |
-| **P36-M24** | Human review pack | Birkly |
-| **P36-M25–M28** | Buffer for polish, Stripe live closure, P28 unblock marker | — |
+| **P36-M0** | Create private **`Raaakete/Birkly-Internal`** repo + README + AGENTS.md + cloud env doc | Internal (new) |
+| **P36-M1** | Move `tests/`, `docs/reviews/`, `docs/roadmap/`, `docs/agent-ops/`, `.cursor/`, agent scripts to Internal | Birkly → Internal |
+| **P36-M2** | Remove legacy `docs/*.md` + `docs/*.html` from public Birkly; audit → Birkly-Docs or Internal | Birkly |
+| **P36-M3** | Public README + CONTRIBUTING + LICENSE; scrub git history note for human | Birkly |
 
-*Note: M25–M28 reserved for overflow from human review; renumber if scope splits.*
+### CMS productization
+
+| ID | Focus | Repo |
+|----|--------|------|
+| **P36-M4** | Release manifest v2 — runtime-only zip | Birkly |
+| **P36-M5** | Official plugins → `packages/official-plugins/` in Internal | Internal |
+| **P36-M6** | Empty `content/` + `project/` skeleton; customer README | Birkly |
+| **P36-M7** | `demo-website/` → `project/` migration | Birkly |
+| **P36-M8** | CI in Internal: `ci-check.sh` runs tests against sibling Birkly | Internal |
+
+### Ops starters
+
+| ID | Focus | Repo |
+|----|--------|------|
+| **P36-M9** | Ops starter pack admin + API | Marketplace |
+| **P36-M10** | CMS onboarding downloads starters from Ops | Birkly |
+| **P36-M11** | Migrate demos to Ops; delete `demo-content/` from both repos | Birkly + Marketplace |
+
+### Ops & Provider depth
+
+| ID | Focus | Repo |
+|----|--------|------|
+| **P36-M12** | Ops grouped sidebar | Marketplace |
+| **P36-M13** | Ops UI polish + starter/featured/settings pages | Marketplace |
+| **P36-M14** | Ops installation detail + feedback + revenue dashboard | Marketplace |
+| **P36-M15** | Provider grouped nav + analytics + drafts + media | Marketplace |
+
+### Docs, website, closure
+
+| ID | Focus | Repo |
+|----|--------|------|
+| **P36-M16** | Birkly-Docs `06-plugin-economy/` (8 pages) | Birkly-Docs |
+| **P36-M17** | Birkly-Website featured catalog | Birkly-Website |
+| **P36-M18** | Template pack install path | Birkly + Marketplace |
+| **P36-M19** | Public repo audit — GitHub tree matches target (human eyeball) | Birkly |
+| **P36-M20** | Release zip + Internal CI green | Birkly + Internal |
+| **P36-M21–M29** | Buffer / polish / P28 unblock marker | — |
+| **P36-M30** | Verification matrix + human review pack | All |
 
 ---
 

@@ -198,11 +198,13 @@ When in doubt, treat as major and ask the human.
 
 **Delivered:** Birkly admin shell on Ops/Provider · SQLite + repos · CSRF · admin users · security scan v2 · permission manifest · offer pages + embed · official plugin seeds · API catalog enhancements.
 
-**2026-07-24 — Phase 36 proposed** (Keven) — **CMS productization & platform depth**
+**2026-07-24 — Phase 36 approved** (Keven) — **CMS productization & platform depth**
 
-**Priorities:** Clean CMS release zip · Ops-hosted starters/templates · grouped Ops/Provider nav · platform feature depth · Birkly-Docs plugin economy section.
+**Priorities:** **Public/private split** (`Birkly-Internal` private) · scrub public Birkly for OSS · clean release zip · Ops starters · grouped Ops/Provider nav · plugin economy docs.
 
-**Spec:** `docs/reviews/P36-cms-productization-platform-plan.md` · **Handoff:** `docs/reviews/P36-lead-engineer-handoff.md` · **Matrix:** `docs/reviews/P36-verification-matrix.md`
+**Human decisions (locked):** Birkly public = product only · Birkly-Internal private = tests + planning + agents · notify once at P36-M30 · P28 after P36-M18.
+
+**Spec:** `docs/reviews/P36-cms-productization-platform-plan.md` — **moves to Birkly-Internal at P36-M1**
 
 ---
 
@@ -265,7 +267,7 @@ Build a reliable, **dependency-free** flat-file CMS (Birkly) that is simple, sec
 
 **Delivered:** Admin shell · SQLite · permissions · offer embed · official plugin catalog seeds · provider offer editor upgrades.
 
-**Next active phase:** **Phase 36** — **CMS productization & platform depth** — proposed (2026-07-24)
+**Next active phase:** **Phase 36** — **CMS productization & platform depth** — **approved** (2026-07-24)
 
 **Paused:** **Phase 28** — Beta launch automation — resume after P36-M18 · **Phase 26** — Studio creative — resume after P28-M20
 

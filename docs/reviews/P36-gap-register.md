@@ -63,13 +63,24 @@
 
 ---
 
+## Public repo hygiene (P36-D11–D13)
+
+| ID | Gap | Severity | Milestone |
+|----|-----|----------|-----------|
+| G36-26 | `docs/reviews/` (100+ phase files) on public Birkly | **blocker** | M1 |
+| G36-27 | `docs/roadmap/ROADMAP.md` on public Birkly | **blocker** | M1 |
+| G36-28 | `docs/agent-ops/` on public Birkly | **blocker** | M1 |
+| G36-29 | `tests/` (163+ files) on public Birkly | **blocker** | M1 |
+| G36-30 | 63 legacy `docs/*.md` planning files | high | M2 |
+| G36-31 | Old `docs/*.html` inline docs site | high | M2 |
+| G36-32 | No private Birkly-Internal repo | **blocker** | M0 |
+| G36-33 | AGENTS.md + .cursor/ on public repo | **blocker** | M1 |
+
+---
+
 ## Keven requests (2026-07-24)
 
 | ID | Request | Maps to |
 |----|---------|---------|
-| G36-R1 | Clean CMS — no legacy in download | G36-01–G36-05 |
-| G36-R2 | Ops UI overhaul + grouped sidebar | G36-10–G36-11 |
-| G36-R3 | Ops advanced features list | M11–M13 |
-| G36-R4 | Provider UI + features | G36-17–G36-20 |
-| G36-R5 | Docs plugin economy section | G36-21 |
-| G36-R6 | Ops-managed demo/templates | G36-06–G36-09 |
+| G36-R7 | Public OSS — no planning/tests on GitHub | G36-26–G36-33, M0–M3 |
+| G36-R8 | Planning in non-public repo | G36-32, Birkly-Internal |

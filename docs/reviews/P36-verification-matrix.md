@@ -5,6 +5,19 @@
 
 ---
 
+## Public repo (GitHub)
+
+| ID | Check | Status | Evidence |
+|----|-------|--------|----------|
+| PUB-01 | No `docs/reviews/` on public Birkly | pending | |
+| PUB-02 | No `tests/` on public Birkly | pending | |
+| PUB-03 | No `AGENTS.md` or `.cursor/` on public Birkly | pending | |
+| PUB-04 | Birkly-Internal exists and CI green | pending | |
+| PUB-05 | README + CONTRIBUTING on public Birkly | pending | |
+| PUB-06 | Human confirms GitHub tree looks clean | pending | |
+
+---
+
 ## CMS release zip
 
 | ID | Check | Status | Evidence |

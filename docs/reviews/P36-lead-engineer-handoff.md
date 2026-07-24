@@ -1,11 +1,13 @@
 # Phase 36 — Lead-engineer handoff (CMS productization & platform depth)
 
-**Status:** Proposed — execute after human approves P36 plan  
-**Human rule:** Execute **P36-M0→M24** autonomously. Notify human **once** at **P36-M24**.
+**Status:** Approved — execute now (2026-07-24, Keven)  
+**Human rule:** Execute **P36-M0→M30** autonomously. Notify human **once** at **P36-M30**.
 
 **Master plan:** `docs/reviews/P36-cms-productization-platform-plan.md`  
 **Gap register:** `docs/reviews/P36-gap-register.md`  
 **Matrix:** `docs/reviews/P36-verification-matrix.md`
+
+**Important:** After M1, planning docs live in **`Raaakete/Birkly-Internal`** (private). Clone/update paths in handoff below.
 
 ---
 
@@ -14,71 +16,118 @@
 ```
 You are the lead-engineer for Birkly Phase 36 — CMS productization & platform depth.
 
-Execute P36-M0→M24 autonomously after human approves plan. Notify human ONCE at P36-M24.
+Human approved P36 (2026-07-24). Execute P36-M0→M30 autonomously.
+Notify human ONCE at P36-M30.
 
-BASELINE: P35 complete — Ops/Provider Birkly admin shell, SQLite, permissions, offer embed,
-official plugin catalog seeds on marketplace.birkly.cloud.
+BASELINE: P35 complete. P34 deployed on *.birkly.cloud.
 
-PAUSED until P36-M18: Phase 28 (needs clean CMS zip + Ops starter install).
+PAUSED until P36-M18: Phase 28 (needs clean public CMS + Ops starters).
 
-LOCKED DECISIONS (when approved):
-- CMS zip: runtime only — NO demo-content, plugins source, AGENTS.md, agent scripts
-- Official plugin source → packages/official-plugins/ (dev only)
-- Starters hosted on Ops; CMS downloads on onboarding
-- Paths: content/collections/ + project/ (not demo-website/)
-- Ops sidebar groups: Marketplace · Platform · Marketing · System
-- Birkly-Docs: new 06-plugin-economy/ section (8 pages)
+LOCKED DECISIONS:
+- Raaakete/Birkly = PUBLIC open source — product runtime ONLY
+- Raaakete/Birkly-Internal = PRIVATE — tests, roadmap, reviews, agent-ops, AGENTS.md, .cursor/, CI scripts
+- Product docs = Birkly-Docs (not CMS docs/ folder)
+- CMS zip = runtime only (no demo-content, tests, agent files)
+- Official plugin source in Internal packages/official-plugins/
+- Starters on Ops; CMS downloads on onboarding
+- Paths: content/collections/ + project/
+- Ops sidebar: Marketplace · Platform · Marketing · System
 
-READ FIRST:
-1. docs/reviews/P36-cms-productization-platform-plan.md
+READ FIRST (until M1 moves them — then read from Birkly-Internal):
+1. Birkly-Internal/docs/reviews/P36-cms-productization-platform-plan.md (after M1)
 2. scripts/cms-release-manifest.json
 3. core/demo_starter_templates.php
 4. Birkly-Marketplace/core/shell_nav.php
-5. Birkly-Marketplace/views/shared/admin-shell-start.php
 
-═══ WAVE 1 — CLEAN CMS (M1–M4) ═══
+═══ WAVE 0 — PUBLIC / INTERNAL SPLIT (M0–M3) — DO FIRST ═══
 
-Release manifest v2. Move plugins to packages/official-plugins/.
-Empty content/ + project/ skeleton. Migrate demo-website → project.
+P36-M0: Create private repo Raaakete/Birkly-Internal
+  - README: multi-repo layout, BIRKLY_ROOT=../Birkly
+  - AGENTS.md moved from Birkly (update repo table)
+  - .cursor/ moved from Birkly
+  - Human: add repo to Cursor Cloud environment (private)
 
-═══ WAVE 2 — OPS STARTERS (M5–M8) ═══
+P36-M1: Move from public Birkly → Birkly-Internal (git mv in Internal PR + delete from Birkly):
+  - tests/ (entire suite)
+  - docs/reviews/
+  - docs/roadmap/
+  - docs/agent-ops/
+  - scripts/ci-check.sh, agent-smoke-test.sh, send-agent-digest.php
+  - AGENTS.md, .cursor/
 
-Ops starter pack admin + API. CMS onboarding fetches from Ops.
-Port blog/business/docs demos to Ops artifacts; delete demo-content from zip.
+P36-M2: Remove from public Birkly:
+  - docs/*.md legacy planning (63 files) — archive to Internal or merge to Birkly-Docs
+  - docs/*.html old docs site
+  - business/ if present
+  - demo-content/ (after copying packs for Ops seed in M11)
 
-═══ WAVE 3 — OPS DEPTH (M9–M13) ═══
+P36-M3: Public Birkly polish:
+  - README.md (self-hoster focused, links Birkly-Docs)
+  - CONTRIBUTING.md (clone Internal for tests, or CI badge)
+  - LICENSE (confirm)
 
-Grouped sidebar. UI polish. Starter manager, featured offers, settings.
-Installation detail, feedback workflow, revenue/webhook dashboard.
+P36-M8: Internal CI — tests/run.php uses getenv('BIRKLY_ROOT') default ../Birkly
 
-═══ WAVE 4 — PROVIDER DEPTH (M14–M16) ═══
+═══ WAVE 1 — CMS PRODUCT (M4–M7) ═══
 
-Grouped nav, tabbed offer editor, analytics, payouts, drafts, media library.
+Release manifest v2. packages/official-plugins in Internal.
+Empty content/ + project/. demo-website → project migration.
 
-═══ WAVE 5 — DOCS & WEBSITE (M17–M19) ═══
+═══ WAVE 2 — OPS STARTERS (M9–M11) ═══
 
-Birkly-Docs plugin economy section. Website featured catalog. URL refresh.
+Ops starter admin + API. CMS onboarding from Ops. Delete demo-content.
 
-═══ WAVE 6 — CLOSURE (M20–M24) ═══
+═══ WAVE 3 — OPS & PROVIDER (M12–M15) ═══
 
-Template pack install path. Release CI gates. Human review pack.
+Grouped sidebars. Feature depth per plan.
+
+═══ WAVE 4 — DOCS & CLOSURE (M16–M30) ═══
+
+Birkly-Docs plugin economy. Website catalog. Template install.
+P36-M19: Human eyeball — public GitHub tree looks like a clean CMS product.
+P36-M30: Human review pack.
 
 DELEGATION:
-- cms-developer: M1–M4, M7–M8, M20
-- frontend-developer: M9–M10, M14, M18
-- docs-writer: M17, M19
-- qa-verifier: M21–M24
+- cms-developer: M2–M7, M10, M18 (Birkly public)
+- lead-engineer: M0–M1, M8 (Birkly-Internal scaffold)
+- frontend-developer: M12–M15, M17
+- docs-writer: M16 + Birkly-Docs URL refresh
+- qa-verifier: M20, M30
 
-BRANCHES: cursor/p36-m[N]-<slug>-030a
+HUMAN TASKS:
+- M0: Create private GitHub repo Birkly-Internal + add to Cursor Cloud
+- M19: Browse public github.com/Raaakete/Birkly — confirm clean
+- M30: Sign-off
+
+BRANCHES:
+- Birkly (public): cursor/p36-m[N]-<slug>-030a
+- Birkly-Internal: cursor/p36-m[N]-<slug>-030a
+- Marketplace: cursor/p36-m[N]-<slug>-030a
+
+ORDER: M0→M3 before any public-facing polish. Never commit planning docs back to public Birkly.
 ```
+
+---
+
+## Specialist task map
+
+| Milestone | Owner | Repo |
+|-----------|-------|------|
+| M0–M1, M8 | lead-engineer | Birkly-Internal (new) + Birkly |
+| M2–M7, M10, M18 | cms-developer | Birkly |
+| M5 | cms-developer | Internal |
+| M9–M15 | lead-engineer + frontend-developer | Marketplace |
+| M16 | docs-writer | Birkly-Docs |
+| M17 | frontend-developer | Birkly-Website |
+| M19–M30 | qa-verifier + lead-engineer | All |
 
 ---
 
 ## Human tasks (Keven)
 
-| When | Task |
-|------|--------|
-| Before M1 | Approve P36 plan PR |
-| M8 | Upload initial starter packs to Ops (or agent seeds from demo-content) |
-| M24 | Unzip test CMS release — confirm clean product |
-| M24 | Sign-off review pack |
+| When | Task | Status |
+|------|------|--------|
+| M0 | Create private GitHub repo `Raaakete/Birkly-Internal` | pending |
+| M0 | Add Birkly-Internal to Cursor Cloud environment | pending |
+| M19 | Eyeball public Birkly repo on GitHub | pending |
+| M30 | Human review pack sign-off | pending |
