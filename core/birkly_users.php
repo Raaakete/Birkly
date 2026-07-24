@@ -12,7 +12,49 @@ require_once __DIR__ . '/birkly_paths.php';
  */
 function birkly_is_user_account_filename(string $filename): bool
 {
+    if (preg_match('/_onboarding\.json$/i', $filename)) {
+        return false;
+    }
+    if (preg_match('/^ai_[a-f0-9]+\.json$/i', $filename)) {
+        return false;
+    }
+
     return (bool) preg_match('/^[a-f0-9]{32}\.json$/i', $filename);
+}
+
+/**
+ * Whether a stored users/*.json file is an outbound BYOAI connection (not a human login).
+ */
+function birkly_is_ai_connection_filename(string $filename): bool
+{
+    return (bool) preg_match('/^ai_[a-f0-9]+\.json$/i', $filename);
+}
+
+/**
+ * Whether a user record represents a human CMS login account.
+ */
+function birkly_is_human_user_record(array $user): bool
+{
+    if (($user['type'] ?? '') === 'ai') {
+        return false;
+    }
+
+    $id = (string) ($user['id'] ?? '');
+    if ($id !== '' && str_starts_with($id, 'ai_')) {
+        return false;
+    }
+
+    $email = strtolower(trim((string) ($user['email'] ?? '')));
+    if ($email !== '' && str_ends_with($email, '@ai.birkly')) {
+        return false;
+    }
+
+    $password = $user['password'] ?? '';
+    if (!is_string($password) || $password === '') {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -163,7 +205,7 @@ function birkly_list_human_user_records(bool $stripPassword = true): array
             if (!is_array($user)) {
                 continue;
             }
-            if (($user['type'] ?? '') === 'ai') {
+            if (!birkly_is_human_user_record($user)) {
                 continue;
             }
 
@@ -182,4 +224,50 @@ function birkly_list_human_user_records(bool $stripPassword = true): array
     });
 
     return $users;
+}
+
+/**
+ * Outbound BYOAI provider connections owned by a human user (Settings → AI → Built-in assistant).
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_list_byoai_connections_for_user(string $userId): array
+{
+    $userId = trim($userId);
+    if ($userId === '') {
+        return [];
+    }
+
+    $connections = [];
+    foreach (birkly_users_search_dirs() as $dir) {
+        foreach (scandir($dir) ?: [] as $file) {
+            if ($file === '.' || $file === '..' || !birkly_is_ai_connection_filename($file)) {
+                continue;
+            }
+
+            $record = json_decode((string) file_get_contents($dir . '/' . $file), true);
+            if (!is_array($record) || ($record['type'] ?? '') !== 'ai') {
+                continue;
+            }
+            if ((string) ($record['created_by'] ?? '') !== $userId) {
+                continue;
+            }
+
+            $connections[] = [
+                'id' => (string) ($record['id'] ?? pathinfo($file, PATHINFO_FILENAME)),
+                'name' => (string) ($record['name'] ?? 'AI connection'),
+                'provider' => (string) ($record['provider'] ?? ''),
+                'role' => (string) ($record['role'] ?? ''),
+                'status' => (string) ($record['status'] ?? 'active'),
+                'created_at' => (string) ($record['created_at'] ?? ''),
+                'kind' => 'byoai',
+            ];
+        }
+    }
+
+    usort($connections, static function (array $a, array $b): int {
+        return strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
+    });
+
+    return $connections;
 }

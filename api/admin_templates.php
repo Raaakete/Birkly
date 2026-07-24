@@ -2557,6 +2557,7 @@ function getUsersData() {
     foreach ($users as &$user) {
         $userId = (string) ($user['id'] ?? '');
         $user['mcp_sessions'] = $userId !== '' ? birkly_mcp_oauth_list_sessions($userId) : [];
+        $user['byoai_connections'] = $userId !== '' ? birkly_list_byoai_connections_for_user($userId) : [];
     }
     unset($user);
 
