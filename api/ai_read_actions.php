@@ -417,6 +417,35 @@ function executeReadAction($actionData, $aiUser) {
         }
 
         return ['success' => true, 'data' => ['sub_entry' => $subEntry]];
+    } elseif (in_array($actionType, ['list_project_files', 'read_project_file', 'get_project_info'], true)) {
+        require_once __DIR__ . '/../core/project_site_filesystem.php';
+        $fs = new ProjectSiteFileSystem();
+
+        if ($actionType === 'get_project_info') {
+            return ['success' => true, 'data' => birkly_project_site_info()];
+        }
+
+        if ($actionType === 'list_project_files') {
+            $path = (string) ($actionPayload['path'] ?? '');
+            return [
+                'success' => true,
+                'data' => [
+                    'path' => $path,
+                    'entries' => $fs->listFiles($path),
+                    'count' => count($fs->listFiles($path)),
+                ],
+            ];
+        }
+
+        $filePath = (string) ($actionPayload['path'] ?? '');
+        if ($filePath === '') {
+            return ['success' => false, 'message' => 'path is required'];
+        }
+        $file = $fs->readFile($filePath);
+        if ($file === null) {
+            return ['success' => false, 'message' => 'File not found or not allowed: ' . $filePath];
+        }
+        return ['success' => true, 'data' => ['file' => $file]];
     }
 
     return ['success' => false, 'message' => 'Unknown read action type: ' . $actionType];

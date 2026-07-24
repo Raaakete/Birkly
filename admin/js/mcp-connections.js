@@ -151,6 +151,13 @@
             focusPersonalConnector();
         });
 
+        document.querySelectorAll('.mcp-preset-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                applyMcpPreset(btn.getAttribute('data-mcp-preset'));
+            });
+        });
+
         document.getElementById('mcp-copy-personal-url-btn')?.addEventListener('click', function(e) {
             e.preventDefault();
             copySnippet('mcp-modal-personal-url', true);
@@ -476,6 +483,29 @@
     function hideAddMcpModal() {
         const modal = document.getElementById('add-mcp-modal');
         if (modal) modal.style.display = 'none';
+    }
+
+    function applyMcpPreset(preset) {
+        const serviceRadio = document.getElementById('mcp-agent-type-service');
+        if (serviceRadio) serviceRadio.checked = true;
+        updateAgentTypePanels();
+
+        const nameInput = document.getElementById('mcp-endpoint-name');
+        const descInput = document.getElementById('mcp-agent-description');
+        const roleSelect = document.getElementById('mcp-endpoint-role');
+
+        if (preset === 'site-builder') {
+            if (nameInput) nameInput.value = 'Site builder';
+            if (descInput) descInput.value = 'Build and edit project/ HTML, CSS, and JS with CMS content tools';
+            if (roleSelect) roleSelect.value = 'admin';
+            return;
+        }
+
+        if (preset === 'content') {
+            if (nameInput) nameInput.value = 'Content assistant';
+            if (descInput) descInput.value = 'Draft and edit CMS collections and entries';
+            if (roleSelect) roleSelect.value = 'editor';
+        }
     }
 
     async function loadRoles(selectedRole = null) {

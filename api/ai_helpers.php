@@ -678,12 +678,25 @@ function convertRolePermissionsToFlatList($rolePermissions) {
                 $flatPermissions[] = 'manage_settings';
             }
         }
+        // Public site (project/) — P38
+        elseif ($resource === 'project_site' || $resource === 'project') {
+            if (in_array('view', $actions) || in_array('read', $actions)) {
+                $flatPermissions[] = 'read';
+                $flatPermissions[] = 'manage_project_site';
+            }
+            if (in_array('create', $actions) || in_array('update', $actions) || in_array('write', $actions) || in_array('edit', $actions)) {
+                $flatPermissions[] = 'manage_project_site';
+            }
+            if (in_array('delete', $actions)) {
+                $flatPermissions[] = 'manage_project_site';
+            }
+        }
         
         // Also check if any action directly matches a permission name (for backward compatibility)
         foreach ($actions as $action) {
             $action = strtolower($action);
             if (in_array($action, ['read', 'write', 'delete', 'manage_content', 'manage_users', 
-                                   'manage_media', 'manage_plugins', 'manage_settings',
+                                   'manage_media', 'manage_plugins', 'manage_settings', 'manage_project_site',
                                    'upload', 'read_media', 'read_settings',
                                    'create_user', 'update_user', 'delete_user', 'list_users',
                                    '*', 'all'])) {
