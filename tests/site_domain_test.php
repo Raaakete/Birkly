@@ -34,6 +34,14 @@ $_SERVER['HTTP_ORIGIN'] = 'https://test.birkly.cloud';
 $_SERVER['HTTP_REFERER'] = '';
 assert_true('same cms origin detected from origin header', birkly_request_is_same_cms_origin());
 
+$_SERVER['HTTP_ORIGIN'] = '';
+$_SERVER['HTTP_REFERER'] = '';
+$_SERVER['HTTP_SEC_FETCH_SITE'] = 'same-origin';
+assert_true('same cms origin detected from sec-fetch-site', birkly_request_is_same_cms_origin());
+
+unset($_SERVER['HTTP_SEC_FETCH_SITE']);
+assert_true('no origin referer or sec-fetch-site is not same origin', !birkly_request_is_same_cms_origin());
+
 assert_true('normalize host strips port', birkly_normalize_host('localhost:8080') === 'localhost');
 
 echo "\nsite_domain_test: " . ($failures === 0 ? "PASS\n" : "FAIL ($failures)\n");
