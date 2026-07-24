@@ -369,6 +369,15 @@ function executeAiAction($approval) {
 
         case 'delete_sub_entry':
             return executeDeleteSubEntry($actionData, $aiUser, $originalUserId);
+
+        case 'write_project_file':
+            return executeWriteProjectFile($actionData, $aiUser, $originalUserId);
+
+        case 'create_project_file':
+            return executeCreateProjectFile($actionData, $aiUser, $originalUserId);
+
+        case 'delete_project_file':
+            return executeDeleteProjectFile($actionData, $aiUser, $originalUserId);
             
         default:
             return ['success' => false, 'message' => 'Unknown action type: ' . $actionType];
@@ -1313,6 +1322,56 @@ function executeDeleteSubEntry($actionData, $aiUser = null, $originalUserId = nu
     }
 
     return ['success' => true, 'data' => []];
+}
+
+function executeWriteProjectFile($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/project_site_filesystem.php';
+
+    $path = (string) ($actionData['path'] ?? '');
+    $content = (string) ($actionData['content'] ?? '');
+    if ($path === '') {
+        return ['success' => false, 'message' => 'path is required'];
+    }
+
+    $fs = new ProjectSiteFileSystem();
+    if (!$fs->writeFile($path, $content)) {
+        return ['success' => false, 'message' => 'Failed to write file (path blocked or invalid): ' . $path];
+    }
+
+    return ['success' => true, 'data' => ['path' => $path, 'written' => true]];
+}
+
+function executeCreateProjectFile($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/project_site_filesystem.php';
+
+    $path = (string) ($actionData['path'] ?? '');
+    $content = (string) ($actionData['content'] ?? '');
+    if ($path === '') {
+        return ['success' => false, 'message' => 'path is required'];
+    }
+
+    $fs = new ProjectSiteFileSystem();
+    if (!$fs->createFile($path, $content)) {
+        return ['success' => false, 'message' => 'Failed to create file (exists, blocked, or invalid): ' . $path];
+    }
+
+    return ['success' => true, 'data' => ['path' => $path, 'created' => true]];
+}
+
+function executeDeleteProjectFile($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/project_site_filesystem.php';
+
+    $path = (string) ($actionData['path'] ?? '');
+    if ($path === '') {
+        return ['success' => false, 'message' => 'path is required'];
+    }
+
+    $fs = new ProjectSiteFileSystem();
+    if (!$fs->deleteFile($path)) {
+        return ['success' => false, 'message' => 'Failed to delete file (not found or blocked): ' . $path];
+    }
+
+    return ['success' => true, 'data' => ['path' => $path, 'deleted' => true]];
 }
 
 if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {

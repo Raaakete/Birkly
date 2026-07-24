@@ -118,6 +118,7 @@ function birkly_mcp_handle_resources_list(): array
         ['uri' => 'birkly://docs/plugins', 'name' => 'Plugins', 'description' => 'Plugin architecture and client embed', 'mimeType' => 'text/markdown'],
         ['uri' => 'birkly://docs/ai', 'name' => 'AI & MCP', 'description' => 'BYOAI and MCP architecture', 'mimeType' => 'text/markdown'],
         ['uri' => 'birkly://docs/sub-collections', 'name' => 'Sub-collections', 'description' => 'Sub-collections and sub-entries: schema, disk layout, admin URLs, MCP tools', 'mimeType' => 'text/markdown'],
+        ['uri' => 'birkly://project', 'name' => 'Public site (project/)', 'description' => 'Paths, collections, and templating cheat sheet for AI site building', 'mimeType' => 'application/json'],
     ];
 
     if (function_exists('get_active_plugin_docs')) {
@@ -153,6 +154,15 @@ function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
             'uri' => $uri,
             'mimeType' => 'text/markdown',
             'text' => $context['context_pack'] ?? 'No context pack available.',
+        ]]];
+    }
+    if ($uri === 'birkly://project') {
+        require_once __DIR__ . '/project_site_filesystem.php';
+        $info = birkly_project_site_info();
+        return ['contents' => [[
+            'uri' => $uri,
+            'mimeType' => 'application/json',
+            'text' => json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         ]]];
     }
 

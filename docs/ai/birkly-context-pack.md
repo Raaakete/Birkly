@@ -22,15 +22,28 @@ AI connections receive a **role** (from `settings/roles.json`). Permissions are 
 | Manage media | `manage_media`, `upload` |
 | Manage settings | `manage_settings` |
 | Manage users | `manage_users` |
+| Build public site (`project/`) | `manage_project_site` |
 | Full access | `*` (admin) |
 
 Write actions may require human approval when `require_approval` is enabled on the connection.
 
+## Public site (project/) — AI site builder (P38)
+
+Static HTML/CSS/JS for the public site lives under **`project/`** (not in collections). AI tools can read and write these files when the connection has `manage_project_site` (Admin role by default).
+
+**Read (immediate):** `list_project_files`, `read_project_file`, `get_project_info`
+
+**Write (may need approval in built-in chat; MCP uses client confirmation):** `write_project_file`, `create_project_file`, `delete_project_file`
+
+**Sandbox rules:** paths must stay under `project/`; `..`, PHP, and dotfiles are blocked. Allowed extensions: `html`, `css`, `js`, `json`, `md`, `svg`, `webp`, `txt`.
+
+**Workflow:** call `get_project_info` first for paths and templating cheat sheet, then `list_project_files` / `read_project_file`, edit templates, and use content tools (`create_entry`, etc.) for CMS data.
+
 ## AI actions
 
-**Read (immediate):** `list_collections`, `read_collection`, `list_entries`, `read_entry`, `list_sub_entries`, `read_sub_entry`, `list_media`, `list_users`, `read_user`, `read_settings`, `list_pages`, `list_roles`, `list_plugins`
+**Read (immediate):** `list_collections`, `read_collection`, `list_entries`, `read_entry`, `list_sub_entries`, `read_sub_entry`, `list_media`, `list_users`, `read_user`, `read_settings`, `list_pages`, `list_roles`, `list_plugins`, `list_project_files`, `read_project_file`, `get_project_info`
 
-**Write (may need approval):** `create_entry`, `update_entry`, `delete_entry`, `create_sub_entry`, `update_sub_entry`, `delete_sub_entry`, `create_collection`, `update_collection`, `delete_collection`, media/settings/page/user/role/plugin mutations
+**Write (may need approval):** `create_entry`, `update_entry`, `delete_entry`, `create_sub_entry`, `update_sub_entry`, `delete_sub_entry`, `create_collection`, `update_collection`, `delete_collection`, `write_project_file`, `create_project_file`, `delete_project_file`, media/settings/page/user/role/plugin mutations
 
 **Sub-entry tool parameters:**
 - `list_sub_entries`: `collection` (parent slug), `entry_id` (parent entry ID), `sub_collection` (sub-collection slug), optional `limit`
