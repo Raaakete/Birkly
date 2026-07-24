@@ -162,19 +162,13 @@ function executeReadAction($actionData, $aiUser) {
         return ['success' => true, 'data' => ['settings' => $settings]];
         
     } elseif ($actionType === 'list_users') {
-        // List users (read-only, no passwords)
-        require_once __DIR__ . '/storage.php';
-        $usersStorage = new Storage($birklyRoot . '/users');
-        $users = [];
-        $userFiles = glob($birklyRoot . '/users/*.json');
-        
-        foreach ($userFiles as $file) {
-            $user = json_decode(file_get_contents($file), true);
-            if ($user) {
-                $users[] = birkly_scrub_user_for_ai($user);
-            }
-        }
-        
+        require_once __DIR__ . '/../core/birkly_users.php';
+        require_once __DIR__ . '/ai_helpers.php';
+        $users = array_map(
+            'birkly_scrub_user_for_ai',
+            birkly_list_human_user_records(true)
+        );
+
         return ['success' => true, 'data' => ['users' => $users, 'count' => count($users)]];
         
     } elseif ($actionType === 'read_user') {
