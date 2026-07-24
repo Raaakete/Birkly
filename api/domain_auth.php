@@ -392,10 +392,24 @@ function setDynamicCORS() {
 
 // Middleware function for API endpoints
 function requireDomainAuth($operation = 'read', $collection = null) {
+    require_once __DIR__ . '/../core/site_domain.php';
+
     $domainAuth = new DomainAuth();
     
     // Set dynamic CORS first
     setDynamicCORS();
+
+    if (birkly_request_is_same_cms_origin()) {
+        $cmsHost = birkly_cms_request_host();
+        $GLOBALS['current_license'] = [
+            'domain' => $cmsHost,
+            'type' => 'same_origin',
+            'status' => 'active',
+        ];
+        $GLOBALS['current_domain'] = $cmsHost;
+        $GLOBALS['current_operation'] = $operation;
+        return;
+    }
     
     // Get domain from Referer header or Origin header
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
