@@ -876,8 +876,8 @@
             for (let i = 0; i < s.length; i++) {
                 h = (h * 31 + s.charCodeAt(i)) >>> 0;
             }
-            // v3: invalidates session caches poisoned by pre-#233 admin entry summaries
-            return 'birkly_bundle_v4:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
+            // v5: never trust empty bundled arrays (refetch via API)
+            return 'birkly_bundle_v5:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
         };
 
         Birkly.bundle.entryPayloadLooksStripped = function (entry) {
@@ -1143,8 +1143,12 @@
         Object.keys(Birkly.pageBundle.data).forEach((key) => {
             if (key === '__tf_meta__') return;
             if (Birkly.pageBundle.failed.has(key)) return;
+            const bundled = Birkly.pageBundle.data[key];
+            if (Array.isArray(bundled) && bundled.length === 0) {
+                return;
+            }
             if (data[key] === undefined) {
-                data[key] = Birkly.pageBundle.data[key];
+                data[key] = bundled;
             }
         });
         return data;
@@ -1475,7 +1479,7 @@
             const key = params.collection;
             if (Birkly.pageBundle.keys.has(key) && !Birkly.pageBundle.failed.has(key)) {
                 const bundled = Birkly.pageBundle.data[key];
-                if (Array.isArray(bundled)) {
+                if (Array.isArray(bundled) && bundled.length > 0) {
                     return { status: 'ok', data: { entries: bundled } };
                 }
             }
