@@ -73,6 +73,13 @@ if (function_exists('birkly_dispatch_public_routes') && birkly_dispatch_public_r
 $file = __DIR__ . $uri;
 
 if (file_exists($file) && is_file($file)) {
+    if (preg_match('#^/project/.+\.html$#i', $uri)) {
+        require_once __DIR__ . '/core/client_site_html.php';
+        if (birkly_serve_project_page_html($uri)) {
+            return true;
+        }
+    }
+
     $originalUri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     if ($base !== '' && is_string($originalUri) && str_starts_with($originalUri, $base)) {
         $_SERVER['SCRIPT_NAME'] = birkly_url($uri);
