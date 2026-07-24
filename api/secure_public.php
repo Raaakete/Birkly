@@ -14,6 +14,7 @@ require_once 'storage.php';
 require_once 'domain_auth.php';
 require_once 'rate_limit.php';
 require_once 'log.php';
+require_once __DIR__ . '/../core/public_read.php';
 
 // Apply domain authentication with read permission
 requireDomainAuth('read');
@@ -49,56 +50,52 @@ if ($action === 'list_collections') {
 
 if ($action === 'list_entries') {
     $collection = $input['collection'] ?? '';
-    $id = $input['id'] ?? '';
-    $dir = '';
-    $collections = $storage->list('collections');
-    if ($id) {
+    if ($collection === '' && !empty($input['id'])) {
+        $collections = $storage->list('collections');
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
-            if ($m && $m['id'] === $id) { $dir = $d; break; }
-        }
-    } elseif ($collection) {
-        foreach ($collections as $d) {
-            $m = $storage->read("collections/$d/collection.json");
-            if ($m && $m['slug'] === $collection) { $dir = $d; break; }
+            if ($m && ($m['id'] ?? '') === $input['id']) {
+                $collection = $m['slug'] ?? '';
+                break;
+            }
         }
     }
-    if (!$dir) respond(['status'=>'error','message'=>'Collection not found']);
-    $entries = $storage->list("collections/$dir/entries");
-    $entryData = [];
-    foreach ($entries as $entry) {
-        $data = $storage->read("collections/$dir/entries/$entry");
-        if ($data && $data['status'] === 'published') {
-            $entryData[] = $data;
-        }
+    if ($collection === '') {
+        respond(['status' => 'error', 'message' => 'Collection not found'], 404);
     }
-    respond(['status'=>'ok','data'=>['entries'=>$entryData]]);
+
+    $language = $input['language'] ?? $_GET['language'] ?? 'en';
+    $result = birkly_public_list_entries($storage, $collection, $language);
+    if (($result['status'] ?? '') !== 'ok') {
+        respond(['status' => 'error', 'message' => $result['message'] ?? 'Collection not found'], 404);
+    }
+    respond($result);
 }
 
 if ($action === 'get_entry') {
     $collection = $input['collection'] ?? '';
-    $id = $input['id'] ?? '';
     $entryId = $input['entry'] ?? '';
-    $dir = '';
-    $collections = $storage->list('collections');
-    if ($id) {
+    $slug = $input['slug'] ?? $_GET['slug'] ?? '';
+    if ($collection === '' && !empty($input['id'])) {
+        $collections = $storage->list('collections');
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
-            if ($m && $m['id'] === $id) { $dir = $d; break; }
-        }
-    } elseif ($collection) {
-        foreach ($collections as $d) {
-            $m = $storage->read("collections/$d/collection.json");
-            if ($m && $m['slug'] === $collection) { $dir = $d; break; }
+            if ($m && ($m['id'] ?? '') === $input['id']) {
+                $collection = $m['slug'] ?? '';
+                break;
+            }
         }
     }
-    if (!$dir) respond(['status'=>'error','message'=>'Collection not found']);
-    if (!$entryId) respond(['status'=>'error','message'=>'Entry ID required']);
-    $data = $storage->read("collections/$dir/entries/$entryId.json");
-    if (!$data || $data['status'] !== 'published') {
-        respond(['status'=>'error','message'=>'Entry not found or not published']);
+    if ($collection === '') {
+        respond(['status' => 'error', 'message' => 'Collection not found'], 404);
     }
-    respond(['status'=>'ok','data'=>['entry'=>$data]]);
+
+    $language = $input['language'] ?? $_GET['language'] ?? 'en';
+    $result = birkly_public_get_entry($storage, $collection, $slug, $entryId, $language);
+    if (($result['status'] ?? '') !== 'ok') {
+        respond(['status' => 'error', 'message' => $result['message'] ?? 'Entry not found or not published'], 404);
+    }
+    respond($result);
 }
 
 // License info endpoint (for client verification)
