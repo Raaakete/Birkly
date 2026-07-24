@@ -663,9 +663,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="section-header project-files-header">
               <div>
                 <h2>Files</h2>
-                <p class="section-description">Read-only tree with light add/delete. For full design work, use Studio or edit locally.</p>
+                <p class="section-description">Browse, edit, upload, and organize files in the bundled site workspace.</p>
               </div>
-              <button type="button" class="btn btn-primary btn-sm" id="project-add-file-btn">Add file</button>
+              <div class="project-files-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="project-new-folder-btn">New folder</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="project-upload-file-btn">Upload</button>
+                <input type="file" id="project-upload-input" class="project-upload-input" multiple hidden>
+                <button type="button" class="btn btn-primary btn-sm" id="project-add-file-btn">New file</button>
+              </div>
             </div>
             <div class="project-files-layout">
               <div class="project-file-tree-wrap">
@@ -677,9 +682,17 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div class="project-file-preview-wrap">
                 <div class="project-file-preview-header">
                   <h3 id="project-preview-title">Preview</h3>
-                  <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" style="display:none;">Delete file</button>
+                  <div class="project-file-preview-actions">
+                    <button type="button" class="btn btn-primary btn-sm" id="project-save-file-btn" style="display:none;">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" style="display:none;">Delete</button>
+                  </div>
                 </div>
-                <pre id="project-file-preview" class="project-file-preview"><span class="text-muted">Select a file to preview</span></pre>
+                <div id="project-file-preview-area" class="project-file-preview-area">
+                  <p class="text-muted project-file-placeholder">Select a file to preview or edit</p>
+                  <textarea id="project-file-editor" class="project-file-editor" hidden spellcheck="false"></textarea>
+                  <pre id="project-file-preview" class="project-file-preview" hidden></pre>
+                  <img id="project-file-image" class="project-file-image" alt="" hidden>
+                </div>
               </div>
             </div>
           </section>

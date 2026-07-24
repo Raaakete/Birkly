@@ -24,7 +24,7 @@ if (!is_array($input)) {
     $input = [];
 }
 
-$action = trim((string) ($_GET['action'] ?? $input['action'] ?? 'overview'));
+$action = trim((string) ($_GET['action'] ?? $input['action'] ?? $_POST['action'] ?? 'overview'));
 
 function birkly_project_settings_storage(): Storage
 {
@@ -204,6 +204,7 @@ function birkly_project_site_activity_icon(string $event): string
         'create_project_file', 'project_file_created' => '📄',
         'delete_project_file', 'project_file_deleted' => '🗑️',
         'project_settings_updated' => '⚙️',
+        'project_folder_created' => '📁',
         default => '📌',
     };
 }
@@ -221,6 +222,7 @@ function birkly_project_site_activity_message(string $event, array $details): st
         'create_project_file', 'project_file_created' => 'Created project file' . $pathSuffix,
         'delete_project_file', 'project_file_deleted' => 'Deleted project file' . $pathSuffix,
         'project_settings_updated' => 'Updated project settings',
+        'project_folder_created' => 'Created project folder' . $pathSuffix,
         'ai_approval_created' => 'Requested approval: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix,
         'ai_approval_approved' => 'Approved: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix,
         default => ucfirst(str_replace('_', ' ', $event)) . $pathSuffix,
@@ -237,6 +239,7 @@ function birkly_project_site_activity(int $limit = 30): array
         'project_file_created',
         'project_file_deleted',
         'project_settings_updated',
+        'project_folder_created',
         'ai_approval_approved',
         'ai_approval_created',
     ];
@@ -326,6 +329,7 @@ if ($action === 'overview') {
             'site_dir' => birkly_public_site_dir(),
             'site_path' => birkly_public_site_path(),
             'public_url' => birkly_public_site_url('/index.html'),
+            'visit_url' => birkly_public_site_url(is_file($indexPath) ? '/index.html' : '/'),
             'has_index' => is_file($indexPath),
             'starter' => birkly_project_site_starter_label(),
             'last_change' => $lastChange,
@@ -368,7 +372,10 @@ if ($action === 'read') {
         exit;
     }
 
-    echo json_encode(['status' => 'ok', 'data' => $file]);
+    echo json_encode(['status' => 'ok', 'data' => array_merge($file, [
+        'editable' => $fs->isTextFile($path),
+        'image' => $fs->isImageFile($path),
+    ])]);
     exit;
 }
 
@@ -387,7 +394,7 @@ if ($action === 'activity') {
 
 requireAuth('manage_settings');
 
-$csrf = (string) ($input['_csrf'] ?? '');
+$csrf = (string) ($input['_csrf'] ?? $_POST['_csrf'] ?? '');
 if (!validate_csrf_token($csrf)) {
     log_security_event('permission_denied', ['action' => 'project_site_' . $action, 'reason' => 'invalid CSRF']);
     echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
@@ -413,10 +420,110 @@ if ($action === 'save_settings') {
         'show_visit_button' => $showVisit,
     ]);
 
+    birkly_ensure_public_site_path();
+    $indexPath = birkly_public_site_path() . '/index.html';
+
     echo json_encode([
         'status' => 'ok',
         'message' => 'Project settings saved',
-        'data' => ['show_visit_button' => $showVisit],
+        'data' => [
+            'show_visit_button' => $showVisit,
+            'visit_url' => birkly_public_site_url(is_file($indexPath) ? '/index.html' : '/'),
+            'has_index' => is_file($indexPath),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'write') {
+    $path = trim((string) ($input['path'] ?? ''));
+    $content = (string) ($input['content'] ?? '');
+
+    if ($path === '') {
+        echo json_encode(['status' => 'error', 'message' => 'path is required']);
+        exit;
+    }
+
+    $fs = new ProjectSiteFileSystem();
+    if (!$fs->isTextFile($path)) {
+        echo json_encode(['status' => 'error', 'message' => 'This file type cannot be edited as text']);
+        exit;
+    }
+    if (!$fs->writeFile($path, $content)) {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to save file']);
+        exit;
+    }
+
+    log_security_event('project_file_written', [
+        'path' => $path,
+        'source' => 'admin',
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'File saved',
+        'data' => ['path' => $path],
+    ]);
+    exit;
+}
+
+if ($action === 'create_folder') {
+    $path = trim((string) ($input['path'] ?? ''));
+    if ($path === '') {
+        echo json_encode(['status' => 'error', 'message' => 'path is required']);
+        exit;
+    }
+
+    $fs = new ProjectSiteFileSystem();
+    if (!$fs->createDirectory($path)) {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to create folder']);
+        exit;
+    }
+
+    log_security_event('project_folder_created', [
+        'path' => $path,
+        'source' => 'admin',
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Folder created',
+        'data' => ['path' => $path],
+    ]);
+    exit;
+}
+
+if ($action === 'upload') {
+    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(['status' => 'error', 'message' => 'No file uploaded']);
+        exit;
+    }
+
+    $dir = trim((string) ($_POST['path'] ?? ''));
+    $dir = $dir !== '' ? rtrim(str_replace('\\', '/', $dir), '/') : '';
+    $filename = basename((string) ($_FILES['file']['name'] ?? ''));
+    if ($filename === '' || str_starts_with($filename, '.')) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid filename']);
+        exit;
+    }
+
+    $relativePath = $dir === '' ? $filename : $dir . '/' . $filename;
+    $fs = new ProjectSiteFileSystem();
+    if (!$fs->writeBinaryFile($relativePath, (string) $_FILES['file']['tmp_name'])) {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to upload file (blocked type or invalid path)']);
+        exit;
+    }
+
+    log_security_event('project_file_created', [
+        'path' => $relativePath,
+        'source' => 'admin',
+        'upload' => true,
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'File uploaded',
+        'data' => ['path' => $relativePath],
     ]);
     exit;
 }

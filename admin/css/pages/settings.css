@@ -2459,6 +2459,17 @@
   gap: var(--space-4, 1rem);
 }
 
+.project-files-actions {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.project-upload-input {
+  display: none;
+}
+
 .project-files-layout {
   display: grid;
   grid-template-columns: minmax(220px, 280px) 1fr;
@@ -2541,6 +2552,33 @@
   font-size: 0.9375rem;
 }
 
+.project-file-preview-actions {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+.project-file-preview-area {
+  min-height: 240px;
+}
+
+.project-file-placeholder {
+  margin: var(--space-3, 0.75rem);
+}
+
+.project-file-editor {
+  width: 100%;
+  min-height: 280px;
+  margin: 0;
+  padding: var(--space-3, 0.75rem);
+  border: none;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  background: transparent;
+  color: var(--text-primary);
+}
+
 .project-file-preview {
   margin: 0;
   padding: var(--space-3, 0.75rem);
@@ -2550,6 +2588,14 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.project-file-image {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  margin: var(--space-3, 0.75rem);
+  border-radius: var(--border-radius-s, 4px);
 }
 
 .project-activity-list {
