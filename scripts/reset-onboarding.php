@@ -28,61 +28,34 @@ if (isset($options['help'])) {
     exit(0);
 }
 
+require_once dirname(__DIR__) . '/core/system_rebuild.php';
+
 $baseDir = dirname(__DIR__);
 $collectionsPath = "$baseDir/content/collections";
 $usersPath = "$baseDir/users";
 
 echo "🔄 Resetting onboarding state...\n\n";
 
-// Step 1: Remove entry files
-if (!isset($options['keep-entries'])) {
-    echo "📝 Removing entry files...\n";
-    $entryCount = 0;
-    
-    if (is_dir($collectionsPath)) {
-        $collectionDirs = glob("$collectionsPath/*", GLOB_ONLYDIR);
-        
-        foreach ($collectionDirs as $collectionDir) {
-            $entriesDir = "$collectionDir/entries";
-            if (is_dir($entriesDir)) {
-                $entryFiles = glob("$entriesDir/*.json");
-                foreach ($entryFiles as $entryFile) {
-                    if (unlink($entryFile)) {
-                        $entryCount++;
-                    }
-                }
-                
-                // Also remove version history
-                $versionDirs = glob("$entriesDir/*/versions", GLOB_ONLYDIR);
-                foreach ($versionDirs as $versionDir) {
-                    $versionFiles = glob("$versionDir/*.json");
-                    foreach ($versionFiles as $versionFile) {
-                        unlink($versionFile);
-                    }
-                }
-            }
-        }
-    }
-    
-    echo "   ✓ Removed $entryCount entry files\n";
-} else {
-    echo "📝 Keeping entry files (--keep-entries specified)\n";
-}
-
-// Step 2: Remove onboarding progress files
-echo "📊 Removing onboarding progress...\n";
+$entryCount = 0;
 $onboardingCount = 0;
 
-if (is_dir($usersPath)) {
-    $onboardingFiles = glob("$usersPath/*_onboarding.json");
-    foreach ($onboardingFiles as $onboardingFile) {
-        if (unlink($onboardingFile)) {
-            $onboardingCount++;
-        }
+if (!isset($options['keep-entries'])) {
+    echo "📝 Removing starter site and entry files...\n";
+    $rebuild = birkly_rebuild_system($baseDir);
+    if (empty($rebuild['success'])) {
+        fwrite(STDERR, "Error: " . ($rebuild['message'] ?? 'rebuild failed') . "\n");
+        exit(1);
     }
+    $entryCount = (int) ($rebuild['entries_removed'] ?? 0);
+    $onboardingCount = (int) ($rebuild['onboarding_files_removed'] ?? 0);
+    echo "   ✓ Removed $entryCount entry files\n";
+    echo "   ✓ Removed $onboardingCount onboarding files\n";
+} else {
+    echo "📝 Keeping entry files (--keep-entries specified)\n";
+    echo "📊 Removing onboarding progress...\n";
+    $onboardingCount = birkly_remove_onboarding_progress_files($usersPath);
+    echo "   ✓ Removed $onboardingCount onboarding files\n";
 }
-
-echo "   ✓ Removed $onboardingCount onboarding files\n";
 
 // Step 3: Summary
 echo "\n✅ Onboarding state reset complete!\n\n";

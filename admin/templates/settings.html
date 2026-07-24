@@ -280,6 +280,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
           </section>
+
+          <section class="card settings-danger-zone">
+            <div class="section-header">
+              <h2><?= __('admin.danger_zone') ?></h2>
+            </div>
+            <p class="section-description"><?= __('admin.rebuild_system_description') ?></p>
+            <ul class="settings-danger-list">
+              <li><?= __('admin.rebuild_system_removes_content') ?></li>
+              <li><?= __('admin.rebuild_system_removes_onboarding') ?></li>
+              <li><?= __('admin.rebuild_system_keeps_users') ?></li>
+            </ul>
+            <button type="button" class="btn btn-danger" id="open-rebuild-system-btn">
+              <?= __('admin.rebuild_system_button') ?>
+            </button>
+          </section>
           </div>
         </form>
       </div>
@@ -1300,6 +1315,27 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rebuild System Modal -->
+  <div id="rebuild-system-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><?= __('admin.rebuild_system_title') ?></h2>
+        <button type="button" class="modal-close-btn" id="close-rebuild-system-modal" aria-label="<?= __('admin.cancel') ?>">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="settings-danger-warning"><?= __('admin.rebuild_system_warning') ?></p>
+        <div class="form-group">
+          <label for="rebuild-system-confirmation"><?= __('admin.rebuild_system_confirm_label') ?></label>
+          <input type="text" id="rebuild-system-confirmation" class="input" autocomplete="off" placeholder="<?= __('admin.rebuild_system_confirm_placeholder') ?>">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancel-rebuild-system-btn"><?= __('admin.cancel') ?></button>
+        <button type="button" class="btn btn-danger" id="confirm-rebuild-system-btn" disabled><?= __('admin.rebuild_system_button') ?></button>
       </div>
     </div>
   </div>
