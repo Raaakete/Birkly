@@ -1007,6 +1007,13 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div id="mcp-service-agent-panel" class="mcp-agent-type-panel" hidden>
                 <p class="modal-intro-text">Create a shared service agent with a fixed CMS role. Choose who can see and connect to it.</p>
 
+                <div class="mcp-preset-hints" role="group" aria-label="Service agent presets">
+                  <span class="mcp-preset-label">Quick presets:</span>
+                  <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content">Content assistant</button>
+                  <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder">Site builder</button>
+                  <small class="form-hint-block">Site builder uses the <strong>Admin</strong> role so connected AI can read and write <code>project/</code> HTML, CSS, and JS alongside CMS content.</small>
+                </div>
+
                 <div class="form-group">
                   <label for="mcp-endpoint-name">Agent name</label>
                   <input type="text" id="mcp-endpoint-name" name="name" class="input" placeholder="e.g. Content assistant">

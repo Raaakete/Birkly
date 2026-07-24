@@ -87,6 +87,14 @@ function birkly_ai_action_permission_map(): array
         'get_collection' => ['read'],
         'get_system_context' => ['read'],
         'read_birkly_docs' => ['read'],
+
+        // Public site (project/) — P38
+        'list_project_files' => ['read', 'manage_project_site'],
+        'read_project_file' => ['read', 'manage_project_site'],
+        'get_project_info' => ['read', 'manage_project_site'],
+        'write_project_file' => ['manage_project_site'],
+        'create_project_file' => ['manage_project_site'],
+        'delete_project_file' => ['manage_project_site'],
     ];
 }
 

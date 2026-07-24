@@ -22,6 +22,7 @@ function birkly_default_roles(): array
             'description' => 'Full access to all CMS features',
             'permissions' => [
                 '*' => $allActions,
+                'project_site' => $allActions,
             ],
         ],
         [
