@@ -1341,6 +1341,12 @@ function executeWriteProjectFile($actionData, $aiUser = null, $originalUserId = 
         return ['success' => false, 'message' => 'Failed to write file (path blocked or invalid): ' . $path];
     }
 
+    log_security_event('project_file_written', [
+        'path' => $path,
+        'source' => 'ai',
+        'ai_user_id' => is_array($aiUser) ? ($aiUser['id'] ?? null) : null,
+    ]);
+
     return ['success' => true, 'data' => ['path' => $path, 'written' => true]];
 }
 
@@ -1358,6 +1364,12 @@ function executeCreateProjectFile($actionData, $aiUser = null, $originalUserId =
         return ['success' => false, 'message' => 'Failed to create file (exists, blocked, or invalid): ' . $path];
     }
 
+    log_security_event('project_file_created', [
+        'path' => $path,
+        'source' => 'ai',
+        'ai_user_id' => is_array($aiUser) ? ($aiUser['id'] ?? null) : null,
+    ]);
+
     return ['success' => true, 'data' => ['path' => $path, 'created' => true]];
 }
 
@@ -1373,6 +1385,12 @@ function executeDeleteProjectFile($actionData, $aiUser = null, $originalUserId =
     if (!$fs->deleteFile($path)) {
         return ['success' => false, 'message' => 'Failed to delete file (not found or blocked): ' . $path];
     }
+
+    log_security_event('project_file_deleted', [
+        'path' => $path,
+        'source' => 'ai',
+        'ai_user_id' => is_array($aiUser) ? ($aiUser['id'] ?? null) : null,
+    ]);
 
     return ['success' => true, 'data' => ['path' => $path, 'deleted' => true]];
 }
