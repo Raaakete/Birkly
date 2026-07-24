@@ -877,7 +877,7 @@
                 h = (h * 31 + s.charCodeAt(i)) >>> 0;
             }
             // v3: invalidates session caches poisoned by pre-#233 admin entry summaries
-            return 'birkly_bundle_v3:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
+            return 'birkly_bundle_v4:' + page + ':' + slug + ':' + (Birkly.currentLanguage || 'en') + ':' + h.toString(16);
         };
 
         Birkly.bundle.entryPayloadLooksStripped = function (entry) {
@@ -1715,7 +1715,7 @@
             
             // Handle quoted fields: {'field'} or {'field'.0.'subfield'}
             itemOutput = itemOutput.replace(/\{\s*((?:['"][^'"]+['"]|\.?\d+\.?)+)\s*\}/g, (m, pathStr) => {
-                const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','endget'];
+                const directiveKeywords = ['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','endget'];
                 const firstPartMatch = pathStr.match(/^['"]([^'"]+)['"]/);
                 if (firstPartMatch && directiveKeywords.includes(firstPartMatch[1].toLowerCase())) return m;
                 
@@ -1740,7 +1740,7 @@
             itemOutput = itemOutput.replace(/\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*(?:\.[0-9]+(?:\.[a-zA-Z0-9_]+)*)?)\s*(?:\|\|\s*([^}]+))?\s*(?:"([^"]+)")?\s*\}/g, (m, varPath, fallback, arg) => {
                 const rawPath = String(varPath || '').trim();
                 const lowers = rawPath.toLowerCase();
-                const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry','else'];
+                const directiveKeywords = ['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
                 if (directiveKeywords.includes(lowers)) return m;
                 
                 let value = getNestedValue(itemData, rawPath);
@@ -2325,7 +2325,7 @@
                                 name = name.trim();
                                 const lowers = name.toLowerCase();
                                 // Skip directive keywords and the loop variable (already replaced)
-                                if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+                                if (['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
                                 if (name === propName || name === propName + 's') return m; // Already replaced above
                                 
                                 // Otherwise, try to get from the outer loop item
@@ -2464,7 +2464,7 @@
                 itemOutput = itemOutput.replace(/\{\s*([a-zA-Z0-9_]+)\s*\}/g, (m, name) => {
                     name = name.trim(); // Trim whitespace
                     const lowers = name.toLowerCase();
-                    if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+                    if (['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
                     
                     // Check if this is a date field
                     const isDateField = name === 'created_at' || name === 'updated_at' || name === 'published_at' || name === 'date';
@@ -2503,7 +2503,7 @@
                     if (pathParts.length === 0) return m; // Don't replace if we can't parse
                     
                     const firstPart = pathParts[0].toLowerCase();
-                    if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','endget'].includes(firstPart)) return m;
+                    if (['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','endget'].includes(firstPart)) return m;
                     
                     // Try item first, then loopData
                     let value = null;
@@ -2553,7 +2553,7 @@
                 itemOutput = itemOutput.replace(/\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*(?:\.[0-9]+(?:\.[a-zA-Z0-9_]+)*)?)\s*(?:format\s+(["'])([^"']+)\2)?\s*(?:\|\|\s*([^}]+))?\s*(?:"([^"]+)")?\s*\}/g, (m, varPath, quote, formatFilter, fallback, arg) => {
                     const rawPath = String(varPath || '').trim();
                     const lowers = rawPath.toLowerCase();
-                    const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry','else'];
+                    const directiveKeywords = ['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
                     if (directiveKeywords.includes(lowers)) return m;
                     
                     let value = getNestedValue(loopData, rawPath);
@@ -2861,7 +2861,7 @@
                         name = name.trim();
                         const lowers = name.toLowerCase();
                         // Skip directive keywords and the loop variable (already replaced)
-                        if (['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
+                        if (['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count'].includes(lowers)) return m;
                         if (name === propName || name === propName + 's') return m; // Already replaced above
                         
                         // Otherwise, try to get from the data object
@@ -2905,7 +2905,7 @@
         // Match pattern: {'part1'.'part2'} or {'part1'.0.'part2'} or {'part1'.0.1.'part2'}
         output = output.replace(/\{\s*((?:['"][^'"]+['"]|\.?\d+\.?)+)\s*\}/g, (m, pathStr) => {
             // Skip if it's part of a directive (check if it starts with a directive keyword)
-            const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','endget'];
+            const directiveKeywords = ['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','endget'];
             const firstPartMatch = pathStr.match(/^['"]([^'"]+)['"]/);
             if (firstPartMatch && directiveKeywords.includes(firstPartMatch[1].toLowerCase())) return m;
             
@@ -2969,7 +2969,7 @@
             
             // Check if this is part of a directive (if, for, etc.)
             // For variables like "entry" in "{if entry exist}", we need to check the context
-            const directiveKeywords = ['if','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry','else'];
+            const directiveKeywords = ['if','elseif','else','for','endif','endfor','foreach','endforeach','from','get','has','include','media','url','count','public_form','entry','endentry'];
             const isDirectiveKeyword = directiveKeywords.includes(lowers);
             
             // Check if it's in a directive context
@@ -3125,8 +3125,9 @@
             conditioned = renderConditionals(output, data);
             // Fall back when output is broken: empty, very short, or collapsed to a tiny fraction of original
             // (e.g. 55 chars from 25k = conditional logic excluded almost everything incorrectly)
+            const stillHasConditionalMarkers = /\{\s*(?:if|elseif|else|endif|end\s*if)\s/i.test(conditioned);
             const collapsed = conditioned.length === 0 ||
-                conditioned.length < 50 ||
+                (stillHasConditionalMarkers && beforeConditionalsLength > 500) ||
                 (beforeConditionalsLength > 2000 && conditioned.length < beforeConditionalsLength * 0.02);
             if (collapsed) {
                 Birkly.error('Birkly: renderConditionals produced collapsed output; falling back to marker-stripping only', {
@@ -3808,9 +3809,6 @@
             }
             const existing = data[collectionName];
             if (Array.isArray(existing) && existing.length > 0) {
-                return;
-            }
-            if (Array.isArray(existing) && existing.length === 0 && !Birkly.pageBundle.failed.has(collectionName)) {
                 return;
             }
             Birkly.log('Birkly: ensureCollectionsInData fetching:', collectionName);
@@ -4819,10 +4817,6 @@
                         const prefetched = data[collectionName];
                         if (Array.isArray(prefetched) && prefetched.length > 0) {
                             Birkly.log('Birkly: Using prefetched/virtual list for:', collectionName, 'count:', prefetched.length);
-                            return;
-                        }
-                        if (Array.isArray(prefetched) && prefetched.length === 0 && !Birkly.pageBundle.failed.has(collectionName)) {
-                            Birkly.log('Birkly: Using empty bundled list for:', collectionName);
                             return;
                         }
                         Birkly.log('Birkly: Fetching entries for collection:', collectionName);
