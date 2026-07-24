@@ -3751,6 +3751,24 @@
         return out;
     }
 
+    // Strip site-runtime markers that must not be baked back into templates.
+    function sanitizeRuntimeTemplateHtml(html) {
+        if (!html || typeof html !== 'string') return html || '';
+        return html
+            .replace(/\sdata-marsk-bound="[^"]*"/gi, '')
+            .replace(/\sdata-marsk-scroll-bound="[^"]*"/gi, '')
+            .replace(/\sdata-cms-processed="[^"]*"/gi, '');
+    }
+
+    function captureTemplateSnapshot(element) {
+        const html = sanitizeRuntimeTemplateHtml(element.innerHTML || '');
+        return {
+            element: element,
+            originalHtml: html,
+            template: html
+        };
+    }
+
     // Helper to safely set innerHTML - prevents clearing content if rendered output is suspiciously short
     function safeSetInnerHTML(element, rendered, template, context = '') {
         const originalLength = element.innerHTML.length;
@@ -3858,19 +3876,11 @@
                     const templates = [];
                     const mainEl = document.querySelector('main');
                     if (mainEl && mainEl.innerHTML && (/\{\s*['"]?[a-zA-Z0-9_]/.test(mainEl.innerHTML) || /\{\{/.test(mainEl.innerHTML))) {
-                        templates.push({
-                            element: mainEl,
-                            originalHtml: mainEl.innerHTML,
-                            template: mainEl.innerHTML
-                        });
+                        templates.push(captureTemplateSnapshot(mainEl));
                     } else {
                         // Fallback: render whole body if main isn't present (rare)
                         const bodyEl = document.body;
-                        templates.push({
-                            element: bodyEl,
-                            originalHtml: bodyEl.innerHTML,
-                            template: bodyEl.innerHTML
-                        });
+                        templates.push(captureTemplateSnapshot(bodyEl));
                     }
                     
                     Birkly.log('Birkly: Found', templates.length, 'templates for single entry page (main container mode)');
@@ -3998,10 +4008,7 @@
                             if (!parent || parent.dataset.cmsProcessed) continue;
                             
                             parent.dataset.cmsProcessed = 'true';
-                            templates.push({
-                                element: parent,
-                                template: parent.innerHTML
-                            });
+                            templates.push(captureTemplateSnapshot(parent));
                         }
                     }
                     
@@ -4154,11 +4161,7 @@
         const mainTemplateRoot = document.querySelector('main');
         if (mainTemplateRoot && /\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]/.test(mainTemplateRoot.innerHTML || '')) {
             markTemplateSubtreeProcessed(mainTemplateRoot);
-            templates.push({
-                element: mainTemplateRoot,
-                originalHtml: mainTemplateRoot.innerHTML,
-                template: mainTemplateRoot.innerHTML
-            });
+            templates.push(captureTemplateSnapshot(mainTemplateRoot));
             Birkly.log('Birkly: Registered primary main template root');
         }
         
@@ -4264,19 +4267,11 @@
                 }
                 if (templateRoot !== parent && !templates.some(t => t.element === templateRoot)) {
                     templateRoot.dataset.cmsProcessed = 'true';
-                    templates.push({
-                        element: templateRoot,
-                        originalHtml: templateRoot.innerHTML,
-                        template: templateRoot.innerHTML
-                    });
+                    templates.push(captureTemplateSnapshot(templateRoot));
                     Birkly.log('Birkly: Found template in top-level container:', templateRoot.tagName, templateRoot.className, 'length:', templateRoot.innerHTML.length);
                 } else if (templateRoot === parent) {
                     parent.dataset.cmsProcessed = 'true';
-                    templates.push({
-                        element: parent,
-                        originalHtml: parent.innerHTML,
-                        template: parent.innerHTML
-                    });
+                    templates.push(captureTemplateSnapshot(parent));
                     Birkly.log('Birkly: Found template in element:', parent.tagName, parent.className, 'Content:', nodeValue.substring(0, 50));
                 }
             }
@@ -4366,19 +4361,14 @@
                     }
                     if (templateRoot !== el && !templates.some(t => t.element === templateRoot)) {
                         templateRoot.dataset.cmsProcessed = 'true';
-                        templates.push({
-                            element: templateRoot,
-                            originalHtml: templateRoot.innerHTML,
-                            template: templateRoot.innerHTML
-                        });
+                        templates.push(captureTemplateSnapshot(templateRoot));
                         Birkly.log('Birkly: Found template via alt (top-level):', templateRoot.tagName, templateRoot.className);
                     } else if (templateRoot === el) {
                         el.dataset.cmsProcessed = 'true';
-                        templates.push({
-                            element: el,
-                            originalHtml: innerHTML,
-                            template: innerHTML
-                        });
+                        const snapshot = captureTemplateSnapshot(el);
+                        snapshot.template = sanitizeRuntimeTemplateHtml(innerHTML);
+                        snapshot.originalHtml = snapshot.template;
+                        templates.push(snapshot);
                         Birkly.log('Birkly: Found template via alternative detection:', el.tagName, el.className);
                     }
                 }
