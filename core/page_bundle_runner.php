@@ -6,12 +6,16 @@
 require_once __DIR__ . '/public_read.php';
 require_once __DIR__ . '/page_bundle_helpers.php';
 require_once __DIR__ . '/page_bundle_template_functions.php';
+require_once __DIR__ . '/site_domain.php';
 
 function birkly_page_bundle_collection_allowed(string $collectionSlug): bool {
     if ($collectionSlug === '' || $collectionSlug === 'site_elements') {
         return true;
     }
     if (function_exists('birkly_request_is_local_dev') && birkly_request_is_local_dev()) {
+        return true;
+    }
+    if (function_exists('birkly_request_is_same_cms_origin') && birkly_request_is_same_cms_origin()) {
         return true;
     }
     $domain = $GLOBALS['current_domain'] ?? '';
