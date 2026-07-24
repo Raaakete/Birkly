@@ -24,8 +24,9 @@ set_security_headers('api');
 require_once __DIR__ . '/domain_auth.php';
 require_once __DIR__ . '/../core/page_bundle_runner.php';
 require_once __DIR__ . '/../core/storage/StorageFactory.php';
+require_once __DIR__ . '/../core/site_domain.php';
 
-if (birkly_request_is_local_dev()) {
+if (birkly_request_is_local_dev() || birkly_request_is_same_cms_origin()) {
     setDynamicCORS();
 } else {
     requireDomainAuth('read');
