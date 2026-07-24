@@ -247,23 +247,12 @@ if ($action === 'list_users') {
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
         exit;
     }
-    
-    $users = $storage->list('');  // List root of users directory
-    $userData = [];
-    foreach ($users as $user) {
-        $data = $storage->read($user);
-        if ($data) {
-            $data = birkly_save_user_with_2fa_policy($data);
-            unset($data['password']); // Don't send password hashes
-            $userData[] = $data;
-        }
-    }
-    
+
     echo json_encode([
         'status' => 'ok',
         'data' => [
-            'users' => $userData
-        ]
+            'users' => birkly_list_human_user_records(true),
+        ],
     ]);
     exit;
 }
@@ -285,7 +274,7 @@ if ($action === 'update_user') {
     $userId = $input['id'] ?? '';
     $updates = $input['updates'] ?? [];
     
-    if (empty($userId) || empty($updates)) {
+    if (empty($userId) || empty($updates) || !birkly_is_human_user_id($userId)) {
         echo json_encode(['status' => 'error', 'message' => 'User ID and updates required']);
         exit;
     }
@@ -340,6 +329,11 @@ if ($action === 'extend_2fa_grace') {
     $userId = $input['id'] ?? '';
     if ($userId === '') {
         echo json_encode(['status' => 'error', 'message' => 'User ID required']);
+        exit;
+    }
+
+    if (!birkly_is_human_user_id($userId)) {
+        echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
     }
 
@@ -398,7 +392,7 @@ if ($action === 'delete_user') {
     }
     
     $userId = $input['id'] ?? '';
-    if (empty($userId)) {
+    if (empty($userId) || !birkly_is_human_user_id($userId)) {
         echo json_encode(['status' => 'error', 'message' => 'User ID required']);
         exit;
     }
@@ -420,13 +414,47 @@ if ($action === 'delete_user') {
 
 // Count users
 if ($action === 'count') {
-    $users = $storage->list('');  // List root of users directory
-    $count = count($users);
     echo json_encode([
         'status' => 'ok',
         'data' => [
-            'count' => $count
-        ]
+            'count' => count(birkly_list_human_user_records(false)),
+        ],
+    ]);
+    exit;
+}
+
+// Revoke MCP AI connections for a user (admin only)
+if ($action === 'revoke_mcp_sessions') {
+    if (!isset($_SESSION['user']) || !checkPermission($_SESSION['user'], 'update_user')) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $userId = trim((string) ($input['id'] ?? ''));
+    if ($userId === '' || !birkly_is_human_user_id($userId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Valid user ID required']);
+        exit;
+    }
+
+    require_once __DIR__ . '/../core/mcp_oauth.php';
+    $removed = birkly_mcp_oauth_revoke_user_sessions($userId);
+    log_security_event('mcp_sessions_revoked', [
+        'user_id' => $userId,
+        'revoked_by' => $_SESSION['user']['id'] ?? '',
+        'count' => $removed,
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => $removed > 0 ? 'AI connections revoked' : 'No active AI connections found',
+        'data' => ['revoked' => $removed],
     ]);
     exit;
 }
