@@ -1,0 +1,975 @@
+<link rel="stylesheet" href="{birkly_url '/admin/css/plugin-page.css'}">
+<link rel="stylesheet" href="{birkly_url '/plugins/commerce/admin/commerce.css'}">
+
+{plugin_page_header}
+
+<div class="payments-page commerce-page plugin-page">
+  <div class="payments-tabs commerce-tabs" role="tablist">
+    <button class="payments-tab active" data-tab="connections" role="tab" aria-selected="true">Connections</button>
+    <button class="payments-tab" data-tab="catalog" role="tab">Catalog</button>
+    <button class="payments-tab" data-tab="stock" role="tab">Stock</button>
+    <button class="payments-tab" data-tab="orders" role="tab">Orders</button>
+    <button class="payments-tab" data-tab="subscriptions" role="tab">Subscriptions</button>
+    <button class="payments-tab" data-tab="discounts" role="tab">Discounts</button>
+    <button class="payments-tab" data-tab="gift-cards" role="tab">Gift Cards</button>
+    <button class="payments-tab" data-tab="quotes" role="tab">Quotes</button>
+    <button class="payments-tab" data-tab="analytics" role="tab">Analytics</button>
+    <button class="payments-tab" data-tab="import" role="tab">Import</button>
+    <button class="payments-tab" data-tab="migration" role="tab">Migration</button>
+    <button class="payments-tab" data-tab="mappings" role="tab">Mappings</button>
+    <button class="payments-tab" data-tab="fulfillment" role="tab">Fulfillment</button>
+    <button class="payments-tab" data-tab="shipping" role="tab">Shipping</button>
+    <button class="payments-tab" data-tab="tax" role="tab">Tax</button>
+    <button class="payments-tab" data-tab="fieldtypes" role="tab">Fieldtypes</button>
+    <button class="payments-tab" data-tab="activity" role="tab">Activity</button>
+    <button class="payments-tab" data-tab="settings" role="tab">Settings</button>
+    <button class="payments-tab" data-tab="documentation" role="tab">Documentation</button>
+  </div>
+
+  <div id="payments-tab-connections" class="payments-tab-panel active" role="tabpanel">
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="payments-add-connection">Add Connection</button>
+    </div>
+    <div class="payments-panel-header">
+      <h2>Provider Connections</h2>
+    </div>
+    <div id="payments-providers-matrix" class="payments-providers-matrix"></div>
+    <div id="payments-connections-list" class="payments-connections-list">
+      <div class="loading-state"><p>Loading connections…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-catalog" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="commerce-reindex">Reindex</button>
+    </div>
+    <div class="payments-panel-header">
+      <h2>Catalog</h2>
+    </div>
+    <div id="commerce-catalog-list" class="payments-connections-list">
+      <div class="loading-state"><p>Loading catalog…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-stock" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Warehouse stock</h2></div>
+    <p class="form-hint">Multi-warehouse SKU quantities. Checkout allocates from the first warehouse (by sort order) with sufficient stock.</p>
+    <div class="form-group">
+      <label for="commerce-warehouse-select">Warehouse</label>
+      <select id="commerce-warehouse-select" class="input"></select>
+    </div>
+    <div class="tab-panel-actions">
+      <button type="button" class="btn btn-secondary" id="commerce-warehouse-add">Add warehouse</button>
+      <button type="button" class="btn btn-secondary" id="commerce-warehouse-rename">Rename</button>
+      <button type="button" class="btn btn-secondary" id="commerce-warehouse-delete">Delete</button>
+    </div>
+    <div class="form-group">
+      <label for="commerce-stock-sku">SKU</label>
+      <input type="text" id="commerce-stock-sku" class="input" placeholder="SKU-A" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="commerce-stock-qty">Quantity on hand</label>
+      <input type="number" id="commerce-stock-qty" class="input" min="0" value="0">
+    </div>
+    <div class="form-group">
+      <label for="commerce-stock-threshold">Low stock threshold</label>
+      <input type="number" id="commerce-stock-threshold" class="input" min="0" value="0">
+    </div>
+    <div class="tab-panel-actions">
+      <button type="button" class="btn btn-primary" id="commerce-stock-save">Save SKU</button>
+    </div>
+    <hr>
+    <h3>Transfer stock</h3>
+    <div class="form-group">
+      <label for="commerce-transfer-sku">SKU</label>
+      <input type="text" id="commerce-transfer-sku" class="input" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="commerce-transfer-qty">Quantity</label>
+      <input type="number" id="commerce-transfer-qty" class="input" min="1" value="1">
+    </div>
+    <div class="form-group">
+      <label for="commerce-transfer-from">From warehouse</label>
+      <select id="commerce-transfer-from" class="input"></select>
+    </div>
+    <div class="form-group">
+      <label for="commerce-transfer-to">To warehouse</label>
+      <select id="commerce-transfer-to" class="input"></select>
+    </div>
+    <button type="button" class="btn btn-secondary" id="commerce-transfer-stock">Transfer</button>
+    <div id="commerce-stock-list" class="payments-connections-list" style="margin-top:1.5rem">
+      <div class="loading-state"><p>Loading stock…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-orders" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Orders</h2></div>
+    <div id="commerce-orders-list" class="payments-activity-list">
+      <div class="loading-state"><p>Loading orders…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-subscriptions" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="commerce-subscriptions-refresh">Refresh</button>
+    </div>
+    <div class="payments-panel-header"><h2>Subscriptions</h2></div>
+    <div id="commerce-subscriptions-list" class="payments-activity-list">
+      <div class="loading-state"><p>Loading subscriptions…</p></div>
+    </div>
+    <div id="commerce-subscription-detail" class="commerce-subscription-detail" hidden></div>
+  </div>
+
+  <div id="payments-tab-discounts" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="commerce-add-discount">Add Rule</button>
+    </div>
+    <div class="payments-panel-header">
+      <h2>Discount Rules</h2>
+    </div>
+    <div id="commerce-discounts-list" class="payments-connections-list"></div>
+  </div>
+
+    <div id="payments-tab-gift-cards" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions"><button class="btn btn-primary" id="commerce-issue-gift-card">Issue Gift Card</button></div>
+    <div class="payments-panel-header"><h2>Gift Cards</h2></div>
+    <div id="commerce-gift-cards-list" class="payments-connections-list"><div class="loading-state"><p>Loading…</p></div></div>
+  </div>
+  <div id="payments-tab-quotes" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions"><button class="btn btn-primary" id="commerce-create-quote">Create Quote from Cart</button></div>
+    <div class="payments-panel-header"><h2>B2B Quotes</h2></div>
+    <div id="commerce-quotes-list" class="payments-connections-list"><div class="loading-state"><p>Loading…</p></div></div>
+  </div>
+  <div id="payments-tab-analytics" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-secondary" id="commerce-analytics-refresh">Refresh</button>
+      <button class="btn btn-secondary" id="commerce-analytics-export-orders">Export Orders CSV</button>
+    </div>
+    <div class="payments-panel-header"><h2>Analytics</h2></div>
+    <div id="commerce-analytics-summary"></div>
+    <div id="commerce-analytics-products"></div>
+    <div id="commerce-analytics-affiliates"></div>
+  </div>
+  <div id="payments-tab-import" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button type="button" class="btn btn-primary" id="commerce-import-start">Import products</button>
+    </div>
+    <div class="commerce-import-hero">
+      <div class="commerce-import-hero-copy">
+        <h2>Product imports</h2>
+        <p>Move your catalog from online stores or inventory systems into Birkly. Each import creates or updates entries in a collection with Commerce pricing and stock.</p>
+      </div>
+    </div>
+
+    <div class="commerce-live-import-section" id="commerce-live-import-section">
+      <div class="payments-panel-header">
+        <h3>Live store sync</h3>
+        <p class="form-hint">Connect Shopify, WooCommerce, Etsy, Square, Amazon, or eBay for scheduled or on-demand API sync. Credentials are encrypted at rest.</p>
+      </div>
+      <div class="commerce-live-import-grid">
+        <div class="commerce-live-import-card" data-platform="shopify">
+          <div class="commerce-live-import-card-header">
+            <h4>Shopify</h4>
+            <span class="commerce-live-import-status" id="commerce-live-shopify-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-shopify-form">
+            <div class="form-group">
+              <label for="commerce-live-shopify-domain">Shop domain</label>
+              <input type="text" id="commerce-live-shopify-domain" class="input" placeholder="my-store.myshopify.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-shopify-token">Admin API access token</label>
+              <input type="password" id="commerce-live-shopify-token" class="input" placeholder="shpat_…" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-shopify-collection">Target collection</label>
+              <select id="commerce-live-shopify-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-shopify-currency">Default currency</label>
+              <select id="commerce-live-shopify-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-shopify-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-shopify-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-shopify-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-shopify-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-shopify-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-shopify-meta"></p>
+          </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="woocommerce">
+          <div class="commerce-live-import-card-header">
+            <h4>WooCommerce</h4>
+            <span class="commerce-live-import-status" id="commerce-live-woo-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-woo-form">
+            <div class="form-group">
+              <label for="commerce-live-woo-url">Site URL</label>
+              <input type="url" id="commerce-live-woo-url" class="input" placeholder="https://example.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-key">Consumer key</label>
+              <input type="text" id="commerce-live-woo-key" class="input" placeholder="ck_…" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-secret">Consumer secret</label>
+              <input type="password" id="commerce-live-woo-secret" class="input" placeholder="cs_…" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-collection">Target collection</label>
+              <select id="commerce-live-woo-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-woo-currency">Default currency</label>
+              <select id="commerce-live-woo-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-woo-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-woo-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-woo-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-woo-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-woo-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-woo-meta"></p>
+          </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="etsy">
+          <div class="commerce-live-import-card-header">
+            <h4>Etsy</h4>
+            <span class="commerce-live-import-status" id="commerce-live-etsy-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-etsy-form">
+            <div class="form-group">
+              <label for="commerce-live-etsy-shop-id">Shop ID</label>
+              <input type="text" id="commerce-live-etsy-shop-id" class="input" placeholder="12345" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-api-key">API key</label>
+              <input type="password" id="commerce-live-etsy-api-key" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-token">Access token</label>
+              <input type="password" id="commerce-live-etsy-token" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-collection">Target collection</label>
+              <select id="commerce-live-etsy-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-etsy-currency">Default currency</label>
+              <select id="commerce-live-etsy-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-etsy-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-etsy-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-etsy-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-etsy-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-etsy-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-etsy-meta"></p>
+          </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="square">
+          <div class="commerce-live-import-card-header">
+            <h4>Square</h4>
+            <span class="commerce-live-import-status" id="commerce-live-square-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-square-form">
+            <div class="form-group">
+              <label for="commerce-live-square-token">Access token</label>
+              <input type="password" id="commerce-live-square-token" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-square-location">Location ID (optional)</label>
+              <input type="text" id="commerce-live-square-location" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-square-collection">Target collection</label>
+              <select id="commerce-live-square-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-square-currency">Default currency</label>
+              <select id="commerce-live-square-currency" class="input">
+                <option value="eur">EUR</option>
+                <option value="usd">USD</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-square-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-square-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-square-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-square-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-square-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-square-meta"></p>
+          </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="amazon">
+          <div class="commerce-live-import-card-header">
+            <h4>Amazon</h4>
+            <span class="commerce-live-import-status" id="commerce-live-amazon-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-amazon-form">
+            <div class="form-group">
+              <label for="commerce-live-amazon-seller-id">Seller ID</label>
+              <input type="text" id="commerce-live-amazon-seller-id" class="input" placeholder="A1B2C3D4E5" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-amazon-marketplace">Marketplace ID</label>
+              <input type="text" id="commerce-live-amazon-marketplace" class="input" placeholder="ATVPDKIKX0DER" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-amazon-token">LWA refresh token</label>
+              <input type="password" id="commerce-live-amazon-token" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-amazon-collection">Target collection</label>
+              <select id="commerce-live-amazon-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-amazon-currency">Default currency</label>
+              <select id="commerce-live-amazon-currency" class="input">
+                <option value="usd">USD</option>
+                <option value="eur">EUR</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-amazon-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-amazon-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-amazon-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-amazon-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-amazon-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-amazon-meta"></p>
+          </form>
+        </div>
+
+        <div class="commerce-live-import-card" data-platform="ebay">
+          <div class="commerce-live-import-card-header">
+            <h4>eBay</h4>
+            <span class="commerce-live-import-status" id="commerce-live-ebay-status">Not connected</span>
+          </div>
+          <form class="commerce-live-import-form" id="commerce-live-ebay-form">
+            <div class="form-group">
+              <label for="commerce-live-ebay-token">OAuth access token</label>
+              <input type="password" id="commerce-live-ebay-token" class="input" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-ebay-marketplace">Marketplace ID</label>
+              <input type="text" id="commerce-live-ebay-marketplace" class="input" placeholder="EBAY_US" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-ebay-collection">Target collection</label>
+              <select id="commerce-live-ebay-collection" class="input"></select>
+            </div>
+            <div class="form-group">
+              <label for="commerce-live-ebay-currency">Default currency</label>
+              <select id="commerce-live-ebay-currency" class="input">
+                <option value="usd">USD</option>
+                <option value="eur">EUR</option>
+                <option value="gbp">GBP</option>
+              </select>
+            </div>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-ebay-enabled"> Enable live sync
+            </label>
+            <label class="commerce-live-import-checkbox">
+              <input type="checkbox" id="commerce-live-ebay-schedule"> Include in scheduled cron sync
+            </label>
+            <div class="commerce-live-import-actions">
+              <button type="button" class="btn btn-secondary" id="commerce-live-ebay-test">Test connection</button>
+              <button type="button" class="btn btn-secondary" id="commerce-live-ebay-save">Save</button>
+              <button type="button" class="btn btn-primary" id="commerce-live-ebay-sync">Sync now</button>
+            </div>
+            <p class="form-hint commerce-live-import-meta" id="commerce-live-ebay-meta"></p>
+          </form>
+        </div>
+      </div>
+      <div class="commerce-live-import-webhooks" id="commerce-live-import-webhooks">
+        <div class="payments-panel-header">
+          <h3>Inventory webhooks</h3>
+          <p class="form-hint">Real-time stock sync for Shopify and WooCommerce. Configure the webhook URL and secret in your store admin.</p>
+        </div>
+        <div class="commerce-live-import-webhook-grid">
+          <div class="commerce-live-import-webhook-card" data-webhook-platform="shopify">
+            <h4>Shopify</h4>
+            <p class="form-hint">Topic: <code>inventory_levels/update</code></p>
+            <label class="form-hint">Webhook URL</label>
+            <input type="text" class="input commerce-webhook-url" id="commerce-webhook-url-shopify" readonly>
+            <button type="button" class="btn btn-secondary commerce-webhook-rotate" data-platform="shopify">Rotate secret</button>
+            <p class="form-hint commerce-webhook-secret" id="commerce-webhook-secret-shopify" hidden></p>
+          </div>
+          <div class="commerce-live-import-webhook-card" data-webhook-platform="woocommerce">
+            <h4>WooCommerce</h4>
+            <p class="form-hint">Topic: <code>product.updated</code></p>
+            <label class="form-hint">Webhook URL</label>
+            <input type="text" class="input commerce-webhook-url" id="commerce-webhook-url-woocommerce" readonly>
+            <button type="button" class="btn btn-secondary commerce-webhook-rotate" data-platform="woocommerce">Rotate secret</button>
+            <p class="form-hint commerce-webhook-secret" id="commerce-webhook-secret-woocommerce" hidden></p>
+          </div>
+        </div>
+      </div>
+      <details class="commerce-live-import-cron">
+        <summary>Scheduled sync (cron)</summary>
+        <p class="form-hint">Run all platforms with <strong>Include in scheduled cron sync</strong> enabled:</p>
+        <pre class="commerce-live-import-cron-command" id="commerce-live-import-cron-command"></pre>
+      </details>
+    </div>
+
+    <div class="commerce-import-stats" id="commerce-import-stats" hidden></div>
+
+    <div class="commerce-import-history-section">
+      <div class="payments-panel-header">
+        <h3>Import history</h3>
+        <button type="button" class="btn btn-secondary" id="commerce-import-history-refresh">Refresh</button>
+      </div>
+      <div id="commerce-import-history-list" class="commerce-import-history-list">
+        <div class="loading-state"><p>Loading import history…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="payments-tab-migration" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button type="button" class="btn btn-secondary" id="commerce-migration-refresh">Refresh scan</button>
+      <button type="button" class="btn btn-secondary" id="commerce-migration-preview">Preview mapping</button>
+      <button type="button" class="btn btn-primary" id="commerce-migration-import">Import to Commerce</button>
+    </div>
+    <div class="commerce-migration-hero">
+      <h2>Shop &amp; Events migration</h2>
+      <p>Detect legacy Shopping Cart product collections and Events ticket entries, preview the Commerce fieldtype mapping, and import without removing the legacy plugins.</p>
+    </div>
+
+    <div id="commerce-migration-scan" class="commerce-migration-scan">
+      <div class="loading-state"><p>Scanning for legacy data…</p></div>
+    </div>
+
+    <div class="commerce-migration-options">
+      <div class="form-group">
+        <label>Sources</label>
+        <label class="commerce-migration-source"><input type="checkbox" id="commerce-migration-source-cart" value="shopping_cart" checked> Shopping Cart products</label>
+        <label class="commerce-migration-source"><input type="checkbox" id="commerce-migration-source-events" value="events" checked> Events tickets</label>
+      </div>
+      <div class="form-group">
+        <label for="commerce-migration-products-collection">Products target collection</label>
+        <input type="text" id="commerce-migration-products-collection" class="input" value="products">
+      </div>
+      <div class="form-group">
+        <label for="commerce-migration-events-collection">Events target collection</label>
+        <input type="text" id="commerce-migration-events-collection" class="input" value="events-commerce">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="commerce-migration-create-collections" checked> Create target collections if missing</label>
+      </div>
+    </div>
+
+    <div id="commerce-migration-preview-wrap" class="commerce-migration-preview-wrap" hidden>
+      <div class="payments-panel-header"><h3>Preview</h3></div>
+      <div id="commerce-migration-preview-table" class="commerce-migration-preview-table"></div>
+    </div>
+
+    <div class="commerce-migration-history-section">
+      <div class="payments-panel-header">
+        <h3>Migration history</h3>
+        <button type="button" class="btn btn-secondary" id="commerce-migration-history-refresh">Refresh</button>
+      </div>
+      <div id="commerce-migration-history-list" class="commerce-migration-history-list">
+        <div class="loading-state"><p>Loading migration history…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="payments-tab-mappings" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Purchase Mappings</h2></div>
+    <p class="form-help">Link commerce products to user_management tiers. Mappings apply on paid orders via PostPurchaseRouter (register/none fulfillment) and checkout.</p>
+    <div id="commerce-mapping-wizard" class="commerce-mapping-wizard">
+      <div class="commerce-wizard-steps" role="tablist">
+        <span class="commerce-wizard-step active" data-step="1">1. Product</span>
+        <span class="commerce-wizard-step" data-step="2">2. Purchase option</span>
+        <span class="commerce-wizard-step" data-step="3">3. Tier</span>
+      </div>
+      <div class="commerce-wizard-panel" id="commerce-wizard-step-1">
+        <div class="form-group">
+          <label for="commerce-wizard-catalog">Catalog item</label>
+          <select id="commerce-wizard-catalog" class="input">
+            <option value="">Loading catalog…</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="commerce-wizard-sku">Or match by SKU (optional)</label>
+          <input type="text" id="commerce-wizard-sku" class="input" placeholder="MEMBERSHIP-PRO">
+        </div>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-next-1">Next</button>
+      </div>
+      <div class="commerce-wizard-panel" id="commerce-wizard-step-2" hidden>
+        <div class="form-group">
+          <label for="commerce-wizard-option">Purchase option</label>
+          <select id="commerce-wizard-option" class="input">
+            <option value="">Any / default</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-back-2">Back</button>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-next-2">Next</button>
+      </div>
+      <div class="commerce-wizard-panel" id="commerce-wizard-step-3" hidden>
+        <div class="form-group">
+          <label for="commerce-wizard-tier">Grant tier</label>
+          <select id="commerce-wizard-tier" class="input">
+            <option value="">Loading tiers…</option>
+          </select>
+          <p class="form-help" id="commerce-wizard-tier-hint" hidden>Activate the user_management plugin to grant tiers.</p>
+        </div>
+        <p class="form-help" id="commerce-wizard-summary"></p>
+        <button type="button" class="btn btn-secondary" id="commerce-wizard-back-3">Back</button>
+        <button type="button" class="btn btn-primary" id="commerce-wizard-save">Save mapping</button>
+      </div>
+    </div>
+    <div id="commerce-mappings-list" class="payments-connections-list"></div>
+  </div>
+
+  <div id="payments-tab-fulfillment" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header"><h2>Fulfillment</h2></div>
+    <form id="commerce-fulfillment-form" class="payments-settings-form">
+      <div class="form-group">
+        <label>Active adapter</label>
+        <select id="commerce-fulfillment-adapter" class="input">
+          <option value="manual">Manual / Export</option>
+          <option value="shipstation">ShipStation (stub)</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-secondary" id="commerce-test-fulfillment">Test Connection</button>
+      <button type="submit" class="btn btn-primary">Save</button>
+      <div id="commerce-fulfillment-result" class="payments-test-result" hidden></div>
+    </form>
+  </div>
+
+  <div id="payments-tab-shipping" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="commerce-add-shipping-zone">Add Zone</button>
+    </div>
+    <div class="payments-panel-header">
+      <h2>Shipping Zones</h2>
+    </div>
+    <p class="form-text">Per-zone flat rate or weight tiers. Pick countries from the region list or type ISO codes. Use * for default fallback.</p>
+    <div id="commerce-shipping-zones-list" class="payments-connections-list">
+      <div class="loading-state"><p>Loading shipping zones…</p></div>
+    </div>
+    <button type="button" class="btn btn-primary" id="commerce-save-shipping-zones">Save Zones</button>
+  </div>
+
+  <div id="payments-tab-tax" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Tax Rules</h2>
+    </div>
+    <p class="form-text">Tax v1 — a flat default rate applied at checkout, with an optional per-country override table. Rates are percentages (e.g. <code>19</code> for 19%). Tax is applied to the goods subtotal and persisted on each order.</p>
+    <form id="commerce-tax-form" class="payments-settings-form">
+      <div class="form-group">
+        <label><input type="checkbox" id="commerce-tax-enabled"> Enable tax at checkout</label>
+      </div>
+      <div class="form-group">
+        <label>Default rate (%)</label>
+        <input type="number" step="0.01" min="0" id="commerce-tax-default-rate" class="input" value="0">
+      </div>
+      <div class="payments-panel-header">
+        <h3>Country overrides</h3>
+        <button type="button" class="btn btn-secondary" id="commerce-add-tax-country">Add Country</button>
+      </div>
+      <div id="commerce-tax-country-list" class="payments-connections-list">
+        <div class="loading-state"><p>Loading tax rules…</p></div>
+      </div>
+      <button type="button" class="btn btn-primary" id="commerce-save-tax-rules">Save Tax Rules</button>
+    </form>
+  </div>
+
+  <div id="payments-tab-fieldtypes" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button class="btn btn-primary" id="commerce-add-fieldtype-profile">New fieldtype</button>
+    </div>
+    <div class="payments-panel-header">
+      <div>
+        <h2>Commerce Fieldtypes</h2>
+        <p class="commerce-ft-intro">Saved profiles become selectable field types when you build collections. Configure fulfillment, billing intervals, and custom fields once — reuse everywhere.</p>
+      </div>
+    </div>
+
+    <div id="commerce-fieldtype-profiles-list" class="commerce-ft-grid">
+      <div class="loading-state"><p>Loading fieldtype profiles…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-activity" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="payments-panel-header">
+      <h2>Activity Log</h2>
+      <div class="payments-filters">
+        <select id="payments-filter-provider" class="input"><option value="">All providers</option></select>
+        <select id="payments-filter-status" class="input">
+          <option value="">All statuses</option>
+          <option value="succeeded">Succeeded</option>
+          <option value="failed">Failed</option>
+          <option value="pending">Pending</option>
+          <option value="refunded">Refunded</option>
+        </select>
+        <button class="btn btn-secondary" id="payments-refresh-activity">Refresh</button>
+      </div>
+    </div>
+    <div id="payments-activity-list" class="payments-activity-list">
+      <div class="loading-state"><p>Loading activity…</p></div>
+    </div>
+  </div>
+
+  <div id="payments-tab-settings" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="tab-panel-actions">
+      <button type="submit" form="payments-settings-form" class="btn btn-primary">Save Settings</button>
+    </div>
+    <div class="payments-panel-header"><h2>Commerce Settings</h2></div>
+    <form id="payments-settings-form" class="payments-settings-form">
+      <div class="form-group">
+        <label for="payments-selection-mode">Provider Selection Mode</label>
+        <select id="payments-selection-mode" class="input" name="selection_mode">
+          <option value="auto">Auto (resolve by currency/country/method)</option>
+          <option value="fixed">Fixed (always use default provider)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="payments-default-provider">Default Provider</label>
+        <select id="payments-default-provider" class="input" name="default_provider"></select>
+      </div>
+      <div class="form-group">
+        <label for="payments-default-currency">Default currency</label>
+        <select id="payments-default-currency" class="input" name="commerce_default_currency">
+          <option value="eur">EUR</option>
+          <option value="usd">USD</option>
+          <option value="gbp">GBP</option>
+          <option value="chf">CHF</option>
+          <option value="jpy">JPY</option>
+        </select>
+        <p class="form-hint">Charge currency for new purchase options. No FX conversion at checkout.</p>
+      </div>
+      <div class="form-group">
+        <label for="payments-display-currency">Display currency (optional)</label>
+        <select id="payments-display-currency" class="input" name="commerce_display_currency">
+          <option value="">Same as charge currency</option>
+          <option value="eur">EUR</option>
+          <option value="usd">USD</option>
+          <option value="gbp">GBP</option>
+          <option value="chf">CHF</option>
+          <option value="jpy">JPY</option>
+        </select>
+        <p class="form-hint">Catalog display only — checkout still charges purchase-option currency.</p>
+      </div>
+      <div class="form-group">
+        <label for="payments-fx-rates">Manual FX rates (JSON)</label>
+        <textarea id="payments-fx-rates" class="input" name="commerce_fx_rates" rows="4" placeholder='{"EUR":1,"USD":1.08,"GBP":0.86}'></textarea>
+        <p class="form-hint">Rates relative to display currency base (EUR:1). Used by <code>commerce_format_price_display()</code>.</p>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="payments-enable-widget" name="enable_dashboard_widget"> Enable dashboard widget</label>
+      </div>
+      <div class="form-group">
+        <label for="payments-widget-roles">Dashboard widget roles</label>
+        <select id="payments-widget-roles" class="input" multiple size="4">
+          <option value="admin">Admin</option>
+          <option value="editor">Editor</option>
+          <option value="author">Author</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      <hr>
+      <h3>Dunning emails</h3>
+      <p class="form-hint">Optional built-in emails when a subscription payment fails. Automation triggers remain available for custom flows.</p>
+      <div class="form-group">
+        <label><input type="checkbox" id="payments-dunning-email-enabled" name="dunning_email_enabled"> Send dunning email on payment failure</label>
+      </div>
+      <div class="form-group">
+        <label for="payments-dunning-email-subject">Dunning email subject</label>
+        <input type="text" id="payments-dunning-email-subject" class="input" name="dunning_email_subject">
+      </div>
+      <div class="form-group">
+        <label for="payments-dunning-email-body">Dunning email body</label>
+        <textarea id="payments-dunning-email-body" class="input" name="dunning_email_body" rows="6"></textarea>
+        <p class="form-hint">Placeholders: {subscription_id}, {customer_email}, {amount}, {interval}, {attempt_count}</p>
+      </div>
+      <button type="submit" class="btn btn-primary" hidden aria-hidden="true" tabindex="-1">Save Settings</button>
+    </form>
+  </div>
+
+  <div id="payments-tab-documentation" class="payments-tab-panel" role="tabpanel" hidden>
+    <div class="plugin-docs-panel" data-plugin-id="commerce"></div>
+  </div>
+</div>
+
+<div id="commerce-import-wizard" class="commerce-import-wizard" hidden aria-hidden="true">
+  <div class="commerce-import-wizard-overlay" id="commerce-import-wizard-overlay"></div>
+  <div class="commerce-import-wizard-dialog" role="dialog" aria-labelledby="commerce-import-wizard-title">
+    <div class="commerce-import-wizard-header">
+      <div>
+        <h2 id="commerce-import-wizard-title">Import products</h2>
+        <p class="commerce-import-wizard-subtitle" id="commerce-import-wizard-subtitle">Step 1 of 4 — Choose your platform</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="commerce-import-wizard-close" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="commerce-import-wizard-steps" id="commerce-import-wizard-steps">
+      <div class="commerce-import-wizard-step-indicator is-active" data-step="1"><span>1</span> Platform</div>
+      <div class="commerce-import-wizard-step-indicator" data-step="2"><span>2</span> Upload</div>
+      <div class="commerce-import-wizard-step-indicator" data-step="3"><span>3</span> Review</div>
+      <div class="commerce-import-wizard-step-indicator" data-step="4"><span>4</span> Done</div>
+    </div>
+
+    <div class="commerce-import-wizard-body">
+      <div class="commerce-import-wizard-pane is-active" data-step="1">
+        <div class="commerce-import-wizard-toolbar">
+          <input type="search" id="commerce-import-search" class="input" placeholder="Search platforms…" autocomplete="off">
+          <div class="commerce-import-wizard-filters" id="commerce-import-filters">
+            <button type="button" class="btn btn-secondary is-active" data-filter="all">All</button>
+            <button type="button" class="btn btn-secondary" data-filter="store">Stores</button>
+            <button type="button" class="btn btn-secondary" data-filter="inventory">Inventory</button>
+          </div>
+        </div>
+        <div id="commerce-import-wizard-sources" class="commerce-import-wizard-sources"></div>
+      </div>
+
+      <div class="commerce-import-wizard-pane" data-step="2" hidden>
+        <div class="commerce-import-selected-platform" id="commerce-import-selected-platform"></div>
+        <div class="commerce-import-export-steps" id="commerce-import-export-steps"></div>
+        <div class="commerce-import-form-row">
+          <div class="form-group commerce-import-collection-group">
+            <label>Target collection</label>
+            <div class="commerce-import-collection-mode" role="radiogroup" aria-label="Collection target mode">
+              <label class="commerce-import-collection-mode-option">
+                <input type="radio" name="commerce-import-collection-mode" value="existing" checked>
+                Use existing collection
+              </label>
+              <label class="commerce-import-collection-mode-option">
+                <input type="radio" name="commerce-import-collection-mode" value="new">
+                Create new collection
+              </label>
+            </div>
+            <div id="commerce-import-collection-existing">
+              <select id="commerce-import-collection-select" class="input">
+                <option value="">Loading collections…</option>
+              </select>
+              <p class="form-hint">Only collections with a Commerce fieldtype are listed.</p>
+            </div>
+            <div id="commerce-import-collection-new" hidden>
+              <input type="text" id="commerce-import-collection-title" class="input" placeholder="Product catalog">
+              <p class="form-hint">A new collection with Commerce pricing and variant support will be created.</p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="commerce-import-currency">Default currency</label>
+            <select id="commerce-import-currency" class="input">
+              <option value="eur">EUR</option>
+              <option value="usd">USD</option>
+              <option value="gbp">GBP</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Product CSV file</label>
+          <div class="commerce-import-dropzone" id="commerce-import-dropzone">
+            <input type="file" id="commerce-import-file" accept=".csv,text/csv" hidden>
+            <div class="commerce-import-dropzone-icon" aria-hidden="true">CSV</div>
+            <p class="commerce-import-dropzone-text"><strong>Drop your export here</strong> or <button type="button" class="btn btn-secondary" id="commerce-import-browse">Browse files</button></p>
+            <p class="form-hint" id="commerce-import-file-name">No file selected</p>
+          </div>
+          <details class="commerce-import-paste">
+            <summary>Paste CSV instead</summary>
+            <textarea id="commerce-import-csv" class="input" rows="6" placeholder="title,price,currency,sku,quantity"></textarea>
+          </details>
+        </div>
+      </div>
+
+      <div class="commerce-import-wizard-pane" data-step="3" hidden>
+        <div class="commerce-import-review-summary" id="commerce-import-review-summary"></div>
+        <div class="commerce-import-preview-wrap">
+          <h4>Preview</h4>
+          <div id="commerce-import-preview-table" class="commerce-import-preview-table"></div>
+        </div>
+        <div id="commerce-import-review-error" class="payments-test-result error" hidden></div>
+      </div>
+
+      <div class="commerce-import-wizard-pane" data-step="4" hidden>
+        <div class="commerce-import-result-card" id="commerce-import-result-card"></div>
+        <div id="commerce-import-result-errors" class="commerce-import-result-errors" hidden></div>
+      </div>
+    </div>
+
+    <div class="commerce-import-wizard-footer">
+      <button type="button" class="btn btn-secondary" id="commerce-import-wizard-back" hidden>Back</button>
+      <div class="commerce-import-wizard-footer-spacer"></div>
+      <button type="button" class="btn btn-secondary" id="commerce-import-wizard-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="commerce-import-wizard-next">Continue</button>
+      <button type="button" class="btn btn-primary" id="commerce-import-wizard-import" hidden>Import products</button>
+      <button type="button" class="btn btn-primary" id="commerce-import-wizard-done" hidden>Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="commerce-fieldtype-modal" class="commerce-ft-modal" hidden aria-hidden="true">
+  <div class="commerce-ft-modal-overlay" id="commerce-ft-modal-overlay"></div>
+  <div class="commerce-ft-modal-dialog" role="dialog" aria-labelledby="commerce-fieldtype-editor-title">
+    <div class="commerce-ft-modal-header">
+      <div>
+        <h2 id="commerce-fieldtype-editor-title">Edit fieldtype</h2>
+        <p class="commerce-ft-modal-subtitle" id="commerce-ft-modal-subtitle">Configure how this commerce field appears in entry editors.</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="commerce-ft-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="commerce-ft-modal-body">
+      <input type="hidden" id="commerce-ft-profile-id">
+
+      <div class="commerce-ft-presets" id="commerce-ft-presets-wrap">
+        <span class="commerce-ft-presets-label">Quick start</span>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="events">Events</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="digital">Digital</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="physical">Physical</button>
+        <button type="button" class="btn btn-secondary commerce-ft-preset" data-preset="membership">Membership</button>
+      </div>
+
+      <div class="commerce-ft-form-grid">
+        <section class="commerce-ft-section">
+          <h3>Identity</h3>
+          <div class="form-group">
+            <label for="commerce-ft-name">Display name</label>
+            <input type="text" id="commerce-ft-name" class="input" placeholder="Events &amp; Classes">
+          </div>
+          <div class="form-group">
+            <label for="commerce-ft-slug">Slug</label>
+            <input type="text" id="commerce-ft-slug" class="input" placeholder="events">
+            <p class="form-hint">Field type key: <code id="commerce-ft-type-preview">commerce_events</code></p>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Fulfillment</h3>
+          <div class="form-group">
+            <label for="commerce-ft-default-fulfillment">Default</label>
+            <select id="commerce-ft-default-fulfillment" class="input">
+              <option value="ship">Ship — physical products</option>
+              <option value="deliver">Deliver — digital downloads</option>
+              <option value="register">Register — events &amp; tickets</option>
+              <option value="none">None — memberships</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Allowed types</label>
+            <div id="commerce-ft-fulfillments" class="commerce-ft-chip-group"></div>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section commerce-ft-section-wide">
+          <h3>Entry editor panels</h3>
+          <div id="commerce-ft-toggles" class="commerce-ft-toggle-grid"></div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Billing intervals</h3>
+          <div id="commerce-ft-intervals-list" class="commerce-ft-item-list"></div>
+          <div class="commerce-ft-inline-add">
+            <input type="text" id="commerce-ft-interval-value" class="input" placeholder="3_days">
+            <input type="text" id="commerce-ft-interval-label" class="input" placeholder="Every 3 days">
+            <button type="button" class="btn btn-secondary" id="commerce-ft-add-interval">Add</button>
+          </div>
+        </section>
+
+        <section class="commerce-ft-section">
+          <h3>Custom fields</h3>
+          <div id="commerce-ft-custom-fields-list" class="commerce-ft-item-list"></div>
+          <div class="commerce-ft-inline-add">
+            <input type="text" id="commerce-ft-cf-key" class="input" placeholder="field_key">
+            <input type="text" id="commerce-ft-cf-label" class="input" placeholder="Label">
+            <button type="button" class="btn btn-secondary" id="commerce-ft-add-custom-field">Add</button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="commerce-ft-modal-footer">
+      <button type="button" class="btn btn-secondary" id="commerce-ft-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="commerce-ft-save">Save fieldtype</button>
+    </div>
+  </div>
+</div>
+
+<div id="payments-connection-modal" class="modal-backdrop" style="display: none;">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-header">
+      <h2 id="payments-modal-title">Add Connection</h2>
+      <button class="modal-close-btn" id="payments-modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="payments-connection-form">
+        <input type="hidden" id="payments-conn-id" name="id">
+        <div class="form-group">
+          <label for="payments-conn-provider">Provider</label>
+          <select id="payments-conn-provider" class="input" required></select>
+        </div>
+        <div class="form-group">
+          <label for="payments-conn-label">Label</label>
+          <input type="text" id="payments-conn-label" class="input" placeholder="My Stripe Test" required>
+        </div>
+        <div class="form-group">
+          <label for="payments-conn-mode">Mode</label>
+          <select id="payments-conn-mode" class="input">
+            <option value="test">Test / Sandbox</option>
+            <option value="live">Live</option>
+          </select>
+        </div>
+        <div id="payments-credential-fields"></div>
+        <div class="form-group">
+          <label for="payments-webhook-secret">Webhook Secret (optional)</label>
+          <input type="password" id="payments-webhook-secret" class="input" autocomplete="off">
+        </div>
+        <div id="payments-webhook-url-display" class="payments-webhook-url" hidden></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="payments-test-conn">Test Connection</button>
+          <button type="submit" class="btn btn-primary">Save Connection</button>
+        </div>
+        <div id="payments-test-result" class="payments-test-result" hidden></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="{birkly_url '/admin/js/plugin-docs-tab.js'}"></script>
+<script src="{birkly_url '/plugins/commerce/admin/payments.js'}"></script>
+<script src="{birkly_url '/plugins/commerce/admin/commerce.js'}"></script>

@@ -528,7 +528,7 @@ class ContentEditor extends BaseField {
             <div class="field-config-section">
                 <label>CSS Preview URL</label>
                 <input type="url" name="fields[{$fieldIndex}][css_url]" class="input" value="{$cssUrl}" placeholder="{$defaultCss}">
-                <small class="form-text">Link an external CSS file to preview how content will look on your website. This CSS will be applied to this ContentEditor field in the entry editor. Example: <code>/demo-website/styles.css</code> or bundled <code>{$defaultCss}</code>.</small>
+                <small class="form-text">Link an external CSS file to preview how content will look on your website. This CSS will be applied to this ContentEditor field in the entry editor. Example: <code>/project/styles.css</code> or bundled <code>{$defaultCss}</code>.</small>
             </div>
         HTML;
     }

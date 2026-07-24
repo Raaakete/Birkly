@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HaruSocial · Demo</title>
-    <link rel="stylesheet" href="/demo-website/styles.css">
-    <link rel="stylesheet" href="/demo-website/social/social.css">
+    <link rel="stylesheet" href="/project/styles.css">
+    <link rel="stylesheet" href="/project/social/social.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Critical layout: ensures grid and sidebars apply even if external CSS is delayed or fails -->
     <style>
@@ -21,14 +21,14 @@
 <body class="social-feed-page">
     <header class="social-header">
         <div class="social-header-inner">
-            <h1><a href="/demo-website/social/index.html">HaruSocial</a></h1>
+            <h1><a href="/project/social/index.html">HaruSocial</a></h1>
             <nav class="social-header-nav">
-                <a href="/demo-website/social/index.html">Feed</a>
+                <a href="/project/social/index.html">Feed</a>
                 {if user_logged_in}
-                    <a href="/demo-website/social/profile.html?user_id={user_current.id}">My Profile</a>
+                    <a href="/project/social/profile.html?user_id={user_current.id}">My Profile</a>
                 {else}
-                    <a href="/demo-website/social/login.html">Login</a>
-                    <a href="/demo-website/social/register.html">Register</a>
+                    <a href="/project/social/login.html">Login</a>
+                    <a href="/project/social/register.html">Register</a>
                 {endif}
             </nav>
         </div>
@@ -52,18 +52,18 @@
             <!-- Left sidebar: nav -->
             <aside class="social-sidebar-left">
                 <nav class="social-nav-vertical">
-                    <a href="/demo-website/social/index.html" class="social-nav-item active">
+                    <a href="/project/social/index.html" class="social-nav-item active">
                         <span class="social-nav-icon">📋</span>
                         <span>Feed</span>
                     </a>
                     {if user_logged_in}
-                    <a href="/demo-website/social/profile.html?user_id={user_current.id}" class="social-nav-item">
+                    <a href="/project/social/profile.html?user_id={user_current.id}" class="social-nav-item">
                         <span class="social-nav-icon">👤</span>
                         <span>My Profile</span>
                     </a>
                     {else}
-                    <a href="/demo-website/social/login.html" class="social-nav-item">Login</a>
-                    <a href="/demo-website/social/register.html" class="social-nav-item">Register</a>
+                    <a href="/project/social/login.html" class="social-nav-item">Login</a>
+                    <a href="/project/social/register.html" class="social-nav-item">Register</a>
                     {endif}
                 </nav>
                 <div class="social-sidebar-left-demo">
@@ -108,7 +108,7 @@
                             </form>
                         {else}
                             <div style="text-align: center; padding: 2rem 1rem; background: var(--social-bg-light); border-radius: var(--social-radius-sm);">
-                                <p style="margin:0; color: var(--social-text-secondary);">Please <a href="/demo-website/social/login.html" style="color: var(--social-primary); font-weight: 600; text-decoration: none;">log in</a> to post.</p>
+                                <p style="margin:0; color: var(--social-text-secondary);">Please <a href="/project/social/login.html" style="color: var(--social-primary); font-weight: 600; text-decoration: none;">log in</a> to post.</p>
                             </div>
                         {endif}
                     </div>
@@ -147,7 +147,7 @@
                                             </button>
                                         </form>
                                     {endif}
-                                    <a class="btn btn-sm btn-outline-secondary" href="/demo-website/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
+                                    <a class="btn btn-sm btn-outline-secondary" href="/project/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
                                     {if author_user_id = user_current.id}
                                         <button class="btn btn-sm btn-outline-danger" onclick="deletePost('{id}', '{slug}')" style="margin-left: .5rem;">🗑️ Delete</button>
                                     {endif}
@@ -184,7 +184,7 @@
                                                 </button>
                                             </form>
                                         {endif}
-                                        <a class="btn btn-sm btn-outline-secondary" href="/demo-website/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="/project/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
                                         <button class="btn btn-sm btn-outline-danger" onclick="deletePost('{id}', '{slug}')" style="margin-left: .5rem;">🗑️ Delete</button>
                                     </div>
                                 </div>
@@ -221,7 +221,7 @@
                                                 </button>
                                             </form>
                                         {endif}
-                                        <a class="btn btn-sm btn-outline-secondary" href="/demo-website/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="/project/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
                                         {if author_user_id = user_current.id}
                                             <button class="btn btn-sm btn-outline-danger" onclick="deletePost('{id}', '{slug}')" style="margin-left: .5rem;">🗑️ Delete</button>
                                         {endif}
@@ -256,7 +256,7 @@
                                                 </button>
                                             </form>
                                         {endif}
-                                        <a class="btn btn-sm btn-outline-secondary" href="/demo-website/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="/project/social/post.html?slug={ slug }&collection=social_posts">💬 Comment</a>
                                         <button class="btn btn-sm btn-outline-danger" onclick="deletePost('{id}', '{slug}')" style="margin-left: .5rem;">🗑️ Delete</button>
                                     </div>
                                 </div>
@@ -280,7 +280,7 @@
                                 </div>
                                 <div style="white-space: pre-wrap; margin: .75rem 0;">{ content }</div>
                                 <div class="post-actions">
-                                    <a class="btn btn-sm btn-outline-secondary" href="/demo-website/social/post.html?slug={ slug }&collection=social_posts">💬 View & Comment</a>
+                                    <a class="btn btn-sm btn-outline-secondary" href="/project/social/post.html?slug={ slug }&collection=social_posts">💬 View & Comment</a>
                                 </div>
                             </div>
                         {endif}
@@ -317,7 +317,7 @@
                             <div class="social-people-item">
                                 <strong>{ u.name }</strong>
                                 <div class="text-muted social-people-email">{ u.email }</div>
-                                <a class="btn btn-sm btn-outline-secondary social-people-link" href="/demo-website/social/profile.html?user_id={u.id}">Open profile</a>
+                                <a class="btn btn-sm btn-outline-secondary social-people-link" href="/project/social/profile.html?user_id={u.id}">Open profile</a>
                             </div>
                         {endfor}
                         </div>
@@ -345,7 +345,7 @@
             document.addEventListener('DOMContentLoaded', function() {
                 var banner = document.createElement('div');
                 banner.style.cssText = 'background:#c00;color:#fff;padding:12px;text-align:center;font-family:sans-serif;';
-                banner.innerHTML = 'CMS client did not load. Open this page via the dev server: <strong>http://localhost:8080/demo-website/social/index.html</strong>';
+                banner.innerHTML = 'CMS client did not load. Open this page via the dev server: <strong>http://localhost:8080/project/social/index.html</strong>';
                 document.body.insertBefore(banner, document.body.firstChild);
             });
         }

@@ -1,9 +1,11 @@
 <?php
 /**
- * Starter template packs for onboarding (demo collections + demo website).
+ * Starter template packs for onboarding (demo collections + public site under project/).
  */
 
 declare(strict_types=1);
+
+require_once __DIR__ . '/project_site.php';
 
 function birkly_demo_starter_catalog(): array
 {
@@ -157,7 +159,7 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
 
     $pack = $catalog[$templateId];
     $contentRoot = $projectRoot . '/content/collections';
-    $websiteRoot = $projectRoot . '/demo-website';
+    $websiteRoot = birkly_public_site_path();
     $packRoot = $projectRoot . '/demo-content/' . $templateId;
 
     $removed = [];
@@ -221,7 +223,8 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         'success' => $success,
         'template' => $templateId,
         'installed_collections' => $installed,
-        'demo_website' => $hasWebsite,
+            'demo_website' => $hasWebsite,
+            'project_site' => $hasWebsite,
         'removed' => $removed,
         'message' => $success ? 'Starter template installed' : 'Starter template could not be installed',
     ];
