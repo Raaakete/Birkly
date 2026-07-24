@@ -1,18 +1,19 @@
 /**
- * Settings → Project tab — overview, file tree, AI activity.
+ * Settings → Project tab — overview, file tree, activity.
  */
 (function () {
     'use strict';
 
     var state = {
-        overview: null,
         currentPath: '',
-        selectedFile: null,
-        initialized: false
+        selectedFile: null
     };
 
     function apiUrl(path) {
-        return (window.Birkly && window.Birkly.url) ? window.Birkly.url(path) : path;
+        if (window.Birkly && typeof window.Birkly.url === 'function') {
+            return window.Birkly.url(path);
+        }
+        return path;
     }
 
     function getCsrfToken() {
@@ -47,13 +48,58 @@
         }
     }
 
-    async function fetchOverview() {
-        var response = await fetch(apiUrl('/api/project_site.php?action=overview'), { credentials: 'same-origin' });
-        var payload = await response.json();
-        if (!response.ok || payload.status !== 'ok') {
-            throw new Error(payload.message || 'Failed to load project overview');
+    function fetchJson(url, options) {
+        return fetch(url, options || { credentials: 'same-origin' }).then(function (response) {
+            return response.text().then(function (text) {
+                var payload;
+                try {
+                    payload = text ? JSON.parse(text) : {};
+                } catch (e) {
+                    throw new Error('Invalid response from server');
+                }
+                if (!response.ok || payload.status !== 'ok') {
+                    throw new Error(payload.message || ('Request failed (' + response.status + ')'));
+                }
+                return payload;
+            });
+        });
+    }
+
+    function formatActor(item) {
+        var user = item.user || 'Unknown';
+        var details = item.details || {};
+        if (details.reviewed_by) {
+            return details.reviewed_by + ' approved AI change';
         }
-        return payload.data;
+        if (details.source === 'ai') {
+            return details.ai_user_id ? ('AI · ' + details.ai_user_id) : 'AI';
+        }
+        if (details.source === 'admin') {
+            return user + ' (admin)';
+        }
+        return user;
+    }
+
+    function setLoading(containerId, message) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '<div class="loading-state"><div class="spinner"></div>' +
+            (message ? '<p>' + escapeHtml(message) + '</p>' : '') + '</div>';
+    }
+
+    function setError(containerId, message) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '<div class="error-state"><p>' + escapeHtml(message) + '</p></div>';
+    }
+
+    function loadOverview() {
+        setLoading('project-overview-content', 'Loading project info...');
+        return fetchJson(apiUrl('/api/project_site.php?action=overview')).then(function (payload) {
+            renderOverview(payload.data || {});
+        }).catch(function (error) {
+            setError('project-overview-content', error.message || 'Failed to load project overview');
+        });
     }
 
     function renderOverview(data) {
@@ -80,8 +126,8 @@
         }
     }
 
-    async function saveVisitButtonSetting(enabled) {
-        var response = await fetch(apiUrl('/api/project_site.php?action=save_settings'), {
+    function saveVisitButtonSetting(enabled) {
+        return fetchJson(apiUrl('/api/project_site.php?action=save_settings'), {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
@@ -91,21 +137,10 @@
                 _csrf: getCsrfToken()
             })
         });
-        var payload = await response.json();
-        if (!response.ok || payload.status !== 'ok') {
-            throw new Error(payload.message || 'Failed to save setting');
-        }
     }
 
-    async function loadFileTree(path) {
-        var response = await fetch(apiUrl('/api/project_site.php?action=list&path=' + encodeURIComponent(path || '')), {
-            credentials: 'same-origin'
-        });
-        var payload = await response.json();
-        if (!response.ok || payload.status !== 'ok') {
-            throw new Error(payload.message || 'Failed to list files');
-        }
-        return payload.data;
+    function loadFileTree(path) {
+        return fetchJson(apiUrl('/api/project_site.php?action=list&path=' + encodeURIComponent(path || '')));
     }
 
     function renderBreadcrumb(path) {
@@ -115,12 +150,11 @@
         var parts = path ? path.split('/') : [];
         var html = '<button type="button" class="project-crumb" data-path="">project/</button>';
         var built = '';
-        parts.forEach(function (part, index) {
+        parts.forEach(function (part) {
             if (!part) return;
             built = built ? built + '/' + part : part;
-            var crumbPath = built;
             html += '<span class="project-crumb-sep">/</span>';
-            html += '<button type="button" class="project-crumb" data-path="' + escapeHtml(crumbPath) + '">' + escapeHtml(part) + '</button>';
+            html += '<button type="button" class="project-crumb" data-path="' + escapeHtml(built) + '">' + escapeHtml(part) + '</button>';
         });
         el.innerHTML = html;
     }
@@ -142,44 +176,39 @@
         }).join('') + '</ul>';
     }
 
-    async function previewFile(path) {
-        var response = await fetch(apiUrl('/api/project_site.php?action=read&path=' + encodeURIComponent(path)), {
-            credentials: 'same-origin'
+    function refreshFiles() {
+        setLoading('project-file-tree');
+        return loadFileTree(state.currentPath).then(function (payload) {
+            renderBreadcrumb(state.currentPath);
+            renderFileTree((payload.data && payload.data.entries) || []);
+        }).catch(function (error) {
+            setError('project-file-tree', error.message || 'Failed to list files');
         });
-        var payload = await response.json();
-        if (!response.ok || payload.status !== 'ok') {
-            throw new Error(payload.message || 'Failed to read file');
-        }
-
-        var preview = document.getElementById('project-file-preview');
-        var title = document.getElementById('project-preview-title');
-        var deleteBtn = document.getElementById('project-delete-file-btn');
-        if (title) title.textContent = path;
-        if (preview) preview.textContent = payload.data.content || '';
-        if (deleteBtn) deleteBtn.style.display = '';
-        state.selectedFile = path;
     }
 
-    async function refreshFiles() {
-        var data = await loadFileTree(state.currentPath);
-        renderBreadcrumb(state.currentPath);
-        renderFileTree(data.entries || []);
+    function previewFile(path) {
+        return fetchJson(apiUrl('/api/project_site.php?action=read&path=' + encodeURIComponent(path))).then(function (payload) {
+            var preview = document.getElementById('project-file-preview');
+            var title = document.getElementById('project-preview-title');
+            var deleteBtn = document.getElementById('project-delete-file-btn');
+            if (title) title.textContent = path;
+            if (preview) preview.textContent = (payload.data && payload.data.content) || '';
+            if (deleteBtn) deleteBtn.style.display = '';
+            state.selectedFile = path;
+        }).catch(function (error) {
+            alert(error.message || 'Failed to read file');
+        });
     }
 
-    async function loadActivity() {
-        var container = document.getElementById('project-activity-list');
-        if (!container) return;
+    function loadActivity() {
+        setLoading('project-activity-list');
+        return fetchJson(apiUrl('/api/project_site.php?action=activity&limit=20')).then(function (payload) {
+            var container = document.getElementById('project-activity-list');
+            if (!container) return;
 
-        try {
-            var response = await fetch(apiUrl('/api/project_site.php?action=activity&limit=20'), { credentials: 'same-origin' });
-            var payload = await response.json();
-            if (!response.ok || payload.status !== 'ok') {
-                throw new Error(payload.message || 'Failed to load activity');
-            }
-
-            var items = payload.data.activity || [];
+            var items = (payload.data && payload.data.activity) || [];
             if (!items.length) {
-                container.innerHTML = '<div class="empty-state"><p>No project file activity yet.</p></div>';
+                container.innerHTML = '<div class="empty-state"><p>No project activity yet.</p></div>';
                 return;
             }
 
@@ -188,13 +217,13 @@
                     '<span class="project-activity-icon">' + escapeHtml(item.icon || '📌') + '</span>' +
                     '<div class="project-activity-body">' +
                         '<div class="project-activity-message">' + escapeHtml(item.message || item.event) + '</div>' +
-                        '<div class="project-activity-meta">' + escapeHtml(item.user || '') + ' · ' + escapeHtml(formatDate(item.timestamp)) + '</div>' +
+                        '<div class="project-activity-meta">' + escapeHtml(formatActor(item)) + ' · ' + escapeHtml(formatDate(item.timestamp)) + '</div>' +
                     '</div>' +
                 '</li>';
             }).join('') + '</ul>';
-        } catch (error) {
-            container.innerHTML = '<div class="error-state"><p>' + escapeHtml(error.message) + '</p></div>';
-        }
+        }).catch(function (error) {
+            setError('project-activity-list', error.message || 'Failed to load activity');
+        });
     }
 
     function bindEvents() {
@@ -220,10 +249,10 @@
                 if (type === 'dir') {
                     state.currentPath = path;
                     state.selectedFile = null;
-                    refreshFiles().catch(function (error) { alert(error.message); });
+                    refreshFiles();
                     return;
                 }
-                previewFile(path).catch(function (error) { alert(error.message); });
+                previewFile(path);
             });
         }
 
@@ -235,7 +264,7 @@
                 if (!btn) return;
                 state.currentPath = btn.getAttribute('data-path') || '';
                 state.selectedFile = null;
-                refreshFiles().catch(function (error) { alert(error.message); });
+                refreshFiles();
             });
         }
 
@@ -247,7 +276,7 @@
                 if (!relative) return;
                 relative = relative.replace(/^\/+/, '');
                 var content = prompt('Initial content (optional):', '') || '';
-                fetch(apiUrl('/api/project_site.php?action=create'), {
+                fetchJson(apiUrl('/api/project_site.php?action=create'), {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
@@ -257,14 +286,14 @@
                         content: content,
                         _csrf: getCsrfToken()
                     })
-                }).then(function (response) { return response.json(); })
-                    .then(function (payload) {
-                        if (payload.status !== 'ok') throw new Error(payload.message || 'Create failed');
-                        var parent = relative.indexOf('/') >= 0 ? relative.split('/').slice(0, -1).join('/') : '';
-                        state.currentPath = parent;
-                        return Promise.all([refreshFiles(), loadActivity()]);
-                    })
-                    .catch(function (error) { alert(error.message); });
+                }).then(function () {
+                    var parent = relative.indexOf('/') >= 0 ? relative.split('/').slice(0, -1).join('/') : '';
+                    state.currentPath = parent;
+                    refreshFiles();
+                    loadActivity();
+                }).catch(function (error) {
+                    alert(error.message);
+                });
             });
         }
 
@@ -274,7 +303,7 @@
             deleteBtn.addEventListener('click', function () {
                 if (!state.selectedFile) return;
                 if (!confirm('Delete ' + state.selectedFile + '? This cannot be undone.')) return;
-                fetch(apiUrl('/api/project_site.php?action=delete'), {
+                fetchJson(apiUrl('/api/project_site.php?action=delete'), {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
@@ -283,37 +312,31 @@
                         path: state.selectedFile,
                         _csrf: getCsrfToken()
                     })
-                }).then(function (response) { return response.json(); })
-                    .then(function (payload) {
-                        if (payload.status !== 'ok') throw new Error(payload.message || 'Delete failed');
-                        state.selectedFile = null;
-                        var preview = document.getElementById('project-file-preview');
-                        var title = document.getElementById('project-preview-title');
-                        if (preview) preview.innerHTML = '<span class="text-muted">Select a file to preview</span>';
-                        if (title) title.textContent = 'Preview';
-                        deleteBtn.style.display = 'none';
-                        return Promise.all([refreshFiles(), loadActivity()]);
-                    })
-                    .catch(function (error) { alert(error.message); });
+                }).then(function () {
+                    state.selectedFile = null;
+                    var preview = document.getElementById('project-file-preview');
+                    var title = document.getElementById('project-preview-title');
+                    if (preview) preview.innerHTML = '<span class="text-muted">Select a file to preview</span>';
+                    if (title) title.textContent = 'Preview';
+                    deleteBtn.style.display = 'none';
+                    refreshFiles();
+                    loadActivity();
+                }).catch(function (error) {
+                    alert(error.message);
+                });
             });
         }
     }
 
-    async function initProjectSettings() {
-        bindEvents();
-
-        try {
-            state.overview = await fetchOverview();
-            renderOverview(state.overview);
-            await refreshFiles();
-            await loadActivity();
-            state.initialized = true;
-        } catch (error) {
-            var overview = document.getElementById('project-overview-content');
-            if (overview) {
-                overview.innerHTML = '<div class="error-state"><p>' + escapeHtml(error.message) + '</p></div>';
-            }
+    function initProjectSettings() {
+        if (!document.getElementById('project')) {
+            return;
         }
+
+        bindEvents();
+        loadOverview();
+        refreshFiles();
+        loadActivity();
     }
 
     window.initProjectSettings = initProjectSettings;
