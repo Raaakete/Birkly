@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/project_site.php';
+require_once __DIR__ . '/ops_starters_client.php';
 
 function birkly_demo_starter_catalog(): array
 {
@@ -73,22 +74,40 @@ function birkly_demo_starter_is_selectable(string $projectRoot, string $template
     if (!isset($catalog[$templateId])) {
         return false;
     }
+    if ($templateId === 'blank') {
+        return true;
+    }
     if (empty($catalog[$templateId]['onboarding_enabled'])) {
         return false;
     }
+
+    $opsOverlay = birkly_ops_starter_availability_overlay($projectRoot);
+    if (isset($opsOverlay[$templateId]) && !empty($opsOverlay[$templateId]['selectable'])) {
+        return true;
+    }
+
     return birkly_demo_starter_pack_ready($projectRoot, $templateId);
 }
 
 function birkly_demo_starter_availability(string $projectRoot): array
 {
     $availability = [];
+    $opsOverlay = birkly_ops_starter_availability_overlay($projectRoot);
+
     foreach (birkly_demo_starter_catalog() as $templateId => $pack) {
+        if (isset($opsOverlay[$templateId])) {
+            $availability[$templateId] = $opsOverlay[$templateId];
+            continue;
+        }
+
         $availability[$templateId] = [
             'enabled' => !empty($pack['onboarding_enabled']),
             'ready' => birkly_demo_starter_pack_ready($projectRoot, $templateId),
-            'selectable' => birkly_demo_starter_is_selectable($projectRoot, $templateId),
+            'selectable' => !empty($pack['onboarding_enabled']) && birkly_demo_starter_pack_ready($projectRoot, $templateId),
+            'source' => 'local',
         ];
     }
+
     return $availability;
 }
 
@@ -187,13 +206,36 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
     }
 
     if (!birkly_demo_starter_pack_ready($projectRoot, $templateId)) {
+        $tmpZip = sys_get_temp_dir() . '/birkly-starter-' . $templateId . '-' . getmypid() . '.zip';
+        $download = birkly_ops_download_starter_zip($templateId, $tmpZip);
+        if ($download !== null) {
+            $extracted = birkly_ops_extract_starter_zip($tmpZip, $projectRoot);
+            @unlink($tmpZip);
+            if ($extracted['success']) {
+                $primary = birkly_demo_starter_primary_collection($templateId);
+                $primaryInstalled = $primary === null || in_array($primary, $extracted['installed_collections'], true);
+                return [
+                    'success' => $primaryInstalled,
+                    'template' => $templateId,
+                    'installed_collections' => $extracted['installed_collections'],
+                    'demo_website' => $extracted['project_site'],
+                    'project_site' => $extracted['project_site'],
+                    'removed' => $removed,
+                    'source' => 'ops',
+                    'message' => $extracted['message'],
+                ];
+            }
+        } else {
+            @unlink($tmpZip);
+        }
+
         return [
             'success' => false,
             'template' => $templateId,
             'installed_collections' => [],
             'demo_website' => false,
             'removed' => $removed,
-            'message' => 'Starter template files are missing from this install',
+            'message' => 'Starter template is not available. Connect to Ops or use a local dev tree with demo-content.',
         ];
     }
 
