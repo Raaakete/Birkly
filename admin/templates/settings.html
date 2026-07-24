@@ -71,6 +71,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.domains') ?>
       </button>
+      <button type="button" class="tab" data-tab="project">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7l9-4 9 4-9 4-9-4z"></path>
+          <path d="M3 17l9 4 9-4"></path>
+          <path d="M3 12l9 4 9-4"></path>
+        </svg>
+        Project
+      </button>
       <button type="button" class="tab" data-tab="activity-log">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -628,6 +636,74 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p><?= __('admin.loading_domains') ?>...</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Project Tab -->
+      <div class="tab-pane" id="project">
+        <div class="settings-stack project-settings">
+          <section class="card project-overview-card">
+            <div class="section-header">
+              <h2>Project overview</h2>
+              <p class="section-description">Bundled public site workspace on this installation. Content can also be consumed on external sites via the public API and Domains whitelist.</p>
+            </div>
+            <div id="project-overview-content" class="project-overview-grid">
+              <div class="loading-state"><div class="spinner"></div><p>Loading project info...</p></div>
+            </div>
+            <div class="form-group project-visit-toggle">
+              <label class="checkbox-label">
+                <input type="checkbox" id="project-show-visit-button">
+                Show “Visit project” in admin header
+              </label>
+              <small class="form-help">Opens <code>project/index.html</code> in a new tab when the file exists.</small>
+            </div>
+          </section>
+
+          <section class="card project-files-card">
+            <div class="section-header project-files-header">
+              <div>
+                <h2>Files</h2>
+                <p class="section-description">Read-only tree with light add/delete. For full design work, use Studio or edit locally.</p>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" id="project-add-file-btn">Add file</button>
+            </div>
+            <div class="project-files-layout">
+              <div class="project-file-tree-wrap">
+                <div id="project-file-breadcrumb" class="project-file-breadcrumb">project/</div>
+                <div id="project-file-tree" class="project-file-tree">
+                  <div class="loading-state"><div class="spinner"></div></div>
+                </div>
+              </div>
+              <div class="project-file-preview-wrap">
+                <div class="project-file-preview-header">
+                  <h3 id="project-preview-title">Preview</h3>
+                  <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" style="display:none;">Delete file</button>
+                </div>
+                <pre id="project-file-preview" class="project-file-preview"><span class="text-muted">Select a file to preview</span></pre>
+              </div>
+            </div>
+          </section>
+
+          <section class="card project-activity-card">
+            <div class="section-header">
+              <h2>AI activity</h2>
+              <p class="section-description">Recent project file changes from AI approvals and direct writes.</p>
+            </div>
+            <div id="project-activity-list" class="project-activity-list">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </section>
+
+          <section class="card project-access-card">
+            <div class="section-header">
+              <h2>Access</h2>
+              <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
+            </div>
+            <div class="project-access-links">
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '#ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '#domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -1497,6 +1573,7 @@ window.webhooksData = window.webhooksData || { collections: <?= $webhookCollecti
 
 <script src="<?= birkly_url('/admin/js/webhooks.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/redirects.js') ?>"></script>
+<script src="<?= birkly_url('/admin/js/project-settings.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/mcp-connections.js') ?>"></script>
 
