@@ -1147,7 +1147,14 @@
             if (Array.isArray(bundled) && bundled.length === 0) {
                 return;
             }
-            if (data[key] === undefined) {
+            if (data[key] !== undefined) {
+                return;
+            }
+            if (Array.isArray(bundled)) {
+                data[key] = bundled.map((row) => flattenLocalizedEntry(row));
+            } else if (bundled && typeof bundled === 'object') {
+                data[key] = flattenLocalizedEntry(bundled);
+            } else {
                 data[key] = bundled;
             }
         });
@@ -2353,6 +2360,118 @@
         Birkly.render = globalThis.Birkly.render;
     }
 
+    let birklyRevealObserver = null;
+
+    /**
+     * Marsk templates hide .reveal / .reveal-stagger content until .is-visible is added.
+     * Birkly injects CMS HTML after page load, so Marsk's one-time observer often misses
+     * below-fold sections. Re-run reveal setup after every template render.
+     */
+    function setupPostRenderReveals() {
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const revealSelector = '.reveal:not(.is-visible), .reveal-stagger:not(.is-visible)';
+
+        function revealIfInView(el) {
+            const rect = el.getBoundingClientRect();
+            const margin = 160;
+            if (rect.top < window.innerHeight + margin && rect.bottom > -margin) {
+                el.classList.add('is-visible');
+                if (birklyRevealObserver) {
+                    birklyRevealObserver.unobserve(el);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        if (prefersReducedMotion) {
+            document.querySelectorAll('.reveal, .reveal-stagger').forEach((el) => {
+                el.classList.add('is-visible');
+            });
+            return;
+        }
+
+        const pending = document.querySelectorAll(revealSelector);
+        if (!pending.length) {
+            return;
+        }
+
+        if ('IntersectionObserver' in window) {
+            if (!birklyRevealObserver) {
+                birklyRevealObserver = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            birklyRevealObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.01, rootMargin: '160px 0px 160px 0px' });
+            }
+
+            pending.forEach((el) => {
+                if (!revealIfInView(el)) {
+                    birklyRevealObserver.observe(el);
+                }
+            });
+        } else {
+            pending.forEach((el) => el.classList.add('is-visible'));
+        }
+
+        if (!window.__birklyRevealScrollBound) {
+            window.__birklyRevealScrollBound = true;
+            let scrollTick = false;
+            window.addEventListener('scroll', () => {
+                if (scrollTick) {
+                    return;
+                }
+                scrollTick = true;
+                requestAnimationFrame(() => {
+                    document.querySelectorAll(revealSelector).forEach(revealIfInView);
+                    scrollTick = false;
+                });
+            }, { passive: true });
+        }
+    }
+
+    function normalizeSiteElementsMap(raw) {
+        if (!raw) {
+            return {};
+        }
+        if (!Array.isArray(raw)) {
+            return raw;
+        }
+        const map = {};
+        raw.forEach((entry) => {
+            const normalized = flattenLocalizedEntry(entry);
+            const key = normalized.key || normalized.slug || normalized.id;
+            if (key) {
+                map[key] = normalized;
+            }
+        });
+        return map;
+    }
+
+    function normalizeRenderData(data) {
+        if (!data || typeof data !== 'object') {
+            return data;
+        }
+        if (data.site_elements) {
+            data.site_elements = normalizeSiteElementsMap(data.site_elements);
+        }
+        Object.keys(data).forEach((key) => {
+            if (key === 'site_elements' || key === 'query' || key === 'current') {
+                return;
+            }
+            const value = data[key];
+            if (Array.isArray(value)) {
+                data[key] = value.map((row) => flattenLocalizedEntry(row));
+            } else if (key.indexOf('__entry__:') === 0 && value && typeof value === 'object') {
+                data[key] = flattenLocalizedEntry(value);
+            }
+        });
+        return data;
+    }
+
     async function processTemplatesV3() {
         const siteElements = await getAllSiteElements();
         urlParams = new URLSearchParams(window.location.search);
@@ -2394,16 +2513,7 @@
             current: { language: Birkly.currentLanguage || 'en' }
         };
         mergePageBundleIntoData(data);
-
-        if (Array.isArray(data.site_elements)) {
-            const map = {};
-            data.site_elements.forEach((e) => {
-                const n = flattenLocalizedEntry(e);
-                const key = n.key || n.slug || n.id;
-                if (key) map[key] = n;
-            });
-            data.site_elements = map;
-        }
+        normalizeRenderData(data);
 
         if (slug && collection) {
             try {
@@ -2444,6 +2554,11 @@
                 document.title = Birkly.render.render(document.title, data);
             }
         }
+
+        setupPostRenderReveals();
+        try {
+            document.dispatchEvent(new CustomEvent('birkly:reveals-refresh'));
+        } catch (e) { /* ignore */ }
 
         console.log('[Birkly] v3: rendered', regions.length, 'regions');
     }
