@@ -2328,6 +2328,10 @@
         const header = doc.querySelector('header');
         if (header) add(header);
 
+        doc.querySelectorAll('nav').forEach((nav) => add(nav));
+
+        doc.querySelectorAll('[data-birkly-region]').forEach((el) => add(el));
+
         const footer = doc.querySelector('footer');
         if (footer) add(footer);
 
