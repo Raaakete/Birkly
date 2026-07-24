@@ -19,12 +19,20 @@ if [[ -z "$PLUGIN_ID" ]]; then
 fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PLUGIN_DIR="$ROOT/plugins/$PLUGIN_ID"
+OPS_ROOT="${BIRKLY_OPS_ROOT:-$(dirname "$ROOT")/Birkly-Marketplace}"
+PLUGIN_SRC="${OFFICIAL_PLUGINS_SRC:-$OPS_ROOT/internal/cms/packages/official-plugins}"
+PLUGIN_DIR="$PLUGIN_SRC/$PLUGIN_ID"
+# Installed copy for local dev (optional)
+PLUGIN_INSTALL="$ROOT/plugins/$PLUGIN_ID"
 MANIFEST="$ROOT/scripts/cms-release-manifest.json"
 
 if [[ ! -d "$PLUGIN_DIR" ]]; then
-  echo "Plugin directory not found: $PLUGIN_DIR" >&2
-  exit 1
+  if [[ -d "$PLUGIN_INSTALL" ]]; then
+    PLUGIN_DIR="$PLUGIN_INSTALL"
+  else
+    echo "Plugin directory not found: $PLUGIN_SRC/$PLUGIN_ID (set OFFICIAL_PLUGINS_SRC)" >&2
+    exit 1
+  fi
 fi
 
 if [[ ! -f "$PLUGIN_DIR/plugin.json" ]]; then
