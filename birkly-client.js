@@ -433,9 +433,15 @@
             let rest = m[2].trim();
             let filterExpr = null;
             let orderExpr = null;
+            let limitExpr = null;
             const orderMatch = rest.match(/\s+ordered\s+by\s+(.+)$/i);
             if (orderMatch) {
                 orderExpr = orderMatch[1].trim();
+                const limitInOrder = orderExpr.match(/^(.+?)\s+limit\s+(\d+)\s*$/i);
+                if (limitInOrder) {
+                    orderExpr = limitInOrder[1].trim();
+                    limitExpr = parseInt(limitInOrder[2], 10);
+                }
                 rest = rest.substring(0, orderMatch.index).trim();
             }
             const withMatch = rest.match(/\s+with\s+(.+)$/i);
@@ -443,7 +449,12 @@
                 filterExpr = withMatch[1].trim();
                 rest = rest.substring(0, withMatch.index).trim();
             }
-            return { full: m[0], itemVar: m[1], inClause: rest, filterExpr, orderExpr };
+            const limitMatch = rest.match(/\s+limit\s+(\d+)\s*$/i);
+            if (limitMatch) {
+                limitExpr = parseInt(limitMatch[1], 10);
+                rest = rest.substring(0, limitMatch.index).trim();
+            }
+            return { full: m[0], itemVar: m[1], inClause: rest, filterExpr, orderExpr, limitExpr };
         };
         
         Birkly.conditionals.renderConditionals = function(template, data, itemPrefix = '') {
@@ -2041,6 +2052,7 @@
             const inClause = loopHeader.inClause;
             const filterExpr = loopHeader.filterExpr;
             const orderExpr = loopHeader.orderExpr;
+            const limitExpr = loopHeader.limitExpr;
             const __token = '__BIRKLY_LOOP__' + Math.random().toString(36).slice(2) + '__';
             let items = resolveLoopItems(inClause, data);
             if (!Array.isArray(items)) items = [];
@@ -2105,7 +2117,17 @@
                     sortByDateField('created_at', -1);
                 } else if (order === 'last-updated') {
                     sortByDateField('updated_at', +1);
+                } else if (order === 'order') {
+                    items = items.slice().sort((a, b) => {
+                        const oa = parseFloat(a && a.order != null ? a.order : (a && a.sort_order != null ? a.sort_order : 0)) || 0;
+                        const ob = parseFloat(b && b.order != null ? b.order : (b && b.sort_order != null ? b.sort_order : 0)) || 0;
+                        return oa - ob;
+                    });
                 }
+            }
+
+            if (limitExpr && limitExpr > 0) {
+                items = items.slice(0, limitExpr);
             }
 
             // Find the matching {endfor} or {endforeach}
@@ -4119,6 +4141,26 @@
         // Find ALL elements with template syntax (including in attributes)
         // We need to check both text nodes AND attribute values
         const templates = [];
+        const markTemplateSubtreeProcessed = (el) => {
+            if (!el) return;
+            el.dataset.cmsProcessed = 'true';
+            el.querySelectorAll('*').forEach((child) => {
+                child.dataset.cmsProcessed = 'true';
+            });
+        };
+
+        // Prefer a single <main> pass when it contains CMS collection loops (avoids fragmenting
+        // hero/marquee/blog into separate templates that abort or strip each other).
+        const mainTemplateRoot = document.querySelector('main');
+        if (mainTemplateRoot && /\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"][^'"]+['"]/.test(mainTemplateRoot.innerHTML || '')) {
+            markTemplateSubtreeProcessed(mainTemplateRoot);
+            templates.push({
+                element: mainTemplateRoot,
+                originalHtml: mainTemplateRoot.innerHTML,
+                template: mainTemplateRoot.innerHTML
+            });
+            Birkly.log('Birkly: Registered primary main template root');
+        }
         
         // Method 1: Check text nodes (for content)
         const walker = document.createTreeWalker(
@@ -4665,11 +4707,16 @@
                 // so profile page (profile_posts from prefetch) uses the collection branch and gets prefetches.
                 const collectionMatchesQuoted = template.template.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+['"]([^'"]+)['"][^}]*\}/g);
                 const collectionMatchesUnquoted = template.template.match(/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+([a-zA-Z0-9_\.]+)(?:\s+with\s+[^{}]+?)?(?:\s+ordered\s+by\s+[^{}]+?)?\s*\}/g);
-                const collectionMatches = collectionMatchesQuoted || collectionMatchesUnquoted;
+                const reservedLoopPaths = new Set(['content', 'tags', 'entry', 'query', 'comments']);
+                const hasQuotedCollectionLoops = !!(collectionMatchesQuoted && collectionMatchesQuoted.length);
+                const hasPrefetchCollectionLoops = !!(collectionMatchesUnquoted && collectionMatchesUnquoted.some((match) => {
+                    const m = match.match(/\s+in\s+([a-zA-Z0-9_\.]+)/);
+                    return m && !reservedLoopPaths.has(m[1]);
+                }));
                 
-                Birkly.log('Birkly: Checking for collection loops in template. Template length:', template.template.length, 'Has collection loop:', !!collectionMatches, 'Matches:', collectionMatches);
+                Birkly.log('Birkly: Checking for collection loops in template. Template length:', template.template.length, 'Has quoted collection loop:', hasQuotedCollectionLoops, 'Has prefetch loop:', hasPrefetchCollectionLoops);
                 
-                if (collectionMatches) {
+                if (hasQuotedCollectionLoops || hasPrefetchCollectionLoops) {
                     const collections = [];
                     (collectionMatchesQuoted || []).forEach(match => {
                         const m = match.match(/['"]([^'"]+)['"]/);
@@ -4677,7 +4724,7 @@
                     });
                     (collectionMatchesUnquoted || []).forEach(match => {
                         const m = match.match(/\s+in\s+([a-zA-Z0-9_\.]+)/);
-                        if (m && collections.indexOf(m[1]) === -1) collections.push(m[1]);
+                        if (m && !reservedLoopPaths.has(m[1]) && collections.indexOf(m[1]) === -1) collections.push(m[1]);
                     });
                     
                     Birkly.log('Birkly: Found collections:', collections);
@@ -4871,8 +4918,8 @@
                     
                     // Safety check: if rendered output is suspiciously short, don't replace content
                     if (!safeSetInnerHTML(template.element, rendered, template.template, 'no-collections')) {
-                        // Content was not replaced due to safety check - abort this template processing
-                        return;
+                        // Content was not replaced due to safety check - skip this fragment only
+                        continue;
                     }
                     
                     // Restore entry blocks BEFORE setting innerHTML
@@ -5429,6 +5476,9 @@
         await processTemplates();
         console.log('[Birkly] init: templates processed');
         Birkly.log('Birkly: Templates processed');
+        try {
+            document.dispatchEvent(new CustomEvent('birkly:templates-processed'));
+        } catch (e) { /* ignore */ }
         } catch (err) {
             console.error('[Birkly] init error:', err);
             Birkly.error('Birkly: init error:', err);
