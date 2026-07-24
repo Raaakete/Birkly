@@ -90,3 +90,4 @@ demo-*.html
 
 # Session files
 sess_*
+dist/
