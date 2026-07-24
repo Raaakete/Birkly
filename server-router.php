@@ -20,6 +20,7 @@ if ($uri === false || $uri === null) {
 }
 
 require_once __DIR__ . '/core/birkly_paths.php';
+require_once __DIR__ . '/core/http_routes.php';
 
 $base = birkly_base_path();
 if ($base !== '' && str_starts_with($uri, $base)) {
@@ -29,44 +30,7 @@ if ($base !== '' && str_starts_with($uri, $base)) {
     }
 }
 
-$oauthRoutes = [
-    '/health' => '/api/health.php',
-    '/favicon.ico' => '/admin/assets/birkly-icon.svg',
-    '/.well-known/oauth-protected-resource' => '/api/oauth_protected_resource.php',
-    '/.well-known/oauth-authorization-server' => '/api/oauth_authorization_server.php',
-    '/oauth/authorize' => '/api/oauth_authorize.php',
-    '/oauth/token' => '/api/oauth_token.php',
-    '/oauth/register' => '/api/oauth_register.php',
-    '/mcp' => '/api/mcp.php',
-];
-
-foreach ($oauthRoutes as $prefix => $handler) {
-    if ($uri === $prefix || str_starts_with($uri, $prefix . '/')) {
-        $_SERVER['SCRIPT_NAME'] = birkly_url($handler);
-        if ($prefix === '/favicon.ico') {
-            header('Content-Type: image/svg+xml');
-            header('Cache-Control: public, max-age=86400');
-            readfile(__DIR__ . $handler);
-            return true;
-        }
-        require __DIR__ . $handler;
-        return true;
-    }
-}
-
-if (str_starts_with($uri, '/site') && ($uri === '/site' || str_starts_with($uri, '/site/'))) {
-    require __DIR__ . '/api/studio_public.php';
-    return true;
-}
-
-require_once __DIR__ . '/core/plugin_public_routes.php';
-if (!function_exists('load_plugins')) {
-    require_once __DIR__ . '/core/plugins.php';
-}
-if (function_exists('load_plugins')) {
-    load_plugins(__DIR__ . '/plugins');
-}
-if (function_exists('birkly_dispatch_public_routes') && birkly_dispatch_public_routes($uri)) {
+if (birkly_dispatch_http_route($uri)) {
     return true;
 }
 

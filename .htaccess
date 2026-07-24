@@ -8,6 +8,7 @@ RewriteRule ^\.well-known/oauth-authorization-server(/.*)?$ api/oauth_authorizat
 RewriteRule ^oauth/authorize$ api/oauth_authorize.php [L,QSA]
 RewriteRule ^oauth/token$ api/oauth_token.php [L,QSA]
 RewriteRule ^oauth/register$ api/oauth_register.php [L,QSA]
+RewriteRule ^authorize$ api/oauth_authorize.php [L,QSA]
 RewriteRule ^mcp(/.*)?$ api/mcp.php [L,QSA]
 
 # Studio published sites (P22) — slug query param for LiteSpeed/internal rewrites
