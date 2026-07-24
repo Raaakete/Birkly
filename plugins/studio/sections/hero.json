@@ -1,0 +1,22 @@
+{
+  "id": "hero",
+  "label": "Hero",
+  "section": {
+    "id": "section-hero",
+    "classes": ["studio-section", "hero"],
+    "layout": { "type": "grid", "columns": 1, "gap": "1.5rem" },
+    "responsive": { "default": { "columns": 1 }, "desktop": { "columns": 1 } },
+    "rows": [{
+      "id": "row-hero",
+      "columns": [{
+        "id": "col-hero",
+        "width": "100%",
+        "elements": [
+          { "id": "el-h1", "type": "text", "tag": "h1", "content": "Welcome", "classes": [], "styles": { "textAlign": "center" } },
+          { "id": "el-p", "type": "text", "tag": "p", "content": "Build with Studio", "classes": [], "styles": { "textAlign": "center" } },
+          { "id": "el-btn", "type": "button", "content": "Get started", "href": "#", "classes": ["studio-btn"] }
+        ]
+      }]
+    }]
+  }
+}
