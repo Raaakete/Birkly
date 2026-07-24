@@ -59,9 +59,9 @@ Load modules in order before the main file:
 <script src="birkly-client.js"></script>
 ```
 
-### Production (single script tag)
+### Option 2: Bundled File (Production)
 
-The main `birkly-client.js` file includes all modules inline. For template-first pages served by Birkly, `birkly-client-init.js` is injected automatically into `<head>` (see `core/client_site_html.php`).
+The main `birkly-client.js` file includes all modules inline for backward compatibility.
 
 ## Module Pattern
 
