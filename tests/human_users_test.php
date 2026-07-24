@@ -41,6 +41,23 @@ assert_true('human id pattern matches md5 file', birkly_is_human_user_id($humanI
 assert_true('onboarding suffix rejected', !birkly_is_human_user_id($humanId . '_onboarding'));
 assert_true('ai id rejected', !birkly_is_human_user_id('ai_deadbeef'));
 assert_true('onboarding filename rejected', !birkly_is_user_account_filename($humanId . '_onboarding.json'));
+assert_true('ai connection filename rejected', !birkly_is_user_account_filename('ai_deadbeef.json'));
+assert_true('ai record rejected', !birkly_is_human_user_record([
+    'id' => 'ai_deadbeef',
+    'email' => 'openai@ai.birkly',
+    'type' => 'ai',
+    'name' => 'OpenAI',
+    'role' => 'admin',
+]));
+assert_true('human record accepted', birkly_is_human_user_record([
+    'id' => $humanId,
+    'email' => 'admin@example.com',
+    'password' => 'hashed',
+    'role' => 'admin',
+]));
+assert_true('onboarding-like record rejected without password', !birkly_is_human_user_record([
+    'step' => 'done',
+]));
 
 @unlink($tmpdir . '/' . $humanId . '.json');
 @unlink($tmpdir . '/' . $humanId . '_onboarding.json');

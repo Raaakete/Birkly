@@ -2322,6 +2322,12 @@
   font-size: 0.75rem;
 }
 
+.user-ai-hint {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary, #72746F);
+  font-size: 0.8125rem;
+}
+
 .logout-btn svg {
   margin-right: 0.75rem;
 }

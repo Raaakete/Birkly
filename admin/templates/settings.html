@@ -372,30 +372,46 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <p><strong>Last Login:</strong> <?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : 'Never' ?></p>
                     <?php
                       $mcpSessions = is_array($user['mcp_sessions'] ?? null) ? $user['mcp_sessions'] : [];
+                      $byoaiConnections = is_array($user['byoai_connections'] ?? null) ? $user['byoai_connections'] : [];
+                      $hasAiConnections = !empty($mcpSessions) || !empty($byoaiConnections);
                     ?>
                     <div class="user-ai-connections">
                       <p><strong>AI connections:</strong></p>
-                      <?php if (empty($mcpSessions)): ?>
+                      <?php if (!$hasAiConnections): ?>
                         <p class="user-ai-empty">None active</p>
                       <?php else: ?>
                         <ul class="user-ai-list">
+                          <?php foreach ($byoaiConnections as $connection):
+                            $connectedAt = $connection['created_at'] ?? '';
+                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
+                          ?>
+                            <li>
+                              <span class="user-ai-name"><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span>
+                              <span class="user-ai-meta">outbound · since <?= htmlspecialchars($connectedLabel) ?></span>
+                            </li>
+                          <?php endforeach; ?>
                           <?php foreach ($mcpSessions as $session):
                             $connectedAt = $session['connected_at'] ?? '';
                             $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
                           ?>
                             <li>
                               <span class="user-ai-name"><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span>
-                              <span class="user-ai-meta">since <?= htmlspecialchars($connectedLabel) ?></span>
+                              <span class="user-ai-meta">MCP · since <?= htmlspecialchars($connectedLabel) ?></span>
                             </li>
                           <?php endforeach; ?>
                         </ul>
+                        <?php if (!empty($mcpSessions)): ?>
                         <button
                           type="button"
                           class="btn btn-secondary btn-sm"
                           onclick="revokeUserMcpSessions('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>')"
                         >
-                          Revoke AI access
+                          Revoke MCP access
                         </button>
+                        <?php endif; ?>
+                        <?php if (!empty($byoaiConnections)): ?>
+                        <p class="user-ai-hint">Manage built-in assistant keys under <strong>Settings → AI</strong>.</p>
+                        <?php endif; ?>
                       <?php endif; ?>
                     </div>
                   </div>
