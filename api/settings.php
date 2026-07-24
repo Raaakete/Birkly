@@ -547,6 +547,51 @@ if ($action === 'set_language') {
     exit;
 }
 
+if ($action === 'rebuild_system') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'rebuild_system', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $confirmation = strtoupper(trim((string) ($input['confirmation'] ?? '')));
+    if ($confirmation !== 'REBUILD') {
+        echo json_encode(['status' => 'error', 'message' => 'Type REBUILD to confirm this action']);
+        exit;
+    }
+
+    require_once __DIR__ . '/../core/system_rebuild.php';
+    $projectRoot = dirname(__DIR__);
+    $result = birkly_rebuild_system($projectRoot);
+
+    if (empty($result['success'])) {
+        log_security_event('system_rebuild_failed', [
+            'user' => $_SESSION['user']['email'] ?? 'unknown',
+            'message' => $result['message'] ?? 'unknown',
+        ]);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $result['message'] ?? 'Failed to rebuild system',
+        ]);
+        exit;
+    }
+
+    log_security_event('system_rebuild', [
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+        'entries_removed' => $result['entries_removed'] ?? 0,
+        'onboarding_files_removed' => $result['onboarding_files_removed'] ?? 0,
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'System rebuilt. You will be redirected to setup.',
+        'redirect' => '/admin/index.php?page=onboarding',
+        'data' => $result,
+    ]);
+    exit;
+}
+
 if ($action === 'reset') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
