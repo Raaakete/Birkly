@@ -247,12 +247,30 @@ function birkly_marketplace_fallback_catalog(): array
     return $catalog;
 }
 
+function birkly_marketplace_demo_catalog_slugs(): array
+{
+    return [
+        'birkly-hello-starter',
+        'birkly-seo-basics',
+        'birkly-analytics-pro',
+        'birkly-minimal-theme',
+    ];
+}
+
+function birkly_marketplace_is_demo_catalog_slug(string $slug): bool
+{
+    return in_array($slug, birkly_marketplace_demo_catalog_slugs(), true);
+}
+
 function birkly_marketplace_filter_offers(array $offers, string $query, string $category, string $offerType): array
 {
     $q = strtolower(trim($query));
     $filtered = [];
     foreach ($offers as $offer) {
         if (!is_array($offer)) {
+            continue;
+        }
+        if (birkly_marketplace_is_demo_catalog_slug((string) ($offer['slug'] ?? ''))) {
             continue;
         }
         if ($offerType !== '' && $offerType !== 'all' && ($offer['offer_type'] ?? '') !== $offerType) {
