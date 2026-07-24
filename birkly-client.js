@@ -8,8 +8,8 @@
  *   <script src="https://your-cms-domain.com/birkly-client.js"></script>
  */
 
-// Hide template regions until render completes (anti-FOUC). Safe if this runs late;
-// Marsk pages add class="birkly-pending" in <head> for zero flash before this script loads.
+// Anti-FOUC fallback when birkly-client-init.js was not injected in <head>.
+// CMS serves template-first /project/*.html with init auto-injected (see client_site_html.php).
 (function () {
     var root = document.documentElement;
     root.classList.add('birkly-pending');
