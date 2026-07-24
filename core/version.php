@@ -380,9 +380,8 @@ class BirklyVersion {
             'core/',
             'fieldtypes/',
             'plugins/',
-            'templates/',
+            'project/',
             'index.php',
-            'archive/legacy-templating/render_page.php',
             'VERSION'
         ];
         
