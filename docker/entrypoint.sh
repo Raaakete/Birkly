@@ -26,6 +26,11 @@ fi
 
 chmod -R 777 /app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/plugins /app/themes 2>/dev/null || true
 
+if [ -f /app/scripts/repair-starter-content.php ]; then
+  echo "[entrypoint] Running starter content repairs..."
+  php /app/scripts/repair-starter-content.php || true
+fi
+
 echo "[entrypoint] Starting php-fpm..."
 php-fpm -D
 
