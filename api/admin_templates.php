@@ -2550,21 +2550,16 @@ function getDefaultListTemplate() {
 }
 
 function getUsersData() {
-    $users = [];
-    $usersDir = __DIR__ . '/../users';
-    
-    if (is_dir($usersDir)) {
-        $files = glob($usersDir . '/*.json');
-        foreach ($files as $file) {
-            $user = json_decode(file_get_contents($file), true);
-            if ($user) {
-                // Don't include password in the data
-                unset($user['password']);
-                $users[] = $user;
-            }
-        }
+    require_once __DIR__ . '/../core/birkly_users.php';
+    require_once __DIR__ . '/../core/mcp_oauth.php';
+
+    $users = birkly_list_human_user_records(true);
+    foreach ($users as &$user) {
+        $userId = (string) ($user['id'] ?? '');
+        $user['mcp_sessions'] = $userId !== '' ? birkly_mcp_oauth_list_sessions($userId) : [];
     }
-    
+    unset($user);
+
     return [
         'users' => $users,
         'roles' => ['admin', 'editor', 'viewer']
@@ -2573,26 +2568,12 @@ function getUsersData() {
 
 function getRolesData() {
     require_once __DIR__ . '/../core/roles.php';
+    require_once __DIR__ . '/../core/birkly_users.php';
     $roles = birkly_ensure_default_roles();
-    
-    // Get users for role assignment
-    $users = [];
-    $usersDir = __DIR__ . '/../users';
-    
-    if (is_dir($usersDir)) {
-        $files = glob($usersDir . '/*.json');
-        foreach ($files as $file) {
-            $user = json_decode(file_get_contents($file), true);
-            if ($user) {
-                unset($user['password']);
-                $users[] = $user;
-            }
-        }
-    }
-    
+
     return [
         'roles' => $roles,
-        'users' => $users
+        'users' => birkly_list_human_user_records(true),
     ];
 }
 

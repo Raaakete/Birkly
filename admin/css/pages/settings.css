@@ -2285,6 +2285,43 @@
   margin: 0.25rem 0;
 }
 
+.user-ai-connections {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.user-ai-list {
+  margin: 0.35rem 0 0.5rem;
+  padding-left: 1.1rem;
+}
+
+.user-ai-list li {
+  margin: 0.2rem 0;
+}
+
+.user-ai-name {
+  font-weight: 500;
+  color: var(--text-primary, #20221D);
+}
+
+.user-ai-meta {
+  color: var(--text-secondary, #72746F);
+  font-size: 0.8125rem;
+}
+
+.user-ai-empty {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary, #72746F);
+  font-style: italic;
+}
+
+.user-ai-connections .btn-sm {
+  margin-top: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+}
+
 .logout-btn svg {
   margin-right: 0.75rem;
 }

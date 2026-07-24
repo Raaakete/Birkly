@@ -125,3 +125,61 @@ function birkly_load_user_account(string $email): ?array
     $user = json_decode((string) file_get_contents($path), true);
     return is_array($user) ? $user : null;
 }
+
+/**
+ * Whether a user id refers to a human CMS account (32-char hex), not onboarding metadata.
+ */
+function birkly_is_human_user_id(string $userId): bool
+{
+    return birkly_is_user_account_filename($userId . '.json');
+}
+
+/**
+ * List human CMS user records from users/ and data/users/.
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_list_human_user_records(bool $stripPassword = true): array
+{
+    $users = [];
+    $seen = [];
+
+    foreach (birkly_users_search_dirs() as $dir) {
+        foreach (scandir($dir) ?: [] as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            if (!birkly_is_user_account_filename($file)) {
+                continue;
+            }
+
+            $userId = pathinfo($file, PATHINFO_FILENAME);
+            if (isset($seen[$userId])) {
+                continue;
+            }
+
+            $raw = file_get_contents($dir . '/' . $file);
+            $user = json_decode((string) $raw, true);
+            if (!is_array($user)) {
+                continue;
+            }
+            if (($user['type'] ?? '') === 'ai') {
+                continue;
+            }
+
+            $seen[$userId] = true;
+            if ($stripPassword) {
+                unset($user['password']);
+            }
+            $users[] = $user;
+        }
+    }
+
+    usort($users, static function (array $a, array $b): int {
+        $aLabel = strtolower(trim((string) ($a['email'] ?? $a['name'] ?? $a['id'] ?? '')));
+        $bLabel = strtolower(trim((string) ($b['email'] ?? $b['name'] ?? $b['id'] ?? '')));
+        return $aLabel <=> $bLabel;
+    });
+
+    return $users;
+}
