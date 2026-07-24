@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: ci-check
+  syntax:
+    name: public-syntax-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +19,10 @@ jobs:
           php-version: '8.3'
           coverage: none
 
-      - name: Run CI checks
+      - name: PHP syntax on core files
         run: |
-          chmod +x scripts/ci-check.sh scripts/agent-smoke-test.sh scripts/auth-probe.sh
-          ./scripts/ci-check.sh
+          set -e
+          for f in server-router.php index.php admin/index.php core/version.php; do
+            php -l "$f"
+          done
+          echo "Public CI: syntax OK (full test suite runs in private Birkly-Marketplace internal workspace)"

@@ -1,12 +1,24 @@
-# Birkly (PHP Version)
+# Birkly
 
-A flat-file, modular, zero-dependency CMS designed for simplicity, security, and extensibility. Just upload and use—no npm, no database, no server setup required.
+A flat-file, modular, zero-dependency CMS — upload and run. No npm, no database, no build step.
 
-## 🚀 Quick Start
+## Quick start
 
-**New to Birkly?** Open **`0_START-HERE.html`** in your browser after extracting the zip — it guides you through local or cloud install and the admin setup wizard.
+Open **`0_START-HERE.html`** after extracting a release zip, or run locally:
 
-## Project Structure
+```bash
+chmod +x ./start-server.sh
+./start-server.sh
+```
+
+Admin: [http://localhost:8080/admin](http://localhost:8080/admin)
+
+## Documentation
+
+- **[Birkly-Docs](https://github.com/Raaakete/Birkly-Docs)** — guides, API reference, plugin economy
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — issues and pull requests
+
+## Project layout
 
 - `/admin/` — Admin UI (HTML/CSS/JS)
 - `/api/` — PHP API endpoints (content, media, users, settings)
@@ -14,45 +26,17 @@ A flat-file, modular, zero-dependency CMS designed for simplicity, security, and
 - `/media/` — Uploaded files
 - `/users/` — User data (JSON)
 - `/settings/` — Site settings (JSON)
-- `/themes/` — (Optional) Themes/templates
-- `/plugins/` — (Optional) PHP plugins
-- `index.php` — Entry point (optional, for routing)
+- `/project/` — Public site files (themes, assets)
 
-## Getting Started
+## Local development
 
-### Local Development
-
-1. Download and extract Birkly.
-2. Open a terminal in the extracted folder and run:
-   ```
-   chmod +x ./start-server.sh
-   ./start-server.sh
-   ```
-   Or directly with PHP (requires the router script):
-   ```
-   php -S localhost:8080 -t . server-router.php
-   ```
-3. Visit [http://localhost:8080/admin](http://localhost:8080/admin) in your browser.
-
-- No configuration is needed for most local environments (XAMPP, MAMP, Laragon, Herd, Valet, etc.).
-- All static files and API endpoints work out of the box.
-
-### Demo Content
-
-To set up demo content (blog posts, services, contact form) for testing:
+See **Quick start** above. Official plugins for development:
 
 ```bash
-php scripts/create-demo-content.php
+./scripts/install-dev-plugins.sh
 ```
 
-This creates:
-- **Blog** collection with 5 sample posts
-- **Services** collection with 5 sample services
-- **Contact** collection with Public API enabled for form submissions
-
-After running the script, visit [http://localhost:8080/demo-website/](http://localhost:8080/demo-website/) to see the demo website in action.
-
-### Production/Deployment
+## Production
 
 1. Upload all files to your web server (Apache, Nginx, etc.).
 2. For Apache, the included `.htaccess` ensures everything works automatically.
@@ -69,25 +53,11 @@ After running `php scripts/create-default-user.php` to create the default admin 
 - Email: `admin@localhost`
 - Password: `password`
 
-**Important:** Change the password after your first login for security.
+**Important:** Change the password after your first login.
 
 ---
 
-For advanced configuration, see the documentation or contact the Birkly team.
-
-## Next Steps
-- Migrate/reuse admin UI HTML/CSS/JS into `/admin/`
-- Scaffold basic PHP API endpoints in `/api/`
-- Implement flat-file storage for content, users, media, and settings
-- Connect admin UI to PHP endpoints via AJAX
-- Test and polish the new PHP-based CMS
-- Update documentation and usage instructions
-
----
-
-# Birkly Templating Language
-
-Birkly provides a powerful, zero-dependency templating language for rendering content in your static or headless sites. Below are all supported features and syntax:
+## Templating language
 
 ## 1. Loops (Listing Entries)
 
