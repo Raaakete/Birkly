@@ -78,6 +78,8 @@ If you need a service agent but do not see it, ask an admin to add your role or 
 
 ### Personal connector
 
+For **site building** (editing `project/` HTML/CSS/JS), sign in with an account that has the **Admin** role, or create a **Site builder** service agent (Settings → AI → Add agent → Site builder preset).
+
 Access matches the **authorizing user’s** CMS role at sign-in time (Viewer, Author, Editor, Admin, or custom roles). There is no separate agent role — the AI cannot do more than you can in the admin.
 
 ### Service agent
