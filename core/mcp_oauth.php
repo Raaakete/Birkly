@@ -1000,3 +1000,98 @@ function birkly_mcp_oauth_valid_auth_modes(): array
 {
     return ['api_key', 'oauth', 'both'];
 }
+
+/**
+ * Active MCP OAuth sessions (refresh token not expired), optionally filtered by user id.
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_mcp_oauth_list_sessions(?string $userId = null): array
+{
+    birkly_mcp_oauth_purge_expired();
+    require_once __DIR__ . '/ai_agents.php';
+
+    $store = birkly_mcp_oauth_load_store();
+    $now = time();
+    $sessions = [];
+    $seen = [];
+
+    foreach ($store['tokens'] as $hash => $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        if (($entry['refresh_expires_at'] ?? 0) < $now) {
+            continue;
+        }
+
+        $authorizedBy = (string) ($entry['authorized_by'] ?? '');
+        if ($userId !== null && $authorizedBy !== $userId) {
+            continue;
+        }
+        if ($authorizedBy === '') {
+            continue;
+        }
+
+        $endpointId = (string) ($entry['endpoint_id'] ?? '');
+        $dedupeKey = $authorizedBy . ':' . $endpointId . ':' . (string) ($entry['client_id'] ?? '');
+        if (isset($seen[$dedupeKey])) {
+            continue;
+        }
+        $seen[$dedupeKey] = true;
+
+        $agent = $endpointId !== '' ? birkly_ai_agents_find_by_endpoint_id($endpointId) : null;
+        $agentName = (string) ($agent['name'] ?? '');
+        if ($agentName === '') {
+            $agentName = (string) ($entry['agent_type'] ?? '') === 'personal'
+                ? 'Personal connector'
+                : 'MCP connector';
+        }
+
+        $sessions[] = [
+            'token_hash' => $hash,
+            'user_id' => $authorizedBy,
+            'endpoint_id' => $endpointId,
+            'client_id' => (string) ($entry['client_id'] ?? ''),
+            'agent_name' => $agentName,
+            'agent_type' => (string) ($entry['agent_type'] ?? ($agent['type'] ?? 'service')),
+            'connected_at' => (string) ($entry['created_at'] ?? ''),
+            'refresh_expires_at' => (int) ($entry['refresh_expires_at'] ?? 0),
+        ];
+    }
+
+    usort($sessions, static function (array $a, array $b): int {
+        return strcmp((string) ($b['connected_at'] ?? ''), (string) ($a['connected_at'] ?? ''));
+    });
+
+    return $sessions;
+}
+
+/**
+ * Revoke all active MCP OAuth sessions for a human user. Returns count removed.
+ */
+function birkly_mcp_oauth_revoke_user_sessions(string $userId): int
+{
+    if ($userId === '') {
+        return 0;
+    }
+
+    $store = birkly_mcp_oauth_load_store();
+    $removed = 0;
+
+    foreach ($store['tokens'] as $hash => $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        if ((string) ($entry['authorized_by'] ?? '') !== $userId) {
+            continue;
+        }
+        unset($store['tokens'][$hash]);
+        $removed++;
+    }
+
+    if ($removed > 0) {
+        birkly_mcp_oauth_save_store($store);
+    }
+
+    return $removed;
+}

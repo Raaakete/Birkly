@@ -72,19 +72,11 @@ if ($action === 'users') {
         exit;
     }
 
-    require_once 'storage.php';
-    $usersStorage = new Storage('../users');
+    require_once __DIR__ . '/../core/birkly_users.php';
     $userList = [];
-    foreach ($usersStorage->list() as $file) {
-        if (!str_ends_with($file, '.json')) {
-            continue;
-        }
-        $user = $usersStorage->read($file);
-        if (!is_array($user) || ($user['type'] ?? '') === 'ai') {
-            continue;
-        }
+    foreach (birkly_list_human_user_records(true) as $user) {
         $userList[] = [
-            'id' => $user['id'] ?? pathinfo($file, PATHINFO_FILENAME),
+            'id' => $user['id'] ?? '',
             'email' => $user['email'] ?? '',
             'role' => $user['role'] ?? '',
             'name' => $user['name'] ?? $user['email'] ?? '',

@@ -764,6 +764,36 @@ function deleteUserFromModal() {
     confirmDeleteUser(userId, email);
 }
 
+function revokeUserMcpSessions(userId, label) {
+    if (!userId) return;
+    const who = label || 'this user';
+    if (!confirm('Revoke all active AI app connections for ' + who + '? They will need to sign in again in Claude, Cursor, or ChatGPT.')) {
+        return;
+    }
+
+    fetch(apiUrl('/api/users.php'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'revoke_mcp_sessions',
+            id: userId,
+            _csrf: getCsrfToken(),
+        }),
+    })
+        .then((response) => response.json())
+        .then((result) => {
+            if (result.status === 'ok') {
+                showMessage(result.message || 'AI connections revoked', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showMessage('Error: ' + (result.message || 'Could not revoke AI access'), 'error');
+            }
+        })
+        .catch((error) => {
+            showMessage('Error revoking AI access: ' + error.message, 'error');
+        });
+}
+
 // Plugin management functions
 async function togglePlugin(pluginId, activate) {
     var action = activate ? 'activate' : 'deactivate';
