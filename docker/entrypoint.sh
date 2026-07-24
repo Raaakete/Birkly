@@ -3,11 +3,13 @@ set -e
 
 echo "[entrypoint] Birkly CMS docker image — document root /app (not /usr/share/nginx/html)"
 
-DIRS="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/plugins /app/themes"
+DIRS="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/plugins /app/themes /app/project"
 
 for dir in $DIRS; do
   mkdir -p "$dir"
 done
+
+touch /app/project/.gitkeep 2>/dev/null || true
 
 chmod -R 777 /app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/plugins /app/themes 2>/dev/null || true
 
