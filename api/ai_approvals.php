@@ -514,33 +514,25 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
     error_log("executeCreateEntry: Extracted collection: " . $collection);
     error_log("executeCreateEntry: Extracted entryData keys: " . implode(', ', array_keys($entryData)));
     
-    // Normalize collection slug (handle collection name vs slug)
-    $collection = birkly_normalize_slug((string) $collection);
-
-    if (empty($collection)) {
-        error_log("executeCreateEntry: Collection slug is empty after normalization. Original: " . ($actionData['collection'] ?? 'N/A'));
-        return ['success' => false, 'message' => 'Collection slug is required'];
-    }
-    
-    error_log("executeCreateEntry: Normalized collection slug: " . $collection);
-    
     try {
-        // Don't require admin_entries.php - it has auth checks that will exit
-        // We'll use Storage directly instead
         require_once __DIR__ . '/storage.php';
-        
-        // Create entry using Storage directly
+        require_once __DIR__ . '/../core/content_resolve.php';
+
         $contentStorage = new Storage('../content');
-        $collectionDir = '../content/collections/' . $collection;
-        
-        if (!is_dir($collectionDir)) {
-            error_log("executeCreateEntry: Collection directory not found: " . $collectionDir);
+        $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, (string) $collection);
+        if ($collectionDir === null) {
+            error_log("executeCreateEntry: Collection not found: " . $collection);
             return ['success' => false, 'message' => 'Collection not found: ' . $collection];
         }
+        $collection = $collectionDir;
+        
+        error_log("executeCreateEntry: Resolved collection dir: " . $collection);
+        
+        $collectionPath = '../content/collections/' . $collection;
         
         // Generate entry ID
         $entryId = bin2hex(random_bytes(8));
-        $entryFile = $collectionDir . '/entries/' . $entryId . '.json';
+        $entryFile = $collectionPath . '/entries/' . $entryId . '.json';
         
         // Ensure entries directory exists
         $entriesDir = dirname($entryFile);
@@ -640,12 +632,14 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
         return ['success' => false, 'message' => 'Collection is required'];
     }
     
-    // Normalize collection slug
-    $collection = birkly_normalize_slug((string) $collection);
-
-    if (empty($collection)) {
-        return ['success' => false, 'message' => 'Collection is required'];
+    // Resolve collection directory (preserve legacy slugs like site_elements)
+    require_once __DIR__ . '/../core/content_resolve.php';
+    $contentStorage = new Storage('../content');
+    $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, (string) $collection);
+    if ($collectionDir === null) {
+        return ['success' => false, 'message' => 'Collection not found: ' . $collection];
     }
+    $collection = $collectionDir;
 
     if (!empty($entrySlug)) {
         $entrySlug = birkly_normalize_slug($entrySlug);
@@ -654,8 +648,6 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     if (empty($entryId) && empty($entrySlug)) {
         return ['success' => false, 'message' => 'Entry ID or slug is required'];
     }
-    
-    $contentStorage = new Storage('../content');
     
     // Find entry by ID or slug
     $entry = null;
@@ -726,6 +718,7 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
 // Execute delete entry
 function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
+    require_once __DIR__ . '/../core/content_resolve.php';
     
     $collection = $actionData['collection'] ?? '';
     $entryId = $actionData['id'] ?? '';
@@ -735,7 +728,12 @@ function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null)
     }
     
     $contentStorage = new Storage('../content');
-    $entryFile = 'collections/' . $collection . '/entries/' . $entryId . '.json';
+    $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, (string) $collection);
+    if ($collectionDir === null) {
+        return ['success' => false, 'message' => 'Collection not found: ' . $collection];
+    }
+
+    $entryFile = 'collections/' . $collectionDir . '/entries/' . $entryId . '.json';
     
     $result = $contentStorage->delete($entryFile);
     
@@ -749,15 +747,20 @@ function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null)
 // Execute update collection
 function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
-    $slug = birkly_normalize_slug((string) ($actionData['slug'] ?? ''));
-    if (empty($slug)) {
+    require_once __DIR__ . '/../core/content_resolve.php';
+
+    $slugRef = (string) ($actionData['slug'] ?? '');
+    if ($slugRef === '') {
         return ['success' => false, 'message' => 'Collection slug is required'];
+    }
+
+    $contentStorage = new Storage('../content');
+    $slug = birkly_content_resolve_collection_dir_name($contentStorage, $slugRef);
+    if ($slug === null) {
+        return ['success' => false, 'message' => 'Collection not found'];
     }
     
     $collectionFile = '../content/collections/' . $slug . '/collection.json';
-    if (!file_exists($collectionFile)) {
-        return ['success' => false, 'message' => 'Collection not found'];
-    }
     
     $collection = json_decode(file_get_contents($collectionFile), true);
     if (!$collection) {
