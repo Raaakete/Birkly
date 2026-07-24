@@ -184,7 +184,12 @@ function getEventIcon($event) {
         'login_success' => '🔓',
         'login_failed' => '🔒',
         'logout' => '🚪',
-        'upload_media' => '📷'
+        'upload_media' => '📷',
+        'project_file_written' => '📝',
+        'project_file_created' => '📄',
+        'project_file_deleted' => '🗑️',
+        'ai_approval_approved' => '✅',
+        'ai_approval_created' => '⏳',
     ];
     
     return $icons[$event] ?? '📌';
@@ -248,6 +253,35 @@ function getEventMessage($event, $details) {
         case 'upload_media':
             $name = $details['name'] ?? 'file';
             return "Uploaded media: {$name}";
+
+        case 'project_file_written':
+            $path = $details['path'] ?? 'file';
+            $source = $details['source'] ?? 'admin';
+            return "Wrote project file {$path} ({$source})";
+
+        case 'project_file_created':
+            $path = $details['path'] ?? 'file';
+            $source = $details['source'] ?? 'admin';
+            return "Created project file {$path} ({$source})";
+
+        case 'project_file_deleted':
+            $path = $details['path'] ?? 'file';
+            $source = $details['source'] ?? 'admin';
+            return "Deleted project file {$path} ({$source})";
+
+        case 'ai_approval_created':
+            $actionType = $details['action_type'] ?? 'action';
+            if (in_array($actionType, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
+                return 'AI requested approval: ' . str_replace('_', ' ', $actionType);
+            }
+            return 'AI approval requested';
+
+        case 'ai_approval_approved':
+            $actionType = $details['action_type'] ?? 'action';
+            if (in_array($actionType, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
+                return 'AI approved: ' . str_replace('_', ' ', $actionType);
+            }
+            return 'AI action approved';
             
         default:
             return ucfirst(str_replace('_', ' ', $event));
@@ -263,7 +297,12 @@ function getEventColor($event) {
         'review_action' => '#ffc107',
         'login_success' => '#28a745',
         'login_failed' => '#dc3545',
-        'upload_media' => '#6f42c1'
+        'upload_media' => '#6f42c1',
+        'project_file_written' => '#17a2b8',
+        'project_file_created' => '#28a745',
+        'project_file_deleted' => '#dc3545',
+        'ai_approval_approved' => '#28a745',
+        'ai_approval_created' => '#ffc107',
     ];
     
     return $colors[$event] ?? '#6c757d';
