@@ -105,10 +105,12 @@
             nav.setAttribute('aria-label', 'Main navigation');
         }
         
-        // Mark current page in navigation
+        // Mark current page in navigation — aria-current only on active links
         document.querySelectorAll('.nav-link').forEach(link => {
-            if (link.classList.contains('active') || link.getAttribute('aria-current') !== 'page') {
+            if (link.classList.contains('active')) {
                 link.setAttribute('aria-current', 'page');
+            } else {
+                link.removeAttribute('aria-current');
             }
         });
         
@@ -152,7 +154,7 @@
         skipLinks.setAttribute('aria-label', 'Skip links');
         skipLinks.innerHTML = `
             <a href="#main-content" class="skip-link">Skip to main content</a>
-            <a href="#navigation" class="skip-link">Skip to navigation</a>
+            <a href="#admin-sidebar" class="skip-link">Skip to navigation</a>
         `;
         
         // Add main content landmark

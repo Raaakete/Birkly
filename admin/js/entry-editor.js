@@ -283,19 +283,19 @@
         
         // Setup review action buttons
         if (approveBtn) {
-            approveBtn.addEventListener('click', function() {
+            approveBtn.addEventListener('click', async function () {
                 submitReviewAction('approved');
             });
         }
         
         if (rejectBtn) {
-            rejectBtn.addEventListener('click', function() {
+            rejectBtn.addEventListener('click', async function () {
                 showReviewModal('rejected', 'Reject Entry', 'Enter rejection reason:');
             });
         }
         
         if (requestChangesBtn) {
-            requestChangesBtn.addEventListener('click', function() {
+            requestChangesBtn.addEventListener('click', async function () {
                 showReviewModal('draft', 'Request Changes', 'Enter change request details:');
             });
         }
@@ -382,14 +382,14 @@
         const submitBtn = modalContent.querySelector('#submit-review-btn');
         const notesInput = modalContent.querySelector('#review-notes-input');
         
-        submitBtn.addEventListener('click', function() {
+        submitBtn.addEventListener('click', async function () {
             const notes = notesInput.value.trim();
             modal.remove();
             submitReviewAction(action, notes);
         });
         
         // Close on backdrop click
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', async function (e) {
             if (e.target === modal) {
                 modal.remove();
             }
@@ -408,7 +408,7 @@
         const reviewer = document.getElementById('reviewer')?.value || '';
         
         if (!entryId || !collectionSlug) {
-            alert('Cannot submit review: missing entry or collection information');
+            BirklyFeedback.toast('Cannot submit review: missing entry or collection information', 'error')
             return;
         }
         
@@ -428,15 +428,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                alert('Review action submitted successfully. Reloading page...');
+                BirklyFeedback.toast('Review action submitted successfully. Reloading page...', 'success')
                 window.location.reload();
             } else {
-                alert('Error submitting review: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Error submitting review: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
             console.error('Review error:', error);
-            alert('Error submitting review: ' + error.message);
+            BirklyFeedback.toast('Error submitting review: ' + error.message, 'error')
         });
     }
 
@@ -447,7 +447,7 @@
         const viewVersionsLink = document.getElementById('view-versions');
         if (!viewVersionsLink) return;
         
-        viewVersionsLink.addEventListener('click', function(e) {
+        viewVersionsLink.addEventListener('click', async function (e) {
             e.preventDefault();
             showVersionHistory();
         });
@@ -461,7 +461,7 @@
         const collectionSlug = form.querySelector('input[name="collection"]')?.value;
         
         if (!entryId || !collectionSlug) {
-            alert('Cannot view history: missing entry or collection information');
+            BirklyFeedback.toast('Cannot view history: missing entry or collection information', 'error')
             return;
         }
         
@@ -472,12 +472,12 @@
                 if (data.status === 'ok' && data.versions) {
                     renderVersionModal(data.versions, collectionSlug, entryId);
                 } else {
-                    alert('Error loading version history: ' + (data.message || 'Unknown error'));
+                    BirklyFeedback.toast('Error loading version history: ' + (data.message || 'Unknown error'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Version history error:', error);
-                alert('Error loading version history: ' + error.message);
+                BirklyFeedback.toast('Error loading version history: ' + error.message, 'error')
             });
     }
     
@@ -559,17 +559,17 @@
         const version2Select = modalContent.querySelector('#version2-select');
         const diffView = modalContent.querySelector('#diff-view');
         
-        compareBtn.addEventListener('click', function() {
+        compareBtn.addEventListener('click', async function () {
             const v1 = version1Select.value;
             const v2 = version2Select.value;
             
             if (!v1 || !v2) {
-                alert('Please select both versions to compare');
+                BirklyFeedback.toast('Please select both versions to compare', 'warning')
                 return;
             }
             
             if (v1 === v2) {
-                alert('Please select two different versions');
+                BirklyFeedback.toast('Please select two different versions', 'warning')
                 return;
             }
             
@@ -582,17 +582,17 @@
                         diffView.style.display = 'block';
                         document.getElementById('versions-list').style.display = 'none';
                     } else {
-                        alert('Error loading diff: ' + (data.message || 'Unknown error'));
+                        BirklyFeedback.toast('Error loading diff: ' + (data.message || 'Unknown error'), 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Diff error:', error);
-                    alert('Error loading diff: ' + error.message);
+                    BirklyFeedback.toast('Error loading diff: ' + error.message, 'error')
                 });
         });
         
         // Close on backdrop click
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', async function (e) {
             if (e.target === modal) {
                 modal.remove();
             }
@@ -663,7 +663,7 @@
     }
     
     window.restoreVersion = function(collectionSlug, entryId, version) {
-        if (!confirm('Are you sure you want to restore this version? Current version will be saved as a new version.')) {
+        if (!(await BirklyFeedback.confirm('Are you sure you want to restore this version? Current version will be saved as a new version.'))) {
             return;
         }
         
@@ -679,15 +679,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                alert('Version restored successfully. Reloading page...');
+                BirklyFeedback.toast('Version restored successfully. Reloading page...', 'success')
                 window.location.reload();
             } else {
-                alert('Error restoring version: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Error restoring version: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
             console.error('Restore error:', error);
-            alert('Error restoring version: ' + error.message);
+            BirklyFeedback.toast('Error restoring version: ' + error.message, 'error')
         });
     }
 
@@ -1209,19 +1209,19 @@
                     }
                 } else if (data && data.status === 'error') {
                     if (!applyFieldErrors(data.field_errors)) {
-                        alert('Error: ' + (data.message || raw || 'Unknown error'));
+                        BirklyFeedback.toast('Error: ' + (data.message || raw || 'Unknown error'), 'error');
                     }
                 } else if (!response.ok) {
                     // HTTP error but no valid JSON
                     throw new Error((data && data.message) || (raw || ('HTTP ' + response.status + ' ' + response.statusText)));
                 } else {
                     // Unexpected response format
-                    alert('Error: Unexpected response format');
+                    BirklyFeedback.toast('Error: Unexpected response format', 'error')
                 }
             })
             .catch(error => {
                 console.error('Error saving entry:', error);
-                alert('Error saving entry: ' + error.message);
+                BirklyFeedback.toast('Error saving entry: ' + error.message, 'error')
             });
         });
     }
@@ -1469,7 +1469,7 @@
         const languageTabContents = document.querySelectorAll('.language-tab-content');
         
         languageTabBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', async function () {
                 const langCode = this.dataset.lang;
                 
                 // Update buttons

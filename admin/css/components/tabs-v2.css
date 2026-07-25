@@ -76,7 +76,7 @@
 }
 
 .tabs-v2-picker-wrap:focus-within {
-  outline: 2px solid var(--primary-500, #3b82f6);
+  outline: 2px solid var(--primary-500);
   outline-offset: 2px;
 }
 

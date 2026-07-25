@@ -41,17 +41,47 @@ $bulkEditableFields = array_merge([
             </div>
             
             <div class="collection-actions-bar-right">
-                <label for="entries-search" class="collection-filter-label sr-only">Search entries</label>
-                <input type="search" id="entries-search" class="input collection-search-input" placeholder="Search entries…" autocomplete="off" style="min-width: 180px;">
-                <label for="status-filter" class="collection-filter-label sr-only"><?= __('admin.filter') ?></label>
-                <select id="status-filter" class="collection-filter-select" style="min-width: 150px;">
+                <button type="button" class="btn btn-secondary entries-filter-toggle" id="entries-filter-toggle" aria-expanded="false" aria-controls="entries-filter-drawer">
+                    <?= __('admin.entries_filters') ?>
+                </button>
+                <div class="entries-filter-drawer" id="entries-filter-drawer" hidden>
+                    <div class="entries-filter-drawer__backdrop" data-entries-filter-close></div>
+                    <div class="entries-filter-drawer__panel" role="dialog" aria-label="<?= htmlspecialchars(__('admin.entries_filters')) ?>">
+                        <div class="entries-filter-drawer__header">
+                            <h2 class="entries-filter-drawer__title"><?= __('admin.entries_filters') ?></h2>
+                            <button type="button" class="btn btn-icon entries-filter-drawer__close" data-entries-filter-close aria-label="<?= htmlspecialchars(__('admin.entries_close_filters')) ?>">&times;</button>
+                        </div>
+                        <div class="entries-filter-drawer__body">
+                            <label for="entries-search" class="collection-filter-label"><?= __('admin.search') ?></label>
+                            <input type="search" id="entries-search" class="input collection-search-input" placeholder="<?= htmlspecialchars(__('admin.entries_search_entries')) ?>" autocomplete="off">
+                            <label for="status-filter" class="collection-filter-label"><?= __('admin.filter') ?></label>
+                            <select id="status-filter" class="collection-filter-select">
+                                <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
+                                <option value="published" <?= $currentStatusFilter === 'published' ? 'selected' : '' ?>><?= __('admin.published') ?></option>
+                                <option value="unpublished" <?= $currentStatusFilter === 'unpublished' ? 'selected' : '' ?>><?= __('admin.unpublished') ?></option>
+                                <option value="scheduled" <?= $currentStatusFilter === 'scheduled' ? 'selected' : '' ?>><?= __('admin.scheduled') ?></option>
+                                <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>><?= __('admin.pending_review') ?></option>
+                                <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>><?= __('admin.trashed') ?></option>
+                            </select>
+                        </div>
+                        <div class="entries-filter-drawer__footer">
+                            <button type="button" class="btn btn-primary" data-entries-filter-close><?= __('admin.entries_apply_filters') ?></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="entries-toolbar-filters entries-toolbar-filters--desktop">
+                <label for="entries-search-desktop" class="collection-filter-label sr-only"><?= __('admin.search') ?></label>
+                <input type="search" id="entries-search-desktop" class="input collection-search-input entries-search-desktop" placeholder="<?= htmlspecialchars(__('admin.entries_search_entries')) ?>" autocomplete="off">
+                <label for="status-filter-desktop" class="collection-filter-label sr-only"><?= __('admin.filter') ?></label>
+                <select id="status-filter-desktop" class="collection-filter-select entries-status-desktop">
                     <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
                     <option value="published" <?= $currentStatusFilter === 'published' ? 'selected' : '' ?>><?= __('admin.published') ?></option>
-                    <option value="unpublished" <?= $currentStatusFilter === 'unpublished' ? 'selected' : '' ?>>Unpublished</option>
-                    <option value="scheduled" <?= $currentStatusFilter === 'scheduled' ? 'selected' : '' ?>>Scheduled</option>
-                    <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>>Pending for Review</option>
-                    <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>>Trashed</option>
+                    <option value="unpublished" <?= $currentStatusFilter === 'unpublished' ? 'selected' : '' ?>><?= __('admin.unpublished') ?></option>
+                    <option value="scheduled" <?= $currentStatusFilter === 'scheduled' ? 'selected' : '' ?>><?= __('admin.scheduled') ?></option>
+                    <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>><?= __('admin.pending_review') ?></option>
+                    <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>><?= __('admin.trashed') ?></option>
                 </select>
+                </div>
                 
                 <div class="dropdown">
                     <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
@@ -89,8 +119,8 @@ $bulkEditableFields = array_merge([
                     <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
                     <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
                     <label class="sr-only" for="bulk-field-name">Field to edit</label>
-                    <select id="bulk-field-name" class="collection-filter-select" style="min-width: 160px;">
-                        <option value="">Edit field...</option>
+                    <select id="bulk-field-name" class="collection-filter-select">
+                        <option value=""><?= __('admin.entries_bulk_edit_field') ?></option>
                         <?php foreach ($bulkEditableFields as $field): ?>
                             <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
                                 <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
@@ -98,11 +128,11 @@ $bulkEditableFields = array_merge([
                         <?php endforeach; ?>
                     </select>
                     <label class="sr-only" for="bulk-field-value">Field value</label>
-                    <input type="text" id="bulk-field-value" class="input" placeholder="New value" style="min-width: 180px;">
-                    <button class="btn btn-sm" id="bulk-field-apply-btn" aria-label="Apply bulk field edit">Apply field edit</button>
-                    <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="Move selected entries to trash">Move to trash</button>
+                    <input type="text" id="bulk-field-value" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_bulk_new_value')) ?>">
+                    <button class="btn btn-sm" id="bulk-field-apply-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_apply_field_edit')) ?>"><?= __('admin.entries_bulk_apply_field_edit') ?></button>
+                    <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_move_to_trash')) ?>"><?= __('admin.entries_bulk_move_to_trash') ?></button>
                 <?php else: ?>
-                    <button class="btn btn-sm" id="bulk-restore-btn" aria-label="Restore selected entries">Restore</button>
+                    <button class="btn btn-sm" id="bulk-restore-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_restore')) ?>"><?= __('admin.entries_bulk_restore') ?></button>
                 <?php endif; ?>
                 <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
             </div>

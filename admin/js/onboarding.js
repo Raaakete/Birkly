@@ -17,6 +17,8 @@ const onboarding = {
     resumeHandled: false,
     aiMode: 'chat',
 
+    hostingWizard: null,
+
     init() {
         if (!document.querySelector('.onboarding-page')) return;
 
@@ -36,7 +38,7 @@ const onboarding = {
 
     bindAiModeTabs() {
         document.querySelectorAll('.ai-mode-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', async () => {
                 this.aiMode = tab.dataset.aiMode || 'chat';
                 document.querySelectorAll('.ai-mode-tab').forEach(t => {
                     const active = t === tab;
@@ -148,22 +150,11 @@ const onboarding = {
             e.preventDefault();
             this.saveSiteInfo();
         });
-        document.querySelectorAll('input[name="onboarding-public-mode"]').forEach((input) => {
-            input.addEventListener('change', () => {
-                const wrap = document.getElementById('onboarding-public-url-wrap');
-                const mode = document.querySelector('input[name="onboarding-public-mode"]:checked');
-                if (wrap) wrap.style.display = mode && mode.value !== 'none' ? '' : 'none';
-            });
-        });
-        const cmsUrlInput = document.getElementById('onboarding-cms-url');
-        if (cmsUrlInput && !cmsUrlInput.value) {
-            cmsUrlInput.value = window.location.origin;
-        }
         document.getElementById('onboarding-ai-provider')?.addEventListener('change', () => {
             this.updateAiProviderFields();
             this.aiTestPassed = false;
         });
-        document.getElementById('onboarding-test-ai-btn')?.addEventListener('click', () => this.testAIConnection());
+        document.getElementById('onboarding-test-ai-btn')?.addEventListener('click', async () => this.testAIConnection());
     },
 
     async createFirstUser() {
@@ -217,6 +208,7 @@ const onboarding = {
         }
 
         if (step === 1) this.renderInstallContext();
+        if (step === 2) this.initHostingWizard();
         if (step === 3 && this.starterTemplate) this.highlightStarter(this.starterTemplate);
         if (step === 4) this.initAiWizard();
 
@@ -347,10 +339,10 @@ const onboarding = {
                 }
                 this.nextStep();
             } else {
-                alert(data.message || 'Failed to install starter template');
+                BirklyFeedback.toast(data.message || 'Failed to install starter template', 'error')
             }
         } catch (error) {
-            alert('Failed to install starter template.');
+            BirklyFeedback.toast('Failed to install starter template.', 'error')
         }
         if (btn) {
             btn.disabled = false;
@@ -371,6 +363,20 @@ const onboarding = {
         return null;
     },
 
+    initHostingWizard() {
+        const mount = document.getElementById('onboarding-hosting-wizard-mount');
+        if (!mount || !window.BirklyHostingWizard) return;
+        if (!this.hostingWizard) {
+            this.hostingWizard = window.BirklyHostingWizard.create(mount, {
+                id: 'onboarding-hosting-wizard',
+                mode: 'onboarding',
+                autoLoad: true
+            });
+        } else {
+            this.hostingWizard.load().catch(() => {});
+        }
+    },
+
     async saveSiteInfo() {
         const form = document.getElementById('site-info-form');
         if (!form) return;
@@ -385,7 +391,7 @@ const onboarding = {
 
         const csrfToken = await this.getCSRFToken();
         if (!csrfToken) {
-            alert('Failed to get security token.');
+            BirklyFeedback.toast('Failed to get security token.', 'error')
             if (submitBtn) submitBtn.disabled = false;
             return;
         }
@@ -406,16 +412,18 @@ const onboarding = {
             });
             const data = await response.json();
             if (data.status === 'ok') {
-                const modeInput = document.querySelector('input[name="onboarding-public-mode"]:checked');
-                const hostingBody = {
-                    action: 'save',
-                    hosting: {
-                        cms_base_url: document.getElementById('onboarding-cms-url')?.value.trim() || window.location.origin,
-                        public_site_mode: modeInput ? modeInput.value : 'none',
-                        public_site_url: document.getElementById('onboarding-public-url')?.value.trim() || '',
+                const hostingPayload = this.hostingWizard
+                    ? this.hostingWizard.getHostingPayload()
+                    : {
+                        cms_base_url: window.location.origin,
+                        public_site_mode: 'none',
+                        public_site_url: '',
                         same_host_landing: 'admin',
                         strict_admin_host: true
-                    },
+                    };
+                const hostingBody = {
+                    action: 'save',
+                    hosting: hostingPayload,
                     _csrf: csrfToken
                 };
                 await fetch(Birkly.url('/api/hosting.php?action=save'), {
@@ -425,10 +433,10 @@ const onboarding = {
                 });
                 this.nextStep();
             } else {
-                alert('Failed to save: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
             }
         } catch (error) {
-            alert('Failed to save project information.');
+            BirklyFeedback.toast('Failed to save project information.', 'error')
         }
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -543,11 +551,11 @@ const onboarding = {
         const csrf = await this.getCSRFToken();
 
         if (!provider || !csrf) {
-            alert('Select a provider first.');
+            BirklyFeedback.toast('Select a provider first.', 'warning')
             return;
         }
         if (provider !== 'ollama' && !apiKey) {
-            alert('API key is required.');
+            BirklyFeedback.toast('API key is required.', 'error')
             return;
         }
 
@@ -573,11 +581,11 @@ const onboarding = {
                 await this.updateProgressAPI('ai_connected', true);
                 await this.complete();
             } else {
-                alert(data.message || 'Failed to create AI connection');
+                BirklyFeedback.toast(data.message || 'Failed to create AI connection', 'error')
                 if (btn) btn.disabled = false;
             }
         } catch (error) {
-            alert('Failed to save AI connection.');
+            BirklyFeedback.toast('Failed to save AI connection.', 'error')
             if (btn) btn.disabled = false;
         }
     },
@@ -613,7 +621,7 @@ const onboarding = {
             if (this.starterTemplate) params.set('starter_template', this.starterTemplate);
             window.location.href = Birkly.url('/admin/index.php?page=dashboard') + '&' + params.toString();
         } else {
-            alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
+            BirklyFeedback.toast('Failed to complete onboarding: ' + (data.message || 'Unknown error'), 'error');
         }
     },
 
@@ -624,7 +632,7 @@ const onboarding = {
     },
 
     async skip() {
-        if (!confirm('Skip setup? You can finish later from the dashboard.')) return;
+        if (!(await BirklyFeedback.confirm('Skip setup? You can finish later from the dashboard.'))) return;
         try {
             const response = await fetch(Birkly.url('/api/onboarding.php?action=skip'), { method: 'POST' });
             const data = await response.json();

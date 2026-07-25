@@ -54,14 +54,16 @@ p {
   line-height: var(--font-lineheight-default, 150%);
 }
 
-/* Links */
+/* Links — primary-700 for WCAG contrast on light backgrounds */
 a {
-  color: var(--color-primary, #7CE3BF);
+  color: var(--primary-700, #3DA882);
+  text-decoration: underline;
+  text-underline-offset: 2px;
   transition: color var(--transition-fast, 150ms ease);
 }
 
 a:hover {
-  color: var(--color-primary-hover, #8CECCA);
+  color: var(--primary-800, #2D8C6B);
 }
 
 /* Code */

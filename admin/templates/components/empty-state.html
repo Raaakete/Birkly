@@ -1,10 +1,21 @@
 <!-- Empty State Component
      Parameters:
      - message: Main message to display
+     - icon: Optional icon HTML
      - action_label: Label for action button (optional)
      - action_url: URL for action button (optional)
 -->
 <div class="empty-state empty-state--compact">
+    {if icon exist}
+    <div class="empty-state__icon" aria-hidden="true">{icon}</div>
+    {else}
+    <div class="empty-state__icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M8 12h8"></path>
+        </svg>
+    </div>
+    {endif}
     <p class="empty-state__message">{message}</p>
     {if action_label exist}
         {if action_url exist}

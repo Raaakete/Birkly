@@ -47,7 +47,7 @@
     };
 
     function bindEvents() {
-        document.getElementById('create-webhook')?.addEventListener('click', function() {
+        document.getElementById('create-webhook')?.addEventListener('click', async function () {
             openWebhookModal();
         });
         document.getElementById('save-webhook')?.addEventListener('click', saveWebhook);
@@ -56,7 +56,7 @@
         const tbody = document.getElementById('webhooks-list');
         if (tbody && !tbody.dataset.actionsBound) {
             tbody.dataset.actionsBound = '1';
-            tbody.addEventListener('click', function(e) {
+            tbody.addEventListener('click', async function (e) {
                 const editBtn = e.target.closest('[data-edit-webhook]');
                 if (editBtn) {
                     e.preventDefault();
@@ -245,15 +245,15 @@
                 closeWebhookModal();
                 loadWebhooks();
             } else {
-                alert(result.message || 'Failed to save webhook');
+                BirklyFeedback.toast(result.message || 'Failed to save webhook', 'error')
             }
         } catch (error) {
-            alert('Failed to save webhook: ' + error.message);
+            BirklyFeedback.toast('Failed to save webhook: ' + error.message, 'error')
         }
     }
 
     async function deleteWebhook(webhookId) {
-        if (!webhookId || !confirm('Delete this webhook?')) {
+        if (!webhookId || !(await BirklyFeedback.confirm('Delete this webhook?'))) {
             return;
         }
         try {
@@ -266,17 +266,17 @@
             if (result.status === 'ok') {
                 loadWebhooks();
             } else {
-                alert(result.message || 'Failed to delete webhook');
+                BirklyFeedback.toast(result.message || 'Failed to delete webhook', 'error')
             }
         } catch (error) {
-            alert('Failed to delete webhook: ' + error.message);
+            BirklyFeedback.toast('Failed to delete webhook: ' + error.message, 'error')
         }
     }
 
     async function testWebhook() {
         const payload = readWebhookForm();
         if (!payload.id) {
-            alert('Save the webhook before testing.');
+            BirklyFeedback.toast('Save the webhook before testing.', 'error')
             return;
         }
         try {
@@ -287,12 +287,12 @@
             });
             const result = await response.json();
             if (result.status === 'ok') {
-                alert('Test webhook sent successfully.');
+                BirklyFeedback.toast('Test webhook sent successfully.', 'success')
             } else {
-                alert(result.message || 'Webhook test failed');
+                BirklyFeedback.toast(result.message || 'Webhook test failed', 'error')
             }
         } catch (error) {
-            alert('Webhook test failed: ' + error.message);
+            BirklyFeedback.toast('Webhook test failed: ' + error.message, 'error')
         }
     }
 

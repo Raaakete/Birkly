@@ -12,25 +12,33 @@ $stickySaveBarSaveLabel = __('admin.save_settings');
 $stickySaveBarMessageId = 'settings-message';
 $stickySaveBarMessageClass = 'message settings-toast';
 $stickySaveBarSaveClass = 'btn btn-primary';
+$stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
 include __DIR__ . '/components/sticky-save-bar.php';
 ?>
 
 <div class="settings-page">
 
+  <nav class="settings-area-nav" aria-label="<?= htmlspecialchars(__('admin.settings')) ?>">
+    <button type="button" class="settings-area-btn active" data-area="site"><?= __('admin.settings_area_site') ?></button>
+    <button type="button" class="settings-area-btn" data-area="team"><?= __('admin.settings_area_team') ?></button>
+    <button type="button" class="settings-area-btn" data-area="integrations"><?= __('admin.settings_area_integrations') ?></button>
+    <button type="button" class="settings-area-btn" data-area="infrastructure"><?= __('admin.settings_area_infrastructure') ?></button>
+  </nav>
+
   <div class="settings-tabs tabs-v2-root">
     <div class="tabs">
-      <button type="button" class="tab active" data-tab="general">
+      <button type="button" class="tab active" data-tab="general" data-area="site">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
         </svg>
         <?= __('admin.general') ?>
       </button>
-      <button type="button" class="tab" data-tab="users-roles">
+      <button type="button" class="tab" data-tab="users-roles" data-area="team">
         <?= birkly_icon('user', ['size' => 12]) ?>
         <?= __('admin.users_and_roles') ?>
       </button>
-      <button type="button" class="tab" data-tab="security">
+      <button type="button" class="tab" data-tab="security" data-area="team">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <circle cx="12" cy="16" r="1"></circle>
@@ -38,21 +46,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.security') ?>
       </button>
-      <button type="button" class="tab" data-tab="api">
+      <button type="button" class="tab" data-tab="api" data-area="integrations">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
         <?= __('admin.api') ?>
       </button>
-      <button type="button" class="tab" data-tab="webhooks">
+      <button type="button" class="tab" data-tab="webhooks" data-area="integrations">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
         </svg>
         <?= __('admin.webhooks') ?>
       </button>
-      <button type="button" class="tab" data-tab="redirects">
+      <button type="button" class="tab" data-tab="redirects" data-area="site">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 7l4 4-4 4"></path>
           <path d="M3 11h18"></path>
@@ -60,15 +68,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.redirects') ?>
       </button>
-      <button type="button" class="tab" data-tab="hosting">
+      <button type="button" class="tab" data-tab="hosting" data-area="site">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="2" y1="12" x2="22" y2="12"></line>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
         </svg>
-        Hosting
+        <?= __('admin.hosting') ?>
       </button>
-      <button type="button" class="tab" data-tab="domains">
+      <button type="button" class="tab" data-tab="domains" data-area="site">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
@@ -76,15 +84,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.domains') ?>
       </button>
-      <button type="button" class="tab" data-tab="project">
+      <button type="button" class="tab" data-tab="project" data-area="site">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 7l9-4 9 4-9 4-9-4z"></path>
           <path d="M3 17l9 4 9-4"></path>
           <path d="M3 12l9 4 9-4"></path>
         </svg>
-        Project
+        <?= __('admin.project') ?>
       </button>
-      <button type="button" class="tab" data-tab="activity-log">
+      <button type="button" class="tab" data-tab="activity-log" data-area="team">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14,2 14,8 20,8"></polyline>
@@ -93,7 +101,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.activity_and_audit_log') ?>
       </button>
-      <button type="button" class="tab" data-tab="ai-integrations" data-help-topic="mcp-connections">
+      <button type="button" class="tab" data-tab="ai-integrations" data-area="integrations" data-help-topic="mcp-connections">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
           <path d="M2 17l10 5 10-5"></path>
@@ -102,7 +110,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.ai_integrations') ?>
       </button>
-      <button type="button" class="tab" data-tab="storage">
+      <button type="button" class="tab" data-tab="storage" data-area="infrastructure">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
@@ -110,7 +118,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.storage') ?>
       </button>
-      <button type="button" class="tab" data-tab="monitoring">
+      <button type="button" class="tab" data-tab="monitoring" data-area="infrastructure">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
         </svg>
@@ -523,8 +531,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="settings-section">
             <h2><?= __('admin.plugin_security_denylist') ?></h2>
             <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
-            <div class="denylist-add-toolbar" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
-              <div class="form-group" style="margin: 0; min-width: 220px;">
+            <div class="denylist-add-toolbar settings-section-header-row">
+              <div class="form-group settings-form-group--inline">
                 <label for="denylist-collection-select">Protect collection</label>
                 <select id="denylist-collection-select" class="input">
                   <option value="">Loading collections…</option>
@@ -538,7 +546,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 Add custom pattern
               </button>
             </div>
-            <p class="settings-help" style="margin-top: 0;">Spaces denylist is reserved for a future release (stub).</p>
+            <p class="settings-help settings-help--tight">Spaces denylist is reserved for a future release (stub).</p>
             <div id="denylist-management">
               <div class="text-center">
                 <div class="spinner">Loading denylist...</div>
@@ -559,7 +567,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               $registeredDomains = json_decode(file_get_contents($domainsFile), true) ?: [];
           }
           $domainCount = is_array($registeredDomains) ? count($registeredDomains) : 0;
-          $domainsTabUrl = admin_url('settings') . '#domains';
+          $domainsTabUrl = admin_url('settings') . '?area=site&tab=domains';
         ?>
         <div class="settings-section">
           <h2><?= __('admin.api_information') ?></h2>
@@ -592,61 +600,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
       </div>
 
       <!-- Domains Tab -->
+      <!-- Hosting Tab -->
       <div class="tab-pane" id="hosting">
         <div class="settings-stack hosting-settings">
           <section class="card">
             <div class="section-header">
-              <h2>Hosting URLs</h2>
-              <p class="section-description">Configure where the CMS admin lives and where your public website is served. Dokploy domains should use Internal Path <code>/</code> for all hostnames.</p>
+              <h2><?= __('admin.hosting_urls') ?></h2>
+              <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
             </div>
-            <div class="form-group">
-              <label for="hosting-cms-url">CMS URL</label>
-              <div class="input-with-action">
-                <input type="url" id="hosting-cms-url" class="input" placeholder="https://cms.example.com">
-                <button type="button" class="btn btn-secondary btn-sm" id="hosting-use-current-host">Use current host</button>
-              </div>
-              <small class="form-help">Admin panel, API, and <code>birkly-client.js</code> base URL.</small>
-            </div>
-            <fieldset class="form-group">
-              <legend>Public website</legend>
-              <label class="radio-label"><input type="radio" name="hosting-public-mode" value="none" checked> None — CMS only (no public site on this install)</label>
-              <label class="radio-label"><input type="radio" name="hosting-public-mode" value="external"> Hosted elsewhere (Netlify, separate server, etc.)</label>
-              <label class="radio-label"><input type="radio" name="hosting-public-mode" value="project"> In Birkly (<code>project/</code> folder)</label>
-            </fieldset>
-            <div class="form-group" data-hosting-public-field style="display:none;">
-              <label for="hosting-public-url">Public site URL</label>
-              <input type="url" id="hosting-public-url" class="input" placeholder="https://www.example.com">
-              <small class="form-help">Visitors see this URL in the browser. Saving auto-registers the host in Domains.</small>
-            </div>
-            <fieldset class="form-group" data-hosting-same-host-field style="display:none;">
-              <legend>When CMS and public use the same domain</legend>
-              <label class="radio-label"><input type="radio" name="hosting-same-host-landing" value="admin" checked> Root <code>/</code> opens admin</label>
-              <label class="radio-label"><input type="radio" name="hosting-same-host-landing" value="public"> Root <code>/</code> opens public site</label>
-            </fieldset>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="hosting-strict-admin" checked>
-                Redirect <code>/admin</code> on public host to CMS URL
-              </label>
-            </div>
-            <button type="button" class="btn btn-primary" id="hosting-save-btn">Save hosting settings</button>
-            <p data-hosting-project-link style="display:none;" class="form-help">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '#project') ?>">Settings → Project</a>.</p>
-          </section>
-          <section class="card">
-            <div class="section-header"><h3>Integration snippet</h3></div>
-            <pre class="domains-code-pre"><code id="hosting-client-snippet"></code></pre>
-            <button type="button" class="btn btn-secondary btn-sm" id="hosting-copy-snippet">Copy snippet</button>
-          </section>
-          <section class="card">
-            <details>
-              <summary>Dokploy checklist</summary>
-              <ul class="form-help">
-                <li>Add each domain (CMS + public) pointing to the same app</li>
-                <li>Path <code>/</code> · Internal Path <code>/</code> · port <code>80</code></li>
-                <li>Mount persistent volume at <code>/app/data</code> (see <code>docker-compose.yml</code>)</li>
-                <li>Test: CMS root → admin · public root → site (no <code>/project/</code> in URL)</li>
-              </ul>
-            </details>
+            <div id="hosting-wizard-mount"></div>
+            <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?area=site&tab=project') ?>">Settings → Project</a>.</p>
           </section>
         </div>
       </div>
@@ -703,6 +666,31 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <!-- Project Tab -->
       <div class="tab-pane" id="project">
         <div class="settings-stack project-settings">
+          <section class="card project-simple-card">
+            <div class="section-header project-simple-header">
+              <div>
+                <h2>Project files</h2>
+                <p class="section-description">Bundled public site workspace. Upload files or visit your live site.</p>
+              </div>
+              <a href="#" id="project-visit-public-link" class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer" hidden>Visit public site</a>
+            </div>
+            <div class="project-simple-toolbar">
+              <button type="button" class="btn btn-secondary btn-sm" id="project-simple-upload-btn">Upload files</button>
+              <input type="file" id="project-simple-upload-input" class="project-upload-input" multiple hidden>
+            </div>
+            <div id="project-simple-file-list" class="project-simple-file-list">
+              <div class="loading-state"><div class="spinner"></div><p>Loading files...</p></div>
+            </div>
+            <div class="form-group project-advanced-toggle-row">
+              <label class="checkbox-label">
+                <input type="checkbox" id="project-advanced-editor-toggle">
+                Advanced file editor
+              </label>
+              <small class="form-help">Browse folders, edit source files, and view activity.</small>
+            </div>
+          </section>
+
+          <div id="project-advanced-panel" class="project-advanced-panel" hidden>
           <section class="card project-overview-card">
             <div class="section-header">
               <h2>Project overview</h2>
@@ -774,10 +762,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
             </div>
             <div class="project-access-links">
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '#ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '#domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?area=integrations&tab=ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?area=site&tab=domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
             </div>
           </section>
+          </div>
         </div>
       </div>
 
@@ -942,7 +931,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             
-            <div class="settings-section" style="margin-top: 2rem;">
+            <div class="settings-section settings-section--spaced">
               <h3><?= __('admin.migration') ?></h3>
               <p class="settings-help"><?= __('admin.migration_help') ?></p>
               <div class="form-row">
@@ -1645,6 +1634,7 @@ window.webhooksData = window.webhooksData || { collections: <?= $webhookCollecti
 
 <script src="<?= birkly_url('/admin/js/webhooks.js') ?>"></script>
 <script src="<?= birkly_url('/admin/js/redirects.js') ?>"></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-wizard.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-settings.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/project-settings.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
 <script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>

@@ -175,7 +175,7 @@ if (empty($userAvatar)) {
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('feedback')) ?>" class="nav-link <?= is_nav_active('feedback') ?>" title="Alpha Feedback">
                             <?= birkly_icon('chat-circle', ['class' => 'nav-icon']) ?>
-                            <span class="nav-label">Alpha Feedback</span>
+                            <span class="nav-label"><?= __('admin.alpha_feedback') ?></span>
                         </a>
                     </li>
                     <?php endif; ?>

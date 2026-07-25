@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 2FA buttons are rendered dynamically; use event delegation for reliability
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', async function (e) {
         const target = e.target;
         if (!target) return;
 
@@ -202,7 +202,7 @@ async function startCloudAccountLink() {
 }
 
 async function unlinkCloudAccount() {
-    if (!confirm('Unlink your Birkly cloud account from this CMS installation?')) return;
+    if (!(await BirklyFeedback.confirm('Unlink your Birkly cloud account from this CMS installation?'))) return;
     try {
         const response = await fetch(Birkly.url('/api/cloud_account.php?action=unlink'), {
             method: 'POST',
@@ -328,7 +328,7 @@ async function openAccount2FASetupModal() {
           </div>
         `;
 
-        document.getElementById('account-2fa-step1-next')?.addEventListener('click', () => {
+        document.getElementById('account-2fa-step1-next')?.addEventListener('click', async () => {
             content.querySelector('.account-2fa-step1').style.display = 'none';
             content.querySelector('.account-2fa-step2').style.display = 'block';
             document.getElementById('account-2fa-verify-code')?.focus();
@@ -360,7 +360,7 @@ window.accountClose2FASetupModal = accountClose2FASetupModal;
 async function enableAccount2FA() {
     const code = document.getElementById('account-2fa-verify-code')?.value.trim();
     if (!code || code.length !== 6) {
-        alert('Please enter a valid 6-digit code');
+        BirklyFeedback.toast('Please enter a valid 6-digit code', 'warning')
         return;
     }
 
@@ -389,14 +389,14 @@ async function enableAccount2FA() {
                 <button class="btn btn-primary" type="button" id="account-2fa-done">Done</button>
               </div>
             `;
-            document.getElementById('account-2fa-done')?.addEventListener('click', () => {
+            document.getElementById('account-2fa-done')?.addEventListener('click', async () => {
                 accountClose2FASetupModal();
                 loadAccount2FAStatus();
             });
         }
     } catch (err) {
         console.error('Enable 2FA error:', err);
-        alert('Error enabling 2FA: ' + (err.message || 'Unknown error'));
+        BirklyFeedback.toast('Error enabling 2FA: ' + (err.message || 'Unknown error'), 'error');
     }
 }
 
@@ -440,7 +440,7 @@ document.getElementById('account-2fa-disable-form')?.addEventListener('submit', 
         loadAccount2FAStatus();
     } catch (err) {
         console.error('Disable 2FA error:', err);
-        alert('Error disabling 2FA: ' + (err.message || 'Unknown error'));
+        BirklyFeedback.toast('Error disabling 2FA: ' + (err.message || 'Unknown error'), 'error');
     }
 });
 
@@ -496,7 +496,7 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
                 </div>
               </div>
             `;
-            document.getElementById('account-2fa-regenerate-done')?.addEventListener('click', () => {
+            document.getElementById('account-2fa-regenerate-done')?.addEventListener('click', async () => {
                 accountClose2FARegenerateModal();
                 loadAccount2FAStatus();
             });
@@ -507,7 +507,7 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
         }
     } catch (err) {
         console.error('Regenerate backup codes error:', err);
-        alert('Error regenerating backup codes: ' + (err.message || 'Unknown error'));
+        BirklyFeedback.toast('Error regenerating backup codes: ' + (err.message || 'Unknown error'), 'error');
     }
 });
 
@@ -760,7 +760,7 @@ function handleNotificationsSubmit(e) {
 }
 
 function handleRemoveAvatar() {
-    if (!confirm('Are you sure you want to remove your avatar?')) {
+    if (!(await BirklyFeedback.confirm('Are you sure you want to remove your avatar?'))) {
         return;
     }
     
@@ -780,12 +780,12 @@ function handleRemoveAvatar() {
         if (data.status === 'ok') {
             window.location.reload();
         } else {
-            alert(data.message || 'Error removing avatar');
+            BirklyFeedback.toast(data.message || 'Error removing avatar', 'error')
         }
     })
     .catch(error => {
         console.error('Remove avatar error:', error);
-        alert('Error removing avatar');
+        BirklyFeedback.toast('Error removing avatar', 'error')
     });
 }
 
