@@ -185,10 +185,11 @@ function birkly_health_studio(): array
         $indexRoute = str_contains($body, '/site') && str_contains($body, 'studio_public.php');
     }
     $pluginActive = false;
-    if (function_exists('birkly_is_plugin_active')) {
-        require_once __DIR__ . '/plugins.php';
-        load_plugins();
-        $pluginActive = birkly_is_plugin_active('studio');
+    if (!function_exists('get_plugin_state')) {
+        require_once __DIR__ . '/public_bootstrap.php';
+    }
+    if (function_exists('get_plugin_state')) {
+        $pluginActive = get_plugin_state('studio');
     }
     $routeReady = $publicEntry && $pluginActive && ($htaccessRule || $indexRoute);
     $hints = [];
@@ -250,6 +251,7 @@ function birkly_health_report(): array
         'status' => $status,
         'service' => 'birkly-cms',
         'version' => get_birkly_version(),
+        'build_revision' => birkly_deploy_revision(),
         'php' => PHP_VERSION,
         'time' => gmdate('c'),
         'writable' => $writable,
