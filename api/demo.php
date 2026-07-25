@@ -236,7 +236,11 @@ switch ($action) {
         $result = birkly_demo_install_starter_template($templateId, $projectRoot);
         if (!$result['success']) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => $result['message'] ?? 'Install failed']);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $result['message'] ?? 'Install failed',
+                'diagnostics' => $result['diagnostics'] ?? null,
+            ]);
             exit;
         }
         require_once __DIR__ . '/../core/site_domain.php';
