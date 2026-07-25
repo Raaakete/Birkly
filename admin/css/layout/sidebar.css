@@ -91,14 +91,14 @@
 .sidebar-header .h1,
 .sidebar-header h1 {
   margin: 0;
-  color: var(--brand-primary, var(--primary-600, #2563eb));
+  color: var(--brand-primary);
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.025em;
 }
 
 .sidebar-header h1 {
-  color: var(--brand-primary, var(--primary-600, #2563eb));
+  color: var(--brand-primary);
 }
 
 /* Navigation Links */
@@ -186,14 +186,14 @@
 [data-theme="dark"] .nav-links li.active a,
 [data-theme="dark"] .nav-links a.active {
   color: var(--text-primary, #f8fafc);
-  border-left-color: var(--primary-500, #3b82f6);
+  border-left-color: var(--primary-500);
 }
 
 @media (prefers-color-scheme: dark) {
   [data-theme="system"] .nav-links li.active a,
   [data-theme="system"] .nav-links a.active {
     color: var(--text-primary, #f8fafc);
-    border-left-color: var(--primary-500, #3b82f6);
+    border-left-color: var(--primary-500);
   }
 }
 
@@ -324,7 +324,7 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 
   [data-theme="dark"] body.sidebar-collapsed .nav-links li.active a::before,
   [data-theme="dark"] body.sidebar-collapsed .nav-links a.active::before {
-    background: var(--primary-500, #3b82f6);
+    background: var(--primary-500);
   }
 
   body.sidebar-collapsed .nav-links li.active a,
@@ -430,7 +430,7 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 }
 
 .sidebar-footer .user-menu-trigger:focus {
-  outline: 2px solid var(--primary-500, #3b82f6);
+  outline: 2px solid var(--primary-500);
   outline-offset: 2px;
 }
 
@@ -473,7 +473,7 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
@@ -531,7 +531,7 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   color: #ffffff;
   font-weight: 600;
   font-size: 0.9375rem;
@@ -620,13 +620,13 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 }
 
 .user-language-select:hover {
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
 }
 
 .user-language-select:focus {
   outline: none;
-  border-color: var(--primary-500, #3b82f6);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(124, 227, 191, 0.2);
 }
 
 .user-menu-logout {
