@@ -1143,7 +1143,7 @@ body.dragging-group .group-drop-indicator {
   background: var(--border-light, #f3f4f6);
   border: 1px solid var(--border-light, #f3f4f6);
   border-radius: var(--border-radius-s, 4px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .collections-container[data-view="list"] .collection-card:hover {

@@ -79,7 +79,7 @@
   z-index: 2;
   border-bottom: 1px solid var(--border-light, #f3f4f6);
   width: max-content;
-  min-width: 100%;
+  min-width: 0;
 }
 
 .entries-smart-table .head-row,
@@ -88,6 +88,8 @@
   align-items: center;
   width: max-content;
   min-width: 0;
+  max-width: none;
+  flex-shrink: 0;
   transition: all var(--transition-normal, 200ms ease);
   gap: 1px;
   box-sizing: border-box;
@@ -166,11 +168,10 @@
   flex: 0 0 auto;
   flex-shrink: 0;
   flex-grow: 0;
-  margin-left: auto;
   justify-content: flex-end;
   position: sticky;
   right: 0;
-  padding-right: var(--space-3, 0.75rem);
+  padding-right: var(--space-2, 0.5rem);
   border-left: 1px solid var(--border-light, #f3f4f6);
   z-index: 1;
   background: var(--bg-elevated, #ffffff);
@@ -211,14 +212,14 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  scrollbar-gutter: stable;
 }
 
 .entries-smart-table .table-body {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   width: max-content;
-  min-width: 100%;
+  min-width: 0;
 }
 
 .entries-smart-table .cell-drag {
