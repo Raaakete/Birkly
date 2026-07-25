@@ -56,3 +56,63 @@ Omit `BIRKLY_DATA` and mount folders separately (`/app/content`, `/app/settings`
 ## Health check
 
 `GET /api/health.php` — used by the image `HEALTHCHECK` and external monitoring.
+
+## Dokploy troubleshooting (deploy not updating)
+
+If you merged fixes on GitHub but the live site still shows the same PHP warnings, the **container image was not rebuilt** from latest `main`. Auto-deploy and “clean cache” do not always trigger a new Docker build.
+
+### General tab (required)
+
+| Setting | Must be |
+|---------|---------|
+| Repository | **`Raaakete/Birkly`** (CMS core — not `Birkly-Website`) |
+| Branch | **`main`** |
+| Build type | **Dockerfile** (not Nixpacks, not Static) |
+| Dockerfile | `Dockerfile` (repo root) |
+| Port | **80** |
+
+### Force a real rebuild
+
+1. **General** → confirm settings above → **Save**
+2. **Stop** the application (if Dokploy offers Stop)
+3. Enable **Clean cache** (if available)
+4. Click **Rebuild** (not only “Restart” / lightweight Redeploy)
+5. Open **Deployments** → latest entry → read the **build log**
+
+Build log must include:
+
+```text
+FROM php:8.3-fpm-bookworm
+```
+
+and after start, **Logs** must include:
+
+```text
+[entrypoint] Birkly CMS docker image — document root /app
+[entrypoint] Build revision: ...
+```
+
+If the log mentions `/usr/share/nginx/html` or “Welcome to nginx”, you are on the wrong image type.
+
+### Verify live revision (after rebuild)
+
+Open:
+
+**https://cms.birkly.cloud/api/deploy_revision.php**
+
+| Field | Old broken build | Fixed build |
+|-------|------------------|-------------|
+| `plugin_registry_globals` | `false` | **`true`** |
+| `build_revision` | missing or `unknown` | commit SHA or `unknown` (if no build arg) |
+| PHP warnings above JSON | yes | **no** |
+
+Also: `/api/health.php` on a fixed build returns **JSON only** (no `Warning:` lines) and includes `"build_revision"`.
+
+### Autodeploy
+
+GitHub → repo **Webhooks** or Dokploy **Autodeploy** must fire on push to `main`. If unsure, use **Rebuild** manually after every merge you need live.
+
+### Wrong repo symptom
+
+App name “Birkly Website” in Dokploy is fine, but the **Git repository** must still be `Raaakete/Birkly`. `Birkly-Website` is a separate static/marketing repo and will not pick up CMS Dockerfile fixes.
+
