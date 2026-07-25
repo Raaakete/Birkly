@@ -11,6 +11,40 @@
         return viewport || table;
     }
 
+    function getRowContentWidth(row) {
+        if (!row) {
+            return 0;
+        }
+
+        let maxRight = 0;
+        Array.from(row.children).forEach(function (child) {
+            const rect = child.getBoundingClientRect();
+            if (rect.width > 0) {
+                maxRight = Math.max(maxRight, rect.right);
+            }
+        });
+
+        const rowRect = row.getBoundingClientRect();
+        return Math.max(0, maxRight - rowRect.left);
+    }
+
+    function clampHorizontalScroll(viewport) {
+        const headRow = viewport.querySelector('.head-row');
+        if (!headRow) {
+            return;
+        }
+
+        let contentWidth = getRowContentWidth(headRow);
+        viewport.querySelectorAll('.table-row').forEach(function (row) {
+            contentWidth = Math.max(contentWidth, getRowContentWidth(row));
+        });
+
+        const maxScrollLeft = Math.max(0, Math.ceil(contentWidth) - viewport.clientWidth);
+        if (viewport.scrollLeft > maxScrollLeft + 1) {
+            viewport.scrollLeft = maxScrollLeft;
+        }
+    }
+
     function isActionsOverlappingContent(table) {
         const actionsCell = table.querySelector('.table-row .cell-actions') || table.querySelector('.head-actions');
         if (!actionsCell) {
@@ -61,6 +95,7 @@
         viewport.dataset.smartTableScrollBound = '1';
 
         const onChange = function () {
+            clampHorizontalScroll(viewport);
             updateTableScrollState(viewport);
         };
 
