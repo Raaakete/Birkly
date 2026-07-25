@@ -32,6 +32,53 @@ function birkly_hosting_reset_cache(): void
     unset($GLOBALS['__birkly_hosting_config']);
 }
 
+function birkly_hosting_trust_request_host(): bool
+{
+    $value = strtolower(trim((string) (getenv('BIRKLY_TRUST_REQUEST_HOST') ?: '')));
+    return in_array($value, ['1', 'true', 'yes', 'on'], true);
+}
+
+/**
+ * Optional Docker/staging overrides (do not set on production unless intentional).
+ *
+ * @return array{cms_base_url?:string,public_site_url?:string,public_site_mode?:string}
+ */
+function birkly_hosting_env_overrides(): array
+{
+    $overrides = [];
+
+    $cms = trim((string) (getenv('BIRKLY_CMS_BASE_URL') ?: ''));
+    if ($cms !== '') {
+        $overrides['cms_base_url'] = birkly_hosting_normalize_url($cms, false);
+    }
+
+    $public = trim((string) (getenv('BIRKLY_PUBLIC_SITE_URL') ?: ''));
+    if ($public !== '') {
+        $overrides['public_site_url'] = birkly_hosting_normalize_url($public, true);
+    }
+
+    $mode = trim((string) (getenv('BIRKLY_PUBLIC_SITE_MODE') ?: ''));
+    if ($mode !== '') {
+        $overrides['public_site_mode'] = birkly_hosting_normalize_mode($mode);
+    }
+
+    return $overrides;
+}
+
+/**
+ * @param array<string, mixed> $config
+ * @return array<string, mixed>
+ */
+function birkly_hosting_apply_env_overrides(array $config): array
+{
+    $overrides = birkly_hosting_env_overrides();
+    if ($overrides === []) {
+        return $config;
+    }
+
+    return array_merge($config, $overrides);
+}
+
 /**
  * @return array{cms_base_url: string, public_site_mode: string, public_site_url: string, same_host_landing: string, strict_admin_host: bool}
  */
@@ -64,6 +111,8 @@ function birkly_hosting_load(): array
         ? $config['same_host_landing']
         : 'admin';
     $config['strict_admin_host'] = (bool) $config['strict_admin_host'];
+
+    $config = birkly_hosting_apply_env_overrides($config);
 
     $GLOBALS['__birkly_hosting_config'] = $config;
     return $config;
@@ -311,6 +360,10 @@ function birkly_request_host_role(): string
     }
     if ($publicHost !== '' && $host === $publicHost) {
         return 'public';
+    }
+
+    if (birkly_hosting_trust_request_host() && $host !== '') {
+        return 'cms';
     }
 
     return 'unknown';
