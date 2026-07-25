@@ -29,7 +29,7 @@ function birkly_content_page_data_minimal(): array
             $entriesDir = $dir . '/entries';
             $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json') ?: []) : 0;
 
-            $collections[] = [
+            $row = [
                 'id' => $collectionData['id'] ?? ('col-' . $collectionName),
                 'name' => $collectionData['name'] ?? $collectionData['title'] ?? $collectionName,
                 'slug' => $collectionName,
@@ -37,17 +37,18 @@ function birkly_content_page_data_minimal(): array
                 'entries_count' => $entriesCount,
                 'sub_entries_count' => 0,
             ];
+            if (!empty($collectionData['icon'])) {
+                $row['icon'] = $collectionData['icon'];
+            }
+            if (!empty($collectionData['icon_key'])) {
+                $row['icon_key'] = $collectionData['icon_key'];
+            }
+            $collections[] = $row;
         }
     }
 
-    $groups = [];
-    $groupsFile = $collectionsPath . '/groups.json';
-    if (is_file($groupsFile)) {
-        $groupsData = json_decode((string) file_get_contents($groupsFile), true);
-        if (is_array($groupsData)) {
-            $groups = $groupsData;
-        }
-    }
+    require_once __DIR__ . '/collection_groups.php';
+    $groups = birkly_load_collection_groups($collectionsPath . '/groups.json');
 
     return [
         'collections' => $collections,

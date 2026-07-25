@@ -1114,3 +1114,113 @@ body.dragging-group .group-drop-indicator {
     flex-wrap: wrap;
   }
 }
+
+/* ============================================
+   Content overview view toggle & list layout
+   ============================================ */
+.content-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  padding: 0.25rem;
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-elevated, #ffffff);
+}
+
+.content-view-toggle .btn-icon.active {
+  background: var(--color-neutral-100, #f3f4f6);
+  color: var(--text-primary, #20221D);
+}
+
+.collections-container[data-view="list"] .group-collections,
+.collections-container[data-view="list"] .ungrouped-collections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  grid-template-columns: none;
+}
+
+.collections-container[data-view="list"] .collection-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+}
+
+.collections-container[data-view="list"] .collection-card .collection-header {
+  display: contents;
+  margin-bottom: 0;
+}
+
+.collections-container[data-view="list"] .collection-card .collection-header .title {
+  grid-column: 2;
+  margin: 0;
+}
+
+.collections-container[data-view="list"] .collection-card .collection-description {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.collections-container[data-view="list"] .collection-card .collection-footer {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  margin-top: 0;
+  align-self: center;
+}
+
+.collections-container[data-view="list"] .collection-card .drag-handle {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+/* Nested collection groups */
+.collection-subgroups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  margin-top: var(--space-3, 0.75rem);
+  padding-left: var(--space-4, 1rem);
+  border-left: 2px solid var(--border-light, #f3f4f6);
+}
+
+.collection-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+.collection-subgroup .subgroup-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  cursor: grab;
+  user-select: none;
+}
+
+.collection-subgroup .subgroup-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+  flex: 1;
+}
+
+.collection-subgroup .subgroup-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.collection-subgroup.collapsed .group-collections {
+  display: none;
+}
+
+.group-title-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-right: var(--space-1, 0.25rem);
+}

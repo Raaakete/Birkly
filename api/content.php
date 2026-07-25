@@ -1128,10 +1128,17 @@ if ($action === 'save_groups') {
         echo json_encode(['status' => 'error', 'message' => 'Groups must be an array']);
         exit;
     }
-    $result = birkly_save_collection_groups($groups);
+    $normalized = birkly_normalize_collection_groups($groups);
+    $validationError = birkly_validate_collection_groups($normalized);
+    if ($validationError !== null) {
+        echo json_encode(['status' => 'error', 'message' => $validationError]);
+        exit;
+    }
+    $result = birkly_save_collection_groups($normalized);
     echo json_encode([
         'status' => $result ? 'ok' : 'error',
-        'message' => $result ? 'Groups saved' : 'Failed to save groups'
+        'message' => $result ? 'Groups saved' : 'Failed to save groups',
+        'data' => $result ? ['groups' => $normalized] : null,
     ]);
     exit;
 }
