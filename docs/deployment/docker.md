@@ -63,14 +63,24 @@ No per-folder volume list is required.
 
 ### Two domains (marketing + CMS)
 
-Use one container and route by hostname in your reverse proxy (Dokploy domains):
+Configure URLs in **Settings → Hosting** (`settings/hosting.json`), not by hostname prefix or Dokploy Internal Path tricks.
 
-| Host | Serves | Notes |
-|------|--------|--------|
-| `example.com` | `/project` (public site) | Marketing HTML in repo `project/` → persisted in `data/content/project/` |
-| `cms.example.com` | `/admin`, `/api`, client JS | Register `https://example.com` in CMS **Settings → Domains** |
+| Setting | Example | Role |
+|---------|---------|------|
+| **CMS URL** | `https://cms.birkly.cloud` | Admin, API, `birkly-client.js` — `/` redirects to admin |
+| **Public site URL** | `https://birkly.cloud` | Marketing site when mode = **In Birkly (`project/`)** |
+| **Public site mode** | `project` | Serves `project/` files at clean root URLs (no `/project/` in the browser bar) |
 
-Marketing pages must set `data-cms-url` to the **CMS** host (not the marketing host).
+Dokploy: add **both** domains to the same app. For each domain set **Path** `/` and **Internal Path** `/` (never `/project`). Mount **`/app/data`** as a named volume.
+
+| Host | After P43 routing |
+|------|-------------------|
+| CMS host | `/` → admin · `/admin` · `/api/*` |
+| Public host | `/` → `project/index.html` · `/about` → `project/about.html` · `/admin` → redirect to CMS URL |
+
+Marketing pages must set `data-cms-url` to the **CMS URL** (copy from Settings → Hosting). Saving the public site URL auto-registers the host in **Settings → Domains**.
+
+Site-owner guide: [Birkly-Docs — Dokploy hosting](https://github.com/Raaakete/Birkly-Docs/blob/main/07-operations/dokploy-hosting.md).
 
 ## Legacy multi-folder layout
 
