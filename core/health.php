@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
+require_once __DIR__ . '/birkly_data_paths.php';
 require_once __DIR__ . '/plugins/dependencies.php';
 
 /**
@@ -105,7 +106,7 @@ function birkly_health_writable_dirs(): array
  */
 function birkly_health_disk(): array
 {
-    $root = birkly_project_root();
+    $root = birkly_data_disk_path();
     $free = @disk_free_space($root);
     $total = @disk_total_space($root);
 
