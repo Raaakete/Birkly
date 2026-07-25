@@ -173,6 +173,70 @@
   flex: 1;
 }
 
+/* Plugin / marketplace skeleton loaders (P44-M10) */
+.plugin-card--skeleton,
+.marketplace-card--skeleton {
+  pointer-events: none;
+  border-color: var(--border-light);
+  background: var(--bg-elevated);
+}
+
+.plugin-skeleton-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-3, 0.75rem);
+}
+
+.plugin-skeleton-line {
+  height: 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: plugin-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.plugin-skeleton-line--title {
+  width: 55%;
+  height: 1rem;
+}
+
+.plugin-skeleton-line--body {
+  width: 100%;
+  margin-bottom: var(--space-2, 0.5rem);
+}
+
+.plugin-skeleton-line--short {
+  width: 40%;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.plugin-skeleton-pill {
+  width: 4rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: plugin-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.plugin-skeleton-pill--btn {
+  width: 5.5rem;
+  height: 2rem;
+  border-radius: var(--radius-sm, 0.375rem);
+}
+
+.plugin-skeleton-actions {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+@keyframes plugin-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .plugins-grid {

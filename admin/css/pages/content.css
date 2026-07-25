@@ -1127,6 +1127,98 @@ body.dragging-group .group-drop-indicator {
   }
 }
 
+/* Entries mobile filter drawer (P44-M10) */
+.entries-filter-toggle {
+  display: none;
+}
+
+.entries-toolbar-filters--desktop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+
+.entries-filter-drawer {
+  display: contents;
+}
+
+@media (max-width: 480px) {
+  .entries-filter-toggle {
+    display: inline-flex;
+  }
+
+  .entries-toolbar-filters--desktop {
+    display: none;
+  }
+
+  .entries-filter-drawer {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+  }
+
+  .entries-filter-drawer[hidden] {
+    display: none !important;
+  }
+
+  .entries-filter-drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-overlay, rgba(0, 0, 0, 0.45));
+  }
+
+  .entries-filter-drawer__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated, #ffffff);
+    border-radius: var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem) 0 0;
+    box-shadow: var(--shadow-xl);
+  }
+
+  .entries-filter-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4, 1rem);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .entries-filter-drawer__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .entries-filter-drawer__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-4, 1rem);
+    overflow-y: auto;
+  }
+
+  .entries-filter-drawer__footer {
+    padding: var(--space-4, 1rem);
+    border-top: 1px solid var(--border-light);
+  }
+
+  .entries-filter-drawer__body .collection-search-input,
+  .entries-filter-drawer__body .collection-filter-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.entries-filter-drawer-open {
+    overflow: hidden;
+  }
+}
+
 /* ============================================
    Content overview view toggle & list layout
    ============================================ */

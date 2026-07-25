@@ -140,18 +140,18 @@
             button.setAttribute('aria-expanded', open ? 'true' : 'false');
         }
 
-        button.addEventListener('click', function(e) {
+        button.addEventListener('click', async function (e) {
             e.stopPropagation();
             setMenuOpen(!wrap.classList.contains('open'));
         });
 
-        document.getElementById('assist-fab-ai').addEventListener('click', function(e) {
+        document.getElementById('assist-fab-ai').addEventListener('click', async function (e) {
             e.stopPropagation();
             setMenuOpen(false);
             toggleChatWindow();
         });
 
-        document.getElementById('assist-fab-feedback').addEventListener('click', function(e) {
+        document.getElementById('assist-fab-feedback').addEventListener('click', async function (e) {
             e.stopPropagation();
             setMenuOpen(false);
             if (window.Birkly && typeof window.Birkly.openFeedbackModal === 'function') {
@@ -161,7 +161,7 @@
             }
         });
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', async function (e) {
             if (!wrap.contains(e.target)) {
                 setMenuOpen(false);
             }
@@ -349,7 +349,7 @@
         // Setup event listeners
         document.getElementById('ai-chat-close-btn')?.addEventListener('click', hideChatWindow);
         document.getElementById('ai-chat-fullscreen-btn')?.addEventListener('click', toggleFullscreen);
-        document.getElementById('ai-chat-send-btn')?.addEventListener('click', function() {
+        document.getElementById('ai-chat-send-btn')?.addEventListener('click', async function () {
             if (isChatRequestInFlight) {
                 cancelChatRequest();
             } else {
@@ -363,14 +363,14 @@
             }
         });
 
-        document.getElementById('ai-chat-tab-messages')?.addEventListener('click', () => switchChatView('messages'));
-        document.getElementById('ai-chat-tab-approvals')?.addEventListener('click', () => switchChatView('approvals'));
+        document.getElementById('ai-chat-tab-messages')?.addEventListener('click', async () => switchChatView('messages'));
+        document.getElementById('ai-chat-tab-approvals')?.addEventListener('click', async () => switchChatView('approvals'));
 
-        document.getElementById('ai-chat-connection-select')?.addEventListener('change', function(e) {
+        document.getElementById('ai-chat-connection-select')?.addEventListener('change', async function(e) {
             const connectionId = e.target.value;
             if (!connectionId) return;
             if (currentConnection && currentConnection.id === connectionId) return;
-            if (chatMessages.length > 0 && !confirm('Switch AI connection? This starts a new chat.')) {
+            if (chatMessages.length > 0 && !(await BirklyFeedback.confirm('Switch AI connection? This starts a new chat.'))) {
                 e.target.value = currentConnection?.id || '';
                 return;
             }
@@ -557,8 +557,8 @@
             newBtn.className = 'btn-icon';
             newBtn.title = 'New Chat';
             newBtn.innerHTML = icon('plus', { size: 16 });
-            newBtn.addEventListener('click', function() {
-                if (confirm('Start a new chat? This will clear the current conversation.')) {
+            newBtn.addEventListener('click', async function () {
+                if (await BirklyFeedback.confirm('Start a new chat? This will clear the current conversation.')) {
                     clearChatState();
                     const messages = document.getElementById('ai-chat-messages');
                     if (messages) {
@@ -907,7 +907,7 @@
             return '<button type="button" class="ai-chat-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
         }).join('');
         container.querySelectorAll('.ai-chat-quick-chip').forEach(function(chip) {
-            chip.addEventListener('click', function() {
+            chip.addEventListener('click', async function () {
                 runQuickAction(chip.getAttribute('data-prompt') || '');
             });
         });
@@ -939,7 +939,7 @@
 
         bar.appendChild(wrap);
         wrap.querySelectorAll('.ai-page-quick-chip').forEach(function(chip) {
-            chip.addEventListener('click', function() {
+            chip.addEventListener('click', async function () {
                 runQuickAction(chip.getAttribute('data-prompt') || '');
             });
         });
@@ -1195,7 +1195,7 @@
     
     // Approve action from chat
     async function approveAction(approvalId) {
-        if (!confirm('Approve this action?')) return;
+        if (!(await BirklyFeedback.confirm('Approve this action?'))) return;
         
         try {
             const response = await fetch('/api/ai_approvals.php', {

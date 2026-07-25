@@ -102,7 +102,7 @@
     function attachTrackingListeners() {
         // Copy code buttons
         document.querySelectorAll('.copy-code-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', async function () {
                 const code = this.getAttribute('data-code');
                 navigator.clipboard.writeText(code).then(() => {
                     const originalHTML = this.innerHTML;
@@ -116,7 +116,7 @@
         
         // Toggle tracking buttons
         document.querySelectorAll('.toggle-tracking-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', async function () {
                 const trackingId = this.getAttribute('data-id');
                 const currentEnabled = this.getAttribute('data-enabled') === 'true';
                 toggleTracking(trackingId, !currentEnabled);
@@ -125,9 +125,9 @@
         
         // Delete tracking buttons
         document.querySelectorAll('.delete-tracking-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', async function () {
                 const trackingId = this.getAttribute('data-id');
-                if (confirm('Are you sure you want to delete this tracking configuration? This will stop collecting analytics for this website.')) {
+                if (await BirklyFeedback.confirm('Are you sure you want to delete this tracking configuration? This will stop collecting analytics for this website.')) {
                     deleteTracking(trackingId);
                 }
             });
@@ -152,12 +152,12 @@
             if (data.status === 'ok') {
                 loadTrackingList();
             } else {
-                alert('Error: ' + (data.message || 'Failed to update tracking'));
+                BirklyFeedback.toast('Error: ' + (data.message || 'Failed to update tracking'), 'error');
             }
         })
         .catch(error => {
             console.error('Error toggling tracking:', error);
-            alert('Error updating tracking configuration');
+            BirklyFeedback.toast('Error updating tracking configuration', 'error')
         });
     }
     
@@ -178,12 +178,12 @@
             if (data.status === 'ok') {
                 loadTrackingList();
             } else {
-                alert('Error: ' + (data.message || 'Failed to delete tracking'));
+                BirklyFeedback.toast('Error: ' + (data.message || 'Failed to delete tracking'), 'error');
             }
         })
         .catch(error => {
             console.error('Error deleting tracking:', error);
-            alert('Error deleting tracking configuration');
+            BirklyFeedback.toast('Error deleting tracking configuration', 'error')
         });
     }
     
@@ -214,7 +214,7 @@
             const domain = document.getElementById('tracking-domain').value;
             
             if (!name || !domain) {
-                alert('Please fill in all fields');
+                BirklyFeedback.toast('Please fill in all fields', 'warning')
                 return;
             }
             
@@ -235,12 +235,12 @@
                     closeAddTrackingModal();
                     loadTrackingList();
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to create tracking'));
+                    BirklyFeedback.toast('Error: ' + (data.message || 'Failed to create tracking'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error creating tracking:', error);
-                alert('Error creating tracking configuration');
+                BirklyFeedback.toast('Error creating tracking configuration', 'error')
             });
         });
     }
@@ -253,7 +253,7 @@
     // Close modal on backdrop click
     const addTrackingModal = document.getElementById('add-tracking-modal');
     if (addTrackingModal) {
-        addTrackingModal.addEventListener('click', function(e) {
+        addTrackingModal.addEventListener('click', async function (e) {
             if (e.target === addTrackingModal) {
                 closeAddTrackingModal();
             }
@@ -271,7 +271,7 @@
         // Check if we're on the analytics tab
         const analyticsTab = document.querySelector('[data-tab="analytics"]');
         if (analyticsTab) {
-            analyticsTab.addEventListener('click', function() {
+            analyticsTab.addEventListener('click', async function () {
                 setTimeout(loadTrackingList, 100);
             });
             
