@@ -11,73 +11,6 @@
         return viewport || table;
     }
 
-    function getRowCells(row) {
-        const cells = [];
-        Array.from(row.children).forEach(function (child) {
-            if (child.classList.contains('fields-head-region') || child.classList.contains('fields-region')) {
-                Array.from(child.children).forEach(function (fieldCell) {
-                    cells.push(fieldCell);
-                });
-                return;
-            }
-            cells.push(child);
-        });
-        return cells;
-    }
-
-    function syncColumnWidths(table) {
-        const headRow = table.querySelector('.head-row');
-        if (!headRow) {
-            return;
-        }
-
-        const headCells = getRowCells(headRow);
-        if (headCells.length === 0) {
-            return;
-        }
-
-        const widths = headCells.map(function (cell) {
-            cell.style.width = '';
-            cell.style.minWidth = '';
-            cell.style.maxWidth = '';
-            cell.style.flex = '';
-            return cell.getBoundingClientRect().width;
-        });
-
-        function applyWidths(cells) {
-            cells.forEach(function (cell, index) {
-                const width = widths[index];
-                if (!width || width <= 0) {
-                    return;
-                }
-                const px = Math.ceil(width) + 'px';
-                cell.style.width = px;
-                cell.style.minWidth = px;
-                cell.style.maxWidth = px;
-                cell.style.flex = '0 0 ' + px;
-            });
-        }
-
-        applyWidths(headCells);
-        table.querySelectorAll('.table-row').forEach(function (row) {
-            applyWidths(getRowCells(row));
-        });
-
-        const totalWidth = widths.reduce(function (sum, width) {
-            return sum + (width > 0 ? Math.ceil(width) : 0);
-        }, 0);
-
-        if (totalWidth > 0) {
-            const widthPx = totalWidth + 'px';
-            headRow.style.width = widthPx;
-            headRow.style.minWidth = widthPx;
-            table.querySelectorAll('.table-row').forEach(function (row) {
-                row.style.width = widthPx;
-                row.style.minWidth = widthPx;
-            });
-        }
-    }
-
     function isActionsOverlappingContent(table) {
         const actionsCell = table.querySelector('.table-row .cell-actions') || table.querySelector('.head-actions');
         if (!actionsCell) {
@@ -128,16 +61,11 @@
         viewport.dataset.smartTableScrollBound = '1';
 
         const onChange = function () {
-            syncColumnWidths(table);
             updateTableScrollState(viewport);
         };
 
-        viewport.addEventListener('scroll', function () {
-            updateTableScrollState(viewport);
-        }, { passive: true });
-        table.addEventListener('scroll', function () {
-            updateTableScrollState(viewport);
-        }, { passive: true });
+        viewport.addEventListener('scroll', onChange, { passive: true });
+        table.addEventListener('scroll', onChange, { passive: true });
         window.addEventListener('resize', onChange);
 
         if (typeof ResizeObserver !== 'undefined') {
@@ -146,11 +74,7 @@
             observer.observe(table);
         }
 
-        if (typeof requestAnimationFrame !== 'undefined') {
-            requestAnimationFrame(onChange);
-        } else {
-            onChange();
-        }
+        onChange();
     }
 
     function initializeSmartTableScroll() {
@@ -161,11 +85,6 @@
     window.Birkly.SmartTableScroll = {
         init: initializeSmartTableScroll,
         update: updateTableScrollState,
-        syncColumnWidths: function (table) {
-            if (table) {
-                syncColumnWidths(table);
-            }
-        },
     };
 
     if (document.readyState === 'loading') {
