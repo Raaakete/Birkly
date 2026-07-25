@@ -64,8 +64,10 @@ There is **no** `create_user` action — direct users to Settings → Users.
 Birkly client sites use a **plain-English template language** in static HTML, loaded via:
 
 ```html
-<script src="/cms-template.v2.js"></script>
+<script src="/birkly-client.js" data-cms-url="https://your-cms-domain.com"></script>
 ```
+
+When the page is served from the same host as the CMS (e.g. `project/` preview), `/birkly-client.js` alone is enough. External sites must set `data-cms-url` to the CMS base URL.
 
 Full spec: `docs/TEMPLATE_LANGUAGE_SPEC.md` (platform); public docs on Birkly-Docs when synced.
 
