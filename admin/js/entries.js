@@ -61,10 +61,21 @@
         entryCheckboxes.forEach(function (checkbox) {
             const row = checkbox.closest('.table-row');
             if (!row) return;
-            if (selectedEntries.has(checkbox.value)) {
+            const table = row.closest('.entries-smart-table');
+            const entryId = checkbox.value;
+            const railRow = table
+                ? table.querySelector('.actions-rail-row[data-entry-id="' + entryId.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]')
+                : null;
+            if (selectedEntries.has(entryId)) {
                 row.setAttribute('data-entry-selected', 'true');
+                if (railRow) {
+                    railRow.setAttribute('data-entry-selected', 'true');
+                }
             } else {
                 row.removeAttribute('data-entry-selected');
+                if (railRow) {
+                    railRow.removeAttribute('data-entry-selected');
+                }
             }
         });
     }
@@ -471,6 +482,7 @@
         document.querySelectorAll('.entries-smart-table').forEach(function (table) {
             const headActions = table.querySelector('.head-actions');
             const rowActions = table.querySelectorAll('.cell-actions');
+            const actionsRail = table.querySelector('.table-actions-rail');
             if (!headActions || rowActions.length === 0) {
                 return;
             }
@@ -487,10 +499,16 @@
             });
 
             if (maxWidth > 0) {
-                headActions.style.flexBasis = maxWidth + 'px';
-                headActions.style.width = maxWidth + 'px';
-                headActions.style.minWidth = maxWidth + 'px';
-                table.style.setProperty('--action-cell-width', maxWidth + 'px');
+                const widthPx = Math.ceil(maxWidth) + 'px';
+                headActions.style.flexBasis = widthPx;
+                headActions.style.width = widthPx;
+                headActions.style.minWidth = widthPx;
+                table.style.setProperty('--action-cell-width', widthPx);
+                if (actionsRail) {
+                    actionsRail.style.width = widthPx;
+                    actionsRail.style.flexBasis = widthPx;
+                    actionsRail.style.minWidth = widthPx;
+                }
             }
         });
     }
