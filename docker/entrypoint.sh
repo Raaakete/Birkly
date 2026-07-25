@@ -1,5 +1,5 @@
 #!/bin/sh
-# Do not use set -e globally — a chmod/symlink warning must not prevent nginx from starting (502).
+# Startup must not exit before nginx — a volume/symlink issue should warn, not 502.
 
 echo "[entrypoint] Birkly CMS docker image — document root /app (not /usr/share/nginx/html)"
 
@@ -8,6 +8,7 @@ if [ -f /app/BUILD_REVISION ]; then
 fi
 
 DATA_ROOT="${BIRKLY_DATA:-}"
+USE_DATA_ROOT=0
 
 # Symlink /app/<name> → $DATA_ROOT/<name>, migrating a real directory when present.
 link_persistent_dir() {
@@ -15,8 +16,8 @@ link_persistent_dir() {
   local target="$DATA_ROOT/$name"
   local link="/app/$name"
 
-  if ! mkdir -p "$target"; then
-    echo "[entrypoint] ERROR: cannot create $target"
+  if ! mkdir -p "$target" 2>/dev/null; then
+    echo "[entrypoint] WARN: cannot create $target"
     return 1
   fi
 
@@ -31,43 +32,53 @@ link_persistent_dir() {
     fi
   fi
 
-  rm -rf "$link"
-  if ! ln -sfn "$target" "$link"; then
-    echo "[entrypoint] ERROR: failed to symlink $link → $target"
+  rm -rf "$link" 2>/dev/null || true
+  if ! ln -sfn "$target" "$link" 2>/dev/null; then
+    echo "[entrypoint] WARN: failed to symlink $link → $target"
     return 1
   fi
+  return 0
 }
 
-if [ -n "$DATA_ROOT" ]; then
-  echo "[entrypoint] Unified data root: $DATA_ROOT (single volume mount)"
-  if ! mkdir -p "$DATA_ROOT"; then
-    echo "[entrypoint] ERROR: cannot create data root $DATA_ROOT (check volume mount permissions)"
-    exit 1
-  fi
-
-  for name in content settings users media cache logs temp plugins themes; do
-    link_persistent_dir "$name" || exit 1
-  done
-
-  for name in ai_conversations ai_approvals webhooks invitations analytics mcp_audit mcp_rate feedback; do
-    mkdir -p "$DATA_ROOT/$name" 2>/dev/null || true
-  done
-  mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
-
-  chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback"
-else
-  echo "[entrypoint] Legacy layout (no BIRKLY_DATA — multiple top-level folders)"
+legacy_layout() {
+  echo "[entrypoint] Using legacy in-container data dirs (check volume mount at /app/data)"
   DIRS="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/temp /app/plugins /app/themes"
   for dir in $DIRS; do
     mkdir -p "$dir" 2>/dev/null || true
   done
   chmod_dirs="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/temp /app/plugins /app/themes"
+}
+
+if [ -n "$DATA_ROOT" ]; then
+  echo "[entrypoint] Unified data root: $DATA_ROOT (single volume mount)"
+  if mkdir -p "$DATA_ROOT" 2>/dev/null; then
+  USE_DATA_ROOT=1
+  for name in content settings users media cache logs temp plugins themes; do
+    if ! link_persistent_dir "$name"; then
+      echo "[entrypoint] WARN: data symlink failed for $name — falling back to legacy layout"
+      USE_DATA_ROOT=0
+      break
+    fi
+  done
+  else
+    echo "[entrypoint] WARN: cannot write $DATA_ROOT — falling back to legacy layout"
+    USE_DATA_ROOT=0
+  fi
 fi
 
-# Public site files live under content (persisted). Symlink /app/project → content/project.
+if [ "$USE_DATA_ROOT" -eq 1 ]; then
+  for name in ai_conversations ai_approvals webhooks invitations analytics mcp_audit mcp_rate feedback; do
+    mkdir -p "$DATA_ROOT/$name" 2>/dev/null || true
+  done
+  mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
+  chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback"
+else
+  legacy_layout
+fi
+
 if [ ! -L /app/content ] && [ ! -d /app/content ]; then
-  echo "[entrypoint] ERROR: /app/content missing after data setup"
-  exit 1
+  echo "[entrypoint] WARN: /app/content missing — creating empty content dir"
+  mkdir -p /app/content 2>/dev/null || true
 fi
 
 mkdir -p /app/content/project 2>/dev/null || true
@@ -78,14 +89,13 @@ elif [ -d /app/project ]; then
   if [ -n "$(find /app/project -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -print -quit 2>/dev/null)" ]; then
     cp -a /app/project/. /app/content/project/ 2>/dev/null || true
   fi
-  rm -rf /app/project
-  ln -sfn /app/content/project /app/project
+  rm -rf /app/project 2>/dev/null || true
+  ln -sfn /app/content/project /app/project 2>/dev/null || true
 else
-  ln -sfn /app/content/project /app/project
+  ln -sfn /app/content/project /app/project 2>/dev/null || true
 fi
 
 chmod -R 777 $chmod_dirs 2>/dev/null || true
-
 rm -f /var/run/nginx.pid /var/run/nginx.pid.lock 2>/dev/null || true
 
 if [ -f /app/scripts/repair-starter-content.php ]; then
