@@ -1,0 +1,119 @@
+/* ============================================
+   Empty State Component — unified pattern
+   ============================================ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-10, 2.5rem) var(--space-6, 1.5rem);
+  color: var(--text-secondary, #72746F);
+  gap: var(--space-3, 0.75rem);
+}
+
+.empty-state > p,
+.empty-state__message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  max-width: 36ch;
+}
+
+.empty-state__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #20221D);
+}
+
+.empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg, 0.75rem);
+  background: var(--color-neutral-100, #F8F9F7);
+  color: var(--text-tertiary, #9B9D98);
+  flex-shrink: 0;
+}
+
+.empty-state__action {
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.empty-state a:not(.btn) {
+  color: var(--color-primary, var(--primary-600));
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.empty-state a:not(.btn):hover {
+  text-decoration: underline;
+}
+
+.empty-state--compact {
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+}
+
+.empty-state--loading,
+.empty-state.loading {
+  color: var(--text-tertiary, #9B9D98);
+}
+
+.empty-state--error,
+.empty-state.error {
+  color: var(--error-600, #dc2626);
+}
+
+.empty-state-friendly {
+  text-align: center;
+  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
+  color: var(--text-secondary, #72746F);
+}
+
+.empty-state-friendly strong {
+  color: var(--text-primary, #20221D);
+  display: block;
+  margin-bottom: var(--space-2, 0.5rem);
+}
+
+/* Loading / error shells (used in settings, domains, media) */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-10, 2.5rem) var(--space-5, 1.25rem);
+  color: var(--text-secondary, #72746F);
+  gap: var(--space-3, 0.75rem);
+}
+
+.loading-state p,
+.error-state p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.error-state {
+  color: var(--error-600, #dc2626);
+}
+
+.spinner {
+  border: 3px solid var(--border-color, #e5e7eb);
+  border-top: 3px solid var(--color-primary, var(--primary-500));
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  animation: empty-state-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes empty-state-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -25,14 +25,16 @@
         return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
     }
 
-    const DRAG_HANDLE_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="3" r="1.25"/><circle cx="11" cy="3" r="1.25"/><circle cx="5" cy="8" r="1.25"/><circle cx="11" cy="8" r="1.25"/><circle cx="5" cy="13" r="1.25"/><circle cx="11" cy="13" r="1.25"/></svg>';
+    function icon(name, opts) {
+        return (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
+    }
 
     function createDragHandle(label, className) {
         const handle = document.createElement('span');
         handle.className = className || 'drag-handle';
         handle.setAttribute('role', 'img');
         handle.setAttribute('aria-label', label);
-        handle.innerHTML = DRAG_HANDLE_SVG;
+        handle.innerHTML = icon('dots-six-vertical', { size: 16 });
         return handle;
     }
 
@@ -353,7 +355,7 @@
         collapseBtn.type = 'button';
         collapseBtn.className = 'btn-icon group-collapse-btn';
         collapseBtn.title = 'Collapse Group';
-        collapseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
+        collapseBtn.innerHTML = icon('caret-down', { size: 14 });
         collapseBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -365,7 +367,7 @@
         editBtn.type = 'button';
         editBtn.className = 'btn-icon';
         editBtn.title = 'Edit Group';
-        editBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+        editBtn.innerHTML = icon('pencil-simple', { size: 14 });
         editBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -376,7 +378,7 @@
         deleteBtn.type = 'button';
         deleteBtn.className = 'btn-icon';
         deleteBtn.title = 'Delete Group';
-        deleteBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+        deleteBtn.innerHTML = icon('trash', { size: 14 });
         deleteBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -403,7 +405,7 @@
             addSubBtn.type = 'button';
             addSubBtn.className = 'btn-icon';
             addSubBtn.title = 'Add subgroup';
-            addSubBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>';
+            addSubBtn.innerHTML = icon('plus', { size: 14 });
             addSubBtn.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -583,8 +585,8 @@
         collapseBtn.className = 'btn-icon group-collapse-btn';
         collapseBtn.title = isCollapsed ? 'Expand Group' : 'Collapse Group';
         collapseBtn.innerHTML = isCollapsed
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"></path></svg>'
-            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
+            ? icon('caret-up', { size: 14 })
+            : icon('caret-down', { size: 14 });
         collapseBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -695,7 +697,7 @@
         menuButton.setAttribute('aria-label', 'Collection options');
         menuButton.setAttribute('aria-expanded', 'false');
         menuButton.setAttribute('aria-haspopup', 'true');
-        menuButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>';
+        menuButton.innerHTML = icon('dots-three-vertical', { size: 16 });
         menuButton.addEventListener('dragstart', (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -707,17 +709,17 @@
         const viewEntriesItem = document.createElement('a');
         viewEntriesItem.className = 'dropdown-item collection-menu-item';
         viewEntriesItem.href = adminUrl('entries', { collection: collection.slug });
-        viewEntriesItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span class="dropdown-item-label">View Entries</span>';
+        viewEntriesItem.innerHTML = icon('file-text', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">View Entries</span>';
 
         const editItem = document.createElement('a');
         editItem.className = 'dropdown-item collection-menu-item';
         editItem.href = adminUrl('collection-editor', { collection: collection.slug });
-        editItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg><span class="dropdown-item-label">Edit Collection</span>';
+        editItem.innerHTML = icon('pencil-simple', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Edit Collection</span>';
 
         const duplicateItem = document.createElement('button');
         duplicateItem.type = 'button';
         duplicateItem.className = 'dropdown-item collection-menu-item';
-        duplicateItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="dropdown-item-label">Duplicate Collection</span>';
+        duplicateItem.innerHTML = icon('copy', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Duplicate Collection</span>';
         duplicateItem.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -728,7 +730,7 @@
         const deleteItem = document.createElement('button');
         deleteItem.type = 'button';
         deleteItem.className = 'dropdown-item dropdown-item-danger collection-menu-item collection-menu-item-danger';
-        deleteItem.innerHTML = '<svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg><span class="dropdown-item-label">Delete Collection</span>';
+        deleteItem.innerHTML = icon('trash', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Delete Collection</span>';
         deleteItem.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1016,7 +1018,7 @@
             if (grid) grid.style.display = '';
             if (collapseBtn) {
                 collapseBtn.title = 'Collapse Group';
-                collapseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
+                collapseBtn.innerHTML = icon('caret-down', { size: 14 });
             }
             localStorage.setItem(`group-collapsed-${groupId}`, 'false');
         } else {
@@ -1024,7 +1026,7 @@
             if (grid) grid.style.display = 'none';
             if (collapseBtn) {
                 collapseBtn.title = 'Expand Group';
-                collapseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"></path></svg>';
+                collapseBtn.innerHTML = icon('caret-up', { size: 14 });
             }
             localStorage.setItem(`group-collapsed-${groupId}`, 'true');
         }

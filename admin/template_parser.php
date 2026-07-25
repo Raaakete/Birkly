@@ -1,6 +1,6 @@
 <?php
 /**
- * HaruCMS Natural Template Parser
+ * Birkly Natural Template Parser
  * 
  * Parses natural templating syntax and renders it with data
  */
