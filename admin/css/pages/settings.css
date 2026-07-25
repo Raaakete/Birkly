@@ -1247,6 +1247,12 @@
     font-size: 0.8125rem;
 }
 
+.preference-item > label.toggle-switch {
+    flex: 0 0 auto;
+    width: 36px;
+    margin-right: 0;
+}
+
 .domain-header {
     display: flex;
     justify-content: space-between;
