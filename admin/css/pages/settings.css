@@ -52,6 +52,48 @@
   color: var(--warning-700);
 }
 
+/* Utility classes — reduce inline styles in settings.html (P44-M10) */
+.u-hidden {
+  display: none !important;
+}
+
+.settings-section-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+  align-items: flex-end;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.settings-form-group--inline {
+  margin: 0;
+  min-width: 220px;
+}
+
+.settings-help--tight {
+  margin-top: 0;
+}
+
+.settings-section--spaced {
+  margin-top: var(--space-8, 2rem);
+}
+
+.onboarding-hosting-intro {
+  margin: var(--space-4, 1rem) 0 var(--space-2, 0.5rem);
+}
+
+.onboarding-hosting-intro__title {
+  margin: 0 0 var(--space-1, 0.25rem);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.onboarding-hosting-intro__help {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
 .settings-tabs .tab[data-area] {
   /* hidden by default until area is active — toggled via JS */
 }

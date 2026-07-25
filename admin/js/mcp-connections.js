@@ -48,7 +48,7 @@
 
         if (mcpTab && mcpPane) {
             maybeInitMcpConnections();
-            mcpTab.addEventListener('click', function() {
+            mcpTab.addEventListener('click', async function () {
                 setTimeout(initMcpConnections, 100);
             });
         }
@@ -125,7 +125,7 @@
         document.querySelectorAll('#ai-integrations .help-tip[data-tip]').forEach(btn => {
             if (btn.dataset.tipBound) return;
             btn.dataset.tipBound = '1';
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function (e) {
                 e.preventDefault();
                 e.stopPropagation();
             });
@@ -145,20 +145,20 @@
             radio.addEventListener('change', updateAgentTypePanels);
         });
 
-        document.getElementById('mcp-personal-done-btn')?.addEventListener('click', function(e) {
+        document.getElementById('mcp-personal-done-btn')?.addEventListener('click', async function (e) {
             e.preventDefault();
             hideAddMcpModal();
             focusPersonalConnector();
         });
 
         document.querySelectorAll('.mcp-preset-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function (e) {
                 e.preventDefault();
                 applyMcpPreset(btn.getAttribute('data-mcp-preset'));
             });
         });
 
-        document.getElementById('mcp-copy-personal-url-btn')?.addEventListener('click', function(e) {
+        document.getElementById('mcp-copy-personal-url-btn')?.addEventListener('click', async function (e) {
             e.preventDefault();
             copySnippet('mcp-modal-personal-url', true);
         });
@@ -166,7 +166,7 @@
         const serviceList = document.getElementById('ai-service-agents-list');
         if (serviceList && !serviceList.dataset.actionsBound) {
             serviceList.dataset.actionsBound = '1';
-            serviceList.addEventListener('click', function(e) {
+            serviceList.addEventListener('click', async function (e) {
                 const revokeBtn = e.target.closest('[data-revoke-endpoint]');
                 if (revokeBtn) {
                     e.preventDefault();
@@ -183,7 +183,7 @@
         const personalCard = document.getElementById('ai-personal-agent-card');
         if (personalCard && !personalCard.dataset.actionsBound) {
             personalCard.dataset.actionsBound = '1';
-            personalCard.addEventListener('click', function(e) {
+            personalCard.addEventListener('click', async function (e) {
                 const toggleBtn = e.target.closest('[data-toggle-personal-status]');
                 if (toggleBtn) {
                     e.preventDefault();
@@ -357,7 +357,7 @@
         container.querySelectorAll('.mcp-toggle-setup').forEach(btn => {
             if (btn.dataset.toggleBound) return;
             btn.dataset.toggleBound = '1';
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', async function () {
                 const id = this.dataset.endpointId;
                 const panel = document.getElementById('mcp-setup-panel-' + id);
                 if (!panel) return;
@@ -695,7 +695,7 @@
 
     async function revokeAgent(agentId) {
         if (!agentId || !isAdmin) return;
-        if (!confirm('Remove this service agent? Your AI app will no longer access your site through it.')) {
+        if (!(await BirklyFeedback.confirm('Remove this service agent? Your AI app will no longer access your site through it.'))) {
             return;
         }
 

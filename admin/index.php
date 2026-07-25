@@ -312,6 +312,23 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     <script<?= $__birklyOnboardingNonceAttr ?>>
       window.Birkly = window.Birkly || {};
       window.Birkly.basePath = <?= birkly_base_path_json() ?>;
+      <?php
+      $adminI18nLang = getCurrentLanguage();
+      $adminI18nFile = __DIR__ . '/../lang/' . $adminI18nLang . '.json';
+      $adminI18nFallbackFile = __DIR__ . '/../lang/en.json';
+      $adminI18nData = [];
+      if (is_file($adminI18nFallbackFile)) {
+          $decoded = json_decode((string) file_get_contents($adminI18nFallbackFile), true);
+          $adminI18nData = is_array($decoded['admin'] ?? null) ? $decoded['admin'] : [];
+      }
+      if ($adminI18nLang !== 'en' && is_file($adminI18nFile)) {
+          $decoded = json_decode((string) file_get_contents($adminI18nFile), true);
+          if (is_array($decoded['admin'] ?? null)) {
+              $adminI18nData = array_merge($adminI18nData, $decoded['admin']);
+          }
+      }
+      ?>
+      window.BirklyAdminI18n = <?= json_encode($adminI18nData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/onboarding.css')) ?>">
@@ -364,6 +381,8 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     </div>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/i18n.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/ui-feedback.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-wizard.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/onboarding.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
 </body>

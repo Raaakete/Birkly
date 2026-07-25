@@ -23,12 +23,29 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
         $currentPermissions = [];
     }
     ?>
+    <?php
+    $adminI18nLang = getCurrentLanguage();
+    $adminI18nFile = __DIR__ . '/../../lang/' . $adminI18nLang . '.json';
+    $adminI18nFallbackFile = __DIR__ . '/../../lang/en.json';
+    $adminI18nData = [];
+    if (is_file($adminI18nFallbackFile)) {
+        $decoded = json_decode((string) file_get_contents($adminI18nFallbackFile), true);
+        $adminI18nData = is_array($decoded['admin'] ?? null) ? $decoded['admin'] : [];
+    }
+    if ($adminI18nLang !== 'en' && is_file($adminI18nFile)) {
+        $decoded = json_decode((string) file_get_contents($adminI18nFile), true);
+        if (is_array($decoded['admin'] ?? null)) {
+            $adminI18nData = array_merge($adminI18nData, $decoded['admin']);
+        }
+    }
+    ?>
     <script<?= $__birklyScriptNonceAttr ?>>
       window.Birkly = window.Birkly || {};
       window.Birkly.basePath = <?= birkly_base_path_json() ?>;
       window.Birkly.currentUser = window.Birkly.currentUser || {};
       window.Birkly.currentUser.role = <?= json_encode($currentRole) ?>;
       window.Birkly.currentUser.permissions = <?= json_encode(array_values(array_unique(array_filter($currentPermissions)))) ?>;
+      window.BirklyAdminI18n = <?= json_encode($adminI18nData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
     <?php require_once __DIR__ . '/../../core/build_info.php'; ?>
     <meta name="birkly-build" content="<?= htmlspecialchars((string) (birkly_build_info()['git_commit'] ?? 'unknown')) ?>">

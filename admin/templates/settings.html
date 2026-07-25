@@ -12,17 +12,17 @@ $stickySaveBarSaveLabel = __('admin.save_settings');
 $stickySaveBarMessageId = 'settings-message';
 $stickySaveBarMessageClass = 'message settings-toast';
 $stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">Unsaved changes</span>';
+$stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
 include __DIR__ . '/components/sticky-save-bar.php';
 ?>
 
 <div class="settings-page">
 
-  <nav class="settings-area-nav" aria-label="Settings areas">
-    <button type="button" class="settings-area-btn active" data-area="site">Site</button>
-    <button type="button" class="settings-area-btn" data-area="team">Team &amp; security</button>
-    <button type="button" class="settings-area-btn" data-area="integrations">Integrations</button>
-    <button type="button" class="settings-area-btn" data-area="infrastructure">Infrastructure</button>
+  <nav class="settings-area-nav" aria-label="<?= htmlspecialchars(__('admin.settings')) ?>">
+    <button type="button" class="settings-area-btn active" data-area="site"><?= __('admin.settings_area_site') ?></button>
+    <button type="button" class="settings-area-btn" data-area="team"><?= __('admin.settings_area_team') ?></button>
+    <button type="button" class="settings-area-btn" data-area="integrations"><?= __('admin.settings_area_integrations') ?></button>
+    <button type="button" class="settings-area-btn" data-area="infrastructure"><?= __('admin.settings_area_infrastructure') ?></button>
   </nav>
 
   <div class="settings-tabs tabs-v2-root">
@@ -74,7 +74,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <line x1="2" y1="12" x2="22" y2="12"></line>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
         </svg>
-        Hosting
+        <?= __('admin.hosting') ?>
       </button>
       <button type="button" class="tab" data-tab="domains" data-area="site">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -90,7 +90,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <path d="M3 17l9 4 9-4"></path>
           <path d="M3 12l9 4 9-4"></path>
         </svg>
-        Project
+        <?= __('admin.project') ?>
       </button>
       <button type="button" class="tab" data-tab="activity-log" data-area="team">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -531,8 +531,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="settings-section">
             <h2><?= __('admin.plugin_security_denylist') ?></h2>
             <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
-            <div class="denylist-add-toolbar" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
-              <div class="form-group" style="margin: 0; min-width: 220px;">
+            <div class="denylist-add-toolbar settings-section-header-row">
+              <div class="form-group settings-form-group--inline">
                 <label for="denylist-collection-select">Protect collection</label>
                 <select id="denylist-collection-select" class="input">
                   <option value="">Loading collections…</option>
@@ -546,7 +546,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 Add custom pattern
               </button>
             </div>
-            <p class="settings-help" style="margin-top: 0;">Spaces denylist is reserved for a future release (stub).</p>
+            <p class="settings-help settings-help--tight">Spaces denylist is reserved for a future release (stub).</p>
             <div id="denylist-management">
               <div class="text-center">
                 <div class="spinner">Loading denylist...</div>
@@ -605,8 +605,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <div class="settings-stack hosting-settings">
           <section class="card">
             <div class="section-header">
-              <h2>Hosting URLs</h2>
-              <p class="section-description">Configure where the CMS admin lives and where your public website is served.</p>
+              <h2><?= __('admin.hosting_urls') ?></h2>
+              <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
             </div>
             <div id="hosting-wizard-mount"></div>
             <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?area=site&tab=project') ?>">Settings → Project</a>.</p>
@@ -931,7 +931,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             
-            <div class="settings-section" style="margin-top: 2rem;">
+            <div class="settings-section settings-section--spaced">
               <h3><?= __('admin.migration') ?></h3>
               <p class="settings-help"><?= __('admin.migration_help') ?></p>
               <div class="form-row">

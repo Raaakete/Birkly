@@ -33,9 +33,9 @@ Birkly.Utils = {
         }, 3000);
     },
     
-    // Confirm action
+    // Confirm action (async modal)
     confirmAction(message) {
-        return confirm(message);
+        return BirklyFeedback.confirm(message);
     },
     
     // Escape HTML

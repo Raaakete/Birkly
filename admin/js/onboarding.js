@@ -38,7 +38,7 @@ const onboarding = {
 
     bindAiModeTabs() {
         document.querySelectorAll('.ai-mode-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', async () => {
                 this.aiMode = tab.dataset.aiMode || 'chat';
                 document.querySelectorAll('.ai-mode-tab').forEach(t => {
                     const active = t === tab;
@@ -154,7 +154,7 @@ const onboarding = {
             this.updateAiProviderFields();
             this.aiTestPassed = false;
         });
-        document.getElementById('onboarding-test-ai-btn')?.addEventListener('click', () => this.testAIConnection());
+        document.getElementById('onboarding-test-ai-btn')?.addEventListener('click', async () => this.testAIConnection());
     },
 
     async createFirstUser() {
@@ -339,10 +339,10 @@ const onboarding = {
                 }
                 this.nextStep();
             } else {
-                alert(data.message || 'Failed to install starter template');
+                BirklyFeedback.toast(data.message || 'Failed to install starter template', 'error')
             }
         } catch (error) {
-            alert('Failed to install starter template.');
+            BirklyFeedback.toast('Failed to install starter template.', 'error')
         }
         if (btn) {
             btn.disabled = false;
@@ -391,7 +391,7 @@ const onboarding = {
 
         const csrfToken = await this.getCSRFToken();
         if (!csrfToken) {
-            alert('Failed to get security token.');
+            BirklyFeedback.toast('Failed to get security token.', 'error')
             if (submitBtn) submitBtn.disabled = false;
             return;
         }
@@ -433,10 +433,10 @@ const onboarding = {
                 });
                 this.nextStep();
             } else {
-                alert('Failed to save: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
             }
         } catch (error) {
-            alert('Failed to save project information.');
+            BirklyFeedback.toast('Failed to save project information.', 'error')
         }
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -551,11 +551,11 @@ const onboarding = {
         const csrf = await this.getCSRFToken();
 
         if (!provider || !csrf) {
-            alert('Select a provider first.');
+            BirklyFeedback.toast('Select a provider first.', 'warning')
             return;
         }
         if (provider !== 'ollama' && !apiKey) {
-            alert('API key is required.');
+            BirklyFeedback.toast('API key is required.', 'error')
             return;
         }
 
@@ -581,11 +581,11 @@ const onboarding = {
                 await this.updateProgressAPI('ai_connected', true);
                 await this.complete();
             } else {
-                alert(data.message || 'Failed to create AI connection');
+                BirklyFeedback.toast(data.message || 'Failed to create AI connection', 'error')
                 if (btn) btn.disabled = false;
             }
         } catch (error) {
-            alert('Failed to save AI connection.');
+            BirklyFeedback.toast('Failed to save AI connection.', 'error')
             if (btn) btn.disabled = false;
         }
     },
@@ -621,7 +621,7 @@ const onboarding = {
             if (this.starterTemplate) params.set('starter_template', this.starterTemplate);
             window.location.href = Birkly.url('/admin/index.php?page=dashboard') + '&' + params.toString();
         } else {
-            alert('Failed to complete onboarding: ' + (data.message || 'Unknown error'));
+            BirklyFeedback.toast('Failed to complete onboarding: ' + (data.message || 'Unknown error'), 'error');
         }
     },
 
@@ -632,7 +632,7 @@ const onboarding = {
     },
 
     async skip() {
-        if (!confirm('Skip setup? You can finish later from the dashboard.')) return;
+        if (!(await BirklyFeedback.confirm('Skip setup? You can finish later from the dashboard.'))) return;
         try {
             const response = await fetch(Birkly.url('/api/onboarding.php?action=skip'), { method: 'POST' });
             const data = await response.json();
