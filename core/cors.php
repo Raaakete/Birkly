@@ -109,17 +109,22 @@ function get_registered_domains() {
         $storage = StorageFactory::createStorage(__DIR__ . '/../settings');
         $domains = $storage->read('domains.json') ?? [];
         
-        foreach ($domains as $domain) {
-            if (isset($domain['domain']) && !empty($domain['domain'])) {
-                $domainName = $domain['domain'];
-                // Add both http and https versions
-                $cachedDomains[] = 'https://' . $domainName;
-                $cachedDomains[] = 'http://' . $domainName;
-                // Also add www version if not already present
-                if (strpos($domainName, 'www.') !== 0) {
-                    $cachedDomains[] = 'https://www.' . $domainName;
-                    $cachedDomains[] = 'http://www.' . $domainName;
-                }
+        foreach ($domains as $domainKey => $domain) {
+            if (!is_array($domain)) {
+                continue;
+            }
+
+            $domainName = trim((string) ($domain['domain'] ?? (is_string($domainKey) ? $domainKey : '')));
+            if ($domainName === '') {
+                continue;
+            }
+            // Add both http and https versions
+            $cachedDomains[] = 'https://' . $domainName;
+            $cachedDomains[] = 'http://' . $domainName;
+            // Also add www version if not already present
+            if (strpos($domainName, 'www.') !== 0) {
+                $cachedDomains[] = 'https://www.' . $domainName;
+                $cachedDomains[] = 'http://www.' . $domainName;
             }
         }
     } catch (Exception $e) {
