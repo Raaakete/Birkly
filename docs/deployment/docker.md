@@ -82,6 +82,38 @@ Marketing pages must set `data-cms-url` to the **CMS URL** (copy from Settings �
 
 Site-owner guide: [Birkly-Docs — Dokploy hosting](https://github.com/Raaakete/Birkly-Docs/blob/main/07-operations/dokploy-hosting.md).
 
+### Test vs production (separate Dokploy apps)
+
+Each environment needs its **own named volume** (e.g. `birkly-cms-data` for prod, `birkly-cms-test-data` for test). If test reuses prod’s volume — or a copy of prod’s `/app/data` — `settings/hosting.json` will still point at `https://cms.birkly.cloud`, and visiting `https://test.birkly.cloud` redirects to production.
+
+| Check | Production | Test |
+|-------|------------|------|
+| Volume name | `birkly-cms-data` | `birkly-cms-test-data` (unique) |
+| Domain | `cms.birkly.cloud` | `test.birkly.cloud` |
+| `settings/hosting.json` `cms_base_url` | `https://cms.birkly.cloud` | `https://test.birkly.cloud` |
+
+**Quick fix on test** (pick one):
+
+1. **Environment variables** on the test Dokploy app (no volume edit):
+
+   | Variable | Value |
+   |----------|--------|
+   | `BIRKLY_CMS_BASE_URL` | `https://test.birkly.cloud` |
+   | `BIRKLY_TRUST_REQUEST_HOST` | `true` |
+   | `BIRKLY_PUBLIC_SITE_MODE` | `none` (optional) |
+
+   Redeploy after saving env. `BIRKLY_TRUST_REQUEST_HOST` stops unknown hosts from redirecting to the CMS URL stored in the volume.
+
+2. **Repair script** inside the test container (writes the volume):
+
+   ```bash
+   php /app/scripts/repair-hosting-domain.php https://test.birkly.cloud --public-mode=none
+   ```
+
+3. **Manual edit** on the test volume: `settings/hosting.json` → set `cms_base_url` to `https://test.birkly.cloud`; sync `settings/admin.json` → `cms_url` to the same value.
+
+**Diagnose:** open `/api/deploy_revision.php` on the test host. Check `hosting.cms_base_url`, `hosting.request_host`, and `hosting.request_host_role`. If `request_host` is `test.birkly.cloud` but `request_host_role` is `unknown` and `cms_base_url` is `cms.birkly.cloud`, you have a test/prod hosting mismatch.
+
 ## Legacy multi-folder layout
 
 Omit `BIRKLY_DATA` and mount folders separately (`/app/content`, `/app/settings`, `/app/users`, `/app/media`, …). Supported for older installs; new deployments should use the single data root.
