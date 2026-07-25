@@ -62,7 +62,9 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
 ?>
 <div class="entry-editor-page">
 <?php if (!empty($fieldtypeAssets['css'])): ?>
-    <link rel="stylesheet" href="<?= htmlspecialchars($fieldtypeAssets['css']) ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url($fieldtypeAssets['css'])) ?>">
+<?php elseif (!empty($fieldtypeAssets['css_inline'])): ?>
+    <style><?= $fieldtypeAssets['css_inline'] ?></style>
 <?php endif; ?>
     
     <div class="page-header pt-m pb-m">
@@ -1064,7 +1066,7 @@ echo htmlspecialchars($collectionExample);
 
 <?php if (!empty($fieldtypeAssets['js_files']) && is_array($fieldtypeAssets['js_files'])): ?>
     <?php foreach ($fieldtypeAssets['js_files'] as $jsFile): ?>
-        <script src="<?= htmlspecialchars($jsFile) ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
+        <script src="<?= htmlspecialchars(birkly_url($jsFile)) ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
     <?php endforeach; ?>
 <?php endif; ?>
 <link rel="stylesheet" href="<?= birkly_url('/admin/css/pages/entry-editor-sidebar.css') ?>">
