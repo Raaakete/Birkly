@@ -1,8 +1,0 @@
-{
-  "id": "marsk",
-  "version": "1.0.1",
-  "label": "Marsk — slow living journal",
-  "description": "Flagship editorial blog starter with journal, gallery, and about pages.",
-  "collections": ["blog", "about", "gallery", "site_elements"],
-  "onboarding_enabled": true
-}

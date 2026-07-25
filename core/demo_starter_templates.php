@@ -68,9 +68,6 @@ function birkly_demo_starter_is_selectable(string $projectRoot, string $template
     if ($templateId === 'blank') {
         return true;
     }
-    if (!empty($catalog[$templateId]['onboarding_enabled']) && birkly_demo_local_starter_dir($templateId) !== null) {
-        return true;
-    }
     if (empty($catalog[$templateId]['onboarding_enabled'])) {
         return false;
     }
@@ -87,24 +84,6 @@ function birkly_demo_starter_availability(string $projectRoot): array
     foreach (birkly_demo_starter_catalog() as $templateId => $pack) {
         if (isset($opsOverlay[$templateId])) {
             $availability[$templateId] = $opsOverlay[$templateId];
-            if (!empty($pack['onboarding_enabled']) && birkly_demo_local_starter_dir($templateId) !== null) {
-                $availability[$templateId]['selectable'] = true;
-                $availability[$templateId]['ready'] = true;
-                $availability[$templateId]['enabled'] = true;
-                if (($availability[$templateId]['source'] ?? '') !== 'ops') {
-                    $availability[$templateId]['source'] = 'bundled';
-                }
-            }
-            continue;
-        }
-
-        if (!empty($pack['onboarding_enabled']) && birkly_demo_local_starter_dir($templateId) !== null) {
-            $availability[$templateId] = [
-                'enabled' => true,
-                'ready' => true,
-                'selectable' => true,
-                'source' => 'bundled',
-            ];
             continue;
         }
 
@@ -147,111 +126,6 @@ function birkly_demo_remove_tree(string $dir): bool
     return @rmdir($dir);
 }
 
-/**
- * Bundled starter pack directory (offline fallback when Ops is unreachable).
- */
-function birkly_demo_local_starter_dir(string $templateId): ?string
-{
-    $root = birkly_project_root();
-    $candidates = [
-        $root . '/themes/' . $templateId . '-starter',
-        $root . '/starters/' . $templateId,
-    ];
-    foreach ($candidates as $dir) {
-        if (!is_dir($dir)) {
-            continue;
-        }
-        if (is_dir($dir . '/collections') || is_dir($dir . '/project')) {
-            return $dir;
-        }
-    }
-    return null;
-}
-
-function birkly_demo_copy_tree(string $source, string $dest): bool
-{
-    if (!is_dir($source)) {
-        return false;
-    }
-    if (!is_dir($dest) && !mkdir($dest, 0755, true)) {
-        return false;
-    }
-    $items = array_diff(scandir($source) ?: [], ['.', '..']);
-    foreach ($items as $item) {
-        $from = $source . '/' . $item;
-        $to = $dest . '/' . $item;
-        if (is_dir($from)) {
-            if (!birkly_demo_copy_tree($from, $to)) {
-                return false;
-            }
-        } else {
-            $parent = dirname($to);
-            if (!is_dir($parent) && !mkdir($parent, 0755, true)) {
-                return false;
-            }
-            if (!@copy($from, $to)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-/**
- * @return array{success:bool,installed_collections:list<string>,project_site:bool,message:string}
- */
-function birkly_demo_install_from_local_dir(string $sourceDir, string $projectRoot): array
-{
-    $contentRoot = $projectRoot . '/content/collections';
-    if (!is_dir($contentRoot) && !mkdir($contentRoot, 0755, true)) {
-        return [
-            'success' => false,
-            'installed_collections' => [],
-            'project_site' => false,
-            'message' => 'Cannot write to content directory',
-        ];
-    }
-
-    $projectSiteRoot = $projectRoot . '/' . birkly_public_site_dir();
-    $installed = [];
-    $hasProject = false;
-
-    $collectionsSrc = $sourceDir . '/collections';
-    if (is_dir($collectionsSrc)) {
-        foreach (glob($collectionsSrc . '/*', GLOB_ONLYDIR) ?: [] as $colDir) {
-            $slug = basename($colDir);
-            $dest = $contentRoot . '/' . $slug;
-            if (birkly_demo_copy_tree($colDir, $dest)) {
-                $installed[] = $slug;
-            }
-        }
-    }
-
-    $projectSrc = $sourceDir . '/project';
-    if (is_dir($projectSrc)) {
-        if (!is_dir($projectSiteRoot) && !mkdir($projectSiteRoot, 0755, true)) {
-            return [
-                'success' => false,
-                'installed_collections' => $installed,
-                'project_site' => false,
-                'message' => 'Cannot write to project site directory',
-            ];
-        }
-        if (birkly_demo_copy_tree($projectSrc, $projectSiteRoot)) {
-            $hasProject = true;
-        }
-    }
-
-    return [
-        'success' => $installed !== [] || $hasProject,
-        'installed_collections' => $installed,
-        'project_site' => $hasProject,
-        'message' => ($installed !== [] || $hasProject)
-            ? 'Starter template installed from bundled pack'
-            : 'Bundled starter pack had no installable files',
-    ];
-}
-
 function birkly_demo_install_starter_template(string $templateId, string $projectRoot): array
 {
     $catalog = birkly_demo_starter_catalog();
@@ -260,9 +134,18 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
     }
 
     if ($templateId !== 'blank' && !birkly_demo_starter_is_selectable($projectRoot, $templateId)) {
+        $diagnostics = birkly_ops_starters_diagnostics($templateId);
+        $message = 'This starter template is not available yet';
+        if (($diagnostics['catalog_reachable'] ?? false) !== true) {
+            $message = 'Cannot reach Ops starter catalog. Ensure this server can access '
+                . birkly_ops_starters_catalog_url();
+        } elseif (!empty($diagnostics['errors'])) {
+            $message = 'Starter template is not available from Ops: ' . implode('; ', $diagnostics['errors']);
+        }
         return [
             'success' => false,
-            'message' => 'This starter template is not available yet',
+            'message' => $message,
+            'diagnostics' => $diagnostics,
         ];
     }
 
@@ -299,30 +182,29 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
     }
 
     $tmpZip = sys_get_temp_dir() . '/birkly-starter-' . $templateId . '-' . getmypid() . '.zip';
-    $download = birkly_ops_download_starter_zip($templateId, $tmpZip);
-    $extracted = null;
-    if ($download !== null) {
-        $extracted = birkly_ops_extract_starter_zip($tmpZip, $projectRoot);
+    $downloadErrors = [];
+    $download = birkly_ops_download_starter_zip($templateId, $tmpZip, $downloadErrors);
+    if ($download === null) {
         @unlink($tmpZip);
-    } else {
-        @unlink($tmpZip);
-        $localDir = birkly_demo_local_starter_dir($templateId);
-        if ($localDir !== null) {
-            $extracted = birkly_demo_install_from_local_dir($localDir, $projectRoot);
-            $extracted['source'] = 'bundled';
+        $diagnostics = birkly_ops_starters_diagnostics($templateId);
+        if ($downloadErrors !== []) {
+            $diagnostics['errors'] = array_values(array_unique(array_merge($diagnostics['errors'], $downloadErrors)));
         }
-    }
-
-    if ($extracted === null) {
         return [
             'success' => false,
             'template' => $templateId,
             'installed_collections' => [],
             'demo_website' => false,
             'removed' => $removed,
-            'message' => 'Starter template is not available. Check your network connection and Ops configuration.',
+            'message' => !empty($diagnostics['errors'])
+                ? 'Starter download failed: ' . implode('; ', $diagnostics['errors'])
+                : 'Starter template is not available. Check your network connection and Ops configuration.',
+            'diagnostics' => $diagnostics,
         ];
     }
+
+    $extracted = birkly_ops_extract_starter_zip($tmpZip, $projectRoot);
+    @unlink($tmpZip);
 
     if (!$extracted['success']) {
         return [
@@ -345,7 +227,7 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         'demo_website' => $extracted['project_site'],
         'project_site' => $extracted['project_site'],
         'removed' => $removed,
-        'source' => $extracted['source'] ?? 'ops',
+        'source' => 'ops',
         'message' => $primaryInstalled ? 'Starter template installed' : 'Starter template could not be installed',
     ];
 }
