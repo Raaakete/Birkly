@@ -144,7 +144,7 @@ function birkly_get_core_dashboard_widgets(): array
 {
     $widgets = [
         ['id' => 'content-snapshot', 'title' => 'Content overview', 'size' => 'md', 'priority' => 5, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
-        ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'md', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
+        ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'lg', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
         ['id' => 'recent-collections', 'title' => 'Recent collections', 'size' => 'md', 'priority' => 20, 'mount' => 'recentCollections'],
         ['id' => 'recent-entries', 'title' => 'Recent entries', 'size' => 'md', 'priority' => 25, 'mount' => 'recentEntries'],
         ['id' => 'pending-review', 'title' => 'Pending review', 'size' => 'md', 'priority' => 28, 'endpoint' => '/api/dashboard.php?action=pending_review&limit=12', 'mount' => 'pendingReview', 'roles' => ['admin', 'editor']],
