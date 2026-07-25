@@ -1413,12 +1413,12 @@ function buildSystemPromptOld($context, $aiUser) {
     $prompt .= "            </article>\n";
     $prompt .= "        {endfor}\n";
     $prompt .= "    </div>\n";
-    $prompt .= "    <script src=\"/cms-template.v2.js\"></script>\n";
+    $prompt .= "    <script src=\"/birkly-client.js\"></script>\n";
     $prompt .= "</body>\n";
     $prompt .= "</html>\n\n";
     
     $prompt .= "KEY POINTS:\n";
-    $prompt .= "1. Include the Birkly client script: <script src=\"/cms-template.v2.js\"></script>\n";
+    $prompt .= "1. Include the Birkly client script: <script src=\"/birkly-client.js\"></script>\n";
     $prompt .= "2. Use {for each entry in 'collection-slug'} to loop through entries\n";
     $prompt .= "3. Use field names from the collection schema (e.g., { title }, { text }, { name })\n";
     $prompt .= "4. The client library automatically fetches and renders the content\n";
@@ -1619,7 +1619,7 @@ function buildSystemPromptOld($context, $aiUser) {
         $prompt .= "1. Birkly uses a custom templating syntax with SINGLE braces { like this }\n";
         $prompt .= "   NOT Twig, NOT Liquid, NOT any other templating engine.\n";
         $prompt .= "2. To display collections on a website, use: {for each entry in 'collection-slug'} ... {endfor}\n";
-        $prompt .= "3. The client library (birkly-client.js or cms-template.v2.js) handles template rendering.\n";
+        $prompt .= "3. The client library (birkly-client.js) handles template rendering.\n";
         $prompt .= "4. Collections are accessed via the Birkly API, not external APIs or databases.\n";
         $prompt .= "5. When users ask 'how to display collection X', they want Birkly templating code.\n";
         $prompt .= "6. DO NOT suggest React, Vue, Svelte, or other frameworks unless explicitly asked.\n";
@@ -1631,7 +1631,7 @@ function buildSystemPromptOld($context, $aiUser) {
         $prompt .= "    {for each entry in \"x\"}\n";
         $prompt .= "        <div>{ title }</div>\n";
         $prompt .= "    {endfor}\n";
-        $prompt .= "    Include the script: <script src=\"/cms-template.v2.js\"></script>'\n\n";
+        $prompt .= "    Include the script: <script src=\"/birkly-client.js\"></script>'\n\n";
     }
     
     return $prompt;

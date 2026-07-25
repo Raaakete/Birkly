@@ -252,7 +252,7 @@ function readBirklyDocsTopic(string $slug): ?array
         'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
         'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
         'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
-        'mcp' => ['file' => 'mcp-setup-guide.md', 'title' => 'MCP setup guide'],
+        'mcp' => ['path' => 'admin/docs/snapshots/mcp-connections.md', 'title' => 'MCP setup guide'],
         'sub-collections' => ['file' => 'ai/sub-collections.md', 'title' => 'Sub-collections & sub-entries'],
     ];
 
@@ -261,7 +261,11 @@ function readBirklyDocsTopic(string $slug): ?array
     }
 
     $root = dirname(__DIR__);
-    $path = $root . '/docs/' . $topics[$slug]['file'];
+    if (isset($topics[$slug]['path'])) {
+        $path = $root . '/' . $topics[$slug]['path'];
+    } else {
+        $path = $root . '/docs/' . $topics[$slug]['file'];
+    }
     if (!is_file($path)) {
         return null;
     }
