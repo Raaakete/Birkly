@@ -891,12 +891,12 @@ async function deletePlugin(pluginId) {
             if (data.status === 'ok' && data.data && data.data.licenses) {
                 renderDomains(data.data.licenses);
             } else {
-                listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet.</p></div>';
+                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No domains registered yet.</p></div>';
             }
             attachDomainsCopyButtons(document.getElementById('domains'));
         } catch (error) {
             console.error('Error loading domains:', error);
-            listContainer.innerHTML = '<div class="error-state"><p>Error loading domains: ' + escapeHtml(error.message) + '</p></div>';
+            listContainer.innerHTML = '<div class="message error" role="alert"><div class="message-content"><p class="message-text">Error loading domains: ' + escapeHtml(error.message) + '</p></div></div>';
         }
     }
     
@@ -1052,7 +1052,7 @@ async function deletePlugin(pluginId) {
                 renderAnalyticsReportSections(report) +
                 '</div>';
         } catch (error) {
-            container.innerHTML = '<div class="error-state"><p>Error loading analytics report: ' + escapeHtml(error.message) + '</p></div>';
+            container.innerHTML = '<div class="message error" role="alert"><div class="message-content"><p class="message-text">Error loading analytics report: ' + escapeHtml(error.message) + '</p></div></div>';
         }
     }
 
@@ -1066,7 +1066,7 @@ async function deletePlugin(pluginId) {
         attachDomainsCopyButtons(document.getElementById('domains'));
 
         if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet. Click "Register domain" to add one.</p></div>';
+            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No domains registered yet. Click "Register domain" to add one.</p></div>';
             return;
         }
 
@@ -1681,14 +1681,14 @@ window.deleteDomain = async function(domainName) {
             const fullDetails = log.details ? JSON.stringify(log.details, null, 2) : '';
             
             html += `
-                <tr style="border-bottom: 1px solid var(--border-light);">
-                    <td style="padding: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">${timestamp}</td>
-                    <td style="padding: 0.75rem; color: var(--text-primary);">${escapeHtml(log.user || 'Unknown')}</td>
-                    <td style="padding: 0.75rem;"><span class="badge ${categoryBadge}" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(log.event || 'Unknown')}</span></td>
-                    <td style="padding: 0.75rem;"><span class="badge badge-secondary" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${escapeHtml(category)}</span></td>
-                    <td style="padding: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">${escapeHtml(log.ip || 'Unknown')}</td>
-                    <td style="padding: 0.75rem;">
-                        ${formattedDetails ? `<details><summary style="cursor: pointer; color: #3b82f6; text-decoration: underline;">View Details</summary><div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px; font-size: 0.875rem; max-width: 500px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap; word-break: break-word;">${escapeHtml(formattedDetails)}</pre></div></details>` : '-'}
+                <tr class="activity-log-row">
+                    <td class="activity-log-cell activity-log-cell--muted">${timestamp}</td>
+                    <td class="activity-log-cell">${escapeHtml(log.user || 'Unknown')}</td>
+                    <td class="activity-log-cell"><span class="badge ${categoryBadge}">${escapeHtml(log.event || 'Unknown')}</span></td>
+                    <td class="activity-log-cell"><span class="badge badge-secondary">${escapeHtml(category)}</span></td>
+                    <td class="activity-log-cell activity-log-cell--muted">${escapeHtml(log.ip || 'Unknown')}</td>
+                    <td class="activity-log-cell">
+                        ${formattedDetails ? `<details class="activity-log-details"><summary class="activity-log-details__summary">View Details</summary><div class="activity-log-details__body"><pre class="activity-log-details__pre">${escapeHtml(formattedDetails)}</pre></div></details>` : '-'}
                     </td>
                 </tr>
             `;
