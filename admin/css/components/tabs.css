@@ -33,7 +33,7 @@
 
 .tab.active {
   color: var(--primary-600, #2563eb);
-  border-bottom-color: var(--primary-500, #3b82f6);
+  border-bottom-color: var(--primary-500);
   background: var(--bg-primary, #ffffff);
 }
 
@@ -62,7 +62,7 @@
   
   .tab.active {
     border-right-color: transparent;
-    border-bottom-color: var(--primary-500, #3b82f6);
+    border-bottom-color: var(--primary-500);
   }
 }
 

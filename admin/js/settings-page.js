@@ -405,12 +405,48 @@ window.closeEditRoleModal = closeEditRoleModal;
 window.updateRole = updateRole;
 window.deleteRole = deleteRole;
 
-// Tab functionality - simplified and robust
-(function() {
+// Settings areas, tabs, global save, dirty state (P44-M1, M3, M4)
+(function () {
+    var SETTINGS_AREAS = {
+        site: { label: 'Site', tabs: ['general', 'hosting', 'domains', 'project', 'redirects'], defaultTab: 'general' },
+        team: { label: 'Team & security', tabs: ['users-roles', 'security', 'activity-log'], defaultTab: 'users-roles' },
+        integrations: { label: 'Integrations', tabs: ['api', 'webhooks', 'ai-integrations'], defaultTab: 'api' },
+        infrastructure: { label: 'Infrastructure', tabs: ['storage', 'monitoring'], defaultTab: 'storage' }
+    };
+
+    var INDEPENDENT_SAVE_TABS = [
+        'hosting', 'project', 'domains', 'webhooks', 'redirects',
+        'ai-integrations', 'users-roles', 'activity-log', 'api'
+    ];
+
+    var GLOBAL_SAVE_TABS = {
+        general: { formId: 'general-form', label: 'Save general settings' },
+        security: { formId: 'security-form', label: 'Save security settings' },
+        storage: { formId: 'storage-form', label: 'Save storage settings' },
+        monitoring: { formId: 'monitoring-form', label: 'Save monitoring settings' }
+    };
+
     var LEGACY_AI_HASH_MAP = {
         'ai-connections': 'outbound-connections',
         'mcp-connections': 'inbound-mcp'
     };
+
+    var currentArea = 'site';
+    var currentTab = 'general';
+    var formSnapshots = {};
+    var settingsDirty = false;
+    var beforeUnloadBound = false;
+
+    function getAreaForTab(tabId) {
+        var areaKeys = Object.keys(SETTINGS_AREAS);
+        for (var i = 0; i < areaKeys.length; i++) {
+            var area = areaKeys[i];
+            if (SETTINGS_AREAS[area].tabs.indexOf(tabId) >= 0) {
+                return area;
+            }
+        }
+        return 'site';
+    }
 
     function resolveSettingsHash(hash) {
         if (!hash) return { tab: null, scrollTo: null, legacyHash: null };
@@ -423,21 +459,178 @@ window.deleteRole = deleteRole;
         return { tab: hash, scrollTo: null, legacyHash: null };
     }
 
+    function parseSettingsUrl() {
+        var params = new URLSearchParams(window.location.search);
+        var area = params.get('area');
+        var tab = params.get('tab');
+
+        if (!tab) {
+            var hash = window.location.hash.replace('#', '');
+            var resolved = resolveSettingsHash(hash);
+            if (resolved.tab) {
+                tab = resolved.tab;
+            }
+        }
+
+        if (!area && tab) {
+            area = getAreaForTab(tab);
+        }
+
+        if (!area || !SETTINGS_AREAS[area]) {
+            area = 'site';
+        }
+        if (!tab || SETTINGS_AREAS[area].tabs.indexOf(tab) < 0) {
+            tab = SETTINGS_AREAS[area].defaultTab;
+        }
+
+        return { area: area, tab: tab };
+    }
+
+    function buildSettingsUrl(area, tab) {
+        var params = new URLSearchParams(window.location.search);
+        params.set('page', 'settings');
+        params.set('area', area);
+        params.set('tab', tab);
+        return window.location.pathname + '?' + params.toString();
+    }
+
+    function redirectLegacySettingsUrl() {
+        var params = new URLSearchParams(window.location.search);
+        var legacyTab = params.get('tab');
+        var hash = window.location.hash.replace('#', '');
+        var needsRedirect = false;
+
+        if (legacyTab && !params.get('area')) {
+            needsRedirect = true;
+        }
+        if (hash && !params.get('tab')) {
+            needsRedirect = true;
+        }
+
+        if (!needsRedirect) {
+            return false;
+        }
+
+        var parsed = parseSettingsUrl();
+        var nextUrl = buildSettingsUrl(parsed.area, parsed.tab);
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', nextUrl);
+        }
+        return true;
+    }
+
     function scrollToAiSection(sectionId) {
         if (!sectionId) return;
         var section = document.getElementById(sectionId);
         if (section) {
-            setTimeout(function() {
+            setTimeout(function () {
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 150);
         }
     }
 
-    function activateTab(tabId, tabButtons, tabPanes, scrollTo, urlHash) {
+    function updateAreaNav(area) {
+        document.querySelectorAll('.settings-area-btn').forEach(function (btn) {
+            var isActive = btn.getAttribute('data-area') === area;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+    }
+
+    function updateVisibleTabs(area) {
+        document.querySelectorAll('.settings-tabs .tab[data-tab]').forEach(function (btn) {
+            var tabArea = btn.getAttribute('data-area');
+            var visible = tabArea === area;
+            btn.classList.toggle('tab--hidden', !visible);
+            btn.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        });
+    }
+
+    function updateSaveBar(tabId) {
+        var bar = document.querySelector('.main-actions-bar--sticky');
+        var saveBtn = document.getElementById('global-save-settings-btn');
+        var dirtyBadge = document.getElementById('settings-dirty-badge');
+        if (!bar || !saveBtn) return;
+
+        var showSave = !!GLOBAL_SAVE_TABS[tabId];
+        bar.classList.toggle('is-hidden', !showSave);
+
+        if (showSave && GLOBAL_SAVE_TABS[tabId]) {
+            saveBtn.textContent = GLOBAL_SAVE_TABS[tabId].label;
+        }
+
+        if (dirtyBadge) {
+            dirtyBadge.hidden = !(showSave && settingsDirty);
+        }
+    }
+
+    function serializeForm(form) {
+        if (!form) return '';
+        var data = new FormData(form);
+        var parts = [];
+        for (var pair of data.entries()) {
+            if (pair[0] !== 'project_logo') {
+                parts.push(pair[0] + '=' + pair[1]);
+            }
+        }
+        form.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+            parts.push(cb.name + '=' + (cb.checked ? '1' : '0'));
+        });
+        return parts.sort().join('&');
+    }
+
+    function captureFormSnapshots() {
+        Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
+            var form = document.getElementById(GLOBAL_SAVE_TABS[tabId].formId);
+            if (form) {
+                formSnapshots[tabId] = serializeForm(form);
+            }
+        });
+    }
+
+    function checkDirtyState() {
+        var dirty = false;
+        Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
+            var form = document.getElementById(GLOBAL_SAVE_TABS[tabId].formId);
+            if (form && formSnapshots[tabId] !== undefined) {
+                if (serializeForm(form) !== formSnapshots[tabId]) {
+                    dirty = true;
+                }
+            }
+        });
+        settingsDirty = dirty;
+        updateSaveBar(currentTab);
+        bindBeforeUnload();
+    }
+
+    function bindBeforeUnload() {
+        if (beforeUnloadBound) return;
+        beforeUnloadBound = true;
+        window.addEventListener('beforeunload', function (e) {
+            if (!settingsDirty) return;
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    }
+
+    function bindDirtyTracking() {
+        Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
+            var form = document.getElementById(GLOBAL_SAVE_TABS[tabId].formId);
+            if (!form || form.dataset.dirtyBound === '1') return;
+            form.dataset.dirtyBound = '1';
+            form.addEventListener('input', checkDirtyState);
+            form.addEventListener('change', checkDirtyState);
+        });
+    }
+
+    function activateTab(tabId, tabButtons, tabPanes, scrollTo, area) {
         if (!tabId) return;
-        var tabButton = document.querySelector('[data-tab="' + tabId + '"]');
+        var tabButton = document.querySelector('.settings-tabs .tab[data-tab="' + tabId + '"]');
         var tabPane = document.getElementById(tabId);
         if (!tabButton || !tabPane) return;
+
+        currentTab = tabId;
+        currentArea = area || getAreaForTab(tabId);
 
         for (var j = 0; j < tabButtons.length; j++) {
             tabButtons[j].classList.remove('active');
@@ -446,15 +639,19 @@ window.deleteRole = deleteRole;
             tabPanes[k].classList.remove('active');
         }
 
+        tabButton.classList.remove('tab--hidden');
         tabButton.classList.add('active');
         tabPane.classList.add('active');
 
-        var hashForUrl = urlHash || tabId;
+        updateAreaNav(currentArea);
+        updateVisibleTabs(currentArea);
+        updateSaveBar(tabId);
+
         if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', '?page=settings#' + hashForUrl);
+            window.history.replaceState(null, '', buildSettingsUrl(currentArea, tabId));
         }
 
-        setTimeout(function() {
+        setTimeout(function () {
             if (tabId === 'activity-log' && typeof window.initAuditLog === 'function') {
                 window.initAuditLog();
             } else if (tabId === 'webhooks' && typeof window.initWebhooksManager === 'function') {
@@ -467,6 +664,8 @@ window.deleteRole = deleteRole;
                 window.loadDomains();
             } else if (tabId === 'project' && typeof window.initProjectSettings === 'function') {
                 window.initProjectSettings();
+            } else if (tabId === 'hosting' && typeof window.initHostingSettings === 'function') {
+                window.initHostingSettings();
             } else if (tabId === 'ai-integrations') {
                 window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
             }
@@ -477,6 +676,16 @@ window.deleteRole = deleteRole;
         if (tabsRoot && window.Birkly && window.Birkly.TabsV2 && typeof window.Birkly.TabsV2.refresh === 'function') {
             window.Birkly.TabsV2.refresh(tabsRoot);
         }
+    }
+
+    function activateArea(area, tabId) {
+        if (!SETTINGS_AREAS[area]) {
+            area = 'site';
+        }
+        var tab = tabId && SETTINGS_AREAS[area].tabs.indexOf(tabId) >= 0
+            ? tabId
+            : SETTINGS_AREAS[area].defaultTab;
+        activateTab(tab, getSettingsTabButtons(), getSettingsTabPanes(), null, area);
     }
 
     function getSettingsTabButtons() {
@@ -502,52 +711,53 @@ window.deleteRole = deleteRole;
             return;
         }
 
-        // Event delegation — survives DOM updates and avoids duplicate handlers
+        redirectLegacySettingsUrl();
+
+        document.querySelectorAll('.settings-area-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var area = btn.getAttribute('data-area');
+                if (!area) return;
+                activateArea(area, SETTINGS_AREAS[area].defaultTab);
+            });
+        });
+
         tabNav.addEventListener('click', function (e) {
             var btn = e.target.closest('.tab[data-tab]');
-            if (!btn || !tabNav.contains(btn)) {
+            if (!btn || !tabNav.contains(btn) || btn.classList.contains('tab--hidden')) {
                 return;
             }
             e.preventDefault();
             var targetTab = btn.getAttribute('data-tab');
-            if (!targetTab) {
-                return;
-            }
-            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null, targetTab);
+            if (!targetTab) return;
+            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null, btn.getAttribute('data-area'));
         });
-        
-        // Handle hash on load (including legacy AI tab hashes)
-        var rawHash = window.location.hash.replace('#', '');
-        var resolved = resolveSettingsHash(rawHash);
-        if (resolved.tab) {
-            activateTab(resolved.tab, getSettingsTabButtons(), getSettingsTabPanes(), resolved.scrollTo, rawHash || resolved.tab);
-        } else {
-            var defaultTab = document.querySelector('.settings-tabs .tab.active');
-            if (defaultTab && defaultTab.getAttribute('data-tab') === 'domains') {
-                setTimeout(function () {
-                    if (typeof window.loadDomains === 'function') {
-                        window.loadDomains();
-                    }
-                }, 100);
-            }
-        }
 
-        window.addEventListener('hashchange', function () {
-            var hash = window.location.hash.replace('#', '');
-            var next = resolveSettingsHash(hash);
-            if (next.tab) {
-                activateTab(next.tab, getSettingsTabButtons(), getSettingsTabPanes(), next.scrollTo, hash || next.tab);
-            }
+        var parsed = parseSettingsUrl();
+        activateArea(parsed.area, parsed.tab);
+
+        window.addEventListener('popstate', function () {
+            var next = parseSettingsUrl();
+            activateArea(next.area, next.tab);
         });
+
+        captureFormSnapshots();
+        bindDirtyTracking();
+        checkDirtyState();
     }
 
     window.initSettingsTabs = initTabs;
+    window.getSettingsCurrentTab = function () { return currentTab; };
+    window.markSettingsClean = function () {
+        captureFormSnapshots();
+        settingsDirty = false;
+        updateSaveBar(currentTab);
+    };
 
     document.addEventListener('DOMContentLoaded', initTabs);
-    
-    // Initialize updates if general tab is active on page load
+
     if (document.getElementById('general') && document.getElementById('general').classList.contains('active')) {
-        setTimeout(function() {
+        setTimeout(function () {
             if (typeof window.initUpdates === 'function') {
                 window.initUpdates();
             }
@@ -2016,19 +2226,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Also load if we're already on security tab
-    if (window.location.hash === '#security' || document.querySelector('.tab-pane#security.active')) {
+    var securityPane = document.querySelector('.tab-pane#security.active');
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'security' || window.location.hash === '#security' || securityPane) {
         loadDenylist();
     }
 });
-// Global save bar
+// Global save bar — per-tab forms only (P44-M1, M4)
 function handleGlobalSave() {
-    const generalForm = document.getElementById('general-form');
-    const securityForm = document.getElementById('security-form');
-    const storageForm = document.getElementById('storage-form');
-    const monitoringForm = document.getElementById('monitoring-form');
-    if (!generalForm && !securityForm && !storageForm && !monitoringForm) return;
+    var tabId = typeof window.getSettingsCurrentTab === 'function' ? window.getSettingsCurrentTab() : 'general';
+    var tabConfig = {
+        general: 'general-form',
+        security: 'security-form',
+        storage: 'storage-form',
+        monitoring: 'monitoring-form'
+    };
+    var formId = tabConfig[tabId];
+    if (!formId) return;
 
-    collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm);
+    var form = document.getElementById(formId);
+    if (!form) return;
+
+    if (form.classList) {
+        form.classList.add('was-validated');
+    }
+
+    collectAndSaveSettings(
+        tabId === 'general' ? form : null,
+        tabId === 'security' ? form : null,
+        tabId === 'storage' ? form : null,
+        tabId === 'monitoring' ? form : null
+    );
 }
 
 async function collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm) {
@@ -2101,6 +2329,9 @@ async function collectAndSaveSettings(generalForm, securityForm, storageForm, mo
 
         if (result.status === 'ok') {
             showMessage('Settings saved successfully!', 'success');
+            if (typeof window.markSettingsClean === 'function') {
+                window.markSettingsClean();
+            }
             setTimeout(function () { location.reload(); }, 1000);
         } else {
             showMessage('Error: ' + result.message, 'error');

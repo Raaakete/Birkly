@@ -104,7 +104,7 @@
 }
 
 .block-item .block-drag-handle:hover {
-  color: var(--primary-500, #3b82f6);
+  color: var(--primary-500);
   opacity: 1;
 }
 
@@ -219,7 +219,7 @@
 .field-control select:focus,
 .field-control textarea:focus {
   outline: none;
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -366,7 +366,7 @@
 }
 
 .field-card.drag-over {
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
   background: var(--primary-50, #eff6ff);
 }
 
@@ -570,7 +570,7 @@
 .entry-drop-indicator {
   position: absolute;
   height: 3px;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
@@ -714,7 +714,7 @@
 }
 
 .block-item .block-drag-handle:hover {
-  color: var(--primary-500, #3b82f6);
+  color: var(--primary-500);
   opacity: 1;
 }
 
@@ -850,13 +850,13 @@
 }
 
 .collection-group.drag-over-group-above {
-  border-top: 3px solid var(--primary-500, #3b82f6);
+  border-top: 3px solid var(--primary-500);
   margin-top: var(--space-2, 0.5rem);
   padding-top: var(--space-2, 0.5rem);
 }
 
 .collection-group.drag-over-group-below {
-  border-bottom: 3px solid var(--primary-500, #3b82f6);
+  border-bottom: 3px solid var(--primary-500);
   margin-bottom: var(--space-2, 0.5rem);
   padding-bottom: var(--space-2, 0.5rem);
 }
@@ -864,7 +864,7 @@
 .group-drop-indicator {
   position: absolute;
   height: 3px;
-  background: var(--primary-500, #3b82f6) !important;
+  background: var(--primary-500) !important;
   border-radius: 2px;
   z-index: 10000 !important;
   pointer-events: none;
@@ -897,7 +897,7 @@ body.dragging-group .group-drop-indicator {
    ============================================ */
 .drag-placeholder {
   background: rgba(59, 130, 246, 0.1) !important;
-  border: 2px dashed var(--primary-500, #3b82f6) !important;
+  border: 2px dashed var(--primary-500) !important;
   border-radius: 4px;
   transition: opacity 0.1s ease-out, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), height 0.1s ease-out;
   opacity: 0;
@@ -981,7 +981,7 @@ body.dragging-group .group-drop-indicator {
 .grid.group-collections.drag-over,
 .grid.ungrouped-collections.drag-over {
   background: var(--primary-50, #eff6ff);
-  border: 2px dashed var(--primary-500, #3b82f6);
+  border: 2px dashed var(--primary-500);
   box-shadow: inset 0 0 0 3px var(--primary-100, #dbeafe);
 }
 
@@ -1005,7 +1005,7 @@ body.dragging-group .group-drop-indicator {
 /* Drop Indicator - Blue line showing where card will be dropped */
 .drop-indicator {
   position: absolute;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
@@ -1016,7 +1016,7 @@ body.dragging-group .group-drop-indicator {
 /* Cross-group drop indicator */
 .cross-group-drop-indicator {
   position: absolute;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
