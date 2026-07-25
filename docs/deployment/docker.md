@@ -4,7 +4,7 @@ Production images ship from the root `Dockerfile` (nginx + PHP-FPM, port **80**)
 
 ## Single data directory (recommended)
 
-Set one volume or bind mount at **`/app/data`**. The image sets `BIRKLY_DATA=/app/data` by default.
+Set one **Volume Mount** at **`/app/data`** (Dokploy). Avoid bind mounts to host paths on Docker Swarm. The image sets `BIRKLY_DATA=/app/data` by default.
 
 Everything that must survive container rebuilds lives under that path:
 
@@ -31,10 +31,33 @@ Open [http://localhost:8080/admin](http://localhost:8080/admin).
 ### Dokploy
 
 1. Create one application from this repository (build from `Dockerfile`).
-2. **Volumes:** add a single mount — host path or named volume → **`/app/data`**.
-3. **Environment:** `BIRKLY_DATA=/app/data` (already the image default; set explicitly in Dokploy if needed).
+2. **Volumes:** **Volume Mount** (named volume) → **`/app/data`** — not Bind Mount (see below).
+3. **Environment:** `BIRKLY_DATA=/app/data` (image default).
 4. Expose port **80**; terminate HTTPS in Dokploy.
-5. **Verify deploy:** open `/api/health.php` and check `build_revision` (Git commit baked into the image). After a merge to your tracked branch, trigger **Redeploy** if auto-deploy did not run — a green DNS badge does not mean a new image was built.
+5. **Verify:** `/api/deploy_revision.php` returns JSON; Logs shows **Containers (1)**.
+
+#### Volume type (important)
+
+Dokploy uses **Docker Swarm**. A **Bind Mount** to `/opt/birkly-data` often prevents startup (**Containers (0)**, 502). Use **Volume Mount** with a name like `birkly-cms-data` → `/app/data`.
+
+#### First install order (avoid creating admin twice)
+
+| Step | Action |
+|------|--------|
+| 1 | Create Dokploy app (Birkly, Dockerfile, port 80). |
+| 2 | Add **Volume Mount** at `/app/data` **before** first login. |
+| 3 | **Deploy** → Logs shows **Containers (1)**. |
+| 4 | Open **`/admin`** → create admin account **once**. |
+
+If you created an admin **without** a volume, then added a **new empty** volume and redeployed: you must **create the admin again** (once). The first account lived in the temporary container, not on the volume. After that, the same login survives redeploys.
+
+| Situation | Create admin again? |
+|-----------|---------------------|
+| Volume at `/app/data` from the start | No |
+| No volume first, then new empty volume | **Yes** (once) |
+| Every redeploy with volume attached | No |
+
+Site-owner guide: [Birkly-Docs — Dokploy hosting](https://github.com/Raaakete/Birkly-Docs/blob/main/07-operations/dokploy-hosting.md).
 
 No per-folder volume list is required.
 
