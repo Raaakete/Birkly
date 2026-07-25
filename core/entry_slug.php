@@ -8,6 +8,32 @@
  *
  * @return list<string>
  */
+/**
+ * Schema fields shown as dedicated smart-table columns (P39-M1).
+ *
+ * @return list<string>
+ */
+function birkly_entries_list_reserved_column_names(): array
+{
+    return ['title', 'status', 'slug'];
+}
+
+/**
+ * Filter schema fields for entries list / smart-table columns.
+ *
+ * @param array<int, array<string, mixed>> $fields
+ * @return array<int, array<string, mixed>>
+ */
+function birkly_entries_list_visible_fields(array $fields): array
+{
+    $reserved = array_flip(birkly_entries_list_reserved_column_names());
+
+    return array_values(array_filter($fields, static function (array $field) use ($reserved): bool {
+        $name = strtolower((string) ($field['name'] ?? ''));
+        return $name !== '' && !isset($reserved[$name]);
+    }));
+}
+
 function birkly_entry_reserved_field_names(): array
 {
     return [

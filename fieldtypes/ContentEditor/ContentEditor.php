@@ -38,6 +38,10 @@ class ContentEditor extends BaseField {
         
         return <<<HTML
         <div class="content-editor-wrapper" data-field-name="{$this->name}"{$cssUrlAttr}{$metadataAttr}>
+            <div class="content-editor-mode-tabs" role="tablist" aria-label="Editor mode for {$this->label}">
+                <button type="button" class="content-editor-mode-tab is-active" id="{$tabVisualId}" data-mode="visual" role="tab" aria-selected="true" aria-controls="editor_{$this->name}" tabindex="0">Visual</button>
+                <button type="button" class="content-editor-mode-tab" id="{$tabHtmlId}" data-mode="html" role="tab" aria-selected="false" aria-controls="{$panelHtmlId}" tabindex="-1">HTML</button>
+            </div>
             <div class="content-editor-toolbar" id="toolbar_{$this->name}">
                 <!-- Text Styles Group -->
                 <div class="toolbar-group" data-group="text-styles">
@@ -354,10 +358,6 @@ class ContentEditor extends BaseField {
                         </svg>
                     </button>
                 </div>
-            </div>
-            <div class="content-editor-mode-tabs" role="tablist" aria-label="Editor mode for {$this->label}">
-                <button type="button" class="content-editor-mode-tab is-active" id="{$tabVisualId}" data-mode="visual" role="tab" aria-selected="true" aria-controls="editor_{$this->name}" tabindex="0">Visual</button>
-                <button type="button" class="content-editor-mode-tab" id="{$tabHtmlId}" data-mode="html" role="tab" aria-selected="false" aria-controls="{$panelHtmlId}" tabindex="-1">HTML</button>
             </div>
             <div class="content-editor-body">
             <div class="content-editor-area" 
