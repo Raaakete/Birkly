@@ -12,6 +12,7 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
 $__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_commit'] ?? '1'), ENT_QUOTES, 'UTF-8');
 ?>
 
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/icon.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/tabs-v2.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/theme.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
