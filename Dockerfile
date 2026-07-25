@@ -8,13 +8,18 @@ RUN apt-get update \
     && rm -f /etc/nginx/sites-enabled/default
 
 COPY docker/nginx-site.conf /etc/nginx/conf.d/default.conf
+COPY docker/php-production.ini /usr/local/etc/php/conf.d/99-birkly-production.ini
 WORKDIR /app
 
 ENV BIRKLY_DATA=/app/data
 
+ARG BIRKLY_BUILD_REVISION=unknown
+ENV BIRKLY_BUILD_REVISION=$BIRKLY_BUILD_REVISION
+
 COPY . /app
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
+    && echo "$BIRKLY_BUILD_REVISION" > /app/BUILD_REVISION \
     && mkdir -p content media settings users data cache logs temp plugins themes
 
 EXPOSE 80

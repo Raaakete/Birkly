@@ -64,6 +64,24 @@ function birkly_data_persistent_dir_names(): array
 }
 
 /**
+ * Git/build id baked into Docker images for deploy verification.
+ */
+function birkly_deploy_revision(): ?string
+{
+    $fromEnv = trim((string) (getenv('BIRKLY_BUILD_REVISION') ?: ''));
+    if ($fromEnv !== '') {
+        return $fromEnv;
+    }
+
+    $file = birkly_project_root() . '/BUILD_REVISION';
+    if (is_readable($file)) {
+        return trim((string) file_get_contents($file));
+    }
+
+    return null;
+}
+
+/**
  * Reset cached data root (tests only).
  */
 function birkly_data_paths_reset_cache(): void
