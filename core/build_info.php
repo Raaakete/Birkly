@@ -29,6 +29,16 @@ function birkly_build_info(): array
         }
     }
 
+    if ($gitCommit === null) {
+        if (!function_exists('birkly_deploy_revision')) {
+            require_once __DIR__ . '/birkly_data_paths.php';
+        }
+        $deployRev = birkly_deploy_revision();
+        if (is_string($deployRev) && $deployRev !== '' && $deployRev !== 'unknown') {
+            $gitCommit = substr($deployRev, 0, 40);
+        }
+    }
+
     $contentHead = is_readable($contentTemplate)
         ? substr(preg_replace('/\s+/', ' ', trim((string) file_get_contents($contentTemplate, false, null, 0, 120))), 0, 80)
         : null;
@@ -96,4 +106,58 @@ function birkly_build_info(): array
         'admin_topbar_partial' => is_file($root . '/admin/partials/admin-topbar.php'),
         'expected_pull_path' => 'Git repo root (contains admin/, api/, core/) — not admin/ folder alone',
     ];
+}
+
+/**
+ * Release id for cache busting: git commit, Docker build revision, or null.
+ */
+function birkly_release_identifier(): ?string
+{
+    $info = birkly_build_info();
+    $commit = $info['git_commit'] ?? null;
+    if (is_string($commit) && $commit !== '') {
+        return $commit;
+    }
+
+    if (!function_exists('birkly_deploy_revision')) {
+        require_once __DIR__ . '/birkly_data_paths.php';
+    }
+    $revision = birkly_deploy_revision();
+    if (is_string($revision) && $revision !== '' && $revision !== 'unknown') {
+        return $revision;
+    }
+
+    return null;
+}
+
+/**
+ * Cache-bust token for admin JS/CSS. Docker images without .git use file mtime.
+ */
+function birkly_admin_asset_version(string $relativePath): string
+{
+    $release = birkly_release_identifier();
+    if ($release !== null) {
+        return $release;
+    }
+
+    $normalized = ltrim(str_replace('\\', '/', $relativePath), '/');
+    $full = birkly_project_root() . '/' . $normalized;
+    if (is_file($full)) {
+        return (string) filemtime($full);
+    }
+
+    return '1';
+}
+
+/**
+ * Admin static asset URL with a cache-busting query parameter.
+ */
+function birkly_admin_asset_url(string $relativePath): string
+{
+    if (!function_exists('birkly_url')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    $path = '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+    return birkly_url($path) . '?v=' . rawurlencode(birkly_admin_asset_version(ltrim($path, '/')));
 }

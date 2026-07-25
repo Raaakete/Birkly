@@ -771,7 +771,11 @@ window.deleteRole = deleteRole;
         updateSaveBar(currentTab);
     };
 
-    document.addEventListener('DOMContentLoaded', initTabs);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTabs);
+    } else {
+        initTabs();
+    }
 
     if (document.getElementById('general') && document.getElementById('general').classList.contains('active')) {
         setTimeout(function () {
