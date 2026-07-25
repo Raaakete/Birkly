@@ -35,6 +35,9 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     <title>Birkly Admin</title>
     <!-- Main Stylesheet - Imports all CSS modules -->
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
+    <?php if (isset($page) && $page === 'entry-editor'): ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/fieldtypes/ContentEditor/editor.css')) ?>">
+    <?php endif; ?>
     <?php
     // Load settings to get logo for favicon
     require_once __DIR__ . '/../../api/storage.php';
