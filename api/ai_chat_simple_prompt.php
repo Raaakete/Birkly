@@ -109,7 +109,7 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- Hyphenated collection slugs (e.g. nav-links) are valid in quoted collection names.\n";
     $prompt .= "- Public site API returns published entries only — set status to published for nav/menu content.\n";
     $prompt .= "- Template tags work in any <body> element; the client renders outermost regions with Birkly syntax.\n";
-    $prompt .= "- Include: <script src=\"/cms-template.v2.js\"></script>\n";
+    $prompt .= "- Include: <script src=\"/birkly-client.js\"></script> (add data-cms-url when the site is on a different domain)\n";
     $prompt .= "- Use field names: { title }, { text }, etc.\n\n";
 
     if (!empty($context['page_context']) && is_array($context['page_context'])) {
