@@ -662,7 +662,7 @@
         return div.innerHTML;
     }
     
-    window.restoreVersion = function(collectionSlug, entryId, version) {
+    window.restoreVersion = async function(collectionSlug, entryId, version) {
         if (!(await BirklyFeedback.confirm('Are you sure you want to restore this version? Current version will be saved as a new version.'))) {
             return;
         }
