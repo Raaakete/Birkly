@@ -1,0 +1,52 @@
+/* ============================================
+   Birkly Icon Component
+   ============================================ */
+
+.birkly-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.birkly-icon--sm {
+  width: 14px;
+  height: 14px;
+}
+
+.birkly-icon--md {
+  width: 16px;
+  height: 16px;
+}
+
+.birkly-icon--lg {
+  width: 20px;
+  height: 20px;
+}
+
+.birkly-icon--xl {
+  width: 24px;
+  height: 24px;
+}
+
+.birkly-icon-img {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.nav-icon.birkly-icon,
+.nav-links a .birkly-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.topbar-icon-btn .birkly-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.dropdown-item-icon .birkly-icon {
+  width: 16px;
+  height: 16px;
+}

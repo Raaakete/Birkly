@@ -1,5 +1,5 @@
 /* ============================================
-   HaruCMS Admin - Main Stylesheet Hub
+   Birkly Admin - Main Stylesheet Hub
    ============================================
    
    This file imports all CSS modules in the correct order.
@@ -33,6 +33,8 @@
 @import url('components/switches.css');
 @import url('components/cards.css');
 @import url('components/messages.css');
+@import url('components/empty-states.css');
+@import url('components/status-badges.css');
 @import url('components/tabs.css');
 @import url('components/tabs-v2.css');
 @import url('components/search.css');
@@ -40,6 +42,7 @@
 @import url('components/theme-switcher.css');
 @import url('components/dropdowns.css');
 @import url('components/sticky-save-bar.css');
+@import url('components/icons.css');
 
 /* ============================================
    Layout

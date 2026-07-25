@@ -32,6 +32,10 @@ function resolveMediaItemUrl(url) {
     currentView: 'grid',
   };
 
+  function icon(name, opts) {
+    return (typeof Birkly !== 'undefined' && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
+  }
+
   function getCSRFToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   }
@@ -335,7 +339,7 @@ function resolveMediaItemUrl(url) {
       });
 
       folderItem.innerHTML =
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>' +
+        icon('folder', { size: 16 }) +
         '<span class="folder-name">' + escapeHtml(folder.name || '') + '</span>' +
         '<span class="folder-count">(' + escapeHtml(folder.count || 0) + ')</span>';
 
@@ -347,7 +351,7 @@ function resolveMediaItemUrl(url) {
       addButton.className = 'btn-icon';
       addButton.setAttribute('aria-label', 'Create subfolder in ' + (folder.name || 'folder'));
       addButton.title = 'Create subfolder';
-      addButton.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>';
+      addButton.innerHTML = icon('plus', { size: 12 });
       addButton.addEventListener('click', function (event) {
         event.stopPropagation();
         createSubfolder(folder.path || '');
@@ -358,7 +362,7 @@ function resolveMediaItemUrl(url) {
       renameButton.className = 'btn-icon btn-icon--edit';
       renameButton.setAttribute('aria-label', 'Rename folder ' + (folder.name || 'folder'));
       renameButton.title = 'Rename folder';
-      renameButton.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+      renameButton.innerHTML = icon('pencil-simple', { size: 12 });
       renameButton.addEventListener('click', function (event) {
         event.stopPropagation();
         renameFolder(folder.path || '');
@@ -369,7 +373,7 @@ function resolveMediaItemUrl(url) {
       deleteButton.className = 'btn-icon btn-icon--danger';
       deleteButton.setAttribute('aria-label', 'Delete folder ' + (folder.name || 'folder'));
       deleteButton.title = 'Delete folder';
-      deleteButton.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+      deleteButton.innerHTML = icon('trash', { size: 12 });
       deleteButton.addEventListener('click', function (event) {
         event.stopPropagation();
         deleteFolderWithOptions(folder.path || '');
@@ -414,7 +418,7 @@ function resolveMediaItemUrl(url) {
     rootItem.type = 'button';
     rootItem.className = 'folder-item-move';
     rootItem.innerHTML =
-      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path></svg>' +
+      icon('folder-root', { size: 16 }) +
       '<span>Root folder</span>';
     rootItem.addEventListener('click', function () {
       selectMoveFolder('');
@@ -428,7 +432,7 @@ function resolveMediaItemUrl(url) {
       folderItem.dataset.path = folder.path || '';
       folderItem.style.paddingLeft = ((folder.level || 0) * 20 + 8) + 'px';
       folderItem.innerHTML =
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>' +
+        icon('folder', { size: 16 }) +
         '<span>' + escapeHtml(folder.name || '') + '</span>';
       folderItem.addEventListener('click', function () {
         selectMoveFolder(folder.path || '');
@@ -489,7 +493,7 @@ function resolveMediaItemUrl(url) {
     grid.innerHTML = '';
 
     if (!items.length) {
-      grid.innerHTML = '<div class="empty-state"><h3>No media found</h3><p>Upload files or change the current filters.</p></div>';
+      grid.innerHTML = '<div class="empty-state empty-state--compact"><h3 class="empty-state__title">No media found</h3><p class="empty-state__message">Upload files or change the current filters.</p></div>';
       updateSelectionToolbar();
       return;
     }
@@ -569,7 +573,7 @@ function resolveMediaItemUrl(url) {
 
   function getMediaThumbnailHTML(item) {
     if (!item) {
-      return '<div class="file-thumb"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg></div>';
+      return '<div class="file-thumb">' + icon('file-text', { size: 48 }) + '</div>';
     }
 
     const category = String(item.category || 'file');
@@ -578,18 +582,18 @@ function resolveMediaItemUrl(url) {
 
     if (category === 'image' && url) {
       return '<img src="' + escapeHtml(url) + '" alt="' + name + '" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
-        '<div class="image-error" style="display:none;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21,15 16,10 5,21"></polyline></svg></div>';
+        '<div class="image-error" style="display:none;">' + icon('image', { size: 48 }) + '</div>';
     }
 
     if (category === 'video') {
-      return '<div class="video-thumb"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5,3 19,12 5,21"></polygon></svg></div>';
+      return '<div class="video-thumb">' + icon('play', { size: 48 }) + '</div>';
     }
 
     if (category === 'audio') {
-      return '<div class="audio-thumb"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>';
+      return '<div class="audio-thumb">' + icon('music-notes', { size: 48 }) + '</div>';
     }
 
-    return '<div class="file-thumb"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg></div>';
+    return '<div class="file-thumb">' + icon('file-text', { size: 48 }) + '</div>';
   }
 
   function uploadMedia() {

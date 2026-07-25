@@ -24,22 +24,10 @@ $contentAssetVer = (string) (birkly_build_info()['git_commit'] ?? 'dev');
             <div class="collection-actions-bar-right">
                 <div class="content-view-toggle" role="group" aria-label="Content view">
                     <button type="button" class="btn-icon" id="content-view-grid" data-content-view="grid" aria-label="Grid view" title="Grid view">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <rect x="3" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="14" width="7" height="7"></rect>
-                            <rect x="3" y="14" width="7" height="7"></rect>
-                        </svg>
+                        <?= birkly_icon('squares-four', ['size' => 16]) ?>
                     </button>
                     <button type="button" class="btn-icon" id="content-view-list" data-content-view="list" aria-label="List view" title="List view">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                        </svg>
+                        <?= birkly_icon('list', ['size' => 16]) ?>
                     </button>
                 </div>
             </div>
