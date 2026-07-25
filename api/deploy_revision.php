@@ -20,6 +20,16 @@ $pluginsSnippet = is_readable($pluginsFile)
 
 $projectRoot = birkly_project_root();
 $hosting = birkly_hosting_load();
+$installationId = null;
+$installationFile = $projectRoot . '/settings/installation.json';
+if (is_readable($installationFile)) {
+    $installation = json_decode((string) file_get_contents($installationFile), true);
+    if (is_array($installation)) {
+        $installationId = $installation['installation_id'] ?? null;
+    }
+}
+$dataRoot = getenv('BIRKLY_DATA') ?: '';
+$dataRootResolved = $dataRoot !== '' ? (realpath($dataRoot) ?: $dataRoot) : null;
 $opsStarters = birkly_ops_starters_diagnostics('marsk');
 $opsStarters['install_probe'] = birkly_ops_starters_install_probe($projectRoot, 'marsk');
 
@@ -35,6 +45,10 @@ echo json_encode([
         'request_host_role' => birkly_request_host_role(),
         'env_overrides' => birkly_hosting_env_overrides(),
         'trust_request_host' => birkly_hosting_trust_request_host(),
+    ],
+    'volume' => [
+        'installation_id' => $installationId,
+        'data_root' => $dataRootResolved,
     ],
     'ops_starters' => $opsStarters,
     'time' => gmdate('c'),
