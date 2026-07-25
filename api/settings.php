@@ -199,6 +199,10 @@ if ($action === 'save_all') {
     }
     if (isset($settings['cmsUrl'])) {
         $adminSettings['cms_url'] = $settings['cmsUrl'];
+        require_once __DIR__ . '/../core/hosting_urls.php';
+        $hosting = birkly_hosting_load();
+        $hosting['cms_base_url'] = birkly_hosting_normalize_url((string) $settings['cmsUrl'], false);
+        birkly_hosting_persist($hosting, false);
     }
     if (isset($settings['projectDescription'])) {
         $adminSettings['project_description'] = $settings['projectDescription'];

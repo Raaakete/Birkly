@@ -2,6 +2,7 @@
 // Fallback router for Birkly
 
 require_once __DIR__ . '/core/birkly_paths.php';
+require_once __DIR__ . '/core/hosting_routing.php';
 
 // Note: This file should NOT be used as a router for PHP built-in server
 // PHP files should execute directly without going through this router
@@ -38,9 +39,15 @@ if (preg_match('/\.php$/', $uri)) {
 }
 
 $root = __DIR__;
+
+// P43: settings-driven host roles, clean public URLs, admin canonical host
+if (birkly_hosting_dispatch($uri)) {
+    exit;
+}
+
 $file = realpath($root . $uri);
 
-// Serve static files directly
+// Serve static files directly (CMS host assets at web root)
 if ($file && strpos($file, $root) === 0 && is_file($file)) {
     $mime = mime_content_type($file);
     header('Content-Type: ' . $mime);
@@ -50,32 +57,14 @@ if ($file && strpos($file, $root) === 0 && is_file($file)) {
 
 // Redirect /admin to /admin/index.php (not index.html - we use PHP for admin)
 if ($uri === '/admin' || $uri === '/admin/') {
-    header('Location: ' . birkly_admin_url('dashboard'), true, 302);
+    header('Location: ' . birkly_hosting_admin_url('dashboard'), true, 302);
     exit;
 }
 
 // Fallback for /admin - redirect to PHP admin panel
 if (preg_match('#^/admin($|/)#', $_SERVER['REQUEST_URI'] ?? '')) {
-    header('Location: ' . birkly_admin_url('dashboard'), true, 302);
+    header('Location: ' . birkly_hosting_admin_url('dashboard'), true, 302);
     exit;
-}
-
-// CMS host root → admin; marketing host root → public project site
-if ($uri === '/') {
-    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
-    if (strpos($host, ':') !== false) {
-        $host = explode(':', $host, 2)[0];
-    }
-    if ($host !== '' && str_starts_with($host, 'cms.')) {
-        header('Location: ' . birkly_admin_url('dashboard'), true, 302);
-        exit;
-    }
-    if (is_dir($root . '/project')) {
-        $projectIndex = $root . '/project/index.html';
-        $target = is_file($projectIndex) ? '/project/index.html' : '/project/';
-        header('Location: ' . birkly_url($target), true, 302);
-        exit;
-    }
 }
 
 require_once __DIR__ . '/core/http_routes.php';
@@ -85,4 +74,4 @@ if (birkly_dispatch_http_route($uri)) {
 
 // 404 for other requests
 http_response_code(404);
-echo 'Not found'; 
+echo 'Not found';

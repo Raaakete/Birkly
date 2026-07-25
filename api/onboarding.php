@@ -394,7 +394,12 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         saveOnboardingProgress($userId, $progressData);
 
         require_once __DIR__ . '/../core/site_domain.php';
+        require_once __DIR__ . '/../core/hosting_urls.php';
         birkly_ensure_site_domain_registered();
+        $hosting = birkly_hosting_load();
+        if ($hosting['cms_base_url'] !== '') {
+            birkly_hosting_register_domains($hosting);
+        }
         
         // Store in session for modal display
         if ($demoWebsiteUrl) {

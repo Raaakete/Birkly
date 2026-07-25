@@ -73,9 +73,33 @@ function birkly_request_is_same_cms_origin(): bool
         return false;
     }
 
+    if (function_exists('birkly_hosting_cms_host')) {
+        require_once __DIR__ . '/hosting_urls.php';
+        $configuredCmsHost = birkly_hosting_cms_host();
+        if ($configuredCmsHost !== '' && $cmsHost === $configuredCmsHost) {
+            return true;
+        }
+        $publicHost = birkly_hosting_public_host();
+        if ($publicHost !== '' && $cmsHost === $publicHost && birkly_hosting_same_host()) {
+            return true;
+        }
+    }
+
     $clientHost = birkly_client_request_host();
     if ($clientHost !== '' && $cmsHost === $clientHost) {
         return true;
+    }
+
+    if (function_exists('birkly_hosting_cms_host')) {
+        require_once __DIR__ . '/hosting_urls.php';
+        $configuredCms = birkly_hosting_cms_host();
+        $configuredPublic = birkly_hosting_public_host();
+        if ($configuredCms !== '' && $clientHost === $configuredCms) {
+            return true;
+        }
+        if ($configuredPublic !== '' && $clientHost === $configuredPublic) {
+            return true;
+        }
     }
 
     // fetch() from /project/* on the CMS host may omit Referer/Origin (Safari, privacy settings).
