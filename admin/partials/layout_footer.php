@@ -9,7 +9,7 @@ if (!function_exists('birkly_build_info')) {
     require_once __DIR__ . '/../../core/build_info.php';
 }
 $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
-$__birklyAssetVersion = htmlspecialchars((string) (birkly_build_info()['git_commit'] ?? '1'), ENT_QUOTES, 'UTF-8');
+$__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/tabs-v2.js'), ENT_QUOTES, 'UTF-8');
 ?>
 
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/icon.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
