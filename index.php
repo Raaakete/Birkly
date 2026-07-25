@@ -55,9 +55,27 @@ if ($uri === '/admin' || $uri === '/admin/') {
 }
 
 // Fallback for /admin - redirect to PHP admin panel
-if (preg_match('#^/admin($|/)#', $_SERVER['REQUEST_URI'])) {
+if (preg_match('#^/admin($|/)#', $_SERVER['REQUEST_URI'] ?? '')) {
     header('Location: ' . birkly_admin_url('dashboard'), true, 302);
     exit;
+}
+
+// CMS host root → admin; marketing host root → public project site
+if ($uri === '/') {
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    if (strpos($host, ':') !== false) {
+        $host = explode(':', $host, 2)[0];
+    }
+    if ($host !== '' && str_starts_with($host, 'cms.')) {
+        header('Location: ' . birkly_admin_url('dashboard'), true, 302);
+        exit;
+    }
+    if (is_dir($root . '/project')) {
+        $projectIndex = $root . '/project/index.html';
+        $target = is_file($projectIndex) ? '/project/index.html' : '/project/';
+        header('Location: ' . birkly_url($target), true, 302);
+        exit;
+    }
 }
 
 require_once __DIR__ . '/core/http_routes.php';
