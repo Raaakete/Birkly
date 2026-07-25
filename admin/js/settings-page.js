@@ -533,8 +533,19 @@ window.deleteRole = deleteRole;
         document.querySelectorAll('.settings-area-btn').forEach(function (btn) {
             var isActive = btn.getAttribute('data-area') === area;
             btn.classList.toggle('active', isActive);
-            btn.setAttribute('aria-current', isActive ? 'page' : 'false');
+            if (isActive) {
+                btn.setAttribute('aria-current', 'page');
+            } else {
+                btn.removeAttribute('aria-current');
+            }
         });
+    }
+
+    function refreshTabsV2Picker() {
+        var tabsRoot = document.querySelector('.settings-tabs.tabs-v2-root');
+        if (tabsRoot && window.Birkly && window.Birkly.TabsV2 && typeof window.Birkly.TabsV2.refresh === 'function') {
+            window.Birkly.TabsV2.refresh(tabsRoot);
+        }
     }
 
     function updateVisibleTabs(area) {
@@ -542,8 +553,13 @@ window.deleteRole = deleteRole;
             var tabArea = btn.getAttribute('data-area');
             var visible = tabArea === area;
             btn.classList.toggle('tab--hidden', !visible);
-            btn.setAttribute('aria-hidden', visible ? 'false' : 'true');
+            if (visible) {
+                btn.removeAttribute('aria-hidden');
+            } else {
+                btn.setAttribute('aria-hidden', 'true');
+            }
         });
+        refreshTabsV2Picker();
     }
 
     function updateSaveBar(tabId) {
@@ -724,13 +740,14 @@ window.deleteRole = deleteRole;
 
         tabNav.addEventListener('click', async function (e) {
             var btn = e.target.closest('.tab[data-tab]');
-            if (!btn || !tabNav.contains(btn) || btn.classList.contains('tab--hidden')) {
+            if (!btn || !tabNav.contains(btn)) {
                 return;
             }
             e.preventDefault();
             var targetTab = btn.getAttribute('data-tab');
             if (!targetTab) return;
-            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null, btn.getAttribute('data-area'));
+            var targetArea = btn.getAttribute('data-area') || getAreaForTab(targetTab);
+            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null, targetArea);
         });
 
         var parsed = parseSettingsUrl();

@@ -40,6 +40,7 @@
 
     let groups = [];
     let collections = [];
+    let starterTemplates = [];
     let dragDropManager = null;
     let subgroupSorters = [];
     let currentView = 'grid';
@@ -61,8 +62,15 @@
                     dataText = dataScript.innerHTML.trim();
                 }
                 const data = JSON.parse(dataText);
-                collections = data.collections || [];
-                groups = normalizeGroups(data.groups || []);
+                if (data && typeof data === 'object') {
+                    collections = data.collections || [];
+                    groups = normalizeGroups(data.groups || []);
+                    starterTemplates = Array.isArray(data.starter_templates) ? data.starter_templates : [];
+                } else {
+                    collections = [];
+                    groups = [];
+                    starterTemplates = [];
+                }
                 renderGroupsAndCollections();
             } catch (e) {
                 console.error('Failed to parse content data:', e);
@@ -328,13 +336,12 @@
             });
         }
 
-        if (ungroupedCollections.length > 0 || groups.length > 0) {
+        if (ungroupedCollections.length > 0) {
             container.appendChild(createUngroupedSection(ungroupedCollections));
-        } else if (collections.length === 0 && groups.filter((g) => g.id !== 'ungrouped').length === 0) {
-            container.innerHTML = '<div class="empty-state card" style="padding: 2rem; text-align: center;">'
-                + '<p style="margin: 0 0 1rem; color: var(--text-secondary);">No collections yet.</p>'
-                + '<a class="btn btn-primary" href="' + adminUrl('collection-editor') + '">Create your first collection</a>'
-                + '</div>';
+        } else if (collections.length === 0) {
+            container.appendChild(renderEmptyCollectionsState());
+        } else if (groups.filter((g) => g.id !== 'ungrouped').length > 0) {
+            container.appendChild(createUngroupedSection(ungroupedCollections));
         }
 
         if (dragDropManager) {
@@ -554,6 +561,108 @@
         }
 
         return section;
+    }
+
+    function renderEmptyCollectionsState() {
+        const wrap = document.createElement('div');
+        wrap.className = 'content-empty-state card';
+
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'empty-state__icon';
+        iconWrap.setAttribute('aria-hidden', 'true');
+        iconWrap.innerHTML = icon('stack', { size: 32 });
+
+        const title = document.createElement('h2');
+        title.className = 'content-empty-state__title';
+        title.textContent = 'Create your first collection';
+
+        const message = document.createElement('p');
+        message.className = 'content-empty-state__message';
+        message.textContent = 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.';
+
+        const actions = document.createElement('div');
+        actions.className = 'content-empty-state__actions';
+        const createBtn = document.createElement('a');
+        createBtn.className = 'btn btn-primary';
+        createBtn.href = adminUrl('collection-editor');
+        createBtn.textContent = 'New collection';
+        actions.appendChild(createBtn);
+
+        wrap.appendChild(iconWrap);
+        wrap.appendChild(title);
+        wrap.appendChild(message);
+        wrap.appendChild(actions);
+
+        const selectable = (starterTemplates || []).filter((t) => t && t.id && t.id !== 'blank' && t.selectable !== false);
+        if (selectable.length > 0) {
+            const templatesHeading = document.createElement('h3');
+            templatesHeading.className = 'content-empty-state__templates-title';
+            templatesHeading.textContent = 'Or start with a template';
+
+            const grid = document.createElement('div');
+            grid.className = 'content-starter-template-grid';
+
+            selectable.slice(0, 4).forEach((template) => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'content-starter-template-card';
+                card.innerHTML = '<strong>' + escapeHtml(template.label || template.id) + '</strong>'
+                    + '<span>' + escapeHtml(template.description || '') + '</span>';
+                card.addEventListener('click', function () {
+                    installStarterTemplate(template.id, card);
+                });
+                grid.appendChild(card);
+            });
+
+            wrap.appendChild(templatesHeading);
+            wrap.appendChild(grid);
+        }
+
+        return wrap;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = String(text ?? '');
+        return div.innerHTML;
+    }
+
+    async function installStarterTemplate(templateId, buttonEl) {
+        if (!templateId || buttonEl?.disabled) return;
+        const originalText = buttonEl?.textContent;
+        if (buttonEl) {
+            buttonEl.disabled = true;
+            buttonEl.textContent = 'Installing…';
+        }
+        try {
+            const response = await fetch(apiUrl('/api/demo.php?action=install_starter'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    action: 'install_starter',
+                    template: templateId,
+                    starter_template: templateId,
+                    _csrf: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                })
+            });
+            const data = await response.json();
+            if (data.status === 'ok' || data.success) {
+                window.location.reload();
+                return;
+            }
+            throw new Error(data.message || 'Install failed');
+        } catch (error) {
+            if (window.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+                BirklyFeedback.toast(error.message || 'Failed to install template', 'error');
+            } else {
+                console.error(error);
+            }
+            if (buttonEl) {
+                buttonEl.disabled = false;
+                buttonEl.textContent = originalText || 'Install';
+            }
+        }
     }
 
     function createUngroupedSection(collectionsList) {
