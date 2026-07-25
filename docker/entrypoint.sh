@@ -3,6 +3,10 @@ set -e
 
 echo "[entrypoint] Birkly CMS docker image — document root /app (not /usr/share/nginx/html)"
 
+if [ -f /app/BUILD_REVISION ]; then
+  echo "[entrypoint] Build revision: $(tr -d '\n' < /app/BUILD_REVISION)"
+fi
+
 DATA_ROOT="${BIRKLY_DATA:-}"
 
 # Symlink /app/<name> → $DATA_ROOT/<name>, migrating a real directory when present.
