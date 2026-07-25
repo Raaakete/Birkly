@@ -359,8 +359,18 @@ select.collection-filter-select:not([data-custom-select="true"]),
 .collection-actions-bar-right select.collection-filter-select,
 .collection-actions-bar-right .collection-filter-select,
 .collection-actions-bar-right .collection-actions-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   min-height: 3.125rem !important;
   height: 3.125rem !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+.collection-actions-bar-right .collection-actions-trigger svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 /* For btn-sm context (sub-collection pages) - match btn-sm height exactly */
