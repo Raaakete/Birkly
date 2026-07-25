@@ -303,7 +303,7 @@
 .custom-select-trigger[aria-expanded="true"] {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: var(--focus-ring-subtle);
 }
 
 /* Custom Select Menu */
@@ -351,7 +351,7 @@ select.collection-filter-select:not([data-custom-select="true"]),
 .collection-filter-select:focus {
   outline: none !important;
   border-color: var(--primary-500) !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  box-shadow: var(--focus-ring-subtle) !important;
 }
 
 /* Collection Actions Bar - Size Matching */
