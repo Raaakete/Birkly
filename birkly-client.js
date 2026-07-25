@@ -158,6 +158,108 @@
         Birkly.enableAnalytics = enableAnalytics;
     })();
 
+    /**
+     * Initialize analytics tracking (idempotent — safe to call early and after init).
+     */
+    function initAnalytics() {
+        if (initAnalytics._started) {
+            return;
+        }
+        initAnalytics._started = true;
+
+        const trackingId = Birkly.trackingId;
+        const cmsUrl = (Birkly.cmsUrl || '').replace(/\/$/, '');
+
+        if (!trackingId || !cmsUrl || !Birkly.enableAnalytics) {
+            return;
+        }
+
+        function getSessionId() {
+            const key = 'birkly_session_' + trackingId;
+            let sessionId = sessionStorage.getItem(key);
+            if (!sessionId) {
+                sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                sessionStorage.setItem(key, sessionId);
+            }
+            return sessionId;
+        }
+
+        function buildTrackPayload(extra) {
+            return Object.assign({
+                tracking_id: trackingId,
+                domain: window.location.hostname,
+                path: window.location.pathname + window.location.search,
+                referrer: document.referrer || '',
+                screen_width: window.screen.width || 0,
+                screen_height: window.screen.height || 0,
+                language: navigator.language || navigator.userLanguage || '',
+                session_id: getSessionId()
+            }, extra || {});
+        }
+
+        function sendTrackPayload(data) {
+            const url = cmsUrl + '/api/analytics.php?action=track';
+            const body = JSON.stringify(data);
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body,
+                keepalive: true
+            }).then(function(res) {
+                if (res.ok) {
+                    return null;
+                }
+                return res.json().catch(function() {
+                    return { message: 'HTTP ' + res.status };
+                }).then(function(payload) {
+                    console.warn('[Birkly] Analytics track failed:', payload && payload.message ? payload.message : res.status);
+                });
+            }).catch(function(err) {
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+                    return;
+                }
+                console.warn('[Birkly] Analytics track error:', err);
+            });
+        }
+
+        function trackPageView() {
+            sendTrackPayload(buildTrackPayload());
+        }
+
+        if (document.readyState === 'complete') {
+            trackPageView();
+        } else {
+            window.addEventListener('load', trackPageView);
+        }
+
+        let lastUrl = location.href;
+        new MutationObserver(function() {
+            const url = location.href;
+            if (url !== lastUrl) {
+                lastUrl = url;
+                trackPageView();
+            }
+        }).observe(document, { subtree: true, childList: true });
+
+        window.addEventListener('popstate', function() {
+            setTimeout(trackPageView, 100);
+        });
+
+        window.HaruAnalyticsTrack = function(eventName, eventData) {
+            sendTrackPayload(buildTrackPayload({
+                path: window.location.pathname,
+                event_name: eventName,
+                event_data: eventData || {}
+            }));
+        };
+    }
+
+    if (Birkly.trackingId && Birkly.enableAnalytics) {
+        initAnalytics();
+    }
+
     // Enable verbose debug logs when URL contains ?__dbg=1 or when on localhost (dev server)
     Birkly.debug = (function() {
         try {
@@ -3248,11 +3350,6 @@
         
         // Setup form auto-submission after templates are processed
         setupFormSubmission();
-        
-        // Initialize analytics if tracking ID is present
-        if (Birkly.trackingId) {
-            initAnalytics();
-        }
     }
 
     /**
@@ -3496,124 +3593,6 @@
 
         // Expose refresh so init() can re-bind after template processing finishes
         bindActionForms.refresh = bindExistingForms;
-    }
-    
-    /**
-     * Initialize analytics tracking
-     */
-    function initAnalytics() {
-        const trackingId = Birkly.trackingId;
-        const cmsUrl = Birkly.cmsUrl.replace(/\/$/, '');
-        
-        if (!trackingId || !cmsUrl) {
-            return;
-        }
-        
-        // Generate or get session ID
-        function getSessionId() {
-            const key = 'birkly_session_' + trackingId;
-            let sessionId = sessionStorage.getItem(key);
-            if (!sessionId) {
-                sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                sessionStorage.setItem(key, sessionId);
-            }
-            return sessionId;
-        }
-        
-        // Track page view
-        function trackPageView() {
-            // Analytics is optional and disabled by default for the demo/public setup.
-            // Avoid hitting /api/analytics.php when not explicitly enabled.
-            if (!Birkly.enableAnalytics) return;
-
-            const data = {
-                tracking_id: trackingId,
-                domain: window.location.hostname,
-                path: window.location.pathname + window.location.search,
-                referrer: document.referrer || '',
-                screen_width: window.screen.width || 0,
-                screen_height: window.screen.height || 0,
-                language: navigator.language || navigator.userLanguage || '',
-                session_id: getSessionId()
-            };
-            
-            const url = cmsUrl + '/api/analytics.php?action=track';
-            
-            // Use sendBeacon if available (more reliable)
-            if (navigator.sendBeacon) {
-                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                navigator.sendBeacon(url, blob);
-            } else {
-                // Fallback to fetch
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data),
-                    keepalive: true
-                }).catch(function(err) {
-                    // Silently fail - don't interrupt user experience
-                    if (Birkly.debug) console.debug('Birkly Analytics: Tracking failed', err);
-                });
-            }
-        }
-        
-        // Track page view on load
-        if (document.readyState === 'complete') {
-            trackPageView();
-        } else {
-            window.addEventListener('load', trackPageView);
-        }
-        
-        // Track page views on history changes (SPA support)
-        let lastUrl = location.href;
-        new MutationObserver(function() {
-            const url = location.href;
-            if (url !== lastUrl) {
-                lastUrl = url;
-                trackPageView();
-            }
-        }).observe(document, { subtree: true, childList: true });
-        
-        // Also listen to popstate for back/forward navigation
-        window.addEventListener('popstate', function() {
-            setTimeout(trackPageView, 100);
-        });
-        
-        // Expose API for manual tracking
-        window.HaruAnalyticsTrack = function(eventName, eventData) {
-            const data = {
-                tracking_id: trackingId,
-                domain: window.location.hostname,
-                path: window.location.pathname,
-                referrer: document.referrer || '',
-                screen_width: window.screen.width || 0,
-                screen_height: window.screen.height || 0,
-                language: navigator.language || '',
-                session_id: getSessionId(),
-                event_name: eventName,
-                event_data: eventData || {}
-            };
-            
-            const url = cmsUrl + '/api/analytics.php?action=track';
-            
-            if (navigator.sendBeacon) {
-                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                navigator.sendBeacon(url, blob);
-            } else {
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data),
-                    keepalive: true
-                }).catch(function(err) {
-                    if (Birkly.debug) console.debug('Birkly Analytics: Event tracking failed', err);
-                });
-            }
-        };
     }
     
     
