@@ -658,6 +658,22 @@ if (!$cancelUrl) {
                                         <label>Description</label>
                                         <textarea name="description" id="description" class="input" rows="3" placeholder="Describe what this collection is for"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
                                     </div>
+
+                                    <div class="info-item">
+                                        <label for="icon">Icon (emoji)</label>
+                                        <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="e.g. 📝" maxlength="8" inputmode="text">
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Optional emoji shown on the content overview card
+                                        </small>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <label for="icon_key">Icon key</label>
+                                        <input type="text" name="icon_key" id="icon_key" class="input" value="<?= htmlspecialchars($collection['icon_key'] ?? '') ?>" placeholder="e.g. document-text">
+                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            Optional icon font key for future use
+                                        </small>
+                                    </div>
                                     
                                     <div class="info-item">
                                         <label>Default Sort Order</label>
