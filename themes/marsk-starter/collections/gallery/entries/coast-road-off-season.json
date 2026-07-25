@@ -1,0 +1,16 @@
+{
+  "id": "gallery-coast-road-off-season",
+  "slug": "coast-road-off-season",
+  "status": "published",
+  "created_at": "2026-01-01T00:00:00+00:00",
+  "updated_at": "2026-01-01T00:00:00+00:00",
+  "en": {
+    "title": "Coast road, off-season",
+    "slug": "coast-road-off-season",
+    "caption": "Coast road, off-season",
+    "category": "places",
+    "art_class": "art--04",
+    "order": 3,
+    "status": "published"
+  }
+}
