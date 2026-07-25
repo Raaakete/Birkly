@@ -1137,45 +1137,75 @@ body.dragging-group .group-drop-indicator {
 .collections-container[data-view="list"] .ungrouped-collections {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2, 0.5rem);
+  gap: 1px;
   grid-template-columns: none;
+  padding: 0;
+  background: var(--border-light, #f3f4f6);
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: var(--border-radius-s, 4px);
+  overflow: hidden;
 }
 
 .collections-container[data-view="list"] .collection-card {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto;
+  display: flex;
+  flex-direction: row;
   align-items: center;
   gap: var(--space-3, 0.75rem);
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  min-height: auto !important;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.collections-container[data-view="list"] .collection-card:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--bg-secondary, #fafafa);
 }
 
 .collections-container[data-view="list"] .collection-card .collection-header {
-  display: contents;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
   margin-bottom: 0;
+  gap: var(--space-2, 0.5rem);
 }
 
 .collections-container[data-view="list"] .collection-card .collection-header .title {
-  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
   margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.collections-container[data-view="list"] .collection-card .collection-header .title .collection-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .collections-container[data-view="list"] .collection-card .collection-description {
-  grid-column: 2;
-  grid-row: 2;
+  display: none;
 }
 
 .collections-container[data-view="list"] .collection-card .collection-footer {
-  grid-column: 3;
-  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
   margin-top: 0;
-  align-self: center;
+  padding-top: 0;
+  border-top: none;
+  flex-shrink: 0;
 }
 
 .collections-container[data-view="list"] .collection-card .drag-handle {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  align-self: center;
+  flex-shrink: 0;
 }
 
 /* Nested collection groups */
