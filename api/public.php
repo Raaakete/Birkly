@@ -230,7 +230,7 @@ if ($action === 'list_collection_groups') {
 if ($action === 'list_entries') {
     $collection = $input['collection'] ?? '';
     $id = $input['id'] ?? '';
-    $language = $input['language'] ?? $_GET['language'] ?? 'en'; // Default to 'en'
+    $language = $input['language'] ?? $_GET['language'] ?? $_GET['lang'] ?? $input['lang'] ?? 'en'; // Default to 'en'
     $dir = '';
     $collections = $storage->list('collections');
     if ($id) {
@@ -393,7 +393,7 @@ if ($action === 'get_entry') {
     $id = $input['id'] ?? '';
     $entryId = $input['entry'] ?? '';
     $slug = $input['slug'] ?? $_GET['slug'] ?? '';
-    $language = $input['language'] ?? $_GET['language'] ?? 'en'; // Default to 'en'
+    $language = $input['language'] ?? $_GET['language'] ?? $_GET['lang'] ?? $input['lang'] ?? 'en'; // Default to 'en'
     $dir = '';
     $collections = $storage->list('collections');
     if ($id) {
