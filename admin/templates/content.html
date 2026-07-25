@@ -16,8 +16,34 @@ $contentAssetVer = (string) (birkly_build_info()['git_commit'] ?? 'dev');
     </div>
     
     <div class="main-actions-bar">
-        <a class="btn btn-primary" href="<?= htmlspecialchars(admin_url('collection-editor')) ?>"><?= __('admin.new_collection') ?></a>
-        <button class="btn btn-secondary" id="new-group-btn"><?= __('admin.new_group') ?></button>
+        <div class="collection-actions-bar">
+            <div class="collection-actions-bar-left">
+                <a class="btn btn-primary" href="<?= htmlspecialchars(admin_url('collection-editor')) ?>"><?= __('admin.new_collection') ?></a>
+                <button class="btn btn-secondary" id="new-group-btn"><?= __('admin.new_group') ?></button>
+            </div>
+            <div class="collection-actions-bar-right">
+                <div class="content-view-toggle" role="group" aria-label="Content view">
+                    <button type="button" class="btn-icon" id="content-view-grid" data-content-view="grid" aria-label="Grid view" title="Grid view">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </button>
+                    <button type="button" class="btn-icon" id="content-view-list" data-content-view="list" aria-label="List view" title="List view">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     
     <script type="application/json" id="content-data"><?php echo json_encode($content_bootstrap ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?></script>
@@ -40,6 +66,10 @@ $contentAssetVer = (string) (birkly_build_info()['git_commit'] ?? 'dev');
                 <div class="form-group">
                     <label for="group-name"><?= __('admin.group_name') ?></label>
                     <input type="text" id="group-name" name="name" required class="input" placeholder="<?= htmlspecialchars(__('admin.enter_group_name')) ?>">
+                </div>
+                <div class="form-group">
+                    <label for="group-icon">Icon (emoji)</label>
+                    <input type="text" id="group-icon" name="icon" class="input" placeholder="e.g. 📁" maxlength="8">
                 </div>
             </div>
             <div class="modal-footer">

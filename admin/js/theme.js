@@ -55,15 +55,6 @@ Birkly.Theme = {
     },
 
     initSwitcher() {
-        document.querySelectorAll('.theme-switcher--segmented .theme-btn').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const theme = btn.getAttribute('data-theme');
-                if (theme) {
-                    this.setTheme(theme);
-                }
-            });
-        });
-
         document.querySelectorAll('.theme-option').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const theme = btn.getAttribute('data-theme');
@@ -95,18 +86,6 @@ Birkly.Theme = {
 
     _updateSwitcherUI() {
         const labels = { light: 'Light', dark: 'Dark', system: 'Auto' };
-
-        document.querySelectorAll('.theme-switcher--segmented .theme-btn').forEach((btn) => {
-            const theme = btn.getAttribute('data-theme');
-            const active = theme === this.currentTheme;
-            btn.classList.toggle('active', active);
-            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-            if (theme) {
-                const baseLabel = labels[theme] || theme;
-                btn.setAttribute('title', baseLabel);
-                btn.setAttribute('aria-label', `${baseLabel} theme`);
-            }
-        });
 
         document.querySelectorAll('.theme-switcher-trigger-icon').forEach((icon) => {
             const theme = icon.getAttribute('data-theme-icon');

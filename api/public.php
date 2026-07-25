@@ -222,6 +222,11 @@ if ($action === 'list_collections') {
     respond(['status'=>'ok','data'=>['collections'=>$result]]);
 }
 
+if ($action === 'list_collection_groups') {
+    require_once __DIR__ . '/../core/collection_groups.php';
+    respond(['status' => 'ok', 'data' => ['collection_groups' => birkly_load_collection_groups()]]);
+}
+
 if ($action === 'list_entries') {
     $collection = $input['collection'] ?? '';
     $id = $input['id'] ?? '';

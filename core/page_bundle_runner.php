@@ -104,6 +104,9 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                 $result = birkly_public_list_sub_entries($parentCollection, $parentEntryId, $subCollection);
                 $entries = $result['data']['entries'] ?? [];
                 $out[$into] = birkly_page_bundle_prune_list($entries, $lean);
+            } elseif ($type === 'list_collection_groups') {
+                require_once __DIR__ . '/collection_groups.php';
+                $out[$into] = birkly_load_collection_groups();
             } elseif ($type === 'template_functions_meta') {
                 $key = $into !== '' ? $into : '__tf_meta__';
                 $out[$key] = birkly_page_bundle_template_functions_meta_list();
