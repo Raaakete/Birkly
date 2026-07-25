@@ -277,9 +277,12 @@
 
 .group-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--space-2, 0.5rem);
+  justify-content: space-between;
   margin-bottom: var(--space-3, 0.75rem);
+  cursor: grab;
+  user-select: none;
 }
 
 .group-actions {
@@ -530,13 +533,16 @@
    Drag & Drop Styles for Entries
    ============================================ */
 .drag-handle {
-  font-size: 1.2em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   user-select: none;
   opacity: 0.6;
   transition: opacity 0.15s;
   cursor: grab;
   touch-action: none;
   flex-shrink: 0;
+  line-height: 0;
 }
 
 .collection-card .drag-handle {
@@ -813,6 +819,12 @@
 .group-header {
   cursor: grab;
   user-select: none;
+}
+
+.group-header .group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
 }
 
 .group-header .group-actions {
