@@ -2,6 +2,8 @@
    Onboarding wizard — full-page setup flow
    ============================================ */
 
+@import url('../components/hosting-wizard.css');
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

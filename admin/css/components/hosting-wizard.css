@@ -1,0 +1,126 @@
+/* Hosting wizard — Settings + onboarding (P44-M5) */
+
+.hosting-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+.hosting-wizard-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: var(--space-3, 0.75rem);
+}
+
+.hosting-wizard-step-btn {
+  flex: 1 1 auto;
+  min-width: 120px;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.hosting-wizard-step-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.hosting-wizard-step-btn.active {
+  color: var(--text-primary);
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+  font-weight: 600;
+}
+
+.hosting-wizard-panel-title {
+  margin: 0 0 var(--space-2, 0.5rem);
+  font-size: 1.0625rem;
+}
+
+.hosting-wizard-panel-desc {
+  margin: 0 0 var(--space-4, 1rem);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.hosting-wizard-dokploy {
+  margin-top: var(--space-4, 1rem);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-secondary);
+}
+
+.hosting-wizard-dokploy-title {
+  margin: 0 0 var(--space-2, 0.5rem);
+  font-size: 0.9375rem;
+}
+
+.hosting-wizard-checklist {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.hosting-wizard-checklist li {
+  margin-bottom: var(--space-2, 0.5rem);
+}
+
+.hosting-wizard-preview {
+  padding: var(--space-4, 1rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.hosting-wizard-preview-line {
+  margin: 0 0 var(--space-2, 0.5rem);
+  font-size: 0.9375rem;
+}
+
+.hosting-wizard-snippet-block {
+  margin-top: var(--space-4, 1rem);
+}
+
+.hosting-wizard-snippet-block label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: var(--space-2, 0.5rem);
+}
+
+.hosting-wizard-actions {
+  display: flex;
+  gap: var(--space-3, 0.75rem);
+  justify-content: flex-end;
+  padding-top: var(--space-2, 0.5rem);
+  border-top: 1px solid var(--border-light);
+}
+
+.hosting-wizard .input-with-action {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  align-items: stretch;
+}
+
+.hosting-wizard .input-with-action .input {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .hosting-wizard-step-btn {
+    flex: 1 1 100%;
+  }
+
+  .hosting-wizard .input-with-action {
+    flex-direction: column;
+  }
+}
