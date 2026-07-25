@@ -1253,6 +1253,83 @@
     margin-right: 0;
 }
 
+.domain-analytics-report-actions {
+    margin-top: var(--space-3, 0.75rem);
+}
+
+.domain-analytics-report {
+    margin-top: var(--space-4, 1rem);
+}
+
+.domain-analytics-report-card {
+    padding: var(--space-4, 1rem);
+    background: var(--bg-elevated, #f8f9fa);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: var(--border-radius-s, 8px);
+}
+
+.domain-analytics-report-summary {
+    display: flex;
+    gap: var(--space-6, 1.5rem);
+    margin-bottom: var(--space-4, 1rem);
+}
+
+.domain-analytics-report-summary div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.domain-analytics-report-summary strong {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.domain-analytics-report-summary span {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.domains-settings .analytics-report__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-4, 1rem);
+}
+
+.domains-settings .analytics-report__section h4 {
+    margin: 0 0 var(--space-2, 0.5rem);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.domains-settings .analytics-report__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.domains-settings .analytics-report__list li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2, 0.5rem);
+    padding: 0.25rem 0;
+    font-size: 0.8125rem;
+}
+
+.domains-settings .analytics-report__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.domains-settings .analytics-report__value {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
 .domain-header {
     display: flex;
     justify-content: space-between;
