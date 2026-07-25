@@ -25,6 +25,12 @@ function birkly_http_route_map(): array
     ];
 }
 
+// Bootstrap plugin system at file scope (not inside dispatch) so registries use $GLOBALS.
+require_once __DIR__ . '/plugin_public_routes.php';
+if (!function_exists('load_plugins')) {
+    require_once __DIR__ . '/plugins.php';
+}
+
 function birkly_dispatch_http_route(string $uri): bool
 {
     foreach (birkly_http_route_map() as $prefix => $handler) {
@@ -53,10 +59,6 @@ function birkly_dispatch_http_route(string $uri): bool
         return true;
     }
 
-    require_once __DIR__ . '/plugin_public_routes.php';
-    if (!function_exists('load_plugins')) {
-        require_once __DIR__ . '/plugins.php';
-    }
     if (function_exists('load_plugins')) {
         load_plugins(dirname(__DIR__) . '/plugins');
     }
