@@ -148,6 +148,17 @@ const onboarding = {
             e.preventDefault();
             this.saveSiteInfo();
         });
+        document.querySelectorAll('input[name="onboarding-public-mode"]').forEach((input) => {
+            input.addEventListener('change', () => {
+                const wrap = document.getElementById('onboarding-public-url-wrap');
+                const mode = document.querySelector('input[name="onboarding-public-mode"]:checked');
+                if (wrap) wrap.style.display = mode && mode.value !== 'none' ? '' : 'none';
+            });
+        });
+        const cmsUrlInput = document.getElementById('onboarding-cms-url');
+        if (cmsUrlInput && !cmsUrlInput.value) {
+            cmsUrlInput.value = window.location.origin;
+        }
         document.getElementById('onboarding-ai-provider')?.addEventListener('change', () => {
             this.updateAiProviderFields();
             this.aiTestPassed = false;
@@ -395,6 +406,23 @@ const onboarding = {
             });
             const data = await response.json();
             if (data.status === 'ok') {
+                const modeInput = document.querySelector('input[name="onboarding-public-mode"]:checked');
+                const hostingBody = {
+                    action: 'save',
+                    hosting: {
+                        cms_base_url: document.getElementById('onboarding-cms-url')?.value.trim() || window.location.origin,
+                        public_site_mode: modeInput ? modeInput.value : 'none',
+                        public_site_url: document.getElementById('onboarding-public-url')?.value.trim() || '',
+                        same_host_landing: 'admin',
+                        strict_admin_host: true
+                    },
+                    _csrf: csrfToken
+                };
+                await fetch(Birkly.url('/api/hosting.php?action=save'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(hostingBody)
+                });
                 this.nextStep();
             } else {
                 alert('Failed to save: ' + (data.message || 'Unknown error'));

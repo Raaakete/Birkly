@@ -21,6 +21,7 @@ if ($uri === false || $uri === null) {
 
 require_once __DIR__ . '/core/birkly_paths.php';
 require_once __DIR__ . '/core/http_routes.php';
+require_once __DIR__ . '/core/hosting_routing.php';
 
 $base = birkly_base_path();
 if ($base !== '' && str_starts_with($uri, $base)) {
@@ -28,6 +29,10 @@ if ($base !== '' && str_starts_with($uri, $base)) {
     if ($uri === '') {
         $uri = '/';
     }
+}
+
+if (birkly_hosting_dispatch($uri)) {
+    return true;
 }
 
 if (birkly_dispatch_http_route($uri)) {
