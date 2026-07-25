@@ -66,7 +66,7 @@ function birkly_icon_paths(): array
 
 function birkly_icon_fill_names(): array
 {
-    return ['dots-six-vertical', 'dots-three-vertical'];
+    return ['dots-six-vertical', 'dots-three-vertical', 'sparkle'];
 }
 
 /**

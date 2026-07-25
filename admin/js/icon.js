@@ -62,7 +62,7 @@
     };
 
     /** Solid-fill icons (dots) — not stroke-outlined circles */
-    const ICON_FILL_NAMES = new Set(['dots-six-vertical', 'dots-three-vertical']);
+    const ICON_FILL_NAMES = new Set(['dots-six-vertical', 'dots-three-vertical', 'sparkle']);
 
     /**
      * @param {string} name
