@@ -617,25 +617,57 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
       <!-- Domains Tab -->
       <div class="tab-pane" id="domains">
-        <div class="settings-section">
-          <div class="section-header">
-            <h2><?= __('admin.domain_management_and_analytics') ?></h2>
-            <p class="section-description">Register domains to allow them to access your CMS content via the API. Optionally enable analytics tracking to monitor visitor statistics. Zero-dependency, self-hosted analytics with complete privacy.</p>
-            <button class="btn btn-primary" id="register-domain-btn" onclick="openAddDomainModal()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Register Domain
-            </button>
-          </div>
-          
-          <div id="domains-list" class="domains-grid">
-            <div class="loading-state">
-              <div class="spinner"></div>
-              <p><?= __('admin.loading_domains') ?>...</p>
+        <div class="settings-stack domains-settings">
+          <section class="card domains-header-card">
+            <div class="section-header">
+              <div class="section-header__copy">
+                <h2><?= __('admin.domain_management_and_analytics') ?></h2>
+                <p class="section-description"><?= __('admin.domain_management_description') ?></p>
+              </div>
+              <button type="button" class="btn btn-primary" id="register-domain-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <?= __('admin.register_domain') ?>
+              </button>
             </div>
-          </div>
+          </section>
+
+          <section class="card domains-dev-card">
+            <div class="section-header">
+              <div class="section-header__copy">
+                <h3><?= __('admin.local_development') ?></h3>
+                <p class="section-description"><?= __('admin.local_development_script_help') ?></p>
+              </div>
+            </div>
+            <?php
+            $localhostScript = '<script src="' . htmlspecialchars(birkly_url('/birkly-client.js'), ENT_QUOTES, 'UTF-8') . '" data-tracking-id="localhost"></script>';
+            ?>
+            <div class="domains-code-block">
+              <pre class="domains-code-pre"><code id="domains-localhost-script"><?= htmlspecialchars($localhostScript, ENT_QUOTES, 'UTF-8') ?></code></pre>
+              <button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="domains-localhost-script" title="<?= htmlspecialchars(__('admin.copy_code')) ?>">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <?= __('admin.copy_code') ?>
+              </button>
+            </div>
+            <p class="domains-code-hint"><?= __('admin.tracking_script_hint') ?></p>
+          </section>
+
+          <section class="card domains-list-section">
+            <div class="section-header">
+              <h3><?= __('admin.registered_domains') ?></h3>
+            </div>
+            <div id="domains-list" class="domains-list">
+              <div class="loading-state">
+                <div class="spinner"></div>
+                <p><?= __('admin.loading_domains') ?>...</p>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 
@@ -1253,11 +1285,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </div>
           <div class="form-group">
-            <label>
-              <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
-              <?= __('admin.enable_analytics_tracking') ?>
-            </label>
-            <small class="text-muted">Track visitor statistics for this domain. Zero-dependency, self-hosted analytics with complete privacy.</small>
+            <div class="preference-item domain-analytics-toggle-row">
+              <div class="preference-label">
+                <div class="preference-title"><?= __('admin.enable_analytics_tracking') ?></div>
+                <small class="preference-desc">Track visitor statistics for this domain. Zero-dependency, self-hosted analytics with complete privacy.</small>
+              </div>
+              <label class="toggle-switch" for="domain-enable-analytics">
+                <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
         </form>
       </div>
@@ -1303,11 +1340,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </div>
           <div class="form-group">
-            <label>
-              <input type="checkbox" id="edit-domain-enable-analytics" name="enable_analytics" value="1">
-              Enable Analytics Tracking
-            </label>
-            <small class="text-muted">Track visitor statistics for this domain.</small>
+            <div class="preference-item domain-analytics-toggle-row">
+              <div class="preference-label">
+                <div class="preference-title"><?= __('admin.enable_analytics_tracking') ?></div>
+                <small class="preference-desc">Track visitor statistics for this domain.</small>
+              </div>
+              <label class="toggle-switch" for="edit-domain-enable-analytics">
+                <input type="checkbox" id="edit-domain-enable-analytics" name="enable_analytics" value="1">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
         </form>
       </div>
