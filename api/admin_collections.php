@@ -323,6 +323,8 @@ try {
     $name = $_POST['name'] ?? '';
     $slug = $_POST['slug'] ?? '';
     $description = $_POST['description'] ?? '';
+    $icon = trim((string) ($_POST['icon'] ?? ''));
+    $iconKey = trim((string) ($_POST['icon_key'] ?? ''));
     $template = $_POST['template'] ?? '';
     $sort = $_POST['sort'] ?? 'created_desc';
     $fields = $_POST['fields'] ?? [];
@@ -430,6 +432,13 @@ try {
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ];
+
+    if ($icon !== '') {
+        $collectionData['icon'] = $icon;
+    }
+    if ($iconKey !== '') {
+        $collectionData['icon_key'] = $iconKey;
+    }
     
     // Add API key and settings if Public API is enabled
     if ($entryMethod === 'public_api') {
