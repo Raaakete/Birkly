@@ -107,7 +107,7 @@ if ($action === 'list_licenses' || $action === 'list_domains') {
         exit;
     }
     
-    $enableAnalytics = !empty($input['enable_analytics']);
+    $enableAnalytics = !empty($input['enable_analytics']) || !empty($input['analytics_enabled']);
     
     $domainData = [
         'customer_email' => $customerEmail,
@@ -120,31 +120,13 @@ if ($action === 'list_licenses' || $action === 'list_domains') {
         'analytics_enabled' => $enableAnalytics
     ];
     
-    // If analytics is enabled, create tracking configuration
     if ($enableAnalytics) {
-        require_once __DIR__ . '/analytics.php';
-        $analyticsDir = __DIR__ . '/../data/analytics';
-        if (!is_dir($analyticsDir)) {
-            mkdir($analyticsDir, 0755, true);
+        require_once __DIR__ . '/../core/analytics_config.php';
+        if (!birkly_analytics_set_domain_tracking($domain, true)) {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => 'Could not write analytics configuration. Check that data/analytics is writable.']);
+            exit;
         }
-        
-        $trackingConfigFile = $analyticsDir . '/tracking_ids.json';
-        $trackingIds = [];
-        if (file_exists($trackingConfigFile)) {
-            $trackingIds = json_decode(file_get_contents($trackingConfigFile), true) ?: [];
-        }
-        
-        // Use domain as tracking ID
-        $trackingIds[$domain] = [
-            'id' => $domain,
-            'name' => $domain,
-            'domain' => $domain,
-            'enabled' => true,
-            'created_at' => date('c'),
-            'updated_at' => date('c')
-        ];
-        
-        file_put_contents($trackingConfigFile, json_encode($trackingIds, JSON_PRETTY_PRINT), LOCK_EX);
     }
     
     $result = $domainAuth->registerDomain($domain, $domainData);
@@ -194,7 +176,12 @@ if ($action === 'list_licenses' || $action === 'list_domains') {
         exit;
     }
     
-    $analyticsEnabled = isset($input['analytics_enabled']) ? (bool)$input['analytics_enabled'] : null;
+    $analyticsEnabled = null;
+    if (array_key_exists('analytics_enabled', $input)) {
+        $analyticsEnabled = (bool) $input['analytics_enabled'];
+    } elseif (array_key_exists('enable_analytics', $input)) {
+        $analyticsEnabled = !empty($input['enable_analytics']);
+    }
     
     $updates = [
         'status' => $status,
@@ -212,38 +199,13 @@ if ($action === 'list_licenses' || $action === 'list_domains') {
     // Handle analytics toggle
     if ($analyticsEnabled !== null) {
         $updates['analytics_enabled'] = $analyticsEnabled;
-        
-        require_once __DIR__ . '/analytics.php';
-        $analyticsDir = __DIR__ . '/../data/analytics';
-        if (!is_dir($analyticsDir)) {
-            mkdir($analyticsDir, 0755, true);
+
+        require_once __DIR__ . '/../core/analytics_config.php';
+        if (!birkly_analytics_set_domain_tracking($domain, $analyticsEnabled)) {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => 'Could not update analytics configuration. Check that data/analytics is writable.']);
+            exit;
         }
-        
-        $trackingConfigFile = $analyticsDir . '/tracking_ids.json';
-        $trackingIds = [];
-        if (file_exists($trackingConfigFile)) {
-            $trackingIds = json_decode(file_get_contents($trackingConfigFile), true) ?: [];
-        }
-        
-        if ($analyticsEnabled) {
-            // Enable analytics - create/update tracking config
-            $trackingIds[$domain] = [
-                'id' => $domain,
-                'name' => $domain,
-                'domain' => $domain,
-                'enabled' => true,
-                'created_at' => $trackingIds[$domain]['created_at'] ?? date('c'),
-                'updated_at' => date('c')
-            ];
-        } else {
-            // Disable analytics - remove from tracking config
-            if (isset($trackingIds[$domain])) {
-                $trackingIds[$domain]['enabled'] = false;
-                $trackingIds[$domain]['updated_at'] = date('c');
-            }
-        }
-        
-        file_put_contents($trackingConfigFile, json_encode($trackingIds, JSON_PRETTY_PRINT), LOCK_EX);
     }
     
     $result = $domainAuth->updateLicense($domain, $updates);
