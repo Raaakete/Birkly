@@ -117,7 +117,63 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
         <div class="editor-layout">
             <div class="editor-main">
                 <div class="editor-content">
-                    <?php if (!empty($fields)): ?>
+                    <?php
+                    $multilanguageEnabled = !empty($multilanguage_enabled);
+                    $multilanguageLanguages = $multilanguage_languages ?? [];
+                    $languageFields = $language_fields ?? [];
+                    ?>
+                    <?php if ($multilanguageEnabled && !empty($multilanguageLanguages) && !empty($languageFields)): ?>
+                        <div class="language-tabs-container entry-language-tabs">
+                            <div class="language-tabs-nav" role="tablist" aria-label="Entry languages">
+                                <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>
+                                    <button type="button"
+                                            class="language-tab-btn <?= $langIdx === 0 ? 'active' : '' ?>"
+                                            data-lang="<?= htmlspecialchars($langCode) ?>"
+                                            role="tab"
+                                            aria-selected="<?= $langIdx === 0 ? 'true' : 'false' ?>">
+                                        <?= htmlspecialchars(strtoupper($langCode)) ?>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>
+                                <div class="language-tab-content <?= $langIdx === 0 ? 'active' : '' ?>"
+                                     data-lang="<?= htmlspecialchars($langCode) ?>"
+                                     role="tabpanel"
+                                     <?= $langIdx === 0 ? '' : 'style="display:none"' ?>>
+                                    <?php foreach ($languageFields[$langCode] ?? [] as $field): ?>
+                                        <?php $fieldName = $field['name'] ?? ''; ?>
+                                        <div class="field-block" data-field-name="<?= htmlspecialchars($fieldName) ?>" data-lang="<?= htmlspecialchars($langCode) ?>">
+                                            <div class="field-header">
+                                                <div class="field-title">
+                                                    <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
+                                                    <?php if (!empty($field['required'])): ?>
+                                                        <span class="required">*</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <?php if (!empty($field['required'])): ?>
+                                                    <div class="field-subtitle"><?= __('admin.required') ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="field-control">
+                                                <?php if (!empty($field['html'])): ?>
+                                                    <?= $field['html'] ?>
+                                                <?php else: ?>
+                                                    <?php $fieldValue = $field['lang_value'] ?? ($entry[$langCode][$fieldName] ?? ''); ?>
+                                                    <input type="text"
+                                                           name="<?= htmlspecialchars($langCode . '[' . $fieldName . ']') ?>"
+                                                           id="field_<?= htmlspecialchars($langCode . '_' . $fieldName) ?>"
+                                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                                           class="input"
+                                                           <?= !empty($field['required']) && $langIdx === 0 ? 'required' : '' ?>>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="field-feedback error" role="alert" aria-live="polite"></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php elseif (!empty($fields)): ?>
                         <?php foreach ($fields as $field): ?>
                             <?php $fieldName = $field['name'] ?? ''; ?>
                             <div class="field-block" data-field-name="<?= htmlspecialchars($fieldName) ?>">
@@ -155,11 +211,11 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
             
             <!-- Right Sidebar -->
             <div class="editor-sidebar">
-                <div class="sidebar-tabs">
-                    <div class="tab-nav">
-                        <button type="button" class="tab-btn active" data-tab="general">General</button>
-                        <button type="button" class="tab-btn" data-tab="metadata">Meta Data</button>
-                        <button type="button" class="tab-btn" data-tab="templating">Templating</button>
+                <div class="sidebar-tabs tabs-v2-root">
+                    <div class="tabs tab-nav">
+                        <button type="button" class="tab tab-btn active" data-tab="general">General</button>
+                        <button type="button" class="tab tab-btn" data-tab="metadata">Meta Data</button>
+                        <button type="button" class="tab tab-btn" data-tab="templating">Templating</button>
                     </div>
                     
                     <div class="tab-content">
@@ -687,6 +743,49 @@ echo htmlspecialchars($collectionExample);
 }
 
 .tab-pane.active {
+    display: block;
+}
+
+/* Entry editor language tabs (multilanguage collections) */
+.entry-language-tabs.language-tabs-container {
+    margin-bottom: var(--space-6, 1.5rem);
+}
+
+.entry-language-tabs .language-tabs-nav {
+    display: flex;
+    gap: var(--space-2, 0.5rem);
+    border-bottom: 2px solid var(--border-color, #e5e7eb);
+    margin-bottom: var(--space-4, 1rem);
+}
+
+.entry-language-tabs .language-tab-btn {
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary, #72746F);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: -2px;
+}
+
+.entry-language-tabs .language-tab-btn:hover {
+    color: var(--text-primary, #20221D);
+    border-bottom-color: var(--border-color, #e5e7eb);
+}
+
+.entry-language-tabs .language-tab-btn.active {
+    color: var(--text-primary, #20221D);
+    border-bottom-color: var(--color-dark, #1a1a1a);
+    font-weight: 600;
+}
+
+.entry-language-tabs .language-tab-content {
+    display: none;
+}
+
+.entry-language-tabs .language-tab-content.active {
     display: block;
 }
 

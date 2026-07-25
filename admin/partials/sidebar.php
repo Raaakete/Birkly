@@ -58,6 +58,24 @@ function get_active_plugin_navigation(): array {
 
 $activePluginNavigation = get_active_plugin_navigation();
 
+// Trash discoverability (P40-M3): link to first collection with trashed entries, else content.
+$trashNavUrl = admin_url('content');
+$trashNavCount = 0;
+$contentCollectionsDir = __DIR__ . '/../../content/collections';
+if (is_dir($contentCollectionsDir)) {
+    foreach (glob($contentCollectionsDir . '/*/entries/*.json') ?: [] as $entryFile) {
+        $entryData = json_decode((string) file_get_contents($entryFile), true);
+        if (!is_array($entryData) || ($entryData['status'] ?? '') !== 'trashed') {
+            continue;
+        }
+        $trashNavCount++;
+        if ($trashNavUrl === admin_url('content')) {
+            $collectionSlug = basename(dirname(dirname($entryFile)));
+            $trashNavUrl = admin_url('entries', ['collection' => $collectionSlug, 'status' => 'trashed']);
+        }
+    }
+}
+
 // Load settings to get project name and logo
 require_once __DIR__ . '/../../api/storage.php';
 $storage = new Storage(__DIR__ . '/../../settings');
@@ -119,6 +137,17 @@ if (empty($userAvatar)) {
                                 <polyline points="10,9 9,9 8,9"></polyline>
                             </svg>
                             <span class="nav-label"><?= __('admin.content') ?></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="<?= htmlspecialchars($trashNavUrl) ?>" class="nav-link <?= is_nav_active('entries') && (($_GET['status'] ?? '') === 'trashed') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.trash')) ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            <span class="nav-label"><?= __('admin.trash') ?><?= $trashNavCount > 0 ? ' (' . (int) $trashNavCount . ')' : '' ?></span>
                         </a>
                     </li>
                     <li class="nav-item">
