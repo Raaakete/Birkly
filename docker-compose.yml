@@ -1,0 +1,15 @@
+# Local / Dokploy reference — one volume for all CMS persistence.
+# Dokploy: mount your volume at /app/data and set BIRKLY_DATA=/app/data (default in image).
+services:
+  birkly:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      BIRKLY_DATA: /app/data
+    volumes:
+      - birkly-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  birkly-data:
