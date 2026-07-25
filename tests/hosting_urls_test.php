@@ -81,6 +81,23 @@ try {
     assert_true('normalize url strips slash', birkly_hosting_normalize_url('https://cms.test/') === 'https://cms.test');
     assert_true('clean project path', birkly_hosting_clean_public_url('/project/index.html') === '/index.html');
 
+    putenv('BIRKLY_TRUST_REQUEST_HOST=true');
+    putenv('BIRKLY_CMS_BASE_URL=https://test.birkly.cloud');
+    birkly_hosting_reset_cache();
+    $_SERVER['HTTP_HOST'] = 'test.birkly.cloud';
+    assert_true('trust request host treats staging as cms', birkly_request_host_role() === 'cms');
+    assert_true(
+        'env cms base url override',
+        birkly_hosting_cms_host() === 'test.birkly.cloud'
+    );
+    assert_true(
+        'unknown host does not redirect to prod cms',
+        str_contains(birkly_hosting_admin_url('dashboard'), 'test.birkly.cloud')
+    );
+    putenv('BIRKLY_TRUST_REQUEST_HOST');
+    putenv('BIRKLY_CMS_BASE_URL');
+    birkly_hosting_reset_cache();
+
     $_SERVER['HTTP_HOST'] = 'cms.legacy.test';
     $_SERVER['HTTPS'] = 'on';
     birkly_hosting_reset_cache();
