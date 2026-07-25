@@ -17,7 +17,9 @@ $pluginsSnippet = is_readable($pluginsFile)
     ? (string) file_get_contents($pluginsFile, false, null, 0, 400)
     : '';
 
+$projectRoot = birkly_project_root();
 $opsStarters = birkly_ops_starters_diagnostics('marsk');
+$opsStarters['install_probe'] = birkly_ops_starters_install_probe($projectRoot, 'marsk');
 
 echo json_encode([
     'service' => 'birkly-cms',
