@@ -48,10 +48,10 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
       window.BirklyAdminI18n = <?= json_encode($adminI18nData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
     <?php require_once __DIR__ . '/../../core/build_info.php'; ?>
-    <meta name="birkly-build" content="<?= htmlspecialchars((string) (birkly_build_info()['git_commit'] ?? 'unknown')) ?>">
+    <meta name="birkly-build" content="<?= htmlspecialchars((string) (birkly_release_identifier() ?? birkly_admin_asset_version('admin/js/settings-page.js'))) ?>">
     <title>Birkly Admin</title>
     <!-- Main Stylesheet - Imports all CSS modules -->
-    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_admin_asset_url('/admin/css/style.css')) ?>">
     <?php if (isset($page) && $page === 'entry-editor'): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/fieldtypes/ContentEditor/editor.css')) ?>">
     <?php endif; ?>
