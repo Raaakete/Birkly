@@ -187,18 +187,18 @@ if (empty($userAvatar)) {
                     </li>
                 </ul>
                 </nav>
-        </div>
-        <div class="sidebar-footer">
-            <?php
-            require_once __DIR__ . '/../../core/platform.php';
-            if (birkly_alpha_program_enabled()):
-            ?>
-            <p class="sidebar-program-label"><?= htmlspecialchars(birkly_program_status_label()) ?></p>
-            <?php endif; ?>
             <button type="button" class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" aria-label="Collapse sidebar" aria-pressed="false" title="Collapse sidebar">
                 <?= birkly_icon('caret-left') ?>
                 <span class="sidebar-collapse-label">Collapse</span>
             </button>
         </div>
+        <?php
+        require_once __DIR__ . '/../../core/platform.php';
+        if (birkly_alpha_program_enabled()):
+        ?>
+        <div class="sidebar-footer">
+            <p class="sidebar-program-label"><?= htmlspecialchars(birkly_program_status_label()) ?></p>
+        </div>
+        <?php endif; ?>
     </aside>
 <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
