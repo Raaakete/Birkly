@@ -27,10 +27,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <?= __('admin.general') ?>
       </button>
       <button type="button" class="tab" data-tab="users-roles">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
+        <?= birkly_icon('user', ['size' => 12]) ?>
         <?= __('admin.users_and_roles') ?>
       </button>
       <button type="button" class="tab" data-tab="security">
@@ -269,18 +266,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div id="update-info"></div>
                   <div class="update-actions" id="update-actions" style="display: none;">
                     <button type="button" class="btn btn-primary" id="download-update-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7,10 12,15 17,10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                      </svg>
+                      <?= birkly_icon('import', ['size' => 16]) ?>
                       Download Update
                     </button>
                     <button type="button" class="btn btn-secondary" id="check-updates-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 4v6h-6"></path>
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                      </svg>
+                      <?= birkly_icon('arrows-clockwise', ['size' => 16]) ?>
                       Check Again
                     </button>
                   </div>
@@ -314,17 +304,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <h2><?= __('admin.user_management') ?></h2>
             <div class="user-actions">
               <button class="btn btn-secondary" onclick="openInviteUserModal()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
+                <?= birkly_icon('envelope', ['size' => 16]) ?>
                 Invite User
               </button>
               <button class="btn btn-primary" onclick="openAddUserModal()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <?= birkly_icon('plus', ['size' => 16]) ?>
                 Add User
               </button>
             </div>
@@ -334,9 +318,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </p>
           <div class="users-grid">
             <?php if (empty($users)): ?>
-              <div class="empty-state">
-                <p><?= __('admin.no_users_found') ?></p>
-                <button class="btn btn-primary" onclick="openAddUserModal()"><?= __('admin.add_first_user') ?></button>
+              <div class="empty-state empty-state--compact">
+                <p class="empty-state__message"><?= __('admin.no_users_found') ?></p>
+                <div class="empty-state__action">
+                  <button class="btn btn-primary" onclick="openAddUserModal()"><?= __('admin.add_first_user') ?></button>
+                </div>
               </div>
             <?php else: ?>
               <?php foreach ($users as $user):
@@ -362,16 +348,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     </div>
                     <div class="user-actions">
                       <button class="btn-icon btn-icon--edit" onclick="editUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>')" title="Edit User" aria-label="Edit user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
+                        <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                       </button>
                       <button class="btn-icon btn-icon--danger" onclick="confirmDeleteUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>')" title="Delete User" aria-label="Delete user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="3,6 5,6 21,6"></polyline>
-                          <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                        </svg>
+                        <?= birkly_icon('trash', ['size' => 16]) ?>
                       </button>
                     </div>
                   </div>
@@ -433,10 +413,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="section-header">
             <h2>Role Management</h2>
             <button class="btn btn-primary" onclick="openAddRoleModal()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
+              <?= birkly_icon('plus', ['size' => 16]) ?>
               Add Role
             </button>
           </div>
@@ -447,16 +424,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <h3><?= htmlspecialchars($role['name']) ?></h3>
                 <div class="role-actions">
                   <button class="btn-icon btn-icon--edit" onclick="editRole('<?= htmlspecialchars($role['id']) ?>')" title="Edit Role" aria-label="Edit role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
+                    <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                   </button>
                   <button class="btn-icon btn-icon--danger" onclick="deleteRole('<?= htmlspecialchars($role['id']) ?>')" title="Delete Role" aria-label="Delete role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="3,6 5,6 21,6"></polyline>
-                      <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                    </svg>
+                    <?= birkly_icon('trash', ['size' => 16]) ?>
                   </button>
                 </div>
               </div>
@@ -555,10 +526,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 Add collection
               </button>
               <button type="button" class="btn btn-secondary" onclick="addDenylistResource()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <?= birkly_icon('plus', ['size' => 16]) ?>
                 Add custom pattern
               </button>
             </div>
@@ -589,21 +557,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <h2><?= __('admin.api_information') ?></h2>
           <p class="settings-help"><?= __('admin.api_info_help') ?></p>
           
-          <div class="api-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
-            <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
-              <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">API Endpoint</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">The API is available at: <code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;"><?= htmlspecialchars($apiEndpoint) ?></code></p>
+          <div class="api-info-grid">
+            <div class="api-info-card">
+              <h3 class="api-info-card__title">API Endpoint</h3>
+              <p class="api-info-card__text">The API is available at: <code class="api-info-card__code"><?= htmlspecialchars($apiEndpoint) ?></code></p>
             </div>
-            <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
-              <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Authentication</h3>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Manage domains</a></p>
+            <div class="api-info-card">
+              <h3 class="api-info-card__title">Authentication</h3>
+              <p class="api-info-card__text">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Manage domains</a></p>
             </div>
-            <div class="info-card" style="background: var(--bg-elevated); border: 1px solid var(--border-light); border-radius: var(--border-radius-s); padding: var(--space-6);">
-              <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--text-primary);">Rate Limiting</h3>
+            <div class="api-info-card">
+              <h3 class="api-info-card__title">Rate Limiting</h3>
               <?php if ($domainCount > 0): ?>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab.</p>
+              <p class="api-info-card__text">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab.</p>
               <?php else: ?>
-              <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" style="color: #3b82f6; text-decoration: underline;">Domains</a> tab to enable API access controls.</p>
+              <p class="api-info-card__text">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab to enable API access controls.</p>
               <?php endif; ?>
             </div>
           </div>
@@ -625,10 +593,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <p class="section-description"><?= __('admin.domain_management_description') ?></p>
               </div>
               <button type="button" class="btn btn-primary" id="register-domain-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <?= birkly_icon('plus', ['size' => 16]) ?>
                 <?= __('admin.register_domain') ?>
               </button>
             </div>
@@ -647,10 +612,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="domains-code-block">
               <pre class="domains-code-pre"><code id="domains-localhost-script"><?= htmlspecialchars($localhostScript, ENT_QUOTES, 'UTF-8') ?></code></pre>
               <button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="domains-localhost-script" title="<?= htmlspecialchars(__('admin.copy_code')) ?>">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
+                <?= birkly_icon('copy', ['size' => 14]) ?>
                 <?= __('admin.copy_code') ?>
               </button>
             </div>
@@ -995,10 +957,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
                 </div>
                 <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
+                  <?= birkly_icon('plus', ['size' => 16]) ?>
                   Add agent
                 </button>
               </div>
@@ -1014,10 +973,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <p class="settings-help">Chat with AI inside Birkly using your provider API key.</p>
                 </div>
                 <button class="btn btn-secondary" id="add-connection-btn" type="button">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
+                  <?= birkly_icon('plus', ['size' => 16]) ?>
                   Quick connect
                 </button>
               </div>
@@ -1042,10 +998,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="modal-header">
               <h2 id="connection-modal-title">Quick connect assistant</h2>
               <button class="btn-icon modal-close" id="close-modal-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
             </div>
             <form id="add-connection-form" class="modal-body">
@@ -1131,10 +1084,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="modal-header">
               <h2 id="mcp-modal-title">Add AI agent</h2>
               <button class="btn-icon modal-close" data-mcp-modal-close aria-label="Close">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">

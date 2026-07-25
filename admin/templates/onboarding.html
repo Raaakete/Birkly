@@ -75,7 +75,7 @@ $starterCards = [
                         <label for="first-user-password-confirm"><?= __('admin.confirm_password') ?></label>
                         <input type="password" id="first-user-password-confirm" name="password_confirm" required autocomplete="new-password" minlength="8">
                     </div>
-                    <div id="first-user-error" class="error-message" style="display: none;" aria-live="polite"></div>
+                    <div id="first-user-error" class="message error" style="display: none;" aria-live="polite" role="alert"></div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-large"><?= __('admin.create_admin_account') ?></button>
                     </div>
