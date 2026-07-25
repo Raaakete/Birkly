@@ -75,7 +75,7 @@
 .toolbar-search .search-input:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  box-shadow: var(--focus-ring-tight);
 }
 
 .toolbar-filters {
@@ -97,7 +97,7 @@
 .filter-select:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  box-shadow: var(--focus-ring-tight);
 }
 
 .search-box input {
@@ -113,7 +113,7 @@
 .search-box input:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  box-shadow: var(--focus-ring-tight);
 }
 
 .filter-options {
@@ -865,7 +865,7 @@
 
 .media-card.is-selected {
   border-color: var(--primary-400, #60a5fa);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+  box-shadow: var(--focus-ring-tight);
 }
 
 .media-card__preview {

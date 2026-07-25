@@ -220,7 +220,7 @@
 .field-control textarea:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: var(--focus-ring-subtle);
 }
 
 .field-typename {
@@ -574,7 +574,7 @@
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  box-shadow: var(--focus-glow);
   animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
 
@@ -871,7 +871,7 @@
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6) !important;
+  box-shadow: var(--focus-glow) !important;
 }
 
 /* Completely disable collection drop zones when dragging a group */
@@ -896,7 +896,7 @@ body.dragging-group .group-drop-indicator {
    Drag & Drop Styles for Collections
    ============================================ */
 .drag-placeholder {
-  background: rgba(59, 130, 246, 0.1) !important;
+  background: var(--focus-fill-subtle) !important;
   border: 2px dashed var(--primary-500) !important;
   border-radius: 4px;
   transition: opacity 0.1s ease-out, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), height 0.1s ease-out;
@@ -1009,7 +1009,7 @@ body.dragging-group .group-drop-indicator {
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  box-shadow: var(--focus-glow);
   animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
 
@@ -1020,7 +1020,7 @@ body.dragging-group .group-drop-indicator {
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  box-shadow: var(--focus-glow);
   animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
 
