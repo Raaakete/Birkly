@@ -939,7 +939,7 @@
     function injectQuickActionChips() {
         const params = new URLSearchParams(window.location.search);
         const page = params.get('page') || '';
-        if (page !== 'entry-editor' && page !== 'entries') {
+        if (page !== 'entry-editor') {
             return;
         }
 
