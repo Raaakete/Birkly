@@ -28,7 +28,7 @@
   transition: width var(--transition-normal, 200ms ease), transform var(--transition-normal, 200ms ease);
   padding: var(--admin-shell-edge-padding);
   padding-right: 0;
-  justify-content: space-between;
+  justify-content: flex-start;
   background: var(--background-global, #f8f9f7);
   border-right: none;
   flex-shrink: 0;
@@ -37,6 +37,18 @@
 .sidebar-body {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-body .sidebar-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidebar-body > .sidebar-collapse-toggle {
+  flex-shrink: 0;
+  margin-top: var(--space-3, 0.75rem);
 }
 
 /* Navigation Sidebar Overrides */
@@ -213,11 +225,10 @@ body.sidebar-open {
   overflow: hidden;
 }
 
-/* Sidebar Footer */
+/* Sidebar Footer (alpha program label only) */
 .sidebar-footer {
   margin-top: auto;
-  padding-top: var(--space-4, 1rem);
-  border-top: 1px solid var(--border-light, #e2e8f0);
+  padding-top: var(--space-3, 0.75rem);
   flex-shrink: 0;
   z-index: 1;
 }
