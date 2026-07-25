@@ -58,24 +58,6 @@ function get_active_plugin_navigation(): array {
 
 $activePluginNavigation = get_active_plugin_navigation();
 
-// Trash discoverability (P40-M3): link to first collection with trashed entries, else content.
-$trashNavUrl = admin_url('content');
-$trashNavCount = 0;
-$contentCollectionsDir = __DIR__ . '/../../content/collections';
-if (is_dir($contentCollectionsDir)) {
-    foreach (glob($contentCollectionsDir . '/*/entries/*.json') ?: [] as $entryFile) {
-        $entryData = json_decode((string) file_get_contents($entryFile), true);
-        if (!is_array($entryData) || ($entryData['status'] ?? '') !== 'trashed') {
-            continue;
-        }
-        $trashNavCount++;
-        if ($trashNavUrl === admin_url('content')) {
-            $collectionSlug = basename(dirname(dirname($entryFile)));
-            $trashNavUrl = admin_url('entries', ['collection' => $collectionSlug, 'status' => 'trashed']);
-        }
-    }
-}
-
 // Load settings to get project name and logo
 require_once __DIR__ . '/../../api/storage.php';
 $storage = new Storage(__DIR__ . '/../../settings');
