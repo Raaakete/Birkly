@@ -467,61 +467,7 @@
         });
     }
 
-    function syncActionCellWidths() {
-        document.querySelectorAll('.entries-smart-table').forEach(function (table) {
-            const headActions = table.querySelector('.head-actions');
-            const rowActions = table.querySelectorAll('.cell-actions');
-            if (!headActions || rowActions.length === 0) {
-                return;
-            }
-
-            let maxWidth = 0;
-            rowActions.forEach(function (cell) {
-                const originalWidth = cell.style.width;
-                const originalMinWidth = cell.style.minWidth;
-                cell.style.width = '';
-                cell.style.minWidth = '';
-                maxWidth = Math.max(maxWidth, cell.getBoundingClientRect().width);
-                cell.style.width = originalWidth;
-                cell.style.minWidth = originalMinWidth;
-            });
-
-            if (maxWidth > 0) {
-                headActions.style.flexBasis = maxWidth + 'px';
-                headActions.style.width = maxWidth + 'px';
-                headActions.style.minWidth = maxWidth + 'px';
-                table.style.setProperty('--action-cell-width', maxWidth + 'px');
-            }
-        });
-    }
-
-    function initializeActionCellSync() {
-        syncActionCellWidths();
-
-        let resizeTimeout = null;
-        window.addEventListener('resize', function () {
-            window.clearTimeout(resizeTimeout);
-            resizeTimeout = window.setTimeout(function () {
-                syncActionCellWidths();
-                if (window.Birkly && window.Birkly.SmartTableScroll && typeof window.Birkly.SmartTableScroll.init === 'function') {
-                    window.Birkly.SmartTableScroll.init();
-                }
-            }, 100);
-        });
-
-        const observer = new MutationObserver(function () {
-            syncActionCellWidths();
-            if (window.Birkly && window.Birkly.SmartTableScroll && typeof window.Birkly.SmartTableScroll.init === 'function') {
-                window.Birkly.SmartTableScroll.init();
-            }
-        });
-        document.querySelectorAll('.entries-smart-table').forEach(function (table) {
-            observer.observe(table, { childList: true, subtree: true });
-        });
-    }
-
     updateBulkUI();
     window.setTimeout(initializeEntryDragHandlers, 100);
-    window.setTimeout(initializeActionCellSync, 200);
 })();
 
