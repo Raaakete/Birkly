@@ -893,88 +893,135 @@ async function deletePlugin(pluginId) {
             } else {
                 listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet.</p></div>';
             }
+            attachDomainsCopyButtons(document.getElementById('domains'));
         } catch (error) {
             console.error('Error loading domains:', error);
             listContainer.innerHTML = '<div class="error-state"><p>Error loading domains: ' + escapeHtml(error.message) + '</p></div>';
         }
     }
     
+    function buildDomainTrackingScript(domainName) {
+        var scriptPath = apiUrl('/birkly-client.js');
+        return '<script src="' + scriptPath + '" data-tracking-id="' + domainName + '"></script>';
+    }
+
+    function renderDomainTrackingScript(domainName, enabled) {
+        if (!enabled) {
+            return '';
+        }
+
+        var trackingCode = buildDomainTrackingScript(domainName);
+        var codeId = 'domain-script-' + domainName.replace(/[^a-zA-Z0-9_-]/g, '-');
+        return '' +
+            '<div class="domains-code-block domains-code-block--nested">' +
+            '<pre class="domains-code-pre"><code id="' + escapeHtml(codeId) + '">' + escapeHtml(trackingCode) + '</code></pre>' +
+            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="Copy code">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+            '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
+            '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
+            '</svg>Copy</button></div>' +
+            '<p class="domains-code-hint">Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.</p>';
+    }
+
+    function attachDomainsCopyButtons(root) {
+        var copyButtons = (root || document).querySelectorAll('.domains-copy-btn');
+        for (var i = 0; i < copyButtons.length; i++) {
+            (function(btn) {
+                if (btn.dataset.copyBound === '1') {
+                    return;
+                }
+                btn.dataset.copyBound = '1';
+                btn.addEventListener('click', function() {
+                    var targetId = btn.getAttribute('data-copy-target');
+                    var codeEl = targetId ? document.getElementById(targetId) : null;
+                    var code = codeEl ? codeEl.textContent : '';
+                    if (!code || !navigator.clipboard || !navigator.clipboard.writeText) {
+                        return;
+                    }
+                    navigator.clipboard.writeText(code).then(function() {
+                        var originalText = btn.innerHTML;
+                        btn.innerHTML = 'Copied';
+                        setTimeout(function() {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    });
+                });
+            })(copyButtons[i]);
+        }
+    }
+
+    async function toggleDomainAnalytics(domainName, enabled, toggleInput) {
+        if (!domainName) {
+            return;
+        }
+
+        if (toggleInput) {
+            toggleInput.disabled = true;
+        }
+
+        try {
+            var response = await fetch(apiUrl('/api/domain_management.php'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update_license',
+                    domain: domainName,
+                    status: 'active',
+                    analytics_enabled: !!enabled,
+                    _csrf: getCsrfToken()
+                })
+            });
+
+            var responseText = await response.text();
+            var result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (parseError) {
+                throw new Error('Invalid response from server');
+            }
+
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'Failed to update analytics');
+            }
+
+            showMessage(enabled ? 'Analytics enabled for ' + domainName : 'Analytics disabled for ' + domainName, 'success');
+            loadDomains();
+        } catch (error) {
+            if (toggleInput) {
+                toggleInput.checked = !enabled;
+            }
+            showMessage('Error: ' + error.message, 'error');
+        } finally {
+            if (toggleInput) {
+                toggleInput.disabled = false;
+            }
+        }
+    }
+
     function renderDomains(domains) {
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
             console.error('domains-list container not found in renderDomains');
             return;
         }
-        
-        // Build localhost script section (always visible)
-        // Use relative path - the client library auto-detects the CMS URL from the script src
-        var localhostScript = '<scr' + 'ipt src="/birkly-client.js" data-tracking-id="localhost"></scr' + 'ipt>';
-        var localhostCodeEscaped = escapeHtml(localhostScript);
-        var localhostCodeAttr = localhostScript.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        
-        var html = '<div class="analytics-section" style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">';
-        html += '<h3 style="margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">';
-        html += '<span>🏠</span><span>Localhost Script</span>';
-        html += '</h3>';
-        html += '<p style="margin: 0 0 1rem 0; color: #6b7280; font-size: 0.875rem;">Use this script for local development. Always available and ready to use. Analytics tracking is included automatically.</p>';
-        html += '<div style="position: relative; background: #ffffff; border-radius: 4px; padding: 0.75rem; font-family: monospace; font-size: 0.875rem; border: 1px solid #d1d5db;">';
-        html += '<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;"><code>' + localhostCodeEscaped + '</code></pre>';
-        html += '<button class="btn-icon copy-domain-code-btn" data-code="' + localhostCodeAttr + '" style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.375rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px;" title="Copy code">';
-        html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
-        html += '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>';
-        html += '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>';
-        html += '</svg>';
-        html += '</button>';
-        html += '</div>';
-        html += '<small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.5rem;">Add this code before &lt;/body&gt; tag</small>';
-        html += '</div>';
-        
-        if (domains.length === 0) {
-            html += '<div class="empty-state"><p>No domains registered yet. Click "Register Domain" to add one.</p></div>';
-            listContainer.innerHTML = html;
+
+        attachDomainsCopyButtons(document.getElementById('domains'));
+
+        if (!domains.length) {
+            listContainer.innerHTML = '<div class="empty-state"><p>No domains registered yet. Click "Register domain" to add one.</p></div>';
             return;
         }
-        
-        html += '<div style="margin-top: 2rem;"><h3 style="margin-bottom: 1rem;">Registered Domains</h3></div>';
-        
-        html += domains.map(function(domain) {
+
+        listContainer.innerHTML = domains.map(function(domain) {
             var permissions = domain.permissions || {};
             var permissionLevel = permissions.permission_level || 'read_write';
             var readCollections = permissions.read_collections || [];
             var writeCollections = permissions.write_collections || [];
             var rateLimits = permissions.rate_limits || {};
-            
-            // Build analytics HTML if enabled
-            var analyticsHtml = '';
-            if (domain.analytics_enabled) {
-                var domainName = String(domain.domain || '');
-                // Use relative path - the client library auto-detects the CMS URL from the script src
-                // The script will be hosted on the CMS server, so relative path works universally
-                var trackingCode = '<scr' + 'ipt src="/birkly-client.js" data-tracking-id="' + escapeHtml(domainName) + '"></scr' + 'ipt>';
-                var codeEscaped = escapeHtml(trackingCode);
-                var codeAttrEscaped = trackingCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                var analyticsSection = [];
-                analyticsSection.push('<div class="detail-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e0e0e0;">');
-                analyticsSection.push('<strong style="display: block; margin-bottom: 0.5rem;">📊 Analytics:</strong>');
-                analyticsSection.push('<span class="badge badge-success" style="margin-bottom: 0.5rem; display: inline-block;">Enabled</span>');
-                analyticsSection.push('<div style="margin-top: 0.75rem;">');
-                analyticsSection.push('<label style="font-size: 0.875rem; color: #6b7280; display: block; margin-bottom: 0.25rem;">Integration Script:</label>');
-                analyticsSection.push('<div style="position: relative; background: #f3f4f6; border-radius: 4px; padding: 0.75rem; font-family: monospace; font-size: 0.875rem; border: 1px solid #d1d5db;">');
-                analyticsSection.push('<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;"><code>' + codeEscaped + '</code></pre>');
-                analyticsSection.push('<button class="btn-icon copy-domain-code-btn" data-code="' + codeAttrEscaped + '" style="position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.375rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px;" title="Copy code">');
-                analyticsSection.push('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">');
-                analyticsSection.push('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>');
-                analyticsSection.push('<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>');
-                analyticsSection.push('</svg>');
-                analyticsSection.push('</button>');
-                analyticsSection.push('</div>');
-                analyticsSection.push('<small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.5rem;">Add this code before &lt;/body&gt; tag. Analytics tracking is included automatically.</small>');
-                analyticsSection.push('</div>');
-                analyticsSection.push('</div>');
-                analyticsHtml = analyticsSection.join('');
-            }
-            
-            var domainEscaped = escapeHtml(domain.domain);
+            var analyticsEnabled = !!domain.analytics_enabled;
+            var domainName = String(domain.domain || '');
+            var domainEscaped = escapeHtml(domainName);
             var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
             var statusClass = domain.status === 'active' ? 'success' : 'secondary';
             var statusText = domain.status || 'active';
@@ -983,56 +1030,51 @@ async function deletePlugin(pluginId) {
             var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A';
             var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
             var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
-            var readColsHtml = readCollections.length > 0 ? '<div class="detail-row"><strong>Read Collections:</strong> <span>' + readCollections.join(', ') + '</span></div>' : '';
-            var writeColsHtml = writeCollections.length > 0 ? '<div class="detail-row"><strong>Write Collections:</strong> <span>' + writeCollections.join(', ') + '</span></div>' : '';
-            
-            return '<div class="card domain-card">' +
+            var readColsHtml = readCollections.length > 0 ? '<div class="detail-row"><strong>Read collections:</strong> <span>' + escapeHtml(readCollections.join(', ')) + '</span></div>' : '';
+            var writeColsHtml = writeCollections.length > 0 ? '<div class="detail-row"><strong>Write collections:</strong> <span>' + escapeHtml(writeCollections.join(', ')) + '</span></div>' : '';
+            var trackingScriptHtml = renderDomainTrackingScript(domainName, analyticsEnabled);
+
+            return '' +
+                '<article class="domain-card">' +
                 '<div class="domain-header">' +
                 '<div class="domain-info">' +
-                '<h3>' + domainEscaped + '</h3>' +
+                '<h4 class="domain-name">' + domainEscaped + '</h4>' +
                 '<div class="domain-badges">' +
-                '<span class="badge badge-' + statusClass + '">' + statusText + '</span>' +
+                '<span class="badge badge-' + statusClass + '">' + escapeHtml(statusText) + '</span>' +
                 '<span class="badge badge-' + permClass + '">' + permText + '</span>' +
+                (analyticsEnabled ? '<span class="badge badge-success">Analytics on</span>' : '') +
                 '</div>' +
                 '</div>' +
                 '<div class="domain-actions">' +
-                '<button class="btn btn-small btn-secondary" data-domain="' + escapeHtml(domain.domain) + '" data-action="edit">Edit</button>' +
-                '<button class="btn btn-small btn-danger" data-domain="' + escapeHtml(domain.domain) + '" data-action="delete">Delete</button>' +
+                '<button type="button" class="btn btn-small btn-secondary" data-domain="' + domainEscaped + '" data-action="edit">Edit</button>' +
+                '<button type="button" class="btn btn-small btn-danger" data-domain="' + domainEscaped + '" data-action="delete">Delete</button>' +
                 '</div>' +
                 '</div>' +
                 '<div class="domain-details">' +
                 '<div class="detail-row"><strong>Email:</strong> <span>' + emailEscaped + '</span></div>' +
                 '<div class="detail-row"><strong>Registered:</strong> <span>' + registeredDate + '</span></div>' +
-                '<div class="detail-row"><strong>Rate Limits:</strong> <span>Read: ' + readLimit + '/min, Write: ' + writeLimit + '/hour</span></div>' +
+                '<div class="detail-row"><strong>Rate limits:</strong> <span>Read ' + readLimit + '/min · Write ' + writeLimit + '/hour</span></div>' +
                 readColsHtml +
                 writeColsHtml +
-                analyticsHtml +
                 '</div>' +
-                '</div>';
+                '<div class="domain-analytics-panel">' +
+                '<div class="preference-item domain-analytics-toggle-row">' +
+                '<div class="preference-label">' +
+                '<div class="preference-title">Website analytics</div>' +
+                '<small class="preference-desc">Self-hosted visitor tracking for this domain.</small>' +
+                '</div>' +
+                '<label class="toggle-switch" aria-label="Toggle analytics for ' + domainEscaped + '">' +
+                '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
+                '<span class="toggle-slider"></span>' +
+                '</label>' +
+                '</div>' +
+                (trackingScriptHtml ? '<div class="domain-tracking-script">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
+                '</div>' +
+                '</article>';
         }).join('');
-        
-        listContainer.innerHTML = html;
-        
-        // Attach copy button listeners
-        var copyButtons = document.querySelectorAll('.copy-domain-code-btn');
-        for (var i = 0; i < copyButtons.length; i++) {
-            (function(btn) {
-                btn.addEventListener('click', function() {
-                    var code = btn.getAttribute('data-code');
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(code).then(function() {
-                            var originalHTML = btn.innerHTML;
-                            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"></polyline></svg>';
-                            setTimeout(function() {
-                                btn.innerHTML = originalHTML;
-                            }, 2000);
-                        });
-                    }
-                });
-            })(copyButtons[i]);
-        }
-        
-        // Attach edit/delete button listeners using event delegation
+
+        attachDomainsCopyButtons(listContainer);
+
         var domainActions = listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"]');
         for (var i = 0; i < domainActions.length; i++) {
             (function(btn) {
@@ -1047,6 +1089,15 @@ async function deletePlugin(pluginId) {
                     }
                 });
             })(domainActions[i]);
+        }
+
+        var analyticsToggles = listContainer.querySelectorAll('.domain-analytics-toggle');
+        for (var j = 0; j < analyticsToggles.length; j++) {
+            (function(toggle) {
+                toggle.addEventListener('change', function() {
+                    toggleDomainAnalytics(toggle.getAttribute('data-domain'), toggle.checked, toggle);
+                });
+            })(analyticsToggles[j]);
         }
     }
     
