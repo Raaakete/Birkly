@@ -759,7 +759,7 @@ function handleNotificationsSubmit(e) {
     });
 }
 
-function handleRemoveAvatar() {
+async function handleRemoveAvatar() {
     if (!(await BirklyFeedback.confirm('Are you sure you want to remove your avatar?'))) {
         return;
     }

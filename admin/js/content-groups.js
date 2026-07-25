@@ -1031,7 +1031,7 @@
         return false;
     }
 
-    function deleteGroup(groupId) {
+    async function deleteGroup(groupId) {
         if (!(await BirklyFeedback.confirm('Are you sure you want to delete this group? Collections will be moved to ungrouped.'))) {
             return;
         }
@@ -1051,7 +1051,7 @@
         });
     }
 
-    function deleteCollection(collection) {
+    async function deleteCollection(collection) {
         const collectionId = collection.id;
         if (!collectionId) {
             BirklyFeedback.toast('Error: Collection ID not found. Cannot delete collection.', 'error')
