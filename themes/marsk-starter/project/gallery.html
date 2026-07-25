@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/project/assets/birkly-icon.svg" type="image/svg+xml">
+  <title>Gallery — Marsk</title>
+  <meta name="description" content="Collected moments — the Marsk gallery.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300..700;1,300..700&family=Space+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/project/css/marsk.css">
+</head>
+<body>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <!-- ============================ HEADER ============================ -->
+  <header class="site-header">
+    <div class="container">
+      {from 'site_elements' get entry 'navigation'}
+      <a class="brand" href="/project/index.html">{'content'.0.'value'}<sup>®</sup></a>
+      {endget}
+      <button class="menu-toggle" aria-expanded="false" aria-controls="overlay-menu">
+        <span class="label-open">Menu</span>
+        <span class="label-close">Close</span>
+        <span class="lines" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="overlay-menu" id="overlay-menu">
+    <div class="container">
+      <nav aria-label="Main">
+        <a class="menu-link" href="/project/index.html">Home</a>
+        <a class="menu-link" href="/project/about.html">About</a>
+        <a class="menu-link" href="/project/gallery.html">Gallery</a>
+        <a class="menu-link" href="/project/blog.html">Blog</a>
+      </nav>
+      <div class="menu-foot">
+        <span>Instagram</span>
+        <span>Pinterest</span>
+        <span>RSS</span>
+      </div>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- ============================ PAGE HERO ============================ -->
+    <section class="page-hero">
+      <div class="container">
+        <div class="kicker">Gallery</div>
+        <h1 class="page-title">
+          <span class="word"><span style="animation-delay:0.10s">Collected</span></span>
+          <span class="word"><span style="animation-delay:0.22s" class="accent">moments</span></span>
+        </h1>
+        <p class="text-soft" style="opacity:0;animation:fade-in 1s var(--ease-out) 0.6s forwards">Pictures that didn't need an essay. Replace these gradient studies with your own photography — each tile simply takes an image.</p>
+      </div>
+    </section>
+
+    <!-- ============================ FILTERS ============================ -->
+    <section class="section--tight" style="padding-block:0 var(--space-4)">
+      <div class="container">
+        <div class="filter-bar reveal" role="group" aria-label="Filter gallery">
+          <button class="tag is-active" data-filter="all">All</button>
+          <button class="tag" data-filter="mornings">Mornings</button>
+          <button class="tag" data-filter="craft">Craft</button>
+          <button class="tag" data-filter="places">Places</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ MASONRY GRID ============================ -->
+    <section style="padding-bottom:var(--space-6)">
+      <div class="container">
+        <div class="masonry reveal-stagger">
+          {for each entry in 'gallery' with status = published ordered by order}
+          {if entry has 'aspect_ratio'}
+          <figure class="gallery-tile" data-cat="{ category }" style="aspect-ratio:{ aspect_ratio }">
+            <div class="art { art_class }"></div>
+            <figcaption>{ caption }</figcaption>
+          </figure>
+          {else}
+          <figure class="gallery-tile" data-cat="{ category }">
+            <div class="art { art_class }"></div>
+            <figcaption>{ caption }</figcaption>
+          </figure>
+          {endif}
+          {endfor}
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================ FOOTER ============================ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          {from 'site_elements' get entry 'navigation'}
+          <a class="brand" href="/project/index.html">{'content'.0.'value'}<sup>®</sup></a>
+          {endget}
+          {from 'site_elements' get entry 'footer'}
+          <p class="footer-tagline">{'content'.0.'value'}</p>
+          {endget}
+        </div>
+        <div>
+          <h5>Explore</h5>
+          <ul>
+            <li><a href="/project/index.html">Home</a></li>
+            <li><a href="/project/about.html">About</a></li>
+            <li><a href="/project/gallery.html">Gallery</a></li>
+            <li><a href="/project/blog.html">Blog</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Elsewhere</h5>
+          <ul>
+            <li><a href="#">Instagram</a></li>
+            <li><a href="#">Pinterest</a></li>
+            <li><a href="#">RSS feed</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Template</h5>
+          <ul>
+            <li><a href="#">Made with Marsk</a></li>
+            <li><a href="#">Birkly CMS ready</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-wordmark" aria-hidden="true">Marsk</div>
+    <div class="container">
+      <div class="footer-legal">
+        {from 'site_elements' get entry 'footer'}
+        <span>{'content'.1.'value'}</span>
+        <span>{'content'.2.'value'}</span>
+        {endget}
+      </div>
+    </div>
+  </footer>
+
+  <script src="/project/js/marsk.js"></script>
+  <script src="/birkly-client.js"></script>
+</body>
+</html>

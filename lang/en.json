@@ -540,6 +540,7 @@
         "hosting_wizard_save_failed": "Failed to save hosting settings",
         "onboarding_hosting_section": "Hosting URLs",
         "onboarding_hosting_section_help": "Optional: set where your CMS and public site live. You can change this later in Settings.",
+        "onboarding_hosting_defer": "You can configure CMS and public site URLs later in Settings → Hosting.",
         "entries_bulk_edit_field": "Edit field...",
         "entries_bulk_new_value": "New value",
         "entries_bulk_apply_field_edit": "Apply field edit",

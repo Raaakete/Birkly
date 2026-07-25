@@ -133,6 +133,9 @@ function birkly_ops_download_starter_zip(string $starterId, string $destPath): ?
     if ($downloadUrl === '' || !function_exists('curl_init')) {
         return null;
     }
+    if (str_starts_with($downloadUrl, 'http://')) {
+        $downloadUrl = 'https://' . substr($downloadUrl, 7);
+    }
 
     $fp = fopen($destPath, 'wb');
     if ($fp === false) {
