@@ -2,10 +2,7 @@
     <div class="search-overlay-backdrop" id="search-overlay-backdrop"></div>
     <div class="search-overlay-content" role="dialog" aria-modal="true" aria-labelledby="search-input">
         <div class="search-input-wrapper">
-            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-            </svg>
+            <?= birkly_icon('magnifying-glass', ['size' => 20, 'class' => 'search-icon']) ?>
             <input
                 type="text"
                 id="search-input"
