@@ -50,12 +50,33 @@ function birkly_content_page_data_minimal(): array
     require_once __DIR__ . '/collection_groups.php';
     $groups = birkly_load_collection_groups($collectionsPath . '/groups.json');
 
+    $starterTemplates = [];
+    $startersPath = __DIR__ . '/demo_starter_templates.php';
+    if (is_file($startersPath)) {
+        require_once $startersPath;
+        if (function_exists('birkly_demo_starter_availability')) {
+            foreach (birkly_demo_starter_availability(birkly_project_root()) as $templateId => $meta) {
+                if (empty($meta['selectable'])) {
+                    continue;
+                }
+                $catalog = birkly_demo_starter_catalog()[$templateId] ?? [];
+                $starterTemplates[] = [
+                    'id' => $templateId,
+                    'label' => (string) ($meta['label'] ?? $catalog['label'] ?? $templateId),
+                    'description' => (string) ($meta['description'] ?? $catalog['description'] ?? ''),
+                    'selectable' => true,
+                ];
+            }
+        }
+    }
+
     return [
         'collections' => $collections,
         'groups' => $groups,
         'content_bootstrap' => [
             'collections' => $collections,
             'groups' => $groups,
+            'starter_templates' => $starterTemplates,
         ],
         'content_loader' => 'minimal',
     ];
