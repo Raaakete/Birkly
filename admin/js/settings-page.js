@@ -950,7 +950,7 @@ async function updateUser() {
     }
 }
 
-function confirmDeleteUser(userId, email) {
+async function confirmDeleteUser(userId, email) {
     if (await BirklyFeedback.confirm('Are you sure you want to delete user "' + email + '"? This action cannot be undone.')) {
         deleteUser(userId);
     }
@@ -993,7 +993,7 @@ function deleteUserFromModal() {
     confirmDeleteUser(userId, email);
 }
 
-function revokeUserMcpSessions(userId, label) {
+async function revokeUserMcpSessions(userId, label) {
     if (!userId) return;
     const who = label || 'this user';
     if (!(await BirklyFeedback.confirm('Revoke all active AI app connections for ' + who + '? They will need to sign in again in Claude, Cursor, or ChatGPT.'))) {
@@ -2193,7 +2193,7 @@ function testDatabaseConnection() {
     });
 }
 
-function migrateStorage() {
+async function migrateStorage() {
     if (!(await BirklyFeedback.confirm('This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?'))) {
         return;
     }
