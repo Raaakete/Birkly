@@ -82,6 +82,11 @@ if [ ! -L /app/content ] && [ ! -d /app/content ]; then
 fi
 
 mkdir -p /app/content/project /app/content/collections 2>/dev/null || true
+if [ -L /app/content/collections ] && [ ! -d /app/content/collections ]; then
+  rm -f /app/content/collections 2>/dev/null || true
+  mkdir -p /app/content/collections 2>/dev/null || true
+fi
+chmod 777 /app/content/collections 2>/dev/null || true
 
 if [ -L /app/project ]; then
   :
