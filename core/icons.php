@@ -63,6 +63,11 @@ function birkly_icon_paths(): array
     ];
 }
 
+function birkly_icon_fill_names(): array
+{
+    return ['dots-six-vertical', 'dots-three-vertical'];
+}
+
 /**
  * Build inline SVG markup for an icon.
  *
@@ -76,12 +81,25 @@ function birkly_icon_svg(string $name, array $attrs = []): string
     }
 
     $size = $attrs['size'] ?? 16;
-    $class = trim('birkly-icon ' . ($attrs['class'] ?? ''));
+    $isFill = in_array($name, birkly_icon_fill_names(), true);
+    $class = trim('birkly-icon' . ($isFill ? ' birkly-icon--fill' : '') . ' ' . ($attrs['class'] ?? ''));
     $title = $attrs['title'] ?? '';
     $ariaHidden = $attrs['aria_hidden'] ?? ($title === '');
 
     $titleMarkup = $title !== '' ? '<title>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>' : '';
     $ariaAttr = $ariaHidden ? ' aria-hidden="true"' : '';
+
+    if ($isFill) {
+        return sprintf(
+            '<svg class="%s" width="%s" height="%s" viewBox="0 0 24 24" fill="currentColor" stroke="none"%s>%s%s</svg>',
+            htmlspecialchars($class, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars((string) $size, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars((string) $size, ENT_QUOTES, 'UTF-8'),
+            $ariaAttr,
+            $titleMarkup,
+            $paths[$name]
+        );
+    }
 
     return sprintf(
         '<svg class="%s" width="%s" height="%s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%s>%s%s</svg>',

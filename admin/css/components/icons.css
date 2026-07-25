@@ -50,3 +50,26 @@
   width: 16px;
   height: 16px;
 }
+
+/* Drag handles and menu dots — centered, solid fill icons */
+.drag-handle,
+.group-drag-handle,
+.cell-drag,
+.fieldtype-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.drag-handle .birkly-icon,
+.group-drag-handle .birkly-icon,
+.cell-drag .birkly-icon,
+.collection-menu-btn .birkly-icon,
+.fieldtype-drag-handle .birkly-icon,
+.fieldtype-drag-handle img {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
