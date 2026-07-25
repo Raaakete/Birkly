@@ -481,6 +481,147 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
 }
 
 /**
+ * Normalize page context from admin chat client (P39-M11).
+ *
+ * @param array<string,mixed>|null $raw
+ * @return array<string,mixed>
+ */
+function birkly_ai_normalize_page_context($raw): array
+{
+    if (!is_array($raw)) {
+        return [];
+    }
+
+    $context = [
+        'route' => substr((string) ($raw['route'] ?? $raw['page'] ?? ''), 0, 80),
+        'collection' => substr((string) ($raw['collection'] ?? ''), 0, 120),
+        'entry_id' => substr((string) ($raw['entry_id'] ?? ''), 0, 120),
+        'sub_collection' => substr((string) ($raw['sub_collection'] ?? ''), 0, 120),
+        'sub_entry_id' => substr((string) ($raw['sub_entry_id'] ?? ''), 0, 120),
+        'field_names' => [],
+        'entry_title' => '',
+        'collection_name' => '',
+    ];
+
+    if (!empty($raw['field_names']) && is_array($raw['field_names'])) {
+        foreach ($raw['field_names'] as $name) {
+            $name = substr(trim((string) $name), 0, 80);
+            if ($name !== '') {
+                $context['field_names'][] = $name;
+            }
+        }
+        $context['field_names'] = array_values(array_unique($context['field_names']));
+    }
+
+    return birkly_ai_enrich_page_context($context);
+}
+
+/**
+ * Enrich page context with collection/entry metadata when ids are present.
+ *
+ * @param array<string,mixed> $context
+ * @return array<string,mixed>
+ */
+function birkly_ai_enrich_page_context(array $context): array
+{
+    $collectionSlug = (string) ($context['collection'] ?? '');
+    if ($collectionSlug === '') {
+        return $context;
+    }
+
+    $collectionPath = __DIR__ . '/../content/collections/' . $collectionSlug;
+    $collectionFile = $collectionPath . '/collection.json';
+    if (is_file($collectionFile)) {
+        $collection = json_decode((string) file_get_contents($collectionFile), true);
+        if (is_array($collection)) {
+            $context['collection_name'] = (string) ($collection['name'] ?? $collectionSlug);
+        }
+    }
+
+    $schemaFile = $collectionPath . '/schema.json';
+    if (empty($context['field_names']) && is_file($schemaFile)) {
+        $schema = json_decode((string) file_get_contents($schemaFile), true);
+        if (is_array($schema) && !empty($schema['fields']) && is_array($schema['fields'])) {
+            foreach ($schema['fields'] as $field) {
+                $name = trim((string) ($field['name'] ?? ''));
+                if ($name !== '') {
+                    $context['field_names'][] = $name;
+                }
+            }
+        }
+    }
+
+    $entryId = (string) ($context['entry_id'] ?? '');
+    if ($entryId !== '') {
+        $entryFile = $collectionPath . '/entries/' . $entryId . '.json';
+        if (is_file($entryFile)) {
+            $entry = json_decode((string) file_get_contents($entryFile), true);
+            if (is_array($entry)) {
+                $context['entry_title'] = (string) ($entry['title'] ?? $entry['name'] ?? '');
+                if (empty($context['field_names']) && !empty($entry['fields']) && is_array($entry['fields'])) {
+                    $context['field_names'] = array_keys($entry['fields']);
+                }
+            }
+        }
+    }
+
+    return $context;
+}
+
+/**
+ * Build prompt section describing current admin page context.
+ *
+ * @param array<string,mixed> $pageContext
+ */
+function birkly_ai_page_context_prompt_section(array $pageContext): string
+{
+    if (empty($pageContext)) {
+        return '';
+    }
+
+    $lines = ["CURRENT ADMIN PAGE CONTEXT:"];
+    if (!empty($pageContext['route'])) {
+        $lines[] = '- Route: ' . $pageContext['route'];
+    }
+    if (!empty($pageContext['collection'])) {
+        $label = $pageContext['collection_name'] ?? $pageContext['collection'];
+        $lines[] = '- Collection: ' . $label . ' (slug: ' . $pageContext['collection'] . ')';
+    }
+    if (!empty($pageContext['entry_id'])) {
+        $entryLine = '- Entry ID: ' . $pageContext['entry_id'];
+        if (!empty($pageContext['entry_title'])) {
+            $entryLine .= ' (title: "' . $pageContext['entry_title'] . '")';
+        }
+        $lines[] = $entryLine;
+    }
+    if (!empty($pageContext['sub_collection'])) {
+        $lines[] = '- Sub-collection: ' . $pageContext['sub_collection'];
+    }
+    if (!empty($pageContext['sub_entry_id'])) {
+        $lines[] = '- Sub-entry ID: ' . $pageContext['sub_entry_id'];
+    }
+    if (!empty($pageContext['field_names']) && is_array($pageContext['field_names'])) {
+        $lines[] = '- Visible fields: ' . implode(', ', $pageContext['field_names']);
+    }
+    $lines[] = 'Use this context when the user asks about "this entry", "this collection", or the current page.';
+    $lines[] = 'Prefer read_entry / update_entry scoped to the collection and entry above when relevant.';
+
+    return implode("\n", $lines) . "\n\n";
+}
+
+/**
+ * Whether the provider supports token streaming for admin chat.
+ */
+function birkly_ai_provider_supports_streaming(string $provider): bool
+{
+    $providers = getSupportedAiProviders();
+    $providerInfo = $providers[$provider] ?? null;
+    $providerType = $providerInfo['type'] ?? $provider;
+
+    return in_array($providerType, ['openai', 'openrouter', 'custom', 'ollama'], true);
+}
+
+/**
  * Generate system context for AI
  * Includes collections, schemas, permissions, and curated documentation
  */

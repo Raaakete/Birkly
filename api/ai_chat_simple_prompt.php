@@ -112,6 +112,10 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- Include: <script src=\"/cms-template.v2.js\"></script>\n";
     $prompt .= "- Use field names: { title }, { text }, etc.\n\n";
 
+    if (!empty($context['page_context']) && is_array($context['page_context'])) {
+        $prompt .= birkly_ai_page_context_prompt_section($context['page_context']);
+    }
+
     if (!empty($context['context_pack'])) {
         $prompt .= "BIRKLY REFERENCE:\n";
         $prompt .= $context['context_pack'] . "\n\n";

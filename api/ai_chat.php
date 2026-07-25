@@ -104,6 +104,9 @@ if ($action === 'chat') {
         $aiConnectionId = $input['ai_connection_id'] ?? '';
         $message = $input['message'] ?? '';
         $conversationId = $input['conversation_id'] ?? '';
+        $pageContext = birkly_ai_normalize_page_context($input['page_context'] ?? null);
+        $wantStream = !empty($input['stream']);
+        $streamActive = false;
         
         if (empty($aiConnectionId) || empty($message)) {
             if (!headers_sent()) {
@@ -159,6 +162,9 @@ if ($action === 'chat') {
         
         // Generate system context
         $systemContext = generateSystemContext($aiUser);
+        if (!empty($pageContext)) {
+            $systemContext['page_context'] = $pageContext;
+        }
         
         // Build system prompt
         $systemPrompt = buildSystemPrompt($systemContext, $aiUser);
@@ -228,6 +234,15 @@ if ($action === 'chat') {
         }
         
         // Call AI provider with conversation history (unless we're skipping for short follow-up)
+        $streamCallback = null;
+        if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? ''))) {
+            birkly_ai_sse_begin();
+            $streamActive = true;
+            $streamCallback = function ($token) {
+                birkly_ai_sse_send('token', ['content' => $token]);
+            };
+        }
+
         if (!$skipAiCall) {
             $response = callAiProvider(
                 $aiUser['provider'], 
@@ -238,7 +253,8 @@ if ($action === 'chat') {
                 $conversationId,
                 $aiUser['api_url'] ?? '',
                 $conversationHistory,
-                $aiUser
+                $aiUser,
+                $streamCallback
             );
         } else {
             // Create a fake response that will trigger fallback immediately
@@ -694,7 +710,7 @@ if ($action === 'chat') {
             $writeActions = [];
             foreach ($actions as $action) {
                 $actionType = $action['type'] ?? '';
-                if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins'])) {
+                if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins', 'list_project_files', 'read_project_file', 'get_project_info'], true)) {
                     $readActions[] = $action;
                 } else {
                     $writeActions[] = $action;
@@ -961,7 +977,7 @@ if ($action === 'chat') {
                         $followUpReadActions = [];
                         foreach ($followUpActions as $action) {
                             $actionType = $action['type'] ?? '';
-                            if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins'])) {
+                            if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins', 'list_project_files', 'read_project_file', 'get_project_info'], true)) {
                                 $followUpReadActions[] = $action;
                             } else {
                                 $writeActions[] = $action;
@@ -1023,7 +1039,7 @@ if ($action === 'chat') {
                                         $secondFollowUpActions = extractActionsFromResponse($secondFollowUpResponse['message'] ?? '', $secondFollowUpResponse['tool_calls'] ?? []);
                                         foreach ($secondFollowUpActions as $action) {
                                             $actionType = $action['type'] ?? '';
-                                            if (!in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins'])) {
+                                            if (!in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins', 'list_project_files', 'read_project_file', 'get_project_info'], true)) {
                                                 $writeActions[] = $action;
                                             }
                                         }
@@ -1153,15 +1169,7 @@ if ($action === 'chat') {
                             error_log("Failed to write approval: " . $approvalId);
                         }
                     }
-                    
-                    // Clear output buffers and send response
-                    while (ob_get_level() > 0) {
-                        ob_end_clean();
-                    }
-                    if (!headers_sent()) {
-                        header('Content-Type: application/json; charset=utf-8');
-                    }
-                    // Load full approval details for the chat UI
+
                     $approvalDetails = [];
                     foreach ($approvalIds as $approvalId) {
                         $approval = $approvalStorage->read($approvalId . '.json');
@@ -1176,20 +1184,18 @@ if ($action === 'chat') {
                             ];
                         }
                     }
-                    
-                    $output = json_encode([
+
+                    ai_chat_emit_response([
                         'status' => 'ok',
                         'data' => [
                             'response' => $response['message'],
                             'actions_created' => count($approvalIds),
                             'approval_ids' => $approvalIds,
-                            'approvals' => $approvalDetails, // Include full approval details for chat UI
+                            'approvals' => $approvalDetails,
                             'requires_approval' => true,
-                            'read_data' => $readData
-                        ]
-                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                    echo $output;
-                    exit;
+                            'read_data' => $readData,
+                        ],
+                    ], $streamActive);
                 } else {
                     // Execute actions directly without approval
                     $executedActions = [];
@@ -1221,14 +1227,7 @@ if ($action === 'chat') {
                         }
                     }
                     
-                    // Clear output buffers and send response
-                    while (ob_get_level() > 0) {
-                        ob_end_clean();
-                    }
-                    if (!headers_sent()) {
-                        header('Content-Type: application/json; charset=utf-8');
-                    }
-                    $output = json_encode([
+                    ai_chat_emit_response([
                         'status' => $hasErrors ? 'partial' : 'ok',
                         'data' => [
                             'response' => $response['message'],
@@ -1236,11 +1235,9 @@ if ($action === 'chat') {
                             'execution_results' => $executedActions,
                             'requires_approval' => false,
                             'has_errors' => $hasErrors,
-                            'read_data' => $readData
-                        ]
-                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                    echo $output;
-                    exit;
+                            'read_data' => $readData,
+                        ],
+                    ], $streamActive);
                 }
             } else {
                 // No write actions - just return the response with read data
@@ -1253,38 +1250,20 @@ if ($action === 'chat') {
                     $finalMessage = "I've retrieved the requested data. " . count($readData) . " read operation(s) completed successfully.";
                 }
                 
-                // Clear output buffers and send response
-                while (ob_get_level() > 0) {
-                    ob_end_clean();
-                }
-                if (!headers_sent()) {
-                    header('Content-Type: application/json; charset=utf-8');
-                }
-                $output = json_encode([
+                ai_chat_emit_response([
                     'status' => 'ok',
                     'data' => [
                         'response' => $finalMessage,
                         'requires_approval' => false,
-                        'read_data' => $readData
-                    ]
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                echo $output;
-                exit;
+                        'read_data' => $readData,
+                    ],
+                ], $streamActive);
             }
         } else {
-            // Clear output buffers and send error
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            if (!headers_sent()) {
-                header('Content-Type: application/json; charset=utf-8');
-            }
-            $output = json_encode([
+            ai_chat_emit_response([
                 'status' => 'error',
-                'message' => $response['message'] ?? 'Failed to get AI response'
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            echo $output;
-            exit;
+                'message' => $response['message'] ?? 'Failed to get AI response',
+            ], $streamActive);
         }
     } catch (Exception $e) {
         // Log the error
@@ -1661,7 +1640,7 @@ function buildSystemPromptOld($context, $aiUser) {
 // End of old complex prompt
 
 // Call AI provider API
-function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage, $conversationId = '', $apiUrl = '', $conversationHistory = [], $aiUser = null) {
+function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage, $conversationId = '', $apiUrl = '', $conversationHistory = [], $aiUser = null, $onToken = null) {
     $providers = getSupportedAiProviders();
     $providerInfo = $providers[$provider] ?? null;
     $providerType = $providerInfo['type'] ?? $provider;
@@ -1677,6 +1656,9 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
         case 'openai':
         case 'openrouter':
             $url = $apiUrl ?: ($providerInfo['api_url'] ?? 'https://api.openai.com/v1/chat/completions');
+            if ($onToken && empty($openAiTools)) {
+                return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
+            }
             return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
         case 'anthropic':
             return callAnthropic($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
@@ -1684,6 +1666,9 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
             return callGoogle($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
         case 'ollama':
             $url = $apiUrl ?: ($providerInfo['api_url'] ?? 'http://localhost:11434/api/chat');
+            if ($onToken) {
+                return callOllamaStream($url, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory, $onToken);
+            }
             return callOllama($url, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
         case 'custom':
             $url = $apiUrl;
@@ -1692,6 +1677,9 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
             }
             if ($resolvedModel === '') {
                 return ['success' => false, 'message' => 'Model required for custom provider'];
+            }
+            if ($onToken && empty($openAiTools)) {
+                return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
             }
             return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
         default:
@@ -2028,6 +2016,242 @@ function callOllama($url, $model, $systemPrompt, $userMessage, $conversationHist
     }
     
     return ['success' => true, 'message' => $result['message']['content']];
+}
+
+/**
+ * Begin SSE response for streaming admin chat (P39-M12).
+ */
+function birkly_ai_sse_begin(): void
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: text/event-stream; charset=utf-8');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no');
+    }
+    @ini_set('output_buffering', 'off');
+    @ini_set('zlib.output_compression', '0');
+}
+
+/**
+ * Send one SSE event to the client.
+ *
+ * @param array<string,mixed> $data
+ */
+function birkly_ai_sse_send(string $event, array $data): void
+{
+    echo 'event: ' . $event . "\n";
+    echo 'data: ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
+    if (function_exists('ob_flush')) {
+        @ob_flush();
+    }
+    flush();
+}
+
+/**
+ * Emit final chat response as JSON or SSE done event.
+ *
+ * @param array<string,mixed> $payload
+ */
+function ai_chat_emit_response(array $payload, bool $streaming): void
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if ($streaming) {
+        if (!headers_sent()) {
+            birkly_ai_sse_begin();
+        }
+        birkly_ai_sse_send('done', $payload);
+    } else {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    exit;
+}
+
+/**
+ * Stream OpenAI-compatible chat completions token-by-token.
+ *
+ * @param callable(string):void $onToken
+ */
+function callOpenAIStream($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $onToken) {
+    $messages = [
+        ['role' => 'system', 'content' => $systemPrompt],
+    ];
+
+    foreach ($conversationHistory as $historyMsg) {
+        if ($historyMsg['role'] === 'user' && $historyMsg['content'] === $userMessage && end($conversationHistory) === $historyMsg) {
+            continue;
+        }
+        $messages[] = $historyMsg;
+    }
+
+    $messages[] = ['role' => 'user', 'content' => $userMessage];
+
+    $data = [
+        'model' => $model,
+        'messages' => $messages,
+        'temperature' => 0.7,
+        'stream' => true,
+    ];
+
+    $headers = [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $apiKey,
+    ];
+
+    if (strpos($url, 'openrouter.ai') !== false) {
+        $headers[] = 'HTTP-Referer: ' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $headers[] = 'X-Title: Birkly';
+    }
+
+    $buffer = '';
+    $fullContent = '';
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+    curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (&$buffer, &$fullContent, $onToken) {
+        $buffer .= $chunk;
+        while (($pos = strpos($buffer, "\n")) !== false) {
+            $line = trim(substr($buffer, 0, $pos));
+            $buffer = substr($buffer, $pos + 1);
+            if ($line === '' || $line === 'data: [DONE]') {
+                continue;
+            }
+            if (strpos($line, 'data: ') !== 0) {
+                continue;
+            }
+            $json = json_decode(substr($line, 6), true);
+            if (!is_array($json)) {
+                continue;
+            }
+            $token = $json['choices'][0]['delta']['content'] ?? '';
+            if ($token !== '') {
+                $fullContent .= $token;
+                $onToken($token);
+            }
+        }
+        return strlen($chunk);
+    });
+
+    curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($curlError) {
+        return ['success' => false, 'message' => 'Connection error: ' . $curlError];
+    }
+
+    if ($httpCode !== 200) {
+        $detail = birkly_ai_parse_provider_error($buffer);
+        $message = 'OpenAI API error: ' . $httpCode;
+        if ($detail !== '') {
+            $message .= ' — ' . $detail;
+        }
+        return ['success' => false, 'message' => $message];
+    }
+
+    if ($fullContent === '') {
+        return ['success' => false, 'message' => 'Empty response from provider'];
+    }
+
+    return ['success' => true, 'message' => $fullContent];
+}
+
+/**
+ * Stream Ollama chat responses token-by-token.
+ *
+ * @param callable(string):void $onToken
+ */
+function callOllamaStream($url, $model, $systemPrompt, $userMessage, $conversationHistory = [], $onToken) {
+    if (strpos($url, '/api/chat') === false) {
+        $url = rtrim($url, '/') . '/api/chat';
+    }
+
+    $messages = [
+        ['role' => 'system', 'content' => $systemPrompt],
+    ];
+
+    foreach ($conversationHistory as $historyMsg) {
+        if ($historyMsg['role'] === 'user' && $historyMsg['content'] === $userMessage && end($conversationHistory) === $historyMsg) {
+            continue;
+        }
+        $messages[] = $historyMsg;
+    }
+
+    $messages[] = ['role' => 'user', 'content' => $userMessage];
+
+    $data = [
+        'model' => $model,
+        'messages' => $messages,
+        'stream' => true,
+        'options' => [
+            'temperature' => 0.7,
+        ],
+    ];
+
+    $buffer = '';
+    $fullContent = '';
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+    curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $chunk) use (&$buffer, &$fullContent, $onToken) {
+        $buffer .= $chunk;
+        while (($pos = strpos($buffer, "\n")) !== false) {
+            $line = trim(substr($buffer, 0, $pos));
+            $buffer = substr($buffer, $pos + 1);
+            if ($line === '') {
+                continue;
+            }
+            $json = json_decode($line, true);
+            if (!is_array($json)) {
+                continue;
+            }
+            if (!empty($json['error'])) {
+                continue;
+            }
+            $token = $json['message']['content'] ?? '';
+            if ($token !== '') {
+                $fullContent .= $token;
+                $onToken($token);
+            }
+        }
+        return strlen($chunk);
+    });
+
+    curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($curlError) {
+        return ['success' => false, 'message' => 'Connection error: ' . $curlError];
+    }
+
+    if ($httpCode !== 200) {
+        return ['success' => false, 'message' => 'Ollama API error: HTTP ' . $httpCode];
+    }
+
+    if ($fullContent === '') {
+        return ['success' => false, 'message' => 'Empty response from Ollama'];
+    }
+
+    return ['success' => true, 'message' => $fullContent];
 }
 
 // Clean response message to remove explanations when actions are present
