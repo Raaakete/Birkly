@@ -63,14 +63,33 @@ No per-folder volume list is required.
 
 ### Two domains (marketing + CMS)
 
-Use one container and route by hostname in your reverse proxy (Dokploy domains):
+One Dokploy app, **two domains** on port **80**, path **`/`** for both:
 
-| Host | Serves | Notes |
-|------|--------|--------|
-| `example.com` | `/project` (public site) | Marketing HTML in repo `project/` → persisted in `data/content/project/` |
-| `cms.example.com` | `/admin`, `/api`, client JS | Register `https://example.com` in CMS **Settings → Domains** |
+| Domain | What visitors see |
+|--------|-------------------|
+| `cms.birkly.cloud` | Admin (`/admin`), API, `birkly-client.js` |
+| `birkly.cloud` | Public site from **Settings → Project** (`/project/…`) |
 
-Marketing pages must set `data-cms-url` to the **CMS** host (not the marketing host).
+**Upload your site** in admin: **Settings → Project** (files land in `project/` on the volume).
+
+**Quick test (same app, same files):**
+
+| URL | Should show |
+|-----|-------------|
+| `https://cms.birkly.cloud/project/index.html` | Your marketing HTML |
+| `https://birkly.cloud/project/index.html` | **Same page** |
+
+If the **cms** URL works but **birkly.cloud** shows 403/404, the apex domain is **not** routed to this Dokploy app (DNS or missing domain in Dokploy). Fix:
+
+1. **Dokploy → Domains** — both `birkly.cloud` and `cms.birkly.cloud` on **this** app (Path `/`, Port `80`, HTTPS on).
+2. **DNS** — `birkly.cloud` and `cms.birkly.cloud` must point to the **same server IP** (A or CNAME as your host requires).
+3. **CMS → Settings → Domains** — add `https://birkly.cloud` so the client script allows that origin.
+
+Until `birkly.cloud` is fixed, the public site is still reachable at:
+
+`https://cms.birkly.cloud/project/index.html`
+
+Marketing HTML must load the CMS script from the **cms** host, e.g. `https://cms.birkly.cloud/birkly-client.js` with `data-cms-url="https://cms.birkly.cloud"`.
 
 ## Legacy multi-folder layout
 
