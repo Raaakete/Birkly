@@ -87,41 +87,8 @@
             revision: null
         },
         
-        // Tracking ID (from data-tracking-id attribute)
-        trackingId: (function() {
-            const script = document.querySelector('script[data-tracking-id]');
-            if (script) {
-                return script.getAttribute('data-tracking-id');
-            }
-            // Default to localhost for localhost domains
-            const hostname = window.location.hostname.toLowerCase();
-            const isLocalhost = hostname === 'localhost' || 
-                   hostname === '127.0.0.1' ||
-                   hostname === '::1' ||
-                   hostname === '0.0.0.0' ||
-                   hostname.includes('.local') ||
-                   hostname.includes('.test') ||
-                   hostname.includes('.dev');
-            if (isLocalhost) {
-                return 'localhost';
-            }
-            return null;
-        })()
-        ,
-        // Enable verbose debug logs when URL contains ?__dbg=1 or when on localhost (dev server)
-        debug: (function() {
-            try {
-                if (new URLSearchParams(window.location.search).has('__dbg')) return true;
-                const host = window.location.hostname || '';
-                if (host === 'localhost' || host === '127.0.0.1') return true;
-                return false;
-            } catch (_) { return false; }
-        })(),
-
-        // Feature flags (can be wired to data-attributes later)
-        // - Template functions: Enable to use plugin-provided template functions (e.g., from user_management plugin)
-        // - Analytics is optional and currently returns 403 on many setups.
-        enableTemplateFunctions: true,
+        // Tracking ID and analytics (from data-tracking-id / data-enable-analytics on birkly-client.js)
+        trackingId: null,
         enableAnalytics: false,
         
         // Debug logging helper - only logs when debug mode is enabled
@@ -137,7 +104,72 @@
         }
     };
     
-    // Unconditional so we can confirm script loaded (even without ?__dbg)
+    // Resolve analytics config after Birkly object is created (needs helpers below)
+    (function configureAnalytics() {
+        const clientScript = document.querySelector('script[data-tracking-id], script[src*="birkly-client"]');
+        const hostname = window.location.hostname.toLowerCase();
+        const isLocalhost = hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '::1' ||
+            hostname === '0.0.0.0' ||
+            hostname.includes('.local') ||
+            hostname.includes('.test') ||
+            hostname.includes('.dev');
+
+        let trackingId = null;
+        let sameOriginClient = false;
+
+        if (clientScript) {
+            const explicitId = clientScript.getAttribute('data-tracking-id');
+            if (explicitId !== null && explicitId !== '') {
+                trackingId = explicitId;
+            } else if (clientScript.src) {
+                try {
+                    const scriptUrl = new URL(clientScript.src, window.location.href);
+                    sameOriginClient = scriptUrl.origin === window.location.origin;
+                } catch (_) {
+                    sameOriginClient = false;
+                }
+            }
+        }
+
+        if (!trackingId && isLocalhost) {
+            trackingId = 'localhost';
+        } else if (!trackingId && sameOriginClient) {
+            // Bundled project/ on the CMS host (e.g. test.birkly.cloud/project/index.html)
+            trackingId = hostname;
+        }
+
+        let enableAnalytics = false;
+        if (clientScript) {
+            const flag = (clientScript.getAttribute('data-enable-analytics') || '').toLowerCase();
+            if (flag === 'false' || flag === '0') {
+                enableAnalytics = false;
+            } else if (flag === 'true' || flag === '1') {
+                enableAnalytics = true;
+            } else if (clientScript.hasAttribute('data-tracking-id')) {
+                enableAnalytics = true;
+            } else if (trackingId && sameOriginClient && !isLocalhost) {
+                enableAnalytics = true;
+            }
+        }
+
+        Birkly.trackingId = trackingId;
+        Birkly.enableAnalytics = enableAnalytics;
+    })();
+
+    // Enable verbose debug logs when URL contains ?__dbg=1 or when on localhost (dev server)
+    Birkly.debug = (function() {
+        try {
+            if (new URLSearchParams(window.location.search).has('__dbg')) return true;
+            const host = window.location.hostname || '';
+            if (host === 'localhost' || host === '127.0.0.1') return true;
+            return false;
+        } catch (_) { return false; }
+    })();
+
+    // Feature flags
+    Birkly.enableTemplateFunctions = true;
     console.log('[Birkly] script loaded');
     if (Birkly.debug) console.warn('Birkly client build: dev8 (debug on)');
 
