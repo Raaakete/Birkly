@@ -71,6 +71,53 @@
   border-radius: var(--border-radius-s, 4px);
   max-width: 100%;
   min-width: 0;
+  overflow: hidden;
+}
+
+.entries-smart-table .smart-table-shell {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.entries-smart-table .table-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.entries-smart-table .table-actions-rail {
+  flex: 0 0 var(--action-cell-width, auto);
+  width: var(--action-cell-width, auto);
+  min-width: 120px;
+  border-left: 1px solid var(--border-light, #f3f4f6);
+  background: var(--bg-elevated, #ffffff);
+  display: flex;
+  flex-direction: column;
+}
+
+.entries-smart-table .actions-rail-head {
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.entries-smart-table .actions-rail-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.entries-smart-table .actions-rail-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.entries-smart-table .actions-rail-row:hover .cell-actions {
+  background: var(--color-neutral-200, #F4F6F2);
+}
+
+.entries-smart-table .actions-rail-row[data-entry-selected="true"] .cell-actions {
+  background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
 }
 
 .entries-smart-table .table-head {
@@ -163,31 +210,30 @@
 
 .entries-smart-table .head-actions,
 .entries-smart-table .cell-actions {
-  width: auto;
+  width: 100%;
   min-width: 120px;
   flex: 0 0 auto;
-  flex-shrink: 0;
-  flex-grow: 0;
   justify-content: flex-end;
-  position: sticky;
-  right: 0;
-  padding-right: var(--space-2, 0.5rem);
-  border-left: 1px solid var(--border-light, #f3f4f6);
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-left: none;
   z-index: 1;
   background: var(--bg-elevated, #ffffff);
   border-radius: 0;
   overflow: visible;
+  box-sizing: border-box;
+  height: 60px;
+  margin-bottom: 1px;
 }
 
-.entries-smart-table.is-actions-overlapping .head-actions,
-.entries-smart-table.is-actions-overlapping .cell-actions {
-  box-shadow: -8px 0 16px -4px rgba(0, 0, 0, 0.18);
+.entries-smart-table.is-viewport-scrolled .table-viewport {
+  box-shadow: inset -8px 0 16px -12px rgba(0, 0, 0, 0.12);
 }
 
 .entries-smart-table .head-actions {
   background: var(--color-neutral-200, #F4F6F2);
-  right: 0;
-  z-index: 3;
+  height: 36px;
+  margin-bottom: 0;
 }
 
 .entries-smart-table .cell-drag,
@@ -204,14 +250,6 @@
   max-width: var(--col-field, 240px);
   flex-shrink: 0;
   flex-grow: 0;
-}
-
-.entries-smart-table .table-viewport {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
 }
 
 .entries-smart-table .table-body {
