@@ -1,0 +1,20 @@
+{
+  "id": "weekend-without-plan",
+  "slug": "weekend-without-plan",
+  "status": "published",
+  "created_at": "2026-06-28T08:00:00+00:00",
+  "updated_at": "2026-06-28T08:00:00+00:00",
+  "published_at": "2026-06-28T08:00:00+00:00",
+  "en": {
+    "title": "A weekend without a plan",
+    "slug": "weekend-without-plan",
+    "excerpt": "Two days on the coast with no itinerary and one very good bakery.",
+    "content": "<p>Two days on the coast with no itinerary and one very good bakery. We left the map in the glove box and followed whichever road looked least busy.</p><p>The bakery appeared at the wrong time — too early for lunch, too late for breakfast — which made it perfect. We bought bread we didn't need and ate it on a bench facing the sea.</p><p>Nothing was scheduled. Nothing was missed.</p>",
+    "category": "places",
+    "date": "2026-06-28",
+    "author": "June Marsk",
+    "art_class": "art--03",
+    "read_time": "4 min",
+    "status": "published"
+  }
+}

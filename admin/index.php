@@ -383,7 +383,6 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/i18n.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/ui-feedback.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-wizard.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/onboarding.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
 </body>
 </html>
