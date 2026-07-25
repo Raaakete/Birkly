@@ -17,6 +17,10 @@
     let lastFailedMessage = null;
     let isChatRequestInFlight = false;
 
+    function icon(name, opts) {
+        return (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
+    }
+
     // Storage keys
     const STORAGE_KEY_CONVERSATION = 'ai_chat_conversation_id';
     const STORAGE_KEY_CONNECTION = 'ai_chat_connection_id';
@@ -99,17 +103,11 @@
         menu.setAttribute('role', 'menu');
         menu.innerHTML = `
             <button type="button" class="assist-fab-action" id="assist-fab-ai" role="menuitem" title="AI Assistant" aria-label="AI Assistant">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                    <path d="M2 17l10 5 10-5"></path>
-                    <path d="M2 12l10 5 10-5"></path>
-                </svg>
+                ${icon('stack', { size: 20 })}
                 <span>AI Chat</span>
             </button>
             <button type="button" class="assist-fab-action" id="assist-fab-feedback" role="menuitem" title="Send feedback" aria-label="Send feedback">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
+                ${icon('chat-circle', { size: 20 })}
                 <span>Feedback</span>
             </button>
         `;
@@ -122,14 +120,8 @@
         button.setAttribute('aria-expanded', 'false');
         button.setAttribute('aria-haspopup', 'menu');
         button.innerHTML = `
-            <svg class="assist-fab-icon assist-fab-icon-menu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <svg class="assist-fab-icon assist-fab-icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            ${icon('plus', { size: 22, class: 'assist-fab-icon assist-fab-icon-menu' })}
+            ${icon('x', { size: 22, class: 'assist-fab-icon assist-fab-icon-close', ariaHidden: true })}
         `;
 
         const badge = document.createElement('span');
@@ -307,15 +299,10 @@
                 </div>
                 <div class="ai-chat-header-actions">
                     <button class="btn-icon" id="ai-chat-fullscreen-btn" title="Toggle fullscreen">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                        </svg>
+                        ${icon('arrows-out', { size: 16 })}
                     </button>
                     <button class="btn-icon" id="ai-chat-close-btn" title="Close chat">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
+                        ${icon('x', { size: 16 })}
                     </button>
                 </div>
             </div>
@@ -345,13 +332,8 @@
                             rows="2"
                         ></textarea>
                         <button class="btn btn-primary" id="ai-chat-send-btn" type="button" aria-label="Send message">
-                            <svg class="ai-chat-send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polyline points="22 2 15 22 11 13 2 9 22 2"></polyline>
-                            </svg>
-                            <svg class="ai-chat-cancel-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
-                                <rect x="6" y="6" width="12" height="12" rx="1"></rect>
-                            </svg>
+                            <span class="ai-chat-send-icon">${icon('paper-plane-tilt', { size: 16 })}</span>
+                            <span class="ai-chat-cancel-icon" style="display:none;">${icon('stop', { size: 16 })}</span>
                         </button>
                     </div>
                 </div>
@@ -574,12 +556,7 @@
             newBtn.id = 'ai-chat-new-btn';
             newBtn.className = 'btn-icon';
             newBtn.title = 'New Chat';
-            newBtn.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-            `;
+            newBtn.innerHTML = icon('plus', { size: 16 });
             newBtn.addEventListener('click', function() {
                 if (confirm('Start a new chat? This will clear the current conversation.')) {
                     clearChatState();
@@ -1349,13 +1326,9 @@
             const fullscreenBtn = document.getElementById('ai-chat-fullscreen-btn');
             if (fullscreenBtn) {
                 const isFullscreen = chatWindow.classList.contains('ai-chat-fullscreen');
-                fullscreenBtn.innerHTML = isFullscreen 
-                    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
-                    </svg>`
-                    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                    </svg>`;
+                fullscreenBtn.innerHTML = isFullscreen
+                    ? icon('arrows-in', { size: 16 })
+                    : icon('arrows-out', { size: 16 });
                 fullscreenBtn.title = isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
             }
         }

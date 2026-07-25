@@ -55,11 +55,7 @@ $bulkEditableFields = array_merge([
                 
                 <div class="dropdown">
                     <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <circle cx="12" cy="5" r="1.5"></circle>
-                            <circle cx="12" cy="12" r="1.5"></circle>
-                            <circle cx="12" cy="19" r="1.5"></circle>
-                        </svg>
+                        <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
                         <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>" class="dropdown-item collection-actions-item">
