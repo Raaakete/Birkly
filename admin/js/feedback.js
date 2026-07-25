@@ -175,7 +175,7 @@
             closeDetail();
             await loadFeedback();
         } catch (err) {
-            alert('Error: ' + err.message);
+            BirklyFeedback.toast('Error: ' + err.message, 'error')
         }
     }
 

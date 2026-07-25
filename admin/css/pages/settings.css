@@ -7,6 +7,105 @@
   /* no extra inset; rely on main-content padding */
 }
 
+/* Settings area sub-navigation (P44-M3) */
+.settings-area-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-4, 1rem);
+  padding-bottom: var(--space-3, 0.75rem);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.settings-area-btn {
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.settings-area-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.settings-area-btn.active {
+  color: var(--text-primary);
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+  font-weight: 600;
+}
+
+.settings-dirty-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--warning-100);
+  color: var(--warning-700);
+}
+
+/* Utility classes — reduce inline styles in settings.html (P44-M10) */
+.u-hidden {
+  display: none !important;
+}
+
+.settings-section-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+  align-items: flex-end;
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.settings-form-group--inline {
+  margin: 0;
+  min-width: 220px;
+}
+
+.settings-help--tight {
+  margin-top: 0;
+}
+
+.settings-section--spaced {
+  margin-top: var(--space-8, 2rem);
+}
+
+.onboarding-hosting-intro {
+  margin: var(--space-4, 1rem) 0 var(--space-2, 0.5rem);
+}
+
+.onboarding-hosting-intro__title {
+  margin: 0 0 var(--space-1, 0.25rem);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.onboarding-hosting-intro__help {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.settings-tabs .tab[data-area] {
+  /* hidden by default until area is active — toggled via JS */
+}
+
+.settings-tabs .tab.tab--hidden {
+  display: none !important;
+}
+
+.main-actions-bar--sticky.is-hidden {
+  display: none !important;
+}
+
 .settings-toast {
   margin-bottom: 0;
   max-width: min(420px, 50vw);
@@ -2645,6 +2744,48 @@
 }
 
 /* Project settings tab */
+.project-simple-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4, 1rem);
+}
+
+.project-simple-toolbar {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.project-simple-file-list {
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-s, 4px);
+  background: var(--bg-elevated);
+  min-height: 120px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.project-simple-file-list .project-file-list {
+  margin: 0;
+  padding: var(--space-2, 0.5rem);
+}
+
+.project-simple-file-name {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.project-advanced-toggle-row {
+  margin-top: var(--space-4, 1rem);
+  padding-top: var(--space-4, 1rem);
+  border-top: 1px solid var(--border-light);
+}
+
+.project-advanced-panel[hidden] {
+  display: none !important;
+}
+
 .project-settings .project-overview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -2748,8 +2889,8 @@
   color: var(--text-primary);
 }
 
-.project-file-entry:hover {
-  background: rgba(59, 130, 246, 0.08);
+.settings-page .project-file-entry:hover {
+  background: var(--primary-50);
 }
 
 .project-file-size {

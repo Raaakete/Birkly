@@ -157,7 +157,7 @@
         const pickBtn = $('og-image-pick-btn');
         const input = $('og_image');
         if (!pickBtn || !input) return;
-        pickBtn.addEventListener('click', function () {
+        pickBtn.addEventListener('click', async function () {
             if (window.Birkly && window.Birkly.MediaModal) {
                 window.Birkly.MediaModal.open(function (media) {
                     const url = media?.url || media?.path || '';
@@ -196,7 +196,7 @@
         const btn = $('generate-structured-data-btn');
         const textarea = $('structured_data_json');
         if (!btn || !textarea) return;
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', async function () {
             textarea.value = generateStructuredData();
             markDirty();
         });
@@ -208,7 +208,7 @@
 
     function initCopyButtons() {
         document.querySelectorAll('.copy-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', async function () {
                 const copyTextAttr = this.getAttribute('data-copy');
                 let text = copyTextAttr || '';
                 if (!text) {
@@ -226,7 +226,7 @@
 
         const copyAll = $('copy-all-bindings-btn');
         if (copyAll) {
-            copyAll.addEventListener('click', function () {
+            copyAll.addEventListener('click', async function () {
                 const lines = ['{{ entry.title }}', '{{ entry.slug }}', '{{ entry.meta_title }}', '{{ entry.meta_description }}'];
                 document.querySelectorAll('.field-slug-value code').forEach(function (code) {
                     const slug = (code.textContent || '').trim();
@@ -379,7 +379,7 @@
         const entryId = config.entry_id || '';
         if (!collectionSlug || !entryId || !version) return;
 
-        if (!window.confirm('Restore version ' + version + '? Your current draft will be saved to history first.')) {
+        if (!(await BirklyFeedback.confirm('Restore version ' + version + '? Your current draft will be saved to history first.'))) {
             return;
         }
 
@@ -414,11 +414,11 @@
         const list = $('entry-revisions-list');
         if (!list) return;
 
-        $('refresh-entry-revisions-btn')?.addEventListener('click', function () {
+        $('refresh-entry-revisions-btn')?.addEventListener('click', async function () {
             loadRevisionHistory();
         });
 
-        list.addEventListener('click', function (event) {
+        list.addEventListener('click', async function (event) {
             const button = event.target.closest('.restore-entry-version-btn');
             if (!button) return;
             restoreRevision(button.getAttribute('data-version') || '');

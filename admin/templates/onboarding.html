@@ -116,21 +116,11 @@ $starterCards = [
                         <label for="project-description"><?= __('admin.project_description') ?> <span class="label-optional">(<?= __('admin.optional') ?>)</span></label>
                         <textarea id="project-description" name="project_description" rows="3"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="onboarding-cms-url">CMS URL</label>
-                        <input type="url" id="onboarding-cms-url" name="cms_url" placeholder="https://cms.example.com">
-                        <small class="form-help">Where you open the admin panel. Defaults to this server.</small>
+                    <div class="onboarding-hosting-intro">
+                        <h3 class="onboarding-hosting-intro__title"><?= __('admin.onboarding_hosting_section') ?></h3>
+                        <p class="onboarding-hosting-intro__help"><?= __('admin.onboarding_hosting_section_help') ?></p>
                     </div>
-                    <fieldset class="form-group">
-                        <legend>Public website</legend>
-                        <label class="radio-label"><input type="radio" name="onboarding-public-mode" value="none" checked> Not yet / CMS only</label>
-                        <label class="radio-label"><input type="radio" name="onboarding-public-mode" value="external"> Hosted elsewhere</label>
-                        <label class="radio-label"><input type="radio" name="onboarding-public-mode" value="project"> In Birkly (<code>project/</code>)</label>
-                    </fieldset>
-                    <div class="form-group" id="onboarding-public-url-wrap" style="display:none;">
-                        <label for="onboarding-public-url">Public site URL</label>
-                        <input type="url" id="onboarding-public-url" name="public_url" placeholder="https://www.example.com">
-                    </div>
+                    <div id="onboarding-hosting-wizard-mount" class="onboarding-hosting-wizard-mount"></div>
                     <div class="onboarding-actions onboarding-actions--split">
                         <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
                         <button type="submit" class="btn btn-primary"><?= __('admin.continue') ?></button>

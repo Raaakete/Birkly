@@ -24,7 +24,7 @@
         if (window.Birkly && window.Birkly.Utils && typeof window.Birkly.Utils.showToast === 'function') {
             window.Birkly.Utils.showToast(message, type || 'info');
         } else {
-            alert(message);
+            BirklyFeedback.toast(message, 'error')
         }
     }
 
@@ -96,7 +96,7 @@
             );
         }).join('');
         container.querySelectorAll('[data-webhook-id]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', async function () {
                 deleteWebhook(btn.getAttribute('data-webhook-id'));
             });
         });
@@ -129,7 +129,7 @@
     }
 
     async function deleteWebhook(webhookId) {
-        if (!confirm('Delete this inbound webhook?')) return;
+        if (!(await BirklyFeedback.confirm('Delete this inbound webhook?'))) return;
         try {
             const response = await fetch('/api/automation.php?action=delete_webhook', {
                 method: 'POST',
@@ -195,21 +195,21 @@
         }).join('');
 
         container.querySelectorAll('[data-edit]').forEach(function (btn) {
-            btn.addEventListener('click', function () { editAutomation(btn.getAttribute('data-edit')); });
+            btn.addEventListener('click', async function () { editAutomation(btn.getAttribute('data-edit')); });
         });
         container.querySelectorAll('[data-logs]').forEach(function (btn) {
-            btn.addEventListener('click', function () { viewLogs(btn.getAttribute('data-logs')); });
+            btn.addEventListener('click', async function () { viewLogs(btn.getAttribute('data-logs')); });
         });
         container.querySelectorAll('[data-test]').forEach(function (btn) {
-            btn.addEventListener('click', function () { testAutomation(btn.getAttribute('data-test')); });
+            btn.addEventListener('click', async function () { testAutomation(btn.getAttribute('data-test')); });
         });
         container.querySelectorAll('[data-toggle]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', async function () {
                 toggleAutomation(btn.getAttribute('data-toggle'), btn.getAttribute('data-enabled') === '1');
             });
         });
         container.querySelectorAll('[data-delete]').forEach(function (btn) {
-            btn.addEventListener('click', function () { deleteAutomation(btn.getAttribute('data-delete')); });
+            btn.addEventListener('click', async function () { deleteAutomation(btn.getAttribute('data-delete')); });
         });
     }
 
@@ -315,7 +315,7 @@
             '<option value="">Select condition…</option>' + options + '</select></div>' +
             '<div class="block-config condition-config-' + index + '"></div>';
         conditionsList.appendChild(div);
-        div.querySelector('[data-remove-condition]').addEventListener('click', function () { div.remove(); });
+        div.querySelector('[data-remove-condition]').addEventListener('click', async function () { div.remove(); });
         const typeSelect = div.querySelector('.condition-type-select');
         typeSelect.addEventListener('change', function () {
             loadConditionConfig(index, this.value, {});
@@ -349,7 +349,7 @@
             '<option value="">Select action…</option>' + options + '</select></div>' +
             '<div class="block-config action-config-' + index + '"></div>';
         actionsList.appendChild(div);
-        div.querySelector('[data-remove-action]').addEventListener('click', function () { div.remove(); });
+        div.querySelector('[data-remove-action]').addEventListener('click', async function () { div.remove(); });
         const typeSelect = div.querySelector('.action-type-select');
         typeSelect.addEventListener('change', function () {
             loadActionConfig(index, this.value, {});
@@ -606,7 +606,7 @@
     }
 
     async function deleteAutomation(automationId) {
-        if (!confirm('Delete this automation?')) return;
+        if (!(await BirklyFeedback.confirm('Delete this automation?'))) return;
         try {
             const response = await fetch('/api/automation.php?action=delete', {
                 method: 'POST',
@@ -680,7 +680,7 @@
         const createWebhookBtn = document.getElementById('create-webhook-btn');
         if (createWebhookBtn) createWebhookBtn.addEventListener('click', createWebhook);
         const testBtn = document.getElementById('automation-test-btn');
-        if (testBtn) testBtn.addEventListener('click', function () {
+        if (testBtn) testBtn.addEventListener('click', async function () {
             const id = document.getElementById('automation-id').value;
             testAutomation(id);
         });
