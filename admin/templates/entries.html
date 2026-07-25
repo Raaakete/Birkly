@@ -3,9 +3,17 @@
  * Entries list — pure PHP template (bypasses directive parser).
  */
 $collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection');
+$collectionSlugParam = (string) ($collection['slug'] ?? '');
 $currentStatusFilter = (string) ($current_status_filter ?? '');
 $isTrashView = !empty($is_trash_view);
 $trashedCount = (int) ($trashed_count ?? 0);
+$entriesReturnUrl = admin_url('entries', ['collection' => $collectionSlugParam]);
+$createSubCollectionUrl = admin_url('collection-editor', [
+    'collection' => $collectionSlugParam,
+    'new_sub_collection' => '1',
+    'return_to' => $entriesReturnUrl,
+]);
+$trashUrl = admin_url('entries', ['collection' => $collectionSlugParam, 'status' => 'trashed']);
 $bulkEditableFields = array_merge([
     ['name' => 'title', 'label' => __('admin.title')],
 ], array_values(array_filter($fields ?? [], static function ($field): bool {
@@ -33,6 +41,8 @@ $bulkEditableFields = array_merge([
             </div>
             
             <div class="collection-actions-bar-right">
+                <label for="entries-search" class="collection-filter-label sr-only">Search entries</label>
+                <input type="search" id="entries-search" class="input collection-search-input" placeholder="Search entries…" autocomplete="off" style="min-width: 180px;">
                 <label for="status-filter" class="collection-filter-label"><?= __('admin.filter') ?>:</label>
                 <select id="status-filter" class="collection-filter-select" style="min-width: 150px;">
                     <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
@@ -42,15 +52,6 @@ $bulkEditableFields = array_merge([
                     <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>>Pending for Review</option>
                     <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>>Trashed</option>
                 </select>
-                <?php if ($isTrashView): ?>
-                    <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars(admin_url('entries', ['collection' => $collection['slug'] ?? ''])) ?>">
-                        Active entries
-                    </a>
-                <?php else: ?>
-                    <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars(admin_url('entries', ['collection' => $collection['slug'] ?? '', 'status' => 'trashed'])) ?>">
-                        Trash<?= $trashedCount > 0 ? ' (' . $trashedCount . ')' : '' ?>
-                    </a>
-                <?php endif; ?>
                 
                 <div class="dropdown">
                     <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
@@ -61,9 +62,21 @@ $bulkEditableFields = array_merge([
                         </svg>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
-                        <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collection['slug'] ?? ''])) ?>" class="dropdown-item collection-actions-item">
+                        <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>" class="dropdown-item collection-actions-item">
                             <span class="dropdown-item-label">Edit this collection</span>
                         </a>
+                        <a href="<?= htmlspecialchars($createSubCollectionUrl) ?>" class="dropdown-item collection-actions-item">
+                            <span class="dropdown-item-label">Create sub-collection</span>
+                        </a>
+                        <?php if ($isTrashView): ?>
+                        <a href="<?= htmlspecialchars($entriesReturnUrl) ?>" class="dropdown-item collection-actions-item">
+                            <span class="dropdown-item-label">Back to active entries</span>
+                        </a>
+                        <?php elseif ($trashedCount > 0): ?>
+                        <a href="<?= htmlspecialchars($trashUrl) ?>" class="dropdown-item collection-actions-item">
+                            <span class="dropdown-item-label">View trash (<?= (int) $trashedCount ?>)</span>
+                        </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
