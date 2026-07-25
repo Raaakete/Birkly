@@ -710,7 +710,7 @@ if ($action === 'chat') {
             $writeActions = [];
             foreach ($actions as $action) {
                 $actionType = $action['type'] ?? '';
-                if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins'])) {
+                if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins', 'list_project_files', 'read_project_file', 'get_project_info'], true)) {
                     $readActions[] = $action;
                 } else {
                     $writeActions[] = $action;
@@ -977,7 +977,7 @@ if ($action === 'chat') {
                         $followUpReadActions = [];
                         foreach ($followUpActions as $action) {
                             $actionType = $action['type'] ?? '';
-                            if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins'])) {
+                            if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins', 'list_project_files', 'read_project_file', 'get_project_info'], true)) {
                                 $followUpReadActions[] = $action;
                             } else {
                                 $writeActions[] = $action;
@@ -1039,7 +1039,7 @@ if ($action === 'chat') {
                                         $secondFollowUpActions = extractActionsFromResponse($secondFollowUpResponse['message'] ?? '', $secondFollowUpResponse['tool_calls'] ?? []);
                                         foreach ($secondFollowUpActions as $action) {
                                             $actionType = $action['type'] ?? '';
-                                            if (!in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins'])) {
+                                            if (!in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins', 'list_project_files', 'read_project_file', 'get_project_info'], true)) {
                                                 $writeActions[] = $action;
                                             }
                                         }
