@@ -123,36 +123,108 @@
                 return;
             }
 
-            function renderRankList(title, rows, labelKey, valueKey) {
-                if (!Array.isArray(rows) || rows.length === 0) {
-                    return '';
+            function formatCountry(code) {
+                if (!code || code === 'unknown') return 'Not detected';
+                if (code === 'LOCAL') return 'Local network';
+                try {
+                    if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
+                        const name = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' }).of(code);
+                        if (name) return name;
+                    }
+                } catch (_) { /* ignore */ }
+                return code;
+            }
+
+            function formatLabel(raw, type) {
+                const value = String(raw || '').trim();
+                if (!value || value.toLowerCase() === 'unknown') {
+                    return 'Not detected';
                 }
+                if (type === 'device') {
+                    return { mobile: 'Mobile', tablet: 'Tablet', desktop: 'Desktop', bot: 'Bot' }[value.toLowerCase()] || value.charAt(0).toUpperCase() + value.slice(1);
+                }
+                if (type === 'source') {
+                    if (value === 'direct') return 'Direct';
+                    if (value.indexOf('referral:') === 0) return value.slice(9);
+                    if (value.indexOf('campaign:') === 0) return value.slice(9).replace('/', ' · ');
+                }
+                if (type === 'path') {
+                    return value.length > 42 ? '…' + value.slice(-39) : value;
+                }
+                if (type === 'country') {
+                    return formatCountry(value);
+                }
+                return value;
+            }
+
+            function renderBarGroup(title, rows, labelKey, valueKey, labelType) {
+                if (!Array.isArray(rows) || rows.length === 0) {
+                    return '<div class="analytics-bar-group analytics-bar-group--empty">' +
+                        '<h4 class="analytics-bar-group__title">' + escapeHtml(title) + '</h4>' +
+                        '<p class="analytics-bar-group__empty">No data yet</p></div>';
+                }
+
+                const max = Math.max.apply(null, rows.map(function (row) { return Number(row[valueKey] || 0); }).concat([1]));
                 const items = rows.map(function (row) {
-                    const label = row[labelKey] || '—';
-                    const value = row[valueKey] || 0;
-                    return '<li><span class="analytics-report__label">' + escapeHtml(label) + '</span><span class="analytics-report__value">' + escapeHtml(value) + '</span></li>';
+                    const count = Number(row[valueKey] || 0);
+                    const width = Math.max(8, Math.round((count / max) * 100));
+                    const label = formatLabel(row[labelKey], labelType);
+                    return '<li class="analytics-bar">' +
+                        '<div class="analytics-bar__meta">' +
+                        '<span class="analytics-bar__label" title="' + escapeHtml(String(row[labelKey] || '')) + '">' + escapeHtml(label) + '</span>' +
+                        '<span class="analytics-bar__value">' + escapeHtml(count.toLocaleString()) + '</span>' +
+                        '</div>' +
+                        '<div class="analytics-bar__track" aria-hidden="true">' +
+                        '<span class="analytics-bar__fill" style="width:' + width + '%"></span>' +
+                        '</div></li>';
                 }).join('');
-                return '<div class="analytics-report__section"><h4>' + escapeHtml(title) + '</h4><ul class="analytics-report__list">' + items + '</ul></div>';
+
+                return '<div class="analytics-bar-group">' +
+                    '<h4 class="analytics-bar-group__title">' + escapeHtml(title) + '</h4>' +
+                    '<ul class="analytics-bars">' + items + '</ul></div>';
             }
 
             const insights = data.insights || {};
-            const sections = [
-                renderRankList('Top entrance pages', insights.entrance_pages, 'path', 'entrances'),
-                renderRankList('Top exit pages', insights.exit_pages, 'path', 'exits'),
-                renderRankList('Devices', insights.devices, 'device_type', 'visits'),
-                renderRankList('Locations', insights.countries, 'country', 'visits'),
-                renderRankList('Browsers', insights.browsers, 'browser', 'visits'),
-                renderRankList('Traffic sources', insights.traffic_sources, 'source', 'visits'),
-            ].filter(Boolean).join('');
+            const pageViews = Number(data.total_page_views || 0);
+            const visitors = Number(data.total_visitors || 0);
+            const viewsPerVisitor = visitors > 0 ? (pageViews / visitors).toFixed(1) : '—';
 
             setContent(element,
-                '<div class="analytics-content">' +
-                statGrid([
-                    statTile(Number(data.total_page_views || 0).toLocaleString(), 'Page views (30d)', 'analytics'),
-                    statTile(Number(data.total_visitors || 0).toLocaleString(), 'Visitors (30d)', 'analytics'),
-                ]) +
-                '<div class="analytics-report__grid">' + sections + '</div>' +
-                '<p class="analytics-report__footnote"><a href="' + escapeHtml(adminUrl('settings') + '#domains') + '">View per-domain analytics in Settings → Domains</a></p>' +
+                '<div class="analytics-widget">' +
+                '<div class="analytics-widget__summary">' +
+                '<div class="analytics-kpi analytics-kpi--primary">' +
+                '<span class="analytics-kpi__value">' + escapeHtml(pageViews.toLocaleString()) + '</span>' +
+                '<span class="analytics-kpi__label">Page views</span>' +
+                '<span class="analytics-kpi__hint">Last 30 days</span>' +
+                '</div>' +
+                '<div class="analytics-kpi">' +
+                '<span class="analytics-kpi__value">' + escapeHtml(visitors.toLocaleString()) + '</span>' +
+                '<span class="analytics-kpi__label">Visitors</span>' +
+                '<span class="analytics-kpi__hint">Last 30 days</span>' +
+                '</div>' +
+                '<div class="analytics-kpi analytics-kpi--muted">' +
+                '<span class="analytics-kpi__value">' + escapeHtml(String(viewsPerVisitor)) + '</span>' +
+                '<span class="analytics-kpi__label">Pages / visitor</span>' +
+                '<span class="analytics-kpi__hint">Engagement</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="analytics-widget__panels">' +
+                '<section class="analytics-panel">' +
+                '<h3 class="analytics-panel__title">Visitor journey</h3>' +
+                renderBarGroup('Entrance pages', insights.entrance_pages, 'path', 'entrances', 'path') +
+                renderBarGroup('Exit pages', insights.exit_pages, 'path', 'exits', 'path') +
+                renderBarGroup('Traffic sources', insights.traffic_sources, 'source', 'visits', 'source') +
+                '</section>' +
+                '<section class="analytics-panel">' +
+                '<h3 class="analytics-panel__title">Audience</h3>' +
+                renderBarGroup('Devices', insights.devices, 'device_type', 'visits', 'device') +
+                renderBarGroup('Locations', insights.countries, 'country', 'visits', 'country') +
+                renderBarGroup('Browsers', insights.browsers, 'browser', 'visits', 'browser') +
+                '</section>' +
+                '</div>' +
+                '<div class="dash-widget-footer-links">' +
+                '<a class="dash-widget-footer-link" href="' + escapeHtml(adminUrl('settings') + '#domains') + '">Per-domain reports in Settings → Domains</a>' +
+                '</div>' +
                 '</div>'
             );
         });
