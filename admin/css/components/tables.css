@@ -228,6 +228,9 @@
 .entries-smart-table .cell-drag {
   cursor: grab;
   color: var(--text-tertiary, #C4C6C1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .entries-smart-table .cell-drag:active {
