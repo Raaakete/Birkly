@@ -43,7 +43,7 @@ $bulkEditableFields = array_merge([
             <div class="collection-actions-bar-right">
                 <label for="entries-search" class="collection-filter-label sr-only">Search entries</label>
                 <input type="search" id="entries-search" class="input collection-search-input" placeholder="Search entries…" autocomplete="off" style="min-width: 180px;">
-                <label for="status-filter" class="collection-filter-label"><?= __('admin.filter') ?>:</label>
+                <label for="status-filter" class="collection-filter-label sr-only"><?= __('admin.filter') ?></label>
                 <select id="status-filter" class="collection-filter-select" style="min-width: 150px;">
                     <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
                     <option value="published" <?= $currentStatusFilter === 'published' ? 'selected' : '' ?>><?= __('admin.published') ?></option>
@@ -55,10 +55,10 @@ $bulkEditableFields = array_merge([
                 
                 <div class="dropdown">
                     <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="1"></circle>
-                            <circle cx="12" cy="5" r="1"></circle>
-                            <circle cx="12" cy="19" r="1"></circle>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <circle cx="12" cy="5" r="1.5"></circle>
+                            <circle cx="12" cy="12" r="1.5"></circle>
+                            <circle cx="12" cy="19" r="1.5"></circle>
                         </svg>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
