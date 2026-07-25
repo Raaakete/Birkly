@@ -636,9 +636,10 @@ function getCollectionEditorData() {
     $collectionSlug = $_GET['collection'] ?? null;
     $subCollectionSlug = $_GET['sub_collection'] ?? null;
     $parentSubCollectionSlug = $_GET['parent_sub_collection'] ?? null;
+    $newSubCollection = !empty($_GET['new_sub_collection']);
     
     // Check if this is a sub-collection editor
-    $isSubCollection = !empty($subCollectionSlug) || !empty($parentSubCollectionSlug);
+    $isSubCollection = !empty($subCollectionSlug) || !empty($parentSubCollectionSlug) || $newSubCollection;
     
     // Get available fieldtypes with categories (including plugin-registered ones)
     $fieldtypes = [];
@@ -1588,6 +1589,9 @@ function getEntriesData() {
         }
     }
 
+    require_once __DIR__ . '/../core/entry_slug.php';
+    $fields = birkly_entries_list_visible_fields($fields);
+
     // Build per-entry list cells using fieldtypes (if available)
     $entriesWithCells = [];
     // Build a width map per fieldtype (category)
@@ -1810,6 +1814,9 @@ function getEntriesData() {
  * Used by both getEntriesData() and getEntryDetailData()
  */
 function processEntryForList($entry, $fields, $collectionData) {
+    require_once __DIR__ . '/../core/entry_slug.php';
+    $fields = birkly_entries_list_visible_fields($fields);
+
     // Build width map per fieldtype
     $typeWidths = [];
     $typeMinWidths = [];
