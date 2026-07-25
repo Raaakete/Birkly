@@ -17,8 +17,6 @@ const onboarding = {
     resumeHandled: false,
     aiMode: 'chat',
 
-    hostingWizard: null,
-
     init() {
         if (!document.querySelector('.onboarding-page')) return;
 
@@ -208,7 +206,6 @@ const onboarding = {
         }
 
         if (step === 1) this.renderInstallContext();
-        if (step === 2) this.initHostingWizard();
         if (step === 3 && this.starterTemplate) this.highlightStarter(this.starterTemplate);
         if (step === 4) this.initAiWizard();
 
@@ -363,20 +360,6 @@ const onboarding = {
         return null;
     },
 
-    initHostingWizard() {
-        const mount = document.getElementById('onboarding-hosting-wizard-mount');
-        if (!mount || !window.BirklyHostingWizard) return;
-        if (!this.hostingWizard) {
-            this.hostingWizard = window.BirklyHostingWizard.create(mount, {
-                id: 'onboarding-hosting-wizard',
-                mode: 'onboarding',
-                autoLoad: true
-            });
-        } else {
-            this.hostingWizard.load().catch(() => {});
-        }
-    },
-
     async saveSiteInfo() {
         const form = document.getElementById('site-info-form');
         if (!form) return;
@@ -412,25 +395,6 @@ const onboarding = {
             });
             const data = await response.json();
             if (data.status === 'ok') {
-                const hostingPayload = this.hostingWizard
-                    ? this.hostingWizard.getHostingPayload()
-                    : {
-                        cms_base_url: window.location.origin,
-                        public_site_mode: 'none',
-                        public_site_url: '',
-                        same_host_landing: 'admin',
-                        strict_admin_host: true
-                    };
-                const hostingBody = {
-                    action: 'save',
-                    hosting: hostingPayload,
-                    _csrf: csrfToken
-                };
-                await fetch(Birkly.url('/api/hosting.php?action=save'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(hostingBody)
-                });
                 this.nextStep();
             } else {
                 BirklyFeedback.toast('Failed to save: ' + (data.message || 'Unknown error'), 'error');

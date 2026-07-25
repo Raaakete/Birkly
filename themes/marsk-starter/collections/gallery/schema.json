@@ -1,0 +1,56 @@
+{
+  "fields": [
+    {
+      "name": "title",
+      "type": "text",
+      "label": "Title",
+      "required": true
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "label": "Slug",
+      "required": true
+    },
+    {
+      "name": "image",
+      "type": "media",
+      "label": "Image",
+      "required": false
+    },
+    {
+      "name": "caption",
+      "type": "text",
+      "label": "Caption",
+      "required": false
+    },
+    {
+      "name": "category",
+      "type": "text",
+      "label": "Category",
+      "required": false
+    },
+    {
+      "name": "order",
+      "type": "number",
+      "label": "Order",
+      "required": false
+    },
+    {
+      "name": "status",
+      "type": "select",
+      "label": "Status",
+      "options": [
+        {
+          "label": "Draft",
+          "value": "draft"
+        },
+        {
+          "label": "Published",
+          "value": "published"
+        }
+      ],
+      "default": "published"
+    }
+  ]
+}

@@ -518,6 +518,7 @@
         "hosting_wizard_save_failed": "Hosting-Einstellungen konnten nicht gespeichert werden",
         "onboarding_hosting_section": "Hosting-URLs",
         "onboarding_hosting_section_help": "Optional: Legen Sie fest, wo CMS und öffentliche Website erreichbar sind. Später in den Einstellungen änderbar.",
+        "onboarding_hosting_defer": "CMS- und Website-URLs können Sie später unter Einstellungen → Hosting konfigurieren.",
         "entries_bulk_edit_field": "Feld bearbeiten...",
         "entries_bulk_new_value": "Neuer Wert",
         "entries_bulk_apply_field_edit": "Feldbearbeitung anwenden",

@@ -1,0 +1,19 @@
+{
+  "id": "statement",
+  "slug": "statement",
+  "status": "published",
+  "title": "Homepage Statement",
+  "created_at": "2026-01-01T00:00:00+00:00",
+  "updated_at": "2026-01-01T00:00:00+00:00",
+  "en": {
+    "title": "Homepage Statement",
+    "key": "statement",
+    "content": [
+      {
+        "type": "textarea",
+        "value": "Marsk is a journal for people who like their days a little slower and their coffee a little longer."
+      }
+    ],
+    "status": "published"
+  }
+}

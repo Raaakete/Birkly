@@ -1,0 +1,20 @@
+{
+  "id": "bench-end-of-pier",
+  "slug": "bench-end-of-pier",
+  "status": "published",
+  "created_at": "2026-05-30T08:00:00+00:00",
+  "updated_at": "2026-05-30T08:00:00+00:00",
+  "published_at": "2026-05-30T08:00:00+00:00",
+  "en": {
+    "title": "The bench at the end of the pier",
+    "slug": "bench-end-of-pier",
+    "excerpt": "A wooden bench, a low tide, and an afternoon with nowhere else to be.",
+    "content": "<p>A wooden bench, a low tide, and an afternoon with nowhere else to be. The pier extends further than it looks from shore. By the time you reach the end, the town feels like a suggestion.</p><p>I sat on the bench and watched the harbour empty itself. Boats left. Gulls arrived. The light changed without announcement.</p><p>Some places do not ask anything of you. This is one of them.</p>",
+    "category": "places",
+    "date": "2026-05-30",
+    "author": "June Marsk",
+    "art_class": "art--02",
+    "read_time": "5 min",
+    "status": "published"
+  }
+}

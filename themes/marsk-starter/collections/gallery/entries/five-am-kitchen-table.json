@@ -1,0 +1,16 @@
+{
+  "id": "gallery-five-am-kitchen-table",
+  "slug": "five-am-kitchen-table",
+  "status": "published",
+  "created_at": "2026-01-01T00:00:00+00:00",
+  "updated_at": "2026-01-01T00:00:00+00:00",
+  "en": {
+    "title": "Five a.m., kitchen table",
+    "slug": "five-am-kitchen-table",
+    "caption": "Five a.m., kitchen table",
+    "category": "mornings",
+    "art_class": "art--01",
+    "order": 1,
+    "status": "published"
+  }
+}

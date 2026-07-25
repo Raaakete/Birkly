@@ -1,0 +1,16 @@
+{
+  "id": "about-page",
+  "status": "published",
+  "created_at": "2026-01-01T00:00:00+00:00",
+  "updated_at": "2026-01-01T00:00:00+00:00",
+  "slug": "about",
+  "en": {
+    "title": "Hello, I'm June.",
+    "slug": "about",
+    "subtitle": "About Marsk — who writes it, why it exists, and what slow living means here.",
+    "content": "<p class=\"statement\">Marsk started as a stack of paper notebooks and became a website when the stack fell over.</p><p class=\"text-soft\">I write about the unspectacular: mending, baking, walking, waiting. The entries are short by intention and slow by nature. Nothing here is optimized, monetized or hurried.</p><p class=\"text-soft\">By day I bind books in a small studio. By early morning — the only time that's really mine — I write this journal.</p>",
+    "art_class": "art--02",
+    "caption": "Early morning, studio window",
+    "status": "published"
+  }
+}
