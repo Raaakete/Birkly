@@ -60,15 +60,15 @@
   border-image: none;
 }
 
-/* Sidebar Header */
+/* Sidebar Header — token-based; adapts to light/dark theme */
 .sidebar-header {
   display: flex;
   justify-content: center;
   align-items: center;
   border-bottom: 1px solid var(--border-light, #f3f4f6);
   border-radius: var(--border-radius-s, 4px);
-  background: rgba(30, 31, 42, 1);
-  color: rgba(30, 31, 42, 1);
+  background: var(--bg-elevated, #ffffff);
+  color: var(--text-primary, #20221D);
   padding: var(--space-3, 0.75rem);
   height: 64px;
   margin-bottom: var(--space-2, 0.5rem);
@@ -94,7 +94,7 @@
 
 .sidebar-header .logo .logo-name,
 .sidebar-header .branding-logo .logo-name {
-  color: #ffffff;
+  color: var(--text-primary, #20221D);
   font-weight: 600;
   font-size: 1rem;
 }

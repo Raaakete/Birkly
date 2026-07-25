@@ -8,8 +8,11 @@
         currentPath: '',
         selectedFile: null,
         visitUrl: '',
+        publicSiteUrl: '',
         hasIndex: false,
-        dirty: false
+        dirty: false,
+        advancedMode: false,
+        simpleInitialized: false
     };
 
     function apiUrl(path) {
@@ -122,6 +125,94 @@
         var container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '<div class="error-state"><p>' + escapeHtml(message) + '</p></div>';
+    }
+
+    function renderSimpleFileList(entries) {
+        var container = document.getElementById('project-simple-file-list');
+        if (!container) return;
+
+        var files = (entries || []).filter(function (e) { return e.type === 'file'; });
+        if (!files.length) {
+            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No files yet. Upload to get started.</p></div>';
+            return;
+        }
+
+        container.innerHTML = '<ul class="project-file-list">' + files.map(function (entry) {
+            return '<li><span class="project-simple-file-name">' + escapeHtml(entry.name) + '</span>' +
+                ' <span class="project-file-size">' + formatBytes(entry.size) + '</span></li>';
+        }).join('') + '</ul>';
+    }
+
+    function refreshSimpleFiles() {
+        var container = document.getElementById('project-simple-file-list');
+        if (!container) return Promise.resolve();
+
+        container.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+        return loadFileTree('').then(function (payload) {
+            renderSimpleFileList((payload.data && payload.data.entries) || []);
+        }).catch(function (error) {
+            container.innerHTML = '<div class="error-state"><p>' + escapeHtml(error.message) + '</p></div>';
+        });
+    }
+
+    function loadPublicSiteUrl() {
+        return fetch(apiUrl('/api/hosting.php?action=get'), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (payload) {
+                if (payload.status !== 'ok' || !payload.data) return;
+                var hosting = payload.data.hosting || {};
+                var mode = hosting.public_site_mode || 'none';
+                var url = hosting.public_site_url || '';
+                if (mode === 'project' && !url) {
+                    url = (hosting.cms_base_url || window.location.origin).replace(/\/$/, '') + '/project/';
+                }
+                state.publicSiteUrl = mode !== 'none' ? url : '';
+                var link = document.getElementById('project-visit-public-link');
+                if (link) {
+                    if (state.publicSiteUrl) {
+                        link.href = state.publicSiteUrl;
+                        link.hidden = false;
+                    } else {
+                        link.hidden = true;
+                    }
+                }
+            })
+            .catch(function () { /* optional */ });
+    }
+
+    function setAdvancedMode(enabled) {
+        state.advancedMode = !!enabled;
+        var panel = document.getElementById('project-advanced-panel');
+        if (panel) panel.hidden = !state.advancedMode;
+        if (state.advancedMode) {
+            loadOverview();
+            refreshFiles();
+            loadActivity();
+        }
+    }
+
+    function bindSimpleEvents() {
+        if (state.simpleInitialized) return;
+        state.simpleInitialized = true;
+
+        var toggle = document.getElementById('project-advanced-editor-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', function () {
+                setAdvancedMode(toggle.checked);
+            });
+        }
+
+        var uploadBtn = document.getElementById('project-simple-upload-btn');
+        var uploadInput = document.getElementById('project-simple-upload-input');
+        if (uploadBtn && uploadInput) {
+            uploadBtn.addEventListener('click', async function () {
+                uploadInput.click();
+            });
+            uploadInput.addEventListener('change', function () {
+                uploadFiles(uploadInput.files);
+                uploadInput.value = '';
+            });
+        }
     }
 
     function clearFilePreview() {
@@ -296,7 +387,7 @@
         return fetchJson(apiUrl('/api/project_site.php?action=read&path=' + encodeURIComponent(path))).then(function (payload) {
             openFile(path, payload.data || {});
         }).catch(function (error) {
-            alert(error.message || 'Failed to read file');
+            BirklyFeedback.toast(error.message || 'Failed to read file', 'error')
         });
     }
 
@@ -319,7 +410,7 @@
             state.dirty = false;
             loadActivity();
         }).catch(function (error) {
-            alert(error.message || 'Failed to save file');
+            BirklyFeedback.toast(error.message || 'Failed to save file', 'error')
         });
     }
 
@@ -350,9 +441,10 @@
 
         Promise.all(uploads).then(function () {
             refreshFiles();
+            refreshSimpleFiles();
             loadActivity();
         }).catch(function (error) {
-            alert(error.message);
+            BirklyFeedback.toast(error.message, 'error')
         });
     }
 
@@ -388,7 +480,7 @@
             toggle.dataset.bound = '1';
             toggle.addEventListener('change', function () {
                 saveVisitButtonSetting(toggle.checked).catch(function (error) {
-                    alert(error.message);
+                    BirklyFeedback.toast(error.message, 'error')
                     toggle.checked = !toggle.checked;
                     syncVisitProjectButton(toggle.checked);
                 });
@@ -406,7 +498,7 @@
         var saveBtn = document.getElementById('project-save-file-btn');
         if (saveBtn && saveBtn.dataset.bound !== '1') {
             saveBtn.dataset.bound = '1';
-            saveBtn.addEventListener('click', function () {
+            saveBtn.addEventListener('click', async function () {
                 saveCurrentFile();
             });
         }
@@ -414,7 +506,7 @@
         var tree = document.getElementById('project-file-tree');
         if (tree && tree.dataset.bound !== '1') {
             tree.dataset.bound = '1';
-            tree.addEventListener('click', function (e) {
+            tree.addEventListener('click', async function (e) {
                 var btn = e.target.closest('.project-file-entry');
                 if (!btn) return;
                 var type = btn.getAttribute('data-type');
@@ -432,7 +524,7 @@
         var breadcrumb = document.getElementById('project-file-breadcrumb');
         if (breadcrumb && breadcrumb.dataset.bound !== '1') {
             breadcrumb.dataset.bound = '1';
-            breadcrumb.addEventListener('click', function (e) {
+            breadcrumb.addEventListener('click', async function (e) {
                 var btn = e.target.closest('.project-crumb');
                 if (!btn) return;
                 state.currentPath = btn.getAttribute('data-path') || '';
@@ -444,12 +536,12 @@
         var folderBtn = document.getElementById('project-new-folder-btn');
         if (folderBtn && folderBtn.dataset.bound !== '1') {
             folderBtn.dataset.bound = '1';
-            folderBtn.addEventListener('click', function () {
+            folderBtn.addEventListener('click', async function () {
                 var name = prompt('New folder name:');
                 if (!name) return;
                 name = name.replace(/^\/+/, '').replace(/\/+$/, '');
                 if (!name || name.indexOf('/') >= 0 || name.indexOf('..') >= 0) {
-                    alert('Enter a single folder name without slashes.');
+                    BirklyFeedback.toast('Enter a single folder name without slashes.', 'warning')
                     return;
                 }
                 var fullPath = state.currentPath ? state.currentPath + '/' + name : name;
@@ -466,7 +558,7 @@
                     refreshFiles();
                     loadActivity();
                 }).catch(function (error) {
-                    alert(error.message);
+                    BirklyFeedback.toast(error.message, 'error')
                 });
             });
         }
@@ -475,7 +567,7 @@
         var uploadInput = document.getElementById('project-upload-input');
         if (uploadBtn && uploadInput && uploadBtn.dataset.bound !== '1') {
             uploadBtn.dataset.bound = '1';
-            uploadBtn.addEventListener('click', function () {
+            uploadBtn.addEventListener('click', async function () {
                 uploadInput.click();
             });
             uploadInput.addEventListener('change', function () {
@@ -487,7 +579,7 @@
         var addBtn = document.getElementById('project-add-file-btn');
         if (addBtn && addBtn.dataset.bound !== '1') {
             addBtn.dataset.bound = '1';
-            addBtn.addEventListener('click', function () {
+            addBtn.addEventListener('click', async function () {
                 var relative = prompt('New file name (e.g. about.html):');
                 if (!relative) return;
                 relative = relative.replace(/^\/+/, '');
@@ -513,7 +605,7 @@
                     });
                     loadActivity();
                 }).catch(function (error) {
-                    alert(error.message);
+                    BirklyFeedback.toast(error.message, 'error')
                 });
             });
         }
@@ -521,9 +613,9 @@
         var deleteBtn = document.getElementById('project-delete-file-btn');
         if (deleteBtn && deleteBtn.dataset.bound !== '1') {
             deleteBtn.dataset.bound = '1';
-            deleteBtn.addEventListener('click', function () {
+            deleteBtn.addEventListener('click', async function () {
                 if (!state.selectedFile) return;
-                if (!confirm('Delete ' + state.selectedFile + '? This cannot be undone.')) return;
+                if (!(await BirklyFeedback.confirm('Delete ' + state.selectedFile + '? This cannot be undone.'))) return;
                 fetchJson(apiUrl('/api/project_site.php?action=delete'), {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -538,7 +630,7 @@
                     refreshFiles();
                     loadActivity();
                 }).catch(function (error) {
-                    alert(error.message);
+                    BirklyFeedback.toast(error.message, 'error')
                 });
             });
         }
@@ -550,9 +642,14 @@
         }
 
         bindEvents();
-        loadOverview();
-        refreshFiles();
-        loadActivity();
+        bindSimpleEvents();
+        loadPublicSiteUrl();
+        refreshSimpleFiles();
+
+        var toggle = document.getElementById('project-advanced-editor-toggle');
+        if (toggle && toggle.checked) {
+            setAdvancedMode(true);
+        }
     }
 
     window.initProjectSettings = initProjectSettings;

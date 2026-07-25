@@ -43,25 +43,25 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 ### Phase 44 — Admin UI/UX excellence (full design remediation)
 
-**Status:** **Approved** (2026-07-25) — **M0 complete**, **M1→M12 execution ready**
+**Status:** **Complete** (2026-07-25) — **M1→M12 done**
 
 **Goal:** Fix all issues from the 2026-07-25 admin design review: trustworthy save model, grouped settings IA, hosting wizard UX, design token compliance, accessibility bugs, toast feedback (no alerts), i18n, simplified Project tab, ContentEditor mobile polish, skeleton loaders, design system doc.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
 | **P44-M0** | Gap register + plan + handoff | complete |
-| **P44-M1** | Critical: a11y + global save scope | pending |
-| **P44-M2** | Token compliance (sidebar, focus, links, fonts) | pending |
-| **P44-M3** | Settings IA — 4 grouped areas | pending |
-| **P44-M4** | Dirty state + per-area save bars | pending |
-| **P44-M5** | Hosting wizard + onboarding reuse | pending |
-| **P44-M6** | Project tab simple vs advanced IDE | pending |
-| **P44-M7** | Toast + confirm modal (remove alerts) | pending |
-| **P44-M8** | i18n audit (settings, hosting, onboarding) | pending |
-| **P44-M9** | ContentEditor responsive + dark + mint | pending |
-| **P44-M10** | Mobile entries, skeletons, empty states | pending |
-| **P44-M11** | `docs/admin-design-system.md` | pending |
-| **P44-M12** | Birkly-Docs + V-UX matrix + closure | pending |
+| **P44-M1** | Critical: a11y + global save scope | complete |
+| **P44-M2** | Token compliance (sidebar, focus, links, fonts) | complete |
+| **P44-M3** | Settings IA — 4 grouped areas | complete |
+| **P44-M4** | Dirty state + per-area save bars | complete |
+| **P44-M5** | Hosting wizard + onboarding reuse | complete |
+| **P44-M6** | Project tab simple vs advanced IDE | complete |
+| **P44-M7** | Toast + confirm modal (remove alerts) | complete |
+| **P44-M8** | i18n audit (settings, hosting, onboarding) | complete |
+| **P44-M9** | ContentEditor responsive + dark + mint | complete |
+| **P44-M10** | Mobile entries, skeletons, empty states | complete |
+| **P44-M11** | `docs/admin-design-system.md` | complete |
+| **P44-M12** | Birkly-Docs + V-UX matrix + closure | complete |
 
 **Spec:** `docs/reviews/P44-admin-ux-excellence-plan.md`  
 **Handoff:** `docs/reviews/P44-lead-engineer-handoff.md`  

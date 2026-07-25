@@ -238,11 +238,11 @@ window.Birkly.MediaModal = {
             if (result.status === 'ok' && result.data) {
                 this.selectMedia(result.data);
             } else {
-                alert('Upload failed: ' + (result.error || 'Unknown error'));
+                BirklyFeedback.toast('Upload failed: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Upload failed: ' + error.message);
+            BirklyFeedback.toast('Upload failed: ' + error.message, 'error')
         }
     },
     

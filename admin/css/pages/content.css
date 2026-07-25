@@ -104,7 +104,7 @@
 }
 
 .block-item .block-drag-handle:hover {
-  color: var(--primary-500, #3b82f6);
+  color: var(--primary-500);
   opacity: 1;
 }
 
@@ -219,8 +219,8 @@
 .field-control select:focus,
 .field-control textarea:focus {
   outline: none;
-  border-color: var(--primary-500, #3b82f6);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary-500);
+  box-shadow: var(--focus-ring-subtle);
 }
 
 .field-typename {
@@ -366,7 +366,7 @@
 }
 
 .field-card.drag-over {
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
   background: var(--primary-50, #eff6ff);
 }
 
@@ -570,11 +570,11 @@
 .entry-drop-indicator {
   position: absolute;
   height: 3px;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  box-shadow: var(--focus-glow);
   animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
 
@@ -714,7 +714,7 @@
 }
 
 .block-item .block-drag-handle:hover {
-  color: var(--primary-500, #3b82f6);
+  color: var(--primary-500);
   opacity: 1;
 }
 
@@ -850,13 +850,13 @@
 }
 
 .collection-group.drag-over-group-above {
-  border-top: 3px solid var(--primary-500, #3b82f6);
+  border-top: 3px solid var(--primary-500);
   margin-top: var(--space-2, 0.5rem);
   padding-top: var(--space-2, 0.5rem);
 }
 
 .collection-group.drag-over-group-below {
-  border-bottom: 3px solid var(--primary-500, #3b82f6);
+  border-bottom: 3px solid var(--primary-500);
   margin-bottom: var(--space-2, 0.5rem);
   padding-bottom: var(--space-2, 0.5rem);
 }
@@ -864,14 +864,14 @@
 .group-drop-indicator {
   position: absolute;
   height: 3px;
-  background: var(--primary-500, #3b82f6) !important;
+  background: var(--primary-500) !important;
   border-radius: 2px;
   z-index: 10000 !important;
   pointer-events: none;
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6) !important;
+  box-shadow: var(--focus-glow) !important;
 }
 
 /* Completely disable collection drop zones when dragging a group */
@@ -896,8 +896,8 @@ body.dragging-group .group-drop-indicator {
    Drag & Drop Styles for Collections
    ============================================ */
 .drag-placeholder {
-  background: rgba(59, 130, 246, 0.1) !important;
-  border: 2px dashed var(--primary-500, #3b82f6) !important;
+  background: var(--focus-fill-subtle) !important;
+  border: 2px dashed var(--primary-500) !important;
   border-radius: 4px;
   transition: opacity 0.1s ease-out, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), height 0.1s ease-out;
   opacity: 0;
@@ -981,7 +981,7 @@ body.dragging-group .group-drop-indicator {
 .grid.group-collections.drag-over,
 .grid.ungrouped-collections.drag-over {
   background: var(--primary-50, #eff6ff);
-  border: 2px dashed var(--primary-500, #3b82f6);
+  border: 2px dashed var(--primary-500);
   box-shadow: inset 0 0 0 3px var(--primary-100, #dbeafe);
 }
 
@@ -1005,22 +1005,22 @@ body.dragging-group .group-drop-indicator {
 /* Drop Indicator - Blue line showing where card will be dropped */
 .drop-indicator {
   position: absolute;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  box-shadow: var(--focus-glow);
   animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
 
 /* Cross-group drop indicator */
 .cross-group-drop-indicator {
   position: absolute;
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   border-radius: 2px;
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  box-shadow: var(--focus-glow);
   animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
 
@@ -1124,6 +1124,98 @@ body.dragging-group .group-drop-indicator {
   .collection-actions-bar-right {
     margin-left: 0;
     flex-wrap: wrap;
+  }
+}
+
+/* Entries mobile filter drawer (P44-M10) */
+.entries-filter-toggle {
+  display: none;
+}
+
+.entries-toolbar-filters--desktop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+
+.entries-filter-drawer {
+  display: contents;
+}
+
+@media (max-width: 480px) {
+  .entries-filter-toggle {
+    display: inline-flex;
+  }
+
+  .entries-toolbar-filters--desktop {
+    display: none;
+  }
+
+  .entries-filter-drawer {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+  }
+
+  .entries-filter-drawer[hidden] {
+    display: none !important;
+  }
+
+  .entries-filter-drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-overlay, rgba(0, 0, 0, 0.45));
+  }
+
+  .entries-filter-drawer__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated, #ffffff);
+    border-radius: var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem) 0 0;
+    box-shadow: var(--shadow-xl);
+  }
+
+  .entries-filter-drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4, 1rem);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .entries-filter-drawer__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .entries-filter-drawer__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-4, 1rem);
+    overflow-y: auto;
+  }
+
+  .entries-filter-drawer__footer {
+    padding: var(--space-4, 1rem);
+    border-top: 1px solid var(--border-light);
+  }
+
+  .entries-filter-drawer__body .collection-search-input,
+  .entries-filter-drawer__body .collection-filter-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.entries-filter-drawer-open {
+    overflow: hidden;
   }
 }
 

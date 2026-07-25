@@ -33,11 +33,11 @@
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert('Error uploading file: ' + (data.error || 'Unknown error'));
+                    BirklyFeedback.toast('Error uploading file: ' + (data.error || 'Unknown error'), 'error');
                 }
             })
             .catch(error => {
-                alert('Error: ' + error.message);
+                BirklyFeedback.toast('Error: ' + error.message, 'error')
             });
         });
     }
@@ -45,7 +45,7 @@
     // Media grid interactions
     const mediaItems = document.querySelectorAll('.media-item');
     mediaItems.forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', async function () {
             // Handle media item selection
         });
     });
@@ -53,11 +53,11 @@
     // Delete media handler
     const deleteButtons = document.querySelectorAll('.delete-media-btn');
     deleteButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', async function (e) {
             e.stopPropagation();
             const mediaId = this.getAttribute('data-media-id');
             
-            if (confirm('Are you sure you want to delete this media file?')) {
+            if (await BirklyFeedback.confirm('Are you sure you want to delete this media file?')) {
                 const csrf = csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
                 const body = new FormData();
                 body.append('id', mediaId);
@@ -76,11 +76,11 @@
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        alert('Error deleting media: ' + (data.error || 'Unknown error'));
+                        BirklyFeedback.toast('Error deleting media: ' + (data.error || 'Unknown error'), 'error');
                     }
                 })
                 .catch(error => {
-                    alert('Error: ' + error.message);
+                    BirklyFeedback.toast('Error: ' + error.message, 'error')
                 });
             }
         });

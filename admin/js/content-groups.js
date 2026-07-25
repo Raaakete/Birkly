@@ -143,7 +143,7 @@
             newGroupBtn.addEventListener('click', showCreateGroupModal);
         }
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', async function (e) {
             if (e.target.classList.contains('modal-backdrop')) {
                 closeGroupModal();
             }
@@ -160,7 +160,7 @@
 
     function setupViewToggle() {
         document.querySelectorAll('[data-content-view]').forEach((button) => {
-            button.addEventListener('click', () => {
+            button.addEventListener('click', async () => {
                 setView(button.getAttribute('data-content-view') || 'grid', true);
             });
         });
@@ -751,7 +751,7 @@
         card.appendChild(header);
         card.appendChild(footer);
 
-        card.addEventListener('click', function(e) {
+        card.addEventListener('click', async function (e) {
             if (e.defaultPrevented) return;
             if (e.target.closest('a, button, .drag-handle, .dropdown-trigger, .collection-menu-wrapper, .entry-count-link')) {
                 return;
@@ -779,7 +779,7 @@
     function duplicateCollection(collection) {
         const collectionId = collection.id;
         if (!collectionId) {
-            alert('Error: Collection ID not found. Cannot duplicate collection.');
+            BirklyFeedback.toast('Error: Collection ID not found. Cannot duplicate collection.', 'error')
             return;
         }
 
@@ -798,12 +798,12 @@
             if (data.status === 'ok') {
                 window.location.reload();
             } else {
-                alert('Failed to duplicate collection: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Failed to duplicate collection: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch((error) => {
             console.error('Error duplicating collection:', error);
-            alert('Error duplicating collection. Please try again.');
+            BirklyFeedback.toast('Error duplicating collection. Please try again.', 'error')
         });
     }
 
@@ -859,7 +859,7 @@
         const groupId = form.dataset.groupId;
 
         if (!nameInput || !nameInput.value.trim()) {
-            alert('Please enter a group name');
+            BirklyFeedback.toast('Please enter a group name', 'warning')
             return;
         }
 
@@ -923,7 +923,7 @@
     }
 
     function deleteGroup(groupId) {
-        if (!confirm('Are you sure you want to delete this group? Collections will be moved to ungrouped.')) {
+        if (!(await BirklyFeedback.confirm('Are you sure you want to delete this group? Collections will be moved to ungrouped.'))) {
             return;
         }
 
@@ -945,12 +945,12 @@
     function deleteCollection(collection) {
         const collectionId = collection.id;
         if (!collectionId) {
-            alert('Error: Collection ID not found. Cannot delete collection.');
+            BirklyFeedback.toast('Error: Collection ID not found. Cannot delete collection.', 'error')
             return;
         }
 
         const confirmMessage = `Are you sure you want to delete "${collection.name || 'this collection'}"? This will also delete all ${collection.entries_count || 0} entries in this collection. This action cannot be undone.`;
-        if (!confirm(confirmMessage)) return;
+        if (!(await BirklyFeedback.confirm(confirmMessage))) return;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         fetch(apiUrl('/api/content.php'), {
@@ -970,12 +970,12 @@
                 saveGroups();
                 renderGroupsAndCollections();
             } else {
-                alert('Failed to delete collection: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Failed to delete collection: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch((error) => {
             console.error('Error deleting collection:', error);
-            alert('Error deleting collection. Please try again.');
+            BirklyFeedback.toast('Error deleting collection. Please try again.', 'error')
         });
     }
 
@@ -999,12 +999,12 @@
                 }
                 renderGroupsAndCollections();
             } else {
-                alert('Failed to save groups: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Failed to save groups: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch((error) => {
             console.error('Error saving groups:', error);
-            alert('Error saving groups. Please try again.');
+            BirklyFeedback.toast('Error saving groups. Please try again.', 'error')
         });
     }
 

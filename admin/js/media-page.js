@@ -125,7 +125,7 @@ function resolveMediaItemUrl(url) {
       el.addEventListener('click', closeMediaModal);
     });
     document.querySelectorAll('[data-media-action="open-move"]').forEach(function (el) {
-      el.addEventListener('click', function () {
+      el.addEventListener('click', async function () {
         openMoveModal();
       });
     });
@@ -142,7 +142,7 @@ function resolveMediaItemUrl(url) {
       el.addEventListener('click', confirmMove);
     });
     document.querySelectorAll('[data-media-action="move-selected"]').forEach(function (el) {
-      el.addEventListener('click', function () {
+      el.addEventListener('click', async function () {
         openMoveModal(Array.from(state.selectedIds));
       });
     });
@@ -154,12 +154,12 @@ function resolveMediaItemUrl(url) {
     });
 
     document.querySelectorAll('[data-media-folder]').forEach(function (el) {
-      el.addEventListener('click', function () {
+      el.addEventListener('click', async function () {
         navigateToFolder(el.getAttribute('data-media-folder') || '');
       });
     });
 
-    document.getElementById('media-breadcrumb')?.addEventListener('click', function (event) {
+    document.getElementById('media-breadcrumb')?.addEventListener('click', async function (event) {
       const item = event.target.closest('[data-media-folder]');
       if (item) {
         navigateToFolder(item.getAttribute('data-media-folder') || '');
@@ -169,7 +169,7 @@ function resolveMediaItemUrl(url) {
     document.getElementById('media-search')?.addEventListener('input', filterMedia);
     document.getElementById('type-filter')?.addEventListener('change', filterMedia);
     document.querySelectorAll('[data-media-view]').forEach(function (button) {
-      button.addEventListener('click', function () {
+      button.addEventListener('click', async function () {
         setView(button.getAttribute('data-media-view') || 'grid', true);
       });
     });
@@ -177,7 +177,7 @@ function resolveMediaItemUrl(url) {
 
   function bindModalDismissals() {
     document.querySelectorAll('.modal').forEach(function (modal) {
-      modal.addEventListener('click', function (event) {
+      modal.addEventListener('click', async function (event) {
         if (event.target !== modal) return;
         if (modal.id === 'upload-modal') closeUploadModal();
         if (modal.id === 'media-modal') closeMediaModal();
@@ -334,7 +334,7 @@ function resolveMediaItemUrl(url) {
       folderItem.className = 'folder-item';
       folderItem.dataset.path = folder.path || '';
       folderItem.style.paddingLeft = ((folder.level || 0) * 20 + 8) + 'px';
-      folderItem.addEventListener('click', function () {
+      folderItem.addEventListener('click', async function () {
         navigateToFolder(folder.path || '');
       });
 
@@ -352,7 +352,7 @@ function resolveMediaItemUrl(url) {
       addButton.setAttribute('aria-label', 'Create subfolder in ' + (folder.name || 'folder'));
       addButton.title = 'Create subfolder';
       addButton.innerHTML = icon('plus', { size: 12 });
-      addButton.addEventListener('click', function (event) {
+      addButton.addEventListener('click', async function (event) {
         event.stopPropagation();
         createSubfolder(folder.path || '');
       });
@@ -363,7 +363,7 @@ function resolveMediaItemUrl(url) {
       renameButton.setAttribute('aria-label', 'Rename folder ' + (folder.name || 'folder'));
       renameButton.title = 'Rename folder';
       renameButton.innerHTML = icon('pencil-simple', { size: 12 });
-      renameButton.addEventListener('click', function (event) {
+      renameButton.addEventListener('click', async function (event) {
         event.stopPropagation();
         renameFolder(folder.path || '');
       });
@@ -374,7 +374,7 @@ function resolveMediaItemUrl(url) {
       deleteButton.setAttribute('aria-label', 'Delete folder ' + (folder.name || 'folder'));
       deleteButton.title = 'Delete folder';
       deleteButton.innerHTML = icon('trash', { size: 12 });
-      deleteButton.addEventListener('click', function (event) {
+      deleteButton.addEventListener('click', async function (event) {
         event.stopPropagation();
         deleteFolderWithOptions(folder.path || '');
       });
@@ -420,7 +420,7 @@ function resolveMediaItemUrl(url) {
     rootItem.innerHTML =
       icon('folder-root', { size: 16 }) +
       '<span>Root folder</span>';
-    rootItem.addEventListener('click', function () {
+    rootItem.addEventListener('click', async function () {
       selectMoveFolder('');
     });
     container.appendChild(rootItem);
@@ -434,7 +434,7 @@ function resolveMediaItemUrl(url) {
       folderItem.innerHTML =
         icon('folder', { size: 16 }) +
         '<span>' + escapeHtml(folder.name || '') + '</span>';
-      folderItem.addEventListener('click', function () {
+      folderItem.addEventListener('click', async function () {
         selectMoveFolder(folder.path || '');
       });
       container.appendChild(folderItem);
@@ -516,7 +516,7 @@ function resolveMediaItemUrl(url) {
     thumb.type = 'button';
     thumb.className = 'thumb media-card__preview';
     thumb.innerHTML = getMediaThumbnailHTML(item);
-    thumb.addEventListener('click', function () {
+    thumb.addEventListener('click', async function () {
       viewMedia(item.id);
     });
 
@@ -534,7 +534,7 @@ function resolveMediaItemUrl(url) {
 
     const checkbox = checkboxLabel.querySelector('input');
     checkbox.checked = state.selectedIds.has(item.id);
-    checkbox.addEventListener('click', function (event) {
+    checkbox.addEventListener('click', async function (event) {
       event.stopPropagation();
     });
     checkbox.addEventListener('change', function () {
@@ -546,7 +546,7 @@ function resolveMediaItemUrl(url) {
     nameEl.className = 'name media-card__name';
     nameEl.title = item.name || 'Untitled';
     nameEl.textContent = item.name || 'Untitled';
-    nameEl.addEventListener('click', function () {
+    nameEl.addEventListener('click', async function () {
       viewMedia(item.id);
     });
 
@@ -744,7 +744,7 @@ function resolveMediaItemUrl(url) {
     let handleFiles = 'move';
 
     if (hasFiles) {
-      const choice = confirm('Folder "' + folderName + '" contains files.\n\nClick OK to move files to root, or Cancel to delete them with the folder.');
+      const choice = await BirklyFeedback.confirm('Folder "' + folderName + '" contains files.\n\nClick OK to move files to root, or Cancel to delete them with the folder.');
       handleFiles = choice ? 'move' : 'delete';
     }
 
@@ -752,7 +752,7 @@ function resolveMediaItemUrl(url) {
       ? 'Delete folder "' + folderName + '" and ' + (handleFiles === 'delete' ? 'delete its files' : 'move its files to root') + '?'
       : 'Delete folder "' + folderName + '"?';
 
-    if (!confirm(confirmMessage)) return;
+    if (!(await BirklyFeedback.confirm(confirmMessage))) return;
 
     try {
       const formData = new FormData();
@@ -1057,7 +1057,7 @@ function resolveMediaItemUrl(url) {
       showError('No media selected.');
       return;
     }
-    if (!confirm('Delete the selected media items?')) {
+    if (!(await BirklyFeedback.confirm('Delete the selected media items?'))) {
       return;
     }
 
@@ -1084,7 +1084,7 @@ function resolveMediaItemUrl(url) {
       showError('No media item selected.');
       return;
     }
-    if (!confirm('Delete this media file?')) {
+    if (!(await BirklyFeedback.confirm('Delete this media file?'))) {
       return;
     }
 

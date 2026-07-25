@@ -4,6 +4,13 @@
 (function () {
     'use strict';
 
+    function t(key, fallback) {
+        if (window.Birkly && window.Birkly.i18n && typeof window.Birkly.i18n.t === 'function') {
+            return window.Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     function apiUrl(path) {
         return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
     }
@@ -39,7 +46,13 @@
     const bulkFieldName = document.getElementById('bulk-field-name');
     const bulkFieldValue = document.getElementById('bulk-field-value');
     const bulkFieldApplyBtn = document.getElementById('bulk-field-apply-btn');
-    const statusFilter = document.getElementById('status-filter');
+    const statusFilter = document.getElementById('status-filter') || document.getElementById('status-filter-desktop');
+    const statusFilterDesktop = document.getElementById('status-filter-desktop');
+    const statusFilterMobile = document.getElementById('status-filter');
+    const entriesSearchDesktop = document.getElementById('entries-search-desktop');
+    const entriesSearchMobile = document.getElementById('entries-search');
+    const filterToggle = document.getElementById('entries-filter-toggle');
+    const filterDrawer = document.getElementById('entries-filter-drawer');
 
     const selectedEntries = new Set();
 
@@ -141,7 +154,7 @@
         if (selectedEntries.size === 0) {
             return;
         }
-        if (!window.confirm(confirmation)) {
+        if (!(await BirklyFeedback.confirm(confirmation))) {
             return;
         }
 
@@ -149,11 +162,11 @@
         try {
             const result = await performBulkOperation(action, Array.from(selectedEntries));
             progress.remove();
-            window.alert(successLabel.replace('%count%', String(result.count || selectedEntries.size)));
+            BirklyFeedback.toast(successLabel.replace('%count%', String(result.count || selectedEntries.size)), 'success')
             window.location.reload();
         } catch (error) {
             progress.remove();
-            window.alert('Error: ' + error.message);
+            BirklyFeedback.toast('Error: ' + error.message, 'error')
         }
     }
 
@@ -165,10 +178,16 @@
             return;
         }
         if (!fieldNameValue) {
-            window.alert('Choose a field to edit first.');
+            BirklyFeedback.toast(t('entries_bulk_choose_field', 'Choose a field to edit first.'), 'warning');
             return;
         }
-        if (!window.confirm('Apply this field update to ' + selectedEntries.size + ' selected entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '?')) {
+        var entityLabel = selectedEntries.size === 1
+            ? t('entries_bulk_entity_entry', 'entry')
+            : t('entries_bulk_entity_entries', 'entries');
+        var confirmMsg = t('entries_bulk_apply_confirm', 'Apply this field update to %count% selected %entity%?')
+            .replace('%count%', String(selectedEntries.size))
+            .replace('%entity%', entityLabel);
+        if (!(await BirklyFeedback.confirm(confirmMsg))) {
             return;
         }
 
@@ -176,16 +195,16 @@
         try {
             const result = await performBulkFieldEdit(Array.from(selectedEntries), fieldNameValue, fieldValueValue);
             progress.remove();
-            window.alert(result.message || 'Field updated successfully.');
+            BirklyFeedback.toast(result.message || 'Field updated successfully.', 'success');
             window.location.reload();
         } catch (error) {
             progress.remove();
-            window.alert('Error: ' + error.message);
+            BirklyFeedback.toast('Error: ' + error.message, 'error');
         }
     }
 
     async function handleDeleteEntry(entryId) {
-        if (!window.confirm('Move this entry to trash?')) {
+        if (!(await BirklyFeedback.confirm(t('entries_move_to_trash_confirm', 'Move this entry to trash?'))) {
             return;
         }
         const progress = showProgress('Moving entry to trash…');
@@ -195,12 +214,12 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            window.alert('Error: ' + error.message);
+            BirklyFeedback.toast('Error: ' + error.message, 'error')
         }
     }
 
     async function handleRestoreEntry(entryId) {
-        if (!window.confirm('Restore this entry?')) {
+        if (!(await BirklyFeedback.confirm(t('entries_restore_confirm', 'Restore this entry?'))) {
             return;
         }
         const progress = showProgress('Restoring entry…');
@@ -210,7 +229,7 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            window.alert('Error: ' + error.message);
+            BirklyFeedback.toast('Error: ' + error.message, 'error')
         }
     }
 
@@ -227,7 +246,7 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            window.alert('Error: ' + error.message);
+            BirklyFeedback.toast('Error: ' + error.message, 'error')
         }
     }
 
@@ -271,7 +290,7 @@
         });
     });
 
-    bulkPublishBtn?.addEventListener('click', function () {
+    bulkPublishBtn?.addEventListener('click', async function () {
         runBulkAction(
             'publish',
             'Publish the selected entries?',
@@ -280,7 +299,7 @@
         );
     });
 
-    bulkUnpublishBtn?.addEventListener('click', function () {
+    bulkUnpublishBtn?.addEventListener('click', async function () {
         runBulkAction(
             'unpublish',
             'Unpublish the selected entries?',
@@ -289,7 +308,7 @@
         );
     });
 
-    bulkDeleteBtn?.addEventListener('click', function () {
+    bulkDeleteBtn?.addEventListener('click', async function () {
         runBulkAction(
             'delete',
             'Move the selected entries to trash?',
@@ -298,7 +317,7 @@
         );
     });
 
-    bulkRestoreBtn?.addEventListener('click', function () {
+    bulkRestoreBtn?.addEventListener('click', async function () {
         runBulkAction(
             'restore',
             'Restore the selected entries?',
@@ -310,11 +329,39 @@
     bulkFieldApplyBtn?.addEventListener('click', handleBulkFieldEdit);
     bulkCancelBtn?.addEventListener('click', clearSelection);
 
+    function syncStatusFilters(value) {
+        if (statusFilterDesktop) statusFilterDesktop.value = value;
+        if (statusFilterMobile) statusFilterMobile.value = value;
+    }
+
+    function syncSearchInputs(value) {
+        if (entriesSearchDesktop) entriesSearchDesktop.value = value;
+        if (entriesSearchMobile) entriesSearchMobile.value = value;
+    }
+
+    function openFilterDrawer() {
+        if (!filterDrawer || !filterToggle) return;
+        filterDrawer.hidden = false;
+        filterToggle.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('entries-filter-drawer-open');
+    }
+
+    function closeFilterDrawer() {
+        if (!filterDrawer || !filterToggle) return;
+        filterDrawer.hidden = true;
+        filterToggle.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('entries-filter-drawer-open');
+    }
+
     statusFilter?.addEventListener('change', function () {
+        syncStatusFilters(statusFilter.value);
         setStatusFilter(statusFilter.value);
     });
 
-    const entriesSearch = document.getElementById('entries-search');
+    statusFilterDesktop?.addEventListener('change', function () {
+        syncStatusFilters(statusFilterDesktop.value);
+        setStatusFilter(statusFilterDesktop.value);
+    });
 
     function filterEntriesTable(query) {
         const normalized = String(query || '').trim().toLowerCase();
@@ -331,11 +378,32 @@
         });
     }
 
-    entriesSearch?.addEventListener('input', function () {
-        filterEntriesTable(entriesSearch.value);
+    function handleSearchInput(value) {
+        syncSearchInputs(value);
+        filterEntriesTable(value);
+    }
+
+    entriesSearchMobile?.addEventListener('input', function () {
+        handleSearchInput(entriesSearchMobile.value);
     });
 
-    document.addEventListener('click', function (event) {
+    entriesSearchDesktop?.addEventListener('input', function () {
+        handleSearchInput(entriesSearchDesktop.value);
+    });
+
+    filterToggle?.addEventListener('click', function () {
+        if (filterDrawer && filterDrawer.hidden) {
+            openFilterDrawer();
+        } else {
+            closeFilterDrawer();
+        }
+    });
+
+    filterDrawer?.querySelectorAll('[data-entries-filter-close]').forEach(function (el) {
+        el.addEventListener('click', closeFilterDrawer);
+    });
+
+    document.addEventListener('click', async function (event) {
         const deleteButton = event.target.closest('.delete-entry-btn');
         if (deleteButton) {
             handleDeleteEntry(deleteButton.dataset.entryId || '');
@@ -400,7 +468,7 @@
             });
             initializeEntryDragHandlers();
         } catch (error) {
-            window.alert('Error saving entry order: ' + error.message);
+            BirklyFeedback.toast('Error saving entry order: ' + error.message, 'error')
         }
     }
 

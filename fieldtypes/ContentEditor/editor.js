@@ -179,6 +179,8 @@
               window.ContentEditorBlockManager.initializeEditor(editor);
             }
 
+            initToolbarOverflow(toolbar);
+
             // Initialize table controls for existing tables
             const existingTables = editor.querySelectorAll('table.content-editor-table[data-editable-table="true"]');
             existingTables.forEach(table => {
@@ -880,6 +882,92 @@
         openFullscreen();
       }
     });
+  }
+
+  // Toolbar overflow menu for viewports < 1024px (P44-M9)
+  function initToolbarOverflow(toolbar) {
+    if (!toolbar || toolbar.dataset.overflowReady === 'true') return;
+    toolbar.dataset.overflowReady = 'true';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'content-editor-toolbar-overflow-wrap';
+    wrap.innerHTML = '<button type="button" class="toolbar-btn content-editor-toolbar-overflow-btn" aria-label="More tools" aria-expanded="false" aria-haspopup="true"><span aria-hidden="true">⋯</span></button><div class="content-editor-toolbar-overflow-menu" role="menu" hidden></div>';
+    toolbar.appendChild(wrap);
+
+    const btn = wrap.querySelector('.content-editor-toolbar-overflow-btn');
+    const menu = wrap.querySelector('.content-editor-toolbar-overflow-menu');
+    const movableSelector = ':scope > .toolbar-group:not(.toolbar-group-right), :scope > .toolbar-separator, :scope > .toolbar-dropdown';
+
+    function restoreAll() {
+      Array.from(menu.querySelectorAll('.content-editor-toolbar-overflow-item')).forEach(function (slot) {
+        const el = slot.firstElementChild;
+        const placeholder = slot._overflowPlaceholder;
+        if (placeholder && el) {
+          placeholder.replaceWith(el);
+        }
+        slot.remove();
+      });
+      btn.hidden = true;
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+
+    function layoutOverflow() {
+      restoreAll();
+      if (!window.matchMedia('(max-width: 1023px)').matches) return;
+
+      const items = Array.from(toolbar.querySelectorAll(movableSelector));
+      const reserve = 44;
+      const overflowed = [];
+
+      items.forEach(function (el) { el.hidden = false; });
+
+      for (let i = items.length - 1; i >= 0; i--) {
+        if (toolbar.scrollWidth <= toolbar.clientWidth - reserve) break;
+        overflowed.unshift(items[i]);
+        items[i].hidden = true;
+      }
+
+      if (!overflowed.length) return;
+
+      btn.hidden = false;
+      overflowed.forEach(function (el) {
+        const placeholder = document.createElement('span');
+        placeholder.className = 'content-editor-toolbar-overflow-placeholder';
+        placeholder.setAttribute('aria-hidden', 'true');
+        el.replaceWith(placeholder);
+
+        const slot = document.createElement('div');
+        slot.className = 'content-editor-toolbar-overflow-item';
+        slot._overflowPlaceholder = placeholder;
+        slot.appendChild(el);
+        el.hidden = false;
+        menu.appendChild(slot);
+      });
+    }
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const open = menu.hidden;
+      menu.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    menu.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', function () {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    });
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(layoutOverflow);
+      ro.observe(toolbar);
+    }
+    window.addEventListener('resize', layoutOverflow);
+    layoutOverflow();
   }
 
   // Also initialize on dynamic content
