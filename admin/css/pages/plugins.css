@@ -44,19 +44,19 @@
 }
 
 .health-healthy {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-100, #dcfce7);
+  color: var(--success-700, #15803d);
 }
 
 .health-warning {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--warning-100, #fef3c7);
+  color: var(--warning-700, #92400e);
 }
 
 .health-error,
 .health-unknown {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--error-100, #fee2e2);
+  color: var(--error-700, #b91c1c);
 }
 
 .plugin-name {
@@ -223,7 +223,7 @@
 
 .plugins-tab.active {
   color: var(--text-primary, #20221D);
-  border-bottom-color: var(--primary-500, #3b82f6);
+  border-bottom-color: var(--primary-500);
 }
 
 .plugins-tab-panel {

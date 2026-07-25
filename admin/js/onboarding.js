@@ -17,6 +17,8 @@ const onboarding = {
     resumeHandled: false,
     aiMode: 'chat',
 
+    hostingWizard: null,
+
     init() {
         if (!document.querySelector('.onboarding-page')) return;
 
@@ -148,17 +150,6 @@ const onboarding = {
             e.preventDefault();
             this.saveSiteInfo();
         });
-        document.querySelectorAll('input[name="onboarding-public-mode"]').forEach((input) => {
-            input.addEventListener('change', () => {
-                const wrap = document.getElementById('onboarding-public-url-wrap');
-                const mode = document.querySelector('input[name="onboarding-public-mode"]:checked');
-                if (wrap) wrap.style.display = mode && mode.value !== 'none' ? '' : 'none';
-            });
-        });
-        const cmsUrlInput = document.getElementById('onboarding-cms-url');
-        if (cmsUrlInput && !cmsUrlInput.value) {
-            cmsUrlInput.value = window.location.origin;
-        }
         document.getElementById('onboarding-ai-provider')?.addEventListener('change', () => {
             this.updateAiProviderFields();
             this.aiTestPassed = false;
@@ -217,6 +208,7 @@ const onboarding = {
         }
 
         if (step === 1) this.renderInstallContext();
+        if (step === 2) this.initHostingWizard();
         if (step === 3 && this.starterTemplate) this.highlightStarter(this.starterTemplate);
         if (step === 4) this.initAiWizard();
 
@@ -371,6 +363,20 @@ const onboarding = {
         return null;
     },
 
+    initHostingWizard() {
+        const mount = document.getElementById('onboarding-hosting-wizard-mount');
+        if (!mount || !window.BirklyHostingWizard) return;
+        if (!this.hostingWizard) {
+            this.hostingWizard = window.BirklyHostingWizard.create(mount, {
+                id: 'onboarding-hosting-wizard',
+                mode: 'onboarding',
+                autoLoad: true
+            });
+        } else {
+            this.hostingWizard.load().catch(() => {});
+        }
+    },
+
     async saveSiteInfo() {
         const form = document.getElementById('site-info-form');
         if (!form) return;
@@ -406,16 +412,18 @@ const onboarding = {
             });
             const data = await response.json();
             if (data.status === 'ok') {
-                const modeInput = document.querySelector('input[name="onboarding-public-mode"]:checked');
-                const hostingBody = {
-                    action: 'save',
-                    hosting: {
-                        cms_base_url: document.getElementById('onboarding-cms-url')?.value.trim() || window.location.origin,
-                        public_site_mode: modeInput ? modeInput.value : 'none',
-                        public_site_url: document.getElementById('onboarding-public-url')?.value.trim() || '',
+                const hostingPayload = this.hostingWizard
+                    ? this.hostingWizard.getHostingPayload()
+                    : {
+                        cms_base_url: window.location.origin,
+                        public_site_mode: 'none',
+                        public_site_url: '',
                         same_host_landing: 'admin',
                         strict_admin_host: true
-                    },
+                    };
+                const hostingBody = {
+                    action: 'save',
+                    hosting: hostingPayload,
                     _csrf: csrfToken
                 };
                 await fetch(Birkly.url('/api/hosting.php?action=save'), {

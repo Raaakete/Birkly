@@ -74,7 +74,7 @@
 
 .toolbar-search .search-input:focus {
   outline: none;
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 
@@ -96,7 +96,7 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 
@@ -112,7 +112,7 @@
 
 .search-box input:focus {
   outline: none;
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 
@@ -147,9 +147,9 @@
 }
 
 .view-options button.active {
-  background: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
   color: #fff;
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
 }
 
 /* Media Main (wrapper for media-grid) */

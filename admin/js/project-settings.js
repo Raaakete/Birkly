@@ -8,8 +8,11 @@
         currentPath: '',
         selectedFile: null,
         visitUrl: '',
+        publicSiteUrl: '',
         hasIndex: false,
-        dirty: false
+        dirty: false,
+        advancedMode: false,
+        simpleInitialized: false
     };
 
     function apiUrl(path) {
@@ -122,6 +125,94 @@
         var container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '<div class="error-state"><p>' + escapeHtml(message) + '</p></div>';
+    }
+
+    function renderSimpleFileList(entries) {
+        var container = document.getElementById('project-simple-file-list');
+        if (!container) return;
+
+        var files = (entries || []).filter(function (e) { return e.type === 'file'; });
+        if (!files.length) {
+            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No files yet. Upload to get started.</p></div>';
+            return;
+        }
+
+        container.innerHTML = '<ul class="project-file-list">' + files.map(function (entry) {
+            return '<li><span class="project-simple-file-name">' + escapeHtml(entry.name) + '</span>' +
+                ' <span class="project-file-size">' + formatBytes(entry.size) + '</span></li>';
+        }).join('') + '</ul>';
+    }
+
+    function refreshSimpleFiles() {
+        var container = document.getElementById('project-simple-file-list');
+        if (!container) return Promise.resolve();
+
+        container.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+        return loadFileTree('').then(function (payload) {
+            renderSimpleFileList((payload.data && payload.data.entries) || []);
+        }).catch(function (error) {
+            container.innerHTML = '<div class="error-state"><p>' + escapeHtml(error.message) + '</p></div>';
+        });
+    }
+
+    function loadPublicSiteUrl() {
+        return fetch(apiUrl('/api/hosting.php?action=get'), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (payload) {
+                if (payload.status !== 'ok' || !payload.data) return;
+                var hosting = payload.data.hosting || {};
+                var mode = hosting.public_site_mode || 'none';
+                var url = hosting.public_site_url || '';
+                if (mode === 'project' && !url) {
+                    url = (hosting.cms_base_url || window.location.origin).replace(/\/$/, '') + '/project/';
+                }
+                state.publicSiteUrl = mode !== 'none' ? url : '';
+                var link = document.getElementById('project-visit-public-link');
+                if (link) {
+                    if (state.publicSiteUrl) {
+                        link.href = state.publicSiteUrl;
+                        link.hidden = false;
+                    } else {
+                        link.hidden = true;
+                    }
+                }
+            })
+            .catch(function () { /* optional */ });
+    }
+
+    function setAdvancedMode(enabled) {
+        state.advancedMode = !!enabled;
+        var panel = document.getElementById('project-advanced-panel');
+        if (panel) panel.hidden = !state.advancedMode;
+        if (state.advancedMode) {
+            loadOverview();
+            refreshFiles();
+            loadActivity();
+        }
+    }
+
+    function bindSimpleEvents() {
+        if (state.simpleInitialized) return;
+        state.simpleInitialized = true;
+
+        var toggle = document.getElementById('project-advanced-editor-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', function () {
+                setAdvancedMode(toggle.checked);
+            });
+        }
+
+        var uploadBtn = document.getElementById('project-simple-upload-btn');
+        var uploadInput = document.getElementById('project-simple-upload-input');
+        if (uploadBtn && uploadInput) {
+            uploadBtn.addEventListener('click', function () {
+                uploadInput.click();
+            });
+            uploadInput.addEventListener('change', function () {
+                uploadFiles(uploadInput.files);
+                uploadInput.value = '';
+            });
+        }
     }
 
     function clearFilePreview() {
@@ -350,6 +441,7 @@
 
         Promise.all(uploads).then(function () {
             refreshFiles();
+            refreshSimpleFiles();
             loadActivity();
         }).catch(function (error) {
             alert(error.message);
@@ -550,9 +642,14 @@
         }
 
         bindEvents();
-        loadOverview();
-        refreshFiles();
-        loadActivity();
+        bindSimpleEvents();
+        loadPublicSiteUrl();
+        refreshSimpleFiles();
+
+        var toggle = document.getElementById('project-advanced-editor-toggle');
+        if (toggle && toggle.checked) {
+            setAdvancedMode(true);
+        }
     }
 
     window.initProjectSettings = initProjectSettings;

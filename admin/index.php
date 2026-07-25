@@ -364,6 +364,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     </div>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-wizard.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/onboarding.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
 </body>
 </html>

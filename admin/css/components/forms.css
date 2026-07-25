@@ -55,7 +55,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--primary-500, #3b82f6);
+  border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   transform: translateY(-1px);
 }
@@ -63,10 +63,13 @@
 /* Note: Automatic :valid state styling removed to prevent permanent success indicators.
    Success styling should only be applied explicitly via .form-group--success or .form-group.success classes. */
 
-/* Input Invalid State */
-.input:invalid:not(:placeholder-shown):not(:focus),
-.form-group input:invalid:not(:placeholder-shown):not(:focus),
-.form-group textarea:invalid:not(:placeholder-shown):not(:focus) {
+/* Input Invalid State — only after form validation (submit/blur) */
+form.was-validated .input:invalid:not(:placeholder-shown):not(:focus),
+form.submitted .input:invalid:not(:placeholder-shown):not(:focus),
+form.was-validated .form-group input:invalid:not(:placeholder-shown):not(:focus),
+form.submitted .form-group input:invalid:not(:placeholder-shown):not(:focus),
+form.was-validated .form-group textarea:invalid:not(:placeholder-shown):not(:focus),
+form.submitted .form-group textarea:invalid:not(:placeholder-shown):not(:focus) {
   border-color: var(--error-700, #b91c1c);
 }
 
@@ -288,7 +291,7 @@ select,
   cursor: pointer;
   margin: 0;
   flex-shrink: 0;
-  accent-color: var(--primary-500, #3b82f6);
+  accent-color: var(--primary-500);
 }
 
 /* Radio Label */
@@ -308,7 +311,7 @@ select,
   cursor: pointer;
   margin: 0;
   flex-shrink: 0;
-  accent-color: var(--primary-500, #3b82f6);
+  accent-color: var(--primary-500);
 }
 
 /* Form Text (helper text) */
@@ -339,8 +342,8 @@ select,
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark {
-  background: var(--primary-500, #3b82f6);
-  border-color: var(--primary-500, #3b82f6);
+  background: var(--primary-500);
+  border-color: var(--primary-500);
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
