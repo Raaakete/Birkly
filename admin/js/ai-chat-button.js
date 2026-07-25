@@ -13,6 +13,9 @@
     let chatMessages = [];
     let pendingApprovals = [];
     let chatView = 'messages';
+    let activeChatAbortController = null;
+    let lastFailedMessage = null;
+    let isChatRequestInFlight = false;
 
     // Storage keys
     const STORAGE_KEY_CONVERSATION = 'ai_chat_conversation_id';
@@ -28,6 +31,7 @@
         createFloatingButton();
         loadApprovalQueue();
         setInterval(loadApprovalQueue, 30000);
+        injectQuickActionChips();
 
         window.addEventListener('birkly:ai-connection-changed', function(event) {
             const detail = event.detail || {};
@@ -333,16 +337,20 @@
                     <div class="loading">Loading approvals...</div>
                 </div>
                 <div class="ai-chat-input-container">
+                    <div class="ai-chat-quick-actions" id="ai-chat-quick-actions" hidden></div>
                     <div class="ai-chat-input-wrapper">
                         <textarea 
                             id="ai-chat-input" 
                             placeholder="Ask the AI to create or edit content..."
                             rows="2"
                         ></textarea>
-                        <button class="btn btn-primary" id="ai-chat-send-btn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button class="btn btn-primary" id="ai-chat-send-btn" type="button" aria-label="Send message">
+                            <svg class="ai-chat-send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="22" y1="2" x2="11" y2="13"></line>
                                 <polyline points="22 2 15 22 11 13 2 9 22 2"></polyline>
+                            </svg>
+                            <svg class="ai-chat-cancel-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                                <rect x="6" y="6" width="12" height="12" rx="1"></rect>
                             </svg>
                         </button>
                     </div>
@@ -359,7 +367,13 @@
         // Setup event listeners
         document.getElementById('ai-chat-close-btn')?.addEventListener('click', hideChatWindow);
         document.getElementById('ai-chat-fullscreen-btn')?.addEventListener('click', toggleFullscreen);
-        document.getElementById('ai-chat-send-btn')?.addEventListener('click', sendChatMessage);
+        document.getElementById('ai-chat-send-btn')?.addEventListener('click', function() {
+            if (isChatRequestInFlight) {
+                cancelChatRequest();
+            } else {
+                sendChatMessage();
+            }
+        });
         document.getElementById('ai-chat-input')?.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -408,6 +422,7 @@
         renderConnectionDropdown();
 
         chatWindow.style.display = 'flex';
+        renderInChatQuickActions();
 
         if (availableConnections.length === 0) {
             showNoConnectionMessage();
@@ -586,106 +601,394 @@
         }
     }
 
-    // Send chat message
-    async function sendChatMessage() {
+    // Collect current admin page context for AI (P39-M11)
+    function collectPageContext() {
+        const params = new URLSearchParams(window.location.search);
+        const route = params.get('page') || '';
+        const context = {
+            route: route,
+            collection: params.get('collection') || window.collectionSlug || '',
+            entry_id: params.get('entry') || '',
+            sub_collection: params.get('sub_collection') || '',
+            sub_entry_id: params.get('sub_entry') || '',
+            field_names: []
+        };
+
+        const entryIdInput = document.querySelector('input[name="entry_id"]');
+        if (entryIdInput && entryIdInput.value) {
+            context.entry_id = entryIdInput.value;
+        }
+
+        const collectionInput = document.querySelector('input[name="collection"]');
+        if (collectionInput && collectionInput.value) {
+            context.collection = collectionInput.value;
+        }
+
+        document.querySelectorAll('.field-block[data-field-name]').forEach(function(el) {
+            const name = el.getAttribute('data-field-name');
+            if (name) {
+                context.field_names.push(name);
+            }
+        });
+
+        if (context.field_names.length === 0 && Array.isArray(window.collectionFields)) {
+            context.field_names = window.collectionFields
+                .map(function(f) { return f && f.name ? f.name : ''; })
+                .filter(Boolean);
+        }
+
+        return context;
+    }
+
+    function setSendButtonStreaming(streaming) {
+        const btn = document.getElementById('ai-chat-send-btn');
+        if (!btn) return;
+        btn.classList.toggle('ai-chat-send-btn--streaming', streaming);
+        btn.setAttribute('aria-label', streaming ? 'Cancel response' : 'Send message');
+        btn.title = streaming ? 'Cancel' : 'Send';
+        const sendIcon = btn.querySelector('.ai-chat-send-icon');
+        const cancelIcon = btn.querySelector('.ai-chat-cancel-icon');
+        if (sendIcon) sendIcon.style.display = streaming ? 'none' : '';
+        if (cancelIcon) cancelIcon.style.display = streaming ? '' : 'none';
+    }
+
+    function cancelChatRequest() {
+        if (activeChatAbortController) {
+            activeChatAbortController.abort();
+            activeChatAbortController = null;
+        }
+        isChatRequestInFlight = false;
+        setSendButtonStreaming(false);
+        addChatMessage('system', 'Request cancelled.');
+    }
+
+    function updateStreamingMessage(messageId, content, isComplete) {
+        const messageEl = document.getElementById(messageId);
+        if (!messageEl) return;
+        const contentEl = messageEl.querySelector('.ai-chat-message-content');
+        if (!contentEl) return;
+        contentEl.innerHTML = renderMarkdown(content);
+        if (isComplete) {
+            messageEl.classList.remove('ai-chat-message-streaming');
+        }
+        const messages = document.getElementById('ai-chat-messages');
+        if (messages) {
+            messages.scrollTop = messages.scrollHeight;
+        }
+    }
+
+    function handleChatApiResult(result, assistantMessageId) {
+        if (!result || (result.status !== 'ok' && result.status !== 'partial')) {
+            const errorMsg = result?.message || result?.error || result?.data?.message || 'Unknown error';
+            if (assistantMessageId) {
+                removeChatMessage(assistantMessageId);
+            }
+            addChatMessageWithRetry('error', 'Error: ' + errorMsg);
+            return;
+        }
+
+        const responseText = result.data.response || result.data.message || '';
+        if (assistantMessageId) {
+            updateStreamingMessage(assistantMessageId, responseText, true);
+            if (responseText) {
+                chatMessages.push({ role: 'assistant', content: responseText });
+                saveChatState();
+            }
+        } else if (responseText) {
+            addChatMessage('assistant', responseText);
+        }
+
+        if (result.status === 'partial' && result.data.has_errors) {
+            const failedActions = result.data.execution_results?.filter(function(r) { return !r.success; }) || [];
+            if (failedActions.length > 0) {
+                addChatMessage('system', 'Warning: ' + failedActions.length + ' action(s) failed. Check console for details.');
+                console.error('Failed actions:', failedActions);
+            }
+        }
+
+        if (result.data.requires_approval && result.data.actions_created > 0) {
+            addChatMessage('system', result.data.actions_created + ' action(s) pending approval. Open the Approvals tab to review.');
+            if (result.data.approvals && result.data.approvals.length > 0) {
+                result.data.approvals.forEach(function(approval) {
+                    addApprovalCard(approval);
+                });
+            }
+            loadApprovalQueue();
+        }
+
+        if (!result.data.requires_approval && result.data.actions_executed > 0) {
+            const successCount = result.data.execution_results?.filter(function(r) { return r.success; }).length || 0;
+            if (successCount > 0) {
+                addChatMessage('system', successCount + ' action(s) executed successfully.');
+            }
+        }
+    }
+
+    async function parseSseChatResponse(response, assistantMessageId) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let streamedContent = '';
+        let finalResult = null;
+
+        while (true) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+
+            let eventEnd;
+            while ((eventEnd = buffer.indexOf('\n\n')) !== -1) {
+                const rawEvent = buffer.slice(0, eventEnd);
+                buffer = buffer.slice(eventEnd + 2);
+                const lines = rawEvent.split('\n');
+                let eventName = 'message';
+                let dataLine = '';
+                lines.forEach(function(line) {
+                    if (line.startsWith('event:')) {
+                        eventName = line.slice(6).trim();
+                    } else if (line.startsWith('data:')) {
+                        dataLine += line.slice(5).trim();
+                    }
+                });
+                if (!dataLine) continue;
+                let payload;
+                try {
+                    payload = JSON.parse(dataLine);
+                } catch (e) {
+                    continue;
+                }
+                if (eventName === 'token' && payload.content) {
+                    streamedContent += payload.content;
+                    updateStreamingMessage(assistantMessageId, streamedContent, false);
+                } else if (eventName === 'done') {
+                    finalResult = payload;
+                }
+            }
+        }
+
+        return finalResult;
+    }
+
+    // Send chat message (supports streaming, cancel, retry — P39-M12)
+    async function sendChatMessage(messageOverride) {
         if (!currentConnection) {
             showError('No connection selected');
             return;
         }
-        
+
         const input = document.getElementById('ai-chat-input');
-        const message = input?.value.trim();
+        const message = (typeof messageOverride === 'string' ? messageOverride : input?.value || '').trim();
         if (!message) return;
-        
-        // Add user message to chat
+
+        lastFailedMessage = null;
         addChatMessage('user', message);
-        input.value = '';
-        
-        // Show loading
-        const loadingId = addChatMessage('assistant', 'Thinking...', true);
-        
+        if (input && typeof messageOverride !== 'string') {
+            input.value = '';
+        }
+
+        const assistantMessageId = addChatMessage('assistant', '', true);
+        const messageEl = document.getElementById(assistantMessageId);
+        if (messageEl) {
+            messageEl.classList.add('ai-chat-message-streaming');
+            const contentEl = messageEl.querySelector('.ai-chat-message-content');
+            if (contentEl) {
+                contentEl.innerHTML = '<div class="ai-chat-loading">Thinking...</div>';
+            }
+        }
+
+        activeChatAbortController = new AbortController();
+        isChatRequestInFlight = true;
+        setSendButtonStreaming(true);
+
         try {
             const response = await fetch('/api/ai_chat.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                signal: activeChatAbortController.signal,
                 body: JSON.stringify({
                     action: 'chat',
                     ai_connection_id: currentConnection.id,
                     message: message,
                     conversation_id: conversationId,
+                    page_context: collectPageContext(),
+                    stream: true,
                     _csrf: csrfToken
                 })
             });
-            
-            // Check if response is OK
+
             if (!response.ok) {
                 const errorText = await response.text();
-                removeChatMessage(loadingId);
-                addChatMessage('error', `HTTP Error ${response.status}: ${errorText || 'Server error'}`);
-                console.error('HTTP Error:', response.status, errorText);
+                removeChatMessage(assistantMessageId);
+                lastFailedMessage = message;
+                addChatMessageWithRetry('error', 'HTTP Error ' + response.status + ': ' + (errorText || 'Server error'));
                 return;
             }
-            
-            // Get raw text first to debug
-            const responseText = await response.text();
-            
-            // Try to parse JSON
+
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
             let result;
-            try {
-                result = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error('JSON Parse Error:', parseError);
-                console.error('Response text:', responseText);
-                removeChatMessage(loadingId);
-                addChatMessage('error', 'Invalid response from server. Check console for details.');
-                return;
-            }
-            
-            // Remove loading message
-            removeChatMessage(loadingId);
-            
-            if (result && (result.status === 'ok' || result.status === 'partial')) {
-                // Show the AI response even if status is 'partial' (some actions may have failed)
-                addChatMessage('assistant', result.data.response || result.data.message || 'No response from AI');
-                
-                if (result.status === 'partial' && result.data.has_errors) {
-                    // Show warning if some actions failed
-                    const failedActions = result.data.execution_results?.filter(r => !r.success) || [];
-                    if (failedActions.length > 0) {
-                        addChatMessage('system', 
-                            `Warning: ${failedActions.length} action(s) failed. Check console for details.`);
-                        console.error('Failed actions:', failedActions);
-                    }
-                }
-                
-                if (result.data.requires_approval && result.data.actions_created > 0) {
-                    addChatMessage('system',
-                        `${result.data.actions_created} action(s) pending approval. Open the Approvals tab to review.`);
-                    if (result.data.approvals && result.data.approvals.length > 0) {
-                        result.data.approvals.forEach(approval => {
-                            addApprovalCard(approval);
-                        });
-                    }
-                }
-                
-                if (!result.data.requires_approval && result.data.actions_executed > 0) {
-                    // Show success message if actions were executed directly
-                    const successCount = result.data.execution_results?.filter(r => r.success).length || 0;
-                    if (successCount > 0) {
-                        addChatMessage('system', 
-                            `${successCount} action(s) executed successfully.`);
-                    }
+
+            if (contentType.includes('text/event-stream')) {
+                result = await parseSseChatResponse(response, assistantMessageId);
+                if (!result) {
+                    removeChatMessage(assistantMessageId);
+                    lastFailedMessage = message;
+                    addChatMessageWithRetry('error', 'Stream ended without a response.');
+                    return;
                 }
             } else {
-                const errorMsg = result?.message || result?.error || result?.data?.message || 'Unknown error';
-                addChatMessage('error', 'Error: ' + errorMsg);
-                console.error('API Error:', result);
+                const responseText = await response.text();
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    removeChatMessage(assistantMessageId);
+                    lastFailedMessage = message;
+                    addChatMessageWithRetry('error', 'Invalid response from server.');
+                    return;
+                }
             }
+
+            handleChatApiResult(result, assistantMessageId);
         } catch (error) {
+            if (error.name === 'AbortError') {
+                removeChatMessage(assistantMessageId);
+                return;
+            }
             console.error('Error sending message:', error);
-            removeChatMessage(loadingId);
-            addChatMessage('error', 'Error sending message: ' + error.message);
+            removeChatMessage(assistantMessageId);
+            lastFailedMessage = message;
+            addChatMessageWithRetry('error', 'Error sending message: ' + error.message);
+        } finally {
+            activeChatAbortController = null;
+            isChatRequestInFlight = false;
+            setSendButtonStreaming(false);
         }
+    }
+
+    function retryLastMessage() {
+        if (!lastFailedMessage) return;
+        const message = lastFailedMessage;
+        lastFailedMessage = null;
+        sendChatMessage(message);
+    }
+
+    function addChatMessageWithRetry(role, content) {
+        const messageId = addChatMessage(role, content, false, true);
+        if (!messageId || !lastFailedMessage) return messageId;
+        const messageEl = document.getElementById(messageId);
+        if (!messageEl) return messageId;
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'ai-chat-retry-btn';
+        retryBtn.textContent = 'Retry';
+        retryBtn.addEventListener('click', retryLastMessage);
+        messageEl.querySelector('.ai-chat-message-content')?.appendChild(retryBtn);
+        return messageId;
+    }
+
+    function getQuickActionsForPage() {
+        const params = new URLSearchParams(window.location.search);
+        const page = params.get('page') || '';
+        const collection = params.get('collection') || window.collectionSlug || '';
+        const entryId = params.get('entry') || document.querySelector('input[name="entry_id"]')?.value || '';
+
+        if (page === 'entry-editor' && collection) {
+            const actions = [
+                { label: 'Summarize entry', prompt: 'Summarize this entry in 2-3 sentences.' },
+                { label: 'Suggest title', prompt: 'Suggest a clearer, SEO-friendly title for this entry.' },
+                { label: 'Fix grammar', prompt: 'Fix grammar and spelling in the main text fields of this entry. List suggested changes before applying.' }
+            ];
+            if (entryId) {
+                actions.push({ label: 'Improve excerpt', prompt: 'Write a short excerpt or meta description for this entry.' });
+            } else {
+                actions.unshift({ label: 'Draft from outline', prompt: 'Help me draft this new entry. Ask what topic I want, then suggest field content.' });
+            }
+            return actions;
+        }
+
+        if (page === 'entries' && collection) {
+            return [
+                { label: 'Summarize collection', prompt: 'Summarize the entries in this collection. Highlight themes and gaps.' },
+                { label: 'Suggest entries', prompt: 'Suggest 5 new entry ideas for this collection with titles and brief outlines.' },
+                { label: 'Find duplicates', prompt: 'Check this collection for possible duplicate or very similar entries.' }
+            ];
+        }
+
+        return [];
+    }
+
+    function renderInChatQuickActions() {
+        const container = document.getElementById('ai-chat-quick-actions');
+        if (!container) return;
+        const actions = getQuickActionsForPage();
+        if (actions.length === 0) {
+            container.hidden = true;
+            container.innerHTML = '';
+            return;
+        }
+        container.hidden = false;
+        container.innerHTML = actions.map(function(action) {
+            return '<button type="button" class="ai-chat-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
+        }).join('');
+        container.querySelectorAll('.ai-chat-quick-chip').forEach(function(chip) {
+            chip.addEventListener('click', function() {
+                runQuickAction(chip.getAttribute('data-prompt') || '');
+            });
+        });
+    }
+
+    function injectQuickActionChips() {
+        const params = new URLSearchParams(window.location.search);
+        const page = params.get('page') || '';
+        if (page !== 'entry-editor' && page !== 'entries') {
+            return;
+        }
+
+        const actions = getQuickActionsForPage();
+        if (actions.length === 0) return;
+
+        const bar = document.querySelector('.main-actions-bar') || document.querySelector('.page-header');
+        if (!bar || document.getElementById('ai-page-quick-actions')) {
+            return;
+        }
+
+        const wrap = document.createElement('div');
+        wrap.id = 'ai-page-quick-actions';
+        wrap.className = 'ai-page-quick-actions';
+        wrap.setAttribute('role', 'group');
+        wrap.setAttribute('aria-label', 'AI quick actions');
+        wrap.innerHTML = actions.map(function(action) {
+            return '<button type="button" class="ai-chat-quick-chip ai-page-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
+        }).join('');
+
+        bar.appendChild(wrap);
+        wrap.querySelectorAll('.ai-page-quick-chip').forEach(function(chip) {
+            chip.addEventListener('click', function() {
+                runQuickAction(chip.getAttribute('data-prompt') || '');
+            });
+        });
+    }
+
+    async function runQuickAction(prompt) {
+        if (!prompt) return;
+        await loadConnections();
+        await showChatWindow();
+        if (!currentConnection && availableConnections.length > 0) {
+            currentConnection = availableConnections[0];
+            if (!conversationId) {
+                conversationId = 'conv_' + Date.now();
+            }
+            updateConnectionDropdownValue();
+            saveChatState();
+        }
+        if (!currentConnection) {
+            showError('Select an AI connection first');
+            return;
+        }
+        const input = document.getElementById('ai-chat-input');
+        if (input) {
+            input.value = prompt;
+        }
+        sendChatMessage(prompt);
     }
 
     // Restore chat state from localStorage and server history when available
@@ -1076,7 +1379,11 @@
         approveAction,
         rejectAction,
         switchChatView,
-        loadApprovalQueue
+        loadApprovalQueue,
+        runQuickAction,
+        collectPageContext,
+        cancelChatRequest,
+        retryLastMessage
     };
 
 })();
