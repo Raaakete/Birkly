@@ -10,7 +10,7 @@
         const hasOverflow = viewport.scrollWidth > viewport.clientWidth + 1;
         const scrolled = viewport.scrollLeft > 1;
 
-        table.classList.toggle('is-viewport-scrolled', hasOverflow && scrolled);
+        table.classList.toggle('is-actions-overlapping', hasOverflow && scrolled);
     }
 
     function bindTable(table) {
