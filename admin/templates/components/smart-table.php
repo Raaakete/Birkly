@@ -119,39 +119,38 @@ $getSubEntryCount = function($entry) {
 if (!empty($entries)): ?>
     <div class="entries-smart-table <?= htmlspecialchars($tableClass) ?>" <?= $options['table_data_attrs'] ?? '' ?>>
         <div class="table-viewport">
-            <div class="table-head">
-                <div class="head-row" role="row">
-                    <?php if ($showCheckbox): ?>
-                        <div class="head-cell head-checkbox" role="columnheader" aria-label="<?= __('admin.select_all') ?>">
-                            <input type="checkbox" id="select-all-<?= htmlspecialchars($checkboxIdPrefix) ?>s" class="<?= $checkboxIdPrefix === 'sub-entry' ? 'select-all-sub-entries' : '' ?>" <?= $options['checkbox_data_attrs'] ?? '' ?> aria-label="<?= __('admin.select_all_entries') ?>">
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if ($showDrag): ?>
-                        <div class="head-cell head-drag" role="columnheader" aria-label="<?= __('admin.drag_to_reorder') ?>"></div>
-                    <?php endif; ?>
-                    
-                    <?php if ($showSubEntries): ?>
-                        <div class="head-cell head-sub-entries" role="columnheader" style="width: 60px;" aria-label="Sub-entries count"></div>
-                    <?php endif; ?>
-                    
-                    <div class="head-cell head-title" role="columnheader"><?= __('admin.title') ?></div>
-                    <div class="head-cell head-status" role="columnheader"><?= __('admin.status') ?></div>
-                    
-                    <div class="fields-head-region">
+            <table class="smart-table">
+                <thead class="table-head">
+                    <tr class="head-row">
+                        <?php if ($showCheckbox): ?>
+                            <th class="head-cell head-checkbox" scope="col" aria-label="<?= __('admin.select_all') ?>">
+                                <input type="checkbox" id="select-all-<?= htmlspecialchars($checkboxIdPrefix) ?>s" class="<?= $checkboxIdPrefix === 'sub-entry' ? 'select-all-sub-entries' : '' ?>" <?= $options['checkbox_data_attrs'] ?? '' ?> aria-label="<?= __('admin.select_all_entries') ?>">
+                            </th>
+                        <?php endif; ?>
+
+                        <?php if ($showDrag): ?>
+                            <th class="head-cell head-drag" scope="col" aria-label="<?= __('admin.drag_to_reorder') ?>"></th>
+                        <?php endif; ?>
+
+                        <?php if ($showSubEntries): ?>
+                            <th class="head-cell head-sub-entries" scope="col" aria-label="Sub-entries count"></th>
+                        <?php endif; ?>
+
+                        <th class="head-cell head-title" scope="col"><?= __('admin.title') ?></th>
+                        <th class="head-cell head-status" scope="col"><?= __('admin.status') ?></th>
+
                         <?php foreach ($fields as $field): ?>
-                            <div class="head-cell head-field" role="columnheader" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
+                            <th class="head-cell head-field" scope="col" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
                                 <?= htmlspecialchars($field['name'] ?? $field['label'] ?? '') ?>
-                            </div>
+                            </th>
                         <?php endforeach; ?>
-                    </div>
-                    
-                    <div class="head-cell head-actions" role="columnheader"><?= __('admin.actions') ?></div>
-                </div>
-            </div>
-            
-            <div class="table-body">
-                <?php foreach ($entries as $entry): ?>
+
+                        <th class="head-cell head-actions" scope="col"><?= __('admin.actions') ?></th>
+                    </tr>
+                </thead>
+
+                <tbody class="table-body">
+                    <?php foreach ($entries as $entry): ?>
                     <?php
                     $entryId = $entry['id'] ?? '';
                     $title = $getTitle($entry);
@@ -194,15 +193,15 @@ if (!empty($entries)): ?>
                         $reviewInfo = ' title="Reviewed by: ' . htmlspecialchars($reviewedBy) . '"';
                     }
                     ?>
-                    <div class="table-row <?= htmlspecialchars($rowClass) ?>" role="row" data-entry-id="<?= htmlspecialchars($entryId) ?>" <?= $options['row_data_attrs'] ?? '' ?>>
+                    <tr class="table-row <?= htmlspecialchars($rowClass) ?>" data-entry-id="<?= htmlspecialchars($entryId) ?>" <?= $options['row_data_attrs'] ?? '' ?>>
                         <?php if ($showCheckbox): ?>
-                            <div class="cell cell-checkbox" role="cell" aria-label="<?= __('admin.select_entry') ?>">
+                            <td class="cell cell-checkbox" aria-label="<?= __('admin.select_entry') ?>">
                                 <input type="checkbox" class="<?= htmlspecialchars($checkboxClass) ?>" value="<?= htmlspecialchars($entryId) ?>" <?= $options['checkbox_data_attrs'] ?? '' ?> aria-label="<?= __('admin.select_entry') ?> <?= htmlspecialchars($title) ?>">
-                            </div>
+                            </td>
                         <?php endif; ?>
-                        
+
                         <?php if ($showDrag): ?>
-                            <div class="cell cell-drag" role="cell" draggable="true" aria-label="<?= __('admin.drag_to_reorder') ?>">
+                            <td class="cell cell-drag" draggable="true" aria-label="<?= __('admin.drag_to_reorder') ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <circle cx="9" cy="12" r="1"></circle>
                                     <circle cx="9" cy="5" r="1"></circle>
@@ -211,14 +210,14 @@ if (!empty($entries)): ?>
                                     <circle cx="20" cy="5" r="1"></circle>
                                     <circle cx="20" cy="19" r="1"></circle>
                                 </svg>
-                            </div>
+                            </td>
                         <?php endif; ?>
-                        
+
                         <?php if ($showSubEntries): ?>
-                            <div class="cell cell-sub-entries" role="cell" style="width: 60px; text-align: center;">
+                            <td class="cell cell-sub-entries">
                                 <?php if ($subEntryCount > 0): ?>
-                                    <a href="<?= htmlspecialchars($titleUrl) ?>" 
-                                       class="sub-entry-count-badge" 
+                                    <a href="<?= htmlspecialchars($titleUrl) ?>"
+                                       class="sub-entry-count-badge"
                                        title="<?= $subEntryCount ?> sub-entries"
                                        style="display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 24px; padding: 0 8px; background: var(--primary-100, #e0e7ff); color: var(--primary-700, #4338ca); border-radius: 12px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.2s;">
                                         <span style="margin-right: 2px;">+</span><?= $subEntryCount ?>
@@ -226,16 +225,16 @@ if (!empty($entries)): ?>
                                 <?php else: ?>
                                     <span style="color: var(--text-tertiary, #9ca3af); font-size: 12px;">–</span>
                                 <?php endif; ?>
-                            </div>
+                            </td>
                         <?php endif; ?>
-                        
-                        <div class="cell cell-title" role="cell">
+
+                        <td class="cell cell-title">
                             <a href="<?= htmlspecialchars($titleUrl) ?>" class="title-text">
                                 <?= htmlspecialchars($title) ?>
                             </a>
-                        </div>
-                        
-                        <div class="cell cell-status" role="cell">
+                        </td>
+
+                        <td class="cell cell-status">
                             <span class="status-badge <?= htmlspecialchars($statusClass) ?>" data-status="<?= htmlspecialchars($status) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
                                 <?= htmlspecialchars($statusLabel) ?>
                             </span>
@@ -247,28 +246,27 @@ if (!empty($entries)): ?>
                                     </svg>
                                 </div>
                             <?php endif; ?>
-                        </div>
-                        
-                        <div class="fields-region">
-                            <?php foreach ($fields as $field): ?>
-                                <div class="cell cell-field" role="cell" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
-                                    <?php
-                                    $fieldName = $field['name'] ?? '';
-                                    $fieldValue = '';
-                                    if (isset($entry['__cells'][$fieldName . '_html'])) {
-                                        $fieldValue = $entry['__cells'][$fieldName . '_html'];
-                                    } elseif (isset($entry['__cells'][$fieldName])) {
-                                        $fieldValue = htmlspecialchars($entry['__cells'][$fieldName]);
-                                    } elseif (isset($entry[$fieldName])) {
-                                        $fieldValue = htmlspecialchars($entry[$fieldName]);
-                                    }
-                                    echo $fieldValue ?: '<span class="ft-list-empty" aria-label="' . __('admin.no_value') . '">–</span>';
-                                    ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        
-                        <div class="cell cell-actions" role="cell">
+                        </td>
+
+                        <?php foreach ($fields as $field): ?>
+                            <td class="cell cell-field" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
+                                <?php
+                                $fieldName = $field['name'] ?? '';
+                                $fieldValue = '';
+                                if (isset($entry['__cells'][$fieldName . '_html'])) {
+                                    $fieldValue = $entry['__cells'][$fieldName . '_html'];
+                                } elseif (isset($entry['__cells'][$fieldName])) {
+                                    $fieldValue = htmlspecialchars($entry['__cells'][$fieldName]);
+                                } elseif (isset($entry[$fieldName])) {
+                                    $fieldValue = htmlspecialchars($entry[$fieldName]);
+                                }
+                                echo $fieldValue ?: '<span class="ft-list-empty" aria-label="' . __('admin.no_value') . '">–</span>';
+                                ?>
+                            </td>
+                        <?php endforeach; ?>
+
+                        <td class="cell cell-actions">
+                            <div class="cell-actions-inner">
                             <a class="btn-icon btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -301,10 +299,12 @@ if (!empty($entries)): ?>
                                     </button>
                                 <?php endif; ?>
                             <?php endif; ?>
-                        </div>
-                    </div>
+                            </div>
+                        </td>
+                    </tr>
                 <?php endforeach; ?>
-            </div>
+                </tbody>
+            </table>
         </div>
     </div>
 <?php else: ?>
