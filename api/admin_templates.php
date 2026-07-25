@@ -845,6 +845,52 @@ function getCollectionEditorData() {
     ];
 }
 
+/**
+ * Rewrite fieldtype HTML input names/ids for a language tab (en[field]).
+ */
+function birkly_admin_multilang_field_html(string $html, string $fieldName, string $langCode): string
+{
+    if ($fieldName === '' || $html === '') {
+        return $html;
+    }
+
+    $newName = $langCode . '[' . $fieldName . ']';
+    $quoted = preg_quote($fieldName, '/');
+    $html = preg_replace('/\bname=(["\'])' . $quoted . '\1/i', 'name=$1' . $newName . '$1', $html, 1);
+    $html = preg_replace('/\bname=(["\'])' . $quoted . '\[\]/', 'name=$1' . $newName . '[]', $html);
+    $html = preg_replace('/\bid=(["\'])field_' . $quoted . '\1/i', 'id=$1field_' . $langCode . '_' . $fieldName . '$1', $html, 1);
+
+    return $html;
+}
+
+/**
+ * Build per-language field payloads for the entry editor when multilanguage is enabled.
+ */
+function birkly_admin_build_language_fields(array $fields, array $entry, array $collectionData, bool $includeFieldHtml): array
+{
+    $languages = $collectionData['multilanguage']['languages'] ?? [];
+    if (empty($languages)) {
+        return [];
+    }
+
+    $languageFields = [];
+    foreach ($languages as $langCode) {
+        $langFields = [];
+        foreach ($fields as $f) {
+            $name = $f['name'] ?? '';
+            $langField = $f;
+            $langField['lang_value'] = $entry[$langCode][$name] ?? '';
+            if ($includeFieldHtml && !empty($f['html'])) {
+                $langField['html'] = birkly_admin_multilang_field_html($f['html'], $name, $langCode);
+            }
+            $langFields[] = $langField;
+        }
+        $languageFields[$langCode] = $langFields;
+    }
+
+    return $languageFields;
+}
+
 function getEntryEditorData($includeFieldHtml = false) {
     // Get collection and entry data from URL parameters
     $collectionSlug = $_GET['collection'] ?? null;
@@ -1458,6 +1504,17 @@ function getEntryEditorData($includeFieldHtml = false) {
         !empty($subCollectionSlug)
     );
     $payload['is_nested_sub_entry'] = $isNestedSubEntry;
+
+    $payload['multilanguage_enabled'] = !empty($collectionData['multilanguage']['enabled']);
+    $payload['multilanguage_languages'] = $collectionData['multilanguage']['languages'] ?? [];
+    if ($payload['multilanguage_enabled'] && !empty($payload['multilanguage_languages'])) {
+        $payload['language_fields'] = birkly_admin_build_language_fields(
+            $payload['fields'] ?? [],
+            $payload['entry'] ?? [],
+            $collectionData,
+            $includeFieldHtml
+        );
+    }
 
     require_once __DIR__ . '/../admin/template-helpers.php';
     $payload['breadcrumbs'] = build_entry_breadcrumbs($payload);
