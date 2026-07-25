@@ -85,169 +85,194 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="assets/birkly_favicon.svg">
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        body.auth-page {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background-global, var(--color-neutral-100, #f8f9f7));
         }
-        
-        .verify-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+        .auth-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius-m, 8px);
+            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
             padding: 3rem;
             width: 100%;
             max-width: 400px;
             margin: 2rem;
         }
-        
-        .verify-header {
+
+        .auth-card__header {
             text-align: center;
             margin-bottom: 2rem;
         }
-        
-        .verify-header h1 {
-            color: #2d3748;
+
+        .auth-card__header h1 {
+            color: var(--text-primary);
             margin: 0 0 0.5rem 0;
             font-size: 1.875rem;
             font-weight: 700;
         }
-        
-        .verify-header p {
-            color: #718096;
+
+        .auth-card__header p {
+            color: var(--text-secondary);
             margin: 0;
             font-size: 0.875rem;
         }
-        
-        .verify-form {
+
+        .auth-form {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
-        
-        .form-group {
+
+        .auth-form .form-group {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            margin-bottom: 0;
         }
-        
-        .form-group label {
+
+        .auth-form .form-group label {
             font-weight: 600;
-            color: #2d3748;
+            color: var(--text-primary);
             font-size: 0.875rem;
         }
-        
-        .form-group input {
+
+        .auth-form .form-group input {
             padding: 0.75rem 1rem;
-            border: 2px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             font-size: 1.5rem;
             text-align: center;
             letter-spacing: 0.5rem;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        
-        .form-group input:focus {
+
+        .auth-form .form-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--color-primary, var(--primary-500));
+            box-shadow: 0 0 0 3px rgba(124, 227, 191, 0.25);
         }
-        
-        .verify-button {
-            background: #667eea;
-            color: white;
+
+        .auth-form .verify-button {
+            background: var(--color-primary);
+            color: var(--color-darkest, #4a4d47);
             border: none;
             padding: 0.875rem 1.5rem;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background 0.2s;
         }
-        
-        .verify-button:hover {
-            background: #5a67d8;
+
+        .auth-form .verify-button:hover {
+            background: var(--color-primary-hover);
         }
-        
-        .verify-button:active {
-            background: #4c51bf;
+
+        .auth-form .verify-button:active {
+            background: var(--color-primary-active);
         }
-        
-        .error-message {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            border: 1px solid #feb2b2;
+
+        .auth-card .message {
+            margin-bottom: 1.5rem;
         }
-        
+
         .backup-code-toggle {
             text-align: center;
             margin-top: -1rem;
         }
-        
+
         .backup-code-toggle a {
-            color: #667eea;
+            color: var(--color-primary, var(--primary-600));
             text-decoration: none;
             font-size: 0.875rem;
             cursor: pointer;
+            font-weight: 500;
         }
-        
+
         .backup-code-toggle a:hover {
+            color: var(--primary-700);
             text-decoration: underline;
         }
-        
+
         .backup-code-help {
-            background: #edf2f7;
+            background: var(--primary-50);
+            border: 1px solid var(--primary-200);
             padding: 1rem;
             border-radius: 8px;
             font-size: 0.875rem;
-            color: #4a5568;
+            color: var(--text-secondary);
         }
-        
+
         .backup-code-help h4 {
             margin: 0 0 0.5rem 0;
             font-size: 0.875rem;
-            color: #2d3748;
+            color: var(--text-primary);
         }
-        
+
         .backup-code-help input {
             width: 100%;
             padding: 0.5rem;
-            border: 1px solid #cbd5e0;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             font-size: 0.875rem;
             font-family: monospace;
             text-align: center;
             letter-spacing: 0.25rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .auth-card__footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .auth-card__footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .auth-card__footer a:hover {
+            color: var(--color-primary, var(--primary-600));
         }
     </style>
 </head>
-<body>
-    <div class="verify-container">
-        <div class="verify-header">
+<body class="auth-page">
+    <div class="auth-card verify-container">
+        <div class="auth-card__header verify-header">
             <h1>Two-Factor Authentication</h1>
             <p>Enter the verification code from your authenticator app</p>
         </div>
         
         <?php if ($error): ?>
-            <div class="error-message">
-                <?= htmlspecialchars($error) ?>
+            <div class="message error" role="alert">
+                <div class="message-content">
+                    <p class="message-text"><?= htmlspecialchars($error) ?></p>
+                </div>
             </div>
         <?php endif; ?>
         
         <?php if ($success): ?>
-            <div class="success-message">
-                <?= htmlspecialchars($success) ?>
+            <div class="message success" role="status">
+                <div class="message-content">
+                    <p class="message-text"><?= htmlspecialchars($success) ?></p>
+                </div>
             </div>
         <?php endif; ?>
         
-        <form class="verify-form" method="POST" id="verify-form">
+        <form class="auth-form verify-form" method="POST" id="verify-form">
             <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
             <input type="hidden" name="use_backup_code" id="use_backup_code" value="0">
             
@@ -289,8 +314,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>
         
-        <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
-            <a href="login.php" style="color: #718096; text-decoration: none; font-size: 0.875rem;">Back to login</a>
+        <div class="auth-card__footer">
+            <a href="login.php">Back to login</a>
         </div>
     </div>
     

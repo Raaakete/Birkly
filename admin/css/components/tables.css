@@ -259,34 +259,7 @@
   background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
 }
 
-/* Status Badges */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-md, 0.5rem);
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.status-unpublished {
-  background: var(--warning-50, #fffbeb);
-  color: var(--warning-600, #d97706);
-}
-
-.status-published {
-  background: var(--success-50, #f0fdf4);
-  color: var(--success-600, #16a34a);
-}
-
-.status-archived {
-  background: var(--gray-100, #f3f4f6);
-  color: var(--gray-600, #4b5563);
-}
-
-/* Smart Table Status Badge Styles */
+/* Smart Table Status Badge Styles — compact pill in table cells */
 .entries-smart-table .cell-status .status-badge {
   display: inline-flex;
   padding: 2px 8px;
@@ -309,23 +282,23 @@
 
 .entries-smart-table .cell-status .status-badge.pending_review,
 .entries-smart-table .cell-status .status-badge.review-status.pending {
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffc107;
+  background: var(--warning-50, #fffbeb);
+  color: var(--warning-700, #b45309);
+  border: 1px solid var(--warning-200, #fde68a);
 }
 
 .entries-smart-table .cell-status .status-badge.approved,
 .entries-smart-table .cell-status .status-badge.review-status.approved {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #28a745;
+  background: var(--success-50, #f0fdf4);
+  color: var(--success-700, #15803d);
+  border: 1px solid var(--success-200, #bbf7d0);
 }
 
 .entries-smart-table .cell-status .status-badge.rejected,
 .entries-smart-table .cell-status .status-badge.review-status.rejected {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #dc3545;
+  background: var(--error-50, #fef2f2);
+  color: var(--error-700, #b91c1c);
+  border: 1px solid var(--error-200, #fecaca);
 }
 
 .entries-smart-table .cell-status {

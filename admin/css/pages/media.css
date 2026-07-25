@@ -374,24 +374,14 @@
   text-transform: capitalize;
 }
 
-/* Empty State */
-.empty-state {
+/* Media grid empty state */
+.media-grid .empty-state {
   grid-column: 1 / -1;
-  text-align: center;
-  padding: var(--space-8, 2rem);
-  color: var(--text-secondary, #72746F);
 }
 
-.empty-state h3 {
-  margin: 0 0 var(--space-2, 0.5rem) 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.empty-state p {
+.media-grid .empty-state__title {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 1.125rem;
 }
 
 /* Media Preview - For grid items only, not modal */

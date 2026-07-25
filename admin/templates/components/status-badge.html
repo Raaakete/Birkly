@@ -43,7 +43,7 @@ if ($reviewer) {
     $reviewInfo = ' title="Reviewed by: ' . htmlspecialchars($reviewedBy) . '"';
 }
 ?>
-<span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
+<span class="status-badge status-badge--<?= htmlspecialchars($status) ?> <?= htmlspecialchars($statusClass) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>"<?= $reviewInfo ?>>
     <?= htmlspecialchars($statusLabel) ?>
 </span>
 <?php if ($status === 'pending_review' && $reviewer): ?>

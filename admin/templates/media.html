@@ -14,22 +14,10 @@
     <div class="collection-actions-bar-right media-toolbar">
       <div class="media-view-toggle" role="group" aria-label="Media view">
         <button type="button" class="btn-icon" id="media-view-grid" data-media-view="grid" aria-label="Grid view" title="Grid view">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
+          <span data-icon="squares-four" data-icon-size="16" aria-hidden="true"></span>
         </button>
         <button type="button" class="btn-icon" id="media-view-list" data-media-view="list" aria-label="List view" title="List view">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <line x1="8" y1="6" x2="21" y2="6"></line>
-            <line x1="8" y1="12" x2="21" y2="12"></line>
-            <line x1="8" y1="18" x2="21" y2="18"></line>
-            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-          </svg>
+          <span data-icon="list" data-icon-size="16" aria-hidden="true"></span>
         </button>
       </div>
       <div class="toolbar-search">
@@ -64,16 +52,11 @@
     <aside class="media-sidebar">
       <div class="sidebar-content" id="folder-tree">
         <div class="folder-item all" data-media-folder="all">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2-2z"></path>
-            <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
-          </svg>
+          <span data-icon="archive" data-icon-size="16" aria-hidden="true"></span>
           <span>{translate 'admin.all_media'}</span>
         </div>
         <div class="folder-item root" data-media-folder="">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
-          </svg>
+          <span data-icon="folder-root" data-icon-size="16" aria-hidden="true"></span>
           <span>{translate 'admin.root_folder'}</span>
         </div>
         <div id="folder-list-container"></div>
@@ -90,7 +73,10 @@
         </div>
       </div>
       <div class="media-grid" id="media-grid">
-        <div class="media-loading">{translate 'admin.loading_media'}</div>
+        <div class="empty-state empty-state--loading media-loading" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <p class="empty-state__message">{translate 'admin.loading_media'}</p>
+        </div>
       </div>
     </main>
   </div>

@@ -202,14 +202,7 @@ if (!empty($entries)): ?>
 
                         <?php if ($showDrag): ?>
                             <td class="cell cell-drag" draggable="true" aria-label="<?= __('admin.drag_to_reorder') ?>">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <circle cx="9" cy="12" r="1"></circle>
-                                    <circle cx="9" cy="5" r="1"></circle>
-                                    <circle cx="9" cy="19" r="1"></circle>
-                                    <circle cx="20" cy="12" r="1"></circle>
-                                    <circle cx="20" cy="5" r="1"></circle>
-                                    <circle cx="20" cy="19" r="1"></circle>
-                                </svg>
+                                <?= birkly_icon('dots-six-vertical', ['size' => 16]) ?>
                             </td>
                         <?php endif; ?>
 
@@ -240,10 +233,7 @@ if (!empty($entries)): ?>
                             </span>
                             <?php if ($status === 'pending_review' && $reviewer): ?>
                                 <div class="reviewer-indicator" title="Assigned to: <?= htmlspecialchars($reviewer) ?>">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="12" cy="7" r="4"></circle>
-                                    </svg>
+                                    <?= birkly_icon('user', ['size' => 12]) ?>
                                 </div>
                             <?php endif; ?>
                         </td>
@@ -268,34 +258,22 @@ if (!empty($entries)): ?>
                         <td class="cell cell-actions">
                             <div class="cell-actions-inner">
                             <a class="btn-icon btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
+                                <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                             </a>
                             <?php if ($showDuplicateAction && $status !== 'trashed'): ?>
                                 <button type="button" class="btn-icon <?= htmlspecialchars($duplicateCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Duplicate <?= htmlspecialchars($title) ?>" title="Duplicate">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                        <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-                                        <rect x="4" y="4" width="11" height="11" rx="2"></rect>
-                                    </svg>
+                                    <?= birkly_icon('copy', ['size' => 16]) ?>
                                 </button>
                             <?php endif; ?>
                             <?php if ($showRestoreAction && $status === 'trashed'): ?>
                                 <button type="button" class="btn-icon <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Restore <?= htmlspecialchars($title) ?>" title="Restore">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                        <path d="M3 12a9 9 0 1 0 3-6.7"></path>
-                                        <polyline points="3 3 3 9 9 9"></polyline>
-                                    </svg>
+                                    <?= birkly_icon('arrow-counter-clockwise', ['size' => 16]) ?>
                                 </button>
                             <?php endif; ?>
                             <?php if ($deleteCallback): ?>
                                 <?php if ($status !== 'trashed'): ?>
                                     <button type="button" class="btn-icon btn-icon--danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= htmlspecialchars($deleteLabel) ?> <?= htmlspecialchars($title) ?>" title="<?= htmlspecialchars($deleteLabel) ?>">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                            <polyline points="3,6 5,6 21,6"></polyline>
-                                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                                        </svg>
+                                        <?= birkly_icon('trash', ['size' => 16]) ?>
                                     </button>
                                 <?php endif; ?>
                             <?php endif; ?>
@@ -308,7 +286,7 @@ if (!empty($entries)): ?>
         </div>
     </div>
 <?php else: ?>
-    <div class="empty-state">
-        <p><?= __('admin.no_entries_found_in_collection') ?> <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '']) ?>"><?= __('admin.create_first_entry') ?></a>.</p>
+    <div class="empty-state empty-state--compact">
+        <p class="empty-state__message"><?= __('admin.no_entries_found_in_collection') ?> <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '']) ?>"><?= __('admin.create_first_entry') ?></a>.</p>
     </div>
 <?php endif; ?>
