@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/platform_ops.php';
+require_once __DIR__ . '/project_site.php';
 
 function birkly_ops_starters_catalog_url(): string
 {
@@ -274,17 +275,135 @@ function birkly_ops_download_starter_zip(string $starterId, string $destPath, ?a
 }
 
 /**
- * @return array{success:bool,installed_collections:list<string>,project_site:bool,message:string}
+ * Absolute path to content/collections (resolves symlinks when possible).
+ */
+function birkly_content_collections_dir(string $projectRoot): string
+{
+    $path = rtrim($projectRoot, '/\\') . '/content/collections';
+    $resolved = realpath(dirname($path));
+    if ($resolved !== false) {
+        return $resolved . '/collections';
+    }
+    return $path;
+}
+
+/**
+ * Ensure content/collections exists and is writable before starter install.
+ *
+ * @return array{ok:bool,path:string,error?:string}
+ */
+function birkly_ensure_content_collections_dir(string $projectRoot): array
+{
+    $contentDir = rtrim($projectRoot, '/\\') . '/content';
+    $collectionsDir = birkly_content_collections_dir($projectRoot);
+
+    if (!is_dir($contentDir) && !@mkdir($contentDir, 0775, true)) {
+        return [
+            'ok' => false,
+            'path' => $collectionsDir,
+            'error' => 'Cannot create content directory at ' . $contentDir,
+        ];
+    }
+
+    if (!is_dir($collectionsDir) && !@mkdir($collectionsDir, 0775, true)) {
+        return [
+            'ok' => false,
+            'path' => $collectionsDir,
+            'error' => 'Cannot create collections directory at ' . $collectionsDir,
+        ];
+    }
+
+    if (!is_writable($collectionsDir)) {
+        return [
+            'ok' => false,
+            'path' => $collectionsDir,
+            'error' => 'Collections directory is not writable by the web server',
+        ];
+    }
+
+    return [
+        'ok' => true,
+        'path' => realpath($collectionsDir) ?: $collectionsDir,
+    ];
+}
+
+/**
+ * Dry-run probe: download Marsk zip and count extractable collection slugs (no user data changes).
+ *
+ * @return array<string, mixed>
+ */
+function birkly_ops_starters_install_probe(string $projectRoot, string $starterId = 'marsk'): array
+{
+    $probe = [
+        'starter_id' => $starterId,
+        'collections_dir' => birkly_ensure_content_collections_dir($projectRoot),
+        'project_site_dir' => birkly_public_site_path(),
+        'project_site_writable' => is_writable(birkly_public_site_path()) || is_writable(dirname(birkly_public_site_path())),
+        'zip_download' => false,
+        'zip_collection_slugs' => [],
+        'errors' => [],
+    ];
+
+    $tmpZip = sys_get_temp_dir() . '/birkly-starter-probe-' . $starterId . '-' . getmypid() . '.zip';
+    $downloadErrors = [];
+    $download = birkly_ops_download_starter_zip($starterId, $tmpZip, $downloadErrors);
+    if ($download === null) {
+        $probe['errors'] = array_merge($probe['errors'], $downloadErrors);
+        @unlink($tmpZip);
+        return $probe;
+    }
+
+    $probe['zip_download'] = true;
+    $zip = new ZipArchive();
+    if ($zip->open($tmpZip) === true) {
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = (string) $zip->getNameIndex($i);
+            if (str_starts_with($name, 'collections/') && !str_ends_with($name, '/')) {
+                $relative = substr($name, strlen('collections/'));
+                $slug = explode('/', $relative, 2)[0];
+                if ($slug !== '') {
+                    $probe['zip_collection_slugs'][$slug] = true;
+                }
+            }
+        }
+        $zip->close();
+    } else {
+        $probe['errors'][] = 'Cannot open downloaded starter zip';
+    }
+    $probe['zip_collection_slugs'] = array_keys($probe['zip_collection_slugs']);
+    @unlink($tmpZip);
+
+    return $probe;
+}
+
+/**
+ * @return array{success:bool,installed_collections:list<string>,project_site:bool,message:string,errors?:list<string>}
  */
 function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): array
 {
+    $errors = [];
+    $collectionsReady = birkly_ensure_content_collections_dir($projectRoot);
+    if (!$collectionsReady['ok']) {
+        return [
+            'success' => false,
+            'installed_collections' => [],
+            'project_site' => false,
+            'message' => $collectionsReady['error'] ?? 'Collections directory is not ready',
+            'errors' => [$collectionsReady['error'] ?? 'Collections directory is not ready'],
+        ];
+    }
+
     $zip = new ZipArchive();
     if ($zip->open($zipPath) !== true) {
         return ['success' => false, 'installed_collections' => [], 'project_site' => false, 'message' => 'Cannot open starter zip'];
     }
 
-    $contentRoot = $projectRoot . '/content/collections';
-    $projectSiteRoot = $projectRoot . '/' . birkly_public_site_dir();
+    $contentRoot = $collectionsReady['path'];
+    $projectSiteRoot = rtrim($projectRoot, '/\\') . '/' . birkly_public_site_dir();
+    if (!is_dir($projectSiteRoot) && !@mkdir($projectSiteRoot, 0775, true)) {
+        $errors[] = 'Cannot create project site directory at ' . $projectSiteRoot;
+    }
+
     $installed = [];
     $hasProject = false;
 
@@ -301,15 +420,21 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): a
             }
             $dest = $contentRoot . '/' . $relative;
             $destDir = dirname($dest);
-            if (!is_dir($destDir) && !mkdir($destDir, 0755, true)) {
+            if (!is_dir($destDir) && !@mkdir($destDir, 0775, true)) {
+                $errors[] = 'Cannot create directory ' . $destDir;
                 continue;
             }
             $contents = $zip->getFromIndex($i);
-            if ($contents !== false) {
-                file_put_contents($dest, $contents);
-                $slug = explode('/', $relative, 2)[0];
-                $installed[$slug] = true;
+            if ($contents === false) {
+                $errors[] = 'Cannot read zip entry ' . $name;
+                continue;
             }
+            if (@file_put_contents($dest, $contents) === false) {
+                $errors[] = 'Cannot write ' . $dest;
+                continue;
+            }
+            $slug = explode('/', $relative, 2)[0];
+            $installed[$slug] = true;
             continue;
         }
 
@@ -320,24 +445,38 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): a
             }
             $dest = $projectSiteRoot . '/' . $relative;
             $destDir = dirname($dest);
-            if (!is_dir($destDir) && !mkdir($destDir, 0755, true)) {
+            if (!is_dir($destDir) && !@mkdir($destDir, 0775, true)) {
+                $errors[] = 'Cannot create directory ' . $destDir;
                 continue;
             }
             $contents = $zip->getFromIndex($i);
-            if ($contents !== false) {
-                file_put_contents($dest, $contents);
-                $hasProject = true;
+            if ($contents === false) {
+                $errors[] = 'Cannot read zip entry ' . $name;
+                continue;
             }
+            if (@file_put_contents($dest, $contents) === false) {
+                $errors[] = 'Cannot write ' . $dest;
+                continue;
+            }
+            $hasProject = true;
         }
     }
 
     $zip->close();
 
+    $installedSlugs = array_keys($installed);
+    $success = $installedSlugs !== [] && $hasProject;
+
     return [
-        'success' => $installed !== [] || $hasProject,
-        'installed_collections' => array_keys($installed),
+        'success' => $success,
+        'installed_collections' => $installedSlugs,
         'project_site' => $hasProject,
-        'message' => ($installed !== [] || $hasProject) ? 'Starter template installed from Ops' : 'Starter zip had no installable files',
+        'message' => $success
+            ? 'Starter template installed from Ops'
+            : ($errors !== []
+                ? 'Starter extract failed: ' . implode('; ', array_slice($errors, 0, 3))
+                : 'Starter zip had no installable files'),
+        'errors' => $errors,
     ];
 }
 
