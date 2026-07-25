@@ -314,6 +314,27 @@
         setStatusFilter(statusFilter.value);
     });
 
+    const entriesSearch = document.getElementById('entries-search');
+
+    function filterEntriesTable(query) {
+        const normalized = String(query || '').trim().toLowerCase();
+        const rows = document.querySelectorAll('.entries-smart-table .table-row');
+
+        rows.forEach(function (row) {
+            if (!normalized) {
+                row.style.display = '';
+                return;
+            }
+
+            const haystack = (row.textContent || '').toLowerCase();
+            row.style.display = haystack.includes(normalized) ? '' : 'none';
+        });
+    }
+
+    entriesSearch?.addEventListener('input', function () {
+        filterEntriesTable(entriesSearch.value);
+    });
+
     document.addEventListener('click', function (event) {
         const deleteButton = event.target.closest('.delete-entry-btn');
         if (deleteButton) {

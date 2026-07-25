@@ -250,16 +250,19 @@
   padding: var(--space-2, 0.5rem);
   background: var(--bg-secondary, #fafafa);
   border-bottom: 1px solid var(--border-light, #f3f4f6);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   position: relative;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
   z-index: 10;
+  scrollbar-width: thin;
 }
 
 .toolbar-group {
   display: flex;
   align-items: center;
   gap: var(--space-1, 0.25rem);
+  flex: 0 0 auto;
 }
 
 .toolbar-separator {
