@@ -36,15 +36,85 @@ function birkly_ops_starters_catalog_url(): string
 function birkly_ops_starters_download_endpoint(string $starterId): string
 {
     $catalogUrl = birkly_ops_starters_catalog_url();
-    return rtrim(str_replace('/starters', '/starters/' . rawurlencode($starterId) . '/download', $catalogUrl), '/');
+    $base = preg_replace('#/starters(\?.*)?$#', '', $catalogUrl) ?: $catalogUrl;
+    return rtrim($base, '/') . '/starters/' . rawurlencode($starterId) . '/download';
+}
+
+/**
+ * Normalize Ops artifact URLs to HTTPS (Ops may emit http:// behind a reverse proxy).
+ */
+function birkly_ops_normalize_download_url(string $url): string
+{
+    $url = trim($url);
+    if (str_starts_with($url, 'http://')) {
+        return 'https://' . substr($url, 7);
+    }
+    return $url;
+}
+
+/**
+ * @return array{catalog_reachable:bool,catalog_url:string,channel:string,starter_id?:string,selectable?:bool,errors:list<string>}
+ */
+function birkly_ops_starters_diagnostics(?string $starterId = null): array
+{
+    $diagnostics = [
+        'catalog_reachable' => false,
+        'catalog_url' => birkly_ops_starters_catalog_url(),
+        'channel' => birkly_ops_release_channel(),
+        'errors' => [],
+    ];
+
+    if (!function_exists('curl_init')) {
+        $diagnostics['errors'][] = 'PHP curl extension is not available';
+        return $diagnostics;
+    }
+
+    $catalog = birkly_ops_fetch_starters_catalog($diagnostics['errors']);
+    $diagnostics['catalog_reachable'] = $catalog !== null;
+    if ($catalog === null) {
+        if ($diagnostics['errors'] === []) {
+            $diagnostics['errors'][] = 'Ops starter catalog request failed';
+        }
+        return $diagnostics;
+    }
+
+    if ($starterId === null || $starterId === '') {
+        return $diagnostics;
+    }
+
+    $starterId = strtolower(trim($starterId));
+    $diagnostics['starter_id'] = $starterId;
+    $overlay = birkly_ops_starter_availability_overlay(birkly_project_root());
+    $diagnostics['selectable'] = !empty($overlay[$starterId]['selectable']);
+
+    if (empty($diagnostics['selectable'])) {
+        $diagnostics['errors'][] = 'Starter is not published or not enabled for onboarding on Ops';
+    }
+
+    $info = birkly_ops_starter_download_info($starterId, $diagnostics['errors']);
+    if ($info === null) {
+        if ($diagnostics['errors'] === []) {
+            $diagnostics['errors'][] = 'Ops starter download metadata request failed';
+        }
+        return $diagnostics;
+    }
+
+    $downloadUrl = birkly_ops_normalize_download_url((string) ($info['download_url'] ?? ''));
+    if ($downloadUrl === '') {
+        $diagnostics['errors'][] = 'Ops did not return a download URL';
+    }
+
+    return $diagnostics;
 }
 
 /**
  * @return array<string, mixed>|null
  */
-function birkly_ops_fetch_starters_catalog(): ?array
+function birkly_ops_fetch_starters_catalog(?array &$errors = null): ?array
 {
     if (!function_exists('curl_init')) {
+        $errors ??= [];
+        $errors[] = 'PHP curl extension is not available';
         return null;
     }
 
@@ -57,20 +127,30 @@ function birkly_ops_fetch_starters_catalog(): ?array
     curl_setopt_array($ch, [
         CURLOPT_HTTPGET => true,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 8,
-        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_TIMEOUT => 12,
+        CURLOPT_CONNECTTIMEOUT => 6,
+        CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_HTTPHEADER => ['Accept: application/json'],
     ]);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
     if (!is_string($response) || $code < 200 || $code >= 300) {
+        if ($errors !== null) {
+            $errors[] = $curlError !== ''
+                ? 'Catalog request error: ' . $curlError
+                : 'Catalog request failed with HTTP ' . $code;
+        }
         return null;
     }
 
     $data = json_decode($response, true);
     if (!is_array($data) || empty($data['ok']) || !is_array($data['starters'] ?? null)) {
+        if ($errors !== null) {
+            $errors[] = 'Catalog response was not valid JSON from Ops';
+        }
         return null;
     }
 
@@ -80,9 +160,11 @@ function birkly_ops_fetch_starters_catalog(): ?array
 /**
  * @return array<string, mixed>|null
  */
-function birkly_ops_starter_download_info(string $starterId): ?array
+function birkly_ops_starter_download_info(string $starterId, ?array &$errors = null): ?array
 {
     if (!function_exists('curl_init')) {
+        $errors ??= [];
+        $errors[] = 'PHP curl extension is not available';
         return null;
     }
 
@@ -99,20 +181,30 @@ function birkly_ops_starter_download_info(string $starterId): ?array
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => $payload,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 12,
-        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_CONNECTTIMEOUT => 6,
+        CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json'],
     ]);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
     if (!is_string($response) || $code < 200 || $code >= 300) {
+        if ($errors !== null) {
+            $errors[] = $curlError !== ''
+                ? 'Download metadata error: ' . $curlError
+                : 'Download metadata failed with HTTP ' . $code;
+        }
         return null;
     }
 
     $data = json_decode($response, true);
     if (!is_array($data) || empty($data['ok'])) {
+        if ($errors !== null) {
+            $errors[] = 'Download metadata response was not valid JSON from Ops';
+        }
         return null;
     }
 
@@ -122,23 +214,26 @@ function birkly_ops_starter_download_info(string $starterId): ?array
 /**
  * @return array<string, mixed>|null
  */
-function birkly_ops_download_starter_zip(string $starterId, string $destPath): ?array
+function birkly_ops_download_starter_zip(string $starterId, string $destPath, ?array &$errors = null): ?array
 {
-    $info = birkly_ops_starter_download_info($starterId);
+    $info = birkly_ops_starter_download_info($starterId, $errors);
     if ($info === null) {
         return null;
     }
 
-    $downloadUrl = trim((string) ($info['download_url'] ?? ''));
+    $downloadUrl = birkly_ops_normalize_download_url((string) ($info['download_url'] ?? ''));
     if ($downloadUrl === '' || !function_exists('curl_init')) {
+        if ($errors !== null) {
+            $errors[] = 'Ops did not return a download URL';
+        }
         return null;
-    }
-    if (str_starts_with($downloadUrl, 'http://')) {
-        $downloadUrl = 'https://' . substr($downloadUrl, 7);
     }
 
     $fp = fopen($destPath, 'wb');
     if ($fp === false) {
+        if ($errors !== null) {
+            $errors[] = 'Cannot write starter zip to temp directory';
+        }
         return null;
     }
 
@@ -146,23 +241,32 @@ function birkly_ops_download_starter_zip(string $starterId, string $destPath): ?
     curl_setopt_array($ch, [
         CURLOPT_FILE => $fp,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_CONNECTTIMEOUT => 6,
+        CURLOPT_TIMEOUT => 45,
+        CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_HTTPHEADER => ['Accept: application/zip'],
     ]);
     $ok = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
     fclose($fp);
 
     if ($ok !== true || $code < 200 || $code >= 300 || !is_file($destPath) || filesize($destPath) === 0) {
         @unlink($destPath);
+        if ($errors !== null) {
+            $errors[] = $curlError !== ''
+                ? 'Artifact download error: ' . $curlError
+                : 'Artifact download failed with HTTP ' . $code;
+        }
         return null;
     }
 
     $expected = strtolower(trim((string) ($info['checksum_sha256'] ?? '')));
     if ($expected !== '' && hash_file('sha256', $destPath) !== $expected) {
         @unlink($destPath);
+        if ($errors !== null) {
+            $errors[] = 'Downloaded starter zip checksum mismatch';
+        }
         return null;
     }
 
