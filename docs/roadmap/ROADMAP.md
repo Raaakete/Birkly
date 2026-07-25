@@ -36,15 +36,15 @@ This file tracks **current state** and the **active execution phase**. Full hist
 | Milestone | Focus | Status |
 |-----------|--------|--------|
 | **P43-M0** | Gap register + plan + handoff | complete |
-| **P43-M1** | `hosting.json` + `core/hosting_urls.php` + migration | pending |
-| **P43-M2** | Settings-based routing (`index.php`) | pending |
-| **P43-M3** | Settings → Hosting UI + API | pending |
-| **P43-M4** | Onboarding (CMS URL, public site mode) | pending |
-| **P43-M5** | Clean public URLs + docker nginx | pending |
-| **P43-M6** | Canonical admin host redirects | pending |
-| **P43-M7** | CORS, `site_domain`, public URL helpers | pending |
-| **P43-M8** | Tests + CI | pending |
-| **P43-M9** | Docs (Birkly + Birkly-Docs) + closure | pending |
+| **P43-M1** | `hosting.json` + `core/hosting_urls.php` + migration | complete |
+| **P43-M2** | Settings-based routing (`index.php`) | complete |
+| **P43-M3** | Settings → Hosting UI + API | complete |
+| **P43-M4** | Onboarding (CMS URL, public site mode) | complete |
+| **P43-M5** | Clean public URLs + docker nginx | complete |
+| **P43-M6** | Canonical admin host redirects | complete |
+| **P43-M7** | CORS, `site_domain`, public URL helpers | complete |
+| **P43-M8** | Tests + CI | complete |
+| **P43-M9** | Docs (Birkly + Birkly-Docs) + closure | complete |
 
 **Spec:** `docs/reviews/P43-configurable-hosting-urls-plan.md`  
 **Handoff:** `docs/reviews/P43-lead-engineer-handoff.md`  

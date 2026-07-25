@@ -21,7 +21,17 @@ requireAdminAuth();
 require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../core/icons.php';
 require_once __DIR__ . '/../core/project_site.php';
+require_once __DIR__ . '/../core/hosting_urls.php';
 birkly_ensure_public_site_path();
+
+// P43: canonical admin host — redirect /admin on public/marketing host to CMS URL
+$requestedPage = isset($_GET['page']) && $_GET['page'] !== '' ? (string) $_GET['page'] : 'dashboard';
+if (birkly_hosting_should_redirect_admin()) {
+    $params = $_GET;
+    unset($params['page']);
+    header('Location: ' . birkly_hosting_admin_url($requestedPage, $params), true, 302);
+    exit;
+}
 
 if (is_file(__DIR__ . '/../core/platform_ops.php')) {
     require_once __DIR__ . '/../core/platform_ops.php';
@@ -30,7 +40,7 @@ if (is_file(__DIR__ . '/../core/platform_ops.php')) {
 
 // Page access policy (UX + defense-in-depth).
 // Backend endpoints remain the source of truth; this prevents opening pages a role shouldn't even view.
-$requestedPage = isset($_GET['page']) && $_GET['page'] !== '' ? (string)$_GET['page'] : 'dashboard';
+// $requestedPage set above for canonical host redirect
 $pageViewPermissions = [
     // General
     'dashboard' => 'read',
