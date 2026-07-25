@@ -103,11 +103,11 @@
         menu.setAttribute('role', 'menu');
         menu.innerHTML = `
             <button type="button" class="assist-fab-action" id="assist-fab-ai" role="menuitem" title="AI Assistant" aria-label="AI Assistant">
-                ${icon('stack', { size: 20 })}
+                ${icon('sparkle', { size: 20 })}
                 <span>AI Chat</span>
             </button>
             <button type="button" class="assist-fab-action" id="assist-fab-feedback" role="menuitem" title="Send feedback" aria-label="Send feedback">
-                ${icon('chat-circle', { size: 20 })}
+                ${icon('paper-plane-tilt', { size: 20 })}
                 <span>Feedback</span>
             </button>
         `;
@@ -120,7 +120,7 @@
         button.setAttribute('aria-expanded', 'false');
         button.setAttribute('aria-haspopup', 'menu');
         button.innerHTML = `
-            ${icon('plus', { size: 22, class: 'assist-fab-icon assist-fab-icon-menu' })}
+            ${icon('sparkle', { size: 22, class: 'assist-fab-icon assist-fab-icon-menu' })}
             ${icon('x', { size: 22, class: 'assist-fab-icon assist-fab-icon-close', ariaHidden: true })}
         `;
 
