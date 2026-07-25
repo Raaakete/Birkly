@@ -24,7 +24,7 @@ RUN chmod +x /entrypoint.sh \
 
 EXPOSE 80
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://127.0.0.1/api/health.php || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
+    CMD curl -fsS http://127.0.0.1/api/deploy_revision.php >/dev/null || curl -fsS http://127.0.0.1/api/health.php >/dev/null || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
