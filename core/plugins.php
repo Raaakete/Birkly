@@ -28,15 +28,42 @@ class PluginStorage {
     }
 }
 
-$birkly_hooks = [];
-$birkly_filters = []; // Filter system (for modifying data)
-// Global registries for plugin system
-$birkly_collections = [];
-$birkly_api_endpoints = [];
-$birkly_admin_pages = [];
-$birkly_plugins = []; // Plugin metadata and state
+// Registries must live in $GLOBALS so require from inside a function (http_routes) still works.
+if (!isset($GLOBALS['birkly_hooks']) || !is_array($GLOBALS['birkly_hooks'])) {
+    $GLOBALS['birkly_hooks'] = [];
+}
+$birkly_hooks = &$GLOBALS['birkly_hooks'];
+
+if (!isset($GLOBALS['birkly_filters']) || !is_array($GLOBALS['birkly_filters'])) {
+    $GLOBALS['birkly_filters'] = [];
+}
+$birkly_filters = &$GLOBALS['birkly_filters'];
+
+if (!isset($GLOBALS['birkly_collections']) || !is_array($GLOBALS['birkly_collections'])) {
+    $GLOBALS['birkly_collections'] = [];
+}
+$birkly_collections = &$GLOBALS['birkly_collections'];
+
+if (!isset($GLOBALS['birkly_api_endpoints']) || !is_array($GLOBALS['birkly_api_endpoints'])) {
+    $GLOBALS['birkly_api_endpoints'] = [];
+}
+$birkly_api_endpoints = &$GLOBALS['birkly_api_endpoints'];
+
+if (!isset($GLOBALS['birkly_admin_pages']) || !is_array($GLOBALS['birkly_admin_pages'])) {
+    $GLOBALS['birkly_admin_pages'] = [];
+}
+$birkly_admin_pages = &$GLOBALS['birkly_admin_pages'];
+
+if (!isset($GLOBALS['birkly_plugins']) || !is_array($GLOBALS['birkly_plugins'])) {
+    $GLOBALS['birkly_plugins'] = [];
+}
+$birkly_plugins = &$GLOBALS['birkly_plugins'];
 $haru_plugins = &$birkly_plugins;
-$birkly_plugin_settings = []; // Plugin-specific settings
+
+if (!isset($GLOBALS['birkly_plugin_settings']) || !is_array($GLOBALS['birkly_plugin_settings'])) {
+    $GLOBALS['birkly_plugin_settings'] = [];
+}
+$birkly_plugin_settings = &$GLOBALS['birkly_plugin_settings'];
 
 // Plugin state management
 function get_plugin_state($plugin_id) {
@@ -217,7 +244,7 @@ function register_hook($event, $callback, $priority = 10) {
     $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
     if (isset($backtrace[1]['file'])) {
         $file = $backtrace[1]['file'];
-        foreach (get_all_plugins() as $pid => $plugin) {
+        foreach (get_all_plugins() ?? [] as $pid => $plugin) {
             if (strpos($file, $plugin['path']) !== false) {
                 $plugin_id = $pid;
                 break;
@@ -318,7 +345,7 @@ function add_filter($filter_name, $callback, $priority = 10) {
     $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
     if (isset($backtrace[1]['file'])) {
         $file = $backtrace[1]['file'];
-        foreach (get_all_plugins() as $pid => $plugin) {
+        foreach (get_all_plugins() ?? [] as $pid => $plugin) {
             if (strpos($file, $plugin['path']) !== false) {
                 $plugin_id = $pid;
                 break;
@@ -557,8 +584,8 @@ function get_all_plugins() {
     
     // Always ensure we have the latest plugin states
     load_plugin_states();
-    
-    return $birkly_plugins;
+
+    return is_array($birkly_plugins) ? $birkly_plugins : [];
 }
 
 // Get only active plugins
