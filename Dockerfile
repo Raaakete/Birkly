@@ -10,10 +10,12 @@ RUN apt-get update \
 COPY docker/nginx-site.conf /etc/nginx/conf.d/default.conf
 WORKDIR /app
 
+ENV BIRKLY_DATA=/app/data
+
 COPY . /app
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
-    && mkdir -p content media settings users data cache logs
+    && mkdir -p content media settings users data cache logs temp plugins themes
 
 EXPOSE 80
 

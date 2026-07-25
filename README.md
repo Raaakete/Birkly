@@ -47,6 +47,8 @@ Install plugins from the [Birkly Marketplace](https://marketplace.birkly.cloud) 
 3. Nginx: see `nginx.conf.example` in the full development repository.
 4. Point your domain at the install; admin is at `/admin`.
 
+**Docker / Dokploy:** one volume at `/app/data` — see [docs/deployment/docker.md](docs/deployment/docker.md).
+
 ## Local development (maintainers)
 
 Official plugin sources and the full test suite live in the private **Birkly-Marketplace** ops repository. Clone it alongside this repo and run CI from there — see `CONTRIBUTING.md`.
