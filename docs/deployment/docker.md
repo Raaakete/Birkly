@@ -34,6 +34,7 @@ Open [http://localhost:8080/admin](http://localhost:8080/admin).
 2. **Volumes:** add a single mount — host path or named volume → **`/app/data`**.
 3. **Environment:** `BIRKLY_DATA=/app/data` (already the image default; set explicitly in Dokploy if needed).
 4. Expose port **80**; terminate HTTPS in Dokploy.
+5. **Verify deploy:** open `/api/health.php` and check `build_revision` (Git commit baked into the image). After a merge to your tracked branch, trigger **Redeploy** if auto-deploy did not run — a green DNS badge does not mean a new image was built.
 
 No per-folder volume list is required.
 
