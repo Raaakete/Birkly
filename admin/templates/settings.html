@@ -1620,7 +1620,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
 if (!function_exists('birkly_build_info')) {
     require_once __DIR__ . '/../../core/build_info.php';
 }
-$settingsPageJsVer = (string) (birkly_build_info()['git_commit'] ?? '');
 $settingsUsersJson = json_encode($users ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 $webhookCollectionsJson = json_encode($webhook_collections ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 ?>
@@ -1628,15 +1627,15 @@ $webhookCollectionsJson = json_encode($webhook_collections ?? [], JSON_UNESCAPED
 <script>
 window.webhooksData = window.webhooksData || { collections: <?= $webhookCollectionsJson ?> };
 </script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/settings-page.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/settings-page.js')) ?>"></script>
 
-<script src="<?= birkly_url('/admin/js/updates.js') ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/updates.js')) ?>"></script>
 
-<script src="<?= birkly_url('/admin/js/webhooks.js') ?>"></script>
-<script src="<?= birkly_url('/admin/js/redirects.js') ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-wizard.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-settings.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/project-settings.js') . ($settingsPageJsVer !== '' ? '?v=' . rawurlencode($settingsPageJsVer) : '')) ?>"></script>
-<script src="<?= birkly_url('/admin/js/ai-connections.js') ?>"></script>
-<script src="<?= birkly_url('/admin/js/mcp-connections.js') ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/webhooks.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/redirects.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-wizard.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-settings.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-settings.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/ai-connections.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/mcp-connections.js')) ?>"></script>
 
