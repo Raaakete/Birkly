@@ -16,59 +16,76 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 | Area | Status |
 |------|--------|
-| **Docker / Dokploy** | `BIRKLY_DATA=/app/data` single volume on `main` (#282–#288) |
-| **Production** | `cms.birkly.cloud` (CMS) + `birkly.cloud` (marketing) on one Dokploy app |
-| **Routing (temporary)** | `cms.*` hostname → admin at `/`; other hosts → `/project/` if folder exists |
-| **Gap** | No settings for CMS URL vs public site URL — see **Phase 43** |
+| **Docker / Dokploy** | `BIRKLY_DATA=/app/data` single volume (#282–#288) |
+| **Production** | `cms.birkly.cloud` + `birkly.cloud` on one Dokploy app |
+| **P43 Hosting** | Settings-driven CMS vs public URLs on `main` — complete |
+| **Admin UX gap** | Save semantics, settings IA, tokens, a11y, i18n — see **Phase 44** |
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
 ---
 
-## Next active phase
+## Completed phase
 
 ### Phase 43 — Configurable hosting URLs (CMS vs public site)
 
-**Status:** **Approved** (2026-07-25) — **M0 complete**, **M1→M9 execution ready**
-
-**Goal:** Replace `cms.` hostname magic and `/project/` root hijack with explicit **CMS URL** and **optional public site URL** in settings. Support external sites (headless), bundled `project/`, and single-domain installs.
+**Status:** **Complete** (2026-07-25)
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P43-M0** | Gap register + plan + handoff | complete |
-| **P43-M1** | `hosting.json` + `core/hosting_urls.php` + migration | complete |
-| **P43-M2** | Settings-based routing (`index.php`) | complete |
-| **P43-M3** | Settings → Hosting UI + API | complete |
-| **P43-M4** | Onboarding (CMS URL, public site mode) | complete |
-| **P43-M5** | Clean public URLs + docker nginx | complete |
-| **P43-M6** | Canonical admin host redirects | complete |
-| **P43-M7** | CORS, `site_domain`, public URL helpers | complete |
-| **P43-M8** | Tests + CI | complete |
-| **P43-M9** | Docs (Birkly + Birkly-Docs) + closure | complete |
+| P43-M0–M9 | Settings URLs, routing, Hosting API/UI, nginx, tests, docs | complete |
 
-**Spec:** `docs/reviews/P43-configurable-hosting-urls-plan.md`  
-**Handoff:** `docs/reviews/P43-lead-engineer-handoff.md`  
-**Matrix:** `docs/reviews/P43-verification-matrix.md`  
-**Gaps:** `docs/reviews/P43-gap-register.md`
+**Artifacts:** `docs/reviews/P43-*` · `core/hosting_urls.php` · `api/hosting.php`
 
-**Human decisions (locked):** P43-D1–D10 in plan · notify once at M9 · Dokploy Internal Path always `/`
+---
 
-**Depends on:** Docker single-volume deploy · live `*.birkly.cloud` reference
+## Next active phase
 
-**Paused / not in scope:** P41 design system · P42 marketing template pack · Studio P26
+### Phase 44 — Admin UI/UX excellence (full design remediation)
+
+**Status:** **Approved** (2026-07-25) — **M0 complete**, **M1→M12 execution ready**
+
+**Goal:** Fix all issues from the 2026-07-25 admin design review: trustworthy save model, grouped settings IA, hosting wizard UX, design token compliance, accessibility bugs, toast feedback (no alerts), i18n, simplified Project tab, ContentEditor mobile polish, skeleton loaders, design system doc.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P44-M0** | Gap register + plan + handoff | complete |
+| **P44-M1** | Critical: a11y + global save scope | pending |
+| **P44-M2** | Token compliance (sidebar, focus, links, fonts) | pending |
+| **P44-M3** | Settings IA — 4 grouped areas | pending |
+| **P44-M4** | Dirty state + per-area save bars | pending |
+| **P44-M5** | Hosting wizard + onboarding reuse | pending |
+| **P44-M6** | Project tab simple vs advanced IDE | pending |
+| **P44-M7** | Toast + confirm modal (remove alerts) | pending |
+| **P44-M8** | i18n audit (settings, hosting, onboarding) | pending |
+| **P44-M9** | ContentEditor responsive + dark + mint | pending |
+| **P44-M10** | Mobile entries, skeletons, empty states | pending |
+| **P44-M11** | `docs/admin-design-system.md` | pending |
+| **P44-M12** | Birkly-Docs + V-UX matrix + closure | pending |
+
+**Spec:** `docs/reviews/P44-admin-ux-excellence-plan.md`  
+**Handoff:** `docs/reviews/P44-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P44-verification-matrix.md`  
+**Gaps:** `docs/reviews/P44-gap-register.md`
+
+**Human decisions (locked):** P44-D1–D12 · design-reviewer at M12 · notify once at M12
+
+**Depends on:** P43 complete
+
+**Paused / not in scope:** Studio P26 · P42 marketing template pack
 
 ---
 
 ## Task handoff format
 
 ```markdown
-### Task: P43-M[N]-T[N] [title]
-- **Owner**: cms-developer | docs-writer | qa-verifier | design-reviewer | lead-engineer
+### Task: P44-M[N]-T[N] [title]
+- **Owner**: cms-developer | frontend-developer | docs-writer | qa-verifier | design-reviewer | lead-engineer
 - **Repo(s)**: Birkly | Birkly-Docs
 - **Files**: path/to/files
-- **Depends on**: P43-M[N]-T[N] | none
+- **Depends on**: P44-M[N]-T[N] | none
 - **Acceptance criteria**:
   - ...
 ```
 
-Branch template: `cursor/p43-m[N]-<slug>-030a`
+Branch template: `cursor/p44-m[N]-<slug>-030a`
