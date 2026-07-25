@@ -312,6 +312,26 @@ a.card:hover {
   left: auto;
   margin-bottom: var(--space-2, 0.5rem);
   margin-top: 0;
+  z-index: 1100;
+}
+
+/* List view: open menu downward so it is not clipped by group containers */
+.collections-container[data-view="list"] .collection-menu-wrapper .dropdown-menu.collection-menu-dropdown,
+.card.collection-card.collection-card--list-row .collection-menu-wrapper .dropdown-menu.collection-menu-dropdown {
+  bottom: auto;
+  top: calc(100% + var(--space-1, 0.25rem));
+  margin-bottom: 0;
+}
+
+.collections-container[data-view="list"] .collection-card:has(.collection-menu-btn[aria-expanded="true"]),
+.card.collection-card.collection-card--list-row:has(.collection-menu-btn[aria-expanded="true"]) {
+  position: relative;
+  z-index: 30;
+}
+
+.collections-container[data-view="list"] .collection-card:has(.collection-menu-btn[aria-expanded="true"]) .collection-menu-wrapper,
+.card.collection-card.collection-card--list-row:has(.collection-menu-btn[aria-expanded="true"]) .collection-menu-wrapper {
+  z-index: 40;
 }
 
 /* Legacy support - ensure collection-menu-item works with unified dropdown */
