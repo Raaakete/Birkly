@@ -1478,7 +1478,18 @@ function getEntryEditorData($includeFieldHtml = false) {
             $hashBase = implode('\n', $__fieldtypeCss) . '\n' . implode('\n', $__fieldtypeJs);
             $hash = substr(sha1($hashBase), 0, 12);
             $cssPath = $tempDir . "/fieldtypes-{$hash}.css";
-            if (!empty($__fieldtypeCss)) { @file_put_contents($cssPath, implode("\n\n", $__fieldtypeCss)); }
+            $cssBundled = implode("\n\n", $__fieldtypeCss);
+            $cssUrl = '';
+            $cssInline = '';
+            if ($cssBundled !== '') {
+                @file_put_contents($cssPath, $cssBundled);
+                if (is_file($cssPath) && filesize($cssPath) > 0) {
+                    $cssUrl = "/temp/fieldtypes-{$hash}.css";
+                } else {
+                    // Fallback when temp/ is not writable (common on read-only deploys)
+                    $cssInline = $cssBundled;
+                }
+            }
 
             // Write each JS chunk as a separate file to isolate failures
             $jsFiles = [];
@@ -1487,12 +1498,15 @@ function getEntryEditorData($includeFieldHtml = false) {
                     $file = $tempDir . "/fieldtypes-{$hash}-{$i}.js";
                     $wrapped = ";(function(){\n" . $chunk . "\n})();";
                     @file_put_contents($file, "/* Birkly fieldtype chunk {$i} */\n'use strict';\n" . $wrapped . "\n");
-                    $jsFiles[] = "/temp/fieldtypes-{$hash}-{$i}.js";
+                    if (is_file($file) && filesize($file) > 0) {
+                        $jsFiles[] = "/temp/fieldtypes-{$hash}-{$i}.js";
+                    }
                 }
             }
             $payload['fieldtype_assets'] = [
-                'css' => !empty($__fieldtypeCss) ? "/temp/fieldtypes-{$hash}.css" : '',
-                'js_files'  => $jsFiles
+                'css' => $cssUrl,
+                'css_inline' => $cssInline,
+                'js_files'  => $jsFiles,
             ];
         }
     }
