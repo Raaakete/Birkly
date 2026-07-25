@@ -33,6 +33,8 @@
 @import url('components/switches.css');
 @import url('components/cards.css');
 @import url('components/messages.css');
+@import url('components/empty-states.css');
+@import url('components/status-badges.css');
 @import url('components/tabs.css');
 @import url('components/tabs-v2.css');
 @import url('components/search.css');

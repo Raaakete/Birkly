@@ -255,60 +255,33 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="<?= htmlspecialchars($logoUrl) ?>">
     <style>
-        /* Use admin panel CSS variables */
-        :root {
-            --color-primary: #FFFB00;
-            --color-primary-hover: #f2e966;
-            --color-secondary: #A1B0A1;
-            --color-darkest: #4a4d47;
-            --color-dark: #8e928b;
-            --color-light: #dce2d7;
-            --color-lightest: #f4f6f1;
-            --color-positiv: #e4f1ec;
-            --color-negativ: #f3eced;
-            --primary-500: #3b82f6;
-            --primary-600: #2563eb;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --bg-primary: #ffffff;
-            --bg-elevated: #ffffff;
-            --border-color: #e5e7eb;
-            --border-light: #f3f4f6;
-            --background-global: #f8f9f7;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
+        body.auth-page {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--background-global);
+            background: var(--background-global, var(--color-neutral-100, #f8f9f7));
         }
 
-        .login-container {
+        .auth-card {
             background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
             border-radius: var(--border-radius-m, 8px);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
             padding: 3rem;
             width: 100%;
             max-width: 420px;
             margin: 2rem;
         }
         
-        .login-header {
+        .auth-card__header {
             text-align: center;
             margin-bottom: 2rem;
         }
 
-        .login-logo {
+        .auth-card__logo {
             width: 64px;
             height: 64px;
             margin: 0 auto 1rem;
@@ -317,37 +290,36 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             justify-content: center;
         }
 
-        .login-logo img {
+        .auth-card__logo img {
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
         
-        .login-header h1 {
+        .auth-card__header h1 {
             color: var(--text-primary);
             margin: 0 0 0.5rem 0;
             font-size: 1.875rem;
             font-weight: 700;
         }
         
-        .login-header p {
+        .auth-card__header p {
             color: var(--text-secondary);
             margin: 0;
             font-size: 0.875rem;
         }
         
-        .login-form {
+        .auth-form {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
         
-        /* Match admin panel form styling exactly */
-        .form-group {
-            margin-bottom: 20px;
+        .auth-form .form-group {
+            margin-bottom: 0;
         }
         
-        .form-group label {
+        .auth-form .form-group label {
             display: block;
             margin-bottom: 8px;
             color: var(--text-primary);
@@ -355,8 +327,8 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             font-size: 14px;
         }
         
-        .form-group input[type="email"],
-        .form-group input[type="password"] {
+        .auth-form .form-group input[type="email"],
+        .auth-form .form-group input[type="password"] {
             width: 100%;
             padding: 12px 16px;
             border: 1px solid var(--border-color);
@@ -364,92 +336,77 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             background: var(--bg-primary);
             color: var(--text-primary);
             font-size: 14px;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         
-        .form-group input:focus {
+        .auth-form .form-group input:focus {
             outline: none;
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--color-primary, var(--primary-500));
+            box-shadow: 0 0 0 3px rgba(124, 227, 191, 0.25);
         }
         
-        .login-button {
+        .auth-form .login-button {
             background: var(--color-primary);
-            color: var(--color-darkest);
+            color: var(--color-darkest, #4a4d47);
             border: none;
             padding: 12px 24px;
             border-radius: 6px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease;
             margin-top: 0.5rem;
         }
         
-        .login-button:hover {
+        .auth-form .login-button:hover {
             background: var(--color-primary-hover);
         }
         
-        .login-button:active {
+        .auth-form .login-button:active {
+            background: var(--color-primary-active);
             transform: translateY(1px);
         }
         
-        .error-message {
-            background: var(--color-negativ);
-            color: #c53030;
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            border: 1px solid #feb2b2;
+        .auth-card .message {
             margin-bottom: 1.5rem;
         }
         
-        .success-message {
-            background: var(--color-positiv);
-            color: #2f855a;
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            border: 1px solid #9ae6b4;
-            margin-bottom: 1.5rem;
-        }
-        
-        .login-footer {
+        .auth-card__footer {
             text-align: center;
             margin-top: 2rem;
             padding-top: 2rem;
             border-top: 1px solid var(--border-light);
         }
         
-        .login-footer p {
+        .auth-card__footer p {
             color: var(--text-secondary);
             font-size: 0.875rem;
             margin: 0;
         }
         
-        .login-footer a {
-            color: var(--primary-500);
+        .auth-card__footer a {
+            color: var(--color-primary, var(--primary-600));
             text-decoration: none;
             font-weight: 600;
         }
         
-        .login-footer a:hover {
-            color: var(--primary-600);
+        .auth-card__footer a:hover {
+            color: var(--primary-700);
             text-decoration: underline;
         }
 
         @media (max-width: 480px) {
-            .login-container {
+            .auth-card {
                 padding: 2rem 1.5rem;
                 margin: 1rem;
             }
         }
     </style>
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="login-logo">
+<body class="auth-page">
+    <div class="auth-card login-container">
+        <div class="auth-card__header login-header">
+            <div class="auth-card__logo login-logo">
                 <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?> Logo">
             </div>
             <h1>Welcome Back</h1>
@@ -457,20 +414,26 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
         </div>
         
         <?php if ($error): ?>
-            <div class="error-message">
-                <?= htmlspecialchars($error) ?>
+            <div class="message error" role="alert">
+                <div class="message-content">
+                    <p class="message-text"><?= htmlspecialchars($error) ?></p>
+                </div>
             </div>
         <?php endif; ?>
         
         <?php if ($success): ?>
-            <div class="success-message">
-                <?= htmlspecialchars($success) ?>
+            <div class="message success" role="status">
+                <div class="message-content">
+                    <p class="message-text"><?= htmlspecialchars($success) ?></p>
+                </div>
             </div>
         <?php endif; ?>
 
         <?php if ($notice): ?>
-            <div class="success-message">
-                <?= htmlspecialchars($notice) ?>
+            <div class="message success" role="status">
+                <div class="message-content">
+                    <p class="message-text"><?= htmlspecialchars($notice) ?></p>
+                </div>
                 <form method="POST" action="<?= htmlspecialchars(birkly_url('/admin/logout.php')) ?>" style="margin-top: 10px;">
                     <input type="hidden" name="_csrf" value="<?= htmlspecialchars(get_csrf_token()) ?>">
                     <button type="submit" class="login-button" style="margin-top: 0;">Log out</button>
@@ -478,7 +441,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             </div>
         <?php endif; ?>
         
-        <form class="login-form" method="POST" action="<?= htmlspecialchars(birkly_url('/admin/login.php')) ?>">
+        <form class="auth-form login-form" method="POST" action="<?= htmlspecialchars(birkly_url('/admin/login.php')) ?>">
             <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
             
             <div class="form-group">
@@ -511,7 +474,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             </button>
         </form>
         
-        <div class="login-footer">
+        <div class="auth-card__footer login-footer">
             <?php
             require_once __DIR__ . '/../core/platform.php';
             if (birkly_alpha_program_enabled()):

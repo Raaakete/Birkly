@@ -15,9 +15,9 @@
 
 /* Message Variants */
 .message.info {
-  background: var(--primary-50, #eff6ff);
-  border-color: var(--primary-200, #bfdbfe);
-  color: var(--primary-800, #1e40af);
+  background: var(--primary-50, #EDFCF7);
+  border-color: var(--primary-200, #AEF0DC);
+  color: var(--primary-800, #2D8C6B);
 }
 
 .message.success {
