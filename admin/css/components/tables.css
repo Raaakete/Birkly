@@ -73,29 +73,38 @@
   min-width: 0;
 }
 
-.entries-smart-table .table-head {
+.entries-smart-table .table-viewport {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.entries-smart-table .smart-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+.entries-smart-table .table-head th {
   position: sticky;
   top: 0;
   z-index: 2;
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-  width: max-content;
-  min-width: 0;
 }
 
 .entries-smart-table .head-row,
 .entries-smart-table .table-row {
-  display: flex;
-  align-items: center;
-  width: max-content;
-  min-width: 0;
-  max-width: none;
-  flex-shrink: 0;
-  transition: all var(--transition-normal, 200ms ease);
-  gap: 1px;
-  box-sizing: border-box;
+  transition: background var(--transition-normal, 200ms ease);
 }
 
-.entries-smart-table .table-row:hover .cell {
+.entries-smart-table .table-row:hover td {
+  background: var(--color-neutral-200, #F4F6F2);
+}
+
+.entries-smart-table .table-row:hover td.cell-actions {
   background: var(--color-neutral-200, #F4F6F2);
 }
 
@@ -103,12 +112,10 @@
 .entries-smart-table .cell {
   padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
   height: 60px;
-  display: flex;
-  align-items: center;
-  transition: all var(--transition-normal, 200ms ease);
-  border-radius: var(--border-radius-s, 4px);
-  margin-bottom: 1px;
-  min-width: 0;
+  vertical-align: middle;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  box-sizing: border-box;
 }
 
 .entries-smart-table .head-cell {
@@ -118,33 +125,36 @@
   color: var(--text-secondary, #72746F);
   letter-spacing: 0.02em;
   height: 36px;
+  white-space: nowrap;
 }
 
 .entries-smart-table .cell {
   background: var(--bg-elevated, #ffffff);
 }
 
-/* Smart Table Specialized Cells */
 .entries-smart-table .head-checkbox,
 .entries-smart-table .cell-checkbox {
   width: 40px;
-  flex-shrink: 0;
-  justify-content: center;
+  min-width: 40px;
+  max-width: 40px;
+  text-align: center;
 }
 
 .entries-smart-table .head-drag,
 .entries-smart-table .cell-drag {
   width: 40px;
-  flex-shrink: 0;
-  justify-content: center;
+  min-width: 40px;
+  max-width: 40px;
+  text-align: center;
   cursor: grab !important;
 }
 
 .entries-smart-table .head-sub-entries,
 .entries-smart-table .cell-sub-entries {
   width: 60px;
-  flex-shrink: 0;
-  justify-content: center;
+  min-width: 60px;
+  max-width: 60px;
+  text-align: center;
 }
 
 .entries-smart-table .head-title,
@@ -152,36 +162,45 @@
   width: 320px;
   min-width: 320px;
   max-width: 320px;
-  flex: 0 0 320px;
 }
 
 .entries-smart-table .head-status,
 .entries-smart-table .cell-status {
   width: 180px;
-  flex-shrink: 0;
+  min-width: 180px;
+  max-width: 180px;
 }
 
 .entries-smart-table .head-actions,
 .entries-smart-table .cell-actions {
+  position: sticky;
+  right: 0;
   width: 112px;
   min-width: 112px;
   max-width: 112px;
-  flex: 0 0 112px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1, 0.25rem);
   padding: var(--space-2, 0.5rem);
-  box-sizing: border-box;
   border-left: 1px solid var(--border-light, #f3f4f6);
   background: var(--bg-elevated, #ffffff);
-  border-radius: 0;
+  text-align: center;
+  z-index: 3;
+}
+
+.entries-smart-table.is-scrolled-x .head-actions,
+.entries-smart-table.is-scrolled-x .cell-actions {
+  box-shadow: -6px 0 12px -6px rgba(0, 0, 0, 0.12);
 }
 
 .entries-smart-table .head-actions {
   background: var(--color-neutral-200, #F4F6F2);
   height: 36px;
-  z-index: 1;
+  z-index: 4;
+}
+
+.entries-smart-table .cell-actions-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1, 0.25rem);
 }
 
 .entries-smart-table .cell-actions .btn-icon {
@@ -201,24 +220,9 @@
   width: var(--col-field, 240px);
   min-width: var(--col-field-min, var(--col-field, 240px));
   max-width: var(--col-field, 240px);
-  flex-shrink: 0;
-  flex-grow: 0;
-}
-
-.entries-smart-table .table-viewport {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.entries-smart-table .table-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: max-content;
-  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .entries-smart-table .cell-drag {
@@ -247,7 +251,11 @@
 }
 
 /* Selected Row */
-.entries-smart-table .table-row[data-entry-selected="true"] .cell {
+.entries-smart-table .table-row[data-entry-selected="true"] td {
+  background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
+}
+
+.entries-smart-table .table-row[data-entry-selected="true"] td.cell-actions {
   background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
 }
 
@@ -321,9 +329,7 @@
 }
 
 .entries-smart-table .cell-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  white-space: nowrap;
 }
 
 .reviewer-indicator {
@@ -363,24 +369,7 @@
   gap: var(--space-2, 0.5rem);
 }
 
-/* Header/body field columns — fixed widths; row scrolls in .table-viewport */
-.entries-smart-table .fields-head-region,
-.entries-smart-table .fields-region {
-  display: flex;
-  flex-direction: row;
-  gap: 1px;
-  flex: 0 0 auto;
-  width: max-content;
-  min-width: 0;
-}
-
-.entries-smart-table .cell-field {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
+/* Header/body field columns share widths via table layout */
 .entries-smart-table .cell-field .ft-list-text,
 .entries-smart-table .cell-field .cell-excerpt,
 .entries-smart-table .cell-field .field-text,
@@ -512,24 +501,11 @@
 
 /* Mobile — horizontal scroll in viewport only; compact title column */
 @media (max-width: 767px) {
-  .entries-smart-table .table-viewport {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    max-width: 100%;
-  }
-
-  .entries-smart-table .head-row,
-  .entries-smart-table .table-row {
-    width: max-content;
-    min-width: 100%;
-  }
-
   .entries-smart-table .head-title,
   .entries-smart-table .cell-title {
     width: 140px;
     min-width: 140px;
     max-width: 180px;
-    flex: 0 0 140px;
   }
 
   .entries-smart-table .head-field,
