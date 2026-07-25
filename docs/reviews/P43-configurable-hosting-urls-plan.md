@@ -151,15 +151,15 @@ Merge or supersede open PR #289 nginx fixes as part of M5.
 | ID | Focus | Owner | Status |
 |----|--------|--------|--------|
 | **P43-M0** | Gap register + plan approval (this PR) | product-planner | complete |
-| **P43-M1** | `hosting.json` + `core/hosting_urls.php` + migration | cms-developer | pending |
-| **P43-M2** | `index.php` / router: settings-based `/` and host roles | cms-developer | pending |
-| **P43-M3** | Settings → Hosting UI + API | cms-developer | pending |
-| **P43-M4** | Onboarding steps (CMS URL, public site mode) | cms-developer | pending |
-| **P43-M5** | Clean public URLs + docker nginx | cms-developer | pending |
-| **P43-M6** | Admin canonical host redirects (`/admin` off CMS host) | cms-developer | pending |
-| **P43-M7** | `site_domain.php`, CORS, `birkly_public_site_url()` alignment | cms-developer | pending |
-| **P43-M8** | Tests: `hosting_urls_test.php`, routing HTTP fixtures | cms-developer | pending |
-| **P43-M9** | Birkly-Docs + `docker.md` + closure matrix | docs-writer | pending |
+| **P43-M1** | `hosting.json` + `core/hosting_urls.php` + migration | cms-developer | complete |
+| **P43-M2** | `index.php` / router: settings-based `/` and host roles | cms-developer | complete |
+| **P43-M3** | Settings → Hosting UI + API | cms-developer | complete |
+| **P43-M4** | Onboarding steps (CMS URL, public site mode) | cms-developer | complete |
+| **P43-M5** | Clean public URLs + docker nginx | cms-developer | complete |
+| **P43-M6** | Admin canonical host redirects (`/admin` off CMS host) | cms-developer | complete |
+| **P43-M7** | `site_domain.php`, CORS, `birkly_public_site_url()` alignment | cms-developer | complete |
+| **P43-M8** | Tests: `hosting_urls_test.php`, routing HTTP fixtures | cms-developer | complete |
+| **P43-M9** | Birkly-Docs + `docker.md` + closure matrix | docs-writer | complete |
 
 **Depends on:** Docker single-volume (`BIRKLY_DATA`) on `main` · live `*.birkly.cloud` reference install.
 
