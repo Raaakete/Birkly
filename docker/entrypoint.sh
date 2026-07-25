@@ -81,7 +81,7 @@ if [ ! -L /app/content ] && [ ! -d /app/content ]; then
   mkdir -p /app/content 2>/dev/null || true
 fi
 
-mkdir -p /app/content/project 2>/dev/null || true
+mkdir -p /app/content/project /app/content/collections 2>/dev/null || true
 
 if [ -L /app/project ]; then
   :
