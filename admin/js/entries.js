@@ -469,5 +469,17 @@
 
     updateBulkUI();
     window.setTimeout(initializeEntryDragHandlers, 100);
+
+    document.querySelectorAll('.entries-smart-table .table-viewport').forEach(function (viewport) {
+        const table = viewport.closest('.entries-smart-table');
+        const onScroll = function () {
+            if (!table) {
+                return;
+            }
+            table.classList.toggle('is-scrolled-x', viewport.scrollLeft > 1);
+        };
+        viewport.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+    });
 })();
 
