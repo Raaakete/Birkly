@@ -149,8 +149,23 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         ];
     }
 
-    $contentRoot = $projectRoot . '/content/collections';
-    $websiteRoot = $projectRoot . '/' . birkly_public_site_dir();
+    $collectionsReady = birkly_ensure_content_collections_dir($projectRoot);
+    if (!$collectionsReady['ok']) {
+        return [
+            'success' => false,
+            'template' => $templateId,
+            'installed_collections' => [],
+            'demo_website' => false,
+            'removed' => [],
+            'message' => $collectionsReady['error'] ?? 'Collections directory is not writable',
+            'diagnostics' => [
+                'collections_dir' => $collectionsReady,
+            ],
+        ];
+    }
+
+    $contentRoot = $collectionsReady['path'];
+    $websiteRoot = birkly_public_site_path();
 
     $removed = [];
     foreach (birkly_demo_all_starter_collection_slugs() as $slug) {
@@ -210,24 +225,48 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         return [
             'success' => false,
             'template' => $templateId,
-            'installed_collections' => [],
-            'demo_website' => false,
+            'installed_collections' => $extracted['installed_collections'] ?? [],
+            'demo_website' => (bool) ($extracted['project_site'] ?? false),
             'removed' => $removed,
             'message' => $extracted['message'],
+            'diagnostics' => [
+                'collections_dir' => $collectionsReady,
+                'extract' => $extracted,
+            ],
         ];
     }
 
     $primary = birkly_demo_starter_primary_collection($templateId);
     $primaryInstalled = $primary === null || in_array($primary, $extracted['installed_collections'], true);
 
+    if (!$primaryInstalled) {
+        return [
+            'success' => false,
+            'template' => $templateId,
+            'installed_collections' => $extracted['installed_collections'],
+            'demo_website' => $extracted['project_site'],
+            'project_site' => $extracted['project_site'],
+            'removed' => $removed,
+            'source' => 'ops',
+            'message' => 'Starter template could not be installed: primary collection '
+                . ($primary ?? 'unknown')
+                . ' is missing after extract',
+            'diagnostics' => [
+                'collections_dir' => $collectionsReady,
+                'extract' => $extracted,
+                'primary_collection' => $primary,
+            ],
+        ];
+    }
+
     return [
-        'success' => $primaryInstalled,
+        'success' => true,
         'template' => $templateId,
         'installed_collections' => $extracted['installed_collections'],
         'demo_website' => $extracted['project_site'],
         'project_site' => $extracted['project_site'],
         'removed' => $removed,
         'source' => 'ops',
-        'message' => $primaryInstalled ? 'Starter template installed' : 'Starter template could not be installed',
+        'message' => 'Starter template installed',
     ];
 }

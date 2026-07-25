@@ -336,7 +336,14 @@ const onboarding = {
                 }
                 this.nextStep();
             } else {
-                BirklyFeedback.toast(data.message || 'Failed to install starter template', 'error')
+                let message = data.message || 'Failed to install starter template';
+                const extractErrors = data.diagnostics?.extract?.errors;
+                if (Array.isArray(extractErrors) && extractErrors.length > 0) {
+                    message += ': ' + extractErrors.slice(0, 2).join('; ');
+                } else if (data.diagnostics?.collections_dir?.error) {
+                    message += ': ' + data.diagnostics.collections_dir.error;
+                }
+                BirklyFeedback.toast(message, 'error');
             }
         } catch (error) {
             BirklyFeedback.toast('Failed to install starter template.', 'error')
