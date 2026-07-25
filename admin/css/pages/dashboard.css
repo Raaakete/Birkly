@@ -1187,11 +1187,20 @@ a.dash-feed__title:hover {
     .payments-dash-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .analytics-widget__summary,
+    .analytics-widget__panels {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 480px) {
     .card.dash-widget {
         padding: var(--space-4, 1rem);
+    }
+
+    .analytics-widget__summary {
+        grid-template-columns: 1fr;
     }
 
     .payments-dash-grid {
