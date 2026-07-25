@@ -122,10 +122,39 @@
                 setContent(element, callout('—', 'Analytics ready', 'Enable tracking for your registered domains.', adminUrl('settings') + '#domains', 'Enable analytics →', 'muted'));
                 return;
             }
-            setContent(element, statGrid([
-                statTile(Number(data.total_page_views || 0).toLocaleString(), 'Page views (30d)', 'analytics'),
-                statTile(Number(data.total_visitors || 0).toLocaleString(), 'Visitors (30d)', 'analytics'),
-            ]));
+
+            function renderRankList(title, rows, labelKey, valueKey) {
+                if (!Array.isArray(rows) || rows.length === 0) {
+                    return '';
+                }
+                const items = rows.map(function (row) {
+                    const label = row[labelKey] || '—';
+                    const value = row[valueKey] || 0;
+                    return '<li><span class="analytics-report__label">' + escapeHtml(label) + '</span><span class="analytics-report__value">' + escapeHtml(value) + '</span></li>';
+                }).join('');
+                return '<div class="analytics-report__section"><h4>' + escapeHtml(title) + '</h4><ul class="analytics-report__list">' + items + '</ul></div>';
+            }
+
+            const insights = data.insights || {};
+            const sections = [
+                renderRankList('Top entrance pages', insights.entrance_pages, 'path', 'entrances'),
+                renderRankList('Top exit pages', insights.exit_pages, 'path', 'exits'),
+                renderRankList('Devices', insights.devices, 'device_type', 'visits'),
+                renderRankList('Locations', insights.countries, 'country', 'visits'),
+                renderRankList('Browsers', insights.browsers, 'browser', 'visits'),
+                renderRankList('Traffic sources', insights.traffic_sources, 'source', 'visits'),
+            ].filter(Boolean).join('');
+
+            setContent(element,
+                '<div class="analytics-content">' +
+                statGrid([
+                    statTile(Number(data.total_page_views || 0).toLocaleString(), 'Page views (30d)', 'analytics'),
+                    statTile(Number(data.total_visitors || 0).toLocaleString(), 'Visitors (30d)', 'analytics'),
+                ]) +
+                '<div class="analytics-report__grid">' + sections + '</div>' +
+                '<p class="analytics-report__footnote"><a href="' + escapeHtml(adminUrl('settings') + '#domains') + '">View per-domain analytics in Settings → Domains</a></p>' +
+                '</div>'
+            );
         });
 
         dashboard.registerMount('recentCollections', function (element) {

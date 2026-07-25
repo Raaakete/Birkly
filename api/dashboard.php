@@ -660,7 +660,15 @@ if ($action === 'analytics') {
             'websites' => [],
             'tracking_count' => 0,
             'has_domains' => false,
-            'has_analytics' => false
+            'has_analytics' => false,
+            'insights' => [
+                'entrance_pages' => [],
+                'exit_pages' => [],
+                'devices' => [],
+                'countries' => [],
+                'browsers' => [],
+                'traffic_sources' => [],
+            ],
         ]
     ];
     
@@ -701,6 +709,14 @@ if ($action === 'analytics') {
         $totalVisitors = 0;
         $websites = [];
         $analyticsEnabledCount = 0;
+        $mergedInsights = [
+            'entrance_pages' => [],
+            'exit_pages' => [],
+            'devices' => [],
+            'countries' => [],
+            'browsers' => [],
+            'traffic_sources' => [],
+        ];
         
         foreach ($licenses as $domain => $license) {
             if (!empty($license['analytics_enabled'])) {
@@ -721,18 +737,69 @@ if ($action === 'analytics') {
                         'domain' => $domain,
                         'page_views' => $data['page_views'] ?? 0,
                         'visitors' => $data['unique_visitors'] ?? 0,
-                        'top_pages' => array_slice($data['top_pages'] ?? [], 0, 5)
+                        'top_pages' => array_slice($data['top_pages'] ?? [], 0, 5),
+                        'entrance_pages' => array_slice($data['entrance_pages'] ?? [], 0, 5),
+                        'exit_pages' => array_slice($data['exit_pages'] ?? [], 0, 5),
+                        'devices' => array_slice($data['devices'] ?? [], 0, 5),
+                        'countries' => array_slice($data['countries'] ?? [], 0, 5),
+                        'browsers' => array_slice($data['browsers'] ?? [], 0, 5),
+                        'traffic_sources' => array_slice($data['traffic_sources'] ?? [], 0, 5),
                     ];
+
+                    foreach (['entrance_pages' => 'entrances', 'exit_pages' => 'exits', 'devices' => 'visits', 'countries' => 'visits', 'browsers' => 'visits', 'traffic_sources' => 'visits'] as $section => $metricKey) {
+                        foreach ($data[$section] ?? [] as $row) {
+                            if (!is_array($row)) {
+                                continue;
+                            }
+                            $labelKey = array_key_first(array_diff_key($row, [$metricKey => true]));
+                            if ($labelKey === null) {
+                                continue;
+                            }
+                            $label = (string) ($row[$labelKey] ?? '');
+                            if ($label === '') {
+                                continue;
+                            }
+                            $mergedInsights[$section][$label] = ($mergedInsights[$section][$label] ?? 0) + (int) ($row[$metricKey] ?? 0);
+                        }
+                    }
                             }
                 } catch (Exception $e) {
                     error_log("Error getting analytics for domain {$domain}: " . $e->getMessage());
                         }
                     }
                 }
+
+                foreach ($mergedInsights as $section => $counts) {
+                    arsort($counts);
+                    $labelKeys = [
+                        'entrance_pages' => 'path',
+                        'exit_pages' => 'path',
+                        'devices' => 'device_type',
+                        'countries' => 'country',
+                        'browsers' => 'browser',
+                        'traffic_sources' => 'source',
+                    ];
+                    $metricKeys = [
+                        'entrance_pages' => 'entrances',
+                        'exit_pages' => 'exits',
+                        'devices' => 'visits',
+                        'countries' => 'visits',
+                        'browsers' => 'visits',
+                        'traffic_sources' => 'visits',
+                    ];
+                    $labelKey = $labelKeys[$section] ?? 'label';
+                    $metricKey = $metricKeys[$section] ?? 'visits';
+                    $rows = [];
+                    foreach (array_slice($counts, 0, 5, true) as $label => $count) {
+                        $rows[] = [$labelKey => $label, $metricKey => $count];
+                    }
+                    $mergedInsights[$section] = $rows;
+                }
                 
                 $response['data']['total_page_views'] = $totalPageViews;
                 $response['data']['total_visitors'] = $totalVisitors;
                 $response['data']['websites'] = $websites;
+                $response['data']['insights'] = $mergedInsights;
                 $response['data']['tracking_count'] = $analyticsEnabledCount;
                 $response['data']['has_domains'] = count($licenses) > 0;
             } catch (Throwable $e) {

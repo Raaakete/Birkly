@@ -999,6 +999,63 @@ async function deletePlugin(pluginId) {
         }
     }
 
+    function renderAnalyticsReportSections(report) {
+        function section(title, rows, labelKey, valueKey) {
+            if (!rows || !rows.length) {
+                return '';
+            }
+            var items = rows.map(function(row) {
+                return '<li><span class="analytics-report__label">' + escapeHtml(row[labelKey] || '—') + '</span>' +
+                    '<span class="analytics-report__value">' + escapeHtml(row[valueKey] || 0) + '</span></li>';
+            }).join('');
+            return '<div class="analytics-report__section"><h4>' + escapeHtml(title) + '</h4><ul class="analytics-report__list">' + items + '</ul></div>';
+        }
+
+        return '<div class="analytics-report__grid">' +
+            section('Entrance pages', report.entrance_pages, 'path', 'entrances') +
+            section('Exit pages', report.exit_pages, 'path', 'exits') +
+            section('Devices', report.devices, 'device_type', 'visits') +
+            section('Locations', report.countries, 'country', 'visits') +
+            section('Browsers', report.browsers, 'browser', 'visits') +
+            section('Operating systems', report.operating_systems, 'os', 'visits') +
+            section('Traffic sources', report.traffic_sources, 'source', 'visits') +
+            '</div>';
+    }
+
+    async function loadDomainAnalyticsReport(domainName, container) {
+        if (!container) {
+            return;
+        }
+
+        container.hidden = false;
+        container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading analytics report...</p></div>';
+
+        try {
+            var endDate = new Date().toISOString().slice(0, 10);
+            var startDate = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+            var url = apiUrl('/api/analytics.php?action=data&tracking_id=' + encodeURIComponent(domainName) +
+                '&start_date=' + encodeURIComponent(startDate) + '&end_date=' + encodeURIComponent(endDate));
+            var response = await fetch(url, { credentials: 'same-origin' });
+            var payload = await response.json();
+
+            if (payload.status !== 'ok' || !payload.data) {
+                throw new Error(payload.message || 'Failed to load analytics report');
+            }
+
+            var report = payload.data;
+            container.innerHTML =
+                '<div class="domain-analytics-report-card">' +
+                '<div class="domain-analytics-report-summary">' +
+                '<div><strong>' + escapeHtml(String(report.page_views || 0)) + '</strong><span>Page views (30d)</span></div>' +
+                '<div><strong>' + escapeHtml(String(report.unique_visitors || 0)) + '</strong><span>Visitors (30d)</span></div>' +
+                '</div>' +
+                renderAnalyticsReportSections(report) +
+                '</div>';
+        } catch (error) {
+            container.innerHTML = '<div class="error-state"><p>Error loading analytics report: ' + escapeHtml(error.message) + '</p></div>';
+        }
+    }
+
     function renderDomains(domains) {
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
@@ -1069,6 +1126,11 @@ async function deletePlugin(pluginId) {
                 '</label>' +
                 '</div>' +
                 (trackingScriptHtml ? '<div class="domain-tracking-script">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
+                (analyticsEnabled ?
+                    '<div class="domain-analytics-report-actions">' +
+                    '<button type="button" class="btn btn-secondary btn-sm domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button>' +
+                    '</div>' +
+                    '<div class="domain-analytics-report" hidden></div>' : '') +
                 '</div>' +
                 '</article>';
         }).join('');
@@ -1098,6 +1160,23 @@ async function deletePlugin(pluginId) {
                     toggleDomainAnalytics(toggle.getAttribute('data-domain'), toggle.checked, toggle);
                 });
             })(analyticsToggles[j]);
+        }
+
+        var reportButtons = listContainer.querySelectorAll('.domain-analytics-report-btn');
+        for (var k = 0; k < reportButtons.length; k++) {
+            (function(btn) {
+                btn.addEventListener('click', function() {
+                    var domain = btn.getAttribute('data-domain');
+                    var card = btn.closest('.domain-card');
+                    var reportContainer = card ? card.querySelector('.domain-analytics-report') : null;
+                    if (reportContainer && !reportContainer.dataset.loaded) {
+                        reportContainer.dataset.loaded = '1';
+                        loadDomainAnalyticsReport(domain, reportContainer);
+                    } else if (reportContainer) {
+                        reportContainer.hidden = !reportContainer.hidden;
+                    }
+                });
+            })(reportButtons[k]);
         }
     }
     

@@ -184,22 +184,63 @@
             return sessionId;
         }
 
+        function getEntrancePath() {
+            const key = 'birkly_entrance_' + trackingId;
+            let entrance = sessionStorage.getItem(key);
+            if (!entrance) {
+                entrance = window.location.pathname + window.location.search;
+                sessionStorage.setItem(key, entrance);
+            }
+            return entrance;
+        }
+
+        function getTimezone() {
+            try {
+                return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function getUtmParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                utm_source: params.get('utm_source') || '',
+                utm_medium: params.get('utm_medium') || '',
+                utm_campaign: params.get('utm_campaign') || ''
+            };
+        }
+
         function buildTrackPayload(extra) {
+            const utm = getUtmParams();
             return Object.assign({
                 tracking_id: trackingId,
+                event_type: 'pageview',
                 domain: window.location.hostname,
                 path: window.location.pathname + window.location.search,
+                entrance_path: getEntrancePath(),
                 referrer: document.referrer || '',
                 screen_width: window.screen.width || 0,
                 screen_height: window.screen.height || 0,
+                viewport_width: window.innerWidth || document.documentElement.clientWidth || 0,
+                viewport_height: window.innerHeight || document.documentElement.clientHeight || 0,
                 language: navigator.language || navigator.userLanguage || '',
+                timezone: getTimezone(),
+                utm_source: utm.utm_source,
+                utm_medium: utm.utm_medium,
+                utm_campaign: utm.utm_campaign,
                 session_id: getSessionId()
             }, extra || {});
         }
 
-        function sendTrackPayload(data) {
+        function sendTrackPayload(data, preferBeacon) {
             const url = cmsUrl + '/api/analytics.php?action=track';
             const body = JSON.stringify(data);
+
+            if (preferBeacon && navigator.sendBeacon) {
+                navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+                return;
+            }
 
             fetch(url, {
                 method: 'POST',
@@ -225,7 +266,14 @@
         }
 
         function trackPageView() {
-            sendTrackPayload(buildTrackPayload());
+            sendTrackPayload(buildTrackPayload({ event_type: 'pageview' }));
+        }
+
+        function trackPageExit() {
+            sendTrackPayload(buildTrackPayload({
+                event_type: 'page_exit',
+                path: window.location.pathname + window.location.search
+            }), true);
         }
 
         if (document.readyState === 'complete') {
@@ -245,6 +293,13 @@
 
         window.addEventListener('popstate', function() {
             setTimeout(trackPageView, 100);
+        });
+
+        window.addEventListener('pagehide', trackPageExit);
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                trackPageExit();
+            }
         });
 
         window.HaruAnalyticsTrack = function(eventName, eventData) {
