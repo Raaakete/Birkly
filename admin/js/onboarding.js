@@ -337,11 +337,15 @@ const onboarding = {
                 this.nextStep();
             } else {
                 let message = data.message || 'Failed to install starter template';
+                const collectionsError = data.diagnostics?.collections_dir?.error;
                 const extractErrors = data.diagnostics?.extract?.errors;
                 if (Array.isArray(extractErrors) && extractErrors.length > 0) {
-                    message += ': ' + extractErrors.slice(0, 2).join('; ');
-                } else if (data.diagnostics?.collections_dir?.error) {
-                    message += ': ' + data.diagnostics.collections_dir.error;
+                    const detail = extractErrors.slice(0, 2).join('; ');
+                    if (!message.includes(detail)) {
+                        message += ': ' + detail;
+                    }
+                } else if (collectionsError && !message.includes(collectionsError)) {
+                    message += ': ' + collectionsError;
                 }
                 BirklyFeedback.toast(message, 'error');
             }
