@@ -288,6 +288,32 @@ function birkly_content_collections_dir(string $projectRoot): string
 }
 
 /**
+ * Check whether PHP can write to a path (probe file when is_writable() is unreliable).
+ */
+function birkly_path_is_writable(string $path): bool
+{
+    if ($path === '') {
+        return false;
+    }
+
+    if (is_writable($path)) {
+        return true;
+    }
+
+    if (!is_dir($path) && !is_file($path)) {
+        return false;
+    }
+
+    $probe = rtrim($path, '/\\') . '/.birkly-write-probe-' . getmypid() . '-' . bin2hex(random_bytes(4));
+    if (@file_put_contents($probe, '') === false) {
+        return false;
+    }
+
+    @unlink($probe);
+    return true;
+}
+
+/**
  * Ensure content/collections exists and is writable before starter install.
  *
  * @return array{ok:bool,path:string,error?:string}
@@ -297,7 +323,11 @@ function birkly_ensure_content_collections_dir(string $projectRoot): array
     $contentDir = rtrim($projectRoot, '/\\') . '/content';
     $collectionsDir = birkly_content_collections_dir($projectRoot);
 
-    if (!is_dir($contentDir) && !@mkdir($contentDir, 0775, true)) {
+    if (is_link($collectionsDir) || (file_exists($collectionsDir) && !is_dir($collectionsDir))) {
+        @unlink($collectionsDir);
+    }
+
+    if (!is_dir($contentDir) && !@mkdir($contentDir, 0777, true)) {
         return [
             'ok' => false,
             'path' => $collectionsDir,
@@ -305,7 +335,11 @@ function birkly_ensure_content_collections_dir(string $projectRoot): array
         ];
     }
 
-    if (!is_dir($collectionsDir) && !@mkdir($collectionsDir, 0775, true)) {
+    if (!birkly_path_is_writable($contentDir)) {
+        @chmod($contentDir, 0777);
+    }
+
+    if (!is_dir($collectionsDir) && !@mkdir($collectionsDir, 0777, true)) {
         return [
             'ok' => false,
             'path' => $collectionsDir,
@@ -313,7 +347,12 @@ function birkly_ensure_content_collections_dir(string $projectRoot): array
         ];
     }
 
-    if (!is_writable($collectionsDir)) {
+    if (!birkly_path_is_writable($collectionsDir)) {
+        @chmod($collectionsDir, 0777);
+        @chmod(dirname($collectionsDir), 0777);
+    }
+
+    if (!birkly_path_is_writable($collectionsDir)) {
         return [
             'ok' => false,
             'path' => $collectionsDir,
@@ -337,8 +376,10 @@ function birkly_ops_starters_install_probe(string $projectRoot, string $starterI
     $probe = [
         'starter_id' => $starterId,
         'collections_dir' => birkly_ensure_content_collections_dir($projectRoot),
+        'collections_write_probe' => false,
         'project_site_dir' => birkly_public_site_path(),
-        'project_site_writable' => is_writable(birkly_public_site_path()) || is_writable(dirname(birkly_public_site_path())),
+        'project_site_writable' => birkly_path_is_writable(birkly_public_site_path())
+            || birkly_path_is_writable(dirname(birkly_public_site_path())),
         'zip_download' => false,
         'zip_collection_slugs' => [],
         'errors' => [],
@@ -372,6 +413,12 @@ function birkly_ops_starters_install_probe(string $projectRoot, string $starterI
     }
     $probe['zip_collection_slugs'] = array_keys($probe['zip_collection_slugs']);
     @unlink($tmpZip);
+
+    if (($probe['collections_dir']['ok'] ?? false) === true) {
+        $collectionsPath = (string) ($probe['collections_dir']['path'] ?? '');
+        $probe['collections_write_probe'] = $collectionsPath !== ''
+            && birkly_path_is_writable($collectionsPath);
+    }
 
     return $probe;
 }

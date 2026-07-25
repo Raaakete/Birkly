@@ -73,6 +73,13 @@ symlink($dockerRoot . '/data/content/project', $dockerRoot . '/project');
 
 $collectionsReady = birkly_ensure_content_collections_dir($dockerRoot);
 assert_true('docker layout collections dir ready', ($collectionsReady['ok'] ?? false) === true);
+assert_true('docker layout collections write probe', birkly_path_is_writable($collectionsReady['path'] ?? ''));
+
+$restrictedRoot = sys_get_temp_dir() . '/birkly-ops-restricted-' . getmypid();
+@mkdir($restrictedRoot . '/data/content', 0755, true);
+symlink($restrictedRoot . '/data/content', $restrictedRoot . '/content');
+$restrictedReady = birkly_ensure_content_collections_dir($restrictedRoot);
+assert_true('restricted layout repaired by ensure', ($restrictedReady['ok'] ?? false) === true);
 
 if (is_file($tmp)) {
     $dockerExtract = birkly_ops_extract_starter_zip($tmp, $dockerRoot);
@@ -84,6 +91,6 @@ if (is_file($tmp)) {
 }
 
 @unlink($tmp);
-exec('rm -rf ' . escapeshellarg($root) . ' ' . escapeshellarg($dockerRoot));
+exec('rm -rf ' . escapeshellarg($root) . ' ' . escapeshellarg($dockerRoot) . ' ' . escapeshellarg($restrictedRoot));
 
 exit($failed > 0 ? 1 : 0);

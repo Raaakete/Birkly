@@ -117,13 +117,36 @@ function birkly_demo_remove_tree(string $dir): bool
     $items = array_diff(scandir($dir) ?: [], ['.', '..']);
     foreach ($items as $item) {
         $path = $dir . '/' . $item;
-        if (is_dir($path)) {
+        if (is_dir($path) && !is_link($path)) {
             birkly_demo_remove_tree($path);
         } else {
             @unlink($path);
         }
     }
+    if (is_link($dir)) {
+        return @unlink($dir);
+    }
     return @rmdir($dir);
+}
+
+/**
+ * Remove directory contents but keep the root path (for project symlink targets).
+ */
+function birkly_demo_remove_dir_contents(string $dir): bool
+{
+    if (!is_dir($dir)) {
+        return true;
+    }
+    $items = array_diff(scandir($dir) ?: [], ['.', '..']);
+    foreach ($items as $item) {
+        $path = $dir . '/' . $item;
+        if (is_dir($path) && !is_link($path)) {
+            birkly_demo_remove_tree($path);
+        } else {
+            @unlink($path);
+        }
+    }
+    return true;
 }
 
 function birkly_demo_install_starter_template(string $templateId, string $projectRoot): array
@@ -177,8 +200,24 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         }
     }
     if (is_dir($websiteRoot)) {
-        birkly_demo_remove_tree($websiteRoot);
+        birkly_demo_remove_dir_contents($websiteRoot);
     }
+
+    $collectionsReady = birkly_ensure_content_collections_dir($projectRoot);
+    if (!$collectionsReady['ok']) {
+        return [
+            'success' => false,
+            'template' => $templateId,
+            'installed_collections' => [],
+            'demo_website' => false,
+            'removed' => $removed,
+            'message' => $collectionsReady['error'] ?? 'Collections directory is not writable after cleanup',
+            'diagnostics' => [
+                'collections_dir' => $collectionsReady,
+            ],
+        ];
+    }
+    $contentRoot = $collectionsReady['path'];
 
     if ($templateId === 'blank') {
         if (!is_dir($websiteRoot)) {
