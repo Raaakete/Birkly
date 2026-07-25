@@ -107,58 +107,6 @@ $getStatus = function($entry) {
 $getSubEntryCount = function($entry) {
     return $entry['__sub_entry_count'] ?? 0;
 };
-
-$renderActionsCell = function(
-    string $entryId,
-    string $title,
-    string $status,
-    string $editUrl
-) use (
-    $showDuplicateAction,
-    $duplicateCallback,
-    $showRestoreAction,
-    $restoreCallback,
-    $deleteCallback,
-    $deleteDataAttr,
-    $deleteLabel
-): string {
-    ob_start();
-    ?>
-    <div class="cell cell-actions" role="cell">
-        <a class="btn-icon btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-        </a>
-        <?php if ($showDuplicateAction && $status !== 'trashed'): ?>
-            <button type="button" class="btn-icon <?= htmlspecialchars($duplicateCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Duplicate <?= htmlspecialchars($title) ?>" title="Duplicate">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <rect x="9" y="9" width="11" height="11" rx="2"></rect>
-                    <rect x="4" y="4" width="11" height="11" rx="2"></rect>
-                </svg>
-            </button>
-        <?php endif; ?>
-        <?php if ($showRestoreAction && $status === 'trashed'): ?>
-            <button type="button" class="btn-icon <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Restore <?= htmlspecialchars($title) ?>" title="Restore">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M3 12a9 9 0 1 0 3-6.7"></path>
-                    <polyline points="3 3 3 9 9 9"></polyline>
-                </svg>
-            </button>
-        <?php endif; ?>
-        <?php if ($deleteCallback && $status !== 'trashed'): ?>
-            <button type="button" class="btn-icon btn-icon--danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= htmlspecialchars($deleteLabel) ?> <?= htmlspecialchars($title) ?>" title="<?= htmlspecialchars($deleteLabel) ?>">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <polyline points="3,6 5,6 21,6"></polyline>
-                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                </svg>
-            </button>
-        <?php endif; ?>
-    </div>
-    <?php
-    return (string) ob_get_clean();
-};
 ?>
 
 <?php 
@@ -170,39 +118,40 @@ $renderActionsCell = function(
 
 if (!empty($entries)): ?>
     <div class="entries-smart-table <?= htmlspecialchars($tableClass) ?>" <?= $options['table_data_attrs'] ?? '' ?>>
-        <div class="smart-table-shell">
-            <div class="table-viewport">
-                <div class="table-head">
-                    <div class="head-row" role="row">
-                        <?php if ($showCheckbox): ?>
-                            <div class="head-cell head-checkbox" role="columnheader" aria-label="<?= __('admin.select_all') ?>">
-                                <input type="checkbox" id="select-all-<?= htmlspecialchars($checkboxIdPrefix) ?>s" class="<?= $checkboxIdPrefix === 'sub-entry' ? 'select-all-sub-entries' : '' ?>" <?= $options['checkbox_data_attrs'] ?? '' ?> aria-label="<?= __('admin.select_all_entries') ?>">
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($showDrag): ?>
-                            <div class="head-cell head-drag" role="columnheader" aria-label="<?= __('admin.drag_to_reorder') ?>"></div>
-                        <?php endif; ?>
-                        
-                        <?php if ($showSubEntries): ?>
-                            <div class="head-cell head-sub-entries" role="columnheader" style="width: 60px;" aria-label="Sub-entries count"></div>
-                        <?php endif; ?>
-                        
-                        <div class="head-cell head-title" role="columnheader"><?= __('admin.title') ?></div>
-                        <div class="head-cell head-status" role="columnheader"><?= __('admin.status') ?></div>
-                        
-                        <div class="fields-head-region">
-                            <?php foreach ($fields as $field): ?>
-                                <div class="head-cell head-field" role="columnheader" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
-                                    <?= htmlspecialchars($field['name'] ?? $field['label'] ?? '') ?>
-                                </div>
-                            <?php endforeach; ?>
+        <div class="table-viewport">
+            <div class="table-head">
+                <div class="head-row" role="row">
+                    <?php if ($showCheckbox): ?>
+                        <div class="head-cell head-checkbox" role="columnheader" aria-label="<?= __('admin.select_all') ?>">
+                            <input type="checkbox" id="select-all-<?= htmlspecialchars($checkboxIdPrefix) ?>s" class="<?= $checkboxIdPrefix === 'sub-entry' ? 'select-all-sub-entries' : '' ?>" <?= $options['checkbox_data_attrs'] ?? '' ?> aria-label="<?= __('admin.select_all_entries') ?>">
                         </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($showDrag): ?>
+                        <div class="head-cell head-drag" role="columnheader" aria-label="<?= __('admin.drag_to_reorder') ?>"></div>
+                    <?php endif; ?>
+                    
+                    <?php if ($showSubEntries): ?>
+                        <div class="head-cell head-sub-entries" role="columnheader" style="width: 60px;" aria-label="Sub-entries count"></div>
+                    <?php endif; ?>
+                    
+                    <div class="head-cell head-title" role="columnheader"><?= __('admin.title') ?></div>
+                    <div class="head-cell head-status" role="columnheader"><?= __('admin.status') ?></div>
+                    
+                    <div class="fields-head-region">
+                        <?php foreach ($fields as $field): ?>
+                            <div class="head-cell head-field" role="columnheader" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
+                                <?= htmlspecialchars($field['name'] ?? $field['label'] ?? '') ?>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
+                    
+                    <div class="head-cell head-actions" role="columnheader"><?= __('admin.actions') ?></div>
                 </div>
-                
-                <div class="table-body">
-                    <?php foreach ($entries as $entry): ?>
+            </div>
+            
+            <div class="table-body">
+                <?php foreach ($entries as $entry): ?>
                     <?php
                     $entryId = $entry['id'] ?? '';
                     $title = $getTitle($entry);
@@ -318,31 +267,43 @@ if (!empty($entries)): ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
+                        
+                        <div class="cell cell-actions" role="cell">
+                            <a class="btn-icon btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                            <?php if ($showDuplicateAction && $status !== 'trashed'): ?>
+                                <button type="button" class="btn-icon <?= htmlspecialchars($duplicateCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Duplicate <?= htmlspecialchars($title) ?>" title="Duplicate">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                                        <rect x="4" y="4" width="11" height="11" rx="2"></rect>
+                                    </svg>
+                                </button>
+                            <?php endif; ?>
+                            <?php if ($showRestoreAction && $status === 'trashed'): ?>
+                                <button type="button" class="btn-icon <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Restore <?= htmlspecialchars($title) ?>" title="Restore">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                                        <polyline points="3 3 3 9 9 9"></polyline>
+                                    </svg>
+                                </button>
+                            <?php endif; ?>
+                            <?php if ($deleteCallback): ?>
+                                <?php if ($status !== 'trashed'): ?>
+                                    <button type="button" class="btn-icon btn-icon--danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= htmlspecialchars($deleteLabel) ?> <?= htmlspecialchars($title) ?>" title="<?= htmlspecialchars($deleteLabel) ?>">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <polyline points="3,6 5,6 21,6"></polyline>
+                                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                        </svg>
+                                    </button>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 <?php endforeach; ?>
-                </div>
-            </div>
-
-            <div class="table-actions-rail" aria-label="<?= __('admin.actions') ?>">
-                <div class="actions-rail-head">
-                    <div class="head-cell head-actions" role="columnheader"><?= __('admin.actions') ?></div>
-                </div>
-                <div class="actions-rail-body">
-                    <?php foreach ($entries as $entry): ?>
-                        <?php
-                        $entryId = $entry['id'] ?? '';
-                        $title = $getTitle($entry);
-                        $status = $getStatus($entry);
-                        if ($status === 'draft') {
-                            $status = 'unpublished';
-                        }
-                        $editUrl = $getEditUrl($entry);
-                        ?>
-                        <div class="actions-rail-row" data-entry-id="<?= htmlspecialchars($entryId) ?>">
-                            <?= $renderActionsCell($entryId, $title, $status, $editUrl) ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
             </div>
         </div>
     </div>
