@@ -171,6 +171,10 @@
             container.dataset.view = currentView;
         }
 
+        document.querySelectorAll('.collection-card').forEach((card) => {
+            card.classList.toggle('collection-card--list-row', currentView === 'list');
+        });
+
         document.querySelectorAll('[data-content-view]').forEach((button) => {
             const active = button.getAttribute('data-content-view') === currentView;
             button.classList.toggle('active', active);
@@ -631,7 +635,7 @@
 
     function createCollectionCard(collection, groupId) {
         const card = document.createElement('div');
-        card.className = 'card collection-card';
+        card.className = 'card collection-card' + (currentView === 'list' ? ' collection-card--list-row' : '');
         card.dataset.collectionSlug = collection.slug;
         card.dataset.groupId = groupId || 'ungrouped';
 

@@ -325,6 +325,79 @@ a.card:hover {
   flex-shrink: 0;
 }
 
+/* List view: compact table-row collections */
+.collections-container[data-view="list"] .card.collection-card,
+.card.collection-card.collection-card--list-row {
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0.5rem 0.75rem !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.75rem;
+  box-shadow: none;
+  border-radius: 0;
+  border: none;
+}
+
+.collections-container[data-view="list"] .card.collection-card:hover,
+.card.collection-card.collection-card--list-row:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.collections-container[data-view="list"] .card.collection-card .collection-header,
+.card.collection-card.collection-card--list-row .collection-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0 !important;
+  gap: 0.5rem;
+}
+
+.collections-container[data-view="list"] .card.collection-card .collection-header .title,
+.card.collection-card.collection-card--list-row .collection-header .title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 !important;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.collections-container[data-view="list"] .card.collection-card .collection-header .title .collection-title,
+.card.collection-card.collection-card--list-row .collection-header .title .collection-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collections-container[data-view="list"] .card.collection-card .collection-description,
+.card.collection-card.collection-card--list-row .collection-description {
+  display: none !important;
+}
+
+.collections-container[data-view="list"] .card.collection-card .collection-footer,
+.card.collection-card.collection-card--list-row .collection-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.collections-container[data-view="list"] .card.collection-card .drag-handle,
+.card.collection-card.collection-card--list-row .drag-handle {
+  flex-shrink: 0;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .card {
