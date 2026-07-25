@@ -197,7 +197,7 @@
 
     async function downloadUpdate() {
         if (!updateData || !updateData.update_available) {
-            alert('No update available to download.');
+            BirklyFeedback.toast('No update available to download.', 'error')
             return;
         }
 
@@ -222,10 +222,10 @@
                         ' KB). Click <strong>Install Update</strong> to apply.</p>';
                 }
             } else {
-                alert(result.message || 'Download failed');
+                BirklyFeedback.toast(result.message || 'Download failed', 'error')
             }
         } catch (error) {
-            alert(error.message || 'Download failed');
+            BirklyFeedback.toast(error.message || 'Download failed', 'error')
         } finally {
             if (downloadBtn) {
                 downloadBtn.disabled = false;
@@ -241,11 +241,11 @@
 
     async function installUpdate() {
         if (!downloadedPackage || !updateData) {
-            alert('Download an update first.');
+            BirklyFeedback.toast('Download an update first.', 'error')
             return;
         }
 
-        if (!confirm('Install Birkly ' + updateData.latest_version + '? A backup will be created first.')) {
+        if (!(await BirklyFeedback.confirm('Install Birkly ' + updateData.latest_version + '? A backup will be created first.'))) {
             return;
         }
 
@@ -262,13 +262,13 @@
             });
 
             if (result.status === 'ok') {
-                alert('Update installed successfully. The page will reload.');
+                BirklyFeedback.toast('Update installed successfully. The page will reload.', 'success')
                 window.location.reload();
             } else {
-                alert(result.message || 'Installation failed');
+                BirklyFeedback.toast(result.message || 'Installation failed', 'error')
             }
         } catch (error) {
-            alert(error.message || 'Installation failed');
+            BirklyFeedback.toast(error.message || 'Installation failed', 'error')
         } finally {
             if (installBtn) {
                 installBtn.disabled = false;

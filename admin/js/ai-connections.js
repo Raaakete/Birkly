@@ -53,7 +53,7 @@
 
         if (aiTab && aiPane) {
             maybeInitAiConnections();
-            aiTab.addEventListener('click', function() {
+            aiTab.addEventListener('click', async function () {
                 setTimeout(initAiConnections, 100);
             });
         }
@@ -92,7 +92,7 @@
         const connectionsList = document.getElementById('connections-list');
         if (connectionsList && !connectionsList.dataset.actionsBound) {
             connectionsList.dataset.actionsBound = '1';
-            connectionsList.addEventListener('click', function(e) {
+            connectionsList.addEventListener('click', async function (e) {
                 const deleteBtn = e.target.closest('[data-delete-connection]');
                 if (deleteBtn) {
                     e.preventDefault();
@@ -885,7 +885,7 @@
 
     async function deleteConnection(connectionId) {
         if (!connectionId) return;
-        if (!confirm('Delete this assistant connection? This cannot be undone.')) return;
+        if (!(await BirklyFeedback.confirm('Delete this assistant connection? This cannot be undone.'))) return;
 
         try {
             csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || csrfToken;
@@ -929,11 +929,11 @@
     }
 
     function showError(message) {
-        alert('Error: ' + message);
+        BirklyFeedback.toast('Error: ' + message, 'error')
     }
 
     function showSuccess(message) {
-        alert('Success: ' + message);
+        BirklyFeedback.toast('Success: ' + message, 'success')
     }
 
     window.aiConnections = {

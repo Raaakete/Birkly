@@ -37,7 +37,42 @@
             window.showMessage(message, type);
             return;
         }
-        alert(message);
+        BirklyFeedback.toast(message, type || 'error');
+    }
+
+    function renderPluginSkeletonCards(count) {
+        var n = count || 6;
+        var cards = '';
+        for (var i = 0; i < n; i++) {
+            cards +=
+                '<div class="plugin-card plugin-card--skeleton" aria-hidden="true">' +
+                '<div class="plugin-skeleton-header">' +
+                '<div class="plugin-skeleton-line plugin-skeleton-line--title"></div>' +
+                '<div class="plugin-skeleton-pill"></div>' +
+                '</div>' +
+                '<div class="plugin-skeleton-line plugin-skeleton-line--body"></div>' +
+                '<div class="plugin-skeleton-line plugin-skeleton-line--short"></div>' +
+                '<div class="plugin-skeleton-actions">' +
+                '<div class="plugin-skeleton-pill plugin-skeleton-pill--btn"></div>' +
+                '<div class="plugin-skeleton-pill plugin-skeleton-pill--btn"></div>' +
+                '</div>' +
+                '</div>';
+        }
+        return cards;
+    }
+
+    function renderMarketplaceSkeletonCards(count) {
+        var n = count || 8;
+        var cards = '';
+        for (var i = 0; i < n; i++) {
+            cards +=
+                '<div class="marketplace-card marketplace-card--skeleton" aria-hidden="true">' +
+                '<div class="plugin-skeleton-line plugin-skeleton-line--title"></div>' +
+                '<div class="plugin-skeleton-line plugin-skeleton-line--body"></div>' +
+                '<div class="plugin-skeleton-line plugin-skeleton-line--short"></div>' +
+                '</div>';
+        }
+        return cards;
     }
 
     function handlePluginAction(el) {
@@ -101,7 +136,7 @@
         }
         document.body.dataset.pluginModalsBound = '1';
 
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', async function (e) {
             var el = e.target.closest('[data-plugin-action]');
             if (el) {
                 var action = el.getAttribute('data-plugin-action');
@@ -169,7 +204,7 @@
         }
         root.dataset.delegationBound = '1';
 
-        root.addEventListener('click', function (e) {
+        root.addEventListener('click', async function (e) {
             var el = e.target.closest('[data-plugin-action]');
             if (el) {
                 handlePluginAction(el);
@@ -655,7 +690,7 @@
     async function loadInstalled() {
         var grid = document.getElementById('plugins-grid');
         if (grid) {
-            grid.innerHTML = '<div class="loading-state"><p>Loading plugins...</p></div>';
+            grid.innerHTML = renderPluginSkeletonCards(6);
         }
 
         var response = await fetch(url('/api/plugins.php?action=list'), { credentials: 'same-origin' });
@@ -775,7 +810,7 @@
     }
 
     async function deletePlugin(pluginId) {
-        if (!confirm('Are you sure you want to delete this plugin? This action cannot be undone.')) {
+        if (!(await BirklyFeedback.confirm('Are you sure you want to delete this plugin? This action cannot be undone.'))) {
             return;
         }
         try {
@@ -813,7 +848,7 @@
     }
 
     async function upgradePlugin(pluginId) {
-        if (!confirm('Upgrade this plugin to the latest marketplace version?')) {
+        if (!(await BirklyFeedback.confirm('Upgrade this plugin to the latest marketplace version?'))) {
             return;
         }
         try {
@@ -1043,7 +1078,7 @@
         setMarketplaceView('browse');
         var grid = document.getElementById('marketplace-grid');
         if (grid) {
-            grid.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('loading_marketplace', 'Loading marketplace...')) + '</p></div>';
+            grid.innerHTML = renderMarketplaceSkeletonCards(8);
         }
 
         var params = getMarketplaceBrowseParams();
@@ -1213,7 +1248,7 @@
     }
 
     async function installFreePlugin(slug, version) {
-        if (!confirm(t('confirm_free_install', 'Install this free plugin now?'))) {
+        if (!(await BirklyFeedback.confirm(t('confirm_free_install', 'Install this free plugin now?')))) {
             return;
         }
         await runMarketplaceInstall(slug, version, '');
@@ -1274,7 +1309,7 @@
 
     function initTabs() {
         document.querySelectorAll('.plugins-tab').forEach(function (btn) {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', async function () {
                 switchTab(btn.getAttribute('data-tab'));
             });
         });

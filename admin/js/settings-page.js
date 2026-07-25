@@ -81,7 +81,7 @@ function createPermissionsGrid(containerId, permissions = {}) {
             // Simple, clear checkbox styling
             checkbox.style.cssText = 'width: 20px; height: 20px; min-width: 20px; min-height: 20px; cursor: pointer; margin: 0; margin-right: 8px; flex-shrink: 0;';
             
-            checkbox.addEventListener('click', function(e) {
+            checkbox.addEventListener('click', async function (e) {
                 e.stopPropagation();
             });
             
@@ -366,8 +366,8 @@ async function createRole() {
     }
 }
 
-function deleteRole(roleId) {
-    if (!confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
+async function deleteRole(roleId) {
+    if (!(await BirklyFeedback.confirm('Are you sure you want to delete this role? This action cannot be undone.'))) {
         return;
     }
     
@@ -714,7 +714,7 @@ window.deleteRole = deleteRole;
         redirectLegacySettingsUrl();
 
         document.querySelectorAll('.settings-area-btn').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
+            btn.addEventListener('click', async function (e) {
                 e.preventDefault();
                 var area = btn.getAttribute('data-area');
                 if (!area) return;
@@ -722,7 +722,7 @@ window.deleteRole = deleteRole;
             });
         });
 
-        tabNav.addEventListener('click', function (e) {
+        tabNav.addEventListener('click', async function (e) {
             var btn = e.target.closest('.tab[data-tab]');
             if (!btn || !tabNav.contains(btn) || btn.classList.contains('tab--hidden')) {
                 return;
@@ -934,7 +934,7 @@ async function updateUser() {
 }
 
 function confirmDeleteUser(userId, email) {
-    if (confirm('Are you sure you want to delete user "' + email + '"? This action cannot be undone.')) {
+    if (await BirklyFeedback.confirm('Are you sure you want to delete user "' + email + '"? This action cannot be undone.')) {
         deleteUser(userId);
     }
 }
@@ -979,7 +979,7 @@ function deleteUserFromModal() {
 function revokeUserMcpSessions(userId, label) {
     if (!userId) return;
     const who = label || 'this user';
-    if (!confirm('Revoke all active AI app connections for ' + who + '? They will need to sign in again in Claude, Cursor, or ChatGPT.')) {
+    if (!(await BirklyFeedback.confirm('Revoke all active AI app connections for ' + who + '? They will need to sign in again in Claude, Cursor, or ChatGPT.'))) {
         return;
     }
 
@@ -1041,7 +1041,7 @@ async function togglePlugin(pluginId, activate) {
 }
 
 async function deletePlugin(pluginId) {
-    if (!confirm('Are you sure you want to delete this plugin? This action cannot be undone.')) {
+    if (!(await BirklyFeedback.confirm('Are you sure you want to delete this plugin? This action cannot be undone.'))) {
         return;
     }
     
@@ -1141,7 +1141,7 @@ async function deletePlugin(pluginId) {
                     return;
                 }
                 btn.dataset.copyBound = '1';
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', async function () {
                     var targetId = btn.getAttribute('data-copy-target');
                     var codeEl = targetId ? document.getElementById(targetId) : null;
                     var code = codeEl ? codeEl.textContent : '';
@@ -1350,7 +1350,7 @@ async function deletePlugin(pluginId) {
         var domainActions = listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"]');
         for (var i = 0; i < domainActions.length; i++) {
             (function(btn) {
-                btn.addEventListener('click', function(e) {
+                btn.addEventListener('click', async function (e) {
                     e.preventDefault();
                     var domain = btn.getAttribute('data-domain');
                     var action = btn.getAttribute('data-action');
@@ -1375,7 +1375,7 @@ async function deletePlugin(pluginId) {
         var reportButtons = listContainer.querySelectorAll('.domain-analytics-report-btn');
         for (var k = 0; k < reportButtons.length; k++) {
             (function(btn) {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', async function () {
                     var domain = btn.getAttribute('data-domain');
                     var card = btn.closest('.domain-card');
                     var reportContainer = card ? card.querySelector('.domain-analytics-report') : null;
@@ -1425,7 +1425,7 @@ function closeAddDomainModal() {
     function initDomainButtons() {
         var registerBtn = document.getElementById('register-domain-btn');
         if (registerBtn) {
-            registerBtn.addEventListener('click', function(e) {
+            registerBtn.addEventListener('click', async function (e) {
                 e.preventDefault();
                 openAddDomainModal();
             });
@@ -1614,7 +1614,7 @@ async function updateDomain() {
 }
 
 window.deleteDomain = async function(domainName) {
-    if (!confirm('Are you sure you want to delete domain "' + domainName + '"? This will revoke all access.')) {
+    if (!(await BirklyFeedback.confirm('Are you sure you want to delete domain "' + domainName + '"? This will revoke all access.'))) {
         return;
     }
     
@@ -1660,7 +1660,7 @@ window.deleteDomain = async function(domainName) {
         
         const refreshBtn = document.getElementById('refresh-logs');
         if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
+            refreshBtn.addEventListener('click', async function () {
                 currentPage = 0;
                 loadLogs(true);
             });
@@ -1668,7 +1668,7 @@ window.deleteDomain = async function(domainName) {
         
         const loadMoreBtn = document.getElementById('load-more');
         if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', function() {
+            loadMoreBtn.addEventListener('click', async function () {
                 currentPage++;
                 renderLogs();
             });
@@ -2091,7 +2091,7 @@ async function addDenylistResource() {
 }
 
 async function removeDenylistResource(resource) {
-    if (!confirm(`Remove "${resource}" from the denylist?`)) return;
+    if (!(await BirklyFeedback.confirm(`Remove "${resource}" from the denylist?`))) return;
     
     try {
         const response = await fetch(apiUrl('/api/plugins_permissions.php'), {
@@ -2177,7 +2177,7 @@ function testDatabaseConnection() {
 }
 
 function migrateStorage() {
-    if (!confirm('This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?')) {
+    if (!(await BirklyFeedback.confirm('This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?'))) {
         return;
     }
     
@@ -2187,7 +2187,7 @@ function migrateStorage() {
         return;
     }
     
-    if (!confirm('Migration may take some time. Do not close this window. Continue?')) {
+    if (!(await BirklyFeedback.confirm('Migration may take some time. Do not close this window. Continue?'))) {
         return;
     }
     
@@ -2220,7 +2220,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const securityTab = document.querySelector('[data-tab="security"]');
     if (securityTab) {
-        securityTab.addEventListener('click', function() {
+        securityTab.addEventListener('click', async function () {
             setTimeout(loadDenylist, 100); // Small delay to ensure tab is visible
         });
     }
@@ -2380,7 +2380,7 @@ function initGlobalSave() {
         const removeLogoBtn = document.getElementById('remove-logo-btn');
         if (removeLogoBtn) {
             removeLogoBtn.addEventListener('click', async function () {
-                if (confirm('Are you sure you want to remove the logo? The default Birkly icon will be used.')) {
+                if (await BirklyFeedback.confirm('Are you sure you want to remove the logo? The default Birkly icon will be used.')) {
                     try {
                         const response = await fetch(apiUrl('/api/settings.php'), {
                             method: 'POST',
@@ -2458,7 +2458,7 @@ function initRebuildSystem() {
     cancelBtn?.addEventListener('click', closeModal);
     confirmationInput.addEventListener('input', updateConfirmState);
 
-    modal.addEventListener('click', function (event) {
+    modal.addEventListener('click', async function (event) {
         if (event.target === modal) {
             closeModal();
         }

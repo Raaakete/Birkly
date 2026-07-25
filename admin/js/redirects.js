@@ -140,7 +140,7 @@
 
     async function deleteRedirect(id) {
         const { idInput } = getElements();
-        if (!id || !window.confirm('Delete this redirect?')) {
+        if (!id || !(await BirklyFeedback.confirm('Delete this redirect?'))) {
             return;
         }
 
@@ -195,7 +195,7 @@
         form.dataset.redirectsBound = '1';
         form.addEventListener('submit', saveRedirect);
         resetButton?.addEventListener('click', resetForm);
-        tableBody?.addEventListener('click', function (event) {
+        tableBody?.addEventListener('click', async function (event) {
             const editButton = event.target.closest('.redirect-edit-btn');
             if (editButton) {
                 editRedirect(editButton.getAttribute('data-id') || '');
