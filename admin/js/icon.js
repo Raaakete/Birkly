@@ -56,7 +56,8 @@
         'paper-plane-tilt': '<line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/>',
         'arrows-out': '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>',
         'arrows-in': '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>',
-        'stop': '<rect x="6" y="6" width="12" height="12" rx="1"/>'
+        'stop': '<rect x="6" y="6" width="12" height="12" rx="1"/>',
+        'sparkle': '<path d="M12 3l1.912 5.813a2 2 0 0 0 1.272 1.272L21 12l-5.816 1.912a2 2 0 0 0-1.272 1.272L12 21l-1.912-5.816a2 2 0 0 0-1.272-1.272L3 12l5.816-1.912a2 2 0 0 0 1.272-1.272L12 3z"/>'
     };
 
     /** Solid-fill icons (dots) — not stroke-outlined circles */
