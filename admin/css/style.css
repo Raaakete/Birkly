@@ -1,5 +1,5 @@
 /* ============================================
-   HaruCMS Admin - Main Stylesheet Hub
+   Birkly Admin - Main Stylesheet Hub
    ============================================
    
    This file imports all CSS modules in the correct order.
@@ -40,6 +40,7 @@
 @import url('components/theme-switcher.css');
 @import url('components/dropdowns.css');
 @import url('components/sticky-save-bar.css');
+@import url('components/icons.css');
 
 /* ============================================
    Layout

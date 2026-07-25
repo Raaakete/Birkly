@@ -5,6 +5,10 @@
 require_once __DIR__ . '/../../core/project_site.php';
 require_once __DIR__ . '/../../api/storage.php';
 
+if (!function_exists('birkly_icon')) {
+    require_once __DIR__ . '/../../core/icons.php';
+}
+
 $projectSettingsStorage = new Storage(__DIR__ . '/../../settings');
 $projectTabSettings = $projectSettingsStorage->read('project.json') ?? [];
 $showVisitProjectButton = !empty($projectTabSettings['show_visit_button']);
@@ -19,11 +23,7 @@ if ($showVisitProjectButton) {
 ?>
 <header class="admin-topbar" id="admin-topbar">
     <button class="topbar-icon-btn sidebar-toggle" type="button" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="admin-sidebar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
+        <?= birkly_icon('list') ?>
     </button>
     <div class="admin-topbar-left">
         <nav class="admin-topbar-breadcrumbs" id="admin-topbar-breadcrumbs" aria-label="Breadcrumb"></nav>
@@ -37,17 +37,11 @@ if ($showVisitProjectButton) {
         <?php endif; ?>
         <?php include __DIR__ . '/theme-switcher.php'; ?>
         <button class="topbar-icon-btn" type="button" aria-label="Search" id="topbar-search-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-            </svg>
+            <?= birkly_icon('magnifying-glass') ?>
         </button>
         <div class="dropdown notifications-wrapper">
             <button class="dropdown-trigger topbar-icon-btn notifications-btn" type="button" id="notifications-btn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 01-3.46 0"></path>
-                </svg>
+                <?= birkly_icon('bell') ?>
                 <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
             </button>
         </div>

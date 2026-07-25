@@ -1,5 +1,5 @@
 /* ============================================
-   HaruCMS CSS Variables - Single Source of Truth
+   Birkly CSS Variables - Single Source of Truth
    ============================================ */
 
 :root {
@@ -34,18 +34,19 @@
   --color-negativ: #f3eced;
   
   /* ============================================
-     Primary Color Scale (Blue - for UI elements)
+     Primary Color Scale (Mint — derived from --color-primary)
      ============================================ */
-  --primary-50: #eff6ff;
-  --primary-100: #dbeafe;
-  --primary-200: #bfdbfe;
-  --primary-300: #93c5fd;
-  --primary-400: #60a5fa;
-  --primary-500: #3b82f6;
-  --primary-600: #2563eb;
-  --primary-700: #1d4ed8;
-  --primary-800: #1e40af;
-  --primary-900: #1e3a8a;
+  --primary-50: #EDFCF7;
+  --primary-100: #D4F8ED;
+  --primary-200: #AEF0DC;
+  --primary-300: #88E8C9;
+  --primary-400: #7CE3BF;
+  --primary-500: #7CE3BF;
+  --primary-600: #52C49A;
+  --primary-700: #3DA882;
+  --primary-800: #2D8C6B;
+  --primary-900: #1D6B52;
+  --primary-light: var(--primary-100);
   
   /* ============================================
      Gray Scale (for compatibility)
@@ -244,7 +245,7 @@
   /* ============================================
      Notification Colors
      ============================================ */
-  --notif-color-blue: #dbeafe;
+  --notif-color-blue: #D4F8ED;
   --notif-color-green: #dcfce7;
   --notif-color-orange: #fed7aa;
   --notif-color-red: #fee2e2;
@@ -253,46 +254,78 @@
 
   --surface: var(--bg-elevated);
   --surface-secondary: var(--bg-secondary);
+
+  /* ============================================
+     Dark Theme Token Values (applied via selectors below)
+     ============================================ */
+  --dark-bg-primary: #20221D;
+  --dark-bg-secondary: #2A2C27;
+  --dark-bg-tertiary: #494B46;
+  --dark-bg-elevated: #2A2C27;
+  --dark-bg-hover: #494B46;
+  --dark-bg-overlay: rgba(0, 0, 0, 0.7);
+  --dark-background-global: #20221D;
+  --dark-text-primary: #F8F9F7;
+  --dark-text-secondary: #C4C6C1;
+  --dark-text-tertiary: #9B9D98;
+  --dark-text-inverse: #20221D;
+  --dark-border-light: #494B46;
+  --dark-border-medium: #5A5C57;
+  --dark-border-strong: #72746F;
+  --dark-color-primary: #8CECCA;
+  --dark-color-neutral-100: #2A2C27;
+  --dark-color-neutral-200: #494B46;
+  --dark-color-lightest: #2A2C27;
+  --dark-color-base-white: #2A2C27;
+  --dark-color-black: #F8F9F7;
+  --dark-notif-blue: #1D6B52;
+  --dark-notif-green: #14532d;
+  --dark-notif-orange: #78350f;
+  --dark-notif-red: #7f1d1d;
+  --dark-notif-purple: #581c87;
+  --dark-notif-gray: #494B46;
 }
 
 /* ============================================
    Dark Theme
    ============================================ */
 [data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --bg-elevated: #1e293b;
-  --bg-hover: #334155;
-  --bg-overlay: rgba(0, 0, 0, 0.7);
-  --background-global: #0f172a;
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --text-inverse: #0f172a;
-  
-  --border-light: #334155;
-  --border-medium: #475569;
-  --border-strong: #64748b;
-  --border-color: var(--border-medium);
-  --primary-color: var(--primary-500);
+  --bg-primary: var(--dark-bg-primary);
+  --bg-secondary: var(--dark-bg-secondary);
+  --bg-tertiary: var(--dark-bg-tertiary);
+  --bg-elevated: var(--dark-bg-elevated);
+  --bg-hover: var(--dark-bg-hover);
+  --bg-overlay: var(--dark-bg-overlay);
+  --background-global: var(--dark-background-global);
 
-  --color-neutral-100: #1e293b;
-  --color-neutral-200: #334155;
-  --color-lightest: #1e293b;
-  --color-base-white: #1e293b;
-  --color-black: #f8fafc;
+  --text-primary: var(--dark-text-primary);
+  --text-secondary: var(--dark-text-secondary);
+  --text-tertiary: var(--dark-text-tertiary);
+  --text-inverse: var(--dark-text-inverse);
+
+  --border-light: var(--dark-border-light);
+  --border-medium: var(--dark-border-medium);
+  --border-strong: var(--dark-border-strong);
+  --border-color: var(--border-medium);
+
+  --color-primary: var(--dark-color-primary);
+  --primary-color: var(--color-primary);
+
+  --color-neutral-100: var(--dark-color-neutral-100);
+  --color-neutral-200: var(--dark-color-neutral-200);
+  --color-lightest: var(--dark-color-lightest);
+  --color-base-white: var(--dark-color-base-white);
+  --color-black: var(--dark-color-black);
 
   --surface: var(--bg-elevated);
   --surface-secondary: var(--bg-secondary);
 
-  --notif-color-blue: #1e3a5f;
-  --notif-color-green: #14532d;
-  --notif-color-orange: #78350f;
-  --notif-color-red: #7f1d1d;
-  --notif-color-purple: #581c87;
-  --notif-color-gray: #334155;
+  --notif-color-blue: var(--dark-notif-blue);
+  --notif-color-green: var(--dark-notif-green);
+  --notif-color-orange: var(--dark-notif-orange);
+  --notif-color-red: var(--dark-notif-red);
+  --notif-color-purple: var(--dark-notif-purple);
+  --notif-color-gray: var(--dark-notif-gray);
 }
 
 /* ============================================
@@ -300,40 +333,41 @@
    ============================================ */
 @media (prefers-color-scheme: dark) {
   [data-theme="system"] {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-tertiary: #334155;
-    --bg-elevated: #1e293b;
-    --bg-hover: #334155;
-    --bg-overlay: rgba(0, 0, 0, 0.7);
-    --background-global: #0f172a;
-    
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-tertiary: #94a3b8;
-    --text-inverse: #0f172a;
-    
-    --border-light: #334155;
-    --border-medium: #475569;
-    --border-strong: #64748b;
-    --border-color: var(--border-medium);
-    --primary-color: var(--primary-500);
+    --bg-primary: var(--dark-bg-primary);
+    --bg-secondary: var(--dark-bg-secondary);
+    --bg-tertiary: var(--dark-bg-tertiary);
+    --bg-elevated: var(--dark-bg-elevated);
+    --bg-hover: var(--dark-bg-hover);
+    --bg-overlay: var(--dark-bg-overlay);
+    --background-global: var(--dark-background-global);
 
-    --color-neutral-100: #1e293b;
-    --color-neutral-200: #334155;
-    --color-lightest: #1e293b;
-    --color-base-white: #1e293b;
-    --color-black: #f8fafc;
+    --text-primary: var(--dark-text-primary);
+    --text-secondary: var(--dark-text-secondary);
+    --text-tertiary: var(--dark-text-tertiary);
+    --text-inverse: var(--dark-text-inverse);
+
+    --border-light: var(--dark-border-light);
+    --border-medium: var(--dark-border-medium);
+    --border-strong: var(--dark-border-strong);
+    --border-color: var(--border-medium);
+
+    --color-primary: var(--dark-color-primary);
+    --primary-color: var(--color-primary);
+
+    --color-neutral-100: var(--dark-color-neutral-100);
+    --color-neutral-200: var(--dark-color-neutral-200);
+    --color-lightest: var(--dark-color-lightest);
+    --color-base-white: var(--dark-color-base-white);
+    --color-black: var(--dark-color-black);
 
     --surface: var(--bg-elevated);
     --surface-secondary: var(--bg-secondary);
 
-    --notif-color-blue: #1e3a5f;
-    --notif-color-green: #14532d;
-    --notif-color-orange: #78350f;
-    --notif-color-red: #7f1d1d;
-    --notif-color-purple: #581c87;
-    --notif-color-gray: #334155;
+    --notif-color-blue: var(--dark-notif-blue);
+    --notif-color-green: var(--dark-notif-green);
+    --notif-color-orange: var(--dark-notif-orange);
+    --notif-color-red: var(--dark-notif-red);
+    --notif-color-purple: var(--dark-notif-purple);
+    --notif-color-gray: var(--dark-notif-gray);
   }
 }
-

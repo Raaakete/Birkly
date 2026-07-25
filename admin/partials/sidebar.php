@@ -46,7 +46,7 @@ function get_active_plugin_navigation(): array {
                         'id' => $pluginId,
                         'name' => $pluginData['navigation']['name'] ?? $pluginData['name'],
                         'page' => $pluginData['navigation']['page'] ?? $pluginId,
-                        'icon' => $pluginData['navigation']['icon'] ?? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>'
+                        'icon' => $pluginData['navigation']['icon'] ?? birkly_icon('gear', ['class' => 'nav-icon'])
                     ];
                 }
             }
@@ -106,28 +106,18 @@ if (empty($userAvatar)) {
                 <ul class="nav-links" id="links-main">
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>" title="<?= htmlspecialchars(__('admin.dashboard')) ?>">
-                            <img src="<?= htmlspecialchars(birkly_url('/admin/assets/Speedometer.svg')) ?>" alt="<?= __('admin.dashboard') ?>" class="nav-icon"><span class="nav-label"><?= __('admin.dashboard') ?></span>
+                            <?= birkly_icon('gauge', ['class' => 'nav-icon']) ?><span class="nav-label"><?= __('admin.dashboard') ?></span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('content')) ?>" class="nav-link <?= is_nav_active('content') || is_nav_active('entries') || is_nav_active('entry-editor') || is_nav_active('collection-editor') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.content')) ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14,2 14,8 20,8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10,9 9,9 8,9"></polyline>
-                            </svg>
+                            <?= birkly_icon('file-text', ['class' => 'nav-icon']) ?>
                             <span class="nav-label"><?= __('admin.content') ?></span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('media')) ?>" class="nav-link <?= is_nav_active('media') ?>" title="<?= htmlspecialchars(__('admin.media')) ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21,15 16,10 5,21"></polyline>
-                            </svg>
+                            <?= birkly_icon('image', ['class' => 'nav-icon']) ?>
                             <span class="nav-label"><?= __('admin.media') ?></span>
                         </a>
                     </li>
@@ -145,11 +135,7 @@ if (empty($userAvatar)) {
                     <ul class="nav-links" id="links-plugins">
                         <li class="nav-item">
                             <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'marketplace'])) ?>" class="nav-link <?= is_plugins_tab_active('marketplace') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.marketplace')) ?>">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
-                                </svg>
+                                <?= birkly_icon('shopping-bag', ['class' => 'nav-icon']) ?>
                                 <span class="nav-label"><?= __('admin.marketplace') ?></span>
                             </a>
                         </li>
@@ -175,10 +161,7 @@ if (empty($userAvatar)) {
                 <ul class="nav-links" id="links-settings">
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('redirects') || is_nav_active('roles') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.settings')) ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="3"></circle>
-                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                            </svg>
+                            <?= birkly_icon('gear', ['class' => 'nav-icon']) ?>
                             <span class="nav-label"><?= __('admin.settings') ?></span>
                         </a>
                     </li>
@@ -191,20 +174,14 @@ if (empty($userAvatar)) {
                     ?>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('feedback')) ?>" class="nav-link <?= is_nav_active('feedback') ?>" title="Alpha Feedback">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
+                            <?= birkly_icon('chat-circle', ['class' => 'nav-icon']) ?>
                             <span class="nav-label">Alpha Feedback</span>
                         </a>
                     </li>
                     <?php endif; ?>
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('help')) ?>" class="nav-link <?= is_nav_active('help') ?>" title="<?= htmlspecialchars(__('admin.help')) ?>">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
+                            <?= birkly_icon('question', ['class' => 'nav-icon']) ?>
                             <span class="nav-label"><?= __('admin.help') ?></span>
                         </a>
                     </li>
@@ -219,9 +196,7 @@ if (empty($userAvatar)) {
             <p class="sidebar-program-label"><?= htmlspecialchars(birkly_program_status_label()) ?></p>
             <?php endif; ?>
             <button type="button" class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" aria-label="Collapse sidebar" aria-pressed="false" title="Collapse sidebar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <polyline points="15,18 9,12 15,6"></polyline>
-                </svg>
+                <?= birkly_icon('caret-left') ?>
                 <span class="sidebar-collapse-label">Collapse</span>
             </button>
         </div>
