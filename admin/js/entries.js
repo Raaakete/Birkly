@@ -162,11 +162,11 @@
         try {
             const result = await performBulkOperation(action, Array.from(selectedEntries));
             progress.remove();
-            BirklyFeedback.toast(successLabel.replace('%count%', String(result.count || selectedEntries.size)), 'success')
+            BirklyFeedback.toast(successLabel.replace('%count%', String(result.count || selectedEntries.size)), 'success');
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error')
+            BirklyFeedback.toast('Error: ' + error.message, 'error');;
         }
     }
 
@@ -199,12 +199,12 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error');
+            BirklyFeedback.toast('Error: ' + error.message, 'error');;
         }
     }
 
     async function handleDeleteEntry(entryId) {
-        if (!(await BirklyFeedback.confirm(t('entries_move_to_trash_confirm', 'Move this entry to trash?'))) {
+        if (!(await BirklyFeedback.confirm(t('entries_move_to_trash_confirm', 'Move this entry to trash?')))) {
             return;
         }
         const progress = showProgress('Moving entry to trash…');
@@ -214,12 +214,12 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error')
+            BirklyFeedback.toast('Error: ' + error.message, 'error');
         }
     }
 
     async function handleRestoreEntry(entryId) {
-        if (!(await BirklyFeedback.confirm(t('entries_restore_confirm', 'Restore this entry?'))) {
+        if (!(await BirklyFeedback.confirm(t('entries_restore_confirm', 'Restore this entry?')))) {
             return;
         }
         const progress = showProgress('Restoring entry…');
@@ -229,7 +229,7 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error')
+            BirklyFeedback.toast('Error: ' + error.message, 'error');
         }
     }
 
@@ -246,7 +246,7 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error')
+            BirklyFeedback.toast('Error: ' + error.message, 'error');
         }
     }
 
