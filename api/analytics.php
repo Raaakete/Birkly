@@ -18,9 +18,10 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../core/cors.php';
 set_cors_headers('public');
 
-require_once 'storage.php';
-require_once 'rate_limit.php';
-require_once 'log.php';
+    require_once 'storage.php';
+    require_once 'rate_limit.php';
+    require_once 'log.php';
+    require_once __DIR__ . '/../core/analytics_enrich.php';
 
 $action = $_GET['action'] ?? '';
 
@@ -117,18 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     }
     
     // Create event
-    $event = [
-        'timestamp' => $timestamp,
-        'domain' => $domain,
-        'path' => $path,
-        'referrer' => $referrer,
-        'user_agent' => $userAgent,
-        'ip' => hash('sha256', $ip . $trackingId), // Hash IP for privacy
-        'screen_width' => $screenWidth,
-        'screen_height' => $screenHeight,
-        'language' => $language,
-        'session_id' => $input['session_id'] ?? ''
-    ];
+    $event = birkly_analytics_build_event($input, $ip, $userAgent, $timestamp);
     
     $events[] = $event;
     
@@ -444,105 +434,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete') {
 
 // Helper function to get analytics data
 function getAnalyticsData($trackingId, $startDate, $endDate) {
-    $analyticsDir = __DIR__ . '/../data/analytics';
-    $dataDir = $analyticsDir . '/data/' . $trackingId;
-    
-    if (!is_dir($dataDir)) {
-        return [
-            'page_views' => 0,
-            'unique_visitors' => 0,
-            'top_pages' => [],
-            'referrers' => [],
-            'daily_stats' => []
-        ];
-    }
-    
-    $start = strtotime($startDate);
-    $end = strtotime($endDate . ' 23:59:59');
-    
-    $allEvents = [];
-    $current = $start;
-    
-    // Load all events in date range
-    while ($current <= $end) {
-        $date = date('Y-m-d', $current);
-        $eventFile = $dataDir . '/' . $date . '.json';
-        
-        if (file_exists($eventFile)) {
-            $events = json_decode(file_get_contents($eventFile), true) ?: [];
-            $allEvents = array_merge($allEvents, $events);
-        }
-        
-        $current = strtotime('+1 day', $current);
-    }
-    
-    // Calculate stats
-    $pageViews = count($allEvents);
-    $uniqueIPs = [];
-    $pageCounts = [];
-    $referrerCounts = [];
-    $dailyStats = [];
-    
-    foreach ($allEvents as $event) {
-        // Unique visitors (by hashed IP)
-        $ipHash = $event['ip'] ?? '';
-        if ($ipHash) {
-            $uniqueIPs[$ipHash] = true;
-        }
-        
-        // Page counts
-        $path = $event['path'] ?? '/';
-        $pageCounts[$path] = ($pageCounts[$path] ?? 0) + 1;
-        
-        // Referrer counts
-        $referrer = $event['referrer'] ?? '';
-        if ($referrer) {
-            $referrerDomain = parse_url($referrer, PHP_URL_HOST);
-            if ($referrerDomain && $referrerDomain !== $event['domain']) {
-                $referrerCounts[$referrerDomain] = ($referrerCounts[$referrerDomain] ?? 0) + 1;
-            }
-        }
-        
-        // Daily stats
-        $date = date('Y-m-d', $event['timestamp']);
-        if (!isset($dailyStats[$date])) {
-            $dailyStats[$date] = ['views' => 0, 'visitors' => []];
-        }
-        $dailyStats[$date]['views']++;
-        if ($ipHash) {
-            $dailyStats[$date]['visitors'][$ipHash] = true;
-        }
-    }
-    
-    // Format daily stats
-    $formattedDailyStats = [];
-    foreach ($dailyStats as $date => $stats) {
-        $formattedDailyStats[] = [
-            'date' => $date,
-            'views' => $stats['views'],
-            'visitors' => count($stats['visitors'])
-        ];
-    }
-    
-    // Sort top pages
-    arsort($pageCounts);
-    $topPages = array_slice(array_map(function($path, $count) {
-        return ['path' => $path, 'views' => $count];
-    }, array_keys($pageCounts), $pageCounts), 0, 10);
-    
-    // Sort referrers
-    arsort($referrerCounts);
-    $topReferrers = array_slice(array_map(function($domain, $count) {
-        return ['domain' => $domain, 'visits' => $count];
-    }, array_keys($referrerCounts), $referrerCounts), 0, 10);
-    
-    return [
-        'page_views' => $pageViews,
-        'unique_visitors' => count($uniqueIPs),
-        'top_pages' => array_values($topPages),
-        'referrers' => array_values($topReferrers),
-        'daily_stats' => $formattedDailyStats
-    ];
+    return birkly_analytics_get_report((string) $trackingId, (string) $startDate, (string) $endDate);
 }
 
 // Default response - only execute if called directly, not when included
