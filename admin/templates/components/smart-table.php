@@ -46,6 +46,11 @@ $showCheckbox = $options['show_checkbox'] ?? false;
 $showDrag = $options['show_drag'] ?? false;
 $showSubEntries = $options['show_sub_entries'] ?? false;
 $checkboxIdPrefix = $options['checkbox_id_prefix'] ?? 'entry';
+$selectAllId = match ($checkboxIdPrefix) {
+    'entry' => 'select-all-entries',
+    'sub-entry' => 'select-all-sub-entries',
+    default => 'select-all-' . $checkboxIdPrefix,
+};
 $checkboxClass = $options['checkbox_class'] ?? 'entry-checkbox';
 $rowClass = $options['row_class'] ?? '';
 $tableClass = $options['table_class'] ?? '';
@@ -124,7 +129,7 @@ if (!empty($entries)): ?>
                     <tr class="head-row">
                         <?php if ($showCheckbox): ?>
                             <th class="head-cell head-checkbox" scope="col" aria-label="<?= __('admin.select_all') ?>">
-                                <input type="checkbox" id="select-all-<?= htmlspecialchars($checkboxIdPrefix) ?>s" class="<?= $checkboxIdPrefix === 'sub-entry' ? 'select-all-sub-entries' : '' ?>" <?= $options['checkbox_data_attrs'] ?? '' ?> aria-label="<?= __('admin.select_all_entries') ?>">
+                                <input type="checkbox" id="<?= htmlspecialchars($selectAllId) ?>" class="<?= $checkboxIdPrefix === 'sub-entry' ? 'select-all-sub-entries' : ($checkboxIdPrefix === 'entry' ? 'select-all-entries' : '') ?>" <?= $options['checkbox_data_attrs'] ?? '' ?> aria-label="<?= __('admin.select_all_entries') ?>">
                             </th>
                         <?php endif; ?>
 
@@ -141,7 +146,7 @@ if (!empty($entries)): ?>
 
                         <?php foreach ($fields as $field): ?>
                             <th class="head-cell head-field" scope="col" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
-                                <?= htmlspecialchars($field['name'] ?? $field['label'] ?? '') ?>
+                                <?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?>
                             </th>
                         <?php endforeach; ?>
 

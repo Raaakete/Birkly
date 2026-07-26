@@ -139,3 +139,37 @@
   color: var(--text-tertiary, #9B9D98);
   vertical-align: middle;
 }
+
+[data-theme="dark"] .status-badge.published,
+[data-theme="dark"] .status-badge--published,
+.theme-dark .status-badge.published {
+  background: color-mix(in srgb, var(--success-500) 22%, transparent);
+  color: var(--success-100, #dcfce7);
+}
+
+[data-theme="dark"] .status-badge.unpublished,
+[data-theme="dark"] .status-badge.draft,
+[data-theme="dark"] .status-badge.pending_review,
+.theme-dark .status-badge.unpublished,
+.theme-dark .status-badge.draft {
+  background: color-mix(in srgb, var(--warning-500) 22%, transparent);
+  color: var(--warning-100, #fef3c7);
+}
+
+[data-theme="dark"] .status-badge.scheduled,
+.theme-dark .status-badge.scheduled {
+  background: color-mix(in srgb, var(--primary-500) 22%, transparent);
+  color: var(--primary-100, #D4F8ED);
+}
+
+[data-theme="dark"] .badge-secondary,
+.theme-dark .badge-secondary {
+  background: var(--gray-800, #1f2937);
+  color: var(--gray-200, #e5e7eb);
+}
+
+[data-theme="dark"] .badge-danger,
+.theme-dark .badge-danger {
+  background: color-mix(in srgb, var(--error-500) 22%, transparent);
+  color: var(--error-100, #fee2e2);
+}

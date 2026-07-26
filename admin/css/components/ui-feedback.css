@@ -1,4 +1,4 @@
-/* BirklyFeedback toast + confirm modal (P44-M7) */
+/* BirklyFeedback toast + confirm/prompt modals */
 
 .birkly-feedback-toast-region {
   position: fixed;
@@ -6,7 +6,7 @@
   right: var(--space-6, 1.5rem);
   z-index: 12000;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: var(--space-2, 0.5rem);
   max-width: min(420px, calc(100vw - 2rem));
   pointer-events: none;
@@ -14,6 +14,9 @@
 
 .birkly-feedback-toast {
   pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3, 0.75rem);
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   border-radius: var(--radius-md, 0.5rem);
   font-size: 0.875rem;
@@ -21,8 +24,49 @@
   color: var(--text-primary, #20221D);
   background: var(--bg-elevated, #ffffff);
   border: 1px solid var(--border-medium, #e5e7eb);
-  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
-  animation: birkly-feedback-toast-in 0.2s ease-out;
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08));
+  animation: birkly-feedback-toast-in 0.22s ease-out;
+}
+
+.birkly-feedback-toast--leaving {
+  animation: birkly-feedback-toast-out 0.2s ease-in forwards;
+}
+
+.birkly-feedback-toast__icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
+
+.birkly-feedback-toast__message {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.birkly-feedback-toast__close {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  font-size: 1.125rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  margin-top: -0.1rem;
+}
+
+.birkly-feedback-toast__close:hover {
+  opacity: 1;
 }
 
 .birkly-feedback-toast--success {
@@ -31,10 +75,20 @@
   color: var(--success-800, #166534);
 }
 
+.birkly-feedback-toast--success .birkly-feedback-toast__icon {
+  background: var(--success-500, #22c55e);
+  color: #fff;
+}
+
 .birkly-feedback-toast--error {
   border-color: var(--error-300, #fca5a5);
   background: var(--error-50, #fef2f2);
   color: var(--error-800, #991b1b);
+}
+
+.birkly-feedback-toast--error .birkly-feedback-toast__icon {
+  background: var(--error-500, #ef4444);
+  color: #fff;
 }
 
 .birkly-feedback-toast--warning {
@@ -43,30 +97,130 @@
   color: var(--warning-800, #92400e);
 }
 
+.birkly-feedback-toast--warning .birkly-feedback-toast__icon {
+  background: var(--warning-500, #f59e0b);
+  color: #fff;
+}
+
 .birkly-feedback-toast--info {
   border-color: var(--primary-200, #a7f3d0);
   background: var(--primary-50, #ecfdf5);
   color: var(--primary-800, #065f46);
 }
 
+.birkly-feedback-toast--info .birkly-feedback-toast__icon {
+  background: var(--primary-500, #10b981);
+  color: #fff;
+}
+
 @keyframes birkly-feedback-toast-in {
   from {
     opacity: 0;
-    transform: translateY(0.5rem);
+    transform: translateY(0.75rem) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-.birkly-feedback-confirm-modal .modal-body p {
-  margin: 0;
+@keyframes birkly-feedback-toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+/* Shared dialog shell */
+.birkly-feedback-confirm-modal,
+.birkly-feedback-prompt-modal {
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4, 1rem);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.birkly-feedback-confirm-modal.active,
+.birkly-feedback-prompt-modal.active {
+  opacity: 1;
+}
+
+.birkly-feedback-dialog {
+  max-width: 480px;
+  width: 100%;
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08));
+  transform: translateY(8px) scale(0.98);
+  transition: transform 0.18s ease;
+}
+
+.birkly-feedback-confirm-modal.active .birkly-feedback-dialog,
+.birkly-feedback-prompt-modal.active .birkly-feedback-dialog {
+  transform: translateY(0) scale(1);
+}
+
+.birkly-feedback-confirm-modal .modal-body p,
+.birkly-feedback-prompt-modal .modal-body p {
+  margin: 0 0 var(--space-3, 0.75rem);
+  line-height: 1.5;
+  color: var(--text-secondary, #4b5563);
+}
+
+.birkly-feedback-confirm-details[hidden] {
+  display: none;
+}
+
+.birkly-feedback-confirm-details__intro {
+  margin: 0 0 var(--space-2, 0.5rem);
+  color: var(--text-secondary, #4b5563);
   line-height: 1.5;
 }
 
-.birkly-feedback-confirm-modal .modal-footer {
+.birkly-feedback-confirm-details__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--text-primary, #111827);
+}
+
+.birkly-feedback-confirm-details__list li + li {
+  margin-top: var(--space-1, 0.25rem);
+}
+
+.birkly-feedback-prompt-modal #birkly-feedback-prompt-input {
+  width: 100%;
+}
+
+.birkly-feedback-confirm-modal .modal-footer,
+.birkly-feedback-prompt-modal .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.birkly-feedback-confirm-modal--danger .modal-header h2 {
+  color: var(--error-700, #b91c1c);
+}
+
+[data-theme="dark"] .birkly-feedback-toast,
+.theme-dark .birkly-feedback-toast {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .birkly-feedback-toast,
+  .birkly-feedback-dialog,
+  .birkly-feedback-confirm-modal,
+  .birkly-feedback-prompt-modal {
+    animation: none !important;
+    transition: none !important;
+  }
 }

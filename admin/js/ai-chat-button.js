@@ -1232,7 +1232,11 @@
     
     // Reject action from chat
     async function rejectAction(approvalId) {
-        const reason = prompt('Reason for rejection (optional):');
+        const reason = await BirklyFeedback.prompt('', '', {
+            title: 'Reject action',
+            placeholder: 'Reason (optional)',
+            confirmLabel: 'Reject',
+        });
         
         try {
             const response = await fetch('/api/ai_approvals.php', {
