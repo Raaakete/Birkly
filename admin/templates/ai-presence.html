@@ -14,7 +14,8 @@ $stickySaveBarMessageId = 'ai-presence-message';
 $stickySaveBarMessageClass = 'message';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-publish-btn">' . htmlspecialchars(__('admin.publish_ai_presence')) . '</button>';
-include __DIR__ . '/components/sticky-save-bar.php';
+$stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
+include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
 
 <div class="ai-presence-page">
