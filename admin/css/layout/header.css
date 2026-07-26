@@ -25,6 +25,10 @@
   box-sizing: content-box;
 }
 
+[data-theme="dark"] .admin-topbar {
+  border-bottom-color: var(--border-medium, #3a3d38);
+}
+
 .admin-topbar-left {
   min-width: 0;
   flex: 1 1 auto;
