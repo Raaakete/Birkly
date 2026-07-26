@@ -283,11 +283,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="section-header">
             <h2><?= __('admin.user_management') ?></h2>
             <div class="user-actions">
-              <button class="btn btn-secondary" onclick="openInviteUserModal()">
+              <button class="btn btn-secondary" data-admin-action="openInviteUserModal">
                 <?= birkly_icon('envelope', ['size' => 16]) ?>
                 Invite User
               </button>
-              <button class="btn btn-primary" onclick="openAddUserModal()">
+              <button class="btn btn-primary" data-admin-action="openAddUserModal">
                 <?= birkly_icon('plus', ['size' => 16]) ?>
                 Add User
               </button>
@@ -301,7 +301,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div class="empty-state empty-state--compact">
                 <p class="empty-state__message"><?= __('admin.no_users_found') ?></p>
                 <div class="empty-state__action">
-                  <button class="btn btn-primary" onclick="openAddUserModal()"><?= __('admin.add_first_user') ?></button>
+                  <button class="btn btn-primary" data-admin-action="openAddUserModal"><?= __('admin.add_first_user') ?></button>
                 </div>
               </div>
             <?php else: ?>
@@ -327,10 +327,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       <span class="role-badge <?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?>"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
                     </div>
                     <div class="user-actions">
-                      <button class="btn-icon btn-icon--edit" onclick="editUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>')" title="Edit User" aria-label="Edit user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
+                      <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="Edit User" aria-label="Edit user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
                         <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                       </button>
-                      <button class="btn-icon btn-icon--danger" onclick="confirmDeleteUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>')" title="Delete User" aria-label="Delete user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
+                      <button class="btn-icon btn-icon--danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="Delete User" aria-label="Delete user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
                         <?= birkly_icon('trash', ['size' => 16]) ?>
                       </button>
                     </div>
@@ -372,7 +372,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                         <button
                           type="button"
                           class="btn btn-secondary btn-sm"
-                          onclick="revokeUserMcpSessions('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>')"
+                          data-admin-action="revokeUserMcpSessions" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]'
                         >
                           Revoke MCP access
                         </button>
@@ -392,7 +392,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <section class="card">
             <div class="section-header">
             <h2>Role Management</h2>
-            <button class="btn btn-primary" onclick="openAddRoleModal()">
+            <button class="btn btn-primary" data-admin-action="openAddRoleModal">
               <?= birkly_icon('plus', ['size' => 16]) ?>
               Add Role
             </button>
@@ -403,10 +403,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div class="role-header">
                 <h3><?= htmlspecialchars($role['name']) ?></h3>
                 <div class="role-actions">
-                  <button class="btn-icon btn-icon--edit" onclick="editRole('<?= htmlspecialchars($role['id']) ?>')" title="Edit Role" aria-label="Edit role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
+                  <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="Edit Role" aria-label="Edit role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
                     <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                   </button>
-                  <button class="btn-icon btn-icon--danger" onclick="deleteRole('<?= htmlspecialchars($role['id']) ?>')" title="Delete Role" aria-label="Delete role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
+                  <button class="btn-icon btn-icon--danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="Delete Role" aria-label="Delete role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
                     <?= birkly_icon('trash', ['size' => 16]) ?>
                   </button>
                 </div>
@@ -509,7 +509,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
                 Add collection
               </button>
-              <button type="button" class="btn btn-secondary" onclick="addDenylistResource()">
+              <button type="button" class="btn btn-secondary" data-admin-action="addDenylistResource">
                 <?= birkly_icon('plus', ['size' => 16]) ?>
                 Add custom pattern
               </button>
@@ -894,7 +894,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               
               <div class="form-row">
                 <div class="form-group">
-                  <button type="button" class="btn btn-secondary" onclick="testDatabaseConnection()"><?= __('admin.test_connection') ?></button>
+                  <button type="button" class="btn btn-secondary" data-admin-action="testDatabaseConnection"><?= __('admin.test_connection') ?></button>
                   <small id="db-test-result" style="margin-left: 1rem;"></small>
                 </div>
               </div>
@@ -911,7 +911,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p class="settings-help"><?= __('admin.migration_help') ?></p>
               <div class="form-row">
                 <div class="form-group">
-                  <button type="button" class="btn btn-secondary" onclick="migrateStorage()"><?= __('admin.start_migration') ?></button>
+                  <button type="button" class="btn btn-secondary" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
                   <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small></section>
           </form>
           <form id="monitoring-form" class="settings-form">
@@ -1197,7 +1197,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <label for="mcp-new-connector-url">Connector URL</label>
                   <div class="copy-snippet-row">
                     <input type="text" id="mcp-new-connector-url" class="input" readonly>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-new-connector-url', true)">Copy URL</button>
+                    <button type="button" class="btn btn-sm btn-primary" data-admin-object="mcpConnections" data-admin-method="copySnippet" data-admin-args='["mcp-new-connector-url", true]'>Copy URL</button>
                   </div>
                 </div>
               </div>
@@ -1221,7 +1221,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2><?= __('admin.register_domain') ?></h2>
-        <button class="modal-close-btn" onclick="closeAddDomainModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeAddDomainModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-domain-form">
@@ -1267,8 +1267,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeAddDomainModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="registerDomain()">Register Domain</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeAddDomainModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="registerDomain">Register Domain</button>
       </div>
     </div>
   </div>
@@ -1278,7 +1278,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2><?= __('admin.edit_domain') ?></h2>
-        <button class="modal-close-btn" onclick="closeEditDomainModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeEditDomainModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-domain-form">
@@ -1322,8 +1322,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditDomainModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="updateDomain()"><?= __('admin.update_domain') ?></button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeEditDomainModal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-admin-action="updateDomain"><?= __('admin.update_domain') ?></button>
       </div>
     </div>
   </div>
@@ -1334,7 +1334,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h2><?= __('admin.add_new_role') ?></h2>
-        <button class="modal-close-btn" onclick="closeAddRoleModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeAddRoleModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-role-form">
@@ -1355,8 +1355,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeAddRoleModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="createRole()">Create Role</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeAddRoleModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="createRole">Create Role</button>
       </div>
     </div>
   </div>
@@ -1366,7 +1366,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h2><?= __('admin.edit_role') ?></h2>
-        <button class="modal-close-btn" onclick="closeEditRoleModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeEditRoleModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-role-form">
@@ -1388,8 +1388,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditRoleModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="updateRole()"><?= __('admin.update_role') ?></button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeEditRoleModal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-admin-action="updateRole"><?= __('admin.update_role') ?></button>
       </div>
     </div>
   </div>
@@ -1402,7 +1402,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.invite_new_user') ?></h2>
-        <button class="modal-close-btn" onclick="closeInviteUserModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeInviteUserModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="invite-user-form">
@@ -1429,8 +1429,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeInviteUserModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="sendInvitation()">Send Invitation</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeInviteUserModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="sendInvitation">Send Invitation</button>
       </div>
     </div>
   </div>
@@ -1440,7 +1440,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.add_new_user') ?></h2>
-        <button class="modal-close-btn" onclick="closeAddUserModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeAddUserModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-user-form">
@@ -1463,8 +1463,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeAddUserModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="createUser">Create User</button>
       </div>
     </div>
   </div>
@@ -1495,7 +1495,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.edit_user') ?></h2>
-        <button class="modal-close-btn" onclick="closeEditUserModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeEditUserModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-user-form">
@@ -1519,9 +1519,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="updateUser()">Update User</button>
-        <button type="button" class="btn btn-danger" onclick="deleteUserFromModal()">Delete User</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeEditUserModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="updateUser">Update User</button>
+        <button type="button" class="btn btn-danger" data-admin-action="deleteUserFromModal">Delete User</button>
       </div>
     </div>
   </div>
@@ -1531,7 +1531,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2 id="webhook-modal-title"><?= __('admin.create_webhook') ?></h2>
-        <button type="button" class="modal-close-btn" onclick="closeWebhookModal()">&times;</button>
+        <button type="button" class="modal-close-btn" data-admin-action="closeWebhookModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="webhook-form">
@@ -1570,7 +1570,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeWebhookModal()"><?= __('admin.cancel') ?></button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeWebhookModal"><?= __('admin.cancel') ?></button>
         <button type="button" class="btn btn-primary" id="save-webhook"><?= __('admin.save') ?></button>
         <button type="button" class="btn btn-sm btn-secondary" id="test-webhook"><?= __('admin.test_webhook') ?></button>
       </div>

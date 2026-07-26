@@ -4,6 +4,10 @@
  */
 (function() {
     'use strict';
+
+    var keyboardNavBound = false;
+    var bodyObserver = null;
+    var reinitTimer = null;
     
     function init() {
         enhanceButtons();
@@ -19,8 +23,8 @@
      * Add ARIA labels to buttons without text
      */
     function enhanceButtons() {
-        // Find buttons with only icons
-        document.querySelectorAll('button, .btn').forEach(button => {
+        document.querySelectorAll('button:not([data-a11y-enhanced]), .btn:not([data-a11y-enhanced])').forEach(button => {
+            button.setAttribute('data-a11y-enhanced', 'button');
             const hasText = button.textContent.trim().length > 0;
             const hasAriaLabel = button.hasAttribute('aria-label');
             const title = button.getAttribute('title');
@@ -50,8 +54,8 @@
      * Enhance form accessibility
      */
     function enhanceForms() {
-        // Add aria-describedby to inputs with help text
-        document.querySelectorAll('.form-group, .field-block').forEach(group => {
+        document.querySelectorAll('.form-group:not([data-a11y-enhanced]), .field-block:not([data-a11y-enhanced])').forEach(group => {
+            group.setAttribute('data-a11y-enhanced', 'form-group');
             const input = group.querySelector('input, textarea, select');
             const help = group.querySelector('.help-text, .field-help, .form-text');
             
@@ -115,10 +119,10 @@
         });
         
         // Add keyboard navigation to nav items
-        document.querySelectorAll('.nav-link, .nav-item a').forEach((link, index) => {
+        document.querySelectorAll('.nav-link:not([data-a11y-nav-enhanced]), .nav-item a:not([data-a11y-nav-enhanced])').forEach((link) => {
+            link.setAttribute('data-a11y-nav-enhanced', 'true');
             link.setAttribute('tabindex', '0');
             
-            // Handle keyboard navigation
             link.addEventListener('keydown', function(e) {
                 const links = Array.from(link.parentElement.parentElement.querySelectorAll('a'));
                 const currentIndex = links.indexOf(link);
@@ -203,7 +207,8 @@
      * Enhance modal accessibility
      */
     function enhanceModals() {
-        document.querySelectorAll('.modal, .modal-backdrop').forEach(modal => {
+        document.querySelectorAll('.modal:not([data-a11y-modal-enhanced]), .modal-backdrop:not([data-a11y-modal-enhanced])').forEach(modal => {
+            modal.setAttribute('data-a11y-modal-enhanced', 'true');
             // Set ARIA attributes
             if (!modal.hasAttribute('role')) {
                 modal.setAttribute('role', 'dialog');
@@ -278,7 +283,8 @@
      * Enhance table accessibility
      */
     function enhanceTables() {
-        document.querySelectorAll('table').forEach(table => {
+        document.querySelectorAll('table:not([data-a11y-table-enhanced])').forEach(table => {
+            table.setAttribute('data-a11y-table-enhanced', 'true');
             // Add caption if missing
             if (!table.querySelector('caption')) {
                 const caption = document.createElement('caption');
@@ -306,9 +312,9 @@
      * Setup global keyboard navigation
      */
     function setupKeyboardNavigation() {
-        // Add keyboard shortcuts help (Alt+/ to show)
-        let shortcutsVisible = false;
-        
+        if (keyboardNavBound) return;
+        keyboardNavBound = true;
+
         document.addEventListener('keydown', function(e) {
             // Alt+/ to toggle keyboard shortcuts
             if (e.altKey && e.key === '/') {
@@ -354,7 +360,7 @@
                         <li><kbd>Home</kbd> - Go to first item</li>
                         <li><kbd>End</kbd> - Go to last item</li>
                     </ul>
-                    <button class="btn btn-primary" onclick="this.closest('.keyboard-shortcuts').remove()">Close</button>
+                    <button type="button" class="btn btn-primary" data-modal-dismiss="self">Close</button>
                 </div>
             `;
             document.body.appendChild(help);
@@ -407,18 +413,21 @@
         init();
     }
     
-    // Re-initialize on dynamic content changes
-    const observer = new MutationObserver(function(mutations) {
-        let shouldReinit = false;
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length > 0) {
-                shouldReinit = true;
+    function scheduleReinit() {
+        clearTimeout(reinitTimer);
+        reinitTimer = setTimeout(init, 150);
+    }
+
+    if (!bodyObserver) {
+        bodyObserver = new MutationObserver(function(mutations) {
+            for (var i = 0; i < mutations.length; i++) {
+                if (mutations[i].addedNodes.length > 0) {
+                    scheduleReinit();
+                    return;
+                }
             }
         });
-        if (shouldReinit) {
-            setTimeout(init, 100);
-        }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+        bodyObserver.observe(document.body, { childList: true, subtree: true });
+    }
 })();
 

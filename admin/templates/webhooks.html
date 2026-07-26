@@ -45,7 +45,7 @@
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
             <h2 id="modal-title">{translate 'admin.create_webhook'}</h2>
-            <button class="modal-close" onclick="closeWebhookModal()">&times;</button>
+            <button class="modal-close" data-admin-action="closeWebhookModal">&times;</button>
         </div>
         <div class="modal-body">
             <form id="webhook-form">
@@ -100,7 +100,7 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeWebhookModal()">{translate 'admin.cancel'}</button>
+            <button type="button" class="btn btn-secondary" data-admin-action="closeWebhookModal">{translate 'admin.cancel'}</button>
             <button type="button" class="btn btn-primary" id="save-webhook">{translate 'admin.save'}</button>
             <button type="button" class="btn btn-sm" id="test-webhook" style="margin-left: auto;">{translate 'admin.test_webhook'}</button>
         </div>
@@ -112,7 +112,7 @@
     <div class="modal-content" style="max-width: 800px;">
         <div class="modal-header">
             <h2>{translate 'admin.webhook_logs'}</h2>
-            <button class="modal-close" onclick="closeWebhookLogsModal()">&times;</button>
+            <button class="modal-close" data-admin-action="closeWebhookLogsModal">&times;</button>
         </div>
         <div class="modal-body">
             <div id="webhook-logs-content">
@@ -120,7 +120,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeWebhookLogsModal()">{translate 'admin.close'}</button>
+            <button type="button" class="btn btn-secondary" data-admin-action="closeWebhookLogsModal">{translate 'admin.close'}</button>
         </div>
     </div>
 </div>
