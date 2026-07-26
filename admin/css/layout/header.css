@@ -6,7 +6,8 @@
    Content row = brand row height. Padding below lands at the same Y as the
    top of the first sidebar nav box (Dashboard). A soft downward-only shadow
    (stronger in the center, fading to the sides) hangs below; larger margin
-   spaces page content under that cast. */
+   spaces page content under that cast. Scrolls with page — only editor save
+   bars use position: sticky. */
 .admin-topbar {
   /* Matches .btn outer height: line-height 1.5rem + padding 0.5rem*2 + border 2px */
   --admin-control-size: calc(1.5rem + var(--space-2, 0.5rem) * 2 + 2px);
@@ -14,7 +15,6 @@
   --admin-chrome-stack-gap: var(--space-3, 0.75rem);
   --admin-chrome-content-gap: var(--space-6, 1.5rem);
   --admin-topbar-shadow-height: 1.75rem;
-  --admin-sticky-save-top: calc(var(--admin-chrome-row-height) + var(--admin-chrome-stack-gap));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,9 +27,8 @@
   border-bottom: none;
   background: var(--background-global, #f8f9f7);
   box-sizing: content-box;
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  position: relative;
+  z-index: 1;
 }
 
 /* Soft cast: clipped at the chrome edge, strongest at bottom-center, fades sideways */
