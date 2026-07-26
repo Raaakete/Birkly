@@ -1,6 +1,9 @@
 (function (global) {
     'use strict';
 
+    var LS_AI_CONN = 'ap_ai_connection';
+    var CLAIM_STATUSES = ['pending_review', 'supported', 'unsupported', 'conflicting', 'expired'];
+
     var state = {
         draft: null,
         published: null,
@@ -11,7 +14,13 @@
         entriesByCollection: {},
         selectedClaimId: null,
         dirty: false,
-        suggestions: []
+        suggestions: [],
+        studioSuggestions: [],
+        aiConnections: [],
+        cmsDiff: [],
+        studioDraftPatch: null,
+        versions: [],
+        publicUrls: {}
     };
 
     function apiUrl(path) {
@@ -44,6 +53,30 @@
         }
     }
 
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = String(text ?? '');
+        return div.innerHTML;
+    }
+
+    function uid(prefix) {
+        return (prefix || 'id') + '_' + Math.random().toString(16).slice(2, 10);
+    }
+
+    function postJson(body) {
+        return fetch(apiUrl('/api/ai_presence.php'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({ _csrf: state.csrfToken }, body))
+        }).then(function (r) { return r.json(); });
+    }
+
+    function getSelectedAiConnection() {
+        var sel = document.getElementById('ap-ai-connection');
+        return sel ? sel.value : '';
+    }
+
     function setNested(obj, path, value) {
         var parts = path.split('.');
         var cur = obj;
@@ -68,6 +101,13 @@
         var val;
         if (el.type === 'checkbox') {
             val = el.checked;
+        } else if (el.getAttribute('data-json') === '1') {
+            try {
+                val = el.value.trim() ? JSON.parse(el.value) : [];
+            } catch (e) {
+                toast('Invalid JSON in ' + path, 'error');
+                return;
+            }
         } else if (el.getAttribute('data-array') === 'lines') {
             val = el.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
         } else if (el.getAttribute('data-array') === 'csv') {
@@ -85,8 +125,12 @@
         var val = getNested(state.draft, path);
         if (el.type === 'checkbox') {
             el.checked = !!val;
+        } else if (el.getAttribute('data-json') === '1') {
+            el.value = Array.isArray(val) || (val && typeof val === 'object')
+                ? JSON.stringify(val, null, 2) : '[]';
         } else if (el.getAttribute('data-array') === 'lines' || el.getAttribute('data-array') === 'csv') {
-            el.value = Array.isArray(val) ? (el.getAttribute('data-array') === 'csv' ? val.join(', ') : val.join('\n')) : '';
+            el.value = Array.isArray(val)
+                ? (el.getAttribute('data-array') === 'csv' ? val.join(', ') : val.join('\n')) : '';
         } else {
             el.value = val || '';
         }
@@ -100,12 +144,45 @@
         });
     }
 
+    function switchTab(tab) {
+        if (!tab) return;
+        document.querySelectorAll('.ai-presence-tabs .tab[data-tab]').forEach(function (btn) {
+            var active = btn.getAttribute('data-tab') === tab;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
+            var active = pane.getAttribute('data-tab-content') === tab;
+            pane.classList.toggle('active', active);
+            pane.hidden = !active;
+        });
+    }
+
+    function initTabs() {
+        var root = document.querySelector('.ai-presence-tabs');
+        if (!root) return;
+        var nav = root.querySelector('.tabs');
+        if (nav) {
+            nav.setAttribute('role', 'tablist');
+            nav.addEventListener('click', function (e) {
+                var btn = e.target.closest('.tab[data-tab]');
+                if (!btn || !nav.contains(btn)) return;
+                switchTab(btn.getAttribute('data-tab'));
+            });
+        }
+        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
+            pane.hidden = !pane.classList.contains('active');
+        });
+    }
+
     function renderOverview(data) {
         var c = data.completeness || {};
         var bar = document.getElementById('ai-presence-progress');
         var label = document.getElementById('ai-presence-completeness-label');
         if (bar) bar.style.width = (c.percent || 0) + '%';
-        if (label) label.textContent = (c.score || 0) + ' / ' + (c.max || 100) + ' (' + (c.percent || 0) + '%)';
+        if (label) {
+            label.textContent = (c.score || 0) + ' / ' + (c.max || 100) + ' (' + (c.percent || 0) + '%)';
+        }
 
         var cards = document.getElementById('ai-presence-status-cards');
         if (cards) {
@@ -113,7 +190,8 @@
             (c.items || []).forEach(function (item) {
                 var div = document.createElement('div');
                 div.className = 'ai-presence-status-card' + (item.complete ? ' is-complete' : '');
-                div.innerHTML = '<strong>' + escapeHtml(item.label) + '</strong><span>' + item.score + '/' + item.max + '</span>';
+                div.innerHTML = '<strong>' + escapeHtml(item.label) + '</strong><span>' +
+                    item.score + '/' + item.max + '</span>';
                 cards.appendChild(div);
             });
         }
@@ -134,12 +212,13 @@
         }
 
         var urlsEl = document.getElementById('ai-presence-public-urls');
-        var urls = data.public_urls || {};
+        var urls = data.public_urls || state.publicUrls || {};
         if (urlsEl) {
             urlsEl.innerHTML =
                 '<dt>Well-known</dt><dd><code>' + escapeHtml(urls.well_known_url || '—') + '</code></dd>' +
                 '<dt>Public API</dt><dd><code>' + escapeHtml(urls.api_url || '—') + '</code></dd>' +
-                '<dt>Last published</dt><dd>' + escapeHtml((data.meta && data.meta.last_published_at) || 'Never') + '</dd>';
+                '<dt>Last published</dt><dd>' +
+                escapeHtml((data.meta && data.meta.last_published_at) || 'Never') + '</dd>';
         }
     }
 
@@ -149,11 +228,51 @@
         list.innerHTML = '';
         (state.draft.connected_content || []).forEach(function (ref, idx) {
             var li = document.createElement('li');
-            li.innerHTML = escapeHtml(ref.label || ref.collection || ref.entry_id) +
-                ' <span class="text-muted">(' + escapeHtml(ref.ref_type) + ')</span>' +
-                (state.canEdit ? ' <button type="button" class="btn-link ap-remove-connected" data-idx="' + idx + '">Remove</button>' : '');
+            li.innerHTML = '<strong>' + escapeHtml(ref.label || ref.collection || ref.entry_id) + '</strong> ' +
+                '<span class="badge">' + escapeHtml(ref.role || 'reference') + '</span> ' +
+                '<span class="text-muted">(' + escapeHtml(ref.ref_type) + ')</span>' +
+                (state.canEdit ? ' <button type="button" class="btn-link ap-remove-connected" data-idx="' +
+                    idx + '">Remove</button>' : '');
             list.appendChild(li);
         });
+    }
+
+    function renderClaimDetail() {
+        var el = document.getElementById('ap-claim-detail');
+        if (!el) return;
+        if (!state.selectedClaimId) {
+            el.textContent = 'Select a claim to view details.';
+            el.className = 'text-muted';
+            return;
+        }
+        var claim = (state.draft.claims || []).find(function (c) { return c.id === state.selectedClaimId; });
+        if (!claim) {
+            el.textContent = 'Claim not found.';
+            return;
+        }
+        el.className = 'ap-claim-detail';
+        var html = '<p><strong>' + escapeHtml(claim.statement) + '</strong></p>';
+        if (state.canEdit) {
+            html += '<label>Status <select class="input ap-claim-status" data-claim-id="' +
+                escapeHtml(claim.id) + '">';
+            CLAIM_STATUSES.forEach(function (st) {
+                html += '<option value="' + st + '"' + (claim.status === st ? ' selected' : '') + '>' +
+                    escapeHtml(st) + '</option>';
+            });
+            html += '</select></label>';
+        } else {
+            html += '<p class="badge">' + escapeHtml(claim.status || 'pending_review') + '</p>';
+        }
+        if (claim.notes) html += '<p class="text-muted">' + escapeHtml(claim.notes) + '</p>';
+        el.innerHTML = html;
+        var sel = el.querySelector('.ap-claim-status');
+        if (sel) {
+            sel.addEventListener('change', function () {
+                claim.status = sel.value;
+                state.dirty = true;
+                renderClaims();
+            });
+        }
     }
 
     function renderClaims() {
@@ -163,25 +282,37 @@
         (state.draft.claims || []).forEach(function (claim) {
             var li = document.createElement('li');
             li.className = state.selectedClaimId === claim.id ? 'selected' : '';
-            li.innerHTML = '<strong>' + escapeHtml(claim.statement || 'Untitled') + '</strong>' +
-                ' <span class="badge">' + escapeHtml(claim.status || 'pending_review') + '</span>';
+            li.innerHTML = '<strong>' + escapeHtml(claim.statement || 'Untitled') + '</strong> ' +
+                '<span class="badge">' + escapeHtml(claim.status || 'pending_review') + '</span>';
             li.addEventListener('click', function () {
                 state.selectedClaimId = claim.id;
                 renderClaims();
+                renderClaimDetail();
+                renderEvidence();
             });
             list.appendChild(li);
         });
+        renderClaimDetail();
     }
 
     function renderEvidence() {
         var list = document.getElementById('ap-evidence-list');
         if (!list) return;
         list.innerHTML = '';
-        (state.draft.evidence || []).forEach(function (ev, idx) {
+        var items = state.draft.evidence || [];
+        if (state.selectedClaimId) {
+            items = items.filter(function (ev) {
+                return (ev.claim_ids || []).indexOf(state.selectedClaimId) !== -1;
+            });
+        }
+        items.forEach(function (ev) {
+            var idx = (state.draft.evidence || []).indexOf(ev);
             var li = document.createElement('li');
             li.innerHTML = escapeHtml(ev.title || ev.url || ev.id) +
-                ' <span class="badge">' + escapeHtml(ev.verification_status || 'unverified') + '</span>' +
-                (state.canEdit ? ' <button type="button" class="btn-link ap-verify-evidence" data-idx="' + idx + '">Verify</button>' : '');
+                ' <span class="badge">' + escapeHtml(ev.type || 'other') + '</span> ' +
+                '<span class="badge">' + escapeHtml(ev.verification_status || 'unverified') + '</span>' +
+                (state.canEdit ? ' <button type="button" class="btn-link ap-verify-evidence" data-idx="' +
+                    idx + '">Verify</button>' : '');
             list.appendChild(li);
         });
     }
@@ -195,7 +326,10 @@
             var rep = (ctx.represents && ctx.represents.type) || 'brand';
             li.innerHTML = '<code>' + escapeHtml(ctx.media_id) + '</code> — ' + escapeHtml(rep) +
                 '<div class="text-muted">' + escapeHtml(ctx.description || '') + '</div>' +
-                (state.canEdit ? ' <button type="button" class="btn-link ap-edit-media" data-idx="' + idx + '">Edit</button>' : '');
+                (state.canEdit ? ' <button type="button" class="btn-link ap-edit-media" data-idx="' +
+                    idx + '">Edit</button> ' +
+                    '<button type="button" class="btn-link ap-remove-media" data-idx="' +
+                    idx + '">Remove</button>' : '');
             list.appendChild(li);
         });
     }
@@ -218,68 +352,237 @@
                 warn.appendChild(p);
             });
         }
+        renderVersions();
+        updatePublishApiUrls();
     }
 
-    function renderSuggestions() {
-        var panel = document.getElementById('ap-suggestions-panel');
-        var list = document.getElementById('ap-suggestions-list');
-        if (!panel || !list) return;
-        if (!state.suggestions.length) {
-            panel.hidden = true;
+    function updatePublishApiUrls() {
+        var urls = state.publicUrls || {};
+        var base = urls.api_url || '';
+        var summary = document.getElementById('ap-api-summary');
+        var products = document.getElementById('ap-api-products');
+        if (summary) {
+            summary.textContent = base ? base + (base.indexOf('?') >= 0 ? '&' : '?') + 'view=summary' : '—';
+        }
+        if (products) {
+            products.textContent = base ? base + (base.indexOf('?') >= 0 ? '&' : '?') + 'view=products' : '—';
+        }
+    }
+
+    function renderVersions() {
+        var list = document.getElementById('ap-version-list');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!state.versions.length) {
+            list.innerHTML = '<li class="text-muted">No published versions yet.</li>';
             return;
         }
-        panel.hidden = false;
-        list.innerHTML = '';
-        state.suggestions.forEach(function (s) {
+        state.versions.forEach(function (v) {
             var li = document.createElement('li');
-            li.innerHTML = '<strong>' + escapeHtml(s.label || s.field) + '</strong><p>' + escapeHtml(String(s.value || '')) + '</p>' +
-                '<button type="button" class="btn btn-sm btn-primary ap-accept-suggestion" data-id="' + escapeHtml(s.id) + '">Accept</button> ' +
-                '<button type="button" class="btn btn-sm btn-secondary ap-reject-suggestion" data-id="' + escapeHtml(s.id) + '">Reject</button>';
+            li.textContent = 'Version ' + v.version + ' (' + Math.round((v.size || 0) / 1024) + ' KB)';
             list.appendChild(li);
         });
     }
 
-    function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.textContent = String(text ?? '');
-        return div.innerHTML;
+    function renderProducts() {
+        var grid = document.getElementById('ap-products-list');
+        if (!grid) return;
+        grid.innerHTML = '';
+        (state.draft.products_services || []).forEach(function (prod, idx) {
+            var card = document.createElement('div');
+            card.className = 'ap-product-card card';
+            card.innerHTML =
+                '<h4>' + escapeHtml(prod.name || 'Unnamed') + '</h4>' +
+                '<span class="badge">' + escapeHtml(prod.type || 'product') + '</span>' +
+                (prod.category ? ' <span class="text-muted">' + escapeHtml(prod.category) + '</span>' : '') +
+                '<p>' + escapeHtml(prod.short_description || '') + '</p>' +
+                (state.canEdit ?
+                    '<div class="ap-product-actions">' +
+                    '<button type="button" class="btn btn-sm btn-secondary ap-edit-product" data-idx="' +
+                    idx + '">Edit</button> ' +
+                    '<button type="button" class="btn btn-sm btn-secondary ap-delete-product" data-idx="' +
+                    idx + '">Delete</button></div>' : '');
+            grid.appendChild(card);
+        });
+        if (!(state.draft.products_services || []).length) {
+            grid.innerHTML = '<p class="text-muted">No products or services yet.</p>';
+        }
     }
 
-    function switchTab(tab) {
-        if (!tab) {
-            return;
-        }
-        document.querySelectorAll('.ai-presence-tabs .tab[data-tab]').forEach(function (btn) {
-            var active = btn.getAttribute('data-tab') === tab;
-            btn.classList.toggle('active', active);
-            btn.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
-        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
-            var active = pane.getAttribute('data-tab-content') === tab;
-            pane.classList.toggle('active', active);
-            pane.hidden = !active;
+    function renderRelationships() {
+        var list = document.getElementById('ap-relationships-list');
+        if (!list) return;
+        list.innerHTML = '';
+        (state.draft.relationships || []).forEach(function (rel, idx) {
+            var li = document.createElement('li');
+            li.innerHTML = '<strong>' + escapeHtml(rel.name || 'Unnamed') + '</strong> ' +
+                '<span class="badge">' + escapeHtml(rel.type || 'partner') + '</span>' +
+                (rel.url ? ' <a href="' + escapeHtml(rel.url) + '" target="_blank" rel="noopener">Link</a>' : '') +
+                (rel.description ? '<p class="text-muted">' + escapeHtml(rel.description) + '</p>' : '') +
+                (state.canEdit ? ' <button type="button" class="btn-link ap-remove-relationship" data-idx="' +
+                    idx + '">Remove</button>' : '');
+            list.appendChild(li);
         });
     }
 
-    function initTabs() {
-        var root = document.querySelector('.ai-presence-tabs');
-        if (!root) {
+    function renderSocial() {
+        var wrap = document.getElementById('ap-social-list');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        var profiles = (state.draft.identity && state.draft.identity.social_profiles) || [];
+        profiles.forEach(function (prof, idx) {
+            var row = document.createElement('div');
+            row.className = 'form-row ap-social-row';
+            row.innerHTML =
+                '<input type="text" class="input ap-social-platform" placeholder="Platform" value="' +
+                escapeHtml(prof.platform || '') + '" data-idx="' + idx + '">' +
+                '<input type="url" class="input ap-social-url" placeholder="URL" value="' +
+                escapeHtml(prof.url || '') + '" data-idx="' + idx + '">' +
+                (state.canEdit ? '<button type="button" class="btn btn-sm btn-secondary ap-remove-social" data-idx="' +
+                    idx + '">Remove</button>' : '');
+            wrap.appendChild(row);
+        });
+        wrap.querySelectorAll('.ap-social-platform, .ap-social-url').forEach(function (input) {
+            input.addEventListener('input', syncSocialFromDom);
+        });
+    }
+
+    function syncSocialFromDom() {
+        if (!state.draft.identity) state.draft.identity = {};
+        var rows = document.querySelectorAll('#ap-social-list .ap-social-row');
+        var profiles = [];
+        rows.forEach(function (row) {
+            var platform = row.querySelector('.ap-social-platform');
+            var url = row.querySelector('.ap-social-url');
+            if (platform && url && (platform.value.trim() || url.value.trim())) {
+                profiles.push({ platform: platform.value.trim(), url: url.value.trim() });
+            }
+        });
+        state.draft.identity.social_profiles = profiles;
+        state.dirty = true;
+    }
+
+    function renderCmsDiff() {
+        var list = document.getElementById('ap-cms-diff-list');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!state.cmsDiff.length) {
+            list.innerHTML = '<li class="text-muted">No CMS sync differences detected.</li>';
             return;
         }
-        var nav = root.querySelector('.tabs');
-        if (nav) {
-            nav.setAttribute('role', 'tablist');
-            nav.addEventListener('click', function (e) {
-                var btn = e.target.closest('.tab[data-tab]');
-                if (!btn || !nav.contains(btn)) {
-                    return;
-                }
-                switchTab(btn.getAttribute('data-tab'));
-            });
-        }
-        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
-            pane.hidden = !pane.classList.contains('active');
+        state.cmsDiff.forEach(function (diff) {
+            var li = document.createElement('li');
+            li.className = 'ap-cms-diff-item';
+            var msg = diff.message || diff.type || 'Difference';
+            li.innerHTML = '<strong>' + escapeHtml(diff.label || 'Entry') + '</strong> — ' +
+                escapeHtml(msg) +
+                (diff.field ? ' <code>' + escapeHtml(diff.field) + '</code>' : '') +
+                (diff.similarity !== undefined ? ' (' + diff.similarity + '% match)' : '');
+            if (state.canEdit && diff.ref_index !== undefined) {
+                li.innerHTML += ' <button type="button" class="btn btn-sm btn-secondary ap-cms-refresh" data-ref-index="' +
+                    diff.ref_index + '"' +
+                    (diff.field ? ' data-field="' + escapeHtml(diff.field) + '"' : '') +
+                    '>Refresh from CMS</button>';
+            }
+            list.appendChild(li);
         });
+    }
+
+    function renderCopilotSuggestions() {
+        var list = document.getElementById('ap-copilot-suggestions');
+        var badge = document.getElementById('ap-suggestion-count');
+        if (!list) return;
+        list.innerHTML = '';
+        if (badge) {
+            if (state.suggestions.length) {
+                badge.hidden = false;
+                badge.textContent = String(state.suggestions.length);
+            } else {
+                badge.hidden = true;
+            }
+        }
+        state.suggestions.forEach(function (s) {
+            var li = document.createElement('li');
+            li.className = 'ap-suggestion-item';
+            var valPreview = typeof s.value === 'object' ? JSON.stringify(s.value) : String(s.value || '');
+            if (valPreview.length > 200) valPreview = valPreview.slice(0, 200) + '…';
+            li.innerHTML =
+                '<strong>' + escapeHtml(s.label || s.field) + '</strong>' +
+                '<span class="badge">' + escapeHtml(s.confidence || 'medium') + '</span>' +
+                '<p>' + escapeHtml(valPreview) + '</p>' +
+                (state.canEdit ?
+                    '<button type="button" class="btn btn-sm btn-primary ap-accept-suggestion" data-id="' +
+                    escapeHtml(s.id) + '">Accept</button> ' +
+                    '<button type="button" class="btn btn-sm btn-secondary ap-reject-suggestion" data-id="' +
+                    escapeHtml(s.id) + '">Reject</button>' : '');
+            list.appendChild(li);
+        });
+    }
+
+    function renderStudioSuggestions() {
+        var wrap = document.getElementById('ap-studio-results');
+        var list = document.getElementById('ap-studio-suggestions');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!state.studioSuggestions.length) {
+            if (wrap) wrap.hidden = true;
+            return;
+        }
+        if (wrap) wrap.hidden = false;
+        state.studioSuggestions.forEach(function (s) {
+            var li = document.createElement('li');
+            var valPreview = typeof s.value === 'object' ? JSON.stringify(s.value) : String(s.value || '');
+            li.innerHTML = '<strong>' + escapeHtml(s.label || s.field) + '</strong><p>' +
+                escapeHtml(valPreview.slice(0, 300)) + '</p>';
+            list.appendChild(li);
+        });
+    }
+
+    function populateAiConnections(connections) {
+        state.aiConnections = connections || [];
+        var sel = document.getElementById('ap-ai-connection');
+        if (!sel) return;
+        var saved = '';
+        try { saved = localStorage.getItem(LS_AI_CONN) || ''; } catch (e) { /* ignore */ }
+        sel.innerHTML = '<option value="">Rules only (no AI)</option>';
+        state.aiConnections.forEach(function (conn) {
+            var opt = document.createElement('option');
+            opt.value = conn.id;
+            opt.textContent = conn.name + (conn.provider ? ' (' + conn.provider + ')' : '');
+            sel.appendChild(opt);
+        });
+        if (saved && state.aiConnections.some(function (c) { return c.id === saved; })) {
+            sel.value = saved;
+        }
+        sel.addEventListener('change', function () {
+            try { localStorage.setItem(LS_AI_CONN, sel.value); } catch (e) { /* ignore */ }
+        });
+    }
+
+    function populateStudioCollections() {
+        var sel = document.getElementById('ap-studio-collections');
+        if (!sel) return;
+        sel.innerHTML = '';
+        state.collections.forEach(function (c) {
+            var opt = document.createElement('option');
+            opt.value = c.slug || c.handle || c.id;
+            opt.textContent = c.name || opt.value;
+            sel.appendChild(opt);
+        });
+    }
+
+    function refreshAllRenders(data) {
+        renderOverview(data);
+        renderConnected();
+        renderSocial();
+        renderRelationships();
+        renderProducts();
+        renderClaims();
+        renderEvidence();
+        renderMedia();
+        renderPublishStatus(data);
+        renderCmsDiff();
+        renderCopilotSuggestions();
     }
 
     function maybeShowSetup(data) {
@@ -302,33 +605,31 @@
         overview.hidden = true;
         wizard.innerHTML =
             '<div class="card"><h3>Get started with AI Presence</h3>' +
-            '<p class="text-muted">Define brand context for AI systems — link existing CMS content, add claims with evidence, then publish.</p>' +
+            '<p class="text-muted">Define brand context for AI systems — link existing CMS content, ' +
+            'add claims with evidence, then publish.</p>' +
             '<ol class="ai-presence-setup-steps">' +
-            '<li>Brand identity</li><li>Connect content</li><li>Known for</li><li>Language guidance</li><li>Review</li>' +
-            '</ol>' +
+            '<li>Brand identity</li><li>Connect content</li><li>Known for</li>' +
+            '<li>Language guidance</li><li>Review</li></ol>' +
             '<button type="button" class="btn btn-primary" id="ap-setup-start">Get started</button> ' +
+            '<button type="button" class="btn btn-secondary" id="ap-setup-studio">Open Studio wizard</button> ' +
             '<button type="button" class="btn btn-secondary" id="ap-setup-skip">Skip setup</button></div>';
-        document.getElementById('ap-setup-start').addEventListener('click', function () {
-            fetch(apiUrl('/api/ai_presence.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'setup_prefill', _csrf: state.csrfToken })
-            }).then(function (r) { return r.json(); }).then(function (res) {
+        bindEl('ap-setup-start', 'click', function () {
+            postJson({ action: 'setup_prefill' }).then(function (res) {
                 if (res.status === 'ok' && res.data.prefill) {
                     state.draft = res.data.prefill;
                     bindFields();
+                    renderSocial();
                     switchTab('context');
                     wizard.hidden = true;
                     overview.hidden = false;
                 }
-            });
+            }).catch(function (e) { toast(e.message, 'error'); });
         });
-        document.getElementById('ap-setup-skip').addEventListener('click', function () {
-            fetch(apiUrl('/api/ai_presence.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'setup_skip', _csrf: state.csrfToken })
-            }).then(function () {
+        bindEl('ap-setup-studio', 'click', function () {
+            openStudioModal();
+        });
+        bindEl('ap-setup-skip', 'click', function () {
+            postJson({ action: 'setup_skip' }).then(function () {
                 wizard.hidden = true;
                 overview.hidden = false;
                 load();
@@ -343,6 +644,7 @@
                 state.collections = (res.data && res.data.collections) || res.collections || [];
                 var sel = document.getElementById('ap-connect-collection');
                 if (sel) {
+                    while (sel.options.length > 1) sel.remove(1);
                     state.collections.forEach(function (c) {
                         var opt = document.createElement('option');
                         opt.value = c.slug || c.handle || c.id;
@@ -350,12 +652,14 @@
                         sel.appendChild(opt);
                     });
                 }
+                populateStudioCollections();
             }).catch(function () { /* optional */ });
     }
 
     function loadEntries(collection) {
         if (!collection) return Promise.resolve();
-        return fetch(apiUrl('/api/admin_entries.php?action=list&collection=' + encodeURIComponent(collection)), { credentials: 'same-origin' })
+        return fetch(apiUrl('/api/admin_entries.php?action=list&collection=' +
+            encodeURIComponent(collection)), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 var entries = (res.data && res.data.entries) || res.entries || [];
@@ -373,6 +677,16 @@
             });
     }
 
+    function loadVersions() {
+        return fetch(apiUrl('/api/ai_presence.php?action=list_versions'), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.status === 'ok') {
+                    state.versions = (res.data && res.data.versions) || [];
+                }
+            }).catch(function () { state.versions = []; });
+    }
+
     function load() {
         return fetch(apiUrl('/api/ai_presence.php?action=get'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
@@ -383,13 +697,11 @@
                 state.published = data.published;
                 state.meta = data.meta;
                 state.canEdit = !!data.can_edit;
+                state.cmsDiff = data.cms_diff || [];
+                state.publicUrls = data.public_urls || {};
+                populateAiConnections(data.ai_connections || []);
                 bindFields();
-                renderOverview(data);
-                renderConnected();
-                renderClaims();
-                renderEvidence();
-                renderMedia();
-                renderPublishStatus(data);
+                refreshAllRenders(data);
                 maybeShowSetup(data);
                 if (!state.canEdit) {
                     var saveBtn = document.getElementById('ai-presence-save-draft');
@@ -397,15 +709,12 @@
                     if (saveBtn) saveBtn.disabled = true;
                     if (pubBtn) pubBtn.disabled = true;
                 }
+                return loadVersions();
             });
     }
 
     function saveDraft() {
-        return fetch(apiUrl('/api/ai_presence.php'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'save_draft', draft: state.draft, _csrf: state.csrfToken })
-        }).then(function (r) { return r.json(); }).then(function (res) {
+        return postJson({ action: 'save_draft', draft: state.draft }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message || 'Save failed');
             state.draft = res.data.draft;
             state.dirty = false;
@@ -416,15 +725,275 @@
 
     function publish() {
         return saveDraft().then(function () {
-            return fetch(apiUrl('/api/ai_presence.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'publish', _csrf: state.csrfToken })
-            }).then(function (r) { return r.json(); }).then(function (res) {
+            return postJson({ action: 'publish' }).then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Publish failed');
                 toast('Published for AI systems', 'success');
                 return load();
             });
+        });
+    }
+
+    function runCopilot(mode) {
+        var connId = getSelectedAiConnection();
+        return postJson({ action: 'copilot', ai_connection_id: connId, mode: mode || 'all' })
+            .then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Copilot failed');
+                state.suggestions = res.data.suggestions || [];
+                renderCopilotSuggestions();
+                var panel = document.getElementById('ap-copilot-panel');
+                if (panel) panel.hidden = false;
+                toast(state.suggestions.length + ' suggestion(s)', 'info');
+            });
+    }
+
+    function acceptSuggestion(id) {
+        var suggestion = state.suggestions.find(function (s) { return s.id === id; });
+        if (!suggestion) return Promise.resolve();
+        return postJson({ action: 'accept_suggestion', suggestion: suggestion }).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message || 'Accept failed');
+            state.draft = res.data.draft;
+            state.suggestions = state.suggestions.filter(function (s) { return s.id !== id; });
+            bindFields();
+            refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
+            toast('Suggestion accepted', 'success');
+        });
+    }
+
+    function acceptAllSuggestions() {
+        if (!state.suggestions.length) return Promise.resolve();
+        return postJson({ action: 'accept_suggestions', suggestions: state.suggestions })
+            .then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Accept all failed');
+                state.draft = res.data.draft;
+                state.suggestions = [];
+                bindFields();
+                refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
+                toast('All suggestions accepted', 'success');
+            });
+    }
+
+    function runFieldAi(field) {
+        var connId = getSelectedAiConnection();
+        if (!connId) {
+            toast('Select an AI connection first', 'warning');
+            return Promise.resolve();
+        }
+        return postJson({ action: 'field_ai', field: field, ai_connection_id: connId })
+            .then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Field AI failed');
+                var suggestions = res.data.suggestions || [];
+                if (!suggestions.length) {
+                    toast('No suggestions returned', 'info');
+                    return;
+                }
+                var s = suggestions[0];
+                if (global.BirklyFeedback && global.BirklyFeedback.confirm) {
+                    global.BirklyFeedback.confirm('Apply AI suggestion for ' + field + '?', function (ok) {
+                        if (ok) {
+                            postJson({ action: 'accept_suggestion', suggestion: s }).then(function (r) {
+                                if (r.status === 'ok') {
+                                    state.draft = r.data.draft;
+                                    bindFields();
+                                    refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
+                                    toast('Field updated', 'success');
+                                }
+                            });
+                        }
+                    });
+                } else if (confirm('Apply AI suggestion?')) {
+                    return postJson({ action: 'accept_suggestion', suggestion: s }).then(function (r) {
+                        if (r.status === 'ok') {
+                            state.draft = r.data.draft;
+                            bindFields();
+                            refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
+                        }
+                    });
+                }
+            });
+    }
+
+    function openStudioModal() {
+        var modal = document.getElementById('ap-studio-modal');
+        if (!modal) return;
+        populateStudioCollections();
+        state.studioSuggestions = [];
+        state.studioDraftPatch = null;
+        renderStudioSuggestions();
+        var results = document.getElementById('ap-studio-results');
+        if (results) results.hidden = true;
+        modal.hidden = false;
+    }
+
+    function closeStudioModal() {
+        var modal = document.getElementById('ap-studio-modal');
+        if (modal) modal.hidden = true;
+    }
+
+    function studioGenerate() {
+        var sel = document.getElementById('ap-studio-collections');
+        if (!sel) return;
+        var collections = Array.from(sel.selectedOptions).map(function (o) { return o.value; });
+        if (!collections.length) {
+            toast('Select at least one collection', 'warning');
+            return;
+        }
+        return postJson({
+            action: 'wizard_generate',
+            collections: collections,
+            ai_connection_id: getSelectedAiConnection()
+        }).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
+            state.studioSuggestions = res.data.suggestions || [];
+            state.studioDraftPatch = res.data.draft_patch || null;
+            renderStudioSuggestions();
+            toast(state.studioSuggestions.length + ' studio suggestion(s)', 'success');
+        });
+    }
+
+    function studioApply() {
+        return postJson({
+            action: 'wizard_apply',
+            suggestions: state.studioSuggestions,
+            draft_patch: state.studioDraftPatch || {}
+        }).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message || 'Apply failed');
+            state.draft = res.data.draft;
+            state.studioSuggestions = [];
+            bindFields();
+            refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
+            closeStudioModal();
+            toast('Studio suggestions applied', 'success');
+        });
+    }
+
+    function cmsRefresh(refIndex, field) {
+        var body = { action: 'cms_refresh', ref_index: refIndex };
+        if (field) body.field = field;
+        return postJson(body).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message || 'Refresh failed');
+            state.draft = res.data.draft;
+            bindFields();
+            return load();
+        });
+    }
+
+    function addProduct() {
+        var name = prompt('Product or service name');
+        if (!name) return;
+        var shortDesc = prompt('Short description') || '';
+        state.draft.products_services = state.draft.products_services || [];
+        state.draft.products_services.push({
+            id: uid('prod'),
+            name: name,
+            type: 'product',
+            short_description: shortDesc,
+            full_description: '',
+            category: '',
+            pricing_model: '',
+            best_for: [],
+            not_for: [],
+            claim_ids: [],
+            connected_entry: null,
+            public: true
+        });
+        renderProducts();
+        state.dirty = true;
+    }
+
+    function editProduct(idx) {
+        var prod = (state.draft.products_services || [])[idx];
+        if (!prod) return;
+        prod.name = prompt('Name', prod.name) || prod.name;
+        prod.type = prompt('Type (product/service/bundle)', prod.type || 'product') || prod.type;
+        prod.short_description = prompt('Short description', prod.short_description || '') || prod.short_description;
+        prod.full_description = prompt('Full description', prod.full_description || '') || prod.full_description;
+        prod.category = prompt('Category', prod.category || '') || prod.category;
+        renderProducts();
+        state.dirty = true;
+    }
+
+    function deleteProduct(idx) {
+        if (!confirm('Delete this product/service?')) return;
+        state.draft.products_services.splice(idx, 1);
+        renderProducts();
+        state.dirty = true;
+    }
+
+    function addRelationship() {
+        var name = prompt('Relationship name (partner, parent company, etc.)');
+        if (!name) return;
+        var type = prompt('Type (partner, subsidiary, parent, competitor, other)', 'partner') || 'partner';
+        var desc = prompt('Description (optional)') || '';
+        var url = prompt('URL (optional)') || '';
+        state.draft.relationships = state.draft.relationships || [];
+        state.draft.relationships.push({ id: uid('rel'), type: type, name: name, description: desc, url: url });
+        renderRelationships();
+        state.dirty = true;
+    }
+
+    function addCmsEvidence() {
+        var refs = (state.draft.connected_content || []).filter(function (r) {
+            return r.ref_type === 'entry' && r.entry_id;
+        });
+        if (!refs.length) {
+            toast('Connect CMS entries first (Context tab)', 'warning');
+            return;
+        }
+        var labels = refs.map(function (r, i) { return (i + 1) + '. ' + (r.label || r.entry_id); }).join('\n');
+        var pick = prompt('Pick connected entry number:\n' + labels);
+        if (!pick) return;
+        var idx = parseInt(pick, 10) - 1;
+        if (idx < 0 || idx >= refs.length) return;
+        var ref = refs[idx];
+        var id = uid('evidence');
+        var item = {
+            id: id,
+            type: 'cms_content',
+            title: ref.label || ref.entry_id,
+            url: '',
+            media_id: '',
+            publisher: '',
+            published_at: '',
+            reviewed_at: '',
+            verification_status: 'user_verified',
+            claim_ids: state.selectedClaimId ? [state.selectedClaimId] : [],
+            notes: ref.collection + '/' + ref.entry_id
+        };
+        state.draft.evidence = state.draft.evidence || [];
+        state.draft.evidence.push(item);
+        if (state.selectedClaimId) {
+            var claim = (state.draft.claims || []).find(function (c) {
+                return c.id === state.selectedClaimId;
+            });
+            if (claim) {
+                claim.evidence_ids = claim.evidence_ids || [];
+                claim.evidence_ids.push(id);
+                if (claim.evidence_ids.length >= 2) claim.status = 'supported';
+            }
+        }
+        renderEvidence();
+        renderClaims();
+        state.dirty = true;
+    }
+
+    function runPreview(q) {
+        return postJson({
+            action: 'preview_query',
+            question: q,
+            ai_connection_id: getSelectedAiConnection()
+        }).then(function (res) {
+            if (res.status !== 'ok') return;
+            var answer = document.getElementById('ap-preview-answer');
+            if (answer) answer.textContent = res.data.answer || '';
+            var src = document.getElementById('ap-preview-sources');
+            if (src) {
+                src.innerHTML = '';
+                (res.data.sources || []).forEach(function (s) {
+                    var li = document.createElement('li');
+                    li.textContent = s.label || s.field || s.type;
+                    src.appendChild(li);
+                });
+            }
         });
     }
 
@@ -442,11 +1011,102 @@
             }
         });
 
-        document.querySelectorAll('.ai-presence-goto-tab').forEach(function (btn) {
+        bindEl('ap-copilot-btn', 'click', function () {
+            var panel = document.getElementById('ap-copilot-panel');
+            if (panel) panel.hidden = !panel.hidden;
+        });
+
+        document.querySelectorAll('[data-copilot-mode]').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                switchTab(btn.getAttribute('data-tab'));
+                runCopilot(btn.getAttribute('data-copilot-mode'))
+                    .catch(function (e) { toast(e.message, 'error'); });
             });
         });
+
+        bindEl('ap-accept-all-suggestions', 'click', function () {
+            acceptAllSuggestions().catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        var copilotList = document.getElementById('ap-copilot-suggestions');
+        if (copilotList) {
+            copilotList.addEventListener('click', function (e) {
+                var id = e.target.getAttribute('data-id');
+                if (!id) return;
+                if (e.target.classList.contains('ap-accept-suggestion')) {
+                    acceptSuggestion(id).catch(function (err) { toast(err.message, 'error'); });
+                }
+                if (e.target.classList.contains('ap-reject-suggestion')) {
+                    state.suggestions = state.suggestions.filter(function (s) { return s.id !== id; });
+                    renderCopilotSuggestions();
+                }
+            });
+        }
+
+        document.querySelectorAll('.ap-field-ai').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var field = btn.getAttribute('data-field');
+                if (field) runFieldAi(field).catch(function (e) { toast(e.message, 'error'); });
+            });
+        });
+
+        bindEl('ap-studio-btn', 'click', openStudioModal);
+        bindEl('ap-studio-generate', 'click', function () {
+            studioGenerate().catch(function (e) { toast(e.message, 'error'); });
+        });
+        bindEl('ap-studio-apply', 'click', function () {
+            studioApply().catch(function (e) { toast(e.message, 'error'); });
+        });
+        document.querySelectorAll('[data-close-studio]').forEach(function (el) {
+            el.addEventListener('click', closeStudioModal);
+        });
+
+        bindEl('ap-add-product', 'click', addProduct);
+        bindEl('ap-import-products-ai', 'click', function () {
+            switchTab('products');
+            runCopilot('fill_gaps').catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        var productsList = document.getElementById('ap-products-list');
+        if (productsList) {
+            productsList.addEventListener('click', function (e) {
+                var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                if (isNaN(idx)) return;
+                if (e.target.classList.contains('ap-edit-product')) editProduct(idx);
+                if (e.target.classList.contains('ap-delete-product')) deleteProduct(idx);
+            });
+        }
+
+        bindEl('ap-add-relationship', 'click', addRelationship);
+        var relList = document.getElementById('ap-relationships-list');
+        if (relList) {
+            relList.addEventListener('click', function (e) {
+                if (e.target.classList.contains('ap-remove-relationship')) {
+                    var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                    state.draft.relationships.splice(idx, 1);
+                    renderRelationships();
+                    state.dirty = true;
+                }
+            });
+        }
+
+        bindEl('ap-add-social', 'click', function () {
+            if (!state.draft.identity) state.draft.identity = {};
+            state.draft.identity.social_profiles = state.draft.identity.social_profiles || [];
+            state.draft.identity.social_profiles.push({ platform: '', url: '' });
+            renderSocial();
+            state.dirty = true;
+        });
+        var socialList = document.getElementById('ap-social-list');
+        if (socialList) {
+            socialList.addEventListener('click', function (e) {
+                if (e.target.classList.contains('ap-remove-social')) {
+                    var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                    state.draft.identity.social_profiles.splice(idx, 1);
+                    renderSocial();
+                    state.dirty = true;
+                }
+            });
+        }
 
         var connectCollection = document.getElementById('ap-connect-collection');
         if (connectCollection) {
@@ -456,16 +1116,21 @@
         }
 
         bindEl('ap-add-connected', 'click', function () {
-            var col = document.getElementById('ap-connect-collection').value;
-            var entryId = document.getElementById('ap-connect-entry').value;
+            var colEl = document.getElementById('ap-connect-collection');
+            var entryEl = document.getElementById('ap-connect-entry');
+            var roleEl = document.getElementById('ap-connect-role');
+            var col = colEl ? colEl.value : '';
+            var entryId = entryEl ? entryEl.value : '';
+            var role = roleEl ? roleEl.value : 'brand_description';
             if (!col) return;
             var ref = {
-                role: 'brand_description',
+                role: role,
                 ref_type: entryId ? 'entry' : 'collection',
                 collection: col,
                 entry_id: entryId || '',
                 slug: entryId || col,
-                label: entryId ? (document.getElementById('ap-connect-entry').selectedOptions[0].textContent) : col
+                label: entryId && entryEl.selectedOptions.length
+                    ? entryEl.selectedOptions[0].textContent : col
             };
             state.draft.connected_content = state.draft.connected_content || [];
             state.draft.connected_content.push(ref);
@@ -488,10 +1153,9 @@
         bindEl('ap-add-claim', 'click', function () {
             var statement = prompt('Claim statement');
             if (!statement) return;
-            var id = 'claim_' + Math.random().toString(16).slice(2, 10);
             state.draft.claims = state.draft.claims || [];
             state.draft.claims.push({
-                id: id,
+                id: uid('claim'),
                 statement: statement,
                 status: 'pending_review',
                 evidence_ids: [],
@@ -507,8 +1171,7 @@
         bindEl('ap-add-evidence', 'click', function () {
             var url = prompt('Evidence URL (optional)');
             var title = prompt('Evidence title') || 'Evidence';
-            var id = 'evidence_' + Math.random().toString(16).slice(2, 10);
-            state.draft.evidence = state.draft.evidence || [];
+            var id = uid('evidence');
             var item = {
                 id: id,
                 type: url ? 'external_url' : 'other',
@@ -522,61 +1185,66 @@
                 claim_ids: state.selectedClaimId ? [state.selectedClaimId] : [],
                 notes: ''
             };
-            if (url) {
-                fetch(apiUrl('/api/ai_presence.php'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'fetch_url_meta', url: url, _csrf: state.csrfToken })
-                }).then(function (r) { return r.json(); }).then(function (res) {
-                    if (res.status === 'ok' && res.data.title) item.title = res.data.title;
-                    state.draft.evidence.push(item);
-                    if (state.selectedClaimId) {
-                        var claim = (state.draft.claims || []).find(function (c) { return c.id === state.selectedClaimId; });
-                        if (claim) {
-                            claim.evidence_ids = claim.evidence_ids || [];
-                            claim.evidence_ids.push(id);
-                            if (claim.evidence_ids.length >= 2) claim.status = 'supported';
-                        }
-                    }
-                    renderEvidence();
-                    renderClaims();
-                    state.dirty = true;
-                });
-            } else {
+            var finish = function () {
+                state.draft.evidence = state.draft.evidence || [];
                 state.draft.evidence.push(item);
+                if (state.selectedClaimId) {
+                    var claim = (state.draft.claims || []).find(function (c) {
+                        return c.id === state.selectedClaimId;
+                    });
+                    if (claim) {
+                        claim.evidence_ids = claim.evidence_ids || [];
+                        claim.evidence_ids.push(id);
+                        if (claim.evidence_ids.length >= 2) claim.status = 'supported';
+                    }
+                }
                 renderEvidence();
+                renderClaims();
                 state.dirty = true;
+            };
+            if (url) {
+                postJson({ action: 'fetch_url_meta', url: url }).then(function (res) {
+                    if (res.status === 'ok' && res.data.title) item.title = res.data.title;
+                    finish();
+                }).catch(finish);
+            } else {
+                finish();
             }
         });
+
+        bindEl('ap-add-cms-evidence', 'click', addCmsEvidence);
 
         var evidenceList = document.getElementById('ap-evidence-list');
         if (evidenceList) {
             evidenceList.addEventListener('click', function (e) {
-            if (e.target.classList.contains('ap-verify-evidence')) {
-                var idx = parseInt(e.target.getAttribute('data-idx'), 10);
-                if (state.draft.evidence[idx]) {
-                    state.draft.evidence[idx].verification_status = 'user_verified';
-                    state.draft.evidence[idx].reviewed_at = new Date().toISOString();
-                    renderEvidence();
-                    state.dirty = true;
+                if (e.target.classList.contains('ap-verify-evidence')) {
+                    var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                    if (state.draft.evidence[idx]) {
+                        state.draft.evidence[idx].verification_status = 'user_verified';
+                        state.draft.evidence[idx].reviewed_at = new Date().toISOString();
+                        renderEvidence();
+                        state.dirty = true;
+                    }
                 }
-            }
-        });
+            });
         }
 
         bindEl('ap-add-media-context', 'click', function () {
-            var mediaId = document.getElementById('ap-media-id').value.trim();
+            var mediaIdEl = document.getElementById('ap-media-id');
+            var repEl = document.getElementById('ap-media-represents');
+            var mediaId = mediaIdEl ? mediaIdEl.value.trim() : '';
             if (!mediaId) return;
+            var repType = repEl ? repEl.value : 'brand';
             var desc = prompt('What does this media represent?') || '';
             state.draft.media_context = state.draft.media_context || [];
             state.draft.media_context.push({
                 media_id: mediaId,
-                represents: { type: 'brand', ref: '' },
+                represents: { type: repType, ref: '' },
                 description: desc,
                 intended_use: '',
                 restrictions: ''
             });
-            document.getElementById('ap-media-id').value = '';
+            if (mediaIdEl) mediaIdEl.value = '';
             renderMedia();
             state.dirty = true;
         });
@@ -584,81 +1252,39 @@
         var mediaList = document.getElementById('ap-media-list');
         if (mediaList) {
             mediaList.addEventListener('click', function (e) {
-            if (e.target.classList.contains('ap-edit-media')) {
                 var idx = parseInt(e.target.getAttribute('data-idx'), 10);
-                var ctx = state.draft.media_context[idx];
-                if (!ctx) return;
-                ctx.description = prompt('Description', ctx.description || '') || ctx.description;
-                ctx.intended_use = prompt('Intended use', ctx.intended_use || '') || ctx.intended_use;
-                ctx.restrictions = prompt('Restrictions', ctx.restrictions || '') || ctx.restrictions;
-                renderMedia();
-                state.dirty = true;
-            }
-        });
+                if (isNaN(idx)) return;
+                if (e.target.classList.contains('ap-edit-media')) {
+                    var ctx = state.draft.media_context[idx];
+                    if (!ctx) return;
+                    ctx.description = prompt('Description', ctx.description || '') || ctx.description;
+                    ctx.intended_use = prompt('Intended use', ctx.intended_use || '') || ctx.intended_use;
+                    ctx.restrictions = prompt('Restrictions', ctx.restrictions || '') || ctx.restrictions;
+                    renderMedia();
+                    state.dirty = true;
+                }
+                if (e.target.classList.contains('ap-remove-media')) {
+                    state.draft.media_context.splice(idx, 1);
+                    renderMedia();
+                    state.dirty = true;
+                }
+            });
         }
 
-        bindEl('ap-suggest-btn', 'click', function () {
-            fetch(apiUrl('/api/ai_presence.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'suggest', _csrf: state.csrfToken })
-            }).then(function (r) { return r.json(); }).then(function (res) {
-                if (res.status !== 'ok') throw new Error(res.message);
-                state.suggestions = res.data.suggestions || [];
-                renderSuggestions();
-            }).catch(function (e) { toast(e.message, 'error'); });
-        });
-
-        var suggestionsList = document.getElementById('ap-suggestions-list');
-        if (suggestionsList) {
-            suggestionsList.addEventListener('click', function (e) {
-            var id = e.target.getAttribute('data-id');
-            if (!id) return;
-            if (e.target.classList.contains('ap-accept-suggestion')) {
-                var suggestion = state.suggestions.find(function (s) { return s.id === id; });
-                if (!suggestion) return;
-                fetch(apiUrl('/api/ai_presence.php'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'accept_suggestion', suggestion: suggestion, _csrf: state.csrfToken })
-                }).then(function (r) { return r.json(); }).then(function (res) {
-                    if (res.status === 'ok') {
-                        state.draft = res.data.draft;
-                        bindFields();
-                        renderClaims();
-                        state.suggestions = state.suggestions.filter(function (s) { return s.id !== id; });
-                        renderSuggestions();
-                        toast('Suggestion accepted', 'success');
-                    }
-                });
-            }
-            if (e.target.classList.contains('ap-reject-suggestion')) {
-                state.suggestions = state.suggestions.filter(function (s) { return s.id !== id; });
-                renderSuggestions();
-            }
-        });
-        }
-
-        function runPreview(q) {
-            fetch(apiUrl('/api/ai_presence.php'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'preview_query', question: q, _csrf: state.csrfToken })
-            }).then(function (r) { return r.json(); }).then(function (res) {
-                if (res.status !== 'ok') return;
-                document.getElementById('ap-preview-answer').textContent = res.data.answer || '';
-                var src = document.getElementById('ap-preview-sources');
-                src.innerHTML = '';
-                (res.data.sources || []).forEach(function (s) {
-                    var li = document.createElement('li');
-                    li.textContent = s.label || s.field || s.type;
-                    src.appendChild(li);
-                });
+        var cmsDiffList = document.getElementById('ap-cms-diff-list');
+        if (cmsDiffList) {
+            cmsDiffList.addEventListener('click', function (e) {
+                if (e.target.classList.contains('ap-cms-refresh')) {
+                    var refIndex = parseInt(e.target.getAttribute('data-ref-index'), 10);
+                    var field = e.target.getAttribute('data-field') || null;
+                    cmsRefresh(refIndex, field).catch(function (err) { toast(err.message, 'error'); });
+                }
             });
         }
 
         bindEl('ap-preview-ask', 'click', function () {
-            runPreview(document.getElementById('ap-preview-question').value);
+            var input = document.getElementById('ap-preview-question');
+            runPreview(input ? input.value : '');
         });
         document.querySelectorAll('.ap-preview-q').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -681,9 +1307,7 @@
     }
 
     global.initAiPresence = function (config) {
-        if (!isAiPresencePage()) {
-            return;
-        }
+        if (!isAiPresencePage()) return;
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
         initTabs();

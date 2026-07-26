@@ -13,35 +13,78 @@ $stickySaveBarSaveLabel = __('admin.save_draft');
 $stickySaveBarMessageId = 'ai-presence-message';
 $stickySaveBarMessageClass = 'message';
 $stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-publish-btn">' . htmlspecialchars(__('admin.publish_ai_presence')) . '</button>';
+$stickySaveBarExtraActionHtml = ''
+    . '<button type="button" class="btn btn-secondary" id="ai-presence-publish-btn">' . htmlspecialchars(__('admin.publish_ai_presence')) . '</button>'
+    . '<select id="ap-ai-connection" class="input ap-copilot-select" aria-label="AI connection"><option value="">' . htmlspecialchars(__('admin.ai_presence_ai_rules_only')) . '</option></select>'
+    . '<button type="button" class="btn btn-secondary" id="ap-copilot-btn">' . htmlspecialchars(__('admin.ai_presence_copilot')) . ' <span class="badge" id="ap-suggestion-count" hidden>0</span></button>'
+    . '<button type="button" class="btn btn-secondary" id="ap-studio-btn">' . htmlspecialchars(__('admin.ai_presence_studio')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
+
+<div id="ap-copilot-panel" class="ap-copilot-panel card" hidden>
+    <div class="ap-copilot-header">
+        <h3>{translate 'admin.ai_presence_copilot'}</h3>
+        <div class="ap-copilot-actions">
+            <button type="button" class="btn btn-sm btn-secondary" data-copilot-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-copilot-mode="improve">{translate 'admin.ai_presence_improve'}</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-copilot-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
+            <button type="button" class="btn btn-sm btn-primary" id="ap-accept-all-suggestions">{translate 'admin.ai_presence_accept_all'}</button>
+        </div>
+    </div>
+    <p class="text-muted">{translate 'admin.ai_presence_suggestions_help'}</p>
+    <ul id="ap-copilot-suggestions" class="ap-suggestion-list"></ul>
+</div>
+
+<div id="ap-studio-modal" class="ap-modal" hidden role="dialog" aria-modal="true" aria-labelledby="ap-studio-title">
+    <div class="ap-modal-backdrop" data-close-studio></div>
+    <div class="ap-modal-content card">
+        <h3 id="ap-studio-title">{translate 'admin.ai_presence_studio'}</h3>
+        <p class="text-muted">{translate 'admin.ai_presence_studio_help'}</p>
+        <div class="form-group">
+            <label>{translate 'admin.ai_presence_studio_sources'}</label>
+            <select id="ap-studio-collections" class="input" multiple size="6"></select>
+        </div>
+        <div class="ap-studio-actions">
+            <button type="button" class="btn btn-primary" id="ap-studio-generate">{translate 'admin.ai_presence_studio_generate'}</button>
+            <button type="button" class="btn btn-secondary" data-close-studio>{translate 'admin.cancel'}</button>
+        </div>
+        <div id="ap-studio-results" class="mt-m" hidden>
+            <h4>{translate 'admin.ai_presence_suggestions'}</h4>
+            <ul id="ap-studio-suggestions" class="ap-suggestion-list"></ul>
+            <button type="button" class="btn btn-primary mt-s" id="ap-studio-apply">{translate 'admin.ai_presence_studio_apply'}</button>
+        </div>
+    </div>
+</div>
 
 <div class="ai-presence-page">
     <div class="ai-presence-tabs tabs-v2-root">
         <div class="tabs" role="tablist">
             <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
             <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
+            <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
             <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
             <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
             <button type="button" class="tab" data-tab="publish">{translate 'admin.ai_presence_tab_publish'}</button>
         </div>
 
         <div class="tab-content active" data-tab-content="overview">
-            <div id="ai-presence-setup-wizard" class="ai-presence-setup" hidden></div>
+            <div id="ai-presence-setup-wizard" class="ai-presence-setup card" hidden></div>
             <div id="ai-presence-overview">
                 <div class="ai-presence-completeness card">
                     <h3>{translate 'admin.ai_presence_completeness'}</h3>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-bar" id="ai-presence-progress" style="width:0%"></div>
-                    </div>
+                    <div class="progress-bar-wrap"><div class="progress-bar" id="ai-presence-progress" style="width:0%"></div></div>
                     <p id="ai-presence-completeness-label" class="text-muted"></p>
                 </div>
                 <div class="ai-presence-status-grid" id="ai-presence-status-cards"></div>
                 <div class="card mt-m">
                     <h3>{translate 'admin.ai_presence_next_steps'}</h3>
                     <ul id="ai-presence-next-steps" class="ai-presence-steps"></ul>
+                </div>
+                <div class="card mt-m" id="ap-cms-sync-panel">
+                    <h3>{translate 'admin.ai_presence_cms_sync'}</h3>
+                    <p class="text-muted">{translate 'admin.ai_presence_cms_sync_help'}</p>
+                    <ul id="ap-cms-diff-list" class="ai-presence-item-list"></ul>
                 </div>
                 <div class="card mt-m">
                     <h3>{translate 'admin.ai_presence_public_urls'}</h3>
@@ -56,23 +99,40 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="ap-official-name">{translate 'admin.ai_presence_official_name'}</label>
-                        <input type="text" id="ap-official-name" class="input" data-field="identity.official_name">
+                        <div class="ap-field-row"><input type="text" id="ap-official-name" class="input" data-field="identity.official_name"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.official_name" title="AI">✨</button></div>
                     </div>
                     <div class="form-group">
                         <label for="ap-short-desc">{translate 'admin.ai_presence_short_description'}</label>
-                        <textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea>
+                        <div class="ap-field-row"><textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.short_description" title="AI">✨</button></div>
                     </div>
                     <div class="form-group">
                         <label for="ap-full-desc">{translate 'admin.ai_presence_full_description'}</label>
-                        <textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"></textarea>
+                        <div class="ap-field-row"><textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.full_description" title="AI">✨</button></div>
                     </div>
                     <div class="form-group">
                         <label for="ap-what-we-do">{translate 'admin.ai_presence_what_we_do'}</label>
                         <textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"></textarea>
                     </div>
                     <div class="form-group">
+                        <label for="ap-industry">{translate 'admin.ai_presence_industry'}</label>
+                        <textarea id="ap-industry" class="input" rows="2" placeholder="One per line" data-field="identity.industry" data-array="lines"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-categories">{translate 'admin.ai_presence_categories'}</label>
+                        <textarea id="ap-categories" class="input" rows="2" placeholder="One per line" data-field="identity.categories" data-array="lines"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-locations">{translate 'admin.ai_presence_locations'}</label>
+                        <textarea id="ap-locations" class="input" rows="2" placeholder="One per line" data-field="identity.locations" data-array="lines"></textarea>
+                    </div>
+                    <div class="form-group">
                         <label for="ap-website">{translate 'admin.ai_presence_website'}</label>
                         <input type="url" id="ap-website" class="input" data-field="identity.website">
+                    </div>
+                    <div class="form-group">
+                        <label>{translate 'admin.ai_presence_social_profiles'}</label>
+                        <div id="ap-social-list"></div>
+                        <button type="button" class="btn btn-sm btn-secondary mt-s" id="ap-add-social">{translate 'admin.add'}</button>
                     </div>
                 </div>
             </section>
@@ -87,6 +147,14 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"></textarea>
                 </div>
                 <div class="form-group">
+                    <label for="ap-best-suited">{translate 'admin.ai_presence_best_suited_for'}</label>
+                    <textarea id="ap-best-suited" class="input" rows="2" placeholder="One per line" data-field="positioning.best_suited_for" data-array="lines"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ap-not-ideal">{translate 'admin.ai_presence_not_ideal_for'}</label>
+                    <textarea id="ap-not-ideal" class="input" rows="2" placeholder="One per line" data-field="positioning.not_ideal_for" data-array="lines"></textarea>
+                </div>
+                <div class="form-group">
                     <label for="ap-competitive">{translate 'admin.ai_presence_competitive'}</label>
                     <textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"></textarea>
                 </div>
@@ -98,14 +166,33 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv">
                 </div>
                 <div class="form-group">
+                    <label for="ap-preferred-json">{translate 'admin.ai_presence_preferred_terms'}</label>
+                    <textarea id="ap-preferred-json" class="input" rows="3" placeholder='[{"term":"Birkly","meaning":"Brand name"}]' data-field="communication_guidance.preferred_terms" data-json="1"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ap-avoided-json">{translate 'admin.ai_presence_avoided_terms'}</label>
+                    <textarea id="ap-avoided-json" class="input" rows="3" placeholder='[{"term":"CMS","reason":"Use content platform"}]' data-field="communication_guidance.avoided_terms" data-json="1"></textarea>
+                </div>
+                <div class="form-group">
                     <label for="ap-custom-guidance">{translate 'admin.ai_presence_custom_guidance'}</label>
                     <textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"></textarea>
                 </div>
             </section>
             <section class="card mt-m">
+                <h3>{translate 'admin.ai_presence_relationships'}</h3>
+                <ul id="ap-relationships-list" class="ai-presence-item-list"></ul>
+                <button type="button" class="btn btn-sm btn-secondary mt-s" id="ap-add-relationship">{translate 'admin.ai_presence_add_relationship'}</button>
+            </section>
+            <section class="card mt-m">
                 <h3>{translate 'admin.ai_presence_connected_content'}</h3>
                 <p class="text-muted">{translate 'admin.ai_presence_connected_help'}</p>
                 <div class="form-row">
+                    <select id="ap-connect-role" class="input">
+                        <option value="brand_description">Brand description</option>
+                        <option value="about">About</option>
+                        <option value="products">Products source</option>
+                        <option value="reference">Reference</option>
+                    </select>
                     <select id="ap-connect-collection" class="input"><option value="">{translate 'admin.select_collection'}</option></select>
                     <select id="ap-connect-entry" class="input"><option value="">{translate 'admin.select_entry'}</option></select>
                     <button type="button" class="btn btn-secondary btn-sm" id="ap-add-connected">{translate 'admin.add'}</button>
@@ -114,16 +201,19 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
             </section>
         </div>
 
+        <div class="tab-content" data-tab-content="products">
+            <div class="main-actions-bar">
+                <button type="button" class="btn btn-primary btn-sm" id="ap-add-product">{translate 'admin.ai_presence_add_product'}</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="ap-import-products-ai">{translate 'admin.ai_presence_import_products_ai'}</button>
+            </div>
+            <div id="ap-products-list" class="ap-products-grid mt-m"></div>
+        </div>
+
         <div class="tab-content" data-tab-content="claims">
             <div class="main-actions-bar">
                 <button type="button" class="btn btn-primary btn-sm" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="ap-add-evidence">{translate 'admin.ai_presence_add_evidence'}</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="ap-suggest-btn">{translate 'admin.ai_presence_suggest'}</button>
-            </div>
-            <div id="ap-suggestions-panel" class="card mt-m" hidden>
-                <h3>{translate 'admin.ai_presence_suggestions'}</h3>
-                <p class="text-muted">{translate 'admin.ai_presence_suggestions_help'}</p>
-                <ul id="ap-suggestions-list"></ul>
+                <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-evidence">{translate 'admin.ai_presence_add_cms_evidence'}</button>
             </div>
             <div class="ai-presence-split mt-m">
                 <div class="card">
@@ -132,6 +222,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
                 <div class="card">
                     <h3>{translate 'admin.ai_presence_evidence'}</h3>
+                    <div id="ap-claim-detail" class="text-muted">{translate 'admin.ai_presence_select_claim'}</div>
                     <ul id="ap-evidence-list" class="ai-presence-item-list"></ul>
                 </div>
             </div>
@@ -141,6 +232,12 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
             <p class="text-muted">{translate 'admin.ai_presence_media_help'}</p>
             <div class="form-row">
                 <input type="text" id="ap-media-id" class="input" placeholder="{translate 'admin.media_id'}">
+                <select id="ap-media-represents" class="input">
+                    <option value="brand">Brand</option>
+                    <option value="product">Product</option>
+                    <option value="person">Person</option>
+                    <option value="campaign">Campaign</option>
+                </select>
                 <button type="button" class="btn btn-secondary btn-sm" id="ap-add-media-context">{translate 'admin.add'}</button>
             </div>
             <ul id="ap-media-list" class="ai-presence-item-list mt-m"></ul>
@@ -149,20 +246,20 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
         <div class="tab-content" data-tab-content="publish">
             <div class="card">
                 <h3>{translate 'admin.ai_presence_publish_settings'}</h3>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="ap-pub-enabled" data-field="publication_settings.enabled">
-                    {translate 'admin.ai_presence_enable_publishing'}
-                </label>
-                <label class="checkbox-label mt-s">
-                    <input type="checkbox" id="ap-pub-jsonld" data-field="publication_settings.include_json_ld">
-                    {translate 'admin.ai_presence_include_json_ld'}
-                </label>
+                <label class="checkbox-label"><input type="checkbox" id="ap-pub-enabled" data-field="publication_settings.enabled"> {translate 'admin.ai_presence_enable_publishing'}</label>
+                <label class="checkbox-label mt-s"><input type="checkbox" id="ap-pub-jsonld" data-field="publication_settings.include_json_ld"> {translate 'admin.ai_presence_include_json_ld'}</label>
+                <label class="checkbox-label mt-s"><input type="checkbox" id="ap-pub-views" data-field="publication_settings.public_views_enabled"> {translate 'admin.ai_presence_public_views'}</label>
+                <div class="form-group mt-s">
+                    <label for="ap-pub-path">{translate 'admin.ai_presence_public_path'}</label>
+                    <input type="text" id="ap-pub-path" class="input" data-field="publication_settings.public_path">
+                </div>
                 <p class="text-muted mt-s">{translate 'admin.ai_presence_publish_disclaimer'}</p>
             </div>
             <div class="card mt-m">
                 <h3>{translate 'admin.ai_presence_draft_vs_published'}</h3>
                 <p id="ap-publish-status"></p>
                 <div id="ap-staleness-warnings"></div>
+                <ul id="ap-version-list" class="ai-presence-item-list mt-s"></ul>
             </div>
             <div class="card mt-m">
                 <h3>{translate 'admin.ai_presence_context_preview'}</h3>
@@ -177,6 +274,13 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
                 <div id="ap-preview-answer" class="ai-presence-preview-result mt-m"></div>
                 <ul id="ap-preview-sources" class="ai-presence-sources"></ul>
+            </div>
+            <div class="card mt-m">
+                <h3>{translate 'admin.ai_presence_api_views'}</h3>
+                <dl class="ai-presence-urls">
+                    <dt>Summary</dt><dd><code id="ap-api-summary"></code></dd>
+                    <dt>Products</dt><dd><code id="ap-api-products"></code></dd>
+                </dl>
             </div>
         </div>
     </div>

@@ -61,6 +61,9 @@ function birkly_ai_tool_definitions(): array
         'write_project_file' => ['name' => 'write_project_file', 'description' => 'Create or overwrite a file in project/. PHP and dotfiles are blocked.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path', 'content']]],
         'create_project_file' => ['name' => 'create_project_file', 'description' => 'Create a new file in project/ (fails if path exists). PHP and dotfiles are blocked.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path']]],
         'delete_project_file' => ['name' => 'delete_project_file', 'description' => 'Delete a file from project/ (admin role by default). Directories are not deleted.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string']], 'required' => ['path']]],
+        'get_brand_context' => ['name' => 'get_brand_context', 'description' => 'Get published brand context for AI systems (view: summary|full|products)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
+        'list_brand_products' => ['name' => 'list_brand_products', 'description' => 'List published products and services from AI Presence', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'get_brand_claim' => ['name' => 'get_brand_claim', 'description' => 'Get a supported brand claim by id from published AI Presence', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
     ];
 }
 
@@ -187,6 +190,36 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
             return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Unknown or missing docs topic. Use: templating, admin, plugins, ai, mcp, or an active plugin slug (e.g. commerce)']]];
         }
         return ['content' => [['type' => 'text', 'text' => "# {$topic['title']}\n\n{$topic['text']}"]]];
+    }
+
+    if (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim'], true)) {
+        require_once __DIR__ . '/ai_presence_pro.php';
+        if ($actionType === 'get_brand_context') {
+            $view = (string) ($arguments['view'] ?? 'summary');
+            $data = birkly_ai_presence_public_brand_for_tools($view);
+            if ($data === null) {
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Brand context not published']]];
+            }
+            return ['content' => [['type' => 'text', 'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
+        }
+        if ($actionType === 'list_brand_products') {
+            $data = birkly_ai_presence_public_brand_for_tools('products');
+            if ($data === null) {
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Brand context not published']]];
+            }
+            return ['content' => [['type' => 'text', 'text' => json_encode($data['products_services'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
+        }
+        $id = (string) ($arguments['id'] ?? '');
+        $full = birkly_ai_presence_public_brand_for_tools('full');
+        if ($full === null || $id === '') {
+            return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Claim not found']]];
+        }
+        foreach ($full['claims'] ?? [] as $claim) {
+            if (is_array($claim) && ($claim['id'] ?? '') === $id && ($claim['status'] ?? '') === 'supported') {
+                return ['content' => [['type' => 'text', 'text' => json_encode($claim, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
+            }
+        }
+        return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Claim not found']]];
     }
 
     if (birkly_ai_is_read_action($actionType)) {

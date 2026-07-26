@@ -1,6 +1,6 @@
 <?php
 /**
- * Public read-only AI Presence API (P46).
+ * Public read-only AI Presence API (P46 + P47 views).
  */
 
 declare(strict_types=1);
@@ -17,14 +17,10 @@ set_security_headers('api');
 require_once __DIR__ . '/../../core/cors.php';
 set_cors_headers('public');
 require_once __DIR__ . '/../../core/ai_presence.php';
+require_once __DIR__ . '/../../core/ai_presence_pro.php';
 
 $action = $_GET['action'] ?? 'brand';
-
-if ($action !== 'brand') {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
-    exit;
-}
+$view = trim((string) ($_GET['view'] ?? 'full'));
 
 $published = birkly_ai_presence_load_published();
 if ($published === null || empty($published['publication_settings']['enabled'])) {
@@ -41,4 +37,55 @@ $export = birkly_ai_presence_build_public_export($published, $version, $at);
 header('Cache-Control: public, max-age=300');
 header('X-AI-Presence-Version: ' . $version);
 
-echo json_encode(['status' => 'ok', 'data' => $export], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+if ($action === 'brand') {
+    $body = birkly_ai_presence_public_view($export, $view);
+    echo json_encode(['status' => 'ok', 'data' => $body], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($action === 'product') {
+    $id = trim((string) ($_GET['id'] ?? ''));
+    $found = null;
+    foreach ($export['products_services'] ?? [] as $product) {
+        if (!is_array($product)) {
+            continue;
+        }
+        if (($product['id'] ?? '') === $id || ($product['name'] ?? '') === $id) {
+            if (!isset($product['public']) || $product['public']) {
+                $found = $product;
+            }
+            break;
+        }
+    }
+    if ($found === null) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Product not found']);
+        exit;
+    }
+    echo json_encode(['status' => 'ok', 'data' => $found], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($action === 'claim') {
+    $id = trim((string) ($_GET['id'] ?? ''));
+    $found = null;
+    foreach ($export['claims'] ?? [] as $claim) {
+        if (!is_array($claim) || ($claim['id'] ?? '') !== $id) {
+            continue;
+        }
+        if (($claim['status'] ?? '') === 'supported') {
+            $found = $claim;
+        }
+        break;
+    }
+    if ($found === null) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Claim not found']);
+        exit;
+    }
+    echo json_encode(['status' => 'ok', 'data' => $found], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+http_response_code(400);
+echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
