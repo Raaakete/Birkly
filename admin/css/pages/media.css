@@ -170,7 +170,8 @@
   flex-shrink: 0;
 }
 
-.sidebar-header {
+/* Media library panel only — must NOT target #admin-sidebar .sidebar-header */
+.media-sidebar .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -179,13 +180,13 @@
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
 }
 
-.sidebar-header h3 {
+.media-sidebar .sidebar-header h3 {
   margin: 0;
   font-size: 1rem;
-  color: var(--text-primary, #20221D);
+  color: #ffffff;
 }
 
-.sidebar-content {
+.media-sidebar .sidebar-content {
   flex: 1;
   overflow-y: auto;
 }
