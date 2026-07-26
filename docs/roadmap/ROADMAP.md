@@ -20,7 +20,8 @@ This file tracks **current state** and the **active execution phase**. Full hist
 | **Production** | `cms.birkly.cloud` + `birkly.cloud` on one Dokploy app |
 | **P43 Hosting** | Settings-driven CMS vs public URLs — complete |
 | **P44 Admin UX** | Full design remediation M1–M12 — complete |
-| **Templating / stacks** | Phase 45 approved — execute M1→M12 |
+| **P45 Templating** | Complete — birkly-region, stack docs |
+| **AI Presence** | Phase 46 approved — execute M1→M14 |
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
@@ -81,26 +82,57 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **PRs:** Birkly #307 · Birkly-Docs #39 · Birkly-Website #13
 
-**Paused / not in scope:** Admin eval replacement · Studio P26 · P42 marketing template pack
-
 ---
 
 ## Next active phase
 
-_No active phase queued — select next after P45 merge._
+### Phase 46 — AI Presence (brand context for AI systems)
+
+**Status:** **Approved** (2026-07-26) — **M0 complete**, **M1→M14 execution ready**
+
+**Goal:** Thin layer on CMS — brand identity, claims, evidence, media context, communication guidance; publish `/.well-known/brand-context.json` + public API on the brand's public domain. Not a chatbot. Not duplicate Content/Media.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P46-M0** | Plan, gap register, matrix, handoff | **this PR** |
+| **P46-M1** | Schema + storage + `core/ai_presence.php` | pending |
+| **P46-M2** | Nav + page shell + tabs | pending |
+| **P46-M3** | Overview + completeness + next steps | pending |
+| **P46-M4** | Skippable first-time setup | pending |
+| **P46-M5** | Context tab (identity, positioning, guidance) | pending |
+| **P46-M6** | Connected content pickers | pending |
+| **P46-M7** | Claims & Evidence | pending |
+| **P46-M8** | Media context tab | pending |
+| **P46-M9** | Draft/publish + versions | pending |
+| **P46-M10** | Well-known JSON + public API + JSON-LD | pending |
+| **P46-M11** | Staleness + Publish tab | pending |
+| **P46-M12** | Context Preview (sources visible) | pending |
+| **P46-M13** | AI suggestions (approve-to-save) | pending |
+| **P46-M14** | Birkly-Docs, i18n, tests, closure | pending |
+
+**Spec:** `docs/reviews/P46-ai-presence-plan.md`  
+**Handoff:** `docs/reviews/P46-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P46-verification-matrix.md`  
+**Gaps:** `docs/reviews/P46-gap-register.md`
+
+**Human decisions (locked):** P46-D1–D14 · notify once at M14
+
+**Depends on:** P43 public site URLs · P44 admin UX patterns
+
+**Paused / not in scope:** Admin eval replacement · Studio P26 · P42 marketing template pack
 
 ---
 
 ## Task handoff format
 
 ```markdown
-### Task: P45-M[N]-T[N] [title]
+### Task: P46-M[N]-T[N] [title]
 - **Owner**: cms-developer | frontend-developer | docs-writer | qa-verifier | lead-engineer
-- **Repo(s)**: Birkly | Birkly-Docs | Birkly-Website
+- **Repo(s)**: Birkly | Birkly-Docs
 - **Files**: path/to/files
-- **Depends on**: P45-M[N]-T[N] | none
+- **Depends on**: P46-M[N]-T[N] | none
 - **Acceptance criteria**:
   - ...
 ```
 
-Branch template: `cursor/p45-m[N]-<slug>-030a`
+Branch template: `cursor/p46-m[N]-<slug>-030a`
