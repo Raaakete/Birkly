@@ -50,40 +50,44 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 ---
 
-## Next active phase
+## Recently completed
 
 ### Phase 45 — Templating, web components, and multi-stack integration
 
-**Status:** **Approved** (2026-07-26) — **M0 complete**, **M1→M12 execution ready**
+**Status:** **Complete** (2026-07-26) — V-TPL matrix green
 
 **Goal:** One-line `<birkly-region>` for CMS blocks (no per-page template repetition); scoped `processTemplates`; truthful AI/MCP docs; Birkly-Docs guides for HTML, web components, SPAs, and SSR.
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P45-M0** | Plan, gap register, matrix, handoff | **this PR** |
-| **P45-M1** | AI + MCP syntax truth (remove phantom directives) | pending |
-| **P45-M2** | Scoped `processTemplates({ root })` | pending |
-| **P45-M3** | `<birkly-region>` component (entry + list) | pending |
-| **P45-M4** | Connect lifecycle + `data-birkly-region` | pending |
-| **P45-M5** | Enhance-only component helpers | pending |
-| **P45-M6** | Template language spec v1.0 | pending |
-| **P45-M7** | Project template validator | pending |
-| **P45-M8** | Birkly-Docs: stack hub + web components | pending |
-| **P45-M9** | Birkly-Docs: SPA (React/Vue) guide | pending |
-| **P45-M10** | Birkly-Docs: SSR / build-time guide | pending |
-| **P45-M11** | Tests + V-TPL matrix | pending |
-| **P45-M12** | Birkly-Website reference + closure | pending |
+| **P45-M0** | Plan, gap register, matrix, handoff | **done** |
+| **P45-M1** | AI + MCP syntax truth (remove phantom directives) | **done** |
+| **P45-M2** | Scoped `processTemplates({ root })` | **done** |
+| **P45-M3** | `<birkly-region>` component (entry + list) | **done** |
+| **P45-M4** | Connect lifecycle + `data-birkly-region` | **done** |
+| **P45-M5** | Enhance-only component helpers | **done** |
+| **P45-M6** | Template language spec v1.0 | **done** |
+| **P45-M7** | Project template validator | **done** |
+| **P45-M8** | Birkly-Docs: stack hub + web components | **done** |
+| **P45-M9** | Birkly-Docs: SPA (React/Vue) guide | **done** |
+| **P45-M10** | Birkly-Docs: SSR / build-time guide | **done** |
+| **P45-M11** | Tests + V-TPL matrix | **done** |
+| **P45-M12** | Birkly-Website reference + closure | **done** |
 
 **Spec:** `docs/reviews/P45-templating-and-stacks-plan.md`  
 **Handoff:** `docs/reviews/P45-lead-engineer-handoff.md`  
-**Matrix:** `docs/reviews/P45-verification-matrix.md`  
+**Matrix:** `docs/reviews/P45-verification-matrix.md` (all **pass**)  
 **Gaps:** `docs/reviews/P45-gap-register.md`
 
-**Human decisions (proposed):** P45-D1–D12 · notify once at M12
-
-**Depends on:** P44 complete
+**PRs:** Birkly #307 · Birkly-Docs #39 · Birkly-Website #13
 
 **Paused / not in scope:** Admin eval replacement · Studio P26 · P42 marketing template pack
+
+---
+
+## Next active phase
+
+_No active phase queued — select next after P45 merge._
 
 ---
 
