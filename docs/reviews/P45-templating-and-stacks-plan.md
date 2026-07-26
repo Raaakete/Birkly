@@ -126,7 +126,7 @@ Sync HTML exports after markdown changes (existing docs pipeline).
 | **P45-M3** | `<birkly-region>` element — entry + list modes | cms-developer | pending |
 | **P45-M4** | Connect lifecycle + `data-birkly-region` | cms-developer | pending |
 | **P45-M5** | `birkly-components.js` enhance-only helpers (nav active state) | frontend-developer | pending |
-| **P45-M6** | Template language spec v1.0 | docs-writer | pending |
+| **P45-M6** | Template language spec v1.0 | docs-writer | **done** |
 | **P45-M7** | Template validator (CLI or Project tab) | cms-developer | pending |
 | **P45-M8** | Birkly-Docs: HTML + web components guides | docs-writer | pending |
 | **P45-M9** | Birkly-Docs: SPA guides + optional `birkly-client` helpers doc | docs-writer | pending |

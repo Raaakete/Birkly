@@ -82,5 +82,5 @@
 
 | ID | Scenario | Expected | Milestone | Status |
 |----|----------|----------|-----------|--------|
-| V-TPL-25 | Spec version | `TEMPLATE_LANGUAGE_SPEC.md` = v1.0 | M6 | pending |
+| V-TPL-25 | Spec version | `TEMPLATE_LANGUAGE_SPEC.md` = v1.0 | M6 | **pass** |
 | V-TPL-26 | Human notify | Single closure message with matrix summary | M12 | pending |
