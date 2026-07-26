@@ -183,15 +183,3 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 </div>
 
 {include_script 'ai-presence.js'}
-
-<script>
-window.aiPresenceData = {
-    csrfToken: '{csrf_token}',
-    canEdit: true
-};
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.initAiPresence) {
-        window.initAiPresence(window.aiPresenceData);
-    }
-});
-</script>
