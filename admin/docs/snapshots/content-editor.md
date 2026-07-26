@@ -70,7 +70,7 @@ Grids use `div.content-editor-grid` with inline CSS Grid properties. Responsive 
 
 **Stripped on save:** Editor-only attributes and chrome (`data-ce-*`, resize handles, inspector wrappers) are removed by `ContentEditorSync` and PHP `processValue` before persistence.
 
-**Templates:** Output editor HTML unescaped in templates, e.g. `{'content'}` or `{entry 'blog'.'slug'} … {'body'} {endentry}`. Ensure site CSS does not override layout inline styles unintentionally. Optional field option `css_url` loads project CSS in the admin preview only — it is not embedded in saved HTML.
+**Templates:** Output editor HTML unescaped in templates, e.g. `{'content'}` or `{from 'blog' get entry 'slug'} … {'body'} {endget}`. Ensure site CSS does not override layout inline styles unintentionally. Optional field option `css_url` loads project CSS in the admin preview only — it is not embedded in saved HTML.
 
 **Layout studio modules** (platform): `fieldtypes/ContentEditor/layout/` — shared inspector, resize controller, table-layout, grid-layout. Tests: `layout_roundtrip_test.php`, `table_layout_test.php`, `grid_layout_test.php`, `caret_insert_test.php`.
 

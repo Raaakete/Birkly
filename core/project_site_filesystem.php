@@ -300,16 +300,21 @@ function birkly_project_site_info(): array
     'templating' => [
       'script' => '<script src="/birkly-client.js"></script>',
       'loop' => "{for each entry in 'blog'}\n  <h2>{title}</h2>\n  <div>{'content'}</div>\n{endfor}",
-      'single_entry' => "{entry 'blog'.'my-post-slug'}\n  <h1>{title}</h1>\n{endentry}",
+      'single_entry' => "{from 'blog' get entry 'my-post-slug'}\n  <h1>{title}</h1>\n{endget}",
       'conditional' => "{if entry 'blog'.'featured' exists}\n  ...\n{endif}",
       'from_block' => "{from 'site_elements' get entry 'navigation'}\n  ...\n{endget}",
+      'region' => '<birkly-region collection="site_elements" entry="header"></birkly-region>',
       'rules' => [
         'Collection slugs use single quotes (hyphens allowed: nav-links)',
         'System fields are bare: {title}, {slug}',
         'Custom fields use quoted names: {\'content\'}',
+        'Single entry uses {from \'collection\' get entry \'slug\'}…{endget} — not {entry}{endentry}',
+        'Shared blocks: <birkly-region collection="…" entry="…"> (one line per page)',
+        'Filters: {created_at format "Y-m-d"} only — truncate/strip_tags are not implemented',
         'Static assets live under /project/ (css/, js/, images/)',
         'Public site only shows published entries — set status to published for nav/menu items',
         'Template tags work in any outermost <body> element with Birkly syntax',
+        'Optional: data-birkly-region marks an explicit region root for the client',
       ],
     ],
   ];
