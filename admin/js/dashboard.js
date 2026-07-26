@@ -265,7 +265,10 @@
                     return Promise.all(collections.slice(0, 6).map(function (collection) {
                         const slug = collection.slug || '';
                         const collectionName = collection.name || collection.title || slug;
-                        return fetch(apiUrl('/api/admin_entries.php?action=list&collection=' + encodeURIComponent(slug)), { credentials: 'same-origin' })
+                        return fetch(
+                            apiUrl('/api/admin_entries.php?action=list&collection=' + encodeURIComponent(slug) + '&per_page=8&sort=updated_at&order=desc'),
+                            { credentials: 'same-origin' }
+                        )
                             .then(response => response.json())
                             .then(function (entryPayload) {
                                 const entries = entryPayload.entries || entryPayload?.data?.entries || entryPayload?.data || [];

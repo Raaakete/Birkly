@@ -28,14 +28,20 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const collectionSlug = window.collectionSlug || urlParams.get('collection') || '';
-    const isTrashView = Boolean(window.entriesTrashView);
+    const tableFields = Array.isArray(window.entriesTableFields) ? window.entriesTableFields : [];
+    const hasSubCollections = Boolean(window.entriesHasSubCollections);
+    const hasDragColumn = Boolean(window.entriesHasDragColumn);
+    const initialListState = window.entriesListState || {};
 
     if (!collectionSlug) {
         return;
     }
 
-    const selectAllCheckbox = document.getElementById('select-all-entries');
-    const entryCheckboxes = Array.from(document.querySelectorAll('.entry-checkbox'));
+    let entriesTable = document.querySelector('.entries-smart-table');
+    let tableBody = entriesTable ? entriesTable.querySelector('.table-body') : null;
+    let paginationContainer = document.getElementById('entries-pagination');
+    let selectAllCheckbox = document.getElementById('select-all-entries');
+    let entryCheckboxes = Array.from(document.querySelectorAll('.entry-checkbox'));
     const bulkActionsToolbar = document.getElementById('bulk-actions-toolbar');
     const bulkSelectedCount = document.getElementById('bulk-selected-count');
     const bulkPublishBtn = document.getElementById('bulk-publish-btn');
@@ -55,6 +61,171 @@
     const filterDrawer = document.getElementById('entries-filter-drawer');
 
     const selectedEntries = new Set();
+    let entrySorter = null;
+    let listRequestId = 0;
+    let listRequestController = null;
+    let searchDebounceId = 0;
+    let listState = normalizeListState(initialListState);
+
+    function normalizePositiveInteger(value, fallback) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+    }
+
+    function normalizeListState(rawState) {
+        rawState = rawState || {};
+        const page = normalizePositiveInteger(rawState.page ?? urlParams.get('page'), 1);
+        const perPage = normalizePositiveInteger(rawState.per_page ?? initialListState.per_page, 20);
+        const total = Math.max(0, normalizePositiveInteger(rawState.total, 0));
+        const totalPages = Math.max(1, normalizePositiveInteger(rawState.total_pages, 1));
+        const sort = String(rawState.sort ?? urlParams.get('sort') ?? initialListState.sort ?? '').trim();
+        const order = String(rawState.order ?? urlParams.get('order') ?? initialListState.order ?? 'asc').trim().toLowerCase() === 'desc' ? 'desc' : 'asc';
+        const q = String(rawState.q ?? urlParams.get('q') ?? initialListState.q ?? '').trim();
+        const status = String(rawState.status ?? urlParams.get('status') ?? window.entriesStatusFilter ?? '').trim();
+
+        return {
+            page: Math.min(page, totalPages),
+            per_page: perPage,
+            total: total,
+            total_pages: totalPages,
+            q: q,
+            sort: sort,
+            order: order,
+            status: status,
+        };
+    }
+
+    function refreshTableElements() {
+        entriesTable = document.querySelector('.entries-smart-table');
+        tableBody = entriesTable ? entriesTable.querySelector('.table-body') : null;
+        paginationContainer = document.getElementById('entries-pagination');
+        selectAllCheckbox = document.getElementById('select-all-entries');
+        entryCheckboxes = Array.from(document.querySelectorAll('.entry-checkbox'));
+    }
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function icon(name, opts) {
+        if (window.Birkly && typeof window.Birkly.icon === 'function') {
+            return window.Birkly.icon(name, opts || {});
+        }
+        return '';
+    }
+
+    function normalizeStatus(status) {
+        return status === 'draft' ? 'unpublished' : (status || 'unpublished');
+    }
+
+    function statusLabel(status) {
+        const normalized = normalizeStatus(status);
+        const translated = t(normalized, normalized.replace(/_/g, ' ').replace(/\b\w/g, function (char) {
+            return char.toUpperCase();
+        }));
+        return translated || normalized;
+    }
+
+    function isTrashView() {
+        return String(listState.status || '') === 'trashed';
+    }
+
+    function canDragCurrentView() {
+        return hasDragColumn && !isTrashView() && !listState.q && !listState.status && Number(listState.page || 1) === 1;
+    }
+
+    function buildTitleUrl(entry) {
+        const entryId = entry && entry.id ? String(entry.id) : '';
+        const subEntryCount = Number(entry && entry.__sub_entry_count ? entry.__sub_entry_count : 0);
+        if (subEntryCount > 0 || hasSubCollections) {
+            return adminUrl('entry-detail', { collection: collectionSlug, entry: entryId });
+        }
+        return adminUrl('entry-editor', { collection: collectionSlug, entry: entryId });
+    }
+
+    function buildEditUrl(entry) {
+        const entryId = entry && entry.id ? String(entry.id) : '';
+        const subEntryCount = Number(entry && entry.__sub_entry_count ? entry.__sub_entry_count : 0);
+        if (subEntryCount > 0) {
+            return adminUrl('entry-detail', { collection: collectionSlug, entry: entryId });
+        }
+        return adminUrl('entry-editor', { collection: collectionSlug, entry: entryId });
+    }
+
+    function buildEntriesPageUrl(nextState) {
+        const params = { collection: collectionSlug };
+        if (nextState.status) {
+            params.status = nextState.status;
+        }
+        if (nextState.q) {
+            params.q = nextState.q;
+        }
+        if (nextState.sort) {
+            params.sort = nextState.sort;
+            if (nextState.order) {
+                params.order = nextState.order;
+            }
+        }
+        if (normalizePositiveInteger(nextState.page, 1) > 1) {
+            params.page = String(normalizePositiveInteger(nextState.page, 1));
+        }
+        return adminUrl('entries', params);
+    }
+
+    function buildEntriesApiUrl(nextState) {
+        const params = new URLSearchParams({
+            action: 'list',
+            collection: collectionSlug,
+            page: String(normalizePositiveInteger(nextState.page, 1)),
+            per_page: String(normalizePositiveInteger(nextState.per_page, 20)),
+        });
+        if (nextState.q) {
+            params.set('q', nextState.q);
+        }
+        if (nextState.status) {
+            params.set('status', nextState.status);
+        }
+        if (nextState.sort) {
+            params.set('sort', nextState.sort);
+            if (nextState.order) {
+                params.set('order', nextState.order);
+            }
+        }
+        return apiUrl('/api/admin_entries.php?' + params.toString());
+    }
+
+    function updateBrowserUrl(nextState, replaceHistory) {
+        const nextUrl = buildEntriesPageUrl(nextState);
+        if (replaceHistory) {
+            window.history.replaceState({}, '', nextUrl);
+        } else {
+            window.history.pushState({}, '', nextUrl);
+        }
+    }
+
+    function getColumnCount() {
+        const headRow = document.querySelector('.entries-smart-table .head-row');
+        return headRow ? headRow.children.length : Math.max(1, tableFields.length + 3);
+    }
+
+    function readStateFromLocation() {
+        const currentParams = new URLSearchParams(window.location.search);
+        return normalizeListState({
+            page: currentParams.get('page') || 1,
+            per_page: currentParams.get('per_page') || listState.per_page,
+            q: currentParams.get('q') || '',
+            sort: currentParams.get('sort') || listState.sort,
+            order: currentParams.get('order') || listState.order,
+            status: currentParams.get('status') || '',
+            total: listState.total,
+            total_pages: listState.total_pages,
+        });
+    }
 
     function updateBulkUI() {
         const count = selectedEntries.size;
@@ -148,6 +319,14 @@
             selectAllCheckbox.indeterminate = false;
         }
         updateBulkUI();
+    }
+
+    function setListLoading(isLoading) {
+        refreshTableElements();
+        entriesTable?.classList.toggle('is-loading', isLoading);
+        if (paginationContainer) {
+            paginationContainer.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+        }
     }
 
     async function runBulkAction(action, confirmation, progressLabel, successLabel) {
@@ -266,29 +445,12 @@
     }
 
     function setStatusFilter(value) {
-        const nextUrl = new URL(window.location.href);
-        if (value) {
-            nextUrl.searchParams.set('status', value);
-        } else {
-            nextUrl.searchParams.delete('status');
-        }
-        window.location.href = nextUrl.toString();
-    }
-
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', handleSelectAll);
-    }
-
-    entryCheckboxes.forEach(function (checkbox) {
-        checkbox.addEventListener('change', function () {
-            if (checkbox.checked) {
-                selectedEntries.add(checkbox.value);
-            } else {
-                selectedEntries.delete(checkbox.value);
-            }
-            updateBulkUI();
+        const nextState = Object.assign({}, listState, {
+            status: value || '',
+            page: 1,
         });
-    });
+        window.location.href = buildEntriesPageUrl(nextState);
+    }
 
     bulkPublishBtn?.addEventListener('click', async function () {
         runBulkAction(
@@ -363,24 +525,246 @@
         setStatusFilter(statusFilterDesktop.value);
     });
 
-    function filterEntriesTable(query) {
-        const normalized = String(query || '').trim().toLowerCase();
-        const rows = document.querySelectorAll('.entries-smart-table .table-row');
+    function renderFieldCell(entry, field) {
+        const fieldName = field && field.name ? String(field.name) : '';
+        if (!fieldName) {
+            return '<span class="ft-list-empty" aria-label="' + escapeHtml(t('no_value', 'No value')) + '">–</span>';
+        }
+        if (entry.__cells && entry.__cells[fieldName + '_html']) {
+            return entry.__cells[fieldName + '_html'];
+        }
+        if (entry.__cells && entry.__cells[fieldName]) {
+            return escapeHtml(entry.__cells[fieldName]);
+        }
+        if (entry[fieldName] != null) {
+            return escapeHtml(entry[fieldName]);
+        }
+        return '<span class="ft-list-empty" aria-label="' + escapeHtml(t('no_value', 'No value')) + '">–</span>';
+    }
 
-        rows.forEach(function (row) {
-            if (!normalized) {
-                row.style.display = '';
+    function renderEntryRow(entry) {
+        const entryId = entry && entry.id ? String(entry.id) : '';
+        const title = entry && entry.__cells && entry.__cells.__title ? entry.__cells.__title : (entry.title || entry.slug || entryId || 'Untitled');
+        const normalizedStatus = normalizeStatus(entry && entry.__cells ? entry.__cells.__status : entry.status);
+        const statusClassMap = {
+            pending_review: ' pending review-status',
+            approved: ' approved review-status',
+            rejected: ' rejected review-status',
+            published: '',
+            unpublished: '',
+            scheduled: '',
+            trashed: '',
+        };
+        const statusClass = normalizedStatus + (statusClassMap[normalizedStatus] || '');
+        const statusText = statusLabel(normalizedStatus);
+        const reviewer = entry && entry.reviewer ? String(entry.reviewer) : '';
+        const reviewedBy = entry && entry.reviewed_by ? String(entry.reviewed_by) : '';
+        const reviewTitle = reviewer
+            ? ' title="Assigned to: ' + escapeHtml(reviewer) + '"'
+            : (reviewedBy ? ' title="Reviewed by: ' + escapeHtml(reviewedBy) + '"' : '');
+        const titleUrl = buildTitleUrl(entry);
+        const editUrl = buildEditUrl(entry);
+        const subEntryCount = Number(entry && entry.__sub_entry_count ? entry.__sub_entry_count : 0);
+        const isTrashedEntry = normalizedStatus === 'trashed';
+        const allowDragHandle = hasDragColumn
+            ? '<td class="cell cell-drag"' + (canDragCurrentView() ? ' draggable="true"' : '') + ' aria-label="' + escapeHtml(t('drag_to_reorder', 'Drag to reorder')) + '">' +
+                (canDragCurrentView() ? icon('dots-six-vertical', { size: 16 }) : '') +
+            '</td>'
+            : '';
+
+        const fieldCells = tableFields.map(function (field) {
+            const width = escapeHtml(field.width || '240px');
+            const minWidth = escapeHtml(field.min_width || field.width || '240px');
+            return '<td class="cell cell-field" style="--col-field: ' + width + '; --col-field-min: ' + minWidth + '">' +
+                renderFieldCell(entry, field) +
+            '</td>';
+        }).join('');
+
+        return '' +
+            '<tr class="table-row" data-entry-id="' + escapeHtml(entryId) + '">' +
+                '<td class="cell cell-checkbox" aria-label="' + escapeHtml(t('select_entry', 'Select entry')) + '">' +
+                    '<input type="checkbox" class="entry-checkbox" value="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('select_entry', 'Select entry') + ' ' + title) + '">' +
+                '</td>' +
+                allowDragHandle +
+                (hasSubCollections
+                    ? '<td class="cell cell-sub-entries">' +
+                        (subEntryCount > 0
+                            ? '<a href="' + escapeHtml(titleUrl) + '" class="sub-entry-count-badge" title="' + escapeHtml(String(subEntryCount) + ' sub-entries') + '" style="display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 24px; padding: 0 8px; background: var(--primary-100, #e0e7ff); color: var(--primary-700, #4338ca); border-radius: 12px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.2s;"><span style="margin-right: 2px;">+</span>' + escapeHtml(subEntryCount) + '</a>'
+                            : '<span style="color: var(--text-tertiary, #9ca3af); font-size: 12px;">–</span>') +
+                    '</td>'
+                    : '') +
+                '<td class="cell cell-title">' +
+                    '<a href="' + escapeHtml(titleUrl) + '" class="title-text">' + escapeHtml(title) + '</a>' +
+                '</td>' +
+                '<td class="cell cell-status">' +
+                    '<span class="status-badge ' + escapeHtml(statusClass.trim()) + '" data-status="' + escapeHtml(normalizedStatus) + '" aria-label="' + escapeHtml(t('status', 'Status') + ': ' + statusText) + '"' + reviewTitle + '>' + escapeHtml(statusText) + '</span>' +
+                    (normalizedStatus === 'pending_review' && reviewer
+                        ? '<div class="reviewer-indicator" title="Assigned to: ' + escapeHtml(reviewer) + '">' + icon('user', { size: 12 }) + '</div>'
+                        : '') +
+                '</td>' +
+                fieldCells +
+                '<td class="cell cell-actions">' +
+                    '<div class="cell-actions-inner">' +
+                        '<a class="btn-icon btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit_entry', 'Edit entry')) + '">' +
+                            icon('pencil-simple', { size: 16 }) +
+                        '</a>' +
+                        (!isTrashedEntry
+                            ? '<button type="button" class="btn-icon duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Duplicate ' + title) + '" title="Duplicate">' + icon('copy', { size: 16 }) + '</button>'
+                            : '') +
+                        (isTrashedEntry
+                            ? '<button type="button" class="btn-icon restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Restore ' + title) + '" title="Restore">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
+                            : '<button type="button" class="btn-icon btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Move to trash ' + title) + '" title="Move to trash">' + icon('trash', { size: 16 }) + '</button>') +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function renderEntriesTable(entries) {
+        refreshTableElements();
+        if (!tableBody) {
+            return;
+        }
+        if (!Array.isArray(entries) || entries.length === 0) {
+            tableBody.innerHTML = '<tr class="table-row table-row--empty"><td class="cell cell-empty" colspan="' + getColumnCount() + '">No entries found.</td></tr>';
+            return;
+        }
+        tableBody.innerHTML = entries.map(renderEntryRow).join('');
+    }
+
+    function buildPaginationMarkup(meta, visibleCount) {
+        const total = Math.max(0, Number(meta.total || 0));
+        const page = Math.max(1, Number(meta.page || 1));
+        const perPage = Math.max(1, Number(meta.per_page || listState.per_page || 20));
+        const totalPages = Math.max(1, Number(meta.total_pages || 1));
+        const rangeStart = total > 0 ? ((page - 1) * perPage) + 1 : 0;
+        const rangeEnd = total > 0 ? Math.min(rangeStart + Math.max(visibleCount, 0) - 1, total) : 0;
+        const windowStart = Math.max(1, Math.min(page - 2, Math.max(1, totalPages - 4)));
+        const windowEnd = Math.min(totalPages, windowStart + 4);
+
+        let controls = '';
+        if (totalPages > 1) {
+            if (page > 1) {
+                const prevState = Object.assign({}, listState, meta, { page: page - 1 });
+                controls += '<a class="entries-pagination__link entries-pagination__link--nav" href="' + escapeHtml(buildEntriesPageUrl(prevState)) + '" data-entries-page="' + escapeHtml(page - 1) + '">Previous</a>';
+            } else {
+                controls += '<span class="entries-pagination__link entries-pagination__link--nav is-disabled" aria-disabled="true">Previous</span>';
+            }
+
+            controls += '<div class="entries-pagination__pages">';
+            for (let pageNumber = windowStart; pageNumber <= windowEnd; pageNumber += 1) {
+                if (pageNumber === page) {
+                    controls += '<span class="entries-pagination__link is-active" aria-current="page">' + escapeHtml(pageNumber) + '</span>';
+                } else {
+                    const pageState = Object.assign({}, listState, meta, { page: pageNumber });
+                    controls += '<a class="entries-pagination__link" href="' + escapeHtml(buildEntriesPageUrl(pageState)) + '" data-entries-page="' + escapeHtml(pageNumber) + '">' + escapeHtml(pageNumber) + '</a>';
+                }
+            }
+            controls += '</div>';
+
+            if (page < totalPages) {
+                const nextState = Object.assign({}, listState, meta, { page: page + 1 });
+                controls += '<a class="entries-pagination__link entries-pagination__link--nav" href="' + escapeHtml(buildEntriesPageUrl(nextState)) + '" data-entries-page="' + escapeHtml(page + 1) + '">Next</a>';
+            } else {
+                controls += '<span class="entries-pagination__link entries-pagination__link--nav is-disabled" aria-disabled="true">Next</span>';
+            }
+        }
+
+        return '' +
+            '<div class="entries-pagination__summary">' +
+                (total > 0 ? ('Showing ' + rangeStart + '-' + rangeEnd + ' of ' + total + ' entries') : 'No entries found') +
+            '</div>' +
+            '<div class="entries-pagination__controls">' + controls + '</div>';
+    }
+
+    function renderPagination(meta, visibleCount) {
+        refreshTableElements();
+        if (!paginationContainer) {
+            return;
+        }
+        paginationContainer.innerHTML = buildPaginationMarkup(meta, visibleCount);
+    }
+
+    async function fetchEntriesPage(nextState, options) {
+        options = options || {};
+        const normalizedState = normalizeListState(nextState);
+
+        if (normalizedState.status !== listState.status && normalizedState.status !== (window.entriesStatusFilter || '')) {
+            window.location.href = buildEntriesPageUrl(normalizedState);
+            return;
+        }
+
+        listRequestId += 1;
+        const requestId = listRequestId;
+        if (listRequestController && typeof listRequestController.abort === 'function') {
+            listRequestController.abort();
+        }
+        listRequestController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        setListLoading(true);
+
+        try {
+            const response = await fetch(buildEntriesApiUrl(normalizedState), {
+                credentials: 'same-origin',
+                signal: listRequestController ? listRequestController.signal : undefined,
+            });
+            const text = await response.text();
+            let payload = null;
+            try {
+                payload = JSON.parse(text);
+            } catch (error) {
+                throw new Error('Invalid JSON response');
+            }
+            if (!response.ok || payload?.status === 'error') {
+                throw new Error(payload?.message || ('HTTP ' + response.status));
+            }
+
+            if (requestId !== listRequestId) {
                 return;
             }
 
-            const haystack = (row.textContent || '').toLowerCase();
-            row.style.display = haystack.includes(normalized) ? '' : 'none';
-        });
+            const data = payload && payload.data ? payload.data : {};
+            const entries = Array.isArray(data.entries) ? data.entries : [];
+            listState = normalizeListState(Object.assign({}, normalizedState, data, {
+                total: data.total,
+                total_pages: data.total_pages,
+                page: data.page,
+                per_page: data.per_page,
+            }));
+
+            renderEntriesTable(entries);
+            refreshTableElements();
+            clearSelection();
+            renderPagination(listState, entries.length);
+            updateBulkUI();
+            syncSearchInputs(listState.q);
+            syncStatusFilters(listState.status);
+            updateBrowserUrl(listState, Boolean(options.replaceHistory));
+            initializeEntryDragHandlers();
+            initializeViewportScrollState();
+        } catch (error) {
+            if (error && error.name === 'AbortError') {
+                return;
+            }
+            BirklyFeedback.toast('Error: ' + (error && error.message ? error.message : 'Failed to load entries'), 'error');
+        } finally {
+            if (requestId === listRequestId) {
+                setListLoading(false);
+            }
+        }
     }
 
     function handleSearchInput(value) {
         syncSearchInputs(value);
-        filterEntriesTable(value);
+        window.clearTimeout(searchDebounceId);
+        searchDebounceId = window.setTimeout(function () {
+            const nextQuery = String(value || '').trim();
+            if (nextQuery === listState.q && Number(listState.page || 1) === 1) {
+                return;
+            }
+            fetchEntriesPage(Object.assign({}, listState, {
+                q: nextQuery,
+                page: 1,
+            }), { replaceHistory: true });
+        }, 250);
     }
 
     entriesSearchMobile?.addEventListener('input', function () {
@@ -403,7 +787,41 @@
         el.addEventListener('click', closeFilterDrawer);
     });
 
+    document.addEventListener('change', function (event) {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        if (target.id === 'select-all-entries') {
+            handleSelectAll();
+            return;
+        }
+
+        if (target.classList.contains('entry-checkbox')) {
+            if (target.checked) {
+                selectedEntries.add(target.value);
+            } else {
+                selectedEntries.delete(target.value);
+            }
+            updateBulkUI();
+        }
+    });
+
     document.addEventListener('click', async function (event) {
+        if (!(event.target instanceof Element)) {
+            return;
+        }
+        const paginationLink = event.target.closest('[data-entries-page]');
+        if (paginationLink && paginationContainer && paginationContainer.contains(paginationLink)) {
+            event.preventDefault();
+            const pageNumber = normalizePositiveInteger(paginationLink.getAttribute('data-entries-page'), 1);
+            if (pageNumber !== listState.page) {
+                fetchEntriesPage(Object.assign({}, listState, { page: pageNumber }), { replaceHistory: false });
+            }
+            return;
+        }
+
         const deleteButton = event.target.closest('.delete-entry-btn');
         if (deleteButton) {
             handleDeleteEntry(deleteButton.dataset.entryId || '');
@@ -421,8 +839,6 @@
             handleDuplicateEntry(duplicateButton.dataset.entryId || '');
         }
     });
-
-    let entrySorter = null;
 
     async function reorderEntries(entryId, targetEntryId, insertBefore) {
         const rows = Array.from(document.querySelectorAll('.table-row'));
@@ -474,7 +890,11 @@
 
     function initializeEntryDragHandlers() {
         const tableBody = document.querySelector('.table-body');
-        if (!tableBody || isTrashView || typeof MouseDragDrop !== 'function') {
+        if (!tableBody || !canDragCurrentView() || typeof MouseDragDrop !== 'function') {
+            if (entrySorter) {
+                entrySorter.destroy();
+                entrySorter = null;
+            }
             return;
         }
 
@@ -535,19 +955,41 @@
         });
     }
 
-    updateBulkUI();
-    window.setTimeout(initializeEntryDragHandlers, 100);
-
-    document.querySelectorAll('.entries-smart-table .table-viewport').forEach(function (viewport) {
-        const table = viewport.closest('.entries-smart-table');
-        const onScroll = function () {
-            if (!table) {
+    function initializeViewportScrollState() {
+        document.querySelectorAll('.entries-smart-table .table-viewport').forEach(function (viewport) {
+            if (viewport.dataset.entriesViewportBound === 'true') {
+                const table = viewport.closest('.entries-smart-table');
+                if (table) {
+                    table.classList.toggle('is-scrolled-x', viewport.scrollLeft > 1);
+                }
                 return;
             }
-            table.classList.toggle('is-scrolled-x', viewport.scrollLeft > 1);
-        };
-        viewport.addEventListener('scroll', onScroll, { passive: true });
-        onScroll();
+            const table = viewport.closest('.entries-smart-table');
+            const onScroll = function () {
+                if (!table) {
+                    return;
+                }
+                table.classList.toggle('is-scrolled-x', viewport.scrollLeft > 1);
+            };
+            viewport.dataset.entriesViewportBound = 'true';
+            viewport.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+        });
+    }
+
+    window.addEventListener('popstate', function () {
+        const nextState = readStateFromLocation();
+        syncSearchInputs(nextState.q);
+        syncStatusFilters(nextState.status);
+        if (nextState.status !== listState.status) {
+            window.location.href = buildEntriesPageUrl(nextState);
+            return;
+        }
+        fetchEntriesPage(nextState, { replaceHistory: true });
     });
+
+    updateBulkUI();
+    initializeViewportScrollState();
+    window.setTimeout(initializeEntryDragHandlers, 100);
 })();
 

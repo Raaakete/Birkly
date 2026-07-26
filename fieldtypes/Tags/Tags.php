@@ -12,6 +12,11 @@ class Tags extends BaseField {
         return 'Content & Text';
     }
 
+    public function getLabelForId(): string {
+        // The visible, focusable control is the inline tag input.
+        return 'field_' . $this->name . '_input';
+    }
+
     public function render(): string {
         $value = $this->value ?? [];
         

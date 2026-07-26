@@ -17,10 +17,10 @@ class Toggle extends BaseField {
 
         return <<<HTML
         <div class="toggle-field-wrapper">
-            <label class="toggle-switch" for="field_{$this->name}">
+            <span class="toggle-switch">
                 <input type="checkbox" name="{$this->name}" id="field_{$this->name}" value="1" {$checked} class="toggle-switch-input">
                 <span class="toggle-switch-slider"></span>
-            </label>
+            </span>
         </div>
         HTML;
     }
@@ -56,9 +56,14 @@ class Toggle extends BaseField {
         }
 
         .toggle-switch-input {
+            position: absolute;
+            inset: 0;
             opacity: 0;
-            width: 0;
-            height: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            cursor: pointer;
+            z-index: 1;
         }
 
         .toggle-switch-slider {
@@ -67,6 +72,7 @@ class Toggle extends BaseField {
             background: var(--border-medium, #e5e7eb);
             border-radius: 999px;
             transition: var(--transition-base, 0.3s ease);
+            pointer-events: none;
         }
 
         .toggle-switch-slider:before {

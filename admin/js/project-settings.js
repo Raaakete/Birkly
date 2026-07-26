@@ -537,7 +537,7 @@
         if (folderBtn && folderBtn.dataset.bound !== '1') {
             folderBtn.dataset.bound = '1';
             folderBtn.addEventListener('click', async function () {
-                var name = prompt('New folder name:');
+                var name = await BirklyFeedback.prompt('', '', { title: 'New folder', placeholder: 'Folder name', confirmLabel: 'Create' });
                 if (!name) return;
                 name = name.replace(/^\/+/, '').replace(/\/+$/, '');
                 if (!name || name.indexOf('/') >= 0 || name.indexOf('..') >= 0) {
@@ -580,13 +580,13 @@
         if (addBtn && addBtn.dataset.bound !== '1') {
             addBtn.dataset.bound = '1';
             addBtn.addEventListener('click', async function () {
-                var relative = prompt('New file name (e.g. about.html):');
+                var relative = await BirklyFeedback.prompt('', '', { title: 'New file', placeholder: 'about.html', confirmLabel: 'Continue' });
                 if (!relative) return;
                 relative = relative.replace(/^\/+/, '');
                 if (state.currentPath) {
                     relative = state.currentPath + '/' + relative;
                 }
-                var content = prompt('Initial content (optional):', '') || '';
+                var content = await BirklyFeedback.prompt('', '', { title: 'Initial content', placeholder: '(optional)', confirmLabel: 'Create' }) || '';
                 fetchJson(apiUrl('/api/project_site.php?action=create'), {
                     method: 'POST',
                     credentials: 'same-origin',
