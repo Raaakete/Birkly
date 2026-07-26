@@ -9,7 +9,8 @@
   min-height: 100vh;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   --admin-shell-edge-padding: var(--space-10, 2.5rem);
   /* Shared chrome rhythm: brand/topbar row → gap → divider/nav top → gap → content */
   --admin-chrome-row-height: 64px;
