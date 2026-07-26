@@ -2,6 +2,8 @@
 
 .main-actions-bar--sticky {
   --admin-toolbar-control-height: var(--admin-control-size, 2.5rem);
+  --sticky-save-bar-padding-y: var(--space-2, 0.5rem);
+  --sticky-save-bar-padding-x: 0;
   position: sticky;
   position: -webkit-sticky;
   top: 0;
@@ -12,18 +14,57 @@
   gap: var(--space-3, 0.75rem);
   width: 100%;
   margin-bottom: var(--space-6, 1.5rem);
-  padding: var(--space-2, 0.5rem) 0;
+  padding: var(--sticky-save-bar-padding-y) var(--sticky-save-bar-padding-x);
   background: var(--background-global, #f8f9f7);
   border-bottom: 1px solid transparent;
   box-shadow: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    padding 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease,
+    box-shadow 0.32s ease;
 }
 
 .main-actions-bar--sticky.is-stuck {
+  --sticky-save-bar-padding-y: 0.75rem;
+  --sticky-save-bar-padding-x: 1rem;
   border-bottom-color: var(--border-medium, #e5e7eb);
   box-shadow: 0 4px 12px rgba(32, 34, 29, 0.06);
-  padding-top: var(--space-3, 0.75rem);
-  padding-bottom: var(--space-3, 0.75rem);
+}
+
+@media (min-width: 768px) {
+  .main-actions-bar--sticky.is-stuck {
+    --sticky-save-bar-padding-x: 1.25rem;
+  }
+}
+
+@keyframes sticky-save-controls-bounce {
+  0% {
+    transform: translateY(-10px) scale(0.98);
+    opacity: 0.88;
+  }
+
+  50% {
+    transform: translateY(4px) scale(1.015);
+    opacity: 1;
+  }
+
+  72% {
+    transform: translateY(-2px) scale(1);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-left,
+.main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-right {
+  animation: sticky-save-controls-bounce 0.55s cubic-bezier(0.34, 1.28, 0.64, 1) both;
+}
+
+.main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-right {
+  animation-delay: 0.05s;
 }
 
 .main-actions-bar--sticky .main-actions-left,
@@ -75,10 +116,25 @@
   font-size: 0.875rem;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .main-actions-bar--sticky {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-left,
+  .main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-right {
+    animation: none;
+  }
+}
+
 @media (max-width: 767px) {
   .main-actions-bar--sticky {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .main-actions-bar--sticky.is-stuck {
+    --sticky-save-bar-padding-x: 0.75rem;
   }
 
   .main-actions-bar--sticky .main-actions-left,
