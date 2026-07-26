@@ -20,15 +20,21 @@
   color: var(--warning-700);
 }
 
-.settings-page-header .page-header-actions {
+.settings-dirty-badge[hidden] {
+  display: none !important;
+}
+
+.main-actions-bar--sticky .main-actions-tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3, 0.75rem);
+  gap: var(--space-2, 0.5rem);
+  min-width: 0;
 }
 
 .settings-search-input {
-  min-width: min(320px, 100%);
+  min-width: min(240px, 100%);
+  max-width: min(320px, 100%);
 }
 
 /* Utility classes — reduce inline styles in settings.html (P44-M10) */
@@ -145,7 +151,7 @@
 
 /* Settings Tabs — uses shared components/tabs.css (.tabs / .tab) */
 .settings-tabs {
-  overflow: hidden;
+  overflow: visible;
   min-height: 500px;
 }
 
@@ -166,6 +172,10 @@
 
 .settings-tabs .tabs .tab svg {
   flex-shrink: 0;
+}
+
+.settings-tabs .tabs .tab[hidden] {
+  display: none !important;
 }
 
 .settings-tab-panels {

@@ -23,7 +23,9 @@
 
     function getTabButtons(nav) {
         return Array.prototype.slice.call(nav.querySelectorAll('.tab[data-tab]')).filter(function (btn) {
-            return !btn.classList.contains('tab--hidden') && btn.getAttribute('aria-hidden') !== 'true';
+            return !btn.hidden
+                && !btn.classList.contains('tab--hidden')
+                && btn.getAttribute('aria-hidden') !== 'true';
         });
     }
 

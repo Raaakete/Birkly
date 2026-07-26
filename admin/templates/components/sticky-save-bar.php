@@ -9,6 +9,7 @@ $stickySaveBarStatusHtml = $stickySaveBarStatusHtml ?? '';
 $stickySaveBarSaveId = $stickySaveBarSaveId ?? null;
 $stickySaveBarSaveClass = trim((string) ($stickySaveBarSaveClass ?? 'btn btn-primary'));
 $stickySaveBarExtraActionHtml = $stickySaveBarExtraActionHtml ?? '';
+$stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
 ?>
 <div class="main-actions-bar main-actions-bar--sticky">
     <div class="main-actions-left">
@@ -30,6 +31,11 @@ $stickySaveBarExtraActionHtml = $stickySaveBarExtraActionHtml ?? '';
         </button>
     </div>
     <div class="main-actions-right">
+        <?php if ($stickySaveBarRightHtml): ?>
+            <div class="main-actions-tools">
+                <?= $stickySaveBarRightHtml ?>
+            </div>
+        <?php endif; ?>
         <?php if ($stickySaveBarMessageId): ?>
             <div id="<?= htmlspecialchars($stickySaveBarMessageId) ?>" class="<?= htmlspecialchars(trim('main-actions-message ' . $stickySaveBarMessageClass)) ?>" style="display: none;" role="status" aria-live="polite"></div>
         <?php endif; ?>
