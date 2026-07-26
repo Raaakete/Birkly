@@ -10,6 +10,7 @@ function assertTrue(name, ok) {
 }
 
 function mockElement(tagName, innerHTML, attrs, children) {
+    const attrMap = Object.assign({}, attrs || {});
     const el = {
         tagName: String(tagName || '').toUpperCase(),
         innerHTML: innerHTML || '',
@@ -19,10 +20,16 @@ function mockElement(tagName, innerHTML, attrs, children) {
             return this.children.some((child) => child === other || child.contains(other));
         },
         getAttribute(name) {
-            if (!attrs || !Object.prototype.hasOwnProperty.call(attrs, name)) {
+            if (!Object.prototype.hasOwnProperty.call(attrMap, name)) {
                 return null;
             }
-            return attrs[name];
+            return attrMap[name];
+        },
+        hasAttribute(name) {
+            return Object.prototype.hasOwnProperty.call(attrMap, name);
+        },
+        setAttribute(name, value) {
+            attrMap[name] = value == null ? '' : String(value);
         }
     };
     el.textContent = el.innerHTML;
@@ -98,6 +105,75 @@ assertTrue('hyphenated slug in bundle requests', engine.collectBundleRequests(na
 const filteredTpl = "{for each entry in 'nav-links' with status = published ordered by order}<a>{label}</a>{endfor}";
 const filteredOut = engine.render(filteredTpl, navData);
 assertTrue('status filter on hyphenated collection', filteredOut.includes('Home') && !filteredOut.includes('About'));
+
+// --- P45-M2: scoped root discovery ---
+const scopedInner = mockElement('div', "{from 'site_elements' get entry 'header'}{title}{endget}");
+const scopedOuter = mockElement('section', 'static', {}, [scopedInner]);
+const scopedDoc = mockDocument([scopedOuter]);
+const scopedRegions = engine.discoverPageRegions(scopedDoc, scopedInner);
+assertTrue(
+    'scoped root discovers the root element itself',
+    scopedRegions.length === 1 && scopedRegions[0].element === scopedInner
+);
+
+const siblingA = mockElement('div', "{for each entry in 'blog'}{title}{endfor}");
+const siblingB = mockElement('aside', "{for each entry in 'gallery'}{caption}{endfor}");
+const wrap = mockElement('div', '', {}, [siblingA, siblingB]);
+const wrapDoc = mockDocument([wrap]);
+const onlyA = engine.discoverPageRegions(wrapDoc, siblingA);
+assertTrue('scoped root does not include sibling regions', onlyA.length === 1 && onlyA[0].element === siblingA);
+
+// --- P45-M4: data-birkly-region as explicit region root ---
+const nestedTpl = "{for each entry in 'items'}{title}{endfor}";
+const explicitChild = mockElement('div', nestedTpl, { 'data-birkly-region': '' });
+const parentWithBoth = mockElement('main', '', {}, [explicitChild]);
+// Parent innerHTML includes child templates (browser behavior) — explicit child must win.
+parentWithBoth.innerHTML = "{for each entry in 'blog'}{title}{endfor}" + nestedTpl;
+const explicitDoc = mockDocument([parentWithBoth]);
+const explicitRegions = engine.discoverPageRegions(explicitDoc);
+assertTrue(
+    'data-birkly-region is its own region even when nested under template parent',
+    explicitRegions.length === 1 && explicitRegions[0].element === explicitChild
+);
+assertTrue(
+    'template-bearing ancestor is demoted when it contains data-birkly-region',
+    !explicitRegions.some((r) => r.element === parentWithBoth)
+);
+
+const sectionA = mockElement('section', "{for each entry in 'blog'}{title}{endfor}", { 'data-birkly-region': '' });
+const sectionB = mockElement('aside', "{for each entry in 'gallery'}{caption}{endfor}", { 'data-birkly-region': '' });
+const multiParent = mockElement('main', 'x', {}, [sectionA, sectionB]);
+multiParent.innerHTML = sectionA.innerHTML + sectionB.innerHTML;
+const multiDoc = mockDocument([multiParent]);
+const multiRegions = engine.discoverPageRegions(multiDoc);
+assertTrue(
+    'multiple data-birkly-region siblings are separate regions',
+    multiRegions.length === 2 &&
+        multiRegions.some((r) => r.element === sectionA) &&
+        multiRegions.some((r) => r.element === sectionB)
+);
+
+const emptyExplicit = mockElement('div', '', { 'data-birkly-region': '' });
+const emptyDoc = mockDocument([emptyExplicit]);
+const emptyRegions = engine.discoverPageRegions(emptyDoc);
+assertTrue(
+    'data-birkly-region without template syntax is still a region',
+    emptyRegions.length === 1 && emptyRegions[0].element === emptyExplicit
+);
+
+const processed = mockElement('div', "{for each entry in 'blog'}{title}{endfor}", {
+    'data-birkly-processed': '1'
+});
+const processedDoc = mockDocument([processed]);
+const skipped = engine.discoverPageRegions(processedDoc);
+assertTrue('skips data-birkly-processed regions', skipped.length === 0);
+const forced = engine.discoverPageRegions(processedDoc, null, { force: true });
+assertTrue('force option includes processed regions', forced.length === 1);
+
+const birklyTag = mockElement('birkly-region', '', { collection: 'site_elements', entry: 'header' });
+const tagDoc = mockDocument([birklyTag]);
+const tagRegions = engine.discoverPageRegions(tagDoc);
+assertTrue('BIRKLY-REGION tag is an explicit region', tagRegions.length === 1 && tagRegions[0].element === birklyTag);
 
 console.log('\ntemplate_regions_test: ' + (failures === 0 ? 'PASS' : 'FAIL (' + failures + ')'));
 process.exit(failures === 0 ? 0 : 1);

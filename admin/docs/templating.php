@@ -20,7 +20,7 @@
 </ul>
 
 <h3>Where to put template tags (public sites)</h3>
-<p>When using <code>birkly-client.js</code>, place template tags inside any HTML element in <code>&lt;body&gt;</code>. The client finds the outermost elements that contain Birkly syntax and renders each one. Common choices: <code>&lt;main&gt;</code>, <code>&lt;header&gt;</code>, <code>&lt;nav&gt;</code>, or a wrapper <code>&lt;div&gt;</code> (e.g. a fullscreen menu). You can add <code>data-birkly-region</code> to mark a region explicitly.</p>
+<p>When using <code>birkly-client.js</code>, place template tags inside any HTML element in <code>&lt;body&gt;</code>. The client finds the outermost elements that contain Birkly syntax and renders each one. Common choices: <code>&lt;main&gt;</code>, <code>&lt;header&gt;</code>, <code>&lt;nav&gt;</code>, or a wrapper <code>&lt;div&gt;</code> (e.g. a fullscreen menu). Optional: <code>data-birkly-region</code> marks an explicit region root; shared blocks can use <code>&lt;birkly-region collection="…" entry="…"&gt;</code>.</p>
 
 <h3>Showing a list of entries</h3>
 <p>Loop through entries of a collection. On the <strong>public website</strong>, only <strong>published</strong> entries are returned — draft entries appear as empty until you publish them.</p>
