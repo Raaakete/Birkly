@@ -207,6 +207,8 @@ function getPageData($page) {
             return getAuditLogData();
         case 'feedback':
             return getFeedbackData();
+        case 'ai-presence':
+            return getAiPresenceData();
         default:
             return ['error' => 'Page not found'];
     }
@@ -238,6 +240,11 @@ function getAutomationData() {
             'error' => $e->getMessage()
         ];
     }
+}
+
+function getAiPresenceData() {
+    // Workspace loads draft/published via api/ai_presence.php; keep page data minimal.
+    return ['page' => 'ai-presence'];
 }
 
 function getDashboardData() {
