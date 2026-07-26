@@ -44,6 +44,28 @@
 .topbar-icon-btn .birkly-icon {
   width: 16px;
   height: 16px;
+  display: block;
+}
+
+.fieldtype-card-icon .birkly-icon,
+.fieldtype-card-icon-svg {
+  width: 32px;
+  height: 32px;
+}
+
+.fieldtype-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: var(--text-secondary, #72746F);
+}
+
+.fieldtype-type-icon .birkly-icon,
+.fieldtype-type-icon-svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 .dropdown-item-icon .birkly-icon {
