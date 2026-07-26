@@ -35,6 +35,7 @@ assert_true(is_readable($root . '/schema/ai_presence.schema.json'), 'schema exis
 echo "==> Core PHP files syntax\n";
 foreach ([
     'core/ai_presence.php',
+    'core/ai_presence_pro.php',
     'api/ai_presence.php',
     'api/public/ai_presence.php',
     'api/well_known_brand_context.php',
