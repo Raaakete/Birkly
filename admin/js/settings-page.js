@@ -742,6 +742,20 @@ window.migrateStorage = migrateStorage;
         var tabButtons = Array.prototype.slice.call(getSettingsTabButtons());
         var tabPanes = Array.prototype.slice.call(getSettingsTabPanes());
 
+        if (!query) {
+            tabButtons.forEach(function (button) {
+                button.hidden = false;
+            });
+            tabPanes.forEach(function (pane) {
+                Array.prototype.forEach.call(pane.querySelectorAll('[data-settings-search]'), function (section) {
+                    section.hidden = false;
+                });
+                pane.dataset.searchVisible = '1';
+            });
+            refreshTabsV2Picker();
+            return;
+        }
+
         tabPanes.forEach(function (pane) {
             var searchableSections = Array.prototype.slice.call(pane.querySelectorAll('[data-settings-search]'));
             var paneHasMatch = !query;
