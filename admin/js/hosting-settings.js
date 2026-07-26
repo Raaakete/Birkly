@@ -47,14 +47,15 @@
         if (initialized) return;
         initialized = true;
 
-        var hostingTab = document.querySelector('[data-tab="hosting"]');
-        if (hostingTab) {
-            hostingTab.addEventListener('click', function () {
+        var domainsTab = document.querySelector('[data-tab="domains"]');
+        if (domainsTab) {
+            domainsTab.addEventListener('click', function () {
                 mountWizard();
             });
         }
 
-        if (document.getElementById('hosting') && document.getElementById('hosting').classList.contains('active')) {
+        var domainsPane = document.getElementById('domains');
+        if (domainsPane && domainsPane.classList.contains('active') && document.getElementById('hosting-wizard-mount')) {
             mountWizard();
         }
     }
