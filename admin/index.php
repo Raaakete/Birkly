@@ -60,6 +60,7 @@ $pageViewPermissions = [
 
     // Media
     'media' => 'read_media',
+    'ai-presence' => 'read',
 
     // Settings & admin management
     'settings' => 'read_settings',
@@ -153,6 +154,7 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'dashboard' => 'dashboard.html',
             'content' => 'content.html',
             'media' => 'media.html',
+            'ai-presence' => 'ai-presence.html',
             'settings' => 'settings.html',
             'redirects' => 'redirects.html',
             'account' => 'account.html',
