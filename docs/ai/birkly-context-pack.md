@@ -90,10 +90,18 @@ Full spec: `docs/TEMPLATE_LANGUAGE_SPEC.md` (platform); public docs on Birkly-Do
 ### Single entry (no loop)
 
 ```html
-{entry 'blog'.'my-post-slug'}
+{from 'blog' get entry 'my-post-slug'}
   <h1>{title}</h1>
   <article>{'content'}</article>
-{endentry}
+{endget}
+```
+
+Do **not** invent alternate single-entry wrappers — only `{from … get entry …}…{endget}` is supported.
+
+For shared CMS blocks (header/footer) prefer one-line regions (P45):
+
+```html
+<birkly-region collection="site_elements" entry="header"></birkly-region>
 ```
 
 ### Conditionals
@@ -129,11 +137,11 @@ Sub-collection scoped to one parent entry:
 
 ```html
 {created_at format "Y-m-d H:i"}
-{title truncate 80}
-{'content' strip_tags}
 ```
 
 Common format codes: `Y` year, `m` month, `d` day, `H` hour, `i` minute, `F` full month name.
+
+**Not implemented** (do not use): `{title truncate 80}`, `{'content' strip_tags}`. Prefer a dedicated excerpt field or strip HTML in the CMS before publish.
 
 ### Admin templating (PHP templates)
 
