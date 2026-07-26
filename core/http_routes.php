@@ -17,6 +17,7 @@ function birkly_http_route_map(): array
         '/favicon.ico' => '/admin/assets/birkly-icon.svg',
         '/.well-known/oauth-protected-resource' => '/api/oauth_protected_resource.php',
         '/.well-known/oauth-authorization-server' => '/api/oauth_authorization_server.php',
+        '/.well-known/brand-context.json' => '/api/well_known_brand_context.php',
         '/authorize' => '/api/oauth_authorize.php',
         '/oauth/authorize' => '/api/oauth_authorize.php',
         '/oauth/token' => '/api/oauth_token.php',

@@ -1,0 +1,88 @@
+<?php
+/**
+ * AI Presence storage unit tests (P46-M1).
+ */
+
+declare(strict_types=1);
+
+$root = dirname(__DIR__);
+require_once $root . '/core/ai_presence.php';
+
+$failures = 0;
+
+function assert_true(bool $cond, string $label): void
+{
+    global $failures;
+    if ($cond) {
+        echo "OK  $label\n";
+        return;
+    }
+    echo "FAIL $label\n";
+    $failures++;
+}
+
+birkly_ai_presence_reset_for_tests();
+
+$default = birkly_ai_presence_default_draft();
+assert_true(($default['schema_version'] ?? '') === BIRKLY_AI_PRESENCE_SCHEMA_VERSION, 'default draft schema_version');
+assert_true(is_array($default['identity']), 'default identity object');
+
+$errors = birkly_ai_presence_validate($default);
+assert_true($errors === [], 'default draft validates');
+
+$draft = $default;
+$draft['identity']['official_name'] = 'Test Brand';
+$draft['identity']['short_description'] = 'A test brand for AI Presence.';
+assert_true(birkly_ai_presence_save_draft($draft), 'save draft');
+
+$loaded = birkly_ai_presence_load_draft();
+assert_true(($loaded['identity']['official_name'] ?? '') === 'Test Brand', 'load draft roundtrip');
+
+$merged = birkly_ai_presence_merge_draft(['positioning' => ['best_known_for' => ['Quality']]]);
+assert_true(in_array('Quality', $merged['positioning']['best_known_for'] ?? [], true), 'merge draft partial');
+
+$completeness = birkly_ai_presence_completeness($merged);
+assert_true($completeness['percent'] > 0, 'completeness score > 0');
+assert_true($completeness['max'] === 100, 'completeness max 100');
+
+$steps = birkly_ai_presence_next_steps($merged);
+assert_true(is_array($steps), 'next steps array');
+
+$draft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($draft);
+$pub = birkly_ai_presence_publish();
+assert_true(!empty($pub['ok']), 'publish succeeds when enabled');
+assert_true((int) ($pub['version'] ?? 0) === 1, 'publish version 1');
+
+$published = birkly_ai_presence_load_published();
+assert_true($published !== null, 'published snapshot exists');
+assert_true(($published['identity']['official_name'] ?? '') === 'Test Brand', 'published has brand name');
+
+$draft['identity']['official_name'] = 'Draft Only Change';
+birkly_ai_presence_save_draft($draft);
+$stillPublished = birkly_ai_presence_load_published();
+assert_true(($stillPublished['identity']['official_name'] ?? '') === 'Test Brand', 'draft edits do not change published');
+
+$exportBody = birkly_ai_presence_get_public_export_body();
+assert_true(is_string($exportBody) && $exportBody !== '', 'public export body');
+
+$preview = birkly_ai_presence_preview_query('What is this brand known for?');
+assert_true(($preview['answer'] ?? '') !== '', 'preview query returns answer');
+assert_true(is_array($preview['sources']), 'preview query returns sources');
+
+assert_true(!birkly_ai_presence_is_safe_external_url('http://127.0.0.1/secret'), 'blocks localhost URL');
+assert_true(!birkly_ai_presence_is_safe_external_url('ftp://example.com'), 'blocks non-http URL');
+
+$schemaPath = birkly_ai_presence_schema_path();
+assert_true(is_readable($schemaPath), 'schema file readable');
+$schema = json_decode((string) file_get_contents($schemaPath), true);
+assert_true(is_array($schema) && ($schema['properties']['schema_version']['const'] ?? '') === BIRKLY_AI_PRESENCE_SCHEMA_VERSION, 'schema const matches');
+
+birkly_ai_presence_reset_for_tests();
+
+if ($failures > 0) {
+    fwrite(STDERR, "$failures test(s) failed\n");
+    exit(1);
+}
+
+echo "All ai_presence storage tests passed.\n";
