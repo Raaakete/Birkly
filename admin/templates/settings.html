@@ -12,11 +12,6 @@ if (empty($availableLangs)) {
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
   </div>
-  <div class="page-header-actions">
-    <label class="u-hidden" for="settings-search-input">Search settings</label>
-    <input type="search" id="settings-search-input" class="input settings-search-input" placeholder="Search settings" autocomplete="off">
-    <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>" class="btn btn-secondary btn-sm">View activity</a>
-  </div>
 </div>
 
 <?php
@@ -26,6 +21,10 @@ $stickySaveBarMessageId = 'settings-message';
 $stickySaveBarMessageClass = 'message settings-toast';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
+$stickySaveBarRightHtml = ''
+    . '<label class="u-hidden" for="settings-search-input">Search settings</label>'
+    . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="Search settings" autocomplete="off">'
+    . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="btn btn-secondary btn-sm">View activity</a>';
 include __DIR__ . '/components/sticky-save-bar.php';
 ?>
 
