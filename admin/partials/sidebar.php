@@ -123,6 +123,12 @@ if (empty($userAvatar)) {
                             <span class="nav-label"><?= __('admin.media') ?></span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="<?= htmlspecialchars(admin_url('ai-presence')) ?>" class="nav-link <?= is_nav_active('ai-presence') ?>" title="<?= htmlspecialchars(__('admin.ai_presence')) ?>">
+                            <?= birkly_icon('sparkle', ['class' => 'nav-icon']) ?>
+                            <span class="nav-label"><?= __('admin.ai_presence') ?></span>
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- UI Injection Point: admin_navigation_before_plugins -->
