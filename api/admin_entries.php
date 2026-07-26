@@ -1358,126 +1358,33 @@ function duplicateEntry(): array {
 }
 
 function listEntries() {
-    $collectionSlug = $_GET['collection'] ?? '';
-    $search = $_GET['search'] ?? '';
-    $statusFilter = trim((string) ($_GET['status'] ?? ''));
-    
-    if (empty($collectionSlug)) {
-        return ['error' => 'Collection slug is required'];
-    }
-    
-    // Initialize cache
-    $cache = new Cache();
-    
-    // Try to get cached entry summaries (admin list view only)
-    $cachedEntries = $cache->getEntrySummaries($collectionSlug);
-    
-    if ($cachedEntries === null) {
-        // Cache miss - load entries from files
-        $collectionsDir = __DIR__ . '/../content/collections';
-        if (!is_dir($collectionsDir)) {
-            return ['error' => 'Collections directory not found'];
-        }
-        
-        $collectionDir = $collectionsDir . '/' . $collectionSlug;
-        
-        if (!is_dir($collectionDir)) {
-            return ['error' => 'Collection not found'];
-        }
-        
-        $entriesDir = $collectionDir . '/entries';
-        if (!is_dir($entriesDir)) {
-            $cache->setEntries($collectionSlug, []);
-            return ['entries' => []];
-        }
-        
-        $entries = [];
-        $entryFiles = scandir($entriesDir);
-        
-        foreach ($entryFiles as $file) {
-            if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
-                $entryPath = $entriesDir . '/' . $file;
-                $entryData = json_decode(file_get_contents($entryPath), true);
-                
-                if ($entryData) {
-                    $entryId = pathinfo($file, PATHINFO_FILENAME);
-                    $title = $entryData['title'] ?? $entryId;
-                    
-                    $entries[] = [
-                        'id' => $entryId,
-                        'title' => $title,
-                        'status' => ($entryData['status'] === 'draft' ? 'unpublished' : ($entryData['status'] ?? 'unpublished')),
-                        'updated_at' => $entryData['updated_at'] ?? null,
-                        'created_at' => $entryData['created_at'] ?? null
-                    ];
-                }
-            }
-        }
-        
-        // Cache the summaries separately from full public entry payloads
-        $cache->setEntrySummaries($collectionSlug, $entries);
-        $cachedEntries = $entries;
-    }
-    
-    // Apply search filter if provided
-    if (!empty($search)) {
-        // Use search index for better performance
-        $searchIndex = $cache->getSearchIndex($collectionSlug);
-        
-        if ($searchIndex === null) {
-            // Build search index - need to get collectionDir
-            $collectionsDir = __DIR__ . '/../content/collections';
-            $collectionDir = $collectionsDir . '/' . $collectionSlug;
-            
-            $schemaPath = $collectionDir . '/schema.json';
-            $schema = null;
-            if (file_exists($schemaPath)) {
-                $schema = json_decode(file_get_contents($schemaPath), true);
-            }
-            
-            $searchIndex = $cache->buildSearchIndex($collectionSlug, $cachedEntries, $schema);
-            $cache->setSearchIndex($collectionSlug, $searchIndex);
-        }
-        
-        // Search in index
-        $matchingIds = $cache->searchInIndex($searchIndex, $search);
-        
-        // Filter entries by matching IDs
-        $cachedEntries = array_filter($cachedEntries, function($entry) use ($matchingIds) {
-            return in_array($entry['id'], $matchingIds);
-        });
-        
-        // Re-index array
-        $cachedEntries = array_values($cachedEntries);
+    $collectionSlug = trim((string) ($_GET['collection'] ?? ''));
+    if ($collectionSlug === '') {
+        return ['status' => 'error', 'message' => 'Collection slug is required'];
     }
 
-    if ($statusFilter !== '') {
-        $normalizedStatus = $statusFilter === 'draft' ? 'unpublished' : $statusFilter;
-        $cachedEntries = array_values(array_filter($cachedEntries, function($entry) use ($normalizedStatus) {
-            $entryStatus = (string) ($entry['status'] ?? 'unpublished');
-            if ($entryStatus === 'draft') {
-                $entryStatus = 'unpublished';
-            }
-            return $entryStatus === $normalizedStatus;
-        }));
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once __DIR__ . '/admin_templates.php';
+
+    if (!function_exists('getEntriesData')) {
+        return ['status' => 'error', 'message' => 'Entries list loader is unavailable'];
     }
-    
-    // Return full entry data for admin UI (including status and dates)
-    $result = [];
-    foreach ($cachedEntries as $entry) {
-        $result[] = [
-            'id' => $entry['id'] ?? '',
-            'slug' => $entry['slug'] ?? $entry['id'] ?? '',
-            'title' => $entry['title'] ?? '',
-            'status' => ($entry['status'] === 'draft' ? 'unpublished' : ($entry['status'] ?? 'unpublished')),
-            'updated_at' => $entry['updated_at'] ?? $entry['modified_at'] ?? null,
-            'created_at' => $entry['created_at'] ?? null,
-            'modified_at' => $entry['modified_at'] ?? $entry['updated_at'] ?? $entry['created_at'] ?? null,
-            'reviewer' => $entry['reviewer'] ?? '',
-        ];
+
+    $data = getEntriesData();
+    if (isset($data['error'])) {
+        return ['status' => 'error', 'message' => (string) $data['error']];
     }
-    
-    return ['entries' => $result];
+
+    return [
+        'status' => 'ok',
+        'data' => [
+            'entries' => $data['entries'] ?? [],
+            'total' => (int) ($data['entries_total'] ?? 0),
+            'page' => (int) ($data['entries_page'] ?? 1),
+            'per_page' => (int) ($data['entries_per_page'] ?? 20),
+            'total_pages' => (int) ($data['entries_total_pages'] ?? 1),
+        ],
+    ];
 }
 
 /**

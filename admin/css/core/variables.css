@@ -126,13 +126,14 @@
   --border-strong: #d1d5db;
   --border-color: var(--border-medium, #e5e7eb);
 
-  /* Focus rings (mint — P44-M2) */
-  --focus-ring: 0 0 0 3px rgba(124, 227, 191, 0.25);
-  --focus-ring-subtle: 0 0 0 3px rgba(124, 227, 191, 0.12);
-  --focus-ring-tight: 0 0 0 2px rgba(124, 227, 191, 0.25);
-  --focus-glow: 0 0 8px rgba(124, 227, 191, 0.55);
-  --focus-glow-strong: 0 0 12px rgba(124, 227, 191, 0.7);
-  --focus-fill-subtle: rgba(124, 227, 191, 0.12);
+  /* Focus rings — primary-700 for WCAG 3:1 contrast on white */
+  --focus-ring-color: var(--primary-700, #3DA882);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 35%, transparent);
+  --focus-ring-subtle: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 18%, transparent);
+  --focus-ring-tight: 0 0 0 2px color-mix(in srgb, var(--focus-ring-color) 35%, transparent);
+  --focus-outline: 2px solid var(--focus-ring-color);
+  --focus-outline-offset: 2px;
+  --text-help: var(--text-secondary, #72746F);
   
   /* ============================================
      Spacing System (rem-based)

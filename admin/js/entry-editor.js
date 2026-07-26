@@ -40,6 +40,59 @@
         return entryIdInput ? entryIdInput.value : '';
     }
 
+    function toIsoDateTimeValue(value) {
+        if (!value) {
+            return '';
+        }
+
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? value : date.toISOString();
+    }
+
+    function normalizeScheduleFieldValue(fieldName, value) {
+        if ((fieldName === 'published_at' || fieldName === 'expires_at') && value) {
+            return toIsoDateTimeValue(value);
+        }
+
+        return value;
+    }
+
+    function normalizeScheduleFieldsInFormData(formData) {
+        ['published_at', 'expires_at'].forEach((fieldName) => {
+            const value = formData.get(fieldName);
+            if (typeof value === 'string' && value) {
+                formData.set(fieldName, normalizeScheduleFieldValue(fieldName, value));
+            }
+        });
+    }
+
+    function ensureEntryIdInput(form, entryId) {
+        if (!form || !entryId) {
+            return null;
+        }
+
+        let input = form.querySelector('input[name="entry_id"]');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'entry_id';
+            form.insertBefore(input, form.firstChild);
+        }
+
+        input.value = entryId;
+        return input;
+    }
+
+    function updateEntryEditorUrl(entryId) {
+        if (!entryId || !window.history || typeof window.history.replaceState !== 'function') {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('entry', entryId);
+        window.history.replaceState(window.history.state, '', url.toString());
+    }
+
     function initSlugGeneration() {
         const titleField = findTitleField();
         const slugField = document.getElementById('slug');
@@ -229,22 +282,6 @@
                 expiresAtInput.value = formatDateTimeForInput(expiresAtValue);
             }
         }
-        
-        // Convert datetime-local to ISO format before submission
-        const form = document.getElementById('entry-form');
-        if (form) {
-            form.addEventListener('submit', function() {
-                if (publishAtInput && publishAtInput.value) {
-                    // Convert datetime-local to ISO format
-                    const dt = new Date(publishAtInput.value);
-                    publishAtInput.value = dt.toISOString();
-                }
-                if (expiresAtInput && expiresAtInput.value) {
-                    const dt = new Date(expiresAtInput.value);
-                    expiresAtInput.value = dt.toISOString();
-                }
-            });
-        }
     }
 
     /**
@@ -254,6 +291,7 @@
         const statusSelect = document.getElementById('status');
         const reviewerGroup = document.getElementById('reviewer-group');
         const reviewNotesGroup = document.getElementById('review-notes-group');
+        const reviewActionGroup = document.getElementById('review-action-group');
         const approveBtn = document.getElementById('approve-entry');
         const rejectBtn = document.getElementById('reject-entry');
         const requestChangesBtn = document.getElementById('request-changes');
@@ -269,6 +307,9 @@
             }
             if (reviewNotesGroup) {
                 reviewNotesGroup.style.display = isReviewStatus ? 'block' : 'none';
+            }
+            if (reviewActionGroup) {
+                reviewActionGroup.style.display = status === 'pending_review' ? 'block' : 'none';
             }
         }
         
@@ -905,6 +946,7 @@
             await updateFieldtypes;
 
             const formData = new FormData(form);
+            normalizeScheduleFieldsInFormData(formData);
             
             // Check if this is a sub-entry (creating or editing)
             const isSubEntry = form.querySelector('input[name="sub_collection"]') && form.querySelector('input[name="parent_entry_id"]');
@@ -934,9 +976,9 @@
                     }
                     // Try to parse JSON values
                     try {
-                        data[key] = JSON.parse(value);
+                        data[key] = JSON.parse(normalizeScheduleFieldValue(key, value));
                     } catch {
-                        data[key] = value;
+                        data[key] = normalizeScheduleFieldValue(key, value);
                     }
                 }
                 
@@ -1048,7 +1090,7 @@
                         }
                     } else {
                         // For text, email, date, select, textarea, etc.
-                        const value = input.value || '';
+                        const value = normalizeScheduleFieldValue(name, input.value || '');
                         
                         // Only set if we don't already have a non-empty value for this field
                         // This prevents empty inputs from overwriting filled ones
@@ -1183,6 +1225,13 @@
                 // Check JSON body first - it's the source of truth
                 if (data && data.status === 'ok') {
                     // Success! Even if HTTP status code is 400 (server bug)
+                    const savedEntryId = data.data && data.data.id ? data.data.id : (formData.get('entry_id') || '');
+                    const isNewRegularEntry = !isSubEntry && !formData.get('entry_id') && !!savedEntryId;
+
+                    if (savedEntryId) {
+                        ensureEntryIdInput(form, savedEntryId);
+                    }
+
                     if (isSubEntry) {
                         // For sub-entries, redirect back to parent entry detail page
                         const parentCollection = formData.get('parent_collection') || formData.get('collection');
@@ -1203,9 +1252,19 @@
                         redirectUrl += `&_t=${Date.now()}`;
                         window.location.href = redirectUrl;
                     } else {
-                        // For regular entries, redirect to entries list
-                        const collectionSlug = formData.get('collection') || config.collectionSlug || '';
-                        window.location.href = Birkly.adminUrl('entries', { collection: collectionSlug });
+                        if (isNewRegularEntry) {
+                            updateEntryEditorUrl(savedEntryId);
+                        }
+
+                        document.dispatchEvent(new CustomEvent('entry:saved', {
+                            detail: {
+                                collection: formData.get('collection') || config.collectionSlug || '',
+                                entryId: savedEntryId,
+                                isNewEntry: isNewRegularEntry,
+                                response: data
+                            }
+                        }));
+                        BirklyFeedback.toast((data.data && data.data.message) || 'Entry saved successfully', 'success');
                     }
                 } else if (data && data.status === 'error') {
                     if (!applyFieldErrors(data.field_errors)) {

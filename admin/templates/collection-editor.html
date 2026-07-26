@@ -17,6 +17,9 @@ $isSubCollection = !empty($sub_collection) || !empty($subCollection);
 $subCollectionData = $sub_collection ?? $subCollection ?? null;
 $parentSubCollectionData = $parent_sub_collection ?? null;
 $hasParentSubCollection = !empty($parentSubCollectionData);
+$collectionEditorInitialSchema = $isSubCollection
+    ? ($subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? [])
+    : $fields;
 
 // Determine cancel URL - prioritize return_to, then HTTP_REFERER, then default
 $cancelUrl = null;
@@ -322,16 +325,26 @@ if (!$cancelUrl) {
                                 <?php foreach ($fields as $index => $field): ?>
                                     <div class="fieldtype-section" data-index="<?= $index ?>">
                                         <div class="fieldtype-header">
-                                            <div class="fieldtype-drag-handle">
-                                                <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+                                            <div class="fieldtype-header-main">
+                                                <div class="fieldtype-drag-handle">
+                                                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+                                                </div>
+                                                <div class="fieldtype-title">
+                                                    <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($field['type'] ?? 'Select Type')) ?></span>
+                                                    <span class="fieldtype-name"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?></span>
+                                                </div>
                                             </div>
-                                            <div class="fieldtype-title">
-                                                <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($field['type'] ?? 'Select Type')) ?></span>
-                                                <span class="fieldtype-name"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?></span>
+                                            <div class="fieldtype-header-actions">
+                                                <button type="button" class="btn-icon field-move-up-btn" title="Move field up" aria-label="Move field up">
+                                                    <?= birkly_icon('caret-up', ['size' => 16]) ?>
+                                                </button>
+                                                <button type="button" class="btn-icon field-move-down-btn" title="Move field down" aria-label="Move field down">
+                                                    <?= birkly_icon('caret-down', ['size' => 16]) ?>
+                                                </button>
+                                                <button type="button" class="btn-icon remove-field-btn" title="Remove field" aria-label="Remove field">
+                                                    <?= birkly_icon('trash', ['size' => 16]) ?>
+                                                </button>
                                             </div>
-                                            <button type="button" class="btn-icon remove-field-btn" title="Remove field">
-                                                <?= birkly_icon('trash', ['size' => 16]) ?>
-                                            </button>
                                         </div>
                                         <div class="fieldtype-body">
                                             <div class="fieldtype-row">
@@ -1143,6 +1156,7 @@ if (!empty($captchaProvider) && !empty($captchaSiteKey)) {
 }
 
 $formCode .= '  <button type="submit" class="btn btn-primary">Submit</button>' . "\n";
+$formCode .= '  <div data-form-status role="status" aria-live="polite" style="display: none; margin-top: 12px; font-size: 14px;"></div>' . "\n";
 $formCode .= '</form>' . "\n";
 $formCode .= "\n";
 $formCode .= '<script>' . "\n";
@@ -1150,9 +1164,22 @@ $formCode .= 'document.getElementById("haru-form-' . ($isSubCollection ? $subCol
 $formCode .= '  e.preventDefault();' . "\n";
 $formCode .= '  const form = this;' . "\n";
 $formCode .= '  const submitBtn = form.querySelector("button[type=submit]");' . "\n";
+$formCode .= '  const statusEl = form.querySelector("[data-form-status]");' . "\n";
 $formCode .= '  const originalText = submitBtn.textContent;' . "\n";
+$formCode .= '  const setStatus = function(message, type) {' . "\n";
+$formCode .= '    if (!statusEl) return;' . "\n";
+$formCode .= '    if (!message) {' . "\n";
+$formCode .= '      statusEl.textContent = "";' . "\n";
+$formCode .= '      statusEl.style.display = "none";' . "\n";
+$formCode .= '      return;' . "\n";
+$formCode .= '    }' . "\n";
+$formCode .= '    statusEl.textContent = message;' . "\n";
+$formCode .= '    statusEl.style.display = "block";' . "\n";
+$formCode .= '    statusEl.style.color = type === "error" ? "#b91c1c" : "#166534";' . "\n";
+$formCode .= '  };' . "\n";
 $formCode .= '  submitBtn.disabled = true;' . "\n";
 $formCode .= '  submitBtn.textContent = "Submitting...";' . "\n";
+$formCode .= '  setStatus("", "success");' . "\n";
 $formCode .= "\n";
 $formCode .= '  const formData = new FormData(form);' . "\n";
 $formCode .= '  const data = {};' . "\n";
@@ -1187,14 +1214,14 @@ $formCode .= '    .then(response => response.json())' . "\n";
 $formCode .= '    .then(result => {' . "\n";
 $formCode .= '      if (result.status === "ok") {' . "\n";
 $formCode .= '        form.reset();' . "\n";
-$formCode .= '        alert("Thank you! Your submission has been received.");' . "\n";
+$formCode .= '        setStatus("Thank you! Your submission has been received.", "success");' . "\n";
 $formCode .= '      } else {' . "\n";
-$formCode .= '        alert("Error: " + (result.message || "Something went wrong"));' . "\n";
+$formCode .= '        setStatus("Error: " + (result.message || "Something went wrong"), "error");' . "\n";
 $formCode .= '      }' . "\n";
 $formCode .= '    })' . "\n";
 $formCode .= '    .catch(error => {' . "\n";
 $formCode .= '      console.error("Error:", error);' . "\n";
-$formCode .= '      alert("Error submitting form. Please try again.");' . "\n";
+$formCode .= '      setStatus("Error submitting form. Please try again.", "error");' . "\n";
 $formCode .= '    })' . "\n";
 $formCode .= '    .finally(() => {' . "\n";
 $formCode .= '      submitBtn.disabled = false;' . "\n";
@@ -1235,16 +1262,26 @@ echo htmlspecialchars($formCode);
 <script type="text/template" id="fieldtype-template">
     <div class="fieldtype-section" data-index="__INDEX__">
         <div class="fieldtype-header">
-            <div class="fieldtype-drag-handle">
-                <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+            <div class="fieldtype-header-main">
+                <div class="fieldtype-drag-handle">
+                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+                </div>
+                <div class="fieldtype-title">
+                    <span class="fieldtype-type">__TYPE__</span>
+                    <span class="fieldtype-name">__NAME__</span>
+                </div>
             </div>
-            <div class="fieldtype-title">
-                <span class="fieldtype-type">__TYPE__</span>
-                <span class="fieldtype-name">__NAME__</span>
+            <div class="fieldtype-header-actions">
+                <button type="button" class="btn-icon field-move-up-btn" title="Move field up" aria-label="Move field up">
+                    <?= birkly_icon('caret-up', ['size' => 16]) ?>
+                </button>
+                <button type="button" class="btn-icon field-move-down-btn" title="Move field down" aria-label="Move field down">
+                    <?= birkly_icon('caret-down', ['size' => 16]) ?>
+                </button>
+                <button type="button" class="btn-icon remove-field-btn" title="Remove field" aria-label="Remove field">
+                    <?= birkly_icon('trash', ['size' => 16]) ?>
+                </button>
             </div>
-            <button type="button" class="btn-icon remove-field-btn" title="Remove field">
-                <?= birkly_icon('trash', ['size' => 16]) ?>
-            </button>
         </div>
         <div class="fieldtype-body">
             <div class="fieldtype-row">
@@ -1347,17 +1384,34 @@ echo htmlspecialchars($formCode);
 
 .fieldtype-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: var(--space-3);
     padding: var(--space-4);
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-light);
+}
+
+.fieldtype-header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+    flex: 1;
 }
 
 .fieldtype-title {
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.fieldtype-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
 }
 
 .fieldtype-type {
@@ -1702,6 +1756,26 @@ echo htmlspecialchars($formCode);
     color: var(--error-600);
 }
 
+.field-move-up-btn,
+.field-move-down-btn {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+}
+
+.field-move-up-btn:hover,
+.field-move-down-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+.field-move-up-btn:disabled,
+.field-move-down-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: transparent;
+}
+
 .remove-field-btn:hover {
     background: var(--error-50);
     border-color: var(--error-300);
@@ -1929,6 +2003,7 @@ echo htmlspecialchars($formCode);
 
 <script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/collection-editor-core.js')) ?>?v=<?= htmlspecialchars(birkly_admin_asset_version('admin/js/collection-editor-core.js'), ENT_QUOTES, 'UTF-8') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 
 <script<?= $__birklyScriptNonceAttr ?? '' ?>>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1988,10 +2063,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const subCollectionFieldsContainer = document.getElementById('sub-collection-fields-container');
     let fieldtypeModalTarget = 'collection';
     const availableFieldtypes = <?php echo json_encode($fieldtypes ?? []); ?>;
+    window.__collectionOriginalSchema = <?php echo json_encode($collectionEditorInitialSchema); ?>;
     window.fieldtypes = availableFieldtypes;
     const fieldtypeModal = document.getElementById('fieldtype-selector-modal');
     const fieldtypeGrid = document.getElementById('fieldtype-grid');
     const closeFieldtypeModal = document.getElementById('close-fieldtype-modal');
+    const collectionEditorCore = window.BirklyCollectionEditorCore && typeof window.BirklyCollectionEditorCore.init === 'function'
+        ? window.BirklyCollectionEditorCore.init({
+            formId: 'collection-form',
+            schemaContainerId: <?= json_encode($isSubCollection ? 'sub-collection-fields-container' : 'fields-container') ?>,
+            schemaSectionSelector: <?= json_encode($isSubCollection ? '.fieldtype-section[data-sub-field-index]' : '.fieldtype-section[data-index]') ?>,
+            reorderContainerId: <?= json_encode($isSubCollection ? '' : 'fields-container') ?>,
+            reorderSectionSelector: '.fieldtype-section[data-index]',
+            reorderIndexAttribute: 'data-index',
+            originalSchema: window.__collectionOriginalSchema,
+            isSubCollection: <?= $isSubCollection ? 'true' : 'false' ?>,
+            blockSubmitWhenActiveElementIds: ['language-input', 'sub-collection-language-input']
+        })
+        : null;
     function getNextSubCollectionSchemaFieldIndex() {
         if (!subCollectionFieldsContainer) return 0;
         return subCollectionFieldsContainer.querySelectorAll('.fieldtype-section[data-sub-field-index]').length;
@@ -2052,6 +2141,9 @@ document.addEventListener('DOMContentLoaded', function() {
         subCollectionFieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
         const newField = subCollectionFieldsContainer.lastElementChild;
         const labelInput = newField ? newField.querySelector('input[name*="[label]"]') : null;
+        if (collectionEditorCore) {
+            collectionEditorCore.notifyStructureChange();
+        }
         if (labelInput) {
             labelInput.focus();
             newField.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2082,11 +2174,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         loadFieldtypeConfig(fieldIndex, selectedFieldtype, fieldElement);
-        updateFieldIndices();
-        if (fieldtypeSorter) {
-            fieldtypeSorter.destroy();
+        if (collectionEditorCore) {
+            collectionEditorCore.syncFieldIndices();
+            collectionEditorCore.refreshFieldDragDrop();
+            collectionEditorCore.updateReorderButtonStates();
+            collectionEditorCore.notifyStructureChange();
         }
-        initFieldtypeDragDrop();
         const displayNameInput = fieldElement.querySelector('input[name="fields[' + fieldIndex + '][label]"]');
         if (displayNameInput) {
             displayNameInput.focus();
@@ -2246,7 +2339,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             // Use the fieldtype name for loading config (consistent with existing code)
             const fieldtypeName = selectedType ? (selectedType.name || selectedType.type) : this.value;
-            loadFieldtypeConfig(fieldIndex, fieldtypeName, fieldElement);
+            const currentFieldIndex = fieldElement.getAttribute('data-index') || fieldIndex;
+            loadFieldtypeConfig(currentFieldIndex, fieldtypeName, fieldElement);
         });
         
         return fieldElement;
@@ -2358,7 +2452,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (selectedType) {
                     fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
                 }
-                loadFieldtypeConfig(fieldIndex, this.value, fieldElement);
+                const currentFieldIndex = fieldElement.getAttribute('data-index') || fieldIndex;
+                loadFieldtypeConfig(currentFieldIndex, this.value, fieldElement);
             });
             // Load config if fieldtype is already selected
             if (select.value) {
@@ -2376,139 +2471,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
-    // Remove field functionality
-    if (fieldsContainer) {
-        fieldsContainer.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-field-btn')) {
-                const fieldSection = e.target.closest('.fieldtype-section');
-                fieldSection.remove();
-                updateFieldIndices();
-            }
-        });
-    }
-    
-    // Function to update field indices after reordering or removal
-    function updateFieldIndices() {
-        if (!fieldsContainer) return;
-        
-        const fields = Array.from(fieldsContainer.querySelectorAll('.fieldtype-section'));
-        fields.forEach(function(field, newIndex) {
-            const oldIndex = field.getAttribute('data-index');
-            
-            // Always update to ensure consistency
-            field.setAttribute('data-index', newIndex);
-            
-            // Update all form field names if index changed
-            if (oldIndex !== String(newIndex)) {
-                // Update input/select/textarea names
-                field.querySelectorAll('input, select, textarea').forEach(function(input) {
-                    if (input.name && input.name.includes('fields[' + oldIndex + ']')) {
-                        input.name = input.name.replace('fields[' + oldIndex + ']', 'fields[' + newIndex + ']');
-                    }
-                });
-                
-                // Update data-field-index attributes
-                const configContainer = field.querySelector('.fieldtype-config');
-                if (configContainer) {
-                    configContainer.setAttribute('data-field-index', newIndex);
-                }
-                
-                // Update any IDs that reference the index
-                field.querySelectorAll('[id*="' + oldIndex + '"]').forEach(function(el) {
-                    if (el.id) {
-                        el.id = el.id.replace(oldIndex, newIndex);
-                    }
-                });
-            }
-        });
-    }
-    
-    // Initialize drag and drop for fieldtypes
-    let fieldtypeSorter = null;
-    function initFieldtypeDragDrop() {
-        if (!fieldsContainer) return;
-        
-        // Destroy existing sorter if any
-        if (fieldtypeSorter) {
-            fieldtypeSorter.destroy();
-        }
-        
-        // Create new sorter
-        fieldtypeSorter = new MouseDragDrop({
-            container: fieldsContainer,
-            itemSelector: '.fieldtype-section',
-            handleSelector: '.fieldtype-drag-handle',
-            onReorder: function(fromIndex, toIndex, placeholder, draggedItem) {
-                // MouseDragDrop now passes placeholder and draggedItem directly
-                // We must do this synchronously because cleanup() runs immediately after onReorder returns
-                
-                if (draggedItem && placeholder && placeholder.parentNode) {
-                    // Remove dragged field from its current position (it's still in DOM at original position)
-                    if (draggedItem.parentNode) {
-                        draggedItem.remove();
-                    }
-                    
-                    // Replace placeholder with dragged item
-                    placeholder.parentNode.insertBefore(draggedItem, placeholder);
-                    placeholder.remove();
-                    
-                    // Update all indices and form field names
-                    updateFieldIndices();
-                }
-            }
-        });
-    }
-    
-    // Initialize drag and drop when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initFieldtypeDragDrop);
-    } else {
-        initFieldtypeDragDrop();
-    }
 
-    
-    // Form submission - collect option data before submit
     const form = document.getElementById('collection-form');
-    
-    // Before form submission, collect option data from input fields
     if (form) {
-        form.addEventListener('submit', function(e) {
-            // Remove any existing hidden inputs for option data to prevent duplicates on re-submission
-            document.querySelectorAll('input[type="hidden"][name*="[option-label][]"], input[type="hidden"][name*="[option-value][]"]').forEach(function(input) {
-                input.remove();
-            });
-            
-            // Collect options for select/radio/multiselect fields
-            document.querySelectorAll('.options-list').forEach(function(optionsList) {
-                const fieldIndex = optionsList.id.replace('options_list_', '');
-                const optionItems = optionsList.querySelectorAll('.option-item');
-                
-                optionItems.forEach(function(item, idx) {
-                    const labelInput = item.querySelector('.option-label');
-                    const valueInput = item.querySelector('.option-value');
-                    
-                    if (labelInput && valueInput) {
-                        // Create hidden inputs for the option data
-                        const labelHidden = document.createElement('input');
-                        labelHidden.type = 'hidden';
-                        labelHidden.name = `fields[${fieldIndex}][option-label][]`;
-                        labelHidden.value = labelInput.value;
-                        
-                        const valueHidden = document.createElement('input');
-                        valueHidden.type = 'hidden';
-                        valueHidden.name = `fields[${fieldIndex}][option-value][]`;
-                        valueHidden.value = valueInput.value;
-                        
-                        form.appendChild(labelHidden);
-                        form.appendChild(valueHidden);
-                    }
-                });
-            });
-        });
-    }
-    if (form) {
-        // Prevent form submission when Enter is pressed in language input - use capture phase
         form.addEventListener('keydown', function(e) {
             if ((e.key === 'Enter' || e.keyCode === 13) && e.target && e.target.id === 'language-input') {
                 e.preventDefault();
@@ -2567,54 +2532,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
         }, true); // Capture phase - catch it before it bubbles
-        
-        form.addEventListener('submit', function(e) {
-            // Check if submit was triggered from language input
-            const activeElement = document.activeElement;
-            if (activeElement && activeElement.id === 'language-input') {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
-            
-            e.preventDefault();
-            
-            const formData = new FormData(form);
-            
-            // Debug: Log CSS URL values before submission
-            for (let [key, value] of formData.entries()) {
-                if (key.includes('css_url')) {
-                }
-            }
-            
-            fetch('/api/admin_collections.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                // Check if response is OK
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        console.error('Server error:', response.status, text);
-                        throw new Error(`Server error: ${response.status} - ${text.substring(0, 200)}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.status === 'ok') {
-                    // Redirect to content page
-                    window.location.href = <?= json_encode(admin_url('content')) ?>;
-                } else {
-                    console.error('API error:', data);
-                    BirklyFeedback.toast('Error: ' + (data.message || 'Unknown error'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error saving collection:', error);
-                BirklyFeedback.toast('Error saving collection: ' + error.message, 'error');
-            });
-        });
     }
     
     // Copy to clipboard functionality
@@ -3234,6 +3151,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 div.remove();
+                if (collectionEditorCore) {
+                    collectionEditorCore.notifyStructureChange();
+                }
             });
         }
         
@@ -3246,6 +3166,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const fieldSection = e.target.closest('.fieldtype-section[data-sub-field-index]');
                 if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
                     fieldSection.remove();
+                    if (collectionEditorCore) {
+                        collectionEditorCore.notifyStructureChange();
+                    }
                 }
             }
         });
@@ -3263,6 +3186,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 nameInput.focus();
                 subCollectionElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
+            if (collectionEditorCore) {
+                collectionEditorCore.notifyStructureChange();
+            }
         });
     }
     
@@ -3274,6 +3200,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const section = btn.closest('.fieldtype-section');
                 if (section && (await BirklyFeedback.confirm('Are you sure you want to remove this sub-collection?', { danger: true }))) {
                     section.remove();
+                    if (collectionEditorCore) {
+                        collectionEditorCore.notifyStructureChange();
+                    }
                 }
             }
             if (e.target.closest('.remove-sub-field-btn')) {
@@ -3281,6 +3210,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const fieldSection = btn.closest('.fieldtype-section[data-sub-field-index]');
                 if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
                     fieldSection.remove();
+                    if (collectionEditorCore) {
+                        collectionEditorCore.notifyStructureChange();
+                    }
                 }
             }
             if (e.target.closest('.add-sub-field-btn')) {
@@ -3333,6 +3265,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     `;
                     container.insertAdjacentHTML('beforeend', fieldHtml);
+                    if (collectionEditorCore) {
+                        collectionEditorCore.notifyStructureChange();
+                    }
                 }
             }
         });

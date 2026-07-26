@@ -663,13 +663,13 @@ function resolveMediaItemUrl(url) {
   }
 
   async function createFolder() {
-    const name = prompt('Enter folder name:');
+    const name = await BirklyFeedback.prompt('', '', { title: 'New folder', placeholder: 'Folder name', confirmLabel: 'Create' });
     if (!name) return;
     await createFolderRequest(name.trim());
   }
 
   async function createSubfolder(basePath) {
-    const name = prompt('Enter subfolder name:');
+    const name = await BirklyFeedback.prompt('', '', { title: 'New subfolder', placeholder: 'Subfolder name', confirmLabel: 'Create' });
     if (!name) return;
     const folderName = basePath ? basePath + '/' + name.trim() : name.trim();
     await createFolderRequest(folderName);
@@ -701,7 +701,11 @@ function resolveMediaItemUrl(url) {
 
   async function renameFolder(folderPath) {
     const currentName = folderPath.split('/').pop();
-    const newName = prompt('Enter new name for folder "' + currentName + '":', currentName);
+    const newName = await BirklyFeedback.prompt('Enter a new name for this folder.', currentName, {
+      title: 'Rename folder',
+      placeholder: 'Folder name',
+      confirmLabel: 'Rename',
+    });
     if (!newName || newName === currentName) return;
 
     const pathParts = folderPath.split('/');
