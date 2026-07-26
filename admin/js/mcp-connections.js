@@ -18,10 +18,18 @@
         const pane = document.getElementById('ai-integrations');
         if (!pane) return false;
         const hash = window.location.hash.replace('#', '');
-        if (hash === 'ai-integrations' || hash === 'ai-connections' || hash === 'mcp-connections') {
+        const aiHashes = [
+            'ai-integrations',
+            'ai-connections',
+            'mcp-connections',
+            'outbound-connections',
+            'inbound-mcp'
+        ];
+        if (aiHashes.indexOf(hash) >= 0) {
             return true;
         }
-        return pane.classList.contains('active');
+        const aiTab = document.getElementById('ai');
+        return !!(aiTab && aiTab.classList.contains('active'));
     }
 
     function initMcpConnections() {
@@ -43,16 +51,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        const mcpTab = document.querySelector('[data-tab="ai-integrations"]');
-        const mcpPane = document.getElementById('ai-integrations');
-
-        if (mcpTab && mcpPane) {
-            maybeInitMcpConnections();
-            mcpTab.addEventListener('click', async function () {
-                setTimeout(initMcpConnections, 100);
-            });
-        }
-
+        maybeInitMcpConnections();
         window.addEventListener('hashchange', maybeInitMcpConnections);
         window.addEventListener('birkly:ai-integrations-tab', maybeInitMcpConnections);
     });

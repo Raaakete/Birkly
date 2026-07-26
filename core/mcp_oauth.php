@@ -698,7 +698,7 @@ function birkly_mcp_oauth_render_authorize_error_page(string $message): void
     header('Content-Type: text/html; charset=utf-8');
     echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Connection denied</title></head><body>';
     echo '<h1>Connection denied</h1><p>' . $message . '</p>';
-    echo '<p><a href="' . htmlspecialchars(birkly_url('/admin/index.php?page=settings#ai-integrations'), ENT_QUOTES, 'UTF-8') . '">Back to Birkly settings</a></p>';
+    echo '<p><a href="' . htmlspecialchars(birkly_url('/admin/index.php?page=settings&tab=ai'), ENT_QUOTES, 'UTF-8') . '">Back to Birkly settings</a></p>';
     echo '</body></html>';
     exit;
 }
