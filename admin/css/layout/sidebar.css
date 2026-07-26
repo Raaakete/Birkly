@@ -60,19 +60,24 @@
   border-image: none;
 }
 
-/* Sidebar Header — logo tile + title (separate surfaces) */
+/* Sidebar Header — logo tile + title
+   Same row height + bottom margin as .admin-topbar so Dashboard
+   lines up with the first line of main page content. */
 .sidebar-header {
+  --admin-chrome-row-height: 64px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  border-bottom: none;
+  border: none;
   border-radius: 0;
   background: transparent;
   color: var(--text-primary, #20221D);
-  padding: var(--space-2, 0.5rem) var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  min-height: 64px;
-  height: auto;
-  margin-bottom: var(--space-2, 0.5rem);
+  padding: 0;
+  height: var(--admin-chrome-row-height);
+  min-height: var(--admin-chrome-row-height);
+  max-height: var(--admin-chrome-row-height);
+  margin: 0 0 var(--space-2, 0.5rem);
+  box-sizing: border-box;
 }
 
 .sidebar-header .logo,
@@ -80,46 +85,51 @@
   display: flex;
   align-items: center;
   gap: var(--space-3, 0.75rem);
-  min-height: 44px;
+  height: 100%;
   padding: 0;
   width: 100%;
+  background: transparent;
 }
 
 .sidebar-header .logo-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
-  border-radius: var(--radius-md, 0.5rem);
+  border-radius: var(--border-radius-s, 4px);
   background: #20221D;
   overflow: hidden;
 }
 
 [data-theme="dark"] .sidebar-header .logo-mark {
   background: #141512;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-header .logo .logo-img,
-.sidebar-header .branding-logo img {
-  width: 28px;
-  height: 28px;
+.sidebar-header .branding-logo img,
+.sidebar-header .logo-mark .logo-img {
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   object-fit: contain;
+  display: block;
 }
 
 .sidebar-header .logo .logo-name,
 .sidebar-header .branding-logo .logo-name {
   color: var(--text-primary, #20221D);
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.125rem;
   line-height: 1.2;
+  letter-spacing: -0.02em;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  background: transparent;
 }
 
 .sidebar-header .h1,
@@ -318,8 +328,7 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
 
   body.sidebar-collapsed .sidebar-header {
     justify-content: center;
-    padding-left: 0;
-    padding-right: 0;
+    padding: 0;
   }
 
   body.sidebar-collapsed .sidebar-header .logo-name {
@@ -333,8 +342,8 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
   }
 
   body.sidebar-collapsed .sidebar-header .logo-mark {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
 
   body.sidebar-collapsed .nav-section-header {
