@@ -32,7 +32,7 @@ $isLocalDev = !empty($is_local_dev);
                 <div class="onboarding-complete-card" id="onboarding-complete-ai-card">
                     <h3><?= __('admin.connect_ai_assistant') ?></h3>
                     <p id="onboarding-complete-ai-copy"><?= $isLocalDev ? __('admin.ai_connect_after_deploy_hint') : __('admin.ai_connect_modal_hint') ?></p>
-                    <a href="<?= admin_url('settings') ?>#ai-integrations" class="btn btn-secondary btn-sm"><?= __('admin.ai_settings') ?></a>
+                    <a href="<?= admin_url('settings') ?>?tab=ai" class="btn btn-secondary btn-sm"><?= __('admin.ai_settings') ?></a>
                 </div>
                 <div class="onboarding-complete-card" id="onboarding-complete-demo-card" style="display: none;">
                     <h3>View demo website</h3>
