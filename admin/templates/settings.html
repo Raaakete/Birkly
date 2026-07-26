@@ -18,73 +18,24 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
 <div class="settings-page">
 
-  <nav class="settings-area-nav" aria-label="<?= htmlspecialchars(__('admin.settings')) ?>">
-    <button type="button" class="settings-area-btn active" data-area="site"><?= __('admin.settings_area_site') ?></button>
-    <button type="button" class="settings-area-btn" data-area="team"><?= __('admin.settings_area_team') ?></button>
-    <button type="button" class="settings-area-btn" data-area="integrations"><?= __('admin.settings_area_integrations') ?></button>
-    <button type="button" class="settings-area-btn" data-area="infrastructure"><?= __('admin.settings_area_infrastructure') ?></button>
-  </nav>
-
   <div class="settings-tabs tabs-v2-root">
     <div class="tabs">
-      <button type="button" class="tab active" data-tab="general" data-area="site">
+      <button type="button" class="tab active" data-tab="general">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
         </svg>
         <?= __('admin.general') ?>
       </button>
-      <button type="button" class="tab" data-tab="users-roles" data-area="team">
-        <?= birkly_icon('user', ['size' => 12]) ?>
-        <?= __('admin.users_and_roles') ?>
-      </button>
-      <button type="button" class="tab" data-tab="security" data-area="team">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-          <circle cx="12" cy="16" r="1"></circle>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
-        <?= __('admin.security') ?>
-      </button>
-      <button type="button" class="tab" data-tab="api" data-area="integrations">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-          <polyline points="22,6 12,13 2,6"></polyline>
-        </svg>
-        <?= __('admin.api') ?>
-      </button>
-      <button type="button" class="tab" data-tab="webhooks" data-area="integrations">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <?= __('admin.webhooks') ?>
-      </button>
-      <button type="button" class="tab" data-tab="redirects" data-area="site">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 7l4 4-4 4"></path>
-          <path d="M3 11h18"></path>
-          <path d="M7 17l-4-4 4-4"></path>
-        </svg>
-        <?= __('admin.redirects') ?>
-      </button>
-      <button type="button" class="tab" data-tab="hosting" data-area="site">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="2" y1="12" x2="22" y2="12"></line>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-        </svg>
-        <?= __('admin.hosting') ?>
-      </button>
-      <button type="button" class="tab" data-tab="domains" data-area="site">
+      <button type="button" class="tab" data-tab="domains">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
-        <?= __('admin.domains') ?>
+        <?= __('admin.domains_and_hosting') ?>
       </button>
-      <button type="button" class="tab" data-tab="project" data-area="site">
+      <button type="button" class="tab" data-tab="project">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 7l9-4 9 4-9 4-9-4z"></path>
           <path d="M3 17l9 4 9-4"></path>
@@ -92,16 +43,35 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.project') ?>
       </button>
-      <button type="button" class="tab" data-tab="activity-log" data-area="team">
+      <button type="button" class="tab" data-tab="redirects">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 7l4 4-4 4"></path>
+          <path d="M3 11h18"></path>
+          <path d="M7 17l-4-4 4-4"></path>
+        </svg>
+        <?= __('admin.redirects') ?>
+      </button>
+      <button type="button" class="tab" data-tab="users-roles">
+        <?= birkly_icon('user', ['size' => 12]) ?>
+        <?= __('admin.team_and_security') ?>
+      </button>
+      <button type="button" class="tab" data-tab="activity-log">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14,2 14,8 20,8"></polyline>
           <line x1="16" y1="13" x2="8" y2="13"></line>
           <line x1="16" y1="17" x2="8" y2="17"></line>
         </svg>
-        <?= __('admin.activity_and_audit_log') ?>
+        <?= __('admin.activity') ?>
       </button>
-      <button type="button" class="tab" data-tab="ai-integrations" data-area="integrations" data-help-topic="mcp-connections">
+      <button type="button" class="tab" data-tab="api">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        <?= __('admin.api_and_webhooks') ?>
+      </button>
+      <button type="button" class="tab" data-tab="ai-integrations" data-help-topic="mcp-connections">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
           <path d="M2 17l10 5 10-5"></path>
@@ -110,19 +80,13 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.ai_integrations') ?>
       </button>
-      <button type="button" class="tab" data-tab="storage" data-area="infrastructure">
+      <button type="button" class="tab" data-tab="storage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
-        <?= __('admin.storage') ?>
-      </button>
-      <button type="button" class="tab" data-tab="monitoring" data-area="infrastructure">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-        </svg>
-        <?= __('admin.monitoring') ?>
+        <?= __('admin.infrastructure') ?>
       </button>
     </div>
 
@@ -312,11 +276,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
         </form>
       </div>
-
-      <!-- Users & Roles Tab -->
+      <!-- Team & security Tab -->
       <div class="tab-pane" id="users-roles">
-        <div class="settings-section">
-          <div class="section-header">
+        <div class="settings-stack team-security-settings">
+<section class="card">
+            <div class="section-header">
             <h2><?= __('admin.user_management') ?></h2>
             <div class="user-actions">
               <button class="btn btn-secondary" onclick="openInviteUserModal()">
@@ -423,10 +387,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <?php endforeach; ?>
             <?php endif; ?>
           </div>
-        </div>
+        </section>
 
-        <div class="settings-section">
-          <div class="section-header">
+        <section class="card">
+            <div class="section-header">
             <h2>Role Management</h2>
             <button class="btn btn-primary" onclick="openAddRoleModal()">
               <?= birkly_icon('plus', ['size' => 16]) ?>
@@ -466,14 +430,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <?php endforeach; ?>
           </div>
-        </div>
-      </div>
-
-      <!-- Security Tab -->
-      <div class="tab-pane" id="security">
-<form id="security-form" class="settings-form">
-          <div class="settings-section">
-            <h2><?= __('admin.session_security') ?></h2>
+        </section>
+          <form id="security-form" class="settings-form">
+<section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.session_security') ?></h2>
+</div>
             <div class="form-row">
               <div class="form-group">
                 <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
@@ -500,20 +462,24 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <span>Require Strong Password</span>
               </label>
             </div>
-          </div>
+          </section>
 
-          <div class="settings-section">
-            <h2><?= __('admin.csrf_protection') ?></h2>
+          <section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.csrf_protection') ?></h2>
+</div>
             <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" id="security-enable-csrf" name="securityEnableCsrf" <?= ($settings['security']['enable_csrf'] ?? true) ? 'checked' : '' ?>>
                 <span><?= __('admin.enable_csrf_protection') ?></span>
               </label>
             </div>
-          </div>
+          </section>
 
-          <div class="settings-section">
-            <h2>Two-factor authentication policy</h2>
+          <section class="card">
+            <div class="section-header">
+  <h2>Two-factor authentication policy</h2>
+</div>
             <p class="settings-help">When enabled, all admin users must set up two-factor authentication. Users without 2FA receive a configurable grace period before login is blocked.</p>
             <div class="form-group">
               <label class="checkbox-label">
@@ -526,10 +492,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
               <p class="settings-help">Days users have to enable 2FA after the policy is turned on (default 30).</p>
             </div>
-          </div>
+          </section>
 
-          <div class="settings-section">
-            <h2><?= __('admin.plugin_security_denylist') ?></h2>
+          <section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.plugin_security_denylist') ?></h2>
+</div>
             <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
             <div class="denylist-add-toolbar settings-section-header-row">
               <div class="form-group settings-form-group--inline">
@@ -552,13 +520,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <div class="spinner">Loading denylist...</div>
               </div>
             </div>
-          </div>
-        </form>
+          </section>
+          </form>
+        </div>
       </div>
-
-      <!-- API Tab -->
+      <!-- API & webhooks Tab -->
       <div class="tab-pane" id="api">
-        <?php
+        <div class="settings-stack api-webhooks-settings">
+<?php
           require_once __DIR__ . '/../../core/birkly_paths.php';
           $apiEndpoint = birkly_url('/api/');
           $domainsFile = __DIR__ . '/../../settings/domains.json';
@@ -567,10 +536,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
               $registeredDomains = json_decode(file_get_contents($domainsFile), true) ?: [];
           }
           $domainCount = is_array($registeredDomains) ? count($registeredDomains) : 0;
-          $domainsTabUrl = admin_url('settings') . '?area=site&tab=domains';
+          $domainsTabUrl = admin_url('settings') . '?tab=domains';
         ?>
-        <div class="settings-section">
-          <h2><?= __('admin.api_information') ?></h2>
+        <section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.api_information') ?></h2>
+</div>
           <p class="settings-help"><?= __('admin.api_info_help') ?></p>
           
           <div class="api-info-grid">
@@ -591,32 +562,50 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <?php endif; ?>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="settings-section">
-          <h2><?= __('admin.api_documentation') ?></h2>
-          <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the Birkly documentation or contact your system administrator.</p>
-        </div>
-      </div>
-
-      <!-- Domains Tab -->
-      <!-- Hosting Tab -->
-      <div class="tab-pane" id="hosting">
-        <div class="settings-stack hosting-settings">
-          <section class="card">
+        <section class="card">
             <div class="section-header">
-              <h2><?= __('admin.hosting_urls') ?></h2>
-              <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
+  <h2><?= __('admin.api_documentation') ?></h2>
+</div>
+          <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the Birkly documentation or contact your system administrator.</p>
+        </section>
+<section class="card">
+            <div class="section-header">
+            <div>
+              <h2><?= __('admin.webhooks') ?></h2>
+              <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
             </div>
-            <div id="hosting-wizard-mount"></div>
-            <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?area=site&tab=project') ?>">Settings → Project</a>.</p>
-          </section>
+            <button type="button" class="btn btn-primary" id="create-webhook"><?= __('admin.create_webhook') ?></button>
+          </div>
+          <div class="table-container">
+            <table class="table" id="webhooks-table">
+              <thead>
+                <tr>
+                  <th><?= __('admin.url') ?></th>
+                  <th><?= __('admin.events') ?></th>
+                  <th><?= __('admin.collections') ?></th>
+                  <th><?= __('admin.status') ?></th>
+                  <th><?= __('admin.last_triggered') ?></th>
+                  <th><?= __('admin.actions') ?></th>
+                </tr>
+              </thead>
+              <tbody id="webhooks-list">
+                <tr>
+                  <td colspan="6" class="text-center">
+                    <div class="spinner">Loading...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
         </div>
       </div>
-
+      <!-- Domains & hosting Tab -->
       <div class="tab-pane" id="domains">
         <div class="settings-stack domains-settings">
-          <section class="card domains-header-card">
+<section class="card domains-header-card">
             <div class="section-header">
               <div class="section-header__copy">
                 <h2><?= __('admin.domain_management_and_analytics') ?></h2>
@@ -659,6 +648,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <p><?= __('admin.loading_domains') ?>...</p>
               </div>
             </div>
+          </section>
+
+          <section class="card hosting-settings">
+            <div class="section-header">
+              <h2><?= __('admin.hosting_urls') ?></h2>
+              <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
+            </div>
+            <div id="hosting-wizard-mount"></div>
+            <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=project') ?>">Settings → Project</a>.</p>
           </section>
         </div>
       </div>
@@ -762,48 +760,13 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
             </div>
             <div class="project-access-links">
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?area=integrations&tab=ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?area=site&tab=domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
             </div>
           </section>
           </div>
         </div>
       </div>
-
-      <!-- Webhooks Tab -->
-      <div class="tab-pane" id="webhooks">
-        <div class="settings-section">
-          <div class="section-header">
-            <div>
-              <h2><?= __('admin.webhooks') ?></h2>
-              <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
-            </div>
-            <button type="button" class="btn btn-primary" id="create-webhook"><?= __('admin.create_webhook') ?></button>
-          </div>
-          <div class="table-container">
-            <table class="table" id="webhooks-table">
-              <thead>
-                <tr>
-                  <th><?= __('admin.url') ?></th>
-                  <th><?= __('admin.events') ?></th>
-                  <th><?= __('admin.collections') ?></th>
-                  <th><?= __('admin.status') ?></th>
-                  <th><?= __('admin.last_triggered') ?></th>
-                  <th><?= __('admin.actions') ?></th>
-                </tr>
-              </thead>
-              <tbody id="webhooks-list">
-                <tr>
-                  <td colspan="6" class="text-center">
-                    <div class="spinner">Loading...</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
       <!-- Redirects Tab -->
       <div class="tab-pane" id="redirects">
         <?php include __DIR__ . '/../partials/redirects-panel.php'; ?>
@@ -855,8 +818,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
         </div>
       </div>
-
-      <!-- Storage Tab -->
+      <!-- Infrastructure Tab -->
       <div class="tab-pane" id="storage">
 <?php
   $storageSettings = $settings['storage'] ?? [];
@@ -870,10 +832,17 @@ include __DIR__ . '/components/sticky-save-bar.php';
   $dbUser = $storageSettings['username'] ?? $storageSettings['db_user'] ?? '';
   $dbPassword = $storageSettings['password'] ?? $storageSettings['db_password'] ?? '';
   $dbPrefix = $storageSettings['prefix'] ?? $storageSettings['db_prefix'] ?? 'birkly_';
+
+  $monitoringSettings = $settings['monitoring'] ?? [];
+  $monitoringAlertEmail = (string) ($monitoringSettings['alert_email'] ?? '');
+  $monitoringAlertWebhookUrl = (string) ($monitoringSettings['alert_webhook_url'] ?? '');
 ?>
-<form id="storage-form" class="settings-form">
-          <div class="settings-section">
-            <h2><?= __('admin.storage_backend') ?></h2>
+        <div class="settings-stack infrastructure-settings">
+          <form id="storage-form" class="settings-form">
+<section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.storage_backend') ?></h2>
+</div>
             <p class="settings-help"><?= __('admin.storage_backend_help') ?></p>
             
             <div class="form-row">
@@ -931,30 +900,25 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             
-            <div class="settings-section settings-section--spaced">
-              <h3><?= __('admin.migration') ?></h3>
+            
+              </section>
+            </div>
+          </div>
+<section class="card">
+            <div class="section-header">
+  <h3><?= __('admin.migration') ?></h3>
+</div>
               <p class="settings-help"><?= __('admin.migration_help') ?></p>
               <div class="form-row">
                 <div class="form-group">
                   <button type="button" class="btn btn-secondary" onclick="migrateStorage()"><?= __('admin.start_migration') ?></button>
-                  <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <!-- Monitoring Tab (P13-M4) -->
-      <div class="tab-pane" id="monitoring">
-<?php
-  $monitoringSettings = $settings['monitoring'] ?? [];
-  $monitoringAlertEmail = (string) ($monitoringSettings['alert_email'] ?? '');
-  $monitoringAlertWebhookUrl = (string) ($monitoringSettings['alert_webhook_url'] ?? '');
-?>
-        <form id="monitoring-form" class="settings-form">
-          <div class="settings-section">
-            <h2><?= __('admin.monitoring_alerts') ?></h2>
+                  <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small></section>
+          </form>
+          <form id="monitoring-form" class="settings-form">
+<section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.monitoring_alerts') ?></h2>
+</div>
             <p class="settings-help"><?= __('admin.monitoring_alerts_help') ?></p>
             <div class="form-row">
               <div class="form-group">
@@ -968,10 +932,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <small class="form-help"><?= __('admin.alert_webhook_url_help') ?></small>
               </div>
             </div>
-          </div>
-        </form>
+          </section>
+          </form>
+        </div>
       </div>
-
       <!-- AI Tab -->
       <div class="tab-pane" id="ai-integrations">
         <div class="ai-integrations-settings">
@@ -1247,8 +1211,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
         </div>
       </div>
-
-
 
     </div>
   </div>

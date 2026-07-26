@@ -558,6 +558,11 @@
         "entries_close_filters": "Close",
         "unpublished": "Unpublished",
         "scheduled": "Scheduled",
-        "trashed": "Trashed"
+        "trashed": "Trashed",
+        "activity": "Activity",
+        "api_and_webhooks": "API & webhooks",
+        "domains_and_hosting": "Domains & hosting",
+        "infrastructure": "Infrastructure",
+        "team_and_security": "Team & security"
     }
 }
