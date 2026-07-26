@@ -531,6 +531,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
             } elseif (in_array($page, [
                 'settings', 'redirects',
                 'users', 'roles', 'plugins', 'webhooks', 'help', 'feedback', 'audit-log', 'activity', 'updates',
+                'ai-presence',
             ], true)) {
                 // Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, etc.
                 try {
