@@ -116,6 +116,67 @@ async function parseUsersApiResponse(response) {
     }
 }
 
+async function prepareAvatarFileForUpload(file) {
+    const MAX_DIMENSION = 512;
+    const JPEG_QUALITY = 0.88;
+    const SKIP_REENCODE_BYTES = 512 * 1024;
+
+    if (!file || !String(file.type || '').startsWith('image/')) {
+        throw new Error('Please choose a JPG, PNG, GIF, or WebP image.');
+    }
+
+    if (file.size <= SKIP_REENCODE_BYTES && file.type === 'image/jpeg') {
+        return file;
+    }
+
+    return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            const img = new Image();
+            img.onload = function () {
+                let width = img.width;
+                let height = img.height;
+                const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height, 1));
+                width = Math.max(1, Math.round(width * scale));
+                height = Math.max(1, Math.round(height * scale));
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error('Could not process image in this browser.'));
+                    return;
+                }
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(function (blob) {
+                    if (!blob) {
+                        reject(new Error('Could not compress image. Try a JPG or PNG file.'));
+                        return;
+                    }
+                    const baseName = String(file.name || 'avatar').replace(/\.[^.]+$/, '') || 'avatar';
+                    resolve(new File([blob], baseName + '.jpg', {
+                        type: 'image/jpeg',
+                        lastModified: Date.now(),
+                    }));
+                }, 'image/jpeg', JPEG_QUALITY);
+            };
+            img.onerror = function () {
+                reject(new Error('Could not read image file. Try a JPG or PNG file.'));
+            };
+            img.src = event.target.result;
+        };
+        reader.onerror = function () {
+            reject(new Error('Could not read image file.'));
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 async function saveAccountProfile() {
     const form = document.getElementById('account-profile-form');
     if (!form) {
@@ -126,9 +187,11 @@ async function saveAccountProfile() {
     const avatarFile = form.querySelector('#account-avatar')?.files?.[0];
 
     if (avatarFile) {
+        const preparedAvatar = await prepareAvatarFileForUpload(avatarFile);
         const formData = new FormData(form);
         formData.set('action', 'update_profile');
         formData.set('_csrf', getCsrfToken());
+        formData.set('avatar', preparedAvatar, preparedAvatar.name);
 
         const profileResponse = await fetch(Birkly.url('/api/users.php?action=update_profile'), {
             method: 'POST',
