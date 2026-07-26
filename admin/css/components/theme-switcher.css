@@ -3,11 +3,14 @@
    ============================================ */
 
 .theme-switcher-wrap {
-  display: contents;
+  display: inline-flex;
+  align-items: stretch;
 }
 
 .theme-switcher-dropdown {
-  display: inline-block;
+  display: inline-flex;
+  align-items: stretch;
+  position: relative;
 }
 
 .theme-switcher-trigger {
