@@ -35,16 +35,18 @@ if ($showVisitProjectButton) {
             Visit project
         </a>
         <?php endif; ?>
-        <?php include __DIR__ . '/theme-switcher.php'; ?>
-        <button class="topbar-icon-btn" type="button" aria-label="Search" id="topbar-search-btn">
-            <?= birkly_icon('magnifying-glass') ?>
-        </button>
-        <div class="dropdown notifications-wrapper">
-            <button class="dropdown-trigger topbar-icon-btn notifications-btn" type="button" id="notifications-btn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
-                <?= birkly_icon('bell') ?>
-                <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+        <div class="topbar-control-group" role="group" aria-label="Workspace controls">
+            <?php include __DIR__ . '/theme-switcher.php'; ?>
+            <button class="topbar-icon-btn" type="button" aria-label="Search" id="topbar-search-btn">
+                <?= birkly_icon('magnifying-glass') ?>
             </button>
+            <div class="dropdown notifications-wrapper">
+                <button class="dropdown-trigger topbar-icon-btn notifications-btn" type="button" id="notifications-btn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+                    <?= birkly_icon('bell') ?>
+                    <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                </button>
+            </div>
+            <?php include __DIR__ . '/user-menu.php'; ?>
         </div>
-        <?php include __DIR__ . '/user-menu.php'; ?>
     </div>
 </header>

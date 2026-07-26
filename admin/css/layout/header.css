@@ -92,6 +92,71 @@
   gap: var(--space-3, 0.75rem);
 }
 
+/* Square button group: theme · search · activity · account */
+.topbar-control-group {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border-medium, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--bg-elevated, #ffffff);
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .topbar-control-group {
+  border-color: var(--border-medium, #3a3d38);
+  background: var(--bg-elevated, #2a2c28);
+}
+
+[data-theme="dark"] .topbar-control-group .topbar-icon-btn,
+[data-theme="dark"] .topbar-control-group .user-menu-trigger {
+  border-right-color: var(--border-light, #3a3d38);
+}
+
+[data-theme="dark"] .topbar-control-group .topbar-icon-btn:hover,
+[data-theme="dark"] .topbar-control-group .user-menu-trigger:hover {
+  background: var(--bg-hover, #343632);
+}
+
+.topbar-control-group .theme-switcher-wrap,
+.topbar-control-group .theme-switcher-dropdown,
+.topbar-control-group .notifications-wrapper,
+.topbar-control-group .topbar-user-menu {
+  display: contents;
+}
+
+.topbar-control-group > .topbar-icon-btn,
+.topbar-control-group .topbar-icon-btn,
+.topbar-control-group .user-menu-trigger {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--border-light, #f3f4f6);
+  background: transparent;
+  box-shadow: none;
+}
+
+.topbar-control-group > .topbar-icon-btn:last-child,
+.topbar-control-group .topbar-user-menu .user-menu-trigger {
+  border-right: none;
+}
+
+.topbar-control-group .topbar-icon-btn:hover,
+.topbar-control-group .user-menu-trigger:hover {
+  background: var(--color-neutral-100, #F8F9F7);
+  box-shadow: none;
+}
+
+.topbar-control-group .user-avatar,
+.topbar-control-group .user-avatar-initials {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 0.375rem);
+}
+
 .admin-topbar .topbar-user-menu .user-menu-info,
 .admin-topbar .topbar-user-menu .user-menu-chevron {
   display: none !important;
@@ -188,11 +253,11 @@
   font-size: 0.875rem;
 }
 
-/* Topbar Icon Button */
+/* Topbar Icon Button (standalone / hamburger); group overrides below */
 .topbar-icon-btn {
   width: 36px;
   height: 36px;
-  border-radius: 999px;
+  border-radius: var(--radius-md, 0.5rem);
   border: 1px solid var(--border-light, #f3f4f6);
   display: inline-flex;
   align-items: center;
@@ -219,10 +284,9 @@
 }
 
 /* Topbar User Menu - Uses Unified Dropdown System */
-/* Override unified dropdown trigger styles for topbar user menu */
 .topbar-user-menu .dropdown-trigger.user-menu-trigger {
   padding: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-md, 0.5rem);
   border: none;
   background: transparent;
   width: 36px;
@@ -239,9 +303,9 @@
 
 .topbar-user-menu .user-avatar,
 .topbar-user-menu .user-avatar-initials {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 0.375rem);
   flex-shrink: 0;
   margin: 0;
   padding: 0;

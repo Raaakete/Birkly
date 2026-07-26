@@ -97,7 +97,9 @@ if (empty($userAvatar)) {
         <div class="sidebar-body">
             <div class="sidebar-header">
                 <div id="brandingLogoSidebar" class="logo branding-logo">
-                    <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo" class="logo-img">
+                    <span class="logo-mark" aria-hidden="true">
+                        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="" class="logo-img">
+                    </span>
                     <span class="logo-name"><?= htmlspecialchars($projectName) ?></span>
                 </div>
             </div>

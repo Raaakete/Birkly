@@ -1201,7 +1201,9 @@ body.dragging-group .group-drop-indicator {
   }
 }
 
-/* Entries mobile filter drawer (P44-M10) */
+/* Entries mobile filter drawer (P44-M10)
+   Desktop must NOT use display:contents — that leaks drawer children into the
+   toolbar even when [hidden], duplicating Search / Status filters. */
 .entries-filter-toggle {
   display: none;
 }
@@ -1213,7 +1215,11 @@ body.dragging-group .group-drop-indicator {
 }
 
 .entries-filter-drawer {
-  display: contents;
+  display: none !important;
+}
+
+.entries-filter-drawer[hidden] {
+  display: none !important;
 }
 
 @media (max-width: 480px) {
@@ -1225,8 +1231,8 @@ body.dragging-group .group-drop-indicator {
     display: none;
   }
 
-  .entries-filter-drawer {
-    display: block;
+  .entries-filter-drawer:not([hidden]) {
+    display: block !important;
     position: fixed;
     inset: 0;
     z-index: 1100;
