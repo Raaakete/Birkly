@@ -3,14 +3,17 @@
    ============================================ */
 
 /* Global admin top bar (user menu, search, notifications)
-   Content row = brand row height. Padding below + border-bottom land at the
-   same Y as the top edge of the first sidebar nav box (Dashboard). Matching
-   margin-bottom then spaces page content the same distance below that line. */
+   Content row = brand row height. Padding below lands at the same Y as the
+   top of the first sidebar nav box (Dashboard). A soft downward-only shadow
+   (stronger in the center, fading to the sides) hangs below; larger margin
+   spaces page content under that cast. */
 .admin-topbar {
   /* Matches .btn outer height: line-height 1.5rem + padding 0.5rem*2 + border 2px */
   --admin-control-size: calc(1.5rem + var(--space-2, 0.5rem) * 2 + 2px);
   --admin-chrome-row-height: 64px;
   --admin-chrome-stack-gap: var(--space-3, 0.75rem);
+  --admin-chrome-content-gap: var(--space-6, 1.5rem);
+  --admin-topbar-shadow-height: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -19,14 +22,40 @@
   min-height: var(--admin-chrome-row-height);
   max-height: none;
   padding: 0 0 var(--admin-chrome-stack-gap);
-  margin: 0 0 var(--admin-chrome-stack-gap);
-  border-bottom: 1px solid var(--border-medium, #e5e7eb);
+  margin: 0 0 var(--admin-chrome-content-gap);
+  border-bottom: none;
   background: transparent;
   box-sizing: content-box;
+  position: relative;
+  z-index: 2;
 }
 
-[data-theme="dark"] .admin-topbar {
-  border-bottom-color: var(--border-medium, #3a3d38);
+/* Soft cast: clipped at the chrome edge, strongest at bottom-center, fades sideways */
+.admin-topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: var(--admin-topbar-shadow-height);
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 72% 100% at 50% 0%,
+    rgba(32, 34, 29, 0.14) 0%,
+    rgba(32, 34, 29, 0.07) 38%,
+    rgba(32, 34, 29, 0.02) 62%,
+    transparent 78%
+  );
+}
+
+[data-theme="dark"] .admin-topbar::after {
+  background: radial-gradient(
+    ellipse 72% 100% at 50% 0%,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.22) 38%,
+    rgba(0, 0, 0, 0.06) 62%,
+    transparent 78%
+  );
 }
 
 .admin-topbar-left {
