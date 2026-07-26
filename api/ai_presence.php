@@ -1,6 +1,6 @@
 <?php
 /**
- * AI Presence admin API (P46).
+ * AI Presence admin API (P46 + P47 Pro).
  */
 
 declare(strict_types=1);
@@ -19,6 +19,7 @@ require_once 'auth.php';
 require_once 'validate.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/ai_presence.php';
+require_once __DIR__ . '/../core/ai_presence_pro.php';
 
 if (!isset($_SESSION['user'])) {
     http_response_code(401);
@@ -27,6 +28,7 @@ if (!isset($_SESSION['user'])) {
 }
 
 $currentUser = $_SESSION['user'];
+$userId = (string) ($currentUser['id'] ?? $currentUser['email'] ?? '');
 $raw = file_get_contents('php://input');
 $input = json_decode($raw ?: '{}', true);
 if (!is_array($input)) {
@@ -41,8 +43,14 @@ if (!birkly_ai_presence_can_view($currentUser)) {
     exit;
 }
 
-$readActions = ['get', 'completeness', 'staleness', 'preview_query', 'setup_prefill', 'public_urls'];
-$writeActions = ['save_draft', 'publish', 'fetch_url_meta', 'suggest', 'accept_suggestion', 'setup_complete', 'setup_skip'];
+$readActions = [
+    'get', 'completeness', 'staleness', 'preview_query', 'setup_prefill', 'public_urls',
+    'list_connections', 'list_versions', 'cms_diff',
+];
+$writeActions = [
+    'save_draft', 'publish', 'fetch_url_meta', 'suggest', 'accept_suggestion', 'accept_suggestions',
+    'setup_complete', 'setup_skip', 'copilot', 'field_ai', 'wizard_generate', 'wizard_apply', 'cms_refresh',
+];
 
 if (in_array($action, $writeActions, true) && !birkly_ai_presence_can_edit($currentUser)) {
     http_response_code(403);
@@ -64,9 +72,30 @@ if ($action === 'get') {
             'next_steps' => birkly_ai_presence_next_steps($draft),
             'public_urls' => birkly_ai_presence_public_urls(),
             'staleness' => birkly_ai_presence_staleness($draft),
+            'cms_diff' => birkly_ai_presence_cms_sync_diff($draft),
+            'ai_connections' => birkly_ai_presence_list_ai_connections_for_user($userId),
             'can_edit' => birkly_ai_presence_can_edit($currentUser),
         ],
     ]);
+    exit;
+}
+
+if ($action === 'list_connections') {
+    echo json_encode([
+        'status' => 'ok',
+        'data' => ['connections' => birkly_ai_presence_list_ai_connections_for_user($userId)],
+    ]);
+    exit;
+}
+
+if ($action === 'list_versions') {
+    echo json_encode(['status' => 'ok', 'data' => ['versions' => birkly_ai_presence_list_versions()]]);
+    exit;
+}
+
+if ($action === 'cms_diff') {
+    $draft = birkly_ai_presence_load_draft();
+    echo json_encode(['status' => 'ok', 'data' => ['diffs' => birkly_ai_presence_cms_sync_diff($draft)]]);
     exit;
 }
 
@@ -102,7 +131,10 @@ if ($action === 'setup_prefill') {
 
 if ($action === 'preview_query') {
     $question = trim((string) ($input['question'] ?? $_GET['question'] ?? ''));
-    $result = birkly_ai_presence_preview_query($question);
+    $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
+    $result = $aiConnectionId !== ''
+        ? birkly_ai_presence_preview_query_pro($question, $aiConnectionId)
+        : birkly_ai_presence_preview_query($question);
     echo json_encode(['status' => 'ok', 'data' => $result]);
     exit;
 }
@@ -162,49 +194,69 @@ if ($action === 'fetch_url_meta') {
     exit;
 }
 
-if ($action === 'suggest') {
+if ($action === 'suggest' || $action === 'copilot') {
     $draft = birkly_ai_presence_load_draft();
-    $suggestions = birkly_ai_presence_rule_suggestions($draft);
-
     $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
-    if ($aiConnectionId !== '' && function_exists('callAiProvider')) {
-        require_once __DIR__ . '/ai_chat.php';
-        require_once __DIR__ . '/ai_helpers.php';
-        require_once __DIR__ . '/storage.php';
-        $storage = new Storage('../users');
-        $conn = $storage->read($aiConnectionId . '.json');
-        if (is_array($conn) && ($conn['type'] ?? '') === 'ai') {
-            $chunks = birkly_ai_presence_gather_cms_context($draft);
-            $context = json_encode($chunks, JSON_UNESCAPED_UNICODE);
-            $prompt = "Analyze this CMS content and suggest brand identity fields as JSON array with objects: id, field (identity.* or positioning.* or claims.new), label, value, source. Do not invent facts.\n\n" . $context;
-            try {
-                $apiKey = decryptApiKey($conn['api_key_encrypted'] ?? '');
-                $response = callAiProvider(
-                    (string) ($conn['provider'] ?? 'openai'),
-                    $apiKey,
-                    birkly_ai_resolve_model((string) ($conn['provider'] ?? 'openai'), $conn['model'] ?? null),
-                    'You suggest structured brand context updates. Return JSON only.',
-                    $prompt,
-                    '',
-                    (string) ($conn['api_url'] ?? '')
-                );
-                if (is_string($response)) {
-                    $decoded = json_decode($response, true);
-                    if (is_array($decoded)) {
-                        foreach ($decoded as $row) {
-                            if (is_array($row) && !empty($row['field'])) {
-                                $suggestions[] = $row;
-                            }
-                        }
-                    }
-                }
-            } catch (Throwable $e) {
-                // Rule-based suggestions still returned
+    $mode = trim((string) ($input['mode'] ?? 'all'));
+    $suggestions = birkly_ai_presence_copilot_suggestions($draft, $aiConnectionId, $mode);
+    echo json_encode(['status' => 'ok', 'data' => ['suggestions' => $suggestions]]);
+    exit;
+}
+
+if ($action === 'field_ai') {
+    $draft = birkly_ai_presence_load_draft();
+    $field = trim((string) ($input['field'] ?? ''));
+    $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
+    if ($field === '' || $aiConnectionId === '') {
+        echo json_encode(['status' => 'error', 'message' => 'field and ai_connection_id required']);
+        exit;
+    }
+    $suggestions = birkly_ai_presence_field_ai($field, $draft, $aiConnectionId);
+    echo json_encode(['status' => 'ok', 'data' => ['suggestions' => $suggestions]]);
+    exit;
+}
+
+if ($action === 'wizard_generate') {
+    $collections = $input['collections'] ?? [];
+    if (!is_array($collections)) {
+        $collections = [];
+    }
+    $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
+    $result = birkly_ai_presence_wizard_generate($collections, $aiConnectionId);
+    echo json_encode(['status' => 'ok', 'data' => $result]);
+    exit;
+}
+
+if ($action === 'wizard_apply') {
+    $draft = birkly_ai_presence_load_draft();
+    $patch = $input['draft_patch'] ?? [];
+    if (is_array($patch) && $patch !== []) {
+        $draft = birkly_ai_presence_merge_draft($patch);
+    }
+    $suggestions = $input['suggestions'] ?? [];
+    if (is_array($suggestions)) {
+        foreach ($suggestions as $suggestion) {
+            if (is_array($suggestion)) {
+                $draft = birkly_ai_presence_apply_suggestion($draft, $suggestion);
             }
         }
     }
+    birkly_ai_presence_save_draft($draft);
+    echo json_encode(['status' => 'ok', 'data' => ['draft' => $draft]]);
+    exit;
+}
 
-    echo json_encode(['status' => 'ok', 'data' => ['suggestions' => $suggestions]]);
+if ($action === 'cms_refresh') {
+    $draft = birkly_ai_presence_load_draft();
+    $refIndex = (int) ($input['ref_index'] ?? -1);
+    $field = isset($input['field']) ? trim((string) $input['field']) : null;
+    if ($refIndex < 0) {
+        echo json_encode(['status' => 'error', 'message' => 'ref_index required']);
+        exit;
+    }
+    $draft = birkly_ai_presence_cms_sync_apply($draft, $refIndex, $field ?: null);
+    birkly_ai_presence_save_draft($draft);
+    echo json_encode(['status' => 'ok', 'data' => ['draft' => $draft]]);
     exit;
 }
 
@@ -216,6 +268,23 @@ if ($action === 'accept_suggestion') {
     }
     $draft = birkly_ai_presence_load_draft();
     $draft = birkly_ai_presence_apply_suggestion($draft, $suggestion);
+    birkly_ai_presence_save_draft($draft);
+    echo json_encode(['status' => 'ok', 'data' => ['draft' => $draft]]);
+    exit;
+}
+
+if ($action === 'accept_suggestions') {
+    $suggestions = $input['suggestions'] ?? [];
+    if (!is_array($suggestions)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid suggestions']);
+        exit;
+    }
+    $draft = birkly_ai_presence_load_draft();
+    foreach ($suggestions as $suggestion) {
+        if (is_array($suggestion)) {
+            $draft = birkly_ai_presence_apply_suggestion($draft, $suggestion);
+        }
+    }
     birkly_ai_presence_save_draft($draft);
     echo json_encode(['status' => 'ok', 'data' => ['draft' => $draft]]);
     exit;

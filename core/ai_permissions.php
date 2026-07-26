@@ -95,6 +95,11 @@ function birkly_ai_action_permission_map(): array
         'write_project_file' => ['manage_project_site'],
         'create_project_file' => ['manage_project_site'],
         'delete_project_file' => ['manage_project_site'],
+
+        // AI Presence public brand context (P47)
+        'get_brand_context' => ['read'],
+        'list_brand_products' => ['read'],
+        'get_brand_claim' => ['read'],
     ];
 }
 
