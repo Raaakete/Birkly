@@ -206,9 +206,10 @@ async function saveAccountProfile() {
 
         const savedAvatar = profileResult.data?.avatar || '';
         if (savedAvatar) {
+            const displayUrl = resolveAvatarDisplayUrl(savedAvatar);
             refreshTopbarAvatars(savedAvatar);
             document.querySelectorAll('.account-settings-page .avatar-preview-wrap img').forEach(function (img) {
-                img.src = savedAvatar;
+                img.src = displayUrl;
             });
         }
 
@@ -247,7 +248,20 @@ async function saveAccountProfile() {
     return profileResult;
 }
 
+function resolveAvatarDisplayUrl(avatarUrl) {
+    if (!avatarUrl) {
+        return '';
+    }
+    if (/^https?:\/\//i.test(avatarUrl) || avatarUrl.startsWith('//')) {
+        return avatarUrl;
+    }
+    return typeof Birkly !== 'undefined' && typeof Birkly.url === 'function'
+        ? Birkly.url(avatarUrl)
+        : avatarUrl;
+}
+
 function refreshTopbarAvatars(avatarUrl) {
+    const displayUrl = resolveAvatarDisplayUrl(avatarUrl);
     const topbarMenu = document.querySelector('.topbar-user-menu');
     if (!topbarMenu) {
         return;
@@ -263,11 +277,11 @@ function refreshTopbarAvatars(avatarUrl) {
 
         if (avatarUrl) {
             if (existingImg) {
-                existingImg.src = avatarUrl;
+                existingImg.src = displayUrl;
                 existingImg.style.display = '';
             } else if (existingInitials) {
                 const img = document.createElement('img');
-                img.src = avatarUrl;
+                img.src = displayUrl;
                 img.alt = existingInitials.textContent || 'User';
                 img.className = 'user-avatar';
                 existingInitials.replaceWith(img);
