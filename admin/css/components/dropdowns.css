@@ -359,13 +359,13 @@ select.collection-filter-select:not([data-custom-select="true"]),
 .collection-actions-bar-right select.collection-filter-select,
 .collection-actions-bar-right .collection-filter-select,
 .collection-actions-bar-right .collection-actions-trigger {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 3.125rem !important;
-  height: 3.125rem !important;
-  padding-left: 0.75rem !important;
-  padding-right: 0.75rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--admin-control-size, 2.625rem);
+  height: var(--admin-control-size, 2.625rem);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
 }
 
 .collection-actions-bar-right .collection-actions-trigger svg {

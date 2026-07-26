@@ -31,7 +31,7 @@ if ($showVisitProjectButton) {
     <div class="admin-topbar-spacer"></div>
     <div class="page-header-actions admin-topbar-actions">
         <?php if ($showVisitProjectButton && $visitProjectUrl !== ''): ?>
-        <a href="<?= htmlspecialchars($visitProjectUrl) ?>" id="admin-visit-project-btn" class="btn btn-secondary admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
+        <a href="<?= htmlspecialchars($visitProjectUrl) ?>" id="admin-visit-project-btn" class="btn btn-secondary btn-sm admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
             Visit project
         </a>
         <?php endif; ?>
