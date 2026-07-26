@@ -132,8 +132,7 @@
   --focus-ring-subtle: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 18%, transparent);
   --focus-ring-tight: 0 0 0 2px color-mix(in srgb, var(--focus-ring-color) 35%, transparent);
   --focus-outline: 2px solid var(--focus-ring-color);
-  --focus-outline-offset: 2px;
-  --text-help: var(--text-secondary, #72746F);
+  --admin-sticky-save-top: calc(var(--admin-chrome-row-height, 64px) + var(--admin-chrome-stack-gap, 0.75rem));
   
   /* ============================================
      Spacing System (rem-based)

@@ -1,10 +1,26 @@
+/* Sticky save bar — settings, entry editor, collection editor */
+
 .main-actions-bar--sticky {
   position: sticky;
-  top: 0;
-  z-index: 30;
+  top: var(--admin-sticky-save-top, 0);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3, 0.75rem);
   margin-bottom: var(--space-6, 1.5rem);
   padding: var(--space-2, 0.5rem) 0;
   background: var(--background-global, #f8f9f7);
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.main-actions-bar--sticky.is-stuck {
+  border-bottom-color: var(--border-medium, #e5e7eb);
+  box-shadow: 0 4px 12px rgba(32, 34, 29, 0.06);
+  padding-top: var(--space-3, 0.75rem);
+  padding-bottom: var(--space-3, 0.75rem);
 }
 
 .main-actions-bar--sticky .main-actions-left,

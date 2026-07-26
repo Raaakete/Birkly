@@ -19,6 +19,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/delegated-actions.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtype-config.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/tabs-a11y.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/sticky-save-bar.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/tabs-v2.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/theme.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/dropdown.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
