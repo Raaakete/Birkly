@@ -3,22 +3,26 @@
    ============================================ */
 
 /* Global admin top bar (user menu, search, notifications)
-   Height is shared with .sidebar-header so Dashboard aligns with page content. */
+   Content row = brand row height. Padding below + border-bottom land at the
+   same Y as the top edge of the first sidebar nav box (Dashboard). Matching
+   margin-bottom then spaces page content the same distance below that line. */
 .admin-topbar {
-  --admin-chrome-row-height: 64px;
   /* Matches .btn outer height: line-height 1.5rem + padding 0.5rem*2 + border 2px */
   --admin-control-size: calc(1.5rem + var(--space-2, 0.5rem) * 2 + 2px);
+  --admin-chrome-row-height: 64px;
+  --admin-chrome-stack-gap: var(--space-3, 0.75rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4, 1rem);
   height: var(--admin-chrome-row-height);
   min-height: var(--admin-chrome-row-height);
-  max-height: var(--admin-chrome-row-height);
-  padding: 0;
-  margin: 0 0 var(--space-2, 0.5rem);
+  max-height: none;
+  padding: 0 0 var(--admin-chrome-stack-gap);
+  margin: 0 0 var(--admin-chrome-stack-gap);
+  border-bottom: 1px solid var(--border-medium, #e5e7eb);
   background: transparent;
-  box-sizing: border-box;
+  box-sizing: content-box;
 }
 
 .admin-topbar-left {
@@ -103,8 +107,10 @@
    Do NOT use display:contents on dropdown wrappers — that drops
    position:relative and parks menus at the viewport corner. */
 .topbar-control-group {
+  --topbar-cell-size: calc(var(--admin-control-size) - 2px);
   display: inline-flex;
   align-items: stretch;
+  width: auto;
   height: var(--admin-control-size);
   border: 1px solid var(--border-medium, #e5e7eb);
   border-radius: var(--border-radius-s, 4px);
@@ -119,32 +125,29 @@
   background: var(--bg-elevated, #2a2c28);
 }
 
-.topbar-control-group .theme-switcher-wrap {
-  display: block;
-  flex: 0 0 calc(var(--admin-control-size) - 2px);
-  width: calc(var(--admin-control-size) - 2px);
-  height: 100%;
-}
-
-.topbar-control-group .theme-switcher-wrap .theme-switcher-dropdown {
-  width: 100%;
-  height: 100%;
-}
-
+.topbar-control-group .theme-switcher-wrap,
 .topbar-control-group .theme-switcher-dropdown,
 .topbar-control-group .notifications-wrapper,
-.topbar-control-group .topbar-user-menu {
+.topbar-control-group .topbar-user-menu,
+.topbar-control-group > .topbar-icon-btn {
   position: relative;
   display: block;
-  flex: 0 0 calc(var(--admin-control-size) - 2px);
-  width: calc(var(--admin-control-size) - 2px);
+  flex: 0 0 var(--topbar-cell-size) !important;
+  width: var(--topbar-cell-size) !important;
+  max-width: var(--topbar-cell-size) !important;
+  min-width: var(--topbar-cell-size) !important;
   height: 100%;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-.topbar-control-group > .topbar-icon-btn {
-  flex: 0 0 calc(var(--admin-control-size) - 2px);
+.topbar-control-group .theme-switcher-wrap .theme-switcher-dropdown {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 100%;
+  flex: none !important;
 }
 
 .topbar-control-group > .topbar-icon-btn,
@@ -153,8 +156,8 @@
 .topbar-control-group .topbar-user-menu .user-menu-trigger {
   width: 100% !important;
   max-width: 100% !important;
-  height: 100% !important;
   min-width: 0 !important;
+  height: 100% !important;
   min-height: 0 !important;
   padding: 0 !important;
   gap: 0 !important;
@@ -165,11 +168,6 @@
   box-shadow: none !important;
   transform: none !important;
   box-sizing: border-box;
-}
-
-.topbar-control-group > .topbar-icon-btn {
-  width: calc(var(--admin-control-size) - 2px) !important;
-  max-width: calc(var(--admin-control-size) - 2px) !important;
 }
 
 [data-theme="dark"] .topbar-control-group .topbar-icon-btn,
@@ -609,12 +607,22 @@
     touch-action: manipulation;
   }
 
+  .admin-topbar .topbar-control-group .theme-switcher-wrap,
+  .admin-topbar .topbar-control-group .notifications-wrapper,
+  .admin-topbar .topbar-control-group .topbar-user-menu,
+  .admin-topbar .topbar-control-group > .topbar-icon-btn {
+    flex-basis: var(--topbar-cell-size) !important;
+    width: var(--topbar-cell-size) !important;
+    max-width: var(--topbar-cell-size) !important;
+    min-width: var(--topbar-cell-size) !important;
+  }
+
   .admin-topbar .topbar-control-group .topbar-icon-btn,
   .admin-topbar .topbar-control-group .user-menu-trigger {
-    width: calc(var(--admin-control-size) - 2px);
-    min-width: calc(var(--admin-control-size) - 2px);
-    height: 100%;
-    min-height: 0;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
   }
 
   .admin-topbar .theme-switcher--segmented {

@@ -11,6 +11,9 @@
   max-width: 100%;
   overflow-x: hidden;
   --admin-shell-edge-padding: var(--space-10, 2.5rem);
+  /* Shared chrome rhythm: brand/topbar row → gap → divider/nav top → gap → content */
+  --admin-chrome-row-height: 64px;
+  --admin-chrome-stack-gap: var(--space-3, 0.75rem);
 }
 
 .app {
@@ -65,7 +68,6 @@
    lines up with the first line of main page content.
    Use #admin-sidebar so page CSS (e.g. media.css) cannot restyle this. */
 #admin-sidebar .sidebar-header {
-  --admin-chrome-row-height: 64px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -74,10 +76,11 @@
   background: transparent !important;
   color: var(--text-primary, #20221D);
   padding: 0 !important;
-  height: var(--admin-chrome-row-height) !important;
-  min-height: var(--admin-chrome-row-height) !important;
-  max-height: var(--admin-chrome-row-height) !important;
-  margin: 0 0 var(--space-2, 0.5rem) !important;
+  height: var(--admin-chrome-row-height, 64px) !important;
+  min-height: var(--admin-chrome-row-height, 64px) !important;
+  max-height: var(--admin-chrome-row-height, 64px) !important;
+  /* Gap below brand = space above first nav box (Dashboard) */
+  margin: 0 0 var(--admin-chrome-stack-gap, 0.75rem) !important;
   box-sizing: border-box;
 }
 
@@ -148,7 +151,7 @@
   color: var(--brand-primary);
 }
 
-/* Navigation Links */
+/* Navigation Links — first group top aligns with topbar border-bottom */
 .nav-links {
   list-style: none;
   padding: 0;
@@ -156,6 +159,10 @@
   background: var(--bg-elevated, #ffffff);
   border-radius: var(--border-radius-s, 4px);
   overflow: hidden;
+}
+
+#admin-sidebar .sidebar-nav > .nav-links:first-child {
+  margin-top: 0;
 }
 
 .nav-item {
