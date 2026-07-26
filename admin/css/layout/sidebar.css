@@ -13,7 +13,8 @@
   overflow-y: visible;
   --admin-shell-edge-padding: var(--space-10, 2.5rem);
   /* Shared chrome rhythm: brand/topbar row → gap → divider/nav top → gap → content */
-  --admin-chrome-row-height: 64px;
+  --admin-chrome-tile-size: 2.5rem;
+  --admin-chrome-row-height: var(--admin-chrome-tile-size);
   --admin-chrome-stack-gap: var(--space-3, 0.75rem);
 }
 
@@ -102,8 +103,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--admin-chrome-tile-size, 2.5rem);
+  height: var(--admin-chrome-tile-size, 2.5rem);
   flex-shrink: 0;
   border-radius: var(--border-radius-s, 4px);
   background: #20221D;
@@ -353,8 +354,8 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
   }
 
   body.sidebar-collapsed #admin-sidebar .sidebar-header .logo-mark {
-    width: 36px;
-    height: 36px;
+    width: var(--admin-chrome-tile-size, 2.5rem);
+    height: var(--admin-chrome-tile-size, 2.5rem);
   }
 
   body.sidebar-collapsed .nav-section-header {
