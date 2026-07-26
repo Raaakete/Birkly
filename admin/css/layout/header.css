@@ -2,16 +2,23 @@
    Header & Breadcrumbs Layout Component
    ============================================ */
 
-/* Global admin top bar (user menu, search, notifications) */
+/* Global admin top bar (user menu, search, notifications)
+   Height is shared with .sidebar-header so Dashboard aligns with page content. */
 .admin-topbar {
+  --admin-chrome-row-height: 64px;
+  /* Matches .btn outer height: line-height 1.5rem + padding 0.5rem*2 + border 2px */
+  --admin-control-size: calc(1.5rem + var(--space-2, 0.5rem) * 2 + 2px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4, 1rem);
-  min-height: 64px;
+  height: var(--admin-chrome-row-height);
+  min-height: var(--admin-chrome-row-height);
+  max-height: var(--admin-chrome-row-height);
   padding: 0;
   margin: 0 0 var(--space-2, 0.5rem);
   background: transparent;
+  box-sizing: border-box;
 }
 
 .admin-topbar-left {
@@ -92,15 +99,19 @@
   gap: var(--space-3, 0.75rem);
 }
 
-/* Square button group: theme · search · activity · account */
+/* Square button group: theme · search · activity · account
+   Do NOT use display:contents on dropdown wrappers — that drops
+   position:relative and parks menus at the viewport corner. */
 .topbar-control-group {
   display: inline-flex;
   align-items: stretch;
+  height: var(--admin-control-size);
   border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--radius-md, 0.5rem);
+  border-radius: var(--border-radius-s, 4px);
   background: var(--bg-elevated, #ffffff);
   overflow: visible;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 [data-theme="dark"] .topbar-control-group {
@@ -108,38 +119,41 @@
   background: var(--bg-elevated, #2a2c28);
 }
 
-[data-theme="dark"] .topbar-control-group .topbar-icon-btn,
-[data-theme="dark"] .topbar-control-group .user-menu-trigger {
-  border-right-color: var(--border-light, #3a3d38);
+.topbar-control-group .theme-switcher-wrap {
+  display: inline-flex;
+  align-items: stretch;
 }
 
-[data-theme="dark"] .topbar-control-group .topbar-icon-btn:hover,
-[data-theme="dark"] .topbar-control-group .user-menu-trigger:hover {
-  background: var(--bg-hover, #343632);
-}
-
-.topbar-control-group .theme-switcher-wrap,
 .topbar-control-group .theme-switcher-dropdown,
 .topbar-control-group .notifications-wrapper,
 .topbar-control-group .topbar-user-menu {
-  display: contents;
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  flex: 0 0 auto;
 }
 
 .topbar-control-group > .topbar-icon-btn,
 .topbar-control-group .topbar-icon-btn,
 .topbar-control-group .user-menu-trigger {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: calc(var(--admin-control-size) - 2px);
+  height: 100%;
+  min-width: calc(var(--admin-control-size) - 2px);
+  min-height: 0;
+  padding: 0;
   border: none;
   border-radius: 0;
   border-right: 1px solid var(--border-light, #f3f4f6);
   background: transparent;
   box-shadow: none;
+  transform: none;
 }
 
-.topbar-control-group > .topbar-icon-btn:last-child,
+[data-theme="dark"] .topbar-control-group .topbar-icon-btn,
+[data-theme="dark"] .topbar-control-group .user-menu-trigger {
+  border-right-color: var(--border-light, #3a3d38);
+}
+
 .topbar-control-group .topbar-user-menu .user-menu-trigger {
   border-right: none;
 }
@@ -148,13 +162,39 @@
 .topbar-control-group .user-menu-trigger:hover {
   background: var(--color-neutral-100, #F8F9F7);
   box-shadow: none;
+  transform: none;
+  scale: none;
+}
+
+[data-theme="dark"] .topbar-control-group .topbar-icon-btn:hover,
+[data-theme="dark"] .topbar-control-group .user-menu-trigger:hover {
+  background: var(--bg-hover, #343632);
+}
+
+.topbar-control-group .topbar-icon-btn:active,
+.topbar-control-group .user-menu-trigger:active {
+  transform: none;
+}
+
+/* Avatar fills the last cell edge-to-edge */
+.topbar-control-group .user-menu-trigger {
+  overflow: hidden;
 }
 
 .topbar-control-group .user-avatar,
 .topbar-control-group .user-avatar-initials {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm, 0.375rem);
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.topbar-control-group .dropdown-menu {
+  position: absolute;
+  top: calc(100% + var(--space-2, 0.5rem));
+  bottom: auto;
+  z-index: 1200;
 }
 
 .admin-topbar .topbar-user-menu .user-menu-info,
@@ -253,11 +293,11 @@
   font-size: 0.875rem;
 }
 
-/* Topbar Icon Button (standalone / hamburger); group overrides below */
+/* Topbar Icon Button (standalone / hamburger); group overrides above */
 .topbar-icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md, 0.5rem);
+  width: var(--admin-control-size, 2.5rem);
+  height: var(--admin-control-size, 2.5rem);
+  border-radius: var(--border-radius-s, 4px);
   border: 1px solid var(--border-light, #f3f4f6);
   display: inline-flex;
   align-items: center;
@@ -265,11 +305,11 @@
   background: var(--bg-elevated, #ffffff);
   cursor: pointer;
   color: var(--text-secondary, #72746F);
+  box-sizing: border-box;
   transition: background-color var(--transition-fast, 150ms ease), 
               color var(--transition-fast, 150ms ease), 
               box-shadow var(--transition-fast, 150ms ease), 
-              border-color var(--transition-fast, 150ms ease), 
-              transform var(--transition-fast, 150ms ease);
+              border-color var(--transition-fast, 150ms ease);
 }
 
 .topbar-icon-btn:hover {
@@ -279,20 +319,16 @@
   box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
 }
 
-.topbar-icon-btn:active {
-  transform: translateY(1px);
-}
-
 /* Topbar User Menu - Uses Unified Dropdown System */
 .topbar-user-menu .dropdown-trigger.user-menu-trigger {
   padding: 0;
-  border-radius: var(--radius-md, 0.5rem);
+  border-radius: var(--border-radius-s, 4px);
   border: none;
   background: transparent;
-  width: 36px;
-  height: 36px;
-  min-height: auto;
-  min-width: 36px;
+  width: var(--admin-control-size, 2.5rem);
+  height: var(--admin-control-size, 2.5rem);
+  min-height: 0;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -303,9 +339,9 @@
 
 .topbar-user-menu .user-avatar,
 .topbar-user-menu .user-avatar-initials {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm, 0.375rem);
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
   flex-shrink: 0;
   margin: 0;
   padding: 0;
@@ -530,12 +566,21 @@
     overflow: hidden;
   }
 
-  .admin-topbar .topbar-icon-btn {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+  /* Standalone topbar icons only — do not override .topbar-control-group cells */
+  .admin-topbar-actions > .topbar-icon-btn {
+    width: var(--admin-control-size);
+    height: var(--admin-control-size);
+    min-width: var(--admin-control-size);
+    min-height: var(--admin-control-size);
     touch-action: manipulation;
+  }
+
+  .admin-topbar .topbar-control-group .topbar-icon-btn,
+  .admin-topbar .topbar-control-group .user-menu-trigger {
+    width: calc(var(--admin-control-size) - 2px);
+    min-width: calc(var(--admin-control-size) - 2px);
+    height: 100%;
+    min-height: 0;
   }
 
   .admin-topbar .theme-switcher--segmented {
