@@ -115,11 +115,14 @@ function birkly_ai_presence_default_draft(): array
         'claims' => [],
         'evidence' => [],
         'media_context' => [],
+        'products_services' => [],
         'relationships' => [],
         'publication_settings' => [
             'enabled' => false,
             'public_path' => '/.well-known/brand-context.json',
             'include_json_ld' => true,
+            'redact_public_fields' => [],
+            'public_views_enabled' => true,
         ],
     ];
 }
@@ -152,6 +155,17 @@ function birkly_ai_presence_normalize_draft(array $draft): array
     }
     if (!is_array($merged['media_context'])) {
         $merged['media_context'] = [];
+    }
+    if (!is_array($merged['products_services'])) {
+        $merged['products_services'] = [];
+    }
+    if (!is_array($merged['relationships'])) {
+        $merged['relationships'] = [];
+    }
+
+    if (is_file(__DIR__ . '/ai_presence_pro.php')) {
+        require_once __DIR__ . '/ai_presence_pro.php';
+        $merged = birkly_ai_presence_pro_normalize($merged);
     }
 
     return $merged;
@@ -368,6 +382,26 @@ function birkly_ai_presence_completeness(?array $draft = null): array
         'tab' => 'context',
     ];
 
+    $products = is_array($draft['products_services'] ?? null) ? count($draft['products_services']) : 0;
+    $items[] = [
+        'key' => 'products',
+        'label' => 'Products & services',
+        'score' => $products > 0 ? 10 : 0,
+        'max' => 10,
+        'complete' => $products > 0,
+        'tab' => 'products',
+    ];
+
+    $terms = $draft['communication_guidance']['preferred_terms'] ?? [];
+    $items[] = [
+        'key' => 'terminology',
+        'label' => 'Terminology & voice',
+        'score' => (is_array($terms) && count($terms) > 0) ? 5 : 0,
+        'max' => 5,
+        'complete' => is_array($terms) && count($terms) > 0,
+        'tab' => 'context',
+    ];
+
     $enabled = !empty($pub['enabled']);
     $items[] = [
         'key' => 'publishing',
@@ -413,6 +447,8 @@ function birkly_ai_presence_next_steps(?array $draft = null): array
             'claims' => 'Add claims with supported evidence.',
             'evidence' => 'Attach evidence sources to support your claims.',
             'positioning' => 'Describe what your brand is best known for.',
+            'products' => 'Add at least one product or service with descriptions.',
+            'terminology' => 'Define preferred terms and voice guidance.',
             'publishing' => 'Enable publishing when ready to go live.',
             default => 'Complete: ' . $label,
         };
@@ -551,7 +587,12 @@ function birkly_ai_presence_build_public_export(array $snapshot, int $version, s
     $export['schema_version'] = BIRKLY_AI_PRESENCE_SCHEMA_VERSION;
 
     if (!empty($snapshot['publication_settings']['include_json_ld'])) {
-        $export['json_ld'] = birkly_ai_presence_export_json_ld($snapshot);
+        if (function_exists('birkly_ai_presence_export_json_ld_pro')) {
+            require_once __DIR__ . '/ai_presence_pro.php';
+            $export['json_ld'] = birkly_ai_presence_export_json_ld_pro($snapshot);
+        } else {
+            $export['json_ld'] = birkly_ai_presence_export_json_ld($snapshot);
+        }
     }
 
     return $export;
@@ -1015,6 +1056,15 @@ function birkly_ai_presence_rule_suggestions(array $draft): array
  */
 function birkly_ai_presence_apply_suggestion(array $draft, array $suggestion): array
 {
+    if (is_file(__DIR__ . '/ai_presence_pro.php')) {
+        require_once __DIR__ . '/ai_presence_pro.php';
+        $field = (string) ($suggestion['field'] ?? '');
+        if (in_array($field, ['products_services.new', 'relationships.new'], true)
+            || str_starts_with($field, 'communication_guidance.')) {
+            return birkly_ai_presence_apply_suggestion_pro($draft, $suggestion);
+        }
+    }
+
     $field = (string) ($suggestion['field'] ?? '');
     $value = $suggestion['value'] ?? '';
 
