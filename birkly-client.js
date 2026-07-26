@@ -1898,7 +1898,7 @@
 
 
     /* BIRKLY_RENDER_V3_INLINE */
-    /**
+/**
  * Birkly Template Engine v3
  * String-based renderer — parse → render pipeline (parity with StudioTemplateEngine.php).
  */
@@ -2502,37 +2502,167 @@
         return requests;
     }
 
-    function discoverPageRegions(doc) {
+    function isExplicitRegionElement(el) {
+        if (!el) return false;
+        const tag = String(el.tagName || '').toUpperCase();
+        if (tag === 'BIRKLY-REGION') return true;
+        if (typeof el.hasAttribute === 'function' && el.hasAttribute('data-birkly-region')) {
+            return true;
+        }
+        if (typeof el.getAttribute === 'function' && el.getAttribute('data-birkly-region') !== null) {
+            return true;
+        }
+        return false;
+    }
+
+    function isRegionProcessed(el) {
+        if (!el || typeof el.getAttribute !== 'function') return false;
+        return el.getAttribute('data-birkly-processed') === '1';
+    }
+
+    /**
+     * Discover outermost Light DOM template regions.
+     * @param {Document} doc
+     * @param {Element|null} [rootArg] optional subtree root (if the root itself is a region, include it)
+     * @param {{ force?: boolean }} [options]
+     */
+    function discoverPageRegions(doc, rootArg, options) {
         const regions = [];
-        const root = doc.body || doc.documentElement;
-        if (!root || !root.querySelectorAll) {
+        const opts = options && typeof options === 'object' ? options : {};
+        const force = !!opts.force;
+        const docRoot = (doc && (doc.body || doc.documentElement)) || null;
+        const searchRoot = rootArg || docRoot;
+        if (!searchRoot) {
             return regions;
         }
 
         const candidates = [];
-        root.querySelectorAll('*').forEach((el) => {
+        const consider = (el) => {
+            if (!el || !el.tagName) return;
             const tag = String(el.tagName || '').toUpperCase();
             if (tag === 'SCRIPT' || tag === 'STYLE') return;
+            if (!force && isRegionProcessed(el)) return;
             const template = el.innerHTML || '';
-            if (hasTemplateSyntax(template)) {
+            if (isExplicitRegionElement(el) || hasTemplateSyntax(template)) {
                 candidates.push(el);
             }
+        };
+
+        // Scoped root: if the root element itself is a region, process it.
+        if (rootArg && rootArg.tagName) {
+            consider(rootArg);
+        }
+
+        if (typeof searchRoot.querySelectorAll === 'function') {
+            searchRoot.querySelectorAll('*').forEach(consider);
+        }
+
+        const explicit = candidates.filter(isExplicitRegionElement);
+        const remaining = candidates.filter((el) => {
+            if (isExplicitRegionElement(el)) return true;
+            // Inside an explicit region → not a separate region.
+            if (explicit.some((ex) => ex !== el && typeof ex.contains === 'function' && ex.contains(el))) {
+                return false;
+            }
+            // Ancestor of an explicit region → demote; the attributed element is the region root.
+            if (explicit.some((ex) => ex !== el && typeof el.contains === 'function' && el.contains(ex))) {
+                return false;
+            }
+            return true;
         });
 
-        const outermost = candidates.filter((el) =>
-            !candidates.some((other) => other !== el && other.contains(el))
+        const outermost = remaining.filter((el) =>
+            !remaining.some((other) => other !== el && typeof other.contains === 'function' && other.contains(el))
         );
 
         outermost.forEach((el) => {
             regions.push({ element: el, template: el.innerHTML || '' });
         });
 
-        const title = doc.querySelector('title');
-        if (title && hasTemplateSyntax(title.textContent || '')) {
-            regions.push({ element: title, template: title.textContent || '', isText: true });
+        // <title> only on full-document discovery (not scoped subtree passes)
+        if (!rootArg && doc && typeof doc.querySelector === 'function') {
+            const title = doc.querySelector('title');
+            if (title && !(!force && isRegionProcessed(title)) && hasTemplateSyntax(title.textContent || '')) {
+                regions.push({ element: title, template: title.textContent || '', isText: true });
+            }
         }
 
         return regions;
+    }
+
+    /** Minimal default markup for empty <birkly-region> entry mode. */
+    const REGION_DEFAULT_TEMPLATES = {
+        'site_elements:header':
+            "{from 'site_elements' get entry 'header'}" +
+            '<header class="birkly-site-header">{\'content\'}</header>' +
+            '{endget}',
+        'site_elements:footer':
+            "{from 'site_elements' get entry 'footer'}" +
+            '<footer class="birkly-site-footer">{\'content\'}</footer>' +
+            '{endget}',
+        'site_elements:navigation':
+            "{from 'site_elements' get entry 'navigation'}" +
+            '<nav class="birkly-site-nav">{\'content\'}</nav>' +
+            '{endget}'
+    };
+
+    function getRegionDefaultTemplate(collection, entry) {
+        const col = String(collection || '').trim();
+        const slug = String(entry || '').trim();
+        if (!col || !slug) return '';
+        const key = col + ':' + slug;
+        if (Object.prototype.hasOwnProperty.call(REGION_DEFAULT_TEMPLATES, key)) {
+            return REGION_DEFAULT_TEMPLATES[key];
+        }
+        return (
+            "{from '" + col + "' get entry '" + slug + "'}" +
+            "{title}{'content'}" +
+            '{endget}'
+        );
+    }
+
+    /**
+     * Build the Light DOM template string for a region from attrs + optional child HTML.
+     * Child HTML always wins as the body; missing {from}/{for} wrappers are added when needed.
+     */
+    function buildRegionTemplate(opts) {
+        const options = opts && typeof opts === 'object' ? opts : {};
+        const collection = String(options.collection || '').trim();
+        const entry = String(options.entry || '').trim();
+        const isList = !!options.list;
+        const ordered = String(options.ordered || '').trim();
+        const childHtml = options.childHtml != null ? String(options.childHtml) : '';
+        const trimmedChild = childHtml.trim();
+
+        if (isList) {
+            if (!collection) return trimmedChild;
+            if (trimmedChild) {
+                if (/\{for\s+/i.test(trimmedChild)) return trimmedChild;
+                let open = "{for each entry in '" + collection + "'";
+                if (ordered) open += ' ordered by ' + ordered;
+                open += '}';
+                return open + childHtml + '{endfor}';
+            }
+            let loop = "{for each entry in '" + collection + "'";
+            if (ordered) loop += ' ordered by ' + ordered;
+            loop += '}<article class="birkly-region-item"><h2>{title}</h2></article>{endfor}';
+            return loop;
+        }
+
+        if (!collection || !entry) {
+            return trimmedChild;
+        }
+
+        if (trimmedChild) {
+            if (/\{from\s+/i.test(trimmedChild)) return trimmedChild;
+            return (
+                "{from '" + collection + "' get entry '" + entry + "'}" +
+                childHtml +
+                '{endget}'
+            );
+        }
+
+        return getRegionDefaultTemplate(collection, entry);
     }
 
     const engine = {
@@ -2541,6 +2671,11 @@
         hasTemplateSyntax,
         collectBundleRequests,
         discoverPageRegions,
+        isExplicitRegionElement,
+        isRegionProcessed,
+        REGION_DEFAULT_TEMPLATES,
+        getRegionDefaultTemplate,
+        buildRegionTemplate,
         resolveLoopItems,
         evaluateCondition,
         escapeHtml
@@ -2668,7 +2803,66 @@
         return data;
     }
 
-    async function processTemplatesV3() {
+    function normalizeProcessTemplatesOptions(options) {
+        if (options == null) {
+            return { root: null, silent: false, force: false };
+        }
+        // Backward compatible: treat a bare Element as { root: element }
+        if (typeof Element !== 'undefined' && options instanceof Element) {
+            return { root: options, silent: false, force: false };
+        }
+        if (typeof options !== 'object') {
+            return { root: null, silent: false, force: false };
+        }
+        return {
+            root: options.root || null,
+            silent: !!options.silent,
+            force: !!options.force
+        };
+    }
+
+    function regionProcessDetail(el) {
+        const collection = (el && typeof el.getAttribute === 'function')
+            ? (el.getAttribute('collection') || el.getAttribute('data-birkly-collection') || undefined)
+            : undefined;
+        const entry = (el && typeof el.getAttribute === 'function')
+            ? (el.getAttribute('entry') || el.getAttribute('data-birkly-entry') || undefined)
+            : undefined;
+        const isList = el && typeof el.hasAttribute === 'function' && (
+            el.hasAttribute('list') || el.getAttribute('data-birkly-list') !== null
+        );
+        let mode = 'template';
+        if (isList) mode = 'list';
+        else if (entry) mode = 'entry';
+        return {
+            element: el,
+            collection: collection || undefined,
+            entry: entry || undefined,
+            mode: mode
+        };
+    }
+
+    function markRegionProcessed(el) {
+        if (!el || typeof el.setAttribute !== 'function') return;
+        el.setAttribute('data-birkly-processed', '1');
+    }
+
+    function emitRegionProcessed(el) {
+        if (!el || typeof el.dispatchEvent !== 'function') return;
+        try {
+            el.dispatchEvent(new CustomEvent('birkly:region-processed', {
+                bubbles: true,
+                detail: regionProcessDetail(el)
+            }));
+        } catch (e) { /* ignore */ }
+    }
+
+    async function processTemplatesV3(options) {
+        const opts = normalizeProcessTemplatesOptions(options);
+        const root = opts.root;
+        const silent = opts.silent;
+        const force = opts.force;
+
         const siteElements = await getAllSiteElements();
         urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
@@ -2687,17 +2881,35 @@
             collection = 'blog';
         }
 
-        const regions = Birkly.render.discoverPageRegions(document);
+        const regions = Birkly.render.discoverPageRegions(document, root || undefined, { force: force });
         if (!regions.length) {
-            console.log('[Birkly] v3: no template regions found');
-            return;
+            if (!silent) {
+                console.log('[Birkly] v3: no template regions found');
+            }
+            return { regions: [] };
+        }
+
+        // Prepare <birkly-region> / attributed hosts before bundle collect so defaults are included.
+        for (const region of regions) {
+            const el = region.element;
+            if (!el || region.isText) continue;
+            const tag = String(el.tagName || '').toUpperCase();
+            const isRegionHost = tag === 'BIRKLY-REGION' || (
+                typeof el.hasAttribute === 'function' &&
+                el.hasAttribute('data-birkly-region') &&
+                (el.hasAttribute('collection') || el.hasAttribute('list'))
+            );
+            if (isRegionHost) {
+                prepareBirklyRegionHost(el);
+                region.template = el.innerHTML || '';
+            }
         }
 
         const combinedHtml = regions.map((r) => r.template).join('\n');
         const bundleReqs = Birkly.render.collectBundleRequests(combinedHtml);
         if (bundleReqs.length) {
             await loadPageBundle(bundleReqs);
-        } else if (typeof collectBundleRequests === 'function') {
+        } else if (!root && typeof collectBundleRequests === 'function') {
             const fallbackReqs = collectBundleRequests();
             if (fallbackReqs.length) await loadPageBundle(fallbackReqs);
         }
@@ -2739,12 +2951,16 @@
             } else {
                 region.element.innerHTML = rendered;
             }
+            markRegionProcessed(region.element);
+            emitRegionProcessed(region.element);
         }
 
-        if (data.title) {
+        // Title updates only on full-document process
+        if (!root && data.title) {
             const titleEl = document.querySelector('title');
             if (titleEl && /\{/.test(titleEl.textContent || '')) {
                 titleEl.textContent = Birkly.render.render(titleEl.textContent, data);
+                markRegionProcessed(titleEl);
             }
             if (/\{/.test(document.title)) {
                 document.title = Birkly.render.render(document.title, data);
@@ -2756,12 +2972,151 @@
             document.dispatchEvent(new CustomEvent('birkly:reveals-refresh'));
         } catch (e) { /* ignore */ }
 
-        console.log('[Birkly] v3: rendered', regions.length, 'regions');
+        if (!silent) {
+            console.log('[Birkly] v3: rendered', regions.length, 'regions');
+        }
+
+        if (!root) {
+            try {
+                document.dispatchEvent(new CustomEvent('birkly:templates-processed', {
+                    detail: { regions: regions.length, scoped: false }
+                }));
+            } catch (e) { /* ignore */ }
+        }
+
+        return { regions: regions };
     }
 
-    async function processTemplates() {
-        await processTemplatesV3();
+    /**
+     * Process Light DOM template regions.
+     * @param {{ root?: Element, silent?: boolean, force?: boolean }|Element} [options]
+     *   - root: limit discovery/render to a subtree (region element itself is included)
+     *   - silent: suppress console logs
+     *   - force: re-process regions marked data-birkly-processed
+     */
+    async function processTemplates(options) {
+        return processTemplatesV3(options);
     }
+
+    /**
+     * Prepare a <birkly-region> (or attrs on a host) Light DOM template, then process it.
+     * Only injects default/wrapped markup when the host is empty or lacks {from}/{for}.
+     */
+    function prepareBirklyRegionHost(host) {
+        if (!host || !host.tagName) return;
+        if (typeof host.setAttribute === 'function') {
+            host.setAttribute('data-birkly-region', '');
+        }
+        const collection = host.getAttribute('collection') || '';
+        const entry = host.getAttribute('entry') || '';
+        const isList = host.hasAttribute('list');
+        const ordered = host.getAttribute('ordered') || '';
+        const childHtml = host.innerHTML || '';
+        const next = Birkly.render.buildRegionTemplate({
+            collection: collection,
+            entry: entry,
+            list: isList,
+            ordered: ordered,
+            childHtml: childHtml
+        });
+        if (next && next !== childHtml) {
+            // Allowed initial template inject / wrap only — never used to wipe CMS-rendered siblings.
+            host.innerHTML = next;
+        }
+    }
+
+    async function processBirklyRegionHost(host, options) {
+        if (!host) return;
+        const opts = normalizeProcessTemplatesOptions(options);
+        if (!opts.force && host.getAttribute && host.getAttribute('data-birkly-processed') === '1') {
+            return;
+        }
+        if (host._birklyRegionBusy) return;
+        host._birklyRegionBusy = true;
+        try {
+            prepareBirklyRegionHost(host);
+            await processTemplates({ root: host, silent: opts.silent !== false, force: opts.force });
+        } finally {
+            host._birklyRegionBusy = false;
+        }
+    }
+
+    function defineBirklyRegionElement() {
+        if (typeof customElements === 'undefined' || typeof HTMLElement === 'undefined') {
+            return;
+        }
+        if (customElements.get('birkly-region')) {
+            return;
+        }
+
+        class BirklyRegionElement extends HTMLElement {
+            connectedCallback() {
+                const run = () => {
+                    if (this.getAttribute('data-birkly-processed') === '1') return;
+                    processBirklyRegionHost(this, { silent: true }).catch((err) => {
+                        console.error('[Birkly] birkly-region process error:', err);
+                    });
+                };
+                const schedule = () => {
+                    if (typeof queueMicrotask === 'function') {
+                        queueMicrotask(run);
+                    } else {
+                        Promise.resolve().then(run);
+                    }
+                };
+                // Avoid racing init/API detect: full-page processTemplates prepares hosts.
+                // Late mounts (after init) process immediately.
+                if (Birkly.initialized) {
+                    schedule();
+                    return;
+                }
+                document.addEventListener('birkly:templates-processed', () => {
+                    schedule();
+                }, { once: true });
+            }
+        }
+
+        customElements.define('birkly-region', BirklyRegionElement);
+    }
+
+    let birklyRegionMountObserver = null;
+
+    function observeDataBirklyRegions() {
+        if (typeof MutationObserver === 'undefined' || !document.documentElement) {
+            return;
+        }
+        if (birklyRegionMountObserver) {
+            return;
+        }
+
+        const maybeProcess = (node) => {
+            if (!node || node.nodeType !== 1) return;
+            const tag = String(node.tagName || '').toUpperCase();
+            // Custom element handles its own connect lifecycle.
+            if (tag === 'BIRKLY-REGION') return;
+            const isRegion = typeof node.hasAttribute === 'function' && node.hasAttribute('data-birkly-region');
+            if (!isRegion) return;
+            if (node.getAttribute('data-birkly-processed') === '1') return;
+            processTemplates({ root: node, silent: true }).catch((err) => {
+                console.error('[Birkly] data-birkly-region process error:', err);
+            });
+        };
+
+        birklyRegionMountObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    maybeProcess(node);
+                    if (node && node.nodeType === 1 && typeof node.querySelectorAll === 'function') {
+                        node.querySelectorAll('[data-birkly-region]').forEach(maybeProcess);
+                    }
+                }
+            }
+        });
+        birklyRegionMountObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    defineBirklyRegionElement();
+    observeDataBirklyRegions();
 
     
     // Store urlParams for use in detectCollectionFromTemplate
@@ -3218,9 +3573,7 @@
         await processTemplates();
         console.log('[Birkly] init: templates processed');
         Birkly.log('Birkly: Templates processed');
-        try {
-            document.dispatchEvent(new CustomEvent('birkly:templates-processed'));
-        } catch (e) { /* ignore */ }
+        // birkly:templates-processed is emitted by processTemplates() on full-document runs
         } catch (err) {
             console.error('[Birkly] init error:', err);
             Birkly.error('Birkly: init error:', err);
@@ -3653,7 +4006,10 @@
     
     /**
      * Public API
+     * Note: local `Birkly` (const) keeps the render engine at Birkly.render.
+     * window.Birkly exposes a shallow public surface; engine is also at renderEngine.
      */
+    const renderEngine = Birkly.render;
     window.Birkly = {
         /**
          * Initialize (called automatically, but can be called manually)
@@ -3683,19 +4039,30 @@
         },
         
         /**
-         * Render template manually
+         * Render template manually: Birkly.render(html, data)
          */
         render: function renderTemplate(template, data) {
-            if (Birkly.render && typeof Birkly.render.render === 'function') {
-                return Birkly.render.render(template, data);
+            if (renderEngine && typeof renderEngine.render === 'function') {
+                return renderEngine.render(template, data);
             }
             return template;
         },
+
+        /**
+         * Full v3 engine (discoverPageRegions, collectBundleRequests, buildRegionTemplate, …)
+         */
+        renderEngine: renderEngine,
         
         /**
-         * Process all templates in page
+         * Process Light DOM templates. Accepts options or no args.
+         * Birkly.processTemplates() / Birkly.processTemplates({ root, silent, force })
          */
         processTemplates: processTemplates,
+
+        /**
+         * Prepare + process a region host (used by <birkly-region>)
+         */
+        processRegion: processBirklyRegionHost,
         
         /**
          * Get current configuration
@@ -3707,6 +4074,11 @@
             apiEndpoint: Birkly.apiEndpoint
         })
     };
+
+    // Keep globalThis.Birkly.render as the engine for module consumers / tests that expect .render.render
+    if (typeof globalThis !== 'undefined' && globalThis.Birkly) {
+        globalThis.Birkly.renderEngine = renderEngine;
+    }
     
     // Auto-initialize - start immediately (don't wait for DOMContentLoaded for inline scripts)
     // But check if DOM is ready first
