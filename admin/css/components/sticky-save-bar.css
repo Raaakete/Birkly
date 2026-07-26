@@ -1,13 +1,16 @@
 /* Sticky save bar — settings, entry editor, collection editor */
 
 .main-actions-bar--sticky {
+  --admin-toolbar-control-height: var(--admin-control-size, 2.5rem);
   position: sticky;
+  position: -webkit-sticky;
   top: var(--admin-sticky-save-top, 0);
-  z-index: 40;
+  z-index: 45;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3, 0.75rem);
+  width: 100%;
   margin-bottom: var(--space-6, 1.5rem);
   padding: var(--space-2, 0.5rem) 0;
   background: var(--background-global, #f8f9f7);
@@ -28,12 +31,42 @@
   display: flex;
   align-items: center;
   gap: var(--space-2, 0.5rem);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .main-actions-bar--sticky .main-actions-right {
   margin-left: auto;
   min-width: 0;
+  justify-content: flex-end;
+}
+
+.main-actions-bar--sticky .main-actions-tools {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  flex-shrink: 0;
+}
+
+.main-actions-bar--sticky .main-actions-tools .input,
+.main-actions-bar--sticky .main-actions-tools .settings-search-input {
+  width: min(240px, 32vw);
+  min-width: 10rem;
+  max-width: 17.5rem;
+  height: var(--admin-toolbar-control-height);
+  margin: 0;
+  padding: 0 var(--space-3, 0.75rem);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.main-actions-bar--sticky .main-actions-tools .btn,
+.main-actions-bar--sticky .main-actions-tools .btn-sm {
+  height: var(--admin-toolbar-control-height);
+  min-height: var(--admin-toolbar-control-height);
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .main-actions-bar--sticky .main-actions-message {
@@ -51,11 +84,24 @@
   .main-actions-bar--sticky .main-actions-left,
   .main-actions-bar--sticky .main-actions-right {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .main-actions-bar--sticky .main-actions-right {
     margin-left: 0;
-    justify-content: flex-start;
+    justify-content: space-between;
+  }
+
+  .main-actions-bar--sticky .main-actions-tools {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .main-actions-bar--sticky .main-actions-tools .input,
+  .main-actions-bar--sticky .main-actions-tools .settings-search-input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
   }
 
   .main-actions-bar--sticky .main-actions-left .btn {
