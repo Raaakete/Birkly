@@ -3011,10 +3011,6 @@
   flex-wrap: wrap;
 }
 
-.admin-visit-project-btn {
-  margin-right: var(--space-2, 0.5rem);
-}
-
 @media (max-width: 900px) {
   .project-files-layout {
     grid-template-columns: 1fr;
