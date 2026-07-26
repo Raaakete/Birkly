@@ -841,7 +841,7 @@ window.migrateStorage = migrateStorage;
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
             return BirklyFeedback.confirm(message);
         }
-        return window.confirm(message);
+        return false;
     }
 
     async function activateTab(tabId, tabButtons, tabPanes, scrollTo, options) {
