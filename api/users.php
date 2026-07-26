@@ -58,20 +58,6 @@ if (!$isMultipartRequest) {
 }
 $action = $_POST['action'] ?? $input['action'] ?? $_GET['action'] ?? '';
 
-function birkly_delete_local_avatar_file(?string $avatarUrl): void {
-    if ($avatarUrl === null || $avatarUrl === '') {
-        return;
-    }
-    $path = parse_url($avatarUrl, PHP_URL_PATH);
-    if (!$path || strpos($path, '/admin/assets/avatars/') === false) {
-        return;
-    }
-    $filepath = __DIR__ . '/../admin/assets/avatars/' . basename($path);
-    if (is_file($filepath)) {
-        @unlink($filepath);
-    }
-}
-
 // Helper function to hash passwords
 function hashPassword($password) {
     return password_hash($password, PASSWORD_DEFAULT);
