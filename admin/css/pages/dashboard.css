@@ -666,7 +666,7 @@ a.dash-feed__title:hover {
     color: var(--text-secondary, #6b7280);
 }
 
-.collection-item .btn-small {
+.collection-item .btn-sm {
     flex-shrink: 0;
 }
 
