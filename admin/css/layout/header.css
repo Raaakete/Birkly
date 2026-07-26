@@ -128,41 +128,57 @@
 .topbar-control-group .notifications-wrapper,
 .topbar-control-group .topbar-user-menu {
   position: relative;
-  display: inline-flex;
-  align-items: stretch;
-  flex: 0 0 auto;
+  display: block;
+  flex: 0 0 calc(var(--admin-control-size) - 2px);
+  width: calc(var(--admin-control-size) - 2px);
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.topbar-control-group > .topbar-icon-btn {
+  flex: 0 0 calc(var(--admin-control-size) - 2px);
 }
 
 .topbar-control-group > .topbar-icon-btn,
 .topbar-control-group .topbar-icon-btn,
-.topbar-control-group .user-menu-trigger {
-  width: calc(var(--admin-control-size) - 2px);
-  height: 100%;
-  min-width: calc(var(--admin-control-size) - 2px);
-  min-height: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  border-right: 1px solid var(--border-light, #f3f4f6);
+.topbar-control-group .user-menu-trigger.dropdown-trigger,
+.topbar-control-group .topbar-user-menu .user-menu-trigger {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  border-right: 1px solid var(--border-light, #f3f4f6) !important;
   background: transparent;
-  box-shadow: none;
-  transform: none;
+  box-shadow: none !important;
+  transform: none !important;
+  box-sizing: border-box;
+}
+
+.topbar-control-group > .topbar-icon-btn {
+  width: calc(var(--admin-control-size) - 2px) !important;
+  max-width: calc(var(--admin-control-size) - 2px) !important;
 }
 
 [data-theme="dark"] .topbar-control-group .topbar-icon-btn,
 [data-theme="dark"] .topbar-control-group .user-menu-trigger {
-  border-right-color: var(--border-light, #3a3d38);
+  border-right-color: var(--border-light, #3a3d38) !important;
 }
 
 .topbar-control-group .topbar-user-menu .user-menu-trigger {
-  border-right: none;
+  border-right: none !important;
 }
 
 .topbar-control-group .topbar-icon-btn:hover,
 .topbar-control-group .user-menu-trigger:hover {
   background: var(--color-neutral-100, #F8F9F7);
-  box-shadow: none;
-  transform: none;
+  box-shadow: none !important;
+  transform: none !important;
   scale: none;
 }
 
@@ -173,21 +189,32 @@
 
 .topbar-control-group .topbar-icon-btn:active,
 .topbar-control-group .user-menu-trigger:active {
-  transform: none;
+  transform: none !important;
 }
 
-/* Avatar fills the last cell edge-to-edge */
+/* Avatar fills the last cell edge-to-edge (same square as icon cells) */
 .topbar-control-group .user-menu-trigger {
   overflow: hidden;
 }
 
+.topbar-control-group .user-menu-info,
+.topbar-control-group .user-menu-chevron {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
 .topbar-control-group .user-avatar,
 .topbar-control-group .user-avatar-initials {
-  width: 100%;
-  height: 100%;
-  border-radius: 0;
-  margin: 0;
-  padding: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .topbar-control-group .dropdown-menu {
