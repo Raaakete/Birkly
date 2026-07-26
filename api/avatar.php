@@ -1,6 +1,7 @@
 <?php
 /**
- * Serve user avatar images stored under data/avatars/.
+ * Serve legacy user avatar images (data/avatars/ and admin/assets/avatars/).
+ * New avatars are stored in media/avatars/ and served statically.
  */
 
 declare(strict_types=1);
