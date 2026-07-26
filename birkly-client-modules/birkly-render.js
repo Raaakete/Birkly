@@ -602,37 +602,167 @@
         return requests;
     }
 
-    function discoverPageRegions(doc) {
+    function isExplicitRegionElement(el) {
+        if (!el) return false;
+        const tag = String(el.tagName || '').toUpperCase();
+        if (tag === 'BIRKLY-REGION') return true;
+        if (typeof el.hasAttribute === 'function' && el.hasAttribute('data-birkly-region')) {
+            return true;
+        }
+        if (typeof el.getAttribute === 'function' && el.getAttribute('data-birkly-region') !== null) {
+            return true;
+        }
+        return false;
+    }
+
+    function isRegionProcessed(el) {
+        if (!el || typeof el.getAttribute !== 'function') return false;
+        return el.getAttribute('data-birkly-processed') === '1';
+    }
+
+    /**
+     * Discover outermost Light DOM template regions.
+     * @param {Document} doc
+     * @param {Element|null} [rootArg] optional subtree root (if the root itself is a region, include it)
+     * @param {{ force?: boolean }} [options]
+     */
+    function discoverPageRegions(doc, rootArg, options) {
         const regions = [];
-        const root = doc.body || doc.documentElement;
-        if (!root || !root.querySelectorAll) {
+        const opts = options && typeof options === 'object' ? options : {};
+        const force = !!opts.force;
+        const docRoot = (doc && (doc.body || doc.documentElement)) || null;
+        const searchRoot = rootArg || docRoot;
+        if (!searchRoot) {
             return regions;
         }
 
         const candidates = [];
-        root.querySelectorAll('*').forEach((el) => {
+        const consider = (el) => {
+            if (!el || !el.tagName) return;
             const tag = String(el.tagName || '').toUpperCase();
             if (tag === 'SCRIPT' || tag === 'STYLE') return;
+            if (!force && isRegionProcessed(el)) return;
             const template = el.innerHTML || '';
-            if (hasTemplateSyntax(template)) {
+            if (isExplicitRegionElement(el) || hasTemplateSyntax(template)) {
                 candidates.push(el);
             }
+        };
+
+        // Scoped root: if the root element itself is a region, process it.
+        if (rootArg && rootArg.tagName) {
+            consider(rootArg);
+        }
+
+        if (typeof searchRoot.querySelectorAll === 'function') {
+            searchRoot.querySelectorAll('*').forEach(consider);
+        }
+
+        const explicit = candidates.filter(isExplicitRegionElement);
+        const remaining = candidates.filter((el) => {
+            if (isExplicitRegionElement(el)) return true;
+            // Inside an explicit region → not a separate region.
+            if (explicit.some((ex) => ex !== el && typeof ex.contains === 'function' && ex.contains(el))) {
+                return false;
+            }
+            // Ancestor of an explicit region → demote; the attributed element is the region root.
+            if (explicit.some((ex) => ex !== el && typeof el.contains === 'function' && el.contains(ex))) {
+                return false;
+            }
+            return true;
         });
 
-        const outermost = candidates.filter((el) =>
-            !candidates.some((other) => other !== el && other.contains(el))
+        const outermost = remaining.filter((el) =>
+            !remaining.some((other) => other !== el && typeof other.contains === 'function' && other.contains(el))
         );
 
         outermost.forEach((el) => {
             regions.push({ element: el, template: el.innerHTML || '' });
         });
 
-        const title = doc.querySelector('title');
-        if (title && hasTemplateSyntax(title.textContent || '')) {
-            regions.push({ element: title, template: title.textContent || '', isText: true });
+        // <title> only on full-document discovery (not scoped subtree passes)
+        if (!rootArg && doc && typeof doc.querySelector === 'function') {
+            const title = doc.querySelector('title');
+            if (title && !(!force && isRegionProcessed(title)) && hasTemplateSyntax(title.textContent || '')) {
+                regions.push({ element: title, template: title.textContent || '', isText: true });
+            }
         }
 
         return regions;
+    }
+
+    /** Minimal default markup for empty <birkly-region> entry mode. */
+    const REGION_DEFAULT_TEMPLATES = {
+        'site_elements:header':
+            "{from 'site_elements' get entry 'header'}" +
+            '<header class="birkly-site-header">{\'content\'}</header>' +
+            '{endget}',
+        'site_elements:footer':
+            "{from 'site_elements' get entry 'footer'}" +
+            '<footer class="birkly-site-footer">{\'content\'}</footer>' +
+            '{endget}',
+        'site_elements:navigation':
+            "{from 'site_elements' get entry 'navigation'}" +
+            '<nav class="birkly-site-nav">{\'content\'}</nav>' +
+            '{endget}'
+    };
+
+    function getRegionDefaultTemplate(collection, entry) {
+        const col = String(collection || '').trim();
+        const slug = String(entry || '').trim();
+        if (!col || !slug) return '';
+        const key = col + ':' + slug;
+        if (Object.prototype.hasOwnProperty.call(REGION_DEFAULT_TEMPLATES, key)) {
+            return REGION_DEFAULT_TEMPLATES[key];
+        }
+        return (
+            "{from '" + col + "' get entry '" + slug + "'}" +
+            "{title}{'content'}" +
+            '{endget}'
+        );
+    }
+
+    /**
+     * Build the Light DOM template string for a region from attrs + optional child HTML.
+     * Child HTML always wins as the body; missing {from}/{for} wrappers are added when needed.
+     */
+    function buildRegionTemplate(opts) {
+        const options = opts && typeof opts === 'object' ? opts : {};
+        const collection = String(options.collection || '').trim();
+        const entry = String(options.entry || '').trim();
+        const isList = !!options.list;
+        const ordered = String(options.ordered || '').trim();
+        const childHtml = options.childHtml != null ? String(options.childHtml) : '';
+        const trimmedChild = childHtml.trim();
+
+        if (isList) {
+            if (!collection) return trimmedChild;
+            if (trimmedChild) {
+                if (/\{for\s+/i.test(trimmedChild)) return trimmedChild;
+                let open = "{for each entry in '" + collection + "'";
+                if (ordered) open += ' ordered by ' + ordered;
+                open += '}';
+                return open + childHtml + '{endfor}';
+            }
+            let loop = "{for each entry in '" + collection + "'";
+            if (ordered) loop += ' ordered by ' + ordered;
+            loop += '}<article class="birkly-region-item"><h2>{title}</h2></article>{endfor}';
+            return loop;
+        }
+
+        if (!collection || !entry) {
+            return trimmedChild;
+        }
+
+        if (trimmedChild) {
+            if (/\{from\s+/i.test(trimmedChild)) return trimmedChild;
+            return (
+                "{from '" + collection + "' get entry '" + entry + "'}" +
+                childHtml +
+                '{endget}'
+            );
+        }
+
+        return getRegionDefaultTemplate(collection, entry);
     }
 
     const engine = {
@@ -641,6 +771,11 @@
         hasTemplateSyntax,
         collectBundleRequests,
         discoverPageRegions,
+        isExplicitRegionElement,
+        isRegionProcessed,
+        REGION_DEFAULT_TEMPLATES,
+        getRegionDefaultTemplate,
+        buildRegionTemplate,
         resolveLoopItems,
         evaluateCondition,
         escapeHtml
