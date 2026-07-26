@@ -222,13 +222,28 @@
         renderWorkflow(data);
 
         var urlsEl = document.getElementById('ai-presence-public-urls');
+        var urlsEmptyEl = document.getElementById('ap-public-urls-empty');
+        var urlsPanel = document.getElementById('ap-public-urls-panel');
         var urls = data.public_urls || state.publicUrls || {};
         if (urlsEl) {
-            urlsEl.innerHTML =
-                '<dt>Well-known</dt><dd><code>' + escapeHtml(urls.well_known_url || '—') + '</code></dd>' +
-                '<dt>Public API</dt><dd><code>' + escapeHtml(urls.api_url || '—') + '</code></dd>' +
-                '<dt>Last published</dt><dd>' +
-                escapeHtml((data.meta && data.meta.last_published_at) || 'Never') + '</dd>';
+            var hasBase = !!(urls.well_known_url || urls.api_url || urls.public_site_base);
+            if (urlsEmptyEl && urlsPanel && !hasBase) {
+                var settingsUrl = urlsPanel.getAttribute('data-settings-url') || '#';
+                var noBaseMsg = urlsPanel.getAttribute('data-msg-no-base') ||
+                    'Configure your public site URL to see live endpoints.';
+                urlsEmptyEl.innerHTML = escapeHtml(noBaseMsg) +
+                    ' <a href="' + escapeHtml(settingsUrl) + '">Settings → Site delivery</a>';
+                urlsEmptyEl.hidden = false;
+                urlsEl.hidden = true;
+            } else {
+                if (urlsEmptyEl) urlsEmptyEl.hidden = true;
+                urlsEl.hidden = false;
+                urlsEl.innerHTML =
+                    '<dt>Well-known</dt><dd><code>' + escapeHtml(urls.well_known_url || '—') + '</code></dd>' +
+                    '<dt>Public API</dt><dd><code>' + escapeHtml(urls.api_url || '—') + '</code></dd>' +
+                    '<dt>Last published</dt><dd>' +
+                    escapeHtml((data.meta && data.meta.last_published_at) || 'Never') + '</dd>';
+            }
         }
     }
 
@@ -474,10 +489,31 @@
 
     function renderCmsDiff() {
         var list = document.getElementById('ap-cms-diff-list');
+        var emptyEl = document.getElementById('ap-cms-sync-empty');
+        var panel = document.getElementById('ap-cms-sync-panel');
         if (!list) return;
         list.innerHTML = '';
+        var linkedEntries = (state.draft.connected_content || []).filter(function (ref) {
+            return ref && ref.ref_type === 'entry';
+        });
+        if (!linkedEntries.length) {
+            if (emptyEl && panel) {
+                var noLinksMsg = panel.getAttribute('data-msg-no-links') ||
+                    'No CMS entries linked yet. Connect entries on the Context tab to track sync.';
+                emptyEl.innerHTML = escapeHtml(noLinksMsg) +
+                    ' <button type="button" class="btn-link ai-presence-goto-tab" data-tab="context">' +
+                    escapeHtml(panel.getAttribute('data-goto-context-label') || 'Context') + '</button>';
+                emptyEl.hidden = false;
+            }
+            list.hidden = true;
+            return;
+        }
+        if (emptyEl) emptyEl.hidden = true;
+        list.hidden = false;
         if (!state.cmsDiff.length) {
-            list.innerHTML = '<li class="text-muted">No CMS sync differences detected.</li>';
+            var inSyncMsg = (panel && panel.getAttribute('data-msg-in-sync')) ||
+                'All linked CMS entries match your draft fields.';
+            list.innerHTML = '<li class="ap-panel-status ap-panel-status--ok">' + escapeHtml(inSyncMsg) + '</li>';
             return;
         }
         state.cmsDiff.forEach(function (diff) {
