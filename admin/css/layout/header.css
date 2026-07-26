@@ -10,10 +10,11 @@
    bars use position: sticky. */
 .admin-topbar {
   /* Matches .btn outer height: line-height 1.5rem + padding 0.5rem*2 + border 2px */
-  --admin-control-size: calc(1.5rem + var(--space-2, 0.5rem) * 2 + 2px);
-  --admin-chrome-row-height: 64px;
+  --admin-chrome-tile-size: 2.5rem;
+  --admin-control-size: var(--admin-chrome-tile-size);
+  --admin-chrome-row-height: var(--admin-chrome-tile-size);
   --admin-chrome-stack-gap: var(--space-3, 0.75rem);
-  --admin-chrome-content-gap: var(--space-6, 1.5rem);
+  --admin-chrome-content-gap: var(--admin-chrome-stack-gap);
   --admin-topbar-shadow-height: 1.75rem;
   display: flex;
   align-items: center;
@@ -284,7 +285,7 @@
   justify-content: space-between;
   gap: var(--space-4, 1rem);
   margin-bottom: var(--space-4, 1rem);
-  height: 64px;
+  height: var(--admin-chrome-row-height, 2.5rem);
 }
 
 .page-header--hoisted-empty {
