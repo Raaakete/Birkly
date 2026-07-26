@@ -3,18 +3,14 @@
    ============================================ */
 
 /* Global admin top bar (user menu, search, notifications)
-   Content row = brand row height. Padding below lands at the same Y as the
-   top of the first sidebar nav box (Dashboard). A soft downward-only shadow
-   (stronger in the center, fading to the sides) hangs below; larger margin
-   spaces page content under that cast. Scrolls with page — only editor save
-   bars use position: sticky. */
+   Content row = brand row height. Padding below matches sidebar header
+   margin-bottom; content gap below that spaces page content under the
+   topbar shadow. Scrolls with page — only editor save bars use sticky. */
 .admin-topbar {
   /* Matches .btn outer height: line-height 1.5rem + padding 0.5rem*2 + border 2px */
   --admin-chrome-tile-size: 2.5rem;
   --admin-control-size: var(--admin-chrome-tile-size);
   --admin-chrome-row-height: var(--admin-chrome-tile-size);
-  --admin-chrome-stack-gap: var(--space-3, 0.75rem);
-  --admin-chrome-content-gap: var(--admin-chrome-stack-gap);
   --admin-topbar-shadow-height: 1.75rem;
   display: flex;
   align-items: center;

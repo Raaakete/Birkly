@@ -134,7 +134,8 @@
   --focus-outline: 2px solid var(--focus-ring-color);
   --admin-chrome-tile-size: 2.5rem;
   --admin-chrome-row-height: var(--admin-chrome-tile-size);
-  --admin-chrome-stack-gap: var(--space-3, 0.75rem);
+  --admin-chrome-stack-gap: var(--space-6, 1.5rem);
+  --admin-chrome-content-gap: var(--space-6, 1.5rem);
   --admin-control-size: var(--admin-chrome-tile-size);
   --admin-sticky-save-top: 0;
   
