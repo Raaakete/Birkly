@@ -22,6 +22,10 @@ function escapeHtml(text) {
 }
 
 function showMessage(message, type) {
+    if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+        BirklyFeedback.toast(message, type === 'success' ? 'success' : type === 'error' ? 'error' : type || 'info');
+        return;
+    }
     const messageEl = document.getElementById('settings-message');
     if (!messageEl) return;
     messageEl.textContent = message;
@@ -396,7 +400,7 @@ async function deleteRole(roleId) {
     });
 }
 
-// Ensure functions are available on window for onclick handlers
+// Ensure functions are available for delegated data-admin-action handlers
 window.openAddRoleModal = openAddRoleModal;
 window.closeAddRoleModal = closeAddRoleModal;
 window.createRole = createRole;
@@ -404,31 +408,59 @@ window.editRole = editRole;
 window.closeEditRoleModal = closeEditRoleModal;
 window.updateRole = updateRole;
 window.deleteRole = deleteRole;
+window.openInviteUserModal = openInviteUserModal;
+window.closeInviteUserModal = closeInviteUserModal;
+window.sendInvitation = sendInvitation;
+window.openAddUserModal = openAddUserModal;
+window.closeAddUserModal = closeAddUserModal;
+window.openEditUserModal = openEditUserModal;
+window.closeEditUserModal = closeEditUserModal;
+window.editUser = editUser;
+window.createUser = createUser;
+window.updateUser = updateUser;
+window.confirmDeleteUser = confirmDeleteUser;
+window.deleteUserFromModal = deleteUserFromModal;
+window.revokeUserMcpSessions = revokeUserMcpSessions;
+window.openAddDomainModal = openAddDomainModal;
+window.closeAddDomainModal = closeAddDomainModal;
+window.closeEditDomainModal = closeEditDomainModal;
+window.registerDomain = registerDomain;
+window.updateDomain = updateDomain;
+window.addDenylistResource = addDenylistResource;
+window.testDatabaseConnection = testDatabaseConnection;
+window.migrateStorage = migrateStorage;
 
-// Settings tabs, global save, dirty state (single tab row)
+// Settings tabs, global save, dirty state, and settings search
 (function () {
     var VALID_TABS = [
-        'general', 'domains', 'project', 'redirects', 'users-roles',
-        'activity-log', 'api', 'ai-integrations', 'storage'
+        'general', 'site-delivery', 'team-access', 'security', 'integrations', 'system'
     ];
 
     var TAB_ALIASES = {
-        hosting: 'domains',
-        webhooks: 'api',
-        security: 'users-roles',
-        monitoring: 'storage'
+        domains: 'site-delivery',
+        hosting: 'site-delivery',
+        project: 'site-delivery',
+        redirects: 'site-delivery',
+        webhooks: 'integrations',
+        security: 'security',
+        'users-roles': 'team-access',
+        monitoring: 'system',
+        storage: 'system',
+        api: 'integrations',
+        'ai-integrations': 'integrations',
+        'activity-log': 'system'
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'project', 'domains', 'redirects', 'ai-integrations', 'activity-log', 'api'
+        'site-delivery', 'team-access', 'integrations'
     ];
 
     var GLOBAL_SAVE_TABS = {
         general: { formIds: ['general-form'], label: 'Save general settings' },
-        'users-roles': { formIds: ['security-form'], label: 'Save security settings' },
-        storage: {
+        security: { formIds: ['security-form'], label: 'Save security settings' },
+        system: {
             formIds: ['storage-form', 'monitoring-form'],
-            label: 'Save infrastructure settings'
+            label: 'Save system settings'
         }
     };
 
@@ -439,8 +471,22 @@ window.deleteRole = deleteRole;
 
     var currentTab = 'general';
     var formSnapshots = {};
-    var settingsDirty = false;
+    var dirtyTabs = {};
     var beforeUnloadBound = false;
+
+    function normalizeSearchValue(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function isTrackedGlobalTab(tabId) {
+        return !!GLOBAL_SAVE_TABS[tabId] && INDEPENDENT_SAVE_TABS.indexOf(tabId) < 0;
+    }
+
+    function hasDirtyTrackedTabs() {
+        return Object.keys(GLOBAL_SAVE_TABS).some(function (tabId) {
+            return !!dirtyTabs[tabId];
+        });
+    }
 
     function normalizeTabId(tabId) {
         if (!tabId) return null;
@@ -452,13 +498,20 @@ window.deleteRole = deleteRole;
 
     function resolveSettingsHash(hash) {
         if (!hash) return { tab: null, scrollTo: null, legacyHash: null };
-        if (hash === 'ai-integrations') {
-            return { tab: 'ai-integrations', scrollTo: null, legacyHash: null };
-        }
         if (LEGACY_AI_HASH_MAP[hash]) {
-            return { tab: 'ai-integrations', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
+            return { tab: 'integrations', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
         }
-        return { tab: normalizeTabId(hash), scrollTo: null, legacyHash: null };
+
+        var normalized = normalizeTabId(hash);
+        if (!normalized) {
+            return { tab: null, scrollTo: null, legacyHash: null };
+        }
+
+        if (normalized !== hash) {
+            return { tab: normalized, scrollTo: hash, legacyHash: hash };
+        }
+
+        return { tab: normalized, scrollTo: null, legacyHash: null };
     }
 
     function parseSettingsUrl() {
@@ -475,8 +528,7 @@ window.deleteRole = deleteRole;
             }
         } else {
             tab = normalizeTabId(tab);
-            if (resolvedHash.scrollTo && (tab === 'ai-integrations' || resolvedHash.tab === 'ai-integrations')) {
-                tab = 'ai-integrations';
+            if (resolvedHash.scrollTo && resolvedHash.tab && resolvedHash.tab === tab) {
                 scrollTo = resolvedHash.scrollTo;
             }
         }
@@ -500,9 +552,10 @@ window.deleteRole = deleteRole;
         var params = new URLSearchParams(window.location.search);
         var rawTab = params.get('tab');
         var hash = window.location.hash.replace('#', '');
+        var resolvedHash = resolveSettingsHash(hash);
         var needsRedirect = params.has('area')
             || (rawTab && TAB_ALIASES[rawTab])
-            || (hash && (!params.get('tab') || !!resolveSettingsHash(hash).scrollTo));
+            || (hash && (!params.get('tab') || !!resolvedHash.scrollTo || normalizeTabId(hash) !== hash));
 
         if (!needsRedirect) {
             return false;
@@ -514,14 +567,13 @@ window.deleteRole = deleteRole;
         return true;
     }
 
-    function scrollToAiSection(sectionId) {
+    function scrollToSettingsSection(sectionId) {
         if (!sectionId) return;
         var section = document.getElementById(sectionId);
-        if (section) {
-            setTimeout(function () {
-                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 150);
-        }
+        if (!section) return;
+        setTimeout(function () {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
     }
 
     function refreshTabsV2Picker() {
@@ -536,12 +588,67 @@ window.deleteRole = deleteRole;
         return cfg && cfg.formIds ? cfg.formIds.slice() : [];
     }
 
+    function serializeForm(form) {
+        if (!form) return '';
+
+        var parts = [];
+        Array.prototype.forEach.call(form.elements || [], function (field) {
+            if (!field || !field.name || field.disabled) {
+                return;
+            }
+
+            if (field.type === 'file') {
+                var files = Array.prototype.map.call(field.files || [], function (file) {
+                    return [file.name, file.size, file.lastModified].join(':');
+                });
+                parts.push(field.name + '=' + files.join(','));
+                return;
+            }
+
+            if (field.type === 'checkbox') {
+                parts.push(field.name + '=' + (field.checked ? '1' : '0'));
+                return;
+            }
+
+            if (field.type === 'radio') {
+                if (field.checked) {
+                    parts.push(field.name + '=' + field.value);
+                }
+                return;
+            }
+
+            if (field.tagName === 'SELECT' && field.multiple) {
+                var selectedValues = Array.prototype.map.call(field.selectedOptions || [], function (option) {
+                    return option.value;
+                }).sort();
+                parts.push(field.name + '=' + selectedValues.join(','));
+                return;
+            }
+
+            parts.push(field.name + '=' + field.value);
+        });
+
+        return parts.sort().join('&');
+    }
+
     function serializeTabForms(tabId) {
+        if (!isTrackedGlobalTab(tabId)) {
+            return '';
+        }
+
         var parts = [];
         getGlobalSaveFormIds(tabId).forEach(function (formId) {
             parts.push(serializeForm(document.getElementById(formId)));
         });
         return parts.join('||');
+    }
+
+    function updateTabDirtyIndicators() {
+        var tabButtons = getSettingsTabButtons();
+        for (var i = 0; i < tabButtons.length; i++) {
+            var tabId = tabButtons[i].getAttribute('data-tab');
+            tabButtons[i].classList.toggle('tab--dirty', !!dirtyTabs[tabId]);
+        }
     }
 
     function updateSaveBar(tabId) {
@@ -558,48 +665,51 @@ window.deleteRole = deleteRole;
         }
 
         if (dirtyBadge) {
-            dirtyBadge.hidden = !(showSave && settingsDirty);
+            dirtyBadge.hidden = !(showSave && !!dirtyTabs[tabId]);
         }
     }
 
-    function serializeForm(form) {
-        if (!form) return '';
-        var data = new FormData(form);
-        var parts = [];
-        for (var pair of data.entries()) {
-            if (pair[0] !== 'project_logo') {
-                parts.push(pair[0] + '=' + pair[1]);
+    function captureFormSnapshots(tabId) {
+        if (tabId) {
+            if (isTrackedGlobalTab(tabId)) {
+                formSnapshots[tabId] = serializeTabForms(tabId);
+                dirtyTabs[tabId] = false;
             }
+            updateTabDirtyIndicators();
+            updateSaveBar(currentTab);
+            return;
         }
-        form.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
-            parts.push(cb.name + '=' + (cb.checked ? '1' : '0'));
+
+        Object.keys(GLOBAL_SAVE_TABS).forEach(function (trackedTabId) {
+            formSnapshots[trackedTabId] = serializeTabForms(trackedTabId);
+            dirtyTabs[trackedTabId] = false;
         });
-        return parts.sort().join('&');
+        updateTabDirtyIndicators();
+        updateSaveBar(currentTab);
     }
 
-    function captureFormSnapshots() {
-        Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
+    function checkDirtyState(tabId) {
+        tabId = normalizeTabId(tabId) || currentTab;
+        if (!isTrackedGlobalTab(tabId)) {
+            return false;
+        }
+
+        if (formSnapshots[tabId] === undefined) {
             formSnapshots[tabId] = serializeTabForms(tabId);
-        });
-    }
+        }
 
-    function checkDirtyState() {
-        var dirty = false;
-        Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
-            if (formSnapshots[tabId] !== undefined && serializeTabForms(tabId) !== formSnapshots[tabId]) {
-                dirty = true;
-            }
-        });
-        settingsDirty = dirty;
+        dirtyTabs[tabId] = serializeTabForms(tabId) !== formSnapshots[tabId];
+        updateTabDirtyIndicators();
         updateSaveBar(currentTab);
         bindBeforeUnload();
+        return dirtyTabs[tabId];
     }
 
     function bindBeforeUnload() {
         if (beforeUnloadBound) return;
         beforeUnloadBound = true;
         window.addEventListener('beforeunload', function (e) {
-            if (!settingsDirty) return;
+            if (!hasDirtyTrackedTabs()) return;
             e.preventDefault();
             e.returnValue = '';
         });
@@ -611,64 +721,14 @@ window.deleteRole = deleteRole;
                 var form = document.getElementById(formId);
                 if (!form || form.dataset.dirtyBound === '1') return;
                 form.dataset.dirtyBound = '1';
-                form.addEventListener('input', checkDirtyState);
-                form.addEventListener('change', checkDirtyState);
+                form.addEventListener('input', function () {
+                    checkDirtyState(tabId);
+                });
+                form.addEventListener('change', function () {
+                    checkDirtyState(tabId);
+                });
             });
         });
-    }
-
-    function activateTab(tabId, tabButtons, tabPanes, scrollTo) {
-        if (!tabId) return;
-        tabId = normalizeTabId(tabId) || tabId;
-        var tabButton = document.querySelector('.settings-tabs .tab[data-tab="' + tabId + '"]');
-        var tabPane = document.getElementById(tabId);
-        if (!tabButton || !tabPane) return;
-
-        currentTab = tabId;
-
-        for (var j = 0; j < tabButtons.length; j++) {
-            tabButtons[j].classList.remove('active');
-        }
-        for (var k = 0; k < tabPanes.length; k++) {
-            tabPanes[k].classList.remove('active');
-        }
-
-        tabButton.classList.add('active');
-        tabPane.classList.add('active');
-
-        updateSaveBar(tabId);
-
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', buildSettingsUrl(tabId));
-        }
-
-        setTimeout(function () {
-            if (tabId === 'activity-log' && typeof window.initAuditLog === 'function') {
-                window.initAuditLog();
-            } else if (tabId === 'api' && typeof window.initWebhooksManager === 'function') {
-                window.initWebhooksManager(window.webhooksData || {});
-            } else if (tabId === 'redirects' && typeof window.initRedirectsManager === 'function') {
-                window.initRedirectsManager();
-            } else if (tabId === 'general' && typeof window.initUpdates === 'function') {
-                window.initUpdates();
-            } else if (tabId === 'domains') {
-                if (typeof window.loadDomains === 'function') {
-                    window.loadDomains();
-                }
-                if (typeof window.initHostingSettings === 'function') {
-                    window.initHostingSettings();
-                }
-            } else if (tabId === 'project' && typeof window.initProjectSettings === 'function') {
-                window.initProjectSettings();
-            } else if (tabId === 'users-roles' && typeof window.loadDenylist === 'function') {
-                window.loadDenylist();
-            } else if (tabId === 'ai-integrations') {
-                window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
-            }
-            scrollToAiSection(scrollTo);
-        }, 100);
-
-        refreshTabsV2Picker();
     }
 
     function getSettingsTabButtons() {
@@ -677,6 +737,162 @@ window.deleteRole = deleteRole;
 
     function getSettingsTabPanes() {
         return document.querySelectorAll('.settings-tab-panels > .tab-pane');
+    }
+
+    function applySettingsSearch() {
+        var searchInput = document.getElementById('settings-search-input');
+        var query = normalizeSearchValue(searchInput && searchInput.value);
+        var tabButtons = Array.prototype.slice.call(getSettingsTabButtons());
+        var tabPanes = Array.prototype.slice.call(getSettingsTabPanes());
+
+        tabPanes.forEach(function (pane) {
+            var searchableSections = Array.prototype.slice.call(pane.querySelectorAll('[data-settings-search]'));
+            var paneHasMatch = !query;
+
+            searchableSections.forEach(function (section) {
+                var haystack = normalizeSearchValue(section.getAttribute('data-settings-search'));
+                var matches = !query || haystack.indexOf(query) >= 0;
+                section.hidden = !matches;
+                if (matches) {
+                    paneHasMatch = true;
+                }
+            });
+
+            pane.dataset.searchVisible = paneHasMatch ? '1' : '0';
+        });
+
+        tabButtons.forEach(function (button) {
+            var tabId = button.getAttribute('data-tab');
+            var pane = document.getElementById(tabId);
+            var buttonHaystack = normalizeSearchValue(button.getAttribute('data-settings-search') || button.textContent);
+            var isDirtyCurrentTab = tabId === currentTab && !!dirtyTabs[tabId];
+            var matches = isDirtyCurrentTab || !query || buttonHaystack.indexOf(query) >= 0 || !!(pane && pane.dataset.searchVisible === '1');
+            button.hidden = !matches;
+        });
+
+        if (query) {
+            if (dirtyTabs[currentTab]) {
+                refreshTabsV2Picker();
+                return;
+            }
+            var activeButton = document.querySelector('.settings-tabs .tab.active[data-tab="' + currentTab + '"]');
+            if (!activeButton || activeButton.hidden) {
+                var nextButton = null;
+                for (var i = 0; i < tabButtons.length; i++) {
+                    if (!tabButtons[i].hidden) {
+                        nextButton = tabButtons[i];
+                        break;
+                    }
+                }
+                if (nextButton && nextButton.getAttribute('data-tab') !== currentTab) {
+                    activateTab(nextButton.getAttribute('data-tab'), getSettingsTabButtons(), getSettingsTabPanes(), null, { force: true });
+                }
+            }
+        }
+
+        refreshTabsV2Picker();
+    }
+
+    function initSettingsSearch() {
+        var searchInput = document.getElementById('settings-search-input');
+        if (!searchInput || searchInput.dataset.searchBound === '1') {
+            return;
+        }
+        searchInput.dataset.searchBound = '1';
+        searchInput.addEventListener('input', applySettingsSearch);
+        searchInput.addEventListener('search', applySettingsSearch);
+        applySettingsSearch();
+    }
+
+    function initMergedTabFeatures(tabId, scrollTo) {
+        if (tabId === 'site-delivery') {
+            if (typeof window.loadDomains === 'function') {
+                window.loadDomains();
+            }
+            if (typeof window.initHostingSettings === 'function') {
+                window.initHostingSettings();
+            }
+            if (typeof window.initProjectSettings === 'function') {
+                window.initProjectSettings();
+            }
+            if (typeof window.initRedirectsManager === 'function') {
+                window.initRedirectsManager();
+            }
+        } else if (tabId === 'security' && typeof window.loadDenylist === 'function') {
+            window.loadDenylist();
+        } else if (tabId === 'integrations') {
+            if (typeof window.initWebhooksManager === 'function') {
+                window.initWebhooksManager(window.webhooksData || {});
+            }
+            window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
+        } else if (tabId === 'system' && typeof window.initUpdates === 'function') {
+            window.initUpdates();
+        }
+
+        scrollToSettingsSection(scrollTo);
+    }
+
+    async function confirmLeaveDirtyTab(targetTabId) {
+        if (!isTrackedGlobalTab(currentTab) || !dirtyTabs[currentTab] || targetTabId === currentTab) {
+            return true;
+        }
+
+        var message = 'You have unsaved changes in ' + currentTab.replace(/-/g, ' ') + '. Leave this tab without saving?';
+        if (globalThis.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
+            return BirklyFeedback.confirm(message);
+        }
+        return false;
+    }
+
+    async function activateTab(tabId, tabButtons, tabPanes, scrollTo, options) {
+        options = options || {};
+        if (!tabId) return false;
+        tabId = normalizeTabId(tabId) || tabId;
+
+        var tabButton = document.querySelector('.settings-tabs .tab[data-tab="' + tabId + '"]');
+        var tabPane = document.getElementById(tabId);
+        if (!tabButton || !tabPane) return false;
+
+        if (!options.force && tabId !== currentTab) {
+            var confirmed = await confirmLeaveDirtyTab(tabId);
+            if (!confirmed) {
+                if (options.fromHistory && window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', buildSettingsUrl(currentTab));
+                }
+                return false;
+            }
+        }
+
+        currentTab = tabId;
+
+        for (var j = 0; j < tabButtons.length; j++) {
+            var isActive = tabButtons[j] === tabButton;
+            tabButtons[j].classList.toggle('active', isActive);
+            if (window.Birkly && window.Birkly.TabsA11y) {
+                window.Birkly.TabsA11y.syncTabButton(tabButtons[j], isActive);
+            }
+        }
+        for (var k = 0; k < tabPanes.length; k++) {
+            var paneActive = tabPanes[k] === tabPane;
+            tabPanes[k].classList.toggle('active', paneActive);
+            if (window.Birkly && window.Birkly.TabsA11y) {
+                window.Birkly.TabsA11y.syncTabPanel(tabPanes[k], paneActive);
+            }
+        }
+
+        updateSaveBar(tabId);
+        applySettingsSearch();
+
+        if (!options.fromHistory && window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', buildSettingsUrl(tabId));
+        }
+
+        setTimeout(function () {
+            initMergedTabFeatures(tabId, scrollTo);
+        }, 100);
+
+        refreshTabsV2Picker();
+        return true;
     }
 
     function initTabs() {
@@ -688,6 +904,28 @@ window.deleteRole = deleteRole;
             console.error('Settings tab navigation not found');
             return;
         }
+
+        tabNav.setAttribute('role', 'tablist');
+        tabNav.setAttribute('aria-label', 'Settings sections');
+        tabButtons.forEach(function (btn, index) {
+            var tabId = btn.getAttribute('data-tab');
+            if (!tabId) return;
+            btn.setAttribute('role', 'tab');
+            btn.setAttribute('id', 'settings-tab-' + tabId);
+            btn.setAttribute('aria-controls', tabId);
+            var pane = document.getElementById(tabId);
+            if (pane) {
+                pane.setAttribute('role', 'tabpanel');
+                pane.setAttribute('aria-labelledby', 'settings-tab-' + tabId);
+                if (!pane.hasAttribute('tabindex')) {
+                    pane.setAttribute('tabindex', '0');
+                }
+            }
+            if (index === 0 && !btn.classList.contains('active')) {
+                btn.setAttribute('aria-selected', 'false');
+                btn.tabIndex = -1;
+            }
+        });
 
         if (!tabPanes.length) {
             console.error('Settings tab panes not found');
@@ -705,41 +943,52 @@ window.deleteRole = deleteRole;
             e.preventDefault();
             var targetTab = btn.getAttribute('data-tab');
             if (!targetTab) return;
-            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null);
+            await activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null);
         });
 
-        activateTab(parsed.tab, getSettingsTabButtons(), getSettingsTabPanes(), parsed.scrollTo);
+        activateTab(parsed.tab, getSettingsTabButtons(), getSettingsTabPanes(), parsed.scrollTo, { force: true });
 
-        window.addEventListener('popstate', function () {
+        if (window.Birkly && window.Birkly.TabsA11y) {
+            window.Birkly.TabsA11y.enhance(tabNav, {
+                activateOnFocus: true,
+                onActivate: function (targetTab) {
+                    activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null);
+                },
+            });
+        }
+
+        window.addEventListener('popstate', async function () {
             var next = parseSettingsUrl();
-            activateTab(next.tab, getSettingsTabButtons(), getSettingsTabPanes(), next.scrollTo);
+            await activateTab(next.tab, getSettingsTabButtons(), getSettingsTabPanes(), next.scrollTo, { fromHistory: true });
         });
 
         captureFormSnapshots();
         bindDirtyTracking();
-        checkDirtyState();
+        initSettingsSearch();
+        updateSaveBar(currentTab);
     }
 
     window.initSettingsTabs = initTabs;
     window.getSettingsCurrentTab = function () { return currentTab; };
-    window.markSettingsClean = function () {
-        captureFormSnapshots();
-        settingsDirty = false;
+    window.markSettingsClean = function (tabIds) {
+        var tabs = Array.isArray(tabIds) ? tabIds : [tabIds || currentTab];
+        tabs.forEach(function (tabId) {
+            tabId = normalizeTabId(tabId) || tabId;
+            if (!isTrackedGlobalTab(tabId)) {
+                return;
+            }
+            formSnapshots[tabId] = serializeTabForms(tabId);
+            dirtyTabs[tabId] = false;
+        });
+        updateTabDirtyIndicators();
         updateSaveBar(currentTab);
     };
+    window.checkSettingsDirtyState = checkDirtyState;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initTabs);
     } else {
         initTabs();
-    }
-
-    if (document.getElementById('general') && document.getElementById('general').classList.contains('active')) {
-        setTimeout(function () {
-            if (typeof window.initUpdates === 'function') {
-                window.initUpdates();
-            }
-        }, 200);
     }
 })();
 
@@ -2040,7 +2289,11 @@ async function addDenylistCollection() {
 }
 
 async function addDenylistResource() {
-    const resource = prompt('Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):');
+    const resource = await BirklyFeedback.prompt(
+        'Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):',
+        '',
+        { title: 'Add to denylist', confirmLabel: 'Add', placeholder: 'e.g. payroll/*' }
+    );
     if (!resource || resource.trim() === '') return;
     
     try {
@@ -2197,18 +2450,18 @@ async function migrateStorage() {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('denylist-add-collection-btn')?.addEventListener('click', addDenylistCollection);
 
-    const teamTab = document.querySelector('[data-tab="users-roles"]');
-    if (teamTab) {
-        teamTab.addEventListener('click', async function () {
+    const securityTab = document.querySelector('[data-tab="security"]');
+    if (securityTab) {
+        securityTab.addEventListener('click', async function () {
             setTimeout(loadDenylist, 100);
         });
     }
 
-    var teamPane = document.querySelector('.tab-pane#users-roles.active');
+    var securityPane = document.querySelector('.tab-pane#security.active');
     var params = new URLSearchParams(window.location.search);
     var tab = params.get('tab');
-    if (tab === 'security') tab = 'users-roles';
-    if (tab === 'users-roles' || window.location.hash === '#security' || window.location.hash === '#users-roles' || teamPane) {
+    if (tab === 'users-roles') tab = 'team-access';
+    if (tab === 'security' || window.location.hash === '#security' || securityPane) {
         loadDenylist();
     }
 });
@@ -2216,37 +2469,67 @@ document.addEventListener('DOMContentLoaded', function() {
 // Global save bar — per-tab forms (merged tabs may save multiple forms)
 function handleGlobalSave() {
     var tabId = typeof window.getSettingsCurrentTab === 'function' ? window.getSettingsCurrentTab() : 'general';
-    var generalForm = null;
-    var securityForm = null;
-    var storageForm = null;
-    var monitoringForm = null;
+    var forms = {
+        general: null,
+        security: null,
+        storage: null,
+        monitoring: null,
+    };
 
     if (tabId === 'general') {
-        generalForm = document.getElementById('general-form');
-    } else if (tabId === 'users-roles') {
-        securityForm = document.getElementById('security-form');
-    } else if (tabId === 'storage') {
-        storageForm = document.getElementById('storage-form');
-        monitoringForm = document.getElementById('monitoring-form');
+        forms.general = document.getElementById('general-form');
+    } else if (tabId === 'security') {
+        forms.security = document.getElementById('security-form');
+    } else if (tabId === 'system') {
+        forms.storage = document.getElementById('storage-form');
+        forms.monitoring = document.getElementById('monitoring-form');
     } else {
         return;
     }
 
-    [generalForm, securityForm, storageForm, monitoringForm].forEach(function (form) {
+    [forms.general, forms.security, forms.storage, forms.monitoring].forEach(function (form) {
         if (form && form.classList) {
             form.classList.add('was-validated');
         }
     });
 
-    if (!generalForm && !securityForm && !storageForm && !monitoringForm) {
+    if (!forms.general && !forms.security && !forms.storage && !forms.monitoring) {
         return;
     }
 
-    collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm);
+    collectAndSaveSettings(tabId, forms);
 }
 
-async function collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm) {
+function syncSavedLogoState(generalForm, logoPath) {
+    if (!generalForm) {
+        return;
+    }
+
+    var logoInput = generalForm.querySelector('#project-logo');
+    if (logoInput) {
+        logoInput.value = '';
+    }
+
+    if (!logoPath) {
+        return;
+    }
+
+    document.querySelectorAll('.logo-preview-img').forEach(function (image) {
+        image.src = logoPath;
+    });
+
+    var preview = document.getElementById('logo-preview');
+    if (preview) {
+        preview.style.display = 'block';
+    }
+}
+
+async function collectAndSaveSettings(tabId, forms) {
     const settings = {};
+    const generalForm = forms.general || null;
+    const securityForm = forms.security || null;
+    const storageForm = forms.storage || null;
+    const monitoringForm = forms.monitoring || null;
 
     function appendFormData(form) {
         if (!form) return;
@@ -2314,11 +2597,11 @@ async function collectAndSaveSettings(generalForm, securityForm, storageForm, mo
         const result = await response.json();
 
         if (result.status === 'ok') {
-            showMessage('Settings saved successfully!', 'success');
+            syncSavedLogoState(generalForm, logoPath);
             if (typeof window.markSettingsClean === 'function') {
-                window.markSettingsClean();
+                window.markSettingsClean(tabId);
             }
-            setTimeout(function () { location.reload(); }, 1000);
+            showMessage('Settings saved successfully!', 'success');
         } else {
             showMessage('Error: ' + result.message, 'error');
         }

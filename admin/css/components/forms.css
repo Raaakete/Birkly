@@ -101,7 +101,7 @@ form.submitted .form-group textarea:invalid:not(:placeholder-shown):not(:focus) 
   display: block;
   margin-top: var(--space-1, 0.25rem);
   font-size: 0.75rem;
-  color: var(--text-tertiary, #C4C6C1);
+  color: var(--text-help, var(--text-secondary, #72746F));
 }
 
 .form-group--error .form-help,

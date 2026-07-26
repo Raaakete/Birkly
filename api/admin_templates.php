@@ -863,6 +863,20 @@ function birkly_admin_multilang_field_html(string $html, string $fieldName, stri
     return $html;
 }
 
+function birkly_admin_multilang_label_for_id(string $labelForId, string $fieldName, string $langCode): string
+{
+    if ($labelForId === '' || $fieldName === '') {
+        return $labelForId;
+    }
+
+    $prefix = 'field_' . $fieldName;
+    if (strpos($labelForId, $prefix) !== 0) {
+        return $labelForId;
+    }
+
+    return 'field_' . $langCode . '_' . $fieldName . substr($labelForId, strlen($prefix));
+}
+
 /**
  * Build per-language field payloads for the entry editor when multilanguage is enabled.
  */
@@ -880,6 +894,13 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
             $name = $f['name'] ?? '';
             $langField = $f;
             $langField['lang_value'] = $entry[$langCode][$name] ?? '';
+            if (!empty($langField['label_for_id'])) {
+                $langField['label_for_id'] = birkly_admin_multilang_label_for_id(
+                    (string) $langField['label_for_id'],
+                    $name,
+                    $langCode
+                );
+            }
             if ($includeFieldHtml && !empty($f['html'])) {
                 $langField['html'] = birkly_admin_multilang_field_html($f['html'], $name, $langCode);
             }
@@ -1282,7 +1303,9 @@ function getEntryEditorData($includeFieldHtml = false) {
             'label' => 'Title',
             'type' => 'text',
             'required' => false, // Not mandatory - will auto-fill with entry ID if empty
-            'id' => 'field-title'
+            'id' => 'field-title',
+            'help_text' => 'If left empty, the entry ID will be used as the title',
+            'label_for_id' => 'field_title',
         ];
         
         // Add title field HTML if including field HTML
@@ -1424,6 +1447,9 @@ function getEntryEditorData($includeFieldHtml = false) {
                     if (method_exists($ft, 'render')) {
                         // For editor form, use full field render
                         $renderedHtml = $ft->render();
+                        if (method_exists($ft, 'getLabelForId')) {
+                            $payload['fields'][$idx]['label_for_id'] = $ft->getLabelForId();
+                        }
                         
                         // Add data-fieldtype attribute to help with JS initialization
                         // Wrap the HTML or add attribute to the first input/textarea/select
@@ -1517,6 +1543,9 @@ function getEntryEditorData($includeFieldHtml = false) {
         $payload['entry']['id'] ?? $entryId,
         !empty($subCollectionSlug)
     );
+    $payload['can_review_entry'] = !$isSubEntry
+        && !empty($payload['entry']['id'])
+        && in_array($_SESSION['user']['role'] ?? '', ['admin', 'editor'], true);
     $payload['is_nested_sub_entry'] = $isNestedSubEntry;
 
     $payload['multilanguage_enabled'] = !empty($collectionData['multilanguage']['enabled']);
@@ -1538,33 +1567,34 @@ function getEntryEditorData($includeFieldHtml = false) {
 }
 
 function getEntriesData() {
-    // Get collection data from URL parameters
-    $collectionSlug = $_GET['collection'] ?? null;
-    $statusFilter = trim((string) ($_GET['status'] ?? ''));
-    
-    if (!$collectionSlug) {
+    $params = birkly_admin_get_entries_list_params();
+    $collectionSlug = $params['collection'];
+    $statusFilter = $params['status'];
+
+    if ($collectionSlug === '') {
         return ['error' => 'Collection parameter required'];
     }
-    
-    // Get collection data
+
     $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
     if (!file_exists($collectionFile)) {
         return ['error' => 'Collection not found'];
     }
-    
+
     $collectionData = json_decode(file_get_contents($collectionFile), true);
     $collectionData['slug'] = $collectionSlug;
 
     require_once __DIR__ . '/../core/collection_meta.php';
     $collectionData = array_merge($collectionData, birkly_normalize_collection_meta($collectionData, $collectionSlug));
-    
-    // Get entries
+
     $entries = [];
     $entriesDir = __DIR__ . "/../content/collections/$collectionSlug/entries";
     if (is_dir($entriesDir)) {
         $entryFiles = glob($entriesDir . '/*.json');
         foreach ($entryFiles as $entryFile) {
             $entryData = json_decode(file_get_contents($entryFile), true);
+            if (!is_array($entryData)) {
+                continue;
+            }
             $entryData['id'] = basename($entryFile, '.json');
             $entries[] = $entryData;
         }
@@ -1572,55 +1602,58 @@ function getEntriesData() {
 
     $trashedCount = 0;
     foreach ($entries as $entry) {
-        if ((string) ($entry['status'] ?? '') === 'trashed') {
+        if (birkly_admin_normalize_entry_status((string) ($entry['status'] ?? '')) === 'trashed') {
             $trashedCount++;
         }
     }
-    
-    // Apply order from order.json if it exists
+
     $orderFile = __DIR__ . "/../content/collections/$collectionSlug/order.json";
     if (file_exists($orderFile)) {
         $order = json_decode(file_get_contents($orderFile), true);
         if (is_array($order) && !empty($order)) {
-            // Create a map of entry IDs to entries
             $entryMap = [];
             foreach ($entries as $entry) {
                 $entryMap[$entry['id']] = $entry;
             }
-            
-            // Rebuild entries array in the custom order
+
             $orderedEntries = [];
             foreach ($order as $entryId) {
                 if (isset($entryMap[$entryId])) {
                     $orderedEntries[] = $entryMap[$entryId];
-                    unset($entryMap[$entryId]); // Remove from map
+                    unset($entryMap[$entryId]);
                 }
             }
-            
-            // Add any entries that weren't in the order file (new entries)
+
             foreach ($entryMap as $entry) {
                 $orderedEntries[] = $entry;
             }
-            
+
             $entries = $orderedEntries;
         }
     }
 
     $entries = array_values(array_filter($entries, static function (array $entry) use ($statusFilter): bool {
-        $status = (string) ($entry['status'] ?? 'draft');
-        if ($status === 'draft') {
-            $status = 'unpublished';
-        }
-
-        if ($statusFilter === '') {
-            return $status !== 'trashed';
-        }
-
-        $normalizedFilter = $statusFilter === 'draft' ? 'unpublished' : $statusFilter;
-        return $status === $normalizedFilter;
+        return birkly_admin_entry_matches_status_filter($entry, $statusFilter);
     }));
-    
-    // Get sub-collections to calculate sub-entry counts (including nested)
+
+    if ($params['q'] !== '') {
+        $query = $params['q'];
+        $entries = array_values(array_filter($entries, static function (array $entry) use ($query, $collectionData): bool {
+            return birkly_admin_entry_matches_query($entry, $query, $collectionData);
+        }));
+    }
+
+    if ($params['sort'] !== '') {
+        $entries = birkly_admin_sort_entries($entries, $params['sort'], $params['order'], $collectionData);
+    }
+
+    $totalEntries = count($entries);
+    $perPage = max(1, (int) $params['per_page']);
+    $totalPages = max(1, (int) ceil($totalEntries / $perPage));
+    $page = min(max(1, (int) $params['page']), $totalPages);
+    $offset = ($page - 1) * $perPage;
+    $entries = array_slice($entries, $offset, $perPage);
+
     $subCollections = $collectionData['sub_collections'] ?? [];
     if (!empty($subCollections)) {
         $helpersPath = __DIR__ . '/admin_content_helpers.php';
@@ -1650,7 +1683,6 @@ function getEntriesData() {
         unset($entry);
     }
 
-    // Read field schema for list cell rendering
     $fields = [];
     $schemaFile = __DIR__ . "/../content/collections/$collectionSlug/schema.json";
     if (file_exists($schemaFile)) {
@@ -1663,26 +1695,26 @@ function getEntriesData() {
     require_once __DIR__ . '/../core/entry_slug.php';
     $fields = birkly_entries_list_visible_fields($fields);
 
-    // Build per-entry list cells using fieldtypes (if available)
     $entriesWithCells = [];
-    // Build a width map per fieldtype (category)
     $typeWidths = [];
     $typeMinWidths = [];
-    
-    // Load admin_fieldtypes.php to get getFieldtypeClass() function
+
     if (!function_exists('getFieldtypeClass')) {
         require_once __DIR__ . '/admin_fieldtypes.php';
     }
-    
+
     foreach ($fields as $field) {
         $name = $field['name'] ?? null;
         $type = $field['type'] ?? null;
-        if (!$name || !$type) continue;
-        if (isset($typeWidths[$type])) continue;
+        if (!$name || !$type) {
+            continue;
+        }
+        if (isset($typeWidths[$type])) {
+            continue;
+        }
         $width = null;
         $minWidth = null;
         try {
-            // Use getFieldtypeClass() to properly handle case-insensitive directory matching
             $class = getFieldtypeClass($type);
             if ($class && class_exists($class)) {
                 $ft = new $class(['name' => $name]);
@@ -1702,44 +1734,20 @@ function getEntriesData() {
         $typeMinWidths[$type] = $minWidth ?: ($width ?: '240px');
     }
 
-    // Attach width and min-width to field definitions for header rendering
     foreach ($fields as $idx => $field) {
         $ftype = $field['type'] ?? '';
         $fields[$idx]['width'] = $typeWidths[$ftype] ?? '240px';
         $fields[$idx]['min_width'] = $typeMinWidths[$ftype] ?? ($typeWidths[$ftype] ?? '240px');
     }
-    // Provide a shared CSS var for field column width (from the first fieldtype or a default)
-    $preferredWidth = '240px';
-    if (!empty($fields)) { $preferredWidth = $fields[0]['width'] ?? '240px'; }
 
-    // Check if collection has multi-language enabled
-    $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
-    $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
-    $defaultLanguage = !empty($multilanguageLanguages) ? $multilanguageLanguages[0] : 'en';
-    
+    $preferredWidth = '240px';
+    if (!empty($fields)) {
+        $preferredWidth = $fields[0]['width'] ?? '240px';
+    }
+
     foreach ($entries as $entry) {
         $cells = [];
-        // Title and status are mandatory in UI; ensure presence
-        // For multi-language entries, extract title from language section
-        $title = $entry['title'] ?? '';
-        if (empty($title) && $multilanguageEnabled && !empty($multilanguageLanguages)) {
-            // Try to get title from default language
-            if (isset($entry[$defaultLanguage]['title'])) {
-                $title = $entry[$defaultLanguage]['title'];
-            } else {
-                // Try any available language
-                foreach ($multilanguageLanguages as $lang) {
-                    if (isset($entry[$lang]['title']) && !empty($entry[$lang]['title'])) {
-                        $title = $entry[$lang]['title'];
-                        break;
-                    }
-                }
-            }
-        }
-        // Fallback to key or slug if no title found
-        if (empty($title)) {
-            $title = $entry['key'] ?? $entry['slug'] ?? 'Untitled';
-        }
+        $title = birkly_admin_extract_entry_title($entry, $collectionData);
         $cells['__title'] = $title;
         $cells['__status'] = $entry['status'] ?? 'draft';
 
@@ -1747,33 +1755,17 @@ function getEntriesData() {
         foreach ($fields as $field) {
             $name = $field['name'] ?? null;
             $type = $field['type'] ?? null;
-            if (!$name || !$type) continue;
-
-            // For multi-language entries, extract value from language section
-            $value = $entry[$name] ?? ($field['default'] ?? null);
-            if ($value === null && $multilanguageEnabled && !empty($multilanguageLanguages)) {
-                // Try to get value from default language
-                if (isset($entry[$defaultLanguage][$name])) {
-                    $value = $entry[$defaultLanguage][$name];
-                } else {
-                    // Try any available language
-                    foreach ($multilanguageLanguages as $lang) {
-                        if (isset($entry[$lang][$name])) {
-                            $value = $entry[$lang][$name];
-                            break;
-                        }
-                    }
-                }
+            if (!$name || !$type) {
+                continue;
             }
 
-            // Try to render via fieldtype class if present
+            $value = birkly_admin_extract_entry_value($entry, $name, $collectionData, $field['default'] ?? null);
+
             $rendered = null;
             try {
-                // Use getFieldtypeClass to support both core and plugin fieldtypes
                 if (function_exists('getFieldtypeClass')) {
                     $fieldtypeClass = getFieldtypeClass($type);
                 } else {
-                    // Fallback to core fieldtype namespace
                     $ftName = ucfirst(strtolower($type));
                     $fieldtypeClass = "Birkly\\FieldTypes\\$ftName\\$ftName";
                     if (!class_exists($fieldtypeClass)) {
@@ -1791,39 +1783,37 @@ function getEntriesData() {
                         'help' => $field['help_text'] ?? '',
                         'group' => $field['group'] ?? 'Content',
                     ];
-                    
-                    // Add field-specific config (e.g., options for Select, collection for Relation)
+
                     if (isset($field['options'])) {
                         $ftConfig['options'] = $field['options'];
                     }
                     if (isset($field['collection'])) {
                         $ftConfig['collection'] = $field['collection'];
                     }
-                    
+
                     $ft = new $fieldtypeClass($ftConfig);
                     if (method_exists($ft, 'renderListCell')) {
                         $rendered = $ft->renderListCell($value, ['entry' => $entry, 'field' => $field]);
                     }
                 }
             } catch (\Throwable $e) {
-                // Fallback to a simple string representation on error
                 $rendered = null;
             }
 
             if ($rendered === null) {
-                // Generic fallback
                 if (is_array($value)) {
                     $rendered = '<span class="ft-list-badge">' . count($value) . ' items</span>';
-                } else if (is_object($value)) {
+                } elseif (is_object($value)) {
                     $rendered = '<span class="ft-list-badge">object</span>';
                 } else {
-                    $text = htmlspecialchars((string)($value ?? ''), ENT_QUOTES, 'UTF-8');
-                    if ($text === '') $text = '<span class="ft-list-empty">–</span>';
+                    $text = htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
+                    if ($text === '') {
+                        $text = '<span class="ft-list-empty">–</span>';
+                    }
                     $rendered = '<span class="ft-list-text">' . $text . '</span>';
                 }
             }
 
-            // Provide both raw text and html variants for templating convenience
             $cells[$name] = strip_tags($rendered);
             $cells[$name . '_html'] = $rendered;
 
@@ -1837,33 +1827,33 @@ function getEntriesData() {
             ];
         }
 
-        // Compose combined fields HTML for list view (ordered by schema)
         $combined = '';
         foreach ($fields as $field) {
             $fname = $field['name'] ?? null;
-            if (!$fname) continue;
+            if (!$fname) {
+                continue;
+            }
             $label = htmlspecialchars($field['label'] ?? $fname, ENT_QUOTES, 'UTF-8');
             $valueHtml = $cells[$fname . '_html'] ?? '<span class="ft-list-empty">–</span>';
             $combined .= '<div class="field-chip"><span class="field-label">' . $label . '</span> <span class="field-value">' . $valueHtml . '</span></div>';
         }
         $cells['__fields_html'] = $combined;
 
-        $entryWithCells = $entry; // This preserves __sub_entry_count and all other entry properties
-        $entryWithCells['__cells'] = $cells; // legacy access
+        $entryWithCells = $entry;
+        $entryWithCells['__cells'] = $cells;
         $entryWithCells['entryfields'] = $entryFieldPairs;
-        // Flat ordered cells for rendering without dynamic lookups
         $entryWithCells['row_cells'] = array_map(function ($pair) {
             return [
                 'width' => $pair['width'] ?? '240px',
                 'html' => $pair['value_html'] ?? '<span class="ft-list-empty">–</span>'
             ];
         }, $entryFieldPairs);
-        // Also provide pre-rendered HTML to avoid nested templating issues
+
         $rowCellsHtml = '';
         foreach ($entryFieldPairs as $pair) {
             $w = htmlspecialchars($pair['width'] ?? '240px', ENT_QUOTES, 'UTF-8');
             $h = $pair['value_html'] ?? '<span class="ft-list-empty">–</span>';
-            $rowCellsHtml .= '<div class="cell cell-field" style="--col-w: '.$w.'">'.$h.'</div>';
+            $rowCellsHtml .= '<div class="cell cell-field" style="--col-w: ' . $w . '">' . $h . '</div>';
         }
         $entryWithCells['row_cells_html'] = $rowCellsHtml;
         $entriesWithCells[] = $entryWithCells;
@@ -1875,9 +1865,208 @@ function getEntriesData() {
         'entries' => $entriesWithCells,
         'list_column_width' => $preferredWidth,
         'current_status_filter' => $statusFilter,
+        'current_search_query' => $params['q'],
+        'current_sort' => $params['sort'],
+        'current_order' => $params['order'],
+        'entries_page' => $page,
+        'entries_per_page' => $perPage,
+        'entries_total' => $totalEntries,
+        'entries_total_pages' => $totalPages,
         'is_trash_view' => $statusFilter === 'trashed',
         'trashed_count' => $trashedCount,
     ];
+}
+
+function birkly_admin_get_entries_list_params(): array {
+    $defaultPerPage = birkly_admin_get_default_admin_items_per_page();
+    $requestedPerPage = (int) ($_GET['per_page'] ?? 0);
+    $perPage = $requestedPerPage > 0 ? $requestedPerPage : $defaultPerPage;
+
+    return [
+        'collection' => trim((string) ($_GET['collection'] ?? '')),
+        'status' => trim((string) ($_GET['status'] ?? '')),
+        'page' => max(1, (int) ($_GET['page'] ?? 1)),
+        'per_page' => max(1, min($perPage, 200)),
+        'q' => trim((string) ($_GET['q'] ?? $_GET['search'] ?? '')),
+        'sort' => trim((string) ($_GET['sort'] ?? '')),
+        'order' => birkly_admin_normalize_sort_order((string) ($_GET['order'] ?? '')),
+    ];
+}
+
+function birkly_admin_get_default_admin_items_per_page(): int {
+    static $defaultItemsPerPage = null;
+    if ($defaultItemsPerPage !== null) {
+        return $defaultItemsPerPage;
+    }
+
+    $defaultItemsPerPage = 20;
+    $settingsFile = __DIR__ . '/../settings/admin.json';
+    if (!is_file($settingsFile)) {
+        return $defaultItemsPerPage;
+    }
+
+    $settingsData = json_decode((string) file_get_contents($settingsFile), true);
+    $configured = (int) ($settingsData['items_per_page'] ?? 0);
+    if ($configured > 0) {
+        $defaultItemsPerPage = $configured;
+    }
+
+    return $defaultItemsPerPage;
+}
+
+function birkly_admin_normalize_sort_order(string $order): string {
+    $normalized = strtolower(trim($order));
+    return $normalized === 'desc' ? 'desc' : 'asc';
+}
+
+function birkly_admin_normalize_entry_status(string $status): string {
+    return $status === 'draft' ? 'unpublished' : ($status !== '' ? $status : 'unpublished');
+}
+
+function birkly_admin_entry_matches_status_filter(array $entry, string $statusFilter): bool {
+    $status = birkly_admin_normalize_entry_status((string) ($entry['status'] ?? 'draft'));
+    if ($statusFilter === '') {
+        return $status !== 'trashed';
+    }
+
+    $normalizedFilter = birkly_admin_normalize_entry_status($statusFilter);
+    return $status === $normalizedFilter;
+}
+
+function birkly_admin_extract_entry_value(array $entry, string $name, array $collectionData, $default = null) {
+    if (array_key_exists($name, $entry)) {
+        return $entry[$name];
+    }
+
+    $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
+    $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
+    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
+        $defaultLanguage = $multilanguageLanguages[0];
+        if (isset($entry[$defaultLanguage]) && is_array($entry[$defaultLanguage]) && array_key_exists($name, $entry[$defaultLanguage])) {
+            return $entry[$defaultLanguage][$name];
+        }
+        foreach ($multilanguageLanguages as $lang) {
+            if (isset($entry[$lang]) && is_array($entry[$lang]) && array_key_exists($name, $entry[$lang])) {
+                return $entry[$lang][$name];
+            }
+        }
+    }
+
+    return $default;
+}
+
+function birkly_admin_extract_entry_title(array $entry, array $collectionData): string {
+    $title = birkly_admin_extract_entry_value($entry, 'title', $collectionData, '');
+    $title = is_scalar($title) ? trim((string) $title) : '';
+    if ($title === '') {
+        $title = (string) ($entry['key'] ?? $entry['slug'] ?? 'Untitled');
+    }
+
+    return $title;
+}
+
+function birkly_admin_entry_matches_query(array $entry, string $query, array $collectionData): bool {
+    $needle = trim($query);
+    if ($needle === '') {
+        return true;
+    }
+
+    $haystack = [
+        birkly_admin_extract_entry_title($entry, $collectionData),
+        (string) ($entry['slug'] ?? ''),
+        (string) ($entry['id'] ?? ''),
+        birkly_admin_normalize_entry_status((string) ($entry['status'] ?? '')),
+    ];
+
+    $encoded = json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if (is_string($encoded)) {
+        $haystack[] = $encoded;
+    }
+
+    return stripos(implode(' ', $haystack), $needle) !== false;
+}
+
+function birkly_admin_sort_entries(array $entries, string $sort, string $order, array $collectionData): array {
+    if ($sort === '' || count($entries) < 2) {
+        return $entries;
+    }
+
+    $direction = strtolower($order) === 'desc' ? -1 : 1;
+    $indexedEntries = [];
+    foreach ($entries as $index => $entry) {
+        $indexedEntries[] = [
+            'index' => $index,
+            'entry' => $entry,
+        ];
+    }
+
+    usort($indexedEntries, static function (array $left, array $right) use ($sort, $direction, $collectionData): int {
+        $leftValue = birkly_admin_get_entry_sort_value($left['entry'], $sort, $collectionData);
+        $rightValue = birkly_admin_get_entry_sort_value($right['entry'], $sort, $collectionData);
+
+        if (is_numeric($leftValue) && is_numeric($rightValue)) {
+            $comparison = $leftValue <=> $rightValue;
+        } else {
+            $comparison = strnatcasecmp((string) $leftValue, (string) $rightValue);
+        }
+
+        if ($comparison === 0) {
+            $comparison = $left['index'] <=> $right['index'];
+        }
+
+        return $comparison * $direction;
+    });
+
+    return array_values(array_map(static function (array $item): array {
+        return $item['entry'];
+    }, $indexedEntries));
+}
+
+function birkly_admin_get_entry_sort_value(array $entry, string $sort, array $collectionData) {
+    switch ($sort) {
+        case 'title':
+            return birkly_admin_extract_entry_title($entry, $collectionData);
+        case 'status':
+            return birkly_admin_normalize_entry_status((string) ($entry['status'] ?? ''));
+        case 'updated':
+        case 'updated_at':
+        case 'modified_at':
+            return birkly_admin_normalize_sort_value($entry['updated_at'] ?? $entry['modified_at'] ?? $entry['created_at'] ?? '', true);
+        case 'created':
+        case 'created_at':
+            return birkly_admin_normalize_sort_value($entry['created_at'] ?? '', true);
+        case 'slug':
+            return birkly_admin_normalize_sort_value($entry['slug'] ?? '');
+        case 'id':
+            return birkly_admin_normalize_sort_value($entry['id'] ?? '');
+        default:
+            return birkly_admin_normalize_sort_value(
+                birkly_admin_extract_entry_value($entry, $sort, $collectionData, $entry[$sort] ?? ''),
+                false
+            );
+    }
+}
+
+function birkly_admin_normalize_sort_value($value, bool $preferTimestamp = false) {
+    if ($preferTimestamp) {
+        $timestamp = strtotime((string) $value);
+        return $timestamp !== false ? $timestamp : 0;
+    }
+
+    if (is_array($value) || is_object($value)) {
+        $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return is_string($encoded) ? $encoded : '';
+    }
+
+    if (is_bool($value)) {
+        return $value ? 1 : 0;
+    }
+
+    if (is_numeric($value)) {
+        return (float) $value;
+    }
+
+    return is_scalar($value) ? trim((string) $value) : '';
 }
 
 /**

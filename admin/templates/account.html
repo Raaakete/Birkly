@@ -230,7 +230,7 @@
   <div class="modal-content" style="max-width: 520px;">
     <div class="modal-header">
       <h2>{translate 'admin.setup_2fa'}</h2>
-      <button class="modal-close-btn" type="button" onclick="window.accountClose2FASetupModal && window.accountClose2FASetupModal()">&times;</button>
+      <button class="modal-close-btn" type="button" data-admin-action="accountClose2FASetupModal">&times;</button>
     </div>
     <div class="modal-body">
       <div id="account-2fa-setup-content">
@@ -244,7 +244,7 @@
   <div class="modal-content" style="max-width: 520px;">
     <div class="modal-header">
       <h2>{translate 'admin.disable_2fa'}</h2>
-      <button class="modal-close-btn" type="button" onclick="window.accountClose2FADisableModal && window.accountClose2FADisableModal()">&times;</button>
+      <button class="modal-close-btn" type="button" data-admin-action="accountClose2FADisableModal">&times;</button>
     </div>
     <div class="modal-body">
       <p>{translate 'admin.disable_2fa_instructions'}</p>
@@ -259,7 +259,7 @@
           <small class="form-text">Enter a code from your authenticator app or leave blank</small>
         </div>
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" onclick="window.accountClose2FADisableModal && window.accountClose2FADisableModal()">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FADisableModal">Cancel</button>
           <button type="submit" class="btn btn-danger">{translate 'admin.disable_2fa'}</button>
         </div>
       </form>
@@ -271,7 +271,7 @@
   <div class="modal-content" style="max-width: 520px;">
     <div class="modal-header">
       <h2>{translate 'admin.regenerate_backup_codes'}</h2>
-      <button class="modal-close-btn" type="button" onclick="window.accountClose2FARegenerateModal && window.accountClose2FARegenerateModal()">&times;</button>
+      <button class="modal-close-btn" type="button" data-admin-action="accountClose2FARegenerateModal">&times;</button>
     </div>
     <div class="modal-body">
       <p>{translate 'admin.regenerate_backup_codes_warning'}</p>
@@ -285,7 +285,7 @@
           <input type="text" id="account-regenerate-code" name="code" class="input" placeholder="000000" maxlength="6">
         </div>
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" onclick="window.accountClose2FARegenerateModal && window.accountClose2FARegenerateModal()">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FARegenerateModal">Cancel</button>
           <button type="submit" class="btn btn-primary">{translate 'admin.regenerate_backup_codes'}</button>
         </div>
       </form>

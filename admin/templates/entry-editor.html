@@ -92,6 +92,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     <?php
     $stickySaveBarForm = 'entry-form';
     $stickySaveBarSaveLabel = !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry');
+    $stickySaveBarSaveId = 'entry-save-submit';
     $stickySaveBarCancelUrl = !empty($cancel_url) ? $cancel_url : null;
     $stickySaveBarStatusHtml = '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
     include __DIR__ . '/components/sticky-save-bar.php';
@@ -143,17 +144,22 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                      role="tabpanel"
                                      <?= $langIdx === 0 ? '' : 'style="display:none"' ?>>
                                     <?php foreach ($languageFields[$langCode] ?? [] as $field): ?>
-                                        <?php $fieldName = $field['name'] ?? ''; ?>
+                                        <?php
+                                        $fieldName = $field['name'] ?? '';
+                                        $fieldHelpText = trim((string) ($field['help_text'] ?? $field['help'] ?? ''));
+                                        $fieldSubtitle = $fieldHelpText !== '' ? $fieldHelpText : (!empty($field['required']) ? __('admin.required') : '');
+                                        $fieldLabelFor = 'field_' . $langCode . '_' . $fieldName;
+                                        ?>
                                         <div class="field-block" data-field-name="<?= htmlspecialchars($fieldName) ?>" data-lang="<?= htmlspecialchars($langCode) ?>">
                                             <div class="field-header">
-                                                <div class="field-title">
+                                                <label class="field-title" for="<?= htmlspecialchars($fieldLabelFor) ?>">
                                                     <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
                                                     <?php if (!empty($field['required'])): ?>
                                                         <span class="required">*</span>
                                                     <?php endif; ?>
-                                                </div>
-                                                <?php if (!empty($field['required'])): ?>
-                                                    <div class="field-subtitle"><?= __('admin.required') ?></div>
+                                                </label>
+                                                <?php if ($fieldSubtitle !== ''): ?>
+                                                    <div class="field-subtitle"><?= htmlspecialchars($fieldSubtitle) ?></div>
                                                 <?php endif; ?>
                                             </div>
                                             <div class="field-control">
@@ -177,17 +183,22 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                         </div>
                     <?php elseif (!empty($fields)): ?>
                         <?php foreach ($fields as $field): ?>
-                            <?php $fieldName = $field['name'] ?? ''; ?>
+                            <?php
+                            $fieldName = $field['name'] ?? '';
+                            $fieldHelpText = trim((string) ($field['help_text'] ?? $field['help'] ?? ''));
+                            $fieldSubtitle = $fieldHelpText !== '' ? $fieldHelpText : (!empty($field['required']) ? __('admin.required') : '');
+                            $fieldLabelFor = $field['label_for_id'] ?? ('field_' . $fieldName);
+                            ?>
                             <div class="field-block" data-field-name="<?= htmlspecialchars($fieldName) ?>">
                                 <div class="field-header">
-                                    <div class="field-title">
+                                    <label class="field-title" for="<?= htmlspecialchars($fieldLabelFor) ?>">
                                         <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
                                         <?php if (!empty($field['required'])): ?>
                                             <span class="required">*</span>
                                         <?php endif; ?>
-                                    </div>
-                                    <?php if (!empty($field['required'])): ?>
-                                        <div class="field-subtitle"><?= __('admin.required') ?></div>
+                                    </label>
+                                    <?php if ($fieldSubtitle !== ''): ?>
+                                        <div class="field-subtitle"><?= htmlspecialchars($fieldSubtitle) ?></div>
                                     <?php endif; ?>
                                 </div>
                                 <div class="field-control">
@@ -320,6 +331,17 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     Select a user to notify when this entry is submitted for review
                                 </small>
                             </div>
+
+                            <?php if (!empty($can_review_entry)): ?>
+                                <div class="entry-review-actions" id="review-action-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? 'block' : 'none' ?>;">
+                                    <div class="entry-review-actions__title">Review actions</div>
+                                    <div class="entry-review-actions__buttons">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="approve-entry">Approve</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="request-changes">Request changes</button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="reject-entry">Reject</button>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                             
                             <!-- Entry Information Section -->
                             <div class="entry-info-section" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
