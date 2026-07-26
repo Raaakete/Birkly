@@ -104,6 +104,18 @@ function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
 
+async function parseUsersApiResponse(response) {
+    const text = await response.text();
+    if (!text) {
+        throw new Error('Empty response from server');
+    }
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        throw new Error('Unexpected server response while saving account settings');
+    }
+}
+
 async function saveAccountProfile() {
     const form = document.getElementById('account-profile-form');
     if (!form) {
@@ -126,11 +138,14 @@ async function saveAccountProfile() {
             credentials: 'same-origin',
             body: uploadData,
         });
-        const uploadResult = await uploadResponse.json();
+        const uploadResult = await parseUsersApiResponse(uploadResponse);
         if (uploadResult.status !== 'ok') {
             throw new Error(uploadResult.message || 'Avatar upload failed');
         }
         avatarUrl = uploadResult.data?.avatarPath ?? null;
+        if (!avatarUrl) {
+            throw new Error('Avatar upload did not return a file path');
+        }
     }
 
     const payload = {
@@ -151,15 +166,17 @@ async function saveAccountProfile() {
         credentials: 'same-origin',
         body: JSON.stringify(payload),
     });
-    const profileResult = await profileResponse.json();
+    const profileResult = await parseUsersApiResponse(profileResponse);
     if (profileResult.status !== 'ok') {
         throw new Error(profileResult.message || 'Error updating profile');
     }
 
-    if (profileResult.data && profileResult.data.avatar) {
-        refreshTopbarAvatars(profileResult.data.avatar);
-    } else if (avatarUrl) {
-        refreshTopbarAvatars(avatarUrl);
+    const savedAvatar = profileResult.data?.avatar || avatarUrl || '';
+    if (savedAvatar) {
+        refreshTopbarAvatars(savedAvatar);
+        document.querySelectorAll('.account-settings-page .avatar-preview-wrap img').forEach(function (img) {
+            img.src = savedAvatar;
+        });
     }
 
     const avatarInput = form.querySelector('#account-avatar');

@@ -35,9 +35,11 @@ if (!is_dir($usersDir)) {
 $storage = new Storage($usersDir);
 $rawInput = file_get_contents('php://input');
 $input = [];
+$rawBody = [];
 if (!empty($rawInput)) {
     $decoded = json_decode($rawInput, true);
     if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        $rawBody = $decoded;
         $input = sanitize_input($decoded);
     } elseif (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
         if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
@@ -492,8 +494,7 @@ if ($action === 'update_profile') {
         exit;
     }
     
-    $userId = $_SESSION['user']['id'];
-    $user = $storage->read($userId . '.json');
+    $user = birkly_load_user_account_for_session($_SESSION['user']);
     if (!$user) {
         echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
@@ -503,13 +504,16 @@ if ($action === 'update_profile') {
     if (isset($input['name'])) {
         $user['name'] = $input['name'];
     }
-    if (isset($input['avatar'])) {
-        birkly_delete_local_avatar_file($user['avatar'] ?? '');
-        $user['avatar'] = $input['avatar'];
+    if (array_key_exists('avatar', $rawBody)) {
+        $avatar = trim((string) $rawBody['avatar']);
+        if ($avatar !== ($user['avatar'] ?? '')) {
+            birkly_delete_local_avatar_file($user['avatar'] ?? '');
+        }
+        $user['avatar'] = $avatar;
     }
     
     $user['updated_at'] = date('c');
-    $result = $storage->write($userId . '.json', $user);
+    $result = birkly_save_user_account($user);
     
     // Update session
     $_SESSION['user'] = array_merge($_SESSION['user'], [
@@ -584,7 +588,11 @@ if ($action === 'upload_avatar') {
     
     // Generate unique filename
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $filename = 'avatar-' . $_SESSION['user']['id'] . '-' . uniqid() . '.' . $extension;
+    $avatarUserId = trim((string) ($_SESSION['user']['id'] ?? ''));
+    if ($avatarUserId === '' && !empty($_SESSION['user']['email'])) {
+        $avatarUserId = birkly_user_id_from_email((string) $_SESSION['user']['email']);
+    }
+    $filename = 'avatar-' . $avatarUserId . '-' . uniqid() . '.' . $extension;
     $filepath = $avatarsDir . '/' . $filename;
     
     // Move uploaded file
@@ -617,8 +625,7 @@ if ($action === 'remove_avatar') {
         exit;
     }
 
-    $userId = $_SESSION['user']['id'];
-    $user = $storage->read($userId . '.json');
+    $user = birkly_load_user_account_for_session($_SESSION['user']);
     if (!$user) {
         echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
@@ -627,7 +634,7 @@ if ($action === 'remove_avatar') {
     birkly_delete_local_avatar_file($user['avatar'] ?? '');
     $user['avatar'] = '';
     $user['updated_at'] = date('c');
-    $result = $storage->write($userId . '.json', $user);
+    $result = birkly_save_user_account($user);
 
     $_SESSION['user']['avatar'] = '';
 
@@ -672,12 +679,11 @@ if ($action === 'set_language') {
     $_SESSION['admin_language'] = $language;
     
     // Save to user profile
-    $userId = $_SESSION['user']['id'];
-    $user = $storage->read($userId . '.json');
+    $user = birkly_load_user_account_for_session($_SESSION['user']);
     if ($user) {
         $user['language'] = $language;
         $user['updated_at'] = date('c');
-        $storage->write($userId . '.json', $user);
+        birkly_save_user_account($user);
         
         // Update session
         $_SESSION['user']['language'] = $language;
@@ -722,8 +728,7 @@ if ($action === 'update_notification_preferences') {
     ];
     
     // Save to user profile
-    $userId = $_SESSION['user']['id'];
-    $user = $storage->read($userId . '.json');
+    $user = birkly_load_user_account_for_session($_SESSION['user']);
     if (!$user) {
         echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
@@ -731,7 +736,7 @@ if ($action === 'update_notification_preferences') {
     
     $user['notification_preferences'] = $validPreferences;
     $user['updated_at'] = date('c');
-    $result = $storage->write($userId . '.json', $user);
+    $result = birkly_save_user_account($user);
     
     // Update session
     $_SESSION['user']['notification_preferences'] = $validPreferences;
@@ -772,8 +777,7 @@ if ($action === 'change_password') {
         exit;
     }
     
-    $userId = $_SESSION['user']['id'];
-    $user = $storage->read($userId . '.json');
+    $user = birkly_load_user_account_for_session($_SESSION['user']);
     if (!$user) {
         echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
@@ -789,7 +793,7 @@ if ($action === 'change_password') {
     // Update password
     $user['password'] = hashPassword($newPassword);
     $user['updated_at'] = date('c');
-    $result = $storage->write($userId . '.json', $user);
+    $result = birkly_save_user_account($user);
     
     log_security_event('password_changed', ['user' => $_SESSION['user']['email'] ?? 'unknown']);
     

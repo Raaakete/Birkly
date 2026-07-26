@@ -153,6 +153,108 @@ function birkly_user_account_path(string $email): ?string
 }
 
 /**
+ * Resolve the filesystem path to a user account JSON file by id and/or email.
+ */
+function birkly_resolve_user_account_path(string $userId, ?string $email = null): ?string
+{
+    $email = $email !== null ? strtolower(trim($email)) : '';
+    if ($email !== '') {
+        $byEmail = birkly_user_account_path($email);
+        if ($byEmail !== null) {
+            return $byEmail;
+        }
+    }
+
+    $userId = trim($userId);
+    if ($userId === '') {
+        return null;
+    }
+
+    foreach (birkly_users_search_dirs() as $dir) {
+        $path = $dir . '/' . $userId . '.json';
+        if (is_file($path)) {
+            return $path;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Load a user account record by session id/email.
+ *
+ * @param array<string, mixed> $sessionUser
+ * @return array<string, mixed>|null
+ */
+function birkly_load_user_account_for_session(array $sessionUser): ?array
+{
+    $email = strtolower(trim((string) ($sessionUser['email'] ?? '')));
+    if ($email !== '') {
+        $user = birkly_load_user_account($email);
+        if ($user !== null) {
+            return $user;
+        }
+    }
+
+    $userId = trim((string) ($sessionUser['id'] ?? ''));
+    if ($userId === '' && $email !== '') {
+        $userId = birkly_user_id_from_email($email);
+    }
+    if ($userId === '') {
+        return null;
+    }
+
+    $path = birkly_resolve_user_account_path($userId, $email !== '' ? $email : null);
+    if ($path === null) {
+        return null;
+    }
+
+    $user = json_decode((string) file_get_contents($path), true);
+    return is_array($user) ? $user : null;
+}
+
+/**
+ * Persist a user account record to the directory where it already lives,
+ * or to the canonical write directory for new accounts.
+ *
+ * @param array<string, mixed> $user
+ */
+function birkly_save_user_account(array $user): bool
+{
+    $email = strtolower(trim((string) ($user['email'] ?? '')));
+    $userId = trim((string) ($user['id'] ?? ''));
+    if ($userId === '' && $email !== '') {
+        $userId = birkly_user_id_from_email($email);
+        $user['id'] = $userId;
+    }
+    if ($userId === '') {
+        return false;
+    }
+
+    $path = birkly_resolve_user_account_path($userId, $email !== '' ? $email : null);
+    if ($path === null) {
+        $path = birkly_users_write_dir() . '/' . $userId . '.json';
+    }
+
+    $dir = dirname($path);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+
+    $json = json_encode($user, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        return false;
+    }
+
+    $tmpPath = $path . '.tmp';
+    if (file_put_contents($tmpPath, $json, LOCK_EX) === false) {
+        return false;
+    }
+
+    return rename($tmpPath, $path);
+}
+
+/**
  * Load a user account record by email.
  *
  * @return array<string, mixed>|null
