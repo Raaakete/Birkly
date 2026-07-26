@@ -1,0 +1,196 @@
+<div class="page-header pt-m pb-m">
+    <div class="page-header-left">
+        <div class="breadcrumbs">
+            <span class="current">{translate 'admin.ai_presence'}</span>
+        </div>
+        <p class="page-subtitle text-muted">{translate 'admin.ai_presence_subtitle'}</p>
+    </div>
+</div>
+
+<?php
+$stickySaveBarSaveId = 'ai-presence-save-draft';
+$stickySaveBarSaveLabel = __('admin.save_draft');
+$stickySaveBarMessageId = 'ai-presence-message';
+$stickySaveBarMessageClass = 'message';
+$stickySaveBarSaveClass = 'btn btn-primary';
+$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-publish-btn">' . htmlspecialchars(__('admin.publish_ai_presence')) . '</button>';
+include __DIR__ . '/components/sticky-save-bar.php';
+?>
+
+<div class="ai-presence-page">
+    <div class="ai-presence-tabs tabs-v2-root">
+        <div class="tabs" role="tablist">
+            <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
+            <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
+            <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
+            <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
+            <button type="button" class="tab" data-tab="publish">{translate 'admin.ai_presence_tab_publish'}</button>
+        </div>
+
+        <div class="tab-content active" data-tab-content="overview">
+            <div id="ai-presence-setup-wizard" class="ai-presence-setup" hidden></div>
+            <div id="ai-presence-overview">
+                <div class="ai-presence-completeness card">
+                    <h3>{translate 'admin.ai_presence_completeness'}</h3>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar" id="ai-presence-progress" style="width:0%"></div>
+                    </div>
+                    <p id="ai-presence-completeness-label" class="text-muted"></p>
+                </div>
+                <div class="ai-presence-status-grid" id="ai-presence-status-cards"></div>
+                <div class="card mt-m">
+                    <h3>{translate 'admin.ai_presence_next_steps'}</h3>
+                    <ul id="ai-presence-next-steps" class="ai-presence-steps"></ul>
+                </div>
+                <div class="card mt-m">
+                    <h3>{translate 'admin.ai_presence_public_urls'}</h3>
+                    <dl id="ai-presence-public-urls" class="ai-presence-urls"></dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" data-tab-content="context">
+            <section class="card">
+                <h3>{translate 'admin.ai_presence_identity'}</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="ap-official-name">{translate 'admin.ai_presence_official_name'}</label>
+                        <input type="text" id="ap-official-name" class="input" data-field="identity.official_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-short-desc">{translate 'admin.ai_presence_short_description'}</label>
+                        <textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-full-desc">{translate 'admin.ai_presence_full_description'}</label>
+                        <textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-what-we-do">{translate 'admin.ai_presence_what_we_do'}</label>
+                        <textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-website">{translate 'admin.ai_presence_website'}</label>
+                        <input type="url" id="ap-website" class="input" data-field="identity.website">
+                    </div>
+                </div>
+            </section>
+            <section class="card mt-m">
+                <h3>{translate 'admin.ai_presence_positioning'}</h3>
+                <div class="form-group">
+                    <label for="ap-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
+                    <textarea id="ap-best-known" class="input" rows="2" placeholder="One per line" data-field="positioning.best_known_for" data-array="lines"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ap-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
+                    <textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ap-competitive">{translate 'admin.ai_presence_competitive'}</label>
+                    <textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"></textarea>
+                </div>
+            </section>
+            <section class="card mt-m">
+                <h3>{translate 'admin.ai_presence_communication'}</h3>
+                <div class="form-group">
+                    <label for="ap-tone">{translate 'admin.ai_presence_tone'}</label>
+                    <input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv">
+                </div>
+                <div class="form-group">
+                    <label for="ap-custom-guidance">{translate 'admin.ai_presence_custom_guidance'}</label>
+                    <textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"></textarea>
+                </div>
+            </section>
+            <section class="card mt-m">
+                <h3>{translate 'admin.ai_presence_connected_content'}</h3>
+                <p class="text-muted">{translate 'admin.ai_presence_connected_help'}</p>
+                <div class="form-row">
+                    <select id="ap-connect-collection" class="input"><option value="">{translate 'admin.select_collection'}</option></select>
+                    <select id="ap-connect-entry" class="input"><option value="">{translate 'admin.select_entry'}</option></select>
+                    <button type="button" class="btn btn-secondary btn-sm" id="ap-add-connected">{translate 'admin.add'}</button>
+                </div>
+                <ul id="ap-connected-list" class="ai-presence-ref-list"></ul>
+            </section>
+        </div>
+
+        <div class="tab-content" data-tab-content="claims">
+            <div class="main-actions-bar">
+                <button type="button" class="btn btn-primary btn-sm" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="ap-add-evidence">{translate 'admin.ai_presence_add_evidence'}</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="ap-suggest-btn">{translate 'admin.ai_presence_suggest'}</button>
+            </div>
+            <div id="ap-suggestions-panel" class="card mt-m" hidden>
+                <h3>{translate 'admin.ai_presence_suggestions'}</h3>
+                <p class="text-muted">{translate 'admin.ai_presence_suggestions_help'}</p>
+                <ul id="ap-suggestions-list"></ul>
+            </div>
+            <div class="ai-presence-split mt-m">
+                <div class="card">
+                    <h3>{translate 'admin.ai_presence_claims'}</h3>
+                    <ul id="ap-claims-list" class="ai-presence-item-list"></ul>
+                </div>
+                <div class="card">
+                    <h3>{translate 'admin.ai_presence_evidence'}</h3>
+                    <ul id="ap-evidence-list" class="ai-presence-item-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" data-tab-content="media">
+            <p class="text-muted">{translate 'admin.ai_presence_media_help'}</p>
+            <div class="form-row">
+                <input type="text" id="ap-media-id" class="input" placeholder="{translate 'admin.media_id'}">
+                <button type="button" class="btn btn-secondary btn-sm" id="ap-add-media-context">{translate 'admin.add'}</button>
+            </div>
+            <ul id="ap-media-list" class="ai-presence-item-list mt-m"></ul>
+        </div>
+
+        <div class="tab-content" data-tab-content="publish">
+            <div class="card">
+                <h3>{translate 'admin.ai_presence_publish_settings'}</h3>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="ap-pub-enabled" data-field="publication_settings.enabled">
+                    {translate 'admin.ai_presence_enable_publishing'}
+                </label>
+                <label class="checkbox-label mt-s">
+                    <input type="checkbox" id="ap-pub-jsonld" data-field="publication_settings.include_json_ld">
+                    {translate 'admin.ai_presence_include_json_ld'}
+                </label>
+                <p class="text-muted mt-s">{translate 'admin.ai_presence_publish_disclaimer'}</p>
+            </div>
+            <div class="card mt-m">
+                <h3>{translate 'admin.ai_presence_draft_vs_published'}</h3>
+                <p id="ap-publish-status"></p>
+                <div id="ap-staleness-warnings"></div>
+            </div>
+            <div class="card mt-m">
+                <h3>{translate 'admin.ai_presence_context_preview'}</h3>
+                <p class="text-muted">{translate 'admin.ai_presence_preview_help'}</p>
+                <div class="ai-presence-preview-presets">
+                    <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What is this brand known for?">{translate 'admin.ai_presence_preset_known_for'}</button>
+                    <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What does this brand do?">{translate 'admin.ai_presence_preset_what_do'}</button>
+                </div>
+                <div class="form-row mt-s">
+                    <input type="text" id="ap-preview-question" class="input" placeholder="{translate 'admin.ai_presence_ask_question'}">
+                    <button type="button" class="btn btn-primary btn-sm" id="ap-preview-ask">{translate 'admin.ask'}</button>
+                </div>
+                <div id="ap-preview-answer" class="ai-presence-preview-result mt-m"></div>
+                <ul id="ap-preview-sources" class="ai-presence-sources"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{include_script 'ai-presence.js'}
+
+<script>
+window.aiPresenceData = {
+    csrfToken: '{csrf_token}',
+    canEdit: true
+};
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.initAiPresence) {
+        window.initAiPresence(window.aiPresenceData);
+    }
+});
+</script>
