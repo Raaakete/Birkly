@@ -116,7 +116,16 @@
                 const wh = result.data.webhook;
                 showMessage('Webhook created. Copy the full URL with token now — it will not be shown again in the list.', 'success');
                 if (wh && wh.url) {
-                    prompt('Inbound webhook URL (save this):', window.location.origin + wh.url);
+                    var webhookUrl = window.location.origin + wh.url;
+                    try {
+                        await navigator.clipboard.writeText(webhookUrl);
+                        showMessage('Webhook URL copied to clipboard.', 'success');
+                    } catch (_) {
+                        await BirklyFeedback.prompt('Copy this webhook URL:', webhookUrl, {
+                            title: 'Webhook created',
+                            confirmLabel: 'Done',
+                        });
+                    }
                 }
                 if (nameInput) nameInput.value = '';
                 loadWebhooks();

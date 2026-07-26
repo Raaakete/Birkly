@@ -146,7 +146,7 @@ if (!empty($entries)): ?>
 
                         <?php foreach ($fields as $field): ?>
                             <th class="head-cell head-field" scope="col" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
-                                <?= htmlspecialchars($field['name'] ?? $field['label'] ?? '') ?>
+                                <?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?>
                             </th>
                         <?php endforeach; ?>
 

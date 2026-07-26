@@ -167,9 +167,16 @@
 }
 
 .field-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--text-primary, #20221D);
+}
+
+label.field-title {
+  cursor: pointer;
 }
 
 .field-subtitle {
@@ -1296,6 +1303,84 @@ body.dragging-group .group-drop-indicator {
 
   body.entries-filter-drawer-open {
     overflow: hidden;
+  }
+}
+
+.entries-smart-table.is-loading {
+  opacity: 0.72;
+  transition: opacity var(--transition-fast, 150ms ease);
+}
+
+.entries-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  margin-top: var(--space-4, 1rem);
+  padding: var(--space-3, 0.75rem) 0;
+  color: var(--text-secondary, #72746F);
+  font-size: 0.875rem;
+}
+
+.entries-pagination__summary {
+  min-width: 0;
+}
+
+.entries-pagination__controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.entries-pagination__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+}
+
+.entries-pagination__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: var(--radius-sm, 0.375rem);
+  background: var(--bg-elevated, #ffffff);
+  color: var(--text-primary, #20221D);
+  text-decoration: none;
+  transition: background var(--transition-fast, 150ms ease), border-color var(--transition-fast, 150ms ease), color var(--transition-fast, 150ms ease);
+}
+
+.entries-pagination__link:hover {
+  background: var(--bg-hover, #f3f4f6);
+  border-color: var(--border-medium, #d1d5db);
+}
+
+.entries-pagination__link.is-active {
+  background: var(--text-primary, #20221D);
+  border-color: var(--text-primary, #20221D);
+  color: var(--bg-elevated, #ffffff);
+}
+
+.entries-pagination__link.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .entries-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .entries-pagination__controls {
+    justify-content: space-between;
+    margin-left: 0;
   }
 }
 

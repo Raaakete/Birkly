@@ -156,6 +156,42 @@
         }
     }
 
+    function renderConfirmDetails(modal, details) {
+        var detailsEl = modal.querySelector('#birkly-feedback-confirm-details');
+        if (!detailsEl) return;
+
+        if (!details) {
+            detailsEl.innerHTML = '';
+            detailsEl.hidden = true;
+            return;
+        }
+
+        var intro = '';
+        var items = [];
+
+        if (Array.isArray(details)) {
+            items = details;
+        } else if (typeof details === 'string') {
+            intro = details;
+        } else if (typeof details === 'object') {
+            intro = details.intro || '';
+            items = Array.isArray(details.items) ? details.items : [];
+        }
+
+        var html = '';
+        if (intro) {
+            html += '<p class="birkly-feedback-confirm-details__intro">' + escapeHtml(intro) + '</p>';
+        }
+        if (items.length) {
+            html += '<ul class="birkly-feedback-confirm-details__list">' + items.map(function (item) {
+                return '<li>' + escapeHtml(item) + '</li>';
+            }).join('') + '</ul>';
+        }
+
+        detailsEl.innerHTML = html;
+        detailsEl.hidden = !html;
+    }
+
     function ensureConfirmModal() {
         var modal = document.getElementById('birkly-feedback-confirm-modal');
         if (modal) return modal;
@@ -175,6 +211,7 @@
             '</div>' +
             '<div class="modal-body">' +
             '<p id="birkly-feedback-confirm-message"></p>' +
+            '<div id="birkly-feedback-confirm-details" class="birkly-feedback-confirm-details" hidden></div>' +
             '</div>' +
             '<div class="modal-footer">' +
             '<button type="button" class="btn btn-secondary" data-birkly-feedback-action="cancel">Cancel</button>' +
@@ -277,7 +314,7 @@
 
     /**
      * @param {string} message
-     * @param {{ title?: string, confirmLabel?: string, cancelLabel?: string, danger?: boolean }} [options]
+     * @param {{ title?: string, confirmLabel?: string, cancelLabel?: string, danger?: boolean, details?: string|string[]|{ intro?: string, items?: string[] } }} [options]
      */
     function confirm(message, options) {
         options = options || {};
@@ -290,6 +327,7 @@
 
             if (titleEl) titleEl.textContent = options.title || 'Confirm';
             if (messageEl) messageEl.textContent = String(message ?? '');
+            renderConfirmDetails(modal, options.details);
             if (confirmBtn) {
                 confirmBtn.textContent = options.confirmLabel || 'Confirm';
                 confirmBtn.className = options.danger ? 'btn btn-danger' : 'btn btn-primary';
@@ -300,6 +338,25 @@
             confirmResolve = resolve;
             openModal(modal);
             if (confirmBtn) confirmBtn.focus();
+        });
+    }
+
+    /**
+     * @param {string} message
+     * @param {string[]} changes
+     * @param {{ title?: string, confirmLabel?: string, cancelLabel?: string, intro?: string }} [options]
+     */
+    function confirmDestructive(message, changes, options) {
+        options = options || {};
+        return confirm(message, {
+            title: options.title || 'Confirm destructive changes',
+            confirmLabel: options.confirmLabel || 'Continue',
+            cancelLabel: options.cancelLabel || 'Cancel',
+            danger: true,
+            details: {
+                intro: options.intro || 'These changes can affect existing content:',
+                items: Array.isArray(changes) ? changes : []
+            }
         });
     }
 
@@ -340,6 +397,7 @@
     global.BirklyFeedback = {
         toast: toast,
         confirm: confirm,
+        confirmDestructive: confirmDestructive,
         prompt: prompt
     };
 

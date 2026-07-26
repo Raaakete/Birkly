@@ -32,8 +32,9 @@
 }
 
 .tab.active {
-  color: var(--primary-600, #2563eb);
-  border-bottom-color: var(--primary-500);
+  color: var(--text-primary, #20221D);
+  font-weight: 600;
+  border-bottom-color: var(--primary-600, #52C49A);
   background: var(--bg-primary, #ffffff);
 }
 

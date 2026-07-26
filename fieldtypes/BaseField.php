@@ -84,6 +84,15 @@ abstract class BaseField {
         return $this->help;
     }
 
+    /**
+     * Get the preferred control id for the field label's "for" attribute.
+     * Fieldtypes can override this when the primary interactive control is not
+     * the default field_{name} input.
+     */
+    public function getLabelForId(): string {
+        return 'field_' . $this->name;
+    }
+
     // Get field's group
     public function getGroup(): string {
         return $this->group;

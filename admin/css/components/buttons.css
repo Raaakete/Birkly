@@ -35,8 +35,21 @@
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--primary-500);
-  outline-offset: 2px;
+  outline: var(--focus-outline, 2px solid var(--primary-700));
+  outline-offset: var(--focus-outline-offset, 2px);
+  box-shadow: var(--focus-ring-tight);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover {
+    scale: 1;
+  }
+
+  .btn,
+  .btn:active {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* Button Variants */
