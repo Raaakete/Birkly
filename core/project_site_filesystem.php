@@ -308,7 +308,7 @@ function birkly_project_site_info(): array
         'Collection slugs use single quotes (hyphens allowed: nav-links)',
         'System fields are bare: {title}, {slug}',
         'Custom fields use quoted names: {\'content\'}',
-        'Single entry uses {from \'collection\' get entry \'slug\'}…{endget} — not {entry}{endentry}',
+        'Single entry uses {from \'collection\' get entry \'slug\'}…{endget}',
         'Shared blocks: <birkly-region collection="…" entry="…"> (one line per page)',
         'Filters: {created_at format "Y-m-d"} only — truncate/strip_tags are not implemented',
         'Static assets live under /project/ (css/, js/, images/)',
