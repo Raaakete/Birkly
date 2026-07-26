@@ -37,7 +37,8 @@ This directory contains the modular components of the Birkly client library.
 6. **birkly-render.js** - Template engine v3 (string-based renderer)
    - `render(html, data)` - Full parse → render pipeline
    - `collectBundleRequests(html)` - Data needs from template source
-   - `discoverPageRegions(document)` - Outermost elements in `<body>` that contain template syntax (plus `<title>`)
+   - `discoverPageRegions(document, root?, { force? })` - Outermost Light DOM regions (template syntax, `data-birkly-region`, or `birkly-region`); optional scoped root; skips `data-birkly-processed`
+   - `buildRegionTemplate` / `getRegionDefaultTemplate` - helpers for `<birkly-region>` entry/list defaults
    - Inlined into `birkly-client.js` for production (single script tag)
 
 ### Hydrate script (baked pages)
