@@ -2355,15 +2355,11 @@ function getAccountData() {
     $currentUser = $_SESSION['user'];
 
     // Load full user data from storage to get name and avatar
-    require_once __DIR__ . '/storage.php';
-    $userStorage = new Storage(__DIR__ . '/../users');
-    $userId = $currentUser['id'] ?? '';
-    if ($userId) {
-        $userData = $userStorage->read($userId . '.json');
-        if ($userData) {
-            // Merge session data with stored data
-            $currentUser = array_merge($currentUser, $userData);
-        }
+    require_once __DIR__ . '/../core/birkly_users.php';
+    $userData = birkly_load_user_account_for_session($currentUser);
+    if ($userData) {
+        // Merge session data with stored data
+        $currentUser = array_merge($currentUser, $userData);
     }
 
     // Don't send password hash
