@@ -479,32 +479,7 @@
   justify-content: center;
 }
 
-.btn-large {
-  padding: var(--space-3, 0.75rem) var(--space-7, 1.75rem);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.btn-small {
-  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-  font-size: 0.875rem;
-}
-
-.btn-ghost {
-  background: transparent;
-  border: none;
-  color: var(--text-tertiary, #9b9d98);
-  font-size: 0.875rem;
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  cursor: pointer;
-  border-radius: var(--border-radius-s, 6px);
-  transition: color 0.15s ease;
-}
-
-.btn-ghost:hover {
-  color: var(--text-secondary, #72746f);
-  background: var(--color-neutral-100, #f4f6f2);
-}
+/* Button variants/sizes live in components/buttons.css */
 
 .btn.loading,
 .btn:disabled {

@@ -1551,8 +1551,8 @@ async function deletePlugin(pluginId) {
                 '</div>' +
                 '</div>' +
                 '<div class="domain-actions">' +
-                '<button type="button" class="btn btn-small btn-secondary" data-domain="' + domainEscaped + '" data-action="edit">Edit</button>' +
-                '<button type="button" class="btn btn-small btn-danger" data-domain="' + domainEscaped + '" data-action="delete">Delete</button>' +
+                '<button type="button" class="btn btn-sm btn-secondary" data-domain="' + domainEscaped + '" data-action="edit">Edit</button>' +
+                '<button type="button" class="btn btn-sm btn-danger" data-domain="' + domainEscaped + '" data-action="delete">Delete</button>' +
                 '</div>' +
                 '</div>' +
                 '<div class="domain-details">' +

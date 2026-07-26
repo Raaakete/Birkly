@@ -27,22 +27,22 @@ $isLocalDev = !empty($is_local_dev);
                 <div class="onboarding-complete-card">
                     <h3><?= __('admin.create_first_entry') ?></h3>
                     <p><?= __('admin.start_adding_content') ?></p>
-                    <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-small"><?= __('admin.go_to_content') ?></a>
+                    <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-sm"><?= __('admin.go_to_content') ?></a>
                 </div>
                 <div class="onboarding-complete-card" id="onboarding-complete-ai-card">
                     <h3><?= __('admin.connect_ai_assistant') ?></h3>
                     <p id="onboarding-complete-ai-copy"><?= $isLocalDev ? __('admin.ai_connect_after_deploy_hint') : __('admin.ai_connect_modal_hint') ?></p>
-                    <a href="<?= admin_url('settings') ?>#ai-integrations" class="btn btn-secondary btn-small"><?= __('admin.ai_settings') ?></a>
+                    <a href="<?= admin_url('settings') ?>#ai-integrations" class="btn btn-secondary btn-sm"><?= __('admin.ai_settings') ?></a>
                 </div>
                 <div class="onboarding-complete-card" id="onboarding-complete-demo-card" style="display: none;">
                     <h3>View demo website</h3>
                     <p>Open the starter template site that was installed with your CMS.</p>
-                    <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-small" target="_blank" rel="noopener">Open demo site</a>
+                    <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Open demo site</a>
                 </div>
                 <div class="onboarding-complete-card">
                     <h3><?= __('admin.read_documentation') ?></h3>
                     <p><?= __('admin.learn_more_features') ?></p>
-                    <a href="<?= admin_url('help') ?>" class="btn btn-secondary btn-small"><?= __('admin.view_docs') ?></a>
+                    <a href="<?= admin_url('help') ?>" class="btn btn-secondary btn-sm"><?= __('admin.view_docs') ?></a>
                 </div>
             </div>
         </div>
@@ -61,7 +61,7 @@ $isLocalDev = !empty($is_local_dev);
 
 <div class="main-actions-bar">
     <div class="main-actions-left">
-        <button type="button" class="btn btn-secondary btn-small" id="dashboard-customize-btn" aria-haspopup="dialog" aria-controls="dashboard-customize-modal">
+        <button type="button" class="btn btn-secondary btn-sm" id="dashboard-customize-btn" aria-haspopup="dialog" aria-controls="dashboard-customize-modal">
             Customize dashboard
         </button>
     </div>
@@ -76,7 +76,7 @@ $isLocalDev = !empty($is_local_dev);
         <div class="modal-body">
             <p class="dashboard-customize-lead">Drag widgets to reorder them and use the checkboxes to show or hide widgets on your dashboard.</p>
             <div class="dashboard-customize-toolbar">
-                <button type="button" class="btn btn-ghost btn-small" id="dashboard-reset-layout-btn">Reset to defaults</button>
+                <button type="button" class="btn btn-outline btn-muted btn-sm" id="dashboard-reset-layout-btn">Reset to defaults</button>
             </div>
             <ul class="dashboard-widget-picker" id="dashboard-widget-picker"></ul>
         </div>
@@ -95,7 +95,7 @@ $isLocalDev = !empty($is_local_dev);
     </summary>
     <div class="welcome-card">
         <div class="checklist-toolbar" style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
-            <button type="button" class="btn btn-ghost btn-small" id="hide-checklist-btn">Hide checklist</button>
+            <button type="button" class="btn btn-outline btn-muted btn-sm" id="hide-checklist-btn">Hide checklist</button>
         </div>
         <div class="checklist-progress">
             <div class="progress-bar-container">
@@ -115,7 +115,7 @@ $isLocalDev = !empty($is_local_dev);
                     <a href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
                     <?php if (!empty($item['hint'])): ?><small class="checklist-hint"><?= htmlspecialchars($item['hint']) ?></small><?php endif; ?>
                 </div>
-                <?php if (empty($item['completed'])): ?><button type="button" class="btn btn-ghost btn-small checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" title="Dismiss">×</button><?php endif; ?>
+                <?php if (empty($item['completed'])): ?><button type="button" class="btn btn-outline btn-muted btn-sm checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" title="Dismiss">×</button><?php endif; ?>
             </div>
             <?php endforeach; ?>
         </div>

@@ -1544,11 +1544,6 @@
     margin: 0 auto var(--space-4, 1rem);
 }
 
-.btn-small {
-    padding: 6px 12px;
-    font-size: 0.875em;
-}
-
 #activity-log .activity-log-page,
 #updates .updates-page {
     padding: 0;
@@ -2656,8 +2651,6 @@
 
 .user-ai-connections .btn-sm {
   margin-top: 0.35rem;
-  padding: 0.25rem 0.6rem;
-  font-size: 0.75rem;
 }
 
 .user-ai-hint {

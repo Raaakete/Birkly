@@ -501,31 +501,6 @@
 
 .ai-chat-approval-actions .btn {
     flex: 1;
-    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-    border: none;
-    border-radius: var(--radius-md, 0.5rem);
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 500;
-    transition: all var(--transition-fast, 150ms ease);
-}
-
-.ai-chat-approval-actions .btn-success {
-    background: var(--success-500, #22c55e);
-    color: var(--text-inverse, #ffffff);
-}
-
-.ai-chat-approval-actions .btn-success:hover {
-    background: var(--success-600, #16a34a);
-}
-
-.ai-chat-approval-actions .btn-danger {
-    background: var(--error-500, #ef4444);
-    color: var(--text-inverse, #ffffff);
-}
-
-.ai-chat-approval-actions .btn-danger:hover {
-    background: var(--error-600, #dc2626);
 }
 
 .ai-chat-approval-status {
