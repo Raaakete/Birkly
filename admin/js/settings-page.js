@@ -657,15 +657,12 @@ window.migrateStorage = migrateStorage;
         var dirtyBadge = document.getElementById('settings-dirty-badge');
         if (!bar || !saveBtn) return;
 
-        var showSave = !!GLOBAL_SAVE_TABS[tabId];
-        bar.classList.toggle('is-hidden', !showSave);
-
-        if (showSave && GLOBAL_SAVE_TABS[tabId]) {
-            saveBtn.textContent = GLOBAL_SAVE_TABS[tabId].label;
-        }
+        bar.classList.remove('is-hidden');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Settings';
 
         if (dirtyBadge) {
-            dirtyBadge.hidden = !(showSave && !!dirtyTabs[tabId]);
+            dirtyBadge.hidden = !hasDirtyTrackedTabs();
         }
     }
 
@@ -2466,7 +2463,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Global save bar — per-tab forms (merged tabs may save multiple forms)
+// Global save bar — saves all dirty form tabs, or the current tab when nothing is dirty yet
 function handleGlobalSave() {
     var tabId = typeof window.getSettingsCurrentTab === 'function' ? window.getSettingsCurrentTab() : 'general';
     var forms = {
@@ -2475,17 +2472,31 @@ function handleGlobalSave() {
         storage: null,
         monitoring: null,
     };
+    var tabsToSave = Object.keys(GLOBAL_SAVE_TABS).filter(function (trackedTabId) {
+        return !!dirtyTabs[trackedTabId];
+    });
 
-    if (tabId === 'general') {
-        forms.general = document.getElementById('general-form');
-    } else if (tabId === 'security') {
-        forms.security = document.getElementById('security-form');
-    } else if (tabId === 'system') {
-        forms.storage = document.getElementById('storage-form');
-        forms.monitoring = document.getElementById('monitoring-form');
-    } else {
+    if (!tabsToSave.length && GLOBAL_SAVE_TABS[tabId]) {
+        tabsToSave = [tabId];
+    }
+
+    if (!tabsToSave.length) {
+        if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+            BirklyFeedback.toast('No pending changes to save', 'info');
+        }
         return;
     }
+
+    tabsToSave.forEach(function (trackedTabId) {
+        if (trackedTabId === 'general') {
+            forms.general = document.getElementById('general-form');
+        } else if (trackedTabId === 'security') {
+            forms.security = document.getElementById('security-form');
+        } else if (trackedTabId === 'system') {
+            forms.storage = document.getElementById('storage-form');
+            forms.monitoring = document.getElementById('monitoring-form');
+        }
+    });
 
     [forms.general, forms.security, forms.storage, forms.monitoring].forEach(function (form) {
         if (form && form.classList) {
@@ -2494,10 +2505,13 @@ function handleGlobalSave() {
     });
 
     if (!forms.general && !forms.security && !forms.storage && !forms.monitoring) {
+        if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+            BirklyFeedback.toast('Changes on this tab are saved when you confirm each action', 'info');
+        }
         return;
     }
 
-    collectAndSaveSettings(tabId, forms);
+    collectAndSaveSettings(tabsToSave, forms);
 }
 
 function syncSavedLogoState(generalForm, logoPath) {
@@ -2524,7 +2538,8 @@ function syncSavedLogoState(generalForm, logoPath) {
     }
 }
 
-async function collectAndSaveSettings(tabId, forms) {
+async function collectAndSaveSettings(tabsToSave, forms) {
+    const savedTabs = Array.isArray(tabsToSave) ? tabsToSave : [tabsToSave];
     const settings = {};
     const generalForm = forms.general || null;
     const securityForm = forms.security || null;
@@ -2599,7 +2614,9 @@ async function collectAndSaveSettings(tabId, forms) {
         if (result.status === 'ok') {
             syncSavedLogoState(generalForm, logoPath);
             if (typeof window.markSettingsClean === 'function') {
-                window.markSettingsClean(tabId);
+                savedTabs.forEach(function (savedTabId) {
+                    window.markSettingsClean(savedTabId);
+                });
             }
             showMessage('Settings saved successfully!', 'success');
         } else {

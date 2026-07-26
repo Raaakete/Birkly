@@ -1,13 +1,5 @@
 <?php ?>
 <?php
-$stickySaveBarSaveId = 'global-save-settings-btn';
-$stickySaveBarSaveLabel = __('admin.save_settings');
-$stickySaveBarMessageId = 'settings-message';
-$stickySaveBarMessageClass = 'message settings-toast';
-$stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
-include __DIR__ . '/components/sticky-save-bar.php';
-
 $availableLangs = class_exists('I18n') ? I18n::getAvailableLanguages() : [];
 $currentSiteLanguage = (string) ($settings['site']['language'] ?? 'en');
 if (empty($availableLangs)) {
@@ -26,6 +18,16 @@ if (empty($availableLangs)) {
     <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>" class="btn btn-secondary btn-sm">View activity</a>
   </div>
 </div>
+
+<?php
+$stickySaveBarSaveId = 'global-save-settings-btn';
+$stickySaveBarSaveLabel = __('admin.save_settings');
+$stickySaveBarMessageId = 'settings-message';
+$stickySaveBarMessageClass = 'message settings-toast';
+$stickySaveBarSaveClass = 'btn btn-primary';
+$stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
+include __DIR__ . '/components/sticky-save-bar.php';
+?>
 
 <div class="settings-page">
 
