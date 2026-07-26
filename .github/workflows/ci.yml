@@ -22,7 +22,17 @@ jobs:
       - name: PHP syntax on core files
         run: |
           set -e
-          for f in server-router.php index.php admin/index.php core/version.php; do
+          for f in server-router.php index.php admin/index.php core/version.php scripts/validate-project-templates.php; do
             php -l "$f"
           done
-          echo "Public CI: syntax OK (full test suite runs in private Birkly-Marketplace internal workspace)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Template engine CI check
+        run: ./scripts/ci-check.sh
+
+      - name: Public CI note
+        run: echo "Public CI: syntax + template engine OK (full admin suite runs in private Birkly-Marketplace internal workspace)"
