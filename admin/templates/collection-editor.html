@@ -11,6 +11,7 @@ if (!isset($__birklyScriptNonceAttr) || $__birklyScriptNonceAttr === '') {
     require_once dirname(__DIR__) . '/../core/csp.php';
     $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
 }
+require_once dirname(__DIR__) . '/../core/fieldtype_icons.php';
 
 // Detect if this is a sub-collection editor
 $isSubCollection = !empty($sub_collection) || !empty($subCollection);
@@ -187,7 +188,7 @@ if (!$cancelUrl) {
                                     <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>" style="margin-bottom: 1rem;">
                                         <div class="fieldtype-header">
                                             <div class="fieldtype-title">
-                                                <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($subField['type'] ?? 'Select Type')) ?></span>
+                                                <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
                                                 <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
                                             </div>
                                             <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
@@ -330,7 +331,7 @@ if (!$cancelUrl) {
                                                     <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
                                                 </div>
                                                 <div class="fieldtype-title">
-                                                    <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($field['type'] ?? 'Select Type')) ?></span>
+                                                    <?= birkly_fieldtype_type_badge($field['type'] ?? null, $fieldtypes) ?>
                                                     <span class="fieldtype-name"><?= htmlspecialchars($field['label'] ?? $field['name'] ?? '') ?></span>
                                                 </div>
                                             </div>
@@ -480,7 +481,7 @@ if (!$cancelUrl) {
                                                     <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>" style="margin-bottom: 1rem;">
                                                         <div class="fieldtype-header">
                                                             <div class="fieldtype-title">
-                                                                <span class="fieldtype-type"><?= htmlspecialchars(strtoupper($subField['type'] ?? 'Select Type')) ?></span>
+                                                                <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
                                                                 <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
                                                             </div>
                                                             <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
@@ -1267,7 +1268,10 @@ echo htmlspecialchars($formCode);
                     <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
                 </div>
                 <div class="fieldtype-title">
-                    <span class="fieldtype-type">__TYPE__</span>
+                    <span class="fieldtype-type" data-fieldtype="">
+                        <span class="fieldtype-type-icon" aria-hidden="true"></span>
+                        <span class="fieldtype-type-label">__TYPE__</span>
+                    </span>
                     <span class="fieldtype-name">__NAME__</span>
                 </div>
             </div>
@@ -1415,6 +1419,9 @@ echo htmlspecialchars($formCode);
 }
 
 .fieldtype-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -1422,6 +1429,11 @@ echo htmlspecialchars($formCode);
     background: var(--bg-tertiary);
     padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-sm);
+    line-height: 1.2;
+}
+
+.fieldtype-type-label {
+    line-height: 1.2;
 }
 
 .fieldtype-name {
@@ -1648,6 +1660,7 @@ echo htmlspecialchars($formCode);
     background: var(--bg-tertiary);
     border-radius: var(--radius-md);
     padding: var(--space-3);
+    line-height: 0;
 }
 
 .fieldtype-card-name {
@@ -2004,6 +2017,7 @@ echo htmlspecialchars($formCode);
 <script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/collection-editor-core.js')) ?>?v=<?= htmlspecialchars(birkly_admin_asset_version('admin/js/collection-editor-core.js'), ENT_QUOTES, 'UTF-8') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtype-icons.js')) ?>?v=<?= htmlspecialchars(birkly_admin_asset_version('admin/js/fieldtype-icons.js'), ENT_QUOTES, 'UTF-8') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 
 <script<?= $__birklyScriptNonceAttr ?? '' ?>>
 document.addEventListener('DOMContentLoaded', function() {
@@ -2101,7 +2115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
                 <div class="fieldtype-header">
                     <div class="fieldtype-title">
-                        <span class="fieldtype-type">${String(typeLabel).toUpperCase()}</span>
+                        ${renderFieldtypeTypeBadgeHtml(selectedFieldtype, typeLabel)}
                         <span class="fieldtype-name">New Field</span>
                     </div>
                     <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
@@ -2167,7 +2181,9 @@ document.addEventListener('DOMContentLoaded', function() {
         fieldsContainer.appendChild(fieldElement);
         const selectedType = availableFieldtypes.find(ft => ft.name === selectedFieldtype);
         if (selectedType) {
-            fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+            if (window.Birkly && typeof Birkly.updateFieldtypeTypeBadge === 'function') {
+                Birkly.updateFieldtypeTypeBadge(fieldElement, selectedFieldtype, availableFieldtypes);
+            }
             const typeSelect = fieldElement.querySelector('.field-type-select');
             if (typeSelect) {
                 typeSelect.value = selectedType.type || selectedType.name;
@@ -2268,41 +2284,24 @@ document.addEventListener('DOMContentLoaded', function() {
         fieldtypeModal.style.display = 'flex';
     }
     
-    function getFieldtypeIcon(name) {
-        const registryMap = {
-            email: 'envelope',
-            url: 'link',
-            relation: 'link',
-            media: 'image',
-            gallery: 'squares-four',
-            dynamicitems: 'list',
-            file: 'file-text'
-        };
-        const key = (name || '').toLowerCase().replace(/[-_\s]/g, '');
-        const registryName = registryMap[key];
-        if (registryName && window.Birkly && typeof Birkly.icon === 'function') {
-            return Birkly.icon(registryName, { size: 48 });
+    function getFieldtypeIcon(name, size) {
+        size = size || 32;
+        if (window.Birkly && typeof Birkly.fieldtypeIcon === 'function') {
+            return Birkly.fieldtypeIcon(name, {
+                size: size,
+                class: size >= 24 ? 'fieldtype-card-icon-svg' : 'fieldtype-type-icon-svg'
+            });
         }
+        return '';
+    }
 
-        const icons = {
-            contenteditor: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M7 7h6"></path><path d="M7 11h10"></path><path d="M7 15h4"></path><circle cx="16" cy="15" r="1.5"></circle></svg>',
-            tags: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29a1 1 0 001.42 0l6.58-6.58a1 1 0 000-1.42L12 2z"></path><circle cx="6.5" cy="6.5" r="1.5"></circle></svg>',
-            text: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"></path><line x1="12" y1="4" x2="12" y2="20"></line><line x1="8" y1="20" x2="16" y2="20"></line></svg>',
-            textarea: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="7" y1="7" x2="17" y2="7"></line><line x1="7" y1="10" x2="17" y2="10"></line><line x1="7" y1="13" x2="17" y2="13"></line><line x1="7" y1="16" x2="14" y2="16"></line></svg>',
-            number: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 6h10"></path><path d="M7 18h10"></path><path d="M7 6v12"></path><path d="M17 6v12"></path></svg>',
-            range: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="8" cy="12" r="2" fill="currentColor"></circle></svg>',
-            date: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
-            datetime: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="15" r="4"></circle><line x1="12" y1="13" x2="12" y2="15"></line><line x1="12" y1="15" x2="14" y2="16"></line></svg>',
-            time: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
-            checkbox: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><polyline points="9 12 11 14 15 10"></polyline></svg>',
-            color: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="8" r="3" fill="currentColor"></circle><path d="M12 14v6"></path><path d="M9 17h6"></path></svg>',
-            multiselect: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="12" height="4" rx="1"></rect><polyline points="6 7 7.5 8.5 10 6"></polyline><rect x="4" y="11" width="12" height="4" rx="1"></rect><polyline points="6 13 7.5 14.5 10 12"></polyline><rect x="4" y="17" width="12" height="4" rx="1"></rect></svg>',
-            radio: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><circle cx="12" cy="8" r="2" fill="currentColor"></circle><circle cx="12" cy="16" r="4"></circle></svg>',
-            select: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="12" x2="11" y2="12"></line><polyline points="8 10 12 14 16 10"></polyline></svg>',
-            map: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
-            default: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line></svg>'
-        };
-        return icons[key] || icons.default;
+    function renderFieldtypeTypeBadgeHtml(fieldtypeName, label) {
+        const safeName = String(fieldtypeName || '');
+        const safeLabel = String(label || 'Select Type').toUpperCase();
+        return '<span class="fieldtype-type" data-fieldtype="' + safeName.replace(/"/g, '&quot;') + '">' +
+            '<span class="fieldtype-type-icon" aria-hidden="true">' + getFieldtypeIcon(safeName, 14) + '</span>' +
+            '<span class="fieldtype-type-label">' + safeLabel.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
+            '</span>';
     }
     
     function renderFieldtype(fieldIndex, fieldData = {}) {
@@ -2328,14 +2327,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.innerHTML = html;
         const fieldElement = div.firstElementChild;
+
+        if (fieldData.type && window.Birkly && typeof Birkly.updateFieldtypeTypeBadge === 'function') {
+            Birkly.updateFieldtypeTypeBadge(fieldElement, fieldData.type, availableFieldtypes);
+        }
         
         // Set up fieldtype change handler
         const typeSelect = fieldElement.querySelector('.field-type-select');
         typeSelect.addEventListener('change', function() {
             // Find by either type or name (since option value can be either)
             const selectedType = availableFieldtypes.find(ft => (ft.type || ft.name) === this.value);
-            if (selectedType) {
-                fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+            if (selectedType && window.Birkly && typeof Birkly.updateFieldtypeTypeBadge === 'function') {
+                Birkly.updateFieldtypeTypeBadge(fieldElement, selectedType.name || selectedType.type, availableFieldtypes);
             }
             // Use the fieldtype name for loading config (consistent with existing code)
             const fieldtypeName = selectedType ? (selectedType.name || selectedType.type) : this.value;
@@ -2449,8 +2452,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Find by type first (from getAdminConfig), then by name
                 const selectedType = availableFieldtypes.find(ft => (ft.type || ft.name) === this.value) || 
                                      availableFieldtypes.find(ft => ft.name === this.value);
-                if (selectedType) {
-                    fieldElement.querySelector('.fieldtype-type').textContent = selectedType.label.toUpperCase();
+                if (selectedType && window.Birkly && typeof Birkly.updateFieldtypeTypeBadge === 'function') {
+                    Birkly.updateFieldtypeTypeBadge(fieldElement, selectedType.name || selectedType.type, availableFieldtypes);
                 }
                 const currentFieldIndex = fieldElement.getAttribute('data-index') || fieldIndex;
                 loadFieldtypeConfig(currentFieldIndex, this.value, fieldElement);
@@ -3078,7 +3081,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
                                 <div class="fieldtype-header">
                                     <div class="fieldtype-title">
-                                        <span class="fieldtype-type">${(field.type || 'Select Type').toUpperCase()}</span>
+                                        ${renderFieldtypeTypeBadgeHtml(field.type || '', field.type || 'Select Type')}
                                         <span class="fieldtype-name">${field.label || field.name || ''}</span>
                                     </div>
                                     <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
@@ -3225,7 +3228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
                             <div class="fieldtype-header">
                                 <div class="fieldtype-title">
-                                    <span class="fieldtype-type">SELECT TYPE</span>
+                                    ${renderFieldtypeTypeBadgeHtml('', 'Select Type')}
                                     <span class="fieldtype-name">New Field</span>
                                 </div>
                                 <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
@@ -3271,6 +3274,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+
+    if (window.Birkly && typeof Birkly.hydrateFieldtypeTypeBadges === 'function') {
+        Birkly.hydrateFieldtypeTypeBadges(document, availableFieldtypes);
     }
 });
 </script>
