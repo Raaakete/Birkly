@@ -18,6 +18,10 @@ node tests/birkly_region_test.js
 echo "==> Phantom template validator self-test"
 php scripts/validate-project-templates.php --self-test
 
+echo "==> AI Presence tests"
+php tests/ai_presence_storage_test.php
+php tests/ai_presence_test.php
+
 echo "==> Other node template engine smoke tests"
 node tests/for_loop_header_test.js
 node tests/from_block_prefetch_test.js
