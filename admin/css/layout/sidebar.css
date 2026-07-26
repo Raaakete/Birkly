@@ -353,11 +353,6 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
     width: auto;
   }
 
-  body.sidebar-collapsed #admin-sidebar .sidebar-header .logo-mark {
-    width: var(--admin-chrome-tile-size, 2.5rem);
-    height: var(--admin-chrome-tile-size, 2.5rem);
-  }
-
   body.sidebar-collapsed .nav-section-header {
     display: none;
   }
