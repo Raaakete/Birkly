@@ -123,29 +123,38 @@ async function saveAccountProfile() {
     }
 
     const name = form.querySelector('#account-name')?.value?.trim() ?? '';
-    let avatarUrl = null;
-
     const avatarFile = form.querySelector('#account-avatar')?.files?.[0];
-    if (avatarFile) {
-        const uploadData = new FormData();
-        uploadData.append('action', 'upload_avatar');
-        uploadData.append('_csrf', getCsrfToken());
-        uploadData.append('file', avatarFile);
 
-        const uploadResponse = await fetch(Birkly.url('/api/users.php'), {
+    if (avatarFile) {
+        const formData = new FormData(form);
+        formData.set('action', 'update_profile');
+        formData.set('_csrf', getCsrfToken());
+
+        const profileResponse = await fetch(Birkly.url('/api/users.php?action=update_profile'), {
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
-            body: uploadData,
+            body: formData,
         });
-        const uploadResult = await parseUsersApiResponse(uploadResponse);
-        if (uploadResult.status !== 'ok') {
-            throw new Error(uploadResult.message || 'Avatar upload failed');
+        const profileResult = await parseUsersApiResponse(profileResponse);
+        if (profileResult.status !== 'ok') {
+            throw new Error(profileResult.message || 'Error updating profile');
         }
-        avatarUrl = uploadResult.data?.avatarPath ?? null;
-        if (!avatarUrl) {
-            throw new Error('Avatar upload did not return a file path');
+
+        const savedAvatar = profileResult.data?.avatar || '';
+        if (savedAvatar) {
+            refreshTopbarAvatars(savedAvatar);
+            document.querySelectorAll('.account-settings-page .avatar-preview-wrap img').forEach(function (img) {
+                img.src = savedAvatar;
+            });
         }
+
+        const avatarInput = form.querySelector('#account-avatar');
+        if (avatarInput) {
+            avatarInput.value = '';
+        }
+
+        return profileResult;
     }
 
     const payload = {
@@ -153,9 +162,6 @@ async function saveAccountProfile() {
         name: name,
         _csrf: getCsrfToken(),
     };
-    if (avatarUrl) {
-        payload.avatar = avatarUrl;
-    }
 
     const profileResponse = await fetch(Birkly.url('/api/users.php'), {
         method: 'POST',
@@ -171,17 +177,8 @@ async function saveAccountProfile() {
         throw new Error(profileResult.message || 'Error updating profile');
     }
 
-    const savedAvatar = profileResult.data?.avatar || avatarUrl || '';
-    if (savedAvatar) {
-        refreshTopbarAvatars(savedAvatar);
-        document.querySelectorAll('.account-settings-page .avatar-preview-wrap img').forEach(function (img) {
-            img.src = savedAvatar;
-        });
-    }
-
-    const avatarInput = form.querySelector('#account-avatar');
-    if (avatarInput) {
-        avatarInput.value = '';
+    if (profileResult.data && profileResult.data.avatar) {
+        refreshTopbarAvatars(profileResult.data.avatar);
     }
 
     return profileResult;
