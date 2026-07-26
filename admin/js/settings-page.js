@@ -995,6 +995,15 @@ window.migrateStorage = migrateStorage;
         updateSaveBar(currentTab);
     };
     window.checkSettingsDirtyState = checkDirtyState;
+    window.getSettingsTabsToSave = function (fallbackTabId) {
+        var tabsToSave = Object.keys(GLOBAL_SAVE_TABS).filter(function (trackedTabId) {
+            return !!dirtyTabs[trackedTabId];
+        });
+        if (!tabsToSave.length && GLOBAL_SAVE_TABS[fallbackTabId]) {
+            tabsToSave = [fallbackTabId];
+        }
+        return tabsToSave;
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initTabs);
@@ -2486,13 +2495,9 @@ function handleGlobalSave() {
         storage: null,
         monitoring: null,
     };
-    var tabsToSave = Object.keys(GLOBAL_SAVE_TABS).filter(function (trackedTabId) {
-        return !!dirtyTabs[trackedTabId];
-    });
-
-    if (!tabsToSave.length && GLOBAL_SAVE_TABS[tabId]) {
-        tabsToSave = [tabId];
-    }
+    var tabsToSave = typeof window.getSettingsTabsToSave === 'function'
+        ? window.getSettingsTabsToSave(tabId)
+        : [];
 
     if (!tabsToSave.length) {
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
