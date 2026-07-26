@@ -676,7 +676,14 @@
         });
     }
 
+    function isAiPresencePage() {
+        return !!document.querySelector('.ai-presence-page');
+    }
+
     global.initAiPresence = function (config) {
+        if (!isAiPresencePage()) {
+            return;
+        }
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
         initTabs();
@@ -687,4 +694,12 @@
             bindActions();
         });
     };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            global.initAiPresence({});
+        });
+    } else if (isAiPresencePage()) {
+        global.initAiPresence({});
+    }
 })(window);
