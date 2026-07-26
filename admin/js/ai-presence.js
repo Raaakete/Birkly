@@ -559,9 +559,6 @@
         });
     }
 
-    function renderCopilotSuggestions() {
-        renderAssistSuggestions();
-    }
 
     function populateAiConnections(connections) {
         state.aiConnections = connections || [];
