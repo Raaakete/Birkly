@@ -33,24 +33,119 @@ if (!is_dir($usersDir)) {
     @mkdir($usersDir, 0755, true);
 }
 $storage = new Storage($usersDir);
-$rawInput = file_get_contents('php://input');
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+$isMultipartRequest = stripos($contentType, 'multipart/form-data') !== false;
+$rawInput = '';
 $input = [];
 $rawBody = [];
-if (!empty($rawInput)) {
-    $decoded = json_decode($rawInput, true);
-    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-        $rawBody = $decoded;
-        $input = sanitize_input($decoded);
-    } elseif (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
-        if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
-            header('Content-Type: application/json');
+if (!$isMultipartRequest) {
+    $rawInput = file_get_contents('php://input');
+    if (!empty($rawInput)) {
+        $decoded = json_decode($rawInput, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $rawBody = $decoded;
+            $input = sanitize_input($decoded);
+        } elseif (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && stripos($contentType, 'application/json') !== false) {
+            if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+                header('Content-Type: application/json');
+            }
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid JSON input: ' . json_last_error_msg()]);
+            exit;
         }
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid JSON input: ' . json_last_error_msg()]);
-        exit;
     }
 }
 $action = $_POST['action'] ?? $input['action'] ?? $_GET['action'] ?? '';
+
+function birkly_upload_error_message(int $code): string {
+    switch ($code) {
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
+            return 'File too large. Maximum size is 2MB.';
+        case UPLOAD_ERR_PARTIAL:
+            return 'The uploaded file was only partially uploaded.';
+        case UPLOAD_ERR_NO_FILE:
+            return 'No file uploaded.';
+        case UPLOAD_ERR_NO_TMP_DIR:
+            return 'Server is missing a temporary folder for uploads.';
+        case UPLOAD_ERR_CANT_WRITE:
+            return 'Failed to write uploaded file to disk.';
+        case UPLOAD_ERR_EXTENSION:
+            return 'A server extension blocked the file upload.';
+        default:
+            return 'Upload error (code ' . $code . ').';
+    }
+}
+
+function birkly_process_avatar_upload_from_request(array $sessionUser): array {
+    $file = null;
+    foreach (['avatar', 'file'] as $field) {
+        if (!isset($_FILES[$field])) {
+            continue;
+        }
+        if ((int) $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+        if ((int) $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+            return [
+                'ok' => false,
+                'message' => birkly_upload_error_message((int) $_FILES[$field]['error']),
+            ];
+        }
+        $file = $_FILES[$field];
+        break;
+    }
+
+    if (!$file || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+        return ['ok' => false, 'message' => 'No file uploaded or upload error'];
+    }
+
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+
+    if (!in_array($mimeType, $allowedTypes, true)) {
+        return ['ok' => false, 'message' => 'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.'];
+    }
+
+    if (($file['size'] ?? 0) > 2 * 1024 * 1024) {
+        return ['ok' => false, 'message' => 'File too large. Maximum size is 2MB.'];
+    }
+
+    $avatarsDir = __DIR__ . '/../admin/assets/avatars';
+    if (!is_dir($avatarsDir)) {
+        mkdir($avatarsDir, 0755, true);
+    }
+
+    $extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+    if ($extension === '') {
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            default => 'jpg',
+        };
+    }
+
+    $avatarUserId = trim((string) ($sessionUser['id'] ?? ''));
+    if ($avatarUserId === '' && !empty($sessionUser['email'])) {
+        $avatarUserId = birkly_user_id_from_email((string) $sessionUser['email']);
+    }
+
+    $filename = 'avatar-' . $avatarUserId . '-' . uniqid() . '.' . $extension;
+    $filepath = $avatarsDir . '/' . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+        return ['ok' => false, 'message' => 'Failed to save file'];
+    }
+
+    return [
+        'ok' => true,
+        'path' => birkly_url('/admin/assets/avatars/' . $filename),
+    ];
+}
 
 function birkly_delete_local_avatar_file(?string $avatarUrl): void {
     if ($avatarUrl === null || $avatarUrl === '') {
@@ -487,8 +582,10 @@ if ($action === 'update_profile') {
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
         exit;
     }
-    
-    $csrf = $input['_csrf'] ?? '';
+
+    $csrf = $isMultipartRequest
+        ? ($_POST['_csrf'] ?? '')
+        : ($input['_csrf'] ?? '');
     if (!validate_csrf_token($csrf)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
         exit;
@@ -500,16 +597,35 @@ if ($action === 'update_profile') {
         exit;
     }
     
-    // Update allowed fields
-    if (isset($input['name'])) {
-        $user['name'] = $input['name'];
-    }
-    if (array_key_exists('avatar', $rawBody)) {
-        $avatar = trim((string) $rawBody['avatar']);
-        if ($avatar !== ($user['avatar'] ?? '')) {
-            birkly_delete_local_avatar_file($user['avatar'] ?? '');
+    if ($isMultipartRequest) {
+        if (isset($_POST['name'])) {
+            $user['name'] = sanitize_string((string) $_POST['name']);
         }
-        $user['avatar'] = $avatar;
+
+        $upload = birkly_process_avatar_upload_from_request($_SESSION['user']);
+        if (!$upload['ok']) {
+            echo json_encode(['status' => 'error', 'message' => $upload['message']]);
+            exit;
+        }
+
+        if (!empty($upload['path'])) {
+            if ($upload['path'] !== ($user['avatar'] ?? '')) {
+                birkly_delete_local_avatar_file($user['avatar'] ?? '');
+            }
+            $user['avatar'] = $upload['path'];
+        }
+    } else {
+        // Update allowed fields
+        if (isset($input['name'])) {
+            $user['name'] = $input['name'];
+        }
+        if (array_key_exists('avatar', $rawBody)) {
+            $avatar = trim((string) $rawBody['avatar']);
+            if ($avatar !== ($user['avatar'] ?? '')) {
+                birkly_delete_local_avatar_file($user['avatar'] ?? '');
+            }
+            $user['avatar'] = $avatar;
+        }
     }
     
     $user['updated_at'] = date('c');
@@ -545,70 +661,19 @@ if ($action === 'upload_avatar') {
         echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
         exit;
     }
-    
-    if (!isset($_FILES['file']) && !isset($_FILES['avatar'])) {
-        echo json_encode(['status' => 'error', 'message' => 'No file uploaded or upload error']);
+
+    $upload = birkly_process_avatar_upload_from_request($_SESSION['user']);
+    if (!$upload['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $upload['message']]);
         exit;
     }
 
-    $file = null;
-    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-        $file = $_FILES['file'];
-    } elseif (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-        $file = $_FILES['avatar'];
-    }
-
-    if (!$file) {
-        echo json_encode(['status' => 'error', 'message' => 'No file uploaded or upload error']);
-        exit;
-    }
-    
-    // Validate file type
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
-    
-    if (!in_array($mimeType, $allowedTypes)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid file type. Only images are allowed.']);
-        exit;
-    }
-    
-    // Validate file size (max 2MB for avatar)
-    if ($file['size'] > 2 * 1024 * 1024) {
-        echo json_encode(['status' => 'error', 'message' => 'File too large. Maximum size is 2MB.']);
-        exit;
-    }
-    
-    // Create admin/assets/avatars directory if it doesn't exist
-    $avatarsDir = __DIR__ . '/../admin/assets/avatars';
-    if (!is_dir($avatarsDir)) {
-        mkdir($avatarsDir, 0755, true);
-    }
-    
-    // Generate unique filename
-    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $avatarUserId = trim((string) ($_SESSION['user']['id'] ?? ''));
-    if ($avatarUserId === '' && !empty($_SESSION['user']['email'])) {
-        $avatarUserId = birkly_user_id_from_email((string) $_SESSION['user']['email']);
-    }
-    $filename = 'avatar-' . $avatarUserId . '-' . uniqid() . '.' . $extension;
-    $filepath = $avatarsDir . '/' . $filename;
-    
-    // Move uploaded file
-    if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        $avatarPath = birkly_url('/admin/assets/avatars/' . $filename);
-        
-        echo json_encode([
-            'status' => 'ok',
-            'message' => 'Avatar uploaded successfully',
-            'data' => ['avatarPath' => $avatarPath]
-        ]);
-        exit;
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'Failed to save file']);
-        exit;
-    }
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Avatar uploaded successfully',
+        'data' => ['avatarPath' => $upload['path']],
+    ]);
+    exit;
 }
 
 // Remove avatar (current user only)
