@@ -2607,12 +2607,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.href = <?= json_encode(admin_url('content')) ?>;
                 } else {
                     console.error('API error:', data);
-                    alert('Error: ' + (data.message || 'Unknown error'));
+                    BirklyFeedback.toast('Error: ' + (data.message || 'Unknown error'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error saving collection:', error);
-                alert('Error saving collection: ' + error.message);
+                BirklyFeedback.toast('Error saving collection: ' + error.message, 'error');
             });
         });
     }
@@ -2629,7 +2629,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         }).catch(function(err) {
             console.error('Failed to copy:', err);
-            alert('Failed to copy to clipboard');
+            BirklyFeedback.toast('Failed to copy to clipboard', 'error');
         });
     }
     
@@ -3082,7 +3082,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 2000);
                 }.bind(this)).catch(function(err) {
                     console.error('Failed to copy:', err);
-                    alert('Failed to copy API key');
+                    BirklyFeedback.toast('Failed to copy API key', 'error');
                 });
             }
         });
@@ -3229,10 +3229,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove button handler
         const removeBtn = div.querySelector('.remove-sub-collection-btn');
         if (removeBtn) {
-            removeBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to remove this sub-collection?')) {
-                    div.remove();
+            removeBtn.addEventListener('click', async function() {
+                if (!(await BirklyFeedback.confirm('Are you sure you want to remove this sub-collection?', { danger: true }))) {
+                    return;
                 }
+                div.remove();
             });
         }
         
@@ -3240,10 +3241,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (subCollectionFieldsContainer) {
-        subCollectionFieldsContainer.addEventListener('click', function(e) {
+        subCollectionFieldsContainer.addEventListener('click', async function(e) {
             if (e.target.closest('.remove-sub-field-btn')) {
                 const fieldSection = e.target.closest('.fieldtype-section[data-sub-field-index]');
-                if (fieldSection && confirm('Are you sure you want to remove this field?')) {
+                if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
                     fieldSection.remove();
                 }
             }
@@ -3267,18 +3268,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle remove buttons for existing sub-collections
     if (subCollectionsContainer) {
-        subCollectionsContainer.addEventListener('click', function(e) {
+        subCollectionsContainer.addEventListener('click', async function(e) {
             if (e.target.closest('.remove-sub-collection-btn')) {
                 const btn = e.target.closest('.remove-sub-collection-btn');
                 const section = btn.closest('.fieldtype-section');
-                if (section && confirm('Are you sure you want to remove this sub-collection?')) {
+                if (section && (await BirklyFeedback.confirm('Are you sure you want to remove this sub-collection?', { danger: true }))) {
                     section.remove();
                 }
             }
             if (e.target.closest('.remove-sub-field-btn')) {
                 const btn = e.target.closest('.remove-sub-field-btn');
                 const fieldSection = btn.closest('.fieldtype-section[data-sub-field-index]');
-                if (fieldSection && confirm('Are you sure you want to remove this field?')) {
+                if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
                     fieldSection.remove();
                 }
             }

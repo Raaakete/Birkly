@@ -393,6 +393,10 @@ try {
             error_log("Existing collection found: " . print_r($existingCollection, true));
         }
     }
+
+    if ($action === 'create' && $existingCollection) {
+        throw new Exception('A collection with this slug already exists. Choose a different slug or open the existing collection to edit it.');
+    }
     
     // Create collection directory if it doesn't exist
     if (!is_dir($collectionsPath)) {
