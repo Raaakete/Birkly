@@ -3,13 +3,23 @@
 .ap-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: "main assist";
   gap: var(--space-m, 1rem);
   align-items: start;
   padding-bottom: var(--space-xl, 2rem);
 }
 
 .ap-main {
+  grid-area: main;
   min-width: 0;
+}
+
+.ap-assist-sidebar {
+  grid-area: assist;
+  position: sticky;
+  top: calc(var(--header-height, 56px) + var(--space-m, 1rem));
+  max-height: calc(100vh - var(--header-height, 56px) - 2rem);
+  overflow: auto;
 }
 
 /* —— Intro & workflow —— */
@@ -118,14 +128,7 @@
   display: none;
 }
 
-/* —— Assist sidebar —— */
-.ap-assist-sidebar {
-  position: sticky;
-  top: calc(var(--header-height, 56px) + var(--space-m, 1rem));
-  max-height: calc(100vh - var(--header-height, 56px) - 2rem);
-  overflow: auto;
-}
-
+/* —— Assist panel (sidebar inner) —— */
 .ap-assist-inner {
   padding: var(--space-m, 1rem);
   display: flex;
@@ -476,9 +479,11 @@
 @media (max-width: 1279px) {
   .ap-page {
     grid-template-columns: 1fr;
+    grid-template-areas: "main";
   }
 
   .ap-assist-sidebar {
+    grid-area: auto;
     position: fixed;
     top: 0;
     right: 0;

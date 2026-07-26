@@ -19,52 +19,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
 
 <div class="ap-page">
-    <aside class="ap-assist-sidebar" id="ap-assist-sidebar" aria-label="{translate 'admin.ai_presence_assist_title'}">
-        <div class="ap-assist-inner card">
-            <header class="ap-assist-header">
-                <h2 class="ap-assist-title">{translate 'admin.ai_presence_assist_title'}</h2>
-                <p class="ap-assist-lede">{translate 'admin.ai_presence_assist_lede'}</p>
-            </header>
-
-            <div class="ap-assist-block">
-                <label class="ap-assist-label" for="ap-ai-connection">{translate 'admin.ai_provider'}</label>
-                <select id="ap-ai-connection" class="input ap-assist-select" aria-describedby="ap-ai-connection-hint">
-                    <option value="">{translate 'admin.ai_presence_ai_rules_only'}</option>
-                </select>
-                <p id="ap-ai-connection-hint" class="ap-hint">{translate 'admin.ai_presence_assist_connection_hint'}</p>
-            </div>
-
-            <div class="ap-assist-block">
-                <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_quick'}</h3>
-                <p class="ap-hint">{translate 'admin.ai_presence_assist_quick_hint'}</p>
-                <div class="ap-assist-actions">
-                    <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
-                    <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
-                    <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
-                </div>
-            </div>
-
-            <div class="ap-assist-block ap-assist-block--divider">
-                <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_build'}</h3>
-                <p class="ap-hint">{translate 'admin.ai_presence_assist_build_hint'}</p>
-                <label class="ap-assist-label" for="ap-assist-collections">{translate 'admin.ai_presence_studio_sources'}</label>
-                <select id="ap-assist-collections" class="input" multiple size="5" aria-describedby="ap-assist-build-hint"></select>
-                <p id="ap-assist-build-hint" class="ap-hint">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
-                <button type="button" class="btn btn-sm btn-primary ap-assist-build-btn" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
-            </div>
-
-            <div class="ap-assist-block ap-assist-block--results" id="ap-assist-results">
-                <div class="ap-assist-results-head">
-                    <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_review'} <span class="badge ap-suggestion-badge" id="ap-suggestion-count" hidden>0</span></h3>
-                    <button type="button" class="btn btn-sm btn-primary" id="ap-accept-all-suggestions">{translate 'admin.ai_presence_accept_all'}</button>
-                </div>
-                <p class="ap-hint">{translate 'admin.ai_presence_suggestions_help'}</p>
-                <ul id="ap-assist-suggestions" class="ap-suggestion-list ap-suggestion-list--sidebar"></ul>
-                <p id="ap-assist-empty" class="ap-assist-empty text-muted">{translate 'admin.ai_presence_assist_empty'}</p>
-            </div>
-        </div>
-    </aside>
-
     <div class="ap-main">
         <section class="ap-intro card" id="ap-intro">
             <div class="ap-intro-grid">
@@ -342,6 +296,52 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
             </div>
         </div>
     </div>
+
+    <aside class="ap-assist-sidebar" id="ap-assist-sidebar" aria-label="{translate 'admin.ai_presence_assist_title'}">
+        <div class="ap-assist-inner card">
+            <header class="ap-assist-header">
+                <h2 class="ap-assist-title">{translate 'admin.ai_presence_assist_title'}</h2>
+                <p class="ap-assist-lede">{translate 'admin.ai_presence_assist_lede'}</p>
+            </header>
+
+            <div class="ap-assist-block">
+                <label class="ap-assist-label" for="ap-ai-connection">{translate 'admin.ai_provider'}</label>
+                <select id="ap-ai-connection" class="input ap-assist-select" aria-describedby="ap-ai-connection-hint">
+                    <option value="">{translate 'admin.ai_presence_ai_rules_only'}</option>
+                </select>
+                <p id="ap-ai-connection-hint" class="ap-hint">{translate 'admin.ai_presence_assist_connection_hint'}</p>
+            </div>
+
+            <div class="ap-assist-block">
+                <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_quick'}</h3>
+                <p class="ap-hint">{translate 'admin.ai_presence_assist_quick_hint'}</p>
+                <div class="ap-assist-actions">
+                    <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
+                </div>
+            </div>
+
+            <div class="ap-assist-block ap-assist-block--divider">
+                <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_build'}</h3>
+                <p class="ap-hint">{translate 'admin.ai_presence_assist_build_hint'}</p>
+                <label class="ap-assist-label" for="ap-assist-collections">{translate 'admin.ai_presence_studio_sources'}</label>
+                <select id="ap-assist-collections" class="input" multiple size="5" aria-describedby="ap-assist-build-hint"></select>
+                <p id="ap-assist-build-hint" class="ap-hint">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
+                <button type="button" class="btn btn-sm btn-primary ap-assist-build-btn" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
+            </div>
+
+            <div class="ap-assist-block ap-assist-block--results" id="ap-assist-results">
+                <div class="ap-assist-results-head">
+                    <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_review'} <span class="badge ap-suggestion-badge" id="ap-suggestion-count" hidden>0</span></h3>
+                    <button type="button" class="btn btn-sm btn-primary" id="ap-accept-all-suggestions">{translate 'admin.ai_presence_accept_all'}</button>
+                </div>
+                <p class="ap-hint">{translate 'admin.ai_presence_suggestions_help'}</p>
+                <ul id="ap-assist-suggestions" class="ap-suggestion-list ap-suggestion-list--sidebar"></ul>
+                <p id="ap-assist-empty" class="ap-assist-empty text-muted">{translate 'admin.ai_presence_assist_empty'}</p>
+            </div>
+        </div>
+    </aside>
 </div>
 
 <button type="button" class="ap-assist-fab" id="ap-assist-fab" aria-controls="ap-assist-sidebar" aria-expanded="false">
