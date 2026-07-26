@@ -60,17 +60,18 @@
   border-image: none;
 }
 
-/* Sidebar Header — token-based; adapts to light/dark theme */
+/* Sidebar Header — logo tile + title (separate surfaces) */
 .sidebar-header {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--border-radius-s, 4px);
-  background: var(--bg-elevated, #ffffff);
+  border-bottom: none;
+  border-radius: 0;
+  background: transparent;
   color: var(--text-primary, #20221D);
-  padding: var(--space-3, 0.75rem);
-  height: 64px;
+  padding: var(--space-2, 0.5rem) var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  min-height: 64px;
+  height: auto;
   margin-bottom: var(--space-2, 0.5rem);
 }
 
@@ -79,15 +80,32 @@
   display: flex;
   align-items: center;
   gap: var(--space-3, 0.75rem);
-  height: 44px;
+  min-height: 44px;
   padding: 0;
   width: 100%;
 }
 
+.sidebar-header .logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md, 0.5rem);
+  background: #20221D;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .sidebar-header .logo-mark {
+  background: #141512;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
 .sidebar-header .logo .logo-img,
 .sidebar-header .branding-logo img {
-  width: 42px;
-  height: 42px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   object-fit: contain;
 }
@@ -97,6 +115,11 @@
   color: var(--text-primary, #20221D);
   font-weight: 600;
   font-size: 1rem;
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-header .h1,
@@ -293,6 +316,12 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
     padding-right: 0;
   }
 
+  body.sidebar-collapsed .sidebar-header {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   body.sidebar-collapsed .sidebar-header .logo-name {
     display: none;
   }
@@ -300,6 +329,12 @@ body.sidebar-collapse-suggested .sidebar-collapse-toggle .sidebar-collapse-label
   body.sidebar-collapsed .sidebar-header .logo,
   body.sidebar-collapsed .sidebar-header .branding-logo {
     justify-content: center;
+    width: auto;
+  }
+
+  body.sidebar-collapsed .sidebar-header .logo-mark {
+    width: 40px;
+    height: 40px;
   }
 
   body.sidebar-collapsed .nav-section-header {
