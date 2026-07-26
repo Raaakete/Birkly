@@ -215,7 +215,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="plugin-settings-title">{translate 'admin.plugin_settings'}</h2>
-            <button class="modal-close-btn" onclick="closePluginSettingsModal()">&times;</button>
+            <button class="modal-close-btn" data-admin-action="closePluginSettingsModal">&times;</button>
         </div>
         <div class="modal-body">
             <form id="plugin-settings-form">
@@ -225,8 +225,8 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePluginSettingsModal()">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" onclick="savePluginSettings()">{translate 'admin.save_settings'}</button>
+            <button type="button" class="btn btn-secondary" data-admin-action="closePluginSettingsModal">{translate 'admin.cancel'}</button>
+            <button type="button" class="btn btn-primary" data-admin-action="savePluginSettings">{translate 'admin.save_settings'}</button>
         </div>
     </div>
 </div>
@@ -236,7 +236,7 @@
     <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
             <h2 id="plugin-permissions-title">{translate 'admin.plugin_permissions'}</h2>
-            <button class="modal-close-btn" onclick="closePluginPermissionsModal()">&times;</button>
+            <button class="modal-close-btn" data-admin-action="closePluginPermissionsModal">&times;</button>
         </div>
         <div class="modal-body">
             <div id="plugin-permissions-content">
@@ -244,7 +244,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePluginPermissionsModal()">{translate 'admin.close'}</button>
+            <button type="button" class="btn btn-secondary" data-admin-action="closePluginPermissionsModal">{translate 'admin.close'}</button>
         </div>
     </div>
 </div>

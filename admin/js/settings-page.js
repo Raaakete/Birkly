@@ -22,6 +22,10 @@ function escapeHtml(text) {
 }
 
 function showMessage(message, type) {
+    if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+        BirklyFeedback.toast(message, type === 'success' ? 'success' : type === 'error' ? 'error' : type || 'info');
+        return;
+    }
     const messageEl = document.getElementById('settings-message');
     if (!messageEl) return;
     messageEl.textContent = message;
@@ -396,7 +400,7 @@ async function deleteRole(roleId) {
     });
 }
 
-// Ensure functions are available on window for onclick handlers
+// Ensure functions are available for delegated data-admin-action handlers
 window.openAddRoleModal = openAddRoleModal;
 window.closeAddRoleModal = closeAddRoleModal;
 window.createRole = createRole;
@@ -404,6 +408,27 @@ window.editRole = editRole;
 window.closeEditRoleModal = closeEditRoleModal;
 window.updateRole = updateRole;
 window.deleteRole = deleteRole;
+window.openInviteUserModal = openInviteUserModal;
+window.closeInviteUserModal = closeInviteUserModal;
+window.sendInvitation = sendInvitation;
+window.openAddUserModal = openAddUserModal;
+window.closeAddUserModal = closeAddUserModal;
+window.openEditUserModal = openEditUserModal;
+window.closeEditUserModal = closeEditUserModal;
+window.editUser = editUser;
+window.createUser = createUser;
+window.updateUser = updateUser;
+window.confirmDeleteUser = confirmDeleteUser;
+window.deleteUserFromModal = deleteUserFromModal;
+window.revokeUserMcpSessions = revokeUserMcpSessions;
+window.openAddDomainModal = openAddDomainModal;
+window.closeAddDomainModal = closeAddDomainModal;
+window.closeEditDomainModal = closeEditDomainModal;
+window.registerDomain = registerDomain;
+window.updateDomain = updateDomain;
+window.addDenylistResource = addDenylistResource;
+window.testDatabaseConnection = testDatabaseConnection;
+window.migrateStorage = migrateStorage;
 
 // Settings tabs, global save, dirty state (single tab row)
 (function () {
@@ -2040,7 +2065,11 @@ async function addDenylistCollection() {
 }
 
 async function addDenylistResource() {
-    const resource = prompt('Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):');
+    const resource = await BirklyFeedback.prompt(
+        'Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):',
+        '',
+        { title: 'Add to denylist', confirmLabel: 'Add', placeholder: 'e.g. payroll/*' }
+    );
     if (!resource || resource.trim() === '') return;
     
     try {
