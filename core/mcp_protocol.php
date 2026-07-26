@@ -119,6 +119,7 @@ function birkly_mcp_handle_resources_list(): array
         ['uri' => 'birkly://docs/ai', 'name' => 'AI & MCP', 'description' => 'BYOAI and MCP architecture', 'mimeType' => 'text/markdown'],
         ['uri' => 'birkly://docs/sub-collections', 'name' => 'Sub-collections', 'description' => 'Sub-collections and sub-entries: schema, disk layout, admin URLs, MCP tools', 'mimeType' => 'text/markdown'],
         ['uri' => 'birkly://project', 'name' => 'Public site (project/)', 'description' => 'Paths, collections, and templating cheat sheet for AI site building', 'mimeType' => 'application/json'],
+        ['uri' => 'birkly://brand-context', 'name' => 'Brand context (AI Presence)', 'description' => 'Published authoritative brand context for external AI systems', 'mimeType' => 'application/json'],
     ];
 
     if (function_exists('get_active_plugin_docs')) {
@@ -163,6 +164,19 @@ function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
             'uri' => $uri,
             'mimeType' => 'application/json',
             'text' => json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+        ]]];
+    }
+
+    if ($uri === 'birkly://brand-context') {
+        require_once __DIR__ . '/ai_presence_pro.php';
+        $data = birkly_ai_presence_public_brand_for_tools('summary');
+        if ($data === null) {
+            return ['contents' => [['uri' => $uri, 'mimeType' => 'text/plain', 'text' => 'Brand context not published']]];
+        }
+        return ['contents' => [[
+            'uri' => $uri,
+            'mimeType' => 'application/json',
+            'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
         ]]];
     }
 
