@@ -25,8 +25,7 @@
             if (!entry) return;
             bar.classList.toggle('is-stuck', !entry.isIntersecting);
         }, {
-            threshold: [0],
-            rootMargin: 'calc(-1 * var(--admin-sticky-save-top, 0px)) 0px 0px 0px'
+            threshold: [0]
         });
 
         observer.observe(sentinel);
