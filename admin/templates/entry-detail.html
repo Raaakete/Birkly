@@ -438,10 +438,11 @@
 </div>
 
 <script>
-// Delete main entry
-document.querySelector('.delete-main-entry-btn')?.addEventListener('click', function() {
-    if (!confirm('<?= __('admin.confirm_delete') ?>')) return;
-    
+const entryDetailConfirmDelete = <?= json_encode(__('admin.confirm_delete')) ?>;
+
+document.querySelector('.delete-main-entry-btn')?.addEventListener('click', async function() {
+    if (!(await BirklyFeedback.confirm(entryDetailConfirmDelete, { danger: true }))) return;
+
     fetch('/api/admin_entries.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -457,19 +458,18 @@ document.querySelector('.delete-main-entry-btn')?.addEventListener('click', func
         if (d.status === 'ok') {
             window.location.href = <?= json_encode(admin_url('entries', ['collection' => $collection['slug'] ?? ''])) ?>;
         } else {
-            alert('Error: ' + d.message);
+            BirklyFeedback.toast('Error: ' + d.message, 'error');
         }
     });
 });
 
-// Delete sub-entries
 document.querySelectorAll('.delete-sub-entry-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        if (!confirm('<?= __('admin.confirm_delete') ?>')) return;
-        
+    btn.addEventListener('click', async function() {
+        if (!(await BirklyFeedback.confirm(entryDetailConfirmDelete, { danger: true }))) return;
+
         const subCollection = this.getAttribute('data-sub-collection');
         const subEntryId = this.getAttribute('data-sub-entry-id');
-        
+
         fetch('/api/sub_entries.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -487,7 +487,7 @@ document.querySelectorAll('.delete-sub-entry-btn').forEach(btn => {
             if (d.status === 'ok') {
                 location.reload();
             } else {
-                alert('Error: ' + d.message);
+                BirklyFeedback.toast('Error: ' + d.message, 'error');
             }
         });
     });
@@ -542,15 +542,15 @@ function updateBulkToolbar(subCollection) {
 
 // Bulk actions
 document.querySelectorAll('.bulk-publish-btn, .bulk-unpublish-btn, .bulk-delete-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const operation = this.classList.contains('bulk-publish-btn') ? 'publish' : 
+    btn.addEventListener('click', async function() {
+        const operation = this.classList.contains('bulk-publish-btn') ? 'publish' :
                         this.classList.contains('bulk-unpublish-btn') ? 'unpublish' : 'delete';
         const subCollection = this.getAttribute('data-sub-collection');
         const checkboxes = document.querySelectorAll(`.sub-entry-checkbox[data-sub-collection="${subCollection}"]:checked`);
         const ids = Array.from(checkboxes).map(cb => cb.value);
-        
+
         if (!ids.length) return;
-        if (operation === 'delete' && !confirm(`Delete ${ids.length} sub-entries?`)) return;
+        if (operation === 'delete' && !(await BirklyFeedback.confirm('Delete ' + ids.length + ' sub-entries?', { danger: true }))) return;
         
         // Build request payload
         const payload = {
@@ -579,12 +579,12 @@ document.querySelectorAll('.bulk-publish-btn, .bulk-unpublish-btn, .bulk-delete-
             if (d.status === 'ok') {
                 location.reload();
             } else {
-                alert('Error: ' + d.message);
+                BirklyFeedback.toast('Error: ' + d.message, 'error');
             }
         })
         .catch(err => {
             console.error('Bulk operation error:', err);
-            alert('Error performing bulk operation: ' + err.message);
+            BirklyFeedback.toast('Error performing bulk operation: ' + err.message, 'error');
         });
     });
 });
@@ -735,7 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 windowSlug: window.collectionSlug,
                 urlSlug: collectionSlug
             });
-            alert('Error: Collection not found. Please refresh the page.');
+            BirklyFeedback.toast('Error: Collection not found. Please refresh the page.', 'error');
             return;
         }
         
@@ -786,10 +786,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 600);
                 }
             } else {
-                alert('Failed to reorder entries: ' + (data.message || 'Unknown error'));
+                BirklyFeedback.toast('Failed to reorder entries: ' + (data.message || 'Unknown error'), 'error');
             }
         } catch (error) {
-            alert('Failed to reorder entries. Please try again.');
+            BirklyFeedback.toast('Failed to reorder entries. Please try again.', 'error');
         }
     }
     

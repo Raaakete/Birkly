@@ -16,10 +16,10 @@ class Checkbox extends BaseField {
         $checked = $this->value ? 'checked' : '';
         return <<<HTML
         <div class="checkbox-field-wrapper">
-            <label class="checkbox-switch" for="field_{$this->name}">
+            <span class="checkbox-switch">
                 <input type="checkbox" name="{$this->name}" id="field_{$this->name}" value="1" {$checked} class="checkbox-switch-input">
                 <span class="checkbox-switch-slider"></span>
-            </label>
+            </span>
         </div>
         HTML;
     }
@@ -42,9 +42,14 @@ class Checkbox extends BaseField {
         }
         
         .checkbox-switch-input {
+            position: absolute;
+            inset: 0;
             opacity: 0;
-            width: 0;
-            height: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            cursor: pointer;
+            z-index: 1;
         }
         
         .checkbox-switch-slider {
@@ -57,6 +62,7 @@ class Checkbox extends BaseField {
             background-color: var(--border-medium, #e5e7eb);
             transition: var(--transition-base, 0.3s ease);
             border-radius: 28px;
+            pointer-events: none;
         }
         
         .checkbox-switch-slider:before {

@@ -1,11 +1,4 @@
 <?php ?>
-<div class="page-header pt-m pb-m settings-page-header">
-  <div class="page-header-left">
-    <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
-  </div>
-  <div class="page-header-actions"></div>
-</div>
-
 <?php
 $stickySaveBarSaveId = 'global-save-settings-btn';
 $stickySaveBarSaveLabel = __('admin.save_settings');
@@ -14,79 +7,69 @@ $stickySaveBarMessageClass = 'message settings-toast';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
 include __DIR__ . '/components/sticky-save-bar.php';
+
+$availableLangs = class_exists('I18n') ? I18n::getAvailableLanguages() : [];
+$currentSiteLanguage = (string) ($settings['site']['language'] ?? 'en');
+if (empty($availableLangs)) {
+    $availableLangs = [
+        ['code' => 'en', 'native_name' => 'English', 'flag' => ''],
+    ];
+}
 ?>
+<div class="page-header pt-m pb-m settings-page-header">
+  <div class="page-header-left">
+    <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
+  </div>
+  <div class="page-header-actions">
+    <label class="u-hidden" for="settings-search-input">Search settings</label>
+    <input type="search" id="settings-search-input" class="input settings-search-input" placeholder="Search settings" autocomplete="off">
+    <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>" class="btn btn-secondary btn-sm">View activity</a>
+  </div>
+</div>
 
 <div class="settings-page">
 
   <div class="settings-tabs tabs-v2-root">
     <div class="tabs">
-      <button type="button" class="tab active" data-tab="general">
+      <button type="button" class="tab active" data-tab="general" data-settings-search="general project branding timezone language media uploads">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
         </svg>
         <?= __('admin.general') ?>
       </button>
-      <button type="button" class="tab" data-tab="domains">
+      <button type="button" class="tab" data-tab="site-delivery" data-settings-search="site delivery domains hosting project files redirects analytics public site">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
-        <?= __('admin.domains_and_hosting') ?>
+        Site delivery
       </button>
-      <button type="button" class="tab" data-tab="project">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 7l9-4 9 4-9 4-9-4z"></path>
-          <path d="M3 17l9 4 9-4"></path>
-          <path d="M3 12l9 4 9-4"></path>
-        </svg>
-        <?= __('admin.project') ?>
-      </button>
-      <button type="button" class="tab" data-tab="redirects">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 7l4 4-4 4"></path>
-          <path d="M3 11h18"></path>
-          <path d="M7 17l-4-4 4-4"></path>
-        </svg>
-        <?= __('admin.redirects') ?>
-      </button>
-      <button type="button" class="tab" data-tab="users-roles">
+      <button type="button" class="tab" data-tab="team-access" data-settings-search="team access users roles invitations admins editors permissions">
         <?= birkly_icon('user', ['size' => 12]) ?>
-        <?= __('admin.team_and_security') ?>
+        Team access
       </button>
-      <button type="button" class="tab" data-tab="activity-log">
+      <button type="button" class="tab" data-tab="security" data-settings-search="security sessions passwords csrf two-factor 2fa denylist plugins">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14,2 14,8 20,8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
         </svg>
-        <?= __('admin.activity') ?>
+        Security
       </button>
-      <button type="button" class="tab" data-tab="api">
+      <button type="button" class="tab" data-tab="integrations" data-settings-search="integrations api webhooks ai assistant mcp connections service agents">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
-        <?= __('admin.api_and_webhooks') ?>
+        Integrations
       </button>
-      <button type="button" class="tab" data-tab="ai-integrations" data-help-topic="mcp-connections">
+      <button type="button" class="tab" data-tab="system" data-settings-search="system storage monitoring database updates version danger rebuild maintenance activity">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-          <path d="M2 17l10 5 10-5"></path>
-          <path d="M2 12l10 5 10-5"></path>
-          <circle cx="18" cy="6" r="2"></circle>
+          <path d="M3 12h18"></path>
+          <path d="M12 3v18"></path>
+          <circle cx="12" cy="12" r="9"></circle>
         </svg>
-        <?= __('admin.ai_integrations') ?>
-      </button>
-      <button type="button" class="tab" data-tab="storage">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-          <line x1="12" y1="22.08" x2="12" y2="12"></line>
-        </svg>
-        <?= __('admin.infrastructure') ?>
+        System
       </button>
     </div>
 
@@ -97,514 +80,137 @@ include __DIR__ . '/components/sticky-save-bar.php';
           echo render_ui_injections('settings_before_tabs', []);
       }
       ?>
-      
-      <!-- General Tab -->
+
       <div class="tab-pane active" id="general">
         <form id="general-form" class="settings-form" enctype="multipart/form-data">
           <div class="settings-stack">
-          <section class="card">
-            <div class="section-header">
-              <h2><?= __('admin.project_information') ?></h2>
-            </div>
-            <p class="section-description"><?= __('admin.project_information_help') ?></p>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="project-name"><?= __('admin.project_name') ?></label>
-                <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
-                <small class="form-help"><?= __('admin.project_name_help') ?></small>
-              </div>
-              <div class="form-group">
-                <label for="site-timezone"><?= __('admin.timezone') ?></label>
-                <select id="site-timezone" name="siteTimezone" class="input">
-                  <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
-                  <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>Eastern Time</option>
-                  <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>>Central Time</option>
-                  <option value="America/Denver" <?= ($settings['site']['timezone'] ?? '') === 'America/Denver' ? 'selected' : '' ?>>Mountain Time</option>
-                  <option value="America/Los_Angeles" <?= ($settings['site']['timezone'] ?? '') === 'America/Los_Angeles' ? 'selected' : '' ?>>Pacific Time</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
-              <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
-              <small class="form-help"><?= __('admin.optional_description_help') ?></small>
-            </div>
-            <div class="form-group">
-              <label for="project-logo"><?= __('admin.project_logo') ?></label>
-              <input type="file" id="project-logo" name="project_logo" class="input" accept="image/*">
-              <small class="form-help"><?= __('admin.project_logo_help') ?></small>
-              <?php if (!empty($settings['branding']['logoPath'])): ?>
-                <div class="logo-preview-block">
-                  <p class="logo-preview-label"><?= __('admin.current_logo') ?>:</p>
-                  <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" class="logo-preview-img">
-                  <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger logo-remove-btn"><?= __('admin.remove_logo') ?></button>
+            <div class="settings-pane-section" data-settings-search="general project name description logo timezone language branding">
+              <section class="card">
+                <div class="section-header">
+                  <h2><?= __('admin.project_information') ?></h2>
                 </div>
-              <?php endif; ?>
-              <div id="logo-preview" class="logo-preview-block" style="display: none;">
-                <p class="logo-preview-label"><?= __('admin.preview') ?>:</p>
-                <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" class="logo-preview-img">
-              </div>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="section-header">
-              <h2><?= __('admin.media_settings') ?></h2>
-            </div>
-            <?php
-              $mediaSettings = $settings['media'] ?? [];
-              $maxUploadBytes = (int) ($mediaSettings['max_upload_size'] ?? $mediaSettings['maxUploadSize'] ?? 0);
-              $maxUploadMb = $maxUploadBytes > 0
-                  ? max(1, (int) round($maxUploadBytes / 1024 / 1024))
-                  : max(1, (int) ($mediaSettings['maxUploadSize'] ?? 10));
-              $imageQuality = (int) ($mediaSettings['image_quality'] ?? $mediaSettings['imageQuality'] ?? 85);
-              if ($imageQuality < 10) {
-                  $imageQuality = 85;
-              }
-              $thumbnailSize = $mediaSettings['thumbnail_size'] ?? null;
-              $thumbWidth = (int) (is_array($thumbnailSize) ? ($thumbnailSize[0] ?? 150) : ($mediaSettings['thumbnailWidth'] ?? 150));
-              $thumbHeight = (int) (is_array($thumbnailSize) ? ($thumbnailSize[1] ?? 150) : ($mediaSettings['thumbnailHeight'] ?? 150));
-              if ($thumbWidth < 50) {
-                  $thumbWidth = 150;
-              }
-              if ($thumbHeight < 50) {
-                  $thumbHeight = 150;
-              }
-              $createThumbnails = $mediaSettings['create_thumbnails'] ?? $mediaSettings['createThumbnails'] ?? true;
-              if ($createThumbnails === 'on') {
-                  $createThumbnails = true;
-              }
-            ?>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
-                <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" class="input" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
-              </div>
-              <div class="form-group">
-                <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
-                <input type="number" id="media-image-quality" name="mediaImageQuality" class="input" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
-                <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" class="input" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
-              </div>
-              <div class="form-group">
-                <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
-                <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" class="input" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= !empty($createThumbnails) ? 'checked' : '' ?>>
-                <span><?= __('admin.create_thumbnails_automatically') ?></span>
-              </label>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="section-header">
-              <h2><?= __('admin.system_updates') ?></h2>
-            </div>
-            <div class="updates-content">
-              <!-- Current Version Card -->
-              <div class="card">
-                <div class="card-header">
-                  <h3><?= __('admin.current_version') ?></h3>
-                  <div class="version-badge current">
-                    <span id="current-version"><?= __('admin.loading') ?>...</span>
+                <p class="section-description"><?= __('admin.project_information_help') ?></p>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="project-name"><?= __('admin.project_name') ?></label>
+                    <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
+                    <small class="form-help"><?= __('admin.project_name_help') ?></small>
+                  </div>
+                  <div class="form-group">
+                    <label for="site-timezone"><?= __('admin.timezone') ?></label>
+                    <select id="site-timezone" name="siteTimezone" class="input">
+                      <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
+                      <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>Eastern Time</option>
+                      <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>>Central Time</option>
+                      <option value="America/Denver" <?= ($settings['site']['timezone'] ?? '') === 'America/Denver' ? 'selected' : '' ?>>Mountain Time</option>
+                      <option value="America/Los_Angeles" <?= ($settings['site']['timezone'] ?? '') === 'America/Los_Angeles' ? 'selected' : '' ?>>Pacific Time</option>
+                    </select>
                   </div>
                 </div>
-                <div class="card-body">
-                  <p><?= __('admin.birkly_running_version') ?> <strong id="current-version-text"><?= __('admin.loading') ?>...</strong></p>
-                  <div class="version-info">
-                    <div class="info-item">
-                      <span class="label"><?= __('admin.installation_date') ?>:</span>
-                      <span class="value" id="install-date"><?= __('admin.unknown') ?></span>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="site-language">Site language</label>
+                    <select id="site-language" name="siteLanguage" class="input">
+                      <?php foreach ($availableLangs as $lang): ?>
+                        <?php
+                          $langCode = (string) ($lang['code'] ?? '');
+                          $langLabel = trim((string) ($lang['native_name'] ?? $langCode));
+                          $langFlag = trim((string) ($lang['flag'] ?? ''));
+                        ?>
+                        <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentSiteLanguage ? 'selected' : '' ?>><?= htmlspecialchars(trim($langLabel . ' ' . $langFlag)) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                    <small class="form-help">Default language used for your public site content and settings.</small>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
+                  <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
+                  <small class="form-help"><?= __('admin.optional_description_help') ?></small>
+                </div>
+                <div class="form-group">
+                  <label for="project-logo"><?= __('admin.project_logo') ?></label>
+                  <input type="file" id="project-logo" name="project_logo" class="input" accept="image/*">
+                  <small class="form-help"><?= __('admin.project_logo_help') ?></small>
+                  <?php if (!empty($settings['branding']['logoPath'])): ?>
+                    <div class="logo-preview-block">
+                      <p class="logo-preview-label"><?= __('admin.current_logo') ?>:</p>
+                      <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" class="logo-preview-img">
+                      <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger logo-remove-btn"><?= __('admin.remove_logo') ?></button>
                     </div>
-                    <div class="info-item">
-                      <span class="label"><?= __('admin.last_update') ?>:</span>
-                      <span class="value" id="last-update"><?= __('admin.never') ?></span>
-                    </div>
+                  <?php endif; ?>
+                  <div id="logo-preview" class="logo-preview-block" style="display: none;">
+                    <p class="logo-preview-label"><?= __('admin.preview') ?>:</p>
+                    <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" class="logo-preview-img">
                   </div>
                 </div>
-              </div>
-
-              <!-- Update Status Card -->
-              <div class="card" id="update-status-card">
-                <div class="card-header">
-                  <h3><?= __('admin.update_status') ?></h3>
-                  <div class="update-status" id="update-status">
-                    <div class="status-indicator loading">
-                      <div class="spinner"></div>
-                      <span><?= __('admin.checking_for_updates') ?>...</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-body" id="update-details" style="display: none;">
-                  <div id="update-info"></div>
-                  <div class="update-actions" id="update-actions" style="display: none;">
-                    <button type="button" class="btn btn-primary" id="download-update-btn">
-                      <?= birkly_icon('import', ['size' => 16]) ?>
-                      Download Update
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="check-updates-btn">
-                      <?= birkly_icon('arrows-clockwise', ['size' => 16]) ?>
-                      Check Again
-                    </button>
-                  </div>
-                </div>
-              </div>
+              </section>
             </div>
-          </section>
 
-          <section class="card settings-danger-zone">
-            <div class="section-header">
-              <h2><?= __('admin.danger_zone') ?></h2>
+            <div class="settings-pane-section" data-settings-search="general media uploads images thumbnails quality">
+              <section class="card">
+                <div class="section-header">
+                  <h2><?= __('admin.media_settings') ?></h2>
+                </div>
+                <?php
+                  $mediaSettings = $settings['media'] ?? [];
+                  $maxUploadBytes = (int) ($mediaSettings['max_upload_size'] ?? $mediaSettings['maxUploadSize'] ?? 0);
+                  $maxUploadMb = $maxUploadBytes > 0
+                      ? max(1, (int) round($maxUploadBytes / 1024 / 1024))
+                      : max(1, (int) ($mediaSettings['maxUploadSize'] ?? 10));
+                  $imageQuality = (int) ($mediaSettings['image_quality'] ?? $mediaSettings['imageQuality'] ?? 85);
+                  if ($imageQuality < 10) {
+                      $imageQuality = 85;
+                  }
+                  $thumbnailSize = $mediaSettings['thumbnail_size'] ?? null;
+                  $thumbWidth = (int) (is_array($thumbnailSize) ? ($thumbnailSize[0] ?? 150) : ($mediaSettings['thumbnailWidth'] ?? 150));
+                  $thumbHeight = (int) (is_array($thumbnailSize) ? ($thumbnailSize[1] ?? 150) : ($mediaSettings['thumbnailHeight'] ?? 150));
+                  if ($thumbWidth < 50) {
+                      $thumbWidth = 150;
+                  }
+                  if ($thumbHeight < 50) {
+                      $thumbHeight = 150;
+                  }
+                  $createThumbnails = $mediaSettings['create_thumbnails'] ?? $mediaSettings['createThumbnails'] ?? true;
+                  if ($createThumbnails === 'on') {
+                      $createThumbnails = true;
+                  }
+                ?>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
+                    <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" class="input" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
+                  </div>
+                  <div class="form-group">
+                    <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
+                    <input type="number" id="media-image-quality" name="mediaImageQuality" class="input" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
+                    <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" class="input" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
+                  </div>
+                  <div class="form-group">
+                    <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
+                    <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" class="input" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= !empty($createThumbnails) ? 'checked' : '' ?>>
+                    <span><?= __('admin.create_thumbnails_automatically') ?></span>
+                  </label>
+                </div>
+              </section>
             </div>
-            <p class="section-description"><?= __('admin.rebuild_system_description') ?></p>
-            <ul class="settings-danger-list">
-              <li><?= __('admin.rebuild_system_removes_content') ?></li>
-              <li><?= __('admin.rebuild_system_removes_onboarding') ?></li>
-              <li><?= __('admin.rebuild_system_keeps_users') ?></li>
-            </ul>
-            <button type="button" class="btn btn-danger" id="open-rebuild-system-btn">
-              <?= __('admin.rebuild_system_button') ?>
-            </button>
-          </section>
           </div>
         </form>
       </div>
-      <!-- Team & security Tab -->
-      <div class="tab-pane" id="users-roles">
-        <div class="settings-stack team-security-settings">
-<section class="card">
-            <div class="section-header">
-            <h2><?= __('admin.user_management') ?></h2>
-            <div class="user-actions">
-              <button class="btn btn-secondary" onclick="openInviteUserModal()">
-                <?= birkly_icon('envelope', ['size' => 16]) ?>
-                Invite User
-              </button>
-              <button class="btn btn-primary" onclick="openAddUserModal()">
-                <?= birkly_icon('plus', ['size' => 16]) ?>
-                Add User
-              </button>
-            </div>
-          </div>
-          <p class="settings-help-note">
-            CMS users here manage the admin panel. Site visitors and members are managed separately in <strong>Site Users</strong> (User Management plugin).
-          </p>
-          <div class="users-grid">
-            <?php if (empty($users)): ?>
-              <div class="empty-state empty-state--compact">
-                <p class="empty-state__message"><?= __('admin.no_users_found') ?></p>
-                <div class="empty-state__action">
-                  <button class="btn btn-primary" onclick="openAddUserModal()"><?= __('admin.add_first_user') ?></button>
-                </div>
-              </div>
-            <?php else: ?>
-              <?php foreach ($users as $user):
-                $userEmail = trim((string) ($user['email'] ?? ''));
-                $userName = trim((string) ($user['name'] ?? ''));
-                $userLabel = $userName !== '' ? $userName : ($userEmail !== '' ? $userEmail : (string) ($user['id'] ?? 'User'));
-                $userInitial = strtoupper(substr($userLabel, 0, 1));
-                $userSubtitle = ($userEmail !== '' && strcasecmp($userEmail, $userLabel) !== 0) ? $userEmail : '';
-                $userCreated = $user['created_at'] ?? $user['created'] ?? null;
-                $userLastLogin = $user['last_login'] ?? $user['lastLogin'] ?? null;
-              ?>
-                <div class="card user-card">
-                  <div class="user-header">
-                    <div class="user-avatar">
-                      <?= htmlspecialchars($userInitial) ?>
-                    </div>
-                    <div class="user-info">
-                      <h4><?= htmlspecialchars($userLabel) ?></h4>
-                      <?php if ($userSubtitle !== ''): ?>
-                        <p class="user-email"><?= htmlspecialchars($userSubtitle) ?></p>
-                      <?php endif; ?>
-                      <span class="role-badge <?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?>"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
-                    </div>
-                    <div class="user-actions">
-                      <button class="btn-icon btn-icon--edit" onclick="editUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>')" title="Edit User" aria-label="Edit user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
-                        <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
-                      </button>
-                      <button class="btn-icon btn-icon--danger" onclick="confirmDeleteUser('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>')" title="Delete User" aria-label="Delete user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
-                        <?= birkly_icon('trash', ['size' => 16]) ?>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="user-details">
-                    <p><strong>Created:</strong> <?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : 'Unknown' ?></p>
-                    <p><strong>Last Login:</strong> <?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : 'Never' ?></p>
-                    <?php
-                      $mcpSessions = is_array($user['mcp_sessions'] ?? null) ? $user['mcp_sessions'] : [];
-                      $byoaiConnections = is_array($user['byoai_connections'] ?? null) ? $user['byoai_connections'] : [];
-                      $hasAiConnections = !empty($mcpSessions) || !empty($byoaiConnections);
-                    ?>
-                    <div class="user-ai-connections">
-                      <p><strong>AI connections:</strong></p>
-                      <?php if (!$hasAiConnections): ?>
-                        <p class="user-ai-empty">None active</p>
-                      <?php else: ?>
-                        <ul class="user-ai-list">
-                          <?php foreach ($byoaiConnections as $connection):
-                            $connectedAt = $connection['created_at'] ?? '';
-                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
-                          ?>
-                            <li>
-                              <span class="user-ai-name"><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span>
-                              <span class="user-ai-meta">outbound · since <?= htmlspecialchars($connectedLabel) ?></span>
-                            </li>
-                          <?php endforeach; ?>
-                          <?php foreach ($mcpSessions as $session):
-                            $connectedAt = $session['connected_at'] ?? '';
-                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
-                          ?>
-                            <li>
-                              <span class="user-ai-name"><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span>
-                              <span class="user-ai-meta">MCP · since <?= htmlspecialchars($connectedLabel) ?></span>
-                            </li>
-                          <?php endforeach; ?>
-                        </ul>
-                        <?php if (!empty($mcpSessions)): ?>
-                        <button
-                          type="button"
-                          class="btn btn-secondary btn-sm"
-                          onclick="revokeUserMcpSessions('<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>')"
-                        >
-                          Revoke MCP access
-                        </button>
-                        <?php endif; ?>
-                        <?php if (!empty($byoaiConnections)): ?>
-                        <p class="user-ai-hint">Manage built-in assistant keys under <strong>Settings → AI</strong>.</p>
-                        <?php endif; ?>
-                      <?php endif; ?>
-                    </div>
-                  </div>
-                </div>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </div>
-        </section>
 
-        <section class="card">
-            <div class="section-header">
-            <h2>Role Management</h2>
-            <button class="btn btn-primary" onclick="openAddRoleModal()">
-              <?= birkly_icon('plus', ['size' => 16]) ?>
-              Add Role
-            </button>
-          </div>
-          <div class="roles-grid">
-            <?php foreach ($settings['roles'] ?? [] as $role): ?>
-            <div class="card role-card">
-              <div class="role-header">
-                <h3><?= htmlspecialchars($role['name']) ?></h3>
-                <div class="role-actions">
-                  <button class="btn-icon btn-icon--edit" onclick="editRole('<?= htmlspecialchars($role['id']) ?>')" title="Edit Role" aria-label="Edit role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
-                    <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
-                  </button>
-                  <button class="btn-icon btn-icon--danger" onclick="deleteRole('<?= htmlspecialchars($role['id']) ?>')" title="Delete Role" aria-label="Delete role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
-                    <?= birkly_icon('trash', ['size' => 16]) ?>
-                  </button>
-                </div>
-              </div>
-              <p class="role-description"><?= htmlspecialchars($role['description']) ?></p>
-              <div class="role-permissions">
-                <?php foreach ($role['permissions'] ?? [] as $resource => $actions):
-                  $resourceLabel = $resource === '*' ? 'All resources' : ucfirst(str_replace('_', ' ', (string) $resource));
-                  $actionList = is_array($actions) ? $actions : [$actions];
-                ?>
-                <div class="permission-group">
-                  <div class="permission-group-label"><?= htmlspecialchars($resourceLabel) ?>:</div>
-                  <div class="permission-pills">
-                    <?php foreach ($actionList as $action): ?>
-                    <span class="permission-pill"><?= htmlspecialchars((string) $action) ?></span>
-                    <?php endforeach; ?>
-                  </div>
-                </div>
-                <?php endforeach; ?>
-              </div>
-            </div>
-            <?php endforeach; ?>
-          </div>
-        </section>
-          <form id="security-form" class="settings-form">
-<section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.session_security') ?></h2>
-</div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
-                <input type="number" id="security-session-timeout" name="securitySessionTimeout" class="input" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
-              </div>
-              <div class="form-group">
-                <label for="security-max-login-attempts"><?= __('admin.max_login_attempts') ?></label>
-                <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" class="input" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="security-password-min-length"><?= __('admin.password_min_length') ?></label>
-                <input type="number" id="security-password-min-length" name="securityPasswordMinLength" class="input" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
-              </div>
-              <div class="form-group">
-                <label for="security-lockout-time">Lockout Time (minutes)</label>
-                <input type="number" id="security-lockout-time" name="securityLockoutTime" class="input" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['require_strong_password'] ?? $settings['security']['requireStrongPassword'] ?? true) ? 'checked' : '' ?>>
-                <span>Require Strong Password</span>
-              </label>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.csrf_protection') ?></h2>
-</div>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="security-enable-csrf" name="securityEnableCsrf" <?= ($settings['security']['enable_csrf'] ?? true) ? 'checked' : '' ?>>
-                <span><?= __('admin.enable_csrf_protection') ?></span>
-              </label>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="section-header">
-  <h2>Two-factor authentication policy</h2>
-</div>
-            <p class="settings-help">When enabled, all admin users must set up two-factor authentication. Users without 2FA receive a configurable grace period before login is blocked.</p>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="security-require-2fa" name="securityRequire2fa" <?= !empty($settings['security']['require_2fa']) ? 'checked' : '' ?>>
-                <span>Require 2FA for all admin users</span>
-              </label>
-            </div>
-            <div class="form-group">
-              <label for="security-require-2fa-grace-days">Grace period (days)</label>
-              <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
-              <p class="settings-help">Days users have to enable 2FA after the policy is turned on (default 30).</p>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.plugin_security_denylist') ?></h2>
-</div>
-            <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
-            <div class="denylist-add-toolbar settings-section-header-row">
-              <div class="form-group settings-form-group--inline">
-                <label for="denylist-collection-select">Protect collection</label>
-                <select id="denylist-collection-select" class="input">
-                  <option value="">Loading collections…</option>
-                </select>
-              </div>
-              <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
-                Add collection
-              </button>
-              <button type="button" class="btn btn-secondary" onclick="addDenylistResource()">
-                <?= birkly_icon('plus', ['size' => 16]) ?>
-                Add custom pattern
-              </button>
-            </div>
-            <p class="settings-help settings-help--tight">Spaces denylist is reserved for a future release (stub).</p>
-            <div id="denylist-management">
-              <div class="text-center">
-                <div class="spinner">Loading denylist...</div>
-              </div>
-            </div>
-          </section>
-          </form>
-        </div>
-      </div>
-      <!-- API & webhooks Tab -->
-      <div class="tab-pane" id="api">
-        <div class="settings-stack api-webhooks-settings">
-<?php
-          require_once __DIR__ . '/../../core/birkly_paths.php';
-          $apiEndpoint = birkly_url('/api/');
-          $domainsFile = __DIR__ . '/../../settings/domains.json';
-          $registeredDomains = [];
-          if (is_file($domainsFile)) {
-              $registeredDomains = json_decode(file_get_contents($domainsFile), true) ?: [];
-          }
-          $domainCount = is_array($registeredDomains) ? count($registeredDomains) : 0;
-          $domainsTabUrl = admin_url('settings') . '?tab=domains';
-        ?>
-        <section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.api_information') ?></h2>
-</div>
-          <p class="settings-help"><?= __('admin.api_info_help') ?></p>
-          
-          <div class="api-info-grid">
-            <div class="api-info-card">
-              <h3 class="api-info-card__title">API Endpoint</h3>
-              <p class="api-info-card__text">The API is available at: <code class="api-info-card__code"><?= htmlspecialchars($apiEndpoint) ?></code></p>
-            </div>
-            <div class="api-info-card">
-              <h3 class="api-info-card__title">Authentication</h3>
-              <p class="api-info-card__text">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Manage domains</a></p>
-            </div>
-            <div class="api-info-card">
-              <h3 class="api-info-card__title">Rate Limiting</h3>
-              <?php if ($domainCount > 0): ?>
-              <p class="api-info-card__text">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab.</p>
-              <?php else: ?>
-              <p class="api-info-card__text">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab to enable API access controls.</p>
-              <?php endif; ?>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.api_documentation') ?></h2>
-</div>
-          <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the Birkly documentation or contact your system administrator.</p>
-        </section>
-<section class="card">
-            <div class="section-header">
-            <div>
-              <h2><?= __('admin.webhooks') ?></h2>
-              <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
-            </div>
-            <button type="button" class="btn btn-primary" id="create-webhook"><?= __('admin.create_webhook') ?></button>
-          </div>
-          <div class="table-container">
-            <table class="table" id="webhooks-table">
-              <thead>
-                <tr>
-                  <th><?= __('admin.url') ?></th>
-                  <th><?= __('admin.events') ?></th>
-                  <th><?= __('admin.collections') ?></th>
-                  <th><?= __('admin.status') ?></th>
-                  <th><?= __('admin.last_triggered') ?></th>
-                  <th><?= __('admin.actions') ?></th>
-                </tr>
-              </thead>
-              <tbody id="webhooks-list">
-                <tr>
-                  <td colspan="6" class="text-center">
-                    <div class="spinner">Loading...</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-        </div>
-      </div>
-      <!-- Domains & hosting Tab -->
-      <div class="tab-pane" id="domains">
-        <div class="settings-stack domains-settings">
+      <div class="tab-pane" id="site-delivery">
+        <div class="settings-stack">
+          <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains hosting dns analytics public site local development tracking"><div class="settings-stack domains-settings">
 <section class="card domains-header-card">
             <div class="section-header">
               <div class="section-header__copy">
@@ -656,14 +262,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
             </div>
             <div id="hosting-wizard-mount"></div>
-            <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=project') ?>">Settings → Project</a>.</p>
+            <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=site-delivery') ?>">Settings → Site delivery</a>.</p>
           </section>
-        </div>
-      </div>
-
-      <!-- Project Tab -->
-      <div class="tab-pane" id="project">
-        <div class="settings-stack project-settings">
+        </div></div>
+          <div id="project" class="settings-pane-section" data-settings-search="site delivery project files upload editor public site activity access"><div class="settings-stack project-settings">
           <section class="card project-simple-card">
             <div class="section-header project-simple-header">
               <div>
@@ -760,51 +362,336 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
             </div>
             <div class="project-access-links">
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=integrations#ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=site-delivery') ?>" class="btn btn-secondary btn-sm">Domains</a>
             </div>
           </section>
           </div>
+        </div></div>
+          <div id="redirects" class="settings-pane-section" data-settings-search="site delivery redirects routing url rewrite forwarding"><?php include __DIR__ . '/../partials/redirects-panel.php'; ?></div>
         </div>
       </div>
-      <!-- Redirects Tab -->
-      <div class="tab-pane" id="redirects">
-        <?php include __DIR__ . '/../partials/redirects-panel.php'; ?>
-      </div>
 
-      <!-- Activity & Audit Log Tab -->
-      <div class="tab-pane" id="activity-log">
-        <div class="activity-log-page">
-          <div class="main-actions-bar">
-            <div class="filters activity-log-filters">
-              <select id="event-filter" class="input activity-log-filter-event">
-                <option value="">All Events</option>
-              </select>
-              <select id="category-filter" class="input activity-log-filter-category">
-                <option value="all">All Categories</option>
-                <option value="content">Content</option>
-                <option value="users">Users</option>
-                <option value="system">System</option>
-              </select>
-              <input type="date" id="date-filter" class="input activity-log-filter-date" placeholder="Filter by date">
-              <button type="button" class="btn btn-secondary" id="refresh-logs">Refresh</button>
+      <div class="tab-pane" id="team-access">
+        <div class="settings-stack team-access-settings">
+          <div class="settings-pane-section" data-settings-search="team access users invitations admins editors roles users management"><section class="card">
+            <div class="section-header">
+            <h2><?= __('admin.user_management') ?></h2>
+            <div class="user-actions">
+              <button class="btn btn-secondary" data-admin-action="openInviteUserModal">
+                <?= birkly_icon('envelope', ['size' => 16]) ?>
+                Invite User
+              </button>
+              <button class="btn btn-primary" data-admin-action="openAddUserModal">
+                <?= birkly_icon('plus', ['size' => 16]) ?>
+                Add User
+              </button>
             </div>
           </div>
+          <p class="settings-help-note">
+            CMS users here manage the admin panel. Site visitors and members are managed separately in <strong>Site Users</strong> (User Management plugin).
+          </p>
+          <div class="users-grid">
+            <?php if (empty($users)): ?>
+              <div class="empty-state empty-state--compact">
+                <p class="empty-state__message"><?= __('admin.no_users_found') ?></p>
+                <div class="empty-state__action">
+                  <button class="btn btn-primary" data-admin-action="openAddUserModal"><?= __('admin.add_first_user') ?></button>
+                </div>
+              </div>
+            <?php else: ?>
+              <?php foreach ($users as $user):
+                $userEmail = trim((string) ($user['email'] ?? ''));
+                $userName = trim((string) ($user['name'] ?? ''));
+                $userLabel = $userName !== '' ? $userName : ($userEmail !== '' ? $userEmail : (string) ($user['id'] ?? 'User'));
+                $userInitial = strtoupper(substr($userLabel, 0, 1));
+                $userSubtitle = ($userEmail !== '' && strcasecmp($userEmail, $userLabel) !== 0) ? $userEmail : '';
+                $userCreated = $user['created_at'] ?? $user['created'] ?? null;
+                $userLastLogin = $user['last_login'] ?? $user['lastLogin'] ?? null;
+              ?>
+                <div class="card user-card">
+                  <div class="user-header">
+                    <div class="user-avatar">
+                      <?= htmlspecialchars($userInitial) ?>
+                    </div>
+                    <div class="user-info">
+                      <h4><?= htmlspecialchars($userLabel) ?></h4>
+                      <?php if ($userSubtitle !== ''): ?>
+                        <p class="user-email"><?= htmlspecialchars($userSubtitle) ?></p>
+                      <?php endif; ?>
+                      <span class="role-badge <?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?>"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
+                    </div>
+                    <div class="user-actions">
+                      <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="Edit User" aria-label="Edit user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
+                        <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
+                      </button>
+                      <button class="btn-icon btn-icon--danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="Delete User" aria-label="Delete user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
+                        <?= birkly_icon('trash', ['size' => 16]) ?>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="user-details">
+                    <p><strong>Created:</strong> <?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : 'Unknown' ?></p>
+                    <p><strong>Last Login:</strong> <?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : 'Never' ?></p>
+                    <?php
+                      $mcpSessions = is_array($user['mcp_sessions'] ?? null) ? $user['mcp_sessions'] : [];
+                      $byoaiConnections = is_array($user['byoai_connections'] ?? null) ? $user['byoai_connections'] : [];
+                      $hasAiConnections = !empty($mcpSessions) || !empty($byoaiConnections);
+                    ?>
+                    <div class="user-ai-connections">
+                      <p><strong>AI connections:</strong></p>
+                      <?php if (!$hasAiConnections): ?>
+                        <p class="user-ai-empty">None active</p>
+                      <?php else: ?>
+                        <ul class="user-ai-list">
+                          <?php foreach ($byoaiConnections as $connection):
+                            $connectedAt = $connection['created_at'] ?? '';
+                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
+                          ?>
+                            <li>
+                              <span class="user-ai-name"><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span>
+                              <span class="user-ai-meta">outbound · since <?= htmlspecialchars($connectedLabel) ?></span>
+                            </li>
+                          <?php endforeach; ?>
+                          <?php foreach ($mcpSessions as $session):
+                            $connectedAt = $session['connected_at'] ?? '';
+                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
+                          ?>
+                            <li>
+                              <span class="user-ai-name"><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span>
+                              <span class="user-ai-meta">MCP · since <?= htmlspecialchars($connectedLabel) ?></span>
+                            </li>
+                          <?php endforeach; ?>
+                        </ul>
+                        <?php if (!empty($mcpSessions)): ?>
+                        <button
+                          type="button"
+                          class="btn btn-secondary btn-sm"
+                          data-admin-action="revokeUserMcpSessions" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]'
+                        >
+                          Revoke MCP access
+                        </button>
+                        <?php endif; ?>
+                        <?php if (!empty($byoaiConnections)): ?>
+                        <p class="user-ai-hint">Manage built-in assistant keys under <strong>Settings → AI</strong>.</p>
+                        <?php endif; ?>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </section></div>
+          <div class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
+            <div class="section-header">
+            <h2>Role Management</h2>
+            <button class="btn btn-primary" data-admin-action="openAddRoleModal">
+              <?= birkly_icon('plus', ['size' => 16]) ?>
+              Add Role
+            </button>
+          </div>
+          <div class="roles-grid">
+            <?php foreach ($settings['roles'] ?? [] as $role): ?>
+            <div class="card role-card">
+              <div class="role-header">
+                <h3><?= htmlspecialchars($role['name']) ?></h3>
+                <div class="role-actions">
+                  <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="Edit Role" aria-label="Edit role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
+                    <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
+                  </button>
+                  <button class="btn-icon btn-icon--danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="Delete Role" aria-label="Delete role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
+                    <?= birkly_icon('trash', ['size' => 16]) ?>
+                  </button>
+                </div>
+              </div>
+              <p class="role-description"><?= htmlspecialchars($role['description']) ?></p>
+              <div class="role-permissions">
+                <?php foreach ($role['permissions'] ?? [] as $resource => $actions):
+                  $resourceLabel = $resource === '*' ? 'All resources' : ucfirst(str_replace('_', ' ', (string) $resource));
+                  $actionList = is_array($actions) ? $actions : [$actions];
+                ?>
+                <div class="permission-group">
+                  <div class="permission-group-label"><?= htmlspecialchars($resourceLabel) ?>:</div>
+                  <div class="permission-pills">
+                    <?php foreach ($actionList as $action): ?>
+                    <span class="permission-pill"><?= htmlspecialchars((string) $action) ?></span>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <?php endforeach; ?>
+          </div>
+        </section></div>
+        </div>
+      </div>
 
-          <div class="table-container activity-log-table-wrap">
-            <table class="table activity-log-table" id="activity-log-table">
+      <div class="tab-pane" id="security">
+        <form id="security-form" class="settings-form">
+          <div class="settings-stack">
+            <div class="settings-pane-section" data-settings-search="security sessions passwords csrf login attempts timeout lockout">
+              <section class="card">
+                <div class="section-header">
+                  <h2><?= __('admin.session_security') ?></h2>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
+                    <input type="number" id="security-session-timeout" name="securitySessionTimeout" class="input" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
+                  </div>
+                  <div class="form-group">
+                    <label for="security-max-login-attempts"><?= __('admin.max_login_attempts') ?></label>
+                    <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" class="input" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="security-password-min-length"><?= __('admin.password_min_length') ?></label>
+                    <input type="number" id="security-password-min-length" name="securityPasswordMinLength" class="input" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
+                  </div>
+                  <div class="form-group">
+                    <label for="security-lockout-time">Lockout Time (minutes)</label>
+                    <input type="number" id="security-lockout-time" name="securityLockoutTime" class="input" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['require_strong_password'] ?? $settings['security']['requireStrongPassword'] ?? true) ? 'checked' : '' ?>>
+                    <span>Require Strong Password</span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="security-enable-csrf" name="securityEnableCsrf" <?= ($settings['security']['enable_csrf'] ?? true) ? 'checked' : '' ?>>
+                    <span><?= __('admin.enable_csrf_protection') ?></span>
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            <div class="settings-pane-section" data-settings-search="security two factor 2fa authentication policy grace period">
+              <section class="card">
+                <div class="section-header">
+                  <h2>Two-factor authentication policy</h2>
+                </div>
+                <p class="settings-help">When enabled, all admin users must set up two-factor authentication. Users without 2FA receive a configurable grace period before login is blocked.</p>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="security-require-2fa" name="securityRequire2fa" <?= !empty($settings['security']['require_2fa']) ? 'checked' : '' ?>>
+                    <span>Require 2FA for all admin users</span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label for="security-require-2fa-grace-days">Grace period (days)</label>
+                  <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
+                  <p class="settings-help">Days users have to enable 2FA after the policy is turned on (default 30).</p>
+                </div>
+              </section>
+            </div>
+
+            <div class="settings-pane-section" data-settings-search="security denylist plugin security protected collections custom patterns spaces">
+              <section class="card">
+                <div class="section-header">
+                  <h2><?= __('admin.plugin_security_denylist') ?></h2>
+                </div>
+                <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
+                <div class="denylist-add-toolbar settings-section-header-row">
+                  <div class="form-group settings-form-group--inline">
+                    <label for="denylist-collection-select">Protect collection</label>
+                    <select id="denylist-collection-select" class="input">
+                      <option value="">Loading collections…</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
+                    Add collection
+                  </button>
+                  <button type="button" class="btn btn-secondary" data-admin-action="addDenylistResource">
+                    <?= birkly_icon('plus', ['size' => 16]) ?>
+                    Add custom pattern
+                  </button>
+                </div>
+                <p class="settings-help settings-help--tight">Spaces denylist is reserved for a future release (stub).</p>
+                <div id="denylist-management">
+                  <div class="text-center">
+                    <div class="spinner">Loading denylist...</div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="tab-pane" id="integrations">
+        <div class="settings-stack integrations-settings">
+          <div id="api" class="settings-pane-section" data-settings-search="integrations api webhooks domains authentication rate limiting collections"><div class="settings-stack api-webhooks-settings">
+<?php
+          require_once __DIR__ . '/../../core/birkly_paths.php';
+          $apiEndpoint = birkly_url('/api/');
+          $domainsFile = __DIR__ . '/../../settings/domains.json';
+          $registeredDomains = [];
+          if (is_file($domainsFile)) {
+              $registeredDomains = json_decode(file_get_contents($domainsFile), true) ?: [];
+          }
+          $domainCount = is_array($registeredDomains) ? count($registeredDomains) : 0;
+          $domainsTabUrl = admin_url('settings') . '?tab=site-delivery';
+        ?>
+        <section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.api_information') ?></h2>
+</div>
+          <p class="settings-help"><?= __('admin.api_info_help') ?></p>
+          
+          <div class="api-info-grid">
+            <div class="api-info-card">
+              <h3 class="api-info-card__title">API Endpoint</h3>
+              <p class="api-info-card__text">The API is available at: <code class="api-info-card__code"><?= htmlspecialchars($apiEndpoint) ?></code></p>
+            </div>
+            <div class="api-info-card">
+              <h3 class="api-info-card__title">Authentication</h3>
+              <p class="api-info-card__text">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Manage domains</a></p>
+            </div>
+            <div class="api-info-card">
+              <h3 class="api-info-card__title">Rate Limiting</h3>
+              <?php if ($domainCount > 0): ?>
+              <p class="api-info-card__text">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab.</p>
+              <?php else: ?>
+              <p class="api-info-card__text">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab to enable API access controls.</p>
+              <?php endif; ?>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+            <div class="section-header">
+  <h2><?= __('admin.api_documentation') ?></h2>
+</div>
+          <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the Birkly documentation or contact your system administrator.</p>
+        </section>
+<section class="card">
+            <div class="section-header">
+            <div>
+              <h2><?= __('admin.webhooks') ?></h2>
+              <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
+            </div>
+            <button type="button" class="btn btn-primary" id="create-webhook"><?= __('admin.create_webhook') ?></button>
+          </div>
+          <div class="table-container">
+            <table class="table" id="webhooks-table">
               <thead>
                 <tr>
-                  <th>Timestamp</th>
-                  <th>User</th>
-                  <th>Event</th>
-                  <th>Category</th>
-                  <th>IP Address</th>
-                  <th>Details</th>
+                  <th><?= __('admin.url') ?></th>
+                  <th><?= __('admin.events') ?></th>
+                  <th><?= __('admin.collections') ?></th>
+                  <th><?= __('admin.status') ?></th>
+                  <th><?= __('admin.last_triggered') ?></th>
+                  <th><?= __('admin.actions') ?></th>
                 </tr>
               </thead>
-              <tbody id="log-entries">
-                <tr class="activity-log-loading">
+              <tbody id="webhooks-list">
+                <tr>
                   <td colspan="6" class="text-center">
                     <div class="spinner">Loading...</div>
                   </td>
@@ -812,133 +699,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </tbody>
             </table>
           </div>
-
-          <div class="pagination activity-log-pagination">
-            <button type="button" class="btn btn-secondary" id="load-more" style="display: none;">Load More</button>
-          </div>
-        </div>
-      </div>
-      <!-- Infrastructure Tab -->
-      <div class="tab-pane" id="storage">
-<?php
-  $storageSettings = $settings['storage'] ?? [];
-  $storageDriver = $storageSettings['driver'] ?? $storageSettings['backend'] ?? 'flatfile';
-  if ($storageDriver === 'postgres') {
-      $storageDriver = 'postgresql';
-  }
-  $dbHost = $storageSettings['host'] ?? $storageSettings['db_host'] ?? 'localhost';
-  $dbPort = $storageSettings['port'] ?? $storageSettings['db_port'] ?? ($storageDriver === 'postgresql' ? 5432 : 3306);
-  $dbName = $storageSettings['database'] ?? $storageSettings['db_name'] ?? '';
-  $dbUser = $storageSettings['username'] ?? $storageSettings['db_user'] ?? '';
-  $dbPassword = $storageSettings['password'] ?? $storageSettings['db_password'] ?? '';
-  $dbPrefix = $storageSettings['prefix'] ?? $storageSettings['db_prefix'] ?? 'birkly_';
-
-  $monitoringSettings = $settings['monitoring'] ?? [];
-  $monitoringAlertEmail = (string) ($monitoringSettings['alert_email'] ?? '');
-  $monitoringAlertWebhookUrl = (string) ($monitoringSettings['alert_webhook_url'] ?? '');
-?>
-        <div class="settings-stack infrastructure-settings">
-          <form id="storage-form" class="settings-form">
-<section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.storage_backend') ?></h2>
-</div>
-            <p class="settings-help"><?= __('admin.storage_backend_help') ?></p>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
-                <select id="storage-backend" name="storage_backend" class="input">
-                  <option value="flatfile" <?= $storageDriver === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
-                  <option value="mysql" <?= $storageDriver === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
-                  <option value="postgresql" <?= $storageDriver === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
-                  <option value="sqlite" disabled <?= $storageDriver === 'sqlite' ? 'selected' : '' ?>>SQLite (coming soon)</option>
-                </select>
-                <small><?= __('admin.changing_storage_backend_warning') ?></small>
-              </div>
-            </div>
-            
-            <div id="database-config" style="display: <?= in_array($storageDriver, ['mysql', 'postgresql'], true) ? 'block' : 'none' ?>;">
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="db-host"><?= __('admin.database_host') ?></label>
-                  <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars((string) $dbHost) ?>" class="input" placeholder="localhost">
-                </div>
-                <div class="form-group">
-                  <label for="db-port"><?= __('admin.database_port') ?></label>
-                  <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars((string) $dbPort) ?>" class="input" placeholder="<?= $storageDriver === 'postgresql' ? '5432' : '3306' ?>">
-                </div>
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="db-name"><?= __('admin.database_name') ?></label>
-                  <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars((string) $dbName) ?>" class="input" placeholder="birkly">
-                </div>
-                <div class="form-group">
-                  <label for="db-user">Database User</label>
-                  <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars((string) $dbUser) ?>" class="input" placeholder="username">
-                </div>
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="db-password"><?= __('admin.database_password') ?></label>
-                  <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars((string) $dbPassword) ?>" class="input" placeholder="password">
-                </div>
-                <div class="form-group">
-                  <label for="db-prefix">Table Prefix</label>
-                  <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars((string) $dbPrefix) ?>" class="input" placeholder="birkly_">
-                </div>
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <button type="button" class="btn btn-secondary" onclick="testDatabaseConnection()"><?= __('admin.test_connection') ?></button>
-                  <small id="db-test-result" style="margin-left: 1rem;"></small>
-                </div>
-              </div>
-            </div>
-            
-            
-              </section>
-            </div>
-          </div>
-<section class="card">
-            <div class="section-header">
-  <h3><?= __('admin.migration') ?></h3>
-</div>
-              <p class="settings-help"><?= __('admin.migration_help') ?></p>
-              <div class="form-row">
-                <div class="form-group">
-                  <button type="button" class="btn btn-secondary" onclick="migrateStorage()"><?= __('admin.start_migration') ?></button>
-                  <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small></section>
-          </form>
-          <form id="monitoring-form" class="settings-form">
-<section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.monitoring_alerts') ?></h2>
-</div>
-            <p class="settings-help"><?= __('admin.monitoring_alerts_help') ?></p>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="monitoring-alert-email"><?= __('admin.alert_email') ?></label>
-                <input type="email" id="monitoring-alert-email" name="monitoringAlertEmail" class="input" value="<?= htmlspecialchars($monitoringAlertEmail) ?>" placeholder="ops@example.com">
-                <small class="form-help"><?= __('admin.alert_email_help') ?></small>
-              </div>
-              <div class="form-group">
-                <label for="monitoring-alert-webhook"><?= __('admin.alert_webhook_url') ?></label>
-                <input type="url" id="monitoring-alert-webhook" name="monitoringAlertWebhookUrl" class="input" value="<?= htmlspecialchars($monitoringAlertWebhookUrl) ?>" placeholder="https://hooks.example.com/health">
-                <small class="form-help"><?= __('admin.alert_webhook_url_help') ?></small>
-              </div>
-            </div>
-          </section>
-          </form>
-        </div>
-      </div>
-      <!-- AI Tab -->
-      <div class="tab-pane" id="ai-integrations">
-        <div class="ai-integrations-settings">
+        </section>
+        </div></div>
+          <div id="ai-integrations" class="settings-pane-section" data-settings-search="integrations ai assistant mcp connections service agents outbound personal connector"><div class="ai-integrations-settings">
           <div class="settings-section ai-integrations-intro">
             <h2>AI</h2>
             <p class="settings-help ai-intro-lead">Connect AI apps to Birkly or chat inside the admin.</p>
@@ -1197,7 +960,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <label for="mcp-new-connector-url">Connector URL</label>
                   <div class="copy-snippet-row">
                     <input type="text" id="mcp-new-connector-url" class="input" readonly>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-new-connector-url', true)">Copy URL</button>
+                    <button type="button" class="btn btn-sm btn-primary" data-admin-object="mcpConnections" data-admin-method="copySnippet" data-admin-args='["mcp-new-connector-url", true]'>Copy URL</button>
                   </div>
                 </div>
               </div>
@@ -1208,6 +971,202 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <button type="submit" class="btn btn-primary" id="mcp-submit-btn" hidden>Create service agent</button>
               </div>
             </form>
+          </div>
+        </div></div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="system">
+<?php
+  $storageSettings = $settings['storage'] ?? [];
+  $storageDriver = $storageSettings['driver'] ?? $storageSettings['backend'] ?? 'flatfile';
+  if ($storageDriver === 'postgres') {
+      $storageDriver = 'postgresql';
+  }
+  $dbHost = $storageSettings['host'] ?? $storageSettings['db_host'] ?? 'localhost';
+  $dbPort = $storageSettings['port'] ?? $storageSettings['db_port'] ?? ($storageDriver === 'postgresql' ? 5432 : 3306);
+  $dbName = $storageSettings['database'] ?? $storageSettings['db_name'] ?? '';
+  $dbUser = $storageSettings['username'] ?? $storageSettings['db_user'] ?? '';
+  $dbPassword = $storageSettings['password'] ?? $storageSettings['db_password'] ?? '';
+  $dbPrefix = $storageSettings['prefix'] ?? $storageSettings['db_prefix'] ?? 'birkly_';
+
+  $monitoringSettings = $settings['monitoring'] ?? [];
+  $monitoringAlertEmail = (string) ($monitoringSettings['alert_email'] ?? '');
+  $monitoringAlertWebhookUrl = (string) ($monitoringSettings['alert_webhook_url'] ?? '');
+?>
+        <div class="settings-stack system-settings">
+          <div class="settings-pane-section" data-settings-search="system updates current version install download maintenance release notes">
+            <section class="card">
+              <div class="section-header">
+                <h2><?= __('admin.system_updates') ?></h2>
+              </div>
+              <div class="updates-content">
+                <div class="card">
+                  <div class="card-header">
+                    <h3><?= __('admin.current_version') ?></h3>
+                    <div class="version-badge current">
+                      <span id="current-version"><?= __('admin.loading') ?>...</span>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <p><?= __('admin.birkly_running_version') ?> <strong id="current-version-text"><?= __('admin.loading') ?>...</strong></p>
+                    <div class="version-info">
+                      <div class="info-item">
+                        <span class="label"><?= __('admin.installation_date') ?>:</span>
+                        <span class="value" id="install-date"><?= __('admin.unknown') ?></span>
+                      </div>
+                      <div class="info-item">
+                        <span class="label"><?= __('admin.last_update') ?>:</span>
+                        <span class="value" id="last-update"><?= __('admin.never') ?></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card" id="update-status-card">
+                  <div class="card-header">
+                    <h3><?= __('admin.update_status') ?></h3>
+                    <div class="update-status" id="update-status">
+                      <div class="status-indicator loading">
+                        <div class="spinner"></div>
+                        <span><?= __('admin.checking_for_updates') ?>...</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body" id="update-details" style="display: none;">
+                    <div id="update-info"></div>
+                    <div class="update-actions" id="update-actions" style="display: none;">
+                      <button type="button" class="btn btn-primary" id="download-update-btn">
+                        <?= birkly_icon('import', ['size' => 16]) ?>
+                        Download Update
+                      </button>
+                      <button type="button" class="btn btn-secondary" id="check-updates-btn">
+                        <?= birkly_icon('arrows-clockwise', ['size' => 16]) ?>
+                        Check Again
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div id="storage" class="settings-pane-section" data-settings-search="system storage monitoring infrastructure database mysql postgresql alerts webhook migration">
+            <div class="settings-stack infrastructure-settings">
+              <form id="storage-form" class="settings-form">
+                <section class="card">
+                  <div class="section-header">
+                    <h2><?= __('admin.storage_backend') ?></h2>
+                  </div>
+                  <p class="settings-help"><?= __('admin.storage_backend_help') ?></p>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
+                      <select id="storage-backend" name="storage_backend" class="input">
+                        <option value="flatfile" <?= $storageDriver === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
+                        <option value="mysql" <?= $storageDriver === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
+                        <option value="postgresql" <?= $storageDriver === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
+                        <option value="sqlite" disabled <?= $storageDriver === 'sqlite' ? 'selected' : '' ?>>SQLite (coming soon)</option>
+                      </select>
+                      <small><?= __('admin.changing_storage_backend_warning') ?></small>
+                    </div>
+                  </div>
+
+                  <div id="database-config" style="display: <?= in_array($storageDriver, ['mysql', 'postgresql'], true) ? 'block' : 'none' ?>;">
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="db-host"><?= __('admin.database_host') ?></label>
+                        <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars((string) $dbHost) ?>" class="input" placeholder="localhost">
+                      </div>
+                      <div class="form-group">
+                        <label for="db-port"><?= __('admin.database_port') ?></label>
+                        <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars((string) $dbPort) ?>" class="input" placeholder="<?= $storageDriver === 'postgresql' ? '5432' : '3306' ?>">
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="db-name"><?= __('admin.database_name') ?></label>
+                        <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars((string) $dbName) ?>" class="input" placeholder="birkly">
+                      </div>
+                      <div class="form-group">
+                        <label for="db-user">Database User</label>
+                        <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars((string) $dbUser) ?>" class="input" placeholder="username">
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="db-password"><?= __('admin.database_password') ?></label>
+                        <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars((string) $dbPassword) ?>" class="input" placeholder="password">
+                      </div>
+                      <div class="form-group">
+                        <label for="db-prefix">Table Prefix</label>
+                        <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars((string) $dbPrefix) ?>" class="input" placeholder="birkly_">
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <button type="button" class="btn btn-secondary" data-admin-action="testDatabaseConnection"><?= __('admin.test_connection') ?></button>
+                        <small id="db-test-result" style="margin-left: 1rem;"></small>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="card">
+                  <div class="section-header">
+                    <h3><?= __('admin.migration') ?></h3>
+                  </div>
+                  <p class="settings-help"><?= __('admin.migration_help') ?></p>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <button type="button" class="btn btn-secondary" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
+                      <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small>
+                    </div>
+                  </div>
+                </section>
+              </form>
+
+              <form id="monitoring-form" class="settings-form">
+                <section class="card">
+                  <div class="section-header">
+                    <h2><?= __('admin.monitoring_alerts') ?></h2>
+                  </div>
+                  <p class="settings-help"><?= __('admin.monitoring_alerts_help') ?></p>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="monitoring-alert-email"><?= __('admin.alert_email') ?></label>
+                      <input type="email" id="monitoring-alert-email" name="monitoringAlertEmail" class="input" value="<?= htmlspecialchars($monitoringAlertEmail) ?>" placeholder="ops@example.com">
+                      <small class="form-help"><?= __('admin.alert_email_help') ?></small>
+                    </div>
+                    <div class="form-group">
+                      <label for="monitoring-alert-webhook"><?= __('admin.alert_webhook_url') ?></label>
+                      <input type="url" id="monitoring-alert-webhook" name="monitoringAlertWebhookUrl" class="input" value="<?= htmlspecialchars($monitoringAlertWebhookUrl) ?>" placeholder="https://hooks.example.com/health">
+                      <small class="form-help"><?= __('admin.alert_webhook_url_help') ?></small>
+                    </div>
+                  </div>
+                </section>
+              </form>
+            </div>
+          </div>
+
+          <div class="settings-pane-section" data-settings-search="system danger rebuild reset onboarding destructive">
+            <section class="card settings-danger-zone">
+              <div class="section-header">
+                <h2><?= __('admin.danger_zone') ?></h2>
+              </div>
+              <p class="section-description"><?= __('admin.rebuild_system_description') ?></p>
+              <ul class="settings-danger-list">
+                <li><?= __('admin.rebuild_system_removes_content') ?></li>
+                <li><?= __('admin.rebuild_system_removes_onboarding') ?></li>
+                <li><?= __('admin.rebuild_system_keeps_users') ?></li>
+              </ul>
+              <button type="button" class="btn btn-danger" id="open-rebuild-system-btn">
+                <?= __('admin.rebuild_system_button') ?>
+              </button>
+            </section>
           </div>
         </div>
       </div>
@@ -1221,7 +1180,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2><?= __('admin.register_domain') ?></h2>
-        <button class="modal-close-btn" onclick="closeAddDomainModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeAddDomainModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-domain-form">
@@ -1267,8 +1226,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeAddDomainModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="registerDomain()">Register Domain</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeAddDomainModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="registerDomain">Register Domain</button>
       </div>
     </div>
   </div>
@@ -1278,7 +1237,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2><?= __('admin.edit_domain') ?></h2>
-        <button class="modal-close-btn" onclick="closeEditDomainModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeEditDomainModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-domain-form">
@@ -1322,8 +1281,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditDomainModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="updateDomain()"><?= __('admin.update_domain') ?></button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeEditDomainModal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-admin-action="updateDomain"><?= __('admin.update_domain') ?></button>
       </div>
     </div>
   </div>
@@ -1334,7 +1293,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h2><?= __('admin.add_new_role') ?></h2>
-        <button class="modal-close-btn" onclick="closeAddRoleModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeAddRoleModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-role-form">
@@ -1355,8 +1314,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeAddRoleModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="createRole()">Create Role</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeAddRoleModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="createRole">Create Role</button>
       </div>
     </div>
   </div>
@@ -1366,7 +1325,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h2><?= __('admin.edit_role') ?></h2>
-        <button class="modal-close-btn" onclick="closeEditRoleModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeEditRoleModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-role-form">
@@ -1388,8 +1347,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditRoleModal()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="updateRole()"><?= __('admin.update_role') ?></button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeEditRoleModal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-admin-action="updateRole"><?= __('admin.update_role') ?></button>
       </div>
     </div>
   </div>
@@ -1402,7 +1361,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.invite_new_user') ?></h2>
-        <button class="modal-close-btn" onclick="closeInviteUserModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeInviteUserModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="invite-user-form">
@@ -1429,8 +1388,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeInviteUserModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="sendInvitation()">Send Invitation</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeInviteUserModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="sendInvitation">Send Invitation</button>
       </div>
     </div>
   </div>
@@ -1440,7 +1399,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.add_new_user') ?></h2>
-        <button class="modal-close-btn" onclick="closeAddUserModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeAddUserModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="add-user-form">
@@ -1463,8 +1422,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeAddUserModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="createUser">Create User</button>
       </div>
     </div>
   </div>
@@ -1495,7 +1454,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.edit_user') ?></h2>
-        <button class="modal-close-btn" onclick="closeEditUserModal()">&times;</button>
+        <button class="modal-close-btn" data-admin-action="closeEditUserModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-user-form">
@@ -1519,9 +1478,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="updateUser()">Update User</button>
-        <button type="button" class="btn btn-danger" onclick="deleteUserFromModal()">Delete User</button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeEditUserModal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-admin-action="updateUser">Update User</button>
+        <button type="button" class="btn btn-danger" data-admin-action="deleteUserFromModal">Delete User</button>
       </div>
     </div>
   </div>
@@ -1531,7 +1490,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2 id="webhook-modal-title"><?= __('admin.create_webhook') ?></h2>
-        <button type="button" class="modal-close-btn" onclick="closeWebhookModal()">&times;</button>
+        <button type="button" class="modal-close-btn" data-admin-action="closeWebhookModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="webhook-form">
@@ -1570,7 +1529,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeWebhookModal()"><?= __('admin.cancel') ?></button>
+        <button type="button" class="btn btn-secondary" data-admin-action="closeWebhookModal"><?= __('admin.cancel') ?></button>
         <button type="button" class="btn btn-primary" id="save-webhook"><?= __('admin.save') ?></button>
         <button type="button" class="btn btn-sm btn-secondary" id="test-webhook"><?= __('admin.test_webhook') ?></button>
       </div>

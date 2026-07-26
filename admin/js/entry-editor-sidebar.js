@@ -284,15 +284,26 @@
         if (badge) badge.classList.add('is-visible');
     }
 
+    function resetDirtyState() {
+        formDirty = false;
+        initialSnapshot = formSnapshot();
+        const badge = $('editor-unsaved-badge');
+        if (badge) {
+            badge.classList.remove('is-visible');
+        }
+    }
+
     function initDirtyTracking() {
         if (!form) return;
         initialSnapshot = formSnapshot();
         form.addEventListener('input', markDirty);
         form.addEventListener('change', markDirty);
-        form.addEventListener('submit', function () {
-            formDirty = false;
-            const badge = $('editor-unsaved-badge');
-            if (badge) badge.classList.remove('is-visible');
+        document.addEventListener('entry:saved', function (event) {
+            const entryId = event.detail && event.detail.entryId ? event.detail.entryId : '';
+            if (entryId) {
+                config.entry_id = entryId;
+            }
+            resetDirtyState();
         });
         window.addEventListener('beforeunload', function (e) {
             if (formDirty && formSnapshot() !== initialSnapshot) {
