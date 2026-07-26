@@ -89,7 +89,7 @@
         if (!existing) {
             existing = document.createElement('a');
             existing.id = 'admin-visit-project-btn';
-            existing.className = 'btn btn-secondary btn-sm admin-visit-project-btn';
+            existing.className = 'btn btn-secondary admin-visit-project-btn';
             existing.target = '_blank';
             existing.rel = 'noopener noreferrer';
             existing.textContent = 'Visit project';

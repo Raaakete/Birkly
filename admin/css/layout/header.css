@@ -137,6 +137,24 @@
   gap: var(--space-3, 0.75rem);
 }
 
+.admin-visit-project-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--admin-control-size);
+  min-height: var(--admin-control-size);
+  padding: 0 var(--space-3, 0.75rem);
+  font-size: 0.8125rem;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.admin-visit-project-btn:hover {
+  scale: 1;
+  transform: none;
+}
+
 /* Square button group: theme · search · activity · account
    Do NOT use display:contents on dropdown wrappers — that drops
    position:relative and parks menus at the viewport corner. */
@@ -188,6 +206,9 @@
 .topbar-control-group .topbar-icon-btn,
 .topbar-control-group .user-menu-trigger.dropdown-trigger,
 .topbar-control-group .topbar-user-menu .user-menu-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
@@ -202,6 +223,12 @@
   box-shadow: none !important;
   transform: none !important;
   box-sizing: border-box;
+}
+
+.topbar-control-group .topbar-icon-btn .birkly-icon,
+.topbar-control-group .theme-switcher-trigger .birkly-icon {
+  display: block;
+  margin: 0;
 }
 
 [data-theme="dark"] .topbar-control-group .topbar-icon-btn,
