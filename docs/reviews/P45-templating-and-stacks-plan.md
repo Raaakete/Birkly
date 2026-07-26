@@ -1,6 +1,6 @@
 # P45 — Templating, web components, and multi-stack integration
 
-**Status:** Proposed (2026-07-26) — **awaiting human approval**  
+**Status:** Approved (2026-07-26, Keven) — **next active phase**  
 **Repos:** Birkly (engine + client + AI pack) · Birkly-Docs (integration guides) · Birkly-Website (reference migration)  
 **Handoff:** `docs/reviews/P45-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P45-verification-matrix.md`  

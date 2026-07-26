@@ -1,7 +1,7 @@
 # Phase 45 — Lead-engineer handoff (templating & multi-stack)
 
-**Status:** Proposed (2026-07-26) — **awaiting human approval before M1**  
-**Human rule:** After approval, execute P45-M1→M12 autonomously. Notify human **once** at **P45-M12** closure.
+**Status:** Approved (2026-07-26, Keven) — **execute P45-M1→M12**  
+**Human rule:** Execute autonomously. Notify human **once** at **P45-M12** closure.
 
 **Master plan:** `docs/reviews/P45-templating-and-stacks-plan.md`  
 **Gap register:** `docs/reviews/P45-gap-register.md`  
@@ -16,7 +16,7 @@
 ```
 You are the lead-engineer for Birkly Phase 45 — Templating, web components, and multi-stack integration.
 
-Human approved P45 (date TBD). Execute P45-M1→M12 autonomously in order.
+Human approved P45 (2026-07-26, Keven). Execute P45-M1→M12 autonomously in order.
 Notify human ONCE at P45-M12 with V-TPL matrix green.
 
 GOAL: Real out-of-the-box integration for HTML, web components, SPAs, and SSR —

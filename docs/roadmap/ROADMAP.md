@@ -20,7 +20,7 @@ This file tracks **current state** and the **active execution phase**. Full hist
 | **Production** | `cms.birkly.cloud` + `birkly.cloud` on one Dokploy app |
 | **P43 Hosting** | Settings-driven CMS vs public URLs — complete |
 | **P44 Admin UX** | Full design remediation M1–M12 — complete |
-| **Templating / stacks** | Web components + AI docs gaps — see **Phase 45** (proposed) |
+| **Templating / stacks** | Phase 45 approved — execute M1→M12 |
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
@@ -50,11 +50,11 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 ---
 
-## Proposed next phase (awaiting approval)
+## Next active phase
 
 ### Phase 45 — Templating, web components, and multi-stack integration
 
-**Status:** **Proposed** (2026-07-26) — **M0 plan PR; human approval before M1**
+**Status:** **Approved** (2026-07-26) — **M0 complete**, **M1→M12 execution ready**
 
 **Goal:** One-line `<birkly-region>` for CMS blocks (no per-page template repetition); scoped `processTemplates`; truthful AI/MCP docs; Birkly-Docs guides for HTML, web components, SPAs, and SSR.
 
