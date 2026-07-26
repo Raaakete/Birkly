@@ -12,20 +12,21 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 ---
 
-## Current state (verified 2026-07-25)
+## Current state (verified 2026-07-26)
 
 | Area | Status |
 |------|--------|
 | **Docker / Dokploy** | `BIRKLY_DATA=/app/data` single volume (#282–#288) |
 | **Production** | `cms.birkly.cloud` + `birkly.cloud` on one Dokploy app |
-| **P43 Hosting** | Settings-driven CMS vs public URLs on `main` — complete |
-| **Admin UX gap** | Save semantics, settings IA, tokens, a11y, i18n — see **Phase 44** |
+| **P43 Hosting** | Settings-driven CMS vs public URLs — complete |
+| **P44 Admin UX** | Full design remediation M1–M12 — complete |
+| **Templating / stacks** | Web components + AI docs gaps — see **Phase 45** (proposed) |
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
 ---
 
-## Completed phase
+## Completed phases
 
 ### Phase 43 — Configurable hosting URLs (CMS vs public site)
 
@@ -37,55 +38,65 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Artifacts:** `docs/reviews/P43-*` · `core/hosting_urls.php` · `api/hosting.php`
 
----
-
-## Next active phase
-
 ### Phase 44 — Admin UI/UX excellence (full design remediation)
 
-**Status:** **Complete** (2026-07-25) — **M1→M12 done**
-
-**Goal:** Fix all issues from the 2026-07-25 admin design review: trustworthy save model, grouped settings IA, hosting wizard UX, design token compliance, accessibility bugs, toast feedback (no alerts), i18n, simplified Project tab, ContentEditor mobile polish, skeleton loaders, design system doc.
+**Status:** **Complete** (2026-07-25)
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| **P44-M0** | Gap register + plan + handoff | complete |
-| **P44-M1** | Critical: a11y + global save scope | complete |
-| **P44-M2** | Token compliance (sidebar, focus, links, fonts) | complete |
-| **P44-M3** | Settings IA — 4 grouped areas | complete |
-| **P44-M4** | Dirty state + per-area save bars | complete |
-| **P44-M5** | Hosting wizard + onboarding reuse | complete |
-| **P44-M6** | Project tab simple vs advanced IDE | complete |
-| **P44-M7** | Toast + confirm modal (remove alerts) | complete |
-| **P44-M8** | i18n audit (settings, hosting, onboarding) | complete |
-| **P44-M9** | ContentEditor responsive + dark + mint | complete |
-| **P44-M10** | Mobile entries, skeletons, empty states | complete |
-| **P44-M11** | `docs/admin-design-system.md` | complete |
-| **P44-M12** | Birkly-Docs + V-UX matrix + closure | complete |
+| P44-M0–M12 | Save model, settings IA, hosting wizard, tokens, a11y, i18n, Project tab, closure | complete |
 
-**Spec:** `docs/reviews/P44-admin-ux-excellence-plan.md`  
-**Handoff:** `docs/reviews/P44-lead-engineer-handoff.md`  
-**Matrix:** `docs/reviews/P44-verification-matrix.md`  
-**Gaps:** `docs/reviews/P44-gap-register.md`
+**Artifacts:** `docs/reviews/P44-*` · `docs/admin-design-system.md`
 
-**Human decisions (locked):** P44-D1–D12 · design-reviewer at M12 · notify once at M12
+---
 
-**Depends on:** P43 complete
+## Proposed next phase (awaiting approval)
 
-**Paused / not in scope:** Studio P26 · P42 marketing template pack
+### Phase 45 — Templating, web components, and multi-stack integration
+
+**Status:** **Proposed** (2026-07-26) — **M0 plan PR; human approval before M1**
+
+**Goal:** One-line `<birkly-region>` for CMS blocks (no per-page template repetition); scoped `processTemplates`; truthful AI/MCP docs; Birkly-Docs guides for HTML, web components, SPAs, and SSR.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| **P45-M0** | Plan, gap register, matrix, handoff | **this PR** |
+| **P45-M1** | AI + MCP syntax truth (remove phantom directives) | pending |
+| **P45-M2** | Scoped `processTemplates({ root })` | pending |
+| **P45-M3** | `<birkly-region>` component (entry + list) | pending |
+| **P45-M4** | Connect lifecycle + `data-birkly-region` | pending |
+| **P45-M5** | Enhance-only component helpers | pending |
+| **P45-M6** | Template language spec v1.0 | pending |
+| **P45-M7** | Project template validator | pending |
+| **P45-M8** | Birkly-Docs: stack hub + web components | pending |
+| **P45-M9** | Birkly-Docs: SPA (React/Vue) guide | pending |
+| **P45-M10** | Birkly-Docs: SSR / build-time guide | pending |
+| **P45-M11** | Tests + V-TPL matrix | pending |
+| **P45-M12** | Birkly-Website reference + closure | pending |
+
+**Spec:** `docs/reviews/P45-templating-and-stacks-plan.md`  
+**Handoff:** `docs/reviews/P45-lead-engineer-handoff.md`  
+**Matrix:** `docs/reviews/P45-verification-matrix.md`  
+**Gaps:** `docs/reviews/P45-gap-register.md`
+
+**Human decisions (proposed):** P45-D1–D12 · notify once at M12
+
+**Depends on:** P44 complete
+
+**Paused / not in scope:** Admin eval replacement · Studio P26 · P42 marketing template pack
 
 ---
 
 ## Task handoff format
 
 ```markdown
-### Task: P44-M[N]-T[N] [title]
-- **Owner**: cms-developer | frontend-developer | docs-writer | qa-verifier | design-reviewer | lead-engineer
-- **Repo(s)**: Birkly | Birkly-Docs
+### Task: P45-M[N]-T[N] [title]
+- **Owner**: cms-developer | frontend-developer | docs-writer | qa-verifier | lead-engineer
+- **Repo(s)**: Birkly | Birkly-Docs | Birkly-Website
 - **Files**: path/to/files
-- **Depends on**: P44-M[N]-T[N] | none
+- **Depends on**: P45-M[N]-T[N] | none
 - **Acceptance criteria**:
   - ...
 ```
 
-Branch template: `cursor/p44-m[N]-<slug>-030a`
+Branch template: `cursor/p45-m[N]-<slug>-030a`
