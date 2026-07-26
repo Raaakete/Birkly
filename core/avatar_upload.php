@@ -1,15 +1,17 @@
 <?php
 /**
- * Avatar upload helpers — validation, optimization, and storage.
+ * Avatar upload helpers — validation, optimization, and media-library storage.
  */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
+require_once __DIR__ . '/media_storage.php';
 
 const BIRKLY_AVATAR_MAX_UPLOAD_BYTES = 8388608; // 8MB raw upload
 const BIRKLY_AVATAR_MAX_DIMENSION = 512;
 const BIRKLY_AVATAR_JPEG_QUALITY = 88;
+const BIRKLY_AVATAR_MEDIA_FOLDER = 'avatars';
 
 function birkly_avatar_max_upload_bytes(): int
 {
@@ -22,131 +24,29 @@ function birkly_avatar_max_upload_label(): string
     return $mb . 'MB';
 }
 
-function birkly_avatars_dir(): string
-{
-    return birkly_project_root() . '/data/avatars';
-}
-
 function birkly_legacy_avatars_dir(): string
 {
     return birkly_project_root() . '/admin/assets/avatars';
 }
 
+function birkly_legacy_data_avatars_dir(): string
+{
+    return birkly_project_root() . '/data/avatars';
+}
+
 function birkly_avatar_filename_is_safe(string $filename): bool
 {
-    return (bool) preg_match('/^avatar-[a-f0-9]{32}-[a-zA-Z0-9.]+\.jpg$/', $filename);
+    return (bool) preg_match('/^avatar-[a-zA-Z0-9_-]+-[a-zA-Z0-9._-]+\.jpg$/', $filename);
 }
 
-function birkly_avatar_public_url(string $filename): string
+function birkly_avatar_public_url(string $mediaId): string
 {
-    return birkly_url(birkly_avatar_storage_path($filename));
+    return birkly_media_public_url(BIRKLY_AVATAR_MEDIA_FOLDER, $mediaId, 'jpg');
 }
 
-function birkly_avatar_storage_path(string $filename): string
+function birkly_avatar_legacy_storage_path(string $filename): string
 {
     return '/api/avatar.php?f=' . rawurlencode($filename);
-}
-
-function birkly_path_is_writable(string $path): bool
-{
-    if ($path === '') {
-        return false;
-    }
-
-    if (is_writable($path)) {
-        return true;
-    }
-
-    if (!is_dir($path) && !is_file($path)) {
-        return false;
-    }
-
-    $probe = rtrim($path, '/\\') . '/.birkly-write-probe-' . getmypid() . '-' . bin2hex(random_bytes(4));
-    if (@file_put_contents($probe, 'ok') === false) {
-        return false;
-    }
-
-    @unlink($probe);
-    return true;
-}
-
-/**
- * @return array{ok:bool,path?:string,message?:string}
- */
-function birkly_ensure_avatars_dir(): array
-{
-    $dir = birkly_avatars_dir();
-
-    if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
-        @mkdir($dir, 0777, true);
-    }
-
-    if (!is_dir($dir)) {
-        return ['ok' => false, 'message' => 'Could not create avatar storage folder.'];
-    }
-
-    if (!birkly_path_is_writable($dir)) {
-        @chmod($dir, 0775);
-    }
-    if (!birkly_path_is_writable($dir)) {
-        @chmod($dir, 0777);
-    }
-    if (!birkly_path_is_writable($dir)) {
-        return ['ok' => false, 'message' => 'Avatar storage folder is not writable.'];
-    }
-
-    return ['ok' => true, 'path' => $dir];
-}
-
-function birkly_avatar_file_path(string $filename): ?string
-{
-    if (!birkly_avatar_filename_is_safe($filename)) {
-        return null;
-    }
-
-    $primary = birkly_avatars_dir() . '/' . $filename;
-    if (is_file($primary)) {
-        return $primary;
-    }
-
-    $legacy = birkly_legacy_avatars_dir() . '/' . $filename;
-    if (is_file($legacy)) {
-        return $legacy;
-    }
-
-    return null;
-}
-
-function birkly_delete_local_avatar_file(?string $avatarUrl): void
-{
-    if ($avatarUrl === null || $avatarUrl === '') {
-        return;
-    }
-
-    $path = parse_url($avatarUrl, PHP_URL_PATH) ?: $avatarUrl;
-    $query = [];
-    $queryString = parse_url($avatarUrl, PHP_URL_QUERY);
-    if (is_string($queryString) && $queryString !== '') {
-        parse_str($queryString, $query);
-    }
-
-    $filename = '';
-    if (isset($query['f'])) {
-        $filename = basename((string) $query['f']);
-    } elseif (preg_match('#/avatars/([^/?]+)$#', $path, $matches)) {
-        $filename = basename($matches[1]);
-    }
-
-    if ($filename === '' || !birkly_avatar_filename_is_safe($filename)) {
-        return;
-    }
-
-    foreach ([birkly_avatars_dir(), birkly_legacy_avatars_dir()] as $dir) {
-        $filepath = $dir . '/' . $filename;
-        if (is_file($filepath)) {
-            @unlink($filepath);
-        }
-    }
 }
 
 function birkly_avatar_upload_error_message(int $code): string
@@ -171,6 +71,59 @@ function birkly_avatar_upload_error_message(int $code): string
             return 'A server extension blocked the file upload.';
         default:
             return 'Upload error (code ' . $code . ').';
+    }
+}
+
+function birkly_avatar_file_path(string $filename): ?string
+{
+    if (!birkly_avatar_filename_is_safe($filename)) {
+        return null;
+    }
+
+    foreach ([birkly_legacy_data_avatars_dir(), birkly_legacy_avatars_dir()] as $dir) {
+        $filepath = $dir . '/' . $filename;
+        if (is_file($filepath)) {
+            return $filepath;
+        }
+    }
+
+    return null;
+}
+
+function birkly_delete_local_avatar_file(?string $avatarUrl): void
+{
+    if ($avatarUrl === null || $avatarUrl === '') {
+        return;
+    }
+
+    $path = parse_url($avatarUrl, PHP_URL_PATH) ?: $avatarUrl;
+    $query = [];
+    $queryString = parse_url($avatarUrl, PHP_URL_QUERY);
+    if (is_string($queryString) && $queryString !== '') {
+        parse_str($queryString, $query);
+    }
+
+    if (str_contains($path, '/media/')) {
+        birkly_delete_media_by_url($avatarUrl);
+        return;
+    }
+
+    $filename = '';
+    if (isset($query['f'])) {
+        $filename = basename((string) $query['f']);
+    } elseif (preg_match('#/avatars/([^/?]+)$#', $path, $matches)) {
+        $filename = basename($matches[1]);
+    }
+
+    if ($filename === '' || !birkly_avatar_filename_is_safe($filename)) {
+        return;
+    }
+
+    foreach ([birkly_legacy_data_avatars_dir(), birkly_legacy_avatars_dir()] as $dir) {
+        $filepath = $dir . '/' . $filename;
+        if (is_file($filepath)) {
+            @unlink($filepath);
+        }
     }
 }
 
@@ -264,7 +217,7 @@ function birkly_optimize_avatar_file(string $sourcePath, string $destPath): bool
 }
 
 /**
- * Process an uploaded avatar field and store an optimized JPEG.
+ * Process an uploaded avatar field and store an optimized JPEG in media/avatars/.
  *
  * @param array<string, mixed> $sessionUser
  * @return array{ok:bool,path?:string,message?:string}
@@ -311,11 +264,10 @@ function birkly_process_avatar_upload_from_request(array $sessionUser): array
         ];
     }
 
-    $dirResult = birkly_ensure_avatars_dir();
+    $dirResult = birkly_ensure_media_folder(BIRKLY_AVATAR_MEDIA_FOLDER);
     if (!$dirResult['ok']) {
-        return ['ok' => false, 'message' => $dirResult['message'] ?? 'Avatar storage folder is not writable.'];
+        return ['ok' => false, 'message' => $dirResult['message'] ?? 'Media storage folder is not writable.'];
     }
-    $avatarsDir = $dirResult['path'];
 
     $avatarUserId = trim((string) ($sessionUser['id'] ?? ''));
     if ($avatarUserId === '' && !empty($sessionUser['email'])) {
@@ -323,10 +275,26 @@ function birkly_process_avatar_upload_from_request(array $sessionUser): array
         $avatarUserId = birkly_user_id_from_email((string) $sessionUser['email']);
     }
 
-    $filename = 'avatar-' . $avatarUserId . '-' . uniqid('', true) . '.jpg';
-    $filepath = $avatarsDir . '/' . $filename;
-    $tempPath = $filepath . '.upload';
+    if ($avatarUserId === '') {
+        return ['ok' => false, 'message' => 'Could not determine user for avatar upload.'];
+    }
 
+    $avatarUserId = preg_replace('/[^a-zA-Z0-9_-]/', '', $avatarUserId);
+    if ($avatarUserId === '') {
+        return ['ok' => false, 'message' => 'Could not determine user for avatar upload.'];
+    }
+
+    $mediaId = 'avatar-' . $avatarUserId . '-' . str_replace('.', '_', uniqid('', true));
+    if (!birkly_validate_media_id($mediaId)) {
+        return ['ok' => false, 'message' => 'Could not generate a valid avatar filename.'];
+    }
+
+    $filepath = birkly_media_file_path(BIRKLY_AVATAR_MEDIA_FOLDER, $mediaId, 'jpg');
+    if ($filepath === '') {
+        return ['ok' => false, 'message' => 'Media storage folder is not writable.'];
+    }
+
+    $tempPath = $filepath . '.upload';
     if (!move_uploaded_file($file['tmp_name'], $tempPath)) {
         return ['ok' => false, 'message' => 'Failed to save uploaded file.'];
     }
@@ -338,8 +306,25 @@ function birkly_process_avatar_upload_from_request(array $sessionUser): array
 
     @unlink($tempPath);
 
+    $uploadedBy = trim((string) ($sessionUser['name'] ?? $sessionUser['email'] ?? 'Account'));
+    $register = birkly_register_media_item([
+        'id' => $mediaId,
+        'folder' => BIRKLY_AVATAR_MEDIA_FOLDER,
+        'ext' => 'jpg',
+        'name' => $mediaId . '.jpg',
+        'title' => 'Avatar — ' . $uploadedBy,
+        'uploaded_by' => $uploadedBy,
+        'type' => 'image/jpeg',
+        'alt_text' => 'Profile picture for ' . $uploadedBy,
+    ]);
+
+    if (!$register['ok']) {
+        @unlink($filepath);
+        return ['ok' => false, 'message' => $register['message'] ?? 'Failed to register avatar in media library.'];
+    }
+
     return [
         'ok' => true,
-        'path' => birkly_avatar_storage_path($filename),
+        'path' => birkly_avatar_public_url($mediaId),
     ];
 }
