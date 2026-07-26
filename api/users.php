@@ -34,16 +34,35 @@ if (!is_dir($usersDir)) {
 }
 $storage = new Storage($usersDir);
 $rawInput = file_get_contents('php://input');
-$input = !empty($rawInput) ? sanitize_input(json_decode($rawInput, true)) : [];
-if (json_last_error() !== JSON_ERROR_NONE) {
-    if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
-        header('Content-Type: application/json');
+$input = [];
+if (!empty($rawInput)) {
+    $decoded = json_decode($rawInput, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        $input = sanitize_input($decoded);
+    } elseif (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+        if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+            header('Content-Type: application/json');
+        }
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid JSON input: ' . json_last_error_msg()]);
+        exit;
     }
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Invalid JSON input: ' . json_last_error_msg()]);
-    exit;
 }
-$action = $input['action'] ?? $_GET['action'] ?? '';
+$action = $_POST['action'] ?? $input['action'] ?? $_GET['action'] ?? '';
+
+function birkly_delete_local_avatar_file(?string $avatarUrl): void {
+    if ($avatarUrl === null || $avatarUrl === '') {
+        return;
+    }
+    $path = parse_url($avatarUrl, PHP_URL_PATH);
+    if (!$path || strpos($path, '/admin/assets/avatars/') === false) {
+        return;
+    }
+    $filepath = __DIR__ . '/../admin/assets/avatars/' . basename($path);
+    if (is_file($filepath)) {
+        @unlink($filepath);
+    }
+}
 
 // Helper function to hash passwords
 function hashPassword($password) {
@@ -485,6 +504,7 @@ if ($action === 'update_profile') {
         $user['name'] = $input['name'];
     }
     if (isset($input['avatar'])) {
+        birkly_delete_local_avatar_file($user['avatar'] ?? '');
         $user['avatar'] = $input['avatar'];
     }
     
@@ -499,7 +519,11 @@ if ($action === 'update_profile') {
     
     echo json_encode([
         'status' => $result ? 'ok' : 'error',
-        'message' => $result ? 'Profile updated' : 'Failed to update profile'
+        'message' => $result ? 'Profile updated' : 'Failed to update profile',
+        'data' => [
+            'name' => $user['name'] ?? '',
+            'avatar' => $user['avatar'] ?? '',
+        ],
     ]);
     exit;
 }
@@ -518,12 +542,22 @@ if ($action === 'upload_avatar') {
         exit;
     }
     
-    if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+    if (!isset($_FILES['file']) && !isset($_FILES['avatar'])) {
         echo json_encode(['status' => 'error', 'message' => 'No file uploaded or upload error']);
         exit;
     }
-    
-    $file = $_FILES['file'];
+
+    $file = null;
+    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['file'];
+    } elseif (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['avatar'];
+    }
+
+    if (!$file) {
+        echo json_encode(['status' => 'error', 'message' => 'No file uploaded or upload error']);
+        exit;
+    }
     
     // Validate file type
     $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -567,6 +601,42 @@ if ($action === 'upload_avatar') {
         echo json_encode(['status' => 'error', 'message' => 'Failed to save file']);
         exit;
     }
+}
+
+// Remove avatar (current user only)
+if ($action === 'remove_avatar') {
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $userId = $_SESSION['user']['id'];
+    $user = $storage->read($userId . '.json');
+    if (!$user) {
+        echo json_encode(['status' => 'error', 'message' => 'User not found']);
+        exit;
+    }
+
+    birkly_delete_local_avatar_file($user['avatar'] ?? '');
+    $user['avatar'] = '';
+    $user['updated_at'] = date('c');
+    $result = $storage->write($userId . '.json', $user);
+
+    $_SESSION['user']['avatar'] = '';
+
+    echo json_encode([
+        'status' => $result ? 'ok' : 'error',
+        'message' => $result ? 'Avatar removed' : 'Failed to remove avatar',
+        'data' => ['avatar' => ''],
+    ]);
+    exit;
 }
 
 // Set language (user-level)
@@ -732,6 +802,15 @@ if ($action === 'change_password') {
 
 // Default response - only if this file is called directly
 if (basename($_SERVER['SCRIPT_NAME']) === 'users.php') {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $action ? 'Unknown action' : 'Action required',
+        ]);
+        exit;
+    }
+
     $users = $storage->list('');  // List root of users directory
     $count = count($users);
     echo json_encode([

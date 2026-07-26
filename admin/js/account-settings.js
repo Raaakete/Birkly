@@ -104,6 +104,72 @@ function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
 
+async function saveAccountProfile() {
+    const form = document.getElementById('account-profile-form');
+    if (!form) {
+        return null;
+    }
+
+    const name = form.querySelector('#account-name')?.value?.trim() ?? '';
+    let avatarUrl = null;
+
+    const avatarFile = form.querySelector('#account-avatar')?.files?.[0];
+    if (avatarFile) {
+        const uploadData = new FormData();
+        uploadData.append('action', 'upload_avatar');
+        uploadData.append('_csrf', getCsrfToken());
+        uploadData.append('file', avatarFile);
+
+        const uploadResponse = await fetch(Birkly.url('/api/users.php'), {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: uploadData,
+        });
+        const uploadResult = await uploadResponse.json();
+        if (uploadResult.status !== 'ok') {
+            throw new Error(uploadResult.message || 'Avatar upload failed');
+        }
+        avatarUrl = uploadResult.data?.avatarPath ?? null;
+    }
+
+    const payload = {
+        action: 'update_profile',
+        name: name,
+        _csrf: getCsrfToken(),
+    };
+    if (avatarUrl) {
+        payload.avatar = avatarUrl;
+    }
+
+    const profileResponse = await fetch(Birkly.url('/api/users.php'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+    });
+    const profileResult = await profileResponse.json();
+    if (profileResult.status !== 'ok') {
+        throw new Error(profileResult.message || 'Error updating profile');
+    }
+
+    if (profileResult.data && profileResult.data.avatar) {
+        refreshTopbarAvatars(profileResult.data.avatar);
+    } else if (avatarUrl) {
+        refreshTopbarAvatars(avatarUrl);
+    }
+
+    const avatarInput = form.querySelector('#account-avatar');
+    if (avatarInput) {
+        avatarInput.value = '';
+    }
+
+    return profileResult;
+}
+
 function refreshTopbarAvatars(avatarUrl) {
     const topbarMenu = document.querySelector('.topbar-user-menu');
     if (!topbarMenu) {
@@ -522,19 +588,7 @@ async function handleUnifiedAccountSave() {
     try {
         const profileForm = document.getElementById('account-profile-form');
         if (profileForm) {
-            const profileData = new FormData(profileForm);
-            const profileResponse = await fetch(Birkly.url('/api/users.php'), {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                body: profileData,
-            });
-            const profileResult = await profileResponse.json();
-            if (profileResult.status !== 'ok') {
-                throw new Error(profileResult.message || 'Error updating profile');
-            }
-            if (profileResult.data && profileResult.data.avatar) {
-                refreshTopbarAvatars(profileResult.data.avatar);
-            }
+            await saveAccountProfile();
         }
 
         const languageForm = document.getElementById('account-language-form');
@@ -579,7 +633,7 @@ async function handleUnifiedAccountSave() {
                 },
                 body: JSON.stringify({
                     action: 'update_notification_preferences',
-                    notification_preferences: prefs,
+                    preferences: prefs,
                     _csrf: getCsrfToken(),
                 }),
             });
@@ -611,33 +665,16 @@ async function handleUnifiedAccountSave() {
 
 function handleProfileSubmit(e) {
     e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    const messageEl = document.getElementById('account-message');
-    
-    fetch(Birkly.url('/api/users.php'), {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'ok') {
+    const messageEl = document.getElementById('account-save-message');
+
+    saveAccountProfile()
+        .then(function () {
             showMessage(messageEl, 'Profile updated successfully', 'success');
-            // Update avatar if changed
-            if (data.data && data.data.avatar) {
-                refreshTopbarAvatars(data.data.avatar);
-            }
-        } else {
-            showMessage(messageEl, data.message || 'Error updating profile', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Profile update error:', error);
-        showMessage(messageEl, 'Error updating profile', 'error');
-    });
+        })
+        .catch(function (error) {
+            console.error('Profile update error:', error);
+            showMessage(messageEl, error.message || 'Error updating profile', 'error');
+        });
 }
 
 function handlePasswordSubmit(e) {
@@ -772,7 +809,7 @@ async function handleRemoveAvatar() {
         },
         body: JSON.stringify({
             action: 'remove_avatar',
-            _csrf: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            _csrf: getCsrfToken()
         })
     })
     .then(response => response.json())
