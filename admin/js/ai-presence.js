@@ -14,10 +14,28 @@
         suggestions: []
     };
 
-    function apiUrl() {
-        return (global.Birkly && global.Birkly.apiUrl)
-            ? global.Birkly.apiUrl('ai_presence.php')
-            : '/api/ai_presence.php';
+    function apiUrl(path) {
+        if (!path) {
+            path = '/api/ai_presence.php';
+        } else if (path.indexOf('/api/') !== 0) {
+            path = '/api/' + path.replace(/^\//, '');
+        }
+        if (global.Birkly && typeof global.Birkly.url === 'function') {
+            return global.Birkly.url(path);
+        }
+        return path;
+    }
+
+    function getCsrfToken() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return (meta && meta.content) ? meta.content : '';
+    }
+
+    function bindEl(id, event, handler) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener(event, handler);
+        }
     }
 
     function toast(msg, type) {
@@ -228,11 +246,39 @@
     }
 
     function switchTab(tab) {
-        document.querySelectorAll('.ai-presence-tabs .tab').forEach(function (btn) {
-            btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+        if (!tab) {
+            return;
+        }
+        document.querySelectorAll('.ai-presence-tabs .tab[data-tab]').forEach(function (btn) {
+            var active = btn.getAttribute('data-tab') === tab;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
         });
         document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
-            pane.classList.toggle('active', pane.getAttribute('data-tab-content') === tab);
+            var active = pane.getAttribute('data-tab-content') === tab;
+            pane.classList.toggle('active', active);
+            pane.hidden = !active;
+        });
+    }
+
+    function initTabs() {
+        var root = document.querySelector('.ai-presence-tabs');
+        if (!root) {
+            return;
+        }
+        var nav = root.querySelector('.tabs');
+        if (nav) {
+            nav.setAttribute('role', 'tablist');
+            nav.addEventListener('click', function (e) {
+                var btn = e.target.closest('.tab[data-tab]');
+                if (!btn || !nav.contains(btn)) {
+                    return;
+                }
+                switchTab(btn.getAttribute('data-tab'));
+            });
+        }
+        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
+            pane.hidden = !pane.classList.contains('active');
         });
     }
 
@@ -263,7 +309,7 @@
             '<button type="button" class="btn btn-primary" id="ap-setup-start">Get started</button> ' +
             '<button type="button" class="btn btn-secondary" id="ap-setup-skip">Skip setup</button></div>';
         document.getElementById('ap-setup-start').addEventListener('click', function () {
-            fetch(apiUrl(), {
+            fetch(apiUrl('/api/ai_presence.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'setup_prefill', _csrf: state.csrfToken })
@@ -278,7 +324,7 @@
             });
         });
         document.getElementById('ap-setup-skip').addEventListener('click', function () {
-            fetch(apiUrl(), {
+            fetch(apiUrl('/api/ai_presence.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'setup_skip', _csrf: state.csrfToken })
@@ -291,10 +337,7 @@
     }
 
     function loadCollections() {
-        var url = (global.Birkly && global.Birkly.apiUrl)
-            ? global.Birkly.apiUrl('admin_collections.php?action=list')
-            : '/api/admin_collections.php?action=list';
-        return fetch(url, { credentials: 'same-origin' })
+        return fetch(apiUrl('/api/admin_collections.php?action=list'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 state.collections = (res.data && res.data.collections) || res.collections || [];
@@ -312,10 +355,7 @@
 
     function loadEntries(collection) {
         if (!collection) return Promise.resolve();
-        var url = (global.Birkly && global.Birkly.apiUrl)
-            ? global.Birkly.apiUrl('admin_entries.php?action=list&collection=' + encodeURIComponent(collection))
-            : '/api/admin_entries.php?action=list&collection=' + encodeURIComponent(collection);
-        return fetch(url, { credentials: 'same-origin' })
+        return fetch(apiUrl('/api/admin_entries.php?action=list&collection=' + encodeURIComponent(collection)), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 var entries = (res.data && res.data.entries) || res.entries || [];
@@ -334,7 +374,7 @@
     }
 
     function load() {
-        return fetch(apiUrl() + '?action=get', { credentials: 'same-origin' })
+        return fetch(apiUrl('/api/ai_presence.php?action=get'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Load failed');
@@ -352,14 +392,16 @@
                 renderPublishStatus(data);
                 maybeShowSetup(data);
                 if (!state.canEdit) {
-                    document.getElementById('ai-presence-save-draft').disabled = true;
-                    document.getElementById('ai-presence-publish-btn').disabled = true;
+                    var saveBtn = document.getElementById('ai-presence-save-draft');
+                    var pubBtn = document.getElementById('ai-presence-publish-btn');
+                    if (saveBtn) saveBtn.disabled = true;
+                    if (pubBtn) pubBtn.disabled = true;
                 }
             });
     }
 
     function saveDraft() {
-        return fetch(apiUrl(), {
+        return fetch(apiUrl('/api/ai_presence.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'save_draft', draft: state.draft, _csrf: state.csrfToken })
@@ -374,7 +416,7 @@
 
     function publish() {
         return saveDraft().then(function () {
-            return fetch(apiUrl(), {
+            return fetch(apiUrl('/api/ai_presence.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'publish', _csrf: state.csrfToken })
@@ -387,10 +429,10 @@
     }
 
     function bindActions() {
-        document.getElementById('ai-presence-save-draft').addEventListener('click', function () {
+        bindEl('ai-presence-save-draft', 'click', function () {
             saveDraft().catch(function (e) { toast(e.message, 'error'); });
         });
-        document.getElementById('ai-presence-publish-btn').addEventListener('click', function () {
+        bindEl('ai-presence-publish-btn', 'click', function () {
             if (global.BirklyFeedback && global.BirklyFeedback.confirm) {
                 global.BirklyFeedback.confirm('Publish brand context to public endpoints?', function (ok) {
                     if (ok) publish().catch(function (e) { toast(e.message, 'error'); });
@@ -406,11 +448,14 @@
             });
         });
 
-        document.getElementById('ap-connect-collection').addEventListener('change', function (e) {
-            loadEntries(e.target.value);
-        });
+        var connectCollection = document.getElementById('ap-connect-collection');
+        if (connectCollection) {
+            connectCollection.addEventListener('change', function (e) {
+                loadEntries(e.target.value);
+            });
+        }
 
-        document.getElementById('ap-add-connected').addEventListener('click', function () {
+        bindEl('ap-add-connected', 'click', function () {
             var col = document.getElementById('ap-connect-collection').value;
             var entryId = document.getElementById('ap-connect-entry').value;
             if (!col) return;
@@ -428,16 +473,19 @@
             state.dirty = true;
         });
 
-        document.getElementById('ap-connected-list').addEventListener('click', function (e) {
-            if (e.target.classList.contains('ap-remove-connected')) {
-                var idx = parseInt(e.target.getAttribute('data-idx'), 10);
-                state.draft.connected_content.splice(idx, 1);
-                renderConnected();
-                state.dirty = true;
-            }
-        });
+        var connectedList = document.getElementById('ap-connected-list');
+        if (connectedList) {
+            connectedList.addEventListener('click', function (e) {
+                if (e.target.classList.contains('ap-remove-connected')) {
+                    var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                    state.draft.connected_content.splice(idx, 1);
+                    renderConnected();
+                    state.dirty = true;
+                }
+            });
+        }
 
-        document.getElementById('ap-add-claim').addEventListener('click', function () {
+        bindEl('ap-add-claim', 'click', function () {
             var statement = prompt('Claim statement');
             if (!statement) return;
             var id = 'claim_' + Math.random().toString(16).slice(2, 10);
@@ -456,7 +504,7 @@
             state.dirty = true;
         });
 
-        document.getElementById('ap-add-evidence').addEventListener('click', function () {
+        bindEl('ap-add-evidence', 'click', function () {
             var url = prompt('Evidence URL (optional)');
             var title = prompt('Evidence title') || 'Evidence';
             var id = 'evidence_' + Math.random().toString(16).slice(2, 10);
@@ -475,7 +523,7 @@
                 notes: ''
             };
             if (url) {
-                fetch(apiUrl(), {
+                fetch(apiUrl('/api/ai_presence.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'fetch_url_meta', url: url, _csrf: state.csrfToken })
@@ -501,7 +549,9 @@
             }
         });
 
-        document.getElementById('ap-evidence-list').addEventListener('click', function (e) {
+        var evidenceList = document.getElementById('ap-evidence-list');
+        if (evidenceList) {
+            evidenceList.addEventListener('click', function (e) {
             if (e.target.classList.contains('ap-verify-evidence')) {
                 var idx = parseInt(e.target.getAttribute('data-idx'), 10);
                 if (state.draft.evidence[idx]) {
@@ -512,8 +562,9 @@
                 }
             }
         });
+        }
 
-        document.getElementById('ap-add-media-context').addEventListener('click', function () {
+        bindEl('ap-add-media-context', 'click', function () {
             var mediaId = document.getElementById('ap-media-id').value.trim();
             if (!mediaId) return;
             var desc = prompt('What does this media represent?') || '';
@@ -530,7 +581,9 @@
             state.dirty = true;
         });
 
-        document.getElementById('ap-media-list').addEventListener('click', function (e) {
+        var mediaList = document.getElementById('ap-media-list');
+        if (mediaList) {
+            mediaList.addEventListener('click', function (e) {
             if (e.target.classList.contains('ap-edit-media')) {
                 var idx = parseInt(e.target.getAttribute('data-idx'), 10);
                 var ctx = state.draft.media_context[idx];
@@ -542,9 +595,10 @@
                 state.dirty = true;
             }
         });
+        }
 
-        document.getElementById('ap-suggest-btn').addEventListener('click', function () {
-            fetch(apiUrl(), {
+        bindEl('ap-suggest-btn', 'click', function () {
+            fetch(apiUrl('/api/ai_presence.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'suggest', _csrf: state.csrfToken })
@@ -555,13 +609,15 @@
             }).catch(function (e) { toast(e.message, 'error'); });
         });
 
-        document.getElementById('ap-suggestions-list').addEventListener('click', function (e) {
+        var suggestionsList = document.getElementById('ap-suggestions-list');
+        if (suggestionsList) {
+            suggestionsList.addEventListener('click', function (e) {
             var id = e.target.getAttribute('data-id');
             if (!id) return;
             if (e.target.classList.contains('ap-accept-suggestion')) {
                 var suggestion = state.suggestions.find(function (s) { return s.id === id; });
                 if (!suggestion) return;
-                fetch(apiUrl(), {
+                fetch(apiUrl('/api/ai_presence.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'accept_suggestion', suggestion: suggestion, _csrf: state.csrfToken })
@@ -581,9 +637,10 @@
                 renderSuggestions();
             }
         });
+        }
 
         function runPreview(q) {
-            fetch(apiUrl(), {
+            fetch(apiUrl('/api/ai_presence.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'preview_query', question: q, _csrf: state.csrfToken })
@@ -600,13 +657,14 @@
             });
         }
 
-        document.getElementById('ap-preview-ask').addEventListener('click', function () {
+        bindEl('ap-preview-ask', 'click', function () {
             runPreview(document.getElementById('ap-preview-question').value);
         });
         document.querySelectorAll('.ap-preview-q').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var q = btn.getAttribute('data-q');
-                document.getElementById('ap-preview-question').value = q;
+                var input = document.getElementById('ap-preview-question');
+                if (input) input.value = q;
                 runPreview(q);
             });
         });
@@ -619,9 +677,14 @@
     }
 
     global.initAiPresence = function (config) {
-        state.csrfToken = config.csrfToken || '';
-        state.canEdit = config.canEdit !== false;
-        bindActions();
-        loadCollections().then(load).catch(function (e) { toast(e.message, 'error'); });
+        state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
+        state.canEdit = !config || config.canEdit !== false;
+        initTabs();
+        loadCollections().then(load).then(function () {
+            bindActions();
+        }).catch(function (e) {
+            toast(e.message || 'Failed to load AI Presence', 'error');
+            bindActions();
+        });
     };
 })(window);

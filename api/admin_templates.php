@@ -243,8 +243,12 @@ function getAutomationData() {
 }
 
 function getAiPresenceData() {
-    // Workspace loads draft/published via api/ai_presence.php; keep page data minimal.
-    return ['page' => 'ai-presence'];
+    require_once __DIR__ . '/../core/csrf.php';
+
+    return [
+        'page' => 'ai-presence',
+        'csrf_token' => get_csrf_token(),
+    ];
 }
 
 function getDashboardData() {
