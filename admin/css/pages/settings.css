@@ -7,39 +7,7 @@
   /* no extra inset; rely on main-content padding */
 }
 
-/* Settings area sub-navigation (P44-M3) */
-.settings-area-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-4, 1rem);
-  padding-bottom: var(--space-3, 0.75rem);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.settings-area-btn {
-  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md, 0.5rem);
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
-}
-
-.settings-area-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--border-medium);
-}
-
-.settings-area-btn.active {
-  color: var(--text-primary);
-  border-color: var(--primary-500);
-  background: var(--primary-50);
-  font-weight: 600;
-}
+/* Area sub-nav removed — single settings tab row */
 
 .settings-dirty-badge {
   display: inline-flex;
@@ -94,14 +62,6 @@
   color: var(--text-secondary);
 }
 
-.settings-tabs .tab[data-area] {
-  /* hidden by default until area is active — toggled via JS */
-}
-
-.settings-tabs .tab.tab--hidden {
-  display: none !important;
-}
-
 .main-actions-bar--sticky.is-hidden {
   display: none !important;
 }
@@ -120,16 +80,56 @@
   gap: var(--space-6, 1.5rem);
 }
 
-.settings-stack > .card {
+/* Forms inside a stack should not break card spacing */
+.settings-stack > .settings-form {
+  display: contents;
+}
+
+.settings-stack > .card,
+.settings-stack > .settings-form > .card {
   min-height: auto;
 }
 
-.settings-stack > .card > .section-header {
+.settings-stack > .card > .section-header,
+.settings-stack > .settings-form > .card > .section-header {
   margin-bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
 }
 
-.settings-stack > .card > .section-description {
+.settings-stack > .card > .section-description,
+.settings-stack > .settings-form > .card > .section-description,
+.settings-stack > .card > .section-header .section-description,
+.settings-stack > .settings-form > .card > .section-header .section-description {
   margin-top: var(--space-1, 0.25rem);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.settings-stack > .card > .settings-help,
+.settings-stack > .settings-form > .card > .settings-help,
+.settings-stack > .card > .settings-help-note,
+.settings-stack > .settings-form > .card > .settings-help-note {
+  margin-top: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-4, 1rem);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Merged settings pages */
+.team-security-settings > .card,
+.api-webhooks-settings > .card,
+.infrastructure-settings > .card,
+.domains-settings > .card {
+  padding: var(--space-5, 1.25rem) var(--space-6, 1.5rem);
+}
+
+.api-webhooks-settings .api-info-grid {
+  margin-top: var(--space-2, 0.5rem);
 }
 
 /* Settings Tabs — uses shared components/tabs.css (.tabs / .tab) */

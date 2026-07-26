@@ -405,25 +405,31 @@ window.closeEditRoleModal = closeEditRoleModal;
 window.updateRole = updateRole;
 window.deleteRole = deleteRole;
 
-// Settings areas, tabs, global save, dirty state (P44-M1, M3, M4)
+// Settings tabs, global save, dirty state (single tab row)
 (function () {
-    var SETTINGS_AREAS = {
-        site: { label: 'Site', tabs: ['general', 'hosting', 'domains', 'project', 'redirects'], defaultTab: 'general' },
-        team: { label: 'Team & security', tabs: ['users-roles', 'security', 'activity-log'], defaultTab: 'users-roles' },
-        integrations: { label: 'Integrations', tabs: ['api', 'webhooks', 'ai-integrations'], defaultTab: 'api' },
-        infrastructure: { label: 'Infrastructure', tabs: ['storage', 'monitoring'], defaultTab: 'storage' }
+    var VALID_TABS = [
+        'general', 'domains', 'project', 'redirects', 'users-roles',
+        'activity-log', 'api', 'ai-integrations', 'storage'
+    ];
+
+    var TAB_ALIASES = {
+        hosting: 'domains',
+        webhooks: 'api',
+        security: 'users-roles',
+        monitoring: 'storage'
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'hosting', 'project', 'domains', 'webhooks', 'redirects',
-        'ai-integrations', 'users-roles', 'activity-log', 'api'
+        'project', 'domains', 'redirects', 'ai-integrations', 'activity-log', 'api'
     ];
 
     var GLOBAL_SAVE_TABS = {
-        general: { formId: 'general-form', label: 'Save general settings' },
-        security: { formId: 'security-form', label: 'Save security settings' },
-        storage: { formId: 'storage-form', label: 'Save storage settings' },
-        monitoring: { formId: 'monitoring-form', label: 'Save monitoring settings' }
+        general: { formIds: ['general-form'], label: 'Save general settings' },
+        'users-roles': { formIds: ['security-form'], label: 'Save security settings' },
+        storage: {
+            formIds: ['storage-form', 'monitoring-form'],
+            label: 'Save infrastructure settings'
+        }
     };
 
     var LEGACY_AI_HASH_MAP = {
@@ -431,21 +437,17 @@ window.deleteRole = deleteRole;
         'mcp-connections': 'inbound-mcp'
     };
 
-    var currentArea = 'site';
     var currentTab = 'general';
     var formSnapshots = {};
     var settingsDirty = false;
     var beforeUnloadBound = false;
 
-    function getAreaForTab(tabId) {
-        var areaKeys = Object.keys(SETTINGS_AREAS);
-        for (var i = 0; i < areaKeys.length; i++) {
-            var area = areaKeys[i];
-            if (SETTINGS_AREAS[area].tabs.indexOf(tabId) >= 0) {
-                return area;
-            }
+    function normalizeTabId(tabId) {
+        if (!tabId) return null;
+        if (TAB_ALIASES[tabId]) {
+            return TAB_ALIASES[tabId];
         }
-        return 'site';
+        return tabId;
     }
 
     function resolveSettingsHash(hash) {
@@ -456,65 +458,58 @@ window.deleteRole = deleteRole;
         if (LEGACY_AI_HASH_MAP[hash]) {
             return { tab: 'ai-integrations', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
         }
-        return { tab: hash, scrollTo: null, legacyHash: null };
+        return { tab: normalizeTabId(hash), scrollTo: null, legacyHash: null };
     }
 
     function parseSettingsUrl() {
         var params = new URLSearchParams(window.location.search);
-        var area = params.get('area');
         var tab = params.get('tab');
+        var scrollTo = null;
+        var hash = window.location.hash.replace('#', '');
+        var resolvedHash = resolveSettingsHash(hash);
 
         if (!tab) {
-            var hash = window.location.hash.replace('#', '');
-            var resolved = resolveSettingsHash(hash);
-            if (resolved.tab) {
-                tab = resolved.tab;
+            if (resolvedHash.tab) {
+                tab = resolvedHash.tab;
+                scrollTo = resolvedHash.scrollTo;
+            }
+        } else {
+            tab = normalizeTabId(tab);
+            if (resolvedHash.scrollTo && (tab === 'ai-integrations' || resolvedHash.tab === 'ai-integrations')) {
+                tab = 'ai-integrations';
+                scrollTo = resolvedHash.scrollTo;
             }
         }
 
-        if (!area && tab) {
-            area = getAreaForTab(tab);
+        if (!tab || VALID_TABS.indexOf(tab) < 0) {
+            tab = 'general';
         }
 
-        if (!area || !SETTINGS_AREAS[area]) {
-            area = 'site';
-        }
-        if (!tab || SETTINGS_AREAS[area].tabs.indexOf(tab) < 0) {
-            tab = SETTINGS_AREAS[area].defaultTab;
-        }
-
-        return { area: area, tab: tab };
+        return { tab: tab, scrollTo: scrollTo };
     }
 
-    function buildSettingsUrl(area, tab) {
+    function buildSettingsUrl(tab) {
         var params = new URLSearchParams(window.location.search);
         params.set('page', 'settings');
-        params.set('area', area);
         params.set('tab', tab);
+        params.delete('area');
         return window.location.pathname + '?' + params.toString();
     }
 
-    function redirectLegacySettingsUrl() {
+    function normalizeSettingsUrl(parsed) {
         var params = new URLSearchParams(window.location.search);
-        var legacyTab = params.get('tab');
+        var rawTab = params.get('tab');
         var hash = window.location.hash.replace('#', '');
-        var needsRedirect = false;
-
-        if (legacyTab && !params.get('area')) {
-            needsRedirect = true;
-        }
-        if (hash && !params.get('tab')) {
-            needsRedirect = true;
-        }
+        var needsRedirect = params.has('area')
+            || (rawTab && TAB_ALIASES[rawTab])
+            || (hash && (!params.get('tab') || !!resolveSettingsHash(hash).scrollTo));
 
         if (!needsRedirect) {
             return false;
         }
 
-        var parsed = parseSettingsUrl();
-        var nextUrl = buildSettingsUrl(parsed.area, parsed.tab);
         if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', nextUrl);
+            window.history.replaceState(null, '', buildSettingsUrl(parsed.tab));
         }
         return true;
     }
@@ -529,18 +524,6 @@ window.deleteRole = deleteRole;
         }
     }
 
-    function updateAreaNav(area) {
-        document.querySelectorAll('.settings-area-btn').forEach(function (btn) {
-            var isActive = btn.getAttribute('data-area') === area;
-            btn.classList.toggle('active', isActive);
-            if (isActive) {
-                btn.setAttribute('aria-current', 'page');
-            } else {
-                btn.removeAttribute('aria-current');
-            }
-        });
-    }
-
     function refreshTabsV2Picker() {
         var tabsRoot = document.querySelector('.settings-tabs.tabs-v2-root');
         if (tabsRoot && window.Birkly && window.Birkly.TabsV2 && typeof window.Birkly.TabsV2.refresh === 'function') {
@@ -548,18 +531,17 @@ window.deleteRole = deleteRole;
         }
     }
 
-    function updateVisibleTabs(area) {
-        document.querySelectorAll('.settings-tabs .tab[data-tab]').forEach(function (btn) {
-            var tabArea = btn.getAttribute('data-area');
-            var visible = tabArea === area;
-            btn.classList.toggle('tab--hidden', !visible);
-            if (visible) {
-                btn.removeAttribute('aria-hidden');
-            } else {
-                btn.setAttribute('aria-hidden', 'true');
-            }
+    function getGlobalSaveFormIds(tabId) {
+        var cfg = GLOBAL_SAVE_TABS[tabId];
+        return cfg && cfg.formIds ? cfg.formIds.slice() : [];
+    }
+
+    function serializeTabForms(tabId) {
+        var parts = [];
+        getGlobalSaveFormIds(tabId).forEach(function (formId) {
+            parts.push(serializeForm(document.getElementById(formId)));
         });
-        refreshTabsV2Picker();
+        return parts.join('||');
     }
 
     function updateSaveBar(tabId) {
@@ -597,21 +579,15 @@ window.deleteRole = deleteRole;
 
     function captureFormSnapshots() {
         Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
-            var form = document.getElementById(GLOBAL_SAVE_TABS[tabId].formId);
-            if (form) {
-                formSnapshots[tabId] = serializeForm(form);
-            }
+            formSnapshots[tabId] = serializeTabForms(tabId);
         });
     }
 
     function checkDirtyState() {
         var dirty = false;
         Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
-            var form = document.getElementById(GLOBAL_SAVE_TABS[tabId].formId);
-            if (form && formSnapshots[tabId] !== undefined) {
-                if (serializeForm(form) !== formSnapshots[tabId]) {
-                    dirty = true;
-                }
+            if (formSnapshots[tabId] !== undefined && serializeTabForms(tabId) !== formSnapshots[tabId]) {
+                dirty = true;
             }
         });
         settingsDirty = dirty;
@@ -631,22 +607,24 @@ window.deleteRole = deleteRole;
 
     function bindDirtyTracking() {
         Object.keys(GLOBAL_SAVE_TABS).forEach(function (tabId) {
-            var form = document.getElementById(GLOBAL_SAVE_TABS[tabId].formId);
-            if (!form || form.dataset.dirtyBound === '1') return;
-            form.dataset.dirtyBound = '1';
-            form.addEventListener('input', checkDirtyState);
-            form.addEventListener('change', checkDirtyState);
+            getGlobalSaveFormIds(tabId).forEach(function (formId) {
+                var form = document.getElementById(formId);
+                if (!form || form.dataset.dirtyBound === '1') return;
+                form.dataset.dirtyBound = '1';
+                form.addEventListener('input', checkDirtyState);
+                form.addEventListener('change', checkDirtyState);
+            });
         });
     }
 
-    function activateTab(tabId, tabButtons, tabPanes, scrollTo, area) {
+    function activateTab(tabId, tabButtons, tabPanes, scrollTo) {
         if (!tabId) return;
+        tabId = normalizeTabId(tabId) || tabId;
         var tabButton = document.querySelector('.settings-tabs .tab[data-tab="' + tabId + '"]');
         var tabPane = document.getElementById(tabId);
         if (!tabButton || !tabPane) return;
 
         currentTab = tabId;
-        currentArea = area || getAreaForTab(tabId);
 
         for (var j = 0; j < tabButtons.length; j++) {
             tabButtons[j].classList.remove('active');
@@ -655,53 +633,42 @@ window.deleteRole = deleteRole;
             tabPanes[k].classList.remove('active');
         }
 
-        tabButton.classList.remove('tab--hidden');
         tabButton.classList.add('active');
         tabPane.classList.add('active');
 
-        updateAreaNav(currentArea);
-        updateVisibleTabs(currentArea);
         updateSaveBar(tabId);
 
         if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', buildSettingsUrl(currentArea, tabId));
+            window.history.replaceState(null, '', buildSettingsUrl(tabId));
         }
 
         setTimeout(function () {
             if (tabId === 'activity-log' && typeof window.initAuditLog === 'function') {
                 window.initAuditLog();
-            } else if (tabId === 'webhooks' && typeof window.initWebhooksManager === 'function') {
+            } else if (tabId === 'api' && typeof window.initWebhooksManager === 'function') {
                 window.initWebhooksManager(window.webhooksData || {});
             } else if (tabId === 'redirects' && typeof window.initRedirectsManager === 'function') {
                 window.initRedirectsManager();
             } else if (tabId === 'general' && typeof window.initUpdates === 'function') {
                 window.initUpdates();
-            } else if (tabId === 'domains' && typeof window.loadDomains === 'function') {
-                window.loadDomains();
+            } else if (tabId === 'domains') {
+                if (typeof window.loadDomains === 'function') {
+                    window.loadDomains();
+                }
+                if (typeof window.initHostingSettings === 'function') {
+                    window.initHostingSettings();
+                }
             } else if (tabId === 'project' && typeof window.initProjectSettings === 'function') {
                 window.initProjectSettings();
-            } else if (tabId === 'hosting' && typeof window.initHostingSettings === 'function') {
-                window.initHostingSettings();
+            } else if (tabId === 'users-roles' && typeof window.loadDenylist === 'function') {
+                window.loadDenylist();
             } else if (tabId === 'ai-integrations') {
                 window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
             }
             scrollToAiSection(scrollTo);
         }, 100);
 
-        var tabsRoot = document.querySelector('.settings-tabs.tabs-v2-root');
-        if (tabsRoot && window.Birkly && window.Birkly.TabsV2 && typeof window.Birkly.TabsV2.refresh === 'function') {
-            window.Birkly.TabsV2.refresh(tabsRoot);
-        }
-    }
-
-    function activateArea(area, tabId) {
-        if (!SETTINGS_AREAS[area]) {
-            area = 'site';
-        }
-        var tab = tabId && SETTINGS_AREAS[area].tabs.indexOf(tabId) >= 0
-            ? tabId
-            : SETTINGS_AREAS[area].defaultTab;
-        activateTab(tab, getSettingsTabButtons(), getSettingsTabPanes(), null, area);
+        refreshTabsV2Picker();
     }
 
     function getSettingsTabButtons() {
@@ -727,16 +694,8 @@ window.deleteRole = deleteRole;
             return;
         }
 
-        redirectLegacySettingsUrl();
-
-        document.querySelectorAll('.settings-area-btn').forEach(function (btn) {
-            btn.addEventListener('click', async function (e) {
-                e.preventDefault();
-                var area = btn.getAttribute('data-area');
-                if (!area) return;
-                activateArea(area, SETTINGS_AREAS[area].defaultTab);
-            });
-        });
+        var parsed = parseSettingsUrl();
+        normalizeSettingsUrl(parsed);
 
         tabNav.addEventListener('click', async function (e) {
             var btn = e.target.closest('.tab[data-tab]');
@@ -746,16 +705,14 @@ window.deleteRole = deleteRole;
             e.preventDefault();
             var targetTab = btn.getAttribute('data-tab');
             if (!targetTab) return;
-            var targetArea = btn.getAttribute('data-area') || getAreaForTab(targetTab);
-            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null, targetArea);
+            activateTab(targetTab, getSettingsTabButtons(), getSettingsTabPanes(), null);
         });
 
-        var parsed = parseSettingsUrl();
-        activateArea(parsed.area, parsed.tab);
+        activateTab(parsed.tab, getSettingsTabButtons(), getSettingsTabPanes(), parsed.scrollTo);
 
         window.addEventListener('popstate', function () {
             var next = parseSettingsUrl();
-            activateArea(next.area, next.tab);
+            activateTab(next.tab, getSettingsTabButtons(), getSettingsTabPanes(), next.scrollTo);
         });
 
         captureFormSnapshots();
@@ -1991,6 +1948,7 @@ async function loadDenylist() {
         container.innerHTML = `<p class="error">Error: ${error.message}</p>`;
     }
 }
+window.loadDenylist = loadDenylist;
 
 function renderDenylistItem(resource, type) {
     const label = type === 'collection' ? 'collection' : (type === 'space' ? 'space' : 'pattern');
@@ -2235,49 +2193,56 @@ async function migrateStorage() {
     });
 }
 
-// Load denylist when security tab is shown
+// Load denylist when Team & security tab is shown
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('denylist-add-collection-btn')?.addEventListener('click', addDenylistCollection);
 
-    const securityTab = document.querySelector('[data-tab="security"]');
-    if (securityTab) {
-        securityTab.addEventListener('click', async function () {
-            setTimeout(loadDenylist, 100); // Small delay to ensure tab is visible
+    const teamTab = document.querySelector('[data-tab="users-roles"]');
+    if (teamTab) {
+        teamTab.addEventListener('click', async function () {
+            setTimeout(loadDenylist, 100);
         });
     }
-    
-    // Also load if we're already on security tab
-    var securityPane = document.querySelector('.tab-pane#security.active');
+
+    var teamPane = document.querySelector('.tab-pane#users-roles.active');
     var params = new URLSearchParams(window.location.search);
-    if (params.get('tab') === 'security' || window.location.hash === '#security' || securityPane) {
+    var tab = params.get('tab');
+    if (tab === 'security') tab = 'users-roles';
+    if (tab === 'users-roles' || window.location.hash === '#security' || window.location.hash === '#users-roles' || teamPane) {
         loadDenylist();
     }
 });
-// Global save bar — per-tab forms only (P44-M1, M4)
+
+// Global save bar — per-tab forms (merged tabs may save multiple forms)
 function handleGlobalSave() {
     var tabId = typeof window.getSettingsCurrentTab === 'function' ? window.getSettingsCurrentTab() : 'general';
-    var tabConfig = {
-        general: 'general-form',
-        security: 'security-form',
-        storage: 'storage-form',
-        monitoring: 'monitoring-form'
-    };
-    var formId = tabConfig[tabId];
-    if (!formId) return;
+    var generalForm = null;
+    var securityForm = null;
+    var storageForm = null;
+    var monitoringForm = null;
 
-    var form = document.getElementById(formId);
-    if (!form) return;
-
-    if (form.classList) {
-        form.classList.add('was-validated');
+    if (tabId === 'general') {
+        generalForm = document.getElementById('general-form');
+    } else if (tabId === 'users-roles') {
+        securityForm = document.getElementById('security-form');
+    } else if (tabId === 'storage') {
+        storageForm = document.getElementById('storage-form');
+        monitoringForm = document.getElementById('monitoring-form');
+    } else {
+        return;
     }
 
-    collectAndSaveSettings(
-        tabId === 'general' ? form : null,
-        tabId === 'security' ? form : null,
-        tabId === 'storage' ? form : null,
-        tabId === 'monitoring' ? form : null
-    );
+    [generalForm, securityForm, storageForm, monitoringForm].forEach(function (form) {
+        if (form && form.classList) {
+            form.classList.add('was-validated');
+        }
+    });
+
+    if (!generalForm && !securityForm && !storageForm && !monitoringForm) {
+        return;
+    }
+
+    collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm);
 }
 
 async function collectAndSaveSettings(generalForm, securityForm, storageForm, monitoringForm) {
@@ -2435,6 +2400,20 @@ function initGlobalSave() {
 
     if (securityForm) {
         securityForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            handleGlobalSave();
+        });
+    }
+
+    if (storageForm) {
+        storageForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            handleGlobalSave();
+        });
+    }
+
+    if (monitoringForm) {
+        monitoringForm.addEventListener('submit', function (e) {
             e.preventDefault();
             handleGlobalSave();
         });
