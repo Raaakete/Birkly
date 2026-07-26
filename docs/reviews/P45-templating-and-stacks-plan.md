@@ -1,6 +1,6 @@
 # P45 — Templating, web components, and multi-stack integration
 
-**Status:** Approved (2026-07-26, Keven) — **next active phase**  
+**Status:** **Complete** (2026-07-26) — M1→M12 executed; V-TPL matrix green  
 **Repos:** Birkly (engine + client + AI pack) · Birkly-Docs (integration guides) · Birkly-Website (reference migration)  
 **Handoff:** `docs/reviews/P45-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P45-verification-matrix.md`  
@@ -120,19 +120,19 @@ Sync HTML exports after markdown changes (existing docs pipeline).
 
 | ID | Focus | Owner | Status |
 |----|--------|-------|--------|
-| **P45-M0** | Plan, gap register, matrix, handoff, roadmap | product-planner | **this PR** |
-| **P45-M1** | Docs + AI truth — remove phantom syntax | docs-writer + cms-developer | pending |
-| **P45-M2** | `processTemplates({ root })` + region discovery hardening | cms-developer | pending |
-| **P45-M3** | `<birkly-region>` element — entry + list modes | cms-developer | pending |
-| **P45-M4** | Connect lifecycle + `data-birkly-region` | cms-developer | pending |
-| **P45-M5** | `birkly-components.js` enhance-only helpers (nav active state) | frontend-developer | pending |
-| **P45-M6** | Template language spec v1.0 | docs-writer | pending |
-| **P45-M7** | Template validator (CLI or Project tab) | cms-developer | pending |
-| **P45-M8** | Birkly-Docs: HTML + web components guides | docs-writer | pending |
-| **P45-M9** | Birkly-Docs: SPA guides + optional `birkly-client` helpers doc | docs-writer | pending |
-| **P45-M10** | Birkly-Docs: SSR / build-time guide | docs-writer | pending |
-| **P45-M11** | Automated tests + V-TPL matrix | qa-verifier | pending |
-| **P45-M12** | Birkly-Website reference migration + closure | lead-engineer | pending |
+| **P45-M0** | Plan, gap register, matrix, handoff, roadmap | product-planner | **done** |
+| **P45-M1** | Docs + AI truth — remove phantom syntax | docs-writer + cms-developer | **done** |
+| **P45-M2** | `processTemplates({ root })` + region discovery hardening | cms-developer | **done** |
+| **P45-M3** | `<birkly-region>` element — entry + list modes | cms-developer | **done** |
+| **P45-M4** | Connect lifecycle + `data-birkly-region` | cms-developer | **done** |
+| **P45-M5** | `birkly-components.js` enhance-only helpers (nav active state) | frontend-developer | **done** |
+| **P45-M6** | Template language spec v1.0 | docs-writer | **done** |
+| **P45-M7** | Template validator (CLI or Project tab) | cms-developer | **done** |
+| **P45-M8** | Birkly-Docs: HTML + web components guides | docs-writer | **done** |
+| **P45-M9** | Birkly-Docs: SPA guides + optional `birkly-client` helpers doc | docs-writer | **done** |
+| **P45-M10** | Birkly-Docs: SSR / build-time guide | docs-writer | **done** |
+| **P45-M11** | Automated tests + V-TPL matrix | qa-verifier | **done** |
+| **P45-M12** | Birkly-Website reference migration + closure | lead-engineer | **done** |
 
 **Depends on:** P44 complete  
 **Parallel OK:** M8–M10 docs can start after M1 (syntax locked); engine M2–M5 before reference migration M12.

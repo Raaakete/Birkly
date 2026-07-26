@@ -22,9 +22,9 @@
 |----|-----|----------|--------|
 | G2-01 | `processTemplates()` only processes full document | **High** | P45-M2 scoped `root` |
 | G2-02 | `data-birkly-region` documented but not implemented | **Med** | P45-M4 implement or remove |
-| G2-03 | Shadow DOM not scanned (undocumented policy) | **Med** | P45-M6 / Birkly-Docs web-components.md |
-| G2-04 | `ordered by oldest` sorts `created_at` not custom `order` field — confusing | **Med** | P45-M1 docs + M6 spec note |
-| G2-05 | Nested regions: parent wins; behaviour undocumented | **Low** | P45-M6 spec |
+| G2-03 | Shadow DOM not scanned (undocumented policy) | **Med** | **Documented in spec v1.0** (Light DOM vs Shadow DOM); Birkly-Docs web-components.md still M8 |
+| G2-04 | `ordered by oldest` sorts `created_at` not custom `order` field — confusing | **Med** | **Documented in spec v1.0** (Ordering / G2-04) |
+| G2-05 | Nested regions: parent wins; behaviour undocumented | **Low** | **Documented in spec v1.0** (Nested regions; explicit region demotes ancestor) |
 | G2-06 | No per-region processed event | **Low** | P45-M4 `birkly:region-processed` |
 
 ---
@@ -56,9 +56,9 @@
 
 | ID | Gap | Target |
 |----|-----|--------|
-| G5-01 | `TEMPLATE_LANGUAGE_SPEC.md` still Draft v0.1 | P45-M6 v1.0 |
+| G5-01 | `TEMPLATE_LANGUAGE_SPEC.md` still Draft v0.1 | **Resolved** — Spec v1.0 (P45-M6) |
 | G5-02 | No template validator for project files | P45-M7 |
-| G5-03 | `site_elements` special-case in bundle prefetch undocumented | P45-M6 |
+| G5-03 | `site_elements` special-case in bundle prefetch undocumented | **Resolved** — documented in Spec v1.0 (`site_elements` prefetch) |
 
 ---
 
