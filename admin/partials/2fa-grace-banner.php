@@ -29,7 +29,7 @@ $accountUrl = birkly_admin_url('account') . '#2fa';
             <?php endif; ?>
             After that, admin access is blocked until 2FA is enabled.
         </span>
-        <a class="btn btn-secondary btn-small" href="<?= htmlspecialchars($accountUrl) ?>">Enable 2FA</a>
+        <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars($accountUrl) ?>">Enable 2FA</a>
     </div>
 </div>
 <style>

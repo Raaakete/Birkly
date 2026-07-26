@@ -279,7 +279,7 @@ a.card:hover {
   gap: var(--space-2, 0.5rem);
 }
 
-.collection-actions .btn {
+.collection-actions .btn-icon {
   padding: var(--space-2, 0.5rem);
   border: none;
   background: transparent;
@@ -288,11 +288,11 @@ a.card:hover {
   transition: background-color 0.2s;
 }
 
-.collection-actions .btn:hover {
+.collection-actions .btn-icon:hover {
   background: var(--bg-primary, #ffffff);
 }
 
-.collection-actions .btn:disabled {
+.collection-actions .btn-icon:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
