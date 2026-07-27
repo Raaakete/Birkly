@@ -158,14 +158,23 @@
         const list = document.getElementById('connections-list');
         if (!list) return;
 
-        const outbound = connections.filter(conn => conn.provider !== 'mcp');
+        const outbound = connections.filter(function (conn) {
+            if (conn.provider === 'mcp') return false;
+            return true;
+        });
+        const seen = new Set();
+        const unique = outbound.filter(function (conn) {
+            if (!conn.id || seen.has(conn.id)) return false;
+            seen.add(conn.id);
+            return true;
+        });
 
-        if (outbound.length === 0) {
+        if (unique.length === 0) {
             list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>No assistant connected</strong></p><p>Click <em>Quick connect</em> to add your AI provider and API key for in-admin chat.</p></div>';
             return;
         }
 
-        list.innerHTML = outbound.map(conn => `
+        list.innerHTML = unique.map(conn => `
             <div class="ai-connection-entry" data-connection-id="${escapeHtml(conn.id)}">
                 <div class="ai-connection-entry-header">
                     <strong>${escapeHtml(conn.name || conn.provider)}</strong>
