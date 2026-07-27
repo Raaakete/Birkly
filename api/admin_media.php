@@ -278,6 +278,35 @@ function createFolder() {
     }
 }
 
+/**
+ * Detect MIME type for uploads, normalizing SVG which finfo may report as text/xml.
+ */
+function detectUploadMimeType(string $tmpPath, string $originalName): string
+{
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $detected = $finfo ? (finfo_file($finfo, $tmpPath) ?: '') : '';
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+
+    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    if ($ext !== 'svg') {
+        return (string) $detected;
+    }
+
+    $head = @file_get_contents($tmpPath, false, null, 0, 8192);
+    if ($head !== false && stripos($head, '<svg') !== false) {
+        return 'image/svg+xml';
+    }
+
+    return (string) $detected;
+}
+
+function isRasterImageMime(string $mimeType): bool
+{
+    return str_starts_with($mimeType, 'image/') && $mimeType !== 'image/svg+xml';
+}
+
 function uploadMedia() {
     // SECURITY FIX: Require CSRF token for file uploads
     $csrf = $_POST['_csrf'] ?? '';
@@ -340,19 +369,17 @@ function uploadMedia() {
     ];
     
     // Always use finfo_file() to detect MIME type from file content, not client-provided type
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $detectedMimeType = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
+    $detectedMimeType = detectUploadMimeType($file['tmp_name'], (string) ($file['name'] ?? ''));
     
-    if (!in_array($detectedMimeType, $allowedTypes)) {
+    if (!in_array($detectedMimeType, $allowedTypes, true)) {
         return [
             'status'  => 'error',
             'message' => 'Invalid file type. Only images, videos, audio, documents, and archives are allowed.'
         ];
     }
     
-    // Additional validation for images
-    if (strpos($detectedMimeType, 'image/') === 0) {
+    // Raster images only — SVG and other vector formats are not handled by getimagesize()
+    if (isRasterImageMime($detectedMimeType)) {
         $imageInfo = @getimagesize($file['tmp_name']);
         if ($imageInfo === false) {
             return [
@@ -694,6 +721,9 @@ function getMediaCategory($mimeType) {
 }
 
 function getImageDimensions($filepath, $mimeType) {
+    if ($mimeType === 'image/svg+xml') {
+        return null;
+    }
     if (strpos($mimeType, 'image/') === 0) {
         $info = getimagesize($filepath);
         if ($info) {
